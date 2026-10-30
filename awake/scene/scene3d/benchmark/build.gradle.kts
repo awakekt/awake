@@ -19,6 +19,7 @@ kotlin {
 dependencies {
     implementation(project(":awake:core:math"))
     // SpatialGrid, the thing SpatialCullingBenchmarks measures against a per-entity scan.
+    implementation(project(":awake:core:spatial"))
     implementation(project(":awake:scene:scene3d"))
     implementation(libs.kotlinx.benchmark.runtime)
 }

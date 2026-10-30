@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.render.renderer.GpuFrameTimeCounter
+import com.awakekt.awake.webgpu.device.submitAndRelease
 import com.awakekt.awake.webgpu.device.timestampPeriodNs
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.ComputePassTimestampWrites
@@ -208,6 +209,6 @@ internal fun Renderer.createRenderEncoder(): GPUCommandEncoder =
     gpuFrameTimer?.createEncoder() ?: graphicsDevice.wgpuContext.device.createCommandEncoder()
 
 internal fun Renderer.submitRenderCommands(encoder: GPUCommandEncoder) {
-    graphicsDevice.wgpuContext.device.queue.submit(listOf(encoder.finish()))
+    graphicsDevice.wgpuContext.device.queue.submitAndRelease(encoder)
     gpuFrameTimer?.submitted(encoder)
 }

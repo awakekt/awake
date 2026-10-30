@@ -7,6 +7,12 @@ package com.awakekt.awake.scene.ai.definition
 
 import com.awakekt.awake.core.schema.AssetReference
 import com.awakekt.awake.core.schema.PropertyHint
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.ai.ensurePathRequest
+import com.awakekt.awake.scene.binding.SceneBinding
+import com.awakekt.awake.scene.binding.SceneBindingHooks
+import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -22,6 +28,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("behavior_tree")
+@SceneBinding(BehaviorTreeAsset::class, name = "BehaviorTreeBinding", hooks = BehaviorTreeBindingHooks::class)
 data class SceneBehaviorTree(
     @AssetReference(AI_DEFINITION_ASSET) val asset: String,
     @PropertyHint("Seeds the random nodes; left out, each entity gets its own.") val seed: Long? = null,
@@ -41,6 +48,7 @@ data class SceneBehaviorTree(
  */
 @Serializable
 @SerialName("state_machine")
+@SceneBinding(StateMachineAsset::class, name = "StateMachineBinding", hooks = StateMachineBindingHooks::class)
 data class SceneStateMachine(
     @AssetReference(AI_DEFINITION_ASSET) val asset: String,
     @PropertyHint("Seeds the random nodes; left out, each entity gets its own.") val seed: Long? = null,
@@ -75,4 +83,28 @@ class BehaviorTreeAsset(var asset: String, var seed: Long? = null, var enabled: 
  */
 class StateMachineAsset(var asset: String, var seed: Long? = null, var enabled: Boolean = true) {
     internal var builtVersion = 0
+}
+
+internal object BehaviorTreeBindingHooks : SceneBindingHooks<BehaviorTreeAsset, SceneBehaviorTree> {
+    override fun afterAttach(
+        world: World,
+        entity: Entity,
+        saved: SceneBehaviorTree,
+        live: BehaviorTreeAsset,
+        context: SceneResolutionContext,
+    ) {
+        world.ensurePathRequest(entity)
+    }
+}
+
+internal object StateMachineBindingHooks : SceneBindingHooks<StateMachineAsset, SceneStateMachine> {
+    override fun afterAttach(
+        world: World,
+        entity: Entity,
+        saved: SceneStateMachine,
+        live: StateMachineAsset,
+        context: SceneResolutionContext,
+    ) {
+        world.ensurePathRequest(entity)
+    }
 }

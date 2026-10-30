@@ -12,8 +12,11 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.canvas.CanvasPrefabs
+import com.awakekt.awake.scene.canvas.SceneCanvasTooltip
+import com.awakekt.awake.scene.canvas.canvasElements
 import com.awakekt.awake.scene.canvas.canvasPrefab
 import com.awakekt.awake.scene.canvas.findCanvasElement
+import com.awakekt.awake.scene.canvas.withCanvasComponents
 import com.awakekt.awake.scene.core.EntityNames
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneDocument
@@ -79,6 +82,21 @@ class CanvasPrefabRoundTripTest {
 
         assertEquals(actionBar, saved)
         assertEquals(CanvasPrefabs.toJson(actionBar), CanvasPrefabs.toJson(saved), "the file an editor saves is the file code wrote")
+        assertEquals(actionBar, actionBar.withCanvasComponents(), "the builder writes the current form")
+        val again = World().also { SceneDocument(nodes = listOf(saved.root)).instantiate(world = it) }
+        assertEquals(saved.root, SceneLoader.fromWorld(again).nodes.single(), "the focused form loads and saves back unchanged")
+    }
+
+    @Test
+    fun aChangeMadeThroughTheElementIsSavedWithoutWaitingForAFrame() {
+        val world = World()
+        SceneDocument(nodes = listOf(actionBar.root)).instantiate(world = world)
+        val energy = world.canvasElements().getValue("Energy")
+
+        energy.tooltip = "Energy"
+        val saved = SceneLoader.fromWorld(world).nodes.single().children.single { it.name == "Energy" }
+
+        assertEquals(SceneCanvasTooltip("Energy"), saved.components.filterIsInstance<SceneCanvasTooltip>().single())
     }
 
     @Test

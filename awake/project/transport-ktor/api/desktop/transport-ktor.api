@@ -1,0 +1,6 @@
+public final class com/awakekt/awake/project/transport/ktor/KtorContentTransport : com/awakekt/awake/project/ContentTransport {
+	public fun <init> (Lio/ktor/client/HttpClient;Ljava/lang/String;)V
+	public synthetic fun <init> (Lio/ktor/client/HttpClient;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun send (Lcom/awakekt/awake/project/ContentRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+

@@ -93,7 +93,13 @@ class SceneDocumentJsonSchemaTest {
 
         val sceneFiles = rootDir.walkTopDown()
             .filter { it.isFile && it.name.endsWith(".scene.json") }
-            .filter { !it.path.contains(".gradle") && !it.path.contains("build") && !it.path.contains(".claude") }
+            .filter { file ->
+                val relative = file.relativeTo(rootDir).invariantSeparatorsPath
+                !relative.contains(".gradle") &&
+                    !relative.startsWith("build/") &&
+                    !relative.contains("/build/") &&
+                    !relative.contains(".claude")
+            }
             .toList()
 
         assertTrue(sceneFiles.isNotEmpty(), "Found scene files in repository: ${sceneFiles.size}")
@@ -107,6 +113,32 @@ class SceneDocumentJsonSchemaTest {
                 "Scene file ${sceneFile.relativeTo(rootDir).path} failed JSON Schema validation: ${issues.joinToString { "${it.path}: ${it.message}" }}",
             )
         }
+    }
+
+    @Test
+    fun meshRendererCastsShadowsIsAnOptionalBoolean() {
+        installEveryComponentKit()
+
+        val validator = JsonSchemaValidator(SceneDocumentJsonSchema.generate(SceneComponentCatalog))
+        fun document(castsShadows: String?) = json.parseToJsonElement(
+            """
+            {
+                "version": 1,
+                "nodes": [
+                    {
+                        "name": "groundCard",
+                        "components": [
+                            { "component": "mesh_renderer", "mesh": "plane", "material": "decal"${castsShadows?.let { ", \"castsShadows\": $it" }.orEmpty()} }
+                        ]
+                    }
+                ]
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(emptyList(), validator.validate(document("false")).map { it.message })
+        assertEquals(emptyList(), validator.validate(document(null)).map { it.message }, "A document without the field is still valid.")
+        assertFalse(validator.validate(document("\"no\"")).isEmpty(), "Negative control: a string is not a boolean.")
     }
 
     @Test

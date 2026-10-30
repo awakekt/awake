@@ -113,13 +113,13 @@ public final class com/awakekt/awake/render/passes/DirectionalShadowBoxKt {
 
 public final class com/awakekt/awake/render/passes/DrawUniformPackingKt {
 	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FI)[F
-	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;F)[F
+	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZ)[F
 	public static synthetic fun instancedUniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FIILjava/lang/Object;)[F
-	public static synthetic fun instancedUniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FILjava/lang/Object;)[F
+	public static synthetic fun instancedUniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZILjava/lang/Object;)[F
 	public static final fun uniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;F)[F
-	public static final fun uniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;F)[F
+	public static final fun uniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZ)[F
 	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)[F
-	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FILjava/lang/Object;)[F
+	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZILjava/lang/Object;)[F
 }
 
 public final class com/awakekt/awake/render/passes/GpuResourcePool {
@@ -279,6 +279,20 @@ public final class com/awakekt/awake/render/passes/ShadowCascadesMathKt {
 	public static synthetic fun cascadeSplitDistances$default (FFIFILjava/lang/Object;)[F
 }
 
+public final class com/awakekt/awake/render/passes/ShadowCasterVolume : com/awakekt/awake/core/math/BoundedVolume {
+	public fun <init> ()V
+	public final fun addCascade (Lcom/awakekt/awake/core/math/Mat4;)V
+	public final fun addPointShadow (Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public fun admits (FFFFFF)Z
+	public fun admits (Lcom/awakekt/awake/core/math/Aabb;)Z
+	public fun bounds (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Aabb;)Z
+	public final fun clear ()Lcom/awakekt/awake/render/passes/ShadowCasterVolume;
+	public final fun getCascadeCount ()I
+	public final fun getPointShadowCount ()I
+	public final fun isEmpty ()Z
+	public final fun set (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;)Lcom/awakekt/awake/render/passes/ShadowCasterVolume;
+}
+
 public final class com/awakekt/awake/render/passes/SharedOpaqueRenderFeature {
 	public static final field INSTANCE_COLOR_BINDING I
 	public static final field INSTANCE_FRAME_BINDING I
@@ -434,6 +448,7 @@ public final class com/awakekt/awake/render/passes/uniforms/DrawUniformPlan : ja
 	public static final field Skinned Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field Sprite Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field TexturedPbr Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
+	public static final field WorldText Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static fun values ()[Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
@@ -537,12 +552,16 @@ public final class com/awakekt/awake/render/passes/uniforms/PbrUniformsKt {
 	public static final fun getDEFAULT_EMISSIVE_FACTOR ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun litShadowUniforms (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/render/passes/uniforms/SceneFrameUniforms;)[F
 	public static final fun litUniforms (Lcom/awakekt/awake/core/math/Mat4;[F[FZ)[F
-	public static final fun pbrMaterialFloats (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;Z)[F
+	public static final synthetic fun pbrMaterialFloats (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;Z)[F
+	public static final fun pbrMaterialFloats (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;ZZ)[F
 	public static final fun pbrMaterialFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;)[F
 	public static synthetic fun pbrMaterialFloats$default (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;ZILjava/lang/Object;)[F
+	public static synthetic fun pbrMaterialFloats$default (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;ZZILjava/lang/Object;)[F
 	public static final fun pbrTexturedMaterialFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;)[F
-	public static final fun skinnedMaterialFloats ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[F)[F
+	public static final synthetic fun skinnedMaterialFloats ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[F)[F
+	public static final fun skinnedMaterialFloats ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[FZ)[F
 	public static synthetic fun skinnedMaterialFloats$default ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[FILjava/lang/Object;)[F
+	public static synthetic fun skinnedMaterialFloats$default ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[FZILjava/lang/Object;)[F
 	public static final fun texturedUniforms (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;[F[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/render/command/GpuShadowCascadeData;FZ)[F
 	public static final fun texturedUniforms (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/passes/uniforms/SceneFrameUniforms;)[F
 	public static synthetic fun texturedUniforms$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;[F[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/render/command/GpuShadowCascadeData;FZILjava/lang/Object;)[F
@@ -605,6 +624,16 @@ public final class com/awakekt/awake/render/passes/uniforms/RenderDebugViewKt {
 	public static final field WIREFRAME_EDGE_GREY F
 	public static final fun debugLayerColor (I)Lcom/awakekt/awake/core/color/Color;
 	public static final fun putDebugView (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/render/renderer/UniformWriter;
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/SceneCoverage {
+	public static final field INSTANCE Lcom/awakekt/awake/render/passes/uniforms/SceneCoverage;
+	public static final field Offset F
+	public static final field Opaque F
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/SceneCoverageKt {
+	public static final fun sceneCoverageCutoff (Lcom/awakekt/awake/render/command/GpuDrawRequest;Z)F
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/SceneDefaultsKt {
@@ -729,10 +758,22 @@ public final class com/awakekt/awake/render/passes/uniforms/TexturedBlend : java
 	public static final field AddsLit Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
 	public static final field AddsUnlit Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
 	public static final field Covers Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+	public static final field Unlit Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
 	public final fun getCode ()I
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
 	public static fun values ()[Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/WorldTextFields {
+	public static final field INSTANCE Lcom/awakekt/awake/render/passes/uniforms/WorldTextFields;
+	public final fun getField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTint ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/WorldTextFieldsKt {
+	public static final fun getWorldTextExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun getWorldTextUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
 public final class com/awakekt/awake/render/pipeline/DrawCallPipelineKt {

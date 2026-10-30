@@ -204,17 +204,19 @@ public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparat
 public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparer {
 	public fun canInstance (Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
 	public fun canInstance (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
+	public fun getClampsShadowDepth ()Z
 	public abstract fun prepare (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/render/command/GpuDrawPreparationContext;)Lcom/awakekt/awake/render/command/GpuResolvedDraw;
 }
 
 public final class com/awakekt/awake/render/command/GpuDrawPreparer$DefaultImpls {
 	public static fun canInstance (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
 	public static fun canInstance (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
+	public static fun getClampsShadowDepth (Lcom/awakekt/awake/render/command/GpuDrawPreparer;)Z
 }
 
 public final class com/awakekt/awake/render/command/GpuDrawRequest {
-	public fun <init> (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIII)V
-	public synthetic fun <init> (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/render/mesh/GpuMesh;
 	public final fun component10 ()Ljava/util/List;
 	public final fun component11 ()Lcom/awakekt/awake/render/pipeline/CullMode;
@@ -228,6 +230,7 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun component19 ()I
 	public final fun component2 ()Lcom/awakekt/awake/render/material/GpuMaterial;
 	public final fun component20 ()I
+	public final fun component21 ()Z
 	public final fun component3 ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun component4 ()[F
 	public final fun component5 ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -235,12 +238,13 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Ljava/util/List;
 	public final fun component9 ()Ljava/util/List;
-	public final fun copy (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIII)Lcom/awakekt/awake/render/command/GpuDrawRequest;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuDrawRequest;
+	public final fun copy (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIZ)Lcom/awakekt/awake/render/command/GpuDrawRequest;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIZILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuDrawRequest;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Z
 	public final fun getAlphaCutoff ()F
 	public final fun getAlphaMode ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
+	public final fun getCastsShadows ()Z
 	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
 	public final fun getExtraUniformFloats ()[F
 	public final fun getInstanceColors ()Ljava/util/List;
@@ -259,11 +263,12 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getWorldBounds ()Lcom/awakekt/awake/core/math/Aabb;
 	public fun hashCode ()I
-	public final fun set (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIII)Lcom/awakekt/awake/render/command/GpuDrawRequest;
-	public static synthetic fun set$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuDrawRequest;
+	public final fun set (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIZ)Lcom/awakekt/awake/render/command/GpuDrawRequest;
+	public static synthetic fun set$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZIIIZILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuDrawRequest;
 	public final fun setAdditive (Z)V
 	public final fun setAlphaCutoff (F)V
 	public final fun setAlphaMode (Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
+	public final fun setCastsShadows (Z)V
 	public final fun setCullMode (Lcom/awakekt/awake/render/pipeline/CullMode;)V
 	public final fun setExtraUniformFloats ([F)V
 	public final fun setInstanceColors (Ljava/util/List;)V
@@ -572,18 +577,26 @@ public final class com/awakekt/awake/render/command/PreparedDrawResolutionKt {
 }
 
 public final class com/awakekt/awake/render/font/UiFontSamplingInfo {
-	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FII)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)V
+	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public final fun component2 ()F
 	public final fun component3 ()I
 	public final fun component4 ()I
-	public final fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FII)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public final fun component5 ()Z
+	public final fun component6 ()F
+	public final synthetic fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public final fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZF)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZFILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAtlasHeight ()I
 	public final fun getAtlasWidth ()I
 	public final fun getDistanceFieldRangePx ()F
+	public final fun getEffectFieldRangePx ()F
+	public final fun getLinearCoverage ()Z
 	public final fun getMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -621,6 +634,14 @@ public final class com/awakekt/awake/render/imagepass/ImagePassChain {
 
 public final class com/awakekt/awake/render/imagepass/ImagePassChain$Companion {
 	public final fun getEmpty ()Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+}
+
+public final class com/awakekt/awake/render/imagepass/ImagePassColorEncoding : java/lang/Enum {
+	public static final field DisplayReferred Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;
+	public static final field LinearHdr Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;
+	public static fun values ()[Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;
 }
 
 public abstract interface class com/awakekt/awake/render/imagepass/ImagePassDestination {
@@ -819,17 +840,19 @@ public final class com/awakekt/awake/render/imagepass/ImagePassStep$Companion {
 }
 
 public final class com/awakekt/awake/render/imagepass/ImagePassTargetContext {
-	public fun <init> (IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;)V
-	public synthetic fun <init> (IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;)V
+	public synthetic fun <init> (IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()Lcom/awakekt/awake/core/math/ClipSpace;
 	public final fun component4 ()Z
 	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
-	public final fun copy (IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
+	public final fun component6 ()Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;
+	public final fun copy (IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;IILcom/awakekt/awake/core/math/ClipSpace;ZLcom/awakekt/awake/render/pipeline/EffectQuality;Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
+	public final fun getColorEncoding ()Lcom/awakekt/awake/render/imagepass/ImagePassColorEncoding;
 	public final fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public final fun getHeight ()I
 	public final fun getSnapshotSupported ()Z
@@ -1120,6 +1143,28 @@ public final class com/awakekt/awake/render/pipeline/GroupBindings$Companion {
 	public final fun getUniformOnlyMaterial ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 }
 
+public final class com/awakekt/awake/render/pipeline/MultisampleState {
+	public static final field Companion Lcom/awakekt/awake/render/pipeline/MultisampleState$Companion;
+	public fun <init> ()V
+	public fun <init> (IZ)V
+	public synthetic fun <init> (IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Z
+	public final fun copy (IZ)Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/MultisampleState;IZILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlphaToCoverageEnabled ()Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public final fun supportedBy (Ljava/util/Set;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public static synthetic fun supportedBy$default (Lcom/awakekt/awake/render/pipeline/MultisampleState;Ljava/util/Set;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/pipeline/MultisampleState$Companion {
+	public final fun getSingle ()Lcom/awakekt/awake/render/pipeline/MultisampleState;
+}
+
 public abstract interface class com/awakekt/awake/render/pipeline/PipelineFactory {
 	public abstract fun create (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -1245,13 +1290,14 @@ public final class com/awakekt/awake/render/pipeline/PipelineSet {
 }
 
 public final class com/awakekt/awake/render/pipeline/PipelineSpec {
-	public fun <init> (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;Lcom/awakekt/awake/render/pipeline/MultisampleState;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;Lcom/awakekt/awake/render/pipeline/MultisampleState;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun component10 ()Z
 	public final fun component11 ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 	public final fun component12 ()Z
 	public final fun component13 ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun component14 ()Lcom/awakekt/awake/render/pipeline/MultisampleState;
 	public final fun component2 ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
 	public final fun component3 ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
 	public final fun component4 ()Lcom/awakekt/awake/render/pipeline/PipelineVariant;
@@ -1260,8 +1306,8 @@ public final class com/awakekt/awake/render/pipeline/PipelineSpec {
 	public final fun component7 ()Z
 	public final fun component8 ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
 	public final fun component9 ()Ljava/util/Map;
-	public final fun copy (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;)Lcom/awakekt/awake/render/pipeline/PipelineSpec;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineSpec;
+	public final fun copy (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;Lcom/awakekt/awake/render/pipeline/MultisampleState;)Lcom/awakekt/awake/render/pipeline/PipelineSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/FrontFace;ZLcom/awakekt/awake/render/pipeline/BindingLayout;Ljava/util/Map;ZLcom/awakekt/awake/render/pipeline/GroupBindings;ZLcom/awakekt/awake/render/renderer/UniformLayout;Lcom/awakekt/awake/render/pipeline/MultisampleState;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineSpec;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBindingLayout ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
 	public final fun getBindingsByGroup ()Ljava/util/Map;
@@ -1271,6 +1317,7 @@ public final class com/awakekt/awake/render/pipeline/PipelineSpec {
 	public final fun getFragmentShader ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
 	public final fun getFrontFace ()Lcom/awakekt/awake/render/pipeline/FrontFace;
 	public final fun getMaterialBindings ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
+	public final fun getMultisample ()Lcom/awakekt/awake/render/pipeline/MultisampleState;
 	public final fun getUniforms ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getUsesMaterialGroup ()Z
 	public final fun getVariant ()Lcom/awakekt/awake/render/pipeline/PipelineVariant;
@@ -1613,6 +1660,7 @@ public final class com/awakekt/awake/render/pipeline/UiPipelineDescriptor {
 }
 
 public final class com/awakekt/awake/render/pipeline/UiPipelineVariant : java/lang/Enum {
+	public static final field DecoratedGlyph Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field Glyph Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field Quad Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field RoundedQuad Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
@@ -1624,16 +1672,22 @@ public final class com/awakekt/awake/render/pipeline/UiPipelineVariant : java/la
 }
 
 public final class com/awakekt/awake/render/pipeline/UiShaderSet {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
 	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component3 ()Ljava/lang/Object;
 	public final fun component4 ()Ljava/lang/Object;
 	public final fun component5 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public final fun component6 ()Ljava/lang/Object;
+	public final synthetic fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/UiShaderSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/UiShaderSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDecoratedGlyph ()Ljava/lang/Object;
 	public final fun getGlyph ()Ljava/lang/Object;
 	public final fun getQuad ()Ljava/lang/Object;
 	public final fun getRoundedQuad ()Ljava/lang/Object;

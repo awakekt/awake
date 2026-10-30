@@ -12,6 +12,5 @@
     <ID>LongParameterList:GlyphAtlasSource.kt$GlyphAtlasSource$( rows: IntArray, atlasX: Int, atlasY: Int, atlasInsetPx: Int, atlasCellSize: Int, atlasInnerSize: Int, supersampleGrid: Int, )</ID>
     <ID>LongParameterList:MsdfFont.kt$MsdfFont$(px: Float, py: Float, x0: Float, y0: Float, x1: Float, y1: Float)</ID>
     <ID>ReturnCount:GlyphAtlasSource.kt$GlyphAtlasSource$fun sampleCoverage( rows: IntArray, atlasX: Int, atlasY: Int, atlasInsetPx: Int, atlasCellSize: Int, atlasInnerSize: Int, supersampleGrid: Int, ): Float</ID>
-    <ID>ReturnCount:UiFont.kt$fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float</ID>
   </CurrentIssues>
 </SmellBaseline>

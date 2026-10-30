@@ -31,31 +31,50 @@ fun UiFont.ellipsize(
     weight: FontWeight = FontWeight.Normal,
     ellipsis: String = "\u2026",
     alwaysEllipsize: Boolean = false,
+): String = ellipsize(text, maxWidthPx, glyphPx, weight, ellipsis, alwaysEllipsize, kerning = true)
+
+/**
+ * [ellipsize], measuring with the font's pair kerning only when [kerning] is true, as a style that turns
+ * kerning off lays its text out.
+ */
+@Suppress("LongParameterList")
+fun UiFont.ellipsize(
+    text: String,
+    maxWidthPx: Float,
+    glyphPx: Float,
+    weight: FontWeight = FontWeight.Normal,
+    ellipsis: String = "\u2026",
+    alwaysEllipsize: Boolean = false,
+    kerning: Boolean,
 ): String {
-    if (!alwaysEllipsize && measureTextWidth(text, glyphPx, weight) <= maxWidthPx) return text
-    val ellipsisWidth = measureTextWidth(ellipsis, glyphPx, weight)
+    if (!alwaysEllipsize && measureTextWidth(text, glyphPx, weight, kerning) <= maxWidthPx) return text
+    val ellipsisWidth = measureTextWidth(ellipsis, glyphPx, weight, kerning)
     return if (ellipsisWidth > maxWidthPx) {
         ""
     } else {
-        text.substring(0, cutBefore(text, maxWidthPx, glyphPx, weight, ellipsis)).trimEnd() + ellipsis
+        text.substring(0, cutBefore(text, maxWidthPx, glyphPx, weight, ellipsis, kerning)).trimEnd() + ellipsis
     }
 }
 
 /** Where [UiFont.ellipsize] cuts [text]: the last cluster boundary whose start, with [ellipsis] after it, fits. */
+@Suppress("LongParameterList")
 private fun UiFont.cutBefore(
     text: String,
     maxWidthPx: Float,
     glyphPx: Float,
     weight: FontWeight,
     ellipsis: String,
+    kerning: Boolean,
 ): Int {
-    val ellipsisWidth = measureTextWidth(ellipsis, glyphPx, weight)
+    val ellipsisWidth = measureTextWidth(ellipsis, glyphPx, weight, kerning)
     var pen = 0f
     var fits = 0
     var start = 0
+    var previous = -1
     while (start < text.length) {
         val end = GraphemeClusters.nextBoundary(text, start)
-        pen += clusterAdvance(text, start, end, glyphPx, weight)
+        pen += kerningBefore(text, previous, start, glyphPx, weight) + clusterAdvance(text, start, end, glyphPx, weight)
+        if (kerning) previous = start
         if (pen + ellipsisWidth > maxWidthPx) break
         fits = end
         start = end
@@ -63,7 +82,7 @@ private fun UiFont.cutBefore(
     // Pen sums advances, which can be narrower than the trailing glyph's ink: shorten until the
     // measured result fits too.
     var cut = fits
-    while (cut > 0 && measureTextWidth(text.substring(0, cut).trimEnd() + ellipsis, glyphPx, weight) > maxWidthPx) {
+    while (cut > 0 && measureTextWidth(text.substring(0, cut).trimEnd() + ellipsis, glyphPx, weight, kerning) > maxWidthPx) {
         cut = GraphemeClusters.previousBoundary(text, cut)
     }
     return cut

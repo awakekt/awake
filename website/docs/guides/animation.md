@@ -130,9 +130,11 @@ the glTF file names.
     The skinned shaders hold at most 64 joint matrices (`MAX_JOINTS`). A skin with more joints does
     not fit.
 
-!!! warning "A skinned entity has no `PbrMaterial`"
-    `SkinnedPose` and `PbrMaterial` share one per-draw uniform slot. An entity carries one or the
-    other.
+!!! tip "`PbrMaterial` on a skinned entity"
+    A single-draw skinned entity (`Skinned`, `SkinnedTextured`) reads `baseColorFactor`,
+    `emissiveFactor`, `alphaMode`, `alphaCutoff` and `unlit` from its `PbrMaterial` alongside its
+    `SkinnedPose`. When lit, the skinned shaders (`Skinned`, `SkinnedTextured`, `SkinnedInstanced`)
+    follow the directional light's `ambient` when set and fall back to `0.35` when unset.
 
 !!! tip "Add `awake:core:animation` to build players"
     `AnimationPlayer`, `AnimationLibrary` and `Skin` live in `awake:core:animation`, which the scene

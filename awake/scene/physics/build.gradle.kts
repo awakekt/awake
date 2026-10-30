@@ -10,6 +10,7 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.scene-components")
 }
 
 kotlin {
@@ -61,6 +62,10 @@ kotlin {
             }
         }
     }
+}
+
+awakeSceneComponents {
+    registry.set("com.awakekt.awake.scene.physics.PhysicsSceneComponents")
 }
 
 mavenPublishing {

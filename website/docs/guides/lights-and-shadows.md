@@ -126,6 +126,82 @@ Raise the sun's `ambient` to lift those areas.
     `ambientLight()`, and Studio's **Ambient Light** slider edits it. It loads and saves, but no
     render system reads it. Use the sun's `ambient` field to change the ambient level.
 
+## Add post-processing
+
+A camera's `post_processing` component runs an ordered list of effects over what the camera drew,
+before the UI is drawn on top. The colour it reads is already display-ready: every lit shader
+applies the exposure, the PBR Neutral curve and the gamma encode itself. So the stack has no
+tone-mapping step of its own, and each effect works on that colour as it is.
+
+=== "Scene document"
+
+    ```json title="post-processing.scene.json"
+    --8<-- "website/docs/snippets/rendering/post-processing.scene.json"
+    ```
+
+=== "Scene DSL"
+
+    ```kotlin title="Kotlin"
+    --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/LightingDocsSampleTest.kt:post-processing-dsl"
+    ```
+
+=== "Studio"
+
+    Studio has no field for post-processing. Set it in the scene document.
+
+Which combinations a scene camera accepts:
+
+| Effects | What runs |
+| --- | --- |
+| `fxaa` alone | A copy of the frame, then FXAA. Only edges change; away from them colours match the frame without the stack within 1/255. |
+| `tone_mapping_grade` with `"mode": "Passthrough"` | Grading only: exposure, white balance, lift, gamma, gain, contrast and saturation, with no curve and no encode. At its defaults it changes nothing. |
+| `bloom` | Bright pass and blur, then the glow added to the frame in a passthrough step. The frame's colour is at most 1, so lower `threshold` below its default of 1. |
+| Any of these, then `fxaa` | FXAA reads the result of the step before it. |
+| `tone_mapping_grade` with `"mode": "PbrNeutral"`, the default | Refused when the scene loads: it would apply the curve and the encode a second time and wash out the whole frame. Use the `tone_mapping` component's `exposure` for brightness. |
+| Two enabled `tone_mapping_grade` effects | Refused when the scene loads. |
+
+`PbrNeutral` exists for colour that has not been tone mapped yet: a chain built in code with
+`PostProcessingStack.buildChain` over a target whose `ImagePassTargetContext.colorEncoding` is
+`LinearHdr`. Such a target gets a `PbrNeutral` step even when the list names none, so FXAA reads
+display colour. No built-in scene path renders linear colour yet. A chain built in code over a
+`DisplayReferred` target, the default, follows the rules in the table, though nothing refuses a
+`PbrNeutral` effect listed there.
+
+## Scene multisampling
+
+The host can request MSAA for its render plan. The default is one sample, preserving existing
+scenes. This setting applies to every main scene pass and offscreen scene target created by that
+engine; it is not a scene-document camera property.
+
+```kotlin
+import com.awakekt.awake.render.pipeline.MultisampleState
+
+val plan = gameRenderPlan.copy(
+    multisample = MultisampleState(count = 4, alphaToCoverageEnabled = true),
+)
+```
+
+Pass `plan` to `VulkanEngine` or `WebGpuEngine`. Vulkan chooses the greatest supported count at or
+below the request from 1, 2, 4 and 8, intersecting its colour and depth framebuffer capabilities.
+Standard WebGPU supports 1 and 4: a request for 2 falls back to 1, and 8 falls back to 4. A downgrade
+logs the requested and selected counts. Falling back to 1 also disables alpha to coverage.
+
+The main colour and depth attachments use the chosen count. Colour resolves before the camera's
+post-processing chain. FXAA remains opt-in; adding an `fxaa` effect explicitly filters the resolved
+colour. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
+resolve and post-processing.
+
+With alpha to coverage enabled, built-in textured and skinned `AlphaMode.Mask` materials convert
+the filtered alpha edge around their cutoff into sample coverage. Opaque materials retain full
+coverage, and alpha-blended and additive materials retain blending. Custom content shaders keep
+alpha to coverage off unless their pipeline specification opts in and supplies suitable output
+alpha. Shadow, camera-depth and mask prepasses remain single-sample with the authored hard cutoff.
+Depth-reading effects continue to read those independent prepasses; no multisampled depth resolve
+or depth readback is provided. TAA is outside this setting.
+
+See [MSAA verification](https://github.com/awakekt/awake/blob/main/docs/reference/msaa-verification.md) for GPU measurements, image probes and
+the limits of the desktop backend coverage.
+
 ## Properties
 
 `light`:
@@ -162,6 +238,9 @@ parameter. Attach a `Light` with `with(Light(...))` to set them, as the ambient 
 | --- | --- | --- | --- |
 | `exposure` | number | `1` | Multiplies the lit scene before tone mapping. Finite and above 0. |
 
+`post_processing` and each effect's fields are listed in the
+[scene document components reference](../reference/scene-document-components.md#post_processing).
+
 ## How it works
 
 The renderer uses the first directional light it finds. With none, it falls back to a fixed default
@@ -177,6 +256,11 @@ casts shadows into six cube faces, one per direction.
 !!! tip "Choosing a shadow distance"
     Keep it as short as your camera needs. Shadow detail near the camera grows as the distance
     shrinks, because the same shadow map covers less of the world.
+
+!!! tip "Keep a mesh out of the shadow maps"
+    Set `castsShadows` to `false` on a `mesh_renderer` (or on an `LodGroup` or
+    `ModularCharacterComponent` in Kotlin) for a decal, a ground card or distant filler. The mesh
+    still draws and still receives shadows; it just shades nothing, in view or off screen.
 
 !!! warning "A far caster casts no shadow"
     A caster more than `shadowDistance` from the camera casts nothing, even onto a mesh right under

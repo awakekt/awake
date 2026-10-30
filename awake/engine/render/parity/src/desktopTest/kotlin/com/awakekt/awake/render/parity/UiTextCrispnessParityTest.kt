@@ -128,7 +128,27 @@ class UiTextCrispnessParityTest {
         assertTrue(solidPixels(image) >= 150, "11px text has ${solidPixels(image)} solid pixels")
     }
 
+    /**
+     * Small text draws exact-size coverage glyphs on both backends: the stem of an 11, 12 or 14 px 'l' is
+     * one solid column with at most one faint column beside it, where the distance field drew two grey ones.
+     */
+    @Test
+    fun aOnePixelStemIsOneSolidColumnOnBothBackends() {
+        for (backend in backends) {
+            for (size in listOf(11f, 12f, 14f)) {
+                val image = render(backend, 1f) { Text("l", style = TextStyle(color = white, size = size.sp)) }
+                val inked = image.indices.filter { y -> image[y].any { it > FAINT } }
+                val middle = inked[inked.size / 4]..inked[inked.size * 3 / 4]
+                val columns = (0 until WIDTH).map { x -> middle.minOf { y -> image[y][x] } }.filter { it > FAINT }
+
+                assertEquals(1, columns.count { it >= STEM_SOLID }, "$backend at $size px: stem columns $columns")
+                assertTrue(columns.size <= 2, "$backend at $size px: stem columns $columns")
+            }
+        }
+    }
+
     private companion object {
+        const val STEM_SOLID = 245
         const val WIDTH = 160
         const val HEIGHT = 48
         const val FAINT = 30

@@ -51,8 +51,16 @@ public final class com/awakekt/awake/scene/controls/CameraInputProcessor {
 	public final fun reset ()V
 }
 
+public final class com/awakekt/awake/scene/controls/ControlsSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/ControlsSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/controls/GameplayInput : com/awakekt/awake/core/input/ActionInputSource {
 	public fun <init> (Lcom/awakekt/awake/core/input/InputSnapshot;Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
+	public fun <init> (Lcom/awakekt/awake/core/input/InputSnapshot;Lcom/awakekt/awake/compose/ui/platform/InputOwnership;Lcom/awakekt/awake/core/input/HostInputState;)V
+	public final fun getHostState ()Lcom/awakekt/awake/core/input/HostInputState;
 	public final fun getKeysOwnedByUi ()Z
 	public fun getKeysWithheldFromActions ()Z
 	public final fun getPinch ()Lcom/awakekt/awake/core/input/PinchGesture;
@@ -539,6 +547,8 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControlBind
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;)Lcom/awakekt/awake/scene/controls/movement/MovementControl;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/controls/movement/MovementControl;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
 }
 
 public final class com/awakekt/awake/scene/controls/movement/MovementControlBindingKt {

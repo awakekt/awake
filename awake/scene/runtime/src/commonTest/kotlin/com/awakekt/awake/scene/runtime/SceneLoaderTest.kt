@@ -13,6 +13,8 @@ import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.canvasElementView
+import com.awakekt.awake.scene.canvas.toCanvasComponents
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -109,9 +111,10 @@ class SceneLoaderTest {
                 SceneNode(
                     name = "parent",
                     transform = SceneTransform(position = SceneVec3(1f, 2f, 3f)),
+                    // Scene core's components come before the 3D module's, as DefaultSceneComponentResolvers.modules lists them.
                     components = listOf(
-                        ScenePbrMaterial(metallic = 0.25f, roughness = 0.4f),
                         SceneSpinControl(radians = 1.5f, speed = 2f),
+                        ScenePbrMaterial(metallic = 0.25f, roughness = 0.4f),
                     ),
                     children = listOf(
                         SceneNode(
@@ -265,7 +268,7 @@ class SceneLoaderTest {
         assertEquals(document, SceneLoader.decode(SceneLoader.encode(document)))
     }
 
-    /** A canvas element loads into the world as a CanvasElement and exports back unchanged. */
+    /** A canvas element saved in the older form loads into the world as a CanvasElement and exports back as its components. */
     @Test
     fun aCanvasElementRoundTripsThroughTheWorld() {
         val authored = SceneCanvasElement(kind = CanvasElementKind.Text, anchor = CanvasAnchor.TopRight, text = "Score 0")
@@ -276,7 +279,9 @@ class SceneLoaderTest {
 
         val loaded = mutableListOf<CanvasElement>().also { list -> world.family<CanvasElement>().forEach { _, e -> list += e } }
         assertEquals("Score 0", loaded.single().text)
-        assertEquals(authored, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<SceneCanvasElement>().single())
+        val exported = SceneLoader.fromWorld(world, name = "x").nodes.single()
+        assertEquals(authored.toCanvasComponents(), exported.components)
+        assertEquals(authored, exported.canvasElementView())
     }
 
     /** A texture animation survives the file as its own component, reaches the world, and exports back unchanged. */
@@ -327,7 +332,24 @@ class SceneLoaderTest {
             """{"version": 1, "name": "older", "nodes": [{"name": "glow", "components": [{"component": "pbr_material", "roughness": 0.4}]}]}""",
         )
 
-        assertFalse(document.nodes.single().components.filterIsInstance<ScenePbrMaterial>().single().litWhenAdditive)
+        val decoded = document.nodes.single().components.filterIsInstance<ScenePbrMaterial>().single()
+        assertFalse(decoded.litWhenAdditive)
+        assertFalse(decoded.unlit)
+    }
+
+    @Test
+    fun unlitRoundTripsThroughTheFileAndTheWorld() {
+        val material = ScenePbrMaterial(baseColorFactor = SceneColor(0.9f, 0.8f, 0.7f, 1f), unlit = true)
+        val document = SceneDocument(nodes = listOf(SceneNode(name = "portrait", components = listOf(material))))
+        val world = World()
+
+        val file = SceneLoader.encode(document)
+        assertTrue(Regex(""""unlit"\s*:\s*true""").containsMatchIn(file), file)
+        SceneLoader.decode(file).instantiate(world = world)
+
+        val loaded = mutableListOf<PbrMaterial>().also { list -> world.family<PbrMaterial>().forEach { _, m -> list += m } }
+        assertTrue(loaded.single().unlit)
+        assertEquals(material, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<ScenePbrMaterial>().single())
     }
 
     /** A sheet's clips survive the file, load showing the first cell of the clip that plays, and export with the clip playing now. */

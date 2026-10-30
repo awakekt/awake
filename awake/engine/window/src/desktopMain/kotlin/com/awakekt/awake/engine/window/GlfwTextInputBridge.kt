@@ -9,17 +9,16 @@ import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.TextEditAction
 
-private const val GLFW_KEY_LEFT_SHIFT = 340
-private const val GLFW_KEY_RIGHT_SHIFT = 344
 private const val GLFW_KEY_LEFT_CONTROL = 341
 private const val GLFW_KEY_RIGHT_CONTROL = 345
 private const val GLFW_KEY_LEFT_SUPER = 343
 private const val GLFW_KEY_RIGHT_SUPER = 347
+private const val GLFW_KEY_LEFT_ALT = 342
+private const val GLFW_KEY_RIGHT_ALT = 346
 private const val GLFW_KEY_A = 65
 private const val GLFW_KEY_C = 67
 private const val GLFW_KEY_V = 86
 private const val GLFW_KEY_X = 88
-private const val GLFW_KEY_SPACE = 32
 private const val GLFW_KEY_ENTER = 257
 private const val GLFW_KEY_RIGHT = 262
 private const val GLFW_KEY_LEFT = 263
@@ -33,23 +32,8 @@ private const val GLFW_KEY_DELETE = 261
 private const val REPEAT_INITIAL_DELAY_SECONDS = 0.5
 private const val REPEAT_INTERVAL_SECONDS = 0.05
 
-/** GLFW key codes -> printable character (unshifted). Shift flips letters to uppercase; the
- * rest of this v1 punctuation set intentionally ignores shift (see task doc, full shift-symbol
- * mapping is a follow-up). */
-private val PrintableKeys: Map<Int, Char> = buildMap {
-    for (code in 65..90) put(code, ('a' + (code - 65))) // A-Z -> lowercase unless shifted
-    for (code in 48..57) put(code, ('0' + (code - 48))) // 0-9
-    put(GLFW_KEY_SPACE, ' ')
-    put(44, ',')
-    put(45, '-')
-    put(46, '.')
-    put(47, '/')
-    put(59, ';')
-    put(61, '=')
-    put(91, '[')
-    put(93, ']')
-    put(39, '\'')
-}
+/** The keys of the clipboard and select-all shortcuts: Ctrl (Cmd on macOS) with A, C, V or X. */
+private val ShortcutKeys = intArrayOf(GLFW_KEY_A, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_X)
 
 private val EditKeys: Map<Int, TextEditAction> = mapOf(
     GLFW_KEY_BACKSPACE to TextEditAction.Backspace,
@@ -80,12 +64,13 @@ internal fun resetGlfwTextInputRepeatStateForTest() {
 }
 
 /**
- * Polls a GLFW window's keyboard state each frame and feeds Awake's shared text-input API
- * ([Input.pushTypedText]/[Input.pushEditAction]) -- separate from [pollGlfwInput], which only
- * drives the small gameplay [com.awakekt.awake.core.input.Key] set.
+ * Feeds a GLFW window's typing to Awake's shared text-input API ([Input.pushTypedText] and
+ * [Input.pushEditAction]) each frame -- separate from [pollGlfwInput], which drives the gameplay
+ * [com.awakekt.awake.core.input.Key] set.
  *
- * Pure polling (matches [pollGlfwInput]'s style, no GLFW char/key callbacks): tracks rising
- * edges plus a simple hold-to-repeat cadence per key.
+ * Text is what the platform typed, from GLFW's character callback: the keyboard layout, Shift,
+ * Caps Lock, AltGr and dead keys are already applied, so any layout types the characters on its
+ * keys. Edit keys and the clipboard shortcuts are polled, with a hold-to-repeat cadence per key.
  */
 fun pollGlfwTextInput(window: Long, input: Input, deltaSeconds: Double = 1.0 / 60.0): Unit =
     pollGlfwTextInput(glfwWindowInput(window), input, deltaSeconds)
@@ -94,12 +79,12 @@ fun pollGlfwTextInput(window: Long, input: Input, deltaSeconds: Double = 1.0 / 6
 private val ShortcutUsesSuper: Boolean = System.getProperty("os.name").orEmpty().startsWith("Mac")
 
 /** Testable core: takes the [GlfwWindowInput] seam instead of a raw window handle, so a
- * desktopTest can fake key-hold state across frames and assert the resulting
- * [Input.pushTypedText]/[Input.pushEditAction] calls, including shift and hold-to-repeat.
+ * desktopTest can fake typed text and key-hold state across frames and assert the resulting
+ * [Input.pushTypedText]/[Input.pushEditAction] calls, including hold-to-repeat.
  *
  * Also the clipboard: Ctrl+C/X/V/A (Cmd on macOS) become copy and cut requests, the clipboard's
  * text typed in, and select-all, and the UI's answer to last frame's copy or cut is written out.
- * A letter pressed with Ctrl or Cmd held is a shortcut, never typed text. */
+ * Ctrl with Alt is AltGr on Windows, which types a character rather than taking a shortcut. */
 internal fun pollGlfwTextInput(
     reader: GlfwWindowInput,
     input: Input,
@@ -108,26 +93,43 @@ internal fun pollGlfwTextInput(
 ) {
     input.takeClipboardWrite()?.let { reader.clipboardText = it }
 
-    val shiftDown = reader.isKeyDown(GLFW_KEY_LEFT_SHIFT) || reader.isKeyDown(GLFW_KEY_RIGHT_SHIFT)
-    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
-    val superDown = reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
-    val shortcutDown = if (shortcutUsesSuper) superDown else ctrlDown
+    reader.consumeTypedText().takeIf { it.isNotEmpty() }?.let(input::pushTypedText)
 
-    PrintableKeys.forEach { (glfwKey, char) ->
-        pollKey(reader, glfwKey, deltaSeconds) {
-            when {
-                shortcutDown -> fireShortcut(glfwKey, reader, input)
-                // Ctrl or Cmd with a letter belongs to the app's own shortcuts, not the text.
-                ctrlDown || superDown -> Unit
-                else -> {
-                    val shifted = if (shiftDown && char.isLetter()) char.uppercaseChar() else char
-                    input.pushTypedText(shifted.toString())
-                }
-            }
-        }
+    val shortcutDown = isShortcutModifierDown(reader, shortcutUsesSuper)
+    val wordJumpDown = isWordJumpModifierDown(reader, shortcutUsesSuper)
+
+    for (glfwKey in ShortcutKeys) {
+        pollKey(reader, glfwKey, deltaSeconds) { if (shortcutDown) fireShortcut(glfwKey, reader, input) }
     }
     EditKeys.forEach { (glfwKey, action) ->
-        pollKey(reader, glfwKey, deltaSeconds) { input.pushEditAction(action) }
+        pollKey(reader, glfwKey, deltaSeconds) {
+            input.pushEditAction(resolveEditAction(glfwKey, action, wordJumpDown))
+        }
+    }
+}
+
+private fun isShortcutModifierDown(reader: GlfwWindowInput, shortcutUsesSuper: Boolean): Boolean {
+    if (shortcutUsesSuper) {
+        return reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
+    }
+    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
+    val altDown = reader.isKeyDown(GLFW_KEY_LEFT_ALT) || reader.isKeyDown(GLFW_KEY_RIGHT_ALT)
+    return ctrlDown && !altDown
+}
+
+private fun isWordJumpModifierDown(reader: GlfwWindowInput, shortcutUsesSuper: Boolean): Boolean {
+    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
+    val altDown = reader.isKeyDown(GLFW_KEY_LEFT_ALT) || reader.isKeyDown(GLFW_KEY_RIGHT_ALT)
+    val superDown = reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
+    return if (shortcutUsesSuper) altDown && !ctrlDown && !superDown else ctrlDown && !altDown && !superDown
+}
+
+private fun resolveEditAction(glfwKey: Int, defaultAction: TextEditAction, wordJumpDown: Boolean): TextEditAction {
+    if (!wordJumpDown) return defaultAction
+    return when (glfwKey) {
+        GLFW_KEY_LEFT -> TextEditAction.WordLeft
+        GLFW_KEY_RIGHT -> TextEditAction.WordRight
+        else -> defaultAction
     }
 }
 

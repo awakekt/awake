@@ -129,6 +129,17 @@ interface TransportSession {
     val principal: String? get() = null
 
     /**
+     * Why this session ended, or `null` while it is open or when the implementation does not
+     * report one. Set before [incoming] closes, so a host that sees the channel close can read the
+     * cause straight away. The first cause wins and the value never changes afterwards.
+     *
+     * The transport only reports the cause: whether to retry, tell the peer or log it is the
+     * consuming project's policy. Defaults to `null`, so existing implementations keep compiling
+     * unchanged.
+     */
+    val closeReason: SessionCloseReason? get() = null
+
+    /**
      * Sends a packet to this session through the specified delivery channel.
      *
      * @param channel Delivery reliability guarantee requested for this packet.
@@ -146,3 +157,35 @@ interface TransportSession {
     /** Closes this session and terminates the client connection. */
     suspend fun close()
 }
+
+/** Why a [TransportSession] ended, as reported through [TransportSession.closeReason]. */
+enum class SessionCloseReason {
+    /**
+     * The peer closed the connection, or it ended without the host closing it and without an
+     * outbound overflow: a close frame, a dropped socket, a failed write or a keep-alive timeout.
+     */
+    PeerClosed,
+
+    /** The outbound queue was full, so the slow peer was dropped rather than buffered without bound. */
+    OutboundOverflow,
+
+    /** The host or server closed the session, for example through [TransportSession.close] or a server stop. */
+    ServerClosed,
+}
+
+/** Optional telemetry for a session whose receive queue can discard packets. */
+interface InboundDropMetrics {
+    /**
+     * Cumulative packets discarded by the inbound queue, including overflow and cancelled
+     * receive handoffs. This is actual loss, not queue occupancy or proof of an abusive peer.
+     * Reading does not reset it; the count remains available after close.
+     */
+    val droppedInbound: Long
+}
+
+/**
+ * Actual inbound queue discards, or null when this transport does not report them.
+ * An optional capability keeps existing [TransportSession] implementations binary-compatible.
+ */
+val TransportSession.droppedInbound: Long?
+    get() = (this as? InboundDropMetrics)?.droppedInbound

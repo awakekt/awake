@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls.movement
 
 import com.awakekt.awake.ecs.Poolable
+import com.awakekt.awake.scene.binding.RuntimeOnly
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlinx.serialization.Serializable
 import kotlin.math.PI
@@ -13,7 +14,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sign
 
-private const val TWO_PI = (2 * PI).toFloat()
+private const val TWO_PI = 2 * PI
 
 /** What sets a [MovementControl]'s intent, and so which way its axes point. */
 @Serializable
@@ -36,12 +37,15 @@ class MovementControl : Poolable {
     var driver: MovementDriver = MovementDriver.Player
 
     /** Lateral movement intent: the camera's right for a player, world X for an agent. */
+    @RuntimeOnly
     var moveX: Float = 0f
 
     /** Vertical movement intent along the Y axis. */
+    @RuntimeOnly
     var moveY: Float = 0f
 
     /** Longitudinal movement intent: the camera's forward for a player, world Z for an agent. */
+    @RuntimeOnly
     var moveZ: Float = 0f
 
     /** Units per second for this entity. Null uses the movement system's speed. */
@@ -52,12 +56,15 @@ class MovementControl : Poolable {
      * an AI behaviour moving at its own speed. While set it replaces [speed] and [runSpeed], which
      * stay as authored. Null leaves them in charge.
      */
+    @RuntimeOnly
     var moveSpeed: Float? = null
 
     /** Whether a jump is wanted this frame. A character controller decides whether it can jump. */
+    @RuntimeOnly
     var jump: Boolean = false
 
     /** Whether the player asks to run this frame, as the `run` input action says; [runSpeed] then replaces [speed]. */
+    @RuntimeOnly
     var run: Boolean = false
 
     /** Units per second while [run] is held. Null keeps [speed]. */
@@ -98,6 +105,8 @@ class MovementControl : Poolable {
     /**
      * Turns [transform] toward world direction ([worldX], [worldZ]) by at most [turnSpeed] times
      * [delta] radians, the short way round. A model faces +Z at yaw 0, glTF's forward.
+     * Non-finite inputs and non-positive time/speed leave the rotation unchanged. Finite yaw
+     * is reduced modulo a full turn before stepping, even when its magnitude is very large.
      *
      * @param transform Transform component whose yaw orientation is updated.
      * @param worldX Target direction X component in world space.
@@ -105,12 +114,20 @@ class MovementControl : Poolable {
      * @param delta Frame time delta in seconds.
      */
     fun turnToward(transform: Transform, worldX: Float, worldZ: Float, delta: Float) {
-        if (turnSpeed <= 0f || (worldX == 0f && worldZ == 0f)) return
+        val yaw = transform.rotation.y
+        if (!yaw.isFinite() || !worldX.isFinite() || !worldZ.isFinite()) return
+        val validSpeed = turnSpeed.isFinite() && turnSpeed > 0f
+        val validTime = delta.isFinite() && delta > 0f
+        val noDirection = worldX == 0f && worldZ == 0f
+        if (!validSpeed || !validTime || noDirection) return
         val target = atan2(worldX, worldZ)
-        var difference = target - transform.rotation.y
-        while (difference > PI) difference -= TWO_PI
-        while (difference < -PI) difference += TWO_PI
-        val step = turnSpeed * delta
-        transform.rotation.y = if (abs(difference) <= step) target else transform.rotation.y + sign(difference) * step
+        // Repeated subtraction can never reduce Infinity, or even a large finite Float whose
+        // spacing exceeds 2*pi. Remainder is bounded; Double also keeps speed*time from overflowing.
+        val current = yaw.toDouble() % TWO_PI
+        var difference = (target.toDouble() - current) % TWO_PI
+        if (difference > PI) difference -= TWO_PI
+        if (difference < -PI) difference += TWO_PI
+        val step = turnSpeed.toDouble() * delta
+        transform.rotation.y = if (abs(difference) <= step) target else (current + sign(difference) * step).toFloat()
     }
 }

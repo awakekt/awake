@@ -17,6 +17,7 @@ import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.SphereShape
 import com.awakekt.awake.physics.defaultLayerFor
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -137,6 +138,7 @@ data class ScenePhysicsBody(
  * [MeshColliderSystem] turns into the body and saves as its model reference. A body whose shape a
  * scene can't describe, such as a terrain heightfield, is left out when saving.
  */
+@RegisteredBinding
 object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody> {
     override val componentClass: KClass<PhysicsBody> = PhysicsBody::class
     override val schemaClass: KClass<ScenePhysicsBody> = ScenePhysicsBody::class
@@ -212,7 +214,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
 }
 
 /** Registers `physics_body` for loading and saving. */
-fun SceneComponentRegistry.registerPhysics(): SceneComponentRegistry = register(PhysicsBodyBinding)
+fun SceneComponentRegistry.registerPhysics(): SceneComponentRegistry = register(PhysicsSceneComponents)
 
 private fun SceneCollisionShape.toPhysicsShape(): PhysicsShape = when (this) {
     is SceneBoxShape -> BoxShape(Vec3f(halfExtents.x, halfExtents.y, halfExtents.z))

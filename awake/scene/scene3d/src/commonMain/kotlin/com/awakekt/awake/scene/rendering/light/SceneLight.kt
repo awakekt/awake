@@ -5,12 +5,16 @@
  */
 package com.awakekt.awake.scene.rendering.light
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
+import com.awakekt.awake.scene.binding.SceneBinding
+import com.awakekt.awake.scene.binding.SceneValueConverter
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
+import com.awakekt.awake.scene.rendering.SceneVec3Converter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -27,6 +31,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("light")
+@SceneBinding(Light::class, converters = [SceneLightColorConverter::class, SceneVec3Converter::class])
 data class SceneLight(
     val color: SceneColor = SceneColor.White,
     val intensity: Float = 1f,
@@ -57,4 +62,11 @@ data class SceneLight(
         /** Omnidirectional point light source. */
         Point,
     }
+}
+
+/** A light's saved [SceneColor] as its live RGB [Vec3f]: the saved alpha is ignored, and written back as 1. */
+internal object SceneLightColorConverter : SceneValueConverter<SceneColor, Vec3f> {
+    override fun toLive(saved: SceneColor): Vec3f = Vec3f(saved.r, saved.g, saved.b)
+
+    override fun toSaved(live: Vec3f): SceneColor = SceneColor(live.x, live.y, live.z, 1f)
 }

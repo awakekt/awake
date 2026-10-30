@@ -21,7 +21,18 @@ interface DrawMeshUploader<M> {
 
     /** Builds or updates a backend mesh for text glyph primitives in [runIndex]. */
     fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M
+
+    /**
+     * Builds or updates a backend mesh for decorated glyph primitives in [runIndex], counted apart from [glyphMesh]'s,
+     * in [DrawPipelineKind.DecoratedGlyph]'s layout. The default shares [glyphMesh]'s meshes, past every index it
+     * uses this frame, for an uploader whose meshes take any layout.
+     */
+    fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M =
+        glyphMesh(DECORATED_RUN_INDEX_BASE + runIndex, vertices, indices)
 }
+
+/** Where [DrawMeshUploader.decoratedGlyphMesh]'s default starts counting, past any frame's plain glyph runs. */
+private const val DECORATED_RUN_INDEX_BASE = 1 shl 20
 
 typealias UiMeshUploader<M> = DrawMeshUploader<M>
 
@@ -44,6 +55,7 @@ fun <M> uploadDrawRuns(
     var quadRunCount = 0
     var roundedQuadRunCount = 0
     var glyphRunCount = 0
+    var decoratedGlyphRunCount = 0
     var index = 0
     while (index < staged.size) {
         when (val run = staged[index]) {
@@ -63,7 +75,10 @@ fun <M> uploadDrawRuns(
 
             is StagedDrawRun.GlyphRun -> {
                 val font = run.font ?: defaultFont
-                if (font != null) {
+                if (font != null && run.decorated) {
+                    val mesh = uploader.decoratedGlyphMesh(decoratedGlyphRunCount++, run.vertices, run.indices)
+                    runs += DrawRun.GlyphRun(mesh, font, decorated = true)
+                } else if (font != null) {
                     runs += DrawRun.GlyphRun(uploader.glyphMesh(glyphRunCount++, run.vertices, run.indices), font)
                 }
             }

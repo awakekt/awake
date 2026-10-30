@@ -10,27 +10,36 @@ import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextOutline
 import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+/** A style's outline and shadow (#630), drawn with each glyph in one draw from the font's effect field (#1061). */
 class TextDecorationsTest {
     private fun glyphs(style: TextStyle): List<UiDrawPrimitive.Glyph> =
         composeFrame(200, 60) { Text("Hi", style = style) }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
 
     @Test
-    fun aShadowIsTheTextAgainUnderItMovedByItsOffset() {
+    fun aShadowIsDrawnWithEachGlyphMovedByItsOffset() {
         val plain = glyphs(TextStyle(color = Color.White))
-        val shadowed = glyphs(TextStyle(color = Color.White, shadow = TextShadow(Color.Black, 2f, 3f)))
+        val shadowed = glyphs(TextStyle(color = Color.White, shadow = TextShadow(Color.Black, 2f, 3f, blur = 1.5f)))
 
-        assertEquals(plain.size * 2, shadowed.size)
-        val (under, over) = shadowed.chunked(plain.size)
-        assertEquals(plain, over, "the text itself is drawn last, unchanged")
-        assertTrue(under.all { it.color == Color.Black })
-        assertEquals(plain.map { it.x + 2f to it.y + 3f }, under.map { it.x to it.y })
+        assertEquals(plain.size, shadowed.size, "one draw a glyph, its shadow included")
+        assertTrue(shadowed.all { it.color == Color.White })
+        for (glyph in shadowed) {
+            val decoration = assertNotNull(glyph.decoration)
+            assertEquals(Color.Black, decoration.shadowColor)
+            assertEquals(2f to 3f, decoration.shadowOffsetX to decoration.shadowOffsetY)
+            assertEquals(1.5f, decoration.shadowBlur)
+            assertTrue(decoration.outlineColor.isTransparent(), "no outline asked for")
+        }
     }
 
     @Test
@@ -42,22 +51,44 @@ class TextDecorationsTest {
         val plain = fieldGlyphs(TextStyle(color = Color.White))
         val decorated = fieldGlyphs(TextStyle(color = Color.White, shadow = TextShadow(Color.Black), outline = TextOutline(Color.Black)))
 
-        assertEquals(plain.size * 10, decorated.size, "a shadow, eight outline copies, then the text")
+        assertEquals(plain.size, decorated.size, "one draw a glyph, outline and shadow included")
+        assertTrue(decorated.all { it.decoration != null })
     }
 
+    /** The glyph's effect tile reaches past its quad on every side, by more than the outline, so the ring fits. */
     @Test
-    fun anOutlineSurroundsEveryGlyphUnderTheText() {
-        val plain = glyphs(TextStyle(color = Color.White))
+    fun anOutlineSurroundsEveryGlyphInItsOwnDraw() {
         val outlined = glyphs(TextStyle(color = Color.White, outline = TextOutline(Color.Black, 2f)))
+        assertEquals(2, outlined.size)
+        for (glyph in outlined) {
+            val decoration = assertNotNull(glyph.decoration)
+            assertEquals(Color.Black, decoration.outlineColor)
+            assertEquals(2f, decoration.outlineWidth)
+            assertTrue(decoration.fieldOffsetX < -2f && decoration.fieldOffsetY < -2f, "$decoration around $glyph")
+            assertTrue(decoration.fieldOffsetX + decoration.fieldW > glyph.w + 2f, "$decoration around $glyph")
+            assertTrue(decoration.fieldOffsetY + decoration.fieldH > glyph.h + 2f, "$decoration around $glyph")
+        }
+    }
 
-        assertEquals(plain.size * 9, outlined.size, "eight copies around, then the text")
-        assertEquals(plain, outlined.takeLast(plain.size))
-        val first = plain.first()
-        val ring = outlined.dropLast(plain.size).filterIndexed { i, _ -> i % plain.size == 0 }
-        assertTrue(ring.all { it.color == Color.Black })
-        assertEquals(2f, ring.maxOf { it.x } - first.x, 1e-4f, "two dp to the right")
-        assertEquals(2f, first.x - ring.minOf { it.x }, 1e-4f, "and two to the left")
-        assertEquals(2f, ring.maxOf { it.y } - first.y, 1e-4f, "below")
-        assertEquals(2f, first.y - ring.minOf { it.y }, 1e-4f, "and above")
+    /** Below the pixel-glyph limit too: decorated text draws from the distance field, so its weight never jumps there. */
+    @Test
+    fun smallDecoratedTextDrawsFromTheDistanceFieldOnBothSidesOfThePixelGlyphLimit() {
+        for (size in listOf(12f, 24f, 25f, 48f)) {
+            val outlined = glyphs(TextStyle(color = Color.White, size = size.sp, outline = TextOutline(Color.Black, 1f)))
+            assertTrue(outlined.isNotEmpty() && outlined.all { it.decoration != null }, "at $size px: $outlined")
+        }
+    }
+
+    /** A font with no effect field, such as the bitmap font, stamps its decorated text as before: ten draws a glyph. */
+    @Test
+    fun aFontWithoutAnEffectFieldStampsTheDecoration() {
+        val font = UiFonts.bitmap()
+        val plain = glyphs(TextStyle(color = Color.White, font = font))
+        val decorated = glyphs(TextStyle(color = Color.White, font = font, shadow = TextShadow(Color.Black), outline = TextOutline(Color.Black)))
+
+        assertEquals(plain.size * 10, decorated.size, "a shadow, eight outline copies, then the text")
+        assertEquals(plain, decorated.takeLast(plain.size))
+        assertTrue(decorated.all { it.decoration == null })
+        assertNull(font.effectGlyphFor('H'.code))
     }
 }

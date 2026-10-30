@@ -37,10 +37,11 @@ private fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle
     element.buttonPress.tick(settings)
     element.buttonPress.runCooldown(element, settings)
     val density = LocalDensity.current
+    val units = LocalCanvasDensity.current.takeIf { it > 0f } ?: density
     val skin = tree.skinOf(element)?.button
     val state = element.controlState()
     val words = skin?.label?.let { label -> labelStyle(element, label, state, tree, textStyle) } ?: textStyle
-    Box(styled.buttonInput(element, density, tree.touchMarginPx(element, density)), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
+    Box(styled.buttonInput(element, density, tree.touchMarginPx(element, density), units), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
         skin?.background?.let { Slot(element, CanvasSlots.BUTTON_BACKGROUND, it, state, Modifier.fillMaxSize(), tree.images) }
         skin?.icon?.let { icon ->
             val size = icon.size ?: (minOf(element.width, element.height) * ICON_SHARE)
@@ -111,13 +112,13 @@ private fun PlainButtonView(element: CanvasElement, styled: Modifier, textStyle:
 }
 
 /**
- * Reads a Button's bound cooldown, charges and enabled into it, before it is styled: whether it is
- * disabled. Any other kind is never disabled.
+ * Reads a button's bound cooldown, charges and enabled into its [CanvasButtonWidget], before it is
+ * styled: whether it is disabled. An element with no button widget is never disabled.
  */
 internal fun CanvasElement.readButtonState(tree: CanvasTree): Boolean {
-    if (kind != CanvasElementKind.Button) return false
+    val button = widget as? CanvasButtonWidget ?: return false
     tree.readButtonState(this)
-    return !enabled
+    return !button.enabled
 }
 
 private val COOLDOWN_SHADE = Color(0f, 0f, 0f, 0.6f)

@@ -51,7 +51,7 @@ context(_: Composer)
  * @param bindings The scene component bindings an element's [CanvasElement.bind] reads fields
  *   through: the scene's own registry's. Null reads through every globally registered one, gathered
  *   only on a frame where an element reads a field.
- * @param views What [CanvasElementKind.View] elements show. Without it they draw only their style.
+ * @param views What elements with a [com.awakekt.awake.ui.canvas.CanvasViewWidget] show. Without it they draw only their style.
  *   `SceneAppLifecycleRuntime`'s `canvasViews(world)` gives a host that draws the canvas itself the
  *   runtime's own.
  * @param fonts The loaded font files elements name in [CanvasElement.font], by path, as
@@ -103,6 +103,8 @@ fun SceneCanvas(
 ) {
     // Kept from frame to frame: sorting every element and indexing every named node each frame cost
     // more than drawing a large canvas does.
+    // Components changed on an entity, or through its element, since the last frame.
+    world.syncCanvasElements()
     val order = remember(world) { CanvasItemOrder(world) }
     val named = remember(world) { CanvasNodeNames(world) }
     named.nextFrame()

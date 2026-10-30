@@ -45,6 +45,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -60,6 +61,8 @@ class SceneSwitchTest {
         val worlds = mutableListOf<CountedWorld>()
         val project = loadProject(files(), listOf(gates)) { CountedWorld(createJoltPhysicsWorld()).also { worlds += it } }
         val game = play(project)
+        val hostInput = game.runtime.hostInputState
+        game.runtime.showTouchControls = true
         val menuPhysics = worlds.single()
         val spawned = game.runtime.spawn(project, SceneLoader.decode(SPAWNED).nodes.single())
         game.frames(FRAMES)
@@ -71,6 +74,8 @@ class SceneSwitchTest {
         game.frames(FRAMES)
 
         val world = game.world
+        assertSame(hostInput, game.runtime.hostInputState, "a scene switch keeps the host input service")
+        assertTrue(hostInput.showTouchControls)
         assertNull(world.find("Title"), "the menu's entities are gone")
         assertNull(world.find("MenuCamera"))
         assertFalse(world.isAlive(spawned.root), "a node spawned into the menu goes with it")

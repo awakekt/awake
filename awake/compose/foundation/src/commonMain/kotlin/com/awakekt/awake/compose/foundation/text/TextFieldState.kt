@@ -11,6 +11,7 @@ import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
+import com.awakekt.awake.core.text.unicode.WordBoundaries
 
 /**
  * The text in a field and where the caret sits in it.
@@ -230,6 +231,14 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
                 selectionAnchor = cursor
                 preferredColumn = null
             }
+            TextEditAction.WordLeft -> {
+                val from = if (hasSelection) selectionStart else cursor
+                moveCursorTo(WordBoundaries.previousWordBoundary(text, from))
+            }
+            TextEditAction.WordRight -> {
+                val from = if (hasSelection) selectionEnd else cursor
+                moveCursorTo(WordBoundaries.nextWordBoundary(text, from))
+            }
             TextEditAction.Home -> {
                 moveCursorTo(lineStart(cursor))
             }
@@ -266,6 +275,12 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
 
     /** Selects the full current value, as a Ctrl/Cmd+A adapter needs. */
     fun selectAll() = select(0, text.length)
+
+    /** Selects the word or token at [index], committing any IME composition first. */
+    internal fun selectWordAt(index: Int) {
+        commitComposition()
+        select(WordBoundaries.wordStart(text, index), WordBoundaries.wordEnd(text, index))
+    }
 
     /** Updates the visible pre-edit range without changing the caller-owned committed [text]. */
     fun setComposition(composition: ImeComposition) {

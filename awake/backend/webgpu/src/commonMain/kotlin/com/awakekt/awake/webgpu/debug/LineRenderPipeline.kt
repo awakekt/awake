@@ -16,6 +16,7 @@ import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
+import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.writeBufferData
@@ -56,7 +57,13 @@ import io.ygdrasil.webgpu.VertexState
  * satisfies that requirement while keeping lines' original no-depth-test look (never
  * occluded by, never occludes, scene geometry).
  */
-class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, shaderCode: ByteArray) {
+class LineRenderPipeline(
+    graphicsDevice: GraphicsDevice,
+    swapchainManager: SwapchainManager,
+    shaderCode: ByteArray,
+    /** Sample count of the colour/depth attachments this pipeline draws into. */
+    private val sampleCount: Int = 1,
+) {
     private val device = graphicsDevice.wgpuContext.device
 
     /**
@@ -84,55 +91,63 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
     init {
         val wgslSource = shaderCode.decodeToString()
         val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = wgslSource))
+        val layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UniformOnlyMaterial))
 
-        pipeline = device.createRenderPipeline(
-            RenderPipelineDescriptor(
-                layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UniformOnlyMaterial)),
-                vertex = VertexState(
-                    module = shaderModule,
-                    entryPoint = "vertexMain",
-                    buffers = listOf(
-                        // Derived from DebugLineLayout, not restated -- the same layout was
-                        // hardcoded here and in Vulkan's line pipeline, so it existed in three
-                        // places. See `awake-render-pipeline`'s "never hardcode vertex attribute
-                        // descriptions" rule, which names lines specifically.
-                        VertexBufferLayout(
-                            arrayStride = DebugLineLayout.Format.strideBytes.toULong(),
-                            attributes = DebugLineLayout.Format.entries.map { entry ->
-                                VertexAttribute(
-                                    shaderLocation = entry.attribute.location.toUInt(),
-                                    offset = entry.offsetBytes.toULong(),
-                                    format = entry.attribute.format.toGpuVertexFormat(),
-                                )
-                            },
+        // The pipeline holds what it needs of the module and layout; their own handles end here.
+        pipeline = try {
+            device.createRenderPipeline(
+                RenderPipelineDescriptor(
+                    multisample = io.ygdrasil.webgpu.MultisampleState(count = sampleCount.toUInt()),
+                    layout = layout,
+                    vertex = VertexState(
+                        module = shaderModule,
+                        entryPoint = "vertexMain",
+                        buffers = listOf(
+                            // Derived from DebugLineLayout, not restated -- the same layout was
+                            // hardcoded here and in Vulkan's line pipeline, so it existed in three
+                            // places. See `awake-render-pipeline`'s "never hardcode vertex attribute
+                            // descriptions" rule, which names lines specifically.
+                            VertexBufferLayout(
+                                arrayStride = DebugLineLayout.Format.strideBytes.toULong(),
+                                attributes = DebugLineLayout.Format.entries.map { entry ->
+                                    VertexAttribute(
+                                        shaderLocation = entry.attribute.location.toUInt(),
+                                        offset = entry.offsetBytes.toULong(),
+                                        format = entry.attribute.format.toGpuVertexFormat(),
+                                    )
+                                },
+                            ),
                         ),
                     ),
-                ),
-                fragment = FragmentState(
-                    module = shaderModule,
-                    entryPoint = "fragmentMain",
-                    targets = listOf(ColorTargetState(format = swapchainManager.imageFormatWebGpu)),
-                ),
-                // Debug/gizmo lines are editor overlays, never scene triangles. Keep this
-                // explicit beside Vulkan's cull-none state so backend defaults cannot drift.
-                primitive = PrimitiveState(
-                    topology = GPUPrimitiveTopology.LineList,
-                    cullMode = when (DebugLinePipelinePolicy.cullMode) {
-                        CullMode.None -> GPUCullMode.None
-                        CullMode.Back, CullMode.Front -> error("Debug line policy cannot cull triangle faces.")
+                    fragment = FragmentState(
+                        module = shaderModule,
+                        entryPoint = "fragmentMain",
+                        targets = listOf(ColorTargetState(format = swapchainManager.imageFormatWebGpu)),
+                    ),
+                    // Debug/gizmo lines are editor overlays, never scene triangles. Keep this
+                    // explicit beside Vulkan's cull-none state so backend defaults cannot drift.
+                    primitive = PrimitiveState(
+                        topology = GPUPrimitiveTopology.LineList,
+                        cullMode = when (DebugLinePipelinePolicy.cullMode) {
+                            CullMode.None -> GPUCullMode.None
+                            CullMode.Back, CullMode.Front -> error("Debug line policy cannot cull triangle faces.")
+                        },
+                    ),
+                    depthStencil = when (DebugLinePipelinePolicy.depthMode) {
+                        DebugLineDepthMode.AlwaysVisible -> DepthStencilState(
+                            format = GPUTextureFormat.Depth32Float,
+                            depthWriteEnabled = false,
+                            depthCompare = GPUCompareFunction.Always,
+                            stencilFront = StencilFaceState(),
+                            stencilBack = StencilFaceState(),
+                        )
                     },
                 ),
-                depthStencil = when (DebugLinePipelinePolicy.depthMode) {
-                    DebugLineDepthMode.AlwaysVisible -> DepthStencilState(
-                        format = GPUTextureFormat.Depth32Float,
-                        depthWriteEnabled = false,
-                        depthCompare = GPUCompareFunction.Always,
-                        stencilFront = StencilFaceState(),
-                        stencilBack = StencilFaceState(),
-                    )
-                },
-            ),
-        )
+            )
+        } finally {
+            layout.close()
+            shaderModule.close()
+        }
 
         mvpBuffer = device.createBuffer(
             BufferDescriptor(
@@ -140,7 +155,7 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
                 usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
             ),
         )
-        bindGroup = device.createBindGroup(
+        bindGroup = device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(0u),
                 entries = listOf(
@@ -157,10 +172,12 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
     }
 
     /**
-     * Closes the MVP uniform buffer, the only resource this class has to release explicitly. Do not
-     * draw with this pipeline or call [writeMvp] afterwards.
+     * Closes the bind group, the MVP uniform buffer and the pipeline. Do not draw with this pipeline
+     * or call [writeMvp] afterwards.
      */
     fun destroy() {
+        bindGroup.close()
         mvpBuffer.close()
+        pipeline.close()
     }
 }

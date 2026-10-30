@@ -256,6 +256,9 @@ data class CanvasControlSkin(
  * @property images Image tokens by name, which a slot's image names with the path `@name`; they add to
  * and replace the preset's, as a project's own art replaces the textured preset's.
  * @property skin The theme's own slots, over the preset's.
+ * @property transitionSeconds Default seconds a [CanvasStyle] takes to interpolate between its
+ * states on this canvas when its own [CanvasStyle.transitionSeconds] is null; null or 0 changes at
+ * once.
  */
 @Serializable
 data class CanvasControlTheme(
@@ -263,7 +266,26 @@ data class CanvasControlTheme(
     val colors: Map<String, String> = emptyMap(),
     val images: Map<String, CanvasImage> = emptyMap(),
     val skin: CanvasControlSkin = CanvasControlSkin(),
+    @PropertyRange(min = 0.0) val transitionSeconds: Float? = null,
 ) {
+    /** [CanvasControlTheme] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        preset: CanvasThemePreset = CanvasThemePreset.MinimalFlat,
+        colors: Map<String, String> = emptyMap(),
+        images: Map<String, CanvasImage> = emptyMap(),
+        skin: CanvasControlSkin = CanvasControlSkin(),
+    ) : this(preset, colors, images, skin)
+
+    /** [copy] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        preset: CanvasThemePreset = this.preset,
+        colors: Map<String, String> = this.colors,
+        images: Map<String, CanvasImage> = this.images,
+        skin: CanvasControlSkin = this.skin,
+    ): CanvasControlTheme = copy(preset, colors, images, skin)
+
     /** What is wrong with this theme, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         for ((name, color) in colors) {
@@ -274,6 +296,7 @@ data class CanvasControlTheme(
             if (!TOKEN_NAME.matches(name)) add("images \"$name\" must be letters, digits, - or _")
             image.problems().forEach { add("images.$name.$it") }
         }
+        if (transitionSeconds != null && !(transitionSeconds >= 0f && transitionSeconds.isFinite())) add("transitionSeconds must not be negative")
         skin.problems().forEach { add("skin.$it") }
         unknownTokens().forEach { add("skin names the token @$it, which neither the theme nor its preset has") }
     }

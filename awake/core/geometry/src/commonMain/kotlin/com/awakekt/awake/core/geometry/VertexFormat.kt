@@ -157,5 +157,17 @@ data class VertexFormat(val attributes: List<VertexAttribute>) {
                 VertexAttribute(VertexSemantic.Uv, GpuDataShape.Vec2, location = 1),
             ),
         )
+
+        /** Position vec3 @ 0, uv vec2 @ 12, color vec4 @ 20, stride 36 -- a quad mesh that carries its
+         * own straight-alpha colour per vertex, such as glyph quads of text placed in a scene, where
+         * one mesh holds runs of more than one colour. A format of its own, so the pipeline that draws
+         * it is never the one an atlas sprite's [PositionUv] selects. */
+        val PositionUvColor = VertexFormat(
+            listOf(
+                VertexAttribute(VertexSemantic.Position, GpuDataShape.Vec3, location = 0),
+                VertexAttribute(VertexSemantic.Uv, GpuDataShape.Vec2, location = 1),
+                VertexAttribute(VertexSemantic.Color, GpuDataShape.Vec4, location = 2),
+            ),
+        )
     }
 }

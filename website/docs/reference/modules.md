@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 93: 90 in Core, 3 in the Vulkan family. |
+| Published modules | 100: 97 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -30,7 +30,8 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
-| `com.awakekt.awake.core:math` | `awake-core-math` | Vectors, matrices, quaternions, rays, frustums and camera lenses. |
+| `com.awakekt.awake.core:math` | `awake-core-math` | Vectors, matrices, quaternions, rays, frustums, bounded volumes and camera lenses. |
+| `com.awakekt.awake.core:spatial` | `awake-core-spatial` | Uniform column spatial grid for AABB, sphere, frustum and bounded-volume queries. |
 | `com.awakekt.awake.core:pool` | `awake-core-pool` | Frame-scoped object pools that reuse instances without allocating. |
 | `com.awakekt.awake.core:math2d` | `awake-core-math2d` | Screen-space 2D primitives: `Vec2`, `Rectangle`, `Size2D`, `Dp`. |
 | `com.awakekt.awake.core:geometry` | `awake-core-geometry` | Mesh geometry data and math: vertex formats, decoding, simplification. |
@@ -95,6 +96,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:scene3d` | `awake-scene-scene3d` | Cameras, lights, mesh renderers and the systems that draw a scene. |
 | `com.awakekt.awake.scene:document` | `awake-scene-document` | Scene documents: `SceneDocument`, `SceneLoader`, validation, prefabs, extensions. |
 | `com.awakekt.awake.scene:binding` | `awake-scene-binding` | Bindings between scene document components and ECS components. |
+| `com.awakekt.awake.scene.binding:processor` | `awake-scene-binding-processor` | JVM KSP build tool generating scene component bindings and registries. |
 | `com.awakekt.awake.scene:runtime` | `awake-scene-runtime` | The scene runtime: `SceneManager`, sessions, asset library, scheduling, app lifecycle. |
 | `com.awakekt.awake.scene:authoring` | `awake-scene-authoring` | The scene DSL and application DSL: entities, systems, assets and UI in Kotlin. |
 | `com.awakekt.awake.scene:controls` | `awake-scene-controls` | Camera rigs and input-driven movement. |
@@ -111,6 +113,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:blueprint` | `awake-scene-blueprint` | Runs blueprints on scene entities: the `blueprint` component and `BlueprintSystem`. |
 | `com.awakekt.awake.scene:world` | `awake-scene-world` | Open-world plumbing: partitioning, streaming and the floating origin, over `awake:world`. |
 | `com.awakekt.awake.scene:worldstream` | `awake-scene-worldstream` | Cell streamers for meshes, physics, heightfield tiles and terrain texture tiles. |
+| `com.awakekt.awake.scene:worldtext` | `awake-scene-worldtext` | The `world_text` scene component and the scene feature that draws text placed in a scene. |
 
 ### Physics
 
@@ -127,6 +130,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake:navigation` | `awake-navigation` | Heightmap-derived navigation grids, streamed navigation and path requests. |
 | `com.awakekt.awake:tilemap` | `awake-tilemap` | Finite tile grids, atlas chunk geometry and visibility, with no scene dependency. |
 | `com.awakekt.awake:world` | `awake-world` | World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency. |
+| `com.awakekt.awake:worldtext` | `awake-worldtext` | Text placed in a 3D world: laid out once, drawn as distance-field quads in the scene pass, with no scene dependency. |
 | `com.awakekt.awake:ai` | `awake-ai` | Behavior tree and finite state machine primitives. |
 | `com.awakekt.awake.ai:behavior` | `awake-ai-behavior` | Starter behaviors that follow navigation paths: `patrol`, `chase`, `flee`, with no scene dependency. |
 | `com.awakekt.awake:blueprint` | `awake-blueprint` | Runtime for event-driven game logic authored as node graphs. |
@@ -141,7 +145,10 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake:project` | `awake-project` | The AwakeKt project manifest format and its validation. |
 | `com.awakekt.awake.project:runtime` | `awake-project-runtime` | Plays a project without the editor: `loadProject`, `runProject`. |
 | `com.awakekt.awake.project:blueprint` | `awake-project-blueprint` | Plays a project's blueprint graphs: the capability a project names to run its scene's blueprints. |
+| `com.awakekt.awake.project:transport-ktor` | `awake-project-transport-ktor` | A `ContentTransport` over your Ktor `HttpClient`, for protected content on desktop, Android and iOS. |
+| `com.awakekt.awake.project:transport-browser` | `awake-project-transport-browser` | A `ContentTransport` over the browser's `fetch()`, for protected content on the web, with no HTTP library. |
 | `com.awakekt.awake.editor:contract` | `awake-editor-contract` | Public extension points and plugin contracts for AwakeKt Studio. |
+| `com.awakekt.awake:plugin-archive` | `awake-plugin-archive` | How a plugin is described, packaged and trusted: `plugin.json`, the `.awakeplugin` archive, signature checks, signed publisher key and revocation lists, and `plugins.lock.json`. |
 
 ### UI
 

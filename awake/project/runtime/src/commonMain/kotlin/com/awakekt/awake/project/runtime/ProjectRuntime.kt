@@ -3,11 +3,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions") // The four hidden overloads kept for binary compatibility double the loadProject family.
+
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.localization.StringLayer
+import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
@@ -54,9 +58,13 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * entry scene and for each scene a switch plays.
  * @property strings The project's text by key, from its `strings/<locale>.json` tables, in the
  * device's locale; null when the project has no table for the default locale, English
- * (`strings/en.json`). Every scene it plays shows its keyed canvas text from these. A settings
- * screen switches language with [Strings.setLocale]: only the new locale's table is read, and keyed
- * text changes on the next frame. Game code and plugins look keys up here too.
+ * (`strings/en.json`). When the app passed its own [Strings] to [loadProject], this is that same
+ * instance, with the project's tables added until [close] and the app's locale kept, never null.
+ * Every scene it plays shows its keyed canvas text from these. A settings screen switches language
+ * with [Strings.setLocale]: only the new locale's table is read, and keyed text changes on the next
+ * frame. Game code and plugins look keys up here too.
+ * @param addedStrings The tables [loadProject] added to the app's [strings], which [close] takes out
+ * again; null when it added none or once they are out.
  */
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -67,6 +75,7 @@ class LoadedProject internal constructor(
     internal val hasRenderer: Boolean = true,
     internal val physicsWorld: (suspend () -> PhysicsWorld)? = null,
     val strings: Strings? = null,
+    private var addedStrings: StringTableSource? = null,
 ) : AutoCloseable {
     /** The scene playing now, which a switch replaces on the frame thread. */
     internal var playing: ProjectScene = entry
@@ -101,11 +110,16 @@ class LoadedProject internal constructor(
 
     /**
      * Destroys the playing scene's physics world, if it has one, and stops loading models for spawned
-     * nodes. Closing twice is harmless.
+     * nodes. When the app passed its own [Strings] to [loadProject], the project's tables are taken out
+     * of it again, and the app's own stay: text read after this returns is the app's, unless a locale
+     * switch on [strings] is in flight, after which they go. Closing twice is harmless.
      */
     override fun close() {
         closed = true
         playing.close()
+        val added = addedStrings ?: return
+        addedStrings = null
+        removeProjectStrings(checkNotNull(strings), added)
     }
 }
 
@@ -127,6 +141,11 @@ class LoadedProject internal constructor(
  * canvas without the images or fonts and its meshes without their models; load with `hasRenderer = true` for a
  * host that later draws.
  *
+ * [onProgress] hears how far the entry scene's content has come, from 0 as loading starts to 1 as
+ * the project is ready, never going down and never repeating a value, on the loading coroutine. In
+ * between it reports the share of the scene's content bytes that have arrived, as
+ * [SceneSwitchState.Loading.progress] defines it; where [files] can't report bytes it is 0 and then 1.
+ *
  * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
  * capability, a component no capability registers, content a capability cannot load (a collision
  * model that can't be read, for one), or a scene that needs physics when [physicsWorld] is null.
@@ -135,27 +154,46 @@ class LoadedProject internal constructor(
  * registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts. Installing twice is
  * harmless. A host that loads more than one project, such as an editor, loads each into a registry of
  * its own with the other `loadProject`.
+ *
+ * Without [strings], the project's `strings/` tables load into a [Strings] of its own, in the
+ * device's locale, as [LoadedProject.strings] describes. A game that shows text before the project
+ * loads, such as a connection screen, makes its [Strings] first with [Strings.load] and passes it as
+ * [strings]: the project's tables are added to it at [StringLayer.Game], after the game's own, and
+ * [LoadedProject.strings] is that same instance. Its locale stays the one the game chose, so one
+ * [Strings.setLocale] changes the game's early text and the project's together. Where both have a key
+ * in the same locale the project's text wins; a locale still comes before a layer, so the game's
+ * Korean for a key beats the project's English for a Korean player. The tables are added once the
+ * rest of the project has loaded, so a load that fails leaves [strings] as it was. [LoadedProject.close]
+ * takes them out again and leaves the game's own, so a host that loads a project again into the same
+ * instance, as a [projectRoute] does on each entry, holds one copy of its tables at a time.
  */
 suspend fun loadProject(
     files: AssetSource,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
+    strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld)
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, onProgress = onProgress, sharedStrings = strings)
 
 /**
  * [loadProject] starting at [entryScene], a scene path relative to the project root, instead of
  * [AwakeProjectManifest.entryScene]. For a game that opens at a login or menu scene while the
  * manifest's entry scene is the main world, or a server or test that loads one named scene without
  * loading the manifest's entry scene first.
+ *
+ * With `strings`, the project's tables are added to the app's own [Strings], as the first
+ * [loadProject] describes.
  */
 suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
+    strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene)
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene, onProgress, strings)
 
 /**
  * [loadProject] into [componentRegistry] instead of the process-wide registry: Core's scene components
@@ -165,18 +203,26 @@ suspend fun loadProject(
  * Pass a [SceneComponentRegistry.scoped] registry per project, and drop it when the project closes: two
  * projects whose capabilities use the same component name for different components then load one after
  * the other, and each decodes only its own. A project's scene uses only components its registry holds.
+ *
+ * With `strings`, the project's tables are added to the app's own [Strings], as the first
+ * [loadProject] describes.
  */
 suspend fun loadProject(
     files: AssetSource,
     componentRegistry: SceneComponentRegistry,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
+    strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld)
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, onProgress = onProgress, sharedStrings = strings)
 
 /**
  * [loadProject] into [componentRegistry], starting at [entryScene] instead of
  * [AwakeProjectManifest.entryScene].
+ *
+ * With `strings`, the project's tables are added to the app's own [Strings], as the first
+ * [loadProject] describes.
  */
 suspend fun loadProject(
     files: AssetSource,
@@ -184,8 +230,53 @@ suspend fun loadProject(
     componentRegistry: SceneComponentRegistry,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
+    strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene)
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene, onProgress, strings)
+
+// The signatures these four had before `onProgress` was added, kept so a consumer compiled against them
+// still links. Hidden: source callers resolve to the overloads above.
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, entryScene, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, entryScene, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
 
 /**
  * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own
@@ -257,6 +348,11 @@ suspend fun LoadedProject.switchTo(path: String) {
  * fixed step or frame, never inside a system's update. Nothing carries across: the world is emptied,
  * whatever joined it included, and the next scene starts from its file with systems, content and a
  * physics world of its own. A scene that can't load or play is logged, and the one playing goes on.
+ *
+ * What a switch is doing is the app's `SceneSwitchStatus` service: its [SceneSwitchStatus.state] is
+ * loading with the share of the next scene's content bytes that have arrived, then ready once the new
+ * scene has had its first frame, or failed with the scene's path and why, for a loading curtain or an
+ * error message the game draws itself.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
     val scenes = ProjectSceneRunner(project)
@@ -273,6 +369,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
     fixedSystem(PROJECT_FIXED_SYSTEMS) { scenes.bind(this) }
     frameSystem(PROJECT_FRAME_SYSTEMS) { scenes.frameSystems }
     service(SceneSwitch::class) { scenes }
+    service(SceneSwitchStatus::class) { scenes }
     onReady {
         showTouchControls = touchControls
         project.componentRegistry?.let { canvasBindings = it.bindings }

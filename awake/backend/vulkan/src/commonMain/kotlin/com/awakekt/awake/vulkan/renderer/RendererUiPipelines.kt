@@ -66,8 +66,37 @@ internal fun Renderer.ensureGlyphPipeline() {
 /** [ensureGlyphPipeline]'s offscreen counterpart, for [renderUiToTexture]. */
 internal fun Renderer.ensureOffscreenGlyphPipeline() {
     if (offscreenGlyphRenderPipeline != null) return
-    offscreenGlyphRenderPipeline = buildUiGlyphRenderPipeline(renderPipeline.renderPass)
+    offscreenGlyphRenderPipeline = buildUiGlyphRenderPipeline(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat))
 }
+
+/**
+ * Builds the swapchain decorated glyph pipeline (#1061) once, when this renderer was given its shaders. Like
+ * [ensureGlyphPipeline]'s, it holds no font.
+ */
+internal fun Renderer.ensureDecoratedGlyphPipeline() {
+    if (uiDecoratedGlyphRenderPipeline != null) return
+    val renderPass = requireNotNull(uiRenderPipeline) { "ensureUiQuadPipeline() must run first." }.renderPass
+    uiDecoratedGlyphRenderPipeline = buildUiDecoratedGlyphRenderPipeline(renderPass)
+}
+
+/** [ensureDecoratedGlyphPipeline]'s offscreen counterpart, for [renderUiToTexture]. */
+internal fun Renderer.ensureOffscreenDecoratedGlyphPipeline() {
+    if (offscreenDecoratedGlyphRenderPipeline != null) return
+    offscreenDecoratedGlyphRenderPipeline =
+        buildUiDecoratedGlyphRenderPipeline(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat))
+}
+
+private fun Renderer.buildUiDecoratedGlyphRenderPipeline(renderPass: Long): UiRenderPipeline? =
+    uiDecoratedGlyphShaders?.let { shaders ->
+        UiRenderPipeline(
+            graphicsDevice = graphicsDevice,
+            swapchainManager = swapchainManager,
+            vertShaderCode = shaders.vertex,
+            fragShaderCode = shaders.fragment,
+            descriptor = uiPipelineDescriptor(UiPipelineKind.DecoratedGlyph),
+            externalRenderPass = renderPass,
+        )
+    }
 
 private fun Renderer.buildUiGlyphRenderPipeline(renderPass: Long): UiRenderPipeline =
     UiRenderPipeline(
@@ -150,7 +179,7 @@ internal fun Renderer.ensureOffscreenQuadPipeline() {
         vertShaderCode = uiShaders.vertex,
         fragShaderCode = uiShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.Quad),
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
     )
 }
 
@@ -162,7 +191,7 @@ internal fun Renderer.ensureOffscreenRoundedQuadPipeline() {
         vertShaderCode = uiRoundedQuadShaders.vertex,
         fragShaderCode = uiRoundedQuadShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.RoundedQuad),
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
     )
 }
 
@@ -174,7 +203,7 @@ internal fun Renderer.ensureOffscreenTexturePipeline(mode: TextureCompositeMode)
         vertShaderCode = uiTextureShaders.vertex,
         fragShaderCode = uiTextureShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.Texture, mode.blendMode, mode.premultiplied),
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
         framesInFlight = maxFramesInFlight,
     )
 }
@@ -190,7 +219,7 @@ internal fun Renderer.ensureTargetCompositePipeline() {
         swapchainManager = swapchainManager,
         vertShaderCode = shaders.vertex,
         fragShaderCode = shaders.fragment,
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
         descriptor = UiPipelineDescriptor(
             variant = UiPipelineVariant.TargetComposite,
             vertexFormat = VertexFormats2D.Quad,
@@ -215,6 +244,12 @@ internal fun Renderer.activeUiPipelineTargets(): List<com.awakekt.awake.vulkan.p
 
     uiGlyphRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiGlyph.vulkan.program())) }
     offscreenGlyphRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiGlyph.vulkan.program())) }
+    uiDecoratedGlyphRenderPipeline?.let {
+        add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiDecoratedGlyph.vulkan.program()))
+    }
+    offscreenDecoratedGlyphRenderPipeline?.let {
+        add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiDecoratedGlyph.vulkan.program()))
+    }
 
     uiRoundedQuadRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiRoundedQuad.vulkan.program())) }
     offscreenRoundedQuadRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiRoundedQuad.vulkan.program())) }

@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneComponent
@@ -88,6 +89,7 @@ data class SceneTerrainSurface(
 /**
  * Binding definition connecting [SceneTerrain] descriptors to ECS [TerrainComponent] components.
  */
+@RegisteredBinding
 object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
     override val componentClass: KClass<TerrainComponent> = TerrainComponent::class
     override val schemaClass: KClass<SceneTerrain> = SceneTerrain::class

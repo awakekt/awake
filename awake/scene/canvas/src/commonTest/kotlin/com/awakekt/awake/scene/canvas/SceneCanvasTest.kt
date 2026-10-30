@@ -235,7 +235,7 @@ class SceneCanvasTest {
     }
 
     @Test
-    fun savedFormRoundTripsEveryField() {
+    fun savedFormRoundTripsEveryFieldOfItsKind() {
         val saved = SceneCanvasElement(
             kind = CanvasElementKind.Bar,
             anchor = CanvasAnchor.BottomCenter,
@@ -264,7 +264,7 @@ class SceneCanvasTest {
             font = "fonts/title.ttf",
             style = CanvasStyle(
                 background = "#202020",
-                gradient = CanvasGradient("#303030", "#101010", horizontal = true),
+                gradient = CanvasGradient("#303030", "#101010", horizontal = true, middle = "#4080C0"),
                 image = CanvasImage("ui/frame.png", regionX = 4, regionWidth = 48, sliceLeft = 16, sliceRight = 16, repeatEdges = true, tint = "#FFFFFF80"),
                 fillImage = CanvasImage("ui/gauge.png", sliceLeft = 3, sliceRight = 3, repeatCenter = true, pixelated = true),
                 cornerRadius = 6f,
@@ -278,7 +278,12 @@ class SceneCanvasTest {
             ),
         )
 
-        assertEquals(saved, saved.toComponent().toSceneComponent())
+        // A Bar keeps every field a Bar has; another widget's fields, here a Button's action and
+        // double action, a View's camera and a TextField's limits, had no effect on it and are not kept.
+        val kept = saved.copy(action = "", doubleAction = "", camera = "", mask = "", maxLength = 0, maxLengthUnit = TextLengthUnit.Graphemes)
+        assertEquals(kept, saved.toComponent().toSceneComponent())
+        val field = SceneCanvasElement(kind = CanvasElementKind.TextField, mask = "*", maxLength = 40, maxLengthUnit = TextLengthUnit.Utf8Bytes, text = "typed")
+        assertEquals(field, field.toComponent().toSceneComponent())
     }
 
     @Test
@@ -510,9 +515,14 @@ class SceneCanvasTest {
             style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 2f), textShadow = CanvasTextShadow("#FF0000"))
         }
 
-        val colours = frame().glyphs().map { it.color }
+        val glyphs = frame().glyphs()
 
-        assertEquals(listOf(Color.fromHex("#FF0000"), Color.fromHex("#000000"), Color.White), colours.distinct(), "shadow, then outline, then the text")
+        // One draw a glyph (#1061): the text's colour, its outline and its shadow on the same primitive.
+        assertEquals(2, glyphs.size)
+        assertEquals(listOf(Color.White), glyphs.map { it.color }.distinct())
+        assertEquals(listOf(Color.fromHex("#000000")), glyphs.map { it.decoration?.outlineColor }.distinct())
+        assertEquals(listOf(2f), glyphs.map { it.decoration?.outlineWidth }.distinct())
+        assertEquals(listOf(Color.fromHex("#FF0000")), glyphs.map { it.decoration?.shadowColor }.distinct())
     }
 
     /** Ten pixels per world unit across and down, from the screen's corner; null behind z 0. */

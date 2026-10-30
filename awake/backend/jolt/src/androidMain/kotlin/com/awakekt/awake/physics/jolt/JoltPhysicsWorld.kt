@@ -80,6 +80,7 @@ import com.github.stephengold.joltjni.Vec3
 import com.github.stephengold.joltjni.enumerate.EActivation
 import com.github.stephengold.joltjni.enumerate.EAllowedDofs
 import com.github.stephengold.joltjni.enumerate.EAxis
+import com.github.stephengold.joltjni.enumerate.EBackFaceMode
 import com.github.stephengold.joltjni.enumerate.EBodyType
 import com.github.stephengold.joltjni.enumerate.EConstraintSpace
 import com.github.stephengold.joltjni.enumerate.EMotionQuality
@@ -215,6 +216,8 @@ class JoltPhysicsWorld(
     gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
     override val layers: CollisionLayers = CollisionLayers.Default,
 ) : PhysicsWorld {
+    private val shapeCastContacts = ShapeCastContactDecoder()
+
     // Companion object init always runs before any instance member -- the only ordering
     // guarantee strong enough to load the native lib before tempAllocator's native constructor
     // call (confirmed via UnsatisfiedLinkError when this lived in an instance init instead).
@@ -275,8 +278,13 @@ class JoltPhysicsWorld(
     private val unitScale = com.github.stephengold.joltjni.Vec3(1f, 1f, 1f)
     private val noBaseOffset = RVec3(0.0, 0.0, 0.0)
 
-    // Initial overlaps need a separating axis even when the cast has no travel.
-    private val shapeCastSettings = ShapeCastSettings().apply { setReturnDeepestPoint(true) }
+    // Initial overlaps need a separating axis even when the cast has no travel. Triangle back
+    // faces block as well (#1030): a sweep let through a one-sided mesh from behind leaves the
+    // shape inside it, where every later sweep reports a hit at fraction 0.
+    private val shapeCastSettings = ShapeCastSettings().apply {
+        setReturnDeepestPoint(true)
+        setBackFaceModeTriangles(EBackFaceMode.CollideWithBackFaces)
+    }
     private val rayCastSettings = RayCastSettings()
     private val closestRayHit = ClosestHitCastRayCollector()
     private val allRayHits = AllHitCastRayCollector()
@@ -626,12 +634,15 @@ class JoltPhysicsWorld(
             // a caller slides along -- negating and normalizing here rather than making every call
             // site rediscover that.
             val axis = hit.penetrationAxis
-            val inverseLength = 1f / sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z)
-            ShapeCastHit(
+            shapeCastContacts.decode(
                 handle = BodyHandle(hit.bodyId2.toLong()),
                 point = Vec3f(contact.x, contact.y, contact.z),
-                normal = Vec3f(-axis.x * inverseLength, -axis.y * inverseLength, -axis.z * inverseLength),
+                axisX = axis.x,
+                axisY = axis.y,
+                axisZ = axis.z,
                 fraction = hit.fraction,
+                from = from,
+                to = to,
             )
         }
     }

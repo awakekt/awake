@@ -233,6 +233,9 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
         const oneLayer = new Map();
         // A stationary initial overlap otherwise has no separating axis to normalize.
         query.castSettings.mReturnDeepestPoint = true;
+        // Triangle back faces block as well (#1030): a sweep let through a one-sided mesh from
+        // behind leaves the shape inside it, where every later sweep hits at fraction 0.
+        query.castSettings.mBackFaceModeTriangles = jolt.EBackFaceMode_CollideWithBackFaces;
         world.query = query;
         world.oneLayer = oneLayer;
         world.layerFilter = (onlyLayer) => {
@@ -567,11 +570,11 @@ private const val SHAPE_KIND_SPHERE = 1
 private const val SHAPE_KIND_CAPSULE = 2
 
 /**
- * Sweeps a convex shape and returns `[hit, bodyId, px, py, pz, nx, ny, nz, fraction]`, with
+ * Sweeps a convex shape and returns `[hit, bodyId, px, py, pz, axisX, axisY, axisZ, fraction]`, with
  * `hit` 0 or 1 -- one crossing per cast rather than one per field.
  *
  * `mPenetrationAxis` points INTO the surface and is unnormalized, so it is negated and
- * normalized here; a caller sliding along the raw axis would drive straight into the wall it
+ * normalized by the shared decoder; a caller sliding along the raw axis would drive into the wall it
  * just hit.
  */
 // Called from JoltPhysicsWorld.shapeCast() below; detekt cannot trace @JsFun calls.
@@ -602,11 +605,11 @@ private const val SHAPE_KIND_CAPSULE = 2
         if (hadHit) {
             const hit = collector.mHit;
             const point = hit.mContactPointOn2;
-            const axis = hit.mPenetrationAxis.Normalized();
+            const axis = hit.mPenetrationAxis;
             out = [
                 1, hit.mBodyID2.GetIndexAndSequenceNumber(),
                 point.GetX(), point.GetY(), point.GetZ(),
-                -axis.GetX(), -axis.GetY(), -axis.GetZ(),
+                axis.GetX(), axis.GetY(), axis.GetZ(),
                 hit.mFraction,
             ];
         }
@@ -1228,6 +1231,8 @@ class JoltPhysicsWorld private constructor(
     private val world: JsAny,
     override val layers: CollisionLayers,
 ) : PhysicsWorld {
+    private val shapeCastContacts = ShapeCastContactDecoder()
+
     // Every body this PhysicsWorld created, so syncTransforms() knows what to read back and
     // destroy() knows what to tear down -- same reasoning (and the same "no cheap bulk query"
     // constraint) as the desktop/iOS backends' own `trackedBodyIds`.
@@ -1745,19 +1750,19 @@ class JoltPhysicsWorld private constructor(
             ignore?.id?.toInt() ?: -1,
         )
         if (jsArrayGet(result, 0).toInt() == 0) return null
-        return ShapeCastHit(
+        return shapeCastContacts.decode(
             handle = BodyHandle(jsArrayGet(result, 1).toLong()),
             point = Vec3f(
                 jsArrayGet(result, 2).toFloat(),
                 jsArrayGet(result, 3).toFloat(),
                 jsArrayGet(result, 4).toFloat(),
             ),
-            normal = Vec3f(
-                jsArrayGet(result, 5).toFloat(),
-                jsArrayGet(result, 6).toFloat(),
-                jsArrayGet(result, 7).toFloat(),
-            ),
+            axisX = jsArrayGet(result, 5).toFloat(),
+            axisY = jsArrayGet(result, 6).toFloat(),
+            axisZ = jsArrayGet(result, 7).toFloat(),
             fraction = jsArrayGet(result, 8).toFloat(),
+            from = from,
+            to = to,
         )
     }
 

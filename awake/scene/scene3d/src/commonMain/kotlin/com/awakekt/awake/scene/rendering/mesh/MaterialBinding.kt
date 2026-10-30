@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.toColor
@@ -16,6 +17,7 @@ import kotlin.reflect.KClass
 /**
  * Binding definition connecting [ScenePbrMaterial] descriptors to ECS [PbrMaterial] components.
  */
+@RegisteredBinding
 object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
     override val componentClass: KClass<PbrMaterial> = PbrMaterial::class
     override val schemaClass: KClass<ScenePbrMaterial> = ScenePbrMaterial::class
@@ -46,6 +48,7 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
         litWhenAdditive = litWhenAdditive,
+        unlit = unlit,
     )
 
     /**
@@ -61,5 +64,6 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
         litWhenAdditive = litWhenAdditive,
+        unlit = unlit,
     )
 }

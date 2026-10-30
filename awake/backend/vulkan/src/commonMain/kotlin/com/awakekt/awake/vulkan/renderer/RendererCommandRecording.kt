@@ -308,13 +308,13 @@ internal fun Renderer.recordPostPassesToTexture(
             commandBuffer,
             VkRenderPassBeginInfo(
                 renderPass = continuePass,
-                framebuffer = target.framebuffer,
+                framebuffer = target.colorFramebuffer(continuePass),
                 renderArea = VkRect2D(extent = VkExtent2D(target.width, target.height)),
             ),
             VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
         )
         val parentTarget = VulkanImagePassParentTarget(
-            framebuffer = target.framebuffer,
+            framebuffer = target.colorFramebuffer(continuePass),
             colorImage = target.colorImage,
             colorImageView = target.colorImageView,
             colorFormat = swapchain.imageFormat,

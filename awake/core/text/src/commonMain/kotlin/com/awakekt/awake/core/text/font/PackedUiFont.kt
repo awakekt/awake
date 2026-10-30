@@ -57,6 +57,41 @@ internal interface PackedUiFontData {
 
     /** The atlas bytes [encodedAtlasBase64] holds. A font baked at run time hands its bytes over instead. */
     fun atlasBytes(): ByteArray = Base64.Default.decode(encodedAtlasBase64.filterNot(Char::isWhitespace))
+
+    /** The outlines the atlas was drawn from, for [PackedUiFont.pixelGlyphs]; null when they were not kept. */
+    fun outlineFont(): OpenTypeFont? = null
+
+    /** The font file's line box, for [UiFont.lineAscentEm] and its siblings; null to derive it from the atlas. */
+    fun lineMetrics(): FontLineMetrics? = null
+
+    /**
+     * The atlas glyphs' pair kerning, already read; null to read it from [outlineFont] on first use, or to
+     * have none when there are no outlines either.
+     */
+    fun kerning(): KerningPairs? = null
+
+    /** The resolution this atlas's distance field was baked at. */
+    fun distanceFieldBake(): DistanceFieldBake = DistanceFieldBake.GENERATOR
+
+    /** The effect field's size in texels ([EffectFields]); 0 by 0 for a font without one. */
+    val effectAtlasWidth: Int get() = 0
+    val effectAtlasHeight: Int get() = 0
+
+    /** The effect field's spread in its texels, as [distanceFieldRangePx] is the atlas's. */
+    val effectFieldRangePx: Float get() = 0f
+
+    /** Each glyph's effect tile (left, top, right, bottom) in effect-field texels, in glyph order. */
+    val effectUvBoundsPx: IntArray get() = IntArray(0)
+
+    /** The quad each effect tile covers (offsetX, offsetY, width, height in em, pen/line-top relative), in glyph order. */
+    val effectQuadMetricsEm: FloatArray get() = FloatArray(0)
+
+    /** The effect field as [EffectFields.decode] reads it. */
+    val encodedEffectFieldBase64: String get() = ""
+
+    /** The effect field's bytes, one a texel; null when there is none. A font baked at run time hands them over. */
+    fun effectFieldBytes(): ByteArray? =
+        if (effectAtlasHeight > 0) EffectFields.decode(encodedEffectFieldBase64, effectAtlasWidth, effectAtlasHeight) else null
 }
 
 /**
@@ -64,19 +99,25 @@ internal interface PackedUiFontData {
  *
  * @param data The underlying packed font data.
  * @property cellSize The base cell size in pixels for this font instance.
+ * @param lineMetrics The font file's line box; null derives it from [ascentEm] and [lineHeightEm].
+ * @param outlines The outlines the atlas was drawn from, read on first use for [pixelGlyphs], and for the
+ *   pair kerning [kerningFor] reads when [data] does not already carry it.
  */
 // UiFont's Char and code point lookups are each one short override here.
 @Suppress("TooManyFunctions")
 class PackedUiFont internal constructor(
     private val data: PackedUiFontData,
     override val cellSize: Int = data.baseCellSize,
+    private val lineMetrics: FontLineMetrics? = data.lineMetrics(),
+    private val outlines: () -> OpenTypeFont? = data::outlineFont,
 ) : UiFont {
     override val samplingMode: UiFontSamplingMode = data.samplingMode
     override val textScaleStep: Float = data.textScaleStep
-    override val atlasWidth: Int = data.atlasWidth
-    override val atlasHeight: Int = data.atlasHeight
+    override val atlasWidth: Int = maxOf(data.atlasWidth, data.effectAtlasWidth)
+    override val atlasHeight: Int = data.atlasHeight + data.effectAtlasHeight
     override val atlasPixelsRgba: ByteArray by lazy(::decodeAtlasPixels)
     override val distanceFieldRangePx: Float = data.distanceFieldRangePx
+    override val effectFieldRangePx: Float = if (data.effectAtlasHeight > 0) data.effectFieldRangePx else 0f
     override val visibleTopEm: Float by lazy { computeVisibleBand().first }
     override val visibleBottomEm: Float by lazy { computeVisibleBand().second }
 
@@ -89,6 +130,19 @@ class PackedUiFont internal constructor(
     override val descentEm: Float by lazy { visibleBottomEm - baselineEm }
 
     override val capHeightEm: Float by lazy { measureCapHeightEm() }
+
+    /**
+     * Glyphs rasterized from the outlines this atlas was drawn from, at exact pixel sizes; null for an
+     * atlas whose outlines were not kept, such as a colour emoji atlas. The outlines are read on first
+     * use, and each size's glyphs are rasterized the first time it is drawn.
+     */
+    override val pixelGlyphs: PixelGlyphs? by lazy {
+        outlines()?.let { font ->
+            val codes = ArrayList<Int>(data.advancesEm.size)
+            forEachGlyphCode { _, code -> codes += code }
+            OutlinePixelGlyphs(font, codes.toIntArray(), data.fallbackChar.code, ascentEm)
+        }
+    }
 
     /**
      * Baseline position, read off a flat-bottomed capital rather than assumed.
@@ -109,9 +163,34 @@ class PackedUiFont internal constructor(
     private val glyphsByCode: Map<Int, GlyphRect> by lazy(::decodeGlyphRects)
     private val inkByCode: Map<Int, InkBounds> by lazy(::decodeInkBounds)
     private val advancesByCode: Map<Int, Float> by lazy(::decodeAdvances)
-    private val fallbackCode: Int = data.fallbackChar.code
+    private val effectsByCode: Map<Int, GlyphRect> by lazy {
+        val codes = ArrayList<Int>(data.advancesEm.size)
+        forEachGlyphCode { _, code -> codes += code }
+        EffectFields.tiles(codes.toIntArray(), data.effectUvBoundsPx, data.effectQuadMetricsEm, data.atlasHeight, atlasWidth, atlasHeight)
+    }
+    internal val fontName: String get() = data.name
+    internal val fallbackCode: Int = data.fallbackChar.code
+
+    /**
+     * The pairs [kerningFor] reads: the data's own, or those of the outlines the atlas was drawn from among
+     * its code points, read on first use. The built-in Roboto's outlines carry its `GPOS` kerning
+     * (`tools/fonts-tooling/subset_roboto_outlines.py`).
+     */
+    private val kerningPairs: KerningPairs by lazy {
+        data.kerning() ?: outlines()?.let { font ->
+            val codes = ArrayList<Int>(data.advancesEm.size)
+            forEachGlyphCode { _, code -> codes += code }
+            KerningPairs.read(font, codes.toIntArray())
+        } ?: KerningPairs.EMPTY
+    }
+
+    /** How many pairs of this font's code points it kerns. */
+    internal val kerningPairCount: Int get() = kerningPairs.size
 
     override val lineHeightEm: Float get() = data.lineHeightEm
+    override val lineAscentEm: Float get() = lineMetrics?.ascentEm ?: ascentEm
+    override val lineDescentEm: Float get() = lineMetrics?.descentEm ?: (lineHeightEm - ascentEm)
+    override val lineGapEm: Float get() = lineMetrics?.gapEm ?: 0f
 
     override fun uvFor(char: Char): GlyphRect? = glyphFor(char.code, FontWeight.Normal)
 
@@ -121,6 +200,9 @@ class PackedUiFont internal constructor(
 
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
         glyphsByCode[codePoint] ?: glyphsByCode[fallbackCode]
+
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        if (codePoint in glyphsByCode) effectsByCode[codePoint] else effectsByCode[fallbackCode]
 
     /**
      * A glyph's outline-exact ink box, in em, without the crop bleed and texel snap that
@@ -177,7 +259,38 @@ class PackedUiFont internal constructor(
         return glyphPx * maxOf(advanceEm, rightEdgeEm)
     }
 
+    override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float =
+        glyphPx * kerningPairs.em(left, right)
+
+    private val proportionalFont: UiFont by lazy { numericVariant(FontNumerals.Proportional) }
+    private val tabularFont: UiFont by lazy { numericVariant(FontNumerals.Tabular) }
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = when (numerals) {
+        null -> this
+        FontNumerals.Proportional -> proportionalFont
+        FontNumerals.Tabular -> tabularFont
+    }
+
+    private fun numericVariant(numerals: FontNumerals): UiFont {
+        val codes = ArrayList<Int>(data.advancesEm.size)
+        forEachGlyphCode { _, code -> codes += code }
+        return buildNumericPackedUiFont(
+            base = this,
+            bake = data.distanceFieldBake(),
+            codes = codes.toIntArray(),
+            outlines = outlines,
+            numerals = numerals,
+        )
+    }
+
+    /** The atlas's texels, then the effect field's in the rows under them ([EffectFields.stack]). */
     private fun decodeAtlasPixels(): ByteArray {
+        val atlas = decodeGlyphPixels()
+        val field = data.effectFieldBytes() ?: return atlas
+        return EffectFields.stack(atlas, data.atlasWidth, data.atlasHeight, field, data.effectAtlasWidth, data.effectAtlasHeight)
+    }
+
+    private fun decodeGlyphPixels(): ByteArray {
         val decoded = data.atlasBytes()
         // An MTSDF atlas is already RGBA -- RGB carries the multi-channel distance the shader
         // takes a median of, A a true signed distance. Handing it back verbatim is the point;
@@ -270,23 +383,28 @@ class PackedUiFont internal constructor(
             inkByCode[char.code]?.heightEm?.takeIf { it > 0f }
         } ?: super.capHeightEm
 
-    private fun computeVisibleBand(): Pair<Float, Float> {
-        var metricIndex = 0
+    /**
+     * The ink band of the atlas's glyphs, without the Latin-1 Supplement and Latin Extended-A letters and signs.
+     * Their accents, cedillas, commas below (Ģ, ļ) and § reach past the line box a font is laid out in, by
+     * design, and counting them would grow the deepest descender [descentEm] reports, and with it the line
+     * `TextLineBox` keeps the ink inside of, by a pixel at sizes such as 12, 16 and 17 for every line of text
+     * a font with the wider set draws. A font with no glyph outside them is measured by all of them.
+     */
+    private fun computeVisibleBand(): Pair<Float, Float> =
+        visibleBand(skipLatinMarks = true) ?: visibleBand(skipLatinMarks = false) ?: (0f to 1f)
+
+    private fun visibleBand(skipLatinMarks: Boolean): Pair<Float, Float>? {
         var top = Float.POSITIVE_INFINITY
         var bottom = Float.NEGATIVE_INFINITY
-        forEachGlyphCode { _, _ ->
-            val offsetYEm = data.inkMetricsEm[metricIndex + 1]
-            val heightEm = data.inkMetricsEm[metricIndex + 3]
-            if (heightEm > 0f) {
+        forEachGlyphCode { glyph, code ->
+            val offsetYEm = data.inkMetricsEm[glyph * 4 + 1]
+            val heightEm = data.inkMetricsEm[glyph * 4 + 3]
+            if (heightEm > 0f && !(skipLatinMarks && code in LATIN_SUPPLEMENT_FIRST..LATIN_EXTENDED_A_LAST)) {
                 top = minOf(top, offsetYEm)
                 bottom = maxOf(bottom, offsetYEm + heightEm)
             }
-            metricIndex += 4
         }
-        if (!top.isFinite() || !bottom.isFinite() || bottom <= top) {
-            return 0f to 1f
-        }
-        return top to bottom
+        return if (top.isFinite() && bottom.isFinite() && bottom > top) top to bottom else null
     }
 
     private companion object {
@@ -296,3 +414,7 @@ class PackedUiFont internal constructor(
         const val RGBA_CHANNELS = 4
     }
 }
+
+/** U+00A0 to U+017F: Latin-1 Supplement and Latin Extended-A, which [PackedUiFont]'s ink band leaves out. */
+private const val LATIN_SUPPLEMENT_FIRST = 0x00A0
+private const val LATIN_EXTENDED_A_LAST = 0x017F

@@ -60,10 +60,13 @@ internal class WebGpuContentFeatureGpu(
 
     override suspend fun addDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload? {
         val pass = depthPass ?: return null
-        val caster = DepthPrePassFeature.ContentCaster(
+        val shaderCode = depth.vertexShader.resolveBytes()
+        // The content pipeline's own group-0 layout, so its bind group binds unchanged. The depth
+        // pipeline's layout keeps it; this reference ends once that is built.
+        val depthPipeline = pipeline.groupZeroLayout.use { groupZero ->
             DepthOnlyPipeline(
                 graphicsDevice = graphicsDevice,
-                shaderCode = depth.vertexShader.resolveBytes(),
+                shaderCode = shaderCode,
                 vertexFormat = depth.vertexFormat,
                 vertexEntryPoint = depth.vertexEntryPoint,
                 fragmentEntryPoint = depth.fragmentEntryPoint,
@@ -71,11 +74,10 @@ internal class WebGpuContentFeatureGpu(
                 frontFace = depth.frontFace,
                 bindingsByGroup = depth.bindingsByGroup,
                 bindingsMetadataAvailable = depth.bindingsMetadataAvailable,
-                // The content pipeline's own group-0 layout, so its bind group binds unchanged.
-                groupZeroLayout = pipeline.groupZeroLayout,
-            ),
-            source,
-        )
+                groupZeroLayout = groupZero,
+            )
+        }
+        val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
         pass.contentCasters += caster
         return ContentUpload(null) {
             pass.contentCasters -= caster

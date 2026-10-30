@@ -1779,3 +1779,20 @@ generic image-pass executor (`VulkanImagePassExecutor`, `WebGpuImagePassExecutor
 transient targets and mid-pass snapshot/resume; neither `render:contract` nor either backend names
 any specific effect (`verifyBackendLayering` and `verifyRenderContractBoundary`).
 
+### D41 — Plugin trust formats live in Core (`:awake:plugin-archive`)
+**DECIDED (2026-10-25).** Full record:
+[decisions/D41-plugin-trust-formats.md](../architecture/decisions/D41-plugin-trust-formats.md).
+
+Plugin manifests, the `.awakeplugin` archive, its signature checks, root-signed publisher key and
+revocation lists, and `plugins.lock.json` are one public Core module, verified on every target
+through each platform's crypto provider. Install, resolution, catalogue and trust policy stay with
+the host. Amends D35, which had put signatures on the Studio side.
+
+### D42 — Content bundle encryption (`:awake:project`)
+**DECIDED (2026-10-30).** Full record:
+[decisions/D42-content-bundle-encryption.md](../architecture/decisions/D42-content-bundle-encryption.md).
+
+Bundle members are sealed one by one with AES-256-GCM under an HKDF-derived key and nonce (bundle
+format 2, index format 4), so range reads still authenticate one member and bundles stay
+deterministic. Core takes the key through `BundleKeyProvider` and caches ciphertext only; how the
+key is fetched or kept offline is the app's. A key shipped in the client is deterrence only.

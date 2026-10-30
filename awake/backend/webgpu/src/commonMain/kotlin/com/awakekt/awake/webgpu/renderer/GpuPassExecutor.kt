@@ -64,7 +64,8 @@ internal class RendererGpuPassExecutor(
                 RenderPassDescriptor(
                     colorAttachments = listOf(
                         RenderPassColorAttachment(
-                            view = colorView,
+                            view = swapchainManager.multisampleColorView ?: colorView,
+                            resolveTarget = colorView.takeIf { swapchainManager.multisampleColorView != null },
                             loadOp = GPULoadOp.Clear,
                             clearValue = clearColorValue(input.environment),
                             storeOp = GPUStoreOp.Store,
@@ -129,6 +130,13 @@ internal class RendererGpuPassExecutor(
             // Staged UI is one frame's: a frame that stages none draws none, not the last one again.
             uiRuns = emptyList()
             submitRenderCommands(encoder)
+            colorView.close()
+            presentedColor = PresentedColor(
+                colorTexture,
+                renderingContext.width.toInt(),
+                renderingContext.height.toInt(),
+                swapchainManager.imageFormatWebGpu,
+            )
             gpuFrameTimer?.publish()
             statsCounter.publish(gpuFrameTimer?.lastMs)
         }
@@ -165,7 +173,8 @@ internal class RendererGpuPassExecutor(
             RenderPassDescriptor(
                 colorAttachments = listOf(
                     RenderPassColorAttachment(
-                        view = offscreen.colorView,
+                        view = offscreen.sceneColorView,
+                        resolveTarget = offscreen.sceneResolveView,
                         loadOp = GPULoadOp.Clear,
                         clearValue = renderer.clearColorValue(input.environment),
                         storeOp = GPUStoreOp.Store,
@@ -244,6 +253,7 @@ internal class RendererGpuPassExecutor(
         val height = renderingContext.height.toInt()
         quadPipeline.writeScreenSize(width.toFloat(), height.toFloat())
         renderer.uiGlyphRenderPipeline?.writeScreenSize(width.toFloat(), height.toFloat())
+        renderer.uiDecoratedGlyphRenderPipeline?.writeScreenSize(width.toFloat(), height.toFloat())
         renderer.uiTextureRenderPipelines.values.forEach {
             it.writeScreenSize(width.toFloat(), height.toFloat())
         }
@@ -286,6 +296,13 @@ internal class RendererGpuPassExecutor(
         context.encoder.end()
     }
 }
+
+internal class PresentedColor(
+    val texture: io.ygdrasil.webgpu.GPUTexture,
+    val width: Int,
+    val height: Int,
+    val format: io.ygdrasil.webgpu.GPUTextureFormat,
+)
 
 @Suppress("UnusedParameter")
 private fun recordPostPasses(

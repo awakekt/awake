@@ -30,8 +30,8 @@ internal class CliArguments private constructor(
     fun required(index: Int, what: String): String = words.getOrNull(index) ?: throw UsageException("missing $what")
 
     companion object {
-        private val FLAGS = setOf("json", "dry-run", "help")
-        private val VALUED = setOf("project", "parent", "output", "width", "height", "frames", "backend", "view", "camera", "code")
+        private val FLAGS = setOf("json", "dry-run", "help", "opaque-ids", "prune")
+        private val VALUED = setOf("project", "parent", "output", "width", "height", "frames", "backend", "view", "camera", "code", "group", "depth", "target-mb", "salt", "key-id", "key-file", "key-env")
 
         /** Splits [args] into words and options, refusing an option it doesn't know. */
         fun parse(args: List<String>): CliArguments {

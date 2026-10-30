@@ -45,6 +45,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanPipelineHandle
 import com.awakekt.awake.vulkan.pipeline.createShaderModule
 import com.awakekt.awake.vulkan.pipeline.toShaderIntArray
 import com.awakekt.awake.vulkan.pipeline.toVkFormat
+import com.awakekt.awake.vulkan.pipeline.toVkSampleCount
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 
 /**
@@ -64,6 +65,8 @@ class LineRenderPipeline(
     private val framesInFlight: Int = 1,
     private val vertexEntryPoint: String = "vertexMain",
     private val fragmentEntryPoint: String = "fragmentMain",
+    /** Matches the colour/depth attachments this line pass draws into. */
+    private val sampleCount: Int = 1,
 ) : VulkanPipelineHandle {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -193,7 +196,7 @@ class LineRenderPipeline(
                 ),
             )
         }
-        val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo())
+        val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo(rasterizationSamples = sampleCount.toVkSampleCount()))
 
         val inputAssemblyInfo = arrayOf(
             VkPipelineInputAssemblyStateCreateInfo(

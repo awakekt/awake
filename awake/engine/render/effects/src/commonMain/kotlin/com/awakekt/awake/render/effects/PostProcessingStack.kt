@@ -7,6 +7,7 @@ package com.awakekt.awake.render.effects
 
 import com.awakekt.awake.render.imagepass.ImagePassAddressMode
 import com.awakekt.awake.render.imagepass.ImagePassChain
+import com.awakekt.awake.render.imagepass.ImagePassColorEncoding
 import com.awakekt.awake.render.imagepass.ImagePassDestination
 import com.awakekt.awake.render.imagepass.ImagePassFilterMode
 import com.awakekt.awake.render.imagepass.ImagePassRect
@@ -30,13 +31,27 @@ object PostProcessingStack {
     const val TRANSIENT_BLOOM_BRIGHT_ID: String = "bloom_bright"
     const val TRANSIENT_LDR_SCENE_ID: String = "ldr_scene_color"
 
+    /**
+     * A copy of the target's colour that a final tone-mapping step reads, so it never samples the
+     * target it draws into (#1010).
+     */
+    const val TRANSIENT_SCENE_COPY_ID: String = "scene_color_copy"
+
     fun levelTargetId(level: Int): String = "bloom_level_$level"
 
     /**
      * Builds an [ImagePassChain] executing the ordered list of [effects] inside [targetContext].
      *
+     * The tone-mapping step follows [ImagePassTargetContext.colorEncoding]:
+     * - a [ToneMappingGradeEffect] in [effects] runs as listed, in its own [ToneMappingMode];
+     * - with none listed, a [ImagePassColorEncoding.LinearHdr] target gets the default
+     *   [ToneMappingMode.PbrNeutral] step, since its colour is not displayable yet;
+     * - with none listed, a [ImagePassColorEncoding.DisplayReferred] target gets no tone-mapping
+     *   step: FXAA and custom effects read a copy of the target's colour as the scene drew it.
+     *   Only bloom, which composites in that step, adds a [ToneMappingMode.Passthrough] one.
+     *
      * Returns [ImagePassChain.Empty] when [targetContext] has [EffectQuality.Off], when dimensions
-     * are zero or negative, or when no effects are enabled.
+     * are zero or negative, or when no enabled effect leaves a step to run.
      */
     @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth", "ReturnCount")
     fun buildChain(
@@ -53,7 +68,7 @@ object PostProcessingStack {
         val active = effects.filter { it.enabled }
         if (active.isEmpty()) return ImagePassChain.Empty
 
-        val toneMapping = active.filterIsInstance<ToneMappingGradeEffect>().firstOrNull() ?: ToneMappingGradeEffect()
+        val listedToneMapping = active.filterIsInstance<ToneMappingGradeEffect>().firstOrNull()
         val bloom = active.filterIsInstance<BloomEffect>().firstOrNull()?.takeIf { it.intensity > 0f }
         val fxaa = active.filterIsInstance<FxaaEffect>().firstOrNull()?.takeIf { it.quality != EffectQuality.Off }
         val customEffects = active.filterIsInstance<CustomPostEffect>()
@@ -169,65 +184,56 @@ object PostProcessingStack {
         }
 
         // 2. Tone-mapping & Color Grading
+        val toneMapping = listedToneMapping ?: when {
+            targetContext.colorEncoding == ImagePassColorEncoding.LinearHdr -> ToneMappingGradeEffect()
+            finalBloomTargetId != null -> ToneMappingGradeEffect(mode = ToneMappingMode.Passthrough)
+            else -> null
+        }
         val hasSubsequentSteps = fxaa != null || customEffects.isNotEmpty()
+        if (toneMapping == null && !hasSubsequentSteps) return ImagePassChain.Empty
+        // FXAA and custom effects read display colour from TRANSIENT_LDR_SCENE_ID: the
+        // tone-mapping step's output, or else a copy of the target's own colour, which a
+        // display-referred scene already wrote ready for display. A copy, not the snapshot itself:
+        // a step that samples the snapshot while drawing into the active target reads the image it
+        // writes on a backend that snapshots in place.
+        val ldrSource = ImagePassSource.TransientTarget(TRANSIENT_LDR_SCENE_ID)
         if (hasSubsequentSteps) {
             targets += ImagePassTargetSpec(
                 id = TRANSIENT_LDR_SCENE_ID,
                 width = targetContext.width,
                 height = targetContext.height,
-                format = ImagePassTargetFormat.Rgba8Unorm,
+                format = if (toneMapping != null) ImagePassTargetFormat.Rgba8Unorm else ImagePassTargetFormat.DestinationMatch,
             )
         }
-
-        val toneMapDestination = if (hasSubsequentSteps) {
-            ImagePassDestination.TransientTarget(TRANSIENT_LDR_SCENE_ID)
-        } else {
-            ImagePassDestination.ActiveTarget(blendEnabled = false)
+        // A last tone-mapping step draws into the active target, so it reads a copy of the target's
+        // colour rather than the snapshot: a tone-only stack, and bloom's Passthrough composite.
+        val toneReadsCopy = toneMapping != null && !hasSubsequentSteps
+        if (toneReadsCopy) {
+            targets += ImagePassTargetSpec(
+                id = TRANSIENT_SCENE_COPY_ID,
+                width = targetContext.width,
+                height = targetContext.height,
+                format = ImagePassTargetFormat.DestinationMatch,
+            )
+            steps += copyTargetStep(targetContext, linearSampler, TRANSIENT_SCENE_COPY_ID)
         }
-
-        val toneMapShaderId = if (finalBloomTargetId != null) {
-            PostProcessingShaders.TONE_MAPPING_GRADE_BLOOM_SHADER_ID
+        if (toneMapping == null) {
+            steps += copyTargetStep(targetContext, linearSampler, TRANSIENT_LDR_SCENE_ID)
         } else {
-            PostProcessingShaders.TONE_MAPPING_GRADE_SHADER_ID
-        }
-
-        val toneMapInputs = mutableListOf<ImagePassTextureBinding>()
-        toneMapInputs += ImagePassTextureBinding(
-            binding = 1,
-            source = ImagePassSource.DestinationSnapshot,
-            sampler = linearSampler,
-        )
-        if (finalBloomTargetId != null) {
-            toneMapInputs += ImagePassTextureBinding(
-                binding = 3,
-                source = ImagePassSource.TransientTarget(finalBloomTargetId),
+            steps += toneMappingStep(
+                toneMapping = toneMapping,
+                bloomIntensity = if (finalBloomTargetId != null) bloom?.intensity ?: 0f else 0f,
+                bloomTargetId = finalBloomTargetId,
+                toLdrTarget = hasSubsequentSteps,
+                source = if (toneReadsCopy) {
+                    ImagePassSource.TransientTarget(TRANSIENT_SCENE_COPY_ID)
+                } else {
+                    ImagePassSource.DestinationSnapshot
+                },
+                targetContext = targetContext,
                 sampler = linearSampler,
             )
         }
-
-        steps += ImagePassStep(
-            shader = ImagePassShaderRegistry.require(toneMapShaderId),
-            inputs = toneMapInputs,
-            destination = toneMapDestination,
-            uniformData = PostProcessingShaders.packToneMappingGradeUniforms(
-                exposure = toneMapping.exposure,
-                contrast = toneMapping.contrast,
-                saturation = toneMapping.saturation,
-                bloomIntensity = if (finalBloomTargetId != null) bloom?.intensity ?: 0f else 0f,
-                whiteBalanceTemperature = toneMapping.whiteBalanceTemperature,
-                whiteBalanceTint = toneMapping.whiteBalanceTint,
-                lift = toneMapping.lift,
-                gamma = toneMapping.gamma,
-                gain = toneMapping.gain,
-            ),
-            quadVertices = buildImagePassQuadVertices(
-                rect = ImagePassRect(0f, 0f, targetContext.width.toFloat(), targetContext.height.toFloat()),
-                targetWidth = targetContext.width,
-                targetHeight = targetContext.height,
-                clipSpace = targetContext.clipSpace,
-            ),
-            quadIndices = ImagePassQuadIndices,
-        )
 
         // 3. Custom post-processing stages
         for (custom in customEffects) {
@@ -237,7 +243,7 @@ object PostProcessingStack {
                 inputs = listOf(
                     ImagePassTextureBinding(
                         binding = 1,
-                        source = ImagePassSource.TransientTarget(TRANSIENT_LDR_SCENE_ID),
+                        source = ldrSource,
                         sampler = linearSampler,
                     ),
                 ),
@@ -260,7 +266,7 @@ object PostProcessingStack {
                 inputs = listOf(
                     ImagePassTextureBinding(
                         binding = 1,
-                        source = ImagePassSource.TransientTarget(TRANSIENT_LDR_SCENE_ID),
+                        source = ldrSource,
                         sampler = linearSampler,
                     ),
                 ),
@@ -269,6 +275,7 @@ object PostProcessingStack {
                     width = targetContext.width,
                     height = targetContext.height,
                     qualityTier = fxaa.quality.ordinal,
+                    lumaInAlpha = toneMapping != null,
                 ),
                 quadVertices = buildImagePassQuadVertices(
                     rect = ImagePassRect(0f, 0f, targetContext.width.toFloat(), targetContext.height.toFloat()),
@@ -284,6 +291,92 @@ object PostProcessingStack {
             sourceBounds = ImagePassRect(0f, 0f, targetContext.width.toFloat(), targetContext.height.toFloat()),
             transientTargets = targets,
             steps = steps,
+        )
+    }
+
+    /** Copies the target's colour, as the scene drew it, into the transient target [destinationId]. */
+    private fun copyTargetStep(
+        targetContext: ImagePassTargetContext,
+        sampler: ImagePassSamplerSpec,
+        destinationId: String,
+    ): ImagePassStep =
+        ImagePassStep(
+            shader = ImagePassShaderRegistry.require(ImageEffectShaders.COPY_SHADER_ID),
+            inputs = listOf(
+                ImagePassTextureBinding(binding = 1, source = ImagePassSource.DestinationSnapshot, sampler = sampler),
+            ),
+            destination = ImagePassDestination.TransientTarget(destinationId),
+            uniformData = ImageEffectShaders.packCopyUniforms(0f, 0f, 1f, 1f),
+            quadVertices = buildImagePassQuadVertices(
+                rect = ImagePassRect(0f, 0f, targetContext.width.toFloat(), targetContext.height.toFloat()),
+                targetWidth = targetContext.width,
+                targetHeight = targetContext.height,
+                clipSpace = targetContext.clipSpace,
+            ),
+            quadIndices = ImagePassQuadIndices,
+            clearDestination = true,
+        )
+
+    /** The tone-mapping and grading step: reads [source], the target's colour, plus bloom when there is some. */
+    @Suppress("LongParameterList")
+    private fun toneMappingStep(
+        toneMapping: ToneMappingGradeEffect,
+        bloomIntensity: Float,
+        bloomTargetId: String?,
+        toLdrTarget: Boolean,
+        source: ImagePassSource,
+        targetContext: ImagePassTargetContext,
+        sampler: ImagePassSamplerSpec,
+    ): ImagePassStep {
+        val toneMapDestination = if (toLdrTarget) {
+            ImagePassDestination.TransientTarget(TRANSIENT_LDR_SCENE_ID)
+        } else {
+            ImagePassDestination.ActiveTarget(blendEnabled = false)
+        }
+
+        val toneMapShaderId = if (bloomTargetId != null) {
+            PostProcessingShaders.TONE_MAPPING_GRADE_BLOOM_SHADER_ID
+        } else {
+            PostProcessingShaders.TONE_MAPPING_GRADE_SHADER_ID
+        }
+
+        val toneMapInputs = mutableListOf<ImagePassTextureBinding>()
+        toneMapInputs += ImagePassTextureBinding(
+            binding = 1,
+            source = source,
+            sampler = sampler,
+        )
+        if (bloomTargetId != null) {
+            toneMapInputs += ImagePassTextureBinding(
+                binding = 3,
+                source = ImagePassSource.TransientTarget(bloomTargetId),
+                sampler = sampler,
+            )
+        }
+
+        return ImagePassStep(
+            shader = ImagePassShaderRegistry.require(toneMapShaderId),
+            inputs = toneMapInputs,
+            destination = toneMapDestination,
+            uniformData = PostProcessingShaders.packToneMappingGradeUniforms(
+                exposure = toneMapping.exposure,
+                contrast = toneMapping.contrast,
+                saturation = toneMapping.saturation,
+                bloomIntensity = bloomIntensity,
+                whiteBalanceTemperature = toneMapping.whiteBalanceTemperature,
+                whiteBalanceTint = toneMapping.whiteBalanceTint,
+                lift = toneMapping.lift,
+                gamma = toneMapping.gamma,
+                gain = toneMapping.gain,
+                mode = toneMapping.mode,
+            ),
+            quadVertices = buildImagePassQuadVertices(
+                rect = ImagePassRect(0f, 0f, targetContext.width.toFloat(), targetContext.height.toFloat()),
+                targetWidth = targetContext.width,
+                targetHeight = targetContext.height,
+                clipSpace = targetContext.clipSpace,
+            ),
+            quadIndices = ImagePassQuadIndices,
         )
     }
 
@@ -343,6 +436,7 @@ object PostProcessingStack {
         saturation: Float = 1.0f,
         bloom: FloatArray? = null,
         bloomIntensity: Float = 0.0f,
+        mode: ToneMappingMode = ToneMappingMode.PbrNeutral,
     ): FloatArray {
         var r = radiance[0] + (bloom?.get(0) ?: 0f) * bloomIntensity
         var g = radiance[1] + (bloom?.get(1) ?: 0f) * bloomIntensity
@@ -376,6 +470,10 @@ object PostProcessingStack {
         r = (luma + (r - luma) * saturation).coerceAtLeast(0f)
         g = (luma + (g - luma) * saturation).coerceAtLeast(0f)
         b = (luma + (b - luma) * saturation).coerceAtLeast(0f)
+
+        if (mode == ToneMappingMode.Passthrough) {
+            return floatArrayOf(r, g, b, r * 0.2126f + g * 0.7152f + b * 0.0722f)
+        }
 
         // 6. Khronos PBR Neutral curve
         val startCompression = 0.76f

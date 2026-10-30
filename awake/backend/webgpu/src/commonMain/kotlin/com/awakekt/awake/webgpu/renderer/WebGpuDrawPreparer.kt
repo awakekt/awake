@@ -37,6 +37,9 @@ internal class WebGpuDrawPreparer(
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
 
+    /** The shadow depth pipelines set `unclippedDepth` exactly when the device can honour it. */
+    override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.unclippedDepth
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,

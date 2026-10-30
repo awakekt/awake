@@ -20,8 +20,14 @@ import com.awakekt.awake.core.math.Vec3f
  * actually multiplies by, and it stays meaningful for a zero-length sweep where a distance
  * would not.
  *
+ * Construction rejects a non-finite point/normal, a zero normal, or a fraction outside `[0, 1]`.
+ * A malformed backend result must fail before a caller uses it to advance a position. It is not
+ * a clear path, and no fallback contact direction is invented. Vectors remain mutable; their owner
+ * must preserve these invariants after construction.
+ *
  * @property handle The body that was struck by the swept shape.
- * @property point World-space position where contact occurred.
+ * @property point World-space position where contact occurred. For a sweep that starts overlapping
+ *   (fraction 0), the struck surface's point deepest inside the swept shape.
  * @property normal Surface normal pointing away from the struck body at [point].
  * @property fraction Normalized distance along the sweep vector in range `[0, 1]`.
  */
@@ -30,4 +36,16 @@ data class ShapeCastHit(
     val point: Vec3f,
     val normal: Vec3f,
     val fraction: Float,
-)
+) {
+    init {
+        if (!point.hasFiniteComponents()) throw InvalidShapeCastResultException("ShapeCastHit point must be finite: $point")
+        if (!normal.hasFiniteComponents()) throw InvalidShapeCastResultException("ShapeCastHit normal must be finite: $normal")
+        if (normal.x == 0f && normal.y == 0f && normal.z == 0f) throw InvalidShapeCastResultException("ShapeCastHit normal must be nonzero: $normal")
+        if (!fraction.isFinite() || fraction !in 0f..1f) throw InvalidShapeCastResultException("ShapeCastHit fraction must be finite and in [0, 1]: $fraction")
+    }
+}
+
+private fun Vec3f.hasFiniteComponents(): Boolean = x.isFinite() && y.isFinite() && z.isFinite()
+
+/** A backend contact violated the query contract; callers may block the affected operation. */
+class InvalidShapeCastResultException(message: String) : IllegalArgumentException(message)

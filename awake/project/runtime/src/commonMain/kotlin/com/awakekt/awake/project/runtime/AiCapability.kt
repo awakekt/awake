@@ -23,7 +23,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.navigation.PathRequestSystem
 import com.awakekt.awake.navigation.grid.TileField
 import com.awakekt.awake.scene.ai.AgentIntentResetSystem
-import com.awakekt.awake.scene.ai.AiBehaviorBindings
+import com.awakekt.awake.scene.ai.AiSceneComponents
 import com.awakekt.awake.scene.ai.MovementAgentPlacement
 import com.awakekt.awake.scene.ai.chase.SceneChase
 import com.awakekt.awake.scene.ai.definition.AiDefinitionAttachSystem
@@ -40,6 +40,7 @@ import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.navigation.NavigationSceneComponents
 import com.awakekt.awake.scene.navigation.SceneNavigation
 import com.awakekt.awake.scene.physics.PhysicsBody
 import kotlin.reflect.KClass
@@ -70,7 +71,7 @@ import kotlin.reflect.KClass
  */
 internal object AiCapability : SceneCapability {
     override val id = "com.awakekt.awake.ai"
-    override val components = AiBehaviorBindings.bindings
+    override val components = AiSceneComponents.bindings + NavigationSceneComponents.bindings
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
         require(!scene.hasRouteBehaviours() || scene.navigation() != null) {

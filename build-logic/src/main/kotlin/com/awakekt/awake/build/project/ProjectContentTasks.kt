@@ -6,6 +6,7 @@
 package com.awakekt.awake.build.project
 
 import java.io.File
+import java.lang.reflect.InvocationTargetException
 import java.security.MessageDigest
 import javax.inject.Inject
 import kotlinx.serialization.json.Json
@@ -27,27 +28,73 @@ import kotlinx.serialization.json.put
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
+import org.gradle.workers.WorkAction
+import org.gradle.workers.WorkParameters
+import org.gradle.workers.WorkerExecutor
 
 abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactory) {
     val manifestFile: RegularFileProperty = objects.fileProperty()
     val assetsLockFile: RegularFileProperty = objects.fileProperty()
     val indexOutputFile: RegularFileProperty = objects.fileProperty()
+    val bundlesOutputDirectory: DirectoryProperty = objects.directoryProperty()
     val assetRoots: ListProperty<String> = objects.listProperty(String::class.java)
     val indexRoots: ListProperty<String> = objects.listProperty(String::class.java)
     val indexRootPath: Property<String> = objects.property(String::class.java)
     val indexBaseUrl: Property<String> = objects.property(String::class.java)
+
+    /** Globs of project-relative paths in the public sign-in set, such as every file under `strings`; see [publicContentSet]. */
+    val publicFiles: ListProperty<String> = objects.listProperty(String::class.java)
+
+    /** Scenes in the public sign-in set, each with every file it names; see [publicContentSet]. */
+    val publicScenes: ListProperty<String> = objects.listProperty(String::class.java)
+
+    /** Where `generateProjectIndex` writes the public index, when [publicFiles] or [publicScenes] declare a public set. */
+    val publicIndexOutputFile: RegularFileProperty = objects.fileProperty()
+
+    /** Where `generatePublicContentBundles` writes the public set's bundles and bundled index, apart from the protected ones. */
+    val publicBundlesOutputDirectory: DirectoryProperty = objects.directoryProperty()
+
+    val bundleGrouping: Property<String> = objects.property(String::class.java)
+    val bundleFolderDepth: Property<Int> = objects.property(Int::class.java)
+    val targetBundleBytes: Property<Long> = objects.property(Long::class.java)
+    val bundleOpaqueIds: Property<Boolean> = objects.property(Boolean::class.java)
+    val bundlePathSalt: Property<String> = objects.property(String::class.java)
+    val bundleUrlPrefix: Property<String> = objects.property(String::class.java)
+
+    /**
+     * With a value, `generateContentBundles` seals bundle members under the key this names, read from
+     * [bundleKeyFile] or the environment variable [bundleKeyEnvironmentVariable] (exactly one), never
+     * from the build script. See the encrypted content guide.
+     */
+    val bundleKeyId: Property<String> = objects.property(String::class.java)
+    val bundleKeyFile: RegularFileProperty = objects.fileProperty()
+    val bundleKeyEnvironmentVariable: Property<String> = objects.property(String::class.java)
+
+    /**
+     * Whether `generateContentBundles` deletes `.awkb` files under [bundlesOutputDirectory] that the new
+     * index doesn't list. On by default only while that folder is inside the build folder: a publish
+     * folder that still serves the previous release's bundles keeps them for players mid-update.
+     */
+    val pruneStaleBundles: Property<Boolean> = objects.property(Boolean::class.java)
+    val engineVersion: Property<String> = objects.property(String::class.java)
 }
 
 @DisableCachingByDefault(because = "Validates the mutable project directory and has no declared output")
@@ -337,6 +384,20 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val indexedFiles: ConfigurableFileCollection
 
+    /** Globs of the public sign-in set; with [publicScenes] empty too, the index lists every file, as before. */
+    @get:Input
+    abstract val publicFiles: ListProperty<String>
+
+    @get:Input
+    abstract val publicScenes: ListProperty<String>
+
+    /**
+     * The public index, of the public set alone, written when one is declared; [outputFile] then lists
+     * the protected files, every other file, so each file is in exactly one index.
+     */
+    @get:OutputFile
+    abstract val publicIndexOutputFile: RegularFileProperty
+
     @TaskAction
     fun generate() {
         val root = project.projectDir
@@ -350,6 +411,25 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
             }
         }.distinctBy { it.relativeTo(root).invariantSeparatorsPath }
             .sortedBy { it.relativeTo(root).invariantSeparatorsPath }
+        val publicSet = try {
+            publicContentSet(root, files.map { it.relativeTo(root).invariantSeparatorsPath }, publicFiles.get(), publicScenes.get())
+        } catch (e: IllegalArgumentException) {
+            throw GradleException(e.message.orEmpty(), e)
+        }
+        val publicIndex = publicIndexOutputFile.get().asFile
+        if (publicSet.isEmpty()) {
+            publicIndex.delete()
+            writeIndex(outputFile.get().asFile, root, files)
+            logger.lifecycle("Generated project index: ${files.size} files")
+            return
+        }
+        val (inPublic, inProtected) = files.partition { it.relativeTo(root).invariantSeparatorsPath in publicSet }
+        writeIndex(publicIndex, root, inPublic)
+        writeIndex(outputFile.get().asFile, root, inProtected)
+        logger.lifecycle("Generated project indexes: ${inPublic.size} public files, ${inProtected.size} protected files")
+    }
+
+    private fun writeIndex(output: File, root: File, files: List<File>) {
         val baseUrl = baseUrl.get().trimEnd('/')
         val document = buildJsonObject {
             put("formatVersion", 2)
@@ -366,11 +446,188 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
                 }
             })
         }
-        outputFile.get().asFile.apply {
+        output.apply {
             parentFile.mkdirs()
             writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), document) + "\n")
         }
-        logger.lifecycle("Generated project index: ${files.size} files")
+    }
+}
+
+/**
+ * Packs a loose `project.index.json` and the project files it names into content bundles (`.awkb`) and
+ * writes the bundled `project.index.json` beside them, running `:awake:project`'s writer inside an
+ * isolated Gradle worker so `build-logic` carries no second bundle writer.
+ */
+@DisableCachingByDefault(because = "Packs mutable project content files into content-addressed bundle archives")
+abstract class GenerateContentBundlesTask : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val indexFile: RegularFileProperty
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val indexedFiles: ConfigurableFileCollection
+
+    @get:Internal
+    abstract val projectDirectory: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @get:Input
+    abstract val grouping: Property<String>
+
+    @get:Input
+    abstract val folderDepth: Property<Int>
+
+    @get:Input
+    abstract val targetBundleBytes: Property<Long>
+
+    @get:Input
+    abstract val opaqueIds: Property<Boolean>
+
+    @get:Optional
+    @get:Input
+    abstract val pathSalt: Property<String>
+
+    @get:Input
+    abstract val bundleUrlPrefix: Property<String>
+
+    /** Whether `.awkb` files under [outputDirectory] that the new index doesn't list are deleted. */
+    @get:Input
+    abstract val pruneStaleBundles: Property<Boolean>
+
+    /** The id of the key bundle members are sealed under, or none for plaintext bundles. */
+    @get:Optional
+    @get:Input
+    abstract val keyId: Property<String>
+
+    /** The key file; read by the worker, never stored by Gradle. [keyFingerprint] tracks its contents. */
+    @get:Internal
+    abstract val keyFile: RegularFileProperty
+
+    /** The environment variable holding the key; read by the worker, never stored by Gradle. */
+    @get:Optional
+    @get:Input
+    abstract val keyEnvironmentVariable: Property<String>
+
+    /** A labelled SHA-256 of the key ([BundleKeyFingerprintSource]), so a new key reruns the task without Gradle keeping the key. */
+    @get:Optional
+    @get:Input
+    abstract val keyFingerprint: Property<String>
+
+    @get:Classpath
+    abstract val workerClasspath: ConfigurableFileCollection
+
+    @get:Inject
+    abstract val workerExecutor: WorkerExecutor
+
+    @TaskAction
+    fun generate() {
+        if (opaqueIds.get() && pathSalt.orNull.isNullOrBlank()) {
+            throw GradleException("projectContent.bundlePathSalt must be set when bundleOpaqueIds is true")
+        }
+        if (keyId.isPresent && keyFile.isPresent == keyEnvironmentVariable.isPresent) {
+            throw GradleException("projectContent.bundleKeyId needs exactly one of bundleKeyFile and bundleKeyEnvironmentVariable")
+        }
+        if (!keyId.isPresent && (keyFile.isPresent || keyEnvironmentVariable.isPresent)) {
+            throw GradleException("projectContent.bundleKeyFile and bundleKeyEnvironmentVariable need bundleKeyId")
+        }
+        val queue = workerExecutor.classLoaderIsolation {
+            classpath.from(workerClasspath)
+        }
+        queue.submit(GenerateContentBundlesWorkAction::class.java) {
+            indexFile.set(this@GenerateContentBundlesTask.indexFile)
+            projectDirectory.set(this@GenerateContentBundlesTask.projectDirectory)
+            outputDirectory.set(this@GenerateContentBundlesTask.outputDirectory)
+            grouping.set(this@GenerateContentBundlesTask.grouping)
+            folderDepth.set(this@GenerateContentBundlesTask.folderDepth)
+            targetBundleBytes.set(this@GenerateContentBundlesTask.targetBundleBytes)
+            opaqueIds.set(this@GenerateContentBundlesTask.opaqueIds)
+            pathSalt.set(this@GenerateContentBundlesTask.pathSalt)
+            bundleUrlPrefix.set(this@GenerateContentBundlesTask.bundleUrlPrefix)
+            pruneStaleBundles.set(this@GenerateContentBundlesTask.pruneStaleBundles)
+            keyId.set(this@GenerateContentBundlesTask.keyId)
+            keyFile.set(this@GenerateContentBundlesTask.keyFile)
+            keyEnvironmentVariable.set(this@GenerateContentBundlesTask.keyEnvironmentVariable)
+        }
+        queue.await()
+    }
+}
+
+interface GenerateContentBundlesParameters : WorkParameters {
+    val indexFile: RegularFileProperty
+    val projectDirectory: DirectoryProperty
+    val outputDirectory: DirectoryProperty
+    val grouping: Property<String>
+    val folderDepth: Property<Int>
+    val targetBundleBytes: Property<Long>
+    val opaqueIds: Property<Boolean>
+    val pathSalt: Property<String>
+    val bundleUrlPrefix: Property<String>
+    val pruneStaleBundles: Property<Boolean>
+    val keyId: Property<String>
+    val keyFile: RegularFileProperty
+    val keyEnvironmentVariable: Property<String>
+}
+
+abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBundlesParameters> {
+    override fun execute() {
+        val loader = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
+        // A contract with com.awakekt.awake:project of the plugin's own version; an overridden
+        // projectContent.engineVersion from another release may not have it.
+        val method = try {
+            Class.forName(WORKER_CLASS, true, loader).getMethod(
+                "run",
+                File::class.java,
+                File::class.java,
+                File::class.java,
+                String::class.java,
+                Int::class.javaPrimitiveType,
+                Long::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType,
+                String::class.java,
+                String::class.java,
+                Boolean::class.javaPrimitiveType,
+                String::class.java,
+                File::class.java,
+                String::class.java,
+            )
+        } catch (failure: ReflectiveOperationException) {
+            throw GradleException(
+                "generateContentBundles needs com.awakekt.awake:project of the same release as the " +
+                    "com.awakekt.awake.plugin.project-content plugin, and the one on its worker class path doesn't " +
+                    "match ($failure). Leave projectContent.engineVersion unset, or set it to the plugin's version.",
+                failure,
+            )
+        }
+        val stats = try {
+            method.invoke(
+                null,
+                parameters.indexFile.get().asFile,
+                parameters.projectDirectory.get().asFile,
+                parameters.outputDirectory.get().asFile,
+                parameters.grouping.get(),
+                parameters.folderDepth.get(),
+                parameters.targetBundleBytes.get(),
+                parameters.opaqueIds.get(),
+                parameters.pathSalt.orNull,
+                parameters.bundleUrlPrefix.get(),
+                parameters.pruneStaleBundles.get(),
+                parameters.keyId.orNull,
+                parameters.keyFile.orNull?.asFile,
+                parameters.keyEnvironmentVariable.orNull,
+            ) as LongArray
+        } catch (failure: InvocationTargetException) {
+            val cause = failure.targetException ?: failure
+            throw GradleException(cause.message ?: "Content bundle generation failed", cause)
+        }
+        Logging.getLogger(GenerateContentBundlesTask::class.java)
+            .lifecycle("Generated content bundles: ${stats[1]} files in ${stats[0]} bundles (${stats[3]} written)")
+    }
+
+    private companion object {
+        const val WORKER_CLASS = "com.awakekt.awake.project.ContentBundleGradleWorker"
     }
 }
 

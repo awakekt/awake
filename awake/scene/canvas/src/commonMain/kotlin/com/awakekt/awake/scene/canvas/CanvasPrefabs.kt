@@ -17,15 +17,15 @@ import com.awakekt.awake.scene.document.SceneValidator
 import com.awakekt.awake.ui.canvas.CanvasElement
 import kotlinx.serialization.json.Json
 
-/** Validates, reads and writes prefabs of `canvas_element` nodes, such as one [canvasPrefab] built. */
+/** Validates, reads and writes prefabs of canvas element nodes, such as one [canvasPrefab] built. */
 object CanvasPrefabs {
     /**
-     * The JSON a canvas prefab is written in: the prefab format's, pretty-printed, that knows a
-     * `canvas_element` whether or not anything registered it, and keeps any component it does not
+     * The JSON a canvas prefab is written in: the prefab format's, pretty-printed, that knows every
+     * canvas component, and the older `canvas_element`, whether or not anything registered them, and keeps any component it does not
      * know as data, so a prefab with another module's components reads and writes back whole.
      */
     val json: Json = Json(
-        SceneSerializers.createJson(mapOf(SceneCanvasElement::class to SceneCanvasElement.serializer()), keepUnknownComponents = true),
+        SceneSerializers.createJson(CanvasSceneComponents.bindings.associate { it.schemaClass to checkNotNull(it.serializer) }, keepUnknownComponents = true),
     ) { prettyPrint = true }
 
     /**
@@ -57,15 +57,15 @@ object CanvasPrefabs {
         addAll(SceneValidator.validate(SceneDocument(nodes = listOf(prefab.root))))
         val seen = HashMap<String, String>()
         prefab.root.visit(path = prefab.root.name ?: "#0") { node, path ->
-            val id = node.canvasElement()?.elementId?.takeIf(String::isNotEmpty) ?: return@visit
+            val id = node.canvasElementId()?.takeIf(String::isNotEmpty) ?: return@visit
             val first = seen[id]
-            if (first == null) seen[id] = path else add(SceneValidationIssue(path, "canvas_element.elementId \"$id\" is already used at $first"))
+            if (first == null) seen[id] = path else add(SceneValidationIssue(path, "elementId \"$id\" is already used at $first"))
         }
     }
 }
 
 /**
- * The node at or under this one whose `canvas_element` has [elementId], or null: how code finds an
+ * The node at or under this one whose canvas element has [elementId], or null: how code finds an
  * element of a prefab by its stable id rather than by a name that changes on a rename.
  *
  * @param elementId The element's [SceneCanvasElement.elementId].
@@ -73,12 +73,12 @@ object CanvasPrefabs {
  */
 fun SceneNode.findCanvasNode(elementId: String): SceneNode? = when {
     elementId.isEmpty() -> null
-    canvasElement()?.elementId == elementId -> this
+    canvasElementId() == elementId -> this
     else -> children.firstNotNullOfOrNull { it.findCanvasNode(elementId) }
 }
 
 /**
- * The node of this prefab whose `canvas_element` has [elementId], or null.
+ * The node of this prefab whose canvas element has [elementId], or null.
  *
  * @param elementId The element's [SceneCanvasElement.elementId].
  * @return The node, or null when no element has that id.
@@ -92,7 +92,9 @@ fun ScenePrefab.findCanvasNode(elementId: String): SceneNode? = root.findCanvasN
  * `Unit Frame 2`, keeps its own elements apart under its own root.
  *
  * It looks at every canvas element in the world, so look up once, when the prefab is placed, and
- * keep the entity rather than calling it every frame.
+ * keep the entity rather than calling it every frame. Code that builds the prefab and binds it
+ * declares its elements as [CanvasParts] instead, and [resolve]s them once into typed handles; this
+ * string lookup stays for tools and data-only lookups.
  *
  * @param root The placed prefab's root entity: the one its `prefab_link` node, or its root node, made.
  * @param elementId The element's [CanvasElement.elementId].
@@ -100,6 +102,7 @@ fun ScenePrefab.findCanvasNode(elementId: String): SceneNode? = root.findCanvasN
  */
 fun World.findCanvasElement(root: Entity, elementId: String): Entity? {
     if (elementId.isEmpty() || !isAlive(root)) return null
+    syncCanvasElements()
     var found: Entity? = null
     queryEach(CanvasElement::class) { entity, element ->
         if (found == null && element.elementId == elementId && isAtOrUnder(entity, root)) found = entity
@@ -108,7 +111,7 @@ fun World.findCanvasElement(root: Entity, elementId: String): Entity? {
 }
 
 /** Whether [entity] is [root] or has it as a [Transform] ancestor; a parent chain that loops is neither. */
-private fun World.isAtOrUnder(entity: Entity, root: Entity): Boolean {
+internal fun World.isAtOrUnder(entity: Entity, root: Entity): Boolean {
     var current: Entity? = entity
     var steps = 0
     while (current != null && steps++ <= MAX_DEPTH) {
@@ -121,7 +124,14 @@ private fun World.isAtOrUnder(entity: Entity, root: Entity): Boolean {
 /** Far deeper than any canvas: past it, a parent chain is taken to loop. */
 private const val MAX_DEPTH = 1024
 
-private fun SceneNode.canvasElement(): SceneCanvasElement? = components.firstNotNullOfOrNull { it as? SceneCanvasElement }
+/** The id of the canvas element this node is, saved in either form, or null when it is none. */
+private fun SceneNode.canvasElementId(): String? = components.firstNotNullOfOrNull {
+    when (it) {
+        is SceneCanvasRect -> it.elementId
+        is SceneCanvasElement -> it.elementId
+        else -> null
+    }
+}
 
 private fun SceneNode.visit(path: String, action: (SceneNode, String) -> Unit) {
     action(this, path)

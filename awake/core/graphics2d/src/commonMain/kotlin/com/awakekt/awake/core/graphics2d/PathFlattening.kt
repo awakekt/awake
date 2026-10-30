@@ -138,12 +138,20 @@ fun DrawPath.flattenContours(
                 repeat(steps) { step ->
                     val t = (step + 1) / steps.toFloat()
                     val angleDegrees = command.startDegrees + command.sweepDegrees * t
-                    val angleRadians = angleDegrees * PI.toFloat() / 180f
+                    // Cardinal endpoints must match adjacent line commands exactly. Trig's tiny
+                    // residual at 90/180/270 degrees creates backwards seam edges in large circles,
+                    // making a convex clip fail its turn-sign check and disappear on the GPU.
                     appendPoint(
-                        DrawPoint(
-                            x = centerX + cos(angleRadians) * radiusX,
-                            y = centerY + sin(angleRadians) * radiusY,
-                        ),
+                        when (angleDegrees % 360f) {
+                            0f -> DrawPoint(command.right, centerY)
+                            90f, -270f -> DrawPoint(centerX, command.bottom)
+                            180f, -180f -> DrawPoint(command.left, centerY)
+                            270f, -90f -> DrawPoint(centerX, command.top)
+                            else -> {
+                                val angleRadians = angleDegrees * PI.toFloat() / 180f
+                                DrawPoint(centerX + cos(angleRadians) * radiusX, centerY + sin(angleRadians) * radiusY)
+                            }
+                        },
                     )
                 }
             }

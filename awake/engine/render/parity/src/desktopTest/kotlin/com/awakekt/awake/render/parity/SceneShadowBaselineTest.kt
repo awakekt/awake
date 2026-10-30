@@ -27,10 +27,11 @@ import kotlin.test.fail
  * indices 0..2 are one full period of the speckle pattern the parity ratchet counts, so these
  * three frames cover every case the twelve do.
  *
- * Per-backend baselines: the two backends store colour differently (Vulkan's offscreen target is
- * UNORM, WebGPU's takes sRGB from the surface -- see [SceneBackendParityTest]), so one image
- * cannot serve both. Re-record with `-DAWAKE_RECORD_SNAPSHOTS=true` -- and per this repo's
- * verification rules, only after stating what should change and why.
+ * Per-backend baselines, recorded from each backend's own frame. Both offscreen targets are UNORM
+ * now, and WebGPU's frames match Vulkan's baselines within 1/255; while WebGPU's target took the
+ * surface's sRGB format, its frames were the sRGB encode of these and differed by up to 73/255
+ * (#1011). Re-record with `-DAWAKE_RECORD_SNAPSHOTS=true` -- and per this repo's verification
+ * rules, only after stating what should change and why.
  */
 class SceneShadowBaselineTest {
 

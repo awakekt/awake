@@ -14,6 +14,7 @@ import com.awakekt.awake.vulkan.enums.VkImageViewType
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanImages
+import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.info.VkFramebufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkImageCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkImageLayout2
@@ -42,6 +43,9 @@ import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
  * by [transitionToShaderReadOnly]) -- both compositing (sampling) and readback (a temporary
  * detour through `TRANSFER_SRC_OPTIMAL` and back, see `Renderer.readPixels`) start from
  * there.
+ *
+ * Depth and multisampled colour exist only for scene passes and are built by the first one (see
+ * [framebuffer]); a target that only UI and image passes draw into holds its 1x colour alone.
  */
 class OffscreenRenderTarget(
     graphicsDevice: GraphicsDevice,
@@ -50,6 +54,7 @@ class OffscreenRenderTarget(
     override val height: Int,
     colorFormat: Int,
     private val onDestroy: (() -> Unit)? = null,
+    private val sampleCount: Int = 1,
 ) : RenderTarget {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -78,18 +83,37 @@ class OffscreenRenderTarget(
     var sampler: Long = 0
         private set
 
-    private var depthImage: Long = 0
-    private var depthImageMemory: Long = 0
-    private var depthImageView: Long = 0
+    private val colorFormat = colorFormat
+    private var colorBytes = 0L
+    private var scene: SceneAttachments? = null
 
     /**
      * Framebuffer binding [colorImageView] and the target's own depth attachment, built for the
-     * render pass passed at construction.
+     * render pass passed at construction. The first read allocates the scene attachments: depth
+     * and, above 1x, multisampled colour. A target that only UI passes draw into never reads it.
      */
-    var framebuffer: Long = 0
-        private set
+    val framebuffer: Long
+        get() {
+            check(!destroyed) { "The render target was destroyed." }
+            return (scene ?: SceneAttachments(graphicsDevice, renderPass, VkExtent2D(width, height), colorFormat, colorImageView, sampleCount))
+                .also { scene = it }
+                .framebuffer
+        }
+
+    /** Every image this target holds now, resolved colour first; the scene attachments only once built. */
+    internal val attachmentAllocations: List<AttachmentAllocation>
+        get() = listOf(AttachmentAllocation(colorFormat, 1, colorBytes)) + scene?.attachments.orEmpty().map { it.allocation }
 
     private var shaderReadable = false
+    private val colorFramebuffers = mutableMapOf<Long, Long>()
+
+    /** Single-sample colour-only destination for post-processing and offscreen UI. */
+    internal fun colorFramebuffer(pass: Long): Long = colorFramebuffers.getOrPut(pass) {
+        Vulkan.vkCreateFramebuffer(
+            device,
+            VkFramebufferCreateInfo(renderPass = pass, pAttachments = arrayOf(colorImageView), width = width, height = height, layers = 1),
+        )
+    }
 
     init {
         colorImage = VulkanImages.vkCreateImage(
@@ -113,6 +137,7 @@ class OffscreenRenderTarget(
             device,
             VkMemoryAllocateInfo(allocationSize = colorRequirements.size, memoryTypeIndex = colorMemoryTypeIndex),
         )
+        colorBytes = colorRequirements.size
         VulkanImages.vkBindImageMemory(device, colorImage, colorImageMemory, 0)
         colorImageView = Vulkan.vkCreateImageView(
             device,
@@ -130,53 +155,6 @@ class OffscreenRenderTarget(
             ),
         )
         sampler = VulkanImages.vkCreateSampler(device, VkSamplerCreateInfo())
-
-        depthImage = VulkanImages.vkCreateImage(
-            device,
-            VkImageCreateInfo(
-                width = width,
-                height = height,
-                format = VkFormat.VK_FORMAT_D32_SFLOAT.value,
-                usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            ),
-        )
-        val depthRequirements = VulkanImages.vkGetImageMemoryRequirements(device, depthImage)
-        val depthMemoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            depthRequirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        )
-        depthImageMemory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(allocationSize = depthRequirements.size, memoryTypeIndex = depthMemoryTypeIndex),
-        )
-        VulkanImages.vkBindImageMemory(device, depthImage, depthImageMemory, 0)
-        depthImageView = Vulkan.vkCreateImageView(
-            device,
-            VkImageViewCreateInfo(
-                image = depthImage,
-                viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
-                format = VkFormat.VK_FORMAT_D32_SFLOAT,
-                subresourceRange = VkImageSubresourceRange(
-                    aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT.value,
-                    baseMipLevel = 0,
-                    levelCount = 1,
-                    baseArrayLayer = 0,
-                    layerCount = 1,
-                ),
-            ),
-        )
-
-        framebuffer = Vulkan.vkCreateFramebuffer(
-            device,
-            VkFramebufferCreateInfo(
-                renderPass = renderPass,
-                pAttachments = arrayOf(colorImageView, depthImageView),
-                width = width,
-                height = height,
-                layers = 1,
-            ),
-        )
     }
 
     /** Called once, right after the render pass that wrote [colorImage] ends -- transitions
@@ -221,10 +199,10 @@ class OffscreenRenderTarget(
     override fun destroy() {
         if (destroyed) return
         destroyed = true
-        Vulkan.vkDestroyFramebuffer(device, framebuffer)
-        Vulkan.vkDestroyImageView(device, depthImageView)
-        VulkanImages.vkDestroyImage(device, depthImage)
-        VulkanBuffers.vkFreeMemory(device, depthImageMemory)
+        colorFramebuffers.values.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        colorFramebuffers.clear()
+        scene?.destroy()
+        scene = null
         VulkanImages.vkDestroySampler(device, sampler)
         Vulkan.vkDestroyImageView(device, colorImageView)
         VulkanImages.vkDestroyImage(device, colorImage)

@@ -57,6 +57,7 @@ fun runDesktopWindow(
     check(window != 0L) { "glfwCreateWindow returned null" }
     GlfwWindow.glfwFocusWindow(window)
     GlfwWindow.glfwSetScrollCallback(window)
+    GlfwWindow.glfwSetCharCallback(window)
 
     try {
         try {

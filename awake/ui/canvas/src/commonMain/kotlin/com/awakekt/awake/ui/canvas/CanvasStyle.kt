@@ -6,6 +6,7 @@
 package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.style.StyleScope
+import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.ui.graphics.Brush
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.shadow.Shadow
@@ -36,7 +37,7 @@ import kotlinx.serialization.Serializable
  * @property borderColor The border's colour; a border needs both.
  * @property shadow A shadow cast behind the element, in its shape.
  * @property textColor The colour of a Text's or Button's text, in place of [CanvasElement.color].
- * @property textShadow A hard shadow under a Text's or Button's text.
+ * @property textShadow A shadow under a Text's or Button's text, hard or soft.
  * @property textOutline An outline around a Text's or Button's text.
  * @property alpha The element's opacity, from 0 to 1, its children included.
  * @property hovered What changes while the pointer is over a Button.
@@ -49,6 +50,9 @@ import kotlinx.serialization.Serializable
  * the unrotated box.
  * @property linkColor The colour of a Text's `[[key|shown words]]` spans; null draws them in a
  * default blue.
+ * @property transitionSeconds Seconds to interpolate between this style's states ([hovered],
+ * [pressed], [disabled]); null falls back to [CanvasControlTheme.transitionSeconds], and 0 changes
+ * at once.
  */
 @Serializable
 data class CanvasStyle(
@@ -70,7 +74,60 @@ data class CanvasStyle(
     val disabled: CanvasStateStyle? = null,
     val rotation: Float? = null,
     val linkColor: String? = null,
+    @PropertyRange(min = 0.0) val transitionSeconds: Float? = null,
 ) {
+    /** [CanvasStyle] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        background: String? = null,
+        gradient: CanvasGradient? = null,
+        image: CanvasImage? = null,
+        fillImage: CanvasImage? = null,
+        fillImageMode: CanvasFillImageMode = CanvasFillImageMode.Cut,
+        cornerRadius: Float? = null,
+        borderWidth: Float? = null,
+        borderColor: String? = null,
+        shadow: CanvasShadow? = null,
+        textColor: String? = null,
+        textShadow: CanvasTextShadow? = null,
+        textOutline: CanvasTextOutline? = null,
+        alpha: Float? = null,
+        hovered: CanvasStateStyle? = null,
+        pressed: CanvasStateStyle? = null,
+        disabled: CanvasStateStyle? = null,
+        rotation: Float? = null,
+        linkColor: String? = null,
+    ) : this(
+        background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor,
+    )
+
+    /** [copy] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        background: String? = this.background,
+        gradient: CanvasGradient? = this.gradient,
+        image: CanvasImage? = this.image,
+        fillImage: CanvasImage? = this.fillImage,
+        fillImageMode: CanvasFillImageMode = this.fillImageMode,
+        cornerRadius: Float? = this.cornerRadius,
+        borderWidth: Float? = this.borderWidth,
+        borderColor: String? = this.borderColor,
+        shadow: CanvasShadow? = this.shadow,
+        textColor: String? = this.textColor,
+        textShadow: CanvasTextShadow? = this.textShadow,
+        textOutline: CanvasTextOutline? = this.textOutline,
+        alpha: Float? = this.alpha,
+        hovered: CanvasStateStyle? = this.hovered,
+        pressed: CanvasStateStyle? = this.pressed,
+        disabled: CanvasStateStyle? = this.disabled,
+        rotation: Float? = this.rotation,
+        linkColor: String? = this.linkColor,
+    ): CanvasStyle = copy(
+        background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor,
+    )
+
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         addAll(
@@ -84,6 +141,7 @@ data class CanvasStyle(
         if ((cornerRadius ?: 0f) < 0f) add("cornerRadius must not be negative")
         if ((borderWidth ?: 0f) < 0f) add("borderWidth must not be negative")
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
+        if (transitionSeconds != null && !(transitionSeconds >= 0f && transitionSeconds.isFinite())) add("transitionSeconds must not be negative")
         addAll(partProblems())
     }
 
@@ -106,13 +164,24 @@ data class CanvasStyle(
      */
     internal fun applyTo(scope: StyleScope, images: Map<String, ImageBitmap>, isDisabled: Boolean = false) {
         cornerRadius?.let { scope.cornerRadius(it.dp) }
-        shadow?.let { scope.dropShadow(it.toShadow()) }
+        val states = activeStates(scope.state, isDisabled)
+        (states.lastOrNull { it.shadow != null }?.shadow ?: shadow)?.let { scope.dropShadow(it.toShadow()) }
         paint(scope, images, background, gradient, image, textColor, alpha)
-        val dimmed = if (isDisabled) disabled ?: DIMMED else null
-        val states = listOfNotNull(hovered.takeIf { scope.state.isHovered }, pressed.takeIf { scope.state.isPressed }, dimmed)
         for (state in states) paint(scope, images, state.background, state.gradient, state.image, state.textColor, state.alpha)
         val border = states.lastOrNull { it.borderColor != null }?.borderColor ?: borderColor
         if (borderWidth != null && borderWidth > 0f && border != null) scope.border(borderWidth.dp, colorOf(border, Color.Transparent))
+    }
+
+    /** The active state overrides on [state], in application order; [isDisabled] adds [disabled] or [DIMMED]. */
+    internal fun activeStates(state: StyleState, isDisabled: Boolean = false): List<CanvasStateStyle> {
+        val dimmed = if (isDisabled) disabled ?: DIMMED else null
+        return listOfNotNull(hovered.takeIf { state.isHovered }, pressed.takeIf { state.isPressed }, dimmed)
+    }
+
+    /** The draw-only centre scale active on [state]; 1 when no active state sets one. */
+    internal fun stateScale(state: StyleState, isDisabled: Boolean = false): Float {
+        val raw = activeStates(state, isDisabled).lastOrNull { it.scale != null }?.scale ?: return 1f
+        return if (raw.isFinite()) raw.coerceAtLeast(0f) else 1f
     }
 
     /** Limits. */
@@ -120,7 +189,7 @@ data class CanvasStyle(
         /** How opaque a disabled Button with no [disabled] look draws. */
         const val DISABLED_ALPHA = 0.45f
 
-        private val DIMMED = CanvasStateStyle(alpha = DISABLED_ALPHA)
+        internal val DIMMED = CanvasStateStyle(alpha = DISABLED_ALPHA)
     }
 }
 
@@ -156,8 +225,8 @@ enum class CanvasFillImageMode {
 }
 
 /**
- * What a [CanvasStyle] changes while its Button is hovered or pressed: its paint, but not its shape
- * or shadow. A property left out keeps what the style says.
+ * What a [CanvasStyle] changes while its Button is hovered, pressed or disabled: its paint, shadow,
+ * scale or opacity. A property left out keeps what the style says.
  *
  * @property background The fill.
  * @property gradient A gradient fill, in place of [background].
@@ -165,6 +234,8 @@ enum class CanvasFillImageMode {
  * @property borderColor The border's colour, for a style with a border.
  * @property textColor The text's colour.
  * @property alpha The opacity, from 0 to 1.
+ * @property shadow The shadow cast behind the element, in place of [CanvasStyle.shadow].
+ * @property scale Multiplier around the element's centre, without moving its layout or hit area.
  */
 @Serializable
 data class CanvasStateStyle(
@@ -174,12 +245,38 @@ data class CanvasStateStyle(
     val borderColor: String? = null,
     val textColor: String? = null,
     @PropertyRange(min = 0.0, max = 1.0) val alpha: Float? = null,
+    val shadow: CanvasShadow? = null,
+    @PropertyRange(min = 0.0) val scale: Float? = null,
 ) {
+    /** [CanvasStateStyle] as it was before `shadow` and `scale`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        background: String? = null,
+        gradient: CanvasGradient? = null,
+        image: CanvasImage? = null,
+        borderColor: String? = null,
+        textColor: String? = null,
+        alpha: Float? = null,
+    ) : this(background, gradient, image, borderColor, textColor, alpha)
+
+    /** [copy] as it was before `shadow` and `scale`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        background: String? = this.background,
+        gradient: CanvasGradient? = this.gradient,
+        image: CanvasImage? = this.image,
+        borderColor: String? = this.borderColor,
+        textColor: String? = this.textColor,
+        alpha: Float? = this.alpha,
+    ): CanvasStateStyle = copy(background, gradient, image, borderColor, textColor, alpha)
+
     internal fun problems(): List<String> = buildList {
         addAll(colourProblems("background" to background, "borderColor" to borderColor, "textColor" to textColor))
         gradient?.problems()?.forEach { add("gradient.$it") }
         image?.problems()?.forEach { add("image.$it") }
+        shadow?.problems()?.forEach { add("shadow.$it") }
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
+        if (scale != null && !(scale >= 0f && scale.isFinite())) add("scale must not be negative")
     }
 }
 
@@ -189,14 +286,25 @@ data class CanvasStateStyle(
  * @property start The colour at the top, or the left.
  * @property end The colour at the bottom, or the right.
  * @property horizontal Whether it runs left to right.
+ * @property middle An optional colour halfway between [start] and [end]. Null keeps the two-colour fill.
  */
 @Serializable
-data class CanvasGradient(val start: String, val end: String, val horizontal: Boolean = false) {
-    internal fun problems(): List<String> = colourProblems("start" to start, "end" to end)
+data class CanvasGradient(val start: String, val end: String, val horizontal: Boolean = false, val middle: String? = null) {
+    /** Keeps the original two-colour constructor available to already compiled callers. */
+    constructor(start: String, end: String, horizontal: Boolean = false) : this(start, end, horizontal, null)
+
+    /** Keeps the original copy signature, preserving a midpoint when one has since been set. */
+    fun copy(start: String = this.start, end: String = this.end, horizontal: Boolean = this.horizontal): CanvasGradient = CanvasGradient(start, end, horizontal, middle)
+
+    internal fun problems(): List<String> = colourProblems("start" to start, "end" to end, "middle" to middle)
 
     internal fun toBrush(): Brush {
         val from = colorOf(start, Color.Transparent)
         val to = colorOf(end, Color.Transparent)
+        middle?.let {
+            val colors = listOf(from, colorOf(it, Color.Transparent), to)
+            return if (horizontal) Brush.horizontalGradient(colors) else Brush.verticalGradient(colors)
+        }
         return if (horizontal) Brush.horizontal(from, to) else Brush.vertical(from, to)
     }
 }
@@ -237,17 +345,35 @@ data class CanvasShadow(
 }
 
 /**
- * A hard shadow under an element's text.
+ * A shadow under an element's text: hard by default, softened across [blur] dp either side of its edge.
  *
  * @property color Its colour.
  * @property offsetX How far right it falls, in dp.
  * @property offsetY How far down it falls, in dp.
+ * @property blur How far either side of its edge it fades, in dp; 0 for a hard shadow.
  */
 @Serializable
-data class CanvasTextShadow(val color: String = "#000000C0", val offsetX: Float = 1f, val offsetY: Float = 1f) {
-    internal fun problems(): List<String> = colourProblems("color" to color)
+data class CanvasTextShadow(
+    val color: String = "#000000C0",
+    val offsetX: Float = 1f,
+    val offsetY: Float = 1f,
+    @PropertyRange(min = 0.0) val blur: Float = 0f,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(color: String = "#000000C0", offsetX: Float = 1f, offsetY: Float = 1f) : this(color, offsetX, offsetY, 0f)
 
-    internal fun toTextShadow(): TextShadow = TextShadow(colorOf(color, Color.Transparent), offsetX, offsetY)
+    /** The `copy` from before [blur], which keeps this one's [blur]. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(color: String = this.color, offsetX: Float = this.offsetX, offsetY: Float = this.offsetY): CanvasTextShadow =
+        CanvasTextShadow(color, offsetX, offsetY, blur)
+
+    internal fun problems(): List<String> = buildList {
+        addAll(colourProblems("color" to color))
+        if (blur < 0f) add("blur must be 0 or more")
+    }
+
+    internal fun toTextShadow(): TextShadow =
+        TextShadow(colorOf(color, Color.Transparent), offsetX, offsetY, blur.coerceAtLeast(0f))
 }
 
 /**

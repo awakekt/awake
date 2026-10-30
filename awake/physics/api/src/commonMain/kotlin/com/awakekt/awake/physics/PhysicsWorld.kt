@@ -227,6 +227,11 @@ interface PhysicsWorld {
      * sphere, both symmetric about the sweep, so one would be a parameter every call site passes
      * an identity to. A box sweep can add it.
      *
+     * **A triangle surface blocks a sweep from either side.** A [MeshShape] or [HeightFieldShape]
+     * is one-sided to the simulation, but a sweep asks what would stop you, and one let through a
+     * surface from behind ends inside it -- where every later sweep reports a hit at fraction 0
+     * and a character can never leave. Raycasts are unaffected.
+     *
      * **A sensor is never reported by a cast.** It is not solid, so it is not an answer to "what
      * would block me" -- and reporting one would turn every trigger volume into an invisible wall
      * the player walks into. [overlapShape] is the query that does see them, which is the whole
@@ -246,6 +251,10 @@ interface PhysicsWorld {
      * matching filter in JoltPhysics.js takes one layer too, and jolt-jni's mask-capable
      * `DefaultObjectLayerFilter` has a package-private constructor. A caller that needs "anything
      * except my own layer" still has no way to say so -- see docs/plans/physics-open-world.md.
+     *
+     * A returned [ShapeCastHit] must have a finite point, finite nonzero normal and a finite
+     * fraction in `[0, 1]`. Its constructor rejects a malformed result with
+     * [IllegalArgumentException]; implementations must not turn an invalid contact into a miss.
      */
     fun shapeCast(
         shape: PhysicsShape,

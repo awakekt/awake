@@ -14,7 +14,7 @@ internal const val GLFW_FOCUSED = 0x00020001
 /**
  * Seam between [pollGlfwInput]/[pollGlfwTextInput]'s translation logic and the real GLFW
  * native bindings ([GlfwWindow]) -- exists so a desktopTest can fake "this key is down this
- * frame" and assert the right [com.awakekt.awake.core.input.Input] calls fire,
+ * frame" or "this text was typed" and assert the right [com.awakekt.awake.core.input.Input] calls fire,
  * without a live window. A real GLFW window (and therefore OS-level focus behavior) still
  * can't be faked this way -- this only covers the keycode/repeat/shift translation, not
  * whether the OS actually delivers key events to the window in the first place.
@@ -51,6 +51,13 @@ interface GlfwWindowInput {
     /** A trackpad pinch's scale factor since the last poll; 1 for none, or a reader with no pinch. */
     fun consumePinchScale(): Double = 1.0
 
+    /**
+     * The text typed since the last call, as the platform produced it: the keyboard layout, Shift,
+     * Caps Lock, AltGr and dead keys already applied, and no control characters. Empty for none,
+     * or for a reader with no character channel.
+     */
+    fun consumeTypedText(): String = ""
+
     /** Returns `true` if the window currently has OS input focus. */
     fun isFocused(): Boolean = true
 
@@ -75,6 +82,7 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
         ScrollSource.entries.getOrElse(GlfwWindow.glfwConsumeScrollSource(window)) { ScrollSource.Unknown }
     override fun consumePinchScale(): Double = GlfwWindow.glfwConsumePinchScale(window)
     override fun isFocused(): Boolean = GlfwWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
+    override fun consumeTypedText(): String = GlfwWindow.glfwConsumeTypedText(window).orEmpty()
     override var clipboardText: String?
         get() = GlfwWindow.glfwGetClipboardString(window)
         set(value) {

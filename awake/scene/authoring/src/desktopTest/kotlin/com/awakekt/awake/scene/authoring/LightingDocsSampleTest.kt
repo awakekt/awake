@@ -7,6 +7,9 @@ package com.awakekt.awake.scene.authoring
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.effects.FxaaEffect
+import com.awakekt.awake.render.effects.ToneMappingGradeEffect
+import com.awakekt.awake.render.effects.ToneMappingMode
 import com.awakekt.awake.scene.authoring.dsl.directionalLight
 import com.awakekt.awake.scene.authoring.dsl.pointLight
 import com.awakekt.awake.scene.authoring.dsl.scene
@@ -14,12 +17,16 @@ import com.awakekt.awake.scene.authoring.dsl.transform
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneValidationException
 import com.awakekt.awake.scene.rendering.light.Light
+import com.awakekt.awake.scene.rendering.postprocessing.PostProcessing
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * The "Lights and shadows" guide shows each light as a scene document and in the scene DSL, side
@@ -106,6 +113,40 @@ class LightingDocsSampleTest {
 
         assertEquals(load("exposure.scene.json").toneMappings().single(), fromDsl)
         assertEquals(1.5f, fromDsl.exposure)
+    }
+
+    @Test
+    fun theSceneDocumentAndTheSceneDslSetTheSamePostProcessing() {
+        val world = World()
+        // --8<-- [start:post-processing-dsl]
+        world.scene {
+            entity("camera") {
+                with(
+                    PostProcessing(
+                        effects = listOf(
+                            ToneMappingGradeEffect(saturation = 1.1f, mode = ToneMappingMode.Passthrough),
+                            FxaaEffect(),
+                        ),
+                    ),
+                )
+            }
+        }
+        // --8<-- [end:post-processing-dsl]
+        val fromDsl = world.query(PostProcessing::class).mapNotNull { world.get<PostProcessing>(it) }.single()
+        val document = load("post-processing.scene.json")
+        val fromDocument = document.query(PostProcessing::class).mapNotNull { document.get<PostProcessing>(it) }.single()
+
+        assertEquals(fromDocument, fromDsl)
+    }
+
+    /** The guide's warning holds: a PbrNeutral step on a scene camera is refused at load (#1007). */
+    @Test
+    fun aSceneDocumentThatWouldEncodeTwiceIsRefused() {
+        DefaultSceneComponentResolvers.install()
+        val text = File(DOCS_SNIPPETS, "rendering/post-processing.scene.json").readText()
+            .replace("\"mode\": \"Passthrough\"", "\"mode\": \"PbrNeutral\"")
+        val error = assertFailsWith<SceneValidationException> { SceneLoader.instantiate(SceneLoader.decode(text)) }
+        assertTrue("encode the frame twice" in error.message.orEmpty(), error.message)
     }
 
     private fun load(snippet: String): World {

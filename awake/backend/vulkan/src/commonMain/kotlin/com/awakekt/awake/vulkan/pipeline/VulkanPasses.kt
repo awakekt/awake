@@ -26,6 +26,7 @@ import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.ui.DynamicMesh
+import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 
 /**
  * Vulkan's implementations of the three scene-pass ports. Each is a plain translation into this
@@ -100,6 +101,7 @@ internal class VulkanUiRunRecorder(
             UiPipelineKind.Quad -> pipelines.quad
             UiPipelineKind.RoundedQuad -> pipelines.roundedQuad
             UiPipelineKind.Glyph -> pipelines.glyph
+            UiPipelineKind.DecoratedGlyph -> pipelines.decoratedGlyph
             // A texture binds its exact blend/alpha-convention pipeline in drawTexturePrimitive.
             // Requiring the straight-alpha default here dropped a run holding only premultiplied
             // render-target textures.
@@ -109,11 +111,15 @@ internal class VulkanUiRunRecorder(
         // since each one also needs its own descriptor set bound at the same point.
         // Glyph binds only the pipeline here: its group 0 is the font's, bound in bindGlyphFont.
         if (pipeline != null && kind != UiPipelineKind.Texture) pipeline.bind(commandBuffer)
+        if (kind.isGlyph) glyphPipeline = pipeline
         return pipeline != null
     }
 
+    /** The glyph pipeline [bindPipeline] last bound, plain or decorated, which [bindGlyphFont] binds a font into. */
+    private var glyphPipeline: UiRenderPipeline? = null
+
     override fun bindGlyphFont(font: UiFont): Boolean {
-        val pipeline = pipelines.glyph
+        val pipeline = glyphPipeline
         val atlas = pipelines.fontAtlases[font]
         if (pipeline == null || atlas == null) return false
         pipeline.bindFontAtlas(commandBuffer, font, atlas)

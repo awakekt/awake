@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
 
@@ -45,10 +46,12 @@ data class CanvasCurve(val points: List<CanvasCurvePoint> = emptyList()) {
     /** The curve's value at [x], or [otherwise] when it has no points. */
     fun valueAt(x: Float, otherwise: Float = 1f): Float {
         if (points.isEmpty()) return otherwise
-        val next = points.indexOfFirst { x <= it.at }
+        // Indexed, not indexOfFirst: read for every follower every frame, and that allocates an iterator.
+        var next = 0
+        while (next < points.size && x > points[next].at) next++
         return when (next) {
-            0 -> points.first().value
-            -1 -> points.last().value
+            0 -> points[0].value
+            points.size -> points[points.size - 1].value
             else -> between(points[next - 1], points[next], x)
         }
     }
@@ -152,4 +155,59 @@ data class CanvasFollowLimit(
 ) {
     /** What is wrong with this limit, each as `field message`; empty when nothing is. */
     fun problems(): List<String> = if (max < 0) listOf("max must not be negative") else emptyList()
+}
+
+/**
+ * A canvas element that follows a node on screen, such as a name plate above a character: which
+ * node, where on it, and how it behaves with many on screen. [CanvasOverlay] writes back what it
+ * worked out as it drew, [pinned], [pinAngle] and [distance], which are never saved.
+ */
+class CanvasFollow {
+    /** The name of the node the element follows; empty follows none. */
+    var node: String = ""
+
+    /** A world-space offset from the followed node, such as above its head. */
+    var offset: Vec3f = Vec3f(0f, 0f, 0f)
+
+    /** Whether the element covers the screen rectangle of the followed node's meshes instead of standing at its point. */
+    var bounds: Boolean = false
+
+    /** How far, in dp, a [bounds] box reaches past the node's rectangle on each side; negative pulls it in. */
+    var outset: Float = 0f
+
+    /**
+     * How the follower behaves with many on screen: culling, ranking against a [CanvasFollowLimit],
+     * scale and fade by distance, and holding to the screen's edge. Null follows
+     * [CanvasFollowRules.Default]: culled off screen and hidden behind the camera.
+     */
+    var rules: CanvasFollowRules? = null
+
+    /**
+     * How important this follower is right now, set from code each frame, for a [CanvasFollowLimit]
+     * that ranks by [CanvasFollowRank.Score]: higher stays.
+     */
+    var score: Float = 0f
+
+    /** Whether the follower was last drawn held to the screen's edge, its target off screen or behind the camera. */
+    var pinned: Boolean = false
+        internal set
+
+    /** While [pinned], which way the target lies from the element, in degrees clockwise from the right. */
+    var pinAngle: Float = 0f
+        internal set
+
+    /** How far the followed point was from the camera last frame, in world units; 0 when the host cannot tell. */
+    var distance: Float = 0f
+        internal set
+}
+
+/**
+ * Marks an element inside a follower as the arrow of one held to the screen's edge: drawn only while
+ * its parent is [CanvasFollow.pinned], centred on its parent's edge toward the target and turned to
+ * point at it, its picture pointing right before it turns. Its `style.rotation` adds to the turn,
+ * so art that points up takes 90.
+ */
+class CanvasFollowArrow {
+    /** The arrow's turn from its follower's [CanvasFollow.pinAngle]; [CanvasOverlay] sets it as it draws the arrow. */
+    internal var angle: Float = 0f
 }

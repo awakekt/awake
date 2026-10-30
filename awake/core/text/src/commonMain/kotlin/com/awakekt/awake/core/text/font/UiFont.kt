@@ -50,6 +50,8 @@ data class GlyphRect(
 /**
  * Represents a typeface and rasterized glyph atlas used for UI text rendering.
  */
+// Each lookup is one short function with a default, by Char and by code point, and layout asks for each.
+@Suppress("TooManyFunctions")
 interface UiFont {
     /** The sampling strategy required when rendering this font's atlas. */
     val samplingMode: UiFontSamplingMode
@@ -85,6 +87,14 @@ interface UiFont {
     val distanceFieldRangePx: Float
         get() = 0f
 
+    /**
+     * Spread in atlas texels of the font's effect field, the coarse, wide-reaching distance field an outline and a
+     * soft shadow are drawn from in the glyph's own draw (#1061); 0 for a font without one, whose decorated text is
+     * stamped instead. Its tiles share the atlas with the glyphs, see [effectGlyphFor].
+     */
+    val effectFieldRangePx: Float
+        get() = 0f
+
     /** Distance from layout origin to baseline in em units. */
     val ascentEm: Float
         get() = 0.8f
@@ -96,6 +106,52 @@ interface UiFont {
     /** Capital letter height in em units. */
     val capHeightEm: Float
         get() = 0.7f
+
+    /**
+     * The line box's height above the baseline, in em: the ascent a browser's `line-height: normal`
+     * starts from, which can differ from the glyph metrics' [ascentEm]. A font read from a file
+     * reports it as DirectWrite does (`OS/2` `usWinAscent`, or `sTypoAscender` when the font sets
+     * USE_TYPO_METRICS). Defaults to [ascentEm].
+     */
+    val lineAscentEm: Float
+        get() = ascentEm
+
+    /**
+     * The line box's depth below the baseline, in em, read as [lineAscentEm] is (`usWinDescent` or
+     * `sTypoDescender`). Defaults to [lineHeightEm] less [ascentEm].
+     */
+    val lineDescentEm: Float
+        get() = lineHeightEm - ascentEm
+
+    /** The space the font asks for between one line box and the next, in em; part of `line-height: normal`. */
+    val lineGapEm: Float
+        get() = 0f
+
+    /**
+     * Whether this atlas's alpha is the exact area of each pixel a glyph covers: a renderer then shapes
+     * it with the text coverage rule, which depends on the text colour, as it shapes every distance
+     * field's coverage, so dark text on a light ground and light text on a dark one keep the same weight
+     * at every size. False for coverage that is already shaped, such as [UiFonts.bitmap]'s, which draws
+     * as it is.
+     */
+    val linearCoverage: Boolean
+        get() = false
+
+    /**
+     * Glyphs rasterized from this font's outlines at exact pixel sizes, which a renderer draws 1:1 for
+     * text up to [pixelGlyphMaxSize] device pixels; null when the font has no outlines to rasterize, as
+     * [UiFonts.bitmap] has none, and every size draws from [atlasPixelsRgba].
+     */
+    val pixelGlyphs: PixelGlyphs?
+        get() = null
+
+    /**
+     * The largest size, in device pixels after display density and any canvas scale, that draws from
+     * [pixelGlyphs]; larger text draws from the distance field. [DEFAULT_PIXEL_GLYPH_MAX_SIZE] unless set
+     * with [withPixelGlyphMaxSize]; 0 draws every size from the distance field.
+     */
+    val pixelGlyphMaxSize: Int
+        get() = DEFAULT_PIXEL_GLYPH_MAX_SIZE
 
     /**
      * Resolves the atlas UV bounding rectangle and layout offsets for [char].
@@ -144,6 +200,13 @@ interface UiFont {
         glyphFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, weight)
 
     /**
+     * The effect-field tile of the glyph [glyphFor] answers for [codePoint] at [weight]: its rect in the same atlas
+     * page, and the quad it covers in em from the pen origin and line top, reaching half an em or so past the ink.
+     * Null when the font has no effect field ([effectFieldRangePx] is 0), or none for that glyph.
+     */
+    fun effectGlyphFor(codePoint: Int, weight: FontWeight = FontWeight.Normal): GlyphRect? = null
+
+    /**
      * Computes the horizontal advance distance in pixels for [char] rendered at [glyphPx].
      *
      * @param char The character to measure.
@@ -168,11 +231,24 @@ interface UiFont {
         advanceFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, glyphPx, weight)
 
     /**
+     * The font's pair kerning between the code points [left] and [right], drawn one after the other at
+     * [glyphPx] in [weight]: what to add to the pen after [left]'s advance, in pixels, usually negative.
+     *
+     * A font read from a file kerns from its `GPOS` `kern` feature or its `kern` table, among the
+     * characters it was loaded with; the built-in Roboto family carries its own pairs. The default, for a
+     * font with no kerning, is 0. Layout asks through [kerningBefore], once per adjacent pair of grapheme
+     * clusters, so this must not allocate.
+     */
+    fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float = 0f
+
+    /**
      * Resolves the underlying [UiFont] that provides the atlas for [codePoint] at [weight].
      *
      * Single-face fonts and families sharing an atlas return this.
      * A fallback chain containing faces with disparate sampling modes (such as colour emoji)
-     * returns the specific face that owns the glyph.
+     * returns the specific face that owns the glyph. A numeric variant ([withNumerals]) returns the
+     * font whose atlas it shares for the glyphs it shares, and its page of substituted figures for those.
+     * The answer is always one of [atlasPages].
      */
     fun fontFor(codePoint: Int, weight: FontWeight = FontWeight.Normal): UiFont = this
 
@@ -181,7 +257,9 @@ interface UiFont {
      *
      * Single-face fonts and families sharing one texture report a single-item list with `this`.
      * A fallback chain whose combined atlas exceeds the max texture size (8192 px)
-     * splits across multiple pages, where each page exposes its slice of the atlas.
+     * splits across multiple pages, where each page exposes its slice of the atlas. The first page holds
+     * this font's own atlas, the pixels of [atlasPixelsRgba]; a numeric variant ([withNumerals]) lists the
+     * font it shares that atlas with first, then a page holding only its substituted figures.
      */
     val atlasPages: List<UiFont> get() = listOf(this)
 
@@ -189,6 +267,27 @@ interface UiFont {
      * Resolves the page [UiFont] for [pageIndex], or this font if invalid or single-paged.
      */
     fun pageFont(pageIndex: Int): UiFont = atlasPages.getOrElse(pageIndex) { this }
+
+    /**
+     * Returns a view of this font that draws and spaces digits with [numerals] (`pnum` or `tnum` from its
+     * OpenType `GSUB` table), or `this` when [numerals] is null or the font has no distinct glyphs for it.
+     *
+     * Implementations memoize the returned instance per [FontNumerals] so layout caches and atlas uploads
+     * see a stable [UiFont] identity across frames. A variant shares this font's atlas rather than copying
+     * it: [fontFor] answers this font's own atlas pages for every glyph the two share.
+     */
+    fun withNumerals(numerals: FontNumerals?): UiFont = this
+
+    /** Defaults shared by every font. */
+    companion object {
+        /**
+         * The largest text, in device pixels, that draws from [pixelGlyphs] unless a font says otherwise.
+         *
+         * Below it a distance field's anti-aliased edge is a large share of a stroke; above it the field's
+         * edge is a pixel or less and it scales freely.
+         */
+        const val DEFAULT_PIXEL_GLYPH_MAX_SIZE: Int = 24
+    }
 }
 
 /** U+FFFD, what a code point a `Char` cannot hold is looked up as. */
@@ -239,6 +338,25 @@ inline fun UiFont.forEachGlyphInCluster(
     return pen
 }
 
+/**
+ * The pair kerning, in pixels at [glyphPx], that moves the grapheme cluster starting at [start] after the
+ * one starting at [previousStart]: [UiFont.kerningFor] between the two clusters' first code points. 0 when
+ * [previousStart] is negative, which is how a caller with nothing before the cluster, or with kerning
+ * turned off, asks.
+ *
+ * Kerning falls between clusters, never inside one, and between their first code points, so a combining
+ * mark does not stop a letter from kerning with the next, as a shaper skips marks when it kerns.
+ * Measurement, painting, the caret, hit testing and line breaking all add it before a cluster's
+ * [forEachGlyphInCluster] pen, so a kerned box, its glyphs and its caret agree.
+ */
+fun UiFont.kerningBefore(
+    text: CharSequence,
+    previousStart: Int,
+    start: Int,
+    glyphPx: Float,
+    weight: FontWeight = FontWeight.Normal,
+): Float = if (previousStart < 0) 0f else kerningFor(CodePoints.at(text, previousStart), CodePoints.at(text, start), glyphPx, weight)
+
 /** The advance in pixels of the grapheme cluster `text[start until end]`; see [forEachGlyphInCluster]. */
 fun UiFont.clusterAdvance(
     text: CharSequence,
@@ -258,26 +376,39 @@ fun UiFont.clusterAdvance(
  * that boxes text exactly to this width (see `shadcnLabel`) would otherwise clip that last
  * glyph's overhanging pixels. Widen the result to also cover the last glyph's real right edge.
  *
+ * Adjacent clusters are kerned ([kerningBefore]).
+ *
  * @param label The text string to measure.
  * @param glyphPx The target font height in pixels.
  * @param weight The font weight face to use for measuring.
  * @return The total visual layout width in pixels.
  */
-fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float {
+fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float =
+    measureTextWidth(label, glyphPx, weight, kerning = true)
+
+/**
+ * [measureTextWidth], kerning adjacent clusters only when [kerning] is true, as a style that turns kerning
+ * off lays its text out.
+ */
+fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight, kerning: Boolean): Float {
     var width = 0f
     var lastCodePoint = -1
     var lastPen = 0f
+    var previous = -1
     GraphemeClusters.forEach(label) { start, end ->
         if (label[start] != '\n' && label[end - 1] != '\n') {
+            width += kerningBefore(label, previous, start, glyphPx, weight)
             val clusterStart = width
             width += forEachGlyphInCluster(label, start, end, glyphPx, weight) { codePoint, penX ->
                 lastCodePoint = codePoint
                 lastPen = clusterStart + penX
             }
+            if (kerning) previous = start
+        } else {
+            previous = -1
         }
     }
-    if (lastCodePoint < 0) return width
-    val glyph = glyphFor(lastCodePoint, weight) ?: return width
-    val lastGlyphRightEdge = lastPen + (glyph.offsetXEm + glyph.widthEm) * glyphPx
+    val glyph = if (lastCodePoint < 0) null else glyphFor(lastCodePoint, weight)
+    val lastGlyphRightEdge = if (glyph == null) width else lastPen + (glyph.offsetXEm + glyph.widthEm) * glyphPx
     return maxOf(width, lastGlyphRightEdge)
 }

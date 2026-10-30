@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
@@ -37,6 +38,7 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import com.awakekt.awake.core.text.unicode.WordBoundaries
 import kotlin.math.roundToInt
 
 // PascalCase composables: Compose's own convention. See 11-refinements.md rule 1.
@@ -45,6 +47,8 @@ private object TextFieldNodeType
 
 private const val CARET_WIDTH = 1f
 private const val CARET_BLINK_PERIOD_SECONDS = 1f
+private const val DOUBLE_CLICK_MAX_SECONDS = 0.4f
+private const val DOUBLE_CLICK_SLOP_PX = 8
 
 /**
  * The mask a password field should pass to `BasicTextField(mask = ...)`, so every field in an app
@@ -96,7 +100,8 @@ context(_: Composer)
  * reveals; pass it on touch platforms.
  *
  * Pass [PasswordMask] unless a design calls for another character. The bundled UI font covers
- * printable ASCII and the bullet; any other mask character draws that font's fallback glyph.
+ * printable ASCII, the bullet and the Latin accented letters and signs of `UiFonts.DEFAULT_CHARS`; any other
+ * mask character draws that font's fallback glyph.
  *
  * [onSubmit] fires on Enter in a single-line field (`singleLine`, or masked since a password field
  * is always single-line) -- Compose's `KeyboardActions.onDone`. A multi-line field has nowhere to
@@ -132,6 +137,7 @@ fun BasicTextField(
         val clock = LocalFrameClock.current
         val horizontalOffset = remember { ScrollState() }
         val reveal = remember(state) { LastTypedReveal() }
+        val textState = remember { TextNodeState() }
         // Measure and paint the placeholder through the same run as real text. That keeps baselines,
         // clipping, and the empty-field minimum line height identical instead of treating a placeholder
         // as a decoration with its own layout rules.
@@ -143,6 +149,8 @@ fun BasicTextField(
         // read from, so all of them see the masked glyphs.
         val displayedText = { fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " } }
         val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
+        policy.cache = textState.cache
+        policy.motion = textState.motion
         // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
         val textColor = resolved.color ?: DefaultTextColor
         val color = { if (state.text.isEmpty() && placeholder != null) placeholderColor ?: textColor else textColor }
@@ -160,28 +168,19 @@ fun BasicTextField(
                 )
                 .clickable { }
                 .drawBehind {
-                    clipped {
-                        val paintColor = color()
-                        val run = policy.runFor(density, 1f)
-                        val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
-                        val caret = TextRunOf(state, policy, density).position()
-                        val focused = source.isFocused
-                        val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
-                        run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
-                            drawRect(
-                                x = x + textOffsetX,
-                                y = y + textOffsetY,
-                                width = width,
-                                height = height,
-                                color = paintColor.withAlpha(0.35f),
-                            )
-                        }
-                        run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
+                    val paintColor = color()
+                    val run = policy.runFor(density, policy.measuredFontScale)
+                    val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
+                    val caret = TextRunOf(state, policy, density).position()
+                    val focused = source.isFocused
+                    val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
+                    clipFieldText(horizontalOffset.takeIf { oneLine }) {
+                        drawSelectionSegments(run, state, textOffsetX, textOffsetY, paintColor.withAlpha(0.35f))
+                        run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY, motion = textState.motion)
                         if (focused && isCaretVisible(clock.totalSeconds)) {
-                            drawRect(
+                            drawFieldCaret(
                                 x = caret.x + textOffsetX,
                                 y = if (oneLine) textOffsetY else caret.y,
-                                width = CARET_WIDTH,
                                 height = run.lineHeightPx,
                                 color = paintColor,
                             )
@@ -191,6 +190,40 @@ fun BasicTextField(
             measurePolicy = policy,
         )
     }
+}
+
+private fun DrawScope.drawSelectionSegments(
+    run: TextRun,
+    state: TextFieldState,
+    offsetX: Float,
+    offsetY: Float,
+    color: Color,
+) {
+    run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
+        drawRect(x = x + offsetX, y = y + offsetY, width = width, height = height, color = color)
+    }
+}
+
+private fun DrawScope.drawFieldCaret(x: Float, y: Float, height: Float, color: Color) {
+    drawRect(x = x, y = y, width = CARET_WIDTH, height = height, color = color)
+}
+
+/**
+ * Clips a field's text at its padding box, as CSS clips a field's content, not at the line box: a
+ * glyph's ink reaches past its advance and its line (an accent, a leading `j`'s tail), and a clip at
+ * the text's own box cut it. A side a single line is scrolled past ([scroll], null for a multi-line
+ * field) keeps the tight clip, so a scrolled-away character never shows in the padding.
+ */
+private fun DrawScope.clipFieldText(scroll: ScrollState?, block: () -> Unit) {
+    val scrolledLeft = scroll != null && scroll.value > 0
+    val scrolledRight = scroll != null && scroll.value < scroll.maxValue
+    clippedWithMargin(
+        left = if (scrolledLeft) 0f else Float.POSITIVE_INFINITY,
+        top = Float.POSITIVE_INFINITY,
+        right = if (scrolledRight) 0f else Float.POSITIVE_INFINITY,
+        bottom = Float.POSITIVE_INFINITY,
+        block = block,
+    )
 }
 
 /**
@@ -310,7 +343,7 @@ private class TextRunOf(
     private val density: Float,
 ) {
     fun position(): CaretPosition {
-        val run = policy.runFor(density, 1f)
+        val run = policy.runFor(density, policy.measuredFontScale)
         val position = run.caretPositionAt(state.displayedCursor)
         return CaretPosition(position.x, position.y)
     }
@@ -333,7 +366,7 @@ private class TextFieldInputElement(
     private val onSubmit: (() -> Unit)?,
     private val passThroughKeys: Set<Key>,
 ) : ModifierNodeElement<TextFieldInputNode>() {
-    override fun create(): TextFieldInputNode = TextFieldInputNode()
+    override fun create(): TextFieldInputNode = TextFieldInputNode(state)
 
     override fun update(node: TextFieldInputNode) {
         node.state = state
@@ -350,11 +383,112 @@ private class TextFieldInputElement(
     }
 }
 
-private class TextFieldInputNode :
-    Modifier.Node(),
+private class DoubleClickTracker {
+    private var firstPressSeconds: Float = Float.NEGATIVE_INFINITY
+    private var firstPressX: Int = 0
+    private var firstPressY: Int = 0
+    private var firstPressText: String? = null
+    private var firstPressCursor: Int = -1
+    private var firstPressDragged: Boolean = false
+    private var awaitingSecondPress: Boolean = false
+    private var wordDragStart: Int = -1
+    private var wordDragEnd: Int = -1
+
+    fun reset() {
+        firstPressSeconds = Float.NEGATIVE_INFINITY
+        firstPressText = null
+        firstPressCursor = -1
+        firstPressDragged = false
+        awaitingSecondPress = false
+        wordDragStart = -1
+        wordDragEnd = -1
+    }
+
+    fun onPress(state: TextFieldState, mask: Char?, event: PointerEvent, index: Int, now: Float) {
+        if (isSecondPressOfDoubleClick(state, event, now)) {
+            awaitingSecondPress = false
+            firstPressSeconds = Float.NEGATIVE_INFINITY
+            if (mask != null) {
+                state.selectAll()
+            } else {
+                state.selectWordAt(index)
+                wordDragStart = state.selectionStart
+                wordDragEnd = state.selectionEnd
+            }
+        } else {
+            awaitingSecondPress = false
+            wordDragStart = -1
+            wordDragEnd = -1
+            firstPressSeconds = now
+            firstPressX = event.x
+            firstPressY = event.y
+            firstPressDragged = false
+            state.moveCursorTo(index)
+            firstPressText = state.text
+            firstPressCursor = state.cursor
+        }
+    }
+
+    fun onCapturedMove(state: TextFieldState, mask: Char?, event: PointerEvent, index: Int) {
+        if (wordDragStart >= 0 && mask == null) {
+            val targetStart = WordBoundaries.wordStart(state.text, index)
+            val targetEnd = WordBoundaries.wordEnd(state.text, index)
+            if (targetStart < wordDragStart) {
+                state.select(wordDragEnd, targetStart)
+            } else {
+                state.select(wordDragStart, targetEnd)
+            }
+        } else {
+            if (!isWithinSlop(event.x, event.y)) firstPressDragged = true
+            state.select(state.selectionAnchor, index)
+        }
+    }
+
+    fun onHoverMove(event: PointerEvent) {
+        if (awaitingSecondPress && !isWithinSlop(event.x, event.y)) awaitingSecondPress = false
+    }
+
+    fun onRelease(state: TextFieldState, event: PointerEvent) {
+        val wasWordDrag = wordDragStart >= 0
+        wordDragStart = -1
+        wordDragEnd = -1
+        val cleanPointerGesture = !wasWordDrag && event.isCaptureHolder && event.isInBounds
+        val cleanTap = cleanPointerGesture && !firstPressDragged && !event.longPressConsumed
+        awaitingSecondPress = cleanTap && isUnchangedSinceFirstPress(state)
+    }
+
+    fun onExit(event: PointerEvent) {
+        if (!event.isCaptureHolder) awaitingSecondPress = false
+    }
+
+    private fun isSecondPressOfDoubleClick(state: TextFieldState, event: PointerEvent, now: Float): Boolean {
+        if (!awaitingSecondPress || !isUnchangedSinceFirstPress(state)) return false
+        val withinTime = now >= firstPressSeconds && now - firstPressSeconds <= DOUBLE_CLICK_MAX_SECONDS
+        return withinTime && isWithinSlop(event.x, event.y)
+    }
+
+    private fun isUnchangedSinceFirstPress(state: TextFieldState): Boolean =
+        !state.hasSelection && state.text === firstPressText && state.cursor == firstPressCursor
+
+    private fun isWithinSlop(x: Int, y: Int): Boolean {
+        val dx = x - firstPressX
+        val dy = y - firstPressY
+        return dx * dx + dy * dy <= DOUBLE_CLICK_SLOP_PX * DOUBLE_CLICK_SLOP_PX
+    }
+}
+
+private class TextFieldInputNode(
+    initialState: TextFieldState,
+) : Modifier.Node(),
     TextInputNode,
     PointerInputNode {
-    lateinit var state: TextFieldState
+    private val clicks = DoubleClickTracker()
+
+    var state: TextFieldState = initialState
+        set(value) {
+            if (field !== value) clicks.reset()
+            field = value
+        }
     var singleLine: Boolean = false
     var mask: Char? = null
     var reveal: LastTypedReveal? = null
@@ -368,6 +502,10 @@ private class TextFieldInputNode :
 
     override val isPassword: Boolean get() = mask != null
     override val isSingleLine: Boolean get() = singleLine
+
+    override fun onDetach() {
+        clicks.reset()
+    }
 
     // A masked field never hands its text to the clipboard, the way a browser treats a password
     // input: copy yields nothing and cut neither yields nor removes anything.
@@ -394,32 +532,41 @@ private class TextFieldInputNode :
     }
 
     override fun onEditAction(action: TextEditAction) {
-        if (action == TextEditAction.Enter) {
-            if (singleLine) onSubmit?.invoke() else state.insert("\n")
-        } else {
-            state.apply(action)
+        when {
+            action == TextEditAction.Enter -> if (singleLine) onSubmit?.invoke() else state.insert("\n")
+            mask != null && action == TextEditAction.WordLeft -> state.apply(TextEditAction.Home)
+            mask != null && action == TextEditAction.WordRight -> state.apply(TextEditAction.End)
+            else -> state.apply(action)
         }
     }
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || event.isConsumed) return
-        val index = policy.runFor(density, 1f).indexAt(
-            x = (event.x + if (singleLine) horizontalOffset.value else 0).toFloat(),
-            y = event.y.toFloat(),
-        )
         when (event.type) {
             PointerEventType.Press -> {
-                state.moveCursorTo(index)
+                clicks.onPress(state, mask, event, hitIndexAt(event), clock.totalSeconds)
                 event.consume()
             }
-            PointerEventType.Release -> onClick?.invoke()
+            PointerEventType.Release -> {
+                clicks.onRelease(state, event)
+                onClick?.invoke()
+            }
             PointerEventType.Move -> if (event.isCaptureHolder) {
-                state.select(state.selectionAnchor, index)
+                clicks.onCapturedMove(state, mask, event, hitIndexAt(event))
                 event.consume()
+            } else {
+                clicks.onHoverMove(event)
             }
+            PointerEventType.Exit -> clicks.onExit(event)
             else -> Unit
         }
     }
+
+    private fun hitIndexAt(event: PointerEvent): Int =
+        policy.runFor(density, policy.measuredFontScale).indexAt(
+            x = (event.x + if (singleLine) horizontalOffset.value else 0).toFloat(),
+            y = event.y.toFloat(),
+        )
 
     override fun toString(): String = "textInput(cursor=${state.cursor})"
 }

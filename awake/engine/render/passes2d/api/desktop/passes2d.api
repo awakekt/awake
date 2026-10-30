@@ -6,9 +6,14 @@ public final class com/awakekt/awake/render/passes2d/BackdropBlurWork {
 }
 
 public abstract interface class com/awakekt/awake/render/passes2d/DrawMeshUploader {
+	public fun decoratedGlyphMesh (I[F[I)Ljava/lang/Object;
 	public abstract fun glyphMesh (I[F[I)Ljava/lang/Object;
 	public abstract fun quadMesh (I[F[I)Ljava/lang/Object;
 	public abstract fun roundedQuadMesh (I[F[I)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/render/passes2d/DrawMeshUploader$DefaultImpls {
+	public static fun decoratedGlyphMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[I)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawMeshUploaderKt {
@@ -24,6 +29,7 @@ public abstract interface class com/awakekt/awake/render/passes2d/DrawPass {
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawPipelineKind : java/lang/Enum {
+	public static final field DecoratedGlyph Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static final field Glyph Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static final field Quad Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static final field RoundedQuad Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
@@ -32,6 +38,7 @@ public final class com/awakekt/awake/render/passes2d/DrawPipelineKind : java/lan
 	public final fun getFloatsPerVertex ()I
 	public final fun getPipelineVariant ()Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public final fun getVertexFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun isGlyph ()Z
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static fun values ()[Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 }
@@ -45,7 +52,10 @@ public final class com/awakekt/awake/render/passes2d/DrawRun$ClipRun : com/awake
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawRun$GlyphRun : com/awakekt/awake/render/passes2d/DrawRun {
-	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/text/font/UiFont;Z)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDecorated ()Z
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getMesh ()Ljava/lang/Object;
 }
@@ -151,8 +161,11 @@ public final class com/awakekt/awake/render/passes2d/StagedDrawRun$ClipRun : com
 }
 
 public final class com/awakekt/awake/render/passes2d/StagedDrawRun$GlyphRun : com/awakekt/awake/render/passes2d/StagedDrawRun {
-	public fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;)V
+	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;)V
 	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;Z)V
+	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDecorated ()Z
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getIndices ()[I
 	public final fun getVertices ()[F

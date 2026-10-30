@@ -125,6 +125,7 @@ class Renderer internal constructor(
 
     internal val uiShaderCode: ByteArray get() = uiShaderSources.quad
     internal val uiGlyphShaderCode: ByteArray get() = uiShaderSources.glyph
+    internal val uiDecoratedGlyphShaderCode: ByteArray? get() = uiShaderSources.decoratedGlyph
     internal val uiTextureShaderCode: ByteArray get() = uiShaderSources.texture
     internal val uiRoundedQuadShaderCode: ByteArray get() = uiShaderSources.roundedQuad
     internal val uiTargetCompositeShaderCode: ByteArray
@@ -162,6 +163,9 @@ class Renderer internal constructor(
 
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
+
+    /** The latest main-pass colour, valid until the host returns this surface texture. */
+    internal var presentedColor: PresentedColor? = null
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device)
 
     override val frameStats: RenderFrameStats?
@@ -244,6 +248,7 @@ class Renderer internal constructor(
     // drawUi never builds either pipeline at all.
     internal var uiRenderPipeline: UiRenderPipeline? = null
     internal var uiGlyphRenderPipeline: UiRenderPipeline? = null
+    internal var uiDecoratedGlyphRenderPipeline: UiRenderPipeline? = null
 
     // Lazily built on the first drawUi() call that has any Texture primitives -- see
     // ensureTextureQuadPipeline()'s doc comment.
@@ -267,6 +272,7 @@ class Renderer internal constructor(
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
+    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index, decorated = true)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
 
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES)
@@ -336,6 +342,7 @@ class Renderer internal constructor(
         imagePassExecutor.destroy()
         bufferPools.destroy()
         uiRenderPipeline?.destroy()
+        uiDecoratedGlyphRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()
         uiTextureRenderPipelines.values.forEach { it.destroy() }
         uiTargetCompositePipelines.values.forEach(UiTargetCompositePipeline::destroy)
@@ -359,6 +366,9 @@ class Renderer internal constructor(
     companion object {
         /** Matches the Vulkan backend's own batching budget; see its MAX_UI_QUADS. */
         internal const val MAX_UI_QUADS = 256
+
+        /** Matches the Vulkan backend's textured-primitive starting size; see its TEXTURE_PRIMITIVE_QUADS. */
+        internal const val TEXTURE_PRIMITIVE_QUADS = 1
 
         /** Starting size only -- LineMesh grows past it. See DebugLineLayout.INITIAL_LINES. */
         internal const val MAX_DEBUG_LINES = DebugLineLayout.INITIAL_LINES

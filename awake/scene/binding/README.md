@@ -12,9 +12,13 @@
 
 ```text
 awake/scene/binding/src/commonMain/kotlin/com/awakekt/awake/scene/binding/
-├── SceneComponentBinding.kt   # Type-safe bi-directional SceneComponentBinding<C, S>
-├── SceneComponentResolver.kt  # SceneComponentResolver, SceneResolutionContext, SceneComponentRegistry
-└── PrefabLinkBinding.kt       # Built-in resolver for ScenePrefabLink
+├── SceneComponentBinding.kt    # Type-safe bi-directional SceneComponentBinding<C, S>
+├── SceneComponentResolver.kt   # SceneComponentResolver, SceneResolutionContext, SceneComponentRegistry, PrefabLinkBinding
+├── SceneComponentModule.kt     # A module's generated registry of bindings
+├── SceneBindingAnnotations.kt  # @SceneBinding, @RuntimeOnly, @SavedAs, @SavedOnly, @RegisteredBinding, @UnboundSceneComponent
+├── SceneBindingHooks.kt        # SceneBindingHooks, SceneValueConverter, SceneColorConverter
+└── SceneUnknownComponents.kt   # Components kept as data when nothing installed provides them
+processor/                      # The KSP processor behind @SceneBinding (a build tool, never a dependency)
 ```
 
 ---
@@ -22,40 +26,44 @@ awake/scene/binding/src/commonMain/kotlin/com/awakekt/awake/scene/binding/
 ## Core Contracts
 
 ### 1. `SceneComponentBinding<C, S>`
-The strongly typed interface for mapping an authored scene component `S : SceneComponent` to/from an active ECS component `C : Any`:
+The strongly typed interface for mapping an authored scene component `S : SceneComponent` to and from a
+live ECS component `C : Any`. Implementers write `attachTyped`, where `component` is already an `S`, and
+`export`; `serializer` registers `schemaClass` with `SceneSerializers` when the binding is registered.
+
+### 2. Generated bindings: `@SceneBinding`
+Most bindings copy each field across and back. Annotate the schema instead of writing one:
 
 ```kotlin
-interface SceneComponentBinding<C : Any, S : SceneComponent> : SceneComponentResolver {
-    val schemaClass: KClass<S>
-    val serializer: KSerializer<S>? get() = null
-
-    override fun canResolve(component: SceneComponent): Boolean =
-        schemaClass.isInstance(component)
-
-    override fun attach(world: World, entity: Entity, component: SceneComponent, context: SceneResolutionContext) {
-        if (canResolve(component)) {
-            @Suppress("UNCHECKED_CAST")
-            attachTyped(world, entity, component as S, context)
-        }
-    }
-
-    fun attachTyped(world: World, entity: Entity, component: S, context: SceneResolutionContext)
-
-    fun exportComponent(world: World, entity: Entity): S? = null
-}
+@Serializable
+@SerialName("spin_control")
+@SceneBinding(SpinControl::class)
+data class SceneSpinControl(val radians: Float = 0f, val speed: Float = 1f) : SceneComponent
 ```
 
-- **Zero Manual Casting**: Subclasses implement `attachTyped` where `component` is already guaranteed to be of type `S`.
-- **Automatic Polymorphic Deserialization**: Providing `serializer` registers `schemaClass` with `SceneSerializers` when registered globally.
-- **Bi-Directional**: `exportComponent` enables round-trip export from an ECS world back to `.scene.json`.
+A module that applies the `com.awakekt.awake.plugin.scene-components` build plugin then gets
+`SpinControlBinding`, with `toComponent()` and `toSceneComponent()`, and a `SceneComponentModule` object
+listing every binding in the module. A missing field, a type with no converter, a scene component with no
+binding, or a public hand-written binding not marked `@RegisteredBinding` fails the build. Hooks
+(`afterCopyToLive`, `afterCopyToSaved`, `afterAttach`, `beforeExport`) cover the bindings that are mostly
+copies. The guide is [Scene components](../../../website/docs/guides/scene-components.md).
 
-### 2. `SceneComponentResolver` & `SceneComponentRegistry`
+For a schema wrapping a live value under one constructor property, use
+`@SceneBinding(CanvasLayout::class, whole = "layout")`. Loading unwraps `saved.layout` and exporting
+constructs `SceneCanvasLayout(layout = live)`, using the same converters and hooks as field copies.
+The named property must be readable and have the live type (or a listed converter); every other
+schema constructor parameter needs a default, which export uses. This preserves the value itself
+instead of constructing and copying its fields. `runtimeOnly` and `renamed` apply only to field copies.
+
+Keep a binding hand-written, and mark it `@RegisteredBinding`, when it resolves asset references, links
+entities through `SceneResolutionContext`, creates native objects, or reshapes a format.
+
+### 3. `SceneComponentResolver` & `SceneComponentRegistry`
 - `SceneComponentResolver`: General-purpose contract for scene components (such as prefab instantiation) that might not map 1:1 to an ECS component.
-- `SceneResolutionContext`: Carries node metadata and exposes `recordRequest(Any)` for renderable requests or deferred bindings.
-- `SceneComponentRegistry`: Instance and global registry for resolvers. Global registration via `SceneComponentRegistry.registerGlobal(...)` dynamically installs both the runtime resolver and the polymorphic JSON serializer.
+- `SceneResolutionContext`: Defers node links until every node exists and exposes `recordRequest(Any)` for renderable requests.
+- `SceneComponentRegistry`: Instance and global registry for resolvers. `register(module)` and `registerGlobal(module)` add a whole `SceneComponentModule`; nothing registers a module by itself.
 
-### 3. `PrefabLinkBinding`
-Handles recursive instantiation and property overrides for nested prefab links (`ScenePrefabLink`).
+### 4. `PrefabLinkBinding`
+Handles nested prefab links (`ScenePrefabLink`); every registry includes it.
 
 ---
 
@@ -65,4 +73,4 @@ Handles recursive instantiation and property overrides for nested prefab links (
 - [`awake:scene:runtime`](../runtime/README.md) — Scene adapters (`AwakeWorldSceneAdapter`, `SceneWorldExport`), `DefaultSceneComponentResolvers`, and `SceneAppLifecycleRuntime`.
 - [`awake:scene:scene3d`](../scene3d/README.md) — Camera, light, and mesh bindings (`CameraBinding`, `LightBinding`, `MaterialBinding`, `MeshRendererBinding`).
 - [`awake:scene:scene-core`](../scene-core/README.md) — Transform components and `SpinControlBinding`.
-- [`awake:ai:behavior`](../../ai/behavior/README.md) — AI behavior bindings (`PatrolBinding`, `ChaseBinding`, `FleeBinding`).
+- [`awake:scene:ai`](../ai/README.md) — AI behavior, definition, and perception bindings (`PatrolBinding`, `ChaseBinding`, `FleeBinding`, `AiSceneComponents`).

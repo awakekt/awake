@@ -8,6 +8,7 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
 import kotlin.math.exp
+import kotlin.math.floor
 import kotlin.math.ln
 
 /** How a [CanvasScaler] works out a canvas's scale. */
@@ -28,9 +29,61 @@ enum class CanvasScaleMode {
 }
 
 /**
- * Works out the scale a [CanvasOverlay] draws at from the size of its box: what Unity calls a canvas
- * scaler. It is data, saved with a scene as its `canvas_scaler` and passed as
- * `CanvasOverlay(scaler = …)`; [scaleFor] is the whole rule.
+ * Rounds the scale a [CanvasScaler] works out to a step, so a canvas drawn from pixel art lands on a
+ * whole number of screen pixels per art pixel.
+ *
+ * Text does not need it. A canvas rounds each text element's size to whole device pixels, after the
+ * scale and the density, so text up to the font's pixel-glyph size is crisp at any scale. What
+ * snapping gives is a scale that is a clean multiple of the art, and text sizes that agree with the
+ * layout: at 1.5 every even size is whole, at 1 or 2 every size is.
+ *
+ * It costs layout size. A snapped canvas is laid out at the snapped scale, so against the unsnapped
+ * one every size and offset is off by up to half a step, in proportion: a 1017 dp tall window against
+ * the default 720 reference gives 1.4125, which [HalfStep] draws at 1.5, 6% larger, and [WholeStep] at 1,
+ * 29% smaller. Pick a step small against the scales the game runs at.
+ */
+@Serializable
+enum class CanvasScaleSnap(
+    /** The multiple of the scale the rule is rounded to; 0 for none. */
+    internal val step: Float,
+) {
+    /** The scale is used as the rule gives it. */
+    None(0f),
+
+    /** The scale is rounded to the nearest whole number: 1, 2, 3. */
+    WholeStep(1f),
+
+    /** The scale is rounded to the nearest half: 1, 1.5, 2, 2.5. */
+    HalfStep(0.5f),
+    ;
+
+    /**
+     * [scale] rounded to the nearest multiple of this step, halves up. A scale under one step is left
+     * as it is: a canvas smaller than its design cannot be made a whole multiple of it, and rounding
+     * it up would grow it past the box it was fitted to.
+     */
+    internal fun round(scale: Float): Float =
+        if (step <= 0f || scale < step) scale else floor(scale / step + HALF) * step
+
+    private companion object {
+        const val HALF = 0.5f
+    }
+}
+
+/** Which part of a canvas a [CanvasScaler] scales. */
+@Serializable
+enum class CanvasScaleScope {
+    /** Every element on the canvas, when the scaler is the canvas's own. */
+    Canvas,
+
+    /** Only the node the scaler sits on and the nodes beneath it, at the scale the canvas's box gives. */
+    Subtree,
+}
+
+/**
+ * Works out the scale a [CanvasOverlay] or one of its subtrees draws at from the size of the canvas's
+ * box: what Unity calls a canvas scaler. It is data, saved with a scene as its `canvas_scaler` and
+ * passed as `CanvasOverlay(scaler = …)` or [CanvasItem.scaler]; [scaleFor] is the whole rule.
  *
  * The scale multiplies dp. At 1 an element of 100 units is 100 dp across, as without a scaler.
  *
@@ -51,6 +104,11 @@ enum class CanvasScaleMode {
  * @property maxScale The largest scale the rule may give; 0 for no limit.
  * @property playerScale The player's own multiplier, applied after [minScale] and [maxScale] so a
  *   player can always make the UI larger or smaller: a game's settings menu sets it.
+ * @property snap Rounds the scale [mode] gives to a step, before the limits hold it and the player
+ *   multiplies it; [CanvasScaleSnap.None], the default, draws at the scale as the rule gives it. See
+ *   [CanvasScaleSnap] for what it keeps crisp and what it costs.
+ * @property scope Whether the scaler applies to the whole [CanvasScaleScope.Canvas], the default, or
+ *   only to the [CanvasScaleScope.Subtree] of the node it sits on.
  */
 @Serializable
 data class CanvasScaler(
@@ -63,11 +121,49 @@ data class CanvasScaler(
     @PropertyRange(min = 0.0) val minScale: Float = 0f,
     @PropertyRange(min = 0.0) val maxScale: Float = 0f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val playerScale: Float = 1f,
+    val snap: CanvasScaleSnap = CanvasScaleSnap.None,
+    val scope: CanvasScaleScope = CanvasScaleScope.Canvas,
 ) {
+    /** [CanvasScaler] as it was before `scope`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mode: CanvasScaleMode = CanvasScaleMode.ScaleWithScreenSize,
+        referenceWidth: Float = DEFAULT_REFERENCE_WIDTH,
+        referenceHeight: Float = DEFAULT_REFERENCE_HEIGHT,
+        match: Float = DEFAULT_MATCH,
+        pixelsPerUnit: Float = 1f,
+        referenceDpi: Float = DP_PER_INCH,
+        minScale: Float = 0f,
+        maxScale: Float = 0f,
+        playerScale: Float = 1f,
+        snap: CanvasScaleSnap = CanvasScaleSnap.None,
+    ) : this(
+        mode, referenceWidth, referenceHeight, match, pixelsPerUnit, referenceDpi, minScale, maxScale, playerScale,
+        snap,
+    )
+
+    /** [copy] as it was before `scope`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mode: CanvasScaleMode = this.mode,
+        referenceWidth: Float = this.referenceWidth,
+        referenceHeight: Float = this.referenceHeight,
+        match: Float = this.match,
+        pixelsPerUnit: Float = this.pixelsPerUnit,
+        referenceDpi: Float = this.referenceDpi,
+        minScale: Float = this.minScale,
+        maxScale: Float = this.maxScale,
+        playerScale: Float = this.playerScale,
+        snap: CanvasScaleSnap = this.snap,
+    ): CanvasScaler = copy(
+        mode, referenceWidth, referenceHeight, match, pixelsPerUnit, referenceDpi, minScale, maxScale, playerScale,
+        snap,
+    )
+
     /**
      * The scale for a canvas box [width] by [height] dp, on a screen of [density] pixels per dp and
-     * [dpi] dots per inch: by [mode], held between [minScale] and [maxScale], then times
-     * [playerScale].
+     * [dpi] dots per inch: by [mode], rounded by [snap], held between [minScale] and [maxScale], then
+     * times [playerScale]. The limits come after the rounding, so a scale is never outside them.
      *
      * A host that knows the screen's real dots per inch passes [dpi]; by default it is 160 per dp,
      * the density's own definition, which is true on Android and close elsewhere. A box with no
@@ -80,7 +176,7 @@ data class CanvasScaler(
             CanvasScaleMode.ScaleWithScreenSize -> screenScale(width, height)
             CanvasScaleMode.ConstantPhysicalSize -> dpi / (referenceDpi * pixels)
         }
-        var scale = if (raw > 0f && raw.isFinite()) raw else 1f
+        var scale = snap.round(if (raw > 0f && raw.isFinite()) raw else 1f)
         if (minScale > 0f) scale = scale.coerceAtLeast(minScale)
         if (maxScale > 0f) scale = scale.coerceAtMost(maxScale)
         val player = if (playerScale > 0f && playerScale.isFinite()) playerScale else 1f

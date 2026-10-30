@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -21,10 +22,10 @@ import kotlinx.coroutines.runBlocking
  * on. Vulkan runs its real frame loop into presentable stand-in images; WebGPU's renderer is an
  * [OffscreenFrames].
  */
-internal fun openRuntimeSession(backend: HeadlessUiBackend, app: AwakeAppLifecycle, width: Int, height: Int): HeadlessRenderSession =
+internal fun openRuntimeSession(backend: HeadlessUiBackend, app: AwakeAppLifecycle, width: Int, height: Int, plan: RenderPlan = EngineShowcaseRenderPlan): HeadlessRenderSession =
     when (backend) {
         HeadlessUiBackend.WebGpu -> {
-            val session = webGpuHeadlessPlan(EngineShowcaseRenderPlan, surface = HeadlessSurface(width, height))
+            val session = webGpuHeadlessPlan(plan, surface = HeadlessSurface(width, height))
             val renderer = OffscreenFrames(session.renderer, width, height)
             object : HeadlessRenderSession {
                 override val renderer: Renderer = renderer
@@ -35,7 +36,7 @@ internal fun openRuntimeSession(backend: HeadlessUiBackend, app: AwakeAppLifecyc
             }
         }
         HeadlessUiBackend.Vulkan -> {
-            val renderer = runBlocking { PlanEngine(app).boot(HeadlessSurface(width, height)) }
+            val renderer = runBlocking { PlanEngine(app, plan).boot(HeadlessSurface(width, height)) }
             object : HeadlessRenderSession {
                 override val renderer: Renderer = renderer
                 override fun close() = renderer.destroy()
@@ -43,7 +44,7 @@ internal fun openRuntimeSession(backend: HeadlessUiBackend, app: AwakeAppLifecyc
         }
     }
 
-private class PlanEngine(app: AwakeAppLifecycle) : VulkanEngine(app, EngineShowcaseRenderPlan) {
+private class PlanEngine(app: AwakeAppLifecycle, plan: RenderPlan) : VulkanEngine(app, plan) {
     suspend fun boot(surface: HeadlessSurface): Renderer = createBackendResources(surface).renderer
 }
 

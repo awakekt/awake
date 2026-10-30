@@ -17,6 +17,7 @@ import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.ge
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
 import com.awakekt.awake.asset.shaderdsl.le
@@ -29,6 +30,7 @@ import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
 import com.awakekt.awake.asset.shaderdsl.texture2d
@@ -67,6 +69,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val entityModel = if (skinned && !instanced) handles.value("model") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
         val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
+        val pbrFactors = if (skinned && !instanced) handles.value("pbrFactors") else null
         val exposure = handles.value("exposure")
         // The single-draw skinned block carries the point lights and what the debug views read; the instanced block doesn't.
         val pointLights = if (skinned && !instanced) SkinnedPointLights(handles::array) else null
@@ -112,7 +115,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
                 )
                 position = let("skinnedPosition", skinMatrix * vec4(inPosition, 1f.lit))
                 outNormal = let("skinnedNormal", skinMatrix * vec4(inNormal, 0f.lit))
-                if (debugVaryings != null) debugVaryings.write(this, entityModel!! * position, joints, weights, debug!!.joint)
+                if (debugVaryings != null && debug != null) debugVaryings.write(this, entityModel!! * position, joints, weights, debug.joint)
             } else {
                 position = vec4(inPosition, 1f.lit)
                 outNormal = inNormal
@@ -137,14 +140,17 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val n = let("n", normalize(normal))
             val l = let("l", normalize(lightDirection.xyz))
             val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-            val shade = variable("shade", sunShade(ambient, diffuse, lightColor))
-            if (pointLights != null) addPointLights(shade, ambient, n, debugVaryings!!.worldPosition, pointLights)
+            val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
+            val shade = variable("shade", sunShade(ambientShare, diffuse, lightColor))
+            if (pointLights != null) addPointLights(shade, ambientShare, n, debugVaryings!!.worldPosition, pointLights)
             val rgb = if (instanceTints != null) color.xyz else color
             val lit = rgb * shade
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             if (tint != null && glow != null) {
-                val shaded = vec4(displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x), tint.w)
-                colorOutput(skinnedDebugColor(debug!!, debugVaryings!!, n, rgb * tint.xyz, displayTransform, exposure, shaded))
+                val stored = let("stored", rgb * tint.xyz)
+                val litShaded = displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x)
+                val shaded = vec4(select(litShaded, displayTransform.unlit(stored), pbrFactors!!.w gt UNLIT_THRESHOLD.lit), tint.w)
+                colorOutput(skinnedDebugColor(debug!!, debugVaryings!!, n, stored, displayTransform, exposure, shaded))
             } else {
                 colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), if (instanceTints != null) color.w else 1f.lit))
             }
@@ -215,17 +221,25 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val n = let("n", normalize(normal))
         val l = let("l", normalize(handles.value("lightDirection").xyz))
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-        val shade = variable("shade", sunShade(ambient, diffuse, handles.value("lightColor")))
-        addPointLights(shade, ambient, n, debugVaryings.worldPosition, SkinnedPointLights(handles::array))
+        val lightColor = handles.value("lightColor")
+        val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
+        val shade = variable("shade", sunShade(ambientShare, diffuse, lightColor))
+        addPointLights(shade, ambientShare, n, debugVaryings.worldPosition, SkinnedPointLights(handles::array))
         // The material's factors tint it as glTF's do; untinted they are white and black.
-        val lit = texColor.rgb * color * tint.xyz * shade + glow.xyz
+        val stored = let("stored", texColor.rgb * color * tint.xyz)
+        val lit = stored * shade + glow.xyz
         val alpha = let("alpha", texColor.a * tint.w)
-        // A masked material's cut-out, as the textured shader's; an opaque one's cutoff is 0.
-        discardIf(alpha lt pbrFactors.z)
-        val shaded = vec4(displayTransform.displayReferred(lit, exposure.x), alpha)
-        colorOutput(skinnedDebugColor(debug, debugVaryings, n, texColor.rgb * color * tint.xyz, displayTransform, exposure, shaded))
+        val shaded = vec4(
+            select(displayTransform.displayReferred(lit, exposure.x), displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit),
+            alpha,
+        )
+        val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, stored, displayTransform, exposure, shaded))
+        val coverage = materialCoverage(alpha, pbrFactors.z, debugColor.w)
+        colorOutput(vec4(debugColor.xyz, coverage))
     }
 }
+
+private const val UNLIT_THRESHOLD = 0.5f
 
 /**
  * How lit a surface is under the scene's sun: [ambient], plus the sun's [lightColor] on the rest by

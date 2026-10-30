@@ -286,6 +286,18 @@ Verify a change to any of this with an empty Gradle home (`GRADLE_USER_HOME=$(mk
 
 ### Template publishing
 
+The public `com.awakekt.awake.plugin.scene-components` marker and the JVM-only
+`com.awakekt.awake.scene.binding:processor` ship on the Core version train. The processor uses the
+shared publication convention and participates in the Core artifact inventory and staging checks;
+the build-logic publication check includes the marker. Both the PR Templates workflow and the
+release Consumer job publish the build plugins locally, then run
+`tools/check_scene_components_consumer.sh` against a separate project. That project resolves the
+published marker and processor without an included build, generates bindings and a registry in
+commonMain, and tests JVM/Wasm persistence plus Android compilation (and native compilation on
+macOS). Templates also runs a separate macOS consumer job before merge, publishing only this
+toolchain's dependency closure to check both native targets. A consumer project's own version must
+never choose the processor version.
+
 The three starter templates (`templates/game`, `templates/project`, `templates/plugin`) live in
 this repository and are tested from there: `.github/workflows/templates.yml` and
 `obfuscated-templates.yml` build the in-tree copy through `tools/check_template_consumer.sh`, so a

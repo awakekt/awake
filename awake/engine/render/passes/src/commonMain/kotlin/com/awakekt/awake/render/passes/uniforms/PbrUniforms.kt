@@ -88,15 +88,16 @@ data class TextureAnimation(
 }
 
 /**
- * A skinned draw's `extraUniformFloats` tinted by its material: [palette], then [baseColorFactor] and
- * [emissiveFactor], laid out as [SkinnedMaterialLayout]. Written into [into], so a caller that draws
- * every frame reuses one array.
+ * A skinned draw's `extraUniformFloats` tinted by its material: [palette], then [baseColorFactor],
+ * [emissiveFactor] and [unlit] in `pbrFactors.w`, laid out as [SkinnedMaterialLayout]. Written into
+ * [into], so a caller that draws every frame reuses one array.
  */
 fun skinnedMaterialFloats(
     palette: FloatArray,
     baseColorFactor: Color,
     emissiveFactor: Color,
     into: FloatArray = FloatArray(SkinnedMaterialLayout.total),
+    unlit: Boolean = false,
 ): FloatArray {
     val layout = SkinnedMaterialLayout
     val paletteEnd = layout.offsetOf(UniformFields.BaseColorFactor)
@@ -106,15 +107,26 @@ fun skinnedMaterialFloats(
     into.fill(0f, palette.size, paletteEnd)
     layout.writeVec4(into, UniformFields.BaseColorFactor, baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a)
     layout.writeVec4(into, UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
+    layout.writeVec4(into, UniformFields.PbrFactors, 0f, 0f, 0f, if (unlit) SKINNED_UNLIT else 0f)
     return into
 }
+
+/** [skinnedMaterialFloats] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun skinnedMaterialFloats(
+    palette: FloatArray,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    into: FloatArray = FloatArray(SkinnedMaterialLayout.total),
+): FloatArray = skinnedMaterialFloats(palette, baseColorFactor, emissiveFactor, into, unlit = false)
 
 /**
  * Packs authored PBR factors without making scene extraction know the GPU lane order.
  *
  * [litWhenAdditive] keeps a textured draw lit when it blends additively, where it would otherwise
- * add only its own colour (see [TexturedBlend]). It rides in `pbrFactors.w` for the shared packer,
- * which replaces it with the draw's [TexturedBlend] code.
+ * add only its own colour; [unlit] skips lighting and tone mapping so the draw outputs its stored
+ * colour (see [TexturedBlend]). Both ride in `pbrFactors.w` for the shared packer, which replaces
+ * the lane with the draw's [TexturedBlend] code.
  */
 @Suppress("LongParameterList") // One argument per authored material value.
 fun pbrMaterialFloats(
@@ -124,12 +136,26 @@ fun pbrMaterialFloats(
     emissiveFactor: Color,
     textureAnimation: TextureAnimation = TextureAnimation.None,
     litWhenAdditive: Boolean = false,
+    unlit: Boolean = false,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTexturedMaterial)
-    .put(UniformFields.PbrFactors, metallic, roughness, 0f, if (litWhenAdditive) LIT_WHEN_ADDITIVE else 0f)
+    .put(UniformFields.PbrFactors, metallic, roughness, 0f, authoredShadingFlags(litWhenAdditive, unlit))
     .put(UniformFields.BaseColorFactor, baseColorFactor)
     .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
     .putTextureAnimation(textureAnimation)
     .build()
+
+/** [pbrMaterialFloats] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList") // One argument per authored material value.
+fun pbrMaterialFloats(
+    metallic: Float,
+    roughness: Float,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    textureAnimation: TextureAnimation = TextureAnimation.None,
+    litWhenAdditive: Boolean = false,
+): FloatArray =
+    pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation, litWhenAdditive, unlit = false)
 
 private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): UniformWriter = this
     .put(
@@ -171,6 +197,12 @@ enum class TexturedBlend(val code: Int) {
      * draw whose material asks to stay lit.
      */
     AddsLit(2),
+
+    /**
+     * Draws `baseColorFactor * texture * vertexColor` as stored, skipping lighting, tone mapping
+     * and fog: a material with `unlit = true`.
+     */
+    Unlit(3),
 }
 
 /**
@@ -223,22 +255,36 @@ private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, addi
             .build()
     }
     val factors = layout.readVec4(output, UniformFields.PbrFactors)
-    val blend = texturedBlend(additive, litWhenAdditive = factors.w > LIT_WHEN_ADDITIVE / 2f)
+    val flags = (factors.w + FLAG_ROUNDING).toInt()
+    val blend = texturedBlend(
+        additive = additive,
+        litWhenAdditive = (flags and FLAG_LIT_WHEN_ADDITIVE) != 0,
+        unlit = (flags and FLAG_UNLIT) != 0,
+    )
     layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, blend.code.toFloat())
     val scroll = layout.readVec4(output, UniformFields.TextureScroll)
     layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, timeSeconds, scroll.w)
     return output
 }
 
-/** A draw blended [additive]ly adds unlit unless its material asked to stay lit; any other covers. */
-private fun texturedBlend(additive: Boolean, litWhenAdditive: Boolean): TexturedBlend = when {
+/** An unlit material skips shading; otherwise an [additive] draw adds unlit unless [litWhenAdditive] is set, and any other covers. */
+private fun texturedBlend(additive: Boolean, litWhenAdditive: Boolean, unlit: Boolean): TexturedBlend = when {
+    unlit -> TexturedBlend.Unlit
     !additive -> TexturedBlend.Covers
     litWhenAdditive -> TexturedBlend.AddsLit
     else -> TexturedBlend.AddsUnlit
 }
 
-/** An authored payload's `pbrFactors.w` when its material stays lit while blending additively; 0 otherwise. */
-private const val LIT_WHEN_ADDITIVE = 1f
+private fun authoredShadingFlags(litWhenAdditive: Boolean, unlit: Boolean): Float =
+    ((if (litWhenAdditive) FLAG_LIT_WHEN_ADDITIVE else 0) or (if (unlit) FLAG_UNLIT else 0)).toFloat()
+
+/** Authored bit flags packed into `pbrFactors.w` before [texturedMaterialPayload] stamps [TexturedBlend]. */
+private const val FLAG_LIT_WHEN_ADDITIVE = 1
+private const val FLAG_UNLIT = 2
+private const val FLAG_ROUNDING = 0.5f
+
+/** `SkinnedMaterialLayout`'s `pbrFactors.w` when the material is unlit; `0f` when lit. */
+private const val SKINNED_UNLIT = 1f
 
 /** The factor fields a textured payload carried before texture animation. */
 private val FACTOR_FLOATS =

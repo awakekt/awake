@@ -205,6 +205,12 @@ public abstract interface class com/awakekt/awake/scene/worldstream/VirtualTerra
 	public abstract fun provideTile (Lcom/awakekt/awake/world/WorldCellCoord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/scene/worldstream/WorldstreamSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/worldstream/WorldstreamSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/worldstream/WorldstreamTerrainDriver : com/awakekt/awake/scene/runtime/TerrainDriver {
 	public static final field DEFAULT_DELTA F
 	public fun <init> ()V

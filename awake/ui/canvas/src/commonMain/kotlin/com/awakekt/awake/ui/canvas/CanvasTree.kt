@@ -22,8 +22,82 @@ import com.awakekt.awake.core.text.font.UiFont
  * @property id Its `canvas-element-<id>` test tag.
  * @property element The element to draw.
  * @property parent The nearest element above it the host found there, or null for a root.
+ * @property scaler A scaler for this element and the elements inside it, worked out from the
+ *   canvas's box; null inherits the canvas's or its parent's.
  */
-class CanvasItem(val id: Int, val element: CanvasElement, val parent: CanvasElement? = null)
+class CanvasItem(
+    val id: Int,
+    val element: CanvasElement,
+    val parent: CanvasElement? = null,
+    val scaler: CanvasScaler? = null,
+) {
+    /** [CanvasItem] as it was before `scaler`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        id: Int,
+        element: CanvasElement,
+        parent: CanvasElement? = null,
+    ) : this(id, element, parent)
+}
+
+/**
+ * The host box a frame's [CanvasOverlay] was measured in, before any canvas or subtree scale is
+ * applied: [width] by [height] host dp at [hostDensity] pixels per dp, [dpi] dots per inch, and
+ * [safeArea] insets in host dp.
+ */
+internal class CanvasBoxMetrics(
+    val width: Float = 0f,
+    val height: Float = 0f,
+    val hostDensity: Float = 1f,
+    val dpi: Float = CanvasScaler.DP_PER_INCH,
+    val safeArea: CanvasInsets = CanvasInsets.None,
+) {
+    /** The positive finite scale [scaler] gives for this host box, or 1. */
+    fun scaleOf(scaler: CanvasScaler): Float {
+        val scale = scaler.scaleFor(width, height, hostDensity, dpi)
+        return if (scale > 0f && scale.isFinite()) scale else 1f
+    }
+
+    /** The pixels per dp a subtree with [scaler] lays out at in this host box. */
+    fun densityOf(scaler: CanvasScaler): Float = hostDensity * scaleOf(scaler)
+}
+
+/**
+ * Memoizes each [CanvasItem]'s effective layout density for the active [CanvasBoxMetrics] pass,
+ * walking parent items when an item has no subtree [CanvasItem.scaler] of its own.
+ */
+internal class CanvasSubtreeScales(private val items: List<CanvasItem>) {
+    var box: CanvasBoxMetrics = CanvasBoxMetrics()
+        private set
+
+    var canvasDensity: Float = 1f
+        private set
+
+    private val byElement = HashMap<CanvasElement, CanvasItem>(items.size * 2).apply {
+        for (item in items) put(item.element, item)
+    }
+    private val densities = HashMap<CanvasElement, Float>(items.size * 2)
+
+    fun measure(box: CanvasBoxMetrics, canvasDensity: Float) {
+        this.box = box
+        this.canvasDensity = canvasDensity
+        densities.clear()
+        for (item in items) resolve(item)
+    }
+
+    fun densityOf(element: CanvasElement): Float = densities[element] ?: canvasDensity
+
+    private fun resolve(item: CanvasItem): Float {
+        densities[item.element]?.let { return it }
+        // Seed before recursing so a caller-supplied parent cycle terminates cleanly.
+        densities[item.element] = canvasDensity
+        val resolved = item.scaler?.let(box::densityOf)
+            ?: item.parent?.let(byElement::get)?.let(::resolve)
+            ?: canvasDensity
+        densities[item.element] = resolved
+        return resolved
+    }
+}
 
 /**
  * What [CanvasOverlay] asks its host for: a [CanvasElement.follow]ed node's projected point or
@@ -80,6 +154,8 @@ internal class CanvasTree(
     private val fonts: Map<String, UiFont> = emptyMap(),
     private val strings: Strings? = null,
     val controls: CanvasControls = CanvasControls.Default,
+    val tooltips: CanvasTooltips = CanvasTooltips(),
+    internal val followers: FollowerPlans = FollowerPlans(),
 ) {
     private val hierarchy = CanvasHierarchy(items)
 
@@ -100,8 +176,19 @@ internal class CanvasTree(
 
     fun childrenOf(element: CanvasElement): List<CanvasItem> = hierarchy.childrenOf(element)
 
-    /** Where each follower drawn this frame goes, as [planFollowers] last worked it out; one not in it is not drawn. */
-    internal val followerPlans = HashMap<CanvasElement, FollowerPlan>()
+    /**
+     * Where each follower goes, as [planFollowers] last worked it out, kept per follower across frames
+     * in [followers]; one absent or not [FollowerPlan.drawn] is not drawn.
+     */
+    internal val followerPlans: HashMap<CanvasElement, FollowerPlan> get() = followers.plans
+
+    internal val scales = CanvasSubtreeScales(items)
+
+    /** The host box this pass was measured in, set before any element or follower is composed. */
+    internal val box: CanvasBoxMetrics get() = scales.box
+
+    /** The whole canvas's pixels per dp this pass, before any subtree or follower scale. */
+    internal val canvasDensity: Float get() = scales.canvasDensity
 
     fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
 
@@ -140,16 +227,16 @@ internal class CanvasTree(
     fun textOf(element: CanvasElement): String {
         val bind = element.bind?.takeIf { it.text.isNotBlank() }
         return when {
-            element.textKey.isNotEmpty() -> keyedText(element)
+            element.textKey.isNotEmpty() -> keyedText(element.textKey, element)
             bind == null -> element.text
             else -> resolver.textField(bind.node, bind.text)
         }
     }
 
-    /** [element]'s [CanvasElement.textKey] in the active locale, with its arguments; the key itself without [strings]. */
-    private fun keyedText(element: CanvasElement): String {
-        val strings = strings ?: return element.textKey.also(::warnNoStrings)
-        return strings.text(element.textKey, argumentsOf(element))
+    /** [key] in the active locale, with [element]'s arguments; the key itself without [strings]. */
+    internal fun keyedText(key: String, element: CanvasElement): String {
+        val strings = strings ?: return key.also(::warnNoStrings)
+        return strings.text(key, argumentsOf(element))
     }
 
     /** [element]'s own [CanvasElement.textArgs], with each its binding reads from a field in place of its own. */
@@ -177,6 +264,12 @@ internal class CanvasTree(
         return found
     }
 }
+
+/** Records the host [box] and whole-canvas [canvasDensity], and resolves every item's subtree density. */
+internal fun CanvasTree.measureBox(box: CanvasBoxMetrics, canvasDensity: Float) = scales.measure(box, canvasDensity)
+
+/** The pixels per dp [element]'s subtree lays out at this pass. */
+internal fun CanvasTree.densityOf(element: CanvasElement): Float = scales.densityOf(element)
 
 private val keyLog = Logger("ui-canvas")
 

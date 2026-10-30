@@ -251,6 +251,7 @@ class Renderer internal constructor(
     internal val maskTarget: DepthTarget? = maskPass?.depthTarget
     internal val uiShaders: ShaderPair = uiShaderPairs.quad
     internal val uiGlyphShaders: ShaderPair = uiShaderPairs.glyph
+    internal val uiDecoratedGlyphShaders: ShaderPair? = uiShaderPairs.decoratedGlyph
     internal val uiTextureShaders: ShaderPair = uiShaderPairs.texture
     internal val uiRoundedQuadShaders: ShaderPair = uiShaderPairs.roundedQuad
     internal val uiTargetCompositeShaders: ShaderPair? = uiShaderPairs.targetComposite
@@ -296,6 +297,7 @@ class Renderer internal constructor(
     internal var depthImages: List<Long> = emptyList()
     internal var depthImageMemories: List<Long> = emptyList()
     internal var depthImageViews: List<Long> = emptyList()
+    internal var multisampleColors: List<com.awakekt.awake.vulkan.texture.ColorAttachment> = emptyList()
     internal var presentTransitionRenderPass: Long = 0
 
     // Reused every call, NOT transferContext.runOneTimeCommands() -- that allocates a fresh
@@ -321,6 +323,8 @@ class Renderer internal constructor(
     internal var presentTransitionFramebuffers: List<Long> = emptyList()
     internal var uiGlyphRenderPipeline: UiRenderPipeline? = null
     internal var offscreenGlyphRenderPipeline: UiRenderPipeline? = null
+    internal var uiDecoratedGlyphRenderPipeline: UiRenderPipeline? = null
+    internal var offscreenDecoratedGlyphRenderPipeline: UiRenderPipeline? = null
 
     /** Every font's uploaded atlas, by identity -- see [ensureFontAtlas]. Released with [textureResources]. */
     internal val fontAtlases = HashMap<UiFont, Texture>()
@@ -367,6 +371,7 @@ class Renderer internal constructor(
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
+    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index, decorated = true)
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun instanceBufferForRun(index: Int): InstanceBuffer = bufferPools.instanceBufferForRun(index)
     internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = bufferPools.skinnedInstanceBufferForRun(index)
@@ -594,6 +599,8 @@ class Renderer internal constructor(
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()
         offscreenGlyphRenderPipeline?.destroy()
+        uiDecoratedGlyphRenderPipeline?.destroy()
+        offscreenDecoratedGlyphRenderPipeline?.destroy()
         offscreenQuadRenderPipeline?.destroy()
         offscreenRoundedQuadRenderPipeline?.destroy()
         offscreenTextureRenderPipelines.values.forEach { it.destroy() }
@@ -626,6 +633,17 @@ class Renderer internal constructor(
          * `DynamicMesh` grows to fit it, so this only trades draw calls against memory.
          */
         internal const val MAX_UI_QUADS = 256
+
+        /**
+         * The size a textured primitive's own mesh starts at: one image is one quad, nine for a
+         * nine-slice, not a batch. Every textured primitive owns its mesh (see
+         * `textureMeshForPrimitive`), so starting each at [MAX_UI_QUADS] reserved about 55 KB of
+         * host-visible memory per primitive and frame slot for a 216-byte quad. A screen of 190
+         * images held 21 MB of buffer capacity that way. Small starting buffers reduce host-visible
+         * memory pressure while investigating the Android crash in #1118; `DynamicMesh` still grows
+         * to fit a larger primitive.
+         */
+        internal const val TEXTURE_PRIMITIVE_QUADS = 1
 
         /** Starting size only -- LineMesh grows past it. See DebugLineLayout.INITIAL_LINES. */
         internal const val MAX_DEBUG_LINES = DebugLineLayout.INITIAL_LINES

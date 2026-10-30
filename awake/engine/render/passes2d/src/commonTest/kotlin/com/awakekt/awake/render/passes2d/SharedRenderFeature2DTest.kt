@@ -130,4 +130,27 @@ class SharedRenderFeature2DTest {
             recording.calls,
         )
     }
+
+    /**
+     * A fractional clip covers the pixel columns and rows whose centres it contains, each edge rounded on
+     * its own (#1053). Truncating x, y, width and height separately took a clip from 10.9 to 31.8 to columns
+     * 10..29: one column the clip leaves out, and the two at its right edge cut off.
+     */
+    @Test
+    fun aFractionalClipCoversThePixelsWhoseCentresItContains() {
+        fun scissorFor(clip: Rectangle): String {
+            val recording = Recording()
+            SharedRenderFeature2D().recordCommands(listOf(DrawRun.ClipRun(clip)), surfaceWidth = 200, surfaceHeight = 200, recorder = recording)
+            return recording.calls.single()
+        }
+
+        // Columns 11..31 and rows 11..27.
+        assertEquals("scissor 11,11 21x17", scissorFor(Rectangle(10.9f, 10.9f, 20.9f, 16.9f)))
+        // A 160x24 field scaled to 0.95 about (100, 50), 24..176 by 38.6..61.4: columns 24..175, rows 39..60.
+        assertEquals("scissor 24,39 152x22", scissorFor(Rectangle(100f - 80f * 0.95f, 50f - 12f * 0.95f, 160f * 0.95f, 24f * 0.95f)))
+        // Whole pixels are unchanged.
+        assertEquals("scissor 10,10 20x16", scissorFor(Rectangle(10f, 10f, 20f, 16f)))
+        // A clip past the surface still stops at its edge.
+        assertEquals("scissor 190,0 10x5", scissorFor(Rectangle(189.6f, -3f, 40f, 7.6f)))
+    }
 }

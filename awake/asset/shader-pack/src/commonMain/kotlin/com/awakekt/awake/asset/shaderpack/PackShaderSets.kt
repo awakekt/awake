@@ -26,6 +26,9 @@ object PackShaderSets {
     /** Unlit atlas quad with straight alpha and an explicit frame and tint. */
     val Sprite = aslShaderSet(SpriteShader)
 
+    /** Distance-field text placed in a scene, with its edge width from screen-space derivatives. */
+    val WorldText = aslShaderSet(WorldTextShader)
+
     /** Standard lit mesh shader set with directional light and cascaded shadow maps. */
     val LitShadow = aslShaderSet(::litShadowShader)
 

@@ -10,7 +10,7 @@ import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.render.pipeline.UiPipelineVariant
 
 /**
- * The four flavors of 2D draw primitive pipeline, and the vertex layout each one draws through.
+ * The flavors of 2D draw primitive pipeline, and the vertex layout each one draws through.
  */
 enum class DrawPipelineKind(
     /** Vertex layout format consumed by this pipeline. */
@@ -29,7 +29,16 @@ enum class DrawPipelineKind(
 
     /** Rounded rectangle pipeline with corner radius and antialiasing. */
     RoundedQuad(VertexFormats2D.RoundedQuad, UiPipelineVariant.RoundedQuad),
+
+    /**
+     * A glyph with its outline and shadow in one quad (#1061). It binds its font's atlas as [Glyph] does, into the
+     * same group-0 shape.
+     */
+    DecoratedGlyph(VertexFormats2D.DecoratedGlyph, UiPipelineVariant.DecoratedGlyph),
     ;
+
+    /** Whether this pipeline samples a font's atlas, bound per font after the pipeline. */
+    val isGlyph: Boolean get() = this == Glyph || this == DecoratedGlyph
 
     /** Derived from the format, never hand-counted. */
     val floatsPerVertex: Int get() = vertexFormat.strideBytes / Float.SIZE_BYTES

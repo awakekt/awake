@@ -25,6 +25,7 @@ import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.min
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
+import com.awakekt.awake.asset.shaderdsl.or
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.r
@@ -46,6 +47,7 @@ import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xy
 import com.awakekt.awake.asset.shaderdsl.y
+import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderdsl.zw
 import com.awakekt.awake.core.geometry.GpuDataShape
 
@@ -120,7 +122,8 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
     val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
     val screenToNdc by uniforms.field(GpuDataShape.Vec4)
     // Keep the font metadata in a vec4 so the shared UI UBO has an explicit 16-byte field.
-    // The shader uses only x/y; z/w are padding lanes written as zero by the shared packer.
+    // x is the atlas kind, y the distance-field range and z the exact-coverage flag (`uiFontInfo`); w is the
+    // effect field's range, which only UiDecoratedGlyphShader reads.
     val fontInfo by uniforms.field(GpuDataShape.Vec4)
 
     val fontAtlas by texture2d(group = 0, binding = 1)
@@ -147,15 +150,17 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
 
     fragment {
         val atlas = let("atlas", textureSample(fontAtlas, fontSampler, uv))
-        val glyphAlpha = variable("glyphAlpha", atlas.a)
-        iff(fontInfo.x lt 0.5f.lit) {
-            assign(glyphAlpha, atlas.a)
-        }
         val atlasSizeU = let("atlasSizeU", textureDimensions(fontAtlas))
         val atlasSize = let(
             "atlasSize",
             vec2(toF32(atlasSizeU.x), toF32(atlasSizeU.y)),
         )
+        // Distance-field coverage: a one-pixel ramp across the field's 0.5 edge, which is the area of the
+        // pixel the outline covers for a straight edge. Computed for every font, outside any branch, so the
+        // derivative is taken in uniform control flow. `UiRasterizer.distanceFieldScreenPxRange` and
+        // `distanceFieldCoverage` are the CPU copy of this block, checked against it by
+        // DistanceFieldGlyphShaderTwinTest, which supplies `atlas`, `atlasSizeU` and `screenTexSize` by name:
+        // rename them there too.
         val unitRange = let("unitRange", vec2(fontInfo.y) / atlasSize)
         val screenTexSize = let("screenTexSize", vec2(1f.lit, 1f.lit) / fwidth(uv))
         val screenPxRange = let("screenPxRange", max(0.5f.lit * dot(unitRange, screenTexSize), 1f.lit))
@@ -163,16 +168,21 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
             "signedDistance",
             max(min(atlas.r, atlas.g), min(max(atlas.r, atlas.g), atlas.b)),
         )
-        val coverage = let(
-            "coverage",
+        val fieldCoverage = let(
+            "fieldCoverage",
             clamp(screenPxRange * (signedDistance - 0.5f.lit) + 0.5f.lit, 0f.lit, 1f.lit),
         )
-        val correctedCoverage = let(
-            "correctedCoverage",
-            pow(coverage, 1f.lit / 1.45f.lit),
-        )
-        iff(fontInfo.x gt 0.5f.lit and (fontInfo.x lt 1.5f.lit)) {
-            assign(glyphAlpha, correctedCoverage)
+        val distanceField = let("distanceField", fontInfo.x gt 0.5f.lit and (fontInfo.x lt 1.5f.lit))
+        val coverage = variable("coverage", atlas.a)
+        iff(distanceField) {
+            assign(coverage, fieldCoverage)
+        }
+        // The text coverage rule ([textCoverageRule]), one for every glyph whose coverage is the area of the pixel
+        // the outline covers: a distance field's ramp above, and exact-size pixel glyphs (fontInfo.z = 1).
+        val ruled = textCoverageRule(coverage, color)
+        val glyphAlpha = variable("glyphAlpha", atlas.a)
+        iff(distanceField or (fontInfo.x lt 0.5f.lit and (fontInfo.z gt 0.5f.lit))) {
+            assign(glyphAlpha, ruled)
         }
         val outColor = variable("outColor", vec4(color.rgb, color.a * glyphAlpha))
         iff(fontInfo.x gt 1.5f.lit) {

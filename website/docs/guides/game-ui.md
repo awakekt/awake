@@ -59,6 +59,52 @@ On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set V
 The project needs the blueprint capability. A blueprint takes no tap from the button: its `action`,
 or a system polling `consumePress()`, sees the tap as it would without the blueprint.
 
+## Canvas components
+
+A canvas element is saved as a set of focused components on its node, one for each concern, and
+the ECS holds each as a component of its own, so a system can query "every text" or "every button"
+directly:
+
+| Component | Live type | What it holds |
+| --- | --- | --- |
+| `canvas_rect` | `CanvasRect` | Where it sits and how big it is. A node with one is a canvas element. |
+| `canvas_text` | `CanvasText` | Its words: text or key and args, font, size, alignment, links. |
+| `canvas_appearance` | `CanvasAppearance` | Its colours, `style` and control `skin`. |
+| `canvas_layout`, `canvas_cluster` | `CanvasLayout`, `CanvasCluster` | How it places its children. |
+| `canvas_bind` | `CanvasBinding` | Game state it shows without code. |
+| `canvas_follow`, `canvas_follow_arrow` | `CanvasFollow`, `CanvasFollowArrow` | The node it follows; the arrow of a follower pinned to the edge. |
+| `canvas_input`, `canvas_tooltip` | `CanvasInput`, `CanvasTooltip` | Pressable, draggable, drop target, wheel; a hover hint. |
+| one widget | `CanvasButtonWidget`, `CanvasBarWidget`, ... | `canvas_button`, `canvas_bar`, `canvas_sweep`, `canvas_stepper`, `canvas_joystick`, `canvas_look_area`, `canvas_text_field`, `canvas_view` or `canvas_image`: what the element is, with its own values and `settings`. |
+
+What the player is doing to an element right now, its taps, hover, drag and drop, focus, stick and
+aim, is a `CanvasPointerState` component, which is never saved. The element's `kind` follows from
+its components: its widget's, else `Text` when it has a `canvas_text`, else `Panel`. The properties
+below are the older `canvas_element`'s, which still loads: each becomes the component that holds it,
+and a scene saves the components. `World.syncCanvasElements()` brings an entity's components and its
+`CanvasElement` in step; `SceneCanvas` calls it every frame.
+
+### Migrating from `canvas_element`
+
+Nothing has to change for a scene or prefab saved before the split: it loads, draws and behaves as
+it did, and the next save writes it as components. To move code and tools over:
+
+- **Files.** `SceneDocument.withCanvasComponents()` and `ScenePrefab.withCanvasComponents()` rewrite a
+  file in the current form; `SceneNode.canvasElementView()` reads a node in either form as the single
+  record a tool written for `canvas_element` expects. A field a kind never used, such as a Panel's
+  `text` or a Bar's `camera`, has no component to go in and is dropped.
+- **Code that builds prefabs.** `canvasPrefab { … }` and its `text`, `panel`, `bar`, `button` and other
+  kind functions are unchanged and now save the component set. A setting the element's kind does not
+  use is reported, `sweep does nothing on a Panel, so it is not saved`, instead of being saved where
+  it did nothing.
+- **Code that reads elements.** `world.get<CanvasElement>(entity)` and its properties work as before.
+  To read by role, query the components instead: `world.family<CanvasButtonWidget, CanvasPointerState>()`
+  for every button and what the player did to it, `world.get<CanvasText>(entity)` for one element's
+  words. Typed parts expose theirs, such as a bar part's `widget` and a text part's `words`. Add,
+  replace or remove a component on the entity, or through `CanvasElement.set`; `SceneCanvas` brings the
+  two in step each frame, and `World.syncCanvasElements()` does it at once.
+- **Kind.** An element's `kind` follows from its components. Setting it on a `CanvasElement` gives it
+  that kind's widget; on an entity, add the widget component.
+
 ## Properties
 
 | Property | Type | Default | What it does |
@@ -74,9 +120,13 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `textArgs` | object | `{}` | Values for `textKey`'s placeholders, by name, such as `{ "count": "3" }`. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `font` | string | `""` | The font of `text`: a `.ttf` or `.otf` file from the project, or a built-in family. See [Use a font](#use-a-font). |
+| `numerals` | `Proportional` · `Tabular` | none | How digits are spaced: `Tabular` gives every digit the same width, so a counter or timer keeps its place; `Proportional` fits each to its shape. None keeps the font's default digits. |
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
 | `maxLength` | integer | `0` | The most a `TextField` lets the player type; `0` for no limit. See [Limit what is typed](#limit-what-is-typed). |
 | `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. |
+| `placeholder` | string | `""` | A `TextField`'s hint while it is empty and unfocused: a key in the string tables, drawn muted. See [Pad a field and hint at it](#pad-a-field-and-hint-at-it). |
+| `padding` | object | `{ "horizontal": 12, "vertical": 0 }` | The space between a `TextField`'s edge and its text, in dp. |
+| `tooltip` | string | `""` | A hint any element shows near the pointer after half a second over it: a key in the string tables. |
 | `pressable` | boolean | `false` | Lets an `Image` or `Panel` take a tap as a `Button` does. Without it, a tap passes through. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
@@ -306,15 +356,18 @@ lengths are dp.
 | `borderWidth`, `borderColor` | number, colour | A border inside the element's edge. It needs both. |
 | `shadow` | `{ color, offsetX, offsetY, blur, spread }` | A shadow behind the element, in its shape. Defaults: `#00000080`, 0, 2, 4, 0. |
 | `textColor` | colour | The text of a `Text` or `Button`, in place of `color`. |
-| `textShadow` | `{ color, offsetX, offsetY }` | A hard shadow under the text. Defaults: `#000000C0`, 1, 1. |
-| `textOutline` | `{ color, width }` | An outline around every glyph, so text reads over any background. Defaults: `#000000`, 1. |
+| `textShadow` | `{ color, offsetX, offsetY, blur }` | A shadow under the text, hard unless `blur` softens its edge across that many dp either side; with no offset, a glow. Defaults: `#000000C0`, 1, 1, 0. |
+| `textOutline` | `{ color, width }` | An outline around every glyph, so text reads over any background, drawn with the glyph in one draw from the font's effect field, so a thick one stays round. Defaults: `#000000`, 1. |
 | `alpha` | number, 0 to 1 | The element's opacity, its children included. |
-| `hovered`, `pressed` | state | What changes while the pointer is over a `Button`, and while it is held. |
+| `hovered`, `pressed`, `disabled` | state | What changes while the pointer is over a `Button`, while it is held, and while it is disabled. |
+| `transitionSeconds` | number | Seconds to interpolate between states, falling back to `canvas_controls.theme.transitionSeconds`; `0` or unset snaps at once. |
 
-A state may set `background`, `gradient`, `image`, `borderColor`, `textColor` and `alpha`; anything it
-leaves out keeps the style's value. `pressed` applies over `hovered`. A button drawn from a sheet of
-art changes its `image` region per state, and a state's `image` can name a file of its own, which
-`loadCanvasImages` reads with the rest. A `Joystick` draws only its colours.
+A state may set `background`, `gradient`, `image`, `borderColor`, `textColor`, `shadow`, `scale` and
+`alpha`; anything it leaves out keeps the style's value. `scale` grows or shrinks what is painted
+about the element's centre without moving its layout box or hit-test area. `pressed` applies over
+`hovered`. A button drawn from a sheet of art changes its `image` region per state, and a state's
+`image` can name a file of its own, which `loadCanvasImages` reads with the rest. A `Joystick` draws
+only its colours.
 
 ## Draw images
 
@@ -373,11 +426,17 @@ a built-in family: `default` is Roboto, and `bitmap` is a fixed-pitch pixel font
 { "component": "canvas_element", "text": "Harbor Town", "fontSize": 32, "font": "fonts/title.ttf" }
 ```
 
-`loadProject` loads each file once, while the scene loads, with the glyphs of printable ASCII and
-`• · … – — × −`; any other character draws as `?`. A file that cannot be read, or is not a font
+`loadProject` loads each file once, while the scene loads, with the glyphs of `UiFonts.DEFAULT_CHARS`:
+printable ASCII, the accented letters of Western and Central European text (Latin-1 Supplement and
+Latin Extended-A) and signs such as `€ ™ “ ”`; any other character draws as `?`. A file that cannot be read, or is not a font
 Awake reads, such as a collection or a WOFF file, is logged once, and its elements draw in the
 default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
 fonts yourself: `SceneCanvas(world, fonts = loadCanvasFonts(scene, files))`.
+
+Text up to 24 pixels, after the canvas scaler and the display density, draws from glyphs rasterized
+at exactly that size, so small labels stay sharp at a fractional scale too, where the size is rounded
+to a whole pixel; larger text draws from a distance field. `bitmap`
+keeps its pixel-art look at every size. See [Draw crisp text](ui.md#draw-crisp-text).
 
 ## Put elements inside others
 
@@ -647,6 +706,55 @@ player's own capsule among them, from hiding anything. A host that runs its own 
 `PhysicsCanvasOcclusion(physicsWorld, physicsSystem)` after its physics step; one with another way
 to tell, such as a depth read-back, sets its own `CanvasOcclusion` with `world.setCanvasOcclusion`.
 
+## Text in the world
+
+Two kinds of text stand in a 3D world, and each has its own tool.
+
+### Name plates
+
+A name plate over a character is a [follower](#follow-a-node): a canvas element drawn on the screen
+where the character is. Its `followRules.scale` curve sizes it by distance, and it stays as crisp as
+text drawn at that size directly, by three rules:
+
+- **Laid out at its final size, never stretched.** The curve's value is rounded to one of 16 sizes
+  per doubling (neighbours about 4 % apart, with 0.5, 1 and 2 exact), and the plate is laid out again
+  at that size, so its glyphs are whole-pixel sizes drawn the way all UI text is. A plate whose
+  distance drifts holds its size until it is a quarter of a step past the next, so it does not flick
+  between two sizes, and it is laid out again only when its size changes.
+- **On whole pixels while it moves slowly.** While the point it follows moves less than a device
+  pixel a frame, the plate's box snaps to whole device pixels, so a still or drifting camera draws the
+  same pixels frame after frame. Faster than two pixels a frame it moves by the exact amount, where a
+  whole-pixel step would judder.
+- **Faded without a layer.** Its `followRules.fade` multiplies what it draws, so nothing that reaches
+  past its box, such as a descender or an outline, is cut. Where two of its own parts overlap, both
+  fade, so the overlap shows through a little more than a layer would let it.
+
+Planning where a hundred plates go, ranked under a `canvas_follow_limit`, allocates nothing per frame
+once each plate has been drawn once.
+
+### Signs and labels in the scene
+
+Text that belongs to the world rather than the screen, such as a sign on a wall, a label on a crate
+or a number that should shrink with distance, is a `world_text` on a node. It is laid out once, drawn
+in the scene pass from the font's distance field, hidden by what stands in front of it, and sorted
+with other transparent things. Its edges are one screen pixel wide at any distance and angle: the
+shader measures how fast the field changes across a pixel instead of assuming the text faces the
+camera at a known size, so a sign seen up close stays sharp, and one seen far away or edge-on does
+not sparkle or smear.
+
+```json title="A sign on a wall, and a label that always faces the camera"
+{ "name": "Harbor Sign", "transform": { "position": { "x": 0, "y": 2.5, "z": -4 } },
+  "components": [ { "component": "world_text", "text": "Harbor Town", "size": 0.4, "weight": 700 } ] },
+{ "name": "Crate Label", "transform": { "position": { "x": 2, "y": 1.2, "z": 0 } },
+  "components": [ { "component": "world_text", "text": "Supplies", "size": 0.2, "billboard": true } ] }
+```
+
+From code, a `WorldText` from `com.awakekt.awake:worldtext` does the same without a scene:
+`WorldTextBatch(renderer).collect(text, worldMatrix, cameraLens, draws)` adds its draws to a frame,
+with the pipeline `worldTextScenePipeline()` in the backend's render plan (a played project's plan
+already has it). Use a name plate for what must stay readable whatever the distance, and a
+`world_text` for what should look like part of the place.
+
 ## Show a 3D view
 
 A `View` element shows what another camera sees, such as a character turning on a select screen.
@@ -689,12 +797,43 @@ where the platform reports them: on Android and on a desktop monitor that report
 browser and iOS report none, so there a unit is a dp. `minScale` and `maxScale` hold the result, and
 `playerScale`, which a settings menu sets, multiplies it after them.
 
+A screen rarely gives a round scale: a 1017 dp tall window against the default 720 reference gives
+1.4125. Text does not need one. Each text element's size is rounded to whole device pixels after the
+scale and the density, so text up to 24 pixels draws from exact-size glyphs at any scale (13 at 1.4125
+is an 18 pixel glyph, a 2% difference), and layout boxes keep the size the scale gives them. Pixel art
+is what a fractional scale hurts: some of its pixels come out a screen pixel wider than others. `snap`
+rounds the scale to the nearest whole number (`WholeStep`) or half (`HalfStep`) before the limits, so
+the art is a clean multiple. The trade-off is layout size. The canvas is laid out at the rounded
+scale, so every size and offset moves by up to half a step in proportion: `HalfStep` draws 1.4125 at
+1.5, 6% larger, and `WholeStep` at 1, 29% smaller. Use `snap` for a pixel-art HUD, with `HalfStep` or
+`WholeStep` as the layout can bear, and leave it `None` for a HUD of vector art and text.
+
 ```json title="A 1080p HUD that follows the screen's height"
 { "component": "canvas_scaler", "referenceWidth": 1920, "referenceHeight": 1080, "match": 1, "maxScale": 2 }
 ```
 
-A host that draws `CanvasOverlay` itself passes the same rule as `CanvasOverlay(items, scaler = …)`,
-and `CanvasScaler.scaleFor(width, height, density)` answers it for any box.
+By default a `canvas_scaler` scales the whole canvas (`scope: "Canvas"`). Set `scope` to `"Subtree"` on
+an element node, or on a plain grouping node above several elements, to scale only that node and what
+sits under it while the rest of the canvas keeps its own scale — a HUD that grows with the screen
+beside a `1:1` inspector window, or a pixel-art widget with `snap: "WholeStep"` inside a smoothly
+scaled HUD. Layout, clipping and hit-testing in that subtree use its scaled coordinates, and an inner
+`Subtree` scaler overrides an outer one for its own branch.
+
+```json title="A scaled HUD subtree beside a 1:1 window"
+[
+  { "name": "Hud", "components": [
+      { "component": "canvas_scaler", "scope": "Subtree", "referenceWidth": 1280, "referenceHeight": 720, "match": 1, "snap": "HalfStep" },
+      { "component": "canvas_rect", "width": 240, "height": 48 }
+    ] },
+  { "name": "Inspector", "components": [
+      { "component": "canvas_rect", "anchor": "TopRight", "width": 320, "height": 220 }
+    ] }
+]
+```
+
+A host that draws `CanvasOverlay` itself passes the same rule as `CanvasOverlay(items, scaler = …)` or
+on one `CanvasItem(id, element, parent, scaler)`, and `CanvasScaler.scaleFor(width, height, density)`
+answers it for any box.
 
 ### Keep clear of a notch
 
@@ -710,6 +849,15 @@ what it follows, either way.
 A host that knows better sets `SceneAppLifecycleRuntime.canvasSafeArea` itself, or passes
 `SceneCanvas(world, safeArea = …)`: an editor previews a device by passing that device's insets.
 `canvasDpi` likewise overrides the platform's dots per inch.
+
+Android also reports `AppFrame.systemGestureInsets`: the edges where system navigation gestures
+take priority, separate from `safeArea`. Both sets are relative to the engine surface and in dp,
+including when the surface is embedded inside a larger window. A host receives updates after a
+resize or inset change through `WindowLifecycle.setSystemGestureInsets`. Other hosts report
+`DisplayInsets.None` unless they supply this information; their existing safe areas are unchanged.
+When laying out edge controls, a host can choose the larger value on each edge from the visual and
+gesture sets and pass that as its canvas safe area. Do not add the sets: they can overlap. General
+panels can continue to use just the visual safe area.
 
 ### Place something on a point
 
@@ -729,6 +877,29 @@ when it arrives. A system writing `text` is not limited.
 The caret, the arrow keys, Backspace, Delete and selection also step a whole character at a time.
 Emoji draw as the font's missing-glyph box until colour emoji fonts are supported, one box for each
 emoji.
+
+## Pad a field and hint at it
+
+A `TextField` keeps its text 12 dp in from its edge, as shadcn's input does, so typed text never
+starts on the border. Set `padding` to change it: `{ "horizontal": 8 }`. The caret, a selection and
+the scrolling of a long line all work inside the padding, and the field clips its text at its own
+edge, so the tail of a leading `j` and the ring of an `Å` are not cut. Leave `vertical` at `0` unless
+the field is taller than its line: the line is centred in the field, and vertical padding takes room
+from it.
+
+Give a field a `placeholder`, a key in the string tables, to show a hint while it is empty and does
+not hold the keyboard. It draws in the field's text colour at half strength, and gives way to the
+caret as soon as the field is focused.
+
+Give any element a `tooltip`, also a key, to show a hint near the pointer once it has been over the
+element for half a second. The hint stays inside the canvas, opening to the pointer's left or above
+it at an edge, and goes when the pointer leaves the element or presses it. `textArgs` fill in the
+placeholders of both keys.
+
+```json
+{ "component": "canvas_element", "kind": "TextField", "width": 240, "height": 32,
+  "placeholder": "chat.hint", "padding": { "horizontal": 10 }, "tooltip": "chat.tip" }
+```
 
 ## How it works
 
@@ -752,6 +923,19 @@ the mask once for each typed character while `text` keeps what was typed, refuse
 reads as a password to accessibility services and the platform keyboard. Set `mask` back to `""` to
 show the password.
 
+Projects played by `runProject`, or by the systems from `sceneSystemsFor`, also accept controls added
+while playing. A HUD does not have to appear in the saved scene to get its input actions. Idle scenes
+watch for controls without creating fallback input state; when controls arrive, action reading runs
+before the canvas feeds its actions, and before movement and camera consumers.
+
+A system using the standard `gameplayInput()` provider can read `input.hostState` for the host's
+`showTouchControls` preference and `lastInputDevice`. The preference is the host's request before a
+canvas's `Auto` visibility policy. `lastInputDevice` stays on a quiet frame; `changeVersion` increments
+only when the device or preference changes, so a system can remember its last version and rebuild
+its layout once per change. The state is updated before systems run and survives project scene
+switches. A custom/headless provider can pass its own `HostInputState` to `GameplayInput`; the
+two-argument constructor continues to report no host state.
+
 A `Joystick` knob follows the thumb that landed on it up to the pad's edge and springs back on
 release; another thumb on a button, or on the stick, never moves it. Its `joystick` settings make it
 `Floating`, appearing where the thumb lands in its box, or `Dynamic`, dragged along past its reach,
@@ -766,6 +950,12 @@ and set its `radius`, a `deadZone`, a `response` or `curve`, four- or eight-way 
   "joystick": { "mode": "Floating", "radius": 64, "restX": 0.35, "restY": 0.6, "deadZone": 0.12,
                 "sprintThreshold": 0.9, "sprintAction": "run", "idleAlpha": 0.4, "idleDelay": 2 } }
 ```
+
+For a deterministic test or a host-supplied stick, `element.setJoystickInput(x, y)` accepts normalized
+pad coordinates (right/down positive). It applies the widget's dead zone, response and sprint
+threshold without synthesizing a pointer. Values are clamped to the pad's reach; `(0, 0)` centres
+it even when `snapBack` is off. Non-finite input, a non-joystick element, or an actual pointer already
+holding the joystick is rejected. Physical input can take over normally afterwards.
 
 A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when
@@ -844,6 +1034,67 @@ renames the node, and every copy of the prefab repeats it.
 `findCanvasElement` looks at every canvas element in the world, so look up once, when the prefab is
 placed, and keep the entity. A host that draws a prefab without a world finds the node in the prefab
 itself with `prefab.findCanvasNode("slot-1")`.
+
+### Bind elements with typed handles
+
+Code that builds a prefab and then updates it, such as a widget a plugin ships, declares its
+elements once as typed handles instead of repeating string ids in the builder and the binder. A
+`CanvasWidgetParts` is the widget; each kind's function (`text`, `image`, `bar`, `sweep`, `button`
+and the rest) declares a part of that kind, and `list` repeats a group of parts, such as a bar's
+slots. The id of each part is composed from the declaration: `icon` in the fourth slot of `bar` is
+`bar.slot-3.icon`. A function given no name declares the group's own element, whose id is the
+group's.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartsFixture.kt:canvas-parts"
+```
+
+The prefab builder takes the handles where it takes a name and an id. Each element gets the part's
+id and kind, and is named after its id unless you pass a `name`. The saved prefab holds plain string
+ids, so an editor, a theme, a saved layout or an override sees the same file as before.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartsFixture.kt:canvas-parts-build"
+```
+
+To bind a placed copy, make one instance of the declaration for it and `resolve` it against the
+copy's root. That walks the world once, binds every part, and throws a
+`CanvasPartResolutionException` naming each part that is missing or of another kind, so a typo or a
+part renamed on one side fails when the prefab is placed, not silently on every frame after it. Each
+handle then exposes only its kind's fields, such as an image part's `image` or a bar's `value`, and
+writes them on the cached element: no lookup and no string is built, so a binder can write every
+frame. Read a list by index, `for (i in slots.indices)`, in code that runs each frame.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartResolutionTest.kt:canvas-parts-bind"
+```
+
+Resolve again after a reload places a new copy. `parts.slots.resolve(world, root)` binds one list on
+its own, and `part.element` reaches a field no typed handle exposes. `findCanvasElement(root, id)`
+stays for tools and data-only lookups.
+
+#### Migrate from string ids
+
+Code that concatenated ids by hand built the same prefab:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartsFixture.kt:canvas-parts-strings"
+```
+
+Declare the parts so the derived ids are the ones the prefab already saves, and the file does not
+change; `CanvasPartsTest` checks that these two builds are equal. Where an id was not built from the
+structure, such as `slot-1-cooldown`, keep it with `pinnedId`, and use the item's `index` for a
+repeated part:
+
+```kotlin title="Kotlin"
+class SlotParts(scope: CanvasPartScope) : CanvasParts(scope) {
+    val cooldown = sweep("cooldown", pinnedId = "slot-${scope.index + 1}-cooldown")
+}
+```
+
+Then replace each `world.findCanvasElement(root, "...")` and `world.get<CanvasElement>(...)` in the
+binder with one `resolve` when the prefab is placed and the handles' fields after it, and delete the
+names file the ids were kept in.
 
 ### Save typed sizes and colours
 

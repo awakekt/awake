@@ -119,6 +119,8 @@ class RenderPipeline(
     private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
     private val bindingsMetadataAvailable: Boolean = false,
+    /** Raster state shared by every attachment in the colour/depth pass. */
+    val multisample: com.awakekt.awake.render.pipeline.MultisampleState = com.awakekt.awake.render.pipeline.MultisampleState.Single,
 ) : UniformBlockOwner {
     var renderPass: Long = 0
 
@@ -195,7 +197,10 @@ class RenderPipeline(
         }
     }
 
-    /** This pipeline's group-0 layout. A pipeline built over it binds this one's bind group unchanged. */
+    /**
+     * This pipeline's group-0 layout. A pipeline built over it binds this one's bind group unchanged.
+     * Each read takes a new native reference, which the reader closes.
+     */
     internal val groupZeroLayout: GPUBindGroupLayout
         get() = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0]).getBindGroupLayout(0u)
 
@@ -300,6 +305,7 @@ class RenderPipeline(
 
     /** Invalidate cached bind groups built against this pipeline's group 0 layout. */
     internal fun invalidateUniformBlock() {
+        contentBindGroup?.bindGroup?.close()
         contentBindGroup = null
         bindGroupBuilt = false
     }
@@ -312,7 +318,7 @@ class RenderPipeline(
                 contentBindGroup?.let { return it }
                 bindGroupBuilt = true
                 val group = WebGpuBindGroupHandle(
-                    device.createBindGroup(
+                    device.createBindGroupReleasingLayout(
                         BindGroupDescriptor(
                             layout = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0])
                                 .getBindGroupLayout(0u),
@@ -351,6 +357,27 @@ class RenderPipeline(
         )
     }
 
+    private fun blendState(): BlendState? = if (variant.blendEnabled) {
+        BlendState(
+            color = BlendComponent(
+                srcFactor = GPUBlendFactor.SrcAlpha,
+                // Additive colour adds to what is there; alpha blends as usual.
+                dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
+            ),
+            alpha = BlendComponent(
+                srcFactor = GPUBlendFactor.One,
+                dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
+            ),
+        )
+    } else {
+        null
+    }
+
+    private fun rasterSamples() = io.ygdrasil.webgpu.MultisampleState(
+        count = multisample.count.toUInt(),
+        alphaToCoverageEnabled = multisample.alphaToCoverageEnabled && !variant.blendEnabled,
+    )
+
     /**
      * Builds a new `GPURenderPipeline` running [wgslSource] with this pipeline's state and explicit layout.
      * It is not bound until [swapIn].
@@ -364,6 +391,7 @@ class RenderPipeline(
         try {
             return device.createRenderPipeline(
                 RenderPipelineDescriptor(
+                    multisample = rasterSamples(),
                     layout = explicitLayout,
                     vertex = VertexState(
                         module = shaderModule,
@@ -376,21 +404,7 @@ class RenderPipeline(
                         targets = listOf(
                             ColorTargetState(
                                 format = swapchainManager.imageFormatWebGpu,
-                                blend = if (variant.blendEnabled) {
-                                    BlendState(
-                                        color = BlendComponent(
-                                            srcFactor = GPUBlendFactor.SrcAlpha,
-                                            // Additive colour adds to what is there; alpha blends as usual.
-                                            dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
-                                        ),
-                                        alpha = BlendComponent(
-                                            srcFactor = GPUBlendFactor.SrcAlpha,
-                                            dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
-                                        ),
-                                    )
-                                } else {
-                                    null
-                                },
+                                blend = blendState(),
                             ),
                         ),
                     ),
@@ -444,7 +458,11 @@ class RenderPipeline(
      * Call once, after the last frame that draws through it.
      */
     fun destroy() {
+        val pipeline = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0])
         WebGpuHandles.release(graphicsPipeline[0])
+        invalidateUniformBlock()
+        pipeline.close()
+        explicitLayout.close()
         // Inside destroy(), not a separate call a teardown path has to remember: forgetting one
         // companion is exactly how every vertex format leaked a transparent pipeline before
         // PipelineSet.all existed. Vulkan's destroy() drops its slots the same way.

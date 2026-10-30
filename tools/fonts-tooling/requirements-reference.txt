@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# reference_render.py only. Not a dependency of Awake Core or its build.
+# freetype-py 2.5.1 bundles FreeType 2.13.2; the script refuses to run against any other FreeType.
+freetype-py==2.5.1

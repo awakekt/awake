@@ -37,7 +37,15 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:compose:ui-testing"))
+            // The name-plate cases read pixels back from the software raster (PixelMap).
+            implementation(project(":awake:engine:render:contract"))
+        }
+        desktopTest.dependencies {
+            // The snapshot cases read pixels back from the software raster (PixelMap) to measure
+            // the width of scaled pixel art.
+            implementation(project(":awake:engine:render:contract"))
         }
     }
 }

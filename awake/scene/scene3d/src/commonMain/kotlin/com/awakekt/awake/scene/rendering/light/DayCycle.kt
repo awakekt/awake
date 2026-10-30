@@ -12,6 +12,7 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneColor
@@ -121,6 +122,7 @@ class DayCycle(val authored: SceneDayCycle) {
 }
 
 /** Binding definition connecting [SceneDayCycle] descriptors to ECS [DayCycle] components. */
+@RegisteredBinding
 object DayCycleBinding : SceneComponentBinding<DayCycle, SceneDayCycle> {
     override val componentClass: KClass<DayCycle> = DayCycle::class
     override val schemaClass: KClass<SceneDayCycle> = SceneDayCycle::class

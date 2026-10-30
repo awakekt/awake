@@ -391,7 +391,9 @@ object DrawRunCoalescer {
                     @Suppress("UNCHECKED_CAST")
                     val glyphSlice = slice as List<DrawCommand.Glyph>
                     val font = first.font
-                    if (canExactClip(activePathClips)) {
+                    if (first.decoration != null) {
+                        stageDecoratedGlyphs(runs, glyphSlice, font, activePathClips, safeInteriorRect, maxQuadsPerRun)
+                    } else if (canExactClip(activePathClips)) {
                         val clipped = glyphSlice.map { glyph ->
                             val raw = texturedQuadMesh(glyph.x, glyph.y, glyph.w, glyph.h, glyph.u0, glyph.v0, glyph.u1, glyph.v1)
                             val mesh = if (canSkipExactClip(safeInteriorRect, glyph.x, glyph.y, glyph.w, glyph.h)) {
@@ -622,9 +624,51 @@ object DrawRunCoalescer {
         return cornerRadius * scale
     }
 
-    /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font. */
+    /**
+     * Decorated glyphs (#1061) in chunks of [maxQuadsPerRun], each quad grown to its decoration's reach and, under a
+     * path clip, cut to it like any glyph.
+     */
+    @Suppress("LongParameterList")
+    private fun stageDecoratedGlyphs(
+        runs: MutableList<StagedDrawRun>,
+        glyphs: List<DrawCommand.Glyph>,
+        font: UiFont?,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        maxQuadsPerRun: Int,
+    ) {
+        var chunkStart = 0
+        while (chunkStart < glyphs.size) {
+            val chunk = glyphs.subList(chunkStart, minOf(chunkStart + maxQuadsPerRun, glyphs.size))
+            runs += if (canExactClip(activePathClips)) {
+                DecoratedGlyphStaging.clippedRun(
+                    chunk.map { glyph ->
+                        val quad = DecoratedGlyphStaging.quad(glyph)
+                        val bounds = quad.vertices
+                        val inside = canSkipExactClip(
+                            safeInteriorRect,
+                            bounds[0].position.x,
+                            bounds[0].position.y,
+                            bounds[2].position.x - bounds[0].position.x,
+                            bounds[2].position.y - bounds[0].position.y,
+                        )
+                        (if (inside) quad else exactClip(quad, activePathClips)) to glyph
+                    },
+                    font,
+                )
+            } else {
+                DecoratedGlyphStaging.run(chunk, font)
+            }
+            chunkStart += chunk.size
+        }
+    }
+
+    /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font and pipeline. */
     private fun continuesSpan(first: DrawCommand, next: DrawCommand): Boolean =
-        next::class == first::class && (first !is DrawCommand.Glyph || first.font === (next as DrawCommand.Glyph).font)
+        next::class == first::class && (
+            first !is DrawCommand.Glyph ||
+                (first.font === (next as DrawCommand.Glyph).font && (first.decoration == null) == (next.decoration == null))
+            )
 
     /** Returns whether a rectangle at ([x], [y], [w], [h]) is fully within [safeInteriorRect], avoiding clipping. */
     fun canSkipExactClip(safeInteriorRect: Rectangle?, x: Float, y: Float, w: Float, h: Float): Boolean =

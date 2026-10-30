@@ -63,13 +63,19 @@ object ScenePassCompiler {
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
         val cameraForward = lens.forwardDirection()
-        val shadowCascadeData = shadowCascadeData(light, environment)
+        // A backend that clamps shadow depth flattens a caster in front of a cascade's near plane
+        // onto it; for one that clips there, the plane moves back to the casters instead. Before
+        // preparation, because prepared draws carry the cascade matrices their receivers sample.
+        val shadowCascadeData = shadowCascadeData(light, environment)?.let { cascades ->
+            if (drawPreparer?.clampsShadowDepth == true) cascades else cascades.reachingCasters(drawCalls, clipSpace)
+        }
         val shadowViewProjections = shadowCascadeData?.viewProjections.orEmpty()
         val packedPassUniforms = sceneLightUniforms(light ?: DEFAULT_SCENE_LIGHT, lens.eye).packed
         val gpuEnvironment = environment.toGpuState(viewDepthRange = lens.far)
 
         // One preparation pass in source order, so every draw keeps its own source index; the
-        // shadow-only ones are then kept out of the scene and handed to the shadow passes.
+        // shadow-only ones are then kept out of the scene and handed to the shadow passes. A draw
+        // that does not cast stays out of the shadow passes, whichever way it was drawn.
         val shadowOnly = ArrayList<Caster>()
         val masked = MaskedDraws(maskLayers)
         var edges = emptyList<GpuResolvedDraw>()
@@ -88,17 +94,17 @@ object ScenePassCompiler {
             val visible = ArrayList<Caster>(requests.size)
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
-                val caster = Caster(draw, request.worldBounds)
+                val caster = Caster(draw, request.worldBounds, request.castsShadows)
                 when {
                     !request.shadowsOnly -> visible += caster.also { masked.add(request.maskLayer, draw) }
-                    !draw.transparent -> shadowOnly += caster
+                    !draw.transparent && request.castsShadows -> shadowOnly += caster
                 }
             }
             if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
         }
-        val opaqueCasters = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
-        val casters = if (shadowOnly.isEmpty()) opaqueCasters else opaqueCasters + shadowOnly
+        val opaque = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
+        val casters = opaque.castingWith(shadowOnly)
 
         return GpuPassInput(
             prePasses = shadowPrePasses(shadowViewProjections, casters.takeIf { resolved != null }, light, environment),
@@ -107,7 +113,7 @@ object ScenePassCompiler {
             viewport = viewport,
             passUniforms = packedPassUniforms,
             environment = gpuEnvironment,
-            resolvedOpaqueDraws = opaqueCasters.map { it.draw },
+            resolvedOpaqueDraws = opaque.map { it.draw },
             resolvedTransparentDraws = resolved?.transparent?.map { it.draw }.orEmpty(),
             resolvedPath = resolved != null,
             cameraForward = cameraForward,
@@ -167,8 +173,20 @@ private fun SceneLight.pointShadowPrePasses(draws: List<Caster>): List<GpuSubPas
         }
     }
 
-/** A prepared draw and the world bounds its request carried, kept together through sorting. */
-private class Caster(val draw: GpuResolvedDraw, val bounds: Aabb?) : PreparedDraw by draw
+/**
+ * A prepared draw, the world bounds its request carried and whether that request casts, kept
+ * together through sorting.
+ */
+private class Caster(val draw: GpuResolvedDraw, val bounds: Aabb?, val casts: Boolean) : PreparedDraw by draw
+
+/**
+ * What the shadow passes draw: the scene's opaque draws that cast, in recording order, then the
+ * shadow-only ones. The same list, not a copy, when every opaque draw casts and none is shadow-only.
+ */
+private fun List<Caster>.castingWith(shadowOnly: List<Caster>): List<Caster> {
+    val casting = if (all { it.casts }) this else filter { it.casts }
+    return if (shadowOnly.isEmpty()) casting else casting + shadowOnly
+}
 
 /**
  * The casters that can write a texel of the depth map [viewProjection] renders.
@@ -179,44 +197,22 @@ private class Caster(val draw: GpuResolvedDraw, val bounds: Aabb?) : PreparedDra
  * draw, most of which lie outside all but one cascade.
  */
 private fun List<Caster>.seenBy(viewProjection: Mat4): List<GpuResolvedDraw> {
-    val planes = castingPlanes(viewProjection)
-    return mapNotNull { caster -> caster.draw.takeIf { caster.bounds?.let(planes::admits) != false } }
-}
-
-/** Left, right, bottom, top and far clip planes of [viewProjection], as `(x, y, z, w)` quads. */
-private fun castingPlanes(viewProjection: Mat4): FloatArray {
-    val m = viewProjection.data
-    val planes = FloatArray(CASTING_PLANES.size * PLANE_FLOATS)
-    CASTING_PLANES.forEachIndexed { plane, (row, sign) ->
-        // Column-major: row r of the matrix is m[r], m[4 + r], m[8 + r], m[12 + r].
-        for (column in 0 until PLANE_FLOATS) {
-            planes[plane * PLANE_FLOATS + column] = m[column * 4 + W_ROW] + sign * m[column * 4 + row]
+    val planes = FloatArray(CASTING_PLANE_FLOATS)
+    writeCastingPlanes(viewProjection, planes, 0)
+    return mapNotNull { caster ->
+        caster.draw.takeIf {
+            caster.bounds?.let { box -> planes.admitsBox(0, box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z) } != false
         }
     }
-    return planes
 }
-
-/** Whether [box] is at least partly inside every plane. A zero matrix admits everything. */
-private fun FloatArray.admits(box: Aabb): Boolean {
-    for (p in indices step PLANE_FLOATS) {
-        val x = if (this[p] > 0f) box.max.x else box.min.x
-        val y = if (this[p + 1] > 0f) box.max.y else box.min.y
-        val z = if (this[p + 2] > 0f) box.max.z else box.min.z
-        if (this[p] * x + this[p + 1] * y + this[p + 2] * z + this[p + 3] < 0f) return false
-    }
-    return true
-}
-
-private const val W_ROW = 3
-private const val PLANE_FLOATS = 4
-private val CASTING_PLANES = listOf(0 to 1f, 0 to -1f, 1 to 1f, 1 to -1f, 2 to -1f)
 
 private fun Lens.forwardDirection(): Vec3f = (center - eye).let { direction ->
     val length = direction.length3()
     if (length > 0.0001f) direction.scale(1f / length) else Vec3f(0f, 0f, -1f)
 }
 
-private fun shadowCascadeData(
+/** The directional cascades a frame renders from [light], or null when it renders none. */
+internal fun shadowCascadeData(
     light: SceneLight?,
     environment: EnvironmentUniforms,
 ): GpuShadowCascadeData? =

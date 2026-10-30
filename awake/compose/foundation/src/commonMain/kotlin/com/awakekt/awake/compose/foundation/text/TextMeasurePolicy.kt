@@ -19,10 +19,12 @@ import com.awakekt.awake.compose.ui.unit.Density
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.font.ellipsize
+import com.awakekt.awake.core.text.font.kerningBefore
 import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
-import kotlin.math.ceil
+import com.awakekt.awake.core.text.unicode.LineBreaks
+import com.awakekt.awake.core.text.unicode.WordBreak
 import kotlin.math.roundToInt
 
 /**
@@ -38,12 +40,14 @@ import kotlin.math.roundToInt
 class TextMeasurePolicy(
     private val source: () -> String,
     internal val style: TextStyle,
-    internal val font: UiFont,
+    font: UiFont,
     internal val singleLine: Boolean = false,
     internal val overflow: TextOverflow = TextOverflow.Clip,
     internal val softWrap: Boolean = true,
     internal val maxLines: Int = Int.MAX_VALUE,
 ) : MeasurePolicy {
+
+    internal val font: UiFont = font.withNumerals(style.numerals)
 
     /** Text that never changes for the life of this policy, which is one pass for [Text]. */
     constructor(
@@ -76,6 +80,9 @@ class TextMeasurePolicy(
      */
     internal var cache: TextLayoutCache? = null
 
+    /** Frame-to-frame scale, size, and subpixel-offset tracker owned by the declaring node. */
+    internal var motion: TextMotionState? = null
+
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
         constraints: Constraints,
@@ -88,34 +95,38 @@ class TextMeasurePolicy(
         } else {
             constraints.maxWidth.toFloat()
         }
+        measuredFontScale = fontScale
+        val sizeSp = style.size ?: DefaultFontSize
+        val rawEmPx = sizeSp.value * density * fontScale * style.scale
+        val smoothSizing = motion?.onMeasure(rawEmPx, style.scale) ?: false
         val cached = cache
-        if (cached != null && cached.hasMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx)) {
+        if (cached != null && cached.hasMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx, smoothSizing)) {
             return layout(
                 constraints.constrainWidth(cached.width),
                 constraints.constrainHeight(cached.height),
                 cached.alignmentLines,
             ) {}
         }
-        val glyphPx = glyphPixels(density, fontScale)
-        val lines = linesAt(glyphPx, wrapWidthPx)
+        val glyphPx = glyphPixels(density, fontScale, smoothSizing)
+        val layouts = layoutsAt(glyphPx, wrapWidthPx)
+        val lines = layouts.size
         // Placeables are integer-pixel sized today. Quantize the complete intrinsic line once,
         // after weighted glyph advances and letter spacing have been summed, so sibling rows do
         // not accumulate a ceiling error for every label. This is the deterministic boundary
         // until the retained layout model carries fractional bounds end to end.
-        val width = lines.maxOf { lineWidth(it, glyphPx) }.roundToInt()
-        val safeLineHeight = safeLineHeight(oneLineHeight(glyphPx), glyphPx * font.lineHeightEm, lines.size)
-        val lineHeight = ceil(safeLineHeight).roundToInt()
-        val height = lineHeight * lines.size
-        val fontH = glyphPx * font.lineHeightEm
-        val topPad = ((safeLineHeight - fontH) / 2f).coerceAtLeast(0f)
-        val firstBaseline = (topPad + glyphPx * font.ascentEm).roundToInt()
-        val lastBaseline = firstBaseline + lineHeight * (lines.size - 1).coerceAtLeast(0)
+        val width = layouts.maxOf { it.boxWidthPx(text) { line -> lineWidth(line, glyphPx) } }
+        // Whole pixels both, from the rule painting uses, so the box is exactly the lines it paints.
+        val em = emDp(fontScale, smoothSizing)
+        val lineHeight = TextLineBox.advancePx(font, em, glyphPx, density, authoredLineHeight(), smoothSizing).roundToInt()
+        val height = lineHeight * lines
+        val firstBaseline = TextLineBox.baselinePx(font, em, density, authoredLineHeight()).roundToInt()
+        val lastBaseline = firstBaseline + lineHeight * (lines - 1).coerceAtLeast(0)
         val alignmentLines = mapOf<AlignmentLine, Int>(
             FirstBaseline to firstBaseline,
             LastBaseline to lastBaseline,
         )
         cached?.storeMeasurement(width, height, alignmentLines)
-        cached?.keyMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx)
+        cached?.keyMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx, smoothSizing)
         return layout(
             constraints.constrainWidth(width),
             constraints.constrainHeight(height),
@@ -132,22 +143,19 @@ class TextMeasurePolicy(
      */
     override fun Density.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
         val glyphPx = glyphPixels(density, fontScale)
-        return linesAt(glyphPx, Float.POSITIVE_INFINITY).maxOfOrNull { lineWidth(it, glyphPx) }?.roundToInt() ?: 0
+        return layoutsAt(glyphPx, Float.POSITIVE_INFINITY).maxOfOrNull { it.boxWidthPx(text) { line -> lineWidth(line, glyphPx) } } ?: 0
     }
 
     /**
-     * The longest single word: below that, wrapping cannot help and a glyph would be cut.
-     *
-     * Measured directly rather than by wrapping at zero. A greedy wrapper keeps at least one word
-     * per line and returns the text unbroken when nothing fits at all, so asking it for a
-     * zero-width layout answers with the whole line -- the maximum, wearing the minimum's name.
+     * The widest single soft-wrap segment: below that, normal wrapping cannot help and emergency
+     * grapheme splitting or clipping takes over.
      */
     override fun Density.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
+        if (singleLine || !softWrap) return maxIntrinsicWidth(measurables, height)
+        val sourceText = text
         val glyphPx = glyphPixels(density, fontScale)
-        return text.split(' ', '\n', '\t')
-            .maxOfOrNull { lineWidth(it, glyphPx) }
-            ?.roundToInt()
-            ?: 0
+        val resolvedWordBreak = style.wordBreak ?: WordBreak.Normal
+        return if (sourceText.isEmpty()) 0 else widestWrappedSegmentPx(sourceText, resolvedWordBreak) { lineWidth(it, glyphPx) }
     }
 
     /**
@@ -161,8 +169,8 @@ class TextMeasurePolicy(
     override fun Density.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int {
         val wrapAt = if (singleLine || width == Constraints.Infinity) Float.POSITIVE_INFINITY else width.toFloat()
         val glyphPx = glyphPixels(density, fontScale)
-        val lineCount = linesAt(glyphPx, wrapAt).size
-        return ceil(safeLineHeight(oneLineHeight(glyphPx), glyphPx * font.lineHeightEm, lineCount)).roundToInt() * lineCount
+        val lineCount = layoutsAt(glyphPx, wrapAt).size
+        return TextLineBox.advancePx(font, emDp(fontScale), glyphPx, density, authoredLineHeight()).roundToInt() * lineCount
     }
 
     /** The same answer as [minIntrinsicHeight]: text has one height at a given width. */
@@ -173,13 +181,18 @@ class TextMeasurePolicy(
     internal var wrapWidthPx: Float = Float.POSITIVE_INFINITY
         private set
 
-    private fun Density.linesAt(glyphPx: Float, maxWidthPx: Float): List<String> =
-        breakIntoLines(
+    /** The font scale the last measure sized the glyphs at, so painting draws them at the same size. */
+    internal var measuredFontScale: Float = 1f
+        private set
+
+    private fun Density.layoutsAt(glyphPx: Float, maxWidthPx: Float): List<TextLineLayout> =
+        breakIntoLineLayouts(
             text = text,
             maxWidthPx = maxWidthPx,
             softWrap = softWrap && !singleLine,
             maxLines = if (singleLine) 1 else maxLines,
             overflow = overflow,
+            wordBreak = style.wordBreak ?: WordBreak.Normal,
             ellipsize = { str, maxW, always ->
                 font.ellipsize(
                     text = str,
@@ -187,33 +200,38 @@ class TextMeasurePolicy(
                     glyphPx = glyphPx,
                     weight = style.weight,
                     alwaysEllipsize = always,
+                    kerning = style.kerning != false,
                 )
             },
         ) { lineWidth(it, glyphPx) }
 
     /**
-     * The line box, authored where the style says so and intrinsic otherwise.
+     * The authored line height in device pixels, or null for the font's own; [TextLineBox] turns either
+     * into the line box.
      *
      * A CSS text scale is a *pair*: `text-sm` is `font-size: 14px; line-height: 20px`, and a design
      * system that carries only the first has no way to reproduce the second. Ignoring
      * [TextStyle.lineHeight] here made every ported recipe short by the difference -- a dropdown item
      * measured 29px against shadcn's 32 because the font's own metrics put the line at 17.
      */
-    private fun Density.oneLineHeight(glyphPx: Float): Float =
-        style.lineHeight?.let { it.value * density * fontScale } ?: (glyphPx * font.lineHeightEm)
+    private fun Density.authoredLineHeight(): Float? = style.lineHeight?.let { it.value * density * fontScale }
 
     /**
      * One line's advance width. A block is as wide as its longest line, never their sum.
      *
      * Summed a grapheme cluster at a time, as `TextRun` paints: a ZWJ emoji is one character, not
-     * the eight `Char`s it is stored in.
+     * the eight `Char`s it is stored in. Adjacent clusters kern as `TextRun` kerns them.
      */
     private fun Density.lineWidth(line: String, glyphPx: Float): Float {
         if (line.isEmpty()) return 0f
+        val kerning = style.kerning != false
         var total = 0f
         var clusters = 0
+        var previous = -1
         GraphemeClusters.forEach(line) { start, end ->
+            total += font.kerningBefore(line, previous, start, glyphPx, style.weight)
             total += font.clusterAdvance(line, start, end, glyphPx, style.weight)
+            if (kerning) previous = start
             clusters++
         }
         // Letter spacing sits between characters, not after the last one -- the same off-by-one that
@@ -223,8 +241,11 @@ class TextMeasurePolicy(
     }
 
     /** The same arithmetic painting and the caret use, so the three cannot drift apart. */
-    internal fun runFor(density: Float, fontScale: Float): TextRun =
-        cache?.runFor(this, density, fontScale, wrapWidthPx) ?: buildRun(density, fontScale)
+    internal fun runFor(density: Float, fontScale: Float): TextRun {
+        val smoothSizing = motion?.smoothSizing ?: false
+        return cache?.runFor(this, density, fontScale, wrapWidthPx, smoothSizing)
+            ?: buildRun(density, fontScale, smoothSizing)
+    }
 
     /**
      * Em size in device pixels.
@@ -237,33 +258,70 @@ class TextMeasurePolicy(
      * 19.5 pixels, and an em that is a fraction of a pixel puts every stem on a different sub-pixel
      * phase, so the same letter renders with a different weight in each place it appears. Measuring
      * and painting both come through here, so a run's width and its glyphs agree on the rounded size.
+     * While [smoothSizing] is active during a scale or size animation, the continuous em is kept so
+     * glyph coverage grows smoothly instead of stepping a whole pixel at a time.
      */
-    internal fun glyphPixels(density: Float, fontScale: Float): Float {
+    internal fun glyphPixels(density: Float, fontScale: Float, smoothSizing: Boolean = false): Float {
         val sizeSp = style.size ?: DefaultFontSize
+        if (smoothSizing) {
+            return (sizeSp.value * density * fontScale * style.scale).coerceAtLeast(1f)
+        }
         val snapped = pixelPerfectTextScale(style.scale, font.textScaleStep)
         return (sizeSp.value * density * fontScale * snapped).roundToInt().coerceAtLeast(1).toFloat()
     }
 }
 
 /**
- * One line's box, from the style's line height and the font's own. A compact line-height is fine
- * for one line, but cannot be allowed to make adjacent multiline glyph quads overlap the font's own
- * vertical metrics.
+ * The authored em in density-independent pixels: size times font scale times the atlas-snapped text
+ * scale, before it is rounded to device pixels as [TextMeasurePolicy.glyphPixels] does. [TextLineBox]
+ * builds the line from this, so a fractional density does not stretch the line by the rounding of the
+ * drawn size.
  */
-private fun safeLineHeight(styleLinePx: Float, fontLinePx: Float, lineCount: Int): Float =
-    if (lineCount > 1) maxOf(styleLinePx, fontLinePx) else styleLinePx
+internal fun TextMeasurePolicy.emDp(fontScale: Float, smoothSizing: Boolean = false): Float {
+    val sizeSp = style.size ?: DefaultFontSize
+    if (smoothSizing) return sizeSp.value * fontScale * style.scale
+    val snapped = pixelPerfectTextScale(style.scale, font.textScaleStep)
+    return sizeSp.value * fontScale * snapped
+}
 
 /** A fresh run from [TextMeasurePolicy]'s inputs and its last wrap width. */
-internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextRun =
+internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float, smoothSizing: Boolean = false): TextRun =
     TextRun(
         text = text,
         style = style,
         font = font,
-        glyphPx = glyphPixels(density, fontScale),
+        glyphPx = glyphPixels(density, fontScale, smoothSizing),
+        emDp = emDp(fontScale, smoothSizing),
         density = density,
         wrapWidthPx = wrapWidthPx,
         singleLine = singleLine,
         overflow = overflow,
         softWrap = softWrap,
         maxLines = maxLines,
+        fontScale = fontScale,
+        forceDistanceField = smoothSizing,
     )
+
+private inline fun widestWrappedSegmentPx(
+    sourceText: String,
+    wordBreak: WordBreak,
+    measureSegment: (String) -> Float,
+): Int {
+    var widest = 0f
+    var hardStart = 0
+    while (hardStart <= sourceText.length) {
+        val hardEnd = sourceText.indexOf('\n', hardStart).let { if (it < 0) sourceText.length else it }
+        var segStart = hardStart
+        while (segStart < hardEnd) {
+            val segEnd = LineBreaks.nextOpportunity(sourceText, segStart, hardEnd, wordBreak)
+            val visibleEnd = trimTrailingSpaces(sourceText, segStart, segEnd)
+            if (visibleEnd > segStart) {
+                widest = maxOf(widest, measureSegment(sourceText.substring(segStart, visibleEnd)))
+            }
+            segStart = segEnd
+        }
+        if (hardEnd == sourceText.length) break
+        hardStart = hardEnd + 1
+    }
+    return widest.roundToInt()
+}

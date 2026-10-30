@@ -9,7 +9,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ui.canvas.CanvasElement
 
 /**
- * The pictures [CanvasElementKind.View] elements show. The host that draws the scene supplies it and
+ * The pictures elements with a [com.awakekt.awake.ui.canvas.CanvasViewWidget] show. The host that draws the scene supplies it and
  * renders every picture it hands out before the frame's UI is drawn. `SceneAppLifecycleRuntime` does
  * for the canvas it draws, and its `canvasViews(world)` gives one to a host that draws `SceneCanvas`
  * itself, rendering and freeing the pictures for it.

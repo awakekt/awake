@@ -40,14 +40,15 @@ internal fun BoxScope.AimGuides(tree: CanvasTree, safeArea: CanvasInsets) {
         key(element) {
             val centerX = bounds.x + bounds.width / 2f
             val centerY = bounds.y + bounds.height / 2f
-            val reach = aim.reach
+            val ratio = if (tree.canvasDensity > 0f) tree.densityOf(element) / tree.canvasDensity else 1f
+            val reach = aim.reach * ratio
             val skin = tree.skinOf(element)?.button
             val state = element.controlState()
             val ring = Modifier.offset((centerX - reach).dp, (centerY - reach).dp).size((reach * 2f).dp).testTag("canvas-aim-range")
             val range = skin?.aimRange
             if (range != null) Slot(element, CanvasSlots.BUTTON_AIM_RANGE, range, state, ring, tree.images, round = true) else Box(ring.clip(CircleShape).background(RANGE))
             val cursorSlot = skin?.aimCursor
-            val cursor = cursorSlot?.size ?: CURSOR_SIZE
+            val cursor = (cursorSlot?.size ?: CURSOR_SIZE) * ratio
             val point = Modifier.offset((centerX + element.aimX * reach - cursor / 2f).dp, (centerY + element.aimY * reach - cursor / 2f).dp)
                 .size(cursor.dp).testTag("canvas-aim-cursor")
             if (cursorSlot != null) {

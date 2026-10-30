@@ -19,6 +19,7 @@ import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
+import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.writeBufferData
@@ -92,6 +93,7 @@ class UiRenderPipeline(
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph -> UiPipelineKind.Glyph
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture -> UiPipelineKind.Texture
             com.awakekt.awake.render.pipeline.UiPipelineVariant.TargetComposite -> UiPipelineKind.Texture
+            com.awakekt.awake.render.pipeline.UiPipelineVariant.DecoratedGlyph -> UiPipelineKind.DecoratedGlyph
         },
         blendMode = descriptor.blendMode,
         premultiplied = descriptor.isPremultiplied,
@@ -116,7 +118,7 @@ class UiRenderPipeline(
 
     /** Alias of [bindGroup], named for the uniform it carries. */
     val screenSizeBindGroup: GPUBindGroup get() = bindGroup
-    private val materialBindGroups = HashMap<Material, GPUBindGroup>()
+    internal val materialBindGroups = HashMap<Material, GPUBindGroup>()
 
     /** One font's atlas, its own uniform block, and the bind group over both. */
     internal class FontBinding(
@@ -125,6 +127,8 @@ class UiRenderPipeline(
         val sampler: GPUSampler,
         val uniforms: GPUBuffer,
         val fontInfo: Vec4,
+        /** Whether [texture] is this pipeline's to close, rather than [atlasSource]'s. */
+        val ownsTexture: Boolean = true,
     ) {
         var bindGroup: GPUBindGroup? = null
     }
@@ -134,6 +138,12 @@ class UiRenderPipeline(
      * until [destroy]. A font no longer drawn keeps its atlas; there is no eviction yet.
      */
     internal val fontBindings = HashMap<UiFont, FontBinding>()
+
+    /**
+     * The glyph pipeline whose uploaded atlases this one samples, so the decorated glyph pipeline (#1061) shares the
+     * plain one's textures and holds only uniform blocks of its own; null uploads its own.
+     */
+    internal var atlasSource: UiRenderPipeline? = null
 
     init {
         val initialWgslSource = shaderCode.decodeToString()
@@ -149,7 +159,7 @@ class UiRenderPipeline(
 
     private fun recreateBindGroup() {
         if (kind == UiPipelineKind.Quad || kind == UiPipelineKind.RoundedQuad) {
-            bindGroup = device.createBindGroup(
+            bindGroup = device.createBindGroupReleasingLayout(
                 BindGroupDescriptor(
                     layout = pipeline.getBindGroupLayout(0u),
                     entries = listOf(
@@ -176,14 +186,15 @@ class UiRenderPipeline(
         val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = processedSource))
         val groupBindings = mapOf(
             0 to when (kind) {
-                UiPipelineKind.Glyph, UiPipelineKind.Texture -> GroupBindings.TexturedMaterial
+                UiPipelineKind.Glyph, UiPipelineKind.DecoratedGlyph, UiPipelineKind.Texture -> GroupBindings.TexturedMaterial
                 UiPipelineKind.Quad, UiPipelineKind.RoundedQuad -> GroupBindings.UniformOnlyMaterial
             },
         )
+        val layout = device.createAwakePipelineLayout(groupBindings)
         try {
             return device.createRenderPipeline(
                 RenderPipelineDescriptor(
-                    layout = device.createAwakePipelineLayout(groupBindings),
+                    layout = layout,
                     vertex = VertexState(
                         module = shaderModule,
                         entryPoint = vertexEntryPoint,
@@ -208,6 +219,7 @@ class UiRenderPipeline(
                 ),
             )
         } finally {
+            layout.close()
             shaderModule.close()
         }
     }
@@ -237,8 +249,7 @@ class UiRenderPipeline(
     internal fun swapIn(newPipeline: GPURenderPipeline): GPURenderPipeline {
         val old = pipeline
         pipeline = newPipeline
-        materialBindGroups.clear()
-        fontBindings.values.forEach { it.bindGroup = null }
+        closeBindGroups()
         recreateBindGroup()
         return old
     }
@@ -260,11 +271,19 @@ class UiRenderPipeline(
      * `setBindGroup`, never a pipeline rebuild or a second upload.
      */
     fun fontBindGroup(font: UiFont): GPUBindGroup {
-        check(kind == UiPipelineKind.Glyph) { "fontBindGroup requires a glyph UiRenderPipeline." }
+        check(kind.isGlyph) { "fontBindGroup requires a glyph UiRenderPipeline." }
         val binding = fontBindings.getOrPut(font) {
-            device.uploadFont(font).also { device.writeUiUniforms(it.uniforms, screenToNdc, it.fontInfo) }
+            val source = atlasSource
+            val uploaded = if (source == null) {
+                device.uploadFont(font)
+            } else {
+                source.fontBindGroup(font)
+                val shared = source.fontBindings.getValue(font)
+                FontBinding(shared.texture, shared.view, shared.sampler, device.createUiUniformBuffer(), shared.fontInfo, ownsTexture = false)
+            }
+            uploaded.also { device.writeUiUniforms(it.uniforms, screenToNdc, it.fontInfo) }
         }
-        return binding.bindGroup ?: device.createBindGroup(
+        return binding.bindGroup ?: device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(0u),
                 entries = listOf(
@@ -281,11 +300,11 @@ class UiRenderPipeline(
         // Graphics-layer slots replace their render-target material on resize. Material.destroy()
         // clears both preview handles; prune those dead keys before adding a live one so this
         // pipeline never retains a retired layer and its backend resources.
-        materialBindGroups.entries.removeAll { (cachedMaterial, _) ->
-            cachedMaterial.previewTextureView == null || cachedMaterial.previewSampler == null
+        materialBindGroups.entries.removeAll { (cachedMaterial, group) ->
+            (cachedMaterial.previewTextureView == null || cachedMaterial.previewSampler == null).also { if (it) group.close() }
         }
         return materialBindGroups.getOrPut(material) {
-            device.createBindGroup(
+            device.createBindGroupReleasingLayout(
                 BindGroupDescriptor(
                     layout = pipeline.getBindGroupLayout(0u),
                     entries = listOf(
@@ -309,18 +328,38 @@ class UiRenderPipeline(
     }
 
     /**
-     * Drops the cached per-material bind groups and closes every font's atlas and uniform buffer and
-     * the screen-size uniform buffer.
+     * Closes the bind groups, then every font's atlas, sampler and uniform buffer and the
+     * screen-size uniform buffer, then the pipeline.
      */
     fun destroy() {
-        materialBindGroups.clear()
+        closeBindGroups()
         fontBindings.values.forEach {
-            it.texture.close()
+            // A binding that shares another pipeline's atlas leaves its view, sampler and texture to that owner.
+            if (it.ownsTexture) {
+                it.view.close()
+                it.sampler.close()
+                it.texture.close()
+            }
             it.uniforms.close()
         }
         fontBindings.clear()
         screenSizeBuffer.close()
+        pipeline.close()
     }
+}
+
+/**
+ * Closes every bind group built against [UiRenderPipeline.pipeline]'s layout. An extension rather
+ * than a member only to keep the class under the per-class function budget.
+ */
+private fun UiRenderPipeline.closeBindGroups() {
+    materialBindGroups.values.forEach(GPUBindGroup::close)
+    materialBindGroups.clear()
+    fontBindings.values.forEach {
+        it.bindGroup?.close()
+        it.bindGroup = null
+    }
+    if (kind == UiPipelineKind.Quad || kind == UiPipelineKind.RoundedQuad) bindGroup.close()
 }
 
 /** The `fontInfo` lanes of a uniform block no glyph reads. */

@@ -32,6 +32,7 @@ class WebGpuPipelineFactory(
     private val graphicsDevice: GraphicsDevice,
     private val swapchainManager: SwapchainManager,
     private val shaderResolver: RuntimeShaderResolver,
+    private val rasterState: com.awakekt.awake.render.pipeline.MultisampleState? = null,
 ) : PipelineFactory<RenderPipeline> {
 
     override suspend fun create(key: PipelineKey, spec: PipelineSpec): RenderPipeline {
@@ -76,6 +77,9 @@ class WebGpuPipelineFactory(
                 CullMode.None, CullMode.Front -> GPUCullMode.None
             },
             frontFace = spec.frontFace,
+            multisample = rasterState?.copy(
+                alphaToCoverageEnabled = rasterState.count > 1 && spec.multisample.alphaToCoverageEnabled,
+            ) ?: spec.multisample,
         )
     }
 }

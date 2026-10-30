@@ -23,7 +23,6 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
-import com.awakekt.awake.compose.foundation.style.resolveTextColor
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
@@ -39,6 +38,7 @@ import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.draw.graphicsLayer
+import com.awakekt.awake.compose.ui.draw.scale
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.ImageFill
@@ -122,34 +122,37 @@ fun CanvasOverlay(
     slotContent: Map<String, CanvasSlotContent> = emptyMap(),
 ) {
     val origin = remember { CanvasOrigin() }
+    val tooltips = remember { CanvasTooltips() }
+    // Kept across frames: each follower's size bucket and motion, and planning's reused lists.
+    val followers = remember { FollowerPlans() }
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
-    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings)
+    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers)
     // Measured before its content is composed, so the scale fits the box, and followers are culled
     // and pinned against it, from the first frame.
     BoxWithConstraints(modifier.fillMaxSize()) {
         val density = LocalDensity.current
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth / density else 0f
         val height = if (constraints.hasBoundedHeight) constraints.maxHeight / density else 0f
-        val drawnScale = scaler?.scaleFor(width, height, density, if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH) ?: scale
+        val effectiveDpi = if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH
+        val drawnScale = scaler?.scaleFor(width, height, density, effectiveDpi) ?: scale
+        val box = CanvasBoxMetrics(width, height, density, effectiveDpi, safeArea)
         CompositionLocalProvider(LocalCanvasSlotContent provides slotContent) {
-            ScaledCanvas(tree, origin, drawnScale, safeArea, width, height, followLimits)
+            ScaledCanvas(tree, origin, drawnScale, box, followLimits)
         }
     }
 }
 
 /**
- * [tree]'s elements in a box filling this one, [width] by [height] host dp, drawn at [scale], with
- * anchored roots kept inside [safeArea] and followers thinned by [limits].
+ * [tree]'s elements in a box filling this one, measured in [box], drawn at [scale], with anchored
+ * roots kept inside [CanvasBoxMetrics.safeArea] and followers thinned by [limits].
  */
 context(_: Composer)
 private fun ScaledCanvas(
     tree: CanvasTree,
     origin: CanvasOrigin,
     scale: Float,
-    safeArea: CanvasInsets,
-    width: Float,
-    height: Float,
+    box: CanvasBoxMetrics,
     limits: List<CanvasFollowLimit>,
 ) {
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
@@ -159,21 +162,24 @@ private fun ScaledCanvas(
         val screen = this
         // A denser dp scales every size, offset, font and image corner beneath it in one place. The
         // host's text style is not the scene's: an element's text looks only as its own data says.
-        val canvasDensity = LocalDensity.current * uiScale
+        val canvasDensity = box.hostDensity * uiScale
+        tree.measureBox(box, canvasDensity)
         CompositionLocalProvider(
             LocalDensity provides canvasDensity,
             LocalCanvasDensity provides canvasDensity,
             LocalTextStyle provides TextStyle.Default,
         ) {
             // Every follower at once, before any is composed: a limit ranks them all.
-            tree.planFollowers(width / uiScale, height / uiScale, canvasDensity, limits)
+            tree.planFollowers(box.width / uiScale, box.height / uiScale, canvasDensity, limits)
             // The insets are the host's dp; under the scaled density they shrink by the scale.
-            val inside = safeArea.scaledBy(1f / uiScale)
+            val inside = box.safeArea.scaledBy(1f / uiScale)
             screen.Elements(tree.roots, tree, inside)
             // Over the controls, so a drag's aim and its cancel zone are never hidden under a button.
             screen.AimGuides(tree, inside)
             // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
             Ghosts(tree)
+            // Last of all, so nothing it hangs over hides it.
+            Tooltip(tree)
         }
     }
 }
@@ -216,14 +222,27 @@ internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem
             if (!tree.shows(child) || (child.followArrow && !element.pinned)) continue
             key(child) {
                 val share = child.grow.coerceAtLeast(0f)
-                CanvasElementView(
-                    child,
-                    Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"),
-                    tree,
-                    tree.childrenOf(child),
-                )
+                WithItemScaler(item, tree) {
+                    CanvasElementView(
+                        child,
+                        Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"),
+                        tree,
+                        tree.childrenOf(child),
+                    )
+                }
             }
         }
+    }
+}
+
+/** Runs [content] under [item]'s own subtree [CanvasScaler] density, or unchanged when it has none. */
+context(_: Composer)
+internal fun WithItemScaler(item: CanvasItem, tree: CanvasTree, content: context(Composer) () -> Unit) {
+    val scaler = item.scaler
+    if (scaler == null) {
+        content()
+    } else {
+        CompositionLocalProvider(LocalDensity provides tree.box.densityOf(scaler), content = content)
     }
 }
 
@@ -245,9 +264,20 @@ private fun BoxScope.Elements(
         when {
             !tree.shows(element) -> Unit
             // An arrow is drawn only while what it sits in is held to the edge.
-            element.followArrow && owner != null -> if (owner.pinned) key(element) { PinArrow(element, owner, tag, tree) }
-            element.follow.isNotEmpty() -> tree.followerPlans[element]?.let { plan -> key(element) { Follower(element, plan, tag, tree) } }
-            else -> key(element) { AnchoredElement(element, tag, tree, safeArea) }
+            element.followArrow && owner != null -> if (owner.pinned) key(element) { PinArrow(item, owner, tag, tree) }
+            element.follow.isNotEmpty() -> tree.followerPlans[element]?.takeIf { it.drawn }?.let { plan -> key(element) { Follower(element, plan, tag, tree) } }
+            else -> key(element) {
+                val scaler = item.scaler
+                if (scaler == null) {
+                    AnchoredElement(element, tag, tree, safeArea)
+                } else {
+                    val itemScale = tree.box.scaleOf(scaler)
+                    val itemSafeArea = if (owner == null) tree.box.safeArea.scaledBy(1f / itemScale) else CanvasInsets.None
+                    CompositionLocalProvider(LocalDensity provides tree.box.hostDensity * itemScale) {
+                        AnchoredElement(element, tag, tree, itemSafeArea)
+                    }
+                }
+            }
         }
     }
 }
@@ -263,13 +293,11 @@ internal fun CanvasElementView(
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
     val state = rememberStyleState(element.interactions)
-    val style = Style {
-        background(back)
-        element.style.applyTo(this, tree.images, disabled)
-    }
-    val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill, tree.fontOf(element))
+    val resolved = rememberCanvasStyleState(element.style, back, fill, state, disabled, tree.controls.theme?.transitionSeconds)
+    val style = Style { resolved.applyTo(this, element.style, tree.images) }
+    val textStyle = element.textStyle(resolved.textColor, tree.fontOf(element))
     if (LocalCanvasGhost.current) {
-        GhostElementView(element, modifier.rotated(element.drawnRotation).styleable(state, style), textStyle, tree, children)
+        GhostElementView(element, modifier.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style), textStyle, tree, children)
         return
     }
     // Tree-space pixels back to canvas units: from the canvas box's corner, which its own onPlaced
@@ -291,25 +319,14 @@ internal fun CanvasElementView(
     // A Button, or an Image or Panel made pressable, occludes what is under it, like any click
     // target; every other kind only watches, so it must not swallow a tap meant for something it
     // happens to be drawn over.
-    val hovered = wheeled.rotated(element.drawnRotation).styleable(state, style)
+    val hovered = wheeled.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style)
         .hoverable(element.interactions, blocksHitTest = element.takesTaps)
-        .pressPoint(element, density)
+        .pressPoint(element, density, units)
+        .tooltipPointer(element, tree.tooltips, units)
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
-    val styled = element.draggedModifier(hovered, tree, density)
-    when (element.kind) {
-        CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
-            CanvasText(element, tree.textOf(element), textStyle)
-            Children(element, children, tree)
-        }
-        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled.pressableTap(element)) { Children(element, children, tree) }
-        CanvasElementKind.Bar, CanvasElementKind.Sweep, CanvasElementKind.Stepper -> GaugeView(element, styled, textStyle, tree, children)
-        CanvasElementKind.Button -> ButtonView(element, styled, textStyle, tree, children)
-        CanvasElementKind.TextField -> TextFieldView(element, styled, textStyle, tree, children)
-        CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
-        CanvasElementKind.View -> CameraView(element, styled, tree, children)
-        CanvasElementKind.LookArea -> LookAreaView(element, styled, tree, children)
-    }
+    val styled = element.draggedModifier(hovered, tree, units)
+    ElementContent(element, styled, wheeled, back, textStyle, tree, children)
 }
 
 /** The canvas's pixels per dp, under the canvas's own scale but not a follower's; 0 outside a canvas. */
@@ -327,6 +344,12 @@ private val CanvasElement.drawnRotation: Float?
  */
 private fun Modifier.rotated(degrees: Float?): Modifier =
     if (degrees == null || degrees == 0f) this else graphicsLayer(rotationDegrees = degrees)
+
+/**
+ * Scales what this node paints about its own centre without moving its layout box or hit area.
+ * Unit scale adds no modifier node.
+ */
+private fun Modifier.scaled(factor: Float): Modifier = if (factor == 1f) this else scale(factor)
 
 /**
  * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's

@@ -16,7 +16,6 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import org.junit.AfterClass
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -106,15 +105,12 @@ class SceneRigDebugViewParityTest {
 
     private fun eachBackend(check: (HeadlessUiBackend) -> Unit) = BACKEND_ORDER.forEach(check)
 
-    private fun render(backend: HeadlessUiBackend, scene: Renderer.() -> ByteArray) = Frame(session(backend).renderer.scene(), backend)
+    private fun render(backend: HeadlessUiBackend, scene: Renderer.() -> ByteArray) = Frame(session(backend).renderer.scene())
 
-    private class Frame(private val pixels: ByteArray, private val backend: HeadlessUiBackend) {
-        /** The shader's output value, 0-255: WebGPU's target is sRGB, so its stored bytes are decoded. */
+    private class Frame(private val pixels: ByteArray) {
+        /** The shader's output value, 0-255: both backends' targets are UNORM, so the stored byte (#1011). */
         fun rgb(x: Int, y: Int): Vec3f {
-            fun channel(c: Int): Float {
-                val stored = pixels[(y * SCENE_SIZE + x) * 4 + c].toInt() and 0xFF
-                return if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[stored] else stored.toFloat()
-            }
+            fun channel(c: Int): Float = (pixels[(y * SCENE_SIZE + x) * 4 + c].toInt() and 0xFF).toFloat()
             return Vec3f(channel(0), channel(1), channel(2))
         }
 
@@ -180,11 +176,5 @@ class SceneRigDebugViewParityTest {
 
         /** `debugLayerColor(joint)`, which `JointWeights` gives each joint, 0-255. */
         fun jointColour(joint: Int): Vec3f = debugLayerColor(joint).let { Vec3f(it.r * 255f, it.g * 255f, it.b * 255f) }
-
-        val SRGB_TO_LINEAR = FloatArray(256) { srgb ->
-            val c = srgb / 255.0
-            val lin = if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
-            (lin * 255.0).toFloat()
-        }
     }
 }

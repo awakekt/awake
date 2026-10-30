@@ -20,6 +20,8 @@ import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.WorldTextFields
+import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
 import com.awakekt.awake.render.passes.uniforms.blendsAdditively
 import com.awakekt.awake.render.passes.uniforms.coverageCutoff
 import com.awakekt.awake.render.passes.uniforms.directionalLightFloats
@@ -27,6 +29,7 @@ import com.awakekt.awake.render.passes.uniforms.drawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.gpuLitShadowUniforms
 import com.awakekt.awake.render.passes.uniforms.litUniforms
 import com.awakekt.awake.render.passes.uniforms.putDebugView
+import com.awakekt.awake.render.passes.uniforms.sceneCoverageCutoff
 import com.awakekt.awake.render.passes.uniforms.texturedUniforms
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.renderer.SkinnedFields
@@ -73,6 +76,7 @@ fun RenderDrawCommand.uniformFloats(
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
+    alphaToCoverageEnabled: Boolean = false,
 ): FloatArray {
     val mvp = model * viewProjection
     return when (
@@ -103,8 +107,13 @@ fun RenderDrawCommand.uniformFloats(
             .put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint)
             .build()
 
+        DrawUniformPlan.WorldText -> UniformWriter(WorldTextUniformLayout)
+            .put(mvp.data, UniformFields.Mvp)
+            .put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field)
+            .build()
+
         DrawUniformPlan.Skinned ->
-            skinnedUniforms(mvp, model, extraUniformFloats, coverageCutoff, exposure, lightPayload, cameraEye, debugView, cameraForward)
+            skinnedUniforms(mvp, model, extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), exposure, lightPayload, cameraEye, debugView, cameraForward)
 
         DrawUniformPlan.TexturedPbr -> texturedUniforms(
             mvp = mvp,
@@ -114,7 +123,7 @@ fun RenderDrawCommand.uniformFloats(
             cameraEye = cameraEye,
             fogColor = fogColor,
             fogDensity = fogDensity,
-            alphaCutoff = coverageCutoff,
+            alphaCutoff = sceneCoverageCutoff(alphaToCoverageEnabled),
             debugView = debugView,
             cameraForward = cameraForward,
             timeSeconds = timeSeconds,
@@ -167,6 +176,7 @@ fun RenderDrawCommand.instancedUniformFloats(
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
+    alphaToCoverageEnabled: Boolean = false,
 ): FloatArray = when (kind) {
     InstancedDrawKind.Particle -> UniformWriter(ParticleUniformLayout)
         .put(viewProjection.data, UniformFields.Mvp)
@@ -187,7 +197,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 cameraEye = cameraEye,
                 fogColor = fogColor,
                 fogDensity = fogDensity,
-                alphaCutoff = coverageCutoff,
+                alphaCutoff = sceneCoverageCutoff(alphaToCoverageEnabled),
                 debugView = debugView,
                 cameraForward = cameraForward,
                 timeSeconds = timeSeconds,
@@ -266,19 +276,23 @@ private fun skinnedUniforms(
     cameraForward: Vec3f,
 ): FloatArray {
     val writer = UniformWriter(SkinnedUniformLayout).put(mvp.data, UniformFields.Mvp)
-    return if (extras.size == SkinnedMaterialLayout.total) {
+    val unlit = if (extras.size == SkinnedMaterialLayout.total) {
         writer
             .put(extras, 0, SkinnedFields.JointPalette)
             .put(model.data, UniformFields.Model)
             .put(extras, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
             .put(extras, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
+        SkinnedMaterialLayout.readVec4(extras, UniformFields.PbrFactors).w
     } else {
         writer
             .putPadded(SkinnedFields.JointPalette, extras)
             .put(model.data, UniformFields.Model)
             .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-    }.put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, 0f)
+        0f
+    }
+    return writer
+        .put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, unlit)
         .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
         .putLights(lightPayload)
         .put(UniformFields.CameraPosition, cameraEye)

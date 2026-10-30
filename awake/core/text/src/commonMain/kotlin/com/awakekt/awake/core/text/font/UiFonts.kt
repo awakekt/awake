@@ -21,7 +21,13 @@ object UiFonts {
     private val msdfCache = mutableMapOf<Int, UiFont>()
 
     /**
-     * Stable bundled atlas used by all targets unless a caller explicitly supplies another font.
+     * Stable bundled atlas used by all targets unless a caller explicitly supplies another font. It holds
+     * [DEFAULT_CHARS]: printable ASCII, the accented letters of Western and Central European text, and common
+     * signs such as € and ™. A char outside it draws as `'?'`; chain a font that has it with [fallback].
+     *
+     * Text up to [UiFont.DEFAULT_PIXEL_GLYPH_MAX_SIZE] device pixels draws from glyphs rasterized at its
+     * exact size ([UiFont.pixelGlyphs]); larger or scaled text draws from the distance-field atlas. Use
+     * [withPixelGlyphMaxSize] to move the limit, or 0 to draw every size from the atlas.
      *
      * @param cellSize The base cell size in pixels for the requested font.
      * @return The cached default font instance at the requested cell size.
@@ -45,7 +51,7 @@ object UiFonts {
      * @return The cached packed sans-serif [UiFont] instance at the requested cell size.
      */
     fun trueSans(cellSize: Int = 12): UiFont = trueSansCache.getOrPut(cellSize) {
-        PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize)
+        PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.regular }
     }
 
     /**
@@ -57,13 +63,13 @@ object UiFonts {
     fun weightedSans(cellSize: Int = 12): UiFont =
         WeightedUiFont(
             mapOf(
-                FontWeight.Thin to PackedUiFont(RobotoThinUiFontData, cellSize = cellSize),
-                FontWeight.Light to PackedUiFont(RobotoLightUiFontData, cellSize = cellSize),
-                FontWeight.Normal to PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize),
-                FontWeight.Medium to PackedUiFont(RobotoMediumUiFontData, cellSize = cellSize),
-                FontWeight.SemiBold to PackedUiFont(RobotoSemiBoldUiFontData, cellSize = cellSize),
-                FontWeight.Bold to PackedUiFont(RobotoBoldUiFontData, cellSize = cellSize),
-                FontWeight.Black to PackedUiFont(RobotoBlackUiFontData, cellSize = cellSize),
+                FontWeight.Thin to PackedUiFont(RobotoThinUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.thin },
+                FontWeight.Light to PackedUiFont(RobotoLightUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.light },
+                FontWeight.Normal to PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.regular },
+                FontWeight.Medium to PackedUiFont(RobotoMediumUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.medium },
+                FontWeight.SemiBold to PackedUiFont(RobotoSemiBoldUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.semiBold },
+                FontWeight.Bold to PackedUiFont(RobotoBoldUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.bold },
+                FontWeight.Black to PackedUiFont(RobotoBlackUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.black },
             ),
         )
 
@@ -116,9 +122,28 @@ object UiFonts {
      */
     fun msdf(cellSize: Int = 12): UiFont = msdfCache.getOrPut(cellSize) { MsdfFont(cellSize = cellSize) }
 
-    /** The chars [load] bakes when a caller names none: the built-in atlas's own set, printable ASCII plus • · … – — × −. */
-    const val DEFAULT_CHARS: String =
+    /**
+     * Printable ASCII plus • · … – — × −: 102 chars, what the built-in atlas held before accented letters joined
+     * it (#1058). Pass it to [load] for a smaller atlas and a faster load when the text is English or otherwise
+     * ASCII, as every char past it is then baked for nothing.
+     */
+    const val ASCII_CHARS: String =
         " !\"#\$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~•·…–—×−"
+
+    /**
+     * The chars [load] bakes when a caller names none, and the built-in atlas's own set: 339 chars, the
+     * [ASCII_CHARS] and then the accented letters and common signs of Western and Central European text.
+     *
+     * These are U+00A0 to U+00FF (Latin-1 Supplement, from the no-break space to ÿ, including © ® ° ± « » ¿ ¡ £ ¥ ß)
+     * and U+0100 to U+017F (Latin Extended-A, Ā to ſ), which cover Filipino, Indonesian and the Western and Central
+     * European languages written in the Latin script, with ‘ ’ ‚ “ ” „ † ‡ ‰ ′ ″ ‹ › € ™ beside them. Greek, Cyrillic,
+     * Vietnamese and every other script are not in it; see [fallback] for text in those.
+     */
+    const val DEFAULT_CHARS: String =
+        ASCII_CHARS +
+            " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ" +
+            "ĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħĨĩĪīĬĭĮįİıĲĳĴĵĶķĸĹĺĻļĽľĿŀŁłŃńŅņŇňŉŊŋŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſ" +
+            "‘’‚“”„†‡‰′″‹›€™"
 
     /**
      * Standard curated emoji set baked by [platformEmoji] and [loadColorFont] when no specific emojis are named.
@@ -162,10 +187,20 @@ object UiFonts {
      * Loads a TrueType (`.ttf`) or OpenType (`.otf`) font from its file's bytes and bakes [chars] into a
      * distance-field atlas like the built-in Roboto's, so it draws through the same glyph shader.
      *
-     * The glyph set is fixed here: a char outside [chars], or one the font lacks, draws as `'?'`.
-     * Kerning is not applied, as it is not for the built-in fonts. Every target bakes the same bytes from
-     * the same file. All the work happens in this call, none per frame: the default set takes tens of
-     * milliseconds on desktop, so load a font while a scene loads, not during one.
+     * The glyph set is fixed here: a char outside [chars], or one the font lacks, draws as `'?'`. With none named
+     * it is [DEFAULT_CHARS], so accented letters and common signs draw; name [ASCII_CHARS] for a smaller atlas
+     * and a faster load when the text needs none of them.
+     * The font's pair kerning among [chars] is read here as well, from the `kern` feature of its `GPOS`
+     * table or else its `kern` table ([UiFont.kerningFor]), and text kerns by it unless its
+     * [TextStyle.kerning][com.awakekt.awake.core.text.theme.TextStyle.kerning] is false, as the
+     * built-in Roboto does. Every target bakes the same bytes from
+     * the same file. The atlas is baked at 64 texels per em with an 8-texel range, so large text keeps its
+     * corners and thin strokes; a glyph set too large for that to fit an 8192-pixel atlas is baked coarser.
+     * The baking happens in this call, none per frame: the default set, 339 glyphs, takes about four times as
+     * long as [ASCII_CHARS]'s 102, a fraction of a second on desktop, so load a font while a scene loads, not
+     * during one. Text up to
+     * [UiFont.DEFAULT_PIXEL_GLYPH_MAX_SIZE] device pixels draws from glyphs rasterized from the font's
+     * outlines at its exact size, each size the first time it is drawn ([UiFont.pixelGlyphs]).
      *
      * @param bytes The font file.
      * @param name Names the font in error messages.

@@ -27,7 +27,7 @@ internal suspend fun createCanvasGpuContext(
     canvas.width = width
     canvas.height = height
     val adapter = requestAdapter().getOrThrow()
-    val device = adapter.requestDevice(adapter.timingDeviceDescriptor(onError)).getOrThrow()
+    val device = adapter.requestDevice(adapter.preferredDeviceDescriptor(onError)).getOrThrow()
     val surface = Surface(canvas.getCanvasSurface())
     val format = GPUTextureFormat.of(checkNotNull(navigator.gpu).getPreferredCanvasFormat().unsafeCast<kotlin.js.JsString>().toString())
         ?: error("The browser's preferred canvas format is unsupported.")

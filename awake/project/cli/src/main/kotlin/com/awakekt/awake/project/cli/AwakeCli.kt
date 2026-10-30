@@ -48,6 +48,7 @@ class AwakeCli(
         "validate" -> validate(arguments)
         "scene" -> scene(arguments)
         "render" -> render(arguments)
+        "bundle" -> bundle(arguments)
         "mcp" -> OK.also { AwakeMcp(ProjectScenes(projectRoot(arguments.value("project"))), workingDir).serve(input(), out) }
         else -> throw UsageException("unknown command '$command'")
     }
@@ -105,6 +106,22 @@ class AwakeCli(
             out.appendLine(
                 "rendered ${project.relative(scene)} to ${output.path}: ${request.width}x${request.height}, " +
                     "${request.view.label} on ${request.backend.label}, frame ${request.frames}",
+            )
+        }
+        return OK
+    }
+
+    private fun bundle(arguments: CliArguments): Int {
+        val index = workingDir.resolve(arguments.required(1, "index"))
+        if (!index.isFile) throw UsageException("no index ${arguments.words[1]}")
+        val output = workingDir.resolve(arguments.value("output") ?: throw UsageException("bundle needs --output <dir>"))
+        val report = ProjectBundle(projectRoot(arguments.value("project")), output).run(index, ProjectBundle.writer(arguments, workingDir), prune = arguments.flag("prune"))
+        if (arguments.flag("json")) {
+            out.appendLine(PRETTY_JSON.encodeToString(JsonObject.serializer(), report.toJson()))
+        } else {
+            out.appendLine(
+                "bundled ${report.files} files into ${report.bundles} bundle${plural(report.bundles)} (${report.bytes} bytes, " +
+                    "${report.written} new) and wrote ${report.index.path}",
             )
         }
         return OK
@@ -181,6 +198,7 @@ class AwakeCli(
             |  awake scene add-component <scene> <node> <type> [fields-json]
             |  awake scene remove-component <scene> <node> <type>
             |  awake render <scene> [--output <png>]          Play a scene headless and save what its camera sees.
+            |  awake bundle <index> --output <dir>            Pack a project index's files into content bundles.
             |  awake mcp                                      Serve these commands to an AI agent over MCP (stdio).
             |
             |  <scene> is a path from the project root, or a name under scenes/. <node> is a path of node
@@ -197,6 +215,12 @@ class AwakeCli(
             |  --backend vulkan|webgpu     The GPU backend (default Vulkan; WebGPU on Windows).
             |  --view <view>    lit, clay, normals, depth, albedo, shadows, joint-weights or wireframe.
             |  --camera <name>  Render from the camera on that node instead of the primary one.
+            |  --group folder|one  How bundle writes group files (default folder, by top folder).
+            |  --depth <n>      How many leading folders name a group (default 1).
+            |  --target-mb <n>  The size a bundle fills to before the next starts (default 16).
+            |  --opaque-ids --salt <text>  Index and bundles carry salted ids instead of paths.
+            |  --prune          Delete .awkb files under the bundle output that the new index doesn't list.
+            |  --key-id <id> --key-file <path>|--key-env <variable>  Seal bundle members with the key in a file or variable.
             |
             |Exits 0 on success, 1 when it finds errors or refuses an edit, and 2 for a wrong command line.
             |

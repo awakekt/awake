@@ -1,3 +1,9 @@
+public final class com/awakekt/awake/engine/window/DesktopHostKt {
+	public static final fun desktopHostActions ()Lcom/awakekt/awake/engine/window/HostActions;
+	public static final fun desktopLaunchEnvironment ()Lcom/awakekt/awake/engine/window/LaunchEnvironment;
+	public static final fun desktopLaunchParameters ([Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+}
+
 public final class com/awakekt/awake/engine/window/DesktopRunLimits {
 	public static final field CAPTURE_PROPERTY Ljava/lang/String;
 	public static final field Companion Lcom/awakekt/awake/engine/window/DesktopRunLimits$Companion;
@@ -49,6 +55,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwConsumeScrollDeltaX (J)D
 	public final fun glfwConsumeScrollDeltaY (J)D
 	public final fun glfwConsumeScrollSource (J)I
+	public final fun glfwConsumeTypedText (J)Ljava/lang/String;
 	public final fun glfwCreateWindow (IILjava/lang/String;)J
 	public final fun glfwDestroyWindow (J)V
 	public final fun glfwFocusWindow (J)V
@@ -64,6 +71,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwGetWindowWidth (J)I
 	public final fun glfwInit ()Z
 	public final fun glfwPollEvents ()V
+	public final fun glfwSetCharCallback (J)V
 	public final fun glfwSetClipboardString (JLjava/lang/String;)V
 	public final fun glfwSetCursorShape (JI)V
 	public final fun glfwSetScrollCallback (J)V
@@ -77,6 +85,7 @@ public abstract interface class com/awakekt/awake/engine/window/GlfwWindowInput 
 	public fun consumeScrollDeltaX ()D
 	public abstract fun consumeScrollDeltaY ()D
 	public fun consumeScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
+	public fun consumeTypedText ()Ljava/lang/String;
 	public abstract fun cursorX ()D
 	public abstract fun cursorY ()D
 	public abstract fun framebufferScaleX ()F
@@ -92,6 +101,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInput$DefaultImpls 
 	public static fun consumePinchScale (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
 	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
 	public static fun consumeScrollSource (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Lcom/awakekt/awake/core/input/ScrollSource;
+	public static fun consumeTypedText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Ljava/lang/String;
 	public static fun getClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Ljava/lang/String;
 	public static fun isFocused (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Z
 	public static fun setClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;Ljava/lang/String;)V
@@ -99,5 +109,70 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInput$DefaultImpls 
 
 public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
 	public static final fun glfwWindowInput (J)Lcom/awakekt/awake/engine/window/GlfwWindowInput;
+}
+
+public abstract interface class com/awakekt/awake/engine/window/HostActions {
+	public abstract fun getPageReload ()Lcom/awakekt/awake/engine/window/PageReload;
+	public abstract fun openUrl (Ljava/lang/String;)Z
+}
+
+public final class com/awakekt/awake/engine/window/LaunchEnvironment {
+	public fun <init> (Lcom/awakekt/awake/engine/window/LaunchOrigin;Lcom/awakekt/awake/engine/window/PrimaryInput;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOrigin ()Lcom/awakekt/awake/engine/window/LaunchOrigin;
+	public final fun getPrimaryInput ()Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchOrigin {
+	public static final field Companion Lcom/awakekt/awake/engine/window/LaunchOrigin$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEffectivePort ()I
+	public final fun getHost ()Ljava/lang/String;
+	public final fun getPort ()Ljava/lang/Integer;
+	public final fun getScheme ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isSecure ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchOrigin$Companion {
+	public final fun fromUrl (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchOrigin;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchParameters {
+	public static final field Companion Lcom/awakekt/awake/engine/window/LaunchParameters$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun first (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getKeys ()Ljava/util/Set;
+	public final fun has (Ljava/lang/String;)Z
+	public fun hashCode ()I
+	public final fun isEmpty ()Z
+	public final fun toMap ()Ljava/util/Map;
+	public fun toString ()Ljava/lang/String;
+	public final fun values (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchParameters$Companion {
+	public final fun fromArguments (Ljava/util/List;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun fromEntries (Ljava/lang/Iterable;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun fromQuery (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun fromUrl (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun getEmpty ()Lcom/awakekt/awake/engine/window/LaunchParameters;
+}
+
+public abstract interface class com/awakekt/awake/engine/window/PageReload {
+	public abstract fun reload ()V
+}
+
+public final class com/awakekt/awake/engine/window/PrimaryInput : java/lang/Enum {
+	public static final field Pointer Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public static final field Touch Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public static fun values ()[Lcom/awakekt/awake/engine/window/PrimaryInput;
 }
 

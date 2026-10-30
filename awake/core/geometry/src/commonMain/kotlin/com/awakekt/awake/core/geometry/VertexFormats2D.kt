@@ -29,6 +29,27 @@ object VertexFormats2D {
         ),
     )
 
+    /**
+     * 2D decorated glyph (#1061), one quad drawing a glyph's fill, outline and shadow from one atlas page: pos (vec2) +
+     * uv (vec2) + uvRect (vec4) + fieldUv (vec2) + fieldRect (vec4) + color (vec4) + outlineColor (vec4) + shadowColor
+     * (vec4) + effect (vec4: outline width, shadow blur, shadow offset u, v; all in field uv) + transform (vec4) = 34
+     * floats (136 bytes). Both uvs extend past their rects over the grown quad; the shader clamps each to its rect.
+     */
+    val DecoratedGlyph = VertexFormat(
+        listOf(
+            VertexAttribute(VertexSemantic.Position, GpuDataShape.Vec2, location = 0),
+            VertexAttribute(VertexSemantic.Uv, GpuDataShape.Vec2, location = 1),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 2),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec2, location = 3),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 4),
+            VertexAttribute(VertexSemantic.Color, GpuDataShape.Vec4, location = 5),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 6),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 7),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 8),
+            VertexAttribute(VertexSemantic.Transform, GpuDataShape.Vec4, location = 9),
+        ),
+    )
+
     /** 2D Rounded Quad: pos (vec2) + localPos (vec2) + halfSize (vec2) + radius (float) + smoothing (float) + color (vec4) + transform (vec4) = 16 floats (64 bytes). */
     val RoundedQuad = VertexFormat(
         listOf(
@@ -47,6 +68,9 @@ object VertexFormats2D {
 
     /** Textured glyph quad layout float count. */
     const val GLYPH_FLOATS_PER_VERTEX = 12
+
+    /** Decorated glyph quad layout float count. */
+    const val DECORATED_GLYPH_FLOATS_PER_VERTEX = 34
 
     /** Rounded quad layout float count. */
     const val ROUNDED_QUAD_FLOATS_PER_VERTEX = 16

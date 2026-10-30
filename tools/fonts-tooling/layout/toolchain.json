@@ -1,0 +1,7 @@
+{
+  "playwright": "1.58.0",
+  "chromium": "145.0.7632.6",
+  "revision": "1208",
+  "canonicalPlatform": "win32",
+  "variant": "chromium-headless-shell"
+}

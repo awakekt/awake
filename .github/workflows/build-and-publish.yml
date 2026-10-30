@@ -113,7 +113,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
@@ -178,7 +178,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
@@ -225,7 +225,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
@@ -282,7 +282,7 @@ jobs:
     name: Verify
     timeout-minutes: 30
     needs: ref
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -337,7 +337,7 @@ jobs:
       }}
     needs: [platform-impact, natives, naga-android]
     timeout-minutes: 120
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -419,6 +419,9 @@ jobs:
               --no-configuration-cache
           fi
 
+      - name: Publish the build plugins locally
+        run: ./gradlew -p build-logic publishToMavenLocal --no-configuration-cache
+
       - name: Verify what was published
         env:
           VULKAN_PUBLISH: ${{ steps.versions.outputs.vulkan_publish }}
@@ -452,6 +455,7 @@ jobs:
           tools/check_template_consumer.sh templates/game "$RUNNER_TEMP/consumer"
           tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/consumer-project"
           tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/consumer-plugin"
+          TEMPLATE_CORE_VERSION="$CORE_VERSION" tools/check_scene_components_consumer.sh "$RUNNER_TEMP/consumer-scene-components"
 
   # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
   # the next push, so this path stays deliberately light.
@@ -470,7 +474,7 @@ jobs:
         needs.window-natives.result == 'success'
       }}
     needs: [verify, consumer, naga-android, naga-desktop, window-natives]
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -574,7 +578,7 @@ jobs:
     timeout-minutes: 60
     if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.platform-impact.outputs.vulkan_publish == 'true'
     needs: [platform-impact, natives, verify, snapshot]
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -630,7 +634,7 @@ jobs:
         needs.window-natives.result == 'success'
       }}
     needs: [verify, consumer, naga-android, naga-desktop, window-natives]
-    runs-on: macos-14
+    runs-on: macos-15
     # Creates the GitHub release and attaches its bundle.
     permissions:
       contents: write
@@ -859,7 +863,7 @@ jobs:
     timeout-minutes: 90
     if: startsWith(github.ref, 'refs/tags/vulkan-v')
     needs: [natives, verify]
-    runs-on: macos-14
+    runs-on: macos-15
     # Creates the GitHub release and attaches its bundle.
     permissions:
       contents: write

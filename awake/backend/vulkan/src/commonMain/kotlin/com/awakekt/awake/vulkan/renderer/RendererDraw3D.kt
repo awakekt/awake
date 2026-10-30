@@ -130,6 +130,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             debugView = debugView,
             exposure = exposure,
             materialUniformFloatCount = material.uniformFloatCount,
+            alphaToCoverageEnabled = instancedPipeline.multisample.alphaToCoverageEnabled,
         )
         val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
         val palettes = cmd.instanceJointPalettes?.let {
@@ -179,6 +180,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         fogDensity = fogDensity,
         debugView = debugView,
         exposure = exposure,
+        alphaToCoverageEnabled = pipeline.multisample.alphaToCoverageEnabled,
     )
     val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
     return PreparedDrawCall(

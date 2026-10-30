@@ -5,6 +5,7 @@
  */
 import com.awakekt.awake.build.extension.HostOs
 import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SourcesJar
@@ -20,7 +21,7 @@ plugins {
 }
 
 val publicationsFromMainHost =
-    listOf("android", "desktop", "iosArm64", "iosSimulatorArm64", "kotlinMultiplatform")
+    listOf("android", "desktop", "iosArm64", "iosSimulatorArm64", "kotlinMultiplatform", "maven")
 
 extensions.configure<PublishingExtension>("publishing") {
     // Never rewrite a SNAPSHOT dependency to a guessed stable version in a published POM; maintainers
@@ -84,13 +85,14 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
     // uploads it once per target, six times. Release size is what Central's monthly publishing
     // limits meter. IDEs read KDoc from the sources jar; `./gradlew developerDocs` still builds
     // the Dokka API reference.
-    configure(
-        KotlinMultiplatform(
-            javadocJar = JavadocJar.Empty(),
-            sourcesJar = SourcesJar.Sources(),
-            androidVariantsToPublish = listOf("release"),
-        )
-    )
+    pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+        configure(KotlinMultiplatform(
+            javadocJar = JavadocJar.Empty(), sourcesJar = SourcesJar.Sources(), androidVariantsToPublish = listOf("release"),
+        ))
+    }
+    pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+        configure(KotlinJvm(javadocJar = JavadocJar.Empty(), sourcesJar = SourcesJar.Sources()))
+    }
 
     pom {
         name.set(project.provider { (project.findProperty("pom.name") as? String) ?: "Awake Engine - ${project.name}" })

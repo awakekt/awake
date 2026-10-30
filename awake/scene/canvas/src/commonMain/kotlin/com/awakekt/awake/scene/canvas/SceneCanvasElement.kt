@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -22,6 +23,7 @@ import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLook
+import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
@@ -156,6 +158,18 @@ import kotlinx.serialization.Serializable
  * It survives a rename of the node and repeats in every instance of a prefab, so code finds it under
  * one instance's root with `World.findCanvasElement`, or in a prefab with `SceneNode.findCanvasNode`.
  * Letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`; unique within one prefab.
+ * @property placeholder The key of the hint a TextField shows while it is empty and does not hold the
+ * keyboard, such as `chat.hint`, in the project's string tables; empty shows none. It draws in the
+ * field's text colour at half strength. [textArgs] fill in its placeholders, as a [textKey]'s.
+ * @property padding The space between a TextField's edge and its text, in dp: `horizontal` (12, shadcn's
+ * input) and `vertical` (0). The field clips its text at its edge, so the padding is also the room
+ * the overhang of a glyph keeps, such as a leading `j`'s tail.
+ * @property tooltip The key of a short hint shown near the pointer after it has been over the element
+ * for half a second, such as `hud.inventory.tooltip`; empty shows none. Any kind takes one. It stays
+ * inside the canvas and goes when the pointer leaves or presses the element. [textArgs] fill in its
+ * placeholders.
+ * @property numerals Digit width spacing (`Tabular` or `Proportional` via OpenType `tnum`/`pnum`); null
+ * keeps the font's default digits.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -211,7 +225,141 @@ data class SceneCanvasElement(
     val sweep: CanvasSweep? = null,
     val stepper: CanvasStepper? = null,
     val elementId: String = "",
+    val placeholder: String = "",
+    val padding: CanvasPadding = CanvasPadding(),
+    val tooltip: String = "",
+    val numerals: FontNumerals? = null,
 ) : SceneComponent {
+    /** [SceneCanvasElement] as it was before `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        kind: CanvasElementKind = CanvasElementKind.Text,
+        anchor: CanvasAnchor = CanvasAnchor.TopLeft,
+        offsetX: Float = CanvasElement.DEFAULT_INSET,
+        offsetY: Float = CanvasElement.DEFAULT_INSET,
+        width: Float = CanvasElement.DEFAULT_WIDTH,
+        height: Float = CanvasElement.DEFAULT_HEIGHT,
+        text: String = "",
+        fontSize: Float = CanvasElement.DEFAULT_FONT_SIZE,
+        color: String = "#FFFFFF",
+        background: String = "#00000000",
+        value: Float = 1f,
+        order: Int = 0,
+        visible: Boolean = true,
+        action: String = "",
+        doubleAction: String = "",
+        touchOnly: Boolean = false,
+        safeArea: Boolean = true,
+        style: CanvasStyle = CanvasStyle(),
+        textAlign: CanvasAnchor? = null,
+        follow: String = "",
+        followOffset: SceneVec3 = SceneVec3(),
+        followBounds: Boolean = false,
+        followOutset: Float = 0f,
+        followRules: CanvasFollowRules? = null,
+        followArrow: Boolean = false,
+        layout: CanvasLayout? = null,
+        grow: Float = 0f,
+        bind: CanvasBinding? = null,
+        wheel: Boolean = false,
+        draggable: Boolean = false,
+        dropTarget: Boolean = false,
+        camera: String = "",
+        links: Boolean = true,
+        mask: String = "",
+        font: String = "",
+        pressable: Boolean = false,
+        maxLength: Int = 0,
+        maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes,
+        textKey: String = "",
+        textArgs: Map<String, String> = emptyMap(),
+        joystick: CanvasJoystick? = null,
+        button: CanvasButton? = null,
+        enabled: Boolean = true,
+        look: CanvasLook? = null,
+        cluster: CanvasCluster? = null,
+        skin: CanvasControlSkin? = null,
+        controlId: String = "",
+        bar: CanvasBar? = null,
+        sweep: CanvasSweep? = null,
+        stepper: CanvasStepper? = null,
+        elementId: String = "",
+        placeholder: String = "",
+        padding: CanvasPadding = CanvasPadding(),
+        tooltip: String = "",
+    ) : this(
+        kind, anchor, offsetX, offsetY, width, height, text, fontSize, color, background, value, order, visible,
+        action, doubleAction, touchOnly, safeArea, style, textAlign, follow, followOffset, followBounds, followOutset,
+        followRules, followArrow, layout, grow, bind, wheel, draggable, dropTarget, camera, links, mask, font,
+        pressable, maxLength, maxLengthUnit, textKey, textArgs, joystick, button, enabled, look, cluster, skin,
+        controlId, bar, sweep, stepper, elementId, placeholder, padding, tooltip,
+    )
+
+    /** [copy] as it was before `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        kind: CanvasElementKind = this.kind,
+        anchor: CanvasAnchor = this.anchor,
+        offsetX: Float = this.offsetX,
+        offsetY: Float = this.offsetY,
+        width: Float = this.width,
+        height: Float = this.height,
+        text: String = this.text,
+        fontSize: Float = this.fontSize,
+        color: String = this.color,
+        background: String = this.background,
+        value: Float = this.value,
+        order: Int = this.order,
+        visible: Boolean = this.visible,
+        action: String = this.action,
+        doubleAction: String = this.doubleAction,
+        touchOnly: Boolean = this.touchOnly,
+        safeArea: Boolean = this.safeArea,
+        style: CanvasStyle = this.style,
+        textAlign: CanvasAnchor? = this.textAlign,
+        follow: String = this.follow,
+        followOffset: SceneVec3 = this.followOffset,
+        followBounds: Boolean = this.followBounds,
+        followOutset: Float = this.followOutset,
+        followRules: CanvasFollowRules? = this.followRules,
+        followArrow: Boolean = this.followArrow,
+        layout: CanvasLayout? = this.layout,
+        grow: Float = this.grow,
+        bind: CanvasBinding? = this.bind,
+        wheel: Boolean = this.wheel,
+        draggable: Boolean = this.draggable,
+        dropTarget: Boolean = this.dropTarget,
+        camera: String = this.camera,
+        links: Boolean = this.links,
+        mask: String = this.mask,
+        font: String = this.font,
+        pressable: Boolean = this.pressable,
+        maxLength: Int = this.maxLength,
+        maxLengthUnit: TextLengthUnit = this.maxLengthUnit,
+        textKey: String = this.textKey,
+        textArgs: Map<String, String> = this.textArgs,
+        joystick: CanvasJoystick? = this.joystick,
+        button: CanvasButton? = this.button,
+        enabled: Boolean = this.enabled,
+        look: CanvasLook? = this.look,
+        cluster: CanvasCluster? = this.cluster,
+        skin: CanvasControlSkin? = this.skin,
+        controlId: String = this.controlId,
+        bar: CanvasBar? = this.bar,
+        sweep: CanvasSweep? = this.sweep,
+        stepper: CanvasStepper? = this.stepper,
+        elementId: String = this.elementId,
+        placeholder: String = this.placeholder,
+        padding: CanvasPadding = this.padding,
+        tooltip: String = this.tooltip,
+    ): SceneCanvasElement = copy(
+        kind, anchor, offsetX, offsetY, width, height, text, fontSize, color, background, value, order, visible,
+        action, doubleAction, touchOnly, safeArea, style, textAlign, follow, followOffset, followBounds, followOutset,
+        followRules, followArrow, layout, grow, bind, wheel, draggable, dropTarget, camera, links, mask, font,
+        pressable, maxLength, maxLengthUnit, textKey, textArgs, joystick, button, enabled, look, cluster, skin,
+        controlId, bar, sweep, stepper, elementId, placeholder, padding, tooltip,
+    )
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     /**
@@ -238,7 +386,7 @@ data class SceneCanvasElement(
     }
 
     /** Fields set where they do nothing, and what is wrong with the follow rules. */
-    private fun kindProblems(): List<String> = followProblems() + controlProblems() + idProblems() + listOfNotNull(
+    private fun kindProblems(): List<String> = followProblems() + controlProblems() + idProblems() + hintProblems() + listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
         "maxLength only limits a TextField".takeIf {
             (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
@@ -251,11 +399,19 @@ data class SceneCanvasElement(
         },
         "textKey and text both set the words; keep one".takeIf { textKey.isNotEmpty() && text.isNotEmpty() },
         "textKey and bind.text both set the words; keep one".takeIf { textKey.isNotEmpty() && !bind?.text.isNullOrBlank() },
-        "textArgs fill in a textKey's text; set textKey".takeIf {
-            textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
-        },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
     )
+
+    /** What is wrong with a TextField's placeholder and padding, any element's tooltip, and the arguments of a key. */
+    private fun hintProblems(): List<String> = listOfNotNull(
+        "placeholder only hints a TextField's empty field".takeIf { placeholder.isNotEmpty() && kind != CanvasElementKind.TextField },
+        "placeholder must not be blank".takeIf { placeholder.isNotEmpty() && placeholder.isBlank() },
+        "padding only pads a TextField".takeIf { padding != CanvasPadding() && kind != CanvasElementKind.TextField },
+        "textArgs fill in a textKey's, placeholder's or tooltip's text; set one".takeIf {
+            textKey.isEmpty() && placeholder.isEmpty() && tooltip.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
+        },
+        "tooltip must not be blank".takeIf { tooltip.isNotEmpty() && tooltip.isBlank() },
+    ) + padding.problems().map { "padding.$it" }
 
     /** What is wrong with the element's id. */
     private fun idProblems(): List<String> = listOfNotNull(

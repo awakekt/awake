@@ -6,10 +6,13 @@
 package com.awakekt.awake.webgpu
 
 import com.awakekt.awake.webgpu.device.GraphicsDevice
+import com.awakekt.awake.webgpu.device.unormCounterpart
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -49,6 +52,28 @@ class WebGpuDesktopDeviceSmokeTest {
                 "expected a registered device handle, got ${graphicsDevice.device}",
             )
             assertNotNull(context.wgpuContext.device, "wgpu4k should have produced a GPUDevice")
+        } finally {
+            graphicsDevice.destroy()
+        }
+    }
+
+    /**
+     * The device draws into the UNORM counterpart of the sRGB format wgpu-native's surface lists
+     * first, as Vulkan's targets are and a browser's canvas always is (#1011). Shaders write colour
+     * that is already display-encoded, which an sRGB target would encode a second time: the
+     * tone-mapping step then drifted 17/255 from its CPU twin (`PostProcessingFxaaParityTest`).
+     */
+    @Test
+    fun drawsIntoAUnormFormatWhenTheSurfaceListsAnSrgbOneFirst() = runBlocking<Unit> {
+        val context = glfwContextRenderer(width = SIZE, height = SIZE, title = "awake-headless")
+        val surfaceFormat = context.wgpuContext.renderingContext.textureFormat
+        val graphicsDevice = GraphicsDevice()
+        try {
+            graphicsDevice.create(context.wgpuContext)
+            val adopted = graphicsDevice.wgpuContext.renderingContext.textureFormat
+            println("surface lists $surfaceFormat first; the device draws into $adopted")
+            assertEquals(surfaceFormat.unormCounterpart() ?: surfaceFormat, adopted)
+            assertNull(adopted.unormCounterpart(), "the device still draws into the sRGB format $adopted")
         } finally {
             graphicsDevice.destroy()
         }

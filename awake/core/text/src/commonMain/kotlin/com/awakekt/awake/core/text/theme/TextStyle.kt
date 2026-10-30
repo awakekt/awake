@@ -8,8 +8,10 @@ package com.awakekt.awake.core.text.theme
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Sp
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.unicode.WordBreak
 
 /**
  * Groups text-related styling properties.
@@ -25,6 +27,14 @@ import com.awakekt.awake.core.text.font.UiFont
  * @property font The typeface to measure and draw with, or null to inherit `LocalFont`.
  *   Compared by whatever equality the [UiFont] instance itself provides -- identity unless a
  *   font overrides it -- which matches the atlas cache a renderer keys on the same instance.
+ * @property kerning Whether the font's pair kerning moves adjacent characters, such as the `A` and `V`
+ *   of "AV", closer or apart; null to inherit. Kerning applies unless a style sets this to false, as a
+ *   browser's `font-kerning: auto` does, and measuring, painting, the caret and hit testing all follow it.
+ * @property wordBreak How soft line breaking treats unspaced letter runs (such as Korean words vs CJK
+ *   syllable/ideograph breaks), matching CSS `word-break`; null to inherit ([WordBreak.Normal] when unset).
+ * @property numerals Numeric figure spacing (`pnum` or `tnum` from the font's OpenType `GSUB` table),
+ *   matching CSS `font-variant-numeric`'s figure-spacing values; null to inherit (leaving the font's
+ *   default digits untouched when unset).
  */
 data class TextStyle(
     val color: Color? = null,
@@ -36,7 +46,42 @@ data class TextStyle(
     val shadow: TextShadow? = null,
     val outline: TextOutline? = null,
     val font: UiFont? = null,
+    val kerning: Boolean? = null,
+    val wordBreak: WordBreak? = null,
+    val numerals: FontNumerals? = null,
 ) {
+    /** [TextStyle] as it was before `wordBreak` and `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        color: Color? = null,
+        size: Sp? = null,
+        lineHeight: Sp? = null,
+        scale: Float = 1f,
+        weight: FontWeight = FontWeight.Normal,
+        letterSpacing: Sp = 0f.sp,
+        shadow: TextShadow? = null,
+        outline: TextOutline? = null,
+        font: UiFont? = null,
+        kerning: Boolean? = null,
+    ) : this(color, size, lineHeight, scale, weight, letterSpacing, shadow, outline, font, kerning, null, null)
+
+    /** [copy] as it was before `wordBreak` and `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        color: Color? = this.color,
+        size: Sp? = this.size,
+        lineHeight: Sp? = this.lineHeight,
+        scale: Float = this.scale,
+        weight: FontWeight = this.weight,
+        letterSpacing: Sp = this.letterSpacing,
+        shadow: TextShadow? = this.shadow,
+        outline: TextOutline? = this.outline,
+        font: UiFont? = this.font,
+        kerning: Boolean? = this.kerning,
+    ): TextStyle = TextStyle(
+        color, size, lineHeight, scale, weight, letterSpacing, shadow, outline, font, kerning, wordBreak, numerals,
+    )
+
     /**
      * Default text style constants.
      */
@@ -66,20 +111,29 @@ data class TextStyle(
             other.shadow ?: shadow,
             other.outline ?: outline,
             other.font ?: font,
+            other.kerning ?: kerning,
+            other.wordBreak ?: wordBreak,
+            other.numerals ?: numerals,
         )
     }
 
     /** Whether merging this over [base] gives this: every field it leaves unset is unset in [base] too. */
     private fun inheritsNothingFrom(base: TextStyle): Boolean =
-        (color != null || base.color == null) && (size != null || base.size == null) &&
-            (lineHeight != null || base.lineHeight == null) && (shadow != null || base.shadow == null) &&
-            (outline != null || base.outline == null) && (font != null || base.font == null)
+        setsOrAbsent(color, base.color) && setsOrAbsent(size, base.size) &&
+            setsOrAbsent(lineHeight, base.lineHeight) && setsOrAbsent(shadow, base.shadow) &&
+            setsOrAbsent(outline, base.outline) && setsOrAbsent(font, base.font) &&
+            setsOrAbsent(kerning, base.kerning) && setsOrAbsent(wordBreak, base.wordBreak) &&
+            setsOrAbsent(numerals, base.numerals)
 
     /** Whether merging this over [base] gives [base]: every field it sets, [base] already has. */
     private fun changesNothingIn(base: TextStyle): Boolean =
         sameOrUnset(color, base.color) && sameOrUnset(size, base.size) && sameOrUnset(lineHeight, base.lineHeight) &&
             sameOrUnset(shadow, base.shadow) && sameOrUnset(outline, base.outline) && sameOrUnset(font, base.font) &&
+            sameOrUnset(kerning, base.kerning) && sameOrUnset(wordBreak, base.wordBreak) &&
+            sameOrUnset(numerals, base.numerals) &&
             scale == base.scale && weight == base.weight && letterSpacing == base.letterSpacing
 }
+
+private fun <T> setsOrAbsent(value: T?, base: T?): Boolean = value != null || base == null
 
 private fun <T> sameOrUnset(value: T?, base: T?): Boolean = value == null || value == base

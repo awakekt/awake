@@ -10,7 +10,6 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
-import com.awakekt.awake.scene.rendering.spatial.findSpatialIndex
 
 /**
  * Keeps the scene's [SpatialIndex] current, so [RenderSystem3D] can ask which entities are in
@@ -51,7 +50,7 @@ class SpatialIndexSystem : System {
     private val stale = ArrayList<Int>()
 
     override fun update(world: World, delta: Float) {
-        val grid = (world.findSpatialIndex() ?: install(world)).grid
+        val grid = (world.findSpatialIndex() ?: install(world)).grid.core
         live.clear()
         world.family<Transform, MeshBounds>().forEach { entity, transform, bounds ->
             live.add(entity.id)
@@ -66,7 +65,7 @@ class SpatialIndexSystem : System {
     }
 
     private fun install(world: World): SpatialIndex {
-        val index = SpatialIndex(SpatialGrid())
+        val index = SpatialIndex()
         world.add(world.create(), index)
         return index
     }

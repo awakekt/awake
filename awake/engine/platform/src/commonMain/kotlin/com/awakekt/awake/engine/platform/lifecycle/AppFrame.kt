@@ -27,6 +27,8 @@ import com.awakekt.awake.core.input.InputSnapshot
  *   host cannot tell.
  * @property dpi The screen's real dots per inch, physical pixels to a physical inch, where the
  *   platform can tell; 0 where it cannot, for a reader to fall back on 160 per dp.
+ * @property systemGestureInsets Edges where the OS handles system gestures, in dp, independently
+ *   of [safeArea]. Layouts can choose to avoid these edges too. None where the host reports none.
  */
 data class AppFrame(
     val delta: Float,
@@ -36,4 +38,5 @@ data class AppFrame(
     val density: Float = 1f,
     val safeArea: DisplayInsets = DisplayInsets.None,
     val dpi: Float = 0f,
+    val systemGestureInsets: DisplayInsets = DisplayInsets.None,
 )

@@ -4,12 +4,41 @@ Packs the UI font's glyphs into a multi-channel signed distance field atlas and 
 source, one object per weight, into `awake:core:text` (`Roboto*UiFontData.kt`). The output is
 committed: nothing runs this at build time, so a change to the atlas is a change to those files.
 
+The glyph set is `UiFonts.DEFAULT_CHARS`, 339 glyphs (#1058): printable ASCII and `• · … – — × −` first,
+in the order they have always had, then Latin-1 Supplement (U+00A0 to U+00FF), Latin Extended-A
+(U+0100 to U+017F) and `‘ ’ ‚ “ ” „ † ‡ ‰ ′ ″ ‹ › € ™`. Roboto has every one. A glyph is added by
+appending it to the lists in `Main.kt`, to `UiFonts.DEFAULT_CHARS` and to `subset_roboto_outlines.py`, in
+that order, and regenerating.
+
+Each glyph gets a tile of its own, its sample rect and two texels around it, and the tiles are packed in
+shelves, tallest first (`ShelfPacking`). The atlas holds the ink and little else: the 339 glyphs fill about the
+same 0.9 million texels per weight that the 102 of ASCII did when every glyph had a cell as large as the
+widest one (`@`, then `‰`). A glyph's texels are the same wherever its tile sits, since its pen origin lands on a
+whole texel, so moving a glyph moves no texel of it. `awake:core:text` packs a font loaded at run time with the
+same algorithm, and `OpenTypeUiFontTest` holds the two to one another.
+
+Beside the atlas each face gets an effect field (`EffectField.kt`, #1061): a coarse true signed distance per glyph
+from msdfgen's `sdf` mode, 16 texels per em, reaching half an em past the ink, which is what a text outline and a soft
+shadow are drawn from in the glyph's own draw. The atlas's 2-texel range reaches about a texel past the edge, too little
+for either. It is packed as wide as the atlas and loaded into the rows under it, in the same texture, so the seven faces
+`WeightedUiFont` stacks stay within 8192 rows. It ships deflated (`encodedEffectFieldBase64`, each row as differences
+from its left neighbour), about 0.1 MB a face. `awake:core:text` bakes the same field for a font loaded at run time
+(`EffectFieldLayout`), and `EffectFieldTest` holds the two to one another.
+
 It reads the Roboto faces in `fonts/`, which `tools/fonts-tooling/instantiate_roboto.py` instantiates
 from the variable source. Nothing loads them at run time, so they live here rather than in
 `awake:core:text`, and games and releases do not carry them. Besides this generator only tests read
 them: `awake:core:text` and `awake:compose:ui-testing` bake them with `UiFonts.load` and hold the
 result against the committed atlases.
 `awake:core:text` keeps `fonts/Roboto-LICENSE.txt`, since the atlases it ships are drawn from Roboto.
+
+Small text does not draw from these atlases: up to 24 device pixels it draws glyphs rasterized from the
+outlines at the exact size (`UiFont.pixelGlyphs`). Those outlines ship separately, as each weight
+subset to the atlas's characters, about 29 KB a face, written by
+`tools/fonts-tooling/subset_roboto_outlines.py` into `RobotoUiFontOutlineData.kt`. The subset keeps the
+face's `GPOS` `kern` feature as well, about 5 KB of it, which is where every size of the built-in
+Roboto takes its pair kerning from (#1022). Run it after changing the faces in `fonts/` or the atlas's
+glyph set, beside this generator.
 
 Roboto is licensed under the SIL Open Font License 1.1, not Apache-2.0. An atlas is the font in
 another format, which that license counts as a modified version of the font, so the atlases stay
@@ -72,7 +101,7 @@ regenerated atlas, and the visual baselines it moves.
 
 ## Checks
 
-`FontVerticalMetricsTest` pins the parsing against hand-built fonts and checks that each committed
+`ShelfPackingTest` pins the packing. `FontVerticalMetricsTest` pins the parsing against hand-built fonts and checks that each committed
 object's `lineHeightEm` is what its font file's `hhea` table gives. `EmLiteralTest` pins the number
 format against the default locale. Run `./gradlew :awake:ui:font-atlas-generator:test`.
 

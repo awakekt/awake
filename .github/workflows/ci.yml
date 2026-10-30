@@ -102,6 +102,17 @@ jobs:
           scripts/vulkan-publication-impact.test.sh
           scripts/vulkan-core-api-impact.test.sh
 
+      # Before 1.0 a released public signature stays as a hidden overload, so a consumer built against
+      # the last stable release still links. Compares the api dumps with that tag's, modifiers aside.
+      - name: Released JVM signatures kept
+        run: |
+          scripts/api-binary-compat.test.sh
+          tag="$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/||' |
+            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          git fetch --quiet --depth=1 origin "refs/tags/$tag:refs/tags/$tag"
+          echo "Comparing the api dumps with $tag"
+          scripts/api-binary-compat.sh "$tag" HEAD
+
       - name: Central bundle, upload and fallback repository
         run: |
           scripts/central-bundle.test.sh
@@ -116,6 +127,7 @@ jobs:
         run: |
           python -m pip install --quiet 'pillow==12.3.0'
           python tools/shadcn/test_render_evidence.py
+          python tools/fonts-tooling/text-evidence/test_text_evidence.py
 
   build:
     name: Build (JVM/Native)
@@ -152,7 +164,7 @@ jobs:
       - name: Install desktop Vulkan/GLFW build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers xvfb
 
       - name: No ponytail comment tags
         run: "! git grep -nIE 'ponytai[l]:' -- ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md'"
@@ -211,6 +223,11 @@ jobs:
       - name: Jolt desktop physics and project runtime tests
         run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest :awake:project:runtime:desktopTest
 
+      # Plugin manifests, archives and their signature checks on the JDK provider, desktop and
+      # Android host, plus the editor contract's deprecated forwards to them.
+      - name: Plugin archive and editor contract tests
+        run: ./gradlew :awake:plugin-archive:desktopTest :awake:plugin-archive:testAndroidHostTest :awake:editor:contract:desktopTest
+
       # Scene document loading, export and the component reference page. The reference test fails
       # when a registered component or field has no row; it drifted while nothing ran it.
       - name: Sprite metadata, animation and scene runtime tests
@@ -227,7 +244,22 @@ jobs:
       - name: Text and run-time font loading tests
         run: |
           ./gradlew :awake:core:text:desktopTest
-          ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest
+          ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest --tests com.awakekt.awake.compose.testing.GradientBackgroundTest
+
+      # Committed browser measurements; CI needs neither Chromium nor Playwright.
+      - name: CPU text layout conformance
+        run: |
+          python3 tools/fonts-tooling/reference_layout.py --verify-inputs
+          python3 tools/fonts-tooling/reference_cjk_layout.py --verify-inputs
+          ./gradlew :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.text.TextLayoutConformanceTest --tests com.awakekt.awake.compose.foundation.text.CjkLineBreakConformanceTest
+
+      - name: Upload text layout deviations
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: text-layout-conformance
+          path: awake/compose/foundation/build/reports/text-layout-conformance/
+          if-no-files-found: ignore
 
       # String tables and their layers, ICU-style messages, CLDR plural rules, locale fallback, input
       # labels, the locale font hook, and the Compose glue that reads them.
@@ -247,6 +279,7 @@ jobs:
       - name: Particle, scene rendering, render pass and shader tests
         run: >-
           ./gradlew
+          :awake:core:spatial:desktopTest
           :awake:particles:desktopTest
           :awake:scene:particles:desktopTest
           :awake:scene:scene3d:desktopTest
@@ -255,6 +288,24 @@ jobs:
           :awake:asset:shader-document:desktopTest
           :awake:scene:shader:desktopTest
           :awake:asset:shader-compiler:desktopTest
+
+      # The @SceneBinding processor's compile tests (a missing field, a type with no converter or a
+      # scene component with no binding must fail the build) and the golden documents the generated
+      # bindings must save byte for byte.
+      - name: Scene binding processor and generated binding tests
+        run: >-
+          ./gradlew
+          :awake:scene:binding:processor:test
+          :awake:scene:binding:desktopTest
+          :awake:scene:scene-core:desktopTest
+          :awake:scene:controls:desktopTest
+          :awake:scene:audio:desktopTest
+          :awake:scene:character:desktopTest
+          :awake:scene:navigation:desktopTest
+          :awake:scene:worldstream:desktopTest
+          :awake:scene:blueprint:desktopTest
+          :awake:scene:ai:desktopTest
+          :awake:project:blueprint:desktopTest
 
       - name: Every wasmJs source set compiles
         run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
@@ -273,14 +324,16 @@ jobs:
       # engine-showcase has complete multiplatform coverage across core ECS, physics, audio,
       # particles and navigation showcases.
       - name: Engine showcase sample (tests and desktop jar)
-        run: ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
+        run: xvfb-run -a ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
 
-      - name: Upload test reports on failure
-        if: failure()
+      - name: Upload engine showcase test reports and MSAA probes
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: engine-showcase-test-reports
-          path: samples/engine-showcase/build/reports/tests/
+          path: |
+            samples/engine-showcase/build/reports/tests/
+            samples/engine-showcase/build/reports/msaa/
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble
@@ -461,7 +514,8 @@ jobs:
             awake/engine/render/parity/build/reports/
           if-no-files-found: warn
 
-  # The only job on a macOS runner, and the only one that can build or run anything for iOS.
+  # The only job on a macOS runner, and the only one that can build or run anything for iOS: the
+  # iOS natives, cinterop and Kotlin/Native. Verify (verify.yml) runs on Linux and leaves them here.
   # It exists because of measured history, not symmetry: the JoltC backend reached four features
   # deep while aborting on its very first `step` -- a fixed-size temp allocator sized under what
   # Jolt asks for -- and it compiled cleanly throughout. Three of the four physics bugs found on
@@ -470,7 +524,9 @@ jobs:
     name: Physics (iOS)
     needs: platform-impact
     if: needs.platform-impact.outputs.ios == 'true'
-    runs-on: macos-latest
+    # Apple silicon, pinned like build-and-publish.yml. Nothing here needs Intel, whose pool is the
+    # scarcest and is being retired.
+    runs-on: macos-15
     timeout-minutes: 45
 
     steps:
@@ -514,11 +570,21 @@ jobs:
         shell: bash
         run: test -f awake/asset/shader-compiler/rust-native/target/aarch64-apple-ios-sim/release/libawake_naga.a
 
+      # The tests below link the simulator slices. This compiles the device cinterops against the
+      # device slices the ios-native action just built, which Verify did on Intel before it moved
+      # to Linux.
+      - name: iOS device cinterop and compile (MoltenVK, JoltC)
+        run: ./gradlew :awake:backend:vulkan:bindings:compileKotlinIosArm64 :awake:backend:jolt:compileKotlinIosArm64
+
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
 
       - name: ECS and sprite iOS simulator tests
         run: ./gradlew :awake:ecs:iosSimulatorArm64Test :awake:asset:sprite:iosSimulatorArm64Test :awake:scene:scene2d:iosSimulatorArm64Test
+
+      # Signature checks through Apple's Security framework and archive inflation through zlib.
+      - name: Plugin archive iOS simulator tests
+        run: ./gradlew :awake:plugin-archive:iosSimulatorArm64Test
 
       - name: Upload iOS physics test reports
         if: always()
@@ -566,10 +632,16 @@ jobs:
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest
 
-      # Code that only runs in a browser: copying a fetched response into a ByteArray, and the
-      # IndexedDB content cache, including a store that's full or blocked. Desktop tests can't reach it.
+      # Code that only runs in a browser: copying a fetched response into a ByteArray, the
+      # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content
+      # transport's real request. Desktop tests can't reach it.
       - name: Project loading browser tests
-        run: ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest
+        run: ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest :awake:project:transport-browser:wasmJsBrowserTest
+
+      # Plugin signature checks through WebCrypto and archive inflation through DecompressionStream,
+      # both asynchronous and both browser-only.
+      - name: Plugin archive browser tests
+        run: ./gradlew :awake:plugin-archive:wasmJsBrowserTest
 
       # The only bundle that pulls in Ktor's JS client and kotlinx-io's Node helpers. A toolchain
       # bump once left a bare `import.meta` in it that no build caught, and the page stopped loading.

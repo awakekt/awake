@@ -101,25 +101,20 @@ class RangeAnnotationsAreEnforcedTest {
         "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
         "canvas_element" to { base ->
-            val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
             val empty = JsonObject(emptyMap())
-            val state = JsonObject(mapOf("image" to image))
             JsonObject(
-                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + ("skin" to fullSkin()) + ("bar" to empty) + ("sweep" to empty) + ("stepper" to empty) + (
-                    "style" to JsonObject(
-                        mapOf(
-                            "image" to image,
-                            "fillImage" to image,
-                            "shadow" to empty,
-                            "textOutline" to empty,
-                            "hovered" to state,
-                            "pressed" to state,
-                            "disabled" to state,
-                        ),
-                    )
-                    ),
+                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + ("skin" to fullSkin()) + ("bar" to empty) + ("sweep" to empty) + ("stepper" to empty) + ("style" to fullStyle()),
             )
         },
+        "canvas_appearance" to { base -> JsonObject(base + ("style" to fullStyle()) + ("skin" to fullSkin())) },
+        "canvas_follow" to { base -> JsonObject(base + ("node" to JsonPrimitive("Player")) + ("rules" to JsonObject(emptyMap()))) },
+        "canvas_bind" to { base -> JsonObject(base + ("bind" to JsonObject(mapOf("node" to JsonPrimitive("Player"), "value" to JsonPrimitive("health.current"))))) },
+        "canvas_button" to { base -> JsonObject(base + ("settings" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to JsonObject(emptyMap()))))))) },
+        "canvas_bar" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_sweep" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_stepper" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_joystick" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_look_area" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
         "canvas_controls" to { base ->
             val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
@@ -134,13 +129,14 @@ class RangeAnnotationsAreEnforcedTest {
     private fun fullStyle(): JsonObject {
         val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
         val empty = JsonObject(emptyMap())
-        val state = JsonObject(mapOf("image" to image))
+        val state = JsonObject(mapOf("image" to image, "shadow" to empty))
         return JsonObject(
             mapOf(
                 "image" to image,
                 "fillImage" to image,
                 "shadow" to empty,
                 "textOutline" to empty,
+                "textShadow" to empty,
                 "hovered" to state,
                 "pressed" to state,
                 "disabled" to state,
@@ -232,6 +228,12 @@ class RangeAnnotationsAreEnforcedTest {
             "canvas_element.style.textOutline.width",
             "canvas_element.layout.gap",
             "canvas_element.grow",
+            "canvas_rect.width",
+            "canvas_rect.grow",
+            "canvas_text.fontSize",
+            "canvas_bar.value",
+            "canvas_appearance.style.cornerRadius",
+            "canvas_layout.layout.gap",
             "pbr_material.metallic",
             "pbr_material.roughness",
             "pbr_material.alphaCutoff",

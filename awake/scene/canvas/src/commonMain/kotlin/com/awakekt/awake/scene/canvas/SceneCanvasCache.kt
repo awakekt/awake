@@ -12,6 +12,8 @@ import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasItem
+import com.awakekt.awake.ui.canvas.CanvasScaleScope
+import com.awakekt.awake.ui.canvas.CanvasScaler
 
 /**
  * A world's nodes by [Name], kept from frame to frame for [SceneCanvasResolver]. A follower, a View
@@ -86,7 +88,7 @@ internal class CanvasItemOrder(private val world: World) {
         val items = ArrayList<CanvasItem>(count)
         for (position in 0 until count) {
             val index = sorted[position]
-            items += CanvasItem(Entity(entities[index]).id, checkNotNull(elements[index]), canvasParent(index))
+            items += CanvasItem(Entity(entities[index]).id, checkNotNull(elements[index]), canvasParent(index), subtreeScaler(index))
         }
         return items
     }
@@ -134,7 +136,7 @@ internal class CanvasItemOrder(private val world: World) {
         val placed = ArrayList<PlacedItem>()
         world.family<CanvasElement>().forEach { entity, element ->
             val path = world.hierarchyPath(entity)
-            placed += PlacedItem(CanvasItem(entity.id, element, world.canvasParent(path)), path)
+            placed += PlacedItem(CanvasItem(entity.id, element, world.canvasParent(path), world.subtreeScaler(path)), path)
         }
         count = placed.size
         val collected = HashMap<PlacedItem, Int>(count * 2)
@@ -174,6 +176,17 @@ internal class CanvasItemOrder(private val world: World) {
         }
         return null
     }
+
+    /** The nearest subtree [CanvasScaler] on item [index]'s path below its [canvasParent], as [World.subtreeScaler] finds it. */
+    private fun subtreeScaler(index: Int): CanvasScaler? {
+        val start = pathStarts[index]
+        for (at in start until pathStarts[index + 1]) {
+            val node = Entity(pathNodes[at])
+            if (at > start && world.has<CanvasElement>(node)) break
+            world.get<CanvasScaler>(node)?.takeIf { it.scope == CanvasScaleScope.Subtree }?.let { return it }
+        }
+        return null
+    }
 }
 
 /**
@@ -184,6 +197,7 @@ internal class CanvasItemOrder(private val world: World) {
  * @return A map from entity name to its [CanvasElement].
  */
 fun World.canvasElements(prefix: String = ""): Map<String, CanvasElement> = buildMap {
+    syncCanvasElements()
     family<Name, CanvasElement>().forEach { _, name, element ->
         if (prefix.isEmpty() || name.value.startsWith(prefix)) {
             put(name.value, element)

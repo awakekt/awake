@@ -44,9 +44,9 @@ data class CanvasLayout(
     }
 
     internal fun toConfig(): FlexBoxConfig {
-        val flexDirection = FlexDirection.valueOf(direction.name)
-        val flexJustify = FlexJustifyContent.valueOf(justify.name)
-        val flexAlign = FlexAlignItems.valueOf(align.name)
+        val flexDirection = direction.toFlex()
+        val flexJustify = justify.toFlex()
+        val flexAlign = align.toFlex()
         return FlexBoxConfig {
             this.direction = flexDirection
             this.wrap = if (this@CanvasLayout.wrap) FlexWrap.Wrap else FlexWrap.NoWrap
@@ -112,4 +112,29 @@ enum class CanvasAlign {
 
     /** Stretched across the whole line. */
     Stretch,
+}
+
+// Mapped case by case rather than by name: a shrunk release can rename or unbox an enum, and a
+// lookup by name then fails at run time.
+private fun CanvasDirection.toFlex(): FlexDirection = when (this) {
+    CanvasDirection.Row -> FlexDirection.Row
+    CanvasDirection.RowReverse -> FlexDirection.RowReverse
+    CanvasDirection.Column -> FlexDirection.Column
+    CanvasDirection.ColumnReverse -> FlexDirection.ColumnReverse
+}
+
+private fun CanvasJustify.toFlex(): FlexJustifyContent = when (this) {
+    CanvasJustify.Start -> FlexJustifyContent.Start
+    CanvasJustify.Center -> FlexJustifyContent.Center
+    CanvasJustify.End -> FlexJustifyContent.End
+    CanvasJustify.SpaceBetween -> FlexJustifyContent.SpaceBetween
+    CanvasJustify.SpaceAround -> FlexJustifyContent.SpaceAround
+    CanvasJustify.SpaceEvenly -> FlexJustifyContent.SpaceEvenly
+}
+
+private fun CanvasAlign.toFlex(): FlexAlignItems = when (this) {
+    CanvasAlign.Start -> FlexAlignItems.Start
+    CanvasAlign.Center -> FlexAlignItems.Center
+    CanvasAlign.End -> FlexAlignItems.End
+    CanvasAlign.Stretch -> FlexAlignItems.Stretch
 }

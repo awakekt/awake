@@ -41,8 +41,13 @@ import kotlin.test.assertTrue
  *
  * Negative control (rule 3 of awake-render-headless-verification):
  * Inverting the directional light vector ([INVERTED_LIGHT_DIRECTION]) alters the lit face
- * distribution and shadow projection across the cube, diverging from the baseline in 672 pixels
- * (out of 16384 total pixels at 128x128).
+ * distribution and shadow projection across the cube, diverging from the baseline in 816 pixels
+ * (out of 16384 total pixels at 128x128); 672 while the target was sRGB, before #1011.
+ *
+ * The baseline is opaque everywhere: the cube writes alpha 1 and the blended depth fog over it
+ * accumulates coverage source-over (`ONE`/`ONE_MINUS_SRC_ALPHA`), which keeps 1 at 1. Until #1142
+ * the fog's alpha used `SRC_ALPHA`, leaving `1 - f + f²` (231 to 236) on 873 cube pixels; only
+ * those alpha bytes changed when the baseline was corrected, every RGB byte is the same.
  */
 class WebGpuProductionPlanFrameTest {
 
@@ -85,6 +90,7 @@ class WebGpuProductionPlanFrameTest {
             // Negative control check: inverting the light direction alters lit fragments.
             val invertedPixels = renderLitCube(renderer, INVERTED_LIGHT_DIRECTION)
             val negativeControl = comparePixels(invertedPixels, baseline)
+            println("Production plan negative control: ${negativeControl.diffPixelCount} pixels differ")
             assertTrue(
                 negativeControl.diffPixelCount > NEGATIVE_CONTROL_MIN_DIFF_PIXELS,
                 "Negative control failed: inverting light direction must alter scene pixels, but diff was ${negativeControl.diffPixelCount}",

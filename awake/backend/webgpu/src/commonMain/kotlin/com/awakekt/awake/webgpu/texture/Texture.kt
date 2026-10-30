@@ -124,9 +124,11 @@ class Texture(
         )
     }
 
-    /** [view]/[sampler] are garbage-collected by the JS runtime (no explicit release exists);
-     * only the texture's own GPU allocation has to be closed. */
+    /** Closes [view] and [sampler], then the texture. A browser collects them anyway; wgpu-native
+     * keeps each until it is released. */
     fun destroy() {
+        view.close()
+        sampler.close()
         texture.close()
     }
 }

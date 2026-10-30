@@ -77,6 +77,24 @@ class AslEvaluatorTest {
         assertNear(floatArrayOf(0f, 0f, 1f, 1f), trace.color)
     }
 
+    @Test
+    fun letOverrideReplacesThatLetAndTheRestStillRun() {
+        // uv (0.3, 0.1) is cell (1, 0), colour B; overriding the cell to (1, 1) flips the parity.
+        val trace = AslEvaluator.traceFragment(
+            CheckerShader,
+            mapOf(
+                "uv" to floatArrayOf(0.3f, 0.1f),
+                "uniforms.tiles" to floatArrayOf(4f, 0f, 0f, 0f),
+                "uniforms.colorA" to floatArrayOf(1f, 0f, 0f, 1f),
+                "uniforms.colorB" to floatArrayOf(0f, 0f, 1f, 1f),
+            ),
+            letOverrides = mapOf("cell" to floatArrayOf(1f, 1f)),
+        )
+        assertNear(floatArrayOf(1f, 1f), trace.lets.getValue("cell"))
+        assertNear(floatArrayOf(0f), trace.lets.getValue("parity"))
+        assertNear(floatArrayOf(1f, 0f, 0f, 1f), trace.color)
+    }
+
     private fun assertNear(expected: FloatArray, actual: FloatArray) {
         assertTrue(expected.size == actual.size, "size ${actual.size} != ${expected.size}")
         expected.indices.forEach { i ->

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="166 146 680 680" role="img" aria-labelledby="title">
+  <title id="title">AwakeKt Ember Signal monochrome glyph</title>
+  <!-- Tonal monochrome glyph: preserves the 3D cube and folded A-ribbon facets in any single foreground colour. -->
+  <path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="currentColor" fill-opacity="0.78"/>
+  <path d="M266 765 346 618 402 674Z" fill="currentColor" fill-opacity="0.38"/>
+  <path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="currentColor"/>
+  <path d="M609 674 664 618 747 765Z" fill="currentColor" fill-opacity="0.58"/>
+  <path d="m505 522 89 53-89 55-87-55Z" fill="currentColor"/>
+  <path d="m418 575 87 55v96l-87-55Z" fill="currentColor" fill-opacity="0.38"/>
+  <path d="m594 575-89 55v96l89-55Z" fill="currentColor" fill-opacity="0.58"/>
+</svg>

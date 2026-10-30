@@ -155,7 +155,7 @@ val SkinnedMaskedTexturedDepthShader: AslShaderDefinition = shader("skinned_text
     }
     fragment {
         val alpha = let("alpha", textureSample(baseColorTexture, baseColorSampler, uv).a * handles.value("baseColorFactor").a)
-        discardIf(alpha lt handles.value("pbrFactors").z)
+        discardIf(alpha lt hardCoverageCutoff(handles.value("pbrFactors").z))
     }
 }
 

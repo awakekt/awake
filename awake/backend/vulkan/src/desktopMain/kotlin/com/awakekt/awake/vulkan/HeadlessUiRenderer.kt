@@ -118,10 +118,11 @@ private suspend fun spirvPair(source: ShaderSource): ShaderPair {
     return ShaderPair(spirv, spirv)
 }
 
-/** The four UI shaders every `Renderer` constructor requires, whether or not a fixture draws UI. */
+/** The UI shaders every `Renderer` constructor requires, whether or not a fixture draws UI. */
 internal suspend fun headlessUiShaderPairs(): UiShaderPairs = UiShaderPairs(
     quad = spirvPair(EngineShaderSets.UiQuad),
     glyph = spirvPair(EngineShaderSets.UiGlyph),
     texture = spirvPair(EngineShaderSets.UiTexture),
     roundedQuad = spirvPair(EngineShaderSets.UiRoundedQuad),
+    decoratedGlyph = spirvPair(EngineShaderSets.UiDecoratedGlyph),
 )

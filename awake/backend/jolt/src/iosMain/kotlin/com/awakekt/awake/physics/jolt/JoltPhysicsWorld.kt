@@ -68,6 +68,7 @@ import platform.joltc.JPC_ACTIVATION_ACTIVATE
 import platform.joltc.JPC_ACTIVATION_DONT_ACTIVATE
 import platform.joltc.JPC_Activation
 import platform.joltc.JPC_AllowedDOFs
+import platform.joltc.JPC_BACK_FACE_MODE_COLLIDE
 import platform.joltc.JPC_BodyCreationSettings
 import platform.joltc.JPC_BodyCreationSettings_default
 import platform.joltc.JPC_BodyFilterFns
@@ -535,9 +536,9 @@ private class ClosestShapeCastHit {
     var pointX = 0f
     var pointY = 0f
     var pointZ = 0f
-    var normalX = 0f
-    var normalY = 0f
-    var normalZ = 0f
+    var axisX = 0f
+    var axisY = 0f
+    var axisZ = 0f
 }
 
 @OptIn(ExperimentalForeignApi::class)
@@ -570,16 +571,13 @@ private fun record(best: ClosestShapeCastHit, hit: JPC_ShapeCastResult) {
     best.pointY = hit.ContactPointOn2.y
     best.pointZ = hit.ContactPointOn2.z
     // PenetrationAxis points into the surface and is not unit length; a contact normal points
-    // back out of it. Same conversion the other three backends do, by hand here.
+    // back out of it. The shared decoder converts it after the native callback.
     val axisX = hit.PenetrationAxis.x
     val axisY = hit.PenetrationAxis.y
     val axisZ = hit.PenetrationAxis.z
-    val length = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
-    if (length > 0f) {
-        best.normalX = -axisX / length
-        best.normalY = -axisY / length
-        best.normalZ = -axisZ / length
-    }
+    best.axisX = axisX
+    best.axisY = axisY
+    best.axisZ = axisZ
 }
 
 /**
@@ -596,6 +594,8 @@ class JoltPhysicsWorld(
     gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
     override val layers: CollisionLayers = CollisionLayers.Default,
 ) : PhysicsWorld {
+    private val shapeCastContacts = ShapeCastContactDecoder()
+
     /**
      * The world's layers, reachable from callbacks that cannot capture.
      *
@@ -1201,6 +1201,9 @@ class JoltPhysicsWorld(
             JPC_ShapeCastSettings_default(args.Settings.ptr)
             // Keep an initial overlap's separating normal defined, including zero-length sweeps.
             args.Settings.ReturnDeepestPoint = true
+            // Triangle back faces block as well (#1030): a sweep let through a one-sided mesh from
+            // behind leaves the shape inside it, where every later sweep hits at fraction 0.
+            args.Settings.BackFaceModeTriangles = JPC_BACK_FACE_MODE_COLLIDE
             args.Collector = collector
             filters.layerFilter?.let { args.ObjectLayerFilter = it }
             filters.bodyFilter?.let { args.BodyFilter = it }
@@ -1212,11 +1215,15 @@ class JoltPhysicsWorld(
         }
 
         if (!best.hasHit) return@memScoped null
-        ShapeCastHit(
+        shapeCastContacts.decode(
             handle = BodyHandle(best.bodyId.toLong()),
             point = Vec3f(best.pointX, best.pointY, best.pointZ),
-            normal = Vec3f(best.normalX, best.normalY, best.normalZ),
+            axisX = best.axisX,
+            axisY = best.axisY,
+            axisZ = best.axisZ,
             fraction = best.fraction,
+            from = from,
+            to = to,
         )
     }
 

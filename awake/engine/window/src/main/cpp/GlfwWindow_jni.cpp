@@ -6,7 +6,7 @@
 // JNI for GlfwWindow.kt: the desktop window, its input, scroll, clipboard and cursor.
 // Moved from the Vulkan bindings' VulkanWindow_jni.gen.cpp (first written by
 // jni-binding-generator, then hand-edited); the two calls that need a VkInstance stay there.
-// Scroll and clipboard delegate to GlfwWindow_native.cpp.
+// Scroll, typed characters and clipboard delegate to GlfwWindow_native.cpp.
 
 #include <jni.h>
 #include <optional>
@@ -27,6 +27,9 @@ extern "C" jint awake_window_consume_scroll_source(JNIEnv* env, jlong window);
 extern "C" jdouble awake_window_consume_pinch_scale(JNIEnv* env, jlong window);
 extern "C" jstring awake_window_get_clipboard_string(JNIEnv* env, jlong window);
 extern "C" void awake_window_set_clipboard_string(JNIEnv* env, jlong window, jstring text);
+extern "C" void awake_window_set_char_callback(JNIEnv* env, jlong window);
+extern "C" jstring awake_window_consume_typed_text(JNIEnv* env, jlong window);
+extern "C" void awake_window_forget_typed_text(jlong window);
 
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -102,6 +105,7 @@ Java_com_awakekt_awake_engine_window_GlfwWindow_glfwDestroyWindow(
     }
 
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(window_ptr));
+    awake_window_forget_typed_text(window);
 }
 
 
@@ -354,6 +358,42 @@ Java_com_awakekt_awake_engine_window_GlfwWindow_glfwSetScrollCallback(
 
     awake_window_set_scroll_callback(env, window);
     return;
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_engine_window_GlfwWindow_glfwSetCharCallback(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwSetCharCallback: window not initialized");
+        return;
+    }
+
+    awake_window_set_char_callback(env, window);
+}
+
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_awakekt_awake_engine_window_GlfwWindow_glfwConsumeTypedText(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwConsumeTypedText: window not initialized");
+        return nullptr;
+    }
+
+    return awake_window_consume_typed_text(env, window);
 }
 
 

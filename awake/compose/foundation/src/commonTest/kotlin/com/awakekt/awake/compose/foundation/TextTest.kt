@@ -344,7 +344,10 @@ class TextPaintingTest {
         }
 
         assertSame(bitmapFont, glyphs[0].font, "the styled run did not draw with its own font")
-        assertSame(UiFonts.default(), glyphs[1].font, "the unstyled run did not fall back to LocalFont")
+        // Small text draws the default family's exact-size glyphs, from a page of that size.
+        val page = checkNotNull(glyphs[1].font)
+        val expected = UiFonts.default().pixelGlyphs?.glyph('a'.code, FontWeight.Normal, page.cellSize)?.atlas
+        assertSame(expected, page, "the unstyled run did not fall back to LocalFont")
     }
 
     @Test

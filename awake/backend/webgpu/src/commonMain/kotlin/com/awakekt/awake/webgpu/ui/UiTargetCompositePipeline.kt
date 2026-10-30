@@ -11,6 +11,7 @@ import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
+import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.writeBufferData
@@ -65,10 +66,11 @@ internal class UiTargetCompositePipeline(
                 code = wgslSource,
             ),
         )
+        val layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UiTargetComposite))
         try {
             return device.createRenderPipeline(
                 RenderPipelineDescriptor(
-                    layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UiTargetComposite)),
+                    layout = layout,
                     vertex = VertexState(module = module, entryPoint = vertexEntryPoint),
                     fragment = FragmentState(
                         module = module,
@@ -79,6 +81,7 @@ internal class UiTargetCompositePipeline(
                 ),
             )
         } finally {
+            layout.close()
             module.close()
         }
     }
@@ -86,14 +89,16 @@ internal class UiTargetCompositePipeline(
     internal fun swapIn(newPipeline: GPURenderPipeline): GPURenderPipeline {
         val old = pipeline
         pipeline = newPipeline
-        bindGroups.clear()
+        closeBindGroups()
         return old
     }
 
     fun bindGroupFor(source: OffscreenRenderTarget, destination: OffscreenRenderTarget): GPUBindGroup {
-        bindGroups.entries.removeAll { (targets, _) -> targets.first.isDestroyed || targets.second.isDestroyed }
+        bindGroups.entries.removeAll { (targets, group) ->
+            (targets.first.isDestroyed || targets.second.isDestroyed).also { if (it) group.close() }
+        }
         return bindGroups.getOrPut(source to destination) {
-            device.createBindGroup(
+            device.createBindGroupReleasingLayout(
                 BindGroupDescriptor(
                     layout = pipeline.getBindGroupLayout(0u),
                     entries = listOf(
@@ -115,9 +120,16 @@ internal class UiTargetCompositePipeline(
         }
     }
 
-    fun destroy() {
+    private fun closeBindGroups() {
+        bindGroups.values.forEach(GPUBindGroup::close)
         bindGroups.clear()
+    }
+
+    /** Closes the bind groups, the mode buffer, the sampler and the pipeline. */
+    fun destroy() {
+        closeBindGroups()
         modeBuffer.close()
         sampler.close()
+        pipeline.close()
     }
 }

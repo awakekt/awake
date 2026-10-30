@@ -63,8 +63,10 @@ fun main(args: Array<String>) {
         )
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
         writeSkinnedEvidence(renderer, ::write)
+        writeWorldTextEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)
         writePostProcessingEvidence(renderer, ::write)
+        writeFxaaOnlyEvidence(renderer, ::write)
         write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             write(
@@ -133,6 +135,13 @@ private fun writeSkinnedEvidence(renderer: Renderer, write: (String, String, Int
         EVIDENCE_SIZE,
         renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
     )
+}
+
+/** A sign placed in the scene, drawn from the distance field, near, far and at a grazing angle. */
+private fun writeWorldTextEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    write("scene-world-text-1m", "Scene text at 1 m: edges one pixel wide close up", EVIDENCE_SIZE, renderer.renderWorldTextScene(1f, size = EVIDENCE_SIZE))
+    write("scene-world-text-10m", "The same sign at 10 m", EVIDENCE_SIZE, renderer.renderWorldTextScene(10f, size = EVIDENCE_SIZE))
+    write("scene-world-text-70deg", "The same sign at 2 m, turned 70 degrees away: no smear across the squeezed axis", EVIDENCE_SIZE, renderer.renderWorldTextScene(2f, 70f, size = EVIDENCE_SIZE))
 }
 
 /** A project's shader documents, as `shader_effect` draws them: its sky alone, and a plane over it. */
@@ -217,6 +226,33 @@ private fun writeBackdropBlurEvidence(renderer: Renderer, write: (String, String
             pixels,
         )
     } finally {
+        target.destroy()
+    }
+}
+
+/**
+ * The shadow scene through a post-processing stack holding FXAA alone: it may only smooth edges.
+ * The lit shaders already wrote display-ready colour, which FXAA once re-tone-mapped (#1007).
+ */
+private fun writeFxaaOnlyEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    renderer.effectQuality = EffectQuality.High
+    val size = EVIDENCE_SIZE
+    val target = renderer.createRenderTarget(size, size)
+    val ground = renderer.createMesh(plane(GROUND_HALF, y = 0f))
+    val caster = renderer.createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f))
+    val material = renderer.createMaterial(LitShadowUniformLayout)
+    try {
+        val chain = PostProcessingStack.buildChain(listOf(FxaaEffect()), renderer.imagePassTargetContext(target))
+        val input = renderer.compileShadowScene(
+            listOf(RenderDrawCommand(ground, material), RenderDrawCommand(caster, material)),
+        ).copy(postPassChain = chain)
+        renderer.renderToTexture(target, input)
+        val pixels = runBlocking { renderer.readPixels(target) }.data
+        write("scene-post-fxaa-only", "Post-processing stack with FXAA alone: edges smoothed, colours as scene-shadow", size, pixels)
+    } finally {
+        ground.destroy()
+        caster.destroy()
+        material.destroy()
         target.destroy()
     }
 }

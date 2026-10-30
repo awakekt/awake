@@ -23,11 +23,14 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.font.clusterAdvance
+import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -41,6 +44,9 @@ import kotlin.test.assertTrue
 class TextPixelSnapTest {
     private val white = Color(1f, 1f, 1f, 1f)
 
+    /** The default family held to its distance field, which these cases measure; small text otherwise draws pixel glyphs. */
+    private val fieldFont = UiFonts.default().withPixelGlyphMaxSize(0)
+
     /** The baseline a `H` quad was placed on, recovered from the quad and the font's own metrics. */
     private fun baselineOf(glyph: UiDrawPrimitive.Glyph, glyphPx: Float, scale: Float = 1f): Float {
         val font = checkNotNull(glyph.font)
@@ -52,34 +58,36 @@ class TextPixelSnapTest {
         ComposeHost(density = density).frame(FrameInput(400, 200), content).primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
 
     /**
-     * A 17.5sp line box around 12sp text puts the unsnapped baseline at 12.85 and the second line's
-     * at 30.35: both quads sat on a fraction of a pixel. Measured on the unsnapped code before this
-     * change: baselines 12.8516 and 30.3516.
+     * A 17.5sp line box around 12sp text put the unsnapped baseline at 12.85 and the second line's
+     * at 30.35: both quads sat on a fraction of a pixel (measured before #956: 12.8516 and 30.3516).
+     * The line box is whole pixels now (#1024): 12 px Roboto is 11 + 3 px of ascent and descent, the
+     * 3.5 px of leading puts floor(1.75) = 1 px above, and the advance rounds 17.5 to 18.
      */
     @Test
     fun everyLineSitsOnAWholeBaseline() {
         val quads = glyphs {
-            Text("H\nH", style = TextStyle(color = white, size = 12.sp, lineHeight = 17.5f.sp))
+            Text("H\nH", style = TextStyle(font = fieldFont, color = white, size = 12.sp, lineHeight = 17.5f.sp))
         }
 
         assertEquals(2, quads.size)
         quads.forEach { assertEquals(floor(baselineOf(it, 12f) + 0.5f), baselineOf(it, 12f), 1e-3f, "baseline ${baselineOf(it, 12f)}") }
-        assertEquals(13f, baselineOf(quads[0], 12f), 1e-3f)
+        assertEquals(12f, baselineOf(quads[0], 12f), 1e-3f)
         assertEquals(30f, baselineOf(quads[1], 12f), 1e-3f)
     }
 
     /**
-     * Under a 1.5x scale the same text keeps its fractional position: 1.5 * 12.8516 - 4.5 = 14.78,
-     * so the baseline moves smoothly while the scale animates instead of in whole-pixel steps.
+     * Under a 1.5x scale about the 18 px box's centre the same text keeps its fractional position:
+     * 1.5 * 12 - 4.5 = 13.5, so the baseline moves smoothly while the scale animates instead of in
+     * whole-pixel steps.
      */
     @Test
     fun scaledTextKeepsItsSubpixelPosition() {
         val quads = glyphs {
-            Text("H", modifier = Modifier.scale(1.5f), style = TextStyle(color = white, size = 12.sp, lineHeight = 17.5f.sp))
+            Text("H", modifier = Modifier.scale(1.5f), style = TextStyle(font = fieldFont, color = white, size = 12.sp, lineHeight = 17.5f.sp))
         }
 
         val baseline = baselineOf(quads.single(), 12f, scale = 1.5f)
-        assertEquals(14.777f, baseline, 5e-3f)
+        assertEquals(13.5f, baseline, 5e-3f)
         assertTrue(abs(baseline - baseline.let { floor(it + 0.5f) }) > 0.1f, "a scaled baseline must stay fractional, was $baseline")
     }
 
@@ -100,7 +108,7 @@ class TextPixelSnapTest {
     @Test
     fun paintedGlyphsUseTheSameRoundedEmAsMeasurement() {
         val quads = glyphs(density = 1.25f) {
-            Text("H", style = TextStyle(color = white, size = 13.sp))
+            Text("H", style = TextStyle(font = fieldFont, color = white, size = 13.sp))
         }
 
         val font = checkNotNull(quads.single().font)
@@ -114,7 +122,7 @@ class TextPixelSnapTest {
      */
     @Test
     fun aRunStartsOnAWholePixelUnlessTheScopeScales() {
-        val font = UiFonts.trueSans()
+        val font = UiFonts.trueSans().withPixelGlyphMaxSize(0)
         val run = TextRun("l", TextStyle.Default, font, glyphPx = 12f, density = 1f)
         val rect = checkNotNull(font.glyphFor('l'.code, FontWeight.Normal))
         val bearing = rect.offsetXEm * 12f
@@ -124,6 +132,61 @@ class TextPixelSnapTest {
 
         assertEquals(5f + bearing, aligned.glyphs.single().x, 1e-4f)
         assertEquals(4.5f + bearing, scaled.glyphs.single().x, 1e-4f)
+    }
+
+    /**
+     * Exact-size glyphs draw 1:1 on whole pixels from any fractional start, the glyph for the subpixel step
+     * nearest the pen; a scope that scales draws the same run from the distance field instead.
+     */
+    @Test
+    fun pixelGlyphsDrawOnWholePixelsAndAScaledScopeDrawsTheField() {
+        val font = UiFonts.trueSans()
+        val run = TextRun("Hl", TextStyle.Default, font, glyphPx = 12f, density = 1f)
+        val glyphs = checkNotNull(font.pixelGlyphs)
+
+        val aligned = RecordingScope(aligned = true).also { run.paint(it, white, offsetX = 4.3f, offsetY = 0.4f) }
+        val scaled = RecordingScope(aligned = false).also { run.paint(it, white, offsetX = 4.3f, offsetY = 0.4f) }
+
+        assertEquals(2, aligned.glyphs.size)
+        for (glyph in aligned.glyphs) {
+            listOf(glyph.x, glyph.y, glyph.w, glyph.h).forEach { assertEquals(floor(it), it, "pixel glyph quad $glyph") }
+        }
+        // The line starts on the whole pixel nearest 4.3, so the 'H' has its pen on it: step 0.
+        val h = checkNotNull(glyphs.glyph('H'.code, FontWeight.Normal, 12))
+        assertEquals(4f + h.left, aligned.glyphs[0].x)
+        assertSame(h.atlas, aligned.glyphs[0].font)
+        assertTrue(scaled.glyphs.all { it.font === font }, "a scaled scope drew ${scaled.glyphs.map { it.font }}")
+    }
+
+    /**
+     * A run of pixel glyphs draws each one's variant for the nearest quarter of a pixel to its pen: the
+     * 'l' after an 'H' is at the pen the 'H''s advance puts it at, and its quad is that step's bitmap
+     * at that step's whole pixel.
+     */
+    @Test
+    fun eachGlyphDrawsTheVariantNearestItsPen() {
+        val font = UiFonts.trueSans()
+        val glyphs = checkNotNull(font.pixelGlyphs)
+        val text = "0123456789"
+        val drawn = RecordingScope(aligned = true).also { TextRun(text, TextStyle.Default, font, glyphPx = 12f, density = 1f).paint(it, white) }
+
+        assertEquals(text.length, drawn.glyphs.size)
+        var pen = 0f
+        var variants = 0
+        for (index in text.indices) {
+            val first = checkNotNull(glyphs.glyph(text[index].code, FontWeight.Normal, 12))
+            val steps = first.subpixelSteps
+            val step = floor(pen * steps + 0.5f)
+            val whole = floor(step / steps)
+            val expected = checkNotNull(glyphs.glyph(text[index].code, FontWeight.Normal, 12, (step - whole * steps).toInt()))
+            val quad = drawn.glyphs[index]
+            assertEquals(whole + expected.left, quad.x, "'${text[index]}' at pen $pen")
+            assertEquals(expected.u0, quad.u0, "'${text[index]}' at pen $pen")
+            assertSame(expected.atlas, quad.font)
+            if (expected !== first) variants++
+            pen += font.clusterAdvance(text, index, index + 1, 12f)
+        }
+        assertTrue(variants >= 5, "only $variants of ${text.length} digits drew a variant other than the whole-pixel one")
     }
 
     /** Records the glyph quads a run draws; nothing else is used. */

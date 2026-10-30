@@ -26,6 +26,8 @@ apiValidation {
     ignoredProjects += setOf(
         "ui-showcase", "engine-showcase", "server",
         "benchmark", "generator", "android-native", "font-atlas-generator",
+        // The KSP processor behind @SceneBinding, a build tool scene modules run, never a dependency.
+        "processor",
         // Every entry here is a sample or a build tool, except the two explained below.
         "tailwind-generator", "testing",
         // The `awake` command line, an application rather than a library.
@@ -492,6 +494,9 @@ allprojects {
     pluginManager.withPlugin("com.awakekt.awake.plugin.publish") {
         pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
             dependencies.add("commonMainApi", dependencies.platform(dependencies.project(mapOf("path" to bomPath))))
+        }
+        pluginManager.withPlugin("java-library") {
+            dependencies.add("api", dependencies.platform(dependencies.project(mapOf("path" to bomPath))))
         }
     }
 }

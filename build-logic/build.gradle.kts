@@ -19,6 +19,7 @@ val publicPluginIds = setOf(
     "com.awakekt.awake.plugin.project-content",
     "com.awakekt.awake.plugin.shader-pipeline",
     "com.awakekt.awake.plugin.icon-codegen",
+    "com.awakekt.awake.plugin.scene-components",
     "com.awakekt.awake.plugin.dokka",
     "com.awakekt.awake.plugin.detekt",
     "com.awakekt.awake.plugin.spotless",
@@ -32,6 +33,14 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
+// Embed the plugin release, independent of the consuming project's version or version catalog.
+tasks.processResources {
+    inputs.property("awakePluginVersion", project.version.toString())
+    filesMatching("com/awakekt/awake/build/*.properties") {
+        expand("version" to project.version.toString())
+    }
+}
+
 dependencies {
     // From the catalog, so the Kotlin and AGP the plugins compile against are the ones the build
     // applies, and one edit moves both.
@@ -40,6 +49,7 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
+    implementation(libs.ksp.gradle.plugin)
     implementation(libs.kotlinx.serialization.json)
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.37.0")
     testImplementation(gradleTestKit())

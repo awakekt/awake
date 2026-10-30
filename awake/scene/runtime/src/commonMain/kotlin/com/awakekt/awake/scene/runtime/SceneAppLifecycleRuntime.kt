@@ -12,14 +12,15 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputDevice
-import com.awakekt.awake.core.input.InputDeviceTracker
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
@@ -30,6 +31,9 @@ import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.platform.error.AppErrorHandler
+import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
@@ -61,6 +65,7 @@ import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.scene.worldtext.WorldTextRenderFeature
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasSlotContent
@@ -140,9 +145,10 @@ class SceneAppLifecycleRuntime internal constructor(
     var canvasSlotContent: Map<String, CanvasSlotContent> = emptyMap()
 
     /** Which device the player last used, read from each frame's input; null until any is used. */
-    val lastInputDevice: InputDevice? get() = inputDevices.last
+    val lastInputDevice: InputDevice? get() = hostInputState.lastInputDevice
 
-    private val inputDevices = InputDeviceTracker()
+    /** Host input information updated before the scene's systems, surviving scene switches. */
+    val hostInputState = HostInputState()
 
     /** The decoded images the scene's canvas elements name, by path; an element whose image is missing draws without it. */
     var canvasImages: Map<String, ImageBitmap> = emptyMap()
@@ -313,7 +319,7 @@ class SceneAppLifecycleRuntime internal constructor(
         val viewportWidth = frame.viewportWidth
         val viewportHeight = frame.viewportHeight
         val snapshot = frame.input
-        inputDevices.observe(snapshot)
+        hostInputState.update(snapshot, showTouchControls)
         recordFrameTime(delta)
         // Before anything this frame can log, so every record it produces carries this frame's
         // number rather than the previous one. The runtime is the only thing that knows where a
@@ -328,7 +334,7 @@ class SceneAppLifecycleRuntime internal constructor(
         session.schedule.timed = perfStatsEnabled
         timePhase({ simRenderMs = it }) {
             session.advance(delta) { step ->
-                spec.updateBlock(this, step, snapshot)
+                runUpdateBlock(step, snapshot)
             }
         }
 
@@ -345,7 +351,7 @@ class SceneAppLifecycleRuntime internal constructor(
             }
             platformDpi = frame.dpi
             timePhase({ uiBuildMs = it }) {
-                buildUiFrame(snapshot, delta, viewportWidth, viewportHeight)
+                buildUiFrameGuarded(snapshot, delta, viewportWidth, viewportHeight)
             }.also { builtFrame ->
                 // Timed on its own, before staging. `drawUi` waits on this fence anyway; taking it
                 // here first costs nothing and stops a GPU-bound frame from reading as an
@@ -400,6 +406,77 @@ class SceneAppLifecycleRuntime internal constructor(
         }
     }
 
+    // Set when the app's update block threw and the handler was told: the block is skipped from then on.
+    private var updateBlockFailed = false
+
+    // Set while the UI build keeps throwing and the handler was told; cleared by the next build that succeeds.
+    private var uiBuildFailing = false
+
+    /**
+     * Runs the app's `onUpdate` block for one fixed step, so that a failure in it reaches the app's
+     * `AppErrorHandler` and the app keeps running.
+     *
+     * The block is treated like a system, as `guardedFor` treats one: the first exception is reported once,
+     * as `AppErrorSource.System` with the subject `updateBlock`, and the block is not called again for the
+     * rest of this scene. The block may have left half of its work done, and one that throws every step
+     * would call the handler 60 times a second. The scene's systems, the render systems and the UI still
+     * run. Its next call is with the next scene, whose runtime is built afresh. With no handler registered
+     * the exception is thrown to the caller, every step it recurs, as before. Only an `Exception` is
+     * contained, not an `Error`.
+     */
+    // TooGenericExceptionCaught: the app's own block, whatever it throws, must not end the frame loop when the app has a handler.
+    @Suppress("TooGenericExceptionCaught")
+    private fun runUpdateBlock(step: Float, snapshot: InputSnapshot) {
+        if (updateBlockFailed) return
+        try {
+            spec.updateBlock(this, step, snapshot)
+        } catch (failure: Exception) {
+            // Before the handler runs, so a handler that steps the frame again does not report the block twice.
+            updateBlockFailed = true
+            if (!reportError(AppErrorSource.System, failure, subject = UPDATE_BLOCK)) {
+                updateBlockFailed = false
+                throw failure
+            }
+            log.error(failure) { "The update block failed and is skipped from now on: ${failure.message}" }
+        }
+    }
+
+    /**
+     * Builds this frame's UI so that a failure in it reaches the app's `AppErrorHandler` and the app
+     * keeps running.
+     *
+     * Unlike a system, the UI is not disabled: it is rebuilt from nothing every frame, keeps no half-done
+     * work between frames, and is where the app is likely to show the error it was just told about, so a
+     * UI that stayed off could never show it. A build that throws therefore draws nothing for that frame
+     * (the scene and any UI already staged are still drawn) and the next frame builds it again. The failure
+     * is reported once, as `AppErrorSource.System` with the subject `ui`, however many frames in a row
+     * fail; the first build that succeeds again re-arms the report. With no handler registered the
+     * exception is thrown to the caller, every frame it recurs, as before. Only an `Exception` is
+     * contained, not an `Error`.
+     */
+    // TooGenericExceptionCaught: the app's own composables, whatever they throw, must not end the frame loop when the app has a handler.
+    @Suppress("TooGenericExceptionCaught")
+    private fun buildUiFrameGuarded(
+        snapshot: InputSnapshot,
+        delta: Float,
+        viewportWidth: Float,
+        viewportHeight: Float,
+    ): SceneFrame = try {
+        buildUiFrame(snapshot, delta, viewportWidth, viewportHeight).also { uiBuildFailing = false }
+    } catch (failure: Exception) {
+        if (!uiBuildFailing) {
+            uiBuildFailing = true
+            if (!reportError(AppErrorSource.System, failure, subject = UI_BUILD)) {
+                uiBuildFailing = false
+                throw failure
+            }
+            log.error(failure) { "The UI build failed and draws nothing until it succeeds again: ${failure.message}" }
+        }
+        emptySceneFrame()
+    }
+
+    private fun emptySceneFrame() = SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
+
     /** Runs the scene's declared UI, or an empty frame if it draws none. */
     private fun buildUiFrame(
         snapshot: InputSnapshot,
@@ -410,7 +487,7 @@ class SceneAppLifecycleRuntime internal constructor(
         val content = spec.ui
         val hasCanvas = drawsSceneCanvas && world.family<CanvasElement>().size > 0
         if (content == null && !hasCanvas) {
-            return SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
+            return emptySceneFrame()
         }
         val frame = uiHost.frame(
             snapshot.toFrameInput(viewportWidth.roundToInt(), viewportHeight.roundToInt(), delta),
@@ -436,7 +513,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         strings = canvasStrings,
                         safeArea = canvasSafeArea ?: platformSafeArea,
                         dpi = canvasDpi ?: platformDpi,
-                        inputDevice = inputDevices.last,
+                        inputDevice = hostInputState.lastInputDevice,
                         slotContent = canvasSlotContent,
                     )
                 }
@@ -524,6 +601,9 @@ class SceneAppLifecycleRuntime internal constructor(
         SceneTilemapRenderFeature(renderer, { requireAssetLibrary().texture(it) }, layers = { sortingLayers }).also(::forgetsTextures)
     }
 
+    // Text a scene places with world_text; it uploads nothing until a scene has some.
+    internal val worldTextFeature by lazy { WorldTextRenderFeature(renderer) }
+
     // A texture the library forgets is uploaded again from what it gives next.
     private fun forgetsTextures(uploads: SceneTextureUploads) {
         session.assetLibraryOrNull()?.addTextureUploads(uploads)
@@ -534,6 +614,7 @@ class SceneAppLifecycleRuntime internal constructor(
             viewStore?.dispose()
             spriteBatch.destroy()
             tilemapFeature.destroy()
+            worldTextFeature.close()
         }
         graphicsLayers.dispose()
         session.dispose(this)
@@ -636,7 +717,7 @@ class SceneAppLifecycleRuntime internal constructor(
             .planCapture(world, camera, width, height)
 
     /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
-    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature, tilemapFeature)) }
+    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature, tilemapFeature, worldTextFeature)) }
 
     /**
      * Retrieves an optional registered application service of the specified [type].
@@ -646,6 +727,18 @@ class SceneAppLifecycleRuntime internal constructor(
      * @return The service instance, or `null` if not registered.
      */
     fun <T : Any> service(type: kotlin.reflect.KClass<T>): T? = services.service(type)
+
+    /**
+     * Hands a failure to the app's [AppErrorHandler], if it registered one.
+     *
+     * @param source Where it failed.
+     * @param cause What was thrown.
+     * @param retry Runs the failed step again, or null; see [com.awakekt.awake.engine.platform.error.AppError.retry].
+     * @param subject What failed, for the handler's message.
+     * @return Whether a handler took it; false when none is registered, and the caller does what it did before.
+     */
+    fun reportError(source: AppErrorSource, cause: Throwable, retry: (() -> Unit)? = null, subject: String? = null): Boolean =
+        services.reportError(source, cause, retry, subject)
 
     /**
      * Retrieves a mandatory registered application service, throwing an exception if not found.
@@ -775,7 +868,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
         RenderSystem3D(
             renderer,
             gpuDrawPreparer,
-            features = listOf(spriteFeature, tilemapFeature),
+            features = listOf(spriteFeature, tilemapFeature, worldTextFeature),
             viewportProvider = viewportProvider,
             renderWorldProvider = renderWorldProvider,
             isRealtimeProvider = isRealtimeProvider,
@@ -797,6 +890,12 @@ fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor =
         ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.cursor } }
         ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.cursor } }
         ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
+
+/** The subjects of the frame work the app supplies, as an `AppError` names them. */
+private const val UPDATE_BLOCK = "updateBlock"
+private const val UI_BUILD = "ui"
+
+private val log = Logger("scene.runtime")
 
 /** Stands in for `spec.ui` when only the scene's canvas elements need a UI frame. */
 private val SceneCanvasOnly: SceneContent = {}

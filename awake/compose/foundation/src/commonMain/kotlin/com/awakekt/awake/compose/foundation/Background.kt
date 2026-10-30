@@ -56,6 +56,7 @@ fun Modifier.background(fill: ImageFill): Modifier = drawBehind { drawImageFill(
 fun Modifier.background(brush: Brush, shape: Shape = RectangleShape): Modifier = when (brush) {
     is Brush.SolidColor -> background(brush.color, shape)
     is Brush.LinearGradient -> drawBehind { drawGradient(brush.colors, shape) }
+    is com.awakekt.awake.compose.ui.graphics.LinearGradient -> this then GradientBackgroundElement(brush, shape)
 }
 
 // The renderer's rounded-quad shadow with no offset, spread or blur is a rounded rectangle whose

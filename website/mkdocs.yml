@@ -68,10 +68,12 @@ nav:
           - Scene documents: guides/scene-documents.md
           - Scene DSL: guides/scene-dsl.md
           - Scene capabilities: guides/scene-capabilities.md
+          - Scene components: guides/scene-components.md
           - ECS: guides/ecs.md
           - App lifecycle: guides/app-lifecycle.md
           - Cameras and controls: guides/cameras-and-controls.md
           - Input: guides/input.md
+          - Launch parameters: guides/launch-parameters.md
           - Math: guides/math.md
       - Rendering:
           - Lights and shadows: guides/lights-and-shadows.md
@@ -93,11 +95,17 @@ nav:
           - Terrain: guides/terrain.md
           - Large worlds: guides/large-worlds.md
           - Audio: guides/audio.md
+      - Content:
+          - Protected content: guides/protected-content.md
+          - Content bundles: guides/content-bundles.md
+          - Encrypted content: guides/encrypted-content.md
       - UI:
           - Game UI: guides/game-ui.md
           - UI with AwakeKt Compose: guides/ui.md
           - shadcn components: guides/shadcn.md
           - Localization: guides/localization.md
+      - Ship:
+          - Release builds and optimization: guides/release-builds.md
   - Reference:
       - Scene document schema: reference/scene-document-schema.md
       - Scene document components: reference/scene-document-components.md

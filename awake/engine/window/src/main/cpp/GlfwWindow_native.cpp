@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 
 #if defined(__APPLE__)
 // GlfwWindow_native_macos.mm: GLFW does not say whether a scroll came from a trackpad.
@@ -90,6 +91,59 @@ extern "C" jdouble awake_window_consume_pinch_scale(JNIEnv* env, jlong window) {
 #else
     return 1.0;
 #endif
+}
+
+// --- Typed characters --------------------------------------------------------------------------
+//
+// GLFW's character callback hands over each Unicode code point the platform typed, with the
+// keyboard layout, Shift, Caps Lock, AltGr and dead keys already applied, and no control
+// characters. Each window queues its own as UTF-16 until the frame drains it. A host that never
+// drains them is held to MAX_TYPED_UNITS, the rest dropped, so the queue cannot grow without end.
+
+static const size_t MAX_TYPED_UNITS = 4096;
+
+static std::unordered_map<GLFWwindow*, std::u16string> g_typedText;
+
+static void awake_glfwCharCallback(GLFWwindow* window, unsigned int codePoint) {
+    std::u16string& text = g_typedText[window];
+    if (codePoint >= 0x10000) {
+        if (codePoint > 0x10FFFF || text.size() + 2 > MAX_TYPED_UNITS) return;
+        const uint32_t offset = codePoint - 0x10000;
+        text.push_back(static_cast<char16_t>(0xD800 + (offset >> 10)));
+        text.push_back(static_cast<char16_t>(0xDC00 + (offset & 0x3FF)));
+    } else if (text.size() < MAX_TYPED_UNITS) {
+        text.push_back(static_cast<char16_t>(codePoint));
+    }
+}
+
+extern "C" void awake_window_set_char_callback(JNIEnv* env, jlong window) {
+    (void)env;
+    GLFWwindow* handle = reinterpret_cast<GLFWwindow*>(window);
+    g_typedText[handle];
+    glfwSetCharCallback(handle, awake_glfwCharCallback);
+}
+
+// The text typed into [window] since the last call, then cleared; null when there is none, so an
+// idle frame allocates nothing. A window whose callback was never set gets it here, so a host that
+// opens its own window and only polls still types.
+extern "C" jstring awake_window_consume_typed_text(JNIEnv* env, jlong window) {
+    GLFWwindow* handle = reinterpret_cast<GLFWwindow*>(window);
+    auto queued = g_typedText.find(handle);
+    if (queued == g_typedText.end()) {
+        awake_window_set_char_callback(env, window);
+        return nullptr;
+    }
+    std::u16string& text = queued->second;
+    if (text.empty()) return nullptr;
+    jstring result = env->NewString(reinterpret_cast<const jchar*>(text.data()), static_cast<jsize>(text.size()));
+    text.clear();
+    return result;
+}
+
+// Called as [window] is destroyed: a later window GLFW gives the same address starts empty and
+// gets its own callback.
+extern "C" void awake_window_forget_typed_text(jlong window) {
+    g_typedText.erase(reinterpret_cast<GLFWwindow*>(window));
 }
 
 // --- Clipboard ---------------------------------------------------------------------------------

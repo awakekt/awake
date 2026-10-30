@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.device
 
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.webgpu.WebGpuHandles
+import io.ygdrasil.webgpu.GPUFeatureName
 import io.ygdrasil.webgpu.WGPUContext
 
 /**
@@ -75,6 +76,15 @@ class GraphicsDevice {
         private set
 
     /**
+     * Whether a render pipeline's `unclippedDepth` takes effect on this device: it was granted
+     * `depth-clip-control`, and this platform's binding passes the flag through. The shadow depth
+     * pass sets it when true, so a caster in front of a cascade's near plane is clamped onto it
+     * instead of clipped away.
+     */
+    internal val unclippedDepth: Boolean
+        get() = UNCLIPPED_DEPTH_REACHES_PIPELINES && GPUFeatureName.DepthClipControl in wgpuContext.device.features
+
+    /**
      * Adopts a pre-resolved WebGPU context as this device and registers its device in
      * [WebGpuHandles].
      *
@@ -87,21 +97,24 @@ class GraphicsDevice {
      * @throws IllegalStateException If [window] is not a [WGPUContext].
      */
     fun create(window: Any) {
-        wgpuContext = window as? WGPUContext
+        val context = window as? WGPUContext
             ?: error(
                 "GraphicsDevice.create expects a pre-resolved WGPUContext on wasmJs " +
                     "(canvasContextRenderer() + surface.configure() must run in the " +
                     "caller's own coroutine first -- see this class's doc comment), got $window",
             )
+        // Before anything reads the format: every pipeline and target is built with it.
+        wgpuContext = context.withDisplayEncodedColorFormat()
         device = WebGpuHandles.register(wgpuContext.device)
     }
 
     /**
-     * Releases [device]'s entry in [WebGpuHandles] and closes the owned [WGPUContext]. The context
-     * must not be used or closed again by the caller afterwards.
+     * Releases [device]'s entry in [WebGpuHandles] and closes the owned [WGPUContext] in order:
+     * surface, device and its queue, adapter. Every resource created from the device must already be
+     * closed. The context must not be used or closed again by the caller afterwards.
      */
     fun destroy() {
         WebGpuHandles.release(device)
-        wgpuContext.close()
+        closeContext(wgpuContext)
     }
 }

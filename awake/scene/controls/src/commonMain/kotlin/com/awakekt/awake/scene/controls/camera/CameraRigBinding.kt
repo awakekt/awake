@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.controls.camera
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.Name
@@ -60,6 +61,7 @@ data class SceneCameraRig(
 /**
  * Scene component binding for serializing and deserializing [CameraRig] components as [SceneCameraRig].
  */
+@RegisteredBinding
 object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
     override val componentClass: KClass<CameraRig> = CameraRig::class
     override val schemaClass: KClass<SceneCameraRig> = SceneCameraRig::class

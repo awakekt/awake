@@ -10,6 +10,7 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.scene-components")
 }
 
 kotlin {
@@ -25,6 +26,7 @@ kotlin {
             implementation(project(":awake:core:pool"))
             implementation(project(":awake:particles"))
             api(project(":awake:core:color"))
+            api(project(":awake:core:spatial"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:world"))
@@ -53,6 +55,10 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+awakeSceneComponents {
+    registry.set("com.awakekt.awake.scene.rendering.Scene3dSceneComponents")
 }
 
 mavenPublishing {

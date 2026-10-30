@@ -6,29 +6,31 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.scene.canvas.SceneCanvasButton
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.SceneCanvasFollow
 import com.awakekt.awake.scene.canvas.SceneCanvasFollowOcclusion
+import com.awakekt.awake.scene.canvas.SceneCanvasJoystick
+import com.awakekt.awake.scene.canvas.SceneCanvasLookArea
 import com.awakekt.awake.scene.canvas.checkCanvasImages
 import com.awakekt.awake.scene.canvas.hasCanvasImages
 import com.awakekt.awake.scene.canvas.loadCanvasFonts
 import com.awakekt.awake.scene.canvas.loadCanvasImages
-import com.awakekt.awake.scene.character.CharacterControllerBinding
 import com.awakekt.awake.scene.character.CharacterControllerSystem
+import com.awakekt.awake.scene.character.CharacterSceneComponents
 import com.awakekt.awake.scene.character.SceneCharacterController
-import com.awakekt.awake.scene.controls.camera.CameraRigBinding
+import com.awakekt.awake.scene.controls.ControlsSceneComponents
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.controls.camera.SceneCameraRig
-import com.awakekt.awake.scene.controls.input.InputActionsBinding
 import com.awakekt.awake.scene.controls.input.SceneInputActions
 import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
-import com.awakekt.awake.scene.controls.movement.MovementControlBinding
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.physics.MeshColliderSystem
-import com.awakekt.awake.scene.physics.PhysicsBodyBinding
+import com.awakekt.awake.scene.physics.PhysicsSceneComponents
 import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
@@ -65,13 +67,19 @@ internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
  */
 internal object ControlsCapability : SceneCapability {
     override val id = "com.awakekt.awake.controls"
-    override val components = listOf(MovementControlBinding, CameraRigBinding, InputActionsBinding)
+    override val components = ControlsSceneComponents.bindings
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val moves = scene.uses(SceneMovementControl::class)
         val touches = scene.hasCanvasActions()
-        if (moves || touches || scene.uses(SceneInputActions::class)) plan.frame("playerInput") { PlayerInputSystem(it.input) }
-        if (touches) plan.frame("canvas-actions") { CanvasActionSystem() }
+        if (moves || touches || scene.uses(SceneInputActions::class)) {
+            plan.frame("playerInput") { PlayerInputSystem(it.input) }
+        } else {
+            plan.frame("playerInput") { RuntimeCanvasInputSystem(it.input) }
+        }
+        // Runtime HUDs need the same ordering as authored ones: begin/read actions before adding
+        // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
+        plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
         if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
     }
@@ -107,7 +115,7 @@ internal object CanvasCapability : SceneCapability {
  */
 internal object PhysicsCapability : SceneCapability {
     override val id = "com.awakekt.awake.physics"
-    override val components = listOf(PhysicsBodyBinding, CharacterControllerBinding)
+    override val components = PhysicsSceneComponents.bindings + CharacterSceneComponents.bindings
 
     /** Whether [scene] has bodies, characters or a terrain collider, so a project makes a physics world for it. */
     fun needsPhysics(scene: SceneDocument): Boolean =
@@ -170,9 +178,16 @@ internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanva
  */
 internal fun SceneDocument.asksForOcclusion(): Boolean = uses(SceneCanvasFollowOcclusion::class) || nodes.any { it.asksForOcclusion() }
 
-private fun SceneNode.asksForOcclusion(): Boolean =
-    components.any { it is SceneCanvasElement && it.followRules?.occlusion == true } || children.any { it.asksForOcclusion() }
+private fun SceneNode.asksForOcclusion(): Boolean = components.any {
+    it is SceneCanvasElement && it.followRules?.occlusion == true || it is SceneCanvasFollow && it.rules?.occlusion == true
+} || children.any { it.asksForOcclusion() }
 
-private fun SceneNode.hasCanvasAction(): Boolean =
-    components.any { it is SceneCanvasElement && (it.action.isNotEmpty() || it.kind == CanvasElementKind.LookArea) } ||
-        children.any { it.hasCanvasAction() }
+private fun SceneNode.hasCanvasAction(): Boolean = components.any {
+    when (it) {
+        is SceneCanvasElement -> it.action.isNotEmpty() || it.kind == CanvasElementKind.LookArea
+        is SceneCanvasButton -> it.action.isNotEmpty()
+        is SceneCanvasJoystick -> it.action.isNotEmpty()
+        is SceneCanvasLookArea -> true
+        else -> false
+    }
+} || children.any { it.hasCanvasAction() }

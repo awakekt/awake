@@ -54,6 +54,34 @@ internal class OpenTypeFont(bytes: ByteArray, private val name: String) {
         tables["cmap"]?.let(::UnicodeVariationSequences)
     }
 
+    /**
+     * The font's line box, in em, as DirectWrite reads it for a browser's `line-height: normal`: the
+     * `OS/2` typographic ascender, descender and line gap when the font sets USE_TYPO_METRICS,
+     * otherwise `usWinAscent`/`usWinDescent` with the external leading the OpenType spec gives for
+     * Windows, `max(0, hhea.lineGap - ((usWinAscent + usWinDescent) - (hhea.ascender - hhea.descender)))`.
+     * A font with no usable `OS/2` table uses its `hhea` line.
+     */
+    val lineMetrics: FontLineMetrics by lazy(::readLineMetrics)
+
+    private fun readLineMetrics(): FontLineMetrics {
+        val hhea = table("hhea")
+        val hheaGap = hhea.s16(HHEA_LINE_GAP)
+        val os2 = tables["OS/2"]?.takeIf { it.length >= OS2_WIN_DESCENT + 2 }
+        val (ascent, descent, gap) = when {
+            os2 == null -> Triple(ascender, -descender, hheaGap)
+            os2.u16(OS2_FS_SELECTION) and USE_TYPO_METRICS != 0 ->
+                Triple(os2.s16(OS2_TYPO_ASCENDER), -os2.s16(OS2_TYPO_DESCENDER), os2.s16(OS2_TYPO_LINE_GAP))
+            os2.u16(OS2_WIN_ASCENT) + os2.u16(OS2_WIN_DESCENT) > 0 -> {
+                val winAscent = os2.u16(OS2_WIN_ASCENT)
+                val winDescent = os2.u16(OS2_WIN_DESCENT)
+                Triple(winAscent, winDescent, hheaGap - ((winAscent + winDescent) - (ascender - descender)))
+            }
+            else -> Triple(ascender, -descender, hheaGap)
+        }
+        val em = unitsPerEm.toFloat()
+        return FontLineMetrics(ascent / em, descent / em, maxOf(0, gap) / em)
+    }
+
     fun hasTable(tag: String): Boolean = tag in tables
     fun tableOrNull(tag: String): FontTable? = tables[tag]
 
@@ -94,8 +122,16 @@ internal class OpenTypeFont(bytes: ByteArray, private val name: String) {
         const val HEAD_LOCA_FORMAT = 50
         const val HHEA_ASCENDER = 4
         const val HHEA_DESCENDER = 6
+        const val HHEA_LINE_GAP = 8
         const val HHEA_METRIC_COUNT = 34
         const val MAXP_GLYPH_COUNT = 4
+        const val OS2_FS_SELECTION = 62
+        const val OS2_TYPO_ASCENDER = 68
+        const val OS2_TYPO_DESCENDER = 70
+        const val OS2_TYPO_LINE_GAP = 72
+        const val OS2_WIN_ASCENT = 74
+        const val OS2_WIN_DESCENT = 76
+        const val USE_TYPO_METRICS = 0x80
         const val MIN_UNITS_PER_EM = 16
         const val MAX_UNITS_PER_EM = 16384
     }

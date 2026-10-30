@@ -96,16 +96,29 @@ public final class com/awakekt/awake/project/runtime/ProjectRenderPlanKt {
 	public static final fun getProjectRenderPlan ()Lcom/awakekt/awake/asset/shaders/RenderPlan;
 }
 
+public final class com/awakekt/awake/project/runtime/ProjectRouteKt {
+	public static final fun projectRoute (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun projectRoute$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
-	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
@@ -175,9 +188,11 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
 	public final fun getSceneSwitch ()Lcom/awakekt/awake/project/runtime/SceneSwitch;
+	public final fun getSceneSwitchStatus ()Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;
 	public final fun spawn (Lcom/awakekt/awake/scene/document/SceneNode;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 	public final fun withAudio (Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSceneSwitch (Lcom/awakekt/awake/project/runtime/SceneSwitch;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public final fun withSceneSwitchStatus (Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSpawner (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 }
 
@@ -188,6 +203,68 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices$Companion
 
 public abstract interface class com/awakekt/awake/project/runtime/SceneSwitch {
 	public abstract fun request (Ljava/lang/String;)V
+}
+
+public abstract interface class com/awakekt/awake/project/runtime/SceneSwitchState {
+}
+
+public final class com/awakekt/awake/project/runtime/SceneSwitchState$Failed : com/awakekt/awake/project/runtime/SceneSwitchState {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Throwable;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$Failed;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/runtime/SceneSwitchState$Failed;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneSwitchState$Idle : com/awakekt/awake/project/runtime/SceneSwitchState {
+	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/SceneSwitchState$Idle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneSwitchState$Loading : com/awakekt/awake/project/runtime/SceneSwitchState {
+	public fun <init> (Ljava/lang/String;F)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun copy (Ljava/lang/String;F)Lcom/awakekt/awake/project/runtime/SceneSwitchState$Loading;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/runtime/SceneSwitchState$Loading;Ljava/lang/String;FILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$Loading;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getProgress ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneSwitchState$Ready : com/awakekt/awake/project/runtime/SceneSwitchState {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$Ready;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/runtime/SceneSwitchState$Ready;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$Ready;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent : com/awakekt/awake/project/runtime/SceneSwitchState {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/project/runtime/SceneSwitchStatus {
+	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 }
 
 public final class com/awakekt/awake/project/runtime/SceneSystemPlan {

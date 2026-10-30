@@ -65,7 +65,7 @@ class IndexedDbContentCache internal constructor(
      * @return How many files were deleted; 0 when the browser's storage is blocked or unavailable.
      */
     override suspend fun retainOnly(index: ProjectIndex): Int {
-        val keep = index.files.map { it.sha256.lowercase().toJsString() }.toTypedArray().toJsArray()
+        val keep = index.files.map { index.cacheKeyOf(it).lowercase().toJsString() }.toTypedArray().toJsArray()
         return useDatabase { jsContentCacheRetain(it, namespace, keep) }?.unsafeCast<JsNumber>()?.toInt() ?: 0
     }
 

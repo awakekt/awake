@@ -43,6 +43,7 @@ import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.framebufferSampleCounts
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
@@ -362,6 +363,7 @@ open class VulkanEngine(
             sceneRenderPass,
             loadShaderPair(EngineShaderSets.DebugLine),
             MAX_FRAMES_IN_FLIGHT,
+            sampleCount = requestedPipelines.getValue(PipelineKey.Primary).fill.multisample.count,
         )
         val content = plan.contentFeaturesFor(RenderBackend.Vulkan).groupBy { it.paint }
         val gpu = VulkanContentFeatureGpu(
@@ -537,6 +539,9 @@ open class VulkanEngine(
             val headless = window as? HeadlessSurface
             graphicsDevice = GraphicsDevice()
             if (headless == null) graphicsDevice.create(window) else graphicsDevice.createHeadless()
+            val rasterState = plan.multisample.supportedBy(graphicsDevice.framebufferSampleCounts()) {
+                println("Awake/Vulkan: $it")
+            }
             swapchainManager = SwapchainManager(
                 graphicsDevice,
                 MAX_FRAMES_IN_FLIGHT,
@@ -574,7 +579,7 @@ open class VulkanEngine(
             maskTarget = plan.maskShaderSet?.let { DepthTarget(graphicsDevice, layers = MASK_LAYER_COUNT, arrayed = true) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)
-            sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
+            sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager, rasterState.count)
 
             // Built only when something declared a skinned-instanced pipeline -- it is that
             // pipeline's @group(1) joint-palette layout and nothing else uses it.
@@ -596,10 +601,11 @@ open class VulkanEngine(
                     framesInFlight = MAX_FRAMES_IN_FLIGHT,
                     declaredEngineSetLayouts = declaredEngineSetLayouts(),
                     emptySetLayout = ::emptySetLayout,
+                    rasterState = rasterState,
                     loadShaders = ::loadShaderPair,
                 ),
             )
-            requestedPipelines = pipelineRegistry.register(plan.toPipelineRequests(RenderBackend.Vulkan))
+            requestedPipelines = pipelineRegistry.register(plan.toPipelineRequests(RenderBackend.Vulkan, rasterState))
             depthPrePass = buildDepthPrePassFeature(depthTarget)
             sceneDepthPass = buildSceneDepthFeature()
             maskPass = buildMaskFeature()

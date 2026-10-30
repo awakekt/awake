@@ -13,7 +13,6 @@ import com.awakekt.awake.render.effects.BlurChain
 import com.awakekt.awake.render.pipeline.EffectQuality
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -58,19 +57,12 @@ class BackdropBlurParityTest {
         val vulkan = captures.getValue(HeadlessUiBackend.Vulkan)
         val webGpu = captures.getValue(HeadlessUiBackend.WebGpu)
 
-        val webGpuLinear = ByteArray(webGpu.size)
-        for (offset in webGpu.indices step 4) {
-            webGpuLinear[offset] = srgbToLinearByte(webGpu[offset].toInt() and 0xFF).toByte()
-            webGpuLinear[offset + 1] = srgbToLinearByte(webGpu[offset + 1].toInt() and 0xFF).toByte()
-            webGpuLinear[offset + 2] = srgbToLinearByte(webGpu[offset + 2].toInt() and 0xFF).toByte()
-            webGpuLinear[offset + 3] = webGpu[offset + 3]
-        }
-
+        // Both targets are UNORM, so the bytes compare directly (#1011).
         var differingPixels = 0
         for (offset in vulkan.indices step 4) {
             val diff = (0..3).any { channel ->
                 val v = vulkan[offset + channel].toInt() and 0xFF
-                val w = webGpuLinear[offset + channel].toInt() and 0xFF
+                val w = webGpu[offset + channel].toInt() and 0xFF
                 abs(v - w) > CHANNEL_TOLERANCE
             }
             if (diff) differingPixels++
@@ -164,11 +156,5 @@ class BackdropBlurParityTest {
         const val SIZE = 64
         const val CHANNEL_TOLERANCE = 4
         val BACKEND_ORDER = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)
-
-        fun srgbToLinearByte(srgbByte: Int): Int {
-            val s = srgbByte / 255.0
-            val linear = if (s <= 0.04045) s / 12.92 else ((s + 0.055) / 1.055).pow(2.4)
-            return (linear * 255.0).roundToInt().coerceIn(0, 255)
-        }
     }
 }

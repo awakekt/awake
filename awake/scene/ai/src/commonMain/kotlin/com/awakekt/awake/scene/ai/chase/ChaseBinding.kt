@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.ai.ensurePathRequest
 import com.awakekt.awake.scene.ai.referenceName
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -17,6 +18,7 @@ import kotlin.reflect.KClass
 /**
  * Scene component binding for [ChaseBehavior] and [SceneChase].
  */
+@RegisteredBinding
 object ChaseBinding : SceneComponentBinding<ChaseBehavior, SceneChase> {
     override val componentClass: KClass<ChaseBehavior> = ChaseBehavior::class
     override val schemaClass: KClass<SceneChase> = SceneChase::class

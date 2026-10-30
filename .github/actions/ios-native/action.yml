@@ -5,8 +5,8 @@
 name: Build the iOS native dependencies
 description: >
   Builds MoltenVK and JoltC for iOS device and simulator, so Kotlin/Native cinterop can find
-  their headers and static libraries. Any job that touches an iOS target needs this -- apiCheck
-  and publishing both pull cinterop into the task graph.
+  their headers and static libraries. Any job that touches an iOS target needs this --
+  cinterop, the iOS tests and publishing all pull it into the task graph.
 
 runs:
   using: composite
@@ -23,7 +23,7 @@ runs:
 
     - name: Restore the MoltenVK build
       id: moltenvk-cache
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: awake/backend/vulkan/bindings/ios-native/MoltenVK/Package
         # Bump the recipe version when this action changes its build or verification contract.
@@ -59,6 +59,15 @@ runs:
           }
         done
 
+    # Save only after validating both slices, before later Gradle gates can fail or
+    # time out. A job-level post-save otherwise discards a successful cold build.
+    - name: Save the verified MoltenVK build
+      if: steps.moltenvk-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: awake/backend/vulkan/bindings/ios-native/MoltenVK/Package
+        key: ${{ steps.moltenvk-cache.outputs.cache-primary-key }}
+
     # Configuring the build installs the Android NDK the Vulkan android-native module pins, a ~1 GB
     # download, on every runner that lacks it. Two release Verify jobs lost it in a row: a corrupt
     # archive (v0.8.0), then a download that hung until the job timed out (v0.8.1). Cache it, and
@@ -73,7 +82,7 @@ runs:
         echo "path=$ANDROID_HOME/ndk/$version" >> "$GITHUB_OUTPUT"
     - name: Restore the Android NDK
       id: ndk-cache
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ steps.ndk.outputs.path }}
         key: android-ndk-${{ runner.os }}-${{ runner.arch }}-${{ steps.ndk.outputs.version }}
@@ -93,6 +102,14 @@ runs:
         done
         echo "::error::Could not install NDK ${{ steps.ndk.outputs.version }}"
         exit 1
+
+    - name: Save the installed Android NDK
+      if: steps.ndk-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.ndk.outputs.path }}
+        key: ${{ steps.ndk-cache.outputs.cache-primary-key }}
+
     # Cheap next to MoltenVK, and the module already owns the CMake invocation, so there is no
     # recipe to duplicate here -- just run the tasks.
     - name: Build JoltC for iOS

@@ -12,6 +12,31 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 
 [resolver]: src/commonMain/kotlin/com/awakekt/awake/ui/canvas/CanvasTree.kt
 
+## Components
+
+An element is made of focused components, one of each type, which `CanvasElement` holds together:
+
+| Component | What it holds |
+|---|---|
+| `CanvasRect` (always) | anchor, offsets, size, order, visibility, touch-only, safe area, grow, element and control ids; the `screenBounds` it was drawn at |
+| `CanvasText` | the words: text or key and arguments, font, size, alignment, links, numerals |
+| `CanvasAppearance` | colour, background, `CanvasStyle` and a control's skin |
+| `CanvasLayout` or `CanvasCluster` | how it places its children |
+| `CanvasBinding` | game state it shows without code |
+| `CanvasFollow`, `CanvasFollowArrow` | the node it follows, and the arrow of a follower pinned to the edge |
+| `CanvasInput`, `CanvasTooltip` | pressable, draggable, drop target, wheel; a hover hint |
+| one `CanvasWidget` | `CanvasButtonWidget`, `CanvasBarWidget`, `CanvasSweepWidget`, `CanvasStepperWidget`, `CanvasJoystickWidget`, `CanvasTextFieldWidget`, `CanvasViewWidget`, `CanvasLookAreaWidget` or `CanvasImageWidget`: its own values and its `settings` |
+| `CanvasPointerState` (always) | what the player is doing to it right now: taps, hover, drag and drop, wheel, links, focus, stick, look and aim. Runtime only, never saved |
+
+Set one with `element.set(component)` and read it with `element.get<CanvasText>()`. The element's
+`kind` follows from its components: its widget's, else `Text` when it has words, else `Panel`.
+Setting `kind` gives it that kind's widget.
+
+The flat properties described below, such as `width`, `text` or `value`, read and write those
+components. Each reads its default while its component is absent. Writing another value adds the
+component, but never adds a widget to an element that has a different one, and never gives a Panel
+words, so an option set on the wrong kind still does nothing.
+
 ## An element
 
 `CanvasElement` has:
@@ -35,8 +60,16 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 - **`textKey`**: a Text's or Button's words by key, looked up in the `Strings` passed as
   `CanvasOverlay(strings = …)` in the active locale, with **`textArgs`** in its placeholders; a
   locale switch shows on the next frame. Without strings, or for a key no table has, the key shows.
+- **`placeholder`**: a TextField's hint, a text key shown in muted text (the field's colour at half
+  strength) while the field is empty and does not hold the keyboard. **`padding`**: the space between
+  a TextField's edge and its text, `horizontal` 12 dp (shadcn's input) and `vertical` 0 by default;
+  caret, selection and scrolling work inside it, and the field clips at its edge, so a leading `j`'s
+  tail and an `Å`'s ring keep their ink. **`tooltip`**: a text key for a hint any element shows near
+  the pointer after 0.5 s over it, kept inside the canvas, gone when the pointer leaves or presses.
 - **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
   is the default Roboto. A host loads the file and passes it in `CanvasOverlay(fonts = …)`.
+- **`numerals`**: `FontNumerals.Tabular` (equal-width digits for counters, timers and score tables,
+  via OpenType `tnum`) or `FontNumerals.Proportional` (`pnum`); null keeps the font's default digits.
 - **`value`**: a Bar's or a Sweep's fill from 0 to 1.
 - **`bar`**, **`sweep`**, **`stepper`**: a Bar as a progress bar (`CanvasBar`: up, down, right to
   left or radial, a trailing fill, segments, ticks and a label), a Sweep's pie or ring
@@ -53,18 +86,29 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
   editor, follows the overlay's own rule rather than a copy of it.
 - **`style`**: how it looks beyond its colours, as the saved form of a Compose `Style` drawn
   through `Modifier.styleable`: fill, gradient, corner radius, border, shadow, text colour, alpha,
-  `hovered` and `pressed` states for a Button, and images. `style.image` is an Image's picture, the
+  `hovered`, `pressed` and `disabled` states (`CanvasStateStyle`: fill, gradient, image, border and
+  text colour, `shadow`, centre `scale` without moving layout or hit-testing, and `alpha`),
+  `transitionSeconds` (interpolated between states, falling back to
+  `CanvasControlTheme.transitionSeconds` and snapping at `0`), and images. `style.image` is an Image's picture, the
   frame of a Panel, Button or Text, or a Bar's track; `style.fillImage` is a Bar's fill, cut at
   `value`, or with `style.fillImageMode` `Squeeze` drawn at the filled width with both end caps kept,
   `Capped` with both caps whole at every value, or `Sweep` swept clockwise over the box.
   A `CanvasImage` names a project file, the region of it to use and the slice insets that
   keep its corners whole. A host decodes the images and passes them in `CanvasOverlay(images = …)`.
 
+  `CanvasGradient(start = "#FF0000", end = "#0000FF", middle = "#00FF00")` runs through
+  green at 50%, top to bottom (`horizontal = true` runs left to right). `middle` is optional;
+  omitting it retains the existing two-colour fill and JSON. All three colours accept
+  `#RRGGBB`/`#RRGGBBAA`, or theme tokens in a control skin. State styles use the same gradient.
+  The midpoint follows opacity, transforms and the element's rounded clip. It uses the shared
+  background brush and coloured-mesh path on CPU, Vulkan and WebGPU, with no canvas-specific shader.
+
 ## Drawing
 
-`CanvasOverlay(items, resolver = …)` draws a flat list of `CanvasItem(id, element, parent)`: each
-item's `parent`, when it is also in the list, is the nearest element above it, so the child draws
-anchored and offset inside the parent's box. A host that keeps elements in an ECS world, a plain
+`CanvasOverlay(items, resolver = …)` draws a flat list of `CanvasItem(id, element, parent, scaler)`:
+each item's `parent`, when it is also in the list, is the nearest element above it, so the child draws
+anchored and offset inside the parent's box, and an optional `scaler` scales only that item and what
+sits inside it from the canvas's box. A host that keeps elements in an ECS world, a plain
 list or anything else builds this list its own way; `awake:scene:canvas`'s `SceneCanvas(world)`
 builds it from a `World`.
 
@@ -78,6 +122,13 @@ that one thing.
 A `View` shows what the camera named by its `camera` field sees, filling its box under its
 children, through `CanvasResolver.texture(element, camera, width, height)`. Without a resolver
 that answers it a `View` draws only its style.
+
+`element.view = CanvasView(transparent = true, mask = CanvasMask.Circle)` opts into a
+transparent camera picture and a circular outline. A `Box` mask uses `style.cornerRadius`;
+`Pill` and `CutCorner` use the same shapes as a Sweep. The mask clips the camera picture,
+leaving the element's own background and overlay children as authored. Explicit ancestor
+clips also apply. The resolver supplies a premultiplied texture: a transparent camera target
+must clear to transparent and omit its sky. The default stays opaque with its black backing.
 
 An element that `follow`s a node is placed by `CanvasResolver.point`/`bounds`, which report where
 the node lands in the frame's pixels. `CanvasOverlay` moves that into its own box by where the box
@@ -114,6 +165,29 @@ unit, or `ConstantPhysicalSize` from the dots per inch the canvas is designed at
 `maxScale` hold the result, and `playerScale` multiplies it after them. `CanvasScaler.scaleFor(width,
 height, density)` is the whole rule, for a host that wants the number itself. It is serializable;
 `awake:scene:canvas` saves it with a scene as `canvas_scaler`.
+
+A `CanvasScaler` on a `CanvasItem` (`CanvasScaleScope.Subtree` in a scene, vs `CanvasScaleScope.Canvas`,
+the default) applies the same rule from the canvas's host box to only that item and the items inside
+it, while sibling subtrees keep the canvas's own scale (or a `ConstantPixelSize` subtree stays `1:1`
+inside a scaled canvas). Layout, clipping, hit-testing, drag-and-drop and follower placement in that
+subtree use its scaled coordinates, and `snap` rounds that subtree's scale on its own.
+
+Text is crisp at a fractional scale without help: a text element's em is rounded to whole device
+pixels after the scale and the density, so up to 24 pixels it draws from exact-size glyphs (13 at
+1.4125 is an 18 pixel glyph, 2% under the exact size) and its layout box keeps the size the scale
+gives it. `CanvasScaler.snap` is for pixel art, which a fractional scale draws with uneven pixels:
+`CanvasScaleSnap.WholeStep` or `HalfStep` rounds the scale to the nearest whole number or half before
+`minScale` and `maxScale` hold it, and the canvas is laid out at the rounded scale. That moves every
+size and offset by up to half a step in proportion: 1.4125 draws at 1.5 with `HalfStep`, 6% larger, and
+at 1 with `WholeStep`, 29% smaller. A scale under one step is left as it is, and `None`, the default,
+leaves the scale as the rule gives it.
+
+A wrapping `layout` decides what fits a line from the sizes as authored. When the pixels per unit
+(the host's density times the scale) are not whole, each child, each gap and the box round to whole
+pixels on their own, so a row sized to exactly its children and gaps can come out a few pixels
+over; up to one pixel per child on the line counts as fitting. The children still draw on whole
+pixels, and a row over by more than that wraps. At a whole number of pixels per unit, whole-unit
+sizes do not round, so nothing is allowed.
 
 ## Safe area
 

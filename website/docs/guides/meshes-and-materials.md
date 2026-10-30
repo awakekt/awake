@@ -106,6 +106,7 @@ Both boxes are in the entity's local space, before its transform.
 | `cullMode` | `None` · `Back` · `Front` | `None` | Which triangle faces to skip. `Back` suits a solid, correctly wound mesh. |
 | `transparent` | boolean | `false` | Draws in the transparent pass: blended by the material's alpha, sorted back to front, no depth write. |
 | `additive` | boolean | `false` | With `transparent`, adds its colour to what is behind it instead of covering it: glows, fire, light shafts. A textured mesh then draws unlit, so its black texels add nothing. |
+| `castsShadows` | boolean | `true` | Draws the mesh into the shadow maps, in view or off screen. `false` for a decal, a ground card, a small prop or distant filler; the mesh still draws and still receives shadows. A `transparent` mesh never casts. |
 
 The ECS `MeshRenderer` also has `visible` (default `true`; `false` skips the draw) and
 `vertexAnimation`, a shader-defined vertex effect that is off at zero. Neither is saved in a scene
@@ -117,11 +118,12 @@ document.
 | --- | --- | --- | --- |
 | `metallic` | number, 0 to 1 | `0` | 0 is a dielectric, 1 is metal. |
 | `roughness` | number, 0 to 1 | `0.5` | 0 is smooth, 1 is rough. |
-| `baseColorFactor` | color | white | Multiplies the base colour texture. Textured pipeline only. |
-| `emissiveFactor` | color | transparent | Multiplies the emissive texture. Textured pipeline only. |
+| `baseColorFactor` | color | white | Multiplies the base colour texture or vertex colour. Textured and skinned pipelines. |
+| `emissiveFactor` | color | transparent | Emitted light, multiplied by the emissive texture when textured. Textured and skinned pipelines. |
 | `alphaMode` | `Opaque` · `Masked` | `Opaque` | `Masked` discards pixels whose alpha is below `alphaCutoff`. |
 | `alphaCutoff` | number, 0 to 1 | `0.5` | The `Masked` threshold. |
 | `litWhenAdditive` | boolean | `false` | Keeps an `additive` textured mesh lit. Textured pipeline only. |
+| `unlit` | boolean | `false` | Draws `baseColorFactor * texture * vertexColor` as stored, skipping lighting, tone mapping and fog. Textured and skinned pipelines. |
 
 An `additive` textured mesh is light added to the scene, so by default it is not shaded: it adds its
 base and emissive colour, the same in sun and shadow, which suits fire, sparks and glows. For the
@@ -133,6 +135,15 @@ highlight lands on it.
 
 ```json
 { "component": "pbr_material", "roughness": 1, "litWhenAdditive": true }
+```
+
+An `unlit` material skips lighting, tone mapping and fog on textured (`Textured`, `InstancedTextured`)
+and single-draw skinned (`Skinned`, `SkinnedTextured`) meshes, writing `baseColorFactor * texture *
+vertexColor` as stored while keeping `alphaMode` masking and output encoding. Use it for hand-painted
+or pre-baked textures and character skin parts whose colours are already authored in display space.
+
+```json
+{ "component": "pbr_material", "unlit": true }
 ```
 
 `texture_animation`, a component of its own beside the material, plays the texture as a frame sheet
@@ -177,7 +188,7 @@ Kotlin-only components:
 | Component | Fields | What it does |
 | --- | --- | --- |
 | `InstancedMeshRenderer` | `mesh`, `material`, `transforms: List<Mat4>` | Draws `mesh` once per matrix, in one draw call. |
-| `LodGroup` | `levels: List<LodLevel>`, `hysteresis = 0.1` | Picks one level per frame by camera distance. |
+| `LodGroup` | `levels: List<LodLevel>`, `hysteresis = 0.1`, `castsShadows = true` | Picks one level per frame by camera distance. `castsShadows` works as on `mesh_renderer`. |
 | `LodLevel` | `mesh`, `material`, `maxDistance` | Draws while the entity is at most `maxDistance` away. |
 | `MeshBounds` | `localBounds: Aabb` | Lets the entity be frustum-culled. |
 | `Occluder` | `localBounds: Aabb` | Hides `MeshBounds` entities it fully covers on screen. |
@@ -213,8 +224,10 @@ keeps showing, so a camera near a threshold does not flicker between levels.
     with it. Use `InstancedSkinnedMeshRenderer`; see [Animation](animation.md).
 
 !!! tip "`PbrMaterial` and skinning"
-    `PbrMaterial` and `SkinnedPose` fill the same per-draw uniform slot, for different vertex formats.
-    An entity carries one or the other, not both.
+    A single-draw skinned entity (`Skinned`, `SkinnedTextured`) carries both `SkinnedPose` and
+    `PbrMaterial`: `RenderSystem3D` packs `baseColorFactor`, `emissiveFactor`, `alphaMode`,
+    `alphaCutoff` and `unlit` alongside the joint palette. `metallic`, `roughness` and
+    `litWhenAdditive` apply to static meshes.
 
 ## Debugging
 

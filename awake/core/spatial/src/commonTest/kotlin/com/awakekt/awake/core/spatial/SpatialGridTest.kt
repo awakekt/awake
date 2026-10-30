@@ -1,0 +1,247 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.core.spatial
+
+import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.core.math.BoundedVolume
+import com.awakekt.awake.core.math.Frustum
+import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.intersects
+import com.awakekt.awake.core.math.squaredDistanceTo
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+/**
+ * The grid's only real contract: it returns exactly what testing every entity would.
+ *
+ * An index that misses something is a hole in the world -- geometry that stops drawing, an
+ * enemy that stops noticing you -- and the failure appears far from here. So the tests that
+ * matter are differential: build a random scene, ask the grid, ask brute force, compare sets.
+ * Anything the column walk gets wrong (a boundary rounding, a missed span, a stale entry after
+ * a move) shows up as a difference rather than as a plausible-looking smaller answer.
+ */
+class SpatialGridTest {
+
+    @Test
+    fun anAabbQueryMatchesTestingEveryEntity() {
+        val random = Random(seed = 20_260_830)
+        val grid = SpatialGrid(cellSize = 16f)
+        val boxes = scatter(random, count = 400, extent = 600f)
+        boxes.forEach { (id, box) -> grid.insert(id, box) }
+
+        repeat(QUERY_COUNT) {
+            val query = randomBox(random, extent = 600f, maxSize = 120f)
+            assertEquals(
+                boxes.filterValues { it.intersects(query) }.keys,
+                grid.queryAabb(query, mutableSetOf()).toSet(),
+                "Query $query disagreed with brute force.",
+            )
+        }
+    }
+
+    @Test
+    fun aRangeQueryMatchesTestingEveryEntity() {
+        val random = Random(seed = 7)
+        val grid = SpatialGrid(cellSize = 32f)
+        val boxes = scatter(random, count = 300, extent = 400f)
+        boxes.forEach { (id, box) -> grid.insert(id, box) }
+
+        repeat(QUERY_COUNT) {
+            val center = randomPoint(random, extent = 400f)
+            val radius = random.nextFloat() * 150f
+            assertEquals(
+                boxes.filterValues { it.squaredDistanceTo(center) <= radius * radius }.keys,
+                grid.queryRange(center, radius, mutableSetOf()).toSet(),
+                "Range query at $center r=$radius disagreed with brute force.",
+            )
+        }
+    }
+
+    @Test
+    fun aFrustumQueryMatchesTestingEveryEntity() {
+        val random = Random(seed = 99)
+        val grid = SpatialGrid(cellSize = 24f)
+        val boxes = scatter(random, count = 500, extent = 300f)
+        boxes.forEach { (id, box) -> grid.insert(id, box) }
+        val lens = Lens(
+            eye = Vec3f(0f, 20f, 200f),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 1f,
+            near = 0.5f,
+            far = 500f,
+        )
+
+        assertEquals(
+            boxes.filterValues { Frustum.intersects(lens, ASPECT, it) }.keys,
+            grid.queryFrustum(lens, ASPECT, mutableSetOf()).toSet(),
+            "The two-level column test must cull exactly what the per-entity test culls.",
+        )
+    }
+
+    @Test
+    fun aVolumeQueryMatchesTestingEveryEntity() {
+        val random = Random(seed = 1_025)
+        val grid = SpatialGrid(cellSize = 24f)
+        val boxes = scatter(random, count = 400, extent = 500f)
+        boxes.forEach { (id, box) -> grid.insert(id, box) }
+
+        repeat(QUERY_COUNT) {
+            val volume = BoxVolume(randomBox(random, extent = 500f, maxSize = 140f))
+            assertEquals(
+                boxes.filterValues(volume::admits).keys,
+                grid.queryVolume(volume, mutableSetOf()).toSet(),
+                "Volume query disagreed with brute force.",
+            )
+        }
+    }
+
+    @Test
+    fun anEntitySpanningSeveralColumnsIsReturnedOnce() {
+        val grid = SpatialGrid(cellSize = 4f)
+        // 20 units across a 4-unit grid: five columns on each axis, so 25 lists hold this id.
+        grid.insert(1, box(-10f, 10f))
+
+        val hits = grid.queryAabb(box(-10f, 10f), mutableListOf())
+
+        assertEquals(listOf(1), hits.toList(), "Once per entity, not once per column it occupies.")
+    }
+
+    @Test
+    fun movingAnEntityLeavesTheColumnsItUsedToOccupy() {
+        val grid = SpatialGrid(cellSize = 8f)
+        grid.insert(1, box(0f, 4f))
+
+        grid.insert(1, box(400f, 404f))
+
+        assertTrue(grid.queryAabb(box(-10f, 10f), mutableListOf()).isEmpty(), "Stale entry at the old place.")
+        assertEquals(listOf(1), grid.queryAabb(box(395f, 410f), mutableListOf()).toList())
+        assertEquals(1, grid.size, "A move is one entry, not two.")
+    }
+
+    @Test
+    fun aRemovedEntityIsGoneFromEveryQuery() {
+        val grid = SpatialGrid(cellSize = 8f)
+        grid.insert(1, box(0f, 4f))
+        grid.insert(2, box(0f, 4f))
+
+        grid.remove(1)
+
+        assertFalse(1 in grid.ids)
+        assertEquals(listOf(2), grid.queryAabb(box(-10f, 10f), mutableListOf()).toList())
+    }
+
+    @Test
+    fun aTallColumnDoesNotSwallowWhatIsAboveOrBelowIt() {
+        // The Y range a column reports only grows, so this checks the per-entity test still
+        // decides: a query above the tall box must not pick up the short one under it.
+        val grid = SpatialGrid(cellSize = 32f)
+        grid.insert(1, Aabb(Vec3f(0f, 0f, 0f), Vec3f(1f, 200f, 1f)))
+        grid.insert(2, Aabb(Vec3f(0f, 0f, 0f), Vec3f(1f, 1f, 1f)))
+
+        val high = grid.queryAabb(Aabb(Vec3f(0f, 150f, 0f), Vec3f(1f, 160f, 1f)), mutableListOf())
+
+        assertEquals(listOf(1), high.toList())
+    }
+
+    @Test
+    fun anEntityThatRisesWithinItsColumnIsStillSeenByTheFrustumQuery() {
+        // A camera looking level at y = 55 sees roughly y 50..60 where the entity stands: the
+        // ground it started on is out of view, its new height is in it.
+        val grid = SpatialGrid(cellSize = 32f)
+        grid.insert(1, Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f)))
+        val lens = Lens(eye = Vec3f(0f, 55f, 100f), center = Vec3f(0f, 55f, 0f), fovYRadians = 0.1f, near = 1f, far = 200f)
+        assertTrue(grid.queryFrustum(lens, ASPECT, mutableListOf()).isEmpty(), "On the ground it is out of view.")
+
+        // Same footprint, so the same columns: only its height changed.
+        val risen = Aabb(Vec3f(-1f, 54f, -1f), Vec3f(1f, 56f, 1f))
+        grid.insert(1, risen)
+
+        assertTrue(Frustum.intersects(lens, ASPECT, risen), "The test scene must put the risen entity in view.")
+        assertEquals(listOf(1), grid.queryFrustum(lens, ASPECT, mutableListOf()).toList(), "Culled while in view: its column's height is stale.")
+    }
+
+    @Test
+    fun anEntityThatRisesWithinItsColumnIsSeenByVolumeQuery() {
+        // A volume spanning y 45..55 above the entity's column.
+        val grid = SpatialGrid(cellSize = 32f)
+        grid.insert(1, Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f)))
+        val volume = BoxVolume(Aabb(Vec3f(-5f, 45f, -5f), Vec3f(5f, 55f, 5f)))
+        assertTrue(grid.queryVolume(volume, mutableListOf()).isEmpty(), "On the ground it is out of the volume's reach.")
+
+        val risen = Aabb(Vec3f(-1f, 49f, -1f), Vec3f(1f, 51f, 1f))
+        grid.insert(1, risen)
+
+        assertTrue(volume.admits(risen), "The test scene must put the risen entity in the volume's reach.")
+        assertEquals(listOf(1), grid.queryVolume(volume, mutableListOf()).toList(), "Dropped by volume query: its column's height is stale.")
+    }
+
+    @Test
+    fun aBoxMovedInPlaceAndInsertedAgainIsStillSeen() {
+        // A caller reusing one box: the grid must not compare the box with itself to spot a move.
+        val grid = SpatialGrid(cellSize = 32f)
+        val box = Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f))
+        grid.insert(1, box)
+        box.min.set(-1f, 54f, -1f)
+        box.max.set(1f, 56f, 1f)
+
+        grid.insert(1, box)
+
+        val lens = Lens(eye = Vec3f(0f, 55f, 100f), center = Vec3f(0f, 55f, 0f), fovYRadians = 0.1f, near = 1f, far = 200f)
+        assertEquals(listOf(1), grid.queryFrustum(lens, ASPECT, mutableListOf()).toList())
+    }
+
+    private class BoxVolume(private val region: Aabb) : BoundedVolume {
+        override fun admits(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean =
+            minX <= region.max.x && maxX >= region.min.x &&
+                minY <= region.max.y && maxY >= region.min.y &&
+                minZ <= region.max.z && maxZ >= region.min.z
+
+        override fun bounds(content: Aabb, out: Aabb): Boolean {
+            out.min.set(max(content.min.x, region.min.x), max(content.min.y, region.min.y), max(content.min.z, region.min.z))
+            out.max.set(min(content.max.x, region.max.x), min(content.max.y, region.max.y), min(content.max.z, region.max.z))
+            return out.min.x <= out.max.x && out.min.y <= out.max.y && out.min.z <= out.max.z
+        }
+    }
+
+    private fun scatter(random: Random, count: Int, extent: Float): Map<Int, Aabb> =
+        (1..count).associateWith { randomBox(random, extent, maxSize = 30f) }
+
+    private fun randomBox(random: Random, extent: Float, maxSize: Float): Aabb {
+        val center = randomPoint(random, extent)
+        val half = Vec3f(
+            random.nextFloat() * maxSize,
+            random.nextFloat() * maxSize,
+            random.nextFloat() * maxSize,
+        )
+        return Aabb(
+            Vec3f(center.x - half.x, center.y - half.y, center.z - half.z),
+            Vec3f(center.x + half.x, center.y + half.y, center.z + half.z),
+        )
+    }
+
+    private fun randomPoint(random: Random, extent: Float) = Vec3f(
+        (random.nextFloat() - HALF) * extent,
+        (random.nextFloat() - HALF) * extent * VERTICAL_FRACTION,
+        (random.nextFloat() - HALF) * extent,
+    )
+
+    private fun box(from: Float, to: Float) = Aabb(Vec3f(from, from, from), Vec3f(to, to, to))
+
+    private companion object {
+        const val QUERY_COUNT = 50
+        const val ASPECT = 16f / 9f
+        const val HALF = 0.5f
+
+        /** Wide and thin, the distribution the grid's columns are chosen for. */
+        const val VERTICAL_FRACTION = 0.1f
+    }
+}

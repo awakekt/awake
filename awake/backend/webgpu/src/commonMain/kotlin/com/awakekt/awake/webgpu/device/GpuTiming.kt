@@ -13,9 +13,16 @@ import io.ygdrasil.webgpu.GPUUncapturedErrorCallback
 import io.ygdrasil.webgpu.SurfaceRenderingContext
 import io.ygdrasil.webgpu.WGPUContext
 
-/** Requests timing only when advertised; unsupported adapters keep the normal rendering path. */
-internal fun GPUAdapter.timingDeviceDescriptor(onError: GPUUncapturedErrorCallback? = null): DeviceDescriptor = DeviceDescriptor(
-    requiredFeatures = listOf(GPUFeatureName.TimestampQuery).filter { it in features },
+/**
+ * Requests the optional features the renderer uses, each only when advertised, so an adapter
+ * without one keeps the normal rendering path: timing, and `depth-clip-control` where this
+ * platform passes `unclippedDepth` through to pipelines (see [UNCLIPPED_DEPTH_REACHES_PIPELINES]).
+ */
+internal fun GPUAdapter.preferredDeviceDescriptor(onError: GPUUncapturedErrorCallback? = null): DeviceDescriptor = DeviceDescriptor(
+    requiredFeatures = listOfNotNull(
+        GPUFeatureName.TimestampQuery,
+        GPUFeatureName.DepthClipControl.takeIf { UNCLIPPED_DEPTH_REACHES_PIPELINES },
+    ).filter { it in features },
     onUncapturedError = onError,
 )
 
@@ -24,11 +31,19 @@ internal suspend fun WGPUContext.withGpuTiming(onError: GPUUncapturedErrorCallba
     if (GPUFeatureName.TimestampQuery !in adapter.features || GPUFeatureName.TimestampQuery in device.features) return this
     check(renderingContext is SurfaceRenderingContext) { "Upgrade the device before creating a texture rendering context." }
     val timedDevice = adapter.requestDevice(
-        adapter.timingDeviceDescriptor(onError).copy(requiredFeatures = (device.features + GPUFeatureName.TimestampQuery).toList()),
+        adapter.preferredDeviceDescriptor(onError).copy(requiredFeatures = (device.features + GPUFeatureName.TimestampQuery).toList()),
     ).getOrThrow()
-    device.close()
+    closeDevice(device)
     return WGPUContext(surface, adapter, timedDevice, renderingContext)
 }
 
 /** Browsers resolve nanoseconds; wgpu-native resolves ticks with a queue-specific period. */
 internal expect fun GPUDevice.timestampPeriodNs(): Float
+
+/**
+ * Whether this platform's WebGPU binding passes a pipeline's `unclippedDepth` through to the
+ * device. Where it does not, the flag is silently dropped and requesting `depth-clip-control`
+ * gains nothing, so the shadow pass must not count on it: the scene compiler pulls cascade near
+ * planes back to their casters instead.
+ */
+internal expect val UNCLIPPED_DEPTH_REACHES_PIPELINES: Boolean

@@ -9,6 +9,8 @@ import com.awakekt.awake.ai.perception.FactionId
 import com.awakekt.awake.ai.perception.FactionRelation
 import com.awakekt.awake.ai.perception.FactionTable
 import com.awakekt.awake.ai.perception.HearingSettings
+import com.awakekt.awake.ai.perception.Perceivable
+import com.awakekt.awake.ai.perception.Perceiver
 import com.awakekt.awake.ai.perception.PerceptionKeys
 import com.awakekt.awake.ai.perception.PerceptionSettings
 import com.awakekt.awake.ai.perception.PerceptionSpace
@@ -19,6 +21,8 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.core.schema.PropertyUnit
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.SceneBinding
+import com.awakekt.awake.scene.binding.SceneValueConverter
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -35,6 +39,11 @@ import kotlin.math.sin
  */
 @Serializable
 @SerialName("perceiver")
+@SceneBinding(
+    Perceiver::class,
+    converters = [FactionIdConverter::class, PerceptionSettingsConverter::class],
+    runtimeOnly = ["memory"],
+)
 data class ScenePerceiver(
     val faction: String,
     val settings: ScenePerceptionSettings = ScenePerceptionSettings(),
@@ -138,6 +147,7 @@ data class ScenePerceptionSettings(
  */
 @Serializable
 @SerialName("perceivable")
+@SceneBinding(Perceivable::class, converters = [FactionIdConverter::class])
 data class ScenePerceivable(
     val faction: String,
     val visible: Boolean = true,
@@ -214,4 +224,16 @@ object TransformPerceptionSpace : PerceptionSpace {
         into.set(sin(yaw), 0f, cos(yaw))
         return true
     }
+}
+
+internal object FactionIdConverter : SceneValueConverter<String, FactionId> {
+    override fun toLive(saved: String): FactionId = FactionId(saved)
+
+    override fun toSaved(live: FactionId): String = live.value
+}
+
+internal object PerceptionSettingsConverter : SceneValueConverter<ScenePerceptionSettings, PerceptionSettings> {
+    override fun toLive(saved: ScenePerceptionSettings): PerceptionSettings = saved.toSettings()
+
+    override fun toSaved(live: PerceptionSettings): ScenePerceptionSettings = ScenePerceptionSettings.of(live)
 }

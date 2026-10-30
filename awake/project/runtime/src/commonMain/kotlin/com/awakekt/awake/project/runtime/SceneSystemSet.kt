@@ -40,6 +40,11 @@ class SceneHostServices private constructor(
      * with [withSceneSwitch].
      */
     val sceneSwitch: SceneSwitch? = null,
+    /**
+     * Where a system reads what the [sceneSwitch] is doing: loading, ready or failed. `runProject` gives
+     * one; null wherever [sceneSwitch] is, unless the host adds its own with [withSceneSwitchStatus].
+     */
+    val sceneSwitchStatus: SceneSwitchStatus? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -72,14 +77,19 @@ class SceneHostServices private constructor(
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
-    fun withAudio(audio: AudioPlayer): SceneHostServices = SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch)
+    fun withAudio(audio: AudioPlayer): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
 
     /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
     fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
+
+    /** These services, with [sceneSwitchStatus] reporting what the [sceneSwitch] is doing, as `runProject` does. */
+    fun withSceneSwitchStatus(sceneSwitchStatus: SceneSwitchStatus): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
 
     /** Makes services for a host with no renderer. */
     companion object {
@@ -150,8 +160,8 @@ class SceneSystemSet internal constructor(
  * - `paged_terrain`: its cells streamed around the primary camera from the index and shared images in
  *   [SceneHostServices.content], drawn through [SceneHostServices.renderer] when it takes content
  *   features, with collision cells when it is a `collider` and [SceneHostServices.physics] is given
- * - `canvas_element`s with an action, and look areas: [CanvasActionSystem], which adds them to the
- *   input actions and turns the camera from a look area
+ * - canvas input watchers, always: controls added at runtime get [CanvasActionSystem], which adds
+ *   their input actions and turns the camera from a look area; an idle scene creates no input state
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
  *   the system that answers their route requests
  * - skinned glTF animation, always

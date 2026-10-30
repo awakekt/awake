@@ -129,6 +129,7 @@ public final class com/awakekt/awake/asset/shaderdsl/AslEvaluator$Companion {
 	public final fun eval (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Ljava/util/Map;)[F
 	public final fun evalFragment (Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Ljava/util/Map;)[F
 	public final fun traceFragment (Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Ljava/util/Map;)Lcom/awakekt/awake/asset/shaderdsl/AslFragmentTrace;
+	public final fun traceFragment (Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Ljava/util/Map;Ljava/util/Map;)Lcom/awakekt/awake/asset/shaderdsl/AslFragmentTrace;
 }
 
 public abstract interface class com/awakekt/awake/asset/shaderdsl/AslExpr {

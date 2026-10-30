@@ -50,6 +50,7 @@ internal class WebGpuUiPass : UiPass<DynamicMesh, WebGpuRenderFrameContext> {
             quad = pipelines.quad,
             roundedQuad = pipelines.roundedQuad,
             glyph = pipelines.glyph,
+            decoratedGlyph = pipelines.decoratedGlyph,
             textures = pipelines.textures,
             textureMeshForPrimitive = context::textureMeshForPrimitive,
             executeImagePass = context::executeImagePass,

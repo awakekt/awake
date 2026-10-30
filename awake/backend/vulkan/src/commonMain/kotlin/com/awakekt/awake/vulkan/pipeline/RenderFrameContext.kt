@@ -64,4 +64,6 @@ internal class UiPipelineSet(
     val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     val roundedQuad: UiRenderPipeline?,
     val fontAtlases: Map<UiFont, Texture>,
+    /** The decorated glyph pipeline (#1061), built once a frame draws a decorated glyph. */
+    val decoratedGlyph: UiRenderPipeline? = null,
 )

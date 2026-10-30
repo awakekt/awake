@@ -53,4 +53,17 @@ class PbrMaterialPackingTest {
         assertContentEquals(pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, litWhenAdditive = true), lit)
         assertSame(lit, material.packedFloats())
     }
+
+    @Test
+    fun unlitPacksWithTheMaterial() {
+        val material = PbrMaterial()
+        val lit = material.packedFloats()
+
+        material.unlit = true
+        val unlit = material.packedFloats()
+
+        assertNotSame(lit, unlit)
+        assertContentEquals(pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, unlit = true), unlit)
+        assertSame(unlit, material.packedFloats())
+    }
 }

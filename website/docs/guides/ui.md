@@ -93,15 +93,152 @@ node. `drawImageFillBar(fill, value, direction)` draws it as a bar's fill, from 
 draws an `ImageFill` over it, and `dropShadow(shadow)` casts a shadow in the style's shape. Scene UI's
 `canvas_element` style is the saved form of the same properties.
 
-`TextStyle(shadow = TextShadow(color, offsetX, offsetY), outline = TextOutline(color, width))` draws a
-hard shadow and an outline under a `Text` or a `BasicTextField`'s text, in dp; both merge over an
-inherited style like its colour and size do. A scene's `canvas_element` text ignores the host's text
-style and looks only as its own data says.
+`TextStyle(shadow = TextShadow(color, offsetX, offsetY, blur), outline = TextOutline(color, width))` draws
+a shadow and an outline under a `Text` or a `BasicTextField`'s text, in dp; both merge over an inherited
+style like its colour and size do. The shadow is hard unless `blur` softens its edge across that many dp
+either side; with no offset it is a glow. With the built-in fonts and any font from `UiFonts.load`, each
+glyph draws its fill, outline and shadow in one quad from the font's effect field, a coarse distance field
+that reaches half an em past the ink: a thick outline stays round with no gaps, and the text costs one draw
+a glyph. Decorated text draws from the distance field at every size, so its weight does not jump at the
+24-pixel limit. A font without an effect field, such as `UiFonts.bitmap()`, stamps the text in the shadow's
+colour, then eight times around it in the outline's, then once more. A scene's `canvas_element` text ignores
+the host's text style and looks only as its own data says.
 
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of
 decoding the same file again.
+
+## Draw crisp text
+
+`Text` sizes its glyphs in device pixels: `sp` times the display density and any canvas scale, rounded
+to a whole pixel. So 12 sp on a 150% display is 18 physical pixels, not a stretched 12. Which path draws
+the text depends on that size.
+
+| Text | Drawn from |
+|---|---|
+| 24 device pixels or smaller, at rest or scrolling by whole pixels | Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 on the pixel grid |
+| 24 device pixels or smaller, translating by fractions of a pixel | Those same exact-size glyphs shifted smoothly across subpixel offsets, easing back onto whole pixels when motion stops |
+| Larger than 24 pixels | The font's distance-field atlas |
+| Under `Modifier.scale`, an animated `TextStyle.scale`, or an animated em size | The distance-field atlas for the whole animation, including as it passes through `1.0x` or crosses 24 pixels |
+| In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
+
+The exact-size glyphs put a one-pixel stem on one solid pixel column, the x-height and cap height
+on whole pixels, and the crossbar of an `e` or the bar of an `H`, `A` or `F` on one solid pixel row.
+Each glyph comes in four subpixel variants, and a glyph is drawn as the variant nearest its pen's
+fraction of a pixel, with its stem still on the grid, so the gaps in a run follow layout instead of
+jumping by up to a pixel between letters. The default Roboto family and any font from `UiFonts.load`
+have them. Each size is rasterized the first time it is drawn, in about ten milliseconds, and kept.
+
+### How coverage becomes colour
+
+Both paths give each pixel a coverage: the share of the pixel the glyph's outline covers. Exact-size
+glyphs store it; the distance field gives it as a one-pixel ramp across the outline. One rule, the
+**text coverage rule**, turns that coverage into the alpha the pixel is blended with. It is the same on
+both paths, on Vulkan, on WebGPU and in the CPU raster the snapshot tests use, so text does not change
+weight when it crosses the 24-pixel limit or starts to scale.
+
+The rule is Skia's mask gamma with the constants Chromium uses for grayscale text on Linux:
+
+1. Take the text colour's luma: its channels raised to the power 1.2, weighted 0.2126, 0.7152 and
+   0.0722, and the sum raised back by 1 / 1.2.
+2. Assume the ground is the opposite of the text: ground luma = 1 − text luma. The shader cannot see
+   what is behind the text.
+3. Boost the coverage `c` with a contrast of 0.2 times the ground's linear luma: `c + (1 − c) × k × c`.
+   Dark text on a light ground gains a little, and light text on a dark ground gains nothing.
+4. Mix text and ground by that coverage in light linearised with gamma 1.2. Then take the alpha that
+   gives the same colour when the GPU blends in the target's own encoding.
+
+| Constant | Value | Where |
+|---|---|---|
+| Gamma | 1.2 | `TEXT_GAMMA` in `AslUiShaders.UiGlyphShader`; `UiRasterizer.textCoverageAlpha` copies it |
+| Contrast | 0.2 | `TEXT_CONTRAST`, likewise |
+| Luma weights | 0.2126, 0.7152, 0.0722 | Rec. 709 |
+
+At half coverage, near-black text on white draws with alpha 0.50 and near-white text on near-black with
+0.55. The exact-size glyphs used to blend with gamma 1.8 and a contrast of 1 in both polarities, which
+gave 0.49 and 0.80, so light text looked bolder than dark. The distance field used `pow(c, 1 / 1.45)`,
+which gave 0.62 for both.
+
+`TextPolarityWeightTest` holds the rule to Chromium. Chromium draws the same label in the same Roboto
+face, dark on light and light on dark, at every size from 9 to 48 px. The references are written by
+`tools/fonts-tooling/chromium_polarity_reference.cjs`. Awake's ink is within 6% of Chromium's at every
+size in both polarities, 0.95 to 1.05 of it. The light-on-dark to dark-on-light ink ratio is within 6%
+of Chromium's own. Ink means the summed darkness of the text's pixels, measured toward the text colour.
+From 24 px pixel glyphs to 25 px distance field, the ink per em changes by under 2% and stem darkness
+by under 3.5%. Before the rule, light-on-dark small text held 1.16 to 1.29 times Chromium's ink, and
+crossing the limit moved ink by 9 to 10% in each polarity.
+
+`TextProofSpecimenTest` holds a full 520 × 714 dp proof page to Chromium in both polarities at 1x and
+1.5x, alongside four 8-bit grey baselines: the 9 to 48 px size ramp with kerning on, Roboto weights 300
+to 900, a runtime-loaded TTF (`Roboto-Medium.ttf`) at pixel-glyph and distance-field sizes, a wrapped
+paragraph, and a HUD readout. Every band stays 0.95 to 1.05 of Chromium's ink (0.949 to 1.045), with
+the light-on-dark to dark-on-light ratio within 5.3% of Chromium's.
+
+The rule does no stem darkening. Chromium does none, and the sizes it was measured at are within the
+tolerance without it.
+
+#### Text colour and custom shaders
+
+- **The colour picks the curve.** The rule reads only the text colour, never the ground. Dark text gets
+  a slightly heavier edge and light text a slightly lighter one than plain coverage would give. Text on
+  a ground close to its own luma, such as grey on grey, is drawn as if the ground were the opposite of
+  the text, as Chromium draws it. A saturated colour counts by its luma: pure red's is about 0.28, so red
+  text is treated as dark text, wherever it is drawn.
+- **Mid-grey text** has a luma of 0.5 and its assumed ground is itself, so it draws with the boosted
+  coverage as it is.
+- **The colour's alpha** multiplies the rule's alpha afterwards. Faded text keeps the shape of its
+  edges and only gets lighter.
+- **Layers and opacity.** The rule applies when a glyph is drawn, including into a `graphicsLayer`. A
+  layer composited later gives the same pixels as drawing straight onto the ground.
+- **A shader document** (`shader_effect`) draws as a pass of its own. It never changes how text is
+  drawn: text it covers, or that covers it, has already been drawn with the rule. An image pass that
+  post-processes the frame sees text after the rule as well.
+- **A glyph shader of your own.** A renderer built with its own `UiShaderSet.glyph` must apply the
+  rule itself, or its text will not match the CPU raster or the other backend. Start from
+  `UiGlyphShader` in `awake:asset:shaders`. Its `fontInfo` uniform says which atlases take the rule:
+  `x = 1` for a distance field, and `x = 0` with `z = 1` for exact-size coverage. A bitmap font such
+  as `UiFonts.bitmap()` (`z = 0`) and colour glyphs (`x = 2`) draw their alpha unchanged.
+
+### The reference small text is held to
+
+The weight of small text is checked against references we control, not against Awake's own earlier
+output. Both polarities are held to Chromium, as above. The shapes of small dark-on-light text are
+also held to FreeType. `tools/fonts-tooling/reference_render.py` renders the same labels with
+FreeType, pinned to 2.13.2 through `freetype-py` 2.5.1 in `requirements-reference.txt`, with these
+settings:
+
+| Setting | Value | Why |
+|---|---|---|
+| Hinting | Light (`FT_LOAD_TARGET_LIGHT`) | Snaps horizontal edges and the x-height to the grid, leaves shapes and advances alone |
+| Stem darkening | On | Keeps thin strokes from fading once blending stops thickening them |
+| Anti-aliasing | 8-bit grayscale coverage | The quantity Awake's exact-size glyphs hold too |
+| Blending | Gamma 1.8 | The gamma FreeType documents for light hinting with stem darkening, and the classic text gamma |
+
+The PNGs live in `awake/compose/ui-testing/src/desktopTest/resources/text-reference/`, and
+`TextReferenceMetricsTest` compares Awake's rendering with them per case: stem width, ink mass, the
+darkness of curves and diagonals against stems, the share of faint ink pixels, and the mean pixel
+difference. It asserts the dark-on-light cases and only reports the light-on-dark ones. The reference
+composites light text with gamma 1.8, which gives it about 1.4 times the ink of dark text, where
+Chromium gives about 1.1 times. The PNGs change only when someone deliberately reruns the generator:
+
+```
+python3 -m pip install -r tools/fonts-tooling/requirements-reference.txt
+python3 tools/fonts-tooling/reference_render.py
+```
+
+To see any component baseline beside FreeType's glyphs, write glyph packs with
+`reference_render.py --glyph-pack <dir>` and run the snapshot tests with
+`AWAKE_TEXT_REFERENCE_GLYPHS=<dir>`; each baseline is also written, in FreeType's glyphs, to
+`build/reports/text-reference/`.
+
+To move the limit, or to draw a font from its distance field at every size, wrap it once and keep it:
+
+```kotlin title="Kotlin"
+val headings = UiFonts.default().withPixelGlyphMaxSize(16) // exact-size glyphs up to 16 px
+val uniform = UiFonts.default().withPixelGlyphMaxSize(0)   // the distance field at every size
+Text("Inventory", style = TextStyle(font = uniform))
+```
 
 ## Put UI on the screen
 

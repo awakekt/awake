@@ -160,6 +160,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:physics:api"))
+            implementation(project(":awake:core:logging"))
             // QuatEuler.kt's pure quaternion-to-Euler conversion takes/returns Vec3.
             implementation(project(":awake:core:math"))
         }

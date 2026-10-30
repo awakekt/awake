@@ -1,6 +1,6 @@
 # D35: the editor boundary between Core and Studio
 
-Status: accepted (2026-10-03)
+Status: accepted (2026-10-03); amended by [D41](D41-plugin-trust-formats.md) (2026-10-25)
 
 ## Decision
 
@@ -12,7 +12,7 @@ repositories only when it changes sides of that line.
 |---|---|
 | Runtime modules, including the runtime that reads data a Studio tool emits | The editor library (`awake/editor/*`) and the app (`app/studio`) |
 | `:awake:editor:contract`: `EditorPlugin`, `PluginManifest`, every provider interface a plugin implements, and the data those interfaces carry | How providers are hosted: dock and workspace layout, the keymap and its conflicts, template insertion, the floating-card deck, the shell |
-| Neutral types those interfaces need (`Composer`, `Modifier`, `World`, `Key`) | Plugin discovery, signatures, entitlement, the marketplace |
+| Neutral types those interfaces need (`Composer`, `Modifier`, `World`, `Key`) | Plugin discovery, entitlement, the marketplace, and the trust policy applied to signatures (the signature formats themselves are Core: [D41](D41-plugin-trust-formats.md)) |
 
 A test for each change: if a third-party plugin has to implement it or read it, it is contract and
 lives in Core. If only the host calls it, it is Studio.

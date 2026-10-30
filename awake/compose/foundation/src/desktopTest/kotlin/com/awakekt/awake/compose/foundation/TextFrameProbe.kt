@@ -19,6 +19,14 @@ import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextShadow
+import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.WordBreak
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
@@ -36,10 +44,76 @@ import kotlin.time.TimeSource
  */
 class TextFrameProbe {
     private val painter = Painter()
-    private val labels = List(ROWS * CELLS_PER_ROW) { "Label ${it + 1}" }
+    private val plainLabels = List(ROWS * CELLS_PER_ROW) { "Label ${it + 1}" }
 
+    /** Labels whose every capital pair kerns in Roboto (#1022): WA, AV, To and Ty. */
+    private val kernedLabels = List(ROWS * CELLS_PER_ROW) { "WAVE To Ty ${it + 1}" }
+
+    /**
+     * Six-glyph mixed CJK labels (#1066), matching `"Label N"`'s glyph count so paint's per-glyph draw
+     * command budget is held constant while soft-wrapping across two lines in a narrower cell.
+     */
+    private val cjkLabels = List(ROWS * CELLS_PER_ROW) { "港口항구${(it % 9) + 1}。" }
+    private var labels = plainLabels
+    private var style: TextStyle? = null
+    private var cellWidthDp = CELL_WIDTH
+
+    /** The default: labels this small draw exact-size pixel glyphs. */
     @Test
     fun unchangedTextPerFrame() {
+        probe("pixel glyphs", style = null)
+    }
+
+    /**
+     * The same labels held to the distance field, the path larger or scaled text takes: the two paths
+     * are set side by side, since a label switches between them when it crosses the size limit.
+     */
+    @Test
+    fun unchangedDistanceFieldTextPerFrame() {
+        probe("distance field", TextStyle(font = UiFonts.default().withPixelGlyphMaxSize(0)))
+    }
+
+    /**
+     * The same labels outlined and with a soft shadow (#1061): one decorated glyph a character, from the distance
+     * field at every size, where stamping drew ten. Held to the same ratchet as plain text: about 82,000 run alone,
+     * once each run kept its glyphs' decorations from frame to frame (160,000 when it built two a glyph a frame).
+     */
+    @Test
+    fun unchangedOutlinedShadowedTextPerFrame() {
+        val decorated = TextStyle(outline = TextOutline(Color.Black, 2f), shadow = TextShadow(Color.Black, 1f, 1f, blur = 2f))
+        probe("outlined and shadowed", decorated)
+    }
+
+    /**
+     * Labels full of kerned pairs, kerned and not: the cost of a kerning lookup per adjacent pair, set side
+     * by side in one JVM, where a comparison across runs would mostly measure the machine.
+     */
+    @Test
+    fun unchangedKernedTextPerFrame() {
+        probe("kerned pairs", style = null, labels = kernedLabels)
+        probe("kerned pairs, kerning off", TextStyle(kerning = false), labels = kernedLabels)
+    }
+
+    /** Wrapped CJK and `keep-all` labels (#1066) reuse their cached layout and allocate nothing extra in layout. */
+    @Test
+    fun unchangedWrappedCjkTextPerFrame() {
+        val asciiLayout = probe("plain control", style = null, labels = plainLabels)
+        val cjkNormalLayout = probe("wrapped CJK normal", style = null, labels = cjkLabels, cellWidth = 36)
+        val cjkKeepAllLayout = probe("wrapped CJK keep-all", TextStyle(wordBreak = WordBreak.KeepAll), labels = cjkLabels, cellWidth = 36)
+        assertTrue(
+            cjkNormalLayout <= asciiLayout + 64L,
+            "wrapped CJK layout ($cjkNormalLayout B) exceeded plain control ($asciiLayout B)",
+        )
+        assertTrue(
+            cjkKeepAllLayout <= asciiLayout + 64L,
+            "wrapped CJK keep-all layout ($cjkKeepAllLayout B) exceeded plain control ($asciiLayout B)",
+        )
+    }
+
+    private fun probe(path: String, style: TextStyle?, labels: List<String> = plainLabels, cellWidth: Int = CELL_WIDTH): Long {
+        this.style = style
+        this.labels = labels
+        this.cellWidthDp = cellWidth
         val root = LayoutNode(ColumnMeasurePolicy())
         repeat(WARMUP_FRAMES) { frame(root) }
 
@@ -59,11 +133,12 @@ class TextFrameProbe {
             paint += measure { painter.paint(root) }
         }
         println(
-            "TextFrameProbe: $perFrame B/frame, ${"%.3f".format(msPerFrame)} ms/frame for ${labels.size} labels " +
+            "TextFrameProbe ($path): $perFrame B/frame, ${"%.3f".format(msPerFrame)} ms/frame for ${labels.size} labels " +
                 "(reconcile ${reconcile / PHASE_SAMPLES}, layout ${layout / PHASE_SAMPLES}, " +
                 "paint ${paint / PHASE_SAMPLES}); total ${elapsed.inWholeMilliseconds} ms over $MEASURED_FRAMES frames",
         )
         assertTrue(perFrame < CEILING_BYTES_PER_FRAME, "$perFrame B/frame exceeds the $CEILING_BYTES_PER_FRAME B ratchet")
+        return layout / PHASE_SAMPLES
     }
 
     private fun frame(root: LayoutNode) {
@@ -78,8 +153,11 @@ class TextFrameProbe {
             val rowModifier = remember { Modifier.height(ROW_HEIGHT.dp) }
             Row(rowModifier) {
                 repeat(CELLS_PER_ROW) { cell ->
-                    val cellModifier = remember { Modifier.width(CELL_WIDTH.dp) }
-                    Text(labels[row * CELLS_PER_ROW + cell], cellModifier)
+                    val widthDp = cellWidthDp
+                    val cellModifier = remember(widthDp) { Modifier.width(widthDp.dp) }
+                    val label = labels[row * CELLS_PER_ROW + cell]
+                    val style = style
+                    if (style == null) Text(label, cellModifier) else Text(label, cellModifier, style = style)
                 }
             }
         }
@@ -112,6 +190,10 @@ class TextFrameProbe {
         // Run alone the figure is exact and repeats. Inside the full desktopTest JVM it has also read
         // 151,345, because escape analysis depends on how earlier tests left the JIT. The ceiling
         // sits above that, still far below the 293 KB a regression back to per-frame re-shaping gives.
-        const val CEILING_BYTES_PER_FRAME = 165_000L
+        //
+        // About 52,000 (pixel glyphs) and 55,000 (distance field) run alone once the weighted family stopped
+        // copying a GlyphRect and building a comparator for every glyph it resolves (#993); the distance-field
+        // case has read 81,979 inside the full desktopTest JVM, so the ceiling sits above that.
+        const val CEILING_BYTES_PER_FRAME = 100_000L
     }
 }

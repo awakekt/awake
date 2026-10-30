@@ -10,11 +10,13 @@ import com.awakekt.awake.core.color.toHex
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Sp
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.scene.document.SceneValidationException
+import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBar
@@ -27,17 +29,21 @@ import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLook
+import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import com.awakekt.awake.ui.canvas.CanvasView
 
 /** Keeps an outer element's settings out of reach inside a child's block. */
 @DslMarker
 annotation class CanvasPrefabDsl
 
 /**
- * A prefab of `canvas_element` nodes built in code: the same [ScenePrefab] an editor saves, so its
- * JSON, from [CanvasPrefabs.toJson], opens in the editor as it is and saves back unchanged.
+ * A prefab of canvas element nodes built in code: the same [ScenePrefab] an editor saves, so its
+ * JSON, from [CanvasPrefabs.toJson], opens in the editor as it is and saves back unchanged. Each
+ * element is saved as its components: a `canvas_rect`, and the `canvas_text`, `canvas_appearance`,
+ * widget and other components its settings call for.
  *
  * The block sets up the root element, of [kind], named [name], and adds its children. The prefab
  * is validated as [CanvasPrefabs.problems] does before it is returned.
@@ -71,17 +77,22 @@ fun canvasPrefab(
     id: String = "",
     block: CanvasElementScope.() -> Unit,
 ): ScenePrefab {
-    val prefab = ScenePrefab(guid = guid, name = name, root = CanvasElementScope(name, kind, id).apply(block).build())
-    val problems = CanvasPrefabs.problems(prefab)
+    val scope = CanvasElementScope(name, kind, id)
+    val prefab = ScenePrefab(guid = guid, name = name, root = scope.apply(block).build())
+    val problems = CanvasPrefabs.problems(prefab) + scope.problems
     if (problems.isNotEmpty()) throw SceneValidationException(problems)
     return prefab
 }
 
 /**
- * One `canvas_element` node of a prefab being built: its settings, typed, and the elements inside
- * it, added with [text], [panel], [bar], [button] and the other kinds' functions.
+ * One canvas element node of a prefab being built: its settings, typed, and the elements inside it,
+ * added with [text], [panel], [bar], [button] and the other kinds' functions. Each kind's function
+ * gives the element the components that kind is made of, such as a `canvas_button` and a
+ * `canvas_text` for a Button.
  *
- * Each setting is the `canvas_element` field of the same name, starting at that field's default.
+ * Each setting is the older `canvas_element` field of the same name, starting at that field's
+ * default, and is saved in the component that holds it now; one that the element's kind never uses,
+ * such as a Panel's text, is not saved.
  * Sizes and offsets are [Dp], a font size is [Sp], and colours are [Color]s, written as
  * [Color.toHex] writes them. Settings that are objects of their own, such as [style], [layout],
  * [bind] or [button], take the `awake:ui:canvas` type the field holds.
@@ -89,6 +100,7 @@ fun canvasPrefab(
  * @param name The node's name.
  * @property kind What the element draws.
  * @param id The element's [elementId].
+ * @param path Where the node sits in the prefab, such as `Window/Close`, for the problems it reports.
  */
 @CanvasPrefabDsl
 @Suppress("TooManyFunctions") // One function for each element kind.
@@ -96,8 +108,12 @@ class CanvasElementScope internal constructor(
     private val name: String,
     val kind: CanvasElementKind,
     id: String,
+    private val path: String = name,
 ) {
     private val defaults = SceneCanvasElement(kind = kind)
+
+    /** What is wrong with this element and the ones inside it, beyond what their saved components validate. */
+    internal val problems = mutableListOf<SceneValidationIssue>()
     private val children = mutableListOf<SceneNode>()
     private val components = mutableListOf<SceneComponent>()
 
@@ -203,8 +219,14 @@ class CanvasElementScope internal constructor(
     /** A View's camera: the name of a node with a camera. */
     var camera: String = defaults.camera
 
+    /** A View's transparency and picture mask, saved on its focused canvas_view component. */
+    var view: CanvasView? = null
+
     /** Whether a Text's `[[key|words]]` spans draw as links. */
     var links: Boolean = defaults.links
+
+    /** Digit width spacing (`Tabular` or `Proportional`); null keeps the font's default digits. */
+    var numerals: FontNumerals? = defaults.numerals
 
     /** A TextField's password mask character; empty draws the text as typed. */
     var mask: String = defaults.mask
@@ -220,6 +242,15 @@ class CanvasElementScope internal constructor(
 
     /** What [maxLength] counts. */
     var maxLengthUnit: TextLengthUnit = defaults.maxLengthUnit
+
+    /** The key of the hint a TextField shows while it is empty and unfocused. */
+    var placeholder: String = defaults.placeholder
+
+    /** The space between a TextField's edge and its text, in dp. */
+    var padding: CanvasPadding = defaults.padding
+
+    /** The key of the hint shown near the pointer after it rests on the element. */
+    var tooltip: String = defaults.tooltip
 
     /** How a Joystick moves and what it reports. */
     var joystick: CanvasJoystick? = defaults.joystick
@@ -264,17 +295,21 @@ class CanvasElementScope internal constructor(
     }
 
     /**
-     * Adds another component to this node beside its `canvas_element`, such as a `tag` or a
+     * Adds another component to this node beside its canvas components, such as a `tag` or a
      * `blueprint`.
      */
     fun component(component: SceneComponent) {
-        require(component !is SceneCanvasElement) { "$name already has its canvas_element; add a child element instead" }
+        require(!component.isCanvasElementPart()) {
+            "$name is already a canvas element; set its ${component::class.simpleName} through this scope, or add a child element"
+        }
         components += component
     }
 
     /** Adds a child element of [kind], named [name], set up by [block]. */
     fun element(name: String, kind: CanvasElementKind, id: String = "", block: CanvasElementScope.() -> Unit = {}) {
-        children += CanvasElementScope(name, kind, id).apply(block).build()
+        val child = CanvasElementScope(name, kind, id, "$path/$name").apply(block)
+        children += child.build()
+        problems += child.problems
     }
 
     /** Adds a Text child. */
@@ -313,11 +348,14 @@ class CanvasElementScope internal constructor(
     /** Adds a Stepper child. */
     fun stepper(name: String, id: String = "", block: CanvasElementScope.() -> Unit = {}) = element(name, CanvasElementKind.Stepper, id, block)
 
-    internal fun build(): SceneNode = SceneNode(
-        name = name,
-        components = listOf(toSceneComponent()) + components,
-        children = children.toList(),
-    )
+    internal fun build(): SceneNode {
+        val element = toSceneComponent()
+        problems += element.unsavedFieldIssues(path)
+        if (view != null && kind != CanvasElementKind.View) problems += SceneValidationIssue(path, "view does nothing on a ${kind.name}, so it is not saved")
+        // Saved as the components it is: the same set an older canvas_element reads as.
+        val parts = element.toCanvasComponents().map { if (it is SceneCanvasView) it.copy(settings = view) else it }
+        return SceneNode(name = name, components = parts + components, children = children.toList())
+    }
 
     private fun toSceneComponent(): SceneCanvasElement = SceneCanvasElement(
         kind = kind,
@@ -353,11 +391,15 @@ class CanvasElementScope internal constructor(
         dropTarget = dropTarget,
         camera = camera,
         links = links,
+        numerals = numerals,
         mask = mask,
         font = font,
         pressable = pressable,
         maxLength = maxLength,
         maxLengthUnit = maxLengthUnit,
+        placeholder = placeholder,
+        padding = padding,
+        tooltip = tooltip,
         textKey = textKey,
         textArgs = textArgs.toMap(),
         joystick = joystick,

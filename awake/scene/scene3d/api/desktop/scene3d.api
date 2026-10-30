@@ -44,9 +44,18 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public final fun getLastFramePlanned ()Z
 	public final fun getLastFrustumCulledCount ()I
 	public final fun getLastOccludedCount ()I
+	public final fun getLastShadowOnlyCount ()I
+	public final fun getMinShadowCasterRatio ()F
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;II)Lcom/awakekt/awake/render/command/GpuPassInput;
+	public final fun setMinShadowCasterRatio (F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/rendering/Scene3dSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/Scene3dSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
 }
 
 public final class com/awakekt/awake/scene/rendering/SceneMathExtensionsKt {
@@ -150,18 +159,20 @@ public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimati
 }
 
 public final class com/awakekt/awake/scene/rendering/animation/ModularCharacterComponent {
-	public fun <init> (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun clearSlots ()V
 	public final fun component1 ()Lcom/awakekt/awake/core/animation/Skin;
 	public final fun component2 ()Ljava/util/Map;
 	public final fun component3 ()Z
 	public final fun component4 ()Lcom/awakekt/awake/core/animation/Skeleton;
-	public final fun copy (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;)Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;
+	public final fun component5 ()Z
+	public final fun copy (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;Z)Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun equip (Ljava/lang/String;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Z)Lcom/awakekt/awake/scene/rendering/animation/CharacterSlot;
 	public static synthetic fun equip$default (Lcom/awakekt/awake/scene/rendering/animation/ModularCharacterComponent;Ljava/lang/String;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/CharacterSlot;
+	public final fun getCastsShadows ()Z
 	public final fun getSkeleton ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun getSkin ()Lcom/awakekt/awake/core/animation/Skin;
 	public final fun getSlot (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/animation/CharacterSlot;
@@ -1053,14 +1064,16 @@ public final class com/awakekt/awake/scene/rendering/mesh/InstancedSkinnedMeshRe
 
 public final class com/awakekt/awake/scene/rendering/mesh/LodGroup {
 	public static final field UNSET I
-	public fun <init> (Ljava/util/List;F)V
-	public synthetic fun <init> (Ljava/util/List;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;FZ)V
+	public synthetic fun <init> (Ljava/util/List;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()F
-	public final fun copy (Ljava/util/List;F)Lcom/awakekt/awake/scene/rendering/mesh/LodGroup;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/LodGroup;Ljava/util/List;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/LodGroup;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/util/List;FZ)Lcom/awakekt/awake/scene/rendering/mesh/LodGroup;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/LodGroup;Ljava/util/List;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/LodGroup;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getActiveLevel ()I
+	public final fun getCastsShadows ()Z
 	public final fun getHysteresis ()F
 	public final fun getLevels ()Ljava/util/List;
 	public fun hashCode ()I
@@ -1121,9 +1134,10 @@ public final class com/awakekt/awake/scene/rendering/mesh/MeshBounds {
 }
 
 public final class com/awakekt/awake/scene/rendering/mesh/MeshRenderer {
-	public fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/render/mesh/Mesh;
+	public final fun component10 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/render/material/Material;
 	public final fun component3 ()Lcom/awakekt/awake/render/pipeline/CullMode;
 	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -1132,11 +1146,12 @@ public final class com/awakekt/awake/scene/rendering/mesh/MeshRenderer {
 	public final fun component7 ()Z
 	public final fun component8 ()Z
 	public final fun component9 ()Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
-	public final fun copy (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
+	public final fun copy (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;Z)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/core/math/Vec3f;ZZZZLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Z
 	public final fun getBillboard ()Z
+	public final fun getCastsShadows ()Z
 	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
 	public final fun getDefaultMaterial ()Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public final fun getMaterial ()Lcom/awakekt/awake/render/material/Material;
@@ -1165,8 +1180,10 @@ public final class com/awakekt/awake/scene/rendering/mesh/MeshRendererBinding : 
 
 public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 	public fun <init> ()V
-	public fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)V
 	public synthetic fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZ)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
@@ -1174,8 +1191,11 @@ public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
 	public final fun component6 ()F
 	public final fun component7 ()Z
-	public final fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public final fun component8 ()Z
+	public final synthetic fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public final fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZ)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlphaCutoff ()F
 	public final fun getAlphaMode ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
@@ -1184,6 +1204,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 	public final fun getLitWhenAdditive ()Z
 	public final fun getMetallic ()F
 	public final fun getRoughness ()F
+	public final fun getUnlit ()Z
 	public fun hashCode ()I
 	public final fun packedFloats (Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;)[F
 	public static synthetic fun packedFloats$default (Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;ILjava/lang/Object;)[F
@@ -1194,25 +1215,28 @@ public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 	public final fun setLitWhenAdditive (Z)V
 	public final fun setMetallic (F)V
 	public final fun setRoughness (F)V
+	public final fun setUnlit (Z)V
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZ)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZZ)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
 	public final fun component4 ()Z
 	public final fun component5 ()Z
 	public final fun component6 ()Z
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZ)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public final fun component7 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZZ)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZZZZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getBillboard ()Z
+	public final fun getCastsShadows ()Z
 	public final fun getCullMode ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
 	public final fun getMaterial ()Ljava/lang/String;
 	public final fun getMesh ()Ljava/lang/String;
@@ -1250,8 +1274,10 @@ public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$Cull
 public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$Companion;
 	public fun <init> ()V
-	public fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)V
 	public synthetic fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZ)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
@@ -1259,8 +1285,11 @@ public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial : com
 	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
 	public final fun component6 ()F
 	public final fun component7 ()Z
-	public final fun copy (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public final fun component8 ()Z
+	public final synthetic fun copy (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZ)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public final fun copy (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZ)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getAlphaCutoff ()F
@@ -1270,6 +1299,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial : com
 	public final fun getLitWhenAdditive ()Z
 	public final fun getMetallic ()F
 	public final fun getRoughness ()F
+	public final fun getUnlit ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
@@ -1698,9 +1728,10 @@ public final class com/awakekt/awake/scene/rendering/postprocessing/ScenePostPro
 public final class com/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect : com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect$Companion;
 	public fun <init> ()V
-	public fun <init> (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/effects/ToneMappingMode;)V
+	public synthetic fun <init> (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/effects/ToneMappingMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
+	public final fun component10 ()Lcom/awakekt/awake/render/effects/ToneMappingMode;
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
@@ -1709,8 +1740,8 @@ public final class com/awakekt/awake/scene/rendering/postprocessing/SceneToneMap
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Ljava/util/List;
 	public final fun component9 ()Ljava/util/List;
-	public final fun copy (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
+	public final fun copy (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/effects/ToneMappingMode;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/effects/ToneMappingMode;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContrast ()F
 	public fun getEnabled ()Z
@@ -1718,6 +1749,7 @@ public final class com/awakekt/awake/scene/rendering/postprocessing/SceneToneMap
 	public final fun getGain ()Ljava/util/List;
 	public final fun getGamma ()Ljava/util/List;
 	public final fun getLift ()Ljava/util/List;
+	public final fun getMode ()Lcom/awakekt/awake/render/effects/ToneMappingMode;
 	public final fun getSaturation ()F
 	public final fun getWhiteBalanceTemperature ()F
 	public final fun getWhiteBalanceTint ()F
@@ -1933,12 +1965,14 @@ public final class com/awakekt/awake/scene/rendering/spatial/SpatialGrid {
 	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun clear ()V
 	public final fun getCellSize ()F
+	public final fun getCore ()Lcom/awakekt/awake/core/spatial/SpatialGrid;
 	public final fun getIds ()Ljava/util/Set;
 	public final fun getSize ()I
 	public final fun insert (ILcom/awakekt/awake/core/math/Aabb;)V
 	public final fun queryAabb (Lcom/awakekt/awake/core/math/Aabb;Ljava/util/Collection;)Ljava/util/Collection;
 	public final fun queryFrustum (Lcom/awakekt/awake/core/math/Lens;FLjava/util/Collection;)Ljava/util/Collection;
 	public final fun queryRange (Lcom/awakekt/awake/core/math/Vec3f;FLjava/util/Collection;)Ljava/util/Collection;
+	public final fun queryShadowCasters (Lcom/awakekt/awake/render/passes/ShadowCasterVolume;Ljava/util/Collection;)Ljava/util/Collection;
 	public final fun remove (I)V
 }
 
@@ -1948,6 +1982,7 @@ public final class com/awakekt/awake/scene/rendering/spatial/SpatialGridKt {
 
 public final class com/awakekt/awake/scene/rendering/spatial/SpatialIndex {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/spatial/SpatialGrid;)V
 	public fun <init> (Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;
@@ -2172,5 +2207,7 @@ public final class com/awakekt/awake/scene/rendering/tonemapping/ToneMappingBind
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/tonemapping/SceneToneMapping;)Lcom/awakekt/awake/scene/rendering/tonemapping/ToneMapping;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/tonemapping/ToneMapping;)Lcom/awakekt/awake/scene/rendering/tonemapping/SceneToneMapping;
 }
 

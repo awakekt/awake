@@ -93,7 +93,10 @@ factories.
 `switchTo` keeps the systems the app registered. A project played with `runProject` goes to another of
 its scenes through its `SceneSwitch` instead, which also closes the old scene's systems and physics
 and plans the next scene's own: a system asks with `services.sceneSwitch?.request("scenes/level-2.scene.json")`,
-and a blueprint with its Load Scene node. See
+and a blueprint with its Load Scene node. A game that shows a loading curtain or an error reads the
+app's `SceneSwitchStatus` service: its `state` is idle, loading with the share of the next scene's
+bytes that have arrived, ready once the new scene has had its first frame, or failed with the scene's
+path and cause. See
 [`awake:project:runtime`](https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene).
 
 ## Save a world
@@ -120,6 +123,10 @@ owns the component, and must be registered before a document that uses them is d
 | `SceneComponentRegistry().registerControls()` | `scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerGlobal(binding)` | any | that binding's id, for every load |
 | `loadProject(files, capabilities = …)` | `project:runtime` | each [scene capability](scene-capabilities.md)'s ids, for that project |
+
+A scene module's own components are listed in the registry the build generates for it, such as
+`SceneCoreSceneComponents`; register one with `registry.register(module)`. [Scene components](scene-components.md)
+shows how to add a component to one.
 
 A registry you build is passed to `instantiate`. Inside an app, where `scene(document)` uses the
 global registry, register with `registerGlobal`; [Cameras and controls](cameras-and-controls.md)

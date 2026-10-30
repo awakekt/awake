@@ -33,6 +33,14 @@ jobs:
   android-physics:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api: 34
+            target: default
+          - api: 36
+            target: google_apis
 
     steps:
       - name: Checkout
@@ -73,22 +81,23 @@ jobs:
       - name: Jolt Android physics tests (instrumented) and a shrunk release's launch
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 34
+          api-level: ${{ matrix.api }}
           arch: x86_64
-          target: default
+          target: ${{ matrix.target }}
           disable-animations: true
           script: |
             ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest :samples:engine-showcase:connectedAndroidDeviceTest
             ./gradlew :samples:engine-showcase:androidApp:assembleRelease
-            scripts/android-launch-check.sh samples/engine-showcase/androidApp/build/outputs/apk/release/androidApp-release.apk com.awakekt.awake.showcase.android/.MainActivity
+            AWAKE_CHECK_RENDERED_UI=1 scripts/android-launch-check.sh samples/engine-showcase/androidApp/build/outputs/apk/release/androidApp-release.apk com.awakekt.awake.showcase.android/.MainActivity 30
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: android-device-test-results
+          name: android-device-test-results-api-${{ matrix.api }}
           path: |
             awake/backend/jolt/build/outputs/androidTest-results/
             awake/scene/physics/build/outputs/androidTest-results/
             samples/engine-showcase/build/outputs/androidTest-results/
+            build/android-launch-check/
           if-no-files-found: warn

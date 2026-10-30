@@ -38,6 +38,11 @@ the renderer-aware Compose host owns size-matched render targets and materials, 
 layers from inner to outer, then replaces each placeholder with its sampled target. Studio's scene
 runtime and standalone Compose apps share this compositor.
 
+A layer does not clip its node's drawing, as Compose's does not. Its target is the node's box grown
+evenly on each side to what the content paints past it (a glyph's ink past its text box, a shadow
+past its card), up to the 8192-pixel texture limit, and the composite quad grows with it about the
+same centre, so rotation and scale are unchanged. A clamped blur keeps its edge at the node.
+
 A layer that only moves, scales or turns pictures skips its target: with no blur, a `SourceOver`
 composite, and only unturned textures inside its bounds (one, under a layer alpha), the compositor
 draws each texture straight into the parent with the layer's transform, as Compose does for a

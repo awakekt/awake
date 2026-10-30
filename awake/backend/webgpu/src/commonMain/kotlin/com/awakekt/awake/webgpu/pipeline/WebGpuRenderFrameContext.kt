@@ -56,4 +56,5 @@ internal class WebGpuUiPipelineSet(
     val glyph: UiRenderPipeline?,
     val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     val roundedQuad: UiRenderPipeline?,
+    val decoratedGlyph: UiRenderPipeline? = null,
 )

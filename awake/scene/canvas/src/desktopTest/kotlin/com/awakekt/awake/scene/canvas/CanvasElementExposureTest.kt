@@ -30,10 +30,13 @@ class CanvasElementExposureTest {
         "kind", "anchor", "offsetX", "offsetY", "width", "height", "text", "textKey", "textArgs", "fontSize", "color",
         "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "safeArea", "style",
         "textAlign", "follow", "followOffset", "followBounds", "followOutset", "followRules", "followArrow", "layout", "grow",
-        "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "maxLength", "maxLengthUnit",
+        "bind", "wheel", "draggable", "dropTarget", "camera", "links", "numerals", "mask", "maxLength", "maxLengthUnit", "placeholder", "padding", "tooltip",
         "font", "pressable", "joystick", "button", "enabled", "look", "cluster", "skin", "controlId",
         "bar", "sweep", "stepper", "elementId",
     ).associateWith { it }
+
+    /** Settings introduced after the legacy record was retired, saved by their focused binding. */
+    private val focusedFields = mapOf("view" to SceneCanvasView.serializer().descriptor)
 
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
     private val codeOnly: Map<String, String> = mapOf(
@@ -46,9 +49,15 @@ class CanvasElementExposureTest {
         "number" to "a Stepper's number right now, saved as its stepper.value, set by the player, game code or bind.value",
     )
 
-    /** [CanvasElement]'s own options: its public setters, skipping a synthetic bridge's `$`-named one. */
-    private fun options(): Set<String> = CanvasElement::class.java.declaredMethods
-        .filter { Modifier.isPublic(it.modifiers) && it.name.startsWith("set") && '$' !in it.name }
+    /**
+     * [CanvasElement]'s own options: its public property setters, its own and those of the bases its
+     * flat properties are split across, skipping a synthetic bridge's `$`-named one and [CanvasElement.set],
+     * which sets a whole component.
+     */
+    private fun options(): Set<String> = generateSequence<Class<*>>(CanvasElement::class.java) { it.superclass }
+        .takeWhile { it != Any::class.java }
+        .flatMap { it.declaredMethods.asSequence() }
+        .filter { Modifier.isPublic(it.modifiers) && it.name.startsWith("set") && it.name != "set" && '$' !in it.name }
         .map { it.name.removePrefix("set").replaceFirstChar(Char::lowercase) }
         .toSet()
 
@@ -56,7 +65,7 @@ class CanvasElementExposureTest {
 
     @Test
     fun everyOptionIsEitherSetFromASceneFileOrListedAsCodeOnly() {
-        val accountedFor = setFromSceneFile.keys + codeOnly.keys
+        val accountedFor = setFromSceneFile.keys + focusedFields.keys + codeOnly.keys
         val actual = options()
 
         assertEquals(emptySet(), actual - accountedFor, "CanvasElement has options no scene file field is mapped to and that are not listed as code-only")
@@ -68,6 +77,7 @@ class CanvasElementExposureTest {
         val targets = setFromSceneFile.values.toSet()
 
         assertEquals(emptySet(), targets - sceneFileFields, "mapped to scene file fields that do not exist")
+        assertTrue(focusedFields.getValue("view").elementNames.contains("settings"))
     }
 
     @Test

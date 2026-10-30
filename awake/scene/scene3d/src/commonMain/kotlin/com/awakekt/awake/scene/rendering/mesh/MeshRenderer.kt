@@ -51,4 +51,10 @@ data class MeshRenderer(
      * has no [PbrMaterial] of its own. Comes from the asset, so it is not saved with the scene.
      */
     val defaultMaterial: PbrMaterial? = null,
+    /**
+     * Draws this mesh into the shadow maps, in view or off screen. Off for what should not shade
+     * the scene: a decal, a ground card, a small prop, distant filler. The mesh itself still draws
+     * and still receives shadows. A [transparent] mesh never casts, whatever this says.
+     */
+    val castsShadows: Boolean = true,
 )

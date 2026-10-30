@@ -135,8 +135,46 @@ class FlexBoxTest {
         assertEquals(30, nodes.getValue("second").y)
     }
 
-    private fun nodes(content: context(Composer) () -> Unit): Map<String, SemanticsNode> {
-        val frame = ComposeHost().frame(FrameInput(viewportWidth = 120, viewportHeight = 120), content)
+    @Test
+    fun aWrappingRowThatFillsItsBoxStaysOnOneLineAtFractionalDensities() {
+        // 4 x 5 dp and 3 x 1 dp gaps fill 23 dp exactly; at 1.5 they round to 4 x 8 + 3 x 2 = 38 px in 35.
+        for (density in listOf(0.75f, 0.83f, 1.25f, 1.5f, 1.75f)) {
+            val nodes = nodes(density) { slotRow(23.dp) }
+
+            assertEquals(listOf(0, 0, 0, 0), slotTags.map { nodes.getValue(it).y }, "one line at density $density")
+        }
+    }
+
+    @Test
+    fun aWrappingRowStillWrapsWhenItOverflowsByMoreThanRounding() {
+        // 3 dp short is 4.5 px at 1.5: past the 4 px the four children's rounding can account for.
+        val nodes = nodes(1.5f) { slotRow(20.dp) }
+
+        // The first line is 8 px tall (5 dp at 1.5, rounded), and the 1 dp gap rounds to 2 px.
+        assertEquals(0, nodes.getValue("slot3").x, "the last slot starts the second line")
+        assertEquals(10, nodes.getValue("slot3").y)
+    }
+
+    @Test
+    fun aWholeDensityGivesNoRoundingSlack() {
+        // 1 dp short at density 2 is 2 px over, which whole pixels cannot explain: the last slot wraps.
+        val nodes = nodes(2f) { slotRow(22.dp) }
+
+        assertEquals(12, nodes.getValue("slot3").y)
+    }
+
+    context(_: Composer)
+    private fun slotRow(width: com.awakekt.awake.compose.ui.unit.Dp) {
+        FlexBox(Modifier.size(width, 20.dp), config = {
+            wrap = FlexWrap.Wrap
+            gap(1.dp)
+        }) {
+            slotTags.forEach { Box(Modifier.size(5.dp, 5.dp).testTag(it)) }
+        }
+    }
+
+    private fun nodes(density: Float = 1f, content: context(Composer) () -> Unit): Map<String, SemanticsNode> {
+        val frame = ComposeHost(density = density).frame(FrameInput(viewportWidth = 120, viewportHeight = 120), content)
         val all = mutableListOf<SemanticsNode>()
         fun collect(values: List<SemanticsNode>) {
             values.forEach {
@@ -156,4 +194,6 @@ class FlexBoxTest {
     ) {
         Box(modifier.then(Modifier.size(main, 10.dp)).testTag(tag))
     }
+
+    private val slotTags = listOf("slot0", "slot1", "slot2", "slot3")
 }

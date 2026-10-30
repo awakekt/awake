@@ -26,8 +26,9 @@ import kotlin.math.sqrt
  * @param penX the pen origin's atlas x, in texels.
  * @param baseline the baseline's atlas y, in texels.
  * @param scale atlas texels per font unit.
+ * @param reach the farthest distance the atlas holds, in texels: half the bake's range.
  */
-internal class GlyphField(outline: List<OutlineSegment>, penX: Double, baseline: Double, scale: Double) {
+internal class GlyphField(outline: List<OutlineSegment>, penX: Double, baseline: Double, scale: Double, private val reach: Double) {
     private val curves = outline.map { segment ->
         val p = segment.points
         FieldCurve(DoubleArray(8) { if (it % 2 == 0) penX + p[it] * scale else baseline - p[it] * scale }, segment.isLine)
@@ -36,35 +37,35 @@ internal class GlyphField(outline: List<OutlineSegment>, penX: Double, baseline:
     private val candidatePoints = DoubleArray(curves.size * 2)
     private val nearest = DoubleArray(2)
 
-    /** The atlas value at ([px], [py]): 0.5 on the outline, 1 at [REACH] inside, 0 at [REACH] outside. */
+    /** The atlas value at ([px], [py]): 0.5 on the outline, 1 at [reach] inside, 0 at [reach] outside. */
     fun value(px: Double, py: Double): Double {
         val inside = winding(px, py) != 0
         val distance = edgeDistance(px, py, inside)
-        return (if (inside) distance else -distance) / (2 * REACH) + 0.5
+        return (if (inside) distance else -distance) / (2 * reach) + 0.5
     }
 
     private fun winding(px: Double, py: Double): Int = curves.sumOf { it.crossings(px, py) }
 
-    /** The distance to the nearest edge point, capped at [REACH]. */
+    /** The distance to the nearest edge point, capped at [reach]. */
     private fun edgeDistance(px: Double, py: Double, inside: Boolean): Double {
         var count = 0
         for (curve in curves) {
-            if (curve.isNear(px, py, REACH)) {
+            if (curve.isNear(px, py, reach)) {
                 candidateDistances[count] = curve.nearestSquared(px, py, nearest)
                 candidatePoints[count * 2] = nearest[0]
                 candidatePoints[count * 2 + 1] = nearest[1]
                 count++
             }
         }
-        var result = REACH
+        var result = reach
         var remaining = count
         while (remaining > 0) {
             var best = 0
             for (index in 1 until count) if (candidateDistances[index] < candidateDistances[best]) best = index
             val distance = sqrt(candidateDistances[best])
             candidateDistances[best] = Double.POSITIVE_INFINITY
-            remaining = if (distance < REACH) remaining - 1 else 0
-            val onEdge = distance < REACH && (!inside || isEdge(px, py, candidatePoints[best * 2], candidatePoints[best * 2 + 1], distance))
+            remaining = if (distance < reach) remaining - 1 else 0
+            val onEdge = distance < reach && (!inside || isEdge(px, py, candidatePoints[best * 2], candidatePoints[best * 2 + 1], distance))
             if (onEdge) {
                 result = distance
                 remaining = 0
@@ -88,8 +89,6 @@ internal class GlyphField(outline: List<OutlineSegment>, penX: Double, baseline:
     }
 
     private companion object {
-        /** The farthest distance the atlas holds, in texels: half the generator's two-texel range. */
-        const val REACH = 1.0
         const val SIDE_STEP = 1e-4
     }
 }

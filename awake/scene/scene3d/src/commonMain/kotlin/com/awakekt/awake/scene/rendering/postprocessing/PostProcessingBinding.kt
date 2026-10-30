@@ -12,6 +12,7 @@ import com.awakekt.awake.render.effects.CustomPostEffect
 import com.awakekt.awake.render.effects.FxaaEffect
 import com.awakekt.awake.render.effects.PostProcessingEffect
 import com.awakekt.awake.render.effects.ToneMappingGradeEffect
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -19,6 +20,7 @@ import kotlin.reflect.KClass
 /**
  * Two-way binding between [ScenePostProcessing] schema descriptors and ECS [PostProcessing] components.
  */
+@RegisteredBinding
 object PostProcessingBinding : SceneComponentBinding<PostProcessing, ScenePostProcessing> {
     override val componentClass: KClass<PostProcessing> = PostProcessing::class
     override val schemaClass: KClass<ScenePostProcessing> = ScenePostProcessing::class
@@ -59,6 +61,7 @@ object PostProcessingBinding : SceneComponentBinding<PostProcessing, ScenePostPr
             lift = schema.lift.toFloatArray(),
             gamma = schema.gamma.toFloatArray(),
             gain = schema.gain.toFloatArray(),
+            mode = schema.mode,
         )
         is SceneBloomEffect -> BloomEffect(
             enabled = schema.enabled,
@@ -89,6 +92,7 @@ object PostProcessingBinding : SceneComponentBinding<PostProcessing, ScenePostPr
             lift = runtime.lift.toList(),
             gamma = runtime.gamma.toList(),
             gain = runtime.gain.toList(),
+            mode = runtime.mode,
         )
         is BloomEffect -> SceneBloomEffect(
             enabled = runtime.enabled,

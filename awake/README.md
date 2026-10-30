@@ -11,7 +11,8 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | Module | What it is |
 |---|---|
 | `core:color` | `Color`. Zero dependencies; the most-depended-on type in the group |
-| `core:math` | `Vec3/4`, `Mat3/4`, `Quat`, `Ray`, `Frustum`, `Aabb`, `Plane`, camera projections |
+| `core:math` | `Vec3/4`, `Mat3/4`, `Quat`, `Ray`, `Frustum`, `Aabb`, `BoundedVolume`, `Plane`, camera projections |
+| `core:spatial` | `SpatialGrid`: uniform 2D-column spatial index for AABB, sphere, frustum, and bounded-volume queries |
 | `core:pool` | `ScratchPool`: frame-scoped object reuse without per-frame allocation |
 | `core:math2d` | `Vec2`, `Rectangle`, `Size2D`, `Dp`, `Sp` — screen-space primitives and units |
 | `core:geometry` | Portable mesh geometry math, no file I/O |

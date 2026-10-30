@@ -17,14 +17,18 @@ env:
 jobs:
   verify:
     name: Verify
-    runs-on: macos-14
-    timeout-minutes: 45
+    # Every gate here is host-independent: the API dumps are `api/desktop/*.api` (JVM, no klib
+    # validation), and formatting, the build-logic tests and the repository gates read sources. On
+    # Linux the Kotlin plugin disables the iOS targets, so no cinterop or Apple native is built.
+    # What needs a Mac -- the iOS natives, cinterop and Kotlin/Native -- is `Physics (iOS)` in ci.yml.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # awakeVerify checks Maven coordinates against the release tags.
           fetch-depth: 0
-          submodules: recursive
 
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
@@ -33,10 +37,14 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
-      - name: Install Vulkan (macOS)
-        run: brew install vulkan-loader molten-vk glfw
-
-      - uses: ./.github/actions/ios-native
+      # Configuring the build installs the NDK the Vulkan android-native module pins. Install it up
+      # front, as the Build (JVM/Native) job does, rather than as a side effect of the first task.
+      - name: Install the Android NDK
+        run: |
+          version=$(sed -n 's/^ *ndkVersion = "\(.*\)"/\1/p' awake/backend/vulkan/bindings/android-native/build.gradle.kts)
+          test -n "$version" || { echo "::error::No ndkVersion in awake/backend/vulkan/bindings/android-native/build.gradle.kts"; exit 1; }
+          # `yes` dies of SIGPIPE once sdkmanager exits, which pipefail would count as a failure.
+          (yes || true) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
 
       - name: Verify Awake repository gates
         run: ./gradlew awakeVerify --no-configuration-cache

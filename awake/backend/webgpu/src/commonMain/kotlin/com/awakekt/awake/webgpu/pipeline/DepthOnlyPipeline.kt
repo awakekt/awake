@@ -110,10 +110,12 @@ class DepthOnlyPipeline(
         )
     }
 
+    private var cascadeBindGroupsBuilt = false
     private val cascadeBindGroups: List<WebGpuBindGroupHandle> by lazy {
+        cascadeBindGroupsBuilt = true
         cascadeBuffers.map { buffer ->
             WebGpuBindGroupHandle(
-                device.createBindGroup(
+                device.createBindGroupReleasingLayout(
                     BindGroupDescriptor(
                         layout = pipeline.getBindGroupLayout(SHADOW_CASCADE_PASS_GROUP.toUInt()),
                         entries = listOf(BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer))),
@@ -132,7 +134,7 @@ class DepthOnlyPipeline(
         if (!handle.hasBindingGroup(0)) return null
         return materialBindGroups.getOrPut(buffer) {
             WebGpuBindGroupHandle(
-                device.createBindGroup(
+                device.createBindGroupReleasingLayout(
                     BindGroupDescriptor(
                         layout = pipeline.getBindGroupLayout(0u),
                         entries = listOf(
@@ -169,7 +171,7 @@ class DepthOnlyPipeline(
         if (!handle.hasBindingGroup(group)) return null
         return paletteBindGroups.getOrPut(buffer) {
             WebGpuBindGroupHandle(
-                device.createBindGroup(
+                device.createBindGroupReleasingLayout(
                     BindGroupDescriptor(
                         layout = pipeline.getBindGroupLayout(group.toUInt()),
                         entries = listOf(BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer))),
@@ -251,40 +253,52 @@ class DepthOnlyPipeline(
             }
         }
 
-        pipeline = device.createRenderPipeline(
-            RenderPipelineDescriptor(
-                layout = device.createAwakePipelineLayout(bindingsByGroup, groupZeroLayout),
-                vertex = VertexState(
-                    module = shaderModule,
-                    entryPoint = vertexEntryPoint,
-                    buffers = vertexBuffers,
+        val layout = device.createAwakePipelineLayout(bindingsByGroup, groupZeroLayout)
+        // The pipeline holds what it needs of the module and layout; their own handles end here.
+        pipeline = try {
+            device.createRenderPipeline(
+                RenderPipelineDescriptor(
+                    layout = layout,
+                    vertex = VertexState(
+                        module = shaderModule,
+                        entryPoint = vertexEntryPoint,
+                        buffers = vertexBuffers,
+                    ),
+                    fragment = FragmentState(
+                        module = shaderModule,
+                        entryPoint = fragmentEntryPoint,
+                        targets = emptyList(),
+                    ),
+                    primitive = PrimitiveState(
+                        cullMode = GPUCullMode.None,
+                        // Mesh geometry is authored counter-clockwise when viewed from its outward-facing side.
+                        frontFace = when (frontFace) {
+                            FrontFace.CounterClockwise -> GPUFrontFace.CCW
+                            FrontFace.Clockwise -> GPUFrontFace.CW
+                        },
+                        // The light-space pass clamps depth where the device can, as Vulkan's twin
+                        // does with depthClampEnable: a caster in front of a cascade's near plane is
+                        // flattened onto it instead of clipped. Elsewhere the scene compiler pulls the
+                        // near plane back instead (`GpuDrawPreparer.clampsShadowDepth`).
+                        unclippedDepth = hasCascadeBlock && shadowBias && graphicsDevice.unclippedDepth,
+                    ),
+                    // Bias only the cascade (light-space) pass -- same reasoning and constants as
+                    // Vulkan's twin: the scene-depth pass feeds depth_fog, which reads raw depth.
+                    depthStencil = DepthStencilState(
+                        format = GPUTextureFormat.Depth32Float,
+                        depthWriteEnabled = true,
+                        depthCompare = GPUCompareFunction.LessEqual,
+                        stencilFront = StencilFaceState(),
+                        stencilBack = StencilFaceState(),
+                        depthBias = if (hasCascadeBlock && shadowBias) SHADOW_DEPTH_BIAS_CONSTANT.toInt() else 0,
+                        depthBiasSlopeScale = if (hasCascadeBlock && shadowBias) SHADOW_DEPTH_BIAS_SLOPE else 0f,
+                    ),
                 ),
-                fragment = FragmentState(
-                    module = shaderModule,
-                    entryPoint = fragmentEntryPoint,
-                    targets = emptyList(),
-                ),
-                primitive = PrimitiveState(
-                    cullMode = GPUCullMode.None,
-                    // Mesh geometry is authored counter-clockwise when viewed from its outward-facing side.
-                    frontFace = when (frontFace) {
-                        FrontFace.CounterClockwise -> GPUFrontFace.CCW
-                        FrontFace.Clockwise -> GPUFrontFace.CW
-                    },
-                ),
-                // Bias only the cascade (light-space) pass -- same reasoning and constants as
-                // Vulkan's twin: the scene-depth pass feeds depth_fog, which reads raw depth.
-                depthStencil = DepthStencilState(
-                    format = GPUTextureFormat.Depth32Float,
-                    depthWriteEnabled = true,
-                    depthCompare = GPUCompareFunction.LessEqual,
-                    stencilFront = StencilFaceState(),
-                    stencilBack = StencilFaceState(),
-                    depthBias = if (hasCascadeBlock && shadowBias) SHADOW_DEPTH_BIAS_CONSTANT.toInt() else 0,
-                    depthBiasSlopeScale = if (hasCascadeBlock && shadowBias) SHADOW_DEPTH_BIAS_SLOPE else 0f,
-                ),
-            ),
-        )
+            )
+        } finally {
+            layout.close()
+            shaderModule.close()
+        }
         handle = WebGpuPipelineHandle(
             pipeline,
             hasGroupZeroBindings = !bindingsMetadataAvailable || 0 in bindingsByGroup,
@@ -292,14 +306,14 @@ class DepthOnlyPipeline(
         )
     }
 
-    /**
-     * Closes the per-cascade uniform buffers and drops the cached bind groups. The pipeline object
-     * itself has no explicit release.
-     */
+    /** Closes the cached bind groups, then the per-cascade uniform buffers, then the pipeline. */
     fun destroy() {
-        cascadeBuffers.forEach { it.close() }
+        if (cascadeBindGroupsBuilt) cascadeBindGroups.forEach { it.bindGroup.close() }
+        materialBindGroups.values.forEach { it.bindGroup.close() }
+        paletteBindGroups.values.forEach { it.bindGroup.close() }
         materialBindGroups.clear()
         paletteBindGroups.clear()
-        // Everything else is garbage collected in the JS runtime
+        cascadeBuffers.forEach { it.close() }
+        pipeline.close()
     }
 }

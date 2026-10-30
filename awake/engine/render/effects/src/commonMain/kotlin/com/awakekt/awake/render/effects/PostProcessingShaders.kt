@@ -137,10 +137,14 @@ object PostProcessingShaders {
             select(shifted, mix(shifted * (newPeak / peak), vec3(newPeak), fade), peak gt startCompression),
         )
 
-        // 7. Gamma 2.2 encode & alpha luma for downstream FXAA
+        // 7. Gamma 2.2 encode; whiteBalance.z = 0 is ToneMappingMode.Passthrough, which keeps the
+        // graded colour as it is: it was display-ready already.
         val encoded = let("encoded", pow(max(mapped, vec3(0f.lit)), vec3(1f.lit / 2.2f.lit)))
-        val finalLuma = let("finalLuma", dot(encoded, vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit)))
-        colorOutput(vec4(encoded, finalLuma))
+        val displayed = let("displayed", select(saturated, encoded, whiteBalance.z gt 0.5f.lit))
+
+        // Alpha carries luma for a downstream FXAA step.
+        val finalLuma = let("finalLuma", dot(displayed, vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit)))
+        colorOutput(vec4(displayed, finalLuma))
     }
 
     val ToneMappingGradeShader: AslShaderDefinition = shader(TONE_MAPPING_GRADE_SHADER_ID) {
@@ -252,12 +256,18 @@ object PostProcessingShaders {
 
         fragment {
             val rcpFrame = let("rcpFrame", fxaaParams.xy)
+            // fxaaParams.w = 1: a tone-mapping step wrote luma into alpha. 0: the source is the
+            // target's own colour, whose alpha is coverage, so luma comes from rgb.
+            val lumaInAlpha = fxaaParams.w gt 0.5f.lit
+            fun luma(sample: AslExpr): AslExpr =
+                select(dot(sample.rgb, vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit)), sample.a, lumaInAlpha)
+
             val colorM = let("colorM", textureSample(sourceTexture, sourceSampler, uv))
-            val lumaM = let("lumaM", colorM.a)
-            val lumaN = let("lumaN", textureSample(sourceTexture, sourceSampler, uv + vec2(0f.lit, -rcpFrame.y)).a)
-            val lumaS = let("lumaS", textureSample(sourceTexture, sourceSampler, uv + vec2(0f.lit, rcpFrame.y)).a)
-            val lumaW = let("lumaW", textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, 0f.lit)).a)
-            val lumaE = let("lumaE", textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, 0f.lit)).a)
+            val lumaM = let("lumaM", luma(colorM))
+            val lumaN = let("lumaN", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(0f.lit, -rcpFrame.y))))
+            val lumaS = let("lumaS", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(0f.lit, rcpFrame.y))))
+            val lumaW = let("lumaW", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, 0f.lit))))
+            val lumaE = let("lumaE", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, 0f.lit))))
 
             val rangeMin = let("rangeMin", min(lumaM, min(min(lumaN, lumaS), min(lumaW, lumaE))))
             val rangeMax = let("rangeMax", max(lumaM, max(max(lumaN, lumaS), max(lumaW, lumaE))))
@@ -267,10 +277,10 @@ object PostProcessingShaders {
             val colorResult = variable("colorResult", colorM)
 
             iff(range gt edgeThreshold) {
-                val lumaNW = let("lumaNW", textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, -rcpFrame.y)).a)
-                val lumaNE = let("lumaNE", textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, -rcpFrame.y)).a)
-                val lumaSW = let("lumaSW", textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, rcpFrame.y)).a)
-                val lumaSE = let("lumaSE", textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, rcpFrame.y)).a)
+                val lumaNW = let("lumaNW", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, -rcpFrame.y))))
+                val lumaNE = let("lumaNE", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, -rcpFrame.y))))
+                val lumaSW = let("lumaSW", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, rcpFrame.y))))
+                val lumaSE = let("lumaSE", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, rcpFrame.y))))
 
                 val lumaL = let("lumaL", (lumaN + lumaS + lumaW + lumaE) * 0.25f.lit)
                 val rangeL = let("rangeL", abs(lumaL - lumaM))
@@ -365,9 +375,16 @@ object PostProcessingShaders {
         lift: FloatArray = floatArrayOf(0f, 0f, 0f),
         gamma: FloatArray = floatArrayOf(1f, 1f, 1f),
         gain: FloatArray = floatArrayOf(1f, 1f, 1f),
+        mode: ToneMappingMode = ToneMappingMode.PbrNeutral,
     ): FloatArray = UniformWriter(ToneMappingGradeUniformLayout)
         .put(ExposureAndContrastField, exposure.coerceAtLeast(0.001f), contrast, saturation, bloomIntensity)
-        .put(WhiteBalanceField, whiteBalanceTemperature.coerceIn(-1f, 1f), whiteBalanceTint.coerceIn(-1f, 1f), 0f, 0f)
+        .put(
+            WhiteBalanceField,
+            whiteBalanceTemperature.coerceIn(-1f, 1f),
+            whiteBalanceTint.coerceIn(-1f, 1f),
+            if (mode == ToneMappingMode.PbrNeutral) 1f else 0f,
+            0f,
+        )
         .put(LiftField, lift[0], lift[1], lift[2], 0f)
         .put(GammaField, gamma[0].coerceAtLeast(0.001f), gamma[1].coerceAtLeast(0.001f), gamma[2].coerceAtLeast(0.001f), 0f)
         .put(GainField, gain[0].coerceAtLeast(0f), gain[1].coerceAtLeast(0f), gain[2].coerceAtLeast(0f), 0f)
@@ -378,14 +395,18 @@ object PostProcessingShaders {
             .put(BloomParamsField, threshold.coerceAtLeast(0f), knee.coerceIn(0f, 1f), 0f, 0f)
             .build()
 
-    fun packFxaaUniforms(width: Int, height: Int, qualityTier: Int = 1): FloatArray =
+    /**
+     * Packs FXAA's uniforms. [lumaInAlpha] says the source's alpha holds luma, as a tone-mapping
+     * step writes it; otherwise FXAA computes luma from the source's rgb.
+     */
+    fun packFxaaUniforms(width: Int, height: Int, qualityTier: Int = 1, lumaInAlpha: Boolean = true): FloatArray =
         UniformWriter(FxaaUniformLayout)
             .put(
                 FxaaParamsField,
                 1f / width.coerceAtLeast(1).toFloat(),
                 1f / height.coerceAtLeast(1).toFloat(),
                 qualityTier.toFloat(),
-                0f,
+                if (lumaInAlpha) 1f else 0f,
             )
             .build()
 }

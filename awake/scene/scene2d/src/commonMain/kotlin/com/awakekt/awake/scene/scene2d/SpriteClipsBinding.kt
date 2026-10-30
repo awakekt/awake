@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.scene2d
 import com.awakekt.awake.core.animation.FrameClipPlayer
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -53,6 +54,7 @@ class SpriteClips(val sheet: SceneSpriteClips) {
 }
 
 /** Attaches clip selection and exports the selected name, independent of component load order. */
+@RegisteredBinding
 object SpriteClipsBinding : SceneComponentBinding<SpriteClips, SceneSpriteClips> {
     override val componentClass: KClass<SpriteClips> = SpriteClips::class
     override val schemaClass: KClass<SceneSpriteClips> = SceneSpriteClips::class

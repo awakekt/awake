@@ -83,9 +83,56 @@ the switch.
   outside the world.
 - **Failure.** A scene that can't be read, decoded, checked or drawn is logged once, as an error naming
   it, and the scene playing goes on as it was. A scene that fails while it is put in is taken out
-  again first.
+  again first. The switch state (below) ends in `Failed` with the scene's path and the cause.
 - **Again and again.** Asking again for the scene on its way changes nothing, and asking for another
   instead replaces the request. Asking for the scene that is playing starts it again from its file.
+
+### Watching a switch: loading, ready, failed
+
+`SceneSwitch` only asks. What a request is doing is the app's `SceneSwitchStatus` service (and
+`SceneHostServices.sceneSwitchStatus` in a system), whose `state` is a `StateFlow<SceneSwitchState>`,
+the same idiom as `Strings.locale`. A loading curtain, a progress bar or an error message is the
+game's to draw from it; `awake:project:runtime` draws nothing, so a played project still needs no
+display.
+
+```kotlin
+val status = game.requireService<SceneSwitchStatus>()
+// Each frame, in a system or a UI:
+when (val state = status.state.value) {
+    SceneSwitchState.Idle -> Unit
+    is SceneSwitchState.Loading -> drawCurtain(state.progress)
+    is SceneSwitchState.Ready -> liftCurtain()
+    is SceneSwitchState.Failed -> showError(state.path, state.cause)
+}
+```
+
+| State | Meaning |
+| --- | --- |
+| `Idle` | No scene has been asked for. |
+| `Loading(path, progress)` | The scene at `path` is being read, and after that swapped in. It lasts until the new scene has had its first frame. |
+| `Ready(path)` | The new scene is playing and its first frame is over. |
+| `Failed(path, cause)` | The scene couldn't be read, decoded, checked or put in; the old scene plays on. |
+
+- **Order.** A request goes `Idle`, `Loading(path, 0)`, ..., `Loading(path, 1)`, `Ready(path)`, or ends
+  in `Failed`. Asking for another scene while one loads makes it `Loading(newPath, 0)`. The state
+  holds its last value until the next request, and changes on the frame thread. A `StateFlow`
+  conflates, so a collector can miss a short-lived state: read `state.value` each frame.
+- **Progress** is the share of the target scene's content bytes that have arrived, from 0 to 1. It
+  never decreases within a request and is 1 once the scene has loaded, before `Ready`. The bytes are
+  those of the scene file and every file it names by project path (a model, an image, a sound, a
+  prefab), counted through `PrefetchableAssetSource.prefetchWithProgress` when the project's files
+  can prefetch: an `IndexedAssetSource` with a `ContentCache`, or a source wrapping one that passes
+  the contract on, as `verifiedByAssetsLock()` does. A source that can't report bytes (local files, an
+  index with no cache, or a wrapper over either) goes from 0 straight to 1. Files named only inside another file,
+  such as a model's textures, are not counted ahead.
+- **Ready** is the start of the frame after the one that first ran the new scene's systems, so on a
+  host with a renderer the scene has been handed to the renderer once, and on a host without one it
+  is the first completed frame. It does not wait for pipeline compilation or texture uploads a
+  backend defers past its first frame, so a curtain may still see a short hitch on a slow device.
+- **`loadProject` progress.** `loadProject(files, ..., onProgress = { share -> ... })` reports the
+  entry scene's content the same way: 0 as loading starts, rising, and 1 as the project is ready,
+  on the loading coroutine. Pass `physicsWorld` by name or as the trailing lambda; `onProgress` sits
+  before it.
 
 `project.scene` is the scene playing now, and `project.close()` closes it, whichever it is: a switch
 closes the scene it leaves, the entry scene included. The manifest lists no scenes, so any scene file
@@ -120,6 +167,47 @@ project's scenes with its capabilities, as an editor does: decoded, prefabs expa
 switched to, systems run for a step, and saved and reopened. It returns a typed `ProjectOpenIssue` for
 each problem, with its file and node path. `awake validate --code` runs it with the project's own built
 code; see the [CLI](../cli/README.md#validating-with-the-projects-code).
+
+## Routing to a project loaded after the app starts
+
+A routed app (`app { scenes { ... } }`) declares its routes before it starts. A project that can only be
+read later, such as protected content read with a token the player gets by signing in, is given to its
+route as a loader with `projectRoute`:
+
+```kotlin
+val signedIn = CompletableDeferred<AssetSource>() // the sign-in scene completes it
+app {
+    scenes {
+        route("sign-in") { /* the game's sign-in screen */ }
+        projectRoute("world", loading = { ui { Text("Loading...") } }) {
+            loadProject(signedIn.await(), physicsWorld = ::createJoltPhysicsWorld)
+        }
+    }
+}
+```
+
+The router (`DeferredSceneRoute` in `awake:scene:runtime`) runs the loader off the frame thread the
+first time the route is entered, or when `SceneRouterRuntime.preload` asks, and plays the `loading`
+scene until it returns; `routeStatus` reports `Loading`, `Loaded` or `Failed(cause)`. A loader that
+throws leaves the route on its loading scene, and entering the route again loads again. A load the
+player leaves keeps going and waits, unplayed, for the next entry; the router never switches back on its
+own. Because a project plays once, the route owns it: leaving the route closes the project, the next
+entry calls the loader again, and the app stopping closes one that loaded and never played. See
+[Protected content](../../../website/docs/guides/protected-content.md#play-a-protected-project-after-sign-in).
+
+## Failures reach the app
+
+`runProject` and `projectRoute` catch what fails while a project plays and hand it to the
+`AppErrorHandler` the app registered (`service(AppErrorHandler::class, handler)`); Core never presents
+it. A scene a `SceneSwitch` cannot read or play is reported as `AppErrorSource.SceneSwitch` with a
+retry that asks for the scene again, and the scene playing goes on. A `projectRoute` loader that
+throws is reported as `ProjectLoad` with a retry that loads the route again. A scene system that
+throws in a frame is reported once as `System`, with no retry, and is skipped for the rest of that
+scene while the other systems, the renderer and the UI run on. The runner's own steps are contained
+too, so a failure there never disables scene switching: one that fails after the last scene is taken
+out is reported as `SceneSwitch`, the new scene plays, and the project can switch again. With no
+handler registered a failure is logged (switch, load) or thrown out of the frame (system) as before. See
+[App lifecycle](../../../website/docs/guides/app-lifecycle.md#handle-errors).
 
 ## Playing a scene in a world of your own
 
@@ -171,10 +259,13 @@ decoded: a sheet of 2048 by 1856 pixels takes 15 MB of memory and a decode, whic
 on a picture nothing draws. Such a project, if it is played by `runProject` after
 all, draws its canvas without those images.
 
-The runtime brings no display with it. `awake:project` and `awake:project:runtime` reach no GPU
-backend and no window module (`:awake:backend:*`, `:awake:engine:window`): the host picks the backends
-a project draws and simulates with and passes them in, as it passes the physics world. `awakeVerify`
-runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming the chain.
+The runtime brings no display and no HTTP stack with it. `awake:project` and `awake:project:runtime`
+reach no GPU backend, no window module and no content transport module (`:awake:backend:*`,
+`:awake:engine:window`, `:awake:project:transport-*`): the host picks the backends a project draws and
+simulates with and passes them in, as it passes the physics world, and builds the HTTP client behind
+its `ContentTransport` (the ready-made `transport-ktor` and `transport-browser` modules are opt-in).
+`awakeVerify` runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming
+the chain.
 
 ## Loading more than one project
 

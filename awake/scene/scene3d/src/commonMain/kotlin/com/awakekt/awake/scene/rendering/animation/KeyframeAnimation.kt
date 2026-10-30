@@ -11,6 +11,7 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.transform.Transform
@@ -80,6 +81,7 @@ class KeyframeAnimation(val tracks: SceneKeyframeAnimation) {
 /**
  * Binding definition connecting [SceneKeyframeAnimation] descriptors to ECS [KeyframeAnimation] components.
  */
+@RegisteredBinding
 object KeyframeAnimationBinding : SceneComponentBinding<KeyframeAnimation, SceneKeyframeAnimation> {
     override val componentClass: KClass<KeyframeAnimation> = KeyframeAnimation::class
     override val schemaClass: KClass<SceneKeyframeAnimation> = SceneKeyframeAnimation::class

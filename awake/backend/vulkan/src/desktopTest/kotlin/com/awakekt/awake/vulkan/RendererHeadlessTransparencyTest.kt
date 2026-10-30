@@ -107,12 +107,28 @@ class RendererHeadlessTransparencyTest {
 
     /**
      * The compositor draws a turned picture straight into its parent instead of through an
-     * offscreen layer, and the pixels match the layer's: at its own size at any angle, and scaled
-     * at a quarter turn. A clip inside the layer keeps the reference on its offscreen pass.
+     * offscreen layer, and the pixels match the layer's: at its own size at any angle and scale,
+     * and magnified at a quarter turn. A clip inside the layer keeps the reference on its
+     * offscreen pass.
+     *
+     * Both paths submit the same quad, so they cover the same pixels; what they can differ in is
+     * the texture sampled. The layer's target has one level, and the picture's image once
+     * carried a mip chain, so the direct draw's colour depended on the driver's level-of-detail
+     * estimate (#1016). At 30 degrees and its own size the true level is 0, but the Vulkan spec
+     * lets an implementation estimate anything from -0.21 to +0.45, and an RTX 5070 drew the 4x2
+     * picture differently from its layer while lavapipe drew both alike at every 7.5-degree step
+     * of a whole turn. The half-size quarter turn needs level 1 on any device, and the 30-degree
+     * turn drawn 1% small a true level of 0.0145, which lavapipe estimates above 0, standing in
+     * for the RTX: before the direct draw sampled the base level only, lavapipe measured 4
+     * channels off by one at 0.99 and 4 off by up to 33 at the half-size quarter turn.
+     *
+     * A picture magnified inside its layer and then turned off a quarter turn is resampled twice
+     * offscreen and once directly, so it is not compared here: the 40x20 case at 30 degrees
+     * differs in 956 channels, by up to 14.
      */
     @Test
     fun aRotatedPictureDrawnDirectlyMatchesItsOffscreenLayer() = withHeadlessRenderer { renderer ->
-        fun render(width: Int, height: Int, degrees: Float, offscreen: Boolean): ByteArray {
+        fun render(width: Int, height: Int, scale: Float, degrees: Float, offscreen: Boolean): ByteArray {
             val output = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
             val compositor = GraphicsLayerCompositor()
             try {
@@ -122,7 +138,15 @@ class RendererHeadlessTransparencyTest {
                 val primitives = compositor.composite(
                     renderer = renderer,
                     primitives = listOf(
-                        UiDrawPrimitive.Texture(40f, 50f, width.toFloat(), height.toFloat(), GraphicsLayerPlaceholder(1), rotationDegrees = degrees, premultiplied = true),
+                        UiDrawPrimitive.Texture(
+                            40f,
+                            50f,
+                            width * scale,
+                            height * scale,
+                            GraphicsLayerPlaceholder(1),
+                            rotationDegrees = degrees,
+                            premultiplied = true,
+                        ),
                     ),
                     layers = listOf(GraphicsLayerFrame(id = 1, x = 40f, y = 50f, width = width, height = height, alpha = 1f, primitives = children)),
                     font = UiFonts.default(),
@@ -137,11 +161,23 @@ class RendererHeadlessTransparencyTest {
             }
         }
 
-        for ((size, degrees) in listOf(Pair(4 to 2, 30f), Pair(4 to 2, 90f), Pair(40 to 20, 90f))) {
+        val cases = listOf(
+            Triple(4 to 2, 1f, 30f),
+            Triple(4 to 2, 0.99f, 30f),
+            Triple(4 to 2, 1f, 90f),
+            Triple(4 to 2, 0.5f, 90f),
+            Triple(40 to 20, 1f, 90f),
+        )
+        for ((size, scale, degrees) in cases) {
             val (width, height) = size
+            val layered = render(width, height, scale, degrees, offscreen = true)
+            val direct = render(width, height, scale, degrees, offscreen = false)
+            val changed = layered.indices.filter { layered[it] != direct[it] }
+            val largest = changed.maxOfOrNull { kotlin.math.abs((layered[it].toInt() and 0xFF) - (direct[it].toInt() and 0xFF)) }
             assertTrue(
-                render(width, height, degrees, offscreen = true).contentEquals(render(width, height, degrees, offscreen = false)),
-                "a ${width}x$height picture turned $degrees degrees moved a pixel",
+                changed.isEmpty(),
+                "a ${width}x$height picture at scale $scale turned $degrees degrees drew ${changed.size} channels " +
+                    "differently from its offscreen layer, by up to $largest",
             )
         }
     }
