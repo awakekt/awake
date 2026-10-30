@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.LocaleId
+import com.awakekt.awake.core.localization.StringLayer
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.localization.systemLocale
@@ -21,6 +22,7 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.SpawnedNode
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * One of a project's scenes as it loaded to play: the document at [path], the glTF models its
@@ -76,6 +78,7 @@ internal suspend fun loadProjectInto(
     physicsWorld: (suspend () -> PhysicsWorld)?,
     entryScene: String? = null,
     onProgress: (Float) -> Unit = {},
+    sharedStrings: Strings? = null,
 ): LoadedProject {
     val progress = ProgressReporter(onProgress)
     progress.report(0f)
@@ -89,11 +92,30 @@ internal suspend fun loadProjectInto(
     requireRequiredPlugins(manifest, installed)
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
-    val strings = loadProjectStrings(files)
+    val ownStrings = if (sharedStrings == null) loadProjectStrings(files) else null
     files.prefetchSceneContent(scenePath, progress::report)
     val entry = loadProjectScene(scenePath, manifest, files, registry, installed, hasRenderer, physicsWorld)
+    // The app's instance gets the project's tables only once nothing else can fail the load.
+    val strings = sharedStrings?.also { shared ->
+        try {
+            addProjectStrings(shared, files)
+        } catch (cancelled: CancellationException) {
+            entry.close()
+            throw cancelled
+        }
+    } ?: ownStrings
     progress.report(1f)
     return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings)
+}
+
+/**
+ * Adds the project's `strings/` tables to [strings], an instance the app made before the project
+ * loaded, at [StringLayer.Game], keeping its locale: the tables for that locale are read now, and
+ * another's when a switch asks for it. Added after the app's own game tables, so the project's text
+ * wins where both have a key in the same locale. A table the project lacks is no table.
+ */
+internal suspend fun addProjectStrings(strings: Strings, files: AssetSource) {
+    strings.addSource(StringTableSource.assets(files), StringLayer.Game)
 }
 
 /**
