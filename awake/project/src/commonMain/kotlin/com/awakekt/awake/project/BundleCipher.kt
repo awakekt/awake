@@ -62,8 +62,9 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
             key.cipher().decryptWithIv(nonce, sealed)
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (@Suppress("TooGenericExceptionCaught") failure: Exception) {
-            // Each provider throws its own type for a bad tag; all mean the same thing here.
+        } catch (@Suppress("TooGenericExceptionCaught") failure: Throwable) {
+            // Each provider throws its own type for a bad tag, and WebCrypto's rejection reaches wasm as
+            // a JsException, which is a Throwable but not an Exception; all mean the same thing here.
             throw IllegalStateException("$label failed authentication: the wrong key ($keyId), or damaged bytes", failure)
         }
     }
