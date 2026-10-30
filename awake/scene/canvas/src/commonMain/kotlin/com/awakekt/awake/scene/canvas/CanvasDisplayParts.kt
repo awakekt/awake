@@ -16,6 +16,7 @@ import com.awakekt.awake.ui.canvas.CanvasImageWidget
 import com.awakekt.awake.ui.canvas.CanvasSweep
 import com.awakekt.awake.ui.canvas.CanvasSweepWidget
 import com.awakekt.awake.ui.canvas.CanvasText
+import com.awakekt.awake.ui.canvas.CanvasView
 import com.awakekt.awake.ui.canvas.CanvasViewWidget
 import com.awakekt.awake.ui.canvas.get
 
@@ -119,6 +120,11 @@ class CanvasImagePart internal constructor(id: String) : CanvasPart(id, CanvasEl
 
 /** A [CanvasElementKind.View] element: what a camera sees. */
 class CanvasViewPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.View) {
+    /** How the picture clears and is masked. */
+    var view: CanvasView?
+        get() = element.view
+        set(value) { element.view = value }
+
     /** The [CanvasViewWidget] component: the camera it shows. */
     val widget: CanvasViewWidget get() = checkNotNull(element.widget as? CanvasViewWidget) { "canvas part \"$id\" has no CanvasViewWidget" }
 

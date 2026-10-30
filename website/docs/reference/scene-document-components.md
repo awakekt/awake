@@ -430,6 +430,22 @@ What a camera sees: the element's widget. `SceneCanvasView`.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `camera` | string | `""` | The name of a node with a `camera`, as `canvas_element.camera` describes. |
+| `settings` | object | none | Camera-picture transparency and masking, as described below. Omitted keeps the opaque default. |
+
+`settings.transparent` defaults to `false`. Set it to `true` for a portrait over a translucent or
+gradient panel: the runtime clears that camera target to transparent, omits the scene's sky, and
+composites the premultiplied picture. Geometry, lighting and fog remain. Translucent meshes still
+need an alpha-blended pipeline in the host's render plan, as in any other scene.
+
+`settings.mask` defaults to `Box`, using the element's `canvas_appearance.style.cornerRadius`.
+`Circle` uses an inscribed circle; `Pill` fully rounds the short sides; `CutCorner` cuts the corners
+by the style's radius. These mask the camera picture, leaving the element's background and overlay
+children as authored. Explicit ancestor clips also constrain the picture. Target resolution follows
+the element's scaled pixel size; safe-area placement is unchanged.
+
+```json
+{ "type": "canvas_view", "camera": "Portrait Camera", "settings": { "transparent": true, "mask": "Circle" } }
+```
 
 ## `canvas_follow_limit`
 

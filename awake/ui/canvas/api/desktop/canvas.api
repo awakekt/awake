@@ -846,6 +846,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementWidgetFields : co
 	public final fun getSweep ()Lcom/awakekt/awake/ui/canvas/CanvasSweep;
 	public final fun getUsable ()Z
 	public final fun getValue ()F
+	public final fun getView ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun setAction (Ljava/lang/String;)V
 	public final fun setAimLock (Lcom/awakekt/awake/ui/canvas/CanvasAimLock;)V
 	public final fun setBar (Lcom/awakekt/awake/ui/canvas/CanvasBar;)V
@@ -866,6 +867,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementWidgetFields : co
 	public final fun setStepper (Lcom/awakekt/awake/ui/canvas/CanvasStepper;)V
 	public final fun setSweep (Lcom/awakekt/awake/ui/canvas/CanvasSweep;)V
 	public final fun setValue (F)V
+	public final fun setView (Lcom/awakekt/awake/ui/canvas/CanvasView;)V
 	public final fun stepBy (I)Z
 	public final fun stepBy (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 }
@@ -2317,11 +2319,45 @@ public final class com/awakekt/awake/ui/canvas/CanvasTouchVisibility$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasView {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasView$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/ui/canvas/CanvasMask;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/ui/canvas/CanvasMask;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/ui/canvas/CanvasMask;
+	public final fun copy (ZLcom/awakekt/awake/ui/canvas/CanvasMask;)Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasView;ZLcom/awakekt/awake/ui/canvas/CanvasMask;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMask ()Lcom/awakekt/awake/ui/canvas/CanvasMask;
+	public final fun getTransparent ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ui/canvas/CanvasView$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/canvas/CanvasView$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/canvas/CanvasView;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasView$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasViewWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun getCamera ()Ljava/lang/String;
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun setCamera (Ljava/lang/String;)V
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasView;)V
 }
 
 public abstract interface class com/awakekt/awake/ui/canvas/CanvasWidget {
