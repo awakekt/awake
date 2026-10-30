@@ -132,6 +132,7 @@ data class ProjectIndex(
         pathIds: ProjectPathIds? = null,
     ) : this(formatVersion, rootPath, files, bundles, pathIds, null)
 
+    /** The copy that predates [encryption], kept for binary compatibility. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(
         formatVersion: Int = this.formatVersion,

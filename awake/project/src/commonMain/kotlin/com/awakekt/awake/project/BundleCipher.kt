@@ -31,8 +31,24 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
     @OptIn(DelicateCryptographyApi::class)
     suspend fun seal(plaintext: ByteArray, sha256: String): ByteArray {
         val (key, nonce) = derive(sha256)
-        return key.cipher().encryptWithIv(nonce, plaintext)
+        // Sealing the same member twice is deterministic by design, but the JDK refuses an encryption
+        // whose key and nonce match the last one its pooled Cipher ran. One throwaway encryption under
+        // a random key after each seal leaves the pooled Cipher on other values, and a refusal that a
+        // concurrent seal still causes is retried once.
+        val sealed = runCatching { key.cipher().encryptWithIv(nonce, plaintext) }
+            .recoverCatching { if (it is CancellationException) throw it else scramble().let { key.cipher().encryptWithIv(nonce, plaintext) } }
+            .getOrThrow()
+        scramble()
+        return sealed
     }
+
+    /** One encryption of nothing under a random key and nonce, so no pooled cipher keeps a derived key last. */
+    private suspend fun scramble() {
+        val throwaway = scrambleKey ?: CryptographyProvider.Default.get(AES.GCM).keyGenerator(AES.Key.Size.B256).generateKey().also { scrambleKey = it }
+        throwaway.cipher().encrypt(ByteArray(0))
+    }
+
+    private var scrambleKey: AES.GCM.Key? = null
 
     /**
      * [sealed] opened, once its tag proves it is the member whose plaintext SHA-256 is [sha256] under

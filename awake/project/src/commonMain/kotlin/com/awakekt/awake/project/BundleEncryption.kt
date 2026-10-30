@@ -3,8 +3,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package com.awakekt.awake.project
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -67,7 +71,8 @@ class BundleEncryptionKey(
 @Serializable
 data class ProjectBundleEncryption(
     val keyId: String,
-    val scheme: String = SCHEME,
+    // Written out, so a reader never takes a missing scheme for this one.
+    @EncodeDefault val scheme: String = SCHEME,
 ) {
     /** The supported schemes. */
     companion object {

@@ -188,9 +188,13 @@ class IndexedAssetSource(
 
     /** [entry]'s bytes from [cache]: as stored, of the right size, and, when sealed, opened. */
     private suspend fun cached(entry: ProjectIndexEntry): ByteArray? {
-        val stored = storedInCache(entry) ?: return null
-        val seal = seal ?: return stored
-        return runCatching { seal.open(entry, stored, entry.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+        val stored = storedInCache(entry)
+        val seal = seal
+        return if (stored == null || seal == null) {
+            stored
+        } else {
+            runCatching { seal.open(entry, stored, entry.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+        }
     }
 
     private suspend fun isCached(entry: ProjectIndexEntry): Boolean = storedInCache(entry) != null
@@ -247,6 +251,7 @@ class IndexedAssetSource(
             )
         }
 
+        /** The [open] that predates `keys`, kept for binary compatibility. */
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
         suspend fun open(
             indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
@@ -290,6 +295,7 @@ class IndexedAssetSource(
             )
         }
 
+        /** The [open] that predates `keys`, kept for binary compatibility. */
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
         suspend fun open(
             indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
