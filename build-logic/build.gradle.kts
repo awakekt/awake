@@ -36,7 +36,7 @@ repositories {
 // Embed the plugin release, independent of the consuming project's version or version catalog.
 tasks.processResources {
     inputs.property("awakePluginVersion", project.version.toString())
-    filesMatching("com/awakekt/awake/build/scene-components.properties") {
+    filesMatching("com/awakekt/awake/build/*.properties") {
         expand("version" to project.version.toString())
     }
 }

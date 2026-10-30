@@ -233,6 +233,7 @@ The older, single form of a canvas element, read so scenes and prefabs saved bef
 | `padding` | object | `{ "horizontal": 12, "vertical": 0 }` | The space between a `TextField`'s edge and its text, in dp. The default is shadcn's input `px-3`. Caret placement, selection and scrolling work inside it, and the field clips its text at its edge, so a leading `j`'s tail and an `Å`'s ring keep their ink. Vertical padding takes room from the centred line, so a field only as tall as its line should keep it `0`. Negative or set on another kind, it is reported. |
 | `tooltip` | string | `""` | A hint for any element, as a key in the string tables. It shows near the pointer after the pointer has been over the element for half a second, stays inside the canvas, and goes when the pointer leaves or presses the element. `textArgs` fill in its placeholders. |
 | `font` | string | `""` | The font a `Text`'s, `TextField`'s or `Button`'s words draw in. A path ending in `.ttf` or `.otf`, any case, names a TrueType or OpenType file from the project's root, loaded once with the scene; one that cannot be read or is not a font is logged once and draws in the default font. Any other value names a built-in family: `default` (Roboto) or `bitmap` (a fixed-pitch pixel font). Empty draws in the default font. Another name, or a path with another extension, is reported. See [Game UI](../guides/game-ui.md#use-a-font). |
+| `numerals` | `Proportional` · `Tabular` | none | How a `Text`'s, `TextField`'s or `Button`'s digits are spaced, from the font's OpenType features: `Tabular` (`tnum`) gives every digit the same width, so a counter, timer or score column keeps its place as it changes; `Proportional` (`pnum`) fits each digit's width to its shape. None keeps the font's default digits. A font without the feature draws its default digits. |
 | `pressable` | boolean | `false` | Makes an `Image` or `Panel` take a tap as a `Button` does: `consumePress()` and `consumePressAt()` report it, and what is under the element doesn't get it. `false` leaves it watching the pointer only, so a tap passes through. A `Button` is always pressable; set on any other kind, it is reported. |
 | `button` | object | none | Makes a `Button` an action button. `trigger` (`Tap`): fire `action` on a `Tap` released over it, or the moment it goes `Down`. Held `longPressSeconds` (`0.5`), it presses `longPressAction`, and the release is then not a tap. Let go anywhere, it presses `releaseAction`. Its live `cooldown` sweeps a shade over it and its `charges` show in a badge, set from code or `bind`; while cooling with no charge left it takes no press unless `blockWhileCooling` (`true`) is `false`. `cooldownSeconds` (`0`) gives it a cooldown of its own, run from 1 to 0 over that many seconds each time it fires; set with `bind.cooldown`, it is reported. `aim` makes it drag to aim and fire on release, wherever the thumb is: `mode` (`Direction` · `Ground`), `radius` (`0`, 120 dp), `deadZone` (`0.2`), a `cancel` zone (`anchor`, `offsetX`, `offsetY`, `width`, `height`) where letting go cancels, the axis `aimAction` pushed with the aim, and `lockTarget`, which asks the element's code-set `aimLock` for a target. Each action button follows only the pointer that landed on it first. Set on another kind, it is reported. See [Game UI](../guides/game-ui.md#action-buttons). |
 | `enabled` | boolean | `true` | Whether a `Button` can be pressed. A disabled one takes no press, keeps it from what is under it, and draws in `style.disabled`, or dimmed. A `bind.enabled` field sets it each frame instead. |
@@ -399,6 +400,7 @@ A canvas element's words. Without a widget beside it, the element is a Text. `Sc
 | `font` | string | `""` | The font the words draw in, as `canvas_element.font` describes. |
 | `textAlign` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | none | Where the words sit. None keeps the widget's own: top-left for a Text, centred for a Button. |
 | `links` | boolean | `true` | Whether `[[key&#124;shown words]]` spans draw as links. |
+| `numerals` | `Proportional` · `Tabular` | none | How the digits are spaced, as `canvas_element.numerals` describes: `Tabular` gives every digit the same width, `Proportional` fits each to its shape. None keeps the font's default digits. |
 
 ## `canvas_text_field`
 
@@ -428,6 +430,22 @@ What a camera sees: the element's widget. `SceneCanvasView`.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `camera` | string | `""` | The name of a node with a `camera`, as `canvas_element.camera` describes. |
+| `settings` | object | none | Camera-picture transparency and masking, as described below. Omitted keeps the opaque default. |
+
+`settings.transparent` defaults to `false`. Set it to `true` for a portrait over a translucent or
+gradient panel: the runtime clears that camera target to transparent, omits the scene's sky, and
+composites the premultiplied picture. Geometry, lighting and fog remain. Translucent meshes still
+need an alpha-blended pipeline in the host's render plan, as in any other scene.
+
+`settings.mask` defaults to `Box`, using the element's `canvas_appearance.style.cornerRadius`.
+`Circle` uses an inscribed circle; `Pill` fully rounds the short sides; `CutCorner` cuts the corners
+by the style's radius. These mask the camera picture, leaving the element's background and overlay
+children as authored. Explicit ancestor clips also constrain the picture. Target resolution follows
+the element's scaled pixel size; safe-area placement is unchanged.
+
+```json
+{ "type": "canvas_view", "camera": "Portrait Camera", "settings": { "transparent": true, "mask": "Circle" } }
+```
 
 ## `canvas_follow_limit`
 

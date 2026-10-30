@@ -32,8 +32,8 @@ sealed interface PipelineVariant {
      * `inFrame` and `RenderDrawCommand.instanceFrames`. */
     val instanceFrame: Boolean
 
-    /** `true` enables standard straight-alpha blending (`SRC_ALPHA`/`ONE_MINUS_SRC_ALPHA`, both
-     * color and alpha) -- the same blend state each backend's UI texture pipeline already uses. */
+    /** `true` blends straight-alpha colour (`SRC_ALPHA`/`ONE_MINUS_SRC_ALPHA`) and accumulates
+     * coverage (`ONE`/`ONE_MINUS_SRC_ALPHA`). The resulting target is premultiplied. */
     val blendEnabled: Boolean
 
     /** Only meaningful alongside [blendEnabled]: colour adds to what is behind it (`SRC_ALPHA`/`ONE`)

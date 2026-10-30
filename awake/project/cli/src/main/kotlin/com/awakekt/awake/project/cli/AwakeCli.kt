@@ -115,7 +115,7 @@ class AwakeCli(
         val index = workingDir.resolve(arguments.required(1, "index"))
         if (!index.isFile) throw UsageException("no index ${arguments.words[1]}")
         val output = workingDir.resolve(arguments.value("output") ?: throw UsageException("bundle needs --output <dir>"))
-        val report = ProjectBundle(projectRoot(arguments.value("project")), output).run(index, ProjectBundle.writer(arguments))
+        val report = ProjectBundle(projectRoot(arguments.value("project")), output).run(index, ProjectBundle.writer(arguments), prune = arguments.flag("prune"))
         if (arguments.flag("json")) {
             out.appendLine(PRETTY_JSON.encodeToString(JsonObject.serializer(), report.toJson()))
         } else {
@@ -219,6 +219,7 @@ class AwakeCli(
             |  --depth <n>      How many leading folders name a group (default 1).
             |  --target-mb <n>  The size a bundle fills to before the next starts (default 16).
             |  --opaque-ids --salt <text>  Index and bundles carry salted ids instead of paths.
+            |  --prune          Delete .awkb files under the bundle output that the new index doesn't list.
             |
             |Exits 0 on success, 1 when it finds errors or refuses an edit, and 2 for a wrong command line.
             |

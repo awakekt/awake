@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.core.text.font.FontNumerals
+
 /**
  * The words a canvas element draws: a Text's content, a Button's label, what is typed in a
  * TextField, and the font any of them draws in. An element with words but no widget component is a
@@ -50,6 +52,12 @@ class CanvasText {
      * never report a key, so a player cannot make their own line clickable.
      */
     var links: Boolean = true
+
+    /**
+     * Digit width spacing (`Tabular` or `Proportional` through OpenType `tnum`/`pnum`); null keeps
+     * the font's default digits.
+     */
+    var numerals: FontNumerals? = null
 
     /** Default text metrics. */
     companion object {

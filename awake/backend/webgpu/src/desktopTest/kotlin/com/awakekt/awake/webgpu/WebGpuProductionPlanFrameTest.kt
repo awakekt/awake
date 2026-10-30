@@ -43,6 +43,11 @@ import kotlin.test.assertTrue
  * Inverting the directional light vector ([INVERTED_LIGHT_DIRECTION]) alters the lit face
  * distribution and shadow projection across the cube, diverging from the baseline in 816 pixels
  * (out of 16384 total pixels at 128x128); 672 while the target was sRGB, before #1011.
+ *
+ * The baseline is opaque everywhere: the cube writes alpha 1 and the blended depth fog over it
+ * accumulates coverage source-over (`ONE`/`ONE_MINUS_SRC_ALPHA`), which keeps 1 at 1. Until #1142
+ * the fog's alpha used `SRC_ALPHA`, leaving `1 - f + f²` (231 to 236) on 873 cube pixels; only
+ * those alpha bytes changed when the baseline was corrected, every RGB byte is the same.
  */
 class WebGpuProductionPlanFrameTest {
 

@@ -118,6 +118,21 @@ class ProtectedContentDocsSampleTest {
         )
     }
 
+    /**
+     * The guide's "Keep files between runs" sample: compiled here, and not run, since it would keep
+     * files in this machine's real cache folder. PlatformContentCacheDesktopTest runs the same calls
+     * against a temporary folder.
+     */
+    @Suppress("unused")
+    private suspend fun persistentCacheSample(contentFetch: TokenAuthorizedFetch): IndexedAssetSource {
+        // --8<-- [start:platform-cache]
+        // IndexedDB in a browser, the user's cache folder on desktop, Library/Caches on iOS.
+        val cache = platformContentCache(namespace = "harbor-town")
+        val source = IndexedAssetSource.open(fetch = contentFetch, cache = cache)
+        // --8<-- [end:platform-cache]
+        return source
+    }
+
     private class MemoryContentCache : ContentCache {
         val stored = mutableMapOf<String, ByteArray>()
         override suspend fun get(sha256: String): ByteArray? = stored[sha256]

@@ -9,6 +9,8 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.LocaleId
+import com.awakekt.awake.core.localization.StringTableSource
+import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.localization.systemLocale
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
@@ -18,6 +20,7 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -71,6 +74,104 @@ class ProjectStringsTest {
 
         assertEquals("Start", assertNotNull(project.strings).run { setLocale(LocaleId.English); text("menu.start") })
     }
+
+    @Test
+    fun textTheAppReadBeforeLoadingAndTheProjectsComeFromOneInstanceThatSwitchesTogether() = runTest {
+        val early = appStrings(LocaleId.English)
+        assertEquals("The server refused the session.", early.text("connect.refused"), "read before the project loads")
+
+        val project = loadProject(project(KEYED_SCENE), strings = early)
+
+        assertSame(early, project.strings, "the project's text is added to the app's instance, not a second one")
+        assertEquals("The server refused the session.", early.text("connect.refused"))
+        assertEquals("Start", early.text("menu.start"), "the project's key wins over the app's early one")
+        val (game, runtime) = play(project)
+        assertSame(early, runtime.canvasStrings, "the playing scene shows the same instance")
+        assertEquals(drawn("Start"), runtime.glyphs())
+
+        early.setLocale(LocaleId.of("fil"))
+        game.update(FRAME, WIDTH, HEIGHT)
+
+        assertEquals("Tinanggihan ng server ang session.", early.text("connect.refused"))
+        assertEquals("Simulan", early.text("menu.start"))
+        assertEquals(drawn("Simulan"), runtime.glyphs(), "one setLocale changed the app's text and the scene's")
+    }
+
+    @Test
+    fun theLocaleTheAppChoseIsKept() = runTest {
+        val early = appStrings(LocaleId.of("fil"))
+
+        loadProject(project(KEYED_SCENE), hasRenderer = false, strings = early)
+
+        assertEquals(LocaleId.of("fil"), early.locale.value, "not the device's locale")
+        assertEquals("Simulan", early.text("menu.start"))
+    }
+
+    @Test
+    fun theAppsEarlyKeysAreOverriddenOnlyWithinALocale() = runTest {
+        // The app has Korean for menu.start; the project's Korean table wins over it, and a key only
+        // the app has in a locale stays the app's.
+        val early = Strings.load(
+            StringTableSource.of(
+                mapOf(
+                    LocaleId.English to mapOf("menu.start" to "Begin"),
+                    LocaleId.of("ko") to mapOf("menu.start" to "앱 시작", "connect.refused" to "서버가 거부했습니다"),
+                ),
+            ),
+            locale = LocaleId.of("ko"),
+        )
+
+        loadProject(project(KEYED_SCENE), hasRenderer = false, strings = early)
+
+        assertEquals("시작", early.text("menu.start"), "the project's Korean over the app's Korean")
+        assertEquals("서버가 거부했습니다", early.text("connect.refused"))
+        early.setLocale(LocaleId.English)
+        assertEquals("Start", early.text("menu.start"), "the project's English over the app's English")
+    }
+
+    @Test
+    fun aPhysicsWorldPassedAsATrailingLambdaStillBindsToPhysicsWorld() = runTest {
+        val early = appStrings(LocaleId.English)
+
+        // A scene with no bodies never calls it; this checks only which parameter the lambda fills.
+        val project = loadProject(project(KEYED_SCENE), hasRenderer = false, strings = early) { error("no bodies, no world") }
+
+        assertSame(early, project.strings)
+    }
+
+    @Test
+    fun aLoadThatFailsLeavesTheAppsStringsAsTheyWere() = runTest {
+        val early = appStrings(LocaleId.English)
+
+        assertFailsWith<IllegalArgumentException> {
+            loadProject(project("""{ "version": 1, "name": "broken", "nodes": [ { "name": "x", "components": [ { "component": "no_such_component" } ] } ] }"""), strings = early)
+        }
+
+        assertEquals("Early start", early.text("menu.start"), "the project's tables weren't added")
+    }
+
+    @Test
+    fun withoutTheAppsStringsTheProjectHasItsOwnAndLeavesTheAppsAlone() = runTest {
+        val early = appStrings(LocaleId.English)
+
+        val project = loadProject(project(KEYED_SCENE), hasRenderer = false)
+
+        val own = assertNotNull(project.strings)
+        assertTrue(own !== early, "a Strings of the project's own")
+        assertEquals("Early start", early.text("menu.start"))
+        assertTrue(!own.contains("connect.refused"))
+    }
+
+    /** What a game builds before its project loads, for a connection screen's text. */
+    private suspend fun appStrings(locale: LocaleId): Strings = Strings.load(
+        StringTableSource.of(
+            mapOf(
+                LocaleId.English to mapOf("connect.refused" to "The server refused the session.", "menu.start" to "Early start"),
+                LocaleId.of("fil") to mapOf("connect.refused" to "Tinanggihan ng server ang session.", "menu.start" to "Maagang simula"),
+            ),
+        ),
+        locale = locale,
+    )
 
     /** What the scene draws with [text] as a literal, for comparing keyed text against. */
     private suspend fun drawn(text: String): List<UiDrawPrimitive.Glyph> {

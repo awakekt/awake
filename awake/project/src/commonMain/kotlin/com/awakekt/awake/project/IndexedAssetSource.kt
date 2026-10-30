@@ -23,7 +23,7 @@ internal const val MAX_CONCURRENT_PREFETCHES = 6
  * Where [IndexedAssetSource] keeps files it has checked, by SHA-256, so a file read twice, or
  * unchanged between two releases of a project, downloads once and isn't hashed again. A host backs
  * it with what it has: a folder on desktop and mobile, the origin private file system or IndexedDB
- * in a browser.
+ * in a browser. [platformContentCache] answers the platform's default.
  *
  * [get] must return exactly the bytes [put] stored under that SHA-256, or null: [IndexedAssetSource]
  * checks a hit's size but not its hash, so storage that can damage bytes in place has to check them
@@ -93,6 +93,12 @@ class IndexedAssetSource(
         entries = index.files.associateBy { it.key }
         members = BundleMembers(index, fetch, cache, rangeFetch)
     }
+
+    /**
+     * Whether this source keeps checked files in a [ContentCache]. [prefetch] only pays off then: with
+     * none, a loose file it fetched is dropped and fetched again by the read that follows.
+     */
+    val hasCache: Boolean get() = cache != null
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")

@@ -129,12 +129,32 @@ tasks.register<JavaExec>("captureRenderEvidence") {
     useNagaShaderCompiler(this)
     jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
     environment(desktopVulkanEnv)
+    requireExclusiveGpu(this)
     args(
         providers.gradleProperty("evidence.dir")
             .orElse(layout.buildDirectory.dir("reports/render-evidence").map { it.asFile.absolutePath })
             .get(),
     )
 }
+
+// Camera Views need the actual sample plan and scene runtime, kept in the test source set.
+val captureCanvasViewEvidence = tasks.register<JavaExec>("captureCanvasViewEvidence") {
+    group = "awake reports"
+    description = "Render transparent and clipped runtime camera Views (headless Vulkan)."
+    val desktop = kotlin.targets.getByName("desktop").compilations
+    val main = desktop.getByName("main")
+    val test = desktop.getByName("test")
+    dependsOn(test.compileAllTaskName, ":awake:backend:vulkan:bindings:buildDesktopNative")
+    classpath = files(test.output.allOutputs, main.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("com.awakekt.awake.render.parity.CanvasViewCoverageScenarioKt")
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(25)) })
+    useNagaShaderCompiler(this)
+    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    environment(desktopVulkanEnv)
+    requireExclusiveGpu(this)
+    args(providers.gradleProperty("evidence.dir").orElse(layout.buildDirectory.dir("reports/render-evidence").map { it.asFile.absolutePath }).get())
+}
+tasks.named("captureRenderEvidence") { finalizedBy(captureCanvasViewEvidence) }
 
 // >>> text-clip-evidence
 // Renders the text-clipping cases (a field, a layer, a sidebar, a font scale, a canvas) with and

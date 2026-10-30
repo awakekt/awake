@@ -221,6 +221,48 @@ public final class com/awakekt/awake/engine/platform/dsl/AppWindowConfigBuilder 
 	public final fun size (II)V
 }
 
+public final class com/awakekt/awake/engine/platform/error/AppCoroutineScope : java/lang/AutoCloseable, kotlinx/coroutines/CoroutineScope {
+	public fun <init> (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/coroutines/CoroutineContext;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class com/awakekt/awake/engine/platform/error/AppCoroutineScopeKt {
+	public static final fun launchStep (Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Lcom/awakekt/awake/engine/platform/error/AppErrorHandler;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun launchStep$default (Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Lcom/awakekt/awake/engine/platform/error/AppErrorHandler;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
+public final class com/awakekt/awake/engine/platform/error/AppError {
+	public fun <init> (Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getRetry ()Lkotlin/jvm/functions/Function0;
+	public final fun getSource ()Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public final fun getSubject ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/engine/platform/error/AppErrorHandler {
+	public abstract fun onError (Lcom/awakekt/awake/engine/platform/error/AppError;)V
+}
+
+public final class com/awakekt/awake/engine/platform/error/AppErrorKt {
+	public static final fun reportError (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;Ljava/lang/String;)Z
+	public static synthetic fun reportError$default (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;Ljava/lang/String;ILjava/lang/Object;)Z
+}
+
+public final class com/awakekt/awake/engine/platform/error/AppErrorSource : java/lang/Enum {
+	public static final field Bootstrap Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static final field Coroutine Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static final field ProjectLoad Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static final field SceneSwitch Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static final field System Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static fun values ()[Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+}
+
 public final class com/awakekt/awake/engine/platform/lifecycle/AppFrame {
 	public fun <init> (FFFLcom/awakekt/awake/core/input/InputSnapshot;FLcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;FLcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;)V
 	public synthetic fun <init> (FFFLcom/awakekt/awake/core/input/InputSnapshot;FLcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;FLcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
