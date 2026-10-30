@@ -706,6 +706,8 @@
       
         
       
+        
+      
     
     
     
@@ -962,6 +964,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1688,6 +1718,8 @@
       
         
       
+        
+      
     
     
     
@@ -1776,6 +1808,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -3100,6 +3160,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#world_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        world_text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4266,6 +4337,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#world_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        world_text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4771,6 +4853,13 @@ registers it.</p>
 <td><code>DefaultSceneComponentResolvers.install()</code></td>
 <td><a href="../../guides/lights-and-shadows/">Lights and shadows</a></td>
 </tr>
+<tr>
+<td><a href="#world_text"><code>world_text</code></a></td>
+<td><code>WorldText</code></td>
+<td><code>com.awakekt.awake.scene:worldtext</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/game-ui/#text-in-the-world">Game UI</a></td>
+</tr>
 </tbody>
 </table>
 <h2 id="registration">Registration</h2>
@@ -4791,7 +4880,7 @@ registers it.</p>
 <tr>
 <td><code>DefaultSceneComponentResolvers.install()</code></td>
 <td><code>com.awakekt.awake.scene:runtime</code></td>
-<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_appearance</code>, <code>canvas_bar</code>, <code>canvas_bind</code>, <code>canvas_button</code>, <code>canvas_cluster</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow</code>, <code>canvas_follow_arrow</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_image</code>, <code>canvas_input</code>, <code>canvas_joystick</code>, <code>canvas_layout</code>, <code>canvas_look_area</code>, <code>canvas_rect</code>, <code>canvas_scaler</code>, <code>canvas_stepper</code>, <code>canvas_sweep</code>, <code>canvas_text</code>, <code>canvas_text_field</code>, <code>canvas_tooltip</code>, <code>canvas_view</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>tone_mapping</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
+<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_appearance</code>, <code>canvas_bar</code>, <code>canvas_bind</code>, <code>canvas_button</code>, <code>canvas_cluster</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow</code>, <code>canvas_follow_arrow</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_image</code>, <code>canvas_input</code>, <code>canvas_joystick</code>, <code>canvas_layout</code>, <code>canvas_look_area</code>, <code>canvas_rect</code>, <code>canvas_scaler</code>, <code>canvas_stepper</code>, <code>canvas_sweep</code>, <code>canvas_text</code>, <code>canvas_text_field</code>, <code>canvas_tooltip</code>, <code>canvas_view</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>tone_mapping</code>, <code>world_text</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
 </tr>
 <tr>
 <td><code>SceneComponentRegistry.registerControls()</code></td>
@@ -4811,7 +4900,7 @@ registers it.</p>
 <tr>
 <td><code>SceneComponentRegistry.registerAiBehaviors()</code></td>
 <td><code>com.awakekt.awake.scene:ai</code></td>
-<td><code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code></td>
+<td><code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>behavior_tree</code>, <code>state_machine</code>, <code>factions</code>, <code>perceivable</code>, <code>perceiver</code></td>
 </tr>
 <tr>
 <td><code>SceneComponentRegistry.registerBlueprints()</code></td>
@@ -5150,7 +5239,7 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>theme</code></td>
 <td>object</td>
 <td>none</td>
-<td>How every control looks, slot by slot. <code>preset</code> (<code>MinimalFlat</code> · <code>Glass</code> · <code>Textured</code> · <code>None</code>) is the built-in look it starts from; <code>colors</code> and <code>images</code> are tokens, by name, a slot writes as <code>@name</code> in a colour or an image <code>path</code>, over the preset's own; <code>skin</code> sets slots over the preset's: <code>joystick</code> (<code>base</code>, <code>knob</code>, <code>sprintRing</code>, <code>arrows</code>), <code>button</code> (<code>background</code>, <code>icon</code>, <code>label</code>, <code>cooldown</code>, <code>charges</code>, <code>aimCursor</code>, <code>aimRange</code>, <code>cancelZone</code>) and <code>look</code> (<code>feedback</code>). A slot is a <code>style</code> (as <code>canvas_element.style</code>), a <code>size</code>, <code>circle</code>, <code>frames</code> (<code>images</code>, <code>fps</code>, <code>loop</code>), <code>custom</code> (a composable the host registered by that name), <code>hidden</code>, <code>transitionSeconds</code>, and <code>states</code> by <code>Idle</code> · <code>Pressed</code> · <code>Held</code> · <code>Disabled</code> · <code>CoolingDown</code> · <code>Ready</code> · <code>Aiming</code> · <code>Cancelling</code>, each changing its <code>style</code>, <code>scale</code>, <code>alpha</code>, <code>frames</code> or <code>hidden</code>. A token neither the theme nor its preset has is reported. None draws each control plainly from its own colours. See <a href="../../guides/game-ui/#theme-the-controls">Game UI</a>.</td>
+<td>How every control looks, slot by slot. <code>preset</code> (<code>MinimalFlat</code> · <code>Glass</code> · <code>Textured</code> · <code>None</code>) is the built-in look it starts from; <code>colors</code> and <code>images</code> are tokens, by name, a slot writes as <code>@name</code> in a colour or an image <code>path</code>, over the preset's own; <code>transitionSeconds</code> sets the default interpolation duration for element <code>style</code> states (<code>hovered</code>, <code>pressed</code>, <code>disabled</code>) that leave their own unset; <code>skin</code> sets slots over the preset's: <code>joystick</code> (<code>base</code>, <code>knob</code>, <code>sprintRing</code>, <code>arrows</code>), <code>button</code> (<code>background</code>, <code>icon</code>, <code>label</code>, <code>cooldown</code>, <code>charges</code>, <code>aimCursor</code>, <code>aimRange</code>, <code>cancelZone</code>) and <code>look</code> (<code>feedback</code>). A slot is a <code>style</code> (as <code>canvas_element.style</code>), a <code>size</code>, <code>circle</code>, <code>frames</code> (<code>images</code>, <code>fps</code>, <code>loop</code>), <code>custom</code> (a composable the host registered by that name), <code>hidden</code>, <code>transitionSeconds</code>, and <code>states</code> by <code>Idle</code> · <code>Pressed</code> · <code>Held</code> · <code>Disabled</code> · <code>CoolingDown</code> · <code>Ready</code> · <code>Aiming</code> · <code>Cancelling</code>, each changing its <code>style</code>, <code>scale</code>, <code>alpha</code>, <code>frames</code> or <code>hidden</code>. A token neither the theme nor its preset has is reported. None draws each control plainly from its own colours. See <a href="../../guides/game-ui/#theme-the-controls">Game UI</a>.</td>
 </tr>
 <tr>
 <td><code>playerLayout</code></td>
@@ -5296,7 +5385,7 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>style</code></td>
 <td>object</td>
 <td><code>{}</code></td>
-<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>fillImageMode</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, <code>rotation</code>, <code>linkColor</code>, and <code>hovered</code>, <code>pressed</code> and <code>disabled</code> states for a Button. <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code> or, with <code>fillImageMode</code> <code>Squeeze</code>, drawn at the filled width with both end caps kept, or with <code>fillImageMode</code> <code>Sweep</code>, revealed clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay -- <code>fillImage</code> is optional there, and the colour fill sweeps on its own. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. <code>rotation</code> turns the element's image, background and content, children included, clockwise about its own centre in degrees; hit-testing still uses the unrotated box. <code>linkColor</code> colours a Text's <code>[[key&amp;#124;shown words]]</code> spans; unset draws them in a default blue. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
+<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>middle</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>fillImageMode</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, <code>rotation</code>, <code>linkColor</code>, <code>transitionSeconds</code>, and <code>hovered</code>, <code>pressed</code> and <code>disabled</code> states (each overriding fill, gradient, image, border and text colour, <code>shadow</code>, draw-only centre <code>scale</code>, and <code>alpha</code>). <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code> or, with <code>fillImageMode</code> <code>Squeeze</code>, drawn at the filled width with both end caps kept, or with <code>fillImageMode</code> <code>Sweep</code>, revealed clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay -- <code>fillImage</code> is optional there, and the colour fill sweeps on its own. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. <code>rotation</code> turns the element's image, background and content, children included, clockwise about its own centre in degrees; hit-testing still uses the unrotated box. <code>linkColor</code> colours a Text's <code>[[key&amp;#124;shown words]]</code> spans; unset draws them in a default blue. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
 </tr>
 <tr>
 <td><code>textAlign</code></td>
@@ -5431,6 +5520,12 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td>The font a <code>Text</code>'s, <code>TextField</code>'s or <code>Button</code>'s words draw in. A path ending in <code>.ttf</code> or <code>.otf</code>, any case, names a TrueType or OpenType file from the project's root, loaded once with the scene; one that cannot be read or is not a font is logged once and draws in the default font. Any other value names a built-in family: <code>default</code> (Roboto) or <code>bitmap</code> (a fixed-pitch pixel font). Empty draws in the default font. Another name, or a path with another extension, is reported. See <a href="../../guides/game-ui/#use-a-font">Game UI</a>.</td>
 </tr>
 <tr>
+<td><code>numerals</code></td>
+<td><code>Proportional</code> · <code>Tabular</code></td>
+<td>none</td>
+<td>How a <code>Text</code>'s, <code>TextField</code>'s or <code>Button</code>'s digits are spaced, from the font's OpenType features: <code>Tabular</code> (<code>tnum</code>) gives every digit the same width, so a counter, timer or score column keeps its place as it changes; <code>Proportional</code> (<code>pnum</code>) fits each digit's width to its shape. None keeps the font's default digits. A font without the feature draws its default digits.</td>
+</tr>
+<tr>
 <td><code>pressable</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
@@ -5532,7 +5627,7 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>style</code></td>
 <td>object</td>
 <td><code>{}</code></td>
-<td>Images, frames, fills, borders, corners, shadow, text shadow and outline, alpha, rotation, link colour, and <code>hovered</code>, <code>pressed</code> and <code>disabled</code> looks, as <code>canvas_element.style</code> describes.</td>
+<td>Images, frames, fills, borders, corners, shadow, text shadow and outline, alpha, rotation, link colour, <code>transitionSeconds</code>, and <code>hovered</code>, <code>pressed</code> and <code>disabled</code> looks (including <code>shadow</code> and centre <code>scale</code>), as <code>canvas_element.style</code> describes.</td>
 </tr>
 <tr>
 <td><code>skin</code></td>
@@ -5990,6 +6085,12 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>true</code></td>
 <td>Whether <code>[[key&amp;#124;shown words]]</code> spans draw as links.</td>
 </tr>
+<tr>
+<td><code>numerals</code></td>
+<td><code>Proportional</code> · <code>Tabular</code></td>
+<td>none</td>
+<td>How the digits are spaced, as <code>canvas_element.numerals</code> describes: <code>Tabular</code> gives every digit the same width, <code>Proportional</code> fits each to its shape. None keeps the font's default digits.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="canvas_text_field"><code>canvas_text_field</code></h2>
@@ -6080,8 +6181,25 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>""</code></td>
 <td>The name of a node with a <code>camera</code>, as <code>canvas_element.camera</code> describes.</td>
 </tr>
+<tr>
+<td><code>settings</code></td>
+<td>object</td>
+<td>none</td>
+<td>Camera-picture transparency and masking, as described below. Omitted keeps the opaque default.</td>
+</tr>
 </tbody>
 </table>
+<p><code>settings.transparent</code> defaults to <code>false</code>. Set it to <code>true</code> for a portrait over a translucent or
+gradient panel: the runtime clears that camera target to transparent, omits the scene's sky, and
+composites the premultiplied picture. Geometry, lighting and fog remain. Translucent meshes still
+need an alpha-blended pipeline in the host's render plan, as in any other scene.</p>
+<p><code>settings.mask</code> defaults to <code>Box</code>, using the element's <code>canvas_appearance.style.cornerRadius</code>.
+<code>Circle</code> uses an inscribed circle; <code>Pill</code> fully rounds the short sides; <code>CutCorner</code> cuts the corners
+by the style's radius. These mask the camera picture, leaving the element's background and overlay
+children as authored. Explicit ancestor clips also constrain the picture. Target resolution follows
+the element's scaled pixel size; safe-area placement is unchanged.</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_view"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"settings"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"transparent"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"mask"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Circle"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
 <h2 id="canvas_follow_limit"><code>canvas_follow_limit</code></h2>
 <p>The most followers of one group the scene's canvas draws at once, keeping the most important: name
 plates over a crowd. A scene has one for each group it limits, each on any node. Only followers that
@@ -6154,9 +6272,11 @@ the scene has a physics world and either a follower asks or the scene has this c
 </tbody>
 </table>
 <h2 id="canvas_scaler"><code>canvas_scaler</code></h2>
-<p>How the scene's canvas works its scale out from the screen's size, so a HUD designed at one
-resolution fits every screen. A scene has one, on any node; without one the canvas draws at the
-scale its host passes. Every <code>canvas_element</code> size, offset, font and image is multiplied by the scale.
+<p>How the scene's canvas, or one subtree of it, works its scale out from the screen's size, so a HUD
+designed at one resolution fits every screen. With <code>scope</code> <code>Canvas</code>, the default, a scene has one on
+any node, and without one the canvas draws at the scale its host passes; with <code>Subtree</code>, only the node
+it sits on and the nodes beneath it draw at that scale while the rest of the canvas keeps its own.
+Every <code>canvas_element</code> size, offset, font and image in its scope is multiplied by the scale.
 <code>SceneCanvasScaler</code>, saved from the live <code>CanvasScaler</code>.</p>
 <table>
 <thead>
@@ -6227,6 +6347,12 @@ scale its host passes. Every <code>canvas_element</code> size, offset, font and 
 <td><code>None</code> · <code>WholeStep</code> · <code>HalfStep</code></td>
 <td><code>None</code></td>
 <td>Rounds the scale the rule gives to the nearest whole number or half before <code>minScale</code> and <code>maxScale</code> hold it, so pixel art lands on a whole number of screen pixels per art pixel. The layout is drawn at the rounded scale, so every size and offset moves by up to half a step in proportion: a 1.4125 scale draws at 1.5 with <code>HalfStep</code>, 6% larger, and at 1 with <code>WholeStep</code>, 29% smaller. A scale under one step is left as it is. Text needs no snapping; see <a href="../../guides/game-ui/#scale-with-the-screen">Scale with the screen</a>.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td><code>Canvas</code> · <code>Subtree</code></td>
+<td><code>Canvas</code></td>
+<td>Which part of the canvas the scaler applies to. <code>Canvas</code> scales every element on the canvas when it is the scene's whole-canvas scaler; <code>Subtree</code> scales only the node it sits on (an element or a grouping node) and the nodes beneath it, from the canvas's box, with layout, clipping and hit-testing in that subtree using the scaled coordinates.</td>
 </tr>
 </tbody>
 </table>
@@ -6636,10 +6762,10 @@ is <code>true</code>. An axis gives a direction from its keys, up and right bein
 length 1. Key names are those of <code>Key</code> in <code>awake:core:input</code>, such as <code>W</code>, <code>Space</code>, <code>Shift</code> or
 <code>ArrowUp</code>. While a text field has the keys, held actions let go and toggles stay as they were. <code>move</code>
 is an axis, and <code>jump</code> and <code>run</code> are buttons.</p>
-<div class="language-json highlight"><span class="filename">Run unless X is pressed to walk, and press E to interact</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input_actions"</span><span class="p">,</span><span class="w"> </span><span class="nt">"actions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"X"</span><span class="p">],</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Toggle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"startsOn"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"interact"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"E"</span><span class="p">],</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Press"</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">Run unless X is pressed to walk, and press E to interact</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input_actions"</span><span class="p">,</span><span class="w"> </span><span class="nt">"actions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"X"</span><span class="p">],</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Toggle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"startsOn"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"interact"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"E"</span><span class="p">],</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Press"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">]</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <h3 id="chord">Chord</h3>
 <p>An entry of a button's <code>chords</code>: a key or controller button pressed while modifiers are held, named
@@ -6670,10 +6796,10 @@ not also fire an action bound to 1; see <a href="../../guides/input/#chords-and-
 keeps Ctrl+S from firing for Ctrl+Shift+S. A chord binds one action, as a key does, and a chord with
 no modifiers is the plain key. A chord whose key is <code>Unknown</code> or one of its own modifiers does not
 load. Exporting a scene keeps the chords a player rebound while it ran.</p>
-<div class="language-json highlight"><span class="filename">Ctrl+1 or a shoulder held with the bottom face button uses the second hotbar&#x27;s first slot</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slot11"</span><span class="p">,</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Press"</span><span class="p">,</span><span class="w"> </span><span class="nt">"chords"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"key"</span><span class="p">,</span><span class="w"> </span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Digit1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"modifiers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Ctrl"</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gamepad"</span><span class="p">,</span><span class="w"> </span><span class="nt">"button"</span><span class="p">:</span><span class="w"> </span><span class="s2">"South"</span><span class="p">,</span><span class="w"> </span><span class="nt">"modifiers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LeftShoulder"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">Ctrl+1 or a shoulder held with the bottom face button uses the second hotbar&#x27;s first slot</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slot11"</span><span class="p">,</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Press"</span><span class="p">,</span><span class="w"> </span><span class="nt">"chords"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"key"</span><span class="p">,</span><span class="w"> </span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Digit1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"modifiers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Ctrl"</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gamepad"</span><span class="p">,</span><span class="w"> </span><span class="nt">"button"</span><span class="p">:</span><span class="w"> </span><span class="s2">"South"</span><span class="p">,</span><span class="w"> </span><span class="nt">"modifiers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LeftShoulder"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">]</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <h2 id="keyframe_animation"><code>keyframe_animation</code></h2>
 <p>Loops keyframe tracks on its node: position, rotation, scale and material alpha. <code>SceneKeyframeAnimation</code>.</p>
@@ -7450,6 +7576,12 @@ the plane at <code>groundY</code>, otherwise it never lands:</p>
 <td><code>false</code></td>
 <td>Keeps a textured mesh drawn <code>additive</code> lit: it adds its colour as the sun, shadows, ambient and point lights shade it, not only its base and emissive colour. Fog fades it either way.</td>
 </tr>
+<tr>
+<td><code>unlit</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draws <code>baseColorFactor * texture * vertexColor</code> as stored on textured and single-draw skinned meshes, skipping lighting, tone mapping and fog while keeping alpha masking and output encoding.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="perceivable"><code>perceivable</code></h2>
@@ -8180,7 +8312,7 @@ are unsupported and rejected with <code>IllegalArgumentException</code>.</p>
 <p><code>TransformSystem</code> builds the node's world matrix once and then skips it, so a level of thousands of
 props costs almost nothing per frame. The node's parent must not move either: a static node does not
 follow a parent that moves. An editor that moves static nodes uses <code>TransformSystem(skipsStatic = false)</code>.</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"static_transform"</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"static_transform"</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <h2 id="tag"><code>tag</code></h2>
 <p>What the entity is to gameplay, by role, such as <code>enemy</code> or <code>pickup</code>. It becomes the entity's <code>Tags</code>
@@ -8465,6 +8597,66 @@ now showing, so an entity should not also carry a <code>texture_animation</code>
 <td>number</td>
 <td><code>1</code></td>
 <td>Multiplies the lit scene before tone mapping. 2 is one stop brighter. Finite and above 0.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="world_text"><code>world_text</code></h2>
+<p>Text placed in the scene at its node: a sign, a label on an object, a number seen in perspective.
+It is laid out once and drawn from the built-in face's distance field in the scene pass, with its
+edge width taken from screen-space derivatives, so it stays sharp close up, far away and at a
+grazing angle. It is depth tested, so what stands in front of it hides it, and it sorts with the
+scene's other transparent draws. <code>SceneWorldText</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>What it says. Each <code>\n</code> starts a line.</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>number</td>
+<td><code>0.25</code></td>
+<td>The em size in world units, before the node's scale. Above 0.</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>color</td>
+<td>white</td>
+<td>Its colour, straight alpha.</td>
+</tr>
+<tr>
+<td><code>weight</code></td>
+<td>integer</td>
+<td><code>400</code></td>
+<td>The face's weight, 100 to 900: 400 regular, 700 bold.</td>
+</tr>
+<tr>
+<td><code>align</code></td>
+<td><code>Start</code> · <code>Center</code> · <code>End</code></td>
+<td><code>Center</code></td>
+<td>How each line lines up across the text's width. The block of lines is centred on the node vertically.</td>
+</tr>
+<tr>
+<td><code>lineSpacing</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>One line's top to the next, as a multiple of the face's line height. Above 0.</td>
+</tr>
+<tr>
+<td><code>billboard</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Turn to face the camera every frame, keeping the node's place and scale. Off, it lies in the node's XY plane facing its +Z.</td>
 </tr>
 </tbody>
 </table>

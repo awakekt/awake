@@ -715,6 +715,8 @@
       
         
       
+        
+      
     
     
     
@@ -1131,6 +1133,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1863,6 +1893,8 @@
       
         
       
+        
+      
     
     
     
@@ -1954,6 +1986,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -2983,7 +3043,10 @@ factories.</p>
 <p><code>switchTo</code> keeps the systems the app registered. A project played with <code>runProject</code> goes to another of
 its scenes through its <code>SceneSwitch</code> instead, which also closes the old scene's systems and physics
 and plans the next scene's own: a system asks with <code>services.sceneSwitch?.request("scenes/level-2.scene.json")</code>,
-and a blueprint with its Load Scene node. See
+and a blueprint with its Load Scene node. A game that shows a loading curtain or an error reads the
+app's <code>SceneSwitchStatus</code> service: its <code>state</code> is idle, loading with the share of the next scene's
+bytes that have arrived, ready once the new scene has had its first frame, or failed with the scene's
+path and cause. See
 <a href="https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene"><code>awake:project:runtime</code></a>.</p>
 <h2 id="save-a-world">Save a world</h2>
 <p><code>fromWorld</code> walks the entities that have a <code>Transform</code>, follows their parent links to rebuild the

@@ -715,6 +715,8 @@
       
         
       
+        
+      
     
     
     
@@ -1003,6 +1005,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#handle-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handle errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1087,6 +1100,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1819,6 +1860,8 @@
       
         
       
+        
+      
     
     
     
@@ -1910,6 +1953,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -2673,6 +2744,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#handle-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handle errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2834,6 +2916,71 @@ systems in two phases: fixed steps for simulation, and one pass per rendered fra
 Its receiver is the scene runtime, so it can read <code>world</code>, <code>renderer</code> and <code>requireService(…)</code>; look
 entities up by name later, in <code>onReady</code> or when the system runs. <code>fixedSystem</code> and <code>frameSystem</code>
 return a handle; <code>runtime.system(handle)</code> gives back the instance.</p>
+<h2 id="handle-errors">Handle errors</h2>
+<p>Core catches failures and hands them to the app; it never draws anything. Register an
+<code>AppErrorHandler</code> like any other service and decide what to show, for instance by storing the error in
+the state your UI reads:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">app</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="n">service</span><span class="p">(</span><span class="n">AppErrorHandler</span><span class="o">::</span><span class="n">class</span><span class="p">,</span><span class="w"> </span><span class="n">AppErrorHandler</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">error</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">        </span><span class="n">failures</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">error</span><span class="w"> </span><span class="c1">// error.source, error.cause, error.subject, error.retry</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="p">})</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="n">service</span><span class="p">(</span><span class="n">AppCoroutineScope</span><span class="o">::</span><span class="n">class</span><span class="p">,</span><span class="w"> </span><span class="n">AppCoroutineScope</span><span class="p">(</span><span class="n">serviceLookup</span><span class="p">()))</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Each failure reaches the handler once, with where it failed (<code>AppErrorSource</code>), its cause, a
+<code>subject</code> naming what failed, and a <code>retry</code> when running the step again makes sense:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Caught when</th>
+<th><code>retry</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Bootstrap</code></td>
+<td>The graphics engine or an app <code>ready { }</code> callback throws, or a step you launched with <code>launchStep</code> does.</td>
+<td><code>null</code> for the engine's own start-up; a step you launched with <code>launchStep</code> runs again. The engine does not start, as before, and <code>GraphicsEngine.startupError</code> is still set.</td>
+</tr>
+<tr>
+<td><code>ProjectLoad</code></td>
+<td>A <code>projectRoute</code> or <code>deferredRoute</code> loader throws. The route keeps its loading scene with <code>Failed(cause)</code>, as before.</td>
+<td>Loads the route again.</td>
+</tr>
+<tr>
+<td><code>SceneSwitch</code></td>
+<td>A scene a <code>SceneSwitch</code> asked for cannot be read or played, or a routed scene fails to go in. Before the old scene is taken out it plays on, as before; after, the new scene plays (a project) or the route that was active is put back (a router).</td>
+<td>Asks for the scene again.</td>
+</tr>
+<tr>
+<td><code>Coroutine</code></td>
+<td>A coroutine launched in an <code>AppCoroutineScope</code> throws. Its siblings and the scope go on.</td>
+<td><code>null</code></td>
+</tr>
+<tr>
+<td><code>System</code></td>
+<td>A system, the app's update block (subject <code>updateBlock</code>) or its UI build (subject <code>ui</code>) throws in the frame loop.</td>
+<td><code>null</code></td>
+</tr>
+</tbody>
+</table>
+<p>Call <code>retry</code> on the frame thread. It returns at once, and a second failure reaches the handler as a
+new error.</p>
+<p>A system that throws is reported once and then <strong>skipped for the rest of the scene</strong>: the frame
+carries on with the other systems, the renderer and the UI, and a system that fails every frame does
+not call the handler every frame. Its scene's next switch builds the system afresh. Guarding costs one
+flag read per system call and allocates nothing on a frame that succeeds. The app's update block is
+treated the same way. The UI build is not skipped for good, because it is rebuilt from nothing every
+frame and is where the app shows the error: a build that throws draws nothing that frame and runs again
+on the next, and the handler hears of it once until a build succeeds.</p>
+<p>With no handler registered nothing changes: a failed switch or load is logged and the scene or route
+carries on, a failed start sets <code>startupError</code>, and a system's exception is thrown out of the frame.
+A project you load yourself before the app exists can use the same contract with <code>launchStep</code>:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">scope</span><span class="p">.</span><span class="na">launchStep</span><span class="p">(</span><span class="n">AppErrorSource</span><span class="p">.</span><span class="na">ProjectLoad</span><span class="p">,</span><span class="w"> </span><span class="n">errors</span><span class="p">,</span><span class="w"> </span><span class="n">subject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"world"</span><span class="p">,</span><span class="w"> </span><span class="n">onDone</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">play</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="n">loadProject</span><span class="p">(</span><span class="n">files</span><span class="p">,</span><span class="w"> </span><span class="n">physicsWorld</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">createJoltPhysicsWorld</span><span class="p">)</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="p">}</span>
+</span></code></pre></div>
 <h2 id="properties">Properties</h2>
 <p><code>window { }</code>:</p>
 <table>
@@ -2921,7 +3068,7 @@ return a handle; <code>runtime.system(handle)</code> gives back the instance.</p
 </tr>
 <tr>
 <td><code>service(type, value)</code></td>
-<td>Registers a value any module can look up with <code>requireService(type)</code>.</td>
+<td>Registers a value any module can look up with <code>requireService(type)</code>. Register an <code>AppErrorHandler</code> to receive failures; see <a href="#handle-errors">Handle errors</a>.</td>
 </tr>
 </tbody>
 </table>

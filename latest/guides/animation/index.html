@@ -713,6 +713,8 @@
       
         
       
+        
+      
     
     
     
@@ -972,6 +974,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1852,6 +1882,8 @@
       
         
       
+        
+      
     
     
     
@@ -1943,6 +1975,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -2968,10 +3028,12 @@ the glTF file names.</p>
 <p>The skinned shaders hold at most 64 joint matrices (<code>MAX_JOINTS</code>). A skin with more joints does
 not fit.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">A skinned entity has no <code>PbrMaterial</code></p>
-<p><code>SkinnedPose</code> and <code>PbrMaterial</code> share one per-draw uniform slot. An entity carries one or the
-other.</p>
+<div class="admonition tip">
+<p class="admonition-title"><code>PbrMaterial</code> on a skinned entity</p>
+<p>A single-draw skinned entity (<code>Skinned</code>, <code>SkinnedTextured</code>) reads <code>baseColorFactor</code>,
+<code>emissiveFactor</code>, <code>alphaMode</code>, <code>alphaCutoff</code> and <code>unlit</code> from its <code>PbrMaterial</code> alongside its
+<code>SkinnedPose</code>. When lit, the skinned shaders (<code>Skinned</code>, <code>SkinnedTextured</code>, <code>SkinnedInstanced</code>)
+follow the directional light's <code>ambient</code> when set and fall back to <code>0.35</code> when unset.</p>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Add <code>awake:core:animation</code> to build players</p>

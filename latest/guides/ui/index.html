@@ -713,6 +713,8 @@
       
         
       
+        
+      
     
     
     
@@ -972,6 +974,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1704,6 +1734,8 @@
       
         
       
+        
+      
     
     
     
@@ -1795,6 +1827,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -3056,11 +3116,16 @@ node. <code>drawImageFillBar(fill, value, direction)</code> draws it as a bar's 
 <code>Style</code>, <code>background(brush)</code> does the same in place of a background colour, <code>backgroundImage(fill)</code>
 draws an <code>ImageFill</code> over it, and <code>dropShadow(shadow)</code> casts a shadow in the style's shape. Scene UI's
 <code>canvas_element</code> style is the saved form of the same properties.</p>
-<p><code>TextStyle(shadow = TextShadow(color, offsetX, offsetY), outline = TextOutline(color, width))</code> draws a
-hard shadow and an outline under a <code>Text</code> or a <code>BasicTextField</code>'s text, in dp; both merge over an
-inherited style like its colour and size do. Each is drawn as text in its own colour, so the
-<a href="#how-coverage-becomes-colour">text coverage rule</a> shapes its edges by that colour. A scene's <code>canvas_element</code> text ignores the host's text
-style and looks only as its own data says.</p>
+<p><code>TextStyle(shadow = TextShadow(color, offsetX, offsetY, blur), outline = TextOutline(color, width))</code> draws
+a shadow and an outline under a <code>Text</code> or a <code>BasicTextField</code>'s text, in dp; both merge over an inherited
+style like its colour and size do. The shadow is hard unless <code>blur</code> softens its edge across that many dp
+either side; with no offset it is a glow. With the built-in fonts and any font from <code>UiFonts.load</code>, each
+glyph draws its fill, outline and shadow in one quad from the font's effect field, a coarse distance field
+that reaches half an em past the ink: a thick outline stays round with no gaps, and the text costs one draw
+a glyph. Decorated text draws from the distance field at every size, so its weight does not jump at the
+24-pixel limit. A font without an effect field, such as <code>UiFonts.bitmap()</code>, stamps the text in the shadow's
+colour, then eight times around it in the outline's, then once more. A scene's <code>canvas_element</code> text ignores
+the host's text style and looks only as its own data says.</p>
 <p>To load a PNG or JPEG, call <code>decodeImageBitmap(bytes)</code>. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of
@@ -3078,16 +3143,20 @@ the text depends on that size.</p>
 </thead>
 <tbody>
 <tr>
-<td>24 device pixels or smaller, on the pixel grid</td>
-<td>Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1</td>
+<td>24 device pixels or smaller, at rest or scrolling by whole pixels</td>
+<td>Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 on the pixel grid</td>
+</tr>
+<tr>
+<td>24 device pixels or smaller, translating by fractions of a pixel</td>
+<td>Those same exact-size glyphs shifted smoothly across subpixel offsets, easing back onto whole pixels when motion stops</td>
 </tr>
 <tr>
 <td>Larger than 24 pixels</td>
 <td>The font's distance-field atlas</td>
 </tr>
 <tr>
-<td>Under <code>Modifier.scale</code> or another scaling transform</td>
-<td>The distance-field atlas, so it scales smoothly</td>
+<td>Under <code>Modifier.scale</code>, an animated <code>TextStyle.scale</code>, or an animated em size</td>
+<td>The distance-field atlas for the whole animation, including as it passes through <code>1.0x</code> or crosses 24 pixels</td>
 </tr>
 <tr>
 <td>In <code>UiFonts.bitmap()</code></td>
@@ -3156,6 +3225,11 @@ of Chromium's own. Ink means the summed darkness of the text's pixels, measured 
 From 24 px pixel glyphs to 25 px distance field, the ink per em changes by under 2% and stem darkness
 by under 3.5%. Before the rule, light-on-dark small text held 1.16 to 1.29 times Chromium's ink, and
 crossing the limit moved ink by 9 to 10% in each polarity.</p>
+<p><code>TextProofSpecimenTest</code> holds a full 520 × 714 dp proof page to Chromium in both polarities at 1x and
+1.5x, alongside four 8-bit grey baselines: the 9 to 48 px size ramp with kerning on, Roboto weights 300
+to 900, a runtime-loaded TTF (<code>Roboto-Medium.ttf</code>) at pixel-glyph and distance-field sizes, a wrapped
+paragraph, and a HUD readout. Every band stays 0.95 to 1.05 of Chromium's ink (0.949 to 1.045), with
+the light-on-dark to dark-on-light ratio within 5.3% of Chromium's.</p>
 <p>The rule does no stem darkening. Chromium does none, and the sizes it was measured at are within the
 tolerance without it.</p>
 <h4 id="text-colour-and-custom-shaders">Text colour and custom shaders</h4>

@@ -16,7 +16,7 @@
         <link rel="prev" href="../protected-content/">
       
       
-        <link rel="next" href="../game-ui/">
+        <link rel="next" href="../encrypted-content/">
       
       
         
@@ -713,6 +713,8 @@
       
         
       
+        
+      
     
     
     
@@ -972,6 +974,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1706,6 +1736,8 @@
       
         
       
+        
+      
     
     
     
@@ -1915,6 +1947,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bundle-a-public-sign-in-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bundle a public sign-in set
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1951,6 +1994,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2739,6 +2810,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bundle-a-public-sign-in-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bundle a public sign-in set
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2796,6 +2878,7 @@
 
 <div class="awake-badges">
 <p><span class="awake-badge">module: <code>com.awakekt.awake:project</code></span>
+<span class="awake-badge">Gradle: <code>generateContentBundles</code></span>
 <span class="awake-badge">CLI: <code>awake bundle</code></span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span></p>
 </div>
@@ -2805,36 +2888,47 @@ requests, and each one pays for a round trip, a CDN or edge function invocation,
 check. A content bundle holds many files in one archive. The publish step writes the bundles and a
 bundled index; the game opens that index exactly as it opens a loose one.</p>
 <h2 id="write-bundles-in-the-publish-step">Write bundles in the publish step</h2>
-<p>Start from the loose index the build makes (<code>./gradlew generateProjectIndex</code> writes
-<code>build/project.index.json</code>). From the command line:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>awake<span class="w"> </span>bundle<span class="w"> </span>build/project.index.json<span class="w"> </span>--output<span class="w"> </span>build/published
+<p>In a Gradle project with <code>com.awakekt.awake.plugin.project-content</code> applied, run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./gradlew<span class="w"> </span>generateContentBundles
 </span></code></pre></div>
-<p>That writes <code>build/published/bundles/&lt;sha256&gt;.awkb</code> and the bundled
-<code>build/published/project.index.json</code>. Upload the folder as it is. Options: <code>--group folder|one</code>,
-<code>--depth &lt;n&gt;</code>, <code>--target-mb &lt;n&gt;</code> (16 by default), and <code>--opaque-ids --salt &lt;text&gt;</code>.</p>
+<p>That runs <code>generateProjectIndex</code>, packs its files with <code>com.awakekt.awake:project</code>'s writer in an
+isolated Gradle worker, and writes <code>build/published/bundles/&lt;sha256&gt;.awkb</code> plus the bundled
+<code>build/published/project.index.json</code>. Upload <code>build/published</code> as it is.</p>
+<p>The task deletes bundles in <code>build/published</code> that the new index no longer lists, so the folder holds
+one release. Pointed at a folder outside the build, such as a publish folder that still serves the
+previous release's bundles to players mid-update, it keeps them unless <code>pruneStaleBundles</code> is set.</p>
+<p>From the command line, starting from a loose index (<code>./gradlew generateProjectIndex</code> writes
+<code>build/project.index.json</code>), <code>awake bundle</code> writes the exact same files:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>awake<span class="w"> </span>bundle<span class="w"> </span>build/project.index.json<span class="w"> </span>--output<span class="w"> </span>build/published
+</span></code></pre></div>
+<p>Options: <code>--group folder|one</code>, <code>--depth &lt;n&gt;</code>, <code>--target-mb &lt;n&gt;</code> (16 by default),
+<code>--opaque-ids --salt &lt;text&gt;</code>, <code>--key-id &lt;id&gt;</code> with <code>--key-file &lt;path&gt;</code> or <code>--key-env &lt;variable&gt;</code> to
+seal the bundles (<a href="../encrypted-content/">Encrypted content</a>), and <code>--prune</code>, which deletes <code>.awkb</code>
+files under the output folder that the new index doesn't list. Without it, the command keeps them.</p>
 <p>From Kotlin, for a publish step of your own, <code>ContentBundleWriter</code> does the same. It reads each
 file once, checks it against the loose index, and hands you one bundle at a time:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleWriter</span><span class="p">(</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">grouping</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleGrouping</span><span class="p">.</span><span class="na">byFolder</span><span class="p">(</span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">),</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">targetBundleBytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16L</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">1024</span><span class="p">,</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kd">val</span><span class="w"> </span><span class="nv">bundledIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">looseIndex</span><span class="p">,</span><span class="w"> </span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">readProjectFile</span><span class="p">(</span><span class="n">entry</span><span class="p">.</span><span class="na">path</span><span class="p">)</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">bundle</span><span class="w"> </span><span class="o">-&gt;</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="c1">// Named by SHA-256: skip a bundle the host already has.</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bundle</span><span class="p">.</span><span class="na">url</span><span class="w"> </span><span class="k">!in</span><span class="w"> </span><span class="n">storage</span><span class="p">)</span><span class="w"> </span><span class="n">upload</span><span class="p">(</span><span class="n">bundle</span><span class="p">.</span><span class="na">url</span><span class="p">,</span><span class="w"> </span><span class="n">bundle</span><span class="p">.</span><span class="na">bytes</span><span class="p">)</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">upload</span><span class="p">(</span><span class="s">"project.index.json"</span><span class="p">,</span><span class="w"> </span><span class="n">Json</span><span class="p">.</span><span class="na">encodeToString</span><span class="p">(</span><span class="n">ProjectIndex</span><span class="p">.</span><span class="na">serializer</span><span class="p">(),</span><span class="w"> </span><span class="n">bundledIndex</span><span class="p">).</span><span class="na">encodeToByteArray</span><span class="p">())</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleWriter</span><span class="p">(</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">grouping</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleGrouping</span><span class="p">.</span><span class="na">byFolder</span><span class="p">(</span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">),</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">targetBundleBytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16L</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">1024</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="kd">val</span><span class="w"> </span><span class="nv">bundledIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">looseIndex</span><span class="p">,</span><span class="w"> </span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">readProjectFile</span><span class="p">(</span><span class="n">entry</span><span class="p">.</span><span class="na">path</span><span class="p">)</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">bundle</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="c1">// Named by SHA-256: skip a bundle the host already has.</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bundle</span><span class="p">.</span><span class="na">url</span><span class="w"> </span><span class="k">!in</span><span class="w"> </span><span class="n">storage</span><span class="p">)</span><span class="w"> </span><span class="n">upload</span><span class="p">(</span><span class="n">bundle</span><span class="p">.</span><span class="na">url</span><span class="p">,</span><span class="w"> </span><span class="n">bundle</span><span class="p">.</span><span class="na">bytes</span><span class="p">)</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">upload</span><span class="p">(</span><span class="s">"project.index.json"</span><span class="p">,</span><span class="w"> </span><span class="n">Json</span><span class="p">.</span><span class="na">encodeToString</span><span class="p">(</span><span class="n">ProjectIndex</span><span class="p">.</span><span class="na">serializer</span><span class="p">(),</span><span class="w"> </span><span class="n">bundledIndex</span><span class="p">).</span><span class="na">encodeToByteArray</span><span class="p">())</span>
 </span></code></pre></div>
 <p>The output is deterministic: the same files give byte-identical bundles, and a bundle's URL is its
 SHA-256, so a second publish uploads only the bundles whose files changed.</p>
 <h2 id="read-them-in-the-game">Read them in the game</h2>
 <p>Nothing changes for the game. <code>IndexedAssetSource.open</code> reads a bundled index as it reads a loose
 one, with a plain fetch or a <a href="../protected-content/"><code>TokenAuthorizedFetch</code></a>:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndexedAssetSource</span><span class="p">.</span><span class="na">open</span><span class="p">(</span><span class="n">fetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hostFetch</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">)</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">files</span><span class="p">.</span><span class="na">prefetch</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="s">"scenes/main.scene.json"</span><span class="p">,</span><span class="w"> </span><span class="s">"assets/models/crate.glb"</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndexedAssetSource</span><span class="p">.</span><span class="na">open</span><span class="p">(</span><span class="n">fetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hostFetch</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">files</span><span class="p">.</span><span class="na">prefetch</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="s">"scenes/main.scene.json"</span><span class="p">,</span><span class="w"> </span><span class="s">"assets/models/crate.glb"</span><span class="p">))</span>
 </span></code></pre></div>
-<p>The first read of any member fetches its whole bundle once, checks the bundle and every member
-against their SHA-256s, and stores each member in the <code>ContentCache</code> by its own SHA-256. The rest of
-that bundle's files then read with no request. <code>prefetch</code> downloads whole bundles, one per bundle,
+<p>The first read of any member fetches its whole bundle once, checks the bundle's SHA-256 against the
+index and each member against the bundle's table of contents, and stores each member in the
+<code>ContentCache</code> by its own SHA-256, hashing each one as it goes in, since the cache outlives the
+index. The rest of that bundle's files then read with no request. <code>prefetch</code> downloads whole bundles, one per bundle,
 and skips a bundle whose files are already cached.</p>
 <h2 id="choose-the-groups">Choose the groups</h2>
 <p>A bundle should hold files that load together. A scene that needs one texture from a 32 MiB bundle
@@ -2872,16 +2966,16 @@ downloads all 32 MiB.</p>
 </table>
 <p>Core doesn't parse scenes to find which files each uses; your publish step knows. Name a group per
 scene and fall back to folders for the rest:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">pierFiles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="s">"scenes/pier.scene.json"</span><span class="p">,</span><span class="w"> </span><span class="s">"assets/models/buoy.glb"</span><span class="p">,</span><span class="w"> </span><span class="s">"assets/sounds/bell.ogg"</span><span class="p">)</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">byFolder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleGrouping</span><span class="p">.</span><span class="na">byFolder</span><span class="p">()</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">byScene</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleGrouping</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">path</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">pierFiles</span><span class="p">)</span><span class="w"> </span><span class="s">"scene:pier"</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s">"folder:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">byFolder</span><span class="p">.</span><span class="na">groupOf</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">pierFiles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="s">"scenes/pier.scene.json"</span><span class="p">,</span><span class="w"> </span><span class="s">"assets/models/buoy.glb"</span><span class="p">,</span><span class="w"> </span><span class="s">"assets/sounds/bell.ogg"</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">byFolder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleGrouping</span><span class="p">.</span><span class="na">byFolder</span><span class="p">()</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">byScene</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleGrouping</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">path</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">pierFiles</span><span class="p">)</span><span class="w"> </span><span class="s">"scene:pier"</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s">"folder:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">byFolder</span><span class="p">.</span><span class="na">groupOf</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>Keep the files a scene needs first (the manifest, the entry scene, its UI) in small bundles of their
 own, so the first frame doesn't wait for the largest bundle. <code>byFolder</code> already puts the files at the
 project root, <code>awake.project.json</code> among them, in a bundle of their own.</p>
 <h2 id="choose-a-size">Choose a size</h2>
-<p>Each group is split into bundles filled up to the size target, in path order. A file larger than the
-target gets a bundle of its own.</p>
+<p>Each group larger than the size target is split at deterministic content-hash peaks bounded by the
+target, in path order. A file larger than the target gets a bundle of its own.</p>
 <table>
 <thead>
 <tr>
@@ -2910,9 +3004,12 @@ target gets a bundle of its own.</p>
   limit. Bigger bundles mean fewer.</li>
 <li><strong>Over-fetch.</strong> A bundle downloads whole. Bigger bundles fetch more that a scene doesn't use, unless
   the groups match what loads together.</li>
-<li><strong>Re-uploads.</strong> Changing a file changes its bundle and can move the split points after it in its
-  group, so later bundles of that group change too. Other groups are untouched. Smaller groups keep a
-  change local.</li>
+<li><strong>Re-uploads.</strong> Because split points within a group follow content-defined hash boundaries, adding,
+  editing or removing one file typically re-packs its own bundle (two when that bundle splits) and
+  leaves later bundles of that group, and every other group, untouched. That is likely rather than
+  certain: a run of files longer than the target with no hash peak in it is filled greedily, so a
+  change inside it can move the later bundles up to its end. Smaller targets still make each
+  re-uploaded bundle smaller.</li>
 <li><strong>Memory.</strong> A bundle is held whole while it is checked. With a <code>ContentCache</code>, members are then kept
   there; with none, up to 64 MiB of not-yet-read members wait in memory.</li>
 <li><strong>Host limits.</strong> Some CDNs and edge platforms cap a cached object or a response body. Keep the target
@@ -2920,7 +3017,7 @@ target gets a bundle of its own.</p>
 </ul>
 <h2 id="hide-the-file-list">Hide the file list</h2>
 <p>With opaque ids, the index and the bundles carry a salted hash of each path instead of the path:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleWriter</span><span class="p">(</span><span class="n">pathIds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ProjectPathIds</span><span class="p">(</span><span class="n">salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"com.example.harbor-town"</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContentBundleWriter</span><span class="p">(</span><span class="n">pathIds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ProjectPathIds</span><span class="p">(</span><span class="n">salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"com.example.harbor-town"</span><span class="p">))</span>
 </span></code></pre></div>
 <p>The game still reads by path: <code>IndexedAssetSource</code> hashes the path it is asked for with the salt the
 index publishes, and looks that id up.</p>
@@ -2933,7 +3030,7 @@ stop a reader from listing the files; they don't hide the files' contents.</p>
 <p>A host that serves HTTP range requests can read one member without its bundle. Pass a range fetch;
 with <code>TokenAuthorizedFetch</code>, use <code>IndexedAssetSource.open(fetch = tokenFetch, rangeReads = true)</code>,
 which sends <code>Range: bytes=&lt;first&gt;-&lt;last&gt;</code> alongside the token.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndexedAssetSource</span><span class="p">(</span><span class="n">bundled</span><span class="p">.</span><span class="na">index</span><span class="p">,</span><span class="w"> </span><span class="n">fetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serve</span><span class="p">,</span><span class="w"> </span><span class="n">rangeFetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hostRangeFetch</span><span class="p">)</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndexedAssetSource</span><span class="p">(</span><span class="n">bundled</span><span class="p">.</span><span class="na">index</span><span class="p">,</span><span class="w"> </span><span class="n">fetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serve</span><span class="p">,</span><span class="w"> </span><span class="n">rangeFetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hostRangeFetch</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Each <code>read</code> of a member then costs one request for just its bytes, while <code>prefetch</code> still downloads
 whole bundles. Use it for content streamed one file at a time from large bundles, and prefetch what a
@@ -2942,7 +3039,43 @@ from it. Both ready-made transports, <code>KtorContentTransport</code> and <code
 <code>Range</code> header; from a browser to another origin, the content server must allow it, as
 <a href="../protected-content/#the-browser-and-cors">Protected content</a> lists. A range request answered 429,
 or 503 with <code>Retry-After</code>, waits and is sent again like any other.</p>
+<h2 id="bundle-a-public-sign-in-set">Bundle a public sign-in set</h2>
+<p>A project that declares a <a href="../protected-content/#start-on-a-public-sign-in-set">public sign-in set</a>
+gets two loose indexes from <code>generateProjectIndex</code>. <code>generateContentBundles</code> then bundles each one on
+its own, so no bundle mixes public and protected files:</p>
+<table>
+<thead>
+<tr>
+<th>Set</th>
+<th>Task</th>
+<th>Written to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public</td>
+<td><code>generatePublicContentBundles</code>, which <code>generateContentBundles</code> runs first</td>
+<td><code>build/published-public</code></td>
+</tr>
+<tr>
+<td>Protected</td>
+<td><code>generateContentBundles</code></td>
+<td><code>build/published</code></td>
+</tr>
+</tbody>
+</table>
+<p>Publish <code>build/published-public</code> where anyone can read it and <code>build/published</code> behind the read
+token. Each folder is pruned of its own stale bundles only, under the same rule as above. Both sets
+use the same grouping, size and opaque-id settings. A project without a public set skips the public
+task. From the command line, bundle each index on its own:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>awake<span class="w"> </span>bundle<span class="w"> </span>build/project.public.index.json<span class="w"> </span>--output<span class="w"> </span>build/published-public
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>awake<span class="w"> </span>bundle<span class="w"> </span>build/project.index.json<span class="w"> </span>--output<span class="w"> </span>build/published
+</span></code></pre></div>
+<p>The public bundles are never encrypted, since they load before the player has a key; protected
+bundles may be. The game reads both through one <code>LayeredAssetSource</code>, and each bundle member is
+checked against the index it comes from.</p>
 <h2 id="properties">Properties</h2>
+<p><code>ContentBundleWriter</code>:</p>
 <table>
 <thead>
 <tr>
@@ -2963,7 +3096,7 @@ or 503 with <code>Retry-After</code>, waits and is sent again like any other.</p
 <td><code>targetBundleBytes</code></td>
 <td><code>Long</code></td>
 <td>16 MiB</td>
-<td>The size a bundle fills to before the next one starts.</td>
+<td>Upper size target per bundle; larger groups split at content-defined boundaries within it.</td>
 </tr>
 <tr>
 <td><code>pathIds</code></td>
@@ -2976,6 +3109,91 @@ or 503 with <code>Retry-After</code>, waits and is sent again like any other.</p
 <td><code>String</code></td>
 <td><code>bundles</code></td>
 <td>The folder bundle URLs start with, relative to the index.</td>
+</tr>
+</tbody>
+</table>
+<p><code>projectContent</code> Gradle extension (<code>generateContentBundles</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bundlesOutputDirectory</code></td>
+<td><code>DirectoryProperty</code></td>
+<td><code>build/published</code></td>
+<td>Folder where <code>bundles/&lt;sha256&gt;.awkb</code> and the bundled <code>project.index.json</code> are written.</td>
+</tr>
+<tr>
+<td><code>publicBundlesOutputDirectory</code></td>
+<td><code>DirectoryProperty</code></td>
+<td><code>build/published-public</code></td>
+<td>The same, for the <a href="../protected-content/#start-on-a-public-sign-in-set">public sign-in set</a>, written by <code>generatePublicContentBundles</code>.</td>
+</tr>
+<tr>
+<td><code>bundleGrouping</code></td>
+<td><code>Property&lt;String&gt;</code></td>
+<td><code>"folder"</code></td>
+<td><code>"folder"</code> (<code>byFolder</code>) or <code>"one"</code> (<code>oneGroup</code>).</td>
+</tr>
+<tr>
+<td><code>bundleFolderDepth</code></td>
+<td><code>Property&lt;Int&gt;</code></td>
+<td><code>1</code></td>
+<td>Leading folder count when <code>bundleGrouping</code> is <code>"folder"</code>.</td>
+</tr>
+<tr>
+<td><code>targetBundleBytes</code></td>
+<td><code>Property&lt;Long&gt;</code></td>
+<td>16 MiB</td>
+<td>Upper size target per bundle.</td>
+</tr>
+<tr>
+<td><code>bundleOpaqueIds</code></td>
+<td><code>Property&lt;Boolean&gt;</code></td>
+<td><code>false</code></td>
+<td>Whether to replace paths in the index and bundles with salted opaque ids.</td>
+</tr>
+<tr>
+<td><code>bundlePathSalt</code></td>
+<td><code>Property&lt;String&gt;</code></td>
+<td>unset</td>
+<td>Salt required when <code>bundleOpaqueIds</code> is <code>true</code>.</td>
+</tr>
+<tr>
+<td><code>bundleUrlPrefix</code></td>
+<td><code>Property&lt;String&gt;</code></td>
+<td><code>"bundles"</code></td>
+<td>Folder prefix for bundle URLs under <code>bundlesOutputDirectory</code>.</td>
+</tr>
+<tr>
+<td><code>pruneStaleBundles</code></td>
+<td><code>Property&lt;Boolean&gt;</code></td>
+<td><code>true</code> inside the build folder, else <code>false</code></td>
+<td>Whether <code>.awkb</code> files under <code>bundlesOutputDirectory</code> that the new index doesn't list are deleted.</td>
+</tr>
+<tr>
+<td><code>bundleKeyId</code></td>
+<td><code>Property&lt;String&gt;</code></td>
+<td>unset</td>
+<td>With a value, members are sealed under this key; see <a href="../encrypted-content/">Encrypted content</a>.</td>
+</tr>
+<tr>
+<td><code>bundleKeyFile</code></td>
+<td><code>RegularFileProperty</code></td>
+<td>unset</td>
+<td>File holding the key (32 raw bytes or 64 hex digits), outside the repository.</td>
+</tr>
+<tr>
+<td><code>bundleKeyEnvironmentVariable</code></td>
+<td><code>Property&lt;String&gt;</code></td>
+<td>unset</td>
+<td>Environment variable holding the key as hex; use this or <code>bundleKeyFile</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -3036,12 +3254,18 @@ instead of a <code>url</code>, and carry an <code>id</code> instead of a <code>p
 index version it doesn't know, so an older engine fails clearly on a bundled index rather than
 misreading it. A loose index reads exactly as it always has, and the two can share one cache: members
 are cached by their own SHA-256, as loose files are.</p>
-<p><strong>Checks.</strong> A bundle's size and SHA-256 must match the index, and so must each member's. A bundle
-that fails is rejected whole, nothing from it is cached, and the error names every damaged member's
-path (or id), or the header or table when no member is damaged.</p>
+<p><strong>Checks.</strong> A whole bundle's size and SHA-256 are checked once against the index; when they match
+and every member matches its record in the bundle's table of contents, member slices read with no
+<code>ContentCache</code> are trusted without hashing their bytes a second time. Members kept in a
+<code>ContentCache</code> are each hashed before they're stored, because the cache serves later releases by
+SHA-256 and checks a hit by size alone. Single-member range reads still check each member's size
+and SHA-256 directly. A bundle that fails its check is rejected whole, nothing from it is cached,
+and its members are hashed to name every damaged member's path (or id), or the header or table when
+no member is damaged.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../protected-content/">Protected content</a></li>
+<li><a href="../encrypted-content/">Encrypted content</a></li>
 <li><a href="../../get-started/run-in-the-browser/">Run in the browser</a></li>
 <li><a href="../../reference/modules/">Modules</a></li>
 </ul>
@@ -3102,13 +3326,13 @@ path (or id), or the header or table when no member is damaged.</p>
         
         
           
-          <a href="../game-ui/" class="md-footer__link md-footer__link--next" aria-label="Next: Game UI">
+          <a href="../encrypted-content/" class="md-footer__link md-footer__link--next" aria-label="Next: Encrypted content">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Game UI
+                Encrypted content
               </div>
             </div>
             <div class="md-footer__button md-icon">

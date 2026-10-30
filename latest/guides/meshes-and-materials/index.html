@@ -713,6 +713,8 @@
       
         
       
+        
+      
     
     
     
@@ -972,6 +974,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1852,6 +1882,8 @@
       
         
       
+        
+      
     
     
     
@@ -1943,6 +1975,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -2997,13 +3057,13 @@ document.</p>
 <td><code>baseColorFactor</code></td>
 <td>color</td>
 <td>white</td>
-<td>Multiplies the base colour texture. Textured pipeline only.</td>
+<td>Multiplies the base colour texture or vertex colour. Textured and skinned pipelines.</td>
 </tr>
 <tr>
 <td><code>emissiveFactor</code></td>
 <td>color</td>
 <td>transparent</td>
-<td>Multiplies the emissive texture. Textured pipeline only.</td>
+<td>Emitted light, multiplied by the emissive texture when textured. Textured and skinned pipelines.</td>
 </tr>
 <tr>
 <td><code>alphaMode</code></td>
@@ -3023,6 +3083,12 @@ document.</p>
 <td><code>false</code></td>
 <td>Keeps an <code>additive</code> textured mesh lit. Textured pipeline only.</td>
 </tr>
+<tr>
+<td><code>unlit</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draws <code>baseColorFactor * texture * vertexColor</code> as stored, skipping lighting, tone mapping and fog. Textured and skinned pipelines.</td>
+</tr>
 </tbody>
 </table>
 <p>An <code>additive</code> textured mesh is light added to the scene, so by default it is not shaded: it adds its
@@ -3034,27 +3100,33 @@ it, because the fog is already behind it. A black texel adds nothing unless a li
 highlight lands on it.</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pbr_material"</span><span class="p">,</span><span class="w"> </span><span class="nt">"roughness"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"litWhenAdditive"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
+<p>An <code>unlit</code> material skips lighting, tone mapping and fog on textured (<code>Textured</code>, <code>InstancedTextured</code>)
+and single-draw skinned (<code>Skinned</code>, <code>SkinnedTextured</code>) meshes, writing <code>baseColorFactor * texture *
+vertexColor</code> as stored while keeping <code>alphaMode</code> masking and output encoding. Use it for hand-painted
+or pre-baked textures and character skin parts whose colours are already authored in display space.</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pbr_material"</span><span class="p">,</span><span class="w"> </span><span class="nt">"unlit"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
 <p><code>texture_animation</code>, a component of its own beside the material, plays the texture as a frame sheet
 and scrolls it. <code>columns</code> and <code>rows</code> (default 1) describe the sheet, read left to right, then top to
 bottom. <code>frameCount</code> (0 means every cell from <code>firstFrame</code> on) and <code>framesPerSecond</code> (0 holds the
 first frame of the run) play it. <code>scrollU</code> and <code>scrollV</code> scroll the UVs, in UV units per second.</p>
 <p><code>firstFrame</code> is the cell a run starts at, counted from 0 in that reading order. One sheet can hold
 several animations, an idle and a walk, and each entity plays its own:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"texture_animation"</span><span class="p">,</span><span class="w"> </span><span class="nt">"columns"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"rows"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"texture_animation"</span><span class="p">,</span><span class="w"> </span><span class="nt">"columns"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"rows"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>That plays the second row of an eight-column sheet, cells 8 to 15, twelve frames a second. With
 <code>framesPerSecond</code> 0 it shows <code>firstFrame</code> and nothing else, which is how an entity shows one chosen cell.</p>
 <p><code>texture_clips</code> cuts a sheet into named clips and plays one of them, for a sprite that changes what it
 is doing. A clip is a run of cells (<code>firstFrame</code>, <code>frameCount</code>), a rate (<code>framesPerSecond</code>) and
 whether it repeats (<code>loop</code>):</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"texture_clips"</span><span class="p">,</span><span class="w"> </span><span class="nt">"columns"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"rows"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"clip"</span><span class="p">:</span><span class="w"> </span><span class="s2">"idle"</span><span class="p">,</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"clips"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="nt">"idle"</span><span class="p">:</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">  </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nt">"walk"</span><span class="p">:</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w">  </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">"attack"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nt">"loop"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">}</span>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"texture_clips"</span><span class="p">,</span><span class="w"> </span><span class="nt">"columns"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"rows"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"clip"</span><span class="p">:</span><span class="w"> </span><span class="s2">"idle"</span><span class="p">,</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">"clips"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">"idle"</span><span class="p">:</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">  </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">"walk"</span><span class="p">:</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w">  </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">"attack"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"firstFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="nt">"framesPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nt">"loop"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="p">}</span>
 </span></code></pre></div>
 <p><code>texture_animation</code> is played by the GPU on the renderer's clock. These clips are stepped on the CPU by
 the scene's own clock, so a game can choose among them and a paused game holds still. From a system,
@@ -3130,8 +3202,10 @@ with it. Use <code>InstancedSkinnedMeshRenderer</code>; see <a href="../animatio
 </div>
 <div class="admonition tip">
 <p class="admonition-title"><code>PbrMaterial</code> and skinning</p>
-<p><code>PbrMaterial</code> and <code>SkinnedPose</code> fill the same per-draw uniform slot, for different vertex formats.
-An entity carries one or the other, not both.</p>
+<p>A single-draw skinned entity (<code>Skinned</code>, <code>SkinnedTextured</code>) carries both <code>SkinnedPose</code> and
+<code>PbrMaterial</code>: <code>RenderSystem3D</code> packs <code>baseColorFactor</code>, <code>emissiveFactor</code>, <code>alphaMode</code>,
+<code>alphaCutoff</code> and <code>unlit</code> alongside the joint palette. <code>metallic</code>, <code>roughness</code> and
+<code>litWhenAdditive</code> apply to static meshes.</p>
 </div>
 <h2 id="debugging">Debugging</h2>
 <p><code>RenderDiagnostics</code> holds the last frame's counters: <code>frustumCulled</code>, <code>occluded</code>,

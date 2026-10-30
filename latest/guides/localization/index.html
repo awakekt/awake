@@ -713,6 +713,8 @@
       
         
       
+        
+      
     
     
     
@@ -972,6 +974,34 @@
     
   
     Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch parameters
   
 
     
@@ -1704,6 +1734,8 @@
       
         
       
+        
+      
     
     
     
@@ -1795,6 +1827,34 @@
     
   
     Content bundles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encrypted-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encrypted content
   
 
     
@@ -2129,6 +2189,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Show a key in a scene">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text-before-the-project-loads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text before the project loads
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2813,6 +2890,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Show a key in a scene">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text-before-the-project-loads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text before the project loads
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3254,20 +3348,46 @@ its keyed text from it. A settings screen switches language through it:</p>
 <p>Keyed text changes on the next frame; the scene keeps playing. A project with no <code>strings/en.json</code>
 has no strings, and its keyed elements show their keys. A host that draws the canvas itself passes
 <code>SceneCanvas(world, strings = …)</code>. The fields are in <a href="../game-ui/#show-text-in-the-players-language">Game UI</a>.</p>
+<h3 id="text-before-the-project-loads">Text before the project loads</h3>
+<p>A game that shows text before its project has loaded, such as a connection screen saying why a
+server refused the session, makes its own <code>Strings</code> first and hands it to <code>loadProject</code>, so the game
+and the project share one instance:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">strings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Strings</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">StringTableSource</span><span class="p">.</span><span class="na">assets</span><span class="p">(</span><span class="n">appResources</span><span class="p">),</span><span class="w"> </span><span class="n">locale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">settings</span><span class="p">.</span><span class="na">locale</span><span class="w"> </span><span class="o">?:</span><span class="w"> </span><span class="n">systemLocale</span><span class="p">())</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">showConnecting</span><span class="p">(</span><span class="n">strings</span><span class="p">.</span><span class="na">text</span><span class="p">(</span><span class="s">"connect.waiting"</span><span class="p">))</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="kd">val</span><span class="w"> </span><span class="nv">project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">loadProject</span><span class="p">(</span><span class="n">projectFiles</span><span class="p">,</span><span class="w"> </span><span class="n">strings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">,</span><span class="w"> </span><span class="n">physicsWorld</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">createJoltPhysicsWorld</span><span class="p">)</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1">// project.strings === strings</span>
+</span></code></pre></div>
+<ul>
+<li><strong>One instance.</strong> The project's <code>strings/</code> tables are added to it at <code>StringLayer.Game</code>, and
+  <code>LoadedProject.strings</code> is that same <code>Strings</code>. Text the game read before loading and the project's
+  keyed text both come from it.</li>
+<li><strong>The game's locale is kept.</strong> The project's tables are read for the locale the game chose, not the
+  device's, and one <code>setLocale</code> changes the game's text and the project's together.</li>
+<li><strong>The project's keys win.</strong> Its tables are added after the game's own, so where both have a key in
+  the same locale the project's text is shown. The locale still comes first: the game's Korean for a
+  key beats the project's English for a Korean player.</li>
+<li><strong>A failed load changes nothing.</strong> The tables are added only once the rest of the project has
+  loaded.</li>
+<li><strong>Closing the project takes its tables out.</strong> <code>LoadedProject.close()</code> removes the tables that load
+  added and leaves the game's own, so a game that loads a project again into the same instance, as a
+  <code>projectRoute</code> does each time it is entered, holds one copy of them at a time.</li>
+</ul>
+<p>Without <code>strings</code>, the project gets a <code>Strings</code> of its own, as above.</p>
 <h2 id="fonts-for-other-scripts">Fonts for other scripts</h2>
 <p>The built-in UI font draws Latin text. A locale whose script it lacks, such as Korean or Russian,
 names fallback fonts in <code>strings/fonts.json</code>:</p>
-<div class="language-json highlight"><span class="filename">strings/fonts.json</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">"ko"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="s2">"fonts/NotoSansKR-Regular.otf"</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">"ru"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="s2">"fonts/NotoSans-Regular.ttf"</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">strings/fonts.json</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">"ko"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="s2">"fonts/NotoSansKR-Regular.otf"</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="p">],</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">"ru"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="s2">"fonts/NotoSans-Regular.ttf"</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="p">}</span>
 </span></code></pre></div>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocaleFonts</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">assets</span><span class="p">)</span><span class="w"> </span><span class="c1">// strings/fonts.json</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uiFont</span><span class="p">:</span><span class="w"> </span><span class="n">UiFont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">.</span><span class="na">loadFont</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span><span class="w"> </span><span class="n">fonts</span><span class="p">,</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">())</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocaleFonts</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">assets</span><span class="p">)</span><span class="w"> </span><span class="c1">// strings/fonts.json</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uiFont</span><span class="p">:</span><span class="w"> </span><span class="n">UiFont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">.</span><span class="na">loadFont</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span><span class="w"> </span><span class="n">fonts</span><span class="p">,</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">())</span>
 </span></code></pre></div>
 <p><code>loadFont</code> bakes each fallback font with only the chars the loaded tables use that the primary font
 lacks, and returns one font, <code>UiFonts.fallback(primary, fallbacks)</code>, that draws each char from the
