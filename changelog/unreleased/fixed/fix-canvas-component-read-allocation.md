@@ -1,0 +1,1 @@
+- Reading a canvas element component with `get(type)`, and the scene canvas syncing its elements each frame, allocate nothing again on the JVM and Android: the types `get` and `remove` compare against are made once instead of a new class reference per read, which had turned a HUD's steady frame into per-frame garbage since 0.28.0.
