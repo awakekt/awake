@@ -69,6 +69,9 @@ internal interface PackedUiFontData {
      * have none when there are no outlines either.
      */
     fun kerning(): KerningPairs? = null
+
+    /** The resolution this atlas's distance field was baked at. */
+    fun distanceFieldBake(): DistanceFieldBake = DistanceFieldBake.GENERATOR
 }
 
 /**
@@ -86,7 +89,7 @@ class PackedUiFont internal constructor(
     private val data: PackedUiFontData,
     override val cellSize: Int = data.baseCellSize,
     private val lineMetrics: FontLineMetrics? = data.lineMetrics(),
-    outlines: () -> OpenTypeFont? = data::outlineFont,
+    private val outlines: () -> OpenTypeFont? = data::outlineFont,
 ) : UiFont {
     override val samplingMode: UiFontSamplingMode = data.samplingMode
     override val textScaleStep: Float = data.textScaleStep
@@ -139,7 +142,8 @@ class PackedUiFont internal constructor(
     private val glyphsByCode: Map<Int, GlyphRect> by lazy(::decodeGlyphRects)
     private val inkByCode: Map<Int, InkBounds> by lazy(::decodeInkBounds)
     private val advancesByCode: Map<Int, Float> by lazy(::decodeAdvances)
-    private val fallbackCode: Int = data.fallbackChar.code
+    internal val fontName: String get() = data.name
+    internal val fallbackCode: Int = data.fallbackChar.code
 
     /**
      * The pairs [kerningFor] reads: the data's own, or those of the outlines the atlas was drawn from among
@@ -228,6 +232,27 @@ class PackedUiFont internal constructor(
 
     override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float =
         glyphPx * kerningPairs.em(left, right)
+
+    private val proportionalFont: UiFont by lazy { numericVariant(FontNumerals.Proportional) }
+    private val tabularFont: UiFont by lazy { numericVariant(FontNumerals.Tabular) }
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = when (numerals) {
+        null -> this
+        FontNumerals.Proportional -> proportionalFont
+        FontNumerals.Tabular -> tabularFont
+    }
+
+    private fun numericVariant(numerals: FontNumerals): UiFont {
+        val codes = ArrayList<Int>(data.advancesEm.size)
+        forEachGlyphCode { _, code -> codes += code }
+        return buildNumericPackedUiFont(
+            base = this,
+            bake = data.distanceFieldBake(),
+            codes = codes.toIntArray(),
+            outlines = outlines,
+            numerals = numerals,
+        )
+    }
 
     private fun decodeAtlasPixels(): ByteArray {
         val decoded = data.atlasBytes()

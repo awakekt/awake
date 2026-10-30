@@ -100,5 +100,5 @@ private class TextPaintNode :
 /** Used when nothing in the chain provided one. Mid grey reads on both light and dark. */
 internal val DefaultTextColor: Color = Color(0.9f, 0.9f, 0.92f, 1f)
 
-/** The font a run measures and draws with: the style's own, or [ambient] (`LocalFont.current`). */
-internal fun TextStyle.resolveFont(ambient: UiFont): UiFont = font ?: ambient
+/** The font a run measures and draws with: the style's own, or [ambient] (`LocalFont.current`), with [TextStyle.numerals] applied. */
+internal fun TextStyle.resolveFont(ambient: UiFont): UiFont = (font ?: ambient).withNumerals(numerals)

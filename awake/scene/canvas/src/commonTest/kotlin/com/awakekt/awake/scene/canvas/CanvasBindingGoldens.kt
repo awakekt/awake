@@ -7,6 +7,7 @@
 
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.document.SceneComponent
@@ -44,7 +45,7 @@ internal class GoldenCase<S : SceneComponent>(val binding: SceneComponentBinding
  */
 internal val goldenCases: Map<String, GoldenCase<*>> = mapOf(
     "rect" to GoldenCase(CanvasRectBinding, SceneCanvasRect(CanvasAnchor.BottomRight, 2f, 4f, 64f, 32f, 3, false, true, false, 0.5f, "hp", "jump")),
-    "text" to GoldenCase(CanvasTextBinding, SceneCanvasText("Hi", "hud.hi", mapOf("n" to "1"), 18f, "mono", CanvasAnchor.Center, false)),
+    "text" to GoldenCase(CanvasTextBinding, SceneCanvasText("Hi", "hud.hi", mapOf("n" to "1"), 18f, "mono", CanvasAnchor.Center, false, FontNumerals.Tabular)),
     "appearance" to GoldenCase(CanvasAppearanceBinding, SceneCanvasAppearance("#ff0000", "#00000080", CanvasStyle(background = "#123456"), CanvasControlSkin())),
     "layout" to GoldenCase(CanvasLayoutBinding, SceneCanvasLayout(CanvasLayout(direction = CanvasDirection.Column, gap = 4f))),
     "cluster" to GoldenCase(CanvasClusterBinding, SceneCanvasCluster(CanvasCluster(radius = 48f))),

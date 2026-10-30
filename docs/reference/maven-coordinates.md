@@ -118,7 +118,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.core:pool` | `:awake:core:pool` | `core` | — |
 | `com.awakekt.awake.core:schema` | `:awake:core:schema` | `core` | — |
 | `com.awakekt.awake.core:state` | `:awake:core:state` | `core` | — |
-| `com.awakekt.awake.core:text` | `:awake:core:text` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color` |
+| `com.awakekt.awake.core:text` | `:awake:core:text` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:logging` |
 | `com.awakekt.awake:ecs` | `:awake:ecs` | `core` | — |
 | `com.awakekt.awake.editor:contract` | `:awake:editor:contract` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:input`; `api` → `:awake:core:state`; `api` → `:awake:core:di`; `api` → `:awake:plugin-archive` |
 | `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` | `core` | `implementation` → `:awake:core:di`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:engine:platform` |

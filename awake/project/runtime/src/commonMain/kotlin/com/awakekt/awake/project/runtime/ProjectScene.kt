@@ -77,8 +77,11 @@ internal suspend fun loadProjectInto(
     hasRenderer: Boolean,
     physicsWorld: (suspend () -> PhysicsWorld)?,
     entryScene: String? = null,
+    onProgress: (Float) -> Unit = {},
     sharedStrings: Strings? = null,
 ): LoadedProject {
+    val progress = ProgressReporter(onProgress)
+    progress.report(0f)
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
@@ -90,6 +93,7 @@ internal suspend fun loadProjectInto(
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
     val ownStrings = if (sharedStrings == null) loadProjectStrings(files) else null
+    files.prefetchSceneContent(scenePath, progress::report)
     val entry = loadProjectScene(scenePath, manifest, files, registry, installed, hasRenderer, physicsWorld)
     // The app's instance gets the project's tables only once nothing else can fail the load.
     val strings = sharedStrings?.also { shared ->
@@ -100,6 +104,7 @@ internal suspend fun loadProjectInto(
             throw cancelled
         }
     } ?: ownStrings
+    progress.report(1f)
     return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings)
 }
 
@@ -128,10 +133,12 @@ internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
  * Reads the project's scene at [path], as [loadProject] reads its entry scene, for a switch to play
  * it: decoded and checked with the project's registry, its models and its capabilities' content
  * loaded, and its physics world made. Throws [IllegalArgumentException] for a path that leaves the
- * project and for everything [loadProject] refuses in a scene.
+ * project and for everything [loadProject] refuses in a scene. [onProgress] gets the share of the
+ * scene's content bytes that have arrived, as [SceneSwitchState.Loading.progress] defines it.
  */
-internal suspend fun LoadedProject.loadScene(path: String): ProjectScene {
+internal suspend fun LoadedProject.loadScene(path: String, onProgress: (Float) -> Unit = {}): ProjectScene {
     require(AwakeProjectValidator.isSafeProjectPath(path)) { "'$path' is not a project-relative path" }
+    files.prefetchSceneContent(path, onProgress)
     return loadProjectScene(path, manifest, files, componentRegistry, installedCapabilities(capabilities), hasRenderer, physicsWorld)
 }
 

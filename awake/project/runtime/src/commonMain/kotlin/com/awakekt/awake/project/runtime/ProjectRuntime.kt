@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("TooManyFunctions")
+@file:Suppress("TooManyFunctions") // The four hidden overloads kept for binary compatibility double the loadProject family.
 
 package com.awakekt.awake.project.runtime
 
@@ -132,6 +132,11 @@ class LoadedProject internal constructor(
  * canvas without the images or fonts and its meshes without their models; load with `hasRenderer = true` for a
  * host that later draws.
  *
+ * [onProgress] hears how far the entry scene's content has come, from 0 as loading starts to 1 as
+ * the project is ready, never going down and never repeating a value, on the loading coroutine. In
+ * between it reports the share of the scene's content bytes that have arrived, as
+ * [SceneSwitchState.Loading.progress] defines it; where [files] can't report bytes it is 0 and then 1.
+ *
  * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
  * capability, a component no capability registers, content a capability cannot load (a collision
  * model that can't be read, for one), or a scene that needs physics when [physicsWorld] is null.
@@ -157,18 +162,10 @@ suspend fun loadProject(
     files: AssetSource,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, sharedStrings = strings)
-
-/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-suspend fun loadProject(
-    files: AssetSource,
-    capabilities: List<SceneCapability> = emptyList(),
-    hasRenderer: Boolean = true,
-    physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld)
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, onProgress = onProgress, sharedStrings = strings)
 
 /**
  * [loadProject] starting at [entryScene], a scene path relative to the project root, instead of
@@ -184,19 +181,10 @@ suspend fun loadProject(
     entryScene: String,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene, strings)
-
-/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-suspend fun loadProject(
-    files: AssetSource,
-    entryScene: String,
-    capabilities: List<SceneCapability> = emptyList(),
-    hasRenderer: Boolean = true,
-    physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene)
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene, onProgress, strings)
 
 /**
  * [loadProject] into [componentRegistry] instead of the process-wide registry: Core's scene components
@@ -215,19 +203,10 @@ suspend fun loadProject(
     componentRegistry: SceneComponentRegistry,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, sharedStrings = strings)
-
-/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-suspend fun loadProject(
-    files: AssetSource,
-    componentRegistry: SceneComponentRegistry,
-    capabilities: List<SceneCapability> = emptyList(),
-    hasRenderer: Boolean = true,
-    physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld)
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, onProgress = onProgress, sharedStrings = strings)
 
 /**
  * [loadProject] into [componentRegistry], starting at [entryScene] instead of
@@ -242,11 +221,44 @@ suspend fun loadProject(
     componentRegistry: SceneComponentRegistry,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+    onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene, strings)
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene, onProgress, strings)
 
-/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
+// The signatures these four had before `onProgress` was added, kept so a consumer compiled against them
+// still links. Hidden: source callers resolve to the overloads above.
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, entryScene, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 suspend fun loadProject(
     files: AssetSource,
@@ -255,7 +267,7 @@ suspend fun loadProject(
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene)
+): LoadedProject = loadProject(files, entryScene, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
 
 /**
  * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own
@@ -327,6 +339,11 @@ suspend fun LoadedProject.switchTo(path: String) {
  * fixed step or frame, never inside a system's update. Nothing carries across: the world is emptied,
  * whatever joined it included, and the next scene starts from its file with systems, content and a
  * physics world of its own. A scene that can't load or play is logged, and the one playing goes on.
+ *
+ * What a switch is doing is the app's `SceneSwitchStatus` service: its [SceneSwitchStatus.state] is
+ * loading with the share of the next scene's content bytes that have arrived, then ready once the new
+ * scene has had its first frame, or failed with the scene's path and why, for a loading curtain or an
+ * error message the game draws itself.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
     val scenes = ProjectSceneRunner(project)
@@ -343,6 +360,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
     fixedSystem(PROJECT_FIXED_SYSTEMS) { scenes.bind(this) }
     frameSystem(PROJECT_FRAME_SYSTEMS) { scenes.frameSystems }
     service(SceneSwitch::class) { scenes }
+    service(SceneSwitchStatus::class) { scenes }
     onReady {
         showTouchControls = touchControls
         project.componentRegistry?.let { canvasBindings = it.bindings }

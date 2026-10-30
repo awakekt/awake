@@ -127,6 +127,7 @@ class PixelGlyph internal constructor(
  * @param fallbackCode The code point a missing one draws as.
  * @param baselineEm The face's baseline below its line top, in em, so its glyphs line up with its atlas glyphs.
  * @param subpixelSteps How many positions across a pixel each glyph is rasterized at.
+ * @param glyphIds The glyph ID each entry of [codePoints] rasterizes from, defaulting to [OpenTypeFont.glyphFor].
  */
 internal class OutlinePixelGlyphs(
     private val outlines: OpenTypeFont,
@@ -134,12 +135,12 @@ internal class OutlinePixelGlyphs(
     fallbackCode: Int,
     private val baselineEm: Float,
     private val subpixelSteps: Int = SUBPIXEL_STEPS,
+    private val glyphIds: IntArray = IntArray(codePoints.size) { outlines.glyphFor(codePoints[it]) },
 ) : PixelGlyphs {
     private val slotByCode: Map<Int, Int> = HashMap<Int, Int>(codePoints.size * 2).also { map ->
         for (slot in codePoints.indices) map.getOrPut(codePoints[slot]) { slot }
     }
     private val fallbackSlot: Int = slotByCode[fallbackCode] ?: 0
-    private val glyphIds = IntArray(codePoints.size) { outlines.glyphFor(codePoints[it]) }
     private val outlineCache = arrayOfNulls<List<OutlineSegment>>(codePoints.size)
     private val scalePerUnit = 1.0 / outlines.unitsPerEm
     private val hinting = VerticalHinting.measure(outlines)

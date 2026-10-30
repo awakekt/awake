@@ -70,6 +70,50 @@ Its receiver is the scene runtime, so it can read `world`, `renderer` and `requi
 entities up by name later, in `onReady` or when the system runs. `fixedSystem` and `frameSystem`
 return a handle; `runtime.system(handle)` gives back the instance.
 
+## Handle errors
+
+Core catches failures and hands them to the app; it never draws anything. Register an
+`AppErrorHandler` like any other service and decide what to show, for instance by storing the error in
+the state your UI reads:
+
+```kotlin title="Kotlin"
+app {
+    service(AppErrorHandler::class, AppErrorHandler { error ->
+        failures += error // error.source, error.cause, error.subject, error.retry
+    })
+    service(AppCoroutineScope::class, AppCoroutineScope(serviceLookup()))
+}
+```
+
+Each failure reaches the handler once, with where it failed (`AppErrorSource`), its cause, a
+`subject` naming what failed, and a `retry` when running the step again makes sense:
+
+| Source | Caught when | `retry` |
+| --- | --- | --- |
+| `Bootstrap` | The graphics engine or an app `ready { }` callback throws, or a step you launched with `launchStep` does. | `null` for the engine's own start-up; a step you launched with `launchStep` runs again. The engine does not start, as before, and `GraphicsEngine.startupError` is still set. |
+| `ProjectLoad` | A `projectRoute` or `deferredRoute` loader throws. The route keeps its loading scene with `Failed(cause)`, as before. | Loads the route again. |
+| `SceneSwitch` | A scene a `SceneSwitch` asked for cannot be read or played. The scene playing goes on, as before. | Asks for the scene again. |
+| `Coroutine` | A coroutine launched in an `AppCoroutineScope` throws. Its siblings and the scope go on. | `null` |
+| `System` | A system throws in the frame loop. | `null` |
+
+Call `retry` on the frame thread. It returns at once, and a second failure reaches the handler as a
+new error.
+
+A system that throws is reported once and then **skipped for the rest of the scene**: the frame
+carries on with the other systems, the renderer and the UI, and a system that fails every frame does
+not call the handler every frame. Its scene's next switch builds the system afresh. Guarding costs one
+flag read per system call and allocates nothing on a frame that succeeds.
+
+With no handler registered nothing changes: a failed switch or load is logged and the scene or route
+carries on, a failed start sets `startupError`, and a system's exception is thrown out of the frame.
+A project you load yourself before the app exists can use the same contract with `launchStep`:
+
+```kotlin title="Kotlin"
+scope.launchStep(AppErrorSource.ProjectLoad, errors, subject = "world", onDone = ::play) {
+    loadProject(files, physicsWorld = ::createJoltPhysicsWorld)
+}
+```
+
 ## Properties
 
 `window { }`:
@@ -93,7 +137,7 @@ App callbacks, on `app { }` and `appModule { }`:
 | `resize { width, height -> }` | When the surface changes size. |
 | `pause { }`, `resume { }` | When the host pauses and resumes the app. |
 | `dispose { }` | Once, at shutdown. |
-| `service(type, value)` | Registers a value any module can look up with `requireService(type)`. |
+| `service(type, value)` | Registers a value any module can look up with `requireService(type)`. Register an `AppErrorHandler` to receive failures; see [Handle errors](#handle-errors). |
 
 ## How it works
 

@@ -176,6 +176,8 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun readbackAttachment (IILcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun readbackAttachment (Lcom/awakekt/awake/ecs/World;IILcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun ready (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun reportError (Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;Ljava/lang/String;)Z
+	public static synthetic fun reportError$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;Ljava/lang/String;ILjava/lang/Object;)Z
 	public final fun requireAssetLibrary ()Lcom/awakekt/awake/scene/runtime/SceneAssetLibrary;
 	public final fun requireCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun requireEntity-bssdaRw (Ljava/lang/String;)J
@@ -582,6 +584,10 @@ public final class com/awakekt/awake/scene/runtime/project/StandaloneProjectConf
 
 public final class com/awakekt/awake/scene/runtime/schedule/SceneSchedule {
 	public static final field NANOS_PER_MS F
+}
+
+public final class com/awakekt/awake/scene/runtime/schedule/SystemGuardKt {
+	public static final fun guardedFor (Lcom/awakekt/awake/ecs/System;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)Lcom/awakekt/awake/ecs/System;
 }
 
 public final class com/awakekt/awake/scene/runtime/session/SceneDocumentEditSession {

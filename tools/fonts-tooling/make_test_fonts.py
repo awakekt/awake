@@ -20,6 +20,10 @@
 - awake-cjk-test.ttf keeps Roboto Regular's unkerned ASCII and common punctuation metrics, and adds
   1-em fullwidth and 0.5-em halfwidth TrueType glyphs across the Han, Hiragana, Katakana, Hangul
   and East Asian punctuation code points used by the CJK line-breaking conformance suite.
+- roboto-numerals.ttf maps `0`..`9` in `cmap` to Roboto Regular's proportional (`pnum`) figures and
+  maps them to Roboto Regular's equal-width (`1151`-unit) tabular figures through `GSUB` `tnum`
+  using both `SingleSubst` format 1 (delta over a format 2 range coverage) and `SingleSubst` format 2
+  wrapped in a LookupType 7 `ExtensionSubst` (over a format 1 list coverage).
 
 Both are small enough to mutate byte by byte in a test. Timestamps are kept, so a re-run writes
 the same bytes.
@@ -30,6 +34,7 @@ Usage:
 
 from __future__ import annotations
 
+import struct
 from pathlib import Path
 
 from fontTools import subset
@@ -39,6 +44,7 @@ from fontTools.misc.psCharStrings import T2CharString
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont, newTable
+from fontTools.ttLib.tables.DefaultTable import DefaultTable
 from fontTools.ttLib.tables._c_m_a_p import CmapSubtable
 from fontTools.ttLib.tables._k_e_r_n import KernTable_format_0
 
@@ -260,6 +266,119 @@ def make_cjk_ttf() -> TTFont:
     return font
 
 
+def _raw_gsub_table(pnum_ids: list[int], tnum_ids: list[int]) -> bytes:
+    """Builds a deterministic binary GSUB v1.0 table for `tnum`:
+    - Lookup 0 (LookupType 1, SingleSubst format 1 delta, Coverage format 2 range) for digits 0..4.
+    - Lookup 1 (LookupType 7 Extension -> LookupType 1, SingleSubst format 2 array, Coverage format 1 list) for 5..9.
+    """
+    # Consecutive glyph IDs: pnum_ids = [g0..g9], tnum_ids = [t0..t9] with constant delta for 0..4.
+    delta = (tnum_ids[0] - pnum_ids[0]) & 0xFFFF
+    assert all(((pnum_ids[i] + delta) & 0xFFFF) == tnum_ids[i] for i in range(5))
+
+    # Coverage 0 (format 2, 1 range: pnum_ids[0]..pnum_ids[4], startCoverageIndex = 0): 10 bytes
+    cov0 = struct.pack(">HHHHHH", 2, 1, pnum_ids[0], pnum_ids[4], 0, 0)[:10]
+    # SingleSubst 0 (format 1: format=1, coverageOffset=6, deltaGlyphID): 6 + 10 = 16 bytes
+    sub0 = struct.pack(">HHH", 1, 6, delta) + cov0
+    # Lookup 0 (type=1, flag=0, subTableCount=1, subtableOffset=8): 8 + 16 = 24 bytes
+    lookup0 = struct.pack(">HHHH", 1, 0, 1, 8) + sub0
+
+    # Coverage 1 (format 1, 5 glyphs: pnum_ids[5..9]): 4 + 10 = 14 bytes
+    cov1 = struct.pack(">HH5H", 1, 5, *pnum_ids[5:10])
+    # SingleSubst 1 (format 2: format=2, coverageOffset=16, glyphCount=5, 5 target IDs): 16 + 14 = 30 bytes
+    sub1 = struct.pack(">HHH5H", 2, 16, 5, *tnum_ids[5:10]) + cov1
+    # ExtensionSubst (format=1, extensionLookupType=1, extensionOffset=8): 8 + 30 = 38 bytes
+    ext1 = struct.pack(">HHI", 1, 1, 8) + sub1
+    # Lookup 1 (type=7, flag=0, subTableCount=1, subtableOffset=8): 8 + 38 = 46 bytes
+    lookup1 = struct.pack(">HHHH", 7, 0, 1, 8) + ext1
+
+    # Header (10 bytes): major=1, minor=0, scriptList=10, featureList=30, lookupList=48
+    # ScriptList (20 bytes at 10): count=1, tag='DFLT', offset=8 -> Script(defaultLangSys=4, count=0)
+    #   -> LangSys(lookupOrder=0, reqFeature=0xFFFF, featureCount=1, featureIndices=[0])
+    script_list = struct.pack(">H4sHHHHHHH", 1, b"DFLT", 8, 4, 0, 0, 0xFFFF, 1, 0)
+    # FeatureList (18 bytes at 30): count=1, tag='tnum', offset=8 -> Feature(params=0, count=2, lookups=[0, 1])
+    feature_list = struct.pack(">H4sHHHHH", 1, b"tnum", 8, 0, 2, 0, 1)
+    # LookupList (at 48): count=2, offsets=[6, 6 + len(lookup0)]
+    lookup_list = struct.pack(">HHH", 2, 6, 6 + len(lookup0)) + lookup0 + lookup1
+
+    header = struct.pack(">HHHHH", 1, 0, 10, 10 + len(script_list), 10 + len(script_list) + len(feature_list))
+    return header + script_list + feature_list + lookup_list
+
+
+def make_numerals_ttf() -> TTFont:
+    """Proportional (`pnum`) digits by default in `cmap`, switched to equal-width tabular (`tnum`) via GSUB."""
+    source = TTFont(SOURCE, recalcTimestamp=False)
+    cmap = source.getBestCmap()
+    gsub = source["GSUB"].table
+
+    def feature_map(tag: str) -> dict[str, str]:
+        mapping: dict[str, str] = {}
+        for rec in gsub.FeatureList.FeatureRecord:
+            if rec.FeatureTag == tag:
+                for lidx in rec.Feature.LookupListIndex:
+                    for st in gsub.LookupList.Lookup[lidx].SubTable:
+                        mapping.update(st.mapping)
+        return mapping
+
+    pnum_map = feature_map("pnum")
+    tnum_map = feature_map("tnum")
+    digits = "0123456789"
+    pnum_sources = [pnum_map[cmap[ord(d)]] for d in digits]
+    tnum_sources = [tnum_map.get(cmap[ord(d)], cmap[ord(d)]) for d in digits]
+
+    options = subset.Options()
+    options.layout_features = ["kern"]
+    options.hinting = False
+    options.notdef_outline = True
+    options.name_IDs = [1, 2]
+    options.drop_tables += ["GDEF", "GSUB", "STAT", "gasp", "DSIG"]
+    font = TTFont(SOURCE, recalcTimestamp=False)
+    subsetter = subset.Subsetter(options)
+    subsetter.populate(text=" Hx0123456789.,:?$-")
+    subsetter.subset(font)
+
+    # Copy exact proportional and tabular digit outlines & advances in consecutive glyph order so
+    # Format 1 delta (0..4) and Format 2 array + Extension (5..9) are both exercised deterministically.
+    glyf = font["glyf"]
+    hmtx = font["hmtx"]
+    src_glyf = source["glyf"]
+    src_hmtx = source["hmtx"]
+    order = list(font.getGlyphOrder())
+    p_names = [f"num_p_{d}" for d in digits]
+    t_names = [f"num_t_{d}" for d in digits]
+    for dst, src_name in zip(p_names, pnum_sources):
+        g = src_glyf[src_name]
+        pen = TTGlyphPen(source.getGlyphSet())
+        source.getGlyphSet()[src_name].draw(pen)
+        glyf[dst] = pen.glyph()
+        hmtx.metrics[dst] = src_hmtx.metrics[src_name]
+    for dst, src_name in zip(t_names, tnum_sources):
+        pen = TTGlyphPen(source.getGlyphSet())
+        source.getGlyphSet()[src_name].draw(pen)
+        glyf[dst] = pen.glyph()
+        hmtx.metrics[dst] = src_hmtx.metrics[src_name]
+
+    order.extend(p_names)
+    order.extend(t_names)
+    font.setGlyphOrder(order)
+    font["maxp"].numGlyphs = len(order)
+
+    new_cmap = dict(font.getBestCmap())
+    for d, p_name in zip(digits, p_names):
+        new_cmap[ord(d)] = p_name
+    format4 = CmapSubtable.newSubtable(4)
+    format4.platformID, format4.platEncID, format4.language = 3, 1, 0
+    format4.cmap = {cp: name for cp, name in new_cmap.items() if cp <= 0xFFFF}
+    font["cmap"].tables = [format4]
+
+    p_ids = [order.index(name) for name in p_names]
+    t_ids = [order.index(name) for name in t_names]
+    gsub_table = DefaultTable("GSUB")
+    gsub_table.data = _raw_gsub_table(p_ids, t_ids)
+    font["GSUB"] = gsub_table
+    font.recalcTimestamp = False
+    return font
+
+
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ttf = make_ttf()
@@ -270,7 +389,8 @@ def main() -> int:
     otf.save(OUT_DIR / "roboto-subset.otf")
     make_kern_ttf().save(OUT_DIR / "roboto-kern.ttf")
     make_cjk_ttf().save(OUT_DIR / "awake-cjk-test.ttf")
-    for name in ("roboto-subset.ttf", "roboto-subset.otf", "roboto-kern.ttf", "awake-cjk-test.ttf"):
+    make_numerals_ttf().save(OUT_DIR / "roboto-numerals.ttf")
+    for name in ("roboto-subset.ttf", "roboto-subset.otf", "roboto-kern.ttf", "awake-cjk-test.ttf", "roboto-numerals.ttf"):
         print(f"{name:20} {(OUT_DIR / name).stat().st_size:>6,} bytes")
     return 0
 

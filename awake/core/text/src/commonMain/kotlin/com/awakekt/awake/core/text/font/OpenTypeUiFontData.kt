@@ -61,6 +61,8 @@ internal class OpenTypeUiFontData private constructor(
 
     override fun kerning(): KerningPairs = kerning
 
+    override fun distanceFieldBake(): DistanceFieldBake = bake
+
     companion object {
         /**
          * Reads [bytes] and bakes the glyphs of [chars] that the font has, plus [FALLBACK_CHAR],
@@ -191,7 +193,7 @@ private fun codePointsOf(text: String): IntArray {
 }
 
 /** One code point's glyph: its outline and its outline-exact box, both in font units, y up. */
-private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
+internal class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
     val outline: List<OutlineSegment> = font.outline(glyph)
     val advance: Int = font.advance(glyph)
 
@@ -205,7 +207,7 @@ private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
  * is its sample rect and [TILE_MARGIN] texels around it, so a glyph whose ink reaches far (a script font's
  * swash, say) widens only its own tile rather than being cut off, and an atlas holds the ink and little else.
  */
-private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>, private val bake: DistanceFieldBake) {
+internal class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>, private val bake: DistanceFieldBake) {
     private val texelsPerEm = bake.texelsPerEm
     private val cropBleed = bake.cropBleed
     private val unitsPerEm = font.unitsPerEm.toDouble()
