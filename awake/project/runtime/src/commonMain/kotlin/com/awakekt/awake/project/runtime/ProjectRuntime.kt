@@ -3,11 +3,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.localization.StringLayer
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
@@ -54,7 +57,9 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * entry scene and for each scene a switch plays.
  * @property strings The project's text by key, from its `strings/<locale>.json` tables, in the
  * device's locale; null when the project has no table for the default locale, English
- * (`strings/en.json`). Every scene it plays shows its keyed canvas text from these. A settings
+ * (`strings/en.json`). When the app passed its own [Strings] to [loadProject], this is that same
+ * instance, with the project's tables added and the app's locale kept, never null. Every scene it
+ * plays shows its keyed canvas text from these. A settings
  * screen switches language with [Strings.setLocale]: only the new locale's table is read, and keyed
  * text changes on the next frame. Game code and plugins look keys up here too.
  */
@@ -135,7 +140,29 @@ class LoadedProject internal constructor(
  * registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts. Installing twice is
  * harmless. A host that loads more than one project, such as an editor, loads each into a registry of
  * its own with the other `loadProject`.
+ *
+ * Without [strings], the project's `strings/` tables load into a [Strings] of its own, in the
+ * device's locale, as [LoadedProject.strings] describes. A game that shows text before the project
+ * loads, such as a connection screen, makes its [Strings] first with [Strings.load] and passes it as
+ * [strings]: the project's tables are added to it at [StringLayer.Game], after the game's own, and
+ * [LoadedProject.strings] is that same instance. Its locale stays the one the game chose, so one
+ * [Strings.setLocale] changes the game's early text and the project's together. Where both have a key
+ * in the same locale the project's text wins; a locale still comes before a layer, so the game's
+ * Korean for a key beats the project's English for a Korean player. The tables are added once the
+ * rest of the project has loaded, so a load that fails leaves [strings] as it was. Each load adds the
+ * project's tables again, as a new source; a host that loads projects one after another into one
+ * instance keeps each one's tables, the newest winning.
  */
+suspend fun loadProject(
+    files: AssetSource,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    strings: Strings? = null,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, sharedStrings = strings)
+
+/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 suspend fun loadProject(
     files: AssetSource,
     capabilities: List<SceneCapability> = emptyList(),
@@ -148,7 +175,21 @@ suspend fun loadProject(
  * [AwakeProjectManifest.entryScene]. For a game that opens at a login or menu scene while the
  * manifest's entry scene is the main world, or a server or test that loads one named scene without
  * loading the manifest's entry scene first.
+ *
+ * With `strings`, the project's tables are added to the app's own [Strings], as the first
+ * [loadProject] describes.
  */
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    strings: Strings? = null,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene, strings)
+
+/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
@@ -165,7 +206,21 @@ suspend fun loadProject(
  * Pass a [SceneComponentRegistry.scoped] registry per project, and drop it when the project closes: two
  * projects whose capabilities use the same component name for different components then load one after
  * the other, and each decodes only its own. A project's scene uses only components its registry holds.
+ *
+ * With `strings`, the project's tables are added to the app's own [Strings], as the first
+ * [loadProject] describes.
  */
+suspend fun loadProject(
+    files: AssetSource,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    strings: Strings? = null,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, sharedStrings = strings)
+
+/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 suspend fun loadProject(
     files: AssetSource,
     componentRegistry: SceneComponentRegistry,
@@ -177,7 +232,22 @@ suspend fun loadProject(
 /**
  * [loadProject] into [componentRegistry], starting at [entryScene] instead of
  * [AwakeProjectManifest.entryScene].
+ *
+ * With `strings`, the project's tables are added to the app's own [Strings], as the first
+ * [loadProject] describes.
  */
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    strings: Strings? = null,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene, strings)
+
+/** [loadProject] as it was before it took `strings`, kept so code compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
