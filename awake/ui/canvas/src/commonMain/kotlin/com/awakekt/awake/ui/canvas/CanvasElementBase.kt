@@ -41,20 +41,25 @@ sealed class CanvasElementBase {
     var componentsVersion: Int = 0
         internal set
 
-    /** The element's component of [type], or null when it has none; [CanvasRect] and [CanvasPointerState] always answer. */
+    /**
+     * The element's component of [type], or null when it has none; [CanvasRect] and [CanvasPointerState] always answer.
+     *
+     * It allocates nothing, so it can be read every frame; on the JVM, keep [type] in a `val` there, since each
+     * `X::class` written out makes a new class reference.
+     */
     @Suppress("UNCHECKED_CAST") // Each branch answers the field that holds exactly that type.
     fun <T : Any> get(type: KClass<T>): T? = when (type) {
-        CanvasRect::class -> rect
-        CanvasPointerState::class -> pointer
-        CanvasText::class -> textPart
-        CanvasAppearance::class -> appearancePart
-        CanvasLayout::class -> layout
-        CanvasCluster::class -> cluster
-        CanvasBinding::class -> bind
-        CanvasFollow::class -> followPart
-        CanvasFollowArrow::class -> arrowPart
-        CanvasInput::class -> inputPart
-        CanvasTooltip::class -> tooltipPart
+        RECT_TYPE -> rect
+        POINTER_TYPE -> pointer
+        TEXT_TYPE -> textPart
+        APPEARANCE_TYPE -> appearancePart
+        LAYOUT_TYPE -> layout
+        CLUSTER_TYPE -> cluster
+        BINDING_TYPE -> bind
+        FOLLOW_TYPE -> followPart
+        ARROW_TYPE -> arrowPart
+        INPUT_TYPE -> inputPart
+        TOOLTIP_TYPE -> tooltipPart
         else -> widget?.takeIf { type.isInstance(it) }
     } as T?
 
@@ -90,7 +95,7 @@ sealed class CanvasElementBase {
      * @throws IllegalArgumentException for [CanvasRect] and [CanvasPointerState], which every element has.
      */
     fun <T : Any> remove(type: KClass<T>): T? {
-        require(type != CanvasRect::class && type != CanvasPointerState::class) { "every canvas element has a ${type.simpleName}" }
+        require(type != RECT_TYPE && type != POINTER_TYPE) { "every canvas element has a ${type.simpleName}" }
         val removed = get(type) ?: return null
         when (removed) {
             is CanvasText -> textPart = null
@@ -203,6 +208,21 @@ sealed class CanvasElementBase {
             componentsVersion++
         }
 }
+
+// The component types [CanvasElementBase.get] and [CanvasElementBase.remove] compare against, made
+// once: on the JVM without kotlin-reflect each `X::class` makes a new class reference, and reads run
+// every frame (#1169).
+private val RECT_TYPE: KClass<CanvasRect> = CanvasRect::class
+private val POINTER_TYPE: KClass<CanvasPointerState> = CanvasPointerState::class
+private val TEXT_TYPE: KClass<CanvasText> = CanvasText::class
+private val APPEARANCE_TYPE: KClass<CanvasAppearance> = CanvasAppearance::class
+private val LAYOUT_TYPE: KClass<CanvasLayout> = CanvasLayout::class
+private val CLUSTER_TYPE: KClass<CanvasCluster> = CanvasCluster::class
+private val BINDING_TYPE: KClass<CanvasBinding> = CanvasBinding::class
+private val FOLLOW_TYPE: KClass<CanvasFollow> = CanvasFollow::class
+private val ARROW_TYPE: KClass<CanvasFollowArrow> = CanvasFollowArrow::class
+private val INPUT_TYPE: KClass<CanvasInput> = CanvasInput::class
+private val TOOLTIP_TYPE: KClass<CanvasTooltip> = CanvasTooltip::class
 
 /** A new widget of [kind], or null for the kinds that have none. */
 internal fun widgetOf(kind: CanvasElementKind): CanvasWidget? = when (kind) {

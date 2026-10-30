@@ -46,11 +46,46 @@ class CanvasPartsAllocationProbeTest {
         assertEquals(0L, (allocated() - start) / MEASURED_FRAMES, "bytes per frame")
     }
 
+    /**
+     * The canvas's own step before each frame, bringing every element in step with its entity's
+     * components, reads each element's components by type, as do the handles' component reads: a
+     * steady HUD allocates nothing doing either (#1169). The middle of several windows must be 0
+     * bytes, so a one-off allocation of the JIT's own does not fail it; garbage made each frame
+     * shows in every window.
+     */
+    @Test
+    fun syncingAndReadingTheComponentsOfASteadyHudAllocatesNothingPerFrame() {
+        val world = World()
+        val bar = ActionBarParts().resolve(world, world.placeCanvas(actionBarFromParts().root))
+        world.syncCanvasElements()
+        var size = 0f
+        fun frame() {
+            bar.energy.value = 0.5f
+            world.syncCanvasElements()
+            size = bar.title.words.fontSize
+            val slots = bar.slots
+            for (i in slots.indices) size += slots[i].count.words.fontSize
+        }
+        repeat(WARMUP_FRAMES) { frame() }
+
+        val windows = LongArray(MEASURED_WINDOWS)
+        repeat(MEASURED_WINDOWS) { window ->
+            val start = allocated()
+            repeat(MEASURED_FRAMES) { frame() }
+            windows[window] = allocated() - start
+        }
+        windows.sort()
+
+        println("CanvasSyncFrame: ${windows.joinToString()} bytes per $MEASURED_FRAMES frames (font sizes $size)")
+        assertEquals(0L, windows[MEASURED_WINDOWS / 2], "median bytes over $MEASURED_FRAMES frames")
+    }
+
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
     private fun allocated(): Long = threadBean.currentThreadAllocatedBytes
 
     private companion object {
         const val WARMUP_FRAMES = 300
         const val MEASURED_FRAMES = 600
+        const val MEASURED_WINDOWS = 5
     }
 }

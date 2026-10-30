@@ -83,7 +83,8 @@ sealed class CanvasElementFollowFields : CanvasElementFields() {
             if (value && arrowPart == null) {
                 set(CanvasFollowArrow())
             } else if (!value && arrowPart != null) {
-                remove(CanvasFollowArrow::class)
+                arrowPart = null
+                componentsVersion++
             }
         }
 
