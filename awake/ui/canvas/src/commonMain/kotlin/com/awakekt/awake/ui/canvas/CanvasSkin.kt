@@ -268,6 +268,24 @@ data class CanvasControlTheme(
     val skin: CanvasControlSkin = CanvasControlSkin(),
     @PropertyRange(min = 0.0) val transitionSeconds: Float? = null,
 ) {
+    /** [CanvasControlTheme] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        preset: CanvasThemePreset = CanvasThemePreset.MinimalFlat,
+        colors: Map<String, String> = emptyMap(),
+        images: Map<String, CanvasImage> = emptyMap(),
+        skin: CanvasControlSkin = CanvasControlSkin(),
+    ) : this(preset, colors, images, skin)
+
+    /** [copy] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        preset: CanvasThemePreset = this.preset,
+        colors: Map<String, String> = this.colors,
+        images: Map<String, CanvasImage> = this.images,
+        skin: CanvasControlSkin = this.skin,
+    ): CanvasControlTheme = copy(preset, colors, images, skin)
+
     /** What is wrong with this theme, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         for ((name, color) in colors) {

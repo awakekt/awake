@@ -57,6 +57,42 @@ data class SceneCanvasScaler(
     val snap: CanvasScaleSnap = CanvasScaleSnap.None,
     val scope: CanvasScaleScope = CanvasScaleScope.Canvas,
 ) : SceneComponent {
+    /** [SceneCanvasScaler] as it was before `scope`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mode: CanvasScaleMode = CanvasScaleMode.ScaleWithScreenSize,
+        referenceWidth: Float = CanvasScaler.DEFAULT_REFERENCE_WIDTH,
+        referenceHeight: Float = CanvasScaler.DEFAULT_REFERENCE_HEIGHT,
+        match: Float = CanvasScaler.DEFAULT_MATCH,
+        pixelsPerUnit: Float = 1f,
+        referenceDpi: Float = CanvasScaler.DP_PER_INCH,
+        minScale: Float = 0f,
+        maxScale: Float = 0f,
+        playerScale: Float = 1f,
+        snap: CanvasScaleSnap = CanvasScaleSnap.None,
+    ) : this(
+        mode, referenceWidth, referenceHeight, match, pixelsPerUnit, referenceDpi, minScale, maxScale, playerScale,
+        snap,
+    )
+
+    /** [copy] as it was before `scope`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mode: CanvasScaleMode = this.mode,
+        referenceWidth: Float = this.referenceWidth,
+        referenceHeight: Float = this.referenceHeight,
+        match: Float = this.match,
+        pixelsPerUnit: Float = this.pixelsPerUnit,
+        referenceDpi: Float = this.referenceDpi,
+        minScale: Float = this.minScale,
+        maxScale: Float = this.maxScale,
+        playerScale: Float = this.playerScale,
+        snap: CanvasScaleSnap = this.snap,
+    ): SceneCanvasScaler = copy(
+        mode, referenceWidth, referenceHeight, match, pixelsPerUnit, referenceDpi, minScale, maxScale, playerScale,
+        snap,
+    )
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     override fun validate(path: String): List<SceneValidationIssue> =

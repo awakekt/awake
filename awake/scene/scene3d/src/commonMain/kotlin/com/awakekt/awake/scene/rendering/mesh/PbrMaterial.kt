@@ -53,6 +53,30 @@ data class PbrMaterial(
     var litWhenAdditive: Boolean = false,
     var unlit: Boolean = false,
 ) {
+    /** [PbrMaterial] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        metallic: Float = 0f,
+        roughness: Float = 0.5f,
+        baseColorFactor: Color = Color.White,
+        emissiveFactor: Color = Color.Transparent,
+        alphaMode: AlphaMode = AlphaMode.Opaque,
+        alphaCutoff: Float = 0.5f,
+        litWhenAdditive: Boolean = false,
+    ) : this(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode, alphaCutoff, litWhenAdditive)
+
+    /** [copy] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        metallic: Float = this.metallic,
+        roughness: Float = this.roughness,
+        baseColorFactor: Color = this.baseColorFactor,
+        emissiveFactor: Color = this.emissiveFactor,
+        alphaMode: AlphaMode = this.alphaMode,
+        alphaCutoff: Float = this.alphaCutoff,
+        litWhenAdditive: Boolean = this.litWhenAdditive,
+    ): PbrMaterial = copy(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode, alphaCutoff, litWhenAdditive)
+
     private var packed: FloatArray? = null
     private var packedFrom: PbrMaterial? = null
     private var packedAnimation: TextureAnimation? = null
