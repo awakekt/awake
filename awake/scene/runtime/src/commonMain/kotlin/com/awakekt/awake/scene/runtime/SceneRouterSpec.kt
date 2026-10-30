@@ -9,6 +9,8 @@ import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
+import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppInstaller
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
@@ -89,7 +91,9 @@ class LoadedSceneRoute(
  * - **Failure.** When [load] throws, the route stays entered and keeps showing [loading], with
  *   [SceneRouteStatus.Failed] carrying the cause, which is logged once. Entering the route again with
  *   [SceneRouterRuntime.switchTo], from the loading scene or anywhere else, calls [load] again. A
- *   failure is never kept.
+ *   failure is never kept. When the app registered an `AppErrorHandler`, the cause also reaches it
+ *   once, as `AppErrorSource.ProjectLoad` with the route id as its subject; its retry loads the route
+ *   again, as [SceneRouterRuntime.preload] does.
  * - **Leaving while loading.** Switching to another route leaves the loading scene; [load] keeps going.
  *   What it loads is kept for the next entry, which then plays at once, and the router never switches to
  *   the route on its own when it finishes. The app stopping cancels it.
@@ -426,6 +430,9 @@ class SceneRouterRuntime internal constructor(
                 onFailure = { failure ->
                     log.error(failure) { "Can't load scene route '${load.routeId}': ${failure.message}" }
                     state.status = SceneRouteStatus.Failed(failure)
+                    // After the status, so a handler that reads it sees the failure. Retrying loads the route
+                    // again without entering it: if it is still the active route, its scene then plays.
+                    services.reportError(AppErrorSource.ProjectLoad, failure, retry = { preload(load.routeId) }, subject = load.routeId)
                 },
             )
         }
