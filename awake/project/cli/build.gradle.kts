@@ -100,14 +100,15 @@ tasks.test {
     val projectDir = fixtureProject
     val workerFiles = projectWorkerClasspath
     val buildLogicDir = rootDir.resolve("build-logic").absolutePath
-    val gradleJavaHome = org.gradle.internal.jvm.Jvm.current().javaHome.absolutePath
+    // The JDK this build runs on, for the TestKit build the bundle test starts.
+    val gradleJavaHome = providers.systemProperty("java.home")
     jvmArgumentProviders += CommandLineArgumentProvider {
         listOf(
             "-Dawake.fixture.code=${code.asPath}",
             "-Dawake.fixture.project=${projectDir.asFile.absolutePath}",
             "-Dawake.project.workerClasspath=${workerFiles.asPath}",
             "-Dawake.buildLogic.dir=$buildLogicDir",
-            "-Dawake.gradle.javaHome=$gradleJavaHome",
+            "-Dawake.gradle.javaHome=${gradleJavaHome.get()}",
         )
     }
 }
