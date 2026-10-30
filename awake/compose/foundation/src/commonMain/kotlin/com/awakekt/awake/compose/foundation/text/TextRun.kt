@@ -15,6 +15,7 @@ import com.awakekt.awake.core.text.font.forEachGlyphInCluster
 import com.awakekt.awake.core.text.font.kerningBefore
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import com.awakekt.awake.core.text.unicode.WordBreak
 import kotlin.math.floor
 
 /**
@@ -59,6 +60,7 @@ internal class TextRun(
         softWrap = softWrap && !singleLine,
         maxLines = if (singleLine) 1 else maxLines,
         overflow = overflow,
+        wordBreak = style.wordBreak ?: WordBreak.Normal,
         ellipsize = { str, maxW, always ->
             font.ellipsize(
                 text = str,

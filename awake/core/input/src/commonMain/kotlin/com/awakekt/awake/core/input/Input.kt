@@ -254,6 +254,12 @@ enum class TextEditAction {
     /** Moves the cursor one character to the right. */
     ArrowRight,
 
+    /** Moves the cursor one word to the left: Ctrl+Left, or Option+Left on Apple platforms. */
+    WordLeft,
+
+    /** Moves the cursor one word to the right: Ctrl+Right, or Option+Right on Apple platforms. */
+    WordRight,
+
     /** Moves the cursor one line up. */
     ArrowUp,
 

@@ -38,6 +38,7 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import com.awakekt.awake.core.text.unicode.WordBoundaries
 import kotlin.math.roundToInt
 
 // PascalCase composables: Compose's own convention. See 11-refinements.md rule 1.
@@ -46,6 +47,8 @@ private object TextFieldNodeType
 
 private const val CARET_WIDTH = 1f
 private const val CARET_BLINK_PERIOD_SECONDS = 1f
+private const val DOUBLE_CLICK_MAX_SECONDS = 0.4f
+private const val DOUBLE_CLICK_SLOP_PX = 8
 
 /**
  * The mask a password field should pass to `BasicTextField(mask = ...)`, so every field in an app
@@ -353,7 +356,7 @@ private class TextFieldInputElement(
     private val onSubmit: (() -> Unit)?,
     private val passThroughKeys: Set<Key>,
 ) : ModifierNodeElement<TextFieldInputNode>() {
-    override fun create(): TextFieldInputNode = TextFieldInputNode()
+    override fun create(): TextFieldInputNode = TextFieldInputNode(state)
 
     override fun update(node: TextFieldInputNode) {
         node.state = state
@@ -370,11 +373,112 @@ private class TextFieldInputElement(
     }
 }
 
-private class TextFieldInputNode :
-    Modifier.Node(),
+private class DoubleClickTracker {
+    private var firstPressSeconds: Float = Float.NEGATIVE_INFINITY
+    private var firstPressX: Int = 0
+    private var firstPressY: Int = 0
+    private var firstPressText: String? = null
+    private var firstPressCursor: Int = -1
+    private var firstPressDragged: Boolean = false
+    private var awaitingSecondPress: Boolean = false
+    private var wordDragStart: Int = -1
+    private var wordDragEnd: Int = -1
+
+    fun reset() {
+        firstPressSeconds = Float.NEGATIVE_INFINITY
+        firstPressText = null
+        firstPressCursor = -1
+        firstPressDragged = false
+        awaitingSecondPress = false
+        wordDragStart = -1
+        wordDragEnd = -1
+    }
+
+    fun onPress(state: TextFieldState, mask: Char?, event: PointerEvent, index: Int, now: Float) {
+        if (isSecondPressOfDoubleClick(state, event, now)) {
+            awaitingSecondPress = false
+            firstPressSeconds = Float.NEGATIVE_INFINITY
+            if (mask != null) {
+                state.selectAll()
+            } else {
+                state.selectWordAt(index)
+                wordDragStart = state.selectionStart
+                wordDragEnd = state.selectionEnd
+            }
+        } else {
+            awaitingSecondPress = false
+            wordDragStart = -1
+            wordDragEnd = -1
+            firstPressSeconds = now
+            firstPressX = event.x
+            firstPressY = event.y
+            firstPressDragged = false
+            state.moveCursorTo(index)
+            firstPressText = state.text
+            firstPressCursor = state.cursor
+        }
+    }
+
+    fun onCapturedMove(state: TextFieldState, mask: Char?, event: PointerEvent, index: Int) {
+        if (wordDragStart >= 0 && mask == null) {
+            val targetStart = WordBoundaries.wordStart(state.text, index)
+            val targetEnd = WordBoundaries.wordEnd(state.text, index)
+            if (targetStart < wordDragStart) {
+                state.select(wordDragEnd, targetStart)
+            } else {
+                state.select(wordDragStart, targetEnd)
+            }
+        } else {
+            if (!isWithinSlop(event.x, event.y)) firstPressDragged = true
+            state.select(state.selectionAnchor, index)
+        }
+    }
+
+    fun onHoverMove(event: PointerEvent) {
+        if (awaitingSecondPress && !isWithinSlop(event.x, event.y)) awaitingSecondPress = false
+    }
+
+    fun onRelease(state: TextFieldState, event: PointerEvent) {
+        val wasWordDrag = wordDragStart >= 0
+        wordDragStart = -1
+        wordDragEnd = -1
+        val cleanPointerGesture = !wasWordDrag && event.isCaptureHolder && event.isInBounds
+        val cleanTap = cleanPointerGesture && !firstPressDragged && !event.longPressConsumed
+        awaitingSecondPress = cleanTap && isUnchangedSinceFirstPress(state)
+    }
+
+    fun onExit(event: PointerEvent) {
+        if (!event.isCaptureHolder) awaitingSecondPress = false
+    }
+
+    private fun isSecondPressOfDoubleClick(state: TextFieldState, event: PointerEvent, now: Float): Boolean {
+        if (!awaitingSecondPress || !isUnchangedSinceFirstPress(state)) return false
+        val withinTime = now >= firstPressSeconds && now - firstPressSeconds <= DOUBLE_CLICK_MAX_SECONDS
+        return withinTime && isWithinSlop(event.x, event.y)
+    }
+
+    private fun isUnchangedSinceFirstPress(state: TextFieldState): Boolean =
+        !state.hasSelection && state.text === firstPressText && state.cursor == firstPressCursor
+
+    private fun isWithinSlop(x: Int, y: Int): Boolean {
+        val dx = x - firstPressX
+        val dy = y - firstPressY
+        return dx * dx + dy * dy <= DOUBLE_CLICK_SLOP_PX * DOUBLE_CLICK_SLOP_PX
+    }
+}
+
+private class TextFieldInputNode(
+    initialState: TextFieldState,
+) : Modifier.Node(),
     TextInputNode,
     PointerInputNode {
-    lateinit var state: TextFieldState
+    private val clicks = DoubleClickTracker()
+
+    var state: TextFieldState = initialState
+        set(value) {
+            if (field !== value) clicks.reset()
+            field = value
+        }
     var singleLine: Boolean = false
     var mask: Char? = null
     var reveal: LastTypedReveal? = null
@@ -388,6 +492,10 @@ private class TextFieldInputNode :
 
     override val isPassword: Boolean get() = mask != null
     override val isSingleLine: Boolean get() = singleLine
+
+    override fun onDetach() {
+        clicks.reset()
+    }
 
     // A masked field never hands its text to the clipboard, the way a browser treats a password
     // input: copy yields nothing and cut neither yields nor removes anything.
@@ -414,32 +522,41 @@ private class TextFieldInputNode :
     }
 
     override fun onEditAction(action: TextEditAction) {
-        if (action == TextEditAction.Enter) {
-            if (singleLine) onSubmit?.invoke() else state.insert("\n")
-        } else {
-            state.apply(action)
+        when {
+            action == TextEditAction.Enter -> if (singleLine) onSubmit?.invoke() else state.insert("\n")
+            mask != null && action == TextEditAction.WordLeft -> state.apply(TextEditAction.Home)
+            mask != null && action == TextEditAction.WordRight -> state.apply(TextEditAction.End)
+            else -> state.apply(action)
         }
     }
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || event.isConsumed) return
-        val index = policy.runFor(density, policy.measuredFontScale).indexAt(
-            x = (event.x + if (singleLine) horizontalOffset.value else 0).toFloat(),
-            y = event.y.toFloat(),
-        )
         when (event.type) {
             PointerEventType.Press -> {
-                state.moveCursorTo(index)
+                clicks.onPress(state, mask, event, hitIndexAt(event), clock.totalSeconds)
                 event.consume()
             }
-            PointerEventType.Release -> onClick?.invoke()
+            PointerEventType.Release -> {
+                clicks.onRelease(state, event)
+                onClick?.invoke()
+            }
             PointerEventType.Move -> if (event.isCaptureHolder) {
-                state.select(state.selectionAnchor, index)
+                clicks.onCapturedMove(state, mask, event, hitIndexAt(event))
                 event.consume()
+            } else {
+                clicks.onHoverMove(event)
             }
+            PointerEventType.Exit -> clicks.onExit(event)
             else -> Unit
         }
     }
+
+    private fun hitIndexAt(event: PointerEvent): Int =
+        policy.runFor(density, policy.measuredFontScale).indexAt(
+            x = (event.x + if (singleLine) horizontalOffset.value else 0).toFloat(),
+            y = event.y.toFloat(),
+        )
 
     override fun toString(): String = "textInput(cursor=${state.cursor})"
 }

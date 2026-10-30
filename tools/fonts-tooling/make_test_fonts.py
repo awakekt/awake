@@ -17,6 +17,9 @@
   nonzero pair of its characters with the value Roboto's own GPOS `kern` feature gives it (the
   pair positioning lookups applied in order, the first subtable that matches a pair deciding it
   within each lookup, as HarfBuzz applies them). Roboto has no `kern` table of its own.
+- awake-cjk-test.ttf keeps Roboto Regular's unkerned ASCII and common punctuation metrics, and adds
+  1-em fullwidth and 0.5-em halfwidth TrueType glyphs across the Han, Hiragana, Katakana, Hangul
+  and East Asian punctuation code points used by the CJK line-breaking conformance suite.
 
 Both are small enough to mutate byte by byte in a test. Timestamps are kept, so a re-run writes
 the same bytes.
@@ -34,6 +37,7 @@ from fontTools.cffLib import GlobalSubrsIndex, SubrsIndex
 from fontTools.fontBuilder import FontBuilder
 from fontTools.misc.psCharStrings import T2CharString
 from fontTools.pens.t2CharStringPen import T2CharStringPen
+from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.tables._c_m_a_p import CmapSubtable
 from fontTools.ttLib.tables._k_e_r_n import KernTable_format_0
@@ -43,6 +47,14 @@ SOURCE = REPO / "awake/ui/font-atlas-generator/fonts/Roboto-Regular.ttf"
 OUT_DIR = REPO / "awake/core/text/src/commonTest/resources/fonts"
 TEXT = " Hg.:?Ä"
 KERN_TEXT = " AVTWYaeory.,/"
+CJK_LATIN_TEXT = "".join(chr(c) for c in range(0x20, 0x7F)) + "\u00A0\u0301\u2010\u2014\u2018\u2019\u201C\u201D\u2026"
+CJK_EXTRA_FULLWIDTH = (
+    "港口小镇的灯火缓缓亮起石桥仓库与木船在水面映出暖光今晚风浪平稳潮位正常可以按计划启航"
+    "船长翻开航行日志记录下潮汐时刻随后走向码头第号在开放会加载含盏灯再切换到店"
+    "町桟橋朝霧漂灯台静揺北埠頭三搬入準備完了係員点検表確認出発合図送案内板記作業順番荷物運"
+    "항구마을의등불이잔잔한바다위에비치고어부들은새벽출항을차분히준비합니다바람이고요해지면"
+    "목선들이등대옆수로를따라천천히나아갑니다국제해상운송컨테이너터미널자동화관제시스템倉庫내안"
+)
 RECT_CODEPOINT = 0x25A0
 SUBR_BIAS = 107
 
@@ -190,6 +202,64 @@ def move_into_subroutines(font: TTFont) -> None:
         strings[name].globalSubrs = global_
 
 
+def _box_tt_glyph(x0: int, y0: int, x1: int, y1: int):
+    pen = TTGlyphPen(None)
+    pen.moveTo((x0, y0))
+    pen.lineTo((x0, y1))
+    pen.lineTo((x1, y1))
+    pen.lineTo((x1, y0))
+    pen.closePath()
+    return pen.glyph()
+
+
+def make_cjk_ttf() -> TTFont:
+    """Roboto Regular's ASCII/punctuation plus deterministic 1-em fullwidth and 0.5-em halfwidth CJK glyphs."""
+    options = subset.Options()
+    options.layout_features = []
+    options.hinting = False
+    options.notdef_outline = True
+    options.name_IDs = [1, 2, 4, 6]
+    options.drop_tables += ["GDEF", "GPOS", "GSUB", "STAT", "gasp", "DSIG"]
+    font = TTFont(SOURCE, recalcTimestamp=False)
+    subsetter = subset.Subsetter(options)
+    subsetter.populate(text=CJK_LATIN_TEXT)
+    subsetter.subset(font)
+
+    order = list(font.getGlyphOrder()) + ["cjk_full", "cjk_half"]
+    font.setGlyphOrder(order)
+    glyf = font["glyf"]
+    hmtx = font["hmtx"]
+    glyf["cjk_full"] = _box_tt_glyph(128, -200, 1920, 1600)
+    glyf["cjk_half"] = _box_tt_glyph(64, -200, 960, 1600)
+    hmtx.metrics["cjk_full"] = (2048, 128)
+    hmtx.metrics["cjk_half"] = (1024, 64)
+
+    cmap = dict(font.getBestCmap())
+    fullwidth_cps = (
+        list(range(0x3000, 0x3040))
+        + list(range(0x3041, 0x3097))
+        + list(range(0x3099, 0x3100))
+        + list(range(0xFF01, 0xFF61))
+        + [ord(ch) for ch in CJK_EXTRA_FULLWIDTH]
+        + [0x20000]
+    )
+    for cp in sorted(set(fullwidth_cps)):
+        cmap.setdefault(cp, "cjk_full")
+    for cp in range(0xFF61, 0xFFA0):
+        cmap.setdefault(cp, "cjk_half")
+
+    format4 = CmapSubtable.newSubtable(4)
+    format4.platformID, format4.platEncID, format4.language = 3, 1, 0
+    format4.cmap = {cp: name for cp, name in cmap.items() if cp <= 0xFFFF}
+    format12 = CmapSubtable.newSubtable(12)
+    format12.platformID, format12.platEncID, format12.language = 3, 10, 0
+    format12.cmap = cmap
+    font["cmap"].tables = [format4, format12]
+    font["maxp"].numGlyphs = len(order)
+    font.recalcTimestamp = False
+    return font
+
+
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ttf = make_ttf()
@@ -199,7 +269,8 @@ def main() -> int:
     otf.recalcTimestamp = False
     otf.save(OUT_DIR / "roboto-subset.otf")
     make_kern_ttf().save(OUT_DIR / "roboto-kern.ttf")
-    for name in ("roboto-subset.ttf", "roboto-subset.otf", "roboto-kern.ttf"):
+    make_cjk_ttf().save(OUT_DIR / "awake-cjk-test.ttf")
+    for name in ("roboto-subset.ttf", "roboto-subset.otf", "roboto-kern.ttf", "awake-cjk-test.ttf"):
         print(f"{name:20} {(OUT_DIR / name).stat().st_size:>6,} bytes")
     return 0
 

@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.compose.foundation.text
 
+import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import com.awakekt.awake.core.text.unicode.LineBreaks
+import com.awakekt.awake.core.text.unicode.WordBreak
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -15,10 +18,11 @@ import kotlin.math.floor
  * disagreeing is invisible: the box is the right height and the words inside it are on the wrong
  * lines. `TextRun`'s own header makes the same argument about the caret.
  *
- * Greedy and space-only. A word longer than the available width overflows rather than being split,
- * which is what a browser does with `overflow-wrap: normal` -- the default every shadcn component
- * inherits. Real line breaking wants a Unicode break iterator; this covers the Latin text the
- * component set is written in and says so rather than pretending to more.
+ * Greedy over [LineBreaks] (a UAX #14 subset covering spaces, hyphens, CJK ideographs, kana,
+ * Hangul and kinsoku punctuation), with [WordBreak.KeepAll] keeping Korean and unspaced letter runs
+ * whole. When a single unbreakable segment at the start of a line still exceeds [maxWidthPx], it
+ * breaks between [GraphemeClusters] as a last resort (`overflow-wrap: anywhere`), always advancing
+ * by at least one grapheme cluster.
  */
 @Suppress("LongParameterList")
 internal fun breakIntoLines(
@@ -27,6 +31,7 @@ internal fun breakIntoLines(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    wordBreak: WordBreak = WordBreak.Normal,
     ellipsize: ((text: String, maxWidthPx: Float, alwaysEllipsize: Boolean) -> String)? = null,
     widthOf: (String) -> Float,
 ): List<String> = breakIntoLineLayouts(
@@ -35,6 +40,7 @@ internal fun breakIntoLines(
     softWrap = softWrap,
     maxLines = maxLines,
     overflow = overflow,
+    wordBreak = wordBreak,
     ellipsize = ellipsize,
     widthOf = widthOf,
 ).map(TextLineLayout::text)
@@ -50,6 +56,7 @@ internal fun breakIntoLines(
     softWrap = true,
     maxLines = Int.MAX_VALUE,
     overflow = TextOverflow.Clip,
+    wordBreak = WordBreak.Normal,
     ellipsize = null,
     widthOf = widthOf,
 )
@@ -72,6 +79,7 @@ internal fun breakIntoLineLayouts(
     softWrap = true,
     maxLines = Int.MAX_VALUE,
     overflow = TextOverflow.Clip,
+    wordBreak = WordBreak.Normal,
     ellipsize = null,
     widthOf = widthOf,
 )
@@ -89,10 +97,11 @@ internal fun breakIntoLineLayouts(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    wordBreak: WordBreak = WordBreak.Normal,
     ellipsize: ((text: String, maxWidthPx: Float, alwaysEllipsize: Boolean) -> String)? = null,
     widthOf: (String) -> Float,
 ): List<TextLineLayout> {
-    val breaker = TextBreaker(text, maxWidthPx, maxLines, overflow, ellipsize, widthOf)
+    val breaker = TextBreaker(text, maxWidthPx, maxLines, overflow, wordBreak, ellipsize, widthOf)
     return breaker.breakLines(softWrap)
 }
 
@@ -102,6 +111,7 @@ private class TextBreaker(
     private val maxWidthPx: Float,
     maxLines: Int,
     private val overflow: TextOverflow,
+    private val wordBreak: WordBreak,
     private val ellipsize: ((String, Float, Boolean) -> String)?,
     private val widthOf: (String) -> Float,
 ) {
@@ -165,51 +175,82 @@ private class TextBreaker(
             out += TextLineLayout(lineText, hardLine.start, hardLine.endExclusive)
             return
         }
-        wrapWordsIntoLines(hardLine, isLastHardLine, out)
+        wrapSegmentsIntoLines(hardLine, isLastHardLine, out)
     }
 
-    private fun wrapWordsIntoLines(
+    @Suppress("CyclomaticComplexMethod", "ReturnCount")
+    private fun wrapSegmentsIntoLines(
         hardLine: TextLineLayout,
         isLastHardLine: Boolean,
         out: MutableList<TextLineLayout>,
     ) {
-        var current = StringBuilder()
-        var currentStart = hardLine.start
-        var wordStart = hardLine.start
-        while (wordStart <= hardLine.endExclusive) {
-            val wordEnd = nextSpace(wordStart, hardLine.endExclusive)
-            val word = text.substring(wordStart, wordEnd)
-            val candidate = if (current.isEmpty()) word else "$current $word"
-            if (current.isNotEmpty() && !fits(widthOf(candidate), maxWidthPx)) {
+        var lineStart = hardLine.start
+        var lineEnd = hardLine.start
+        var lineVisibleEnd = hardLine.start
+        var segStart = hardLine.start
+        while (segStart < hardLine.endExclusive) {
+            val segEnd = LineBreaks.nextOpportunity(text, segStart, hardLine.endExclusive, wordBreak)
+            val candidateVisibleEnd = trimTrailingSpaces(text, lineStart, segEnd)
+            val candidateFits = candidateVisibleEnd == lineStart ||
+                fits(widthOf(text.substring(lineStart, candidateVisibleEnd)), maxWidthPx)
+            if (candidateFits) {
+                lineEnd = segEnd
+                lineVisibleEnd = candidateVisibleEnd
+                segStart = segEnd
+            } else if (lineEnd > lineStart) {
                 if (out.size == limit - 1) {
-                    out += makeFinalEllipsizedLine(hardLine, currentStart, wordEnd, isLastHardLine)
+                    out += makeFinalEllipsizedLine(hardLine, lineStart, segEnd, isLastHardLine)
                     return
                 }
-                out += TextLineLayout(current.toString(), currentStart, wordStart - 1)
-                current = StringBuilder(word)
-                currentStart = wordStart
+                out += TextLineLayout(text.substring(lineStart, lineVisibleEnd), lineStart, lineVisibleEnd)
+                lineStart = lineEnd
+                lineVisibleEnd = lineStart
             } else {
-                current = StringBuilder(candidate)
+                if (out.size == limit - 1) {
+                    out += makeFinalEllipsizedLine(hardLine, lineStart, segEnd, isLastHardLine)
+                    return
+                }
+                val clusterCut = lastFittingClusterEnd(lineStart, candidateVisibleEnd)
+                out += TextLineLayout(text.substring(lineStart, clusterCut), lineStart, clusterCut)
+                val nextStart = if (clusterCut >= candidateVisibleEnd) segEnd else clusterCut
+                lineStart = nextStart
+                lineEnd = nextStart
+                lineVisibleEnd = nextStart
+                segStart = nextStart
             }
-            if (wordEnd == hardLine.endExclusive) break
-            wordStart = wordEnd + 1
         }
-        emitRemainingWrapped(current.toString(), currentStart, hardLine.endExclusive, isLastHardLine, out)
+        if (lineStart < hardLine.endExclusive && out.size < limit) {
+            emitRemainingWrapped(
+                currentText = text.substring(lineStart, hardLine.endExclusive),
+                currentStart = lineStart,
+                endExclusive = hardLine.endExclusive,
+                isLastHardLine = isLastHardLine,
+                out = out,
+            )
+        }
     }
 
-    private fun nextSpace(start: Int, endExclusive: Int): Int {
-        val found = text.indexOf(' ', start)
-        return if (found < 0 || found > endExclusive) endExclusive else found
+    private fun lastFittingClusterEnd(start: Int, endExclusive: Int): Int {
+        val firstEnd = GraphemeClusters.nextBoundary(text, start).coerceAtMost(endExclusive)
+        var best = firstEnd
+        var cursor = firstEnd
+        while (cursor < endExclusive) {
+            val next = GraphemeClusters.nextBoundary(text, cursor).coerceAtMost(endExclusive)
+            if (!fits(widthOf(text.substring(start, next)), maxWidthPx)) break
+            best = next
+            cursor = next
+        }
+        return best
     }
 
     private fun makeFinalEllipsizedLine(
         hardLine: TextLineLayout,
         currentStart: Int,
-        wordEnd: Int,
+        segEnd: Int,
         isLastHardLine: Boolean,
     ): TextLineLayout {
         val remaining = text.substring(currentStart, hardLine.endExclusive)
-        val hasMore = !isLastHardLine || wordEnd < hardLine.endExclusive || !fits(widthOf(remaining), maxWidthPx)
+        val hasMore = !isLastHardLine || segEnd < hardLine.endExclusive || !fits(widthOf(remaining), maxWidthPx)
         val lineText = if (shouldEllipsize(hasMore, false)) {
             applyEllipsis(remaining, hasMore)
         } else {
@@ -278,6 +319,13 @@ internal fun lineBoxWidthPx(widthPx: Float, wholeHardLine: Boolean): Int =
 internal fun TextLineLayout.boxWidthPx(source: String, widthOf: (String) -> Float): Int {
     val whole = (start == 0 || source[start - 1] == '\n') && (endExclusive == source.length || source[endExclusive] == '\n')
     return lineBoxWidthPx(widthOf(text), whole)
+}
+
+/** Trims trailing ASCII `' '` separator spaces from `[start, endExclusive)` when soft-wrapping. */
+internal fun trimTrailingSpaces(text: String, start: Int, endExclusive: Int): Int {
+    var end = endExclusive
+    while (end > start && text[end - 1] == ' ') end--
+    return end
 }
 
 /** Chromium's `LayoutUnit` is a fixed-point number with six fractional bits. */

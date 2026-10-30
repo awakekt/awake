@@ -12,6 +12,7 @@ import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextOutline
 import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.WordBreak
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -35,6 +36,9 @@ class TextStyleThenTest {
         TextStyle(color = Color.White, shadow = TextShadow(Color.Black, 2f, 2f), outline = TextOutline(Color.Black)),
         TextStyle(font = UiFonts.bitmap()),
         TextStyle(size = 14.sp, font = UiFonts.default()),
+        TextStyle(wordBreak = WordBreak.Normal),
+        TextStyle(wordBreak = WordBreak.KeepAll),
+        TextStyle(color = Color.White, size = 14.sp, lineHeight = 20.sp, wordBreak = WordBreak.KeepAll),
     )
 
     private fun reference(base: TextStyle, other: TextStyle) = TextStyle(
@@ -47,6 +51,7 @@ class TextStyleThenTest {
         shadow = other.shadow ?: base.shadow,
         outline = other.outline ?: base.outline,
         font = other.font ?: base.font,
+        wordBreak = other.wordBreak ?: base.wordBreak,
     )
 
     @Test
@@ -62,7 +67,7 @@ class TextStyleThenTest {
     fun aNoOpMergeReturnsAnExistingInstance() {
         val inherited = TextStyle(size = 14.sp)
         assertSame(inherited, inherited then TextStyle.Default)
-        val full = TextStyle(color = Color.White, size = 14.sp, lineHeight = 20.sp)
+        val full = TextStyle(color = Color.White, size = 14.sp, lineHeight = 20.sp, wordBreak = WordBreak.KeepAll)
         assertSame(full, TextStyle(size = 12.sp) then full)
     }
 }

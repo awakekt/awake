@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "scope": "Chinese, Japanese, Korean, mixed Latin+CJK, and unbreakable URL wrapping at matched device-pixel ems.",
+  "fonts": [
+    {
+      "id": "cjk",
+      "path": "awake/core/text/src/commonTest/resources/fonts/awake-cjk-test.ttf",
+      "sha256": "0373bbd5a8d160aeeb824e9d9e05f1a51ad5efb5e01e7056402b4bf20a831872",
+      "unitsPerEm": 2048,
+      "ascender": 1900,
+      "descender": -500
+    }
+  ],
+  "cases": [
+    {
+      "id": "zh-16-w160",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 160,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "zh",
+      "text": "港口小镇的灯火缓缓亮起，石桥、仓库与木船在水面映出暖光。「今晚风浪平稳（潮位正常），可以按计划启航！」船长翻开航行日志——记录下潮汐时刻……随后走向码头。"
+    },
+    {
+      "id": "zh-16-w210",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 210,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "zh",
+      "text": "港口小镇的灯火缓缓亮起，石桥、仓库与木船在水面映出暖光。「今晚风浪平稳（潮位正常），可以按计划启航！」船长翻开航行日志——记录下潮汐时刻……随后走向码头。"
+    },
+    {
+      "id": "zh-14-w182",
+      "font": "cjk",
+      "sizePx": 14,
+      "density": 1,
+      "wrapWidthPx": 182,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "zh",
+      "text": "港口小镇的灯火缓缓亮起，石桥、仓库与木船在水面映出暖光。「今晚风浪平稳（潮位正常），可以按计划启航！」船长翻开航行日志——记录下潮汐时刻……随后走向码头。"
+    },
+    {
+      "id": "ja-16-w176",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 176,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "ja",
+      "text": "港町の桟橋に朝霧が漂い、灯台の光が静かに揺れている。「北埠頭・第三倉庫（搬入口）の準備は完了しましたか？」係員が点検表を確認し、出発の合図を送った！"
+    },
+    {
+      "id": "ja-16-w224",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 224,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "ja",
+      "text": "港町の桟橋に朝霧が漂い、灯台の光が静かに揺れている。「北埠頭・第三倉庫（搬入口）の準備は完了しましたか？」係員が点検表を確認し、出発の合図を送った！"
+    },
+    {
+      "id": "ja-halfwidth-16-w152",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 152,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "ja",
+      "text": "埠頭の案内板に｢倉庫A､搬入口B｡｣と記され、作業員が順番に荷物を運ぶ。"
+    },
+    {
+      "id": "ja-prolonged-16-w48",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 48,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "ja",
+      "text": "港のコーヒー店とｶｰﾄﾞ案内。"
+    },
+    {
+      "id": "ko-normal-16-w180",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 180,
+      "wordBreak": "normal",
+      "lineBreak": "auto",
+      "lang": "ko",
+      "text": "항구 마을의 등불이 잔잔한 바다 위에 비치고, 어부들은 새벽 출항을 차분히 준비합니다. 바람이 고요해지면 목선들이 등대 옆 수로를 따라 천천히 나아갑니다."
+    },
+    {
+      "id": "ko-normal-16-w240",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 240,
+      "wordBreak": "normal",
+      "lineBreak": "auto",
+      "lang": "ko",
+      "text": "항구 마을의 등불이 잔잔한 바다 위에 비치고, 어부들은 새벽 출항을 차분히 준비합니다. 바람이 고요해지면 목선들이 등대 옆 수로를 따라 천천히 나아갑니다."
+    },
+    {
+      "id": "ko-keepall-16-w180",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 180,
+      "wordBreak": "keep-all",
+      "lineBreak": "auto",
+      "lang": "ko",
+      "text": "항구 마을의 등불이 잔잔한 바다 위에 비치고, 어부들은 새벽 출항을 차분히 준비합니다. 바람이 고요해지면 목선들이 등대 옆 수로를 따라 천천히 나아갑니다."
+    },
+    {
+      "id": "ko-keepall-16-w240",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 240,
+      "wordBreak": "keep-all",
+      "lineBreak": "auto",
+      "lang": "ko",
+      "text": "항구 마을의 등불이 잔잔한 바다 위에 비치고, 어부들은 새벽 출항을 차분히 준비합니다. 바람이 고요해지면 목선들이 등대 옆 수로를 따라 천천히 나아갑니다."
+    },
+    {
+      "id": "ko-keepall-long-16-w160",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 160,
+      "wordBreak": "keep-all",
+      "lineBreak": "auto",
+      "lang": "ko",
+      "text": "항구 국제해상운송컨테이너터미널자동화관제시스템 안내."
+    },
+    {
+      "id": "mixed-16-w180",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 180,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "zh",
+      "text": "Harbor港口Town的第12号Pier在06:30开放，SceneLoader会加载lantern_quay.glb（含24盏灯），再切换到Camera 2。"
+    },
+    {
+      "id": "mixed-16-w240",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 240,
+      "wordBreak": "normal",
+      "lineBreak": "strict",
+      "lang": "zh",
+      "text": "Harbor港口Town的第12号Pier在06:30开放，SceneLoader会加载lantern_quay.glb（含24盏灯），再切换到Camera 2。"
+    },
+    {
+      "id": "url-16-w180",
+      "font": "cjk",
+      "sizePx": 16,
+      "density": 1,
+      "wrapWidthPx": 180,
+      "wordBreak": "normal",
+      "lineBreak": "auto",
+      "lang": "en",
+      "text": "See https://awake.example/assets/scenes/harbor_lantern_quay_2026_archive_manifest.json for details."
+    }
+  ]
+}
