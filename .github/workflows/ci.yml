@@ -704,3 +704,143 @@ jobs:
       # task the script calls next resolves with the pin's arguments.
       - name: Resolve the wait for Core on Central
         run: ./gradlew waitForCoreCentral -Pawake.waitForCoreVersion="${{ steps.release.outputs.version }}" --dry-run --no-configuration-cache
+
+  # awake-plugins built against this change's Core, so a Core change that breaks the plugins or makes
+  # them allocate more fails here, before a release. Core 0.28.0 shipped a canvas read that allocated
+  # every frame (#1169); only the plugins' HUD allocation scorecard (rpg-hud-studio's install path)
+  # caught it, after the release, and 0.28.1 had to fix it.
+  #
+  # awake-plugins is private, so this reads it with PLUGINS_READ_TOKEN, a fine-grained token with
+  # Contents read-only on that one repository. Without the secret (a fork, Dependabot, or before the
+  # owner adds it) the job skips with a notice rather than failing. The token reaches only the checkout,
+  # which keeps no credentials, so neither Core's build nor the plugins' can read it; the job's own
+  # GITHUB_TOKEN is read-only. Not a required check yet (docs/release-process.md, "Plugins consumer").
+  plugins-consumer:
+    name: Plugins consumer
+    needs: platform-impact
+    if: needs.platform-impact.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      # A version no release uses, so the plugins resolve exactly what this run publishes.
+      CORE_VERSION: 0.0.0-plugins-consumer
+      # The awake-plugins branch to build: main, unless the repository variable names another (one
+      # already moved to a newer Core, while main catches up).
+      PLUGINS_REF: ${{ vars.AWAKE_PLUGINS_REF || 'main' }}
+
+    steps:
+      - name: Check access to awake-plugins
+        id: access
+        env:
+          PLUGINS_READ_TOKEN: ${{ secrets.PLUGINS_READ_TOKEN }}
+        run: |
+          if [[ -z "$PLUGINS_READ_TOKEN" ]]; then
+            message="Skipped: the PLUGINS_READ_TOKEN secret is not available to this run (a fork or Dependabot pull request, or the secret is not set), and awake-plugins is private."
+            echo "::notice title=Plugins consumer skipped::$message"
+            echo "$message" >> "$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.access.outputs.enabled == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Checkout awake-plugins
+        if: steps.access.outputs.enabled == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: awakekt/awake-plugins
+          ref: ${{ env.PLUGINS_REF }}
+          token: ${{ secrets.PLUGINS_READ_TOKEN }}
+          path: awake-plugins
+          persist-credentials: false
+
+      # The Core projects the plugins' catalog names and everything they depend on, or the build that
+      # publishes them. A pull request is diffed against its merged base, as the Changelog job is.
+      - name: Does this change reach the plugins?
+        id: reach
+        if: steps.access.outputs.enabled == 'true'
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && 'HEAD^1' || github.event.before }}
+        run: |
+          base="$BASE_SHA"
+          if [[ "$base" == 'HEAD^1' ]]; then base=$(git rev-parse HEAD^1); fi
+          reach=$(tools/check_plugins_consumer.sh affected awake-plugins "$base" HEAD)
+          echo "run=$reach" >> "$GITHUB_OUTPUT"
+          if [[ "$reach" != 'true' ]]; then
+            message="Skipped: nothing this change touches reaches a Core module awake-plugins uses ($(tools/check_plugins_consumer.sh modules awake-plugins | wc -l) projects)."
+            echo "::notice title=Plugins consumer skipped::$message"
+            echo "$message" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Setup JDK
+        if: steps.reach.outputs.run == 'true'
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        if: steps.reach.outputs.run == 'true'
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-provider: basic
+
+      # JVM and wasm only: the plugins' ABI dumps take the wasm klib. No natives, Android or iOS.
+      - name: Publish this change's Core locally
+        if: steps.reach.outputs.run == 'true'
+        run: tools/check_plugins_consumer.sh publish awake-plugins "$CORE_VERSION"
+
+      - name: Point awake-plugins at it
+        if: steps.reach.outputs.run == 'true'
+        run: tools/check_plugins_consumer.sh point awake-plugins "$CORE_VERSION"
+
+      - name: Plugin JVM tests (plain and obfuscated)
+        id: tests
+        if: steps.reach.outputs.run == 'true'
+        run: tools/check_plugins_consumer.sh test awake-plugins
+
+      # Allocations are the gate; shared-runner throughput is reported, not enforced.
+      - name: HUD scorecard (allocation gate, rpg-hud-studio install included)
+        id: scorecard
+        if: ${{ !cancelled() && steps.reach.outputs.run == 'true' && steps.tests.outcome != 'skipped' }}
+        run: tools/check_plugins_consumer.sh scorecard awake-plugins
+
+      - name: Scorecard summary
+        if: ${{ !cancelled() && (steps.scorecard.outcome == 'success' || steps.scorecard.outcome == 'failure') }}
+        working-directory: awake-plugins
+        env:
+          SCORECARD_OUTCOME: ${{ steps.scorecard.outcome }}
+        run: |
+          # pluginScorecard writes its table even when its own gate fails, but not when a task it depends
+          # on failed first; the report task then writes what was measured, marking the rest unverified.
+          if [[ "$SCORECARD_OUTCOME" != 'success' ]]; then
+            ./gradlew pluginScorecardReport --max-workers=2 || true
+          fi
+          {
+            echo "### awake-plugins HUD scorecard against Core $CORE_VERSION ($PLUGINS_REF)"
+            sed -n '/HUD-SCORECARDS:START/,/HUD-SCORECARDS:END/p' README.md | sed '1d;$d'
+            echo
+            for card in docs/scorecards/rpg-hud*.md; do
+              echo "- $(basename "$card" .md): $(grep -m1 '^Required gates:' "$card" || echo 'no result')"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload plugin test reports and scorecards
+        if: ${{ !cancelled() && steps.reach.outputs.run == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: plugins-consumer-reports
+          path: |
+            awake-plugins/docs/scorecards/
+            awake-plugins/tools/hud-benchmarks/build/reports/benchmarks/
+            awake-plugins/plugins/*/*/build/reports/tests/
+            awake-plugins/plugins/*/*/build/reports/scorecard/
+          if-no-files-found: ignore
+          retention-days: 14

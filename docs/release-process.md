@@ -323,6 +323,21 @@ commit per template, never a partial one. See `templates/README.md` for what eac
 alone (the project template's own GitHub Pages web player and its webgpu-pin check script, issue
 templates, and anything else only the repository carries).
 
+### Plugins consumer
+
+The **Plugins consumer** job in `ci.yml` builds the private awakekt/awake-plugins against each
+pull request's Core, so a change that breaks the plugins or makes them allocate more fails before a
+release, not after it (#1169 reached 0.28.0 and needed 0.28.1). Through
+`tools/check_plugins_consumer.sh`, it publishes to Maven Local, at `0.0.0-plugins-consumer`, the Core
+modules the plugins' version catalog names and every Core project they depend on (JVM and wasm only),
+points the plugins' `awake` version at it, and runs their JVM tests, plain and obfuscated, and
+`pluginScorecard`, whose allocation gate holds the HUD modules, rpg-hud-studio's install path among
+them, to `config/scorecards/hud-baselines.json`. It runs only when the change reaches one of those
+modules or the build that publishes them. It needs the `PLUGINS_READ_TOKEN` repository secret, a
+fine-grained token with *Contents* read-only on awake-plugins; without it (forks, Dependabot, or
+before the secret exists) the job skips with a notice and passes. It builds the plugins' `main`,
+or the branch the `AWAKE_PLUGINS_REF` repository variable names. It is not a required check yet.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
