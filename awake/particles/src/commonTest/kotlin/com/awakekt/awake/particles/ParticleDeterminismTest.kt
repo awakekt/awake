@@ -151,7 +151,7 @@ class ParticleDeterminismTest {
             scale = 0.5f,
             lifecycle = ParticleLifecycle(burstCount = 3),
         )
-        emitter.simulation.random = Random(77)
+        emitter.random = Random(77)
         assertEquals(4, emitter.emit(4))
         assertEquals(4, emitter.liveParticleCount)
         assertEquals(0, emitter.spawnedTotal, "emit(count) does not consume lifecycle.burstCount")
@@ -169,7 +169,7 @@ class ParticleDeterminismTest {
     ) {
         val actualEmitter = buildEmitter()
         val actualRandom = Random(seed)
-        actualEmitter.simulation.random = actualRandom
+        actualEmitter.random = actualRandom
         val world = World()
         val entity = world.create()
         world.add(entity, actualEmitter)
@@ -188,7 +188,7 @@ class ParticleDeterminismTest {
             assertEquals(refState.liveCount(), sim.liveParticleCount, "liveParticleCount mismatch at step $stepIndex")
             for (slot in 0 until sim.maxParticles) {
                 val ref = refState.slots[slot]
-                assertEquals(ref.alive, sim.alive[slot], "alive[$slot] mismatch at step $stepIndex")
+                assertEquals(ref.alive, sim.isAlive(slot), "alive[$slot] mismatch at step $stepIndex")
                 assertEquals(ref.pos.x, sim.posX[slot], "posX[$slot] mismatch at step $stepIndex")
                 assertEquals(ref.pos.y, sim.posY[slot], "posY[$slot] mismatch at step $stepIndex")
                 assertEquals(ref.pos.z, sim.posZ[slot], "posZ[$slot] mismatch at step $stepIndex")

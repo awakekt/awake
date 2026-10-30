@@ -80,8 +80,8 @@ public final class com/awakekt/awake/particles/ParticleEmitter {
 	public final fun getMesh ()Lcom/awakekt/awake/render/mesh/Mesh;
 	public final fun getMotion ()Lcom/awakekt/awake/particles/ParticleMotion;
 	public final fun getOrigin ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getRandom ()Lkotlin/random/Random;
 	public final fun getScale ()F
-	public final fun getSimulation ()Lcom/awakekt/awake/core/particles/ParticleSimulation;
 	public final fun getSpawnRate ()F
 	public final fun getStartAlpha ()F
 	public final fun getVisual ()Lcom/awakekt/awake/particles/ParticleVisual;
@@ -90,6 +90,7 @@ public final class com/awakekt/awake/particles/ParticleEmitter {
 	public final fun setLifecycle (Lcom/awakekt/awake/particles/ParticleLifecycle;)V
 	public final fun setLifetime (F)V
 	public final fun setMotion (Lcom/awakekt/awake/particles/ParticleMotion;)V
+	public final fun setRandom (Lkotlin/random/Random;)V
 	public final fun setScale (F)V
 	public final fun setSpawnRate (F)V
 	public final fun setStartAlpha (F)V

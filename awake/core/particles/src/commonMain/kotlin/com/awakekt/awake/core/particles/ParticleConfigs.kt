@@ -149,15 +149,6 @@ class ParticleSpawnConfig {
             is ParticleSpawnShape.RectEdge -> setRectEdge(shape.halfWidth, shape.halfHeight)
         }
     }
-
-    /** Materializes the active shape as an immutable [ParticleSpawnShape]. */
-    fun toShape(): ParticleSpawnShape = when (kind) {
-        SHAPE_RING_XZ -> ParticleSpawnShape.RingXZ(p0)
-        SHAPE_RING_XY -> ParticleSpawnShape.RingXY(p0, p1)
-        SHAPE_BOX -> ParticleSpawnShape.Box(p0, p1, p2)
-        SHAPE_RECT_EDGE -> ParticleSpawnShape.RectEdge(p0, p1)
-        else -> ParticleSpawnShape.Point
-    }
 }
 
 /**
@@ -262,8 +253,16 @@ class ParticleBurstConfig {
     var burstSize: Int = 1
         private set
 
-    /** Activates a pulsed burst schedule with scalar parameters. */
+    /**
+     * Activates a pulsed burst schedule with scalar parameters, validated as [ParticleBurstSchedule]
+     * validates them.
+     *
+     * @throws IllegalArgumentException when [cycleSeconds] or [burstInterval] is not positive and
+     * finite, [activeSeconds] is outside `(0, cycleSeconds]`, or [burstSize] is not positive. The
+     * holder is left unchanged.
+     */
     fun set(cycleSeconds: Float, activeSeconds: Float, burstInterval: Float, burstSize: Int) {
+        requireValidBurstSchedule(cycleSeconds, activeSeconds, burstInterval, burstSize)
         enabled = true
         this.cycleSeconds = cycleSeconds
         this.activeSeconds = activeSeconds
@@ -298,8 +297,11 @@ class ParticleGroundConfig {
     var groundY: Float = 0f
         private set
 
-    /** Optional height query `(x, z) -> groundHeight` taking priority over [colliders] and [groundY]. */
-    var groundHeightProvider: ((x: Float, z: Float) -> Float)? = null
+    /**
+     * Optional ground height under a point, taking priority over [colliders] and [groundY]. It
+     * returns `Float.NaN` where there is no ground.
+     */
+    var groundHeightProvider: ParticleGroundHeight? = null
 
     /** World-space boxes whose top faces (`max.y`) catch falling particles inside their `XZ` footprint. */
     var colliders: List<Aabb> = emptyList()

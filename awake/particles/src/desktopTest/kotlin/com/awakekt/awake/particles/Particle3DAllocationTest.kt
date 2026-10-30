@@ -15,6 +15,7 @@ import java.lang.management.ManagementFactory
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
@@ -22,9 +23,14 @@ import kotlin.test.assertEquals
 class Particle3DAllocationTest {
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
 
+    /**
+     * The emitter has a death hook, so [ParticleSystem]'s forwarding of each death to
+     * [ParticleLifecycle.onParticleDeath] is measured too.
+     */
     @Test
     fun particleSystemStepAndBurstEmitAllocateZeroBytesPerFrame() {
         val world = World()
+        var deaths = 0
         val emitter = ParticleEmitter(
             mesh = stubMesh(),
             material = stubMaterial(),
@@ -50,8 +56,9 @@ class Particle3DAllocationTest {
                 spin = ParticleSpin(-90f, 90f, randomStartAngle = true),
             ),
             ground = ParticleGround(groundY = 0f, restitution = 0.3f, friction = 0.8f),
+            lifecycle = ParticleLifecycle(onParticleDeath = { _, _ -> deaths += 1 }),
         )
-        emitter.simulation.random = Random(123)
+        emitter.random = Random(123)
         world.add(world.create(), emitter)
         val system = ParticleSystem(EmitterPlacement.None)
 
@@ -60,6 +67,9 @@ class Particle3DAllocationTest {
             system.update(world, FRAME_DELTA)
         }
 
+        threadBean.currentThreadAllocatedBytes
+        val deathsBefore = deaths
+
         val before = threadBean.currentThreadAllocatedBytes
         repeat(MEASURED_FRAMES) {
             emitter.emit(8)
@@ -67,11 +77,11 @@ class Particle3DAllocationTest {
         }
         val after = threadBean.currentThreadAllocatedBytes
 
-        val bytesPerFrame = (after - before) / MEASURED_FRAMES
+        assertTrue(deaths > deathsBefore, "the death hook ran in the measured window")
         assertEquals(
             0L,
-            bytesPerFrame,
-            "Steady-state ParticleEmitter.emit() + ParticleSystem.update() must allocate 0 bytes per frame",
+            after - before,
+            "Steady-state ParticleEmitter.emit() + ParticleSystem.update() must allocate 0 bytes over $MEASURED_FRAMES frames",
         )
     }
 

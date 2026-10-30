@@ -11,27 +11,34 @@ import kotlin.random.Random
 const val UNLIMITED_BURST_COUNT: Int = -1
 
 /**
- * Pure structure-of-arrays particle simulation shared by 3D world emitters (`awake:particles`),
- * 2D scene emitters (`awake:scene:scene2d`), and canvas UI emitters (`awake:ui:canvas`).
+ * Pure structure-of-arrays particle simulation. 3D world emitters (`awake:particles`) run on it
+ * today; 2D scene emitters and canvas UI emitters are planned to share it (#1103).
  *
  * All particle arrays are sized once at construction to [maxParticles]. Both [step] and [emit]
  * mutate primitive arrays in place and allocate zero heap objects on the steady-state or burst
  * path.
  *
- * @property maxParticles Fixed slot capacity of this simulation pool; must be greater than `0`.
+ * Slot liveness is read with [isAlive] and changed only through [emit], [spawn], [step],
+ * [clearSlot] and [reset], so [liveParticleCount] and [isComplete] always agree with it.
+ *
+ * @property maxParticles Fixed slot capacity of this simulation pool; must not be negative. `0`
+ * builds an empty pool that never holds a particle: every [emit] drops its whole count.
  * @property random Pseudo-random source used for spawn positions, cone/jitter velocities, sprite
  * frame offsets, and spin rates. Supply a seeded [Random] for deterministic playback.
  */
+// The pool's whole public surface (spawning, stepping, slot queries and curves) lives on one class
+// so its consumers have a single entry point; the work itself is in the internal top-level helpers.
+@Suppress("TooManyFunctions")
 class ParticleSimulation(
     val maxParticles: Int,
     var random: Random = Random.Default,
 ) {
     init {
-        require(maxParticles > 0) { "maxParticles must be positive, got $maxParticles" }
+        require(maxParticles >= 0) { "maxParticles must not be negative, got $maxParticles" }
     }
 
-    /** Per-slot liveness flag (`true` while slot `i` holds an active particle). */
-    val alive: BooleanArray = BooleanArray(maxParticles)
+    /** Per-slot liveness flag (`true` while slot `i` holds an active particle); read it with [isAlive]. */
+    internal val alive: BooleanArray = BooleanArray(maxParticles)
 
     /** Per-slot X coordinate in the caller's simulation space (world units or canvas `dp`). */
     val posX: FloatArray = FloatArray(maxParticles)
@@ -229,19 +236,25 @@ class ParticleSimulation(
         originZ = z
     }
 
+    /** Whether [slot] (`0 until maxParticles`) holds a live particle. */
+    fun isAlive(slot: Int): Boolean = alive[slot]
+
     /**
      * Advances emitter clocks, scheduled emission, and all live particles by [deltaSeconds].
      *
-     * @param deltaSeconds Frame time step in seconds (`<= 0` leaves particles unchanged after
-     * processing any zero-time initial burst only when `deltaSeconds > 0`).
+     * @param deltaSeconds Frame time step in seconds; pass a finite value `>= 0`. `0f` moves and
+     * ages nothing and adds nothing to the continuous rate, though a particle whose lifetime is `0`
+     * still dies. A negative step is not rejected, but it runs the simulation backwards: it winds
+     * [elapsedTime] and every age back, moves particles back along their velocity, and drains the
+     * continuous spawn accumulator, so later steps spawn late.
      * @param effectiveSpawnRate Optional per-frame rate override (`Float.NaN` uses [spawnRate]).
-     * @param onParticleDeath Optional callback invoked with `(x, y, z)` immediately before a
-     * particle whose age reached its lifetime is cleared.
+     * @param onParticleDeath Optional listener told the `(x, y, z)` of each particle whose age
+     * reached its lifetime, immediately before its slot is cleared.
      */
     fun step(
         deltaSeconds: Float,
         effectiveSpawnRate: Float = Float.NaN,
-        onParticleDeath: ((x: Float, y: Float, z: Float) -> Unit)? = null,
+        onParticleDeath: ParticleDeathListener? = null,
     ) {
         elapsedTime += deltaSeconds
         spawnScheduledSlots(this, deltaSeconds, if (effectiveSpawnRate.isNaN()) spawnRate else effectiveSpawnRate)
@@ -297,7 +310,10 @@ class ParticleSimulation(
         return true
     }
 
-    /** Retires [slot] and zeroes its per-particle state without resetting emitter clocks or counters. */
+    /**
+     * Retires [slot], counting it out of [liveParticleCount] if it was live, and zeroes its
+     * per-particle state without resetting emitter clocks or other counters.
+     */
     fun clearSlot(slot: Int) {
         resetSlot(this, slot)
     }
@@ -315,10 +331,18 @@ class ParticleSimulation(
         droppedParticleCount = 0L
     }
 
+    /**
+     * How far through its life [slot] is, `0` at birth to `1` at death (`1` when its lifetime is
+     * not positive): the `t` every lifetime curve, such as a colour blend, is sampled at.
+     */
+    fun lifeFractionAt(slot: Int): Float {
+        val life = lifetime[slot]
+        return if (life > 0f) (age[slot] / life).coerceIn(0f, 1f) else 1f
+    }
+
     /** Current opacity (`0..1`) of [slot] at its current [age], using [alphaRamp] when enabled. */
     fun alphaAt(slot: Int): Float {
-        val life = lifetime[slot]
-        val fraction = if (life > 0f) (age[slot] / life).coerceIn(0f, 1f) else 1f
+        val fraction = lifeFractionAt(slot)
         return if (alphaRamp.enabled) {
             startAlpha[slot] * alphaRampFactorAt(fraction, alphaRamp.fadeInEnd, alphaRamp.fadeOutStart)
         } else {
@@ -330,8 +354,7 @@ class ParticleSimulation(
     fun scaleAt(slot: Int): Float {
         val base = scale[slot]
         if (!hasEndScale) return base
-        val life = lifetime[slot]
-        val fraction = if (life > 0f) (age[slot] / life).coerceIn(0f, 1f) else 1f
+        val fraction = lifeFractionAt(slot)
         return base + (endScale - base) * fraction
     }
 
