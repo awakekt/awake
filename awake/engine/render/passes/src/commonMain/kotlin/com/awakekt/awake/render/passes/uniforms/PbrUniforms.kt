@@ -111,6 +111,15 @@ fun skinnedMaterialFloats(
     return into
 }
 
+/** [skinnedMaterialFloats] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun skinnedMaterialFloats(
+    palette: FloatArray,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    into: FloatArray = FloatArray(SkinnedMaterialLayout.total),
+): FloatArray = skinnedMaterialFloats(palette, baseColorFactor, emissiveFactor, into, unlit = false)
+
 /**
  * Packs authored PBR factors without making scene extraction know the GPU lane order.
  *
@@ -134,6 +143,19 @@ fun pbrMaterialFloats(
     .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
     .putTextureAnimation(textureAnimation)
     .build()
+
+/** [pbrMaterialFloats] as it was before `unlit`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList") // One argument per authored material value.
+fun pbrMaterialFloats(
+    metallic: Float,
+    roughness: Float,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    textureAnimation: TextureAnimation = TextureAnimation.None,
+    litWhenAdditive: Boolean = false,
+): FloatArray =
+    pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation, litWhenAdditive, unlit = false)
 
 private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): UniformWriter = this
     .put(
