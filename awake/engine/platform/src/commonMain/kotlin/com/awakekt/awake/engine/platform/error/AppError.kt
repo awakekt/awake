@@ -16,13 +16,22 @@ enum class AppErrorSource {
     /** A project, or the content a route plays, could not be loaded. */
     ProjectLoad,
 
-    /** A request to play another scene of a running project could not be carried out; the scene playing goes on. */
+    /**
+     * A request to play another scene could not be carried out. A scene that fails before the one playing
+     * is taken out leaves that one playing. One that fails after, once there is no way back, is reported
+     * and the app goes on with the scene it has: the new one when it was put in, else the one that was
+     * active, else none until the retry.
+     */
     SceneSwitch,
 
     /** A coroutine launched in an [AppCoroutineScope] threw. */
     Coroutine,
 
-    /** A system threw in the frame loop. The app keeps running; the system is skipped from then on. */
+    /**
+     * Something the frame loop runs threw: a system, the app's update block (subject `updateBlock`) or its
+     * UI build (subject `ui`). The app keeps running. A system or the update block is skipped from then on;
+     * the UI build draws nothing until it succeeds again.
+     */
     System,
 }
 

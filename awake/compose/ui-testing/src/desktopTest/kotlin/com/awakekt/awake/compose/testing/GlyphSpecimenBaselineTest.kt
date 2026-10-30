@@ -40,7 +40,7 @@ import kotlin.test.Test
  * Each sheet holds the whole set at 12, 24 and 48 sp, top to bottom, in neutral greys, recorded as an 8-bit
  * grey PNG to keep a baseline every text change re-records small. The glyphs alone, near-black on white, in
  * Regular, Bold and Black at device scale 1, and in Regular at 1.5; the same glyphs white on near-black, the
- * HUD case, in Regular and Bold at 1 and Regular at 1.5 (#1064); the layout boxes in Regular at 1 and 1.5.
+ * HUD case, in Regular, Bold and Black at 1 and Regular at 1.5 (#1064); the layout boxes in Regular at 1 and 1.5.
  * Within a size the glyphs fill rows of 17 in [BuiltInGlyphs.specimen]
  * order: `UiFonts.DEFAULT_CHARS`, then anything else the font draws. With today's 339 glyphs that is 20 rows: printable
  * ASCII fills the first five and a bit, the accented letters and signs follow. A glyph sits in the
@@ -89,6 +89,9 @@ class GlyphSpecimenBaselineTest {
 
     @Test
     fun boldLightOnDarkAtScale1() = assertSheet(Sheet.Specimen, FontWeight.Bold, 1f, Polarity.LightOnDark)
+
+    @Test
+    fun blackLightOnDarkAtScale1() = assertSheet(Sheet.Specimen, FontWeight.Black, 1f, Polarity.LightOnDark)
 
     @Test
     fun regularLightOnDarkAtScale15() = assertSheet(Sheet.Specimen, FontWeight.Normal, 1.5f, Polarity.LightOnDark)

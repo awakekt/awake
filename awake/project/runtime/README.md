@@ -120,10 +120,11 @@ when (val state = status.state.value) {
 - **Progress** is the share of the target scene's content bytes that have arrived, from 0 to 1. It
   never decreases within a request and is 1 once the scene has loaded, before `Ready`. The bytes are
   those of the scene file and every file it names by project path (a model, an image, a sound, a
-  prefab), counted through `IndexedAssetSource.prefetch` when the project's files are an
-  `IndexedAssetSource` with a `ContentCache`. A source that can't report bytes (local files, a
-  wrapped source, an index with no cache) goes from 0 straight to 1. Files named only inside another
-  file, such as a model's textures, are not counted ahead.
+  prefab), counted through `PrefetchableAssetSource.prefetchWithProgress` when the project's files
+  can prefetch: an `IndexedAssetSource` with a `ContentCache`, or a source wrapping one that passes
+  the contract on, as `verifiedByAssetsLock()` does. A source that can't report bytes (local files, an
+  index with no cache, or a wrapper over either) goes from 0 straight to 1. Files named only inside another file,
+  such as a model's textures, are not counted ahead.
 - **Ready** is the start of the frame after the one that first ran the new scene's systems, so on a
   host with a renderer the scene has been handed to the renderer once, and on a host without one it
   is the first completed frame. It does not wait for pipeline compilation or texture uploads a
@@ -202,8 +203,10 @@ it. A scene a `SceneSwitch` cannot read or play is reported as `AppErrorSource.S
 retry that asks for the scene again, and the scene playing goes on. A `projectRoute` loader that
 throws is reported as `ProjectLoad` with a retry that loads the route again. A scene system that
 throws in a frame is reported once as `System`, with no retry, and is skipped for the rest of that
-scene while the other systems, the renderer and the UI run on. With no handler registered a failure
-is logged (switch, load) or thrown out of the frame (system) as before. See
+scene while the other systems, the renderer and the UI run on. The runner's own steps are contained
+too, so a failure there never disables scene switching: one that fails after the last scene is taken
+out is reported as `SceneSwitch`, the new scene plays, and the project can switch again. With no
+handler registered a failure is logged (switch, load) or thrown out of the frame (system) as before. See
 [App lifecycle](../../../website/docs/guides/app-lifecycle.md#handle-errors).
 
 ## Playing a scene in a world of your own

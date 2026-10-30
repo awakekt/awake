@@ -226,6 +226,9 @@ class SceneRouterRuntime internal constructor(
     // Whether the active route is a deferred one showing its loading scene.
     private var showingLoading = false
 
+    // Whether the last scene to go in failed and none replaced it, so the router has no scene to update.
+    private var enterFailed = false
+
     /**
      * The identifier of the currently active scene route, a [DeferredSceneRoute] still loading included.
      */
@@ -268,6 +271,8 @@ class SceneRouterRuntime internal constructor(
         collectFinishedLoads()
         applyPendingRouteIfNeeded()
         playLoadedRouteIfWaiting()
+        // After a switch that failed with no scene left to play there is nothing to update until a retry.
+        if (currentRuntime == null && enterFailed) return
         sceneRuntime.update(frame)
     }
 
@@ -345,7 +350,7 @@ class SceneRouterRuntime internal constructor(
     private fun applyPendingRouteIfNeeded() {
         val nextRouteId = pendingRouteId ?: return
         pendingRouteId = null
-        if (nextRouteId == activeSceneId) {
+        if (nextRouteId == activeSceneId && currentRuntime != null) {
             // Entering the active route again retries a failed load; anything else stays as it is.
             deferred[nextRouteId]?.let(::startLoad)
             return
@@ -360,11 +365,42 @@ class SceneRouterRuntime internal constructor(
         if (deferred[activeSceneId]?.status == SceneRouteStatus.Loaded) activate(activeSceneId)
     }
 
+    /**
+     * Makes [sceneId] the active route: the active scene is disposed first, then the route's scene is put in.
+     *
+     * A route whose scene fails to go in leaves the app with the old scene already gone, so the failure
+     * is not left to end the frame. It reaches the app's `AppErrorHandler` once as
+     * `AppErrorSource.SceneSwitch`, with the route id as its subject and a retry that enters the route
+     * again, and the half-built scene is disposed. The route that was active is then entered again, so
+     * the app has a scene to show the error over; only when that fails too, or when the failing route
+     * was the only one entered, does the router idle, updating nothing, until the retry or another
+     * [switchTo]. With no handler registered the exception is thrown to the caller, as before. A first
+     * activation, from [ready], is not contained here: a failure to start is the app's `Bootstrap`.
+     */
+    // TooGenericExceptionCaught: whatever a route's scene throws as it goes in must not leave the app with no scene and no report.
+    @Suppress("TooGenericExceptionCaught")
     private fun activate(sceneId: String) {
+        val previousId = if (currentRuntime != null) currentRoute.id else null
+        leaveCurrent()
+        try {
+            enter(sceneId)
+        } catch (failure: Exception) {
+            if (previousId == null && !enterFailed) throw failure
+            enterFailed = true
+            showingLoading = false
+            if (!services.reportError(AppErrorSource.SceneSwitch, failure, retry = { retryEntering(sceneId) }, subject = sceneId)) throw failure
+            log.error(failure) { "Can't enter scene route '$sceneId': ${failure.message}" }
+            if (previousId != null && previousId != sceneId) reenter(previousId)
+        }
+    }
+
+    /** Puts the scene of [sceneId] in as the active one, or throws having disposed what it began. */
+    // TooGenericExceptionCaught: whatever the scene throws as it goes in is rethrown, after the half-built scene is disposed.
+    @Suppress("TooGenericExceptionCaught")
+    private fun enter(sceneId: String) {
         val route = routesById.getValue(sceneId)
         val activeRenderer =
             checkNotNull(renderer) { "Scene router cannot activate '$sceneId' before ready()." }
-        leaveCurrent()
         currentRoute = route
         val spec = when (route) {
             is SceneRoute -> route.spec
@@ -378,11 +414,45 @@ class SceneRouterRuntime internal constructor(
                 loaded?.spec ?: route.loading
             }
         }
-        currentRuntime = SceneAppLifecycleRuntime(spec).also { runtime ->
+        val runtime = SceneAppLifecycleRuntime(spec)
+        try {
             runtime.initialize(services)
             runImmediateReady {
                 runtime.ready(activeRenderer)
             }
+        } catch (failure: Exception) {
+            disposeQuietly(runtime)
+            throw failure
+        }
+        currentRuntime = runtime
+        enterFailed = false
+    }
+
+    /** Puts the route that was active back after the one that replaced it failed; its own failure is reported, not retried. */
+    // TooGenericExceptionCaught: as in activate.
+    @Suppress("TooGenericExceptionCaught")
+    private fun reenter(previousId: String) {
+        try {
+            enter(previousId)
+        } catch (failure: Exception) {
+            showingLoading = false
+            services.reportError(AppErrorSource.SceneSwitch, failure, retry = { retryEntering(previousId) }, subject = previousId)
+            log.error(failure) { "Can't enter scene route '$previousId' again: ${failure.message}" }
+        }
+    }
+
+    /** What a scene switch's retry does: asks for [sceneId] at the start of the next frame, even from idle. */
+    private fun retryEntering(sceneId: String) {
+        pendingRouteId = sceneId
+    }
+
+    // TooGenericExceptionCaught: a scene half built has nothing sound to dispose, and the failure that matters is the one that left it so.
+    @Suppress("TooGenericExceptionCaught")
+    private fun disposeQuietly(runtime: SceneAppLifecycleRuntime) {
+        try {
+            runtime.dispose()
+        } catch (failure: Exception) {
+            log.error(failure) { "Can't dispose a scene that failed to start: ${failure.message}" }
         }
     }
 
