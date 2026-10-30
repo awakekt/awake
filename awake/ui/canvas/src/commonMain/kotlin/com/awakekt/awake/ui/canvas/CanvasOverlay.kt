@@ -123,9 +123,11 @@ fun CanvasOverlay(
 ) {
     val origin = remember { CanvasOrigin() }
     val tooltips = remember { CanvasTooltips() }
+    // Kept across frames: each follower's size bucket and motion, and planning's reused lists.
+    val followers = remember { FollowerPlans() }
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
-    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips)
+    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers)
     // Measured before its content is composed, so the scale fits the box, and followers are culled
     // and pinned against it, from the first frame.
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -263,7 +265,7 @@ private fun BoxScope.Elements(
             !tree.shows(element) -> Unit
             // An arrow is drawn only while what it sits in is held to the edge.
             element.followArrow && owner != null -> if (owner.pinned) key(element) { PinArrow(item, owner, tag, tree) }
-            element.follow.isNotEmpty() -> tree.followerPlans[element]?.let { plan -> key(element) { Follower(element, plan, tag, tree) } }
+            element.follow.isNotEmpty() -> tree.followerPlans[element]?.takeIf { it.drawn }?.let { plan -> key(element) { Follower(element, plan, tag, tree) } }
             else -> key(element) {
                 val scaler = item.scaler
                 if (scaler == null) {

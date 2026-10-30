@@ -147,6 +147,7 @@ internal class CanvasTree(
     private val strings: Strings? = null,
     val controls: CanvasControls = CanvasControls.Default,
     val tooltips: CanvasTooltips = CanvasTooltips(),
+    internal val followers: FollowerPlans = FollowerPlans(),
 ) {
     private val hierarchy = CanvasHierarchy(items)
 
@@ -167,8 +168,11 @@ internal class CanvasTree(
 
     fun childrenOf(element: CanvasElement): List<CanvasItem> = hierarchy.childrenOf(element)
 
-    /** Where each follower drawn this frame goes, as [planFollowers] last worked it out; one not in it is not drawn. */
-    internal val followerPlans = HashMap<CanvasElement, FollowerPlan>()
+    /**
+     * Where each follower goes, as [planFollowers] last worked it out, kept per follower across frames
+     * in [followers]; one absent or not [FollowerPlan.drawn] is not drawn.
+     */
+    internal val followerPlans: HashMap<CanvasElement, FollowerPlan> get() = followers.plans
 
     internal val scales = CanvasSubtreeScales(items)
 

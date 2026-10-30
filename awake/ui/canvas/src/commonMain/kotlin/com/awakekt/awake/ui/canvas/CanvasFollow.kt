@@ -46,10 +46,12 @@ data class CanvasCurve(val points: List<CanvasCurvePoint> = emptyList()) {
     /** The curve's value at [x], or [otherwise] when it has no points. */
     fun valueAt(x: Float, otherwise: Float = 1f): Float {
         if (points.isEmpty()) return otherwise
-        val next = points.indexOfFirst { x <= it.at }
+        // Indexed, not indexOfFirst: read for every follower every frame, and that allocates an iterator.
+        var next = 0
+        while (next < points.size && x > points[next].at) next++
         return when (next) {
-            0 -> points.first().value
-            -1 -> points.last().value
+            0 -> points[0].value
+            points.size -> points[points.size - 1].value
             else -> between(points[next - 1], points[next], x)
         }
     }
