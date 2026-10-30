@@ -11,6 +11,7 @@ import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.StringLayer
+import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
@@ -58,10 +59,12 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property strings The project's text by key, from its `strings/<locale>.json` tables, in the
  * device's locale; null when the project has no table for the default locale, English
  * (`strings/en.json`). When the app passed its own [Strings] to [loadProject], this is that same
- * instance, with the project's tables added and the app's locale kept, never null. Every scene it
- * plays shows its keyed canvas text from these. A settings
- * screen switches language with [Strings.setLocale]: only the new locale's table is read, and keyed
- * text changes on the next frame. Game code and plugins look keys up here too.
+ * instance, with the project's tables added until [close] and the app's locale kept, never null.
+ * Every scene it plays shows its keyed canvas text from these. A settings screen switches language
+ * with [Strings.setLocale]: only the new locale's table is read, and keyed text changes on the next
+ * frame. Game code and plugins look keys up here too.
+ * @param addedStrings The tables [loadProject] added to the app's [strings], which [close] takes out
+ * again; null when it added none or once they are out.
  */
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -72,6 +75,7 @@ class LoadedProject internal constructor(
     internal val hasRenderer: Boolean = true,
     internal val physicsWorld: (suspend () -> PhysicsWorld)? = null,
     val strings: Strings? = null,
+    private var addedStrings: StringTableSource? = null,
 ) : AutoCloseable {
     /** The scene playing now, which a switch replaces on the frame thread. */
     internal var playing: ProjectScene = entry
@@ -106,11 +110,16 @@ class LoadedProject internal constructor(
 
     /**
      * Destroys the playing scene's physics world, if it has one, and stops loading models for spawned
-     * nodes. Closing twice is harmless.
+     * nodes. When the app passed its own [Strings] to [loadProject], the project's tables are taken out
+     * of it again, and the app's own stay: text read after this returns is the app's, unless a locale
+     * switch on [strings] is in flight, after which they go. Closing twice is harmless.
      */
     override fun close() {
         closed = true
         playing.close()
+        val added = addedStrings ?: return
+        addedStrings = null
+        removeProjectStrings(checkNotNull(strings), added)
     }
 }
 
@@ -149,9 +158,9 @@ class LoadedProject internal constructor(
  * [Strings.setLocale] changes the game's early text and the project's together. Where both have a key
  * in the same locale the project's text wins; a locale still comes before a layer, so the game's
  * Korean for a key beats the project's English for a Korean player. The tables are added once the
- * rest of the project has loaded, so a load that fails leaves [strings] as it was. Each load adds the
- * project's tables again, as a new source; a host that loads projects one after another into one
- * instance keeps each one's tables, the newest winning.
+ * rest of the project has loaded, so a load that fails leaves [strings] as it was. [LoadedProject.close]
+ * takes them out again and leaves the game's own, so a host that loads a project again into the same
+ * instance, as a [projectRoute] does on each entry, holds one copy of its tables at a time.
  */
 suspend fun loadProject(
     files: AssetSource,
