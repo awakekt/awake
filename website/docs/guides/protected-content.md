@@ -278,7 +278,7 @@ player's token and attach it:
 | When | A read of a path |
 | --- | --- |
 | Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. A `SceneSwitch` to such a scene waits in `WaitingForContent`; `LoadedProject.switchTo`, for a host without a frame loop, throws instead. |
-| After `attachProtected` | Is served by the protected source when it has the path, so it wins for a file both have, and by the public set otherwise. Each read goes to one source, which checks it against its own index's SHA-256. |
+| After `attachProtected` | Is served by the protected source when it has the path, so it wins for a file both have, and by the public set otherwise. Each read goes to one source, which checks it against its own index's SHA-256. A scene switch's prefetch goes the same way, so its `Loading` progress counts bytes from both sources. |
 | After `detachProtected`, on sign-out | Is served by the public set alone again. |
 
 The token, and when to sign in or out, stay with your game: Core only takes the source you attach.

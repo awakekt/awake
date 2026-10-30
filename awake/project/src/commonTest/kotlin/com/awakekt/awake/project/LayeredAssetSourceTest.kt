@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
@@ -106,8 +107,39 @@ class LayeredAssetSourceTest {
         assertContentEquals(publicLogo, layered.read(AssetPath("assets/logo.png")).getOrThrow())
     }
 
+    @Test
+    fun aPrefetchGoesThroughTheLayerThatWouldReadEachPathAndCountsBoth() = runTest {
+        val layered = LayeredAssetSource(indexed(publicFiles, "public", cache = MemoryContentCache()))
+        layered.attachProtected(indexed(protectedFiles, "protected", cache = MemoryContentCache()))
+        val progress = mutableListOf<Pair<Long, Long>>()
+
+        assertTrue(layered.canPrefetch)
+        layered.prefetchWithProgress(listOf("scenes/harbor.scene.json", "assets/logo.png", "scenes/sign-in.scene.json")) { done, total ->
+            progress += done to total
+        }
+
+        val expected = (world.size + protectedLogo.size + signIn.size).toLong()
+        assertEquals(expected to expected, progress.last(), "all the bytes of both layers: $progress")
+        assertEquals(setOf("protected/scenes/harbor.scene.json", "protected/assets/logo.png", "public/scenes/sign-in.scene.json"), fetched.toSet())
+        val before = fetched.size
+        layered.read(AssetPath("assets/logo.png")).getOrThrow()
+        layered.read(AssetPath("scenes/sign-in.scene.json")).getOrThrow()
+        assertEquals(before, fetched.size, "the reads after the prefetch come from the caches")
+    }
+
+    @Test
+    fun aPrefetchOfAProtectedPathBeforeSignInFailsBeforeFetching() = runTest {
+        val layered = LayeredAssetSource(indexed(publicFiles, "public", cache = MemoryContentCache()))
+
+        assertFailsWith<ProtectedContentNotAttachedException> {
+            layered.prefetchWithProgress(listOf("scenes/sign-in.scene.json", "scenes/harbor.scene.json")) { _, _ -> }
+        }
+        assertEquals(emptyList(), fetched)
+        assertFalse(LayeredAssetSource(indexed(publicFiles, "public")).canPrefetch, "an index with no cache can't prefetch")
+    }
+
     /** An index over [files] served under [prefix]; every fetch is recorded in [fetched]. */
-    private fun indexed(files: Map<String, ByteArray>, prefix: String, tampered: String? = null): IndexedAssetSource {
+    private fun indexed(files: Map<String, ByteArray>, prefix: String, tampered: String? = null, cache: ContentCache? = null): IndexedAssetSource {
         val entries = files.map { (path, bytes) ->
             ProjectIndexEntry(path = path, sizeBytes = bytes.size.toLong(), sha256 = Sha256.digestHex(bytes), url = "$prefix/$path")
         }
@@ -116,6 +148,6 @@ class LayeredAssetSourceTest {
             val path = url.removePrefix("$prefix/")
             val bytes = files.getValue(path)
             if (path == tampered) bytes.copyOf().also { it[0] = 99 } else bytes
-        })
+        }, cache)
     }
 }

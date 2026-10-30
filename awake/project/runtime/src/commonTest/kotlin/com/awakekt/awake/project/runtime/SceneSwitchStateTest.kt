@@ -17,8 +17,13 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.project.AssetMismatch
+import com.awakekt.awake.project.AwakeAssetLockEntry
+import com.awakekt.awake.project.AwakeAssetsLock
+import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.project.ContentCache
 import com.awakekt.awake.project.IndexedAssetSource
+import com.awakekt.awake.project.LockVerifiedAssetSource
 import com.awakekt.awake.project.ProjectIndex
 import com.awakekt.awake.project.ProjectIndexEntry
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -189,6 +194,74 @@ class SceneSwitchStateTest {
 
         assertEquals(listOf(SceneSwitchState.Idle, SceneSwitchState.Loading(LEVEL, 0f), SceneSwitchState.Loading(LEVEL, 1f), SceneSwitchState.Ready(LEVEL)), seen.states)
         assertEquals(listOf("files/$LEVEL"), loose.fetches, "the level's scene is fetched once and its named files not at all")
+        project.close()
+    }
+
+    @Test
+    fun progressThroughTheAssetLockCountsTheIndexsBytes() = runTest {
+        val source = Indexed(
+            mapOf(MANIFEST_PATH to MANIFEST, MENU to MENU_SCENE, LEVEL to LEVEL_SCENE, LEVEL_A to ByteArray(A_SIZE), LEVEL_B to ByteArray(B_SIZE), PROJECT_ASSETS_LOCK to LOCK),
+        )
+        val mismatches = mutableListOf<AssetMismatch>()
+        val project = loadProject(source.open().verifiedByAssetsLock { mismatches += it })
+        project.sceneLoads = Dispatchers.Unconfined
+        val game = play(project)
+        source.hold(LEVEL, LEVEL_A, LEVEL_B)
+        val seen = Seen(game.status)
+
+        game.switch.request(LEVEL)
+        seen.record()
+        for (path in listOf(LEVEL, LEVEL_A, LEVEL_B)) {
+            source.release(path)
+            game.update()
+            seen.record()
+        }
+        game.frames(FRAMES)
+        seen.record()
+
+        val progress = seen.states.filterIsInstance<SceneSwitchState.Loading>().map { it.progress }
+        assertEquals(progress.sorted(), progress, "progress never decreases: $progress")
+        assertEquals(listOf(0f, 1f), listOf(progress.first(), progress.last()))
+        assertTrue(progress.any { it > 0f && it < 1f }, "the lock passes the index's bytes on, so they're counted on the way: $progress")
+        assertEquals(SceneSwitchState.Ready(LEVEL), seen.states.last())
+        assertEquals("level", project.scene.name)
+        assertTrue(mismatches.isEmpty(), "each file is still checked against the lock, and matches: $mismatches")
+        project.close()
+    }
+
+    @Test
+    fun loadProjectThroughTheAssetLockReportsHowFarTheEntrySceneHasCome() = runTest {
+        val source = Indexed(mapOf(MANIFEST_PATH to MANIFEST, MENU to MENU_SCENE, MENU_A to ByteArray(A_SIZE), MENU_B to ByteArray(B_SIZE), PROJECT_ASSETS_LOCK to LOCK))
+        val reported = mutableListOf<Float>()
+
+        loadProject(source.open().verifiedByAssetsLock(), onProgress = { reported += it }).close()
+
+        assertEquals(0f, reported.first())
+        assertEquals(1f, reported.last())
+        assertTrue(reported.size > 2 && reported.zipWithNext().all { (before, after) -> after > before }, "it only rises, with bytes on the way: $reported")
+    }
+
+    @Test
+    fun theAssetLockOverASourceThatCannotReportBytesJumpsFromZeroToOne() = runTest {
+        val texts = mapOf(MANIFEST_PATH to MANIFEST, MENU to MENU_SCENE, LEVEL to LEVEL_SCENE, PROJECT_ASSETS_LOCK to LOCK)
+        val files = AssetSource { path -> runCatching { texts.getValue(path.value).encodeToByteArray() } }
+        val wrapped = files.verifiedByAssetsLock()
+        assertIs<LockVerifiedAssetSource>(wrapped, "the files are wrapped, not passed through")
+        val reported = mutableListOf<Float>()
+        val project = loadProject(wrapped, onProgress = { reported += it })
+        project.sceneLoads = Dispatchers.Unconfined
+        val game = play(project)
+        val seen = Seen(game.status)
+
+        game.switch.request(LEVEL)
+        seen.record()
+        game.frames(1)
+        seen.record()
+        game.frames(FRAMES)
+        seen.record()
+
+        assertEquals(listOf(0f, 1f), reported, "the first load")
+        assertEquals(listOf(SceneSwitchState.Idle, SceneSwitchState.Loading(LEVEL, 0f), SceneSwitchState.Loading(LEVEL, 1f), SceneSwitchState.Ready(LEVEL)), seen.states, "the switch")
         project.close()
     }
 
@@ -403,6 +476,15 @@ class SceneSwitchStateTest {
   { "name": "assets/level-b.bin" }
 ] }
 """
+
+        /** Pins the manifest and the scenes, as `assets.lock.json` does; the files they name go unpinned. */
+        val LOCK = AwakeProjectValidator.encodeAssetsLock(
+            AwakeAssetsLock(
+                assets = listOf(MANIFEST_PATH to MANIFEST, MENU to MENU_SCENE, LEVEL to LEVEL_SCENE).associate { (path, text) ->
+                    path to text.encodeToByteArray().let { AwakeAssetLockEntry(Sha256.digestHex(it), it.size.toLong()) }
+                },
+            ),
+        )
 
         const val OTHER_SCENE = """
 { "version": 1, "name": "other", "nodes": [
