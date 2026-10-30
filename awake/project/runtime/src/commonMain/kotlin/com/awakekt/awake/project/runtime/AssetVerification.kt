@@ -21,7 +21,9 @@ private val log = Logger("project.assets")
  * These project files, with each asset the project's [PROJECT_ASSETS_LOCK] pins checked against its
  * pin as it loads; see [LockVerifiedAssetSource]. A mismatch is logged as a warning unless
  * [onMismatch] says otherwise, and the asset still loads unless [refuseMismatches] is true. Opt in by
- * loading through it: `loadProject(files.verifiedByAssetsLock())`.
+ * loading through it: `loadProject(files.verifiedByAssetsLock())`. A load through it counts progress
+ * as one through these files would, since it prefetches through them; see
+ * [com.awakekt.awake.project.PrefetchableAssetSource].
  *
  * A project with no lock has nothing to check against, so its files come back unchecked, with a
  * warning. The lock is read from these same files, which catches corruption and casual edits; a game
