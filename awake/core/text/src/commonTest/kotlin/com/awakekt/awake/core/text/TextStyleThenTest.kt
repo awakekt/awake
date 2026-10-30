@@ -7,6 +7,7 @@ package com.awakekt.awake.core.text
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextOutline
@@ -38,7 +39,9 @@ class TextStyleThenTest {
         TextStyle(size = 14.sp, font = UiFonts.default()),
         TextStyle(wordBreak = WordBreak.Normal),
         TextStyle(wordBreak = WordBreak.KeepAll),
-        TextStyle(color = Color.White, size = 14.sp, lineHeight = 20.sp, wordBreak = WordBreak.KeepAll),
+        TextStyle(numerals = FontNumerals.Tabular),
+        TextStyle(numerals = FontNumerals.Proportional),
+        TextStyle(color = Color.White, size = 14.sp, lineHeight = 20.sp, wordBreak = WordBreak.KeepAll, numerals = FontNumerals.Tabular),
     )
 
     private fun reference(base: TextStyle, other: TextStyle) = TextStyle(
@@ -51,7 +54,9 @@ class TextStyleThenTest {
         shadow = other.shadow ?: base.shadow,
         outline = other.outline ?: base.outline,
         font = other.font ?: base.font,
+        kerning = other.kerning ?: base.kerning,
         wordBreak = other.wordBreak ?: base.wordBreak,
+        numerals = other.numerals ?: base.numerals,
     )
 
     @Test
@@ -65,9 +70,15 @@ class TextStyleThenTest {
 
     @Test
     fun aNoOpMergeReturnsAnExistingInstance() {
-        val inherited = TextStyle(size = 14.sp)
+        val inherited = TextStyle(size = 14.sp, numerals = FontNumerals.Tabular)
         assertSame(inherited, inherited then TextStyle.Default)
-        val full = TextStyle(color = Color.White, size = 14.sp, lineHeight = 20.sp, wordBreak = WordBreak.KeepAll)
-        assertSame(full, TextStyle(size = 12.sp) then full)
+        val full = TextStyle(
+            color = Color.White,
+            size = 14.sp,
+            lineHeight = 20.sp,
+            wordBreak = WordBreak.KeepAll,
+            numerals = FontNumerals.Proportional,
+        )
+        assertSame(full, TextStyle(size = 12.sp, numerals = FontNumerals.Tabular) then full)
     }
 }

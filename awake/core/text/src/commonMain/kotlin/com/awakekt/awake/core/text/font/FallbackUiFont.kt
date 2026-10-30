@@ -16,11 +16,17 @@ package com.awakekt.awake.core.text.font
  * multiple atlas pages exposed via [atlasPages]. Faces with disparate sampling modes (e.g.
  * full-colour emoji beside distance-field text) remain distinct and are resolved via [fontFor]
  * so each draws with its appropriate shader and texture atlas.
+ *
+ * A stacked face's own atlas is its first atlas page. A glyph the face draws from another page of its own,
+ * such as a numeric variant's substituted figures, draws from that page ([ExtraAtlasPages]). A numeric
+ * variant of a chain whose faces keep their atlases draws from the chain's own stacked pages, so it copies
+ * and uploads none of them again.
  */
 @Suppress("TooManyFunctions")
 internal class FallbackUiFont(
     private val faces: List<UiFont>,
     private val maxAtlasHeight: Int = UiFonts.DEFAULT_MAX_ATLAS_HEIGHT,
+    private val origin: FallbackUiFont? = null,
 ) : UiFont {
     private val primary: UiFont = faces.first()
     private val stackedFaces: List<UiFont> = faces.filter { it.samplingMode == primary.samplingMode }
@@ -32,12 +38,33 @@ internal class FallbackUiFont(
         }
     }
 
+    /** [origin] when this numeric variant's stacked faces have the same atlases as its own, in the same order. */
+    private val sharedOrigin: FallbackUiFont? = origin?.takeIf { source ->
+        source.stackedFaces.size == stackedFaces.size &&
+            stackedFaces.indices.all { stackedFaces[it].atlasPages.first() === source.stackedFaces[it].atlasPages.first() }
+    }
+
+    /** The chain whose stacked pages a renderer samples for the stacked faces' own glyphs. */
+    private val stackedHome: FallbackUiFont = sharedOrigin ?: this
+
+    /** Each stacked face that draws some glyphs from pages beyond its own atlas: its own atlas page. */
+    private val ownPageByFace: Map<UiFont, UiFont> = buildMap {
+        stackedFaces.forEach { face -> face.atlasPages.takeIf { it.size > 1 }?.let { put(face, it.first()) } }
+    }
+    private val extraPages = ExtraAtlasPages(stackedFaces.flatMap { it.atlasPages.drop(1) }, primary, pageIndex = pages.size)
+
     override val samplingMode: UiFontSamplingMode = primary.samplingMode
     override val cellSize: Int = primary.cellSize
     override val textScaleStep: Float = primary.textScaleStep
     override val atlasWidth: Int = stackedFaces.maxOf { it.atlasWidth }
     override val atlasHeight: Int = if (pages.size == 1) pages[0].atlasHeight else stackedFaces.sumOf { it.atlasHeight }
-    override val atlasPixelsRgba: ByteArray by lazy { if (pages.size == 1) pages[0].atlasPixelsRgba else combineAllAtlases() }
+    override val atlasPixelsRgba: ByteArray by lazy {
+        when {
+            sharedOrigin != null -> sharedOrigin.atlasPixelsRgba
+            pages.size == 1 -> pages[0].atlasPixelsRgba
+            else -> combineAllAtlases()
+        }
+    }
     override val lineHeightEm: Float = primary.lineHeightEm
     override val distanceFieldRangePx: Float = primary.distanceFieldRangePx
     override val visibleTopEm: Float = primary.visibleTopEm
@@ -67,8 +94,13 @@ internal class FallbackUiFont(
         }
     }
 
+    /**
+     * The stacked pages, then the stacked faces' extra pages, then each disparate face's own pages: every
+     * font [fontFor] can answer.
+     */
     override val atlasPages: List<UiFont> =
-        if (pages.size == 1) listOf(this) + disparateFaces else pages + disparateFaces
+        ((if (pages.size == 1) listOf(stackedHome) else stackedHome.pages) + extraPages.pages + disparateFaces.flatMap { it.atlasPages })
+            .distinct()
 
     override fun pageFont(pageIndex: Int): UiFont = atlasPages.getOrElse(pageIndex) { this }
 
@@ -84,20 +116,29 @@ internal class FallbackUiFont(
         val face = faces[faceIndex(codePoint)]
         val glyph = face.glyphFor(codePoint, weight) ?: return null
         val page = faceToPage[face]
-        return if (face.samplingMode == primary.samplingMode && page != null) {
-            page.glyphFor(face, glyph)
-        } else {
-            glyph
+        val extraOwner = extraPageOwner(face, codePoint, weight)
+        return when {
+            face.samplingMode != primary.samplingMode || page == null -> glyph
+            extraOwner != null -> extraPages.glyphFor(extraOwner, glyph)
+            else -> page.glyphFor(face, glyph)
         }
     }
 
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
         val face = faces[faceIndex(codePoint)]
+        val extraOwner = extraPageOwner(face, codePoint, weight)
         return when {
             face.samplingMode != primary.samplingMode -> face.fontFor(codePoint, weight)
-            pages.size == 1 -> this
-            else -> faceToPage[face] ?: this
+            extraOwner != null -> extraPages.fontFor(extraOwner)
+            pages.size == 1 -> stackedHome
+            else -> faceToPage[face]?.let { stackedHome.pages[it.pageIndex] } ?: stackedHome
         }
+    }
+
+    /** The page a stacked [face] draws [codePoint] from when that is not its own atlas, or null. */
+    private fun extraPageOwner(face: UiFont, codePoint: Int, weight: FontWeight): UiFont? {
+        val ownPage = ownPageByFace[face] ?: return null
+        return face.fontFor(codePoint, weight).takeIf { it !== ownPage }
     }
 
     override fun advanceFor(char: Char, glyphPx: Float): Float = faces[faceIndex(char.code)].advanceFor(char, glyphPx)
@@ -111,6 +152,25 @@ internal class FallbackUiFont(
     override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float {
         val face = faceIndex(left)
         return if (face == faceIndex(right)) faces[face].kerningFor(left, right, glyphPx, weight) else 0f
+    }
+
+    private val proportionalFont: UiFont by lazy { buildNumericVariant(FontNumerals.Proportional) }
+    private val tabularFont: UiFont by lazy { buildNumericVariant(FontNumerals.Tabular) }
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = when {
+        numerals == null -> this
+        origin != null -> origin.withNumerals(numerals)
+        numerals == FontNumerals.Proportional -> proportionalFont
+        else -> tabularFont
+    }
+
+    private fun buildNumericVariant(numerals: FontNumerals): UiFont {
+        val mapped = faces.map { it.withNumerals(numerals) }
+        return if (faces.indices.all { mapped[it] === faces[it] }) {
+            this
+        } else {
+            FallbackUiFont(mapped, maxAtlasHeight, origin = this)
+        }
     }
 
     /** The first face that has [codePoint], or the primary face, which draws its own stand-in. */
@@ -156,7 +216,7 @@ internal class FallbackUiFont(
             for (face in stackedFaces) {
                 val faceHeight = face.atlasHeight
                 if (currentPageFaces.isNotEmpty() && currentHeight + faceHeight > maxAtlasHeight) {
-                    pages += createAtlasPage(pageIndex++, primary, currentPageFaces)
+                    pages += stackedAtlasPage(pageIndex++, primary, currentPageFaces)
                     currentPageFaces = mutableListOf()
                     currentHeight = 0
                 }
@@ -164,31 +224,57 @@ internal class FallbackUiFont(
                 currentHeight += faceHeight
             }
             if (currentPageFaces.isNotEmpty()) {
-                pages += createAtlasPage(pageIndex, primary, currentPageFaces)
+                pages += stackedAtlasPage(pageIndex, primary, currentPageFaces)
             }
             return pages
         }
+    }
+}
 
-        fun createAtlasPage(
-            pageIndex: Int,
-            primary: UiFont,
-            pageFaces: List<UiFont>,
-        ): FallbackAtlasPage {
-            val offsets = buildMap {
-                var y = 0
-                pageFaces.forEach { face ->
-                    put(face, y)
-                    y += face.atlasHeight
-                }
-            }
-            return FallbackAtlasPage(
-                pageIndex = pageIndex,
-                primary = primary,
-                pageFaces = pageFaces,
-                pageOffsets = offsets,
-            )
+/** One atlas page at [pageIndex] holding [pageFaces]' atlases stacked top to bottom, drawn as [primary] draws. */
+internal fun stackedAtlasPage(
+    pageIndex: Int,
+    primary: UiFont,
+    pageFaces: List<UiFont>,
+): FallbackAtlasPage {
+    val offsets = buildMap {
+        var y = 0
+        pageFaces.forEach { face ->
+            put(face, y)
+            y += face.atlasHeight
         }
     }
+    return FallbackAtlasPage(
+        pageIndex = pageIndex,
+        primary = primary,
+        pageFaces = pageFaces,
+        pageOffsets = offsets,
+    )
+}
+
+/**
+ * The atlas pages a stacking font's faces draw some glyphs from beyond their own atlases, such as each
+ * weight's strip of substituted figures in a numeric variant of a family ([UiFont.withNumerals]).
+ *
+ * Those in [primary]'s sampling mode are stacked into one page at [pageIndex] while they fit in
+ * [UiFonts.DEFAULT_MAX_ATLAS_HEIGHT], so text spends one more texture on them, not one per face; any other
+ * stays a page of its own.
+ */
+internal class ExtraAtlasPages(extras: List<UiFont>, primary: UiFont, pageIndex: Int) {
+    private val stacked: FallbackAtlasPage? = extras.distinct()
+        .filter { it.samplingMode == primary.samplingMode }
+        .takeIf { it.isNotEmpty() && it.sumOf { page -> page.atlasHeight } <= UiFonts.DEFAULT_MAX_ATLAS_HEIGHT }
+        ?.let { stackedAtlasPage(pageIndex, primary, it) }
+
+    /** The pages a renderer samples for these glyphs: the stacked page first, then the rest. */
+    val pages: List<UiFont> = listOfNotNull(stacked) + extras.distinct().filter { stacked == null || it !in stacked.pageFaces }
+
+    /** The page whose texture holds [owner]'s pixels, where [owner] is what a face's own `fontFor` answered. */
+    fun fontFor(owner: UiFont): UiFont = if (stacked != null && owner in stacked.pageFaces) stacked else owner
+
+    /** [glyph], drawn from [owner], with its UVs moved to where [fontFor] puts [owner]'s pixels. */
+    fun glyphFor(owner: UiFont, glyph: GlyphRect): GlyphRect =
+        if (stacked != null && owner in stacked.pageFaces) stacked.glyphFor(owner, glyph) else glyph
 }
 
 /**

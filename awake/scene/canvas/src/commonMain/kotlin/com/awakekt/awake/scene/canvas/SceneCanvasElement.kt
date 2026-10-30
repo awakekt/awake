@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -167,6 +168,8 @@ import kotlinx.serialization.Serializable
  * for half a second, such as `hud.inventory.tooltip`; empty shows none. Any kind takes one. It stays
  * inside the canvas and goes when the pointer leaves or presses the element. [textArgs] fill in its
  * placeholders.
+ * @property numerals Digit width spacing (`Tabular` or `Proportional` via OpenType `tnum`/`pnum`); null
+ * keeps the font's default digits.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -225,6 +228,7 @@ data class SceneCanvasElement(
     val placeholder: String = "",
     val padding: CanvasPadding = CanvasPadding(),
     val tooltip: String = "",
+    val numerals: FontNumerals? = null,
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 

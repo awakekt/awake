@@ -75,7 +75,9 @@ covered separately by the existing FreeType reference suite (#993).
 The test calls production `TextRun` layout and painting, records glyph quads on the
 CPU, and recovers their origins/baselines from the face's bearing metrics. A case's
 `kerning` reaches the run as `TextStyle.kerning`: `normal` kerns, as Core does by
-default (#1022), and `none` turns it off, as the browser's `font-kerning: none` does. A soft-wrapped
+default (#1022), and `none` turns it off, as the browser's `font-kerning: none` does. A case's
+`numeric` reaches the run as `TextStyle.numerals`: `normal` keeps the face's default digits, while
+`tabular-nums` and `proportional-nums` apply OpenType `tnum` and `pnum` (#1023). A soft-wrapped
 case's `wrapWidthPx` is the run's wrap width, and a line wrapping makes fits when it is no wider than that,
 as the browser fits it, with no half-pixel allowance (#1021). It paints
 into a scope that is not device-pixel aligned, so every size draws from the distance
@@ -89,12 +91,10 @@ example a separator painted inside Core's line but hanging after a browser wrap;
 the exact source-range and line-count metrics report that structural difference.
 
 The browser is always the first comparison. A passing metric is `PASS`, including
-a previously failing metric fixed by later work. Other deviations can be `XFAIL`
-only when they match one of these narrow pre-fix signatures:
-
-- [#1023](https://github.com/awakekt/awake/issues/1023): a requested numeric feature
-  instead matches the independently captured browser control using normal digits
-  (within 0.1 px). Already-tabular default digits may pass without that feature API.
+a previously failing metric fixed by later work. No corpus case currently carries an
+active `XFAIL` signature (#1021, #1022 and #1023 are implemented); the `XFAIL`
+classifier and its negative probes stay in `TextLayoutConformanceTest` so any future
+tracked gap must still match an explicit control rather than excusing arbitrary drift.
 
 One deviation is deliberate rather than a gap, and reports as `SNAP`. Core lays
 every line out with the same whole-device-pixel advance (`TextLineBox`, #1024):
