@@ -457,8 +457,7 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
     @get:Input
     abstract val keyId: Property<String>
 
-    /** The key file; read by the worker, never stored by Gradle. */
-    @get:Optional
+    /** The key file; read by the worker, never stored by Gradle. [keyFingerprint] tracks its contents. */
     @get:Internal
     abstract val keyFile: RegularFileProperty
 
