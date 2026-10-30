@@ -68,7 +68,6 @@ internal class DecoratedGlyphShade(
         val u = clampTo(rawU, glyph.u0, glyph.u1, halfTexelU)
         val v = clampTo(rawV, glyph.v0, glyph.v1, halfTexelV)
         val inRect = rawU in min(glyph.u0, glyph.u1)..max(glyph.u0, glyph.u1) && rawV in min(glyph.v0, glyph.v1)..max(glyph.v0, glyph.v1)
-        val coverage = if (inRect) distanceFieldCoverage(sample(u, v, 0), sample(u, v, 1), sample(u, v, 2), screenPxRange) else 0f
         val outlinePx = outlineWidth * fieldPxRange
         val fineRing = if (inRect && outlinePx <= 0.5f * screenPxRange - 0.5f + REACH_SLACK) {
             (screenPxRange * (sample(u, v, ALPHA) - 0.5f) + outlinePx + 0.5f).coerceIn(0f, 1f)
@@ -78,6 +77,11 @@ internal class DecoratedGlyphShade(
         val fieldU = decoration.fieldU0 + (x - glyph.x - decoration.fieldOffsetX) * fieldPerPxU
         val fieldV = decoration.fieldV0 + (y - glyph.y - decoration.fieldOffsetY) * fieldPerPxV
         val field = fieldAt(fieldU, fieldV)
+        // Across the last half texel of the rect, where the atlas sample is clamped, the fill hands over to the field.
+        val handOver = max(pastFill(rawU, glyph.u0, glyph.u1, halfTexelU), pastFill(rawV, glyph.v0, glyph.v1, halfTexelV))
+        val atlasCoverage = distanceFieldCoverage(sample(u, v, 0), sample(u, v, 1), sample(u, v, 2), screenPxRange)
+        val fieldCoverage = (fieldPxRange * field + 0.5f).coerceIn(0f, 1f)
+        val coverage = atlasCoverage + (fieldCoverage - atlasCoverage) * handOver
         val ring = max((fieldPxRange * (field + outlineWidth) + 0.5f).coerceIn(0f, 1f), fineRing)
         val outline = if (outlineWidth > 0f) max(ring, coverage) else 0f
         val shadow = smoothstep(-softness, softness, fieldAt(fieldU - shadowU, fieldV - shadowV))
@@ -96,6 +100,10 @@ internal class DecoratedGlyphShade(
         out[2] = (glyph.color.b * fillAlpha + (outlineColor.b * outlineAlpha + shadowColor.b * shadowShare) * (1f - fillAlpha)) / divisor
         out[3] = alpha
     }
+
+    /** How far [value] lies past [a]..[b] inset by [inset], in units of [inset], held to 0..1. */
+    private fun pastFill(value: Float, a: Float, b: Float, inset: Float): Float =
+        (max(min(a, b) + inset - value, value - (max(a, b) - inset)) / inset).coerceIn(0f, 1f)
 
     /** The effect field less its 0.5 edge at ([u], [v]), clamped half a texel inside the glyph's tile. */
     private fun fieldAt(u: Float, v: Float): Float =

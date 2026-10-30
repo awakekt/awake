@@ -86,6 +86,35 @@ class TextEffectsRasterTest {
         }
     }
 
+    /**
+     * A decorated glyph moving 0.1 px a frame moves its ink by about as much each frame, never stalling or jumping as a
+     * column at its rect's edge comes or goes. Measured on "Harbor" at 14 px: steps 0.039 to 0.159 px. Before the fill
+     * handed over to the effect field across its rect's last half texel, the clamped atlas sample repeated one coverage
+     * there and the rect then cut it off: steps fell to 0.004 and jumped to 0.331 px.
+     */
+    @Test
+    fun aMovingGlyphLosesNoColumnAtItsRectsEdge() {
+        val style = TextStyle(
+            color = INK,
+            size = 14.sp,
+            outline = TextOutline(Color(0.32f, 0.40f, 0.58f, 1f), 1f),
+            shadow = TextShadow(Color(0.20f, 0.24f, 0.36f, 0.9f), 1f, 1f),
+        )
+        val primitives = ComposeHost(density = 1f).frame(FrameInput(FRAME, FRAME)) { Text("Harbor", style = style) }.primitives
+        val glyphs = primitives.filterIsInstance<UiDrawPrimitive.Glyph>().filter { it.decoration != null && it.w > 0f }
+        assertTrue(glyphs.isNotEmpty(), "decorated glyphs drawn")
+        for (glyph in glyphs) {
+            val centroids = (0..10).map { frame ->
+                val moved = glyph.copy(x = glyph.x + frame * 0.1f)
+                inkCentroidX(listOf(moved).rasterizeToPixelMap(FRAME, FRAME, background = DARK, font = UiFonts.default()))
+            }
+            for (i in 1 until centroids.size) {
+                val step = centroids[i] - centroids[i - 1]
+                assertTrue(step in 0.03..0.19, "glyph at x=${glyph.x}, frame $i: centroid step $step px (${centroids.map { "%.3f".format(it) }})")
+            }
+        }
+    }
+
     /** Outlined, shadowed text is one glyph primitive a character; `UiTextEffectsParityTest` counts its staged quads. */
     @Test
     fun outlinedShadowedTextDrawsOnceAGlyph() {
@@ -117,6 +146,23 @@ class TextEffectsRasterTest {
         return t * t * (3f - 2f * t)
     }
 
+    /** The x of the luma-weighted centroid of everything lighter than [DARK]. */
+    private fun inkCentroidX(map: PixelMap): Double {
+        var mass = 0.0
+        var weighted = 0.0
+        for (y in 0 until map.height) {
+            for (x in 0 until map.width) {
+                val p = map.sample(x, y)
+                val ink = 0.2126 * p.r / 255.0 + 0.7152 * p.g / 255.0 + 0.0722 * p.b / 255.0 - DARK_LUMA
+                if (ink > 1e-4) {
+                    mass += ink
+                    weighted += (x + 0.5) * ink
+                }
+            }
+        }
+        return weighted / mass
+    }
+
     /** How dark ([x], [y]) is on a white ground, 0 to 1, from its red channel. */
     private fun darkness(map: PixelMap, x: Int, y: Int): Float = 1f - map.sample(x, y).r / 255f
 
@@ -124,6 +170,9 @@ class TextEffectsRasterTest {
         val SIZES = listOf(12f, 24f, 48f)
         val WIDTHS = listOf(1f, 2f, 4f)
         val GREY = Color(0.5f, 0.5f, 0.5f, 1f)
+        val DARK = Color(0.08f, 0.08f, 0.10f, 1f)
+        val INK = Color(0.96f, 0.96f, 0.97f, 1f)
+        const val DARK_LUMA = 0.0807
         const val FRAME = 96
         const val PADDING = 16
 

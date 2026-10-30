@@ -140,7 +140,7 @@ internal class DecoratedGlyphInputs(
  * - **Shadow** is the effect field's edge moved by the offset, ramped by smoothstep across the blur either side of it,
  *   or across a pixel for a hard shadow.
  *
- * The fill covers nothing outside its own rect, and every sample is clamped to its tile, half a texel in, and every derivative is taken before any of them, in uniform
+ * The fill hands over to the effect field across the last half texel of its rect, and every sample is clamped to its tile, half a texel in, and every derivative is taken before any of them, in uniform
  * control flow. `UiRasterizer`'s decorated glyph is the CPU copy of this block.
  */
 internal fun AslBlockBuilder.decoratedGlyph(inputs: DecoratedGlyphInputs): AslExpr = with(inputs) {
@@ -154,17 +154,10 @@ internal fun AslBlockBuilder.decoratedGlyph(inputs: DecoratedGlyphInputs): AslEx
     val unitRange = let("unitRange", vec2(fontInfo.y) / atlasSize)
     val screenPxRange = let("screenPxRange", max(0.5f.lit * dot(unitRange, screenTexSize), 1f.lit))
     val signedDistance = let("signedDistance", max(min(fill.r, fill.g), min(max(fill.r, fill.g), fill.b)))
-    // Outside its rect the quad has grown past the glyph: a clamped sample there repeats the rect's edge texels,
-    // which still read a little coverage, and would smear it across the decoration.
     val inRect = let(
         "inRect",
         (uv.x ge uvRect.x) and (uv.x le uvRect.z) and (uv.y ge uvRect.y) and (uv.y le uvRect.w),
     )
-    val coverage = let(
-        "coverage",
-        select(0f.lit, clamp(screenPxRange * (signedDistance - 0.5f.lit) + 0.5f.lit, 0f.lit, 1f.lit), inRect),
-    )
-    val ruled = textCoverageRule(coverage, color)
 
     // Screen pixels per unit of field value, and field values per unit of field uv across.
     val fieldPxRange = let("fieldPxRange", max(0.5f.lit * dot(vec2(fontInfo.w) / atlasSize, fieldScreenTexSize), MIN_RANGE.lit))
@@ -173,6 +166,21 @@ internal fun AslBlockBuilder.decoratedGlyph(inputs: DecoratedGlyphInputs): AslEx
     val fieldHigh = let("fieldHigh", fieldRect.zw - halfTexel)
     val texel = let("texel", vec2(1f.lit, 1f.lit) / atlasSize)
     val field = let("field", fieldSample(this@decoratedGlyph, "fieldAt", clamp(fieldUv, fieldLow, fieldHigh), atlasSize, texel) - 0.5f.lit)
+    // In the last half texel of its rect the atlas sample is clamped, one value repeated, and past the rect it would
+    // smear the edge texels across the decoration; across that band the fill hands over to the effect field's own
+    // ramp, so a moving glyph loses no column where its rect's edge crosses a pixel centre.
+    val pastFill = let("pastFill", max(max(uvRect.xy + halfTexel - uv, uv - (uvRect.zw - halfTexel)), vec2(0f.lit, 0f.lit)) / halfTexel)
+    val handOver = let("handOver", clamp(max(pastFill.x, pastFill.y), 0f.lit, 1f.lit))
+    val coverage = let(
+        "coverage",
+        mix(
+            clamp(screenPxRange * (signedDistance - 0.5f.lit) + 0.5f.lit, 0f.lit, 1f.lit),
+            clamp(fieldPxRange * field + 0.5f.lit, 0f.lit, 1f.lit),
+            handOver,
+        ),
+    )
+    val ruled = textCoverageRule(coverage, color)
+
     val outlineWidth = let("outlineWidth", effect.x * toField)
     val coarseRing = let("coarseRing", clamp(fieldPxRange * (field + outlineWidth) + 0.5f.lit, 0f.lit, 1f.lit))
     // The atlas's own true distance, its alpha, is exact within its reach of the edge, half its screen range: where a

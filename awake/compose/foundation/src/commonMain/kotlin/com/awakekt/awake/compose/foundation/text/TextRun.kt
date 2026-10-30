@@ -49,6 +49,7 @@ internal class TextRun(
     private val softWrap: Boolean = true,
     private val maxLines: Int = Int.MAX_VALUE,
     private val fontScale: Float = 1f,
+    private val forceDistanceField: Boolean = false,
 ) {
     private val font: UiFont = font.withNumerals(style.numerals)
     private val letterSpacing = style.letterSpacing.value * density
@@ -85,7 +86,8 @@ internal class TextRun(
      * every line: the authored line height, tighter or looser than the font's, or the font's own.
      * See [TextLineBox].
      */
-    internal val lineHeightPx: Float = TextLineBox.advancePx(font, emDp, glyphPx, density, authoredLineHeightPx)
+    internal val lineHeightPx: Float =
+        TextLineBox.advancePx(font, emDp, glyphPx, density, authoredLineHeightPx, forceDistanceField)
 
     /**
      * How far below its line's top the em box the glyph metrics are measured from begins: the whole-pixel
@@ -165,28 +167,76 @@ internal class TextRun(
     /**
      * [paint], under its style's shadow and outline. A font with an effect field draws each glyph once, its outline and
      * shadow in the same draw, at every size from the distance field, so their weight is the same on both sides of the
-     * pixel-glyph limit (#1061). A font without one stamps the run: in the shadow's colour moved by its offset, then in
-     * the outline's moved a step in each of eight directions, then the text.
+     * pixel-glyph limit (#1061), at rest, in a scale or size animation and moving by subpixel steps alike. A font
+     * without one stamps the run: in the shadow's colour moved by its offset, then in the outline's moved a step in
+     * each of eight directions, then the text.
      */
-    fun paintDecorated(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) {
+    fun paintDecorated(
+        scope: DrawScope,
+        color: Color,
+        offsetX: Float = 0f,
+        offsetY: Float = 0f,
+        motion: TextMotionState? = null,
+    ) {
+        val plan = motion?.resolvePaint(scope.isScaled, scope.isDevicePixelAligned, offsetX, offsetY)
         val effects = effects
-        if (effects != null && font.effectFieldRangePx > 0f && font.samplingMode == UiFontSamplingMode.DistanceField) {
-            paint(scope, color, offsetX, offsetY, effects)
-            return
+        when {
+            effects == null -> paintPass(scope, color, offsetX, offsetY, 0f, 0f, plan)
+            font.effectFieldRangePx > 0f && font.samplingMode == UiFontSamplingMode.DistanceField ->
+                paintPass(scope, color, offsetX, offsetY, 0f, 0f, plan, effects)
+            else -> effects.stamp(color) { stampColor, dx, dy -> paintPass(scope, stampColor, offsetX, offsetY, dx, dy, plan) }
         }
-        if (effects == null) {
-            paint(scope, color, offsetX, offsetY)
-            return
-        }
-        effects.stamp(color) { stampColor, dx, dy -> paint(scope, stampColor, offsetX + dx, offsetY + dy) }
     }
 
     /**
      * The font's exact-size glyphs, when this run draws from them: its size is a whole number of device
-     * pixels no larger than the font's [UiFont.pixelGlyphMaxSize]. Read once, as the run is laid out.
+     * pixels no larger than the font's [UiFont.pixelGlyphMaxSize], and no scale/size animation is holding
+     * the run on the distance field. Read once, as the run is laid out.
      */
-    private val pixelGlyphs: PixelGlyphs? = font.pixelGlyphs?.takeIf {
-        glyphPx == floor(glyphPx) && glyphPx >= 1f && glyphPx <= font.pixelGlyphMaxSize
+    private val pixelGlyphs: PixelGlyphs? = if (forceDistanceField) {
+        null
+    } else {
+        font.pixelGlyphs?.takeIf {
+            glyphPx == floor(glyphPx) && glyphPx >= 1f && glyphPx <= font.pixelGlyphMaxSize
+        }
+    }
+
+    @Suppress("LongParameterList")
+    private fun paintPass(
+        scope: DrawScope,
+        color: Color,
+        baseOffsetX: Float,
+        baseOffsetY: Float,
+        extraX: Float,
+        extraY: Float,
+        plan: TextPaintMotion?,
+        effects: GlyphEffects? = null,
+    ) {
+        if (plan == null || (!plan.forceDistanceField && !plan.subpixelTranslated)) {
+            val subpixelUnscaled = !scope.isScaled && !forceDistanceField && !scope.isDevicePixelAligned
+            val passX = baseOffsetX + if (subpixelUnscaled) wholePixel(extraX) else extraX
+            val passY = baseOffsetY + if (subpixelUnscaled) wholePixel(extraY) else extraY
+            paint(scope, color, passX, passY, effects)
+            return
+        }
+        if (plan.forceDistanceField) {
+            paintFieldLines(scope, color, baseOffsetX + extraX, baseOffsetY + extraY + glyphTopPx, effects)
+            return
+        }
+        // At unit scale, resting passes snap their decoration offset (`wholePixel(extraX)`), so keeping
+        // that snapped ring/shadow offset while translating by `residualX` moves fill, shadow, and outline
+        // as one rigid unit without popping the 8-tap outline ring at integer pixel crossings.
+        val originX = wholePixel(baseOffsetX) + wholePixel(extraX) + plan.residualX
+        val originY = wholePixel(baseOffsetY) + wholePixel(extraY) + plan.residualY
+        if (pixelGlyphs != null && effects == null) {
+            paintSubpixelPixelLines(scope, color, originX, originY)
+        } else {
+            paintFieldLines(scope, color, originX, originY + glyphTopPx, effects)
+        }
+    }
+
+    private fun paintSubpixelPixelLines(scope: DrawScope, color: Color, originX: Float, originY: Float) {
+        for (i in lineLayouts.indices) paintSubpixelPixelLine(lineLayouts[i].text, scope, color, originX, originY, i)
     }
 
     fun paint(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) = paint(scope, color, offsetX, offsetY, null)
@@ -197,20 +247,32 @@ internal class TextRun(
         // device pixels are what the line's start and baseline snap to; the advances inside the
         // line stay fractional so letter spacing is not disturbed. A scaled scope keeps fractional
         // positions, or text under an animated scale would move in one-pixel steps.
-        val snap = scope.isDevicePixelAligned
+        val scaled = scope.isScaled || forceDistanceField
+        val aligned = scope.isDevicePixelAligned && !forceDistanceField
+        // Decorated text at rest draws from the distance field at every size (#1061), never the pixel glyphs here.
+        val pixelRun = pixelGlyphs != null && effects == null
+        if (!scaled && !aligned && pixelRun) {
+            paintSubpixelPixelLines(scope, color, offsetX, offsetY)
+            return
+        }
+        val snap = aligned
         val originX = if (snap) wholePixel(offsetX) else offsetX
         // The line advance and the baseline offset are whole pixels, so snapping the run's top once puts
         // every line's baseline on the grid, each the same distance below the last.
         val originY = (if (snap) wholePixel(offsetY) else offsetY) + glyphTopPx
         // Small text on the pixel grid draws exact-size coverage glyphs 1:1. Anything scaled draws from
         // the distance field, which is what scales.
-        val pixels = if (snap && effects == null) pixelGlyphs else null
+        val pixels = if (snap && pixelRun) pixelGlyphs else null
         if (pixels != null) {
             for (i in lineLayouts.indices) {
                 paintPixelLine(lineLayouts[i].text, scope, color, originX, originY + i * lineHeightPx)
             }
             return
         }
+        paintFieldLines(scope, color, originX, originY, effects)
+    }
+
+    private fun paintFieldLines(scope: DrawScope, color: Color, originX: Float, originY: Float, effects: GlyphEffects? = null) {
         val pages = font.atlasPages
         val pageCount = pages.size
         val passes = if (pageCount <= 1) 1 else pageCount
@@ -225,6 +287,69 @@ internal class TextRun(
 
     /** [value] rounded half up to a whole pixel. */
     private fun wholePixel(value: Float): Float = floor(value + 0.5f)
+
+    /**
+     * Subpixel-translated sibling of [paintPixelLine]: selects the exact same run-local pixel-glyph
+     * variant as [paintPixelLine] at rest so stems never re-hint or snap to new columns mid-motion,
+     * and expands each quad by half a transparent border texel on all four sides (`PixelGlyphPage`'s
+     * 1-texel gap) so linear atlas filtering shifts ink smoothly across fractional pixel steps while
+     * matching [paintPixelLine] bit-for-bit at every whole-pixel offset.
+     */
+    @Suppress("LongParameterList")
+    private fun paintSubpixelPixelLine(
+        line: String,
+        scope: DrawScope,
+        color: Color,
+        originX: Float,
+        originYOffset: Float,
+        lineIndex: Int,
+    ) {
+        val pixels = pixelGlyphs ?: return
+        val size = glyphPx.toInt()
+        val localLineTop = glyphTopPx + lineIndex * lineHeightPx
+        var localX = 0f
+        var start = 0
+        var previous = -1
+        while (start < line.length) {
+            val end = GraphemeClusters.nextBoundary(line, start)
+            localX += font.kerningBefore(line, previous, start, glyphPx, style.weight)
+            if (kerning) previous = start
+            val clusterLocalX = localX
+            localX += font.forEachGlyphInCluster(line, start, end, glyphPx, style.weight) { codePoint, penX ->
+                val glyph = pixels.glyph(codePoint, style.weight, size)
+                val uv = if (glyph == null) font.glyphFor(codePoint, style.weight) else null
+                if (uv != null) {
+                    scope.drawPlainGlyph(uv, originX + clusterLocalX + penX, originYOffset + localLineTop, color, font.fontFor(codePoint, style.weight))
+                } else if (glyph != null && glyph.width > 0) {
+                    val steps = glyph.subpixelSteps
+                    val localPen = clusterLocalX + penX
+                    var drawn = glyph
+                    var localWholeX = wholePixel(localPen)
+                    if (steps > 1) {
+                        val step = floor(localPen * steps + 0.5f)
+                        localWholeX = floor(step / steps)
+                        drawn = pixels.glyph(codePoint, style.weight, size, (step - localWholeX * steps).toInt()) ?: glyph
+                    }
+                    val localTopY = wholePixel(localLineTop + drawn.baselineEm * glyphPx) + drawn.top
+                    val padU = SUBPIXEL_PAD_TEXELS / drawn.atlas.atlasWidth
+                    val padV = SUBPIXEL_PAD_TEXELS / drawn.atlas.atlasHeight
+                    scope.drawGlyph(
+                        x = originX + localWholeX + drawn.left - SUBPIXEL_PAD_PX,
+                        y = originYOffset + localTopY - SUBPIXEL_PAD_PX,
+                        width = drawn.width + SUBPIXEL_PAD_PX * 2f,
+                        height = drawn.height + SUBPIXEL_PAD_PX * 2f,
+                        u0 = drawn.u0 - padU,
+                        v0 = drawn.v0 - padV,
+                        u1 = drawn.u1 + padU,
+                        v1 = drawn.v1 + padV,
+                        color = color,
+                        font = drawn.atlas,
+                    )
+                }
+            } + letterSpacing
+            start = end
+        }
+    }
 
     /**
      * [paintLine] for exact-size glyphs: the same pen positions, each glyph the variant for the nearest
@@ -248,19 +373,7 @@ internal class TextRun(
                 val glyph = pixels.glyph(codePoint, style.weight, size)
                 val uv = if (glyph == null) font.glyphFor(codePoint, style.weight) else null
                 if (uv != null) {
-                    scope.drawGlyph(
-                        x = clusterX + penX + uv.offsetXEm * glyphPx,
-                        y = lineTop + uv.offsetYEm * glyphPx,
-                        width = uv.widthEm * glyphPx,
-                        height = uv.heightEm * glyphPx,
-                        u0 = uv.u0,
-                        v0 = uv.v0,
-                        u1 = uv.u1,
-                        v1 = uv.v1,
-                        color = color,
-                        font = font.fontFor(codePoint, style.weight),
-                        page = uv.page,
-                    )
+                    scope.drawPlainGlyph(uv, clusterX + penX, lineTop, color, font.fontFor(codePoint, style.weight))
                 } else if (glyph != null && glyph.width > 0) {
                     // The pen lands on the nearest of the glyph's subpixel steps, and that step's glyph has its
                     // stem on the pixel grid, so the gaps in a run follow layout and the stems stay crisp.
@@ -371,3 +484,7 @@ internal class TextRun(
 }
 
 internal data class TextCaretPosition(val x: Float, val y: Float)
+
+// Half-pixel quad/UV pad into PixelGlyphPage's 1-texel transparent border for subpixel translation.
+private const val SUBPIXEL_PAD_PX = 0.5f
+private const val SUBPIXEL_PAD_TEXELS = 0.5f

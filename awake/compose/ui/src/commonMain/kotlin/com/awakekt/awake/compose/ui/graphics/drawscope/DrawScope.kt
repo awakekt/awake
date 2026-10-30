@@ -69,6 +69,14 @@ interface DrawScope {
     val isDevicePixelAligned: Boolean
         get() = true
 
+    /**
+     * Whether an enclosing [withScale] is stretching node-local coordinates away from 1:1 device
+     * pixels. Unlike [isDevicePixelAligned], a fractional [translate] at unit scale keeps this false
+     * so text can slide its unscaled pixel glyphs smoothly instead of switching to the distance field.
+     */
+    val isScaled: Boolean
+        get() = !isDevicePixelAligned
+
     /** Fills a rectangle with [color]. Position and size are node-local pixels; the default is the whole node. */
     fun drawRect(
         x: Float = 0f,
@@ -159,6 +167,14 @@ interface DrawScope {
      * documents that it does not have.
      */
     fun withScale(scaleX: Float, scaleY: Float, block: () -> Unit)
+
+    /**
+     * Shifts everything drawn inside [block] by ([left], [top]) node-local pixels, composing with any
+     * enclosing scale or translation.
+     */
+    fun translate(left: Float = 0f, top: Float = 0f, block: () -> Unit) {
+        block()
+    }
 
     /**
      * Draws one glyph from an atlas cell of [font].
@@ -448,6 +464,9 @@ internal class PaintScope :
     override val isDevicePixelAligned: Boolean
         get() = transform.isWholePixelTranslation
 
+    override val isScaled: Boolean
+        get() = transform.scaleX != 1f || transform.scaleY != 1f
+
     private var alpha = 1f
 
     private val transform = DrawTransformState()
@@ -485,28 +504,7 @@ internal class PaintScope :
         val layerWidth = width
         val layerHeight = height
         val layerAlpha = (this.alpha * alpha).coerceIn(0f, 1f)
-        val blurRadiusX: Float
-        val blurRadiusY: Float
-        val layerTileMode: TileMode
-        when (renderEffect) {
-            is BlurEffect -> {
-                blurRadiusX = renderEffect.radiusX
-                blurRadiusY = renderEffect.radiusY
-                layerTileMode = renderEffect.edgeTreatment
-            }
-            is RenderEffect.Blur -> {
-                blurRadiusX = renderEffect.radiusX.value * density
-                blurRadiusY = renderEffect.radiusY.value * density
-                layerTileMode = TileMode.Decal
-            }
-            else -> {
-                blurRadiusX = 0f
-                blurRadiusY = 0f
-                layerTileMode = TileMode.Clamp
-            }
-        }
-        val blurInsetX = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusX).toInt() else 0
-        val blurInsetY = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusY).toInt() else 0
+        val blur = resolveLayerBlur(renderEffect)
         val elevation = shadowElevation.value.coerceAtLeast(0f) * density
         val outline = shape.createOutline(
             com.awakekt.awake.core.math2d.Size2D(layerWidth.toFloat(), layerHeight.toFloat()),
@@ -520,32 +518,30 @@ internal class PaintScope :
             is ShapeOutline.Generic,
             -> 0f
         }
-        val compositeX = layerX + (1f - scaleX) * layerWidth / 2f + translationX
-        val compositeY = layerY + (1f - scaleY) * layerHeight / 2f + translationY
+        val compositeScaleX = scaleX * transform.scaleX
+        val compositeScaleY = scaleY * transform.scaleY
+        val compositeX = transform.mapX(layerX + (1f - scaleX) * layerWidth / 2f + translationX)
+        val compositeY = transform.mapY(layerY + (1f - scaleY) * layerHeight / 2f + translationY)
         val parentOutput = output
-        val layerOutput = ArrayList<UiDrawPrimitive>()
-        output = layerOutput
-        val enclosingAlpha = this.alpha
-        this.alpha = 1f
-        try {
-            drawContent()
-        } finally {
-            this.alpha = enclosingAlpha
-            output = parentOutput
-        }
+        val layerOutput = recordLayerPrimitives(drawContent)
         // The target grows to what the content paints, not just the node: Compose's graphicsLayer
         // does not clip, and a target the node's size cut every glyph whose ink passes its text box
         // as soon as a fade or a press scale started. Grown evenly on both sides, so the composite's
         // centre, which rotation and scale turn about, stays the node's. A clamped blur keeps its
-        // edge at the node, as its tile mode says.
+        // edge at the node, as its tile mode says. When the composite quad lands between pixels or
+        // resamples under scale or rotation, a one-pixel transparent border keeps CLAMP_TO_EDGE from
+        // smearing ink that touches the target's edge.
         measureOverflow(
             layerOutput,
             Rectangle(layerX, layerY, layerWidth.toFloat(), layerHeight.toFloat()),
             renderEffect,
-            layerTileMode,
+            blur.tileMode,
         )
-        val effectInsetX = maxOf(blurInsetX, overflowInset(maxOf(overflow.left, overflow.right), layerWidth))
-        val effectInsetY = maxOf(blurInsetY, overflowInset(maxOf(overflow.top, overflow.bottom), layerHeight))
+        val allowsEdgePad = renderEffect == null || blur.tileMode == TileMode.Decal
+        val resampleInsetX = resampleEdgeInset(allowsEdgePad, compositeX, layerWidth * compositeScaleX)
+        val resampleInsetY = resampleEdgeInset(allowsEdgePad, compositeY, layerHeight * compositeScaleY)
+        val effectInsetX = maxOf(blur.insetX, resampleInsetX, overflowInset(maxOf(overflow.left, overflow.right), layerWidth))
+        val effectInsetY = maxOf(blur.insetY, resampleInsetY, overflowInset(maxOf(overflow.top, overflow.bottom), layerHeight))
         layers += GraphicsLayerFrame(
             id = layerId,
             x = layerX,
@@ -553,14 +549,14 @@ internal class PaintScope :
             width = layerWidth,
             height = layerHeight,
             alpha = layerAlpha,
-            blurRadiusX = blurRadiusX,
-            blurRadiusY = blurRadiusY,
+            blurRadiusX = blur.radiusX,
+            blurRadiusY = blur.radiusY,
             effectInsetX = effectInsetX,
             effectInsetY = effectInsetY,
             shadowElevation = elevation,
             primitives = layerOutput.map { it.translatedBy(-layerX, -layerY) },
             renderEffect = renderEffect,
-            tileMode = layerTileMode,
+            tileMode = blur.tileMode,
         )
         if (elevation > 0f) {
             if (outline is ShapeOutline.Generic || outline is ShapeOutline.RoundedCorners) {
@@ -584,9 +580,9 @@ internal class PaintScope :
                 parentOutput += UiDrawPrimitive.ShadowQuad(
                     x = compositeX,
                     y = compositeY,
-                    w = layerWidth * scaleX,
-                    h = layerHeight * scaleY,
-                    radius = shadowRadius * minOf(scaleX, scaleY),
+                    w = layerWidth * compositeScaleX,
+                    h = layerHeight * compositeScaleY,
+                    radius = shadowRadius * minOf(compositeScaleX, compositeScaleY),
                     offsetX = 0f,
                     offsetY = elevation / 2f,
                     blurRadius = elevation,
@@ -596,16 +592,75 @@ internal class PaintScope :
             }
         }
         parentOutput += UiDrawPrimitive.Texture(
-            x = compositeX - effectInsetX * scaleX,
-            y = compositeY - effectInsetY * scaleY,
-            w = (layerWidth + effectInsetX * 2) * scaleX,
-            h = (layerHeight + effectInsetY * 2) * scaleY,
+            x = compositeX - effectInsetX * compositeScaleX,
+            y = compositeY - effectInsetY * compositeScaleY,
+            w = (layerWidth + effectInsetX * 2) * compositeScaleX,
+            h = (layerHeight + effectInsetY * 2) * compositeScaleY,
             material = GraphicsLayerPlaceholder(layerId),
             alpha = layerAlpha,
             rotationDegrees = rotationDegrees,
             blendMode = blendMode,
             premultiplied = true,
         )
+    }
+
+    private data class LayerBlurSpec(
+        val radiusX: Float,
+        val radiusY: Float,
+        val tileMode: TileMode,
+        val insetX: Int,
+        val insetY: Int,
+    )
+
+    @Suppress("DEPRECATION")
+    private fun resolveLayerBlur(renderEffect: RenderEffect?): LayerBlurSpec {
+        val radiusX: Float
+        val radiusY: Float
+        val tileMode: TileMode
+        when (renderEffect) {
+            is BlurEffect -> {
+                radiusX = renderEffect.radiusX
+                radiusY = renderEffect.radiusY
+                tileMode = renderEffect.edgeTreatment
+            }
+            is RenderEffect.Blur -> {
+                radiusX = renderEffect.radiusX.value * density
+                radiusY = renderEffect.radiusY.value * density
+                tileMode = TileMode.Decal
+            }
+            else -> {
+                radiusX = 0f
+                radiusY = 0f
+                tileMode = TileMode.Clamp
+            }
+        }
+        val insetX = if (tileMode == TileMode.Decal) kotlin.math.ceil(radiusX).toInt() else 0
+        val insetY = if (tileMode == TileMode.Decal) kotlin.math.ceil(radiusY).toInt() else 0
+        return LayerBlurSpec(radiusX, radiusY, tileMode, insetX, insetY)
+    }
+
+    private fun recordLayerPrimitives(drawContent: () -> Unit): ArrayList<UiDrawPrimitive> {
+        val parentOutput = output
+        val layerOutput = ArrayList<UiDrawPrimitive>()
+        output = layerOutput
+        val enclosingAlpha = this.alpha
+        this.alpha = 1f
+        val enclosingClips = if (clipStack.isEmpty()) null else ArrayList(clipStack).also { clipStack.clear() }
+        try {
+            transform.withIdentity(drawContent)
+        } finally {
+            clipStack.clear()
+            if (enclosingClips != null) clipStack.addAll(enclosingClips)
+            this.alpha = enclosingAlpha
+            output = parentOutput
+        }
+        return layerOutput
+    }
+
+    private fun resampleEdgeInset(allowsEdgePad: Boolean, start: Float, span: Float): Int {
+        if (!allowsEdgePad) return 0
+        val end = start + span
+        return if (start != floor(start) || end != floor(end)) 1 else 0
     }
 
     // Reused for every layer: what its content paints past its node.
@@ -675,6 +730,10 @@ internal class PaintScope :
         // nested scale pivots about where its node actually sits, not about where an outer scale
         // moved it to.
         transform.withScale(scaleX, scaleY, originX + width / 2f, originY + height / 2f, block)
+    }
+
+    override fun translate(left: Float, top: Float, block: () -> Unit) {
+        transform.withTranslation(left, top, block)
     }
 
     override fun withAlpha(alpha: Float, block: () -> Unit) {
@@ -1126,6 +1185,54 @@ private class DrawTransformState {
         } finally {
             // Restored even on a throw, for the same reason the alpha and clip stacks are: one
             // escaped transform silently moves the rest of the frame.
+            scaleX = outerX
+            scaleY = outerY
+            translateX = outerTx
+            translateY = outerTy
+        }
+    }
+
+    /** Shifts node-local coordinates by [dx]/[dy], scaled by whatever scale is already accumulated. */
+    fun withTranslation(dx: Float, dy: Float, block: () -> Unit) {
+        if (dx == 0f && dy == 0f) {
+            block()
+            return
+        }
+        val outerTx = translateX
+        val outerTy = translateY
+        translateX = outerTx + dx * scaleX
+        translateY = outerTy + dy * scaleY
+        try {
+            block()
+        } finally {
+            translateX = outerTx
+            translateY = outerTy
+        }
+    }
+
+    private val isUnscaled: Boolean
+        get() = scaleX == 1f && scaleY == 1f
+
+    private val isUntranslated: Boolean
+        get() = translateX == 0f && translateY == 0f
+
+    /** Suspends any enclosing scale or translation while recording an offscreen layer's own pass. */
+    fun withIdentity(block: () -> Unit) {
+        if (isUnscaled && isUntranslated) {
+            block()
+            return
+        }
+        val outerX = scaleX
+        val outerY = scaleY
+        val outerTx = translateX
+        val outerTy = translateY
+        scaleX = 1f
+        scaleY = 1f
+        translateX = 0f
+        translateY = 0f
+        try {
+            block()
+        } finally {
             scaleX = outerX
             scaleY = outerY
             translateX = outerTx

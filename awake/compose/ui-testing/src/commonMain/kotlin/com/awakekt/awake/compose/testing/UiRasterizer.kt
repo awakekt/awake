@@ -24,6 +24,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
@@ -330,6 +331,89 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
+    /**
+     * Samples an offscreen layer target bilinearly in premultiplied space, matching the linear
+     * render-target sampler Vulkan and WebGPU bind in `GraphicsLayerCompositor`, then converts back to
+     * straight alpha for [PixelMap.blend]. At integer 1:1 coordinates `(tx, ty)` land on exact texel
+     * centres and return the single source pixel unchanged.
+     */
+    fun sampleLayerImage(image: ImageBitmap, region: TextureRegion, modulatedTint: Color, u: Float, v: Float): Color {
+        val su = (region.u0 + (region.u1 - region.u0) * u).coerceIn(0f, 1f)
+        val sv = (region.v0 + (region.v1 - region.v0) * v).coerceIn(0f, 1f)
+        val tx = (su * image.width - 0.5f).coerceIn(0f, (image.width - 1).toFloat())
+        val ty = (sv * image.height - 0.5f).coerceIn(0f, (image.height - 1).toFloat())
+        val x0 = floor(tx).toInt().coerceIn(0, image.width - 1)
+        val y0 = floor(ty).toInt().coerceIn(0, image.height - 1)
+        val x1 = (x0 + 1).coerceIn(0, image.width - 1)
+        val y1 = (y0 + 1).coerceIn(0, image.height - 1)
+        val fx = tx - x0
+        val fy = ty - y0
+        val w00 = (1f - fx) * (1f - fy)
+        val w10 = fx * (1f - fy)
+        val w01 = (1f - fx) * fy
+        val w11 = fx * fy
+
+        var pr = 0f
+        var pg = 0f
+        var pb = 0f
+        var pa = 0f
+
+        fun accumPremul(px: Int, py: Int, weight: Float) {
+            if (weight <= 0f) return
+            val rgba = image.pixel(px, py)
+            val a = (rgba and 0xFF) / 255f
+            if (a <= 0f) return
+            val wa = weight * a
+            pr += ((rgba ushr 24) and 0xFF) / 255f * wa
+            pg += ((rgba ushr 16) and 0xFF) / 255f * wa
+            pb += ((rgba ushr 8) and 0xFF) / 255f * wa
+            pa += wa
+        }
+
+        accumPremul(x0, y0, w00)
+        accumPremul(x1, y0, w10)
+        accumPremul(x0, y1, w01)
+        accumPremul(x1, y1, w11)
+        if (pa <= 0f) return Color.Transparent
+        return Color(
+            (pr / pa) * modulatedTint.r,
+            (pg / pa) * modulatedTint.g,
+            (pb / pa) * modulatedTint.b,
+            pa * modulatedTint.a,
+        )
+    }
+
+    @Suppress("LongParameterList")
+    fun fillRotatedLayerImage(
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        rotationDegrees: Float,
+        image: ImageBitmap,
+        alpha: Float,
+        region: TextureRegion = TextureRegion.Whole,
+        tint: Color = Color.White,
+    ) {
+        if (w <= 0f || h <= 0f) return
+        if (rotationDegrees != 0f) {
+            fillRotatedImage(x, y, w, h, rotationDegrees, image, alpha, region, tint)
+            return
+        }
+        val modulatedTint = Color(tint.r, tint.g, tint.b, (tint.a * alpha).coerceIn(0f, 1f))
+        val x0 = max(ceil(x - 0.5f).toInt(), ceil(clipX0 - 0.5f).toInt()).coerceIn(0, width)
+        val y0 = max(ceil(y - 0.5f).toInt(), ceil(clipY0 - 0.5f).toInt()).coerceIn(0, height)
+        val x1 = min(ceil(x + w - 0.5f).toInt(), ceil(clipX1 - 0.5f).toInt()).coerceIn(0, width)
+        val y1 = min(ceil(y + h - 0.5f).toInt(), ceil(clipY1 - 0.5f).toInt()).coerceIn(0, height)
+        for (py in y0 until y1) {
+            val v = (py + 0.5f - y) / h
+            for (px in x0 until x1) {
+                if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
+                pixelMap.blend(px, py, sampleLayerImage(image, region, modulatedTint, (px + 0.5f - x) / w, v))
+            }
+        }
+    }
+
     fun sampleAtlasChannel(font: UiFont, u: Float, v: Float, channel: Int): Float {
         val atlasWidth = font.atlasWidth
         val atlasHeight = font.atlasHeight
@@ -600,10 +684,10 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
             glyph.w,
             glyph.h,
         )
-        val x0 = max(ceil(glyph.x - 0.5f).toInt(), clipX0.toInt()).coerceIn(0, width)
-        val y0 = max(ceil(glyph.y - 0.5f).toInt(), clipY0.toInt()).coerceIn(0, height)
-        val x1 = min(ceil(glyph.x + glyph.w - 0.5f).toInt(), clipX1.toInt()).coerceIn(0, width)
-        val y1 = min(ceil(glyph.y + glyph.h - 0.5f).toInt(), clipY1.toInt()).coerceIn(0, height)
+        val x0 = max(ceil(glyph.x - 0.5f).toInt(), ceil(clipX0 - 0.5f).toInt()).coerceIn(0, width)
+        val y0 = max(ceil(glyph.y - 0.5f).toInt(), ceil(clipY0 - 0.5f).toInt()).coerceIn(0, height)
+        val x1 = min(ceil(glyph.x + glyph.w - 0.5f).toInt(), ceil(clipX1 - 0.5f).toInt()).coerceIn(0, width)
+        val y1 = min(ceil(glyph.y + glyph.h - 0.5f).toInt(), ceil(clipY1 - 0.5f).toInt()).coerceIn(0, height)
         val r = glyph.color.r * 255f
         val g = glyph.color.g * 255f
         val b = glyph.color.b * 255f
@@ -661,10 +745,10 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
             drawDistanceFieldGlyph(glyph, font)
             return
         }
-        val x0 = max(glyph.x, clipX0).toInt().coerceIn(0, width)
-        val y0 = max(glyph.y, clipY0).toInt().coerceIn(0, height)
-        val x1 = min(glyph.x + glyph.w, clipX1).toInt().coerceIn(0, width)
-        val y1 = min(glyph.y + glyph.h, clipY1).toInt().coerceIn(0, height)
+        val x0 = max(ceil(glyph.x - 0.5f).toInt(), ceil(clipX0 - 0.5f).toInt()).coerceIn(0, width)
+        val y0 = max(ceil(glyph.y - 0.5f).toInt(), ceil(clipY0 - 0.5f).toInt()).coerceIn(0, height)
+        val x1 = min(ceil(glyph.x + glyph.w - 0.5f).toInt(), ceil(clipX1 - 0.5f).toInt()).coerceIn(0, width)
+        val y1 = min(ceil(glyph.y + glyph.h - 0.5f).toInt(), ceil(clipY1 - 0.5f).toInt()).coerceIn(0, height)
         val r = (glyph.color[0] * 255).toInt().coerceIn(0, 255)
         val g = (glyph.color[1] * 255).toInt().coerceIn(0, 255)
         val b = (glyph.color[2] * 255).toInt().coerceIn(0, 255)
@@ -693,8 +777,10 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     for (sx in 0 until samplesX) {
                         val sampleX = px + (sx + 0.5f) / samplesX
                         val sampleY = py + (sy + 0.5f) / samplesY
-                        val u = ((sampleX - glyph.x) / glyph.w).coerceIn(0f, 0.9999f)
-                        val v = ((sampleY - glyph.y) / glyph.h).coerceIn(0f, 0.9999f)
+                        val rawU = (sampleX - glyph.x) / glyph.w
+                        val rawV = (sampleY - glyph.y) / glyph.h
+                        val u = if (samplesX == 1) rawU else rawU.coerceIn(0f, 0.9999f)
+                        val v = if (samplesY == 1) rawV else rawV.coerceIn(0f, 0.9999f)
                         alphaSum += sampleGlyphAlpha(
                             font,
                             rule,
@@ -882,11 +968,15 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.transform,
                 ) { x, y, w, h ->
                     val image = primitive.material as? ImageBitmap
-                        ?: (primitive.material as? GraphicsLayerPlaceholder)?.let { layerImages[it.id] }
-                    if (image != null) {
-                        fillRotatedImage(x, y, w, h, primitive.rotationDegrees, image, primitive.alpha, primitive.region, primitive.tint)
+                    val layerImage = if (image == null) {
+                        (primitive.material as? GraphicsLayerPlaceholder)?.let { layerImages[it.id] }
                     } else {
-                        fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
+                        null
+                    }
+                    when {
+                        image != null -> fillRotatedImage(x, y, w, h, primitive.rotationDegrees, image, primitive.alpha, primitive.region, primitive.tint)
+                        layerImage != null -> fillRotatedLayerImage(x, y, w, h, primitive.rotationDegrees, layerImage, primitive.alpha, primitive.region, primitive.tint)
+                        else -> fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
                     }
                 }
             }

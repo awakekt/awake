@@ -1,0 +1,1 @@
+- Keep moving, scrolling, and scaling text free of pixel-snap shimmer: subpixel translations slide exact-size glyphs smoothly and ease back onto whole pixels at rest, whole-pixel scrolling stays snapped, and scale or em-size animations stay on continuous distance-field sizing without switching paths across `1.0x` or `24 px`.

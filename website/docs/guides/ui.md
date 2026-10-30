@@ -117,9 +117,10 @@ the text depends on that size.
 
 | Text | Drawn from |
 |---|---|
-| 24 device pixels or smaller, on the pixel grid | Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 |
+| 24 device pixels or smaller, at rest or scrolling by whole pixels | Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 on the pixel grid |
+| 24 device pixels or smaller, translating by fractions of a pixel | Those same exact-size glyphs shifted smoothly across subpixel offsets, easing back onto whole pixels when motion stops |
 | Larger than 24 pixels | The font's distance-field atlas |
-| Under `Modifier.scale` or another scaling transform | The distance-field atlas, so it scales smoothly |
+| Under `Modifier.scale`, an animated `TextStyle.scale`, or an animated em size | The distance-field atlas for the whole animation, including as it passes through `1.0x` or crosses 24 pixels |
 | In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
 
 The exact-size glyphs put a one-pixel stem on one solid pixel column, the x-height and cap height

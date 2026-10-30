@@ -17,6 +17,10 @@ import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -160,6 +164,101 @@ class ProjectStringsTest {
         assertTrue(own !== early, "a Strings of the project's own")
         assertEquals("Early start", early.text("menu.start"))
         assertTrue(!own.contains("connect.refused"))
+    }
+
+    @Test
+    fun loadingTheProjectAgainAndClosingTheFirstLeavesOneCopyOfItsTables() = runTest {
+        val early = appStrings(LocaleId.English)
+        val firstReads = mutableListOf<String>()
+        val secondReads = mutableListOf<String>()
+        val first = loadProject(recording(firstReads, project(KEYED_SCENE)), hasRenderer = false, strings = early)
+        val second = loadProject(recording(secondReads, project(KEYED_SCENE)), hasRenderer = false, strings = early)
+
+        first.close()
+
+        assertEquals("Start", early.text("menu.start"), "the second load's tables are still there")
+        firstReads.clear()
+        secondReads.clear()
+        early.setLocale(LocaleId.of("fil"))
+        assertEquals(emptyList(), firstReads.filter { it.startsWith("strings/") }, "the closed project's tables are gone")
+        assertEquals(listOf("strings/fil.json"), secondReads.filter { it.startsWith("strings/") }, "one copy, read once")
+        assertEquals("Simulan", early.text("menu.start"))
+
+        second.close()
+
+        assertEquals("Maagang simula", early.text("menu.start"), "no copy of the project's tables is left")
+    }
+
+    @Test
+    fun closingTheProjectKeepsTheAppsOwnTables() = runTest {
+        val early = appStrings(LocaleId.of("fil"))
+        val project = loadProject(project(KEYED_SCENE), hasRenderer = false, strings = early)
+        assertEquals("Simulan", early.text("menu.start"))
+
+        project.close()
+
+        assertSame(early, project.strings)
+        assertEquals("Maagang simula", early.text("menu.start"), "the app's key shows again")
+        assertEquals("Tinanggihan ng server ang session.", early.text("connect.refused"))
+        assertEquals(LocaleId.of("fil"), early.locale.value, "the app's locale is kept")
+        early.setLocale(LocaleId.English)
+        assertEquals("Early start", early.text("menu.start"))
+        assertEquals("The server refused the session.", early.text("connect.refused"))
+    }
+
+    @Test
+    fun closingTwiceRemovesNothingMore() = runTest {
+        val early = appStrings(LocaleId.English)
+        val first = loadProject(project(KEYED_SCENE), hasRenderer = false, strings = early)
+        first.close()
+        val second = loadProject(project(KEYED_SCENE), hasRenderer = false, strings = early)
+
+        first.close()
+
+        assertTrue(first.closed)
+        assertEquals("Start", early.text("menu.start"), "a second close leaves the next load's tables alone")
+        assertEquals("The server refused the session.", early.text("connect.refused"))
+        second.close()
+        second.close()
+        assertEquals("Early start", early.text("menu.start"))
+    }
+
+    @Test
+    fun aLoadCancelledWhileItAddsTheTablesTakesThemOutAgain() = runTest {
+        val early = appStrings(LocaleId.English)
+        val files = project(KEYED_SCENE)
+        val reading = CompletableDeferred<Unit>()
+        var stall = true
+        val stalling = AssetSource { path ->
+            if (stall && path.value.startsWith("strings/")) {
+                reading.complete(Unit)
+                awaitCancellation()
+            }
+            files.read(path)
+        }
+        val load = launch { loadProject(stalling, hasRenderer = false, strings = early) }
+        reading.await()
+
+        load.cancelAndJoin()
+        stall = false
+
+        assertEquals("Early start", early.text("menu.start"))
+        early.setLocale(LocaleId.of("fil"))
+        assertEquals("Maagang simula", early.text("menu.start"), "the cancelled load's tables aren't read for another locale")
+    }
+
+    @Test
+    fun aProjectWithItsOwnStringsStillHasThemAfterClosing() = runTest {
+        val early = appStrings(LocaleId.English)
+        val project = loadProject(project(KEYED_SCENE), hasRenderer = false)
+        val own = assertNotNull(project.strings)
+
+        project.close()
+        project.close()
+
+        own.setLocale(LocaleId.English)
+        assertEquals("Start", own.text("menu.start"), "closing leaves a project's own Strings as it was")
+        assertEquals("Early start", early.text("menu.start"))
     }
 
     /** What a game builds before its project loads, for a connection screen's text. */
