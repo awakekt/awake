@@ -72,6 +72,26 @@ internal interface PackedUiFontData {
 
     /** The resolution this atlas's distance field was baked at. */
     fun distanceFieldBake(): DistanceFieldBake = DistanceFieldBake.GENERATOR
+
+    /** The effect field's size in texels ([EffectFields]); 0 by 0 for a font without one. */
+    val effectAtlasWidth: Int get() = 0
+    val effectAtlasHeight: Int get() = 0
+
+    /** The effect field's spread in its texels, as [distanceFieldRangePx] is the atlas's. */
+    val effectFieldRangePx: Float get() = 0f
+
+    /** Each glyph's effect tile (left, top, right, bottom) in effect-field texels, in glyph order. */
+    val effectUvBoundsPx: IntArray get() = IntArray(0)
+
+    /** The quad each effect tile covers (offsetX, offsetY, width, height in em, pen/line-top relative), in glyph order. */
+    val effectQuadMetricsEm: FloatArray get() = FloatArray(0)
+
+    /** The effect field as [EffectFields.decode] reads it. */
+    val encodedEffectFieldBase64: String get() = ""
+
+    /** The effect field's bytes, one a texel; null when there is none. A font baked at run time hands them over. */
+    fun effectFieldBytes(): ByteArray? =
+        if (effectAtlasHeight > 0) EffectFields.decode(encodedEffectFieldBase64, effectAtlasWidth, effectAtlasHeight) else null
 }
 
 /**
@@ -93,10 +113,11 @@ class PackedUiFont internal constructor(
 ) : UiFont {
     override val samplingMode: UiFontSamplingMode = data.samplingMode
     override val textScaleStep: Float = data.textScaleStep
-    override val atlasWidth: Int = data.atlasWidth
-    override val atlasHeight: Int = data.atlasHeight
+    override val atlasWidth: Int = maxOf(data.atlasWidth, data.effectAtlasWidth)
+    override val atlasHeight: Int = data.atlasHeight + data.effectAtlasHeight
     override val atlasPixelsRgba: ByteArray by lazy(::decodeAtlasPixels)
     override val distanceFieldRangePx: Float = data.distanceFieldRangePx
+    override val effectFieldRangePx: Float = if (data.effectAtlasHeight > 0) data.effectFieldRangePx else 0f
     override val visibleTopEm: Float by lazy { computeVisibleBand().first }
     override val visibleBottomEm: Float by lazy { computeVisibleBand().second }
 
@@ -142,6 +163,11 @@ class PackedUiFont internal constructor(
     private val glyphsByCode: Map<Int, GlyphRect> by lazy(::decodeGlyphRects)
     private val inkByCode: Map<Int, InkBounds> by lazy(::decodeInkBounds)
     private val advancesByCode: Map<Int, Float> by lazy(::decodeAdvances)
+    private val effectsByCode: Map<Int, GlyphRect> by lazy {
+        val codes = ArrayList<Int>(data.advancesEm.size)
+        forEachGlyphCode { _, code -> codes += code }
+        EffectFields.tiles(codes.toIntArray(), data.effectUvBoundsPx, data.effectQuadMetricsEm, data.atlasHeight, atlasWidth, atlasHeight)
+    }
     internal val fontName: String get() = data.name
     internal val fallbackCode: Int = data.fallbackChar.code
 
@@ -174,6 +200,9 @@ class PackedUiFont internal constructor(
 
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
         glyphsByCode[codePoint] ?: glyphsByCode[fallbackCode]
+
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        if (codePoint in glyphsByCode) effectsByCode[codePoint] else effectsByCode[fallbackCode]
 
     /**
      * A glyph's outline-exact ink box, in em, without the crop bleed and texel snap that
@@ -254,7 +283,14 @@ class PackedUiFont internal constructor(
         )
     }
 
+    /** The atlas's texels, then the effect field's in the rows under them ([EffectFields.stack]). */
     private fun decodeAtlasPixels(): ByteArray {
+        val atlas = decodeGlyphPixels()
+        val field = data.effectFieldBytes() ?: return atlas
+        return EffectFields.stack(atlas, data.atlasWidth, data.atlasHeight, field, data.effectAtlasWidth, data.effectAtlasHeight)
+    }
+
+    private fun decodeGlyphPixels(): ByteArray {
         val decoded = data.atlasBytes()
         // An MTSDF atlas is already RGBA -- RGB carries the multi-channel distance the shader
         // takes a median of, A a true signed distance. Handing it back verbatim is the point;

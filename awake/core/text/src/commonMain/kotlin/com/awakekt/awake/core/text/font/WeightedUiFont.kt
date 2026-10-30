@@ -60,6 +60,10 @@ class WeightedUiFont internal constructor(
     override val atlasPixelsRgba: ByteArray by lazy { if (atlasOwner === this) combineAtlases() else atlasOwner.atlasPixelsRgba }
     override val lineHeightEm: Float = baseFace.font.lineHeightEm
     override val distanceFieldRangePx: Float = baseFace.font.distanceFieldRangePx
+
+    /** The faces' shared effect-field spread; 0, and decorated text stamped, unless every face has the same one. */
+    override val effectFieldRangePx: Float = baseFace.font.effectFieldRangePx
+        .takeIf { range -> faces.all { it.font.effectFieldRangePx == range } } ?: 0f
     override val visibleTopEm: Float = baseFace.font.visibleTopEm
     override val visibleBottomEm: Float = baseFace.font.visibleBottomEm
     override val ascentEm: Float = baseFace.font.ascentEm
@@ -102,6 +106,15 @@ class WeightedUiFont internal constructor(
     }
 
     /** [atlasOwner] for a glyph in its face's own atlas, and the extra page that holds any other. */
+
+    /** The resolved face's tile, moved into its slice; none for a glyph drawn from one of a face's extra pages. */
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+        val face = resolve(weight)
+        val onOwnPage = face.extraPages.isEmpty() || face.font.fontFor(codePoint, face.weight) === face.ownPage
+        val tile = if (effectFieldRangePx > 0f && onOwnPage) face.font.effectGlyphFor(codePoint, face.weight) else null
+        return tile?.let { face.slice(it) }
+    }
+
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
         val face = resolve(weight)
         if (face.extraPages.isEmpty()) return atlasOwner

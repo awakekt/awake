@@ -44,6 +44,22 @@ internal fun Renderer.ensureGlyphPipeline() {
     )
 }
 
+/**
+ * Builds [Renderer.uiDecoratedGlyphRenderPipeline] (#1061) once, after [ensureGlyphPipeline], when this renderer was
+ * given its shader. It samples the glyph pipeline's uploaded atlases rather than uploading its own.
+ */
+internal fun Renderer.ensureDecoratedGlyphPipeline() {
+    if (uiDecoratedGlyphRenderPipeline != null) return
+    val shader = uiDecoratedGlyphShaderCode ?: return
+    ensureGlyphPipeline()
+    uiDecoratedGlyphRenderPipeline = UiRenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        shader,
+        descriptor = uiPipelineDescriptor(UiPipelineKind.DecoratedGlyph),
+    ).also { it.atlasSource = uiGlyphRenderPipeline }
+}
+
 /** Builds [Renderer.uiTextureRenderPipeline] on the first `drawUi` call that has any
  * [com.awakekt.awake.core.graphics2d.UiDrawPrimitive.Texture] primitives -- cached after that. */
 internal fun Renderer.ensureTextureQuadPipeline(mode: TextureCompositeMode) {
@@ -97,6 +113,9 @@ private fun uiPipelineDescriptor(
 internal fun Renderer.activeUiPipelineTargets(): List<com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineTarget> = buildList {
     uiRenderPipeline?.let { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiQuad.webGpu.program())) }
     uiGlyphRenderPipeline?.let { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiGlyph.webGpu.program())) }
+    uiDecoratedGlyphRenderPipeline?.let {
+        add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiDecoratedGlyph.webGpu.program()))
+    }
     uiRoundedQuadRenderPipeline?.let { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiRoundedQuad.webGpu.program())) }
     uiTextureRenderPipelines.values.forEach { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTexture.webGpu.program())) }
     uiTargetCompositePipelines.values.forEach { add(webGpuUiTargetComposite(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTargetComposite.webGpu.program())) }

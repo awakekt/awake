@@ -26,6 +26,8 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.roundToInt
 import kotlin.test.Test
@@ -54,6 +56,8 @@ import kotlin.test.Test
  *
  * - `glyph-specimen-<weight>-<scale>x`: the glyphs alone.
  * - `glyph-specimen-<weight>-<scale>x-light-on-dark`: the glyphs alone, white on near-black.
+ * - `glyph-effects-regular-<scale>x`: the glyphs white with a 2 dp black outline and a soft shadow over mid grey,
+ *   drawn from the effect field in one draw a glyph (#1061).
  * - `glyph-boxes-regular-<scale>x`: the same grid with each glyph's layout box, the `Text` node's own
  *   bounds, tinted and framed beneath the ink. Ink outside the tint is ink a clip or layer the size of
  *   the text's box cuts (#1053).
@@ -92,12 +96,21 @@ class GlyphSpecimenBaselineTest {
     @Test
     fun regularLightOnDarkAtScale15() = assertSheet(Sheet.Specimen, FontWeight.Normal, 1.5f, Polarity.LightOnDark)
 
-    private enum class Sheet(val prefix: String) { Specimen("glyph-specimen"), Boxes("glyph-boxes") }
+    @Test
+    fun regularEffectsAtScale1() = assertSheet(Sheet.Effects, FontWeight.Normal, 1f, Polarity.Effects)
+
+    @Test
+    fun regularEffectsAtScale15() = assertSheet(Sheet.Effects, FontWeight.Normal, 1.5f, Polarity.Effects)
+
+    private enum class Sheet(val prefix: String) { Specimen("glyph-specimen"), Boxes("glyph-boxes"), Effects("glyph-effects") }
 
     /** The sheet's greys: near-black ink on white cells, or the same greys the other way round (#1064). */
     private enum class Polarity(val suffix: String, val ground: Color, val cell: Color, val ink: Color) {
         DarkOnLight("", Color(0.78f, 0.78f, 0.78f, 1f), Color(1f, 1f, 1f, 1f), Color(0.09f, 0.09f, 0.09f, 1f)),
         LightOnDark("-light-on-dark", Color(0.3f, 0.3f, 0.3f, 1f), Color(0.09f, 0.09f, 0.09f, 1f), Color(1f, 1f, 1f, 1f)),
+
+        /** White glyphs with a black outline and soft shadow over mid grey, the HUD-over-a-scene case (#1061). */
+        Effects("", Color(0.45f, 0.45f, 0.45f, 1f), Color(0.6f, 0.6f, 0.6f, 1f), Color(1f, 1f, 1f, 1f)),
     }
 
     private fun assertSheet(sheet: Sheet, weight: FontWeight, scale: Float, polarity: Polarity = Polarity.DarkOnLight) {
@@ -116,7 +129,8 @@ class GlyphSpecimenBaselineTest {
 
     context(_: Composer)
     private fun Grid(sheet: Sheet, weight: FontWeight, size: Int, polarity: Polarity) {
-        val style = TextStyle(color = polarity.ink, size = size.sp, weight = weight, font = UiFonts.default())
+        val plain = TextStyle(color = polarity.ink, size = size.sp, weight = weight, font = UiFonts.default())
+        val style = if (sheet == Sheet.Effects) plain.copy(outline = EFFECT_OUTLINE, shadow = EFFECT_SHADOW) else plain
         val inset = cellInset(size).dp
         Column(Modifier.background(polarity.cell)) {
             for (row in 0 until rows) {
@@ -156,6 +170,8 @@ class GlyphSpecimenBaselineTest {
 
     private companion object {
         val SIZES = listOf(12, 24, 48)
+        val EFFECT_OUTLINE = TextOutline(Color(0f, 0f, 0f, 1f), 2f)
+        val EFFECT_SHADOW = TextShadow(Color(0f, 0f, 0f, 0.6f), 1f, 2f, blur = 2f)
         const val COLUMNS = 17
 
         /** Read off the font once: every weight's coverage scans all of Unicode. */

@@ -95,6 +95,7 @@ internal class WebGpuFrameContext(
         return WebGpuUiPipelineSet(
             quad = quad,
             glyph = renderer.uiGlyphRenderPipeline,
+            decoratedGlyph = renderer.uiDecoratedGlyphRenderPipeline,
             textures = renderer.uiTextureRenderPipelines,
             roundedQuad = renderer.uiRoundedQuadRenderPipeline,
         )

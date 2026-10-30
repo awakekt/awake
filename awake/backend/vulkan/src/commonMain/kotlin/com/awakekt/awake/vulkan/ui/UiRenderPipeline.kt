@@ -124,8 +124,11 @@ class UiRenderPipeline(
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph -> UiPipelineKind.Glyph
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture -> UiPipelineKind.Texture
             com.awakekt.awake.render.pipeline.UiPipelineVariant.TargetComposite -> UiPipelineKind.Quad
+            com.awakekt.awake.render.pipeline.UiPipelineVariant.DecoratedGlyph -> UiPipelineKind.DecoratedGlyph
         },
-        hasTexture = descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture || descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph,
+        hasTexture = descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture ||
+            descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph ||
+            descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.DecoratedGlyph,
         externalRenderPass = externalRenderPass,
         framesInFlight = framesInFlight,
         blendMode = descriptor.blendMode,
@@ -380,7 +383,7 @@ class UiRenderPipeline(
      * @param atlas That font's uploaded atlas.
      */
     fun bindFontAtlas(commandBuffer: Long, font: UiFont, atlas: Texture) {
-        check(kind == UiPipelineKind.Glyph) { "bindFontAtlas requires a glyph UiRenderPipeline." }
+        check(kind.isGlyph) { "bindFontAtlas requires a glyph UiRenderPipeline." }
         val slot = fontSlots.getOrPut(font) { createFontSlot(atlas, uiFontInfo(font.samplingInfo)) }
         VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
     }

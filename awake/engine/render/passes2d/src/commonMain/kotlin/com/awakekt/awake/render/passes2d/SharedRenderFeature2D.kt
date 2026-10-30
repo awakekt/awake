@@ -33,7 +33,7 @@ class SharedRenderFeature2D {
             when (val run = runs[runIndex]) {
                 is DrawRun.QuadRun -> bound.draw(DrawPipelineKind.Quad, run.mesh)
                 is DrawRun.RoundedQuadRun -> bound.draw(DrawPipelineKind.RoundedQuad, run.mesh)
-                is DrawRun.GlyphRun -> bound.drawGlyphs(run.font, run.mesh)
+                is DrawRun.GlyphRun -> bound.drawGlyphs(if (run.decorated) DrawPipelineKind.DecoratedGlyph else DrawPipelineKind.Glyph, run.font, run.mesh)
                 is DrawRun.ClipRun -> bound.clip(run.rect, surfaceWidth, surfaceHeight)
                 is DrawRun.TextureRun -> {
                     textureSlotIndex = recordTextureRun(run, textureSlotIndex, recorder)
@@ -89,9 +89,9 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
         if (bind(next)) recorder.drawMesh(mesh)
     }
 
-    /** A font change binds the next atlas into the glyph pipeline already bound; paint order stays. */
-    fun drawGlyphs(nextFont: UiFont, mesh: M) {
-        if (!bind(DrawPipelineKind.Glyph)) return
+    /** A font change binds the next atlas into the glyph pipeline [kind] already bound; paint order stays. */
+    fun drawGlyphs(kind: DrawPipelineKind, nextFont: UiFont, mesh: M) {
+        if (!bind(kind)) return
         if (nextFont !== font) {
             fontUsable = recorder.bindGlyphFont(nextFont)
             font = nextFont

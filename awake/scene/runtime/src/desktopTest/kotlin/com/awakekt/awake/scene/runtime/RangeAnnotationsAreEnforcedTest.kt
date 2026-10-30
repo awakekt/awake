@@ -136,6 +136,7 @@ class RangeAnnotationsAreEnforcedTest {
                 "fillImage" to image,
                 "shadow" to empty,
                 "textOutline" to empty,
+                "textShadow" to empty,
                 "hovered" to state,
                 "pressed" to state,
                 "disabled" to state,

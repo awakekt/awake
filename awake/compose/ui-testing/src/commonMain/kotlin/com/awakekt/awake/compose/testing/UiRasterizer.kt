@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawPoint
+import com.awakekt.awake.core.graphics2d.GlyphDecoration
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
@@ -713,6 +714,28 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
+    /**
+     * A decorated glyph (#1061), drawn the way `AslDecoratedGlyphShader` draws it: its quad grown to the decoration's
+     * reach, each covered pixel's centre shaded by [DecoratedGlyphShade], kept in float until the blend.
+     */
+    fun drawDecoratedGlyph(glyph: UiDrawPrimitive.Glyph, decoration: GlyphDecoration, font: UiFont) {
+        val bounds = FloatArray(4)
+        decoration.drawnBounds(glyph.x, glyph.y, glyph.w, glyph.h, bounds)
+        val shade = DecoratedGlyphShade(glyph, decoration, font) { u, v, channel -> sampleAtlasChannel(font, u, v, channel) }
+        val x0 = max(ceil(bounds[0] - 0.5f).toInt(), clipX0.toInt()).coerceIn(0, width)
+        val y0 = max(ceil(bounds[1] - 0.5f).toInt(), clipY0.toInt()).coerceIn(0, height)
+        val x1 = min(ceil(bounds[2] - 0.5f).toInt(), clipX1.toInt()).coerceIn(0, width)
+        val y1 = min(ceil(bounds[3] - 0.5f).toInt(), clipY1.toInt()).coerceIn(0, height)
+        val rgba = FloatArray(4)
+        for (py in y0 until y1) {
+            for (px in x0 until x1) {
+                if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
+                shade.shade(px + 0.5f, py + 0.5f, rgba)
+                if (rgba[3] > 0f) pixelMap.blend(px, py, rgba[0] * 255f, rgba[1] * 255f, rgba[2] * 255f, rgba[3])
+            }
+        }
+    }
+
     fun drawGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
         if (font.samplingMode == UiFontSamplingMode.ColorRgba) {
             drawColorGlyph(glyph, font)
@@ -917,9 +940,22 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.h,
                     primitive.transform,
                 ) { x, y, w, h ->
-                    val scaledGlyph = if (primitive.transform == null) primitive else primitive.copy(x = x, y = y, w = w, h = h)
+                    val transform = primitive.transform
+                    val scaledGlyph = if (transform == null) {
+                        primitive
+                    } else {
+                        // Placed from the glyph's own corner, the decoration only scales with it.
+                        val decoration = primitive.decoration?.scaled(transform.scaleX, transform.scaleY)
+                        primitive.copy(x = x, y = y, w = w, h = h, decoration = decoration)
+                    }
                     val glyphFont = (primitive.font ?: font)?.pageFont(primitive.page)
-                    if (glyphFont != null) drawGlyph(scaledGlyph, glyphFont) else fillRect(x, y, w, h, MissingFontColor)
+                    val decoration = scaledGlyph.decoration
+                    when {
+                        glyphFont == null -> fillRect(x, y, w, h, MissingFontColor)
+                        decoration != null && glyphFont.effectFieldRangePx > 0f &&
+                            glyphFont.samplingMode == UiFontSamplingMode.DistanceField -> drawDecoratedGlyph(scaledGlyph, decoration, glyphFont)
+                        else -> drawGlyph(scaledGlyph, glyphFont)
+                    }
                 }
             }
 

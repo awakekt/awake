@@ -18,6 +18,7 @@ import com.awakekt.awake.core.text.font.UiFontSamplingMode
  * @property atlasHeight Height of the backing font glyph texture atlas in pixels.
  * @property linearCoverage Whether coverage alpha is exact pixel area, shaped by the text coverage rule (see
  *   [UiFont.linearCoverage]).
+ * @property effectFieldRangePx The spread in atlas texels of the font's effect field (see [UiFont.effectFieldRangePx]).
  */
 data class UiFontSamplingInfo(
     /** Sampling algorithm mode (e.g. Bitmap or Signed Distance Field). */
@@ -30,7 +31,28 @@ data class UiFontSamplingInfo(
     val atlasHeight: Int,
     /** Whether coverage alpha is exact pixel area, shaped by the text coverage rule. */
     val linearCoverage: Boolean = false,
-)
+    /** The spread in atlas texels of the font's effect field, which outlines and shadows are drawn from; 0 for none. */
+    val effectFieldRangePx: Float = 0f,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mode: UiFontSamplingMode,
+        distanceFieldRangePx: Float = 0f,
+        atlasWidth: Int,
+        atlasHeight: Int,
+        linearCoverage: Boolean = false,
+    ) : this(mode, distanceFieldRangePx, atlasWidth, atlasHeight, linearCoverage, 0f)
+
+    /** The `copy` from before [effectFieldRangePx], which keeps this one's [effectFieldRangePx]. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mode: UiFontSamplingMode = this.mode,
+        distanceFieldRangePx: Float = this.distanceFieldRangePx,
+        atlasWidth: Int = this.atlasWidth,
+        atlasHeight: Int = this.atlasHeight,
+        linearCoverage: Boolean = this.linearCoverage,
+    ): UiFontSamplingInfo = UiFontSamplingInfo(mode, distanceFieldRangePx, atlasWidth, atlasHeight, linearCoverage, effectFieldRangePx)
+}
 
 /**
  * Derives backend-neutral [UiFontSamplingInfo] from a [UiFont].
@@ -42,4 +64,5 @@ val UiFont.samplingInfo: UiFontSamplingInfo
         atlasWidth = atlasWidth,
         atlasHeight = atlasHeight,
         linearCoverage = linearCoverage,
+        effectFieldRangePx = effectFieldRangePx,
     )

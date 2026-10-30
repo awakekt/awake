@@ -38,8 +38,18 @@ sealed class StagedDrawRun {
      * @property vertices The interleaved vertex data.
      * @property indices The index data.
      * @property font The glyphs' own font, or null for the frame's default font.
+     * @property decorated Whether the glyphs carry their outline and shadow, in [DrawPipelineKind.DecoratedGlyph]'s
+     * vertex layout rather than [DrawPipelineKind.Glyph]'s.
      */
-    class GlyphRun(val vertices: FloatArray, val indices: IntArray, val font: UiFont? = null) : StagedDrawRun()
+    class GlyphRun(
+        val vertices: FloatArray,
+        val indices: IntArray,
+        val font: UiFont? = null,
+        val decorated: Boolean = false,
+    ) : StagedDrawRun() {
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        constructor(vertices: FloatArray, indices: IntArray, font: UiFont? = null) : this(vertices, indices, font, false)
+    }
 
     /**
      * Textured image or render target primitives.
@@ -115,8 +125,12 @@ sealed class DrawRun<out M> {
      * @param M The backend's own mesh handle type.
      * @property mesh The mesh handle.
      * @property font The font whose atlas the run samples, already resolved from the frame default.
+     * @property decorated Whether the run draws through [DrawPipelineKind.DecoratedGlyph].
      */
-    class GlyphRun<M>(val mesh: M, val font: UiFont) : DrawRun<M>()
+    class GlyphRun<M>(val mesh: M, val font: UiFont, val decorated: Boolean = false) : DrawRun<M>() {
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        constructor(mesh: M, font: UiFont) : this(mesh, font, false)
+    }
 
     /**
      * A texture draw run.
@@ -156,10 +170,10 @@ val StagedDrawRun.pipelineDescriptor: UiPipelineDescriptor?
             variant = UiPipelineKind.RoundedQuad.pipelineVariant,
             vertexFormat = UiPipelineKind.RoundedQuad.vertexFormat,
         )
-        is StagedDrawRun.GlyphRun -> UiPipelineDescriptor(
-            variant = UiPipelineKind.Glyph.pipelineVariant,
-            vertexFormat = UiPipelineKind.Glyph.vertexFormat,
-        )
+        is StagedDrawRun.GlyphRun -> {
+            val kind = if (decorated) UiPipelineKind.DecoratedGlyph else UiPipelineKind.Glyph
+            UiPipelineDescriptor(variant = kind.pipelineVariant, vertexFormat = kind.vertexFormat)
+        }
         is StagedDrawRun.TextureRun -> UiPipelineDescriptor(
             variant = UiPipelineKind.Texture.pipelineVariant,
             vertexFormat = UiPipelineKind.Texture.vertexFormat,

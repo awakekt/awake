@@ -128,7 +128,10 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
         when (primitive) {
             is DrawCommand.Quad -> rect(primitive.x, primitive.y, primitive.w, primitive.h, primitive.transform)
             is DrawCommand.RoundedQuad -> rect(primitive.x, primitive.y, primitive.w, primitive.h, primitive.transform)
-            is DrawCommand.Glyph -> rect(primitive.x, primitive.y, primitive.w, primitive.h, primitive.transform)
+            is DrawCommand.Glyph -> {
+                val reach = primitive.decoration?.reach ?: 0f
+                rect(primitive.x - reach, primitive.y - reach, primitive.w + 2f * reach, primitive.h + 2f * reach, primitive.transform)
+            }
             is DrawCommand.GradientQuad -> painted(primitive.x, primitive.y, primitive.x + primitive.w, primitive.y + primitive.h)
             is DrawCommand.Texture -> {
                 if (primitive.rotationDegrees == 0f) {

@@ -66,6 +66,7 @@ internal fun Renderer.performDrawUi(
     if (swapchainManager.imageViews.isNotEmpty()) {
         ensureUiQuadPipeline()
         if (hasGlyphs) ensureGlyphPipeline()
+        if (hasGlyphs && uiRuns.any { it is DrawRun.GlyphRun && it.decorated }) ensureDecoratedGlyphPipeline()
         val effectivePrimitives = if (imagePasses.isEmpty()) {
             primitives
         } else {
@@ -125,7 +126,10 @@ fun Renderer.renderUiToTexture(
     val frameIndex = swapchainManager.currentFrame
 
     ensureOffscreenQuadPipeline()
-    if (ensureGlyphRunAtlases()) ensureOffscreenGlyphPipeline()
+    if (ensureGlyphRunAtlases()) {
+        ensureOffscreenGlyphPipeline()
+        if (uiRuns.any { it is DrawRun.GlyphRun && it.decorated }) ensureOffscreenDecoratedGlyphPipeline()
+    }
     val effectivePrimitives = if (imagePasses.isEmpty()) {
         primitives
     } else {
@@ -147,10 +151,12 @@ fun Renderer.renderUiToTexture(
         textures = offscreenTextureRenderPipelines,
         roundedQuad = offscreenRoundedQuadRenderPipeline,
         fontAtlases = fontAtlases,
+        decoratedGlyph = offscreenDecoratedGlyphRenderPipeline,
     )
     pipelines.quad.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     pipelines.roundedQuad?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     pipelines.glyph?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    pipelines.decoratedGlyph?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     pipelines.textures.values.forEach {
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     }
@@ -327,4 +333,7 @@ private class VulkanUiMeshUploader(
 
     override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
         renderer.glyphMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices) }
+
+    override fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
+        renderer.decoratedGlyphMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices) }
 }

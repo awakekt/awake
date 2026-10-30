@@ -26,7 +26,7 @@ interface DrawRunRecorder<in M> {
 
     /**
      * Binds [font]'s atlas and sampling uniforms for the glyph draws that follow, after
-     * [bindPipeline] prepared the glyph pipeline. Called again only when the font changes, and
+     * [bindPipeline] prepared a glyph pipeline ([DrawPipelineKind.isGlyph]), into that pipeline. Called again only when the font changes, and
      * never rebuilds a pipeline: a backend uploads each atlas once and keeps it, keyed by font.
      *
      * @return `false` when [font] cannot be bound, in which case its runs are skipped.

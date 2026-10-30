@@ -17,6 +17,14 @@ widest one (`@`, then `‰`). A glyph's texels are the same wherever its tile si
 whole texel, so moving a glyph moves no texel of it. `awake:core:text` packs a font loaded at run time with the
 same algorithm, and `OpenTypeUiFontTest` holds the two to one another.
 
+Beside the atlas each face gets an effect field (`EffectField.kt`, #1061): a coarse true signed distance per glyph
+from msdfgen's `sdf` mode, 16 texels per em, reaching half an em past the ink, which is what a text outline and a soft
+shadow are drawn from in the glyph's own draw. The atlas's 2-texel range reaches about a texel past the edge, too little
+for either. It is packed as wide as the atlas and loaded into the rows under it, in the same texture, so the seven faces
+`WeightedUiFont` stacks stay within 8192 rows. It ships deflated (`encodedEffectFieldBase64`, each row as differences
+from its left neighbour), about 0.1 MB a face. `awake:core:text` bakes the same field for a font loaded at run time
+(`EffectFieldLayout`), and `EffectFieldTest` holds the two to one another.
+
 It reads the Roboto faces in `fonts/`, which `tools/fonts-tooling/instantiate_roboto.py` instantiates
 from the variable source. Nothing loads them at run time, so they live here rather than in
 `awake:core:text`, and games and releases do not carry them. Besides this generator only tests read

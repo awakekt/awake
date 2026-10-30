@@ -32,6 +32,7 @@ internal class WebGpuUiRunRecorder(
     private val quad: UiRenderPipeline,
     private val roundedQuad: UiRenderPipeline?,
     private val glyph: UiRenderPipeline?,
+    private val decoratedGlyph: UiRenderPipeline? = null,
     private val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     private val textureMeshForPrimitive: (Int) -> DynamicMesh,
     private val executeImagePass: (ImagePassChain) -> GPURenderPassEncoder = { encoder },
@@ -43,6 +44,7 @@ internal class WebGpuUiRunRecorder(
             UiPipelineKind.Quad -> quad
             UiPipelineKind.RoundedQuad -> roundedQuad
             UiPipelineKind.Glyph -> glyph
+            UiPipelineKind.DecoratedGlyph -> decoratedGlyph
             // A texture chooses its exact blend/alpha-convention pipeline in
             // drawTexturePrimitive. Requiring the straight-alpha default here would discard a
             // run that contains only premultiplied render-target textures.
@@ -52,13 +54,17 @@ internal class WebGpuUiRunRecorder(
         if (pipeline != null && kind != UiPipelineKind.Texture) {
             encoder.setPipeline(pipeline.pipeline)
             // Glyph's group 0 is its font's -- atlas and uniforms -- bound in bindGlyphFont.
-            if (kind != UiPipelineKind.Glyph) encoder.bindGroup(0u, pipeline.screenSizeBindGroup)
+            if (!kind.isGlyph) encoder.bindGroup(0u, pipeline.screenSizeBindGroup)
         }
+        if (kind.isGlyph) boundGlyph = pipeline
         return pipeline != null
     }
 
+    /** The glyph pipeline [bindPipeline] last bound, plain or decorated, which [bindGlyphFont] binds a font into. */
+    private var boundGlyph: UiRenderPipeline? = null
+
     override fun bindGlyphFont(font: UiFont): Boolean {
-        val pipeline = glyph ?: return false
+        val pipeline = boundGlyph ?: return false
         encoder.bindGroup(0u, pipeline.fontBindGroup(font))
         return true
     }

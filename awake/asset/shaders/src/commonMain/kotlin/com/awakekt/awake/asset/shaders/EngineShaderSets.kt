@@ -27,6 +27,9 @@ object EngineShaderSets {
     /** Shader set for SDF text glyph rendering. */
     val UiGlyph = aslShaderSet(UiGlyphShader)
 
+    /** A glyph with its outline and shadow in one quad, from its font's effect field (#1061). */
+    val UiDecoratedGlyph = aslShaderSet(UiDecoratedGlyphShader)
+
     /** Shader set for sampled UI texture rendering. */
     val UiTexture = aslShaderSet(UiTextureShader)
 
@@ -41,7 +44,7 @@ object EngineShaderSets {
 }
 
 /**
- * The UI pass's four shaders, each loaded by [load] into whatever a backend holds them as.
+ * The UI pass's shaders, each loaded by [load] into whatever a backend holds them as.
  *
  * *Which* four is one decision, made here; *how* one loads is the backend's, because the payloads
  * genuinely differ -- Vulkan wants a SPIR-V vertex/fragment pair, WebGPU one WGSL module. Both
@@ -56,4 +59,5 @@ suspend fun <T> uiShaderSet(load: suspend (ShaderSet) -> T): UiShaderSet<T> = Ui
     texture = load(EngineShaderSets.UiTexture),
     roundedQuad = load(EngineShaderSets.UiRoundedQuad),
     targetComposite = load(EngineShaderSets.UiTargetComposite),
+    decoratedGlyph = load(EngineShaderSets.UiDecoratedGlyph),
 )

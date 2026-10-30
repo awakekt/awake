@@ -251,6 +251,7 @@ class Renderer internal constructor(
     internal val maskTarget: DepthTarget? = maskPass?.depthTarget
     internal val uiShaders: ShaderPair = uiShaderPairs.quad
     internal val uiGlyphShaders: ShaderPair = uiShaderPairs.glyph
+    internal val uiDecoratedGlyphShaders: ShaderPair? = uiShaderPairs.decoratedGlyph
     internal val uiTextureShaders: ShaderPair = uiShaderPairs.texture
     internal val uiRoundedQuadShaders: ShaderPair = uiShaderPairs.roundedQuad
     internal val uiTargetCompositeShaders: ShaderPair? = uiShaderPairs.targetComposite
@@ -322,6 +323,8 @@ class Renderer internal constructor(
     internal var presentTransitionFramebuffers: List<Long> = emptyList()
     internal var uiGlyphRenderPipeline: UiRenderPipeline? = null
     internal var offscreenGlyphRenderPipeline: UiRenderPipeline? = null
+    internal var uiDecoratedGlyphRenderPipeline: UiRenderPipeline? = null
+    internal var offscreenDecoratedGlyphRenderPipeline: UiRenderPipeline? = null
 
     /** Every font's uploaded atlas, by identity -- see [ensureFontAtlas]. Released with [textureResources]. */
     internal val fontAtlases = HashMap<UiFont, Texture>()
@@ -368,6 +371,7 @@ class Renderer internal constructor(
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
+    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index, decorated = true)
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun instanceBufferForRun(index: Int): InstanceBuffer = bufferPools.instanceBufferForRun(index)
     internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = bufferPools.skinnedInstanceBufferForRun(index)
@@ -595,6 +599,8 @@ class Renderer internal constructor(
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()
         offscreenGlyphRenderPipeline?.destroy()
+        uiDecoratedGlyphRenderPipeline?.destroy()
+        offscreenDecoratedGlyphRenderPipeline?.destroy()
         offscreenQuadRenderPipeline?.destroy()
         offscreenRoundedQuadRenderPipeline?.destroy()
         offscreenTextureRenderPipelines.values.forEach { it.destroy() }

@@ -26,6 +26,9 @@ enum class UiPipelineVariant {
 
     /** Offscreen render target compositing pipeline. */
     TargetComposite,
+
+    /** A glyph with its outline and shadow in one quad, from its font's effect field (#1061). */
+    DecoratedGlyph,
 }
 
 /**

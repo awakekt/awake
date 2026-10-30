@@ -252,6 +252,10 @@ internal fun Renderer.rebuildSwapchainResources() {
         swapchainManager.extent.width.toFloat(),
         swapchainManager.extent.height.toFloat(),
     )
+    uiDecoratedGlyphRenderPipeline?.writeScreenSize(
+        swapchainManager.extent.width.toFloat(),
+        swapchainManager.extent.height.toFloat(),
+    )
     uiTextureRenderPipelines.values.forEach {
         it.writeScreenSize(
             swapchainManager.extent.width.toFloat(),

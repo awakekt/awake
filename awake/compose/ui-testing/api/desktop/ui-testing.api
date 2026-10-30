@@ -103,6 +103,28 @@ public final class com/awakekt/awake/compose/testing/ComposeTestSession {
 	public final fun pressKey (Lcom/awakekt/awake/core/input/Key;)Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;
 }
 
+public final class com/awakekt/awake/compose/testing/OutlineRing {
+	public fun <init> (IIFF)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (IIFF)Lcom/awakekt/awake/compose/testing/OutlineRing;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/testing/OutlineRing;IIFFILjava/lang/Object;)Lcom/awakekt/awake/compose/testing/OutlineRing;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGaps ()I
+	public final fun getRays ()I
+	public final fun getThickest ()F
+	public final fun getThinnest ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/testing/OutlineRingKt {
+	public static final fun outlineRing (Lcom/awakekt/awake/render/capture/PixelMap;IIIII)Lcom/awakekt/awake/compose/testing/OutlineRing;
+	public static synthetic fun outlineRing$default (Lcom/awakekt/awake/render/capture/PixelMap;IIIIIILjava/lang/Object;)Lcom/awakekt/awake/compose/testing/OutlineRing;
+}
+
 public abstract interface class com/awakekt/awake/compose/testing/SemanticsMatcher {
 	public abstract fun matches (Lcom/awakekt/awake/compose/ui/semantics/SemanticsNode;)Z
 }

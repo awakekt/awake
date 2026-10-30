@@ -515,9 +515,14 @@ class SceneCanvasTest {
             style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 2f), textShadow = CanvasTextShadow("#FF0000"))
         }
 
-        val colours = frame().glyphs().map { it.color }
+        val glyphs = frame().glyphs()
 
-        assertEquals(listOf(Color.fromHex("#FF0000"), Color.fromHex("#000000"), Color.White), colours.distinct(), "shadow, then outline, then the text")
+        // One draw a glyph (#1061): the text's colour, its outline and its shadow on the same primitive.
+        assertEquals(2, glyphs.size)
+        assertEquals(listOf(Color.White), glyphs.map { it.color }.distinct())
+        assertEquals(listOf(Color.fromHex("#000000")), glyphs.map { it.decoration?.outlineColor }.distinct())
+        assertEquals(listOf(2f), glyphs.map { it.decoration?.outlineWidth }.distinct())
+        assertEquals(listOf(Color.fromHex("#FF0000")), glyphs.map { it.decoration?.shadowColor }.distinct())
     }
 
     /** Ten pixels per world unit across and down, from the screen's corner; null behind z 0. */

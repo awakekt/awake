@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.passes.GpuResourcePool
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
@@ -43,6 +44,9 @@ internal class GpuBufferPoolManager(
     private val uiGlyphMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
     }
+    private val uiDecoratedGlyphMeshPool = GpuResourcePool {
+        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, VertexFormats2D.DECORATED_GLYPH_FLOATS_PER_VERTEX)
+    }
     private val uiRoundedQuadMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.ROUNDED_QUAD_FLOATS_PER_VERTEX)
     }
@@ -68,7 +72,10 @@ internal class GpuBufferPoolManager(
 
     fun quadMeshForRun(index: Int): DynamicMesh = uiQuadMeshPool[index]
     fun roundedQuadMeshForRun(index: Int): DynamicMesh = uiRoundedQuadMeshPool[index]
-    fun glyphMeshForRun(index: Int): DynamicMesh = uiGlyphMeshPool[index]
+
+    /** The [index]th glyph run's mesh, from the decorated glyph layout's pool when [decorated] (#1061). */
+    fun glyphMeshForRun(index: Int, decorated: Boolean = false): DynamicMesh =
+        if (decorated) uiDecoratedGlyphMeshPool[index] else uiGlyphMeshPool[index]
 
     /** One mesh per textured primitive, not one shared by all of them: queue.writeBuffer is
      * queue-scheduled rather than interleaved with encoding, so a run's later primitive writing a
@@ -172,6 +179,7 @@ internal class GpuBufferPoolManager(
     fun destroy() {
         uiQuadMeshPool.forEach { it.destroy() }
         uiGlyphMeshPool.forEach { it.destroy() }
+        uiDecoratedGlyphMeshPool.forEach { it.destroy() }
         uiRoundedQuadMeshPool.forEach { it.destroy() }
         uiTextureMeshPool.forEach { it.destroy() }
         imagePassMeshPool.forEach { it.destroy() }
