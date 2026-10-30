@@ -15,7 +15,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.Modifier
-import com.awakekt.awake.compose.ui.draw.graphicsLayer
+import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
@@ -24,7 +24,11 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** A follower where its [plan] puts it, at the plan's density, scale and opacity. */
+/**
+ * A follower where its [plan] puts it, at the plan's density, scale and opacity, by the rules in
+ * [FollowerSizing]: laid out at its final size, never stretched, and faded by multiplying what it
+ * draws rather than through a layer, which would cut whatever reaches past its box.
+ */
 context(_: Composer)
 internal fun Follower(element: CanvasElement, plan: FollowerPlan, tag: String, tree: CanvasTree) {
     val currentDensity = LocalDensity.current
@@ -40,11 +44,12 @@ internal fun Follower(element: CanvasElement, plan: FollowerPlan, tag: String, t
 
 context(_: Composer)
 private fun PlacedFollower(element: CanvasElement, plan: FollowerPlan, tag: String, tree: CanvasTree, baseDensity: Float) {
-    val box = plan.box
-    val faded = if (plan.alpha < 1f) Modifier.graphicsLayer(alpha = plan.alpha) else Modifier
-    Box(Modifier.offset(box.x.dp, box.y.dp).then(faded)) {
+    // Overlapping parts of one faded follower each fade, so where they overlap they show through
+    // a little more than a layer would let them; a name plate's parts barely overlap.
+    val faded = if (plan.alpha < 1f) Modifier.alpha(plan.alpha) else Modifier
+    Box(Modifier.offset(plan.x.dp, plan.y.dp).then(faded)) {
         if (plan.scale == 1f) {
-            CanvasElementView(element, Modifier.size(box.width.dp, box.height.dp).testTag(tag), tree, tree.childrenOf(element))
+            CanvasElementView(element, Modifier.size(plan.width.dp, plan.height.dp).testTag(tag), tree, tree.childrenOf(element))
         } else {
             // A denser dp scales its text, images and children with it; its box is already scaled.
             CompositionLocalProvider(LocalDensity provides baseDensity * plan.scale) {

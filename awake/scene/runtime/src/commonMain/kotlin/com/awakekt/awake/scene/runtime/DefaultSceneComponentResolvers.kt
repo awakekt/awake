@@ -48,6 +48,7 @@ import com.awakekt.awake.scene.rendering.tonemapping.ToneMappingBinding
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install
 import com.awakekt.awake.scene.scene2d.Scene2dSceneComponents
 import com.awakekt.awake.scene.shader.ShaderSceneComponents
+import com.awakekt.awake.scene.worldtext.WorldTextSceneComponents
 import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 
 /**
@@ -106,6 +107,7 @@ object DefaultSceneComponentResolvers {
         Scene2dSceneComponents,
         ShaderSceneComponents,
         CanvasSceneComponents,
+        WorldTextSceneComponents,
     )
 
     /** Every standard two-way [SceneComponentBinding]: those of [modules], in their order. */

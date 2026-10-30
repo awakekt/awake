@@ -91,6 +91,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
 	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslWorldTextShaderKt {
+	public static final fun getWorldTextShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/CascadeShadowInputs {
 	public fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
 	public final fun getCameraForward ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
@@ -206,6 +210,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getWorldText ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/PagedTerrainContentFeatureKt {
@@ -319,6 +324,7 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
 
 public final class com/awakekt/awake/asset/shaderpack/SpriteScenePipelineKt {
 	public static final fun spriteScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
+	public static final fun worldTextScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {

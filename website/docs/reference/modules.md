@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 98: 95 in Core, 3 in the Vulkan family. |
+| Published modules | 100: 97 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -113,6 +113,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:blueprint` | `awake-scene-blueprint` | Runs blueprints on scene entities: the `blueprint` component and `BlueprintSystem`. |
 | `com.awakekt.awake.scene:world` | `awake-scene-world` | Open-world plumbing: partitioning, streaming and the floating origin, over `awake:world`. |
 | `com.awakekt.awake.scene:worldstream` | `awake-scene-worldstream` | Cell streamers for meshes, physics, heightfield tiles and terrain texture tiles. |
+| `com.awakekt.awake.scene:worldtext` | `awake-scene-worldtext` | The `world_text` scene component and the scene feature that draws text placed in a scene. |
 
 ### Physics
 
@@ -129,6 +130,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake:navigation` | `awake-navigation` | Heightmap-derived navigation grids, streamed navigation and path requests. |
 | `com.awakekt.awake:tilemap` | `awake-tilemap` | Finite tile grids, atlas chunk geometry and visibility, with no scene dependency. |
 | `com.awakekt.awake:world` | `awake-world` | World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency. |
+| `com.awakekt.awake:worldtext` | `awake-worldtext` | Text placed in a 3D world: laid out once, drawn as distance-field quads in the scene pass, with no scene dependency. |
 | `com.awakekt.awake:ai` | `awake-ai` | Behavior tree and finite state machine primitives. |
 | `com.awakekt.awake.ai:behavior` | `awake-ai-behavior` | Starter behaviors that follow navigation paths: `patrol`, `chase`, `flee`, with no scene dependency. |
 | `com.awakekt.awake:blueprint` | `awake-blueprint` | Runtime for event-driven game logic authored as node graphs. |

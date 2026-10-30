@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.asset.shaderpack.skyboxContentFeature
+import com.awakekt.awake.asset.shaderpack.worldTextScenePipeline
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
 import com.awakekt.awake.core.geometry.VertexFormat
@@ -20,7 +21,7 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 
 /**
  * Everything a played project can draw, on Vulkan and WebGPU alike: lit and shadowed meshes,
- * skinned and textured ones, instanced props, particles and the skybox, and an outline around any
+ * skinned and textured ones, instanced props, particles, text placed in the scene and the skybox, and an outline around any
  * entity marked `Outlined`, which costs nothing while nothing is. A host that plays a project
  * hands this to its backend, so a scene component that needs a pipeline gains it here, beside the
  * systems [runProject] runs for it.
@@ -91,5 +92,7 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             materialBindings = GroupBindings.ParticleMaterial,
             buildAdditive = true,
         ),
+        // A scene's world_text: distance-field glyphs, sharp at any distance and angle.
+        worldTextScenePipeline(),
     ),
 )

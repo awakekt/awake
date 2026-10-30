@@ -46,6 +46,8 @@ kotlin {
                 implementation(project(":awake:core:graphics2d"))
                 implementation(project(":awake:core:host"))
                 implementation(project(":awake:core:text"))
+                // Text placed in a scene, drawn from the distance field on both backends.
+                implementation(project(":awake:worldtext"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

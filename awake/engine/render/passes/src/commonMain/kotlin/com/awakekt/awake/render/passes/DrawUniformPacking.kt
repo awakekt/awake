@@ -20,6 +20,8 @@ import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.WorldTextFields
+import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
 import com.awakekt.awake.render.passes.uniforms.blendsAdditively
 import com.awakekt.awake.render.passes.uniforms.coverageCutoff
 import com.awakekt.awake.render.passes.uniforms.directionalLightFloats
@@ -103,6 +105,11 @@ fun RenderDrawCommand.uniformFloats(
         DrawUniformPlan.Sprite -> UniformWriter(SpriteUniformLayout)
             .put(mvp.data, UniformFields.Mvp)
             .put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint)
+            .build()
+
+        DrawUniformPlan.WorldText -> UniformWriter(WorldTextUniformLayout)
+            .put(mvp.data, UniformFields.Mvp)
+            .put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field)
             .build()
 
         DrawUniformPlan.Skinned ->

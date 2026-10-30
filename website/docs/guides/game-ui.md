@@ -706,6 +706,55 @@ player's own capsule among them, from hiding anything. A host that runs its own 
 `PhysicsCanvasOcclusion(physicsWorld, physicsSystem)` after its physics step; one with another way
 to tell, such as a depth read-back, sets its own `CanvasOcclusion` with `world.setCanvasOcclusion`.
 
+## Text in the world
+
+Two kinds of text stand in a 3D world, and each has its own tool.
+
+### Name plates
+
+A name plate over a character is a [follower](#follow-a-node): a canvas element drawn on the screen
+where the character is. Its `followRules.scale` curve sizes it by distance, and it stays as crisp as
+text drawn at that size directly, by three rules:
+
+- **Laid out at its final size, never stretched.** The curve's value is rounded to one of 16 sizes
+  per doubling (neighbours about 4 % apart, with 0.5, 1 and 2 exact), and the plate is laid out again
+  at that size, so its glyphs are whole-pixel sizes drawn the way all UI text is. A plate whose
+  distance drifts holds its size until it is a quarter of a step past the next, so it does not flick
+  between two sizes, and it is laid out again only when its size changes.
+- **On whole pixels while it moves slowly.** While the point it follows moves less than a device
+  pixel a frame, the plate's box snaps to whole device pixels, so a still or drifting camera draws the
+  same pixels frame after frame. Faster than two pixels a frame it moves by the exact amount, where a
+  whole-pixel step would judder.
+- **Faded without a layer.** Its `followRules.fade` multiplies what it draws, so nothing that reaches
+  past its box, such as a descender or an outline, is cut. Where two of its own parts overlap, both
+  fade, so the overlap shows through a little more than a layer would let it.
+
+Planning where a hundred plates go, ranked under a `canvas_follow_limit`, allocates nothing per frame
+once each plate has been drawn once.
+
+### Signs and labels in the scene
+
+Text that belongs to the world rather than the screen, such as a sign on a wall, a label on a crate
+or a number that should shrink with distance, is a `world_text` on a node. It is laid out once, drawn
+in the scene pass from the font's distance field, hidden by what stands in front of it, and sorted
+with other transparent things. Its edges are one screen pixel wide at any distance and angle: the
+shader measures how fast the field changes across a pixel instead of assuming the text faces the
+camera at a known size, so a sign seen up close stays sharp, and one seen far away or edge-on does
+not sparkle or smear.
+
+```json title="A sign on a wall, and a label that always faces the camera"
+{ "name": "Harbor Sign", "transform": { "position": { "x": 0, "y": 2.5, "z": -4 } },
+  "components": [ { "component": "world_text", "text": "Harbor Town", "size": 0.4, "weight": 700 } ] },
+{ "name": "Crate Label", "transform": { "position": { "x": 2, "y": 1.2, "z": 0 } },
+  "components": [ { "component": "world_text", "text": "Supplies", "size": 0.2, "billboard": true } ] }
+```
+
+From code, a `WorldText` from `com.awakekt.awake:worldtext` does the same without a scene:
+`WorldTextBatch(renderer).collect(text, worldMatrix, cameraLens, draws)` adds its draws to a frame,
+with the pipeline `worldTextScenePipeline()` in the backend's render plan (a played project's plan
+already has it). Use a name plate for what must stay readable whatever the distance, and a
+`world_text` for what should look like part of the place.
+
 ## Show a 3D view
 
 A `View` element shows what another camera sees, such as a character turning on a select screen.
