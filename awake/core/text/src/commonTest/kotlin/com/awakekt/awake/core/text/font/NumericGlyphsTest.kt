@@ -6,12 +6,17 @@
 package com.awakekt.awake.core.text.font
 
 import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.LogSink
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 class NumericGlyphsTest {
     @Test
@@ -100,7 +105,7 @@ class NumericGlyphsTest {
     }
 
     @Test
-    fun corruptGsubTableIsRejectedNamingTheTable() = runTest {
+    fun corruptGsubTableKeepsTheFontAndItsDefaultDigits() = runTest {
         val original = readResourceBytes("fonts/roboto-numerals.ttf")
         val gsubOffset = tableOffset(original, "GSUB")
 
@@ -108,17 +113,275 @@ class NumericGlyphsTest {
         val badHeader = original.copyOf()
         badHeader[gsubOffset + 8] = 0x7F
         badHeader[gsubOffset + 9] = 0xFF.toByte()
-        val error = runCatching { UiFonts.load(badHeader, "corrupt-gsub.ttf") }.exceptionOrNull()
-        assertTrue(error is IllegalArgumentException, "Expected IllegalArgumentException, got $error")
-        assertTrue("'GSUB' table" in error.message.orEmpty(), "Error should name 'GSUB' table: ${error.message}")
+        val warnings = collectWarnings {
+            val loaded = UiFonts.load(badHeader, "corrupt-gsub.ttf", chars = DIGITS)
+            assertSame(loaded, loaded.withNumerals(FontNumerals.Tabular))
+            assertSame(loaded, loaded.withNumerals(FontNumerals.Tabular))
+            assertSame(loaded, loaded.withNumerals(FontNumerals.Proportional))
+            assertEquals(ONE_ADVANCE, loaded.advanceFor('1', 16f), 1e-4f)
+        }
+        assertEquals(2, warnings.size, "one warning per feature, however often it is asked for: $warnings")
+        assertTrue(warnings.all { "'GSUB' table" in it }, "each warning names the table: $warnings")
+        assertTrue(warnings.any { "'tnum'" in it } && warnings.any { "'pnum'" in it }, "and the feature: $warnings")
+    }
+
+    @Test
+    fun aGsubWithoutNumericFeaturesKeepsTheBaseFont() = runTest {
+        val (original, _) = fixture()
+        val gsub = gsub(features = listOf("liga" to listOf(0)), lookups = listOf(ligatureLookup))
+        val loaded = UiFonts.load(withTable(original, "GSUB", gsub), "liga-only.ttf", chars = DIGITS)
+
+        assertSame(loaded, loaded.withNumerals(FontNumerals.Tabular))
+        assertSame(loaded, loaded.withNumerals(FontNumerals.Proportional))
+    }
+
+    @Test
+    fun anUnsupportedLookupTypeUnderTnumIsSkipped() = runTest {
+        val (original, _) = fixture()
+        val gsub = gsub(features = listOf("tnum" to listOf(0)), lookups = listOf(ligatureLookup))
+        val warnings = collectWarnings {
+            val loaded = UiFonts.load(withTable(original, "GSUB", gsub), "tnum-ligature.ttf", chars = DIGITS)
+            assertSame(loaded, loaded.withNumerals(FontNumerals.Tabular))
+        }
+        assertEquals(emptyList(), warnings, "a lookup type this reader does not apply is not a fault")
+    }
+
+    @Test
+    fun aMalformedTnumDropsOnlyThatFeature() = runTest {
+        val (original, ids) = fixture()
+        // 'pnum' maps '1' to '0'; 'tnum' names lookup 5 of 1.
+        val gsub = gsub(
+            features = listOf("pnum" to listOf(0), "tnum" to listOf(5)),
+            lookups = listOf(singleDelta(ids.one, ids.zero - ids.one)),
+        )
+        val warnings = collectWarnings {
+            val loaded = UiFonts.load(withTable(original, "GSUB", gsub), "bad-tnum.ttf", chars = DIGITS)
+            assertSame(loaded, loaded.withNumerals(FontNumerals.Tabular))
+            val proportional = loaded.withNumerals(FontNumerals.Proportional)
+            assertTrue(proportional !== loaded)
+            assertEquals(ZERO_ADVANCE, proportional.advanceFor('1', 16f), 1e-4f, "'pnum' still applies")
+        }
+        assertEquals(1, warnings.size, "$warnings")
+        assertTrue("names lookup 5" in warnings.single() && "'tnum'" in warnings.single(), warnings.single())
+    }
+
+    @Test
+    fun scriptAndLanguageSystemTablesThatManyRecordsRepeatAreEachReadOnce() = runTest {
+        val (original, ids) = fixture()
+        // 10 000 script records all name one script table, whose 10 000 language-system records all name one
+        // language system listing 'tnum' 65 535 times: about 6.5e12 steps when walked record by record.
+        val scripts = 10_000
+        val langSystems = 10_000
+        val gsub = gsub(
+            features = listOf("tnum" to listOf(0)),
+            lookups = listOf(singleDelta(ids.one, ids.zero - ids.one)),
+        ) {
+            u16(scripts)
+            repeat(scripts) {
+                tag("latn")
+                u16(2 + 6 * scripts)
+            }
+            u16(0)
+            u16(langSystems)
+            repeat(langSystems) {
+                tag("DEU ")
+                u16(4 + 6 * langSystems)
+            }
+            u16(0)
+            u16(0xFFFF)
+            u16(0xFFFF)
+            repeat(0xFFFF) { u16(0) }
+        }
+        val started = TimeSource.Monotonic.markNow()
+        val loaded = UiFonts.load(withTable(original, "GSUB", gsub), "repeated-offsets.ttf", chars = DIGITS)
+        val tabular = loaded.withNumerals(FontNumerals.Tabular)
+        val elapsed = started.elapsedNow()
+
+        assertEquals(ZERO_ADVANCE, tabular.advanceFor('1', 16f), 1e-4f, "the feature, listed once, still applies")
+        assertTrue(elapsed < 10.seconds, "read in $elapsed")
+    }
+
+    @Test
+    fun overlappingLanguageSystemsStopAtTheRecordLimitAndDropTheFeature() = runTest {
+        val (original, ids) = fixture()
+        // 2 000 distinct language-system tables, each 2 bytes after the last over a run of 0xFFFF words, so each
+        // claims 65 535 feature indices: 131 million records, which no visited set shortens.
+        val langSystems = 2_000
+        val gsub = gsub(
+            features = listOf("tnum" to listOf(0)),
+            lookups = listOf(singleDelta(ids.one, ids.zero - ids.one)),
+        ) {
+            u16(1)
+            tag("latn")
+            u16(8)
+            u16(0)
+            u16(langSystems)
+            repeat(langSystems) {
+                tag("DEU ")
+                u16(4 + 6 * langSystems + 2 * it)
+            }
+            repeat(langSystems + 3 + 0xFFFF) { u16(0xFFFF) }
+        }
+        val warnings = collectWarnings {
+            val loaded = UiFonts.load(withTable(original, "GSUB", gsub), "overlapping.ttf", chars = DIGITS)
+            assertSame(loaded, loaded.withNumerals(FontNumerals.Tabular))
+        }
+        assertTrue("records" in warnings.single(), warnings.single())
+    }
+
+    private inline fun collectWarnings(block: () -> Unit): List<String> {
+        val warnings = mutableListOf<String>()
+        val sink = LogSink { if (it.level == LogLevel.Warn) warnings += it.message }
+        Log.install(sink)
+        try {
+            block()
+        } finally {
+            Log.remove(sink)
+        }
+        return warnings
+    }
+
+    private class GlyphIds(val zero: Int, val one: Int)
+
+    private suspend fun fixture(): Pair<ByteArray, GlyphIds> {
+        val bytes = readResourceBytes("fonts/roboto-numerals.ttf")
+        val font = OpenTypeFont(bytes, "roboto-numerals.ttf")
+        return bytes to GlyphIds(zero = font.glyphFor('0'.code), one = font.glyphFor('1'.code))
+    }
+
+    /** A big-endian buffer a `GSUB` table is written into. */
+    private class Bytes {
+        private var data = ByteArray(INITIAL_SIZE)
+        var size = 0
+            private set
+
+        fun u16(value: Int) {
+            ensure(2)
+            data[size++] = (value ushr 8).toByte()
+            data[size++] = value.toByte()
+        }
+
+        fun tag(tag: String) {
+            ensure(4)
+            tag.forEach { data[size++] = it.code.toByte() }
+        }
+
+        fun putU16(at: Int, value: Int) {
+            data[at] = (value ushr 8).toByte()
+            data[at + 1] = value.toByte()
+        }
+
+        fun toByteArray(): ByteArray = data.copyOf(size)
+
+        private fun ensure(count: Int) {
+            if (size + count > data.size) data = data.copyOf(maxOf(data.size * 2, size + count))
+        }
+
+        private companion object {
+            const val INITIAL_SIZE = 256
+        }
+    }
+
+    /**
+     * A `GSUB` table with [features] (each a tag and its lookup indices), [lookups], and a script list written
+     * by [scripts], by default one script whose default language system lists every feature.
+     */
+    private fun gsub(
+        features: List<Pair<String, List<Int>>>,
+        lookups: List<Bytes.() -> Unit>,
+        scripts: Bytes.() -> Unit = { defaultScriptList(features.size) },
+    ): ByteArray {
+        val out = Bytes()
+        repeat(5) { out.u16(if (it == 0) 1 else 0) }
+        val featureList = out.size
+        out.putU16(6, featureList)
+        out.u16(features.size)
+        val records = out.size
+        features.forEach { (tag, _) ->
+            out.tag(tag)
+            out.u16(0)
+        }
+        features.forEachIndexed { index, (_, lookupIndices) ->
+            out.putU16(records + 6 * index + 4, out.size - featureList)
+            out.u16(0)
+            out.u16(lookupIndices.size)
+            lookupIndices.forEach(out::u16)
+        }
+        val lookupList = out.size
+        out.putU16(8, lookupList)
+        out.u16(lookups.size)
+        val lookupOffsets = out.size
+        repeat(lookups.size) { out.u16(0) }
+        lookups.forEachIndexed { index, write ->
+            out.putU16(lookupOffsets + 2 * index, out.size - lookupList)
+            out.write()
+        }
+        out.putU16(4, out.size)
+        out.scripts()
+        return out.toByteArray()
+    }
+
+    private fun Bytes.defaultScriptList(featureCount: Int) {
+        u16(1)
+        tag("DFLT")
+        u16(8)
+        u16(4)
+        u16(0)
+        u16(0)
+        u16(0xFFFF)
+        u16(featureCount)
+        repeat(featureCount) { u16(it) }
+    }
+
+    /** A `SingleSubst` format 1 lookup adding [delta] to [glyph] only. */
+    private fun singleDelta(glyph: Int, delta: Int): Bytes.() -> Unit = {
+        u16(1)
+        u16(0)
+        u16(1)
+        u16(8)
+        u16(1)
+        u16(6)
+        u16(delta and 0xFFFF)
+        u16(1)
+        u16(1)
+        u16(glyph)
+    }
+
+    /** A ligature lookup (LookupType 4) with no subtables, a type this reader does not apply. */
+    private val ligatureLookup: Bytes.() -> Unit = {
+        u16(4)
+        u16(0)
+        u16(0)
+    }
+
+    /** [font] with its [tag] table replaced by [table], appended at the end of the file. */
+    private fun withTable(font: ByteArray, tag: String, table: ByteArray): ByteArray {
+        val start = (font.size + 3) and 3.inv()
+        val result = font.copyOf(start + table.size)
+        table.copyInto(result, start)
+        val record = tableRecord(font, tag)
+        listOf(start, table.size).forEachIndexed { field, value ->
+            repeat(4) { result[record + 8 + 4 * field + it] = (value ushr (24 - 8 * it)).toByte() }
+        }
+        return result
+    }
+
+    private fun tableRecord(bytes: ByteArray, tag: String): Int {
+        fun u16(at: Int) = (bytes[at].toInt() and 0xFF) shl 8 or (bytes[at + 1].toInt() and 0xFF)
+        return (0 until u16(4)).map { 12 + 16 * it }.single { at ->
+            (0..3).all { bytes[at + it] == tag[it].code.toByte() }
+        }
     }
 
     private fun tableOffset(bytes: ByteArray, tag: String): Int {
         fun u16(at: Int) = (bytes[at].toInt() and 0xFF) shl 8 or (bytes[at + 1].toInt() and 0xFF)
-        val count = u16(4)
-        val record = (0 until count).map { 12 + 16 * it }.single { at ->
-            (0..3).all { bytes[at + it] == tag[it].code.toByte() }
-        }
+        val record = tableRecord(bytes, tag)
         return u16(record + 8) shl 16 or u16(record + 10)
+    }
+
+    private companion object {
+        const val DIGITS = " ?0123456789:"
+        const val ONE_ADVANCE = 889f / 2048f * 16f
+        const val ZERO_ADVANCE = 1191f / 2048f * 16f
     }
 }

@@ -51,9 +51,7 @@ internal class OpenTypeUiFontData private constructor(
     override val advancesEm: FloatArray get() = layout.advancesEm
 
     /** The pairs the font kerns among the baked glyphs, read as the data is made, so a corrupt table fails the load. */
-    private val kerning: KerningPairs = KerningPairs.read(font, codePointsOf(glyphOrder)).also {
-        NumericGlyphs.validate(font)
-    }
+    private val kerning: KerningPairs = KerningPairs.read(font, codePointsOf(glyphOrder))
 
     override fun atlasBytes(): ByteArray = atlas
 

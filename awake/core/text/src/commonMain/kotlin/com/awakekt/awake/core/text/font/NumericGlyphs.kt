@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.core.text.font
 
+import com.awakekt.awake.core.logging.Logger
+
 /**
  * Single-glyph numeric substitutions (`tnum` and `pnum`) read from an OpenType `GSUB` table.
  *
@@ -12,45 +14,47 @@ package com.awakekt.awake.core.text.font
  * of the requested numeric feature are applied, in lookup list order, with the first matching subtable in
  * each lookup deciding a glyph as a shaper does. Ligatures, contextual substitutions and general shaping
  * belong to #852.
+ *
+ * The table is read when a numeric variant is first asked for, never as the font loads. A feature this
+ * reader rejects (a truncated or corrupt table, an unsupported subtable format, an index out of range, or
+ * more records than [MAX_RECORDS]) is dropped as a browser drops it: it is logged, the font keeps its
+ * default digits for that feature, and the font and its other features keep working.
  */
 internal object NumericGlyphs {
-    /**
-     * Validates [font]'s `GSUB` header and its `tnum` and `pnum` single-substitution subtables when a
-     * `GSUB` table is present, so a truncated or corrupt table fails [UiFonts.load] naming `'GSUB' table`.
-     */
-    fun validate(font: OpenTypeFont) {
-        val gsub = font.tableOrNull("GSUB") ?: return
-        val reader = GsubSingleSubst(gsub, font.glyphCount)
-        reader.lookupsFor(PNUM_TAG)
-        reader.lookupsFor(TNUM_TAG)
-    }
+    private val log = Logger("text")
 
     /**
      * Substituted glyph IDs for [codePoints] under [numerals], or null when [font] has no `GSUB` table,
-     * does not list the feature, or leaves every code point's glyph unchanged.
+     * does not list the feature, leaves every code point's glyph unchanged, or lists it in a way this reader
+     * rejects, which is logged. A variant is built once per font and feature, so that is logged once.
      */
     fun read(font: OpenTypeFont, codePoints: IntArray, numerals: FontNumerals): IntArray? {
         val gsub = font.tableOrNull("GSUB") ?: return null
-        val tag = when (numerals) {
-            FontNumerals.Proportional -> PNUM_TAG
-            FontNumerals.Tabular -> TNUM_TAG
+        val (tag, name) = when (numerals) {
+            FontNumerals.Proportional -> PNUM_TAG to "pnum"
+            FontNumerals.Tabular -> TNUM_TAG to "tnum"
         }
-        val lookups = GsubSingleSubst(gsub, font.glyphCount).lookupsFor(tag)
+        return try {
+            substitute(font, GsubSingleSubst(gsub, font.glyphCount).lookupsFor(tag), codePoints)
+        } catch (problem: IllegalArgumentException) {
+            log.warn { "${problem.message}, so its '$name' feature is ignored and its digits keep their default glyphs" }
+            null
+        }
+    }
+
+    private fun substitute(font: OpenTypeFont, lookups: List<SingleSubstLookup>, codePoints: IntArray): IntArray? {
+        if (lookups.isEmpty()) return null
         var changed = false
-        val glyphs = if (lookups.isEmpty()) {
-            IntArray(0)
-        } else {
-            IntArray(codePoints.size) { slot ->
-                val base = font.glyphFor(codePoints[slot])
-                var current = base
-                if (base != 0) {
-                    for (lookup in lookups) {
-                        current = lookup.substitute(current)
-                    }
-                    if (current != base) changed = true
+        val glyphs = IntArray(codePoints.size) { slot ->
+            val base = font.glyphFor(codePoints[slot])
+            var current = base
+            if (base != 0) {
+                for (lookup in lookups) {
+                    current = lookup.substitute(current)
                 }
-                current
+                if (current != base) changed = true
             }
+            current
         }
         return if (changed) glyphs else null
     }
@@ -61,8 +65,18 @@ internal object NumericGlyphs {
 
 private const val MAX_SUBTABLES = 1024
 
+/**
+ * The most records one read visits: script, language-system and feature records, feature and lookup indices,
+ * and coverage and substitute entries. Each script, language-system, feature and subtable is read once
+ * however many records point at it, so a real font stays far below this; it stops a crafted table whose
+ * overlapping records each claim thousands more from keeping a load busy for minutes.
+ */
+private const val MAX_RECORDS = 1 shl 20
+
 private class GsubSingleSubst(private val gsub: FontTable, private val glyphCount: Int) {
     private var subtablesRead = 0
+    private var recordsRead = 0
+    private val subtablesByOffset = HashMap<Int, SingleSubtable>()
     private val scriptList: Int
     private val featureList: Int
     private val lookupList: Int
@@ -80,41 +94,56 @@ private class GsubSingleSubst(private val gsub: FontTable, private val glyphCoun
     }
 
     fun lookupsFor(tag: Int): List<SingleSubstLookup> {
-        val featureCount = gsub.u16(featureList)
+        val featureCount = records(gsub.u16(featureList))
         val matching = (0 until featureCount).filter { gsub.u32(featureList + 2 + FEATURE_RECORD * it) == tag }
         if (matching.isEmpty()) return emptyList()
         val listed = listedFeatures()
         val features = matching.filter { it in listed }.ifEmpty { matching }
+        val featureTables = HashSet<Int>()
         val indices = HashSet<Int>()
         for (feature in features) {
             val featureTable = featureList + gsub.u16(featureList + 2 + FEATURE_RECORD * feature + 4)
-            for (index in 0 until gsub.u16(featureTable + 2)) {
+            if (!featureTables.add(featureTable)) continue
+            for (index in 0 until records(gsub.u16(featureTable + 2))) {
                 val lookupIndex = gsub.u16(featureTable + 4 + 2 * index)
                 if (lookupIndex >= lookupCount) gsub.fail("names lookup $lookupIndex, past lookup count $lookupCount")
                 indices += lookupIndex
             }
         }
-        return indices.sorted().map { index ->
-            SingleSubstLookup(singleSubtables(lookupList + gsub.u16(lookupList + 2 + 2 * index)))
+        return indices.sorted().mapNotNull { index ->
+            val subtables = singleSubtables(lookupList + gsub.u16(lookupList + 2 + 2 * index))
+            if (subtables.isEmpty()) null else SingleSubstLookup(subtables)
         }
     }
 
+    /** The features some script's language system lists, each script and language-system table read once. */
     private fun listedFeatures(): Set<Int> {
         val listed = HashSet<Int>()
-        for (script in 0 until gsub.u16(scriptList)) {
+        val scriptTables = HashSet<Int>()
+        val langSysTables = HashSet<Int>()
+        for (script in 0 until records(gsub.u16(scriptList))) {
             val scriptTable = scriptList + gsub.u16(scriptList + 2 + SCRIPT_RECORD * script + 4)
+            if (!scriptTables.add(scriptTable)) continue
             val defaultLangSys = gsub.u16(scriptTable)
-            if (defaultLangSys != 0) collectLangSysFeatures(scriptTable + defaultLangSys, listed)
-            for (record in 0 until gsub.u16(scriptTable + 2)) {
+            if (defaultLangSys != 0) collectLangSysFeatures(scriptTable + defaultLangSys, langSysTables, listed)
+            for (record in 0 until records(gsub.u16(scriptTable + 2))) {
                 val langSys = scriptTable + gsub.u16(scriptTable + 4 + LANG_SYS_RECORD * record + 4)
-                collectLangSysFeatures(langSys, listed)
+                collectLangSysFeatures(langSys, langSysTables, listed)
             }
         }
         return listed
     }
 
-    private fun collectLangSysFeatures(langSys: Int, out: MutableSet<Int>) {
-        for (index in 0 until gsub.u16(langSys + 4)) out += gsub.u16(langSys + 6 + 2 * index)
+    private fun collectLangSysFeatures(langSys: Int, visited: MutableSet<Int>, out: MutableSet<Int>) {
+        if (!visited.add(langSys)) return
+        for (index in 0 until records(gsub.u16(langSys + 4))) out += gsub.u16(langSys + 6 + 2 * index)
+    }
+
+    /** Counts [count] more records against [MAX_RECORDS] and returns it. */
+    private fun records(count: Int): Int {
+        recordsRead += count
+        if (recordsRead > MAX_RECORDS) gsub.fail("lists more than $MAX_RECORDS records")
+        return count
     }
 
     private fun singleSubtables(at: Int): List<SingleSubtable> {
@@ -124,7 +153,7 @@ private class GsubSingleSubst(private val gsub: FontTable, private val glyphCoun
         return (0 until count).mapNotNull { index ->
             if (++subtablesRead > MAX_SUBTABLES) gsub.fail("lists more than $MAX_SUBTABLES substitution subtables")
             val subtable = resolveSubtable(at, type, index) ?: return@mapNotNull null
-            readSingleSubtable(subtable)
+            subtablesByOffset.getOrPut(subtable) { readSingleSubtable(subtable) }
         }
     }
 
@@ -141,10 +170,13 @@ private class GsubSingleSubst(private val gsub: FontTable, private val glyphCoun
         return subtable
     }
 
-    private fun readSingleSubtable(at: Int): SingleSubtable = when (val format = gsub.u16(at)) {
-        1 -> DeltaSingleSubtable(gsub, at, glyphCount)
-        2 -> ArraySingleSubtable(gsub, at, glyphCount)
-        else -> gsub.fail("has a single substitution subtable in format $format")
+    private fun readSingleSubtable(at: Int): SingleSubtable {
+        val format = gsub.u16(at)
+        if (format != 1 && format != 2) gsub.fail("has a single substitution subtable in format $format")
+        // Building a subtable reads each of its coverage entries, and a format 2 subtable's substitutes, once.
+        records(gsub.u16(at + gsub.u16(at + 2) + 2))
+        if (format == 2) records(gsub.u16(at + 4))
+        return if (format == 1) DeltaSingleSubtable(gsub, at, glyphCount) else ArraySingleSubtable(gsub, at, glyphCount)
     }
 
     private companion object {
@@ -163,6 +195,8 @@ private class SingleSubstLookup(private val subtables: List<SingleSubtable>) {
     fun substitute(glyph: Int): Int {
         for (subtable in subtables) {
             val target = subtable.substitute(glyph)
+            // A substitution to glyph 0 (`.notdef`) would draw a missing-glyph box in place of a digit the
+            // font has, so the glyph is kept, as if the lookup did not cover it; it is not a lost substitution.
             if (target >= 0) return if (target == 0) glyph else target
         }
         return glyph
