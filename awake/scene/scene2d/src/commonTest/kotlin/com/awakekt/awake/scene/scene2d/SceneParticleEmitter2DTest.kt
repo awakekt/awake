@@ -8,13 +8,13 @@ package com.awakekt.awake.scene.scene2d
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.particles.ParticleBurstSchedule
 import com.awakekt.awake.core.particles.ParticleDeathListener
+import com.awakekt.awake.core.particles.ParticleSpawnRate
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.particles.BurstEmitter2DPool
 import com.awakekt.awake.particles.DEFAULT_PARTICLE_SORTING_LAYER_2D
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.particles.ParticleEmitter2D
-import com.awakekt.awake.particles.ParticleSpawnRate
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.transform.Transform

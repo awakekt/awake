@@ -210,6 +210,10 @@ public final class com/awakekt/awake/core/particles/ParticleSpawnConfig {
 	public final fun setRingXZ (F)V
 }
 
+public abstract interface class com/awakekt/awake/core/particles/ParticleSpawnRate {
+	public abstract fun particlesPerSecond ()F
+}
+
 public abstract interface class com/awakekt/awake/core/particles/ParticleSpawnShape {
 }
 

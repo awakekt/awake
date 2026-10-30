@@ -12,6 +12,7 @@ import com.awakekt.awake.core.particles.ParticleBurstSchedule
 import com.awakekt.awake.core.particles.ParticleDeathListener
 import com.awakekt.awake.core.particles.ParticlePlane
 import com.awakekt.awake.core.particles.ParticleSimulation
+import com.awakekt.awake.core.particles.ParticleSpawnRate
 import com.awakekt.awake.core.particles.ParticleSpawnShape
 import com.awakekt.awake.core.particles.ParticleSpinRange
 import com.awakekt.awake.core.particles.UNLIMITED_BURST_COUNT
@@ -35,16 +36,6 @@ private const val DEG_TO_RAD_2D: Float = (PI / 180.0).toFloat()
  * `SortingLayers.DEFAULT`, which a scene2d test keeps equal.
  */
 const val DEFAULT_PARTICLE_SORTING_LAYER_2D: String = "Default"
-
-/**
- * Asked for a 2D emitter's spawn rate, in particles per second, once a frame in place of
- * [ParticleEmitter2D.spawnRate]. A `fun interface` rather than `() -> Float`, so the rate comes back
- * as a primitive and asking allocates nothing.
- */
-fun interface ParticleSpawnRate {
-    /** The spawn rate for this frame, in particles per second. */
-    fun particlesPerSecond(): Float
-}
 
 /**
  * A 2D particle emitter, an ECS component stepped by [Particle2DSystem] on the shared

@@ -19,6 +19,17 @@ fun interface ParticleDeathListener {
 }
 
 /**
+ * Asked for an emitter's spawn rate, in particles per second, once a frame in place of its fixed
+ * rate, as the 2D and canvas emitters' `dynamicSpawnRate`. The result becomes the
+ * `effectiveSpawnRate` passed to [ParticleSimulation.step]. A `fun interface` rather than
+ * `() -> Float`, so the rate comes back as a primitive and asking allocates nothing.
+ */
+fun interface ParticleSpawnRate {
+    /** The spawn rate for this frame, in particles per second. */
+    fun particlesPerSecond(): Float
+}
+
+/**
  * The height of the ground under a point, set as [ParticleGroundConfig.groundHeightProvider].
  * [ParticleSimulation.step] asks it once per moving particle per step, so it is a `fun interface`
  * rather than a Kotlin function type: the query and its answer stay primitive and allocate nothing.

@@ -140,7 +140,7 @@ public final class com/awakekt/awake/particles/ParticleEmitter2D {
 	public final fun getDirectionDegrees ()F
 	public final fun getDrag ()F
 	public final fun getDroppedParticleCount ()J
-	public final fun getDynamicSpawnRate ()Lcom/awakekt/awake/particles/ParticleSpawnRate;
+	public final fun getDynamicSpawnRate ()Lcom/awakekt/awake/core/particles/ParticleSpawnRate;
 	public final fun getEnabled ()Z
 	public final fun getEndSize ()Ljava/lang/Float;
 	public final fun getEndTint ()Lcom/awakekt/awake/core/color/Color;
@@ -181,7 +181,7 @@ public final class com/awakekt/awake/particles/ParticleEmitter2D {
 	public final fun setConvergeToOrigin (Z)V
 	public final fun setDirectionDegrees (F)V
 	public final fun setDrag (F)V
-	public final fun setDynamicSpawnRate (Lcom/awakekt/awake/particles/ParticleSpawnRate;)V
+	public final fun setDynamicSpawnRate (Lcom/awakekt/awake/core/particles/ParticleSpawnRate;)V
 	public final fun setEnabled (Z)V
 	public final fun setEndSize (Ljava/lang/Float;)V
 	public final fun setEndTint (Lcom/awakekt/awake/core/color/Color;)V
@@ -298,10 +298,6 @@ public final class com/awakekt/awake/particles/ParticleMotion {
 	public final fun getVelocityJitter ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public abstract interface class com/awakekt/awake/particles/ParticleSpawnRate {
-	public abstract fun particlesPerSecond ()F
 }
 
 public final class com/awakekt/awake/particles/ParticleSpin {

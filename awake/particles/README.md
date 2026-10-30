@@ -21,8 +21,8 @@ implementation(project(":awake:particles"))
 - `BurstEmitterPool` and `spawnParticleBurst` -- a one-shot "play this effect here" helper that reuses
   its emitters.
 - `ParticleEmitter2D`, `Particle2DSystem` and `BurstEmitter2DPool` -- the 2D emitter: the same
-  `ParticleSimulation` in the `XY` plane in 2D world units, with `ParticleSpawnRate` and
-  `ParticleDeathListener` hooks that allocate nothing. `appendSpriteDraws` turns its live particles
+  `ParticleSimulation` in the `XY` plane in 2D world units, with `awake:core:particles`'s
+  `ParticleSpawnRate` and `ParticleDeathListener` hooks, which allocate nothing. `appendSpriteDraws` turns its live particles
   into `SpriteDrawInput` quads that sort alongside sprites and tilemaps. `BurstEmitter2DPool` keeps
   resident entities that need no placement and fires a template emitter's settings at a point.
 
