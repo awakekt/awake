@@ -36,6 +36,7 @@ import com.awakekt.awake.ui.canvas.CanvasMask
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import com.awakekt.awake.ui.canvas.CanvasView
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 import kotlin.test.Test
@@ -51,6 +52,19 @@ import kotlin.test.assertTrue
  * same prefab and writes out the same text, and code finds its elements by their stable ids.
  */
 class CanvasPrefabBuilderTest {
+    @Test
+    fun theViewBuilderSavesFocusedSettingsAndRejectsThemOnOtherWidgets() {
+        val settings = CanvasView(transparent = true, mask = CanvasMask.Circle)
+        val prefab = canvasPrefab(guid = "g", name = "Portrait") {
+            view("Camera") { camera = "Portrait Camera"; view = settings }
+        }
+        val read = CanvasPrefabs.fromJson(CanvasPrefabs.toJson(prefab))
+        assertEquals(settings, read.root.children.single().components.filterIsInstance<SceneCanvasView>().single().settings)
+        assertFailsWith<SceneValidationException> {
+            canvasPrefab(guid = "g", name = "Wrong") { panel("Panel") { view = settings } }
+        }
+    }
+
     private fun unitFrame(): ScenePrefab = canvasPrefab(guid = "c0ffee00-0000-4000-8000-000000000001", name = "Unit Frame", id = "frame") {
         anchor = CanvasAnchor.TopLeft
         offset(16.dp, 12.dp)

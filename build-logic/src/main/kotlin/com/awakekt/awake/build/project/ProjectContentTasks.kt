@@ -59,6 +59,19 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     val indexRoots: ListProperty<String> = objects.listProperty(String::class.java)
     val indexRootPath: Property<String> = objects.property(String::class.java)
     val indexBaseUrl: Property<String> = objects.property(String::class.java)
+
+    /** Globs of project-relative paths in the public sign-in set, such as every file under `strings`; see [publicContentSet]. */
+    val publicFiles: ListProperty<String> = objects.listProperty(String::class.java)
+
+    /** Scenes in the public sign-in set, each with every file it names; see [publicContentSet]. */
+    val publicScenes: ListProperty<String> = objects.listProperty(String::class.java)
+
+    /** Where `generateProjectIndex` writes the public index, when [publicFiles] or [publicScenes] declare a public set. */
+    val publicIndexOutputFile: RegularFileProperty = objects.fileProperty()
+
+    /** Where `generatePublicContentBundles` writes the public set's bundles and bundled index, apart from the protected ones. */
+    val publicBundlesOutputDirectory: DirectoryProperty = objects.directoryProperty()
+
     val bundleGrouping: Property<String> = objects.property(String::class.java)
     val bundleFolderDepth: Property<Int> = objects.property(Int::class.java)
     val targetBundleBytes: Property<Long> = objects.property(Long::class.java)
@@ -371,6 +384,20 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val indexedFiles: ConfigurableFileCollection
 
+    /** Globs of the public sign-in set; with [publicScenes] empty too, the index lists every file, as before. */
+    @get:Input
+    abstract val publicFiles: ListProperty<String>
+
+    @get:Input
+    abstract val publicScenes: ListProperty<String>
+
+    /**
+     * The public index, of the public set alone, written when one is declared; [outputFile] then lists
+     * the protected files, every other file, so each file is in exactly one index.
+     */
+    @get:OutputFile
+    abstract val publicIndexOutputFile: RegularFileProperty
+
     @TaskAction
     fun generate() {
         val root = project.projectDir
@@ -384,6 +411,25 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
             }
         }.distinctBy { it.relativeTo(root).invariantSeparatorsPath }
             .sortedBy { it.relativeTo(root).invariantSeparatorsPath }
+        val publicSet = try {
+            publicContentSet(root, files.map { it.relativeTo(root).invariantSeparatorsPath }, publicFiles.get(), publicScenes.get())
+        } catch (e: IllegalArgumentException) {
+            throw GradleException(e.message.orEmpty(), e)
+        }
+        val publicIndex = publicIndexOutputFile.get().asFile
+        if (publicSet.isEmpty()) {
+            publicIndex.delete()
+            writeIndex(outputFile.get().asFile, root, files)
+            logger.lifecycle("Generated project index: ${files.size} files")
+            return
+        }
+        val (inPublic, inProtected) = files.partition { it.relativeTo(root).invariantSeparatorsPath in publicSet }
+        writeIndex(publicIndex, root, inPublic)
+        writeIndex(outputFile.get().asFile, root, inProtected)
+        logger.lifecycle("Generated project indexes: ${inPublic.size} public files, ${inProtected.size} protected files")
+    }
+
+    private fun writeIndex(output: File, root: File, files: List<File>) {
         val baseUrl = baseUrl.get().trimEnd('/')
         val document = buildJsonObject {
             put("formatVersion", 2)
@@ -400,11 +446,10 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
                 }
             })
         }
-        outputFile.get().asFile.apply {
+        output.apply {
             parentFile.mkdirs()
             writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), document) + "\n")
         }
-        logger.lifecycle("Generated project index: ${files.size} files")
     }
 }
 

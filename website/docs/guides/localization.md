@@ -238,6 +238,36 @@ Keyed text changes on the next frame; the scene keeps playing. A project with no
 has no strings, and its keyed elements show their keys. A host that draws the canvas itself passes
 `SceneCanvas(world, strings = …)`. The fields are in [Game UI](game-ui.md#show-text-in-the-players-language).
 
+### Text before the project loads
+
+A game that shows text before its project has loaded, such as a connection screen saying why a
+server refused the session, makes its own `Strings` first and hands it to `loadProject`, so the game
+and the project share one instance:
+
+```kotlin title="Kotlin"
+val strings = Strings.load(StringTableSource.assets(appResources), locale = settings.locale ?: systemLocale())
+showConnecting(strings.text("connect.waiting"))
+
+val project = loadProject(projectFiles, strings = strings, physicsWorld = ::createJoltPhysicsWorld)
+// project.strings === strings
+```
+
+- **One instance.** The project's `strings/` tables are added to it at `StringLayer.Game`, and
+  `LoadedProject.strings` is that same `Strings`. Text the game read before loading and the project's
+  keyed text both come from it.
+- **The game's locale is kept.** The project's tables are read for the locale the game chose, not the
+  device's, and one `setLocale` changes the game's text and the project's together.
+- **The project's keys win.** Its tables are added after the game's own, so where both have a key in
+  the same locale the project's text is shown. The locale still comes first: the game's Korean for a
+  key beats the project's English for a Korean player.
+- **A failed load changes nothing.** The tables are added only once the rest of the project has
+  loaded.
+- **Closing the project takes its tables out.** `LoadedProject.close()` removes the tables that load
+  added and leaves the game's own, so a game that loads a project again into the same instance, as a
+  `projectRoute` does each time it is entered, holds one copy of them at a time.
+
+Without `strings`, the project gets a `Strings` of its own, as above.
+
 ## Fonts for other scripts
 
 The built-in UI font draws Latin text. A locale whose script it lacks, such as Korean or Russian,

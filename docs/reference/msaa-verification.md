@@ -14,12 +14,26 @@ Run:
 
 On Linux, run through `xvfb-run -a`. Desktop probes use JDK 25 for wgpu-native's FFM binding.
 Each GPU comparison has its own test class and process, using the repository's `forkEvery = 1`
-GPU convention. The native binding retains some child objects after device close; repeatedly
-booting all comparisons in one process can exhaust native device allocations. Deterministic native
-teardown is tracked on #996. This isolation does not weaken pixel assertions or retry failed cases.
-Generic render targets also reserve scene colour/depth attachments at the plan's sample count,
-even when subsequently used only as UI layers. UI drawing binds single-sample resolved colour;
-separating UI-only target allocation is tracked on #996 for mobile memory profiling.
+GPU convention. This isolation does not weaken pixel assertions or retry failed cases.
+
+WebGPU shutdown releases every native object it created, children first: bind groups, pipelines
+and their layouts, shader modules, views, samplers, buffers and textures, then the surface, the
+device with the queue handle wgpu4k's device takes and never returns, and the adapter. The desktop
+headless engine creates its own wgpu instance and releases it last.
+`WebGpuRepeatedShutdownTest` boots the showcase plan at 4x twelve times in one process and asks
+wgpu-native's registry report what is still alive after each shutdown; every report is empty.
+Before this teardown, one shutdown left 35 render pipelines, 35 pipeline layouts, 74 bind group
+layouts, 15 shader modules, 37 texture views and a pinned device; repeated boots in one process
+exhausted native device requests on a Windows host. That exhaustion does not reproduce on lavapipe,
+where the comparisons also passed in one process before the fix, so `forkEvery = 1` stays: no run
+here can show that relaxing it is safe, the same task runs the Vulkan comparisons, and the
+hand-built WebGPU fixtures still use wgpu4k's own bootstrap, which drops its instance.
+
+A render target allocates its scene attachments, multisampled colour and depth at the plan's
+sample count, on its first scene pass. A target used only as a UI layer holds its single-sample
+colour alone: at 4x and 128 x 128 that is 65,536 bytes instead of 589,824 on WebGPU, and at
+256 x 256 262,144 bytes instead of 2,359,296 on Vulkan (`WebGpuUiTargetAttachmentsTest`,
+`OffscreenTargetAttachmentsTest`).
 PNGs are written to `samples/engine-showcase/build/reports/msaa/`, and test output contains metrics.
 CI uploads both images and test reports in `engine-showcase-test-reports`.
 

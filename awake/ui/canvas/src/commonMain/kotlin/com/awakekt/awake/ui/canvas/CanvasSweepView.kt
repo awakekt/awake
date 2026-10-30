@@ -68,15 +68,16 @@ private fun DrawScope.masked(mask: DrawShape, bounds: Rectangle, block: () -> Un
 }
 
 /** The outline this element's [CanvasElement.sweep] is cut to, its corners from its style's `cornerRadius`. */
-internal fun CanvasElement.sweepMask(): DrawShape {
-    val radius = style.cornerRadius ?: 0f
-    return when ((sweep ?: CanvasSweep.Default).mask) {
+internal fun CanvasElement.sweepMask(): DrawShape = (sweep ?: CanvasSweep.Default).mask.shape(style.cornerRadius ?: 0f)
+
+/** Resolves a canvas picture or sweep mask using the element's authored corner radius. */
+internal fun CanvasMask.shape(radius: Float): DrawShape =
+    when (this) {
         CanvasMask.Box -> if (radius > 0f) DrawShape.RoundedRectangle(radius.dp) else DrawShape.Rectangle
         CanvasMask.Circle -> DrawShape.Circle
         CanvasMask.Pill -> DrawShape.Pill
         CanvasMask.CutCorner -> if (radius > 0f) DrawShape.CutCorner(radius.dp) else DrawShape.Rectangle
     }
-}
 
 /** A Sweep element: its value swept over its box as its [CanvasElement.sweep] says, in its colour or fill image. */
 context(_: Composer)

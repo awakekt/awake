@@ -506,6 +506,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasControlState$Companion {
 public final class com/awakekt/awake/ui/canvas/CanvasControlTheme {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasControlTheme$Companion;
 	public fun <init> ()V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;Ljava/lang/Float;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;
@@ -513,7 +515,9 @@ public final class com/awakekt/awake/ui/canvas/CanvasControlTheme {
 	public final fun component3 ()Ljava/util/Map;
 	public final fun component4 ()Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
 	public final fun component5 ()Ljava/lang/Float;
+	public final synthetic fun copy (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;)Lcom/awakekt/awake/ui/canvas/CanvasControlTheme;
 	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;Ljava/lang/Float;)Lcom/awakekt/awake/ui/canvas/CanvasControlTheme;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasControlTheme;Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasControlTheme;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasControlTheme;Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasControlTheme;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Ljava/util/Map;
@@ -846,6 +850,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementWidgetFields : co
 	public final fun getSweep ()Lcom/awakekt/awake/ui/canvas/CanvasSweep;
 	public final fun getUsable ()Z
 	public final fun getValue ()F
+	public final fun getView ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun setAction (Ljava/lang/String;)V
 	public final fun setAimLock (Lcom/awakekt/awake/ui/canvas/CanvasAimLock;)V
 	public final fun setBar (Lcom/awakekt/awake/ui/canvas/CanvasBar;)V
@@ -866,6 +871,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementWidgetFields : co
 	public final fun setStepper (Lcom/awakekt/awake/ui/canvas/CanvasStepper;)V
 	public final fun setSweep (Lcom/awakekt/awake/ui/canvas/CanvasSweep;)V
 	public final fun setValue (F)V
+	public final fun setView (Lcom/awakekt/awake/ui/canvas/CanvasView;)V
 	public final fun stepBy (I)Z
 	public final fun stepBy (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 }
@@ -1174,6 +1180,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasInsets$Companion {
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasItem {
+	public synthetic fun <init> (ILcom/awakekt/awake/ui/canvas/CanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasElement;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/ui/canvas/CanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasElement;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (ILcom/awakekt/awake/ui/canvas/CanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasScaler;)V
 	public synthetic fun <init> (ILcom/awakekt/awake/ui/canvas/CanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasScaler;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getElement ()Lcom/awakekt/awake/ui/canvas/CanvasElement;
@@ -1689,6 +1697,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasScaler {
 	public static final field DEFAULT_REFERENCE_WIDTH F
 	public static final field DP_PER_INCH F
 	public fun <init> ()V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;Lcom/awakekt/awake/ui/canvas/CanvasScaleScope;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;Lcom/awakekt/awake/ui/canvas/CanvasScaleScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;
@@ -1702,7 +1712,9 @@ public final class com/awakekt/awake/ui/canvas/CanvasScaler {
 	public final fun component7 ()F
 	public final fun component8 ()F
 	public final fun component9 ()F
+	public final synthetic fun copy (Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;)Lcom/awakekt/awake/ui/canvas/CanvasScaler;
 	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;Lcom/awakekt/awake/ui/canvas/CanvasScaleScope;)Lcom/awakekt/awake/ui/canvas/CanvasScaler;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasScaler;Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasScaler;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasScaler;Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;FFFFFFFFLcom/awakekt/awake/ui/canvas/CanvasScaleSnap;Lcom/awakekt/awake/ui/canvas/CanvasScaleScope;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasScaler;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMatch ()F
@@ -1927,6 +1939,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasSpriteSheetKt {
 public final class com/awakekt/awake/ui/canvas/CanvasStateStyle {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasStateStyle$Companion;
 	public fun <init> ()V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/Float;)V
 	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -1937,7 +1951,9 @@ public final class com/awakekt/awake/ui/canvas/CanvasStateStyle {
 	public final fun component6 ()Ljava/lang/Float;
 	public final fun component7 ()Lcom/awakekt/awake/ui/canvas/CanvasShadow;
 	public final fun component8 ()Ljava/lang/Float;
+	public final synthetic fun copy (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;)Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;
 	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/Float;)Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()Ljava/lang/Float;
@@ -2052,6 +2068,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasStyle {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasStyle$Companion;
 	public static final field DISABLED_ALPHA F
 	public fun <init> ()V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;Ljava/lang/Float;)V
 	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -2073,7 +2091,9 @@ public final class com/awakekt/awake/ui/canvas/CanvasStyle {
 	public final fun component7 ()Ljava/lang/Float;
 	public final fun component8 ()Ljava/lang/String;
 	public final fun component9 ()Lcom/awakekt/awake/ui/canvas/CanvasShadow;
+	public final synthetic fun copy (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;)Lcom/awakekt/awake/ui/canvas/CanvasStyle;
 	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;Ljava/lang/Float;)Lcom/awakekt/awake/ui/canvas/CanvasStyle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasStyle;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasStyle;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasStyle;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasGradient;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasImage;Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasShadow;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasTextShadow;Lcom/awakekt/awake/ui/canvas/CanvasTextOutline;Ljava/lang/Float;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Lcom/awakekt/awake/ui/canvas/CanvasStateStyle;Ljava/lang/Float;Ljava/lang/String;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()Ljava/lang/Float;
@@ -2317,11 +2337,45 @@ public final class com/awakekt/awake/ui/canvas/CanvasTouchVisibility$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasView {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasView$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/ui/canvas/CanvasMask;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/ui/canvas/CanvasMask;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/ui/canvas/CanvasMask;
+	public final fun copy (ZLcom/awakekt/awake/ui/canvas/CanvasMask;)Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasView;ZLcom/awakekt/awake/ui/canvas/CanvasMask;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMask ()Lcom/awakekt/awake/ui/canvas/CanvasMask;
+	public final fun getTransparent ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ui/canvas/CanvasView$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/canvas/CanvasView$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/canvas/CanvasView;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasView$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/ui/canvas/CanvasView;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasViewWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun getCamera ()Ljava/lang/String;
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun setCamera (Ljava/lang/String;)V
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasView;)V
 }
 
 public abstract interface class com/awakekt/awake/ui/canvas/CanvasWidget {

@@ -16,6 +16,7 @@ import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
+import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
@@ -103,7 +104,8 @@ class SkinnedInstanceBuffer(
     fun bindGroupFor(pipeline: GPURenderPipeline): GPUBindGroup {
         val cached = bindGroup
         if (cached != null && bindGroupPipeline === pipeline) return cached
-        val created = graphicsDevice.wgpuContext.device.createBindGroup(
+        cached?.close()
+        val created = graphicsDevice.wgpuContext.device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(PALETTE_GROUP),
                 entries = listOf(
@@ -138,6 +140,8 @@ class SkinnedInstanceBuffer(
      * groups built from it become invalid.
      */
     fun destroy() {
+        bindGroup?.close()
+        bindGroup = null
         buffer.close()
     }
 

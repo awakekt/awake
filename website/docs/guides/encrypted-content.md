@@ -57,6 +57,11 @@ Make a key once per project or entitlement tier, for example with `openssl rand 
 keep it in your secret store. Rotating a key re-seals every bundle and changes every URL, so don't
 rotate it per session. To revoke a player, stop answering them at your key or index endpoint.
 
+With a [public sign-in set](protected-content.md), only the full set is sealed:
+`generatePublicContentBundles` never takes the key, because the sign-in scene loads before the player
+has it. Open the sealed set with your `BundleKeyProvider` after sign-in and attach it to the
+`LayeredAssetSource`; the key is asked for on the first read that needs it.
+
 ## Online: fetch the key after sign-in
 
 Pass a `BundleKeyProvider` to `IndexedAssetSource` or `IndexedAssetSource.open`. The engine asks it

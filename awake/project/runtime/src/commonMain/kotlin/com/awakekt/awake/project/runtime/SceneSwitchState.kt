@@ -12,10 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
  * error while the next scene comes in. Awake draws none of it: the state is all `awake:project:runtime`
  * exposes, so a played project still needs no display.
  *
- * One request moves through [Loading] to [Ready], or to [Failed]:
+ * One request moves through [Loading] to [Ready], or to [Failed]. A scene whose content the app has
+ * yet to make readable, such as a protected scene before the player has signed in, waits in
+ * [WaitingForContent] first:
  * ```
  * Idle -> Loading(path, 0) -> ... -> Loading(path, 1) -> Ready(path)
- *                          \-> Failed(path, cause)
+ *                 |        \-> Failed(path, cause)
+ *                 \-> WaitingForContent(path) -> Loading(path, 0) -> ...
  * ```
  * Asking for another scene while one loads replaces the target: the state is [Loading] of the new path
  * from 0 again. After [Ready] or [Failed] the state stays until the next request.
@@ -32,14 +35,27 @@ sealed interface SceneSwitchState {
      * @property progress The share of the target scene's content bytes that have arrived, from 0 to 1.
      * It never decreases within one request, and is 1 once the scene has loaded, before [Ready].
      * The bytes counted are those of the scene file and every file it names by project path (a model,
-     * an image, a sound, a prefab) that the project's content source can prefetch, which today means an
-     * [com.awakekt.awake.project.IndexedAssetSource] with a content cache. A source that can't report
-     * bytes, such as local files, wrapped sources or an index with no cache, reports 0 and then 1 with
-     * nothing between. Files that are named only inside
-     * another file, such as the textures of a model, are not counted ahead; they load before 1 all the
-     * same.
+     * an image, a sound, a prefab) that the project's content source can prefetch: a
+     * [com.awakekt.awake.project.PrefetchableAssetSource], such as an
+     * [com.awakekt.awake.project.IndexedAssetSource] with a content cache or a source wrapping one, as
+     * `verifiedByAssetsLock()` does. A source that can't report bytes, such as local files, an index
+     * with no cache or a wrapper over either, reports 0 and then 1 with nothing between. Files that are
+     * named only inside another file, such as the textures of a model, are not counted ahead; they load
+     * before 1 all the same.
      */
     data class Loading(val path: String, val progress: Float) : SceneSwitchState
+
+    /**
+     * The scene at [path] can't be read until the app opens its gate: the project's files are a
+     * [com.awakekt.awake.project.GatedAssetSource], such as a
+     * [com.awakekt.awake.project.LayeredAssetSource] with no protected source attached yet, that gates
+     * it. The scene being left plays on, and the request goes on to [Loading] from 0 as soon as the
+     * gate opens, as attaching the protected source after sign-in does. It waits as long as that takes;
+     * asking for another scene replaces it.
+     *
+     * @property path The requested scene, relative to the project root.
+     */
+    data class WaitingForContent(val path: String) : SceneSwitchState
 
     /**
      * The scene at [path] is playing and has finished its first frame, so a curtain can lift. That

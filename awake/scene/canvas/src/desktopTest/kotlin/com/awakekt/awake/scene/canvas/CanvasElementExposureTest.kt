@@ -35,6 +35,9 @@ class CanvasElementExposureTest {
         "bar", "sweep", "stepper", "elementId",
     ).associateWith { it }
 
+    /** Settings introduced after the legacy record was retired, saved by their focused binding. */
+    private val focusedFields = mapOf("view" to SceneCanvasView.serializer().descriptor)
+
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
     private val codeOnly: Map<String, String> = mapOf(
         "focused" to "a request on the keyboard's current owner, not a saved value",
@@ -62,7 +65,7 @@ class CanvasElementExposureTest {
 
     @Test
     fun everyOptionIsEitherSetFromASceneFileOrListedAsCodeOnly() {
-        val accountedFor = setFromSceneFile.keys + codeOnly.keys
+        val accountedFor = setFromSceneFile.keys + focusedFields.keys + codeOnly.keys
         val actual = options()
 
         assertEquals(emptySet(), actual - accountedFor, "CanvasElement has options no scene file field is mapped to and that are not listed as code-only")
@@ -74,6 +77,7 @@ class CanvasElementExposureTest {
         val targets = setFromSceneFile.values.toSet()
 
         assertEquals(emptySet(), targets - sceneFileFields, "mapped to scene file fields that do not exist")
+        assertTrue(focusedFields.getValue("view").elementNames.contains("settings"))
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
+import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.writeBufferData
@@ -88,7 +89,11 @@ class Material(
     fun createResourcesFromRenderTarget(textureView: GPUTextureView, sampler: GPUSampler) {
         previewTextureView = textureView
         previewSampler = sampler
+        ownedSampler = sampler
     }
+
+    /** The sampler made for this material's render target, which it closes in [destroy]. */
+    private var ownedSampler: GPUSampler? = null
 
     /** The 3D packet material case: keeps [texture] plus [pbr] (metallicRoughness,
      * normal, occlusion, emissive -- in `textured.wgsl`'s binding 5-8 order, each a neutral
@@ -123,7 +128,7 @@ class Material(
      * match the shader fails here rather than rendering something wrong.
      */
     fun bindGroupFor(pipeline: GPURenderPipeline, pipelineBindings: GroupBindings = bindings): GPUBindGroup = bindGroups.getOrPut(pipeline) {
-        device.createBindGroup(
+        device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(0u),
                 entries = bindGroupEntries(pipelineBindings),
@@ -139,7 +144,7 @@ class Material(
         uniformBuffer: GPUBuffer,
         pipelineBindings: GroupBindings = bindings,
     ): GPUBindGroup = drawBindGroups.getOrPut(pipeline) { HashMap() }.getOrPut(uniformBuffer) {
-        device.createBindGroup(
+        device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(0u),
                 entries = bindGroupEntries(pipelineBindings, uniformBuffer),
@@ -203,13 +208,18 @@ class Material(
     }
 
     /** Must be safe to call unconditionally (every `AppLifecycle.dispose` calls it regardless of which
-     * of the two cases above the material was built for). WebGPU's views/samplers/bind groups
-     * are garbage-collected by the JS runtime; only the buffer has an explicit release. The
-     * [texture] itself is owned by `Renderer` (which created it), same as Vulkan. */
+     * of the two cases above the material was built for). Closes the bind groups, the uniform
+     * buffer and a render-target material's sampler: a browser collects them anyway, wgpu-native
+     * keeps each until released. The [texture] itself is owned by `Renderer` (which created it),
+     * same as Vulkan, and so is the render target whose view this material samples. */
     override fun destroy() {
         previewTextureView = null
         previewSampler = null
         sourceTarget = null
+        bindGroups.values.forEach(GPUBindGroup::close)
+        drawBindGroups.values.forEach { groups -> groups.values.forEach(GPUBindGroup::close) }
+        ownedSampler?.close()
+        ownedSampler = null
         uniformBuffer?.close()
         uniformBuffer = null
         bindGroups.clear()

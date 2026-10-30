@@ -189,6 +189,8 @@ public final class com/awakekt/awake/compose/ui/draw/ContentDrawScope$DefaultImp
 	public static fun clippedWithMargin (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFLkotlin/jvm/functions/Function0;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
+	public static fun isScaled (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
+	public static fun translate (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFLkotlin/jvm/functions/Function0;)V
 }
 
 public final class com/awakekt/awake/compose/ui/draw/DrawModifiersKt {
@@ -709,6 +711,9 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public abstract fun getWidth ()I
 	public fun isDevicePixelAligned ()Z
+	public fun isScaled ()Z
+	public fun translate (FFLkotlin/jvm/functions/Function0;)V
+	public static synthetic fun translate$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public abstract fun withAlpha (FLkotlin/jvm/functions/Function0;)V
 	public abstract fun withScale (FFLkotlin/jvm/functions/Function0;)V
 }
@@ -725,6 +730,9 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZILjava/lang/Object;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z
+	public static fun isScaled (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z
+	public static fun translate (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function0;)V
+	public static synthetic fun translate$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScopeKt {

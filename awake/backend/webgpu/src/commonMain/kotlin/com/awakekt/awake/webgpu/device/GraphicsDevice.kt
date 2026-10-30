@@ -109,11 +109,12 @@ class GraphicsDevice {
     }
 
     /**
-     * Releases [device]'s entry in [WebGpuHandles] and closes the owned [WGPUContext]. The context
-     * must not be used or closed again by the caller afterwards.
+     * Releases [device]'s entry in [WebGpuHandles] and closes the owned [WGPUContext] in order:
+     * surface, device and its queue, adapter. Every resource created from the device must already be
+     * closed. The context must not be used or closed again by the caller afterwards.
      */
     fun destroy() {
         WebGpuHandles.release(device)
-        wgpuContext.close()
+        closeContext(wgpuContext)
     }
 }

@@ -6,12 +6,14 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayerFactory
+import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.project.GatedAssetSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.audio.AudioSource
@@ -58,10 +60,29 @@ import kotlin.reflect.KClass
  * last one's systems close, its sounds stop, its spawned nodes despawn, its entities go with every
  * other entity the world held, and its physics world is destroyed.
  *
+ * The runner's own steps run inside `project-fixed` and `project-frame`, which the schedule guards as one
+ * system each, so they contain their failures themselves: a step that throws must not end either system,
+ * which would be skipped for the rest of the scene and stop the project from switching at all. A failure
+ * reaches the app's `AppErrorHandler` once, and the runner is able to switch again at once.
+ * - **A switch that fails before the last scene is taken out** is reported as `AppErrorSource.SceneSwitch`,
+ *   with the scene's path as its subject and a retry that asks for it again, and the last scene plays on.
+ * - **A switch that fails after** has no last scene to go back to, so the next one is the scene that
+ *   plays. The teardown runs every step even when one throws, so none of the old scene stays in the
+ *   world; the failure is reported in the same way, once the new scene is committed and set up.
+ * - **A failure of the switch's own bookkeeping** is reported the same way, and the playing scene's
+ *   systems still run that step.
+ * - **Attaching the models of spawned nodes** is treated as a system: its failure is reported once as
+ *   `AppErrorSource.System` with the subject `SpawnedModels`, and the attaching is skipped until the next
+ *   scene. The scene's systems run that frame regardless.
+ *
+ * With no handler registered each failure is thrown, as before.
+ *
  * Every step of a request is published as [state], on the frame thread: the load's progress is handed
  * over from the loading coroutine and applied at the same safe points, so the state never changes
  * under a system's update.
  */
+// TooManyFunctions: the steps of a switch, each small so that its failure is contained where it can be told apart.
+@Suppress("TooManyFunctions")
 internal class ProjectSceneRunner(private val project: LoadedProject) :
     SceneSwitch,
     SceneSwitchStatus {
@@ -97,6 +118,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     private var loading: Job? = null
     private var requests = 0
     private var stopped = false
+    private var spawnedModelsFailed = false
 
     private val input: () -> GameplayInput = { runtime.gameplayInput() }
     private val spawner: (SceneNode) -> SpawnedNode = { node -> runtime.spawn(project, node) }
@@ -127,6 +149,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         status.requested(path)
         loading = loads.launch {
             val report = ProgressReporter { status.report(number, it) }
+            project.awaitContent(path) { waiting -> status.reportWaiting(number, path, waiting) }
             val result = project.readScene(path, report::report)
             // A load that finishes as the scene stops has nothing left to play it.
             if (finished.trySend(FinishedLoad(number, path, result)).isFailure) result.getOrNull()?.close()
@@ -150,10 +173,25 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         project.spawnedModels.close()
     }
 
-    /** At a safe point: plays the scene the current request loaded, or logs why it can't. */
+    /**
+     * At a safe point: plays the scene the current request loaded, or logs why it can't. A failure that
+     * the switch's steps do not contain themselves is reported here, so the step never ends the system
+     * that called it; with no handler registered it is thrown.
+     */
+    // TooGenericExceptionCaught: whatever carrying out a switch throws must leave the system able to run, and to switch again.
+    @Suppress("TooGenericExceptionCaught")
     private fun carryOut() {
-        if (loadingPath == null) return
-        status.applyProgress(requests)
+        val path = loadingPath ?: return
+        try {
+            status.applyProgress(requests)
+            playFinishedLoad()
+        } catch (failure: Exception) {
+            status.failed(path, failure)
+            report(failure, path)
+        }
+    }
+
+    private fun playFinishedLoad() {
         var load = finished.tryReceive().getOrNull()
         while (load != null && load.number != requests) {
             // Replaced by a later request before it finished.
@@ -173,6 +211,12 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
                 refuse(runtime, load.path, project.playing.path, failure) { request(load.path) }
             },
         )
+    }
+
+    /** Logs a failure to play [path] and hands it to the app's handler with a retry, or throws it when there is none. */
+    private fun report(failure: Exception, path: String) {
+        log.error(failure) { "Switching to $path failed: ${failure.message}" }
+        if (!runtime.reportError(AppErrorSource.SceneSwitch, failure, retry = { request(path) }, subject = path)) throw failure
     }
 
     // TooGenericExceptionCaught: a scene that fails as it is put in, whatever the reason, must leave the playing one running.
@@ -196,29 +240,61 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
             refuse(runtime, next.path, leaving.path, failure) { request(next.path) }
             return
         }
-        leave(world, leaving, before)
+        // From here the next scene is in the world and the last is on its way out, so there is no going
+        // back: the next scene plays whatever the teardown or the setup does, and a failure is reported
+        // once it does.
+        val teardownFailure = leave(world, leaving, before)
         project.playing = next
         systems = nextSystems
         instance = nextInstance
-        begin()
+        spawnedModelsFailed = false
+        var setupFailure: Exception? = null
+        try {
+            begin()
+        } catch (failure: Exception) {
+            setupFailure = failure
+        }
         status.swapped(next.path)
+        teardownFailure?.let { report(it, next.path) }
+        setupFailure?.let { report(it, next.path) }
     }
 
-    /** Closes [leaving]: its systems, sounds, spawned nodes, every entity [before] held, and its physics world. */
-    private fun leave(world: World, leaving: ProjectScene, before: List<Entity>) {
-        systems?.close()
-        systems = null
-        world.queryEach(AudioSource::class) { _, source -> source.stop() }
-        if (audio.isInitialized()) audio.value.stopMusic()
-        leaving.despawnAll()
-        instance?.let { scene ->
-            runtime.release(scene)
-            scene.destroy()
+    /**
+     * Closes [leaving]: its systems, sounds, spawned nodes, every entity [before] held, and its physics
+     * world. Each step runs even when an earlier one threw, so that none of the scene stays behind in the
+     * world; the first failure is returned, with the others suppressed in it, and null when none threw.
+     */
+    // TooGenericExceptionCaught: a step of the teardown that throws must not keep the others from running.
+    @Suppress("TooGenericExceptionCaught")
+    private fun leave(world: World, leaving: ProjectScene, before: List<Entity>): Exception? {
+        var failed: Exception? = null
+        fun step(block: () -> Unit) {
+            try {
+                block()
+            } catch (failure: Exception) {
+                failed?.addSuppressed(failure) ?: run { failed = failure }
+            }
         }
+        val closing = systems
+        systems = null
+        step { closing?.close() }
+        step {
+            world.queryEach(AudioSource::class) { _, source -> source.stop() }
+            if (audio.isInitialized()) audio.value.stopMusic()
+        }
+        step { leaving.despawnAll() }
+        val released = instance
         instance = null
+        step {
+            released?.let { scene ->
+                runtime.release(scene)
+                scene.destroy()
+            }
+        }
         // What else joined the scene: a fallback camera, what its systems made, what the host added.
-        before.forEach { if (world.isAlive(it)) world.destroy(it) }
-        leaving.close()
+        step { before.forEach { if (world.isAlive(it)) world.destroy(it) } }
+        step { leaving.close() }
+        return failed
     }
 
     /** What every scene does once its entities are in: its canvas images, fonts and strings, its camera and its skinned clips. */
@@ -229,6 +305,28 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         runtime.sortingLayers = sortingLayers
         activatePrimaryCamera(runtime.world)
         runtime.startSkinnedAnimations(project.models)
+    }
+
+    /**
+     * Gives the nodes spawned since the last frame their models, once those have loaded. A failure is
+     * reported once and the attaching is skipped until the next scene, as a system that throws is; with no
+     * handler registered it is thrown.
+     */
+    // TooGenericExceptionCaught: whatever attaching a model throws must not end the frame systems.
+    @Suppress("TooGenericExceptionCaught")
+    private fun attachSpawnedModels() {
+        if (spawnedModelsFailed) return
+        try {
+            project.spawnedModels.attachLoaded(runtime)
+        } catch (failure: Exception) {
+            // Before the handler runs, so a handler that steps the frame again does not report it twice.
+            spawnedModelsFailed = true
+            if (!runtime.reportError(AppErrorSource.System, failure, subject = SPAWNED_MODELS)) {
+                spawnedModelsFailed = false
+                throw failure
+            }
+            log.error(failure) { "Attaching spawned models failed and is skipped until the next scene: ${failure.message}" }
+        }
     }
 
     /**
@@ -268,7 +366,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         override fun update(world: World, delta: Float) {
             status.frameStarted()
             carryOut()
-            project.spawnedModels.attachLoaded(runtime)
+            attachSpawnedModels()
             val frame = systems?.frame
             if (frame != null) for (index in frame.indices) frame[index].update(world, delta)
             status.frameEnded()
@@ -291,6 +389,19 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
     override fun materialDefaults(name: String): PbrMaterial? = target.materialDefaults(name)
 
     override fun materialDefaults(mesh: String, material: String): PbrMaterial? = target.materialDefaults(mesh, material)
+}
+
+/**
+ * Waits, telling [onWaiting], while the project's files gate the scene at [path], as a
+ * [com.awakekt.awake.project.LayeredAssetSource] gates a protected scene until the app attaches the protected source.
+ */
+private suspend fun LoadedProject.awaitContent(path: String, onWaiting: (Boolean) -> Unit) {
+    val gated = files as? GatedAssetSource ?: return
+    val asset = AssetPath(path)
+    if (!gated.isGated(asset)) return
+    onWaiting(true)
+    gated.awaitOpen(asset)
+    onWaiting(false)
 }
 
 /** The scene at [path], or why it can't be played. Cancelling the load throws, as cancelling does. */
@@ -347,5 +458,7 @@ private fun refuse(runtime: SceneAppLifecycleRuntime, path: String, playing: Str
     log.error(failure) { "Can't play $path, so $playing plays on: ${failure.message}" }
     runtime.reportError(AppErrorSource.SceneSwitch, failure, retry = retry, subject = path)
 }
+
+private const val SPAWNED_MODELS = "SpawnedModels"
 
 private val log = Logger("project.scenes")

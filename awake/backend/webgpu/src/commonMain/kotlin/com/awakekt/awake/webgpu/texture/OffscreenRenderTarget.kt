@@ -60,37 +60,67 @@ class OffscreenRenderTarget(
      * samples to composite the target.
      */
     val colorView: GPUTextureView = colorTexture.createView(TextureViewDescriptor())
-    private val multisampleColor: GPUTexture? = if (sampleCount > 1) {
-        graphicsDevice.wgpuContext.device.createTexture(
+    private val device = graphicsDevice.wgpuContext.device
+    private val sampleCount = sampleCount
+    private var scene: SceneAttachments? = null
+
+    /** Depth and, above 1x, multisampled colour: what only a scene pass binds, built by the first one. */
+    private class SceneAttachments(val multisampleColor: GPUTexture?, val depth: GPUTexture) {
+        val depthView: GPUTextureView = depth.createView(TextureViewDescriptor())
+        val colorView: GPUTextureView? = multisampleColor?.createView()
+
+        fun close() {
+            colorView?.close()
+            depthView.close()
+            multisampleColor?.close()
+            depth.close()
+        }
+    }
+
+    private fun scene(): SceneAttachments {
+        check(!destroyed) { "The render target was destroyed." }
+        scene?.let { return it }
+        val size = Extent3D(width = width.toUInt(), height = height.toUInt())
+        val multisampleColor = if (sampleCount > 1) {
+            device.createTexture(
+                TextureDescriptor(size = size, format = colorFormat, usage = GPUTextureUsage.RenderAttachment, sampleCount = sampleCount.toUInt()),
+            )
+        } else {
+            null
+        }
+        val depth = device.createTexture(
             TextureDescriptor(
-                size = Extent3D(width = width.toUInt(), height = height.toUInt()),
-                format = colorFormat,
-                usage = GPUTextureUsage.RenderAttachment,
+                size = size,
+                format = GPUTextureFormat.Depth32Float,
                 sampleCount = sampleCount.toUInt(),
+                usage = GPUTextureUsage.RenderAttachment,
+                dimension = GPUTextureDimension.TwoD,
             ),
         )
-    } else {
-        null
+        return SceneAttachments(multisampleColor, depth).also { scene = it }
     }
-    internal val sceneColorView: GPUTextureView = multisampleColor?.createView() ?: colorView
-    internal val sceneResolveView: GPUTextureView? = colorView.takeIf { multisampleColor != null }
+
+    /** The view a scene pass renders colour into: the multisampled one above 1x, else [colorView]. */
+    internal val sceneColorView: GPUTextureView get() = scene().colorView ?: colorView
+
+    /** Where a multisampled scene pass resolves, or `null` at 1x. */
+    internal val sceneResolveView: GPUTextureView? get() = colorView.takeIf { scene().multisampleColor != null }
 
     /**
      * The `Depth32Float` attachment sized like the colour texture, so offscreen draws occlude as
-     * on-screen ones do. It is a render attachment only and cannot be sampled.
+     * on-screen ones do. It is a render attachment only and cannot be sampled. The first read
+     * allocates it, with the multisampled colour; a target only UI passes draw into never reads it.
      */
-    val depthTexture: GPUTexture = graphicsDevice.wgpuContext.device.createTexture(
-        TextureDescriptor(
-            size = Extent3D(width = width.toUInt(), height = height.toUInt()),
-            format = GPUTextureFormat.Depth32Float,
-            sampleCount = sampleCount.toUInt(),
-            usage = GPUTextureUsage.RenderAttachment,
-            dimension = GPUTextureDimension.TwoD,
-        ),
-    )
+    val depthTexture: GPUTexture get() = scene().depth
 
     /** View of [depthTexture] that a render pass names as its depth attachment. */
-    val depthView: GPUTextureView = depthTexture.createView(TextureViewDescriptor())
+    val depthView: GPUTextureView get() = scene().depthView
+
+    /** Every texture this target holds now, resolved colour first; the scene attachments only once built. */
+    internal val attachmentAllocations: List<AttachmentAllocation>
+        get() = listOfNotNull(colorTexture, scene?.multisampleColor, scene?.depth).map {
+            AttachmentAllocation(it.format, it.sampleCount.toInt(), it.width.toInt(), it.height.toInt())
+        }
 
     /** Idempotent because `Renderer.destroy` frees every still-live target while a caller holding
      * one may also destroy it directly. Both are legitimate; the guard keeps whichever runs
@@ -103,9 +133,13 @@ class OffscreenRenderTarget(
     override fun destroy() {
         if (destroyed) return
         destroyed = true
+        colorView.close()
         colorTexture.close()
-        multisampleColor?.close()
-        depthTexture.close()
+        scene?.close()
+        scene = null
         onDestroy?.invoke()
     }
 }
+
+/** One texture a render target holds, as requested: format, sample count and size. */
+internal data class AttachmentAllocation(val format: GPUTextureFormat, val samples: Int, val width: Int, val height: Int)

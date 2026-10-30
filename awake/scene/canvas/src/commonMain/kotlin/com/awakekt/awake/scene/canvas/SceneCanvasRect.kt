@@ -100,6 +100,30 @@ data class SceneCanvasText(
     val links: Boolean = true,
     val numerals: FontNumerals? = null,
 ) : SceneComponent {
+    /** [SceneCanvasText] as it was before `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        text: String = "",
+        textKey: String = "",
+        textArgs: Map<String, String> = emptyMap(),
+        fontSize: Float = CanvasText.DEFAULT_FONT_SIZE,
+        font: String = "",
+        textAlign: CanvasAnchor? = null,
+        links: Boolean = true,
+    ) : this(text, textKey, textArgs, fontSize, font, textAlign, links)
+
+    /** [copy] as it was before `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        text: String = this.text,
+        textKey: String = this.textKey,
+        textArgs: Map<String, String> = this.textArgs,
+        fontSize: Float = this.fontSize,
+        font: String = this.font,
+        textAlign: CanvasAnchor? = this.textAlign,
+        links: Boolean = this.links,
+    ): SceneCanvasText = copy(text, textKey, textArgs, fontSize, font, textAlign, links)
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {

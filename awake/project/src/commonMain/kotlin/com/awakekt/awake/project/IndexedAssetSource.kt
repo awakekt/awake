@@ -6,7 +6,6 @@
 package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
-import com.awakekt.awake.core.io.AssetSource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -93,7 +92,7 @@ class IndexedAssetSource(
     private val cache: ContentCache? = null,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
     keys: BundleKeyProvider? = null,
-) : AssetSource {
+) : PrefetchableAssetSource {
     private val entries: Map<String, ProjectIndexEntry>
     private val seal: MemberSeal?
     private val members: BundleMembers
@@ -122,6 +121,12 @@ class IndexedAssetSource(
      * none, a loose file it fetched is dropped and fetched again by the read that follows.
      */
     val hasCache: Boolean get() = cache != null
+
+    /** Whether [prefetch] pays off, which it does with a [ContentCache]: the same as [hasCache]. */
+    override val canPrefetch: Boolean get() = hasCache
+
+    /** [prefetch], for the [PrefetchableAssetSource] contract, which keeps this class's own method as released. */
+    override suspend fun prefetchWithProgress(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) = prefetch(paths, onProgress)
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
@@ -176,7 +181,7 @@ class IndexedAssetSource(
         val first = download.files.first()
         when {
             !download.isBundle -> readChecked(first.entry, first.label)
-            cache == null || download.files.any { !isCached(it.entry) } -> members.load(first.entry.bundle!!)
+            cache == null || download.files.any { storedInCache(it.entry) == null } -> members.load(first.entry.bundle!!)
         }
     }
 
@@ -202,8 +207,6 @@ class IndexedAssetSource(
             runCatching { seal.open(entry, stored, entry.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         }
     }
-
-    private suspend fun isCached(entry: ProjectIndexEntry): Boolean = storedInCache(entry) != null
 
     private suspend fun storedInCache(entry: ProjectIndexEntry): ByteArray? =
         cache?.get(index.cacheKeyOf(entry))?.takeIf { it.size.toLong() == index.storedSizeOf(entry) }
