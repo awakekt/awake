@@ -5,33 +5,18 @@
  */
 package com.awakekt.awake.render.parity
 
-import com.awakekt.awake.core.math.Lens
-import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.core.math.Quat
-import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.capture.PixelMap
-import com.awakekt.awake.render.command.GpuDrawPreparationSource
-import com.awakekt.awake.render.passes.RenderDrawCommand
-import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.writePng
-import com.awakekt.awake.render.texture.RenderTarget
-import com.awakekt.awake.worldtext.WorldText
-import com.awakekt.awake.worldtext.WorldTextBatch
-import com.awakekt.awake.worldtext.WorldTextStyle
-import kotlinx.coroutines.runBlocking
 import java.io.File
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
  * A sign placed in the scene, half a metre an em, at 1 m, 10 m and 50 m and turned 70 degrees away at 10 m,
- * on Vulkan (lavapipe) and WebGPU (wgpu-native) (#1062). Through a 60 degree lens on a 256 pixel frame
- * its em is about 110 pixels at 1 m, 11 at 10 m and 2 at 50 m.
+ * on Vulkan (lavapipe) and WebGPU (wgpu-native) (#1062), as [renderWorldTextScene] draws it: on a 256
+ * pixel frame its em is about 110 pixels at 1 m, 11 at 10 m and 2 at 50 m.
  *
  * Each view is held to the same view drawn at four times the resolution and box-filtered down, the
  * picture the pixel grid would show with no aliasing. Coverage runs from 0 to 1:
@@ -62,21 +47,7 @@ class WorldTextParityTest {
         val coverage = HashMap<String, Map<String, FloatArray>>()
         val failures = ArrayList<String>()
         HeadlessUiBackend.entries.forEach { backend ->
-            openHeadlessScene(backend, SIZE).use { session ->
-                val drawn = HashMap<String, FloatArray>()
-                for (view in views) {
-                    val picture = session.renderer.sign(view, SIZE)
-                    val reference = downsample(session.renderer.sign(view, SIZE * SUPERSAMPLE), SIZE * SUPERSAMPLE, SUPERSAMPLE)
-                    val error = meanError(picture, reference)
-                    val ratio = picture.sum() / reference.sum()
-                    println("WorldText $backend ${view.name}: mean error ${"%.4f".format(error)}, ink ${"%.3f".format(ratio)} of the supersampled")
-                    if (reference.sum() <= MIN_INK) failures += "$backend ${view.name}: the sign is not on screen"
-                    if (error > view.maxError) failures += "$backend ${view.name}: mean error $error against the supersampled sign"
-                    if (abs(ratio - 1f) > INK_RATIO) failures += "$backend ${view.name}: ink $ratio of the supersampled sign"
-                    drawn[view.name] = picture
-                }
-                coverage[backend.name] = drawn
-            }
+            openHeadlessScene(backend, SIZE).use { session -> coverage[backend.name] = views.associate { it.name to session.renderer.check(backend, it, failures) } }
         }
         val (vulkan, webGpu) = coverage.values.toList()
         for (view in views) {
@@ -87,43 +58,29 @@ class WorldTextParityTest {
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
-    /** The sign seen from [View.distance] metres, as each pixel's ink coverage, 0 to 1, in a [size]-square frame. */
-    private fun Renderer.sign(view: View, size: Int): FloatArray {
-        val batch = WorldTextBatch(this)
-        val target = createRenderTarget(size, size)
-        try {
-            val text = WorldText("Hg", WorldTextStyle(size = SIGN_EM))
-            val radians = view.turnDegrees * PI.toFloat() / 180f
-            val placement = Mat4().setTrs(Vec3f(0f, 0f, 0f), Quat(0f, sin(radians / 2f), 0f, cos(radians / 2f)), Vec3f(1f, 1f, 1f))
-            val lens = Lens(eye = Vec3f(0f, 0f, view.distance), center = Vec3f.ZERO, fovYRadians = (PI / 3).toFloat(), near = 0.05f, far = 200f)
-            val draws = ArrayList<RenderDrawCommand>()
-            batch.collect(text, placement, lens, draws)
-            val background = render(target, lens, emptyList(), size)
-            val image = render(target, lens, draws, size)
-            PixelMap(size, size, image).writePng(File("build/reports/render-captures/world-text-${view.name}-$size.png"))
-            return FloatArray(size * size) { pixel ->
-                val drawnRed = image[pixel * 4].toInt() and 0xFF
-                val groundRed = background[pixel * 4].toInt() and 0xFF
-                ((drawnRed - groundRed) / (255f - groundRed).coerceAtLeast(1f)).coerceIn(0f, 1f)
-            }
-        } finally {
-            target.destroy()
-            batch.close()
-        }
+    /** [view] drawn on [backend], held to its supersampled picture, with what is wrong added to [failures]. */
+    private fun Renderer.check(backend: HeadlessUiBackend, view: View, failures: MutableList<String>): FloatArray {
+        val picture = sign(view, SIZE)
+        val reference = downsample(sign(view, SIZE * SUPERSAMPLE), SIZE * SUPERSAMPLE, SUPERSAMPLE)
+        val error = meanError(picture, reference)
+        val ratio = picture.sum() / reference.sum()
+        println("WorldText $backend ${view.name}: mean error ${"%.4f".format(error)}, ink ${"%.3f".format(ratio)} of the supersampled")
+        if (reference.sum() <= MIN_INK) failures += "$backend ${view.name}: the sign is not on screen"
+        if (error > view.maxError) failures += "$backend ${view.name}: mean error $error against the supersampled sign"
+        if (abs(ratio - 1f) > INK_RATIO) failures += "$backend ${view.name}: ink $ratio of the supersampled sign"
+        return picture
     }
 
-    private fun Renderer.render(target: RenderTarget, lens: Lens, draws: List<RenderDrawCommand>, size: Int): ByteArray {
-        renderToTexture(
-            target,
-            ScenePassCompiler.compile(
-                lens = lens,
-                drawCalls = draws,
-                clipSpace = clipSpace,
-                aspect = 1f,
-                drawPreparer = (this as GpuDrawPreparationSource).gpuDrawPreparer,
-            ),
-        )
-        return runBlocking { readPixels(target) }.data.copyOf(size * size * 4)
+    /** The sign seen as [view] shows it, as each pixel's ink coverage, 0 to 1, in a [size]-square frame. */
+    private fun Renderer.sign(view: View, size: Int): FloatArray {
+        val background = renderWorldTextScene(view.distance, view.turnDegrees, size, text = "")
+        val image = renderWorldTextScene(view.distance, view.turnDegrees, size)
+        PixelMap(size, size, image).writePng(File("build/reports/render-captures/world-text-${view.name}-$size.png"))
+        return FloatArray(size * size) { pixel ->
+            val drawnRed = image[pixel * 4].toInt() and 0xFF
+            val groundRed = background[pixel * 4].toInt() and 0xFF
+            ((drawnRed - groundRed) / (255f - groundRed).coerceAtLeast(1f)).coerceIn(0f, 1f)
+        }
     }
 
     /** [values], [size] square, box-filtered down by [factor] on each axis. */
@@ -152,7 +109,6 @@ class WorldTextParityTest {
 
     private companion object {
         const val SIZE = 256
-        const val SIGN_EM = 0.5f
         const val SUPERSAMPLE = 4
         const val INKED = 0.02f
         const val MIN_INK = 1f

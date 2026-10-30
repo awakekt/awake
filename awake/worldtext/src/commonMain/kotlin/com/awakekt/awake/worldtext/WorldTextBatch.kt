@@ -27,12 +27,16 @@ import com.awakekt.awake.render.texture.TextureAsset
  *
  * It uploads each text's quads once per layout, and each font's atlas once, and reuses its draw
  * requests, so a frame that changes no text allocates nothing. Requests stay valid until the next
- * [collect] of the same text. Call [release] for a text that is gone, and [close] before the renderer
- * is destroyed.
+ * [collect] of the same text. Call [release] for a text that is gone, or [releaseUnseen] at the end of
+ * a frame to release every text that frame did not collect, and [close] before the renderer is destroyed.
  */
 class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
     private val materials = HashMap<UiFont, Material>()
     private val uploads = HashMap<WorldText, Upload>()
+
+    // The texts uploaded, by index, so the end of a frame finds those it did not draw without an iterator.
+    private val uploaded = ArrayList<WorldText>()
+    private var frame = 0L
 
     /**
      * Appends [text]'s draws to [out], placed by [placement]: its world matrix. A [WorldText.billboard]
@@ -40,7 +44,8 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
      */
     fun collect(text: WorldText, placement: Mat4, camera: Lens, out: MutableList<RenderDrawCommand>) {
         val layout = text.layout
-        val upload = uploads.getOrPut(text) { Upload() }
+        val upload = uploads.getOrPut(text) { Upload().also { uploaded += text } }
+        upload.frame = frame
         if (upload.revision != text.revision) reupload(upload, text, layout)
         val model = upload.model
         if (text.billboard) model.setFacing(placement, camera) else model.set(placement)
@@ -55,8 +60,28 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
     /** Frees [text]'s uploaded quads; drawing it again uploads them again. */
     fun release(text: WorldText) {
         val upload = uploads.remove(text) ?: return
+        uploaded.remove(text)
         renderer.waitIdle()
         upload.free()
+    }
+
+    /** Ends a frame: frees the quads of every text not collected since the last call, and starts the next. */
+    fun releaseUnseen() {
+        var index = uploaded.size - 1
+        while (index >= 0) {
+            val text = uploaded[index]
+            val upload = uploads[text]
+            if (upload == null || upload.frame != frame) {
+                uploaded[index] = uploaded[uploaded.size - 1]
+                uploaded.removeAt(uploaded.size - 1)
+                uploads.remove(text)?.let {
+                    renderer.waitIdle()
+                    it.free()
+                }
+            }
+            index--
+        }
+        frame++
     }
 
     /** Frees every text's quads and every atlas. Closing twice is harmless. */
@@ -65,6 +90,7 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
         renderer.waitIdle()
         uploads.values.forEach(Upload::free)
         uploads.clear()
+        uploaded.clear()
         materials.values.forEach(Material::destroy)
         materials.clear()
     }
@@ -72,7 +98,6 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
     private fun reupload(upload: Upload, text: WorldText, layout: WorldTextLayout) {
         if (upload.meshes.isNotEmpty()) renderer.waitIdle()
         upload.free()
-        val style = text.style
         for (page in layout.pages) {
             val mesh = renderer.createMesh(page.geometry)
             val extra = UniformWriter(WorldTextExtraUniformLayout)
@@ -85,7 +110,6 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
             }
         }
         upload.revision = text.revision
-        upload.font = style.font
     }
 
     private fun materialFor(font: UiFont): Material = materials.getOrPut(font) {
@@ -94,7 +118,7 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
 
     private class Upload {
         var revision = -1
-        var font: UiFont? = null
+        var frame = 0L
         val model = Mat4()
         val meshes = ArrayList<Mesh>()
         val draws = ArrayList<RenderDrawCommand>()

@@ -53,4 +53,8 @@ fun Mat4.setFacing(placement: Mat4, camera: Lens): Mat4 {
     return this
 }
 
-private fun length(x: Float, y: Float, z: Float): Float = sqrt(x * x + y * y + z * z).takeIf { it > 0f } ?: 1f
+// Not takeIf: a nullable Float is boxed, five times a billboard every frame.
+private fun length(x: Float, y: Float, z: Float): Float {
+    val length = sqrt(x * x + y * y + z * z)
+    return if (length > 0f) length else 1f
+}

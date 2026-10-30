@@ -63,6 +63,7 @@ fun main(args: Array<String>) {
         )
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
         writeSkinnedEvidence(renderer, ::write)
+        writeWorldTextEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)
         writePostProcessingEvidence(renderer, ::write)
         writeFxaaOnlyEvidence(renderer, ::write)
@@ -134,6 +135,13 @@ private fun writeSkinnedEvidence(renderer: Renderer, write: (String, String, Int
         EVIDENCE_SIZE,
         renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
     )
+}
+
+/** A sign placed in the scene, drawn from the distance field, near, far and at a grazing angle. */
+private fun writeWorldTextEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    write("scene-world-text-1m", "Scene text at 1 m: edges one pixel wide close up", EVIDENCE_SIZE, renderer.renderWorldTextScene(1f, size = EVIDENCE_SIZE))
+    write("scene-world-text-10m", "The same sign at 10 m", EVIDENCE_SIZE, renderer.renderWorldTextScene(10f, size = EVIDENCE_SIZE))
+    write("scene-world-text-70deg", "The same sign at 2 m, turned 70 degrees away: no smear across the squeezed axis", EVIDENCE_SIZE, renderer.renderWorldTextScene(2f, 70f, size = EVIDENCE_SIZE))
 }
 
 /** A project's shader documents, as `shader_effect` draws them: its sky alone, and a plane over it. */

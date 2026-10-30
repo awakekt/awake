@@ -15,7 +15,7 @@ package com.awakekt.awake.worldtext
  *
  * @param text What it says; each `\n` starts a line.
  * @param style Its face, size, colour and line alignment.
- * @param billboard Whether it turns to face the camera every frame, keeping its place and scale but not
+ * @property billboard Whether it turns to face the camera every frame, keeping its place and scale but not
  *   its own rotation, as a label over an object does; otherwise it lies in its placement's XY plane,
  *   facing the placement's +Z, as a sign on a wall does.
  */

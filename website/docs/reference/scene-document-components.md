@@ -1236,7 +1236,7 @@ scene's other transparent draws. `SceneWorldText`.
 | `size` | number | `0.25` | The em size in world units, before the node's scale. Above 0. |
 | `color` | color | white | Its colour, straight alpha. |
 | `weight` | integer | `400` | The face's weight, 100 to 900: 400 regular, 700 bold. |
-| `align` | string | `"Center"` | How each line lines up across the text's width: `Start`, `Center` or `End`. The block of lines is centred on the node vertically. |
+| `align` | `Start` · `Center` · `End` | `Center` | How each line lines up across the text's width. The block of lines is centred on the node vertically. |
 | `lineSpacing` | number | `1` | One line's top to the next, as a multiple of the face's line height. Above 0. |
 | `billboard` | boolean | `false` | Turn to face the camera every frame, keeping the node's place and scale. Off, it lies in the node's XY plane facing its +Z. |
 

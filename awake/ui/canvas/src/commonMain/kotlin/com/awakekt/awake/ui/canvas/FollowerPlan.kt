@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -156,17 +157,23 @@ private fun CanvasTree.plan(plan: FollowerPlan, canvas: FollowerCanvas): Boolean
     val projection = resolver.project(element.follow, element.followOffset)
     val frameBox = if (element.followBounds) resolver.bounds(element.follow) else null
     element.followDistance = projection?.distance ?: 0f
-    if (projection == null && frameBox == null) return false
-    if (!looks(plan, rules, projection)) return false
-    if (frameBox != null) {
-        plan.track(frameBox.x, frameBox.y)
-        plan.scale = 1f
-        plan.place((frameBox.x - origin.x) / canvas.density, (frameBox.y - origin.y) / canvas.density, frameBox.width / canvas.density, frameBox.height / canvas.density)
-        plan.outset(element.followOutset)
-        plan.snapToPixels()
-        return !(rules.cullOffScreen && !canvas.overlaps(plan.x, plan.y, plan.width, plan.height))
+    return when {
+        projection == null && frameBox == null -> false
+        !looks(plan, rules, projection) -> false
+        frameBox != null -> onBox(plan, rules, frameBox, canvas)
+        else -> projection != null && onPoint(plan, rules, projection, canvas)
     }
-    return projection != null && onPoint(plan, rules, projection, canvas)
+}
+
+/** [plan]'s follower over the node's frame rectangle [frameBox], grown by its outset; false when culled off screen. */
+private fun CanvasTree.onBox(plan: FollowerPlan, rules: CanvasFollowRules, frameBox: Rectangle, canvas: FollowerCanvas): Boolean {
+    val density = canvas.density
+    plan.track(frameBox.x, frameBox.y)
+    plan.scale = 1f
+    plan.place((frameBox.x - origin.x) / density, (frameBox.y - origin.y) / density, frameBox.width / density, frameBox.height / density)
+    plan.outset(plan.element.followOutset)
+    plan.snapToPixels()
+    return !(rules.cullOffScreen && !canvas.overlaps(plan.x, plan.y, plan.width, plan.height))
 }
 
 /** Sets [plan]'s size bucket and opacity at its distance, returning false when its distance or an occluder hides it. */
@@ -176,14 +183,18 @@ private fun CanvasTree.looks(plan: FollowerPlan, rules: CanvasFollowRules, proje
     val tooFar = rules.maxDistance > 0f && distance > rules.maxDistance
     // Asked last and only on screen: an occlusion query is the dearest thing a host answers.
     val onScreen = projection != null && !projection.behind
-    val occluded = !tooFar && rules.occlusion && onScreen && resolver.occluded(element.follow, element.followOffset)
+    val asksOcclusion = rules.occlusion && onScreen && !tooFar
+    val occluded = asksOcclusion && resolver.occluded(element.follow, element.followOffset)
     val scale = rules.scale?.valueAt(distance) ?: 1f
     val alpha = (rules.fade?.valueAt(distance) ?: 1f).coerceAtMost(1f)
-    if (tooFar || occluded || scale <= 0f || alpha <= 0f) return false
-    plan.bucket = FollowerSizing.bucketOf(scale, plan.bucket)
-    plan.scale = FollowerSizing.scaleOf(plan.bucket)
-    plan.alpha = alpha
-    return true
+    val seen = scale > 0f && alpha > 0f
+    val shown = seen && !tooFar && !occluded
+    if (shown) {
+        plan.bucket = FollowerSizing.bucketOf(scale, plan.bucket)
+        plan.scale = FollowerSizing.scaleOf(plan.bucket)
+        plan.alpha = alpha
+    }
+    return shown
 }
 
 /**
@@ -200,19 +211,20 @@ private fun CanvasTree.onPoint(plan: FollowerPlan, rules: CanvasFollowRules, pro
     val boxWidth = element.width * scale
     val boxHeight = element.height * scale
     val margin = rules.edgeMargin.coerceAtLeast(0f)
-    if (rules.pinToEdge && canvas.sized && (projection.behind || !canvas.holds(x, y, margin))) {
+    val offCanvas = projection.behind || !canvas.holds(x, y, margin)
+    val pins = rules.pinToEdge && canvas.sized && offCanvas
+    if (pins) {
         pinned(plan, x, y, canvas, margin, boxWidth, boxHeight)
-        plan.snapToPixels()
-        return true
+    } else {
+        val column = element.anchor.column
+        val row = element.anchor.row
+        val left = x - column / 2f * boxWidth + (if (column == 2) -element.offsetX else element.offsetX) * scale
+        val top = y - row / 2f * boxHeight + (if (row == 2) -element.offsetY else element.offsetY) * scale
+        plan.place(left, top, boxWidth, boxHeight)
     }
-    if (projection.behind) return false
-    val column = element.anchor.column
-    val row = element.anchor.row
-    val left = x - column / 2f * boxWidth + (if (column == 2) -element.offsetX else element.offsetX) * scale
-    val top = y - row / 2f * boxHeight + (if (row == 2) -element.offsetY else element.offsetY) * scale
-    plan.place(left, top, boxWidth, boxHeight)
     plan.snapToPixels()
-    return !(rules.cullOffScreen && !canvas.overlaps(plan.x, plan.y, boxWidth, boxHeight))
+    val culled = rules.cullOffScreen && !canvas.overlaps(plan.x, plan.y, boxWidth, boxHeight)
+    return pins || (!projection.behind && !culled)
 }
 
 /**

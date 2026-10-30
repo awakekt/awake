@@ -46,6 +46,8 @@ kotlin {
                 implementation(project(":awake:core:graphics2d"))
                 implementation(project(":awake:core:host"))
                 implementation(project(":awake:core:text"))
+                // Text placed in a scene, drawn from the distance field on both backends.
+                implementation(project(":awake:worldtext"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
@@ -65,8 +67,6 @@ kotlin {
                 implementation(project(":awake:compose:runtime"))
                 // The layered terrain surface, drawn with a bake.
                 implementation(project(":awake:kit:terrain-layers"))
-                // Text placed in a scene, drawn from the distance field on both backends.
-                implementation(project(":awake:worldtext"))
                 // Shared image-pass effects rendered on both backends for parity verification.
                 implementation(project(":awake:engine:render:effects"))
             }

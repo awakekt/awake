@@ -283,3 +283,7 @@ free tilemap.tint.g | A colour multiplier: follows the sprite tint contract with
 free tilemap.tint.b | A colour multiplier: follows the sprite tint contract without a fixed channel range.
 free tilemap.tint.a | A colour multiplier: follows the sprite tint contract without a fixed channel range.
 free tilemap.sortOrder | Relative paint order: any signed integer is valid.
+free world_text.color.r | A colour channel: every value is accepted; nothing validates it.
+free world_text.color.g | A colour channel: every value is accepted; nothing validates it.
+free world_text.color.b | A colour channel: every value is accepted; nothing validates it.
+free world_text.color.a | A colour channel: every value is accepted; nothing validates it.

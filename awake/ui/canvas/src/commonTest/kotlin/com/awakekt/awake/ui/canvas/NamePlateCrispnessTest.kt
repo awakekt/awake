@@ -158,14 +158,17 @@ class NamePlateCrispnessTest {
         var worst = 0
         for (y in 1 until FRAME_H - 1) {
             for (x in 1 until FRAME_W - 1) {
-                if (!after.contains(x + dx, y + dy)) continue
-                val inked = if (interiorOnly) before.red(x, y) >= FULL else before.red(x, y) > 0 || after.red(x + dx, y + dy) > 0
-                if (!inked) continue
-                worst = maxOf(worst, abs(before.red(x, y) - after.red(x + dx, y + dy)))
+                if (after.contains(x + dx, y + dy) && inked(before, after, x, y, dx, dy, interiorOnly)) {
+                    worst = maxOf(worst, abs(before.red(x, y) - after.red(x + dx, y + dy)))
+                }
             }
         }
         return worst
     }
+
+    @Suppress("LongParameterList") // Two frames, a pixel, the move between them and which pixels count.
+    private fun inked(before: PixelMap, after: PixelMap, x: Int, y: Int, dx: Int, dy: Int, interiorOnly: Boolean): Boolean =
+        if (interiorOnly) before.red(x, y) >= FULL else before.red(x, y) > 0 || after.red(x + dx, y + dy) > 0
 
     private fun List<SemanticsNode>.findTag(tag: String): SemanticsNode? =
         firstNotNullOfOrNull { if (it.testTag == tag) it else it.children.findTag(tag) }

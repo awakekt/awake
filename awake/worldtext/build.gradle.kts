@@ -28,6 +28,7 @@ kotlin {
             implementation(kotlin("test"))
             implementation(project(":awake:asset:shader-dsl"))
             implementation(project(":awake:asset:shader-pack"))
+            implementation(project(":awake:engine:render:testing"))
         }
     }
 }

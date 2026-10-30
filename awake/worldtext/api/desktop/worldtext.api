@@ -26,6 +26,7 @@ public final class com/awakekt/awake/worldtext/WorldTextBatch : java/lang/AutoCl
 	public fun close ()V
 	public final fun collect (Lcom/awakekt/awake/worldtext/WorldText;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;)V
 	public final fun release (Lcom/awakekt/awake/worldtext/WorldText;)V
+	public final fun releaseUnseen ()V
 }
 
 public final class com/awakekt/awake/worldtext/WorldTextCoverageKt {

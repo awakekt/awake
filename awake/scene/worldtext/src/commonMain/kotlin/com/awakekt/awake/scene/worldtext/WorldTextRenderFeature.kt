@@ -27,21 +27,14 @@ class WorldTextRenderFeature(renderer: Renderer) :
     private val batch = WorldTextBatch(renderer)
     private val draws = ArrayList<RenderDrawCommand>()
     private val contribution = RenderContribution(draws = draws)
-    private var live = HashSet<WorldText>()
-    private var lastLive = HashSet<WorldText>()
 
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution {
         draws.clear()
         val lens = context.camera.lens
         world.queryEach<Transform, WorldText> { _, transform, text ->
-            live.add(text)
             if (text.text.isNotEmpty()) batch.collect(text, transform.worldMatrix, lens, draws)
         }
-        for (text in lastLive) if (text !in live) batch.release(text)
-        val previous = lastLive
-        lastLive = live
-        live = previous
-        live.clear()
+        batch.releaseUnseen()
         return contribution
     }
 
