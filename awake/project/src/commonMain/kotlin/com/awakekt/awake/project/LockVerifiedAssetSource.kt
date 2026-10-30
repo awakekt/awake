@@ -62,8 +62,7 @@ class LockVerifiedAssetSource(
     lock: AwakeAssetsLock,
     private val refuseMismatches: Boolean = false,
     private val onMismatch: (AssetMismatch) -> Unit,
-) :
-    GatedAssetSource,
+) : GatedAssetSource,
     PrefetchableAssetSource {
     private val pins: Map<String, AwakeAssetLockEntry> = lock.assets.mapKeys { (path, _) -> path.removePrefix("/") }
 
