@@ -80,6 +80,7 @@ data class UiShaderSet<T>(
     constructor(quad: T, glyph: T, texture: T, roundedQuad: T, targetComposite: T? = null) :
         this(quad, glyph, texture, roundedQuad, targetComposite, null)
 
+    /** The `copy` from before [decoratedGlyph], which keeps this one's [decoratedGlyph]. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(
         quad: T = this.quad,

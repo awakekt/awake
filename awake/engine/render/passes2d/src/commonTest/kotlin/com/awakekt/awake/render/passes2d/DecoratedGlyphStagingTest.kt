@@ -16,8 +16,8 @@ import kotlin.test.assertTrue
 /** Decorated glyphs (#1061) stage in their own layout and run, one quad a glyph, grown to their decoration. */
 class DecoratedGlyphStagingTest {
     private val decoration = GlyphDecoration(
-        fieldX = 0f,
-        fieldY = 0f,
+        fieldOffsetX = -10f,
+        fieldOffsetY = -10f,
         fieldW = 40f,
         fieldH = 40f,
         fieldU0 = 0.5f,

@@ -16,11 +16,12 @@ import kotlin.math.max
  * softened across [shadowBlur] either side. One quad draws all three, shadow under outline under fill, so a thick
  * outline has no gaps between stamps and outlined, shadowed text costs one draw a glyph.
  *
- * Every length is in the same pixels as the glyph's own quad. Nothing here is UI vocabulary: a scene text pass draws a
+ * Every length is in the same pixels as the glyph's own quad, and the tile is placed from the quad's own corner, so
+ * moving a glyph moves its decoration with nothing to copy. Nothing here is UI vocabulary: a scene text pass draws a
  * glyph's decoration from the same values.
  *
- * @property fieldX Left edge of the glyph's effect tile, in pixels.
- * @property fieldY Top edge of the effect tile, in pixels.
+ * @property fieldOffsetX Left edge of the glyph's effect tile from the left edge of the glyph's quad, in pixels.
+ * @property fieldOffsetY Top edge of the effect tile from the top edge of the glyph's quad, in pixels.
  * @property fieldW Width of the effect tile, in pixels.
  * @property fieldH Height of the effect tile, in pixels.
  * @property fieldU0 Left UV of the effect tile in the glyph's atlas page.
@@ -36,8 +37,8 @@ import kotlin.math.max
  * shadow.
  */
 data class GlyphDecoration(
-    val fieldX: Float,
-    val fieldY: Float,
+    val fieldOffsetX: Float,
+    val fieldOffsetY: Float,
     val fieldW: Float,
     val fieldH: Float,
     val fieldU0: Float,
@@ -69,23 +70,29 @@ data class GlyphDecoration(
      */
     fun drawnBounds(x: Float, y: Float, w: Float, h: Float, out: FloatArray) {
         val grow = reach
+        val fieldX = x + fieldOffsetX
+        val fieldY = y + fieldOffsetY
         out[0] = minOf(x, maxOf(x - grow, fieldX))
         out[1] = minOf(y, maxOf(y - grow, fieldY))
         out[2] = maxOf(x + w, minOf(x + w + grow, fieldX + fieldW))
         out[3] = maxOf(y + h, minOf(y + h + grow, fieldY + fieldH))
     }
 
-    /** This decoration with its pixels mapped by [scaleX], [scaleY] and [dx], [dy], as a scope maps its glyph. */
-    fun mapped(scaleX: Float, scaleY: Float, dx: Float, dy: Float): GlyphDecoration = copy(
-        fieldX = fieldX * scaleX + dx,
-        fieldY = fieldY * scaleY + dy,
-        fieldW = fieldW * scaleX,
-        fieldH = fieldH * scaleY,
-        outlineWidth = outlineWidth * scaleX,
-        shadowOffsetX = shadowOffsetX * scaleX,
-        shadowOffsetY = shadowOffsetY * scaleY,
-        shadowBlur = shadowBlur * scaleX,
-    )
+    /** This decoration with its pixels scaled by [scaleX] and [scaleY], as a scope scales its glyph; itself at 1. */
+    fun scaled(scaleX: Float, scaleY: Float): GlyphDecoration = if (scaleX == 1f && scaleY == 1f) {
+        this
+    } else {
+        copy(
+            fieldOffsetX = fieldOffsetX * scaleX,
+            fieldOffsetY = fieldOffsetY * scaleY,
+            fieldW = fieldW * scaleX,
+            fieldH = fieldH * scaleY,
+            outlineWidth = outlineWidth * scaleX,
+            shadowOffsetX = shadowOffsetX * scaleX,
+            shadowOffsetY = shadowOffsetY * scaleY,
+            shadowBlur = shadowBlur * scaleX,
+        )
+    }
 
     /** This decoration with its colours dimmed by [alpha], as a scope dims its glyph's. */
     fun dimmedBy(alpha: Float): GlyphDecoration =

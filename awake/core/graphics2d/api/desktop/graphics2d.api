@@ -581,13 +581,13 @@ public final class com/awakekt/awake/core/graphics2d/GlyphDecoration {
 	public final fun drawnBounds (FFFF[F)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFieldH ()F
+	public final fun getFieldOffsetX ()F
+	public final fun getFieldOffsetY ()F
 	public final fun getFieldU0 ()F
 	public final fun getFieldU1 ()F
 	public final fun getFieldV0 ()F
 	public final fun getFieldV1 ()F
 	public final fun getFieldW ()F
-	public final fun getFieldX ()F
-	public final fun getFieldY ()F
 	public final fun getOutlineColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getOutlineWidth ()F
 	public final fun getReach ()F
@@ -596,7 +596,7 @@ public final class com/awakekt/awake/core/graphics2d/GlyphDecoration {
 	public final fun getShadowOffsetX ()F
 	public final fun getShadowOffsetY ()F
 	public fun hashCode ()I
-	public final fun mapped (FFFF)Lcom/awakekt/awake/core/graphics2d/GlyphDecoration;
+	public final fun scaled (FF)Lcom/awakekt/awake/core/graphics2d/GlyphDecoration;
 	public fun toString ()Ljava/lang/String;
 }
 

@@ -10,8 +10,8 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawPoint
-import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.GlyphDecoration
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
@@ -653,11 +653,6 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
     }
 
     fun drawGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
-        val decoration = glyph.decoration
-        if (decoration != null && font.effectFieldRangePx > 0f && font.samplingMode == UiFontSamplingMode.DistanceField) {
-            drawDecoratedGlyph(glyph, decoration, font)
-            return
-        }
         if (font.samplingMode == UiFontSamplingMode.ColorRgba) {
             drawColorGlyph(glyph, font)
             return
@@ -863,17 +858,18 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     val scaledGlyph = if (transform == null) {
                         primitive
                     } else {
-                        // The decoration scales about the same pivot as the glyph's own quad.
-                        val decoration = primitive.decoration?.mapped(
-                            transform.scaleX,
-                            transform.scaleY,
-                            transform.pivotX * (1f - transform.scaleX),
-                            transform.pivotY * (1f - transform.scaleY),
-                        )
+                        // Placed from the glyph's own corner, the decoration only scales with it.
+                        val decoration = primitive.decoration?.scaled(transform.scaleX, transform.scaleY)
                         primitive.copy(x = x, y = y, w = w, h = h, decoration = decoration)
                     }
                     val glyphFont = (primitive.font ?: font)?.pageFont(primitive.page)
-                    if (glyphFont != null) drawGlyph(scaledGlyph, glyphFont) else fillRect(x, y, w, h, MissingFontColor)
+                    val decoration = scaledGlyph.decoration
+                    when {
+                        glyphFont == null -> fillRect(x, y, w, h, MissingFontColor)
+                        decoration != null && glyphFont.effectFieldRangePx > 0f &&
+                            glyphFont.samplingMode == UiFontSamplingMode.DistanceField -> drawDecoratedGlyph(scaledGlyph, decoration, glyphFont)
+                        else -> drawGlyph(scaledGlyph, glyphFont)
+                    }
                 }
             }
 

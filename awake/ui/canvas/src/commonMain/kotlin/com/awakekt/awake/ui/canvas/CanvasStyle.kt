@@ -288,6 +288,7 @@ data class CanvasTextShadow(
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(color: String = "#000000C0", offsetX: Float = 1f, offsetY: Float = 1f) : this(color, offsetX, offsetY, 0f)
 
+    /** The `copy` from before [blur], which keeps this one's [blur]. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(color: String = this.color, offsetX: Float = this.offsetX, offsetY: Float = this.offsetY): CanvasTextShadow =
         CanvasTextShadow(color, offsetX, offsetY, blur)

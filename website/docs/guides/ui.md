@@ -93,11 +93,16 @@ node. `drawImageFillBar(fill, value, direction)` draws it as a bar's fill, from 
 draws an `ImageFill` over it, and `dropShadow(shadow)` casts a shadow in the style's shape. Scene UI's
 `canvas_element` style is the saved form of the same properties.
 
-`TextStyle(shadow = TextShadow(color, offsetX, offsetY), outline = TextOutline(color, width))` draws a
-hard shadow and an outline under a `Text` or a `BasicTextField`'s text, in dp; both merge over an
-inherited style like its colour and size do. Each is drawn as text in its own colour, so the
-[text coverage rule](#how-coverage-becomes-colour) shapes its edges by that colour. A scene's `canvas_element` text ignores the host's text
-style and looks only as its own data says.
+`TextStyle(shadow = TextShadow(color, offsetX, offsetY, blur), outline = TextOutline(color, width))` draws
+a shadow and an outline under a `Text` or a `BasicTextField`'s text, in dp; both merge over an inherited
+style like its colour and size do. The shadow is hard unless `blur` softens its edge across that many dp
+either side; with no offset it is a glow. With the built-in fonts and any font from `UiFonts.load`, each
+glyph draws its fill, outline and shadow in one quad from the font's effect field, a coarse distance field
+that reaches half an em past the ink: a thick outline stays round with no gaps, and the text costs one draw
+a glyph. Decorated text draws from the distance field at every size, so its weight does not jump at the
+24-pixel limit. A font without an effect field, such as `UiFonts.bitmap()`, stamps the text in the shadow's
+colour, then eight times around it in the outline's, then once more. A scene's `canvas_element` text ignores
+the host's text style and looks only as its own data says.
 
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads

@@ -371,7 +371,7 @@ class Renderer internal constructor(
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
-    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.decoratedGlyphMeshForRun(index)
+    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index, decorated = true)
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun instanceBufferForRun(index: Int): InstanceBuffer = bufferPools.instanceBufferForRun(index)
     internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = bufferPools.skinnedInstanceBufferForRun(index)

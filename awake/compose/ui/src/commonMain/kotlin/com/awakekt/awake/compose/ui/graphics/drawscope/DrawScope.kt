@@ -910,7 +910,7 @@ internal class PaintScope :
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
-        val mapped = decoration.mapped(transform.scaleX, transform.scaleY, transform.mapX(originX), transform.mapY(originY))
+        val mapped = decoration.scaled(transform.scaleX, transform.scaleY)
         // Culled by what it draws, its quad grown by the decoration's reach, not by the glyph alone.
         val reach = mapped.reach
         if (isFullyOutsideActiveClip(px - reach, py - reach, pw + 2 * reach, ph + 2 * reach)) return

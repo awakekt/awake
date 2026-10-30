@@ -74,8 +74,10 @@ internal class GpuBufferPoolManager(
 
     fun quadMeshForRun(index: Int): DynamicMesh = uiQuadMeshPool[index]
     fun roundedQuadMeshForRun(index: Int): DynamicMesh = uiRoundedQuadMeshPool[index]
-    fun glyphMeshForRun(index: Int): DynamicMesh = uiGlyphMeshPool[index]
-    fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = uiDecoratedGlyphMeshPool[index]
+
+    /** The [index]th glyph run's mesh, from the decorated glyph layout's pool when [decorated] (#1061). */
+    fun glyphMeshForRun(index: Int, decorated: Boolean = false): DynamicMesh =
+        if (decorated) uiDecoratedGlyphMeshPool[index] else uiGlyphMeshPool[index]
 
     /** One mesh per textured primitive, not one shared by all of them -- a run's later primitive
      * would otherwise overwrite geometry an earlier, not-yet-submitted draw still points at. */

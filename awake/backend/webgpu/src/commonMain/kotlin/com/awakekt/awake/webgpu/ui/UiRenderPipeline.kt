@@ -275,7 +275,8 @@ class UiRenderPipeline(
             val uploaded = if (source == null) {
                 device.uploadFont(font)
             } else {
-                val shared = source.atlasBinding(font)
+                source.fontBindGroup(font)
+                val shared = source.fontBindings.getValue(font)
                 FontBinding(shared.texture, shared.view, shared.sampler, device.createUiUniformBuffer(), shared.fontInfo, ownsTexture = false)
             }
             uploaded.also { device.writeUiUniforms(it.uniforms, screenToNdc, it.fontInfo) }
@@ -290,12 +291,6 @@ class UiRenderPipeline(
                 ),
             ),
         ).also { binding.bindGroup = it }
-    }
-
-    /** [font]'s atlas binding, uploaded on first use, for a pipeline that samples this one's atlases. */
-    internal fun atlasBinding(font: UiFont): FontBinding {
-        fontBindGroup(font)
-        return fontBindings.getValue(font)
     }
 
     /** Builds (once) and returns the bind group for [material]'s `previewTextureView`/`previewSampler`. */

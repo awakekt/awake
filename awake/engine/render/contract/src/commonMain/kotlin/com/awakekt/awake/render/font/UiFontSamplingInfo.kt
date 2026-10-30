@@ -18,6 +18,7 @@ import com.awakekt.awake.core.text.font.UiFontSamplingMode
  * @property atlasHeight Height of the backing font glyph texture atlas in pixels.
  * @property linearCoverage Whether coverage alpha is exact pixel area, shaped by the text coverage rule (see
  *   [UiFont.linearCoverage]).
+ * @property effectFieldRangePx The spread in atlas texels of the font's effect field (see [UiFont.effectFieldRangePx]).
  */
 data class UiFontSamplingInfo(
     /** Sampling algorithm mode (e.g. Bitmap or Signed Distance Field). */
@@ -42,6 +43,7 @@ data class UiFontSamplingInfo(
         linearCoverage: Boolean = false,
     ) : this(mode, distanceFieldRangePx, atlasWidth, atlasHeight, linearCoverage, 0f)
 
+    /** The `copy` from before [effectFieldRangePx], which keeps this one's [effectFieldRangePx]. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(
         mode: UiFontSamplingMode = this.mode,

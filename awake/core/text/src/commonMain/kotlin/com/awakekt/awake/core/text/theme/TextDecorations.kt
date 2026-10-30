@@ -25,6 +25,7 @@ data class TextShadow(val color: Color, val offsetX: Float = 1f, val offsetY: Fl
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(color: Color, offsetX: Float = 1f, offsetY: Float = 1f) : this(color, offsetX, offsetY, 0f)
 
+    /** The `copy` from before [blur], which keeps this one's [blur]. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(color: Color = this.color, offsetX: Float = this.offsetX, offsetY: Float = this.offsetY): TextShadow =
         TextShadow(color, offsetX, offsetY, blur)

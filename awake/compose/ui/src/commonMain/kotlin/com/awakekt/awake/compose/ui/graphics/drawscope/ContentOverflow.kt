@@ -124,7 +124,10 @@ internal class ContentOverflow {
             is UiDrawPrimitive.Quad -> box(primitive.x, primitive.y, primitive.w, primitive.h)
             is UiDrawPrimitive.GradientQuad -> box(primitive.x, primitive.y, primitive.w, primitive.h)
             is UiDrawPrimitive.RoundedQuad -> box(primitive.x, primitive.y, primitive.w, primitive.h)
-            is UiDrawPrimitive.Glyph -> glyphBox(primitive)
+            is UiDrawPrimitive.Glyph -> {
+                primitive.paintedBounds(drawn)
+                box(drawn[0], drawn[1], drawn[2] - drawn[0], drawn[3] - drawn[1])
+            }
             is UiDrawPrimitive.BackdropBlur -> box(primitive.x, primitive.y, primitive.w, primitive.h)
             is UiDrawPrimitive.Texture -> turnedBox(primitive.x, primitive.y, primitive.w, primitive.h, primitive.rotationDegrees)
             is UiDrawPrimitive.ShadowQuad -> {
@@ -140,14 +143,7 @@ internal class ContentOverflow {
         return x1 > x0 && y1 > y0
     }
 
-    /** A glyph's quad, or for a decorated one (#1061) the quad its outline and shadow grow it to. */
-    private fun glyphBox(glyph: UiDrawPrimitive.Glyph) {
-        val decoration = glyph.decoration ?: return box(glyph.x, glyph.y, glyph.w, glyph.h)
-        decoration.drawnBounds(glyph.x, glyph.y, glyph.w, glyph.h, drawn)
-        box(drawn[0], drawn[1], drawn[2] - drawn[0], drawn[3] - drawn[1])
-    }
-
-    // [glyphBox]'s scratch, so measuring a decorated glyph allocates nothing.
+    // A decorated glyph's drawn bounds' scratch, so measuring a decorated glyph allocates nothing.
     private val drawn = FloatArray(4)
 
     private fun box(x: Float, y: Float, w: Float, h: Float) {
@@ -184,4 +180,17 @@ internal class ContentOverflow {
     private companion object {
         const val ANTIALIAS_FRINGE = 1f
     }
+}
+
+/**
+ * The rect [this] glyph paints, left, top, right, bottom, into [out]: its quad, or for a decorated glyph (#1061) the
+ * quad its outline and shadow grow it to.
+ */
+private fun UiDrawPrimitive.Glyph.paintedBounds(out: FloatArray) {
+    val decoration = decoration
+    if (decoration != null) return decoration.drawnBounds(x, y, w, h, out)
+    out[0] = x
+    out[1] = y
+    out[2] = x + w
+    out[3] = y + h
 }

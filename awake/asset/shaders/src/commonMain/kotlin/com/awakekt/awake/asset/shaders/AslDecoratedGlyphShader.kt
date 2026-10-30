@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.a
+import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.b
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
@@ -16,7 +17,6 @@ import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.fwidth
 import com.awakekt.awake.asset.shaderdsl.g
-import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.le
@@ -112,6 +112,8 @@ val UiDecoratedGlyphShader: AslShaderDefinition = shader("ui_decorated_glyph") {
  * quad grown by the decoration's reach; [effect] is the outline width, the shadow blur and the shadow offset, all in
  * field uv.
  */
+// One expression for each input the shader core reads; grouping them further would only rename them.
+@Suppress("LongParameterList")
 internal class DecoratedGlyphInputs(
     val atlas: AslExpr,
     val sampler: AslExpr,

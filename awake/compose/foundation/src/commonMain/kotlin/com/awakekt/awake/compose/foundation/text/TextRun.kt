@@ -314,15 +314,14 @@ internal class TextRun(
                     val uv = font.glyphFor(codePoint, style.weight)
                     val pen = clusterX + penX
                     // A blank glyph, a space, has nothing to decorate, and no effect tile.
-                    if (uv != null && effects != null && uv.widthEm > 0f && uv.heightEm > 0f) {
+                    val inked = uv != null && uv.widthEm > 0f && uv.heightEm > 0f
+                    if (inked && effects != null) {
                         val drawn = effects.draw(scope, font, glyphFont, codePoint, style.weight, uv, pen, y, glyphPx, color)
                         if (!drawn) {
-                            effects.stamp(color) { stampColor, dx, dy ->
-                                drawPlainGlyph(scope, uv, pen + dx, y + dy, stampColor, glyphFont)
-                            }
+                            effects.stamp(color) { stampColor, dx, dy -> scope.drawPlainGlyph(uv, pen + dx, y + dy, stampColor, glyphFont) }
                         }
                     } else if (uv != null) {
-                        drawPlainGlyph(scope, uv, pen, y, color, glyphFont)
+                        scope.drawPlainGlyph(uv, pen, y, color, glyphFont)
                     }
                 }
             } + letterSpacing
@@ -331,8 +330,8 @@ internal class TextRun(
     }
 
     /** [uv] with its pen at [pen] on the line whose em box starts at [lineTop], as [paintLine] draws a plain glyph. */
-    private fun drawPlainGlyph(scope: DrawScope, uv: GlyphRect, pen: Float, lineTop: Float, color: Color, glyphFont: UiFont) {
-        scope.drawGlyph(
+    private fun DrawScope.drawPlainGlyph(uv: GlyphRect, pen: Float, lineTop: Float, color: Color, glyphFont: UiFont) {
+        drawGlyph(
             x = pen + uv.offsetXEm * glyphPx,
             y = lineTop + uv.offsetYEm * glyphPx,
             width = uv.widthEm * glyphPx,
@@ -372,4 +371,3 @@ internal class TextRun(
 }
 
 internal data class TextCaretPosition(val x: Float, val y: Float)
-

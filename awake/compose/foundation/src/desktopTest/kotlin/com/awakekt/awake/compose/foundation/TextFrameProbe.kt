@@ -19,9 +19,12 @@ import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.WordBreak
 import com.sun.management.ThreadMXBean
@@ -68,6 +71,17 @@ class TextFrameProbe {
     @Test
     fun unchangedDistanceFieldTextPerFrame() {
         probe("distance field", TextStyle(font = UiFonts.default().withPixelGlyphMaxSize(0)))
+    }
+
+    /**
+     * The same labels outlined and with a soft shadow (#1061): one decorated glyph a character, from the distance
+     * field at every size, where stamping drew ten. Held to the same ratchet as plain text: about 82,000 run alone,
+     * once each run kept its glyphs' decorations from frame to frame (160,000 when it built two a glyph a frame).
+     */
+    @Test
+    fun unchangedOutlinedShadowedTextPerFrame() {
+        val decorated = TextStyle(outline = TextOutline(Color.Black, 2f), shadow = TextShadow(Color.Black, 1f, 1f, blur = 2f))
+        probe("outlined and shadowed", decorated)
     }
 
     /**

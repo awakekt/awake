@@ -64,9 +64,9 @@ class TextDecorationsTest {
             val decoration = assertNotNull(glyph.decoration)
             assertEquals(Color.Black, decoration.outlineColor)
             assertEquals(2f, decoration.outlineWidth)
-            assertTrue(decoration.fieldX < glyph.x - 2f && decoration.fieldY < glyph.y - 2f, "$decoration around $glyph")
-            assertTrue(decoration.fieldX + decoration.fieldW > glyph.x + glyph.w + 2f, "$decoration around $glyph")
-            assertTrue(decoration.fieldY + decoration.fieldH > glyph.y + glyph.h + 2f, "$decoration around $glyph")
+            assertTrue(decoration.fieldOffsetX < -2f && decoration.fieldOffsetY < -2f, "$decoration around $glyph")
+            assertTrue(decoration.fieldOffsetX + decoration.fieldW > glyph.w + 2f, "$decoration around $glyph")
+            assertTrue(decoration.fieldOffsetY + decoration.fieldH > glyph.h + 2f, "$decoration around $glyph")
         }
     }
 

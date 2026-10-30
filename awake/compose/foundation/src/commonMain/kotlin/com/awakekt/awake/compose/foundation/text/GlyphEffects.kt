@@ -27,9 +27,16 @@ internal class GlyphEffects private constructor(
     internal val shadowBlur: Float,
 ) {
     /**
-     * Draws the glyph [uv] of [codePoint] at ([x], [y]) with these effects, its pen at [penX] on the line whose em box
-     * starts at [lineTop]. False, and nothing drawn, when [font] has no effect tile for it or [glyphFont], the page it
-     * samples, reads no effect field: the caller stamps that glyph instead.
+     * Each code point's decoration, built the first time it is drawn: its tile sits at the same place from its quad
+     * at this run's size every frame, so a run at rest allocates none. A [GlyphEffects] serves one laid-out run, whose
+     * font, size and weight do not change; null records a glyph with no effect tile.
+     */
+    private val decorations = HashMap<Int, GlyphDecoration?>()
+
+    /**
+     * Draws the glyph [uv] of [codePoint] with these effects, its pen at [penX] on the line whose em box starts at
+     * [lineTop]. False, and nothing drawn, when [font] has no effect tile for it or [glyphFont], the page it samples,
+     * reads no effect field: the caller stamps that glyph instead.
      */
     @Suppress("LongParameterList")
     fun draw(
@@ -44,8 +51,12 @@ internal class GlyphEffects private constructor(
         glyphPx: Float,
         color: Color,
     ): Boolean {
-        if (glyphFont.effectFieldRangePx <= 0f) return false
-        val tile = font.effectGlyphFor(codePoint, weight) ?: return false
+        val decoration = if (glyphFont.effectFieldRangePx > 0f) {
+            decorations.getOrPut(codePoint) { decorationOf(font, codePoint, weight, uv, glyphPx) }
+        } else {
+            null
+        }
+        decoration ?: return false
         scope.drawDecoratedGlyph(
             x = penX + uv.offsetXEm * glyphPx,
             y = lineTop + uv.offsetYEm * glyphPx,
@@ -58,24 +69,30 @@ internal class GlyphEffects private constructor(
             color = color,
             font = glyphFont,
             page = uv.page,
-            decoration = GlyphDecoration(
-                fieldX = penX + tile.offsetXEm * glyphPx,
-                fieldY = lineTop + tile.offsetYEm * glyphPx,
-                fieldW = tile.widthEm * glyphPx,
-                fieldH = tile.heightEm * glyphPx,
-                fieldU0 = tile.u0,
-                fieldV0 = tile.v0,
-                fieldU1 = tile.u1,
-                fieldV1 = tile.v1,
-                outlineColor = outlineColor,
-                outlineWidth = outlineWidth,
-                shadowColor = shadowColor,
-                shadowOffsetX = shadowOffsetX,
-                shadowOffsetY = shadowOffsetY,
-                shadowBlur = shadowBlur,
-            ),
+            decoration = decoration,
         )
         return true
+    }
+
+    /** [codePoint]'s decoration at [glyphPx], its tile placed from the corner of the quad [uv] draws; null with no tile. */
+    private fun decorationOf(font: UiFont, codePoint: Int, weight: FontWeight, uv: GlyphRect, glyphPx: Float): GlyphDecoration? {
+        val tile = font.effectGlyphFor(codePoint, weight) ?: return null
+        return GlyphDecoration(
+            fieldOffsetX = (tile.offsetXEm - uv.offsetXEm) * glyphPx,
+            fieldOffsetY = (tile.offsetYEm - uv.offsetYEm) * glyphPx,
+            fieldW = tile.widthEm * glyphPx,
+            fieldH = tile.heightEm * glyphPx,
+            fieldU0 = tile.u0,
+            fieldV0 = tile.v0,
+            fieldU1 = tile.u1,
+            fieldV1 = tile.v1,
+            outlineColor = outlineColor,
+            outlineWidth = outlineWidth,
+            shadowColor = shadowColor,
+            shadowOffsetX = shadowOffsetX,
+            shadowOffsetY = shadowOffsetY,
+            shadowBlur = shadowBlur,
+        )
     }
 
     /**

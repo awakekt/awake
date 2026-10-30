@@ -75,10 +75,10 @@ internal object DecoratedGlyphStaging {
         out[offset + 1] = py
         out[offset + 2] = glyph.u0 + (px - glyph.x) / glyph.w * (glyph.u1 - glyph.u0)
         out[offset + 3] = glyph.v0 + (py - glyph.y) / glyph.h * (glyph.v1 - glyph.v0)
-        putRect(out, offset + 4, glyph.u0, glyph.v0, glyph.u1, glyph.v1)
-        out[offset + 8] = d.fieldU0 + (px - d.fieldX) * fieldPerPxU
-        out[offset + 9] = d.fieldV0 + (py - d.fieldY) * fieldPerPxV
-        putRect(out, offset + 10, d.fieldU0, d.fieldV0, d.fieldU1, d.fieldV1)
+        out.putRect(offset + 4, glyph.u0, glyph.v0, glyph.u1, glyph.v1)
+        out[offset + 8] = d.fieldU0 + (px - glyph.x - d.fieldOffsetX) * fieldPerPxU
+        out[offset + 9] = d.fieldV0 + (py - glyph.y - d.fieldOffsetY) * fieldPerPxV
+        out.putRect(offset + 10, d.fieldU0, d.fieldV0, d.fieldU1, d.fieldV1)
         putColor(out, offset + 14, glyph.color)
         putColor(out, offset + 18, d.outlineColor)
         putColor(out, offset + 22, d.shadowColor)
@@ -93,11 +93,11 @@ internal object DecoratedGlyphStaging {
         out[offset + 33] = transform.pivotY
     }
 
-    private fun putRect(out: FloatArray, at: Int, u0: Float, v0: Float, u1: Float, v1: Float) {
-        out[at] = minOf(u0, u1)
-        out[at + 1] = minOf(v0, v1)
-        out[at + 2] = maxOf(u0, u1)
-        out[at + 3] = maxOf(v0, v1)
+    private fun FloatArray.putRect(at: Int, u0: Float, v0: Float, u1: Float, v1: Float) {
+        this[at] = minOf(u0, u1)
+        this[at + 1] = minOf(v0, v1)
+        this[at + 2] = maxOf(u0, u1)
+        this[at + 3] = maxOf(v0, v1)
     }
 
     private fun putColor(out: FloatArray, at: Int, color: Color) {

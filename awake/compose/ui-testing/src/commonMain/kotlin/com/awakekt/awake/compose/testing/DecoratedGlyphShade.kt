@@ -75,8 +75,8 @@ internal class DecoratedGlyphShade(
         } else {
             0f
         }
-        val fieldU = decoration.fieldU0 + (x - decoration.fieldX) * fieldPerPxU
-        val fieldV = decoration.fieldV0 + (y - decoration.fieldY) * fieldPerPxV
+        val fieldU = decoration.fieldU0 + (x - glyph.x - decoration.fieldOffsetX) * fieldPerPxU
+        val fieldV = decoration.fieldV0 + (y - glyph.y - decoration.fieldOffsetY) * fieldPerPxV
         val field = fieldAt(fieldU, fieldV)
         val ring = max((fieldPxRange * (field + outlineWidth) + 0.5f).coerceIn(0f, 1f), fineRing)
         val outline = if (outlineWidth > 0f) max(ring, coverage) else 0f

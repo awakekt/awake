@@ -196,6 +196,7 @@ sealed class DrawCommand {
             page: Int = 0,
         ) : this(x, y, w, h, u0, v0, u1, v1, color, tokenId, transform, font, page, null)
 
+        /** The `copy` from before [decoration], which keeps this one's [decoration]. */
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
         fun copy(
             x: Float = this.x,
@@ -563,12 +564,7 @@ fun UiDrawPrimitive.translatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (
     is UiDrawPrimitive.Quad -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
     is UiDrawPrimitive.GradientQuad -> copy(x = x + dx, y = y + dy)
     is UiDrawPrimitive.RoundedQuad -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
-    is UiDrawPrimitive.Glyph -> copy(
-        x = x + dx,
-        y = y + dy,
-        transform = transform?.translatedBy(dx, dy),
-        decoration = decoration?.mapped(1f, 1f, dx, dy),
-    )
+    is UiDrawPrimitive.Glyph -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
     is UiDrawPrimitive.FilledPath -> copy(path = path.transform(translateX = dx, translateY = dy))
     is UiDrawPrimitive.StrokedPath -> copy(path = path.transform(translateX = dx, translateY = dy))
     is UiDrawPrimitive.Mesh -> copy(offsetX = offsetX + dx, offsetY = offsetY + dy)

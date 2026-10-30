@@ -272,7 +272,7 @@ class Renderer internal constructor(
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
-    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.decoratedGlyphMeshForRun(index)
+    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index, decorated = true)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
 
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES)
