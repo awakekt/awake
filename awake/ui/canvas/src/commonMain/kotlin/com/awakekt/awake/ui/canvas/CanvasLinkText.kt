@@ -93,25 +93,15 @@ private val WORD = Regex("""\S+\s*|\s+""")
 
 private val WRAPPING = FlexBoxConfig { wrap = FlexWrap.Wrap }
 
-/**
- * This element's words in [color] and [font], at its size, with its shadow, outline and [numerals].
- *
- * When a follower scales by [followerScale] (`!= 1f`) through `LocalDensity`, the factor is carried
- * on [TextStyle.scale] and cancelled out of [TextStyle.size] so `Text` draws at the same pixel size
- * while treating the follower as explicitly scaled from its first frame.
- */
-internal fun CanvasElement.textStyle(color: Color, font: UiFont?, followerScale: Float = 1f): TextStyle {
-    val activeScale = if (followerScale > 0f && followerScale.isFinite() && followerScale != 1f) followerScale else 1f
-    return TextStyle(
-        color = color,
-        size = (fontSize / activeScale).sp,
-        scale = activeScale,
-        shadow = style.textShadow?.toTextShadow(),
-        outline = style.textOutline?.toTextOutline(),
-        font = font,
-        numerals = numerals,
-    )
-}
+/** This element's words in [color] and [font], at its size, with its shadow, outline and [numerals]. */
+internal fun CanvasElement.textStyle(color: Color, font: UiFont?) = TextStyle(
+    color = color,
+    size = fontSize.sp,
+    shadow = style.textShadow?.toTextShadow(),
+    outline = style.textOutline?.toTextOutline(),
+    font = font,
+    numerals = numerals,
+)
 
 /** How strong a TextField's hint draws against the field's text colour. */
 private const val PLACEHOLDER_ALPHA = 0.5f
