@@ -44,3 +44,12 @@ allocate nothing:
 
 For ECS scene integration, see `SpatialIndex` and `SpatialIndexSystem` in
 [`awake:scene:scene3d`](../../scene/scene3d/README.md).
+
+## Moved from `awake:scene:scene3d`
+
+Until 0.27 this grid was `com.awakekt.awake.scene.rendering.spatial.SpatialGrid`. That class is
+still there, deprecated, with every 0.27 member forwarding to the core grid it wraps (`core`), so
+code compiled against 0.27 keeps linking; it and the scene-side `DEFAULT_SPATIAL_CELL_SIZE` are
+removed at 1.0. `SpatialIndex.grid` keeps the scene-side type until then: read the core grid as
+`index.grid.core`, and build an index over your own core grid with `SpatialIndex(coreGrid)`.
+`queryShadowCasters(volume, out)` is `queryVolume(volume, out)` here.

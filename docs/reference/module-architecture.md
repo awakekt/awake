@@ -762,10 +762,11 @@ rendering stack, and `SpatialGrid.queryShadowCasters` named `ShadowCasterVolume`
 - `core:spatial` (`com.awakekt.awake.core.spatial`) holds `SpatialGrid` and
   `DEFAULT_SPATIAL_CELL_SIZE`, with `queryVolume(BoundedVolume, out)` replacing the render-pass
   method, and depends on `core:math` alone — no ECS, scene, or renderer dependency.
-- `scene:scene3d` keeps `SpatialIndex`, `SpatialIndexSystem`, and `SceneCullingCompiler`, plus
-  deprecated `SpatialGrid`, `DEFAULT_SPATIAL_CELL_SIZE`, and `SpatialGrid.queryShadowCasters`
-  aliases that keep existing source compiling while precompiled JVM callers recompile against the
-  moved class.
+- `scene:scene3d` keeps `SpatialIndex`, `SpatialIndexSystem`, and `SceneCullingCompiler`. Its
+  `SpatialGrid` stays a real, deprecated class with every 0.27 member (`queryShadowCasters`
+  included), each forwarding to the core grid it wraps (`core`), and `DEFAULT_SPATIAL_CELL_SIZE`
+  stays a deprecated constant, so code compiled against 0.27 keeps linking. `SpatialIndex.grid`
+  keeps that type until 1.0; the scene systems work on `grid.core`. Both forwards go at 1.0.
 
 ## Adding a new module
 
