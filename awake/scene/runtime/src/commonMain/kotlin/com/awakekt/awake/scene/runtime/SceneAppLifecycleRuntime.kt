@@ -20,6 +20,7 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
@@ -332,7 +333,7 @@ class SceneAppLifecycleRuntime internal constructor(
         session.schedule.timed = perfStatsEnabled
         timePhase({ simRenderMs = it }) {
             session.advance(delta) { step ->
-                spec.updateBlock(this, step, snapshot)
+                runUpdateBlock(step, snapshot)
             }
         }
 
@@ -349,7 +350,7 @@ class SceneAppLifecycleRuntime internal constructor(
             }
             platformDpi = frame.dpi
             timePhase({ uiBuildMs = it }) {
-                buildUiFrame(snapshot, delta, viewportWidth, viewportHeight)
+                buildUiFrameGuarded(snapshot, delta, viewportWidth, viewportHeight)
             }.also { builtFrame ->
                 // Timed on its own, before staging. `drawUi` waits on this fence anyway; taking it
                 // here first costs nothing and stops a GPU-bound frame from reading as an
@@ -404,6 +405,77 @@ class SceneAppLifecycleRuntime internal constructor(
         }
     }
 
+    // Set when the app's update block threw and the handler was told: the block is skipped from then on.
+    private var updateBlockFailed = false
+
+    // Set while the UI build keeps throwing and the handler was told; cleared by the next build that succeeds.
+    private var uiBuildFailing = false
+
+    /**
+     * Runs the app's `onUpdate` block for one fixed step, so that a failure in it reaches the app's
+     * `AppErrorHandler` and the app keeps running.
+     *
+     * The block is treated like a system, as `guardedFor` treats one: the first exception is reported once,
+     * as `AppErrorSource.System` with the subject `updateBlock`, and the block is not called again for the
+     * rest of this scene. The block may have left half of its work done, and one that throws every step
+     * would call the handler 60 times a second. The scene's systems, the render systems and the UI still
+     * run. Its next call is with the next scene, whose runtime is built afresh. With no handler registered
+     * the exception is thrown to the caller, every step it recurs, as before. Only an `Exception` is
+     * contained, not an `Error`.
+     */
+    // TooGenericExceptionCaught: the app's own block, whatever it throws, must not end the frame loop when the app has a handler.
+    @Suppress("TooGenericExceptionCaught")
+    private fun runUpdateBlock(step: Float, snapshot: InputSnapshot) {
+        if (updateBlockFailed) return
+        try {
+            spec.updateBlock(this, step, snapshot)
+        } catch (failure: Exception) {
+            // Before the handler runs, so a handler that steps the frame again does not report the block twice.
+            updateBlockFailed = true
+            if (!reportError(AppErrorSource.System, failure, subject = UPDATE_BLOCK)) {
+                updateBlockFailed = false
+                throw failure
+            }
+            log.error(failure) { "The update block failed and is skipped from now on: ${failure.message}" }
+        }
+    }
+
+    /**
+     * Builds this frame's UI so that a failure in it reaches the app's `AppErrorHandler` and the app
+     * keeps running.
+     *
+     * Unlike a system, the UI is not disabled: it is rebuilt from nothing every frame, keeps no half-done
+     * work between frames, and is where the app is likely to show the error it was just told about, so a
+     * UI that stayed off could never show it. A build that throws therefore draws nothing for that frame
+     * (the scene and any UI already staged are still drawn) and the next frame builds it again. The failure
+     * is reported once, as `AppErrorSource.System` with the subject `ui`, however many frames in a row
+     * fail; the first build that succeeds again re-arms the report. With no handler registered the
+     * exception is thrown to the caller, every frame it recurs, as before. Only an `Exception` is
+     * contained, not an `Error`.
+     */
+    // TooGenericExceptionCaught: the app's own composables, whatever they throw, must not end the frame loop when the app has a handler.
+    @Suppress("TooGenericExceptionCaught")
+    private fun buildUiFrameGuarded(
+        snapshot: InputSnapshot,
+        delta: Float,
+        viewportWidth: Float,
+        viewportHeight: Float,
+    ): SceneFrame = try {
+        buildUiFrame(snapshot, delta, viewportWidth, viewportHeight).also { uiBuildFailing = false }
+    } catch (failure: Exception) {
+        if (!uiBuildFailing) {
+            uiBuildFailing = true
+            if (!reportError(AppErrorSource.System, failure, subject = UI_BUILD)) {
+                uiBuildFailing = false
+                throw failure
+            }
+            log.error(failure) { "The UI build failed and draws nothing until it succeeds again: ${failure.message}" }
+        }
+        emptySceneFrame()
+    }
+
+    private fun emptySceneFrame() = SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
+
     /** Runs the scene's declared UI, or an empty frame if it draws none. */
     private fun buildUiFrame(
         snapshot: InputSnapshot,
@@ -414,7 +486,7 @@ class SceneAppLifecycleRuntime internal constructor(
         val content = spec.ui
         val hasCanvas = drawsSceneCanvas && world.family<CanvasElement>().size > 0
         if (content == null && !hasCanvas) {
-            return SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
+            return emptySceneFrame()
         }
         val frame = uiHost.frame(
             snapshot.toFrameInput(viewportWidth.roundToInt(), viewportHeight.roundToInt(), delta),
@@ -813,6 +885,12 @@ fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor =
         ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.cursor } }
         ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.cursor } }
         ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
+
+/** The subjects of the frame work the app supplies, as an `AppError` names them. */
+private const val UPDATE_BLOCK = "updateBlock"
+private const val UI_BUILD = "ui"
+
+private val log = Logger("scene.runtime")
 
 /** Stands in for `spec.ui` when only the scene's canvas elements need a UI frame. */
 private val SceneCanvasOnly: SceneContent = {}
