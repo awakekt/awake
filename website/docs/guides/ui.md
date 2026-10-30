@@ -163,6 +163,12 @@ From 24 px pixel glyphs to 25 px distance field, the ink per em changes by under
 by under 3.5%. Before the rule, light-on-dark small text held 1.16 to 1.29 times Chromium's ink, and
 crossing the limit moved ink by 9 to 10% in each polarity.
 
+`TextProofSpecimenTest` holds a full 520 × 714 dp proof page to Chromium in both polarities at 1x and
+1.5x, alongside four 8-bit grey baselines: the 9 to 48 px size ramp with kerning on, Roboto weights 300
+to 900, a runtime-loaded TTF (`Roboto-Medium.ttf`) at pixel-glyph and distance-field sizes, a wrapped
+paragraph, and a HUD readout. Every band stays 0.95 to 1.05 of Chromium's ink (0.949 to 1.045), with
+the light-on-dark to dark-on-light ratio within 5.3% of Chromium's.
+
 The rule does no stem darkening. Chromium does none, and the sizes it was measured at are within the
 tolerance without it.
 

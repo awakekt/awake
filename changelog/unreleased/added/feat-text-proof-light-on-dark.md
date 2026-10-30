@@ -1,0 +1,1 @@
+- Add the multi-band text proof specimen in both dark-on-light and light-on-dark polarities at 1x and 1.5x display density (`TextProofSpecimenTest`), complete the Black 1x light-on-dark glyph specimen baseline (`GlyphSpecimenBaselineTest`), and hold every specimen band's ink weight and polarity balance against Linux Chromium (`#1064`).
