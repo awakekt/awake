@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.project.cli
 
+import com.awakekt.awake.project.BundleEncryptionKey
+import com.awakekt.awake.project.BundleKeyFiles
 import com.awakekt.awake.project.ContentBundleDirectoryWriter
 import com.awakekt.awake.project.ContentBundleGrouping
 import com.awakekt.awake.project.ContentBundleWriter
@@ -43,7 +45,7 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
 
     companion object {
         /** The writer the command line's options describe. */
-        fun writer(arguments: CliArguments): ContentBundleWriter {
+        fun writer(arguments: CliArguments, workingDir: File = File(".")): ContentBundleWriter {
             val grouping = when (val group = arguments.value("group") ?: "folder") {
                 "folder" -> ContentBundleGrouping.byFolder(arguments.int("depth", 1, DEPTHS))
                 "one" -> ContentBundleGrouping.oneGroup()
@@ -55,7 +57,25 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
                 grouping = grouping,
                 targetBundleBytes = arguments.int("target-mb", DEFAULT_TARGET_MB, TARGET_MBS) * MEBIBYTE,
                 pathIds = if (arguments.flag("opaque-ids")) ProjectPathIds(salt!!) else null,
+                encryption = encryption(arguments, workingDir),
             )
+        }
+
+        /** The key `--key-id` names, read from `--key-file` or the variable `--key-env`; null without `--key-id`. */
+        private fun encryption(arguments: CliArguments, workingDir: File): BundleEncryptionKey? {
+            val file = arguments.value("key-file")
+            val variable = arguments.value("key-env")
+            val keyId = arguments.value("key-id")
+            val misuse = when {
+                keyId == null && (file != null || variable != null) -> "--key-file and --key-env need --key-id <id>"
+                keyId != null && (file == null) == (variable == null) -> "--key-id needs exactly one of --key-file <path> and --key-env <variable>"
+                else -> null
+            }
+            if (misuse != null) throw UsageException(misuse)
+            if (keyId == null) return null
+            return runCatching {
+                if (file != null) BundleKeyFiles.read(keyId, workingDir.resolve(file)) else BundleKeyFiles.fromEnvironment(keyId, variable!!)
+            }.getOrElse { throw CommandFailure(it.message.orEmpty(), it) }
         }
 
         private const val DEFAULT_TARGET_MB = 16
