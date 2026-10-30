@@ -203,6 +203,18 @@ class KtorContentTransportTest {
     }
 
     @Test
+    fun a503WithRetryAfterStopsAtTheAttemptLimit() = runTest {
+        val server = Server(rateLimited(times = 10, retryAfter = "1", status = HttpStatusCode.ServiceUnavailable))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits)).fetch("files/assets/crate.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals(RateLimitBackoff.DEFAULT_MAX_ATTEMPTS, server.requests.size)
+        assertEquals(List(RateLimitBackoff.DEFAULT_MAX_ATTEMPTS - 1) { 1.seconds }, waits)
+    }
+
+    @Test
     fun a503WithoutRetryAfterFailsAtOnceAsBefore() = runTest {
         val server = Server(rateLimited(times = 10, retryAfter = null, status = HttpStatusCode.ServiceUnavailable))
         val waits = mutableListOf<Duration>()
