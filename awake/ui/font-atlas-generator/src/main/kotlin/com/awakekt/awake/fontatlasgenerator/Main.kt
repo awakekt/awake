@@ -164,7 +164,7 @@ fun main() {
  * `baseCellSize`). [offsetXEm] is pen-relative (same origin as [advanceEm]); [offsetYEm] is
  * relative to the font's own ascent line (baseline - ascent), the classic typographic line-top,
  * not a raster grid artifact. */
-private data class GlyphMetrics(
+internal data class GlyphMetrics(
     val offsetXEm: Float,
     val offsetYEm: Float,
     val widthEm: Float,
@@ -184,6 +184,7 @@ private class AtlasResult(
     val inkMetricsEm: FloatArray,
     val advancesEm: FloatArray,
     val encodedAtlasBase64: String,
+    val effect: EffectField,
 )
 
 private fun generateAtlas(fontFile: File): AtlasResult {
@@ -284,6 +285,13 @@ private fun generateAtlas(fontFile: File): AtlasResult {
         inkMetricsEm = inkMetricsEm.toFloatArray(),
         advancesEm = advancesEm.toFloatArray(),
         encodedAtlasBase64 = Base64.getEncoder().encodeToString(rgbaBytes(atlasImage)),
+        effect = generateEffectField(
+            fontFile,
+            ATLAS_GLYPHS,
+            glyphMetrics,
+            vertical.ascent(EFFECT_TEXELS_PER_EM.toFloat()),
+            packing.width,
+        ),
     )
 }
 
@@ -311,30 +319,61 @@ private fun blitGlyphTile(
     lineTopInTileY: Int,
     ascentPxRender: Float,
 ) {
-    val scale = (LOGICAL_CELL * OVERSAMPLE).toDouble()
+    val tile = renderGlyphTile(
+        fontFile = fontFile,
+        char = char,
+        mode = "mtsdf",
+        pxRange = DISTANCE_FIELD_RANGE_PX,
+        texelsPerEm = LOGICAL_CELL * OVERSAMPLE,
+        tileWidthPx = tileWidthPx,
+        tileHeightPx = tileHeightPx,
+        penInTileX = penInTileX,
+        lineTopInTileY = lineTopInTileY,
+        ascentPx = ascentPxRender,
+    ) ?: return
+    for (y in 0 until minOf(tile.height, tileHeightPx)) {
+        for (x in 0 until minOf(tile.width, tileWidthPx)) {
+            atlasImage.setRGB(tileX + x, tileY + y, tile.getRGB(x, y))
+        }
+    }
+}
+
+/**
+ * One glyph's field from `msdfgen` in [mode] (`mtsdf` for the atlas, `sdf` for the effect field), [tileWidthPx] by
+ * [tileHeightPx] texels at [texelsPerEm], its pen origin at ([penInTileX], [lineTopInTileY] + [ascentPx]); null when
+ * msdfgen draws nothing. See [blitGlyphTile] for the coordinate conventions.
+ */
+internal fun renderGlyphTile(
+    fontFile: File,
+    char: Char,
+    mode: String,
+    pxRange: Int,
+    texelsPerEm: Int,
+    tileWidthPx: Int,
+    tileHeightPx: Int,
+    penInTileX: Int,
+    lineTopInTileY: Int,
+    ascentPx: Float,
+): BufferedImage? {
+    val scale = texelsPerEm.toDouble()
     val translateX = penInTileX / scale
-    val translateY = (tileHeightPx - lineTopInTileY - ascentPxRender) / scale
+    val translateY = (tileHeightPx - lineTopInTileY - ascentPx) / scale
     val out = File.createTempFile("awake-msdf-", ".png")
     try {
         val process = ProcessBuilder(
-            MSDFGEN, "mtsdf",
+            MSDFGEN, mode,
             "-font", fontFile.absolutePath, char.code.toString(),
             "-emnormalize",
             "-size", tileWidthPx.toString(), tileHeightPx.toString(),
-            "-pxrange", DISTANCE_FIELD_RANGE_PX.toString(),
+            "-pxrange", pxRange.toString(),
             "-translate", translateX.toString(), translateY.toString(),
             "-scale", scale.toString(),
             "-o", out.absolutePath,
         ).redirectErrorStream(true).start()
         val log = process.inputStream.bufferedText()
         check(process.waitFor() == 0) { "msdfgen failed for '$char' (${char.code}):\n$log" }
-        if (!out.exists() || out.length() == 0L) return
-        val tile = ImageIO.read(out) ?: return
-        for (y in 0 until minOf(tile.height, tileHeightPx)) {
-            for (x in 0 until minOf(tile.width, tileWidthPx)) {
-                atlasImage.setRGB(tileX + x, tileY + y, tile.getRGB(x, y))
-            }
-        }
+        if (!out.exists() || out.length() == 0L) return null
+        return ImageIO.read(out)
     } finally {
         out.delete()
     }
@@ -444,7 +483,13 @@ private fun buildFileSpec(atlas: AtlasResult, face: Face): FileSpec {
         .addProperty(floatArrayProperty("quadMetricsEm", atlas.quadMetricsEm))
         .addProperty(floatArrayProperty("inkMetricsEm", atlas.inkMetricsEm))
         .addProperty(floatArrayProperty("advancesEm", atlas.advancesEm))
-        .addProperty(base64Property(atlas.encodedAtlasBase64))
+        .addProperty(base64Property("encodedAtlasBase64", atlas.encodedAtlasBase64))
+        .addProperty(overrideProperty("effectAtlasWidth", INT, "%L", atlas.effect.width))
+        .addProperty(overrideProperty("effectAtlasHeight", INT, "%L", atlas.effect.height))
+        .addProperty(overrideProperty("effectFieldRangePx", FLOAT, "%Lf", EFFECT_RANGE_TEXELS))
+        .addProperty(intArrayProperty("effectUvBoundsPx", atlas.effect.uvBoundsPx))
+        .addProperty(floatArrayProperty("effectQuadMetricsEm", atlas.effect.quadMetricsEm))
+        .addProperty(base64Property("encodedEffectFieldBase64", atlas.effect.encodedBase64))
         .build()
 
     return FileSpec.builder(FONT_PACKAGE, face.objectName)
@@ -482,11 +527,11 @@ private fun floatArrayProperty(name: String, values: FloatArray): PropertySpec =
         .initializer("floatArrayOf(%L)", values.joinToString(", ") { emLiteral(it) + "f" })
         .build()
 
-private fun base64Property(base64: String): PropertySpec {
+private fun base64Property(name: String, base64: String): PropertySpec {
     val block = CodeBlock.builder().add("\"\"\"\n")
     base64.chunked(BASE64_LINE_WIDTH).forEach { line -> block.add("%L\n", line) }
     block.add("\"\"\"")
-    return PropertySpec.builder("encodedAtlasBase64", STRING)
+    return PropertySpec.builder(name, STRING)
         .addModifiers(KModifier.OVERRIDE)
         .initializer(block.build())
         .build()

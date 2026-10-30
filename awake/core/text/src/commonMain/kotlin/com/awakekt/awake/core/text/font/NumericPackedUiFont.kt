@@ -99,6 +99,7 @@ private class NumericPackedUiFont(
     override val atlasHeight: Int = base.atlasHeight
     override val atlasPixelsRgba: ByteArray get() = base.atlasPixelsRgba
     override val distanceFieldRangePx: Float = base.distanceFieldRangePx
+    override val effectFieldRangePx: Float = base.effectFieldRangePx
     override val lineHeightEm: Float = base.lineHeightEm
     override val visibleTopEm: Float = base.visibleTopEm
     override val visibleBottomEm: Float = base.visibleBottomEm
@@ -119,7 +120,7 @@ private class NumericPackedUiFont(
         }
     }
 
-    private val strip: NumericStripPage? = stripLayout?.let { NumericStripPage(base, it, extraGlyphs, stripIndexByCode, name) }
+    private val strip: NumericStripPage? = stripLayout?.let { NumericStripPage(base, font, it, extraGlyphs, stripIndexByCode, name) }
 
     /** [base], whose atlas this is, then the strip of substituted figures when there is one. */
     override val atlasPages: List<UiFont> = listOfNotNull(base, strip)
@@ -138,6 +139,12 @@ private class NumericPackedUiFont(
 
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
         glyphsByCode[codePoint] ?: glyphsByCode[fallbackCode]
+
+    /** [base]'s tile, or the strip's for a substituted figure, from the page [fontFor] answers. */
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+        val page = fontFor(codePoint, weight)
+        return if (page === base) base.effectGlyphFor(codePoint, weight) else page.effectGlyphFor(codePoint, weight)
+    }
 
     /** The strip for a substituted figure, and [base], whose texture this font's atlas is, for every other glyph. */
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
@@ -188,27 +195,50 @@ private class NumericPackedUiFont(
  */
 private class NumericStripPage(
     private val base: PackedUiFont,
+    font: OpenTypeFont,
     private val layout: GlyphLayout,
     private val glyphs: List<FontGlyph>,
     indexByCode: Map<Int, Int>,
     private val name: String,
 ) : UiFont by base {
-    override val atlasWidth: Int get() = layout.atlasWidth
-    override val atlasHeight: Int get() = layout.atlasHeight
-    override val atlasPixelsRgba: ByteArray by lazy { layout.bakeAtlas(glyphs, name) }
+    /** The strip's own effect field, under its glyphs, when [base] has one too, so substituted figures outline alike. */
+    private val effect: EffectFieldLayout? = if (base.effectFieldRangePx == 0f) {
+        null
+    } else {
+        EffectFieldLayout.of(font, glyphs, layout.atlasWidth, layout.atlasHeight, MAX_TEXTURE_SIZE)
+    }
+    override val atlasWidth: Int get() = maxOf(layout.atlasWidth, effect?.width ?: 0)
+    override val atlasHeight: Int get() = layout.atlasHeight + (effect?.height ?: 0)
+    override val atlasPixelsRgba: ByteArray by lazy {
+        val atlas = layout.bakeAtlas(glyphs, name)
+        val field = effect ?: return@lazy atlas
+        EffectFields.stack(atlas, layout.atlasWidth, layout.atlasHeight, field.bake(), field.width, field.height)
+    }
+    override val effectFieldRangePx: Float get() = if (effect != null) EffectFieldLayout.RANGE_TEXELS else 0f
     override val pixelGlyphs: PixelGlyphs? get() = null
     override val atlasPages: List<UiFont> = listOf(this)
 
     private val glyphsByCode: Map<Int, GlyphRect> = indexByCode.mapValues { glyphAt(it.value) }
+    private val effectsByCode: Map<Int, GlyphRect> = effect?.let { field ->
+        val tiles = EffectFields.tiles(
+            IntArray(glyphs.size) { it },
+            field.uvBoundsPx,
+            field.quadMetricsEm,
+            layout.atlasHeight,
+            atlasWidth,
+            atlasHeight,
+        )
+        indexByCode.mapNotNull { (code, index) -> tiles[index]?.let { code to it.copy(page = 1) } }.toMap()
+    } ?: emptyMap()
 
     /** The rectangle of the strip's [index]th glyph, on page 1 of the font it belongs to. */
     private fun glyphAt(index: Int): GlyphRect {
         val at = index * QUAD_STRIDE
         return GlyphRect(
-            u0 = layout.uvBoundsPx[at].toFloat() / layout.atlasWidth,
-            v0 = layout.uvBoundsPx[at + 1].toFloat() / layout.atlasHeight,
-            u1 = layout.uvBoundsPx[at + 2].toFloat() / layout.atlasWidth,
-            v1 = layout.uvBoundsPx[at + 3].toFloat() / layout.atlasHeight,
+            u0 = layout.uvBoundsPx[at].toFloat() / atlasWidth,
+            v0 = layout.uvBoundsPx[at + 1].toFloat() / atlasHeight,
+            u1 = layout.uvBoundsPx[at + 2].toFloat() / atlasWidth,
+            v1 = layout.uvBoundsPx[at + 3].toFloat() / atlasHeight,
             offsetXEm = layout.quadMetricsEm[at],
             offsetYEm = layout.quadMetricsEm[at + 1],
             widthEm = layout.quadMetricsEm[at + 2],
@@ -216,6 +246,8 @@ private class NumericStripPage(
             page = 1,
         )
     }
+
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? = effectsByCode[codePoint]
 
     override fun uvFor(char: Char): GlyphRect? = glyphsByCode[char.code]
 
@@ -235,5 +267,8 @@ private class NumericStripPage(
 
     private companion object {
         const val QUAD_STRIDE = 4
+
+        /** WebGPU's default texture size limit, as `OpenTypeUiFontData` keeps to. */
+        const val MAX_TEXTURE_SIZE = 8192
     }
 }

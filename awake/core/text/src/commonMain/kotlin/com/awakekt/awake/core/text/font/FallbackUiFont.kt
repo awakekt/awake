@@ -124,6 +124,21 @@ internal class FallbackUiFont(
         }
     }
 
+    /** The face's tile, moved where [glyphFor] moves its glyph; none unless the page it lands on reads its field. */
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+        val face = faces[faceIndex(codePoint)]
+        val range = face.effectFieldRangePx
+        val readable = range > 0f && fontFor(codePoint, weight).effectFieldRangePx == range
+        val tile = (if (readable) face.effectGlyphFor(codePoint, weight) else null) ?: return null
+        val page = faceToPage[face]
+        val extraOwner = extraPageOwner(face, codePoint, weight)
+        return when {
+            face.samplingMode != primary.samplingMode || page == null -> tile
+            extraOwner != null -> extraPages.glyphFor(extraOwner, tile)
+            else -> page.glyphFor(face, tile)
+        }
+    }
+
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
         val face = faces[faceIndex(codePoint)]
         val extraOwner = extraPageOwner(face, codePoint, weight)
@@ -231,6 +246,15 @@ internal class FallbackUiFont(
     }
 }
 
+/**
+ * The effect-field spread [faces] share, which a page stacking them reports; 0, and their decorated text stamped,
+ * when they differ or any has none, since one draw reads one spread for its whole page.
+ */
+internal fun sharedEffectFieldRange(faces: List<UiFont>): Float {
+    val range = faces.firstOrNull()?.effectFieldRangePx ?: return 0f
+    return if (faces.all { it.effectFieldRangePx == range }) range else 0f
+}
+
 /** One atlas page at [pageIndex] holding [pageFaces]' atlases stacked top to bottom, drawn as [primary] draws. */
 internal fun stackedAtlasPage(
     pageIndex: Int,
@@ -295,6 +319,7 @@ internal class FallbackAtlasPage(
     override val atlasPixelsRgba: ByteArray by lazy(::combineAtlases)
     override val lineHeightEm: Float = primary.lineHeightEm
     override val distanceFieldRangePx: Float = primary.distanceFieldRangePx
+    override val effectFieldRangePx: Float = sharedEffectFieldRange(pageFaces)
     override val visibleTopEm: Float = primary.visibleTopEm
     override val visibleBottomEm: Float = primary.visibleBottomEm
     override val ascentEm: Float = primary.ascentEm
@@ -326,6 +351,12 @@ internal class FallbackAtlasPage(
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
         val face = pageFaces.firstOrNull { it.hasGlyph(codePoint) } ?: if (pageIndex == 0) primary else null
         return face?.glyphFor(codePoint, weight)?.let { glyphFor(face, it) }
+    }
+
+    override fun effectGlyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+        if (effectFieldRangePx == 0f) return null
+        val face = pageFaces.firstOrNull { it.hasGlyph(codePoint) } ?: if (pageIndex == 0) primary else null
+        return face?.effectGlyphFor(codePoint, weight)?.let { glyphFor(face, it) }
     }
 
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont = this

@@ -26,6 +26,8 @@ import kotlin.math.min
  * Only basic arithmetic and square roots touch a texel, and those round the same on every target,
  * so the same file gives the same bytes on desktop, Android, iOS and the web.
  */
+// Each part of a loaded font is its own piece of the data interface it implements.
+@Suppress("LongParameterList")
 internal class OpenTypeUiFontData private constructor(
     override val name: String,
     override val glyphOrder: String,
@@ -34,6 +36,8 @@ internal class OpenTypeUiFontData private constructor(
     private val font: OpenTypeFont,
     /** The resolution the atlas was baked at. */
     val bake: DistanceFieldBake,
+    private val effect: EffectFieldLayout?,
+    private val effectField: ByteArray?,
 ) : PackedUiFontData {
     override val lineHeightEm: Float = (layout.ascentPx + layout.descentPx) / bake.texelsPerEm
     override val atlasWidth: Int get() = layout.atlasWidth
@@ -49,6 +53,11 @@ internal class OpenTypeUiFontData private constructor(
     override val quadMetricsEm: FloatArray get() = layout.quadMetricsEm
     override val inkMetricsEm: FloatArray get() = layout.inkMetricsEm
     override val advancesEm: FloatArray get() = layout.advancesEm
+    override val effectAtlasWidth: Int get() = effect?.width ?: 0
+    override val effectAtlasHeight: Int get() = effect?.height ?: 0
+    override val effectFieldRangePx: Float get() = if (effect != null) EffectFieldLayout.RANGE_TEXELS else 0f
+    override val effectUvBoundsPx: IntArray get() = effect?.uvBoundsPx ?: IntArray(0)
+    override val effectQuadMetricsEm: FloatArray get() = effect?.quadMetricsEm ?: FloatArray(0)
 
     /** The pairs the font kerns among the baked glyphs, read as the data is made, so a corrupt table fails the load. */
     private val kerning: KerningPairs = KerningPairs.read(font, codePointsOf(glyphOrder))
@@ -62,6 +71,8 @@ internal class OpenTypeUiFontData private constructor(
     override fun kerning(): KerningPairs = kerning
 
     override fun distanceFieldBake(): DistanceFieldBake = bake
+
+    override fun effectFieldBytes(): ByteArray? = effectField
 
     companion object {
         /**
@@ -112,7 +123,10 @@ internal class OpenTypeUiFontData private constructor(
             require(layout.fits()) {
                 "$name: ${glyphs.size} glyphs need a ${layout.atlasWidth}x${layout.atlasHeight} atlas, over $MAX_ATLAS_SIZE"
             }
-            return OpenTypeUiFontData(name, glyphOrderOf(glyphs), layout, layout.bakeAtlas(glyphs, name), font, chosen)
+            // The effect field outlines and soft shadows are drawn from (#1061), under the atlas, when it is affordable.
+            val effect = EffectFieldLayout.of(font, glyphs, layout.atlasWidth, layout.atlasHeight, MAX_ATLAS_SIZE)
+            val atlas = layout.bakeAtlas(glyphs, name)
+            return OpenTypeUiFontData(name, glyphOrderOf(glyphs), layout, atlas, font, chosen, effect, effect?.bake())
         }
     }
 }

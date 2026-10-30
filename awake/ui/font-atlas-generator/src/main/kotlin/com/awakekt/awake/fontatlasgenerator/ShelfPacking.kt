@@ -51,6 +51,18 @@ internal class ShelfPacking private constructor(
             return best
         }
 
+        /**
+         * Packs tiles of [widths] by [heights] into shelves [width] wide, or as wide as the widest tile: a region
+         * stacked under an atlas of that width, such as its effect field, adds no columns to it.
+         */
+        fun packToWidth(width: Int, widths: IntArray, heights: IntArray): ShelfPacking {
+            require(widths.size == heights.size) { "${widths.size} widths for ${heights.size} heights" }
+            require(widths.all { it > 0 } && heights.all { it > 0 }) { "A tile needs a positive size" }
+            if (widths.isEmpty()) return ShelfPacking(0, 0, IntArray(0), IntArray(0))
+            val order = widths.indices.sortedWith(compareBy({ -heights[it] }, { -widths[it] }, { it }))
+            return shelves(maxOf(width, roundUp(widths.max())), order, widths, heights)
+        }
+
         private fun shelves(width: Int, order: List<Int>, widths: IntArray, heights: IntArray): ShelfPacking {
             val xs = IntArray(widths.size)
             val ys = IntArray(widths.size)

@@ -87,6 +87,14 @@ interface UiFont {
     val distanceFieldRangePx: Float
         get() = 0f
 
+    /**
+     * Spread in atlas texels of the font's effect field, the coarse, wide-reaching distance field an outline and a
+     * soft shadow are drawn from in the glyph's own draw (#1061); 0 for a font without one, whose decorated text is
+     * stamped instead. Its tiles share the atlas with the glyphs, see [effectGlyphFor].
+     */
+    val effectFieldRangePx: Float
+        get() = 0f
+
     /** Distance from layout origin to baseline in em units. */
     val ascentEm: Float
         get() = 0.8f
@@ -190,6 +198,13 @@ interface UiFont {
      */
     fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
         glyphFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, weight)
+
+    /**
+     * The effect-field tile of the glyph [glyphFor] answers for [codePoint] at [weight]: its rect in the same atlas
+     * page, and the quad it covers in em from the pen origin and line top, reaching half an em or so past the ink.
+     * Null when the font has no effect field ([effectFieldRangePx] is 0), or none for that glyph.
+     */
+    fun effectGlyphFor(codePoint: Int, weight: FontWeight = FontWeight.Normal): GlyphRect? = null
 
     /**
      * Computes the horizontal advance distance in pixels for [char] rendered at [glyphPx].
