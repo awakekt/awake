@@ -19,3 +19,16 @@ fun spriteScenePipeline(): ScenePipeline = ScenePipeline(
     variant = PipelineVariant.AlphaBlended,
     materialBindings = GroupBindings.TexturedMaterial,
 )
+
+/**
+ * Distance-field text placed in a scene: glyph quads in [VertexFormat.PositionUvColor], alpha
+ * blended over the scene, depth tested and not written, so text sorts among the frame's other
+ * transparent draws and hides behind what stands in front of it.
+ */
+fun worldTextScenePipeline(): ScenePipeline = ScenePipeline(
+    key = PipelineKey.Format(VertexFormat.PositionUvColor),
+    shaders = PackShaderSets.WorldText,
+    vertexFormat = VertexFormat.PositionUvColor,
+    variant = PipelineVariant.AlphaBlended,
+    materialBindings = GroupBindings.TexturedMaterial,
+)

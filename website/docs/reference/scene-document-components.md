@@ -78,13 +78,14 @@ registers it.
 | [`texture_clips`](#texture_clips) | `TextureClips` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`tilemap`](#tilemap) | `Tilemap` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`tone_mapping`](#tone_mapping) | `ToneMapping` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
+| [`world_text`](#world_text) | `WorldText` | `com.awakekt.awake.scene:worldtext` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#text-in-the-world) |
 
 ## Registration
 
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -1220,6 +1221,24 @@ How bright the lit scene is shown. At most one per node; the first found applies
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `exposure` | number | `1` | Multiplies the lit scene before tone mapping. 2 is one stop brighter. Finite and above 0. |
+
+## `world_text`
+
+Text placed in the scene at its node: a sign, a label on an object, a number seen in perspective.
+It is laid out once and drawn from the built-in face's distance field in the scene pass, with its
+edge width taken from screen-space derivatives, so it stays sharp close up, far away and at a
+grazing angle. It is depth tested, so what stands in front of it hides it, and it sorts with the
+scene's other transparent draws. `SceneWorldText`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `text` | string | `""` | What it says. Each `\n` starts a line. |
+| `size` | number | `0.25` | The em size in world units, before the node's scale. Above 0. |
+| `color` | color | white | Its colour, straight alpha. |
+| `weight` | integer | `400` | The face's weight, 100 to 900: 400 regular, 700 bold. |
+| `align` | `Start` · `Center` · `End` | `Center` | How each line lines up across the text's width. The block of lines is centred on the node vertically. |
+| `lineSpacing` | number | `1` | One line's top to the next, as a multiple of the face's line height. Above 0. |
+| `billboard` | boolean | `false` | Turn to face the camera every frame, keeping the node's place and scale. Off, it lies in the node's XY plane facing its +Z. |
 
 ## See also
 

@@ -30,6 +30,9 @@ enum class DrawUniformPlan {
 
     /** Baseline unshadowed lit shading. */
     Lit,
+
+    /** Unlit distance-field glyph quads of text placed in a scene, with a tint and the field's spread. */
+    WorldText,
 }
 
 /**
@@ -42,6 +45,8 @@ fun drawUniformPlan(
     hasShadowCascades: Boolean,
 ): DrawUniformPlan = when {
     format == VertexFormat.PositionUv && materialUniformFloatCount == SpriteUniformLayout.total -> DrawUniformPlan.Sprite
+
+    format == VertexFormat.PositionUvColor && materialUniformFloatCount == WorldTextUniformLayout.total -> DrawUniformPlan.WorldText
 
     // Exact, and first: the textured block is larger than lit_shadow's, so "at least" cannot tell them apart.
     format == VertexFormat.PositionNormalColorUv &&

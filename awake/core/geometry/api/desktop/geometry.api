@@ -200,6 +200,7 @@ public final class com/awakekt/awake/core/geometry/VertexFormat$Companion {
 	public final fun getPositionNormalColorUv ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getPositionNormalColorUvSkin ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getPositionUv ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionUvColor ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 }
 
 public final class com/awakekt/awake/core/geometry/VertexFormat$Entry {
