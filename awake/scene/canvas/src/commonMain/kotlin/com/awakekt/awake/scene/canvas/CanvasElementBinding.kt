@@ -150,6 +150,7 @@ internal fun SceneComponent.toCanvasPart(): Any = when (this) {
     is SceneCanvasFollowArrow -> CanvasFollowArrowBinding.run { toComponent() }
     is SceneCanvasInput -> CanvasInputBinding.run { toComponent() }
     is SceneCanvasTooltip -> CanvasTooltipBinding.run { toComponent() }
+    is SceneCanvasParticles -> CanvasParticlesBinding.run { toComponent() }
     is SceneCanvasButton -> CanvasButtonBinding.run { toComponent() }
     is SceneCanvasBar -> CanvasBarBinding.run { toComponent() }
     is SceneCanvasSweep -> CanvasSweepBinding.run { toComponent() }

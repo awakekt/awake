@@ -25,6 +25,7 @@ An element is made of focused components, one of each type, which `CanvasElement
 | `CanvasBinding` | game state it shows without code |
 | `CanvasFollow`, `CanvasFollowArrow` | the node it follows, and the arrow of a follower pinned to the edge |
 | `CanvasInput`, `CanvasTooltip` | pressable, draggable, drop target, wheel; a hover hint |
+| `CanvasParticles` | particles emitted from or over the element in canvas `dp` units, backed by `awake:core:particles`'s `ParticleSimulation` |
 | one `CanvasWidget` | `CanvasButtonWidget`, `CanvasBarWidget`, `CanvasSweepWidget`, `CanvasStepperWidget`, `CanvasJoystickWidget`, `CanvasTextFieldWidget`, `CanvasViewWidget`, `CanvasLookAreaWidget` or `CanvasImageWidget`: its own values and its `settings` |
 | `CanvasPointerState` (always) | what the player is doing to it right now: taps, hover, drag and drop, wheel, links, focus, stick, look and aim. Runtime only, never saved |
 

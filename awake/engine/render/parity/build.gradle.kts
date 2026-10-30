@@ -65,6 +65,7 @@ kotlin {
                 implementation(project(":awake:compose:foundation"))
                 implementation(project(":awake:compose:ui"))
                 implementation(project(":awake:compose:runtime"))
+                implementation(project(":awake:engine:compose"))
                 // The layered terrain surface, drawn with a bake.
                 implementation(project(":awake:kit:terrain-layers"))
                 // Shared image-pass effects rendered on both backends for parity verification.

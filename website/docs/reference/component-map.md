@@ -35,6 +35,7 @@ attaches any ECS component, so "—" in the scene DSL column means there is no d
 | `PhysicsBody` | `scene:physics` | `physics_body` | — | [Physics](../guides/physics.md) |
 | `CharacterController` | `scene:character` | `character_controller` | — | [Character controller](../guides/character-controller.md) |
 | `CanvasElement` | `scene:canvas` | `canvas_element` | — | [Game UI](../guides/game-ui.md) |
+| `CanvasParticles` | `scene:canvas` | `canvas_particles` | — | [Game UI](../guides/game-ui.md#particles-on-a-canvas) |
 | `PatrolBehavior` | `ai:behavior` | `patrol` | — | [AI](../guides/ai.md) |
 | `ChaseBehavior` | `ai:behavior` | `chase` | — | [AI](../guides/ai.md) |
 | `FleeBehavior` | `ai:behavior` | `flee` | — | [AI](../guides/ai.md) |

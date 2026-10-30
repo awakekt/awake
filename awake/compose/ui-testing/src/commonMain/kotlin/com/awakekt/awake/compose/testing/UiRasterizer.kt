@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.GlyphDecoration
 import com.awakekt.awake.core.graphics2d.TextureRegion
@@ -136,16 +137,37 @@ private const val FOOTPRINT_ROUNDING = 1e-3f
 
 /** The straight-alpha colour [image] samples at fraction ([u], [v]) of [region], tinted and scaled by [alpha]. */
 @Suppress("LongParameterList")
-private fun sampleImage(image: ImageBitmap, region: TextureRegion, tint: Color, alpha: Float, u: Float, v: Float): Color {
+private fun sampleImage(
+    image: ImageBitmap,
+    region: TextureRegion,
+    tint: Color,
+    alpha: Float,
+    u: Float,
+    v: Float,
+    premultiplied: Boolean = false,
+): Color {
     val sx = ((region.u0 + (region.u1 - region.u0) * u) * image.width).toInt().coerceIn(0, image.width - 1)
     val sy = ((region.v0 + (region.v1 - region.v0) * v) * image.height).toInt().coerceIn(0, image.height - 1)
     val rgba = image.pixel(sx, sy)
-    return Color(
-        ((rgba ushr 24) and 0xFF) / 255f * tint.r,
-        ((rgba ushr 16) and 0xFF) / 255f * tint.g,
-        ((rgba ushr 8) and 0xFF) / 255f * tint.b,
-        (rgba and 0xFF) / 255f * alpha * tint.a,
-    )
+    val rawR = ((rgba ushr 24) and 0xFF) / 255f
+    val rawG = ((rgba ushr 16) and 0xFF) / 255f
+    val rawB = ((rgba ushr 8) and 0xFF) / 255f
+    val rawA = (rgba and 0xFF) / 255f
+    return when {
+        premultiplied && rawA <= 0f -> Color.Transparent
+        premultiplied -> Color(
+            (rawR / rawA).coerceIn(0f, 1f) * tint.r,
+            (rawG / rawA).coerceIn(0f, 1f) * tint.g,
+            (rawB / rawA).coerceIn(0f, 1f) * tint.b,
+            (rawA * alpha * tint.a).coerceIn(0f, 1f),
+        )
+        else -> Color(
+            rawR * tint.r,
+            rawG * tint.g,
+            rawB * tint.b,
+            (rawA * alpha * tint.a).coerceIn(0f, 1f),
+        )
+    }
 }
 
 /**
@@ -264,6 +286,32 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
      * Fills [x], [y], [w], [h] with [region] of [image], times [tint] and [alpha]. It samples the
      * nearest pixel whatever the draw's filter: a test rasterizer, not the GPU's sampler.
      */
+    fun blendWithMode(px: Int, py: Int, color: Color, blendMode: BlendMode) {
+        if (blendMode != BlendMode.Plus) {
+            pixelMap.blend(px, py, color)
+        } else if (color.a > 0f) {
+            val dst = pixelMap.sample(px, py)
+            val dstA = dst.a / 255f
+            val outPremulR = ((dst.r / 255f) * dstA + color.r * color.a).coerceIn(0f, 1f)
+            val outPremulG = ((dst.g / 255f) * dstA + color.g * color.a).coerceIn(0f, 1f)
+            val outPremulB = ((dst.b / 255f) * dstA + color.b * color.a).coerceIn(0f, 1f)
+            val outA = (dstA + color.a).coerceIn(0f, 1f)
+            if (outA > 0f) {
+                pixelMap.set(
+                    px,
+                    py,
+                    Color(
+                        (outPremulR / outA).coerceIn(0f, 1f),
+                        (outPremulG / outA).coerceIn(0f, 1f),
+                        (outPremulB / outA).coerceIn(0f, 1f),
+                        outA,
+                    ),
+                )
+            }
+        }
+    }
+
+    @Suppress("LongParameterList")
     fun fillImage(
         x: Float,
         y: Float,
@@ -273,6 +321,8 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         alpha: Float,
         region: TextureRegion = TextureRegion.Whole,
         tint: Color = Color.White,
+        premultiplied: Boolean = false,
+        blendMode: BlendMode = BlendMode.SourceOver,
     ) {
         if (w <= 0f || h <= 0f) return
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
@@ -282,7 +332,8 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         for (py in y0 until y1) {
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                pixelMap.blend(px, py, sampleImage(image, region, tint, alpha, (px + 0.5f - x) / w, (py + 0.5f - y) / h))
+                val sampled = sampleImage(image, region, tint, alpha, (px + 0.5f - x) / w, (py + 0.5f - y) / h, premultiplied)
+                blendWithMode(px, py, sampled, blendMode)
             }
         }
     }
@@ -305,9 +356,11 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         alpha: Float,
         region: TextureRegion = TextureRegion.Whole,
         tint: Color = Color.White,
+        premultiplied: Boolean = false,
+        blendMode: BlendMode = BlendMode.SourceOver,
     ) {
         if (rotationDegrees == 0f) {
-            fillImage(x, y, w, h, image, alpha, region, tint)
+            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode)
             return
         }
         if (w <= 0f || h <= 0f) return
@@ -326,7 +379,8 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
             for (px in x0 until x1) {
                 val local = unrotatedSample(px, py, centerX, centerY, cosine, sine, w, h)
                 if (!local.isWithin(w, h) || !passesPathClips(px + 0.5f, py + 0.5f)) continue
-                pixelMap.blend(px, py, sampleImage(image, region, tint, alpha, local.x / w, local.y / h))
+                val sampled = sampleImage(image, region, tint, alpha, local.x / w, local.y / h, premultiplied)
+                blendWithMode(px, py, sampled, blendMode)
             }
         }
     }
@@ -394,10 +448,11 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         alpha: Float,
         region: TextureRegion = TextureRegion.Whole,
         tint: Color = Color.White,
+        blendMode: BlendMode = BlendMode.SourceOver,
     ) {
         if (w <= 0f || h <= 0f) return
         if (rotationDegrees != 0f) {
-            fillRotatedImage(x, y, w, h, rotationDegrees, image, alpha, region, tint)
+            fillRotatedImage(x, y, w, h, rotationDegrees, image, alpha, region, tint, premultiplied = false, blendMode = blendMode)
             return
         }
         val modulatedTint = Color(tint.r, tint.g, tint.b, (tint.a * alpha).coerceIn(0f, 1f))
@@ -409,7 +464,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
             val v = (py + 0.5f - y) / h
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                pixelMap.blend(px, py, sampleLayerImage(image, region, modulatedTint, (px + 0.5f - x) / w, v))
+                blendWithMode(px, py, sampleLayerImage(image, region, modulatedTint, (px + 0.5f - x) / w, v), blendMode)
             }
         }
     }
@@ -974,8 +1029,31 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                         null
                     }
                     when {
-                        image != null -> fillRotatedImage(x, y, w, h, primitive.rotationDegrees, image, primitive.alpha, primitive.region, primitive.tint)
-                        layerImage != null -> fillRotatedLayerImage(x, y, w, h, primitive.rotationDegrees, layerImage, primitive.alpha, primitive.region, primitive.tint)
+                        image != null -> fillRotatedImage(
+                            x,
+                            y,
+                            w,
+                            h,
+                            primitive.rotationDegrees,
+                            image,
+                            primitive.alpha,
+                            primitive.region,
+                            primitive.tint,
+                            primitive.premultiplied,
+                            primitive.blendMode,
+                        )
+                        layerImage != null -> fillRotatedLayerImage(
+                            x,
+                            y,
+                            w,
+                            h,
+                            primitive.rotationDegrees,
+                            layerImage,
+                            primitive.alpha,
+                            primitive.region,
+                            primitive.tint,
+                            primitive.blendMode,
+                        )
                         else -> fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
                     }
                 }

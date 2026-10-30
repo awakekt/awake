@@ -322,5 +322,6 @@ up, or for a flat emitter its entity's +X and -Z. The quad's own orientation nev
 
 ## See also
 
+- [Game UI — Particles on a canvas](game-ui.md#particles-on-a-canvas) for screen-space HUD emitters (`canvas_particles` / `CanvasParticles`) and `CanvasBurstPool`.
 - [Meshes and materials](meshes-and-materials.md) for instancing static meshes.
 - [Render plans and shaders](shaders.md) for the particle pipeline.

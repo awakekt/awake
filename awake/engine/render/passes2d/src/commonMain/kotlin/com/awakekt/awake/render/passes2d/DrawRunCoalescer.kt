@@ -7,6 +7,7 @@ package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormats2D
+import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.ColoredVertex
 import com.awakekt.awake.core.graphics2d.DrawCommand
@@ -416,7 +417,7 @@ object DrawRunCoalescer {
                 is DrawCommand.Texture -> {
                     @Suppress("UNCHECKED_CAST")
                     val textureSlice = slice as List<DrawCommand.Texture>
-                    runs += buildTextureRun(textureSlice, activePathClips, safeInteriorRect)
+                    runs += buildTextureRun(textureSlice, activePathClips, safeInteriorRect, maxQuadsPerRun)
                 }
                 is DrawCommand.ClipPathPush -> {
                     @Suppress("UNCHECKED_CAST")
@@ -859,29 +860,131 @@ object DrawRunCoalescer {
         textures: List<DrawCommand.Texture>,
         activePathClips: List<DrawPath>,
         safeInteriorRect: Rectangle? = null,
+    ): StagedDrawRun.TextureRun = buildTextureRun(
+        textures = textures,
+        activePathClips = activePathClips,
+        safeInteriorRect = safeInteriorRect,
+        maxQuadsPerRun = DEFAULT_MAX_TEXTURE_QUADS_PER_RUN,
+    )
+
+    private fun buildTextureRun(
+        textures: List<DrawCommand.Texture>,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        maxQuadsPerRun: Int,
     ): StagedDrawRun.TextureRun {
-        val primitives = textures.map { primitive ->
-            val region = primitive.region
-            val raw = texturedQuadMesh(primitive.x, primitive.y, primitive.w, primitive.h, region.u0, region.v0, region.u1, region.v1)
-                .rotatedAboutCenter(primitive.rotationDegrees)
-            // The same skip every other primitive type takes. It was passed the rect and ignored
-            // it, so a texture wholly inside the clip still paid for an exact clip against it.
-            val clipped = if (
-                activePathClips.isEmpty() ||
-                canSkipExactClip(safeInteriorRect, primitive.x, primitive.y, primitive.w, primitive.h)
-            ) {
-                raw
-            } else {
-                exactClip(raw, activePathClips)
-            }
-            val (vertices, indices) = texturedGeometryBuffers(
-                clipped,
-                primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
-                primitive.transform,
-            )
-            TexturedDrawRun(primitive.material, vertices, indices, primitive.blendMode, primitive.premultiplied)
+        val maxVertices = maxQuadsPerRun * VertexFormats2D.VERTICES_PER_QUAD
+        val maxIndices = maxQuadsPerRun * VertexFormats2D.INDICES_PER_QUAD
+        val stagedRuns = ArrayList<TexturedDrawRun>()
+        val chunk = ArrayList<StagedTextureSlice>()
+        var chunkVertices = 0
+        var chunkIndices = 0
+
+        fun flushChunk() {
+            if (chunk.isEmpty()) return
+            stagedRuns += stageCoalescedTextureRun(chunk)
+            chunk.clear()
+            chunkVertices = 0
+            chunkIndices = 0
         }
-        return StagedDrawRun.TextureRun(primitives)
+
+        for (primitive in textures) {
+            val clipped = clipTextureQuad(primitive, activePathClips, safeInteriorRect)
+            val vertexCount = clipped.vertices.size
+            val indexCount = clipped.indices.size
+            if (vertexCount == 0 || indexCount == 0) continue
+            val slice = StagedTextureSlice(
+                material = primitive.material,
+                blendMode = primitive.blendMode,
+                premultiplied = primitive.premultiplied,
+                mesh = clipped,
+                color = primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
+                transform = primitive.transform,
+            )
+            val head = chunk.firstOrNull()
+            val breaksBatch = head != null && (
+                !slice.matchesBatchState(head) ||
+                    chunkVertices + vertexCount > maxVertices ||
+                    chunkIndices + indexCount > maxIndices
+                )
+            if (breaksBatch) flushChunk()
+            chunk += slice
+            chunkVertices += vertexCount
+            chunkIndices += indexCount
+        }
+        flushChunk()
+        return StagedDrawRun.TextureRun(stagedRuns)
+    }
+
+    private fun clipTextureQuad(
+        primitive: DrawCommand.Texture,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+    ): TexturedTriangleMesh {
+        val region = primitive.region
+        val raw = texturedQuadMesh(
+            primitive.x,
+            primitive.y,
+            primitive.w,
+            primitive.h,
+            region.u0,
+            region.v0,
+            region.u1,
+            region.v1,
+        ).rotatedAboutCenter(primitive.rotationDegrees)
+        if (activePathClips.isEmpty() || canSkipRotatedExactClip(safeInteriorRect, primitive)) {
+            return raw
+        }
+        return exactClip(raw, activePathClips)
+    }
+
+    private fun canSkipRotatedExactClip(
+        safeInteriorRect: Rectangle?,
+        primitive: DrawCommand.Texture,
+    ): Boolean {
+        if (primitive.rotationDegrees == 0f) {
+            return canSkipExactClip(safeInteriorRect, primitive.x, primitive.y, primitive.w, primitive.h)
+        }
+        val radians = primitive.rotationDegrees * (PI / 180.0).toFloat()
+        val cosA = abs(cos(radians))
+        val sinA = abs(sin(radians))
+        val aabbW = primitive.w * cosA + primitive.h * sinA
+        val aabbH = primitive.w * sinA + primitive.h * cosA
+        val cx = primitive.x + primitive.w * 0.5f
+        val cy = primitive.y + primitive.h * 0.5f
+        return canSkipExactClip(safeInteriorRect, cx - aabbW * 0.5f, cy - aabbH * 0.5f, aabbW, aabbH)
+    }
+
+    private fun stageCoalescedTextureRun(chunk: List<StagedTextureSlice>): TexturedDrawRun {
+        val head = chunk.first()
+        val totalVertices = chunk.sumOf { it.mesh.vertices.size }
+        val totalIndices = chunk.sumOf { it.mesh.indices.size }
+        val vertices = FloatArray(totalVertices * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
+        val indices = IntArray(totalIndices)
+        var vertexCursor = 0
+        var indexCursor = 0
+        var vertexOffset = 0
+        for (slice in chunk) {
+            for (vertex in slice.mesh.vertices) {
+                writeGlyphVertex(
+                    vertices,
+                    vertexCursor,
+                    vertex.position.x,
+                    vertex.position.y,
+                    vertex.u,
+                    vertex.v,
+                    slice.color,
+                    slice.transform,
+                )
+                vertexCursor += VertexFormats2D.GLYPH_FLOATS_PER_VERTEX
+            }
+            for (index in slice.mesh.indices) {
+                indices[indexCursor] = vertexOffset + index
+                indexCursor += 1
+            }
+            vertexOffset += slice.mesh.vertices.size
+        }
+        return TexturedDrawRun(head.material, vertices, indices, head.blendMode, head.premultiplied)
     }
 
     /** Generates a textured quad mesh for a rectangle at ([x], [y], [w], [h]) with UV bounds. */
@@ -1111,5 +1214,21 @@ object DrawRunCoalescer {
         return StagedDrawRun.GlyphRun(vertices, indices, font)
     }
 }
+
+private class StagedTextureSlice(
+    val material: Any,
+    val blendMode: BlendMode,
+    val premultiplied: Boolean,
+    val mesh: TexturedTriangleMesh,
+    val color: Color,
+    val transform: DrawTransform?,
+) {
+    fun matchesBatchState(other: StagedTextureSlice): Boolean =
+        material === other.material &&
+            blendMode == other.blendMode &&
+            premultiplied == other.premultiplied
+}
+
+private const val DEFAULT_MAX_TEXTURE_QUADS_PER_RUN = 1024
 
 typealias UiRunCoalescer = DrawRunCoalescer

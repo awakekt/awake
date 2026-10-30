@@ -156,6 +156,7 @@ internal class CanvasTree(
     val controls: CanvasControls = CanvasControls.Default,
     val tooltips: CanvasTooltips = CanvasTooltips(),
     internal val followers: FollowerPlans = FollowerPlans(),
+    internal val premultiplied: PremultipliedImages = PremultipliedImages(),
 ) {
     private val hierarchy = CanvasHierarchy(items)
 

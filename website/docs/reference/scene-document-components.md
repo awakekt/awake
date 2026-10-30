@@ -35,6 +35,7 @@ registers it.
 | [`canvas_joystick`](#canvas_joystick) | `CanvasJoystickWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`canvas_layout`](#canvas_layout) | `CanvasLayout` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`canvas_look_area`](#canvas_look_area) | `CanvasLookAreaWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_particles`](#canvas_particles) | `CanvasParticles` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#particles-on-a-canvas) |
 | [`canvas_rect`](#canvas_rect) | `CanvasRect` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`canvas_scaler`](#canvas_scaler) | `CanvasScaler` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#scale-with-the-screen) |
 | [`canvas_stepper`](#canvas_stepper) | `CanvasStepperWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
@@ -86,7 +87,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_particles`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -352,6 +353,50 @@ A region where a swipe looks and a pinch zooms: the element's widget. `SceneCanv
 | --- | --- | --- | --- |
 | `action` | string | `""` | The axis action the swipe is pushed to. |
 | `settings` | object | none | Its sensitivity, inversion, pinch zoom, `turnsCamera` and `zoomAction`, as `canvas_element.look` describes. |
+
+## `canvas_particles`
+
+Canvas-space particle emitter attached to a canvas element alongside `canvas_rect`, stepped and drawn by `CanvasOverlay` on `awake:core:particles`'s shared `ParticleSimulation` in logical `dp` units. At most one per node. `SceneCanvasParticles`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `Center` | Point on the owning element's `width × height` box where particles spawn. |
+| `offsetX` | number | `0` | Horizontal offset from `anchor` in `dp` (`+` right, `-` left). |
+| `offsetY` | number | `0` | Vertical offset from `anchor` in `dp` (`+` down, `-` up). |
+| `placement` | `BehindContent` · `OverContent` | `OverContent` | Paint layer relative to the element's background, widget and text. |
+| `clipped` | boolean | `true` | Honours enclosing clips and canvas masks when `true`; escapes scissor/path clips and canvas masks within the active render target when `false` (never escaping an ancestor offscreen `graphicsLayer` target). |
+| `localSpace` | boolean | `true` | Moves live particles with the element when `true`; trails in root canvas `dp` space when `false`. |
+| `additive` | boolean | `false` | Draws with `BlendMode.Plus` instead of premultiplied `BlendMode.SourceOver`. |
+| `texture` | string | `""` | Project image path loaded and premultiplied once through `loadCanvasImages`, or `""` for untextured solid-tinted quads. |
+| `columns` | integer | `1` | Sprite-sheet columns when `texture` is non-empty. At least 1. |
+| `rows` | integer | `1` | Sprite-sheet rows when `texture` is non-empty. At least 1. |
+| `frameCount` | integer | `1` | Animated cells played in reading order from `0` (`1..columns*rows`). At least 1. |
+| `frameRate` | number | `8` | Sprite-sheet playback rate in frames per second. Not negative. |
+| `enabled` | boolean | `true` | Whether `CanvasOverlay` steps and draws this emitter. |
+| `maxParticles` | integer | `64` | Fixed pool size; spawning pauses while every slot is live. Above 0. |
+| `spawnRate` | number | `12` | Continuous emission rate in particles per second. Not negative. |
+| `lifetime` | number | `0.8` | Minimum seconds each particle lives. Above 0. |
+| `maxLifetime` | number | none | Upper bound on random particle lifetime, at least `lifetime`. Above 0. |
+| `size` | number | `8` | Particle quad height in `dp` at birth (width preserves cell aspect). Above 0. |
+| `endSize` | number | none | Particle quad height in `dp` interpolated to at death. None keeps `size`. Not negative. |
+| `startAlpha` | number | `1` | Opacity at birth. From 0 to 1. |
+| `alphaCurve` | alpha curve | none | Fade-in / hold / fade-out envelope over normalized lifetime (`fadeInEnd`, `fadeOutStart`). None fades linearly from `startAlpha` to `0`. |
+| `tint` | color | white | Straight-alpha colour multiplier at birth. |
+| `endTint` | color | none | Colour multiplier interpolated to at death. None keeps `tint`. |
+| `shape` | object | `{}` | Spawn distribution around the resolved anchor in `dp`: `kind` (`Point` · `Circle` · `Ring` · `Box` · `ElementRect` · `ElementEdge`), `radius`, `innerRadius`, `halfWidth` and `halfHeight` (each not negative; `innerRadius <= radius` for `Ring`). |
+| `speed` | number | `48` | Launch speed in `dp` per second. Not negative. |
+| `maxSpeed` | number | none | Upper bound on random launch speed, at least `speed`. Not negative. |
+| `directionDegrees` | number | `-90` | Base launch angle in degrees (`0` = right, `-90` = up on screen, `90` = down on screen). |
+| `spreadDegrees` | number | `360` | Fan angle in degrees around `directionDegrees` (`0` = beam, `360` = full circle). From 0 to 360. |
+| `radialSpeed` | number | `0` | Outward speed in `dp/s` added away from the spawn origin. |
+| `convergeToOrigin` | boolean | `false` | Sends spawned particles inward toward the spawn origin at launch speed. |
+| `gravity` | object | `{}` | Constant 2D acceleration `{x, y}` in `dp/s²` (`+Y` pulls downward on screen; `{x: 0, y: 0}` by default). |
+| `drag` | number | `0` | Linear velocity damping per second (`0` disables). Not negative. |
+| `turbulence` | number | `0` | Smooth sine flow-field perturbation strength (`0` disables). |
+| `turbulenceFrequency` | number | `1` | Spatial frequency of the turbulence flow field. Not negative. |
+| `spin` | spin | none | Per-particle angular velocity range (`minDegreesPerSecond`, `maxDegreesPerSecond`, `randomStartAngle`). |
+| `burstCount` | integer | none | Lifetime spawn cap; the emitter finishes once all spawned particles expire, and `enabled` stays as authored. Above 0. |
+| `burstCycle` | burst cycle | none | Repeating pulsed emission schedule (`cycleSeconds`, `activeSeconds`, `burstInterval`, `burstSize`) replacing `spawnRate`. |
 
 ## `canvas_rect`
 

@@ -36,7 +36,10 @@ class CanvasElementExposureTest {
     ).associateWith { it }
 
     /** Settings introduced after the legacy record was retired, saved by their focused binding. */
-    private val focusedFields = mapOf("view" to SceneCanvasView.serializer().descriptor)
+    private val focusedFields = mapOf(
+        "view" to SceneCanvasView.serializer().descriptor,
+        "particles" to SceneCanvasParticles.serializer().descriptor,
+    )
 
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
     private val codeOnly: Map<String, String> = mapOf(
@@ -78,6 +81,7 @@ class CanvasElementExposureTest {
 
         assertEquals(emptySet(), targets - sceneFileFields, "mapped to scene file fields that do not exist")
         assertTrue(focusedFields.getValue("view").elementNames.contains("settings"))
+        assertTrue(focusedFields.getValue("particles").elementNames.contains("maxParticles"))
     }
 
     @Test

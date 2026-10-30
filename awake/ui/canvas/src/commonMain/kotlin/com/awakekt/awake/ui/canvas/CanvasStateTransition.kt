@@ -46,13 +46,18 @@ internal data class ResolvedCanvasState(
     val alpha: Float,
     val scale: Float,
 ) {
-    fun applyTo(scope: StyleScope, style: CanvasStyle, bitmaps: Map<String, ImageBitmap>) {
+    fun applyTo(
+        scope: StyleScope,
+        style: CanvasStyle,
+        bitmaps: Map<String, ImageBitmap>,
+        applyAlpha: Boolean = true,
+    ) {
         style.cornerRadius?.let { scope.cornerRadius(it.dp) }
         shadow?.let { scope.dropShadow(it.toShadow()) }
         fill.applyTo(scope)
         images.asReversed().firstNotNullOfOrNull { it.fill(bitmaps) }?.let(scope::backgroundImage)
         scope.textColor(textColor)
-        if (alpha < 1f) scope.alpha(alpha.coerceIn(0f, 1f))
+        if (applyAlpha && alpha < 1f) scope.alpha(alpha.coerceIn(0f, 1f))
         val borderWidth = style.borderWidth
         if (borderWidth != null && borderWidth > 0f && borderColor != null) {
             scope.border(borderWidth.dp, borderColor)

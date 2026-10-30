@@ -212,6 +212,29 @@ free particle_emitter_2d.tint.b | A colour multiplier: follows the sprite tint c
 free particle_emitter_2d.tint.g | A colour multiplier: follows the sprite tint contract without a fixed channel range.
 free particle_emitter_2d.tint.r | A colour multiplier: follows the sprite tint contract without a fixed channel range.
 free particle_emitter_2d.turbulence | Flow-field strength: any finite strength is valid.
+free canvas_particles.offsetX | Signed dp offset from the resolved anchor: negative and positive values are valid.
+free canvas_particles.offsetY | Signed dp offset from the resolved anchor: negative and positive values are valid.
+free canvas_particles.alphaCurve.fadeInEnd | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
+free canvas_particles.alphaCurve.fadeOutStart | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
+free canvas_particles.burstCycle.activeSeconds | Relational: 0 < activeSeconds <= cycleSeconds, enforced by validate().
+free canvas_particles.burstCycle.burstInterval | Nested object: burst interval validated by burstCycle.problems().
+free canvas_particles.burstCycle.burstSize | Nested object: burst count validated by burstCycle.problems().
+free canvas_particles.burstCycle.cycleSeconds | Nested object: cycle period validated by burstCycle.problems().
+free canvas_particles.directionDegrees | Any angle in degrees is valid: negative points upward and past 360 wraps.
+free canvas_particles.endTint.a | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.endTint.b | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.endTint.g | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.endTint.r | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.gravity.x | Canvas dp acceleration component: any finite float is valid.
+free canvas_particles.gravity.y | Canvas dp acceleration component: any finite float is valid.
+free canvas_particles.radialSpeed | Any radial expansion or contraction speed in dp/s is valid.
+free canvas_particles.spin.maxDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
+free canvas_particles.spin.minDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
+free canvas_particles.tint.a | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.tint.b | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.tint.g | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.tint.r | A colour multiplier: follows the particle tint contract without a fixed channel range.
+free canvas_particles.turbulence | Flow-field strength: any finite strength is valid.
 free skybox.exposure | No validate() limits it; every value is accepted today.
 free skybox.horizonColorB | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColorG | A colour channel: every value is accepted; nothing validates it.

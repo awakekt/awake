@@ -33,6 +33,7 @@ sealed class CanvasElementBase {
     internal var arrowPart: CanvasFollowArrow? = null
     internal var inputPart: CanvasInput? = null
     internal var tooltipPart: CanvasTooltip? = null
+    internal var particlesPart: CanvasParticles? = null
 
     /**
      * Bumped each time a component is set or removed through this element, so a host that keeps the
@@ -60,6 +61,7 @@ sealed class CanvasElementBase {
         ARROW_TYPE -> arrowPart
         INPUT_TYPE -> inputPart
         TOOLTIP_TYPE -> tooltipPart
+        PARTICLES_TYPE -> particlesPart
         else -> widget?.takeIf { type.isInstance(it) }
     } as T?
 
@@ -83,6 +85,7 @@ sealed class CanvasElementBase {
             is CanvasFollowArrow -> arrowPart = component
             is CanvasInput -> inputPart = component
             is CanvasTooltip -> tooltipPart = component
+            is CanvasParticles -> particles = component
             is CanvasWidget -> install(component, carries = false)
             else -> throw IllegalArgumentException("${component::class.simpleName} is not a canvas element component")
         }
@@ -107,6 +110,7 @@ sealed class CanvasElementBase {
             is CanvasFollowArrow -> arrowPart = null
             is CanvasInput -> inputPart = null
             is CanvasTooltip -> tooltipPart = null
+            is CanvasParticles -> particles = null
             is CanvasWidget -> widget = null
         }
         componentsVersion++
@@ -115,7 +119,7 @@ sealed class CanvasElementBase {
 
     /** Every component the element has, [rect] and [pointer] first. */
     fun components(): List<Any> = listOfNotNull(
-        rect, pointer, textPart, appearancePart, layout, cluster, bind, followPart, arrowPart, inputPart, tooltipPart, widget,
+        rect, pointer, textPart, appearancePart, layout, cluster, bind, followPart, arrowPart, inputPart, tooltipPart, particles, widget,
     )
 
     /**
@@ -207,6 +211,19 @@ sealed class CanvasElementBase {
             field = value
             componentsVersion++
         }
+
+    /** Particles emitted from or over this element; null when it has none. */
+    var particles: CanvasParticles?
+        get() = particlesPart
+        set(value) {
+            val previous = particlesPart
+            if (previous !== value) {
+                if (previous != null && previous.owner === this) previous.owner = null
+                if (value != null && this is CanvasElement) value.owner = this
+            }
+            particlesPart = value
+            componentsVersion++
+        }
 }
 
 // The component types [CanvasElementBase.get] and [CanvasElementBase.remove] compare against, made
@@ -223,6 +240,7 @@ private val FOLLOW_TYPE: KClass<CanvasFollow> = CanvasFollow::class
 private val ARROW_TYPE: KClass<CanvasFollowArrow> = CanvasFollowArrow::class
 private val INPUT_TYPE: KClass<CanvasInput> = CanvasInput::class
 private val TOOLTIP_TYPE: KClass<CanvasTooltip> = CanvasTooltip::class
+private val PARTICLES_TYPE: KClass<CanvasParticles> = CanvasParticles::class
 
 /** A new widget of [kind], or null for the kinds that have none. */
 internal fun widgetOf(kind: CanvasElementKind): CanvasWidget? = when (kind) {

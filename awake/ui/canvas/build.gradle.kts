@@ -23,6 +23,7 @@ kotlin {
             api(project(":awake:compose:ui"))
             api(project(":awake:core:math2d"))
             api(project(":awake:core:math"))
+            api(project(":awake:core:particles"))
             api(project(":awake:core:text"))
             api(project(":awake:core:schema"))
             api(project(":awake:core:localization"))
