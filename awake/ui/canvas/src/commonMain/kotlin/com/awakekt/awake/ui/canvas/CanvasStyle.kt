@@ -76,6 +76,58 @@ data class CanvasStyle(
     val linkColor: String? = null,
     @PropertyRange(min = 0.0) val transitionSeconds: Float? = null,
 ) {
+    /** [CanvasStyle] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        background: String? = null,
+        gradient: CanvasGradient? = null,
+        image: CanvasImage? = null,
+        fillImage: CanvasImage? = null,
+        fillImageMode: CanvasFillImageMode = CanvasFillImageMode.Cut,
+        cornerRadius: Float? = null,
+        borderWidth: Float? = null,
+        borderColor: String? = null,
+        shadow: CanvasShadow? = null,
+        textColor: String? = null,
+        textShadow: CanvasTextShadow? = null,
+        textOutline: CanvasTextOutline? = null,
+        alpha: Float? = null,
+        hovered: CanvasStateStyle? = null,
+        pressed: CanvasStateStyle? = null,
+        disabled: CanvasStateStyle? = null,
+        rotation: Float? = null,
+        linkColor: String? = null,
+    ) : this(
+        background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor,
+    )
+
+    /** [copy] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        background: String? = this.background,
+        gradient: CanvasGradient? = this.gradient,
+        image: CanvasImage? = this.image,
+        fillImage: CanvasImage? = this.fillImage,
+        fillImageMode: CanvasFillImageMode = this.fillImageMode,
+        cornerRadius: Float? = this.cornerRadius,
+        borderWidth: Float? = this.borderWidth,
+        borderColor: String? = this.borderColor,
+        shadow: CanvasShadow? = this.shadow,
+        textColor: String? = this.textColor,
+        textShadow: CanvasTextShadow? = this.textShadow,
+        textOutline: CanvasTextOutline? = this.textOutline,
+        alpha: Float? = this.alpha,
+        hovered: CanvasStateStyle? = this.hovered,
+        pressed: CanvasStateStyle? = this.pressed,
+        disabled: CanvasStateStyle? = this.disabled,
+        rotation: Float? = this.rotation,
+        linkColor: String? = this.linkColor,
+    ): CanvasStyle = copy(
+        background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor,
+    )
+
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         addAll(
@@ -196,6 +248,28 @@ data class CanvasStateStyle(
     val shadow: CanvasShadow? = null,
     @PropertyRange(min = 0.0) val scale: Float? = null,
 ) {
+    /** [CanvasStateStyle] as it was before `shadow` and `scale`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        background: String? = null,
+        gradient: CanvasGradient? = null,
+        image: CanvasImage? = null,
+        borderColor: String? = null,
+        textColor: String? = null,
+        alpha: Float? = null,
+    ) : this(background, gradient, image, borderColor, textColor, alpha)
+
+    /** [copy] as it was before `shadow` and `scale`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        background: String? = this.background,
+        gradient: CanvasGradient? = this.gradient,
+        image: CanvasImage? = this.image,
+        borderColor: String? = this.borderColor,
+        textColor: String? = this.textColor,
+        alpha: Float? = this.alpha,
+    ): CanvasStateStyle = copy(background, gradient, image, borderColor, textColor, alpha)
+
     internal fun problems(): List<String> = buildList {
         addAll(colourProblems("background" to background, "borderColor" to borderColor, "textColor" to textColor))
         gradient?.problems()?.forEach { add("gradient.$it") }

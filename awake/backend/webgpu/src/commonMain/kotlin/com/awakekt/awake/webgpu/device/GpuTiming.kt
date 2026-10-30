@@ -33,7 +33,7 @@ internal suspend fun WGPUContext.withGpuTiming(onError: GPUUncapturedErrorCallba
     val timedDevice = adapter.requestDevice(
         adapter.preferredDeviceDescriptor(onError).copy(requiredFeatures = (device.features + GPUFeatureName.TimestampQuery).toList()),
     ).getOrThrow()
-    device.close()
+    closeDevice(device)
     return WGPUContext(surface, adapter, timedDevice, renderingContext)
 }
 

@@ -116,8 +116,11 @@ class DepthTarget(
         },
     )
 
-    /** Closes [depthTexture]. Views and the sampler derived from it must not be used afterwards. */
+    /** Closes the views and the sampler derived from [depthTexture], then the texture itself. */
     fun destroy() {
+        layerViews.forEach(GPUTextureView::close)
+        depthView.close()
+        sampler.close()
         depthTexture.close()
     }
 

@@ -61,6 +61,7 @@ The ones you run most:
 | `./gradlew check` | Before a pull request. |
 | `./gradlew detekt` | Lint only; the pre-push hook runs it on the modules a push changes. |
 | `./gradlew desktopApiDump` | After changing public API, so the pre-push `desktopApiCheck` passes. |
+| `scripts/api-binary-compat.sh <last-release-tag>` | After changing public API: lists released JVM signatures the branch dropped. Before 1.0 each stays as a `@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)` overload; CI runs it against the last stable tag. |
 | `./gradlew :awake:engine:render:parity:captureRenderEvidence` | Render screenshots for a PR that changes rendering. |
 | `./gradlew :awake:engine:render:parity:captureTextClipEvidence` | Text-clipping cases with lost-ink counts for a PR that changes text, fonts, clips or layers; `tools/fonts-tooling/text-evidence/run_local.sh <base-ref>` makes the before/after sheets. |
 | `./gradlew releaseCut -Prelease.channel=<channel>` | Cut a release; see [the release process](docs/release-process.md). |

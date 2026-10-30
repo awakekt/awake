@@ -50,6 +50,38 @@ data class TextStyle(
     val wordBreak: WordBreak? = null,
     val numerals: FontNumerals? = null,
 ) {
+    /** [TextStyle] as it was before `wordBreak` and `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        color: Color? = null,
+        size: Sp? = null,
+        lineHeight: Sp? = null,
+        scale: Float = 1f,
+        weight: FontWeight = FontWeight.Normal,
+        letterSpacing: Sp = 0f.sp,
+        shadow: TextShadow? = null,
+        outline: TextOutline? = null,
+        font: UiFont? = null,
+        kerning: Boolean? = null,
+    ) : this(color, size, lineHeight, scale, weight, letterSpacing, shadow, outline, font, kerning, null, null)
+
+    /** [copy] as it was before `wordBreak` and `numerals`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        color: Color? = this.color,
+        size: Sp? = this.size,
+        lineHeight: Sp? = this.lineHeight,
+        scale: Float = this.scale,
+        weight: FontWeight = this.weight,
+        letterSpacing: Sp = this.letterSpacing,
+        shadow: TextShadow? = this.shadow,
+        outline: TextOutline? = this.outline,
+        font: UiFont? = this.font,
+        kerning: Boolean? = this.kerning,
+    ): TextStyle = TextStyle(
+        color, size, lineHeight, scale, weight, letterSpacing, shadow, outline, font, kerning, wordBreak, numerals,
+    )
+
     /**
      * Default text style constants.
      */

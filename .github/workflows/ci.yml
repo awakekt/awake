@@ -102,6 +102,17 @@ jobs:
           scripts/vulkan-publication-impact.test.sh
           scripts/vulkan-core-api-impact.test.sh
 
+      # Before 1.0 a released public signature stays as a hidden overload, so a consumer built against
+      # the last stable release still links. Compares the api dumps with that tag's, modifiers aside.
+      - name: Released JVM signatures kept
+        run: |
+          scripts/api-binary-compat.test.sh
+          tag="$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/||' |
+            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          git fetch --quiet --depth=1 origin "refs/tags/$tag:refs/tags/$tag"
+          echo "Comparing the api dumps with $tag"
+          scripts/api-binary-compat.sh "$tag" HEAD
+
       - name: Central bundle, upload and fallback repository
         run: |
           scripts/central-bundle.test.sh

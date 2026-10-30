@@ -130,6 +130,7 @@ internal class RendererGpuPassExecutor(
             // Staged UI is one frame's: a frame that stages none draws none, not the last one again.
             uiRuns = emptyList()
             submitRenderCommands(encoder)
+            colorView.close()
             presentedColor = PresentedColor(
                 colorTexture,
                 renderingContext.width.toInt(),
