@@ -95,7 +95,11 @@ internal class BundleMembers(
     private suspend fun keep(bundle: ProjectIndexBundle, members: Map<String, ByteArray>) {
         val cache = cache
         if (cache != null) {
-            members.forEach { (sha256, bytes) -> cache.put(sha256, bytes) }
+            // The cache outlives this index and serves a hit by size alone, so each member it keeps is
+            // hashed here even though the whole bundle's SHA-256 has matched: a key in it always names its bytes.
+            membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }.forEach { member ->
+                cache.put(member.sha256, checked(member, "${member.key} in ${bundle.url}", members.getValue(member.sha256)))
+            }
             return
         }
         lock.withLock {
@@ -131,7 +135,8 @@ internal fun checked(entry: ProjectIndexEntry, label: String, bytes: ByteArray):
 
 /**
  * Slices [members] without rehashing their bytes once the whole bundle's SHA-256 has matched: each
- * member must still match its record in the bundle's table of contents.
+ * member must still match its record in the bundle's table of contents. Members going into a
+ * [ContentCache] are hashed one by one when they're kept.
  */
 private fun sliceTrustedMembers(bytes: ByteArray, members: List<ProjectIndexEntry>): Map<String, ByteArray>? {
     val toc = readTocByKey(bytes)
