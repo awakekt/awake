@@ -47,6 +47,7 @@ import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
 import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.platform.LocalDensity
+import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
@@ -156,6 +157,8 @@ private fun ScaledCanvas(
     limits: List<CanvasFollowLimit>,
 ) {
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
+    val particleClock = remember { CanvasParticlesClock() }
+    particleClock.advance(LocalFrameClock.current.deltaSeconds)
     // The box the elements are placed in, inside any padding the host's modifier adds: where it
     // sits in the frame is what a follower's projected point is moved by.
     Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
@@ -167,10 +170,12 @@ private fun ScaledCanvas(
         CompositionLocalProvider(
             LocalDensity provides canvasDensity,
             LocalCanvasDensity provides canvasDensity,
+            LocalCanvasParticlesClock provides particleClock,
             LocalTextStyle provides TextStyle.Default,
         ) {
             // Every follower at once, before any is composed: a limit ranks them all.
             tree.planFollowers(box.width / uiScale, box.height / uiScale, canvasDensity, limits)
+            stepUncomposedVisibleFollowers(tree, particleClock)
             // The insets are the host's dp; under the scaled density they shrink by the scale.
             val inside = box.safeArea.scaledBy(1f / uiScale)
             screen.Elements(tree.roots, tree, inside)
@@ -206,6 +211,9 @@ internal class CanvasOrigin {
 /** [children] inside [element]: each anchored by hand, laid out in rows or columns by its layout, or fanned out by its cluster. */
 context(_: Composer)
 internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem>, tree: CanvasTree) {
+    if (element.particles?.placement == CanvasParticlePlacement.OverContent) {
+        ParticlesOverContent(element, tree)
+    }
     val cluster = element.cluster
     if (cluster != null) {
         ClusterChildren(element, cluster, children, tree)
@@ -294,7 +302,8 @@ internal fun CanvasElementView(
     val back = colorOf(element.background, Color.Transparent)
     val state = rememberStyleState(element.interactions)
     val resolved = rememberCanvasStyleState(element.style, back, fill, state, disabled, tree.controls.theme?.transitionSeconds)
-    val style = Style { resolved.applyTo(this, element.style, tree.images) }
+    val behindParticles = element.particles?.placement == CanvasParticlePlacement.BehindContent
+    val style = Style { resolved.applyTo(this, element.style, tree.images, applyAlpha = !behindParticles) }
     val textStyle = element.textStyle(resolved.textColor, tree.fontOf(element))
     if (LocalCanvasGhost.current) {
         GhostElementView(element, modifier.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style), textStyle, tree, children)
@@ -316,17 +325,24 @@ internal fun CanvasElementView(
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
+    val transformed = wheeled.rotated(element.drawnRotation).scaled(resolved.scale)
+    val base = if (behindParticles) {
+        val faded = if (resolved.alpha < 1f) transformed.alpha(resolved.alpha.coerceIn(0f, 1f)) else transformed
+        faded.canvasParticlesBehind(element, tree)
+    } else {
+        transformed
+    }
     // A Button, or an Image or Panel made pressable, occludes what is under it, like any click
     // target; every other kind only watches, so it must not swallow a tap meant for something it
     // happens to be drawn over.
-    val hovered = wheeled.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style)
+    val hovered = base.styleable(state, style)
         .hoverable(element.interactions, blocksHitTest = element.takesTaps)
         .pressPoint(element, density, units)
         .tooltipPointer(element, tree.tooltips, units)
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
     val styled = element.draggedModifier(hovered, tree, units)
-    ElementContent(element, styled, wheeled, back, textStyle, tree, children)
+    ElementContent(element, styled, if (behindParticles) base else wheeled, back, textStyle, tree, children)
 }
 
 /** The canvas's pixels per dp, under the canvas's own scale but not a follower's; 0 outside a canvas. */

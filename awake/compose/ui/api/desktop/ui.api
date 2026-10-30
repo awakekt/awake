@@ -188,10 +188,12 @@ public abstract interface class com/awakekt/awake/compose/ui/draw/ContentDrawSco
 public final class com/awakekt/awake/compose/ui/draw/ContentDrawScope$DefaultImpls {
 	public static fun clippedWithMargin (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFLkotlin/jvm/functions/Function0;)V
 	public static fun drawDecoratedGlyph (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILcom/awakekt/awake/core/graphics2d/GlyphDecoration;)V
+	public static fun drawTexture (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
 	public static fun isScaled (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
 	public static fun translate (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFLkotlin/jvm/functions/Function0;)V
+	public static fun unclipped (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;Lkotlin/jvm/functions/Function0;)V
 }
 
 public final class com/awakekt/awake/compose/ui/draw/DrawModifiersKt {
@@ -706,6 +708,8 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
 	public abstract fun drawStrokedPath (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;Lcom/awakekt/awake/core/color/Color;)V
 	public abstract fun drawTexture (Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;Z)V
+	public fun drawTexture (Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
+	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;ILjava/lang/Object;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZILjava/lang/Object;)V
 	public abstract fun emit (Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;)V
 	public abstract fun getDensity ()F
@@ -716,6 +720,7 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public fun isScaled ()Z
 	public fun translate (FFLkotlin/jvm/functions/Function0;)V
 	public static synthetic fun translate$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public fun unclipped (Lkotlin/jvm/functions/Function0;)V
 	public abstract fun withAlpha (FLkotlin/jvm/functions/Function0;)V
 	public abstract fun withScale (FFLkotlin/jvm/functions/Function0;)V
 }
@@ -730,12 +735,15 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static synthetic fun drawRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public static synthetic fun drawRoundedRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
+	public static fun drawTexture (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
+	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;ILjava/lang/Object;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZILjava/lang/Object;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z
 	public static fun isScaled (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z
 	public static fun translate (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function0;)V
 	public static synthetic fun translate$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static fun unclipped (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lkotlin/jvm/functions/Function0;)V
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScopeKt {

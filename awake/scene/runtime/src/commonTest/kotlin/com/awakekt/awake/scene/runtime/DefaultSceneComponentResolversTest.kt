@@ -29,7 +29,7 @@ class DefaultSceneComponentResolversTest {
         "CanvasRectBinding", "CanvasTextBinding", "CanvasAppearanceBinding", "CanvasLayoutBinding", "CanvasClusterBinding",
         "CanvasBindBinding", "CanvasFollowBinding", "CanvasFollowArrowBinding", "CanvasInputBinding", "CanvasTooltipBinding",
         "CanvasButtonBinding", "CanvasBarBinding", "CanvasSweepBinding", "CanvasStepperBinding", "CanvasJoystickBinding",
-        "CanvasLookAreaBinding", "CanvasTextFieldBinding", "CanvasViewBinding", "CanvasImageBinding",
+        "CanvasLookAreaBinding", "CanvasTextFieldBinding", "CanvasViewBinding", "CanvasImageBinding", "CanvasParticlesBinding",
     )
 
     @Test

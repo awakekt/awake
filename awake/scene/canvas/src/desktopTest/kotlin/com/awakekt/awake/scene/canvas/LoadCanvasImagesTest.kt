@@ -164,6 +164,45 @@ class LoadCanvasImagesTest {
         assertFalse(hasCanvasImages(SceneDocument(nodes = listOf(SceneNode("score", components = listOf(SceneCanvasElement(text = "0")))))))
     }
 
+    @Test
+    fun particleTexturesAreDiscoveredCheckedAndLoadedOnceWhileEmptyOnesAreIgnored() = runTest {
+        val reads = mutableListOf<String>()
+        val assets = AssetSource { path ->
+            reads += path.value
+            if (path.value == "spark.png") Result.success(PNG) else Result.failure(IllegalStateException("missing"))
+        }
+        val untexturedOnly = SceneDocument(
+            nodes = listOf(
+                SceneNode("bar", components = listOf(SceneCanvasRect(), SceneCanvasParticles(texture = ""))),
+            ),
+        )
+        assertFalse(hasCanvasImages(untexturedOnly))
+        assertEquals(emptyList(), checkCanvasImages(untexturedOnly, AssetSource { error("nothing to read") }))
+
+        val document = SceneDocument(
+            nodes = listOf(
+                SceneNode("bar", components = listOf(SceneCanvasRect(), SceneCanvasParticles(texture = "spark.png"))),
+                SceneNode(
+                    "hud",
+                    children = listOf(
+                        SceneNode("dup", components = listOf(SceneCanvasRect(), SceneCanvasParticles(texture = "spark.png"))),
+                        SceneNode("missing", components = listOf(SceneCanvasRect(), SceneCanvasParticles(texture = "ember.png"))),
+                        SceneNode("solid", components = listOf(SceneCanvasRect(), SceneCanvasParticles(texture = ""))),
+                    ),
+                ),
+            ),
+        )
+
+        assertTrue(hasCanvasImages(document))
+        assertEquals(listOf("ember.png"), checkCanvasImages(document, assets))
+        assertEquals(listOf("spark.png", "ember.png"), reads, "each non-empty particle texture read once")
+
+        reads.clear()
+        val images = loadCanvasImages(document, assets)
+        assertEquals(setOf("spark.png"), images.keys)
+        assertEquals(listOf("spark.png", "ember.png"), reads)
+    }
+
     private companion object {
         val NOT_AN_IMAGE: ByteArray = "this is not a picture".encodeToByteArray()
 

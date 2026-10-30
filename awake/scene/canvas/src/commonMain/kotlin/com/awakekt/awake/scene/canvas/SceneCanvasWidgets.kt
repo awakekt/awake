@@ -256,7 +256,7 @@ internal fun SceneComponent.isCanvasWidget(): Boolean = when (this) {
 /** Whether this is the saved form of a canvas element component, or the older single `canvas_element`. */
 internal fun SceneComponent.isCanvasElementPart(): Boolean = isCanvasWidget() || when (this) {
     is SceneCanvasElement, is SceneCanvasRect, is SceneCanvasText, is SceneCanvasAppearance, is SceneCanvasLayout, is SceneCanvasCluster,
-    is SceneCanvasBind, is SceneCanvasFollow, is SceneCanvasFollowArrow, is SceneCanvasInput, is SceneCanvasTooltip,
+    is SceneCanvasBind, is SceneCanvasFollow, is SceneCanvasFollowArrow, is SceneCanvasInput, is SceneCanvasTooltip, is SceneCanvasParticles,
     -> true
     else -> false
 }

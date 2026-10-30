@@ -101,6 +101,7 @@ class RangeAnnotationsAreEnforcedTest {
         "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
         "particle_emitter_2d" to { base -> JsonObject(base + ("shape" to JsonObject(emptyMap()))) },
+        "canvas_particles" to { base -> JsonObject(base + ("shape" to JsonObject(emptyMap()))) },
         "canvas_element" to { base ->
             val empty = JsonObject(emptyMap())
             JsonObject(

@@ -63,7 +63,9 @@ fun hasCanvasImages(document: SceneDocument): Boolean = document.nodes.any { it.
 private fun SceneDocument.canvasImagePaths(): List<String> = nodes.flatMap { it.canvasImagePaths() }.distinct()
 
 private fun SceneNode.canvasImagePaths(): List<String> =
-    components.filterIsInstance<SceneCanvasElement>().flatMap { it.style.imagePaths() } + children.flatMap { it.canvasImagePaths() }
+    components.filterIsInstance<SceneCanvasElement>().flatMap { it.style.imagePaths() } +
+        components.filterIsInstance<SceneCanvasParticles>().mapNotNull { it.texture.takeIf(String::isNotEmpty) } +
+        children.flatMap { it.canvasImagePaths() }
 
 /** Every image this style draws: its picture or frame, a Bar's fill, and a Button's hovered and pressed pictures. */
 private fun CanvasStyle.imagePaths(): List<String> = listOfNotNull(image?.path, fillImage?.path, hovered?.image?.path, pressed?.image?.path)

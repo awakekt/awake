@@ -24,8 +24,9 @@ the UI canvas contract.
 Each canvas component has its saved form and a binding that copies its fields both ways, generated
 from the `@SceneBinding` on the saved form: `CanvasRectBinding` loads a `canvas_rect` as a `CanvasRect`,
 `CanvasButtonBinding` a `canvas_button` as a `CanvasButtonWidget`, and so on. The bindings of
-`canvas_layout`, `canvas_cluster` and `canvas_bind` use `@SceneBinding(whole = "...")` to save their
-live value under one field. Only the older `canvas_element` reader is written by hand and marked
+`CanvasLayout`, `CanvasCluster` and `CanvasBinding` use `@SceneBinding(whole = "...")` to save their
+live value under one field. `CanvasParticlesBinding` (`canvas_particles`, verified by
+`CanvasParticlesExposureTest`) and the older `canvas_element` reader are written by hand and marked
 `@RegisteredBinding`. The module's generated
 `CanvasSceneComponents` lists them all, in binding-name order, which is also the order a node lists its
 canvas components when saved; `DefaultSceneComponentResolvers` registers it. `CanvasBindingGoldenTest`

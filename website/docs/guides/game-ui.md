@@ -74,6 +74,7 @@ directly:
 | `canvas_bind` | `CanvasBinding` | Game state it shows without code. |
 | `canvas_follow`, `canvas_follow_arrow` | `CanvasFollow`, `CanvasFollowArrow` | The node it follows; the arrow of a follower pinned to the edge. |
 | `canvas_input`, `canvas_tooltip` | `CanvasInput`, `CanvasTooltip` | Pressable, draggable, drop target, wheel; a hover hint. |
+| `canvas_particles` | `CanvasParticles` | Particles emitted from or over the element in canvas `dp` units. |
 | one widget | `CanvasButtonWidget`, `CanvasBarWidget`, ... | `canvas_button`, `canvas_bar`, `canvas_sweep`, `canvas_stepper`, `canvas_joystick`, `canvas_look_area`, `canvas_text_field`, `canvas_view` or `canvas_image`: what the element is, with its own values and `settings`. |
 
 What the player is doing to an element right now, its taps, hover, drag and drop, focus, stick and
@@ -1110,6 +1111,107 @@ data class FrameTheme(
     @Serializable(with = ColorHexSerializer::class) val accent: Color = Color.White,
 )
 ```
+
+## Particles on a canvas
+
+Attach `canvas_particles` (`CanvasParticles` in Kotlin) alongside `canvas_rect` to emit particles in
+logical canvas `dp` units (`+X` right, `+Y` down; `-90` degrees points upward on screen) on the same
+zero-allocation `ParticleSimulation` that drives 3D and `scene2d` emitters. Leaving `texture` empty
+(`""`) draws solid-tinted quads; naming a project image loads and premultiplies it once through
+`loadCanvasImages`, with optional `columns × rows` sprite-sheet cells.
+
+### Level-up burst on a bar
+
+Set `spawnRate` to `0` on a progress bar's `canvas_particles` with `shape = ElementEdge` so particles
+sit idle until gameplay calls `emit(count)` along the bar's perimeter:
+
+```json title="Scene document"
+{
+  "name": "XpBar",
+  "components": [
+    { "component": "canvas_rect", "anchor": "BottomCenter", "offsetY": 24, "width": 280, "height": 18 },
+    { "component": "canvas_bar", "value": 0.4 },
+    {
+      "component": "canvas_particles",
+      "clipped": false,
+      "additive": true,
+      "texture": "assets/ui/spark.png",
+      "maxParticles": 48,
+      "spawnRate": 0,
+      "lifetime": 0.45,
+      "maxLifetime": 0.75,
+      "size": 10,
+      "endSize": 2,
+      "tint": { "r": 1, "g": 0.85, "b": 0.3, "a": 1 },
+      "endTint": { "r": 1, "g": 0.4, "b": 0.1, "a": 0.6 },
+      "shape": { "kind": "ElementEdge" },
+      "speed": 28,
+      "maxSpeed": 64,
+      "directionDegrees": -90,
+      "spreadDegrees": 140
+    }
+  ]
+}
+```
+
+```kotlin title="Kotlin"
+val xpBar = world.canvasElements().getValue("XpBar")
+if (didLevelUp) {
+    xpBar.particles?.emit(24)
+}
+```
+
+### Button-press burst and `CanvasBurstPool`
+
+Give a button an idle emitter (`spawnRate = 0`, `placement = OverContent` or `BehindContent`) and
+fire `emit(count)` when `consumePress()` triggers:
+
+```kotlin title="Kotlin"
+val craftButton = world.canvasElements().getValue("CraftButton")
+if (craftButton.consumePress()) {
+    craftButton.particles?.emit(16)
+}
+```
+
+For frequent one-shot bursts at arbitrary `(xDp, yDp)` canvas coordinates (pointer taps, coin
+pickups, slot flashes) without adding or removing `CanvasElement`s, keep a `CanvasBurstPool` and pass
+its `items` into `CanvasOverlay`:
+
+```kotlin title="Kotlin"
+val tapBursts = CanvasBurstPool(maxSlots = 16, slotMaxParticles = 24)
+
+// Zero steady-state allocations; returns false and increments droppedBurstCount when all slots are live.
+tapBursts.spawn(xDp = tapX, yDp = tapY, count = 12) { emitter ->
+    emitter.clipped = false
+    emitter.additive = true
+    emitter.lifetime = 0.35f
+    emitter.size = 8f
+    emitter.endSize = 2f
+    emitter.speed = 40f
+    emitter.maxSpeed = 90f
+    emitter.tint = Color(1f, 0.9f, 0.4f, 1f)
+}
+```
+
+### Clipping, layers, scaling, and visibility
+
+- **Clip escape (`clipped = false`).** By default (`clipped = true`), particles honour enclosing
+  rectangle clips, path clips (`Modifier.clip`), and canvas masks. Setting `clipped = false` wraps
+  drawing in `DrawScope.unclipped {}`, escaping scissor/path clips and canvas masks within the
+  active render target — including inside a faded ancestor (`CanvasStyle(alpha = ...)`), whose
+  premultiplied fade the escaped particles still inherit without dark fringes. `clipped = false`
+  **never** escapes an ancestor that renders into an offscreen `graphicsLayer`
+  (`CanvasStyle(rotation != 0f)` or `Modifier.graphicsLayer`): particles inside an offscreen layer
+  remain bounded by that layer's target dimensions and by any clips enclosing the layer.
+- **Stepping and hidden elements.** `CanvasOverlay` steps every visible emitter once per frame using
+  `LocalFrameClock` (even when the element's rectangle sits off-screen or outside a clip), and
+  **pauses stepping while the element or an ancestor is hidden** (`visible == false`, or a hidden
+  `touchOnly` control).
+- **Trailing (`localSpace = false`) and UI scale.** With `localSpace = true` (default), live
+  particles move with the element (including subpixel follower motion and subtree `CanvasScaler`s).
+  With `localSpace = false`, spawned particles detach into root canvas `dp` space so moving the
+  element leaves a trail behind; if `CanvasScaler` or `scale` changes mid-flight, detached in-flight
+  particles scale uniformly with the root canvas.
 
 ## See also
 

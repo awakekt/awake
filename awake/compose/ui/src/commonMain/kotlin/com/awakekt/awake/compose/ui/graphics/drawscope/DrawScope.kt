@@ -268,6 +268,18 @@ interface DrawScope {
     fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle? = null, block: () -> Unit)
 
     /**
+     * Temporarily suspends enclosing scissor clips ([clipped], [clippedWithMargin]) and path clips
+     * ([clippedPath]), including canvas masks built on them, within the active render target while
+     * running [block], then restores both the clip stack and visibility-culling bounds even if
+     * [block] throws.
+     *
+     * This never escapes an ancestor offscreen render-target layer (`Modifier.graphicsLayer`,
+     * `drawLayer`, or a layer-backed effect): primitives drawn inside an offscreen layer remain
+     * isolated to and bounded by that layer's target texture.
+     */
+    fun unclipped(block: () -> Unit) = block()
+
+    /**
      * Draws [region] of a backend texture into this node's bounds, its colour multiplied by
      * [tint] and its texels sampled as [filterQuality] says. [premultiplied] says its colours are
      * already multiplied by its alpha, as a render target's are.
@@ -287,6 +299,26 @@ interface DrawScope {
         filterQuality: FilterQuality = FilterQuality.Low,
         premultiplied: Boolean = false,
     )
+
+    /**
+     * Draws [region] of [material] rotated clockwise by [rotationDegrees] around its quad centre
+     * and composited with [blendMode]. Leaves the 9-parameter [drawTexture] binary signature
+     * untouched while defaulting custom [DrawScope] implementations to an unrotated draw.
+     */
+    @Suppress("LongParameterList")
+    fun drawTexture(
+        material: Any,
+        x: Float = 0f,
+        y: Float = 0f,
+        width: Float = this.width.toFloat(),
+        height: Float = this.height.toFloat(),
+        region: TextureRegion = TextureRegion.Whole,
+        tint: Color = Color.White,
+        filterQuality: FilterQuality = FilterQuality.Low,
+        premultiplied: Boolean = false,
+        rotationDegrees: Float,
+        blendMode: BlendMode = BlendMode.SourceOver,
+    ) = drawTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied)
 
     /**
      * Draws a backdrop frosted-glass blur beneath this node's layout bounds.
@@ -434,8 +466,7 @@ internal class PaintScope :
     DrawScope,
     LayerDrawScope,
     RetainedMeshDrawScope {
-    private val clipStack = ArrayDeque<Rectangle>()
-    private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
+    private val clips = ClipStackState()
     private var output = mutableListOf<UiDrawPrimitive>()
     private val layers = mutableListOf<GraphicsLayerFrame>()
     private var nextLayerId = 0
@@ -478,7 +509,7 @@ internal class PaintScope :
     fun reset() {
         output.clear()
         layers.clear()
-        clipStack.clear()
+        clips.reset()
         nextLayerId = 0
         alpha = 1f
         transform.reset()
@@ -504,7 +535,7 @@ internal class PaintScope :
         val layerWidth = width
         val layerHeight = height
         val layerAlpha = (this.alpha * alpha).coerceIn(0f, 1f)
-        val blur = resolveLayerBlur(renderEffect)
+        val blur = resolveLayerBlur(renderEffect, density)
         val elevation = shadowElevation.value.coerceAtLeast(0f) * density
         val outline = shape.createOutline(
             com.awakekt.awake.core.math2d.Size2D(layerWidth.toFloat(), layerHeight.toFloat()),
@@ -604,63 +635,19 @@ internal class PaintScope :
         )
     }
 
-    private data class LayerBlurSpec(
-        val radiusX: Float,
-        val radiusY: Float,
-        val tileMode: TileMode,
-        val insetX: Int,
-        val insetY: Int,
-    )
-
-    @Suppress("DEPRECATION")
-    private fun resolveLayerBlur(renderEffect: RenderEffect?): LayerBlurSpec {
-        val radiusX: Float
-        val radiusY: Float
-        val tileMode: TileMode
-        when (renderEffect) {
-            is BlurEffect -> {
-                radiusX = renderEffect.radiusX
-                radiusY = renderEffect.radiusY
-                tileMode = renderEffect.edgeTreatment
-            }
-            is RenderEffect.Blur -> {
-                radiusX = renderEffect.radiusX.value * density
-                radiusY = renderEffect.radiusY.value * density
-                tileMode = TileMode.Decal
-            }
-            else -> {
-                radiusX = 0f
-                radiusY = 0f
-                tileMode = TileMode.Clamp
-            }
-        }
-        val insetX = if (tileMode == TileMode.Decal) kotlin.math.ceil(radiusX).toInt() else 0
-        val insetY = if (tileMode == TileMode.Decal) kotlin.math.ceil(radiusY).toInt() else 0
-        return LayerBlurSpec(radiusX, radiusY, tileMode, insetX, insetY)
-    }
-
     private fun recordLayerPrimitives(drawContent: () -> Unit): ArrayList<UiDrawPrimitive> {
         val parentOutput = output
         val layerOutput = ArrayList<UiDrawPrimitive>()
         output = layerOutput
         val enclosingAlpha = this.alpha
         this.alpha = 1f
-        val enclosingClips = if (clipStack.isEmpty()) null else ArrayList(clipStack).also { clipStack.clear() }
         try {
-            transform.withIdentity(drawContent)
+            clips.withIsolatedLayerClips { transform.withIdentity(drawContent) }
         } finally {
-            clipStack.clear()
-            if (enclosingClips != null) clipStack.addAll(enclosingClips)
             this.alpha = enclosingAlpha
             output = parentOutput
         }
         return layerOutput
-    }
-
-    private fun resampleEdgeInset(allowsEdgePad: Boolean, start: Float, span: Float): Int {
-        if (!allowsEdgePad) return 0
-        val end = start + span
-        return if (start != floor(start) || end != floor(end)) 1 else 0
     }
 
     // Reused for every layer: what its content paints past its node.
@@ -677,13 +664,6 @@ internal class PaintScope :
             overflow.reset()
         }
     }
-
-    /**
-     * Whole pixels to reserve either side of a [size]-pixel layer for content painted [reach] past it,
-     * never so many that the target passes [MAX_LAYER_TARGET_SIZE].
-     */
-    private fun overflowInset(reach: Float, size: Int): Int =
-        kotlin.math.ceil(reach).toInt().coerceIn(0, ((MAX_LAYER_TARGET_SIZE - size) / 2).coerceAtLeast(0))
 
     override fun drawPathShadow(
         path: DrawPath,
@@ -751,27 +731,8 @@ internal class PaintScope :
     // Reused: drawBoundsAt writes into it once per draw link per node per frame.
     private val bounds = IntArray(4)
 
-    /**
-     * True when [x]/[y]/[w]/[h] (already node-local-to-canvas transformed, same space as
-     * [clipStack]'s entries) cannot possibly be visible under the active clip.
-     *
-     * [clipStack]'s top is the intersected AABB of every enclosing rect clip *and* path clip's
-     * bounds -- a superset of the true visible region for a path clip (which can carve away
-     * corners inside that box), never a subset. So non-intersection here is a sound trivial
-     * reject: nothing that fails this check could have painted a pixel. It says nothing about
-     * primitives that DO intersect -- those still need real clipping if a path clip is active.
-     *
-     * Exists because a `verticalScroll` clips with a plain rect scissor (`clipped`), which -- unlike
-     * [safeInteriorRect] skipping the *cost* of an active path clip -- does nothing to stop
-     * scrolled-past content from being emitted at all: every primitive between the scissor push
-     * and its pop used to reach the coalescer regardless of scroll position, tessellated and
-     * clip-tested like anything on screen. A tall scrollable page pays for its off-screen rows
-     * every frame, not just its visible ones.
-     */
-    private fun isFullyOutsideActiveClip(x: Float, y: Float, w: Float, h: Float): Boolean {
-        val clip = clipStack.lastOrNull() ?: return false
-        return x + w <= clip.x || x >= clip.x + clip.width || y + h <= clip.y || y >= clip.y + clip.height
-    }
+    private fun isFullyOutsideActiveClip(x: Float, y: Float, w: Float, h: Float): Boolean =
+        clips.isFullyOutside(x, y, w, h)
 
     fun enter(node: LayoutNode) = enter(node, depth = 0)
 
@@ -815,12 +776,54 @@ internal class PaintScope :
         filterQuality: FilterQuality,
         premultiplied: Boolean,
     ) {
+        drawTexture(
+            material = material,
+            x = x,
+            y = y,
+            width = width,
+            height = height,
+            region = region,
+            tint = tint,
+            filterQuality = filterQuality,
+            premultiplied = premultiplied,
+            rotationDegrees = 0f,
+            blendMode = BlendMode.SourceOver,
+        )
+    }
+
+    @Suppress("LongParameterList")
+    override fun drawTexture(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        tint: Color,
+        filterQuality: FilterQuality,
+        premultiplied: Boolean,
+        rotationDegrees: Float,
+        blendMode: BlendMode,
+    ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
-        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Texture(px, py, pw, ph, material, alpha = alpha, premultiplied = premultiplied, region = region, tint = tint, filterQuality = filterQuality)
+        if (clips.isRotatedQuadOutside(px, py, pw, ph, rotationDegrees)) return
+        output += UiDrawPrimitive.Texture(
+            x = px,
+            y = py,
+            w = pw,
+            h = ph,
+            material = material,
+            alpha = alpha,
+            rotationDegrees = rotationDegrees,
+            blendMode = blendMode,
+            premultiplied = premultiplied,
+            region = region,
+            tint = tint,
+            filterQuality = filterQuality,
+        )
     }
 
     override fun drawRoundedRect(
@@ -1007,17 +1010,7 @@ internal class PaintScope :
             w * transform.scaleX,
             h * transform.scaleY,
         )
-        val previous = clipStack.lastOrNull() ?: fullClip
-        val effective = rect.intersect(previous)
-        clipStack.addLast(effective)
-        output += UiDrawPrimitive.ClipPush(effective)
-        try {
-            block()
-        } finally {
-            clipStack.removeLast()
-            // Restore the enclosing clip, rather than leaving the GPU scissor at this clip.
-            output += UiDrawPrimitive.ClipPop(previous)
-        }
+        clips.pushRect(rect, output, block)
     }
 
     /**
@@ -1083,10 +1076,6 @@ internal class PaintScope :
             translateX = tx,
             translateY = ty,
         )
-        val bounds = placed.bounds()
-        val previous = clipStack.lastOrNull() ?: fullClip
-        val effective = bounds.intersect(previous)
-        clipStack.addLast(effective)
         val placedSafeInterior = safeInteriorRect?.let {
             Rectangle(
                 x = it.x * transform.scaleX + tx,
@@ -1095,19 +1084,67 @@ internal class PaintScope :
                 height = it.height * transform.scaleY,
             )
         }
-        output += UiDrawPrimitive.ClipPathPush(placed, effective, placedSafeInterior)
-        try {
-            block()
-        } finally {
-            clipStack.removeLast()
-            output += UiDrawPrimitive.ClipPop(previous)
-        }
+        clips.pushPath(placed, placedSafeInterior, output, block)
+    }
+
+    override fun unclipped(block: () -> Unit) {
+        clips.unclipped(output, block)
     }
 
     override fun emit(primitive: UiDrawPrimitive) {
         output += if (alpha >= 1f) primitive else primitive.dimmedBy(alpha)
     }
 }
+
+private data class LayerBlurSpec(
+    val radiusX: Float,
+    val radiusY: Float,
+    val tileMode: TileMode,
+    val insetX: Int,
+    val insetY: Int,
+)
+
+@Suppress("DEPRECATION")
+private fun resolveLayerBlur(renderEffect: RenderEffect?, density: Float): LayerBlurSpec {
+    val radiusX: Float
+    val radiusY: Float
+    val tileMode: TileMode
+    when (renderEffect) {
+        is BlurEffect -> {
+            radiusX = renderEffect.radiusX
+            radiusY = renderEffect.radiusY
+            tileMode = renderEffect.edgeTreatment
+        }
+        is RenderEffect.Blur -> {
+            radiusX = renderEffect.radiusX.value * density
+            radiusY = renderEffect.radiusY.value * density
+            tileMode = TileMode.Decal
+        }
+        else -> {
+            radiusX = 0f
+            radiusY = 0f
+            tileMode = TileMode.Clamp
+        }
+    }
+    val insetX = if (tileMode == TileMode.Decal) kotlin.math.ceil(radiusX).toInt() else 0
+    val insetY = if (tileMode == TileMode.Decal) kotlin.math.ceil(radiusY).toInt() else 0
+    return LayerBlurSpec(radiusX, radiusY, tileMode, insetX, insetY)
+}
+
+private fun resampleEdgeInset(allowsEdgePad: Boolean, start: Float, span: Float): Int =
+    if (!allowsEdgePad) {
+        0
+    } else {
+        val end = start + span
+        if (start != floor(start) || end != floor(end)) 1 else 0
+    }
+
+/**
+ * Whole pixels to reserve either side of a [size]-pixel layer for content painted [reach] past it,
+ * never so many that the target passes [MAX_LAYER_TARGET_SIZE].
+ */
+private fun overflowInset(reach: Float, size: Int): Int =
+    kotlin.math.ceil(reach).toInt().coerceIn(0, ((MAX_LAYER_TARGET_SIZE - size) / 2).coerceAtLeast(0))
 
 /**
  * Multiplies a colour's own alpha by the live dim, allocating only when there is a dim to apply.
@@ -1242,7 +1279,117 @@ private class DrawTransformState {
 }
 
 /**
+ * Tracks active scissor and path clips, their intersected visibility-culling AABBs, temporary
+ * `unclipped {}` escapes within the current render target, and per-layer clip isolation.
+ */
+private class ClipStackState {
+    private val clipStack = ArrayDeque<Rectangle>()
+    private val clipCommandStack = ArrayDeque<UiDrawPrimitive>()
+    private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
+
+    fun reset() {
+        clipStack.clear()
+        clipCommandStack.clear()
+    }
+
+    fun isFullyOutside(x: Float, y: Float, w: Float, h: Float): Boolean {
+        val clip = clipStack.lastOrNull() ?: return false
+        return x + w <= clip.x || x >= clip.x + clip.width || y + h <= clip.y || y >= clip.y + clip.height
+    }
+
+    fun isRotatedQuadOutside(px: Float, py: Float, pw: Float, ph: Float, rotationDegrees: Float): Boolean {
+        if (rotationDegrees == 0f) return isFullyOutside(px, py, pw, ph)
+        val radians = rotationDegrees * (kotlin.math.PI.toFloat() / HALF_CIRCLE_DEGREES)
+        val cosA = kotlin.math.abs(kotlin.math.cos(radians))
+        val sinA = kotlin.math.abs(kotlin.math.sin(radians))
+        val aabbW = pw * cosA + ph * sinA
+        val aabbH = pw * sinA + ph * cosA
+        val cx = px + pw * HALF_EXTENT
+        val cy = py + ph * HALF_EXTENT
+        return isFullyOutside(cx - aabbW * HALF_EXTENT, cy - aabbH * HALF_EXTENT, aabbW, aabbH)
+    }
+
+    fun withIsolatedLayerClips(block: () -> Unit) {
+        val enclosingClips = if (clipStack.isEmpty()) null else ArrayList(clipStack).also { clipStack.clear() }
+        val enclosingCommands = if (clipCommandStack.isEmpty()) null else ArrayList(clipCommandStack).also { clipCommandStack.clear() }
+        try {
+            block()
+        } finally {
+            clipStack.clear()
+            if (enclosingClips != null) clipStack.addAll(enclosingClips)
+            clipCommandStack.clear()
+            if (enclosingCommands != null) clipCommandStack.addAll(enclosingCommands)
+        }
+    }
+
+    fun pushRect(rect: Rectangle, output: MutableList<UiDrawPrimitive>, block: () -> Unit) {
+        val previous = clipStack.lastOrNull() ?: fullClip
+        val effective = rect.intersect(previous)
+        val push = UiDrawPrimitive.ClipPush(effective)
+        clipStack.addLast(effective)
+        clipCommandStack.addLast(push)
+        output += push
+        try {
+            block()
+        } finally {
+            clipCommandStack.removeLast()
+            clipStack.removeLast()
+            output += UiDrawPrimitive.ClipPop(previous)
+        }
+    }
+
+    fun pushPath(
+        placed: DrawPath,
+        placedSafeInterior: Rectangle?,
+        output: MutableList<UiDrawPrimitive>,
+        block: () -> Unit,
+    ) {
+        val previous = clipStack.lastOrNull() ?: fullClip
+        val effective = placed.bounds().intersect(previous)
+        val push = UiDrawPrimitive.ClipPathPush(placed, effective, placedSafeInterior)
+        clipStack.addLast(effective)
+        clipCommandStack.addLast(push)
+        output += push
+        try {
+            block()
+        } finally {
+            clipCommandStack.removeLast()
+            clipStack.removeLast()
+            output += UiDrawPrimitive.ClipPop(previous)
+        }
+    }
+
+    fun unclipped(output: MutableList<UiDrawPrimitive>, block: () -> Unit) {
+        if (clipStack.isEmpty()) {
+            block()
+            return
+        }
+        val savedBounds = ArrayList(clipStack)
+        val savedCommands = ArrayList(clipCommandStack)
+        for (i in savedBounds.lastIndex downTo 0) {
+            val restore = if (i > 0) savedBounds[i - 1] else fullClip
+            output += UiDrawPrimitive.ClipPop(restore)
+        }
+        clipStack.clear()
+        clipCommandStack.clear()
+        try {
+            block()
+        } finally {
+            clipStack.clear()
+            clipStack.addAll(savedBounds)
+            clipCommandStack.clear()
+            clipCommandStack.addAll(savedCommands)
+            for (i in 0 until savedCommands.size) {
+                output += savedCommands[i]
+            }
+        }
+    }
+}
+
+/**
  * The largest side a layer's render target grows to for overflowing content: WebGPU's default texture
  * size limit, the smallest a backend here guarantees.
  */
 private const val MAX_LAYER_TARGET_SIZE = 8192
+private const val HALF_CIRCLE_DEGREES = 180f
+private const val HALF_EXTENT = 0.5f

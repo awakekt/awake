@@ -1,0 +1,1 @@
+- Add canvas-space particle emitters (`CanvasParticles`, `CanvasBurstPool`, and `SceneCanvasParticles` / `canvas_particles`) backed by `awake:core:particles`'s zero-allocation `ParticleSimulation`, along with `DrawScope.drawTexture`, `DrawScope.unclipped`, and contiguous textured quad coalescing in `DrawRunCoalescer`.

@@ -22,6 +22,7 @@ import com.awakekt.awake.ui.canvas.CanvasInput
 import com.awakekt.awake.ui.canvas.CanvasJoystickWidget
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLookAreaWidget
+import com.awakekt.awake.ui.canvas.CanvasParticles
 import com.awakekt.awake.ui.canvas.CanvasPointerState
 import com.awakekt.awake.ui.canvas.CanvasRect
 import com.awakekt.awake.ui.canvas.CanvasStepperWidget
@@ -46,6 +47,7 @@ internal class CanvasElementLink(var version: Int)
 internal val CANVAS_COMPONENT_TYPES: List<KClass<out Any>> = listOf(
     CanvasRect::class, CanvasPointerState::class, CanvasText::class, CanvasAppearance::class, CanvasLayout::class,
     CanvasCluster::class, CanvasBinding::class, CanvasFollow::class, CanvasFollowArrow::class, CanvasInput::class, CanvasTooltip::class,
+    CanvasParticles::class,
 )
 
 /** Every widget component type, in the order a node with more than one keeps them: the first wins. */
