@@ -197,7 +197,10 @@ class RenderPipeline(
         }
     }
 
-    /** This pipeline's group-0 layout. A pipeline built over it binds this one's bind group unchanged. */
+    /**
+     * This pipeline's group-0 layout. A pipeline built over it binds this one's bind group unchanged.
+     * Each read takes a new native reference, which the reader closes.
+     */
     internal val groupZeroLayout: GPUBindGroupLayout
         get() = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0]).getBindGroupLayout(0u)
 
@@ -302,6 +305,7 @@ class RenderPipeline(
 
     /** Invalidate cached bind groups built against this pipeline's group 0 layout. */
     internal fun invalidateUniformBlock() {
+        contentBindGroup?.bindGroup?.close()
         contentBindGroup = null
         bindGroupBuilt = false
     }
@@ -314,7 +318,7 @@ class RenderPipeline(
                 contentBindGroup?.let { return it }
                 bindGroupBuilt = true
                 val group = WebGpuBindGroupHandle(
-                    device.createBindGroup(
+                    device.createBindGroupReleasingLayout(
                         BindGroupDescriptor(
                             layout = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0])
                                 .getBindGroupLayout(0u),
@@ -454,7 +458,11 @@ class RenderPipeline(
      * Call once, after the last frame that draws through it.
      */
     fun destroy() {
+        val pipeline = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0])
         WebGpuHandles.release(graphicsPipeline[0])
+        invalidateUniformBlock()
+        pipeline.close()
+        explicitLayout.close()
         // Inside destroy(), not a separate call a teardown path has to remember: forgetting one
         // companion is exactly how every vertex format leaked a transparent pipeline before
         // PipelineSet.all existed. Vulkan's destroy() drops its slots the same way.
