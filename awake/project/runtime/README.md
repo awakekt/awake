@@ -202,8 +202,10 @@ it. A scene a `SceneSwitch` cannot read or play is reported as `AppErrorSource.S
 retry that asks for the scene again, and the scene playing goes on. A `projectRoute` loader that
 throws is reported as `ProjectLoad` with a retry that loads the route again. A scene system that
 throws in a frame is reported once as `System`, with no retry, and is skipped for the rest of that
-scene while the other systems, the renderer and the UI run on. With no handler registered a failure
-is logged (switch, load) or thrown out of the frame (system) as before. See
+scene while the other systems, the renderer and the UI run on. The runner's own steps are contained
+too, so a failure there never disables scene switching: one that fails after the last scene is taken
+out is reported as `SceneSwitch`, the new scene plays, and the project can switch again. With no
+handler registered a failure is logged (switch, load) or thrown out of the frame (system) as before. See
 [App lifecycle](../../../website/docs/guides/app-lifecycle.md#handle-errors).
 
 ## Playing a scene in a world of your own
