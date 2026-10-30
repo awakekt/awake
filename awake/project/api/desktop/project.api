@@ -242,6 +242,21 @@ public abstract interface class com/awakekt/awake/project/BundleKeyProvider {
 	public abstract fun key (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/ContentBundleDirectoryReport {
+	public fun <init> (Ljava/io/File;IIJI)V
+	public final fun getBundles ()I
+	public final fun getBytes ()J
+	public final fun getFiles ()I
+	public final fun getIndexFile ()Ljava/io/File;
+	public final fun getWritten ()I
+}
+
+public final class com/awakekt/awake/project/ContentBundleDirectoryWriter {
+	public static final field INSTANCE Lcom/awakekt/awake/project/ContentBundleDirectoryWriter;
+	public final fun write (Ljava/io/File;Ljava/io/File;Ljava/io/File;Lcom/awakekt/awake/project/ContentBundleWriter;Z)Lcom/awakekt/awake/project/ContentBundleDirectoryReport;
+	public static synthetic fun write$default (Lcom/awakekt/awake/project/ContentBundleDirectoryWriter;Ljava/io/File;Ljava/io/File;Ljava/io/File;Lcom/awakekt/awake/project/ContentBundleWriter;ZILjava/lang/Object;)Lcom/awakekt/awake/project/ContentBundleDirectoryReport;
+}
+
 public final class com/awakekt/awake/project/ContentBundleFormat {
 	public static final field ENCRYPTED_VERSION I
 	public static final field FILE_EXTENSION Ljava/lang/String;
@@ -377,6 +392,7 @@ public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/aw
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getHasCache ()Z
 	public final fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun prefetch$default (Lcom/awakekt/awake/project/IndexedAssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

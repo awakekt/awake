@@ -53,4 +53,45 @@ class RobotoOutlinesTest {
             }
         }
     }
+
+    @Test
+    fun everyNumericSubstitutedGlyphHasTheFacesOwnOutlineAndAdvance() = runTest {
+        val codes = ArrayList<Int>().apply {
+            var index = 0
+            while (index < UiFonts.DEFAULT_CHARS.length) {
+                val code = CodePoints.at(UiFonts.DEFAULT_CHARS, index)
+                add(code)
+                index += CodePoints.charCount(code)
+            }
+        }.toIntArray()
+        faces.forEach { (file, embedded) ->
+            val full = OpenTypeFont(readResourceBytes(file), file)
+            val subset = embedded()
+            for (numerals in FontNumerals.entries) {
+                val fullSubst = NumericGlyphs.read(full, codes, numerals)
+                val subsetSubst = NumericGlyphs.read(subset, codes, numerals)
+                assertEquals(fullSubst != null, subsetSubst != null, "$file $numerals presence")
+                if (fullSubst != null && subsetSubst != null) {
+                    for (slot in codes.indices) {
+                        val fullGlyph = fullSubst[slot]
+                        val subsetGlyph = subsetSubst[slot]
+                        val what = "$file $numerals U+${codes[slot].toString(16)}"
+                        assertEquals(
+                            fullGlyph != full.glyphFor(codes[slot]),
+                            subsetGlyph != subset.glyphFor(codes[slot]),
+                            "$what substituted",
+                        )
+                        assertEquals(full.advance(fullGlyph), subset.advance(subsetGlyph), "$what advance")
+                        val want = full.outline(fullGlyph)
+                        val got = subset.outline(subsetGlyph)
+                        assertEquals(want.size, got.size, "$what segments")
+                        want.indices.forEach { segment ->
+                            assertEquals(want[segment].isLine, got[segment].isLine, "$what segment $segment")
+                            assertContentEquals(want[segment].points, got[segment].points, "$what segment $segment")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

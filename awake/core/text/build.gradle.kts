@@ -26,6 +26,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:logging"))
         }
         commonTest {
             // The generator's Roboto faces, which the loader tests bake at run time and hold against the committed atlases.

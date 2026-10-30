@@ -63,7 +63,7 @@ private fun <S : SceneComponent> assertRoundTrips(saved: String, binding: SceneC
 
 private val SAVED: Map<String, String> = mapOf(
     "rect" to """{"anchor":"BottomRight","offsetX":2.0,"offsetY":4.0,"width":64.0,"height":32.0,"order":3,"visible":false,"touchOnly":true,"safeArea":false,"grow":0.5,"elementId":"hp","controlId":"jump"}""",
-    "text" to """{"text":"Hi","textKey":"hud.hi","textArgs":{"n":"1"},"fontSize":18.0,"font":"mono","textAlign":"Center","links":false}""",
+    "text" to """{"text":"Hi","textKey":"hud.hi","textArgs":{"n":"1"},"fontSize":18.0,"font":"mono","textAlign":"Center","links":false,"numerals":"Tabular"}""",
     "appearance" to """{"color":"#ff0000","background":"#00000080","style":{"background":"#123456","fillImageMode":"Cut"},"skin":{}}""",
     "layout" to """{"layout":{"direction":"Column","wrap":false,"gap":4.0,"padding":0.0,"justify":"Start","align":"Start"}}""",
     "cluster" to """{"cluster":{"pivotX":1.0,"pivotY":1.0,"radius":48.0,"startAngle":180.0,"spacing":45.0,"primaryAtPivot":true}}""",

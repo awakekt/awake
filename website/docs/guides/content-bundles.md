@@ -4,6 +4,7 @@
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">module: <code>com.awakekt.awake:project</code></span>
+<span class="awake-badge">Gradle: <code>generateContentBundles</code></span>
 <span class="awake-badge">CLI: <code>awake bundle</code></span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
@@ -16,16 +17,30 @@ bundled index; the game opens that index exactly as it opens a loose one.
 
 ## Write bundles in the publish step
 
-Start from the loose index the build makes (`./gradlew generateProjectIndex` writes
-`build/project.index.json`). From the command line:
+In a Gradle project with `com.awakekt.awake.plugin.project-content` applied, run:
+
+```bash
+./gradlew generateContentBundles
+```
+
+That runs `generateProjectIndex`, packs its files with `com.awakekt.awake:project`'s writer in an
+isolated Gradle worker, and writes `build/published/bundles/<sha256>.awkb` plus the bundled
+`build/published/project.index.json`. Upload `build/published` as it is.
+
+The task deletes bundles in `build/published` that the new index no longer lists, so the folder holds
+one release. Pointed at a folder outside the build, such as a publish folder that still serves the
+previous release's bundles to players mid-update, it keeps them unless `pruneStaleBundles` is set.
+
+From the command line, starting from a loose index (`./gradlew generateProjectIndex` writes
+`build/project.index.json`), `awake bundle` writes the exact same files:
 
 ```bash
 awake bundle build/project.index.json --output build/published
 ```
 
-That writes `build/published/bundles/<sha256>.awkb` and the bundled
-`build/published/project.index.json`. Upload the folder as it is. Options: `--group folder|one`,
-`--depth <n>`, `--target-mb <n>` (16 by default), and `--opaque-ids --salt <text>`.
+Options: `--group folder|one`, `--depth <n>`, `--target-mb <n>` (16 by default),
+`--opaque-ids --salt <text>`, and `--prune`, which deletes `.awkb` files under the output folder that
+the new index doesn't list. Without it, the command keeps them.
 
 From Kotlin, for a publish step of your own, `ContentBundleWriter` does the same. It reads each
 file once, checks it against the loose index, and hands you one bundle at a time:
@@ -46,9 +61,10 @@ one, with a plain fetch or a [`TokenAuthorizedFetch`](protected-content.md):
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/ContentBundlesDocsSampleTest.kt:open"
 ```
 
-The first read of any member fetches its whole bundle once, checks the bundle and every member
-against their SHA-256s, and stores each member in the `ContentCache` by its own SHA-256. The rest of
-that bundle's files then read with no request. `prefetch` downloads whole bundles, one per bundle,
+The first read of any member fetches its whole bundle once, checks the bundle's SHA-256 against the
+index and each member against the bundle's table of contents, and stores each member in the
+`ContentCache` by its own SHA-256, hashing each one as it goes in, since the cache outlives the
+index. The rest of that bundle's files then read with no request. `prefetch` downloads whole bundles, one per bundle,
 and skips a bundle whose files are already cached.
 
 ## Choose the groups
@@ -76,8 +92,8 @@ project root, `awake.project.json` among them, in a bundle of their own.
 
 ## Choose a size
 
-Each group is split into bundles filled up to the size target, in path order. A file larger than the
-target gets a bundle of its own.
+Each group larger than the size target is split at deterministic content-hash peaks bounded by the
+target, in path order. A file larger than the target gets a bundle of its own.
 
 | Target | Suits |
 | --- | --- |
@@ -91,9 +107,12 @@ Weigh these:
   limit. Bigger bundles mean fewer.
 - **Over-fetch.** A bundle downloads whole. Bigger bundles fetch more that a scene doesn't use, unless
   the groups match what loads together.
-- **Re-uploads.** Changing a file changes its bundle and can move the split points after it in its
-  group, so later bundles of that group change too. Other groups are untouched. Smaller groups keep a
-  change local.
+- **Re-uploads.** Because split points within a group follow content-defined hash boundaries, adding,
+  editing or removing one file typically re-packs its own bundle (two when that bundle splits) and
+  leaves later bundles of that group, and every other group, untouched. That is likely rather than
+  certain: a run of files longer than the target with no hash peak in it is filled greedily, so a
+  change inside it can move the later bundles up to its end. Smaller targets still make each
+  re-uploaded bundle smaller.
 - **Memory.** A bundle is held whole while it is checked. With a `ContentCache`, members are then kept
   there; with none, up to 64 MiB of not-yet-read members wait in memory.
 - **Host limits.** Some CDNs and edge platforms cap a cached object or a response body. Keep the target
@@ -134,12 +153,27 @@ or 503 with `Retry-After`, waits and is sent again like any other.
 
 ## Properties
 
+`ContentBundleWriter`:
+
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `grouping` | `ContentBundleGrouping` | `byFolder(1)` | Which group each path is in; no bundle mixes groups. |
-| `targetBundleBytes` | `Long` | 16 MiB | The size a bundle fills to before the next one starts. |
+| `targetBundleBytes` | `Long` | 16 MiB | Upper size target per bundle; larger groups split at content-defined boundaries within it. |
 | `pathIds` | `ProjectPathIds?` | `null` | With a salt, ids replace paths in the index and bundles. |
 | `bundleUrlPrefix` | `String` | `bundles` | The folder bundle URLs start with, relative to the index. |
+
+`projectContent` Gradle extension (`generateContentBundles`):
+
+| Property | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `bundlesOutputDirectory` | `DirectoryProperty` | `build/published` | Folder where `bundles/<sha256>.awkb` and the bundled `project.index.json` are written. |
+| `bundleGrouping` | `Property<String>` | `"folder"` | `"folder"` (`byFolder`) or `"one"` (`oneGroup`). |
+| `bundleFolderDepth` | `Property<Int>` | `1` | Leading folder count when `bundleGrouping` is `"folder"`. |
+| `targetBundleBytes` | `Property<Long>` | 16 MiB | Upper size target per bundle. |
+| `bundleOpaqueIds` | `Property<Boolean>` | `false` | Whether to replace paths in the index and bundles with salted opaque ids. |
+| `bundlePathSalt` | `Property<String>` | unset | Salt required when `bundleOpaqueIds` is `true`. |
+| `bundleUrlPrefix` | `Property<String>` | `"bundles"` | Folder prefix for bundle URLs under `bundlesOutputDirectory`. |
+| `pruneStaleBundles` | `Property<Boolean>` | `true` inside the build folder, else `false` | Whether `.awkb` files under `bundlesOutputDirectory` that the new index doesn't list are deleted. |
 
 ## How it works
 
@@ -166,9 +200,14 @@ index version it doesn't know, so an older engine fails clearly on a bundled ind
 misreading it. A loose index reads exactly as it always has, and the two can share one cache: members
 are cached by their own SHA-256, as loose files are.
 
-**Checks.** A bundle's size and SHA-256 must match the index, and so must each member's. A bundle
-that fails is rejected whole, nothing from it is cached, and the error names every damaged member's
-path (or id), or the header or table when no member is damaged.
+**Checks.** A whole bundle's size and SHA-256 are checked once against the index; when they match
+and every member matches its record in the bundle's table of contents, member slices read with no
+`ContentCache` are trusted without hashing their bytes a second time. Members kept in a
+`ContentCache` are each hashed before they're stored, because the cache serves later releases by
+SHA-256 and checks a hit by size alone. Single-member range reads still check each member's size
+and SHA-256 directly. A bundle that fails its check is rejected whole, nothing from it is cached,
+and its members are hashed to name every damaged member's path (or id), or the header or table when
+no member is damaged.
 
 ## See also
 

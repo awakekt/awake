@@ -93,13 +93,14 @@ private val WORD = Regex("""\S+\s*|\s+""")
 
 private val WRAPPING = FlexBoxConfig { wrap = FlexWrap.Wrap }
 
-/** This element's words in [color] and [font], at its size, with its shadow and outline. */
+/** This element's words in [color] and [font], at its size, with its shadow, outline and [numerals]. */
 internal fun CanvasElement.textStyle(color: Color, font: UiFont?) = TextStyle(
     color = color,
     size = fontSize.sp,
     shadow = style.textShadow?.toTextShadow(),
     outline = style.textOutline?.toTextOutline(),
     font = font,
+    numerals = numerals,
 )
 
 /** How strong a TextField's hint draws against the field's text colour. */

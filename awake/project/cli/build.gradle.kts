@@ -52,6 +52,23 @@ dependencies {
     implementation(project(":awake:engine:platform"))
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(kotlin("test"))
+    testImplementation(gradleTestKit())
+}
+
+val projectWorkerClasspath = configurations.create("projectWorkerClasspath") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+        attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment.STANDARD_JVM))
+        attribute(org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.attribute, org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.jvm)
+    }
+}
+
+dependencies {
+    projectWorkerClasspath(project(":awake:project"))
 }
 
 // A small project with a capability of its own, for `awake validate --code`. Its code builds apart from
@@ -78,10 +95,21 @@ tasks.test {
     filter { excludeTestsMatching("*RenderTest") }
     inputs.files(fixtureCode).withPropertyName("fixtureCode")
     inputs.dir(fixtureProject).withPropertyName("fixtureProject")
+    inputs.files(projectWorkerClasspath).withPropertyName("projectWorkerClasspath")
     val code = fixtureCode
     val projectDir = fixtureProject
+    val workerFiles = projectWorkerClasspath
+    val buildLogicDir = rootDir.resolve("build-logic").absolutePath
+    // The JDK this build runs on, for the TestKit build the bundle test starts.
+    val gradleJavaHome = providers.systemProperty("java.home")
     jvmArgumentProviders += CommandLineArgumentProvider {
-        listOf("-Dawake.fixture.code=${code.asPath}", "-Dawake.fixture.project=${projectDir.asFile.absolutePath}")
+        listOf(
+            "-Dawake.fixture.code=${code.asPath}",
+            "-Dawake.fixture.project=${projectDir.asFile.absolutePath}",
+            "-Dawake.project.workerClasspath=${workerFiles.asPath}",
+            "-Dawake.buildLogic.dir=$buildLogicDir",
+            "-Dawake.gradle.javaHome=${gradleJavaHome.get()}",
+        )
     }
 }
 

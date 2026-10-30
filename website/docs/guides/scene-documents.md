@@ -93,7 +93,10 @@ factories.
 `switchTo` keeps the systems the app registered. A project played with `runProject` goes to another of
 its scenes through its `SceneSwitch` instead, which also closes the old scene's systems and physics
 and plans the next scene's own: a system asks with `services.sceneSwitch?.request("scenes/level-2.scene.json")`,
-and a blueprint with its Load Scene node. See
+and a blueprint with its Load Scene node. A game that shows a loading curtain or an error reads the
+app's `SceneSwitchStatus` service: its `state` is idle, loading with the share of the next scene's
+bytes that have arrived, ready once the new scene has had its first frame, or failed with the scene's
+path and cause. See
 [`awake:project:runtime`](https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene).
 
 ## Save a world

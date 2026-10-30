@@ -1,0 +1,1 @@
+- Support tabular and proportional digit spacing (`TextStyle.numerals = FontNumerals.Tabular` / `FontNumerals.Proportional`) via OpenType `GSUB` `SingleSubst` (`tnum`/`pnum`), including built-in Roboto outlines, loaded fonts (`UiFonts.load`), `WeightedUiFont`, `FallbackUiFont`, and `:awake:ui:canvas` / `:awake:scene:canvas` `numerals` JSON round-tripping (#1023).

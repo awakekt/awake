@@ -92,36 +92,60 @@ internal class BundleMembers(
     /** The bundle's members by SHA-256, each as stored and as read. */
     private suspend fun fetchChecked(bundle: ProjectIndexBundle): Map<String, Member> {
         val bytes = fetch(bundle.url)
-        // The key first, so a refused key fails as itself rather than as damaged members.
-        seal?.cipher()
-        val verified = HashMap<String, Member>()
-        val damaged = membersOf.getValue(bundle.sha256).mapNotNull { member ->
-            val start = member.offset!!
-            val end = start + index.storedSizeOf(member)
-            val slice = if (end <= bytes.size) bytes.copyOfRange(start.toInt(), end.toInt()) else null
-            val read = verified[member.sha256]?.read ?: slice?.let { stored ->
-                runCatching { opened(member, member.key, stored) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
-            }
-            if (slice != null && read != null) {
-                verified[member.sha256] = Member(slice, read)
-                null
-            } else {
-                member.key
-            }
-        }
+        val members = membersOf.getValue(bundle.sha256)
         val whole = bytes.size.toLong() == bundle.sizeBytes && Sha256.digestHex(bytes) == bundle.sha256
-        check(whole && damaged.isEmpty()) {
-            val what = if (damaged.isEmpty()) "its header or table of contents" else "damaged members: ${damaged.joinToString(", ")}"
-            "${bundle.url} doesn't match the project index (expected ${bundle.sizeBytes} bytes with SHA-256 ${bundle.sha256}): $what"
+        val trusted = when {
+            seal != null -> openSealed(bytes, members, whole)
+            whole -> sliceTrustedMembers(bytes, members)?.mapValues { (_, slice) -> Member(slice, slice) }
+            else -> null
         }
-        return verified
+        if (trusted != null) return trusted
+        val damaged = if (seal != null) unopened(bytes, members) else damagedMembers(bytes, members)
+        val what = if (damaged.isEmpty()) "its header or table of contents" else "damaged members: ${damaged.joinToString(", ")}"
+        error(
+            "${bundle.url} doesn't match the project index (expected ${bundle.sizeBytes} bytes with SHA-256 ${bundle.sha256}): $what",
+        )
     }
+
+    /**
+     * A sealed bundle's members, opened, when the whole bundle matches and every member matches its
+     * table of contents record and opens; otherwise null. Opening checks each member's tag, so the
+     * plaintext needs no hashing.
+     */
+    private suspend fun openSealed(bytes: ByteArray, members: List<ProjectIndexEntry>, whole: Boolean): Map<String, Member>? {
+        // The key first, so a refused key fails as itself rather than as damaged members.
+        val seal = seal!!.also { it.cipher() }
+        val toc = readTocByKey(bytes)
+        if (!whole || toc == null || members.any { !matchesTocAndBounds(it, toc[it.key], bytes.size, index.storedSizeOf(it)) }) return null
+        val opened = HashMap<String, Member>(members.size)
+        for (member in members) {
+            if (member.sha256 in opened) continue
+            val stored = sliceOf(bytes, member, index.storedSizeOf(member)) ?: return null
+            opened[member.sha256] = Member(stored, openOrNull(seal, member, stored) ?: return null)
+        }
+        return opened
+    }
+
+    /** The keys of [members] whose sealed bytes don't open, for the message of a bundle that fails. */
+    private suspend fun unopened(bytes: ByteArray, members: List<ProjectIndexEntry>): List<String> = members.mapNotNull { member ->
+        val stored = sliceOf(bytes, member, index.storedSizeOf(member))
+        if (stored != null && openOrNull(seal!!, member, stored) != null) null else member.key
+    }
+
+    private suspend fun openOrNull(seal: MemberSeal, member: ProjectIndexEntry, stored: ByteArray): ByteArray? =
+        runCatching { seal.open(member, stored, member.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
 
     /** Puts [members] in the cache as stored, or with none, keeps each of [bundle]'s files in memory for the read still to come. */
     private suspend fun keep(bundle: ProjectIndexBundle, members: Map<String, ByteArray>, stored: Map<String, Member>) {
         val cache = cache
         if (cache != null) {
-            membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }.forEach { cache.put(index.cacheKeyOf(it), stored.getValue(it.sha256).stored) }
+            // The cache outlives this index and serves a hit by size alone, so each plaintext member it
+            // keeps is hashed here even though the whole bundle's SHA-256 has matched: a key in it always
+            // names its bytes. A sealed member is checked by its tag on every read instead.
+            membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }.forEach { member ->
+                val bytes = stored.getValue(member.sha256).stored
+                cache.put(index.cacheKeyOf(member), if (seal != null) bytes else checked(member, "${member.key} in ${bundle.url}", bytes))
+            }
             return
         }
         lock.withLock {
@@ -172,4 +196,48 @@ internal fun checked(entry: ProjectIndexEntry, label: String, bytes: ByteArray):
         "$label doesn't match the project index: expected ${entry.sizeBytes} bytes with SHA-256 ${entry.sha256}"
     }
     return bytes
+}
+
+/**
+ * Slices [members] without rehashing their bytes once the whole bundle's SHA-256 has matched: each
+ * member must still match its record in the bundle's table of contents. Members going into a
+ * [ContentCache] are hashed one by one when they're kept.
+ */
+private fun sliceTrustedMembers(bytes: ByteArray, members: List<ProjectIndexEntry>): Map<String, ByteArray>? {
+    val toc = readTocByKey(bytes)
+    if (toc == null || members.any { !matchesTocAndBounds(it, toc[it.key], bytes.size, it.sizeBytes) }) return null
+    val verified = HashMap<String, ByteArray>(members.size)
+    for (member in members) {
+        if (member.sha256 !in verified) verified[member.sha256] = sliceOf(bytes, member, member.sizeBytes)!!
+    }
+    return verified
+}
+
+private fun damagedMembers(bytes: ByteArray, members: List<ProjectIndexEntry>): List<String> {
+    val toc = readTocByKey(bytes)
+    return members.mapNotNull { member ->
+        val slice = sliceOf(bytes, member, member.sizeBytes)
+        val tocMatches = toc == null || matchesTocAndBounds(member, toc[member.key], bytes.size, member.sizeBytes)
+        if (slice != null && tocMatches && Sha256.digestHex(slice) == member.sha256) null else member.key
+    }
+}
+
+/** The [storedSize] bytes at [member]'s offset in [bytes], or null when they run past its end. */
+private fun sliceOf(bytes: ByteArray, member: ProjectIndexEntry, storedSize: Long): ByteArray? {
+    val start = member.offset!!
+    val end = start + storedSize
+    return if (end <= bytes.size) bytes.copyOfRange(start.toInt(), end.toInt()) else null
+}
+
+private fun readTocByKey(bytes: ByteArray): Map<String, ContentBundleTocEntry>? =
+    runCatching { ContentBundleFormat.readTableOfContents(bytes).associateBy { it.key } }.getOrNull()
+
+/** Whether [record] is [member]'s: same offset, stored size [storedSize] and plaintext SHA-256, inside the bundle. */
+private fun matchesTocAndBounds(member: ProjectIndexEntry, record: ContentBundleTocEntry?, bundleSize: Int, storedSize: Long): Boolean {
+    val start = member.offset ?: return false
+    return record != null &&
+        record.offset == start &&
+        record.sizeBytes == storedSize &&
+        record.sha256 == member.sha256 &&
+        start + storedSize <= bundleSize
 }

@@ -37,7 +37,7 @@ import kotlin.math.floor
 internal class TextRun(
     private val text: String,
     private val style: TextStyle,
-    private val font: UiFont,
+    font: UiFont,
     private val glyphPx: Float,
     private val density: Float,
     private val emDp: Float = glyphPx / density,
@@ -48,6 +48,7 @@ internal class TextRun(
     private val maxLines: Int = Int.MAX_VALUE,
     private val fontScale: Float = 1f,
 ) {
+    private val font: UiFont = font.withNumerals(style.numerals)
     private val letterSpacing = style.letterSpacing.value * density
 
     /** Whether adjacent clusters kern: unless the style turns it off, as a browser's `font-kerning: auto`. */

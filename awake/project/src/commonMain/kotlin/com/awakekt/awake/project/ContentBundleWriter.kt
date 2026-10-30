@@ -15,8 +15,12 @@ import com.awakekt.awake.core.io.Sha256
  * The output is deterministic. Files are taken in path order and groups in name order, and
  * [ContentBundleFormat.encode] has no timestamps, so the same files give byte-identical bundles with
  * the same SHA-256 and the same URL, and a publish step uploads only bundles it doesn't already
- * have. Adding, removing or resizing a file changes its own bundle and can move the split points of
- * the bundles after it in its group, but leaves other groups' bundles alone.
+ * have. Within a group larger than [targetBundleBytes], bundle boundaries are chosen at
+ * content-defined hash peaks bounded by [targetBundleBytes], so adding, removing or resizing a file
+ * typically re-packs only its own bundle, or two when that bundle splits, and leaves the boundaries
+ * of later bundles in the group where they were. This is likely rather than guaranteed: a stretch
+ * of files longer than [targetBundleBytes] with no hash peak in it is filled greedily, and a change
+ * inside such a stretch can shift the later bundles up to the stretch's end.
  *
  * A file larger than [targetBundleBytes] gets a bundle of its own. Files of the same content in one
  * bundle are stored once.
@@ -110,24 +114,97 @@ class ContentBundleWriter(
         )
     }
 
-    /** The bundles to write, each a list of entries: groups in name order, files in path order, filled to the target. */
-    private fun plan(entries: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> =
+    /**
+     * The bundles to write, each a list of entries: groups in name order, files in path order, split at
+     * content-defined boundaries bounded by [targetBundleBytes].
+     */
+    internal fun plan(entries: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> =
         entries.sortedBy { it.path }
             .groupBy { grouping.groupOf(it.path) }
             .entries.sortedBy { it.key }
-            .flatMap { (_, group) ->
-                val chunks = mutableListOf<MutableList<ProjectIndexEntry>>()
-                var filled = 0L
-                group.forEach { entry ->
-                    if (chunks.isEmpty() || (filled > 0 && filled + entry.sizeBytes > targetBundleBytes)) {
-                        chunks += mutableListOf<ProjectIndexEntry>()
-                        filled = 0
-                    }
-                    chunks.last() += entry
-                    filled += entry.sizeBytes
+            .flatMap { (_, group) -> chunkGroup(group) }
+
+    private fun chunkGroup(group: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> = buildList {
+        val run = mutableListOf<ProjectIndexEntry>()
+        for (entry in group) {
+            if (entry.sizeBytes >= targetBundleBytes) {
+                if (run.isNotEmpty()) {
+                    addAll(chunkRun(run.toList()))
+                    run.clear()
                 }
-                chunks
+                add(listOf(entry))
+            } else {
+                run += entry
             }
+        }
+        if (run.isNotEmpty()) addAll(chunkRun(run))
+    }
+
+    private fun chunkRun(run: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> {
+        val totalBytes = run.sumOf { it.sizeBytes }
+        if (totalBytes <= targetBundleBytes) return listOf(run)
+        return anchorSegments(run, totalBytes).flatMap(::packBounded)
+    }
+
+    /**
+     * Splits [run] after every file whose cut is a local digest peak: its digest beats every other
+     * file's within a quarter of the target on either side. The window on each side only moves
+     * forward, so a sliding maximum finds every peak in one pass, O(files) however small they are.
+     */
+    private fun anchorSegments(run: List<ProjectIndexEntry>, totalBytes: Long): List<List<ProjectIndexEntry>> {
+        val windowBytes = maxOf(1L, targetBundleBytes / CDC_WINDOW_DIVISOR)
+        val starts = LongArray(run.size)
+        val ends = LongArray(run.size)
+        var offset = 0L
+        for (index in run.indices) {
+            starts[index] = offset
+            offset += run[index].sizeBytes
+            ends[index] = offset
+        }
+        val digests = Array(run.size) { index ->
+            Sha256.digest("${run[index].path}\u0000${run[index].sha256}".encodeToByteArray())
+        }
+        val leftMax = DigestWindowMax(digests)
+        val rightMax = DigestWindowMax(digests)
+        // The first file ending within the window before the candidate, and the last file starting
+        // within the window after it; both only move forward as the candidate does.
+        var leftFrom = 0
+        var rightTo = 0
+        return buildList {
+            var segmentStart = 0
+            for (index in 0 until run.lastIndex) {
+                val cut = ends[index]
+                if (cut < windowBytes || totalBytes - cut < windowBytes) continue
+                while (ends[leftFrom] <= starts[index] - windowBytes) leftFrom++
+                if (rightTo < index) rightTo = index
+                while (rightTo + 1 < run.size && starts[rightTo + 1] - cut < windowBytes) rightTo++
+                val left = leftMax.maxIndex(leftFrom, index - 1)
+                val right = rightMax.maxIndex(index + 1, rightTo)
+                val beatsLeft = left < 0 || compareDigests(digests[index], digests[left]) > 0
+                val beatsRight = right < 0 || compareDigests(digests[index], digests[right]) > 0
+                if (beatsLeft && beatsRight) {
+                    add(run.subList(segmentStart, index + 1))
+                    segmentStart = index + 1
+                }
+            }
+            add(run.subList(segmentStart, run.size))
+        }
+    }
+
+    private fun packBounded(segment: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> = buildList {
+        var current = mutableListOf<ProjectIndexEntry>()
+        var filled = 0L
+        for (entry in segment) {
+            if (current.isNotEmpty() && filled + entry.sizeBytes > targetBundleBytes) {
+                add(current)
+                current = mutableListOf()
+                filled = 0L
+            }
+            current += entry
+            filled += entry.sizeBytes
+        }
+        if (current.isNotEmpty()) add(current)
+    }
 
     private fun checkedBytes(entry: ProjectIndexEntry, bytes: ByteArray): ByteArray {
         check(bytes.size.toLong() == entry.sizeBytes && Sha256.digestHex(bytes) == entry.sha256) {
@@ -143,7 +220,45 @@ class ContentBundleWriter(
 
         /** The folder bundles go in, next to the index. */
         const val DEFAULT_BUNDLE_URL_PREFIX: String = "bundles"
+
+        /** Local-maxima byte radius (`target / 4`): keeps natural segments above `target / 4` and below `target`. */
+        private const val CDC_WINDOW_DIVISOR: Int = 4
     }
+}
+
+private const val BYTE_MASK: Int = 0xff
+
+/**
+ * The largest of [digests] over a window whose two ends only ever move forward: a monotonic queue of
+ * indices whose digests decrease, each index pushed and dropped at most once.
+ */
+private class DigestWindowMax(private val digests: Array<ByteArray>) {
+    private val queue = IntArray(digests.size)
+    private var head = 0
+    private var tail = 0
+    private var next = 0
+
+    /**
+     * The index of the largest digest in `from..to`, or -1 for an empty window. Neither [from] nor
+     * [to] may be smaller than in the call before.
+     */
+    fun maxIndex(from: Int, to: Int): Int {
+        while (next <= to) {
+            while (tail > head && compareDigests(digests[queue[tail - 1]], digests[next]) <= 0) tail--
+            queue[tail++] = next++
+        }
+        while (head < tail && queue[head] < from) head++
+        return if (head < tail && from <= to) queue[head] else -1
+    }
+}
+
+/** Compares two digests of one length as unsigned big-endian numbers, without allocating. */
+private fun compareDigests(first: ByteArray, second: ByteArray): Int {
+    for (index in first.indices) {
+        val difference = (first[index].toInt() and BYTE_MASK) - (second[index].toInt() and BYTE_MASK)
+        if (difference != 0) return difference
+    }
+    return 0
 }
 
 /**
