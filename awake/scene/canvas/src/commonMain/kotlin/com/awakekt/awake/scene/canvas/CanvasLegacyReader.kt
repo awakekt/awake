@@ -43,7 +43,7 @@ private val savedOrder: Map<KClass<*>, Int> by lazy { CanvasSceneComponents.bind
 
 /** This element's words: always for the kinds that show them, never for a Panel, and for the rest when it sets any. */
 private fun SceneCanvasElement.wordsOrNull(): SceneCanvasText? {
-    val words = SceneCanvasText(text, textKey, textArgs, fontSize, font, textAlign, links)
+    val words = SceneCanvasText(text, textKey, textArgs, fontSize, font, textAlign, links, numerals)
     return when (kind) {
         CanvasElementKind.Text, CanvasElementKind.Button, CanvasElementKind.TextField -> words
         CanvasElementKind.Panel -> null
@@ -102,6 +102,7 @@ private fun SceneCanvasElement.with(component: SceneComponent): SceneCanvasEleme
         font = component.font,
         textAlign = component.textAlign,
         links = component.links,
+        numerals = component.numerals,
     )
     is SceneCanvasAppearance -> copy(color = component.color, background = component.background, style = component.style, skin = component.skin)
     is SceneCanvasLayout -> copy(layout = component.layout)

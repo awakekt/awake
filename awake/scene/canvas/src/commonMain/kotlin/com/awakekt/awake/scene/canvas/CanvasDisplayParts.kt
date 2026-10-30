@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBar
 import com.awakekt.awake.ui.canvas.CanvasBarWidget
@@ -66,6 +67,13 @@ class CanvasTextPart internal constructor(id: String) : CanvasPart(id, CanvasEle
         get() = element.links
         set(value) {
             element.links = value
+        }
+
+    /** Digit width spacing (`Tabular` or `Proportional`); null keeps the font's default digits. */
+    var numerals: FontNumerals?
+        get() = element.numerals
+        set(value) {
+            element.numerals = value
         }
 }
 

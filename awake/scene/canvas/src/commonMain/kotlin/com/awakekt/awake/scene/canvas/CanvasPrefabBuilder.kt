@@ -10,6 +10,7 @@ import com.awakekt.awake.core.color.toHex
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Sp
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneNode
@@ -220,6 +221,9 @@ class CanvasElementScope internal constructor(
     /** Whether a Text's `[[key|words]]` spans draw as links. */
     var links: Boolean = defaults.links
 
+    /** Digit width spacing (`Tabular` or `Proportional`); null keeps the font's default digits. */
+    var numerals: FontNumerals? = defaults.numerals
+
     /** A TextField's password mask character; empty draws the text as typed. */
     var mask: String = defaults.mask
 
@@ -381,6 +385,7 @@ class CanvasElementScope internal constructor(
         dropTarget = dropTarget,
         camera = camera,
         links = links,
+        numerals = numerals,
         mask = mask,
         font = font,
         pressable = pressable,

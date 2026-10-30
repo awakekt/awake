@@ -6,6 +6,7 @@
 package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.text.font.FontNumerals
 
 /**
  * The flat properties of a [CanvasElement] that read and write its placement, words and look: its
@@ -164,6 +165,13 @@ sealed class CanvasElementFields : CanvasElementBase() {
         get() = textPart?.links ?: true
         set(value) {
             textFor(!value)?.links = value
+        }
+
+    /** See [CanvasText.numerals]. */
+    var numerals: FontNumerals?
+        get() = textPart?.numerals
+        set(value) {
+            textFor(value != null)?.numerals = value
         }
 
     /** See [CanvasAppearance.color]. */

@@ -30,7 +30,7 @@ class CanvasElementExposureTest {
         "kind", "anchor", "offsetX", "offsetY", "width", "height", "text", "textKey", "textArgs", "fontSize", "color",
         "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "safeArea", "style",
         "textAlign", "follow", "followOffset", "followBounds", "followOutset", "followRules", "followArrow", "layout", "grow",
-        "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "maxLength", "maxLengthUnit", "placeholder", "padding", "tooltip",
+        "bind", "wheel", "draggable", "dropTarget", "camera", "links", "numerals", "mask", "maxLength", "maxLengthUnit", "placeholder", "padding", "tooltip",
         "font", "pressable", "joystick", "button", "enabled", "look", "cluster", "skin", "controlId",
         "bar", "sweep", "stepper", "elementId",
     ).associateWith { it }

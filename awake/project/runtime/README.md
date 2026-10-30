@@ -83,9 +83,55 @@ the switch.
   outside the world.
 - **Failure.** A scene that can't be read, decoded, checked or drawn is logged once, as an error naming
   it, and the scene playing goes on as it was. A scene that fails while it is put in is taken out
-  again first.
+  again first. The switch state (below) ends in `Failed` with the scene's path and the cause.
 - **Again and again.** Asking again for the scene on its way changes nothing, and asking for another
   instead replaces the request. Asking for the scene that is playing starts it again from its file.
+
+### Watching a switch: loading, ready, failed
+
+`SceneSwitch` only asks. What a request is doing is the app's `SceneSwitchStatus` service (and
+`SceneHostServices.sceneSwitchStatus` in a system), whose `state` is a `StateFlow<SceneSwitchState>`,
+the same idiom as `Strings.locale`. A loading curtain, a progress bar or an error message is the
+game's to draw from it; `awake:project:runtime` draws nothing, so a played project still needs no
+display.
+
+```kotlin
+val status = game.requireService<SceneSwitchStatus>()
+// Each frame, in a system or a UI:
+when (val state = status.state.value) {
+    SceneSwitchState.Idle -> Unit
+    is SceneSwitchState.Loading -> drawCurtain(state.progress)
+    is SceneSwitchState.Ready -> liftCurtain()
+    is SceneSwitchState.Failed -> showError(state.path, state.cause)
+}
+```
+
+| State | Meaning |
+| --- | --- |
+| `Idle` | No scene has been asked for. |
+| `Loading(path, progress)` | The scene at `path` is being read, and after that swapped in. It lasts until the new scene has had its first frame. |
+| `Ready(path)` | The new scene is playing and its first frame is over. |
+| `Failed(path, cause)` | The scene couldn't be read, decoded, checked or put in; the old scene plays on. |
+
+- **Order.** A request goes `Idle`, `Loading(path, 0)`, ..., `Loading(path, 1)`, `Ready(path)`, or ends
+  in `Failed`. Asking for another scene while one loads makes it `Loading(newPath, 0)`. The state
+  holds its last value until the next request, and changes on the frame thread. A `StateFlow`
+  conflates, so a collector can miss a short-lived state: read `state.value` each frame.
+- **Progress** is the share of the target scene's content bytes that have arrived, from 0 to 1. It
+  never decreases within a request and is 1 once the scene has loaded, before `Ready`. The bytes are
+  those of the scene file and every file it names by project path (a model, an image, a sound, a
+  prefab), counted through `IndexedAssetSource.prefetch` when the project's files are an
+  `IndexedAssetSource` with a `ContentCache`. A source that can't report bytes (local files, a
+  wrapped source, an index with no cache) goes from 0 straight to 1. Files named only inside another
+  file, such as a model's textures, are not counted ahead.
+- **Ready** is the start of the frame after the one that first ran the new scene's systems, so on a
+  host with a renderer the scene has been handed to the renderer once, and on a host without one it
+  is the first completed frame. It does not wait for pipeline compilation or texture uploads a
+  backend defers past its first frame, so a curtain may still see a short hitch on a slow device.
+- **`loadProject` progress.** `loadProject(files, ..., onProgress = { share -> ... })` reports the
+  entry scene's content the same way: 0 as loading starts, rising, and 1 as the project is ready,
+  on the loading coroutine. Pass `physicsWorld` by name or as the trailing lambda; `onProgress` sits
+  before it.
 
 `project.scene` is the scene playing now, and `project.close()` closes it, whichever it is: a switch
 closes the scene it leaves, the entry scene included. The manifest lists no scenes, so any scene file

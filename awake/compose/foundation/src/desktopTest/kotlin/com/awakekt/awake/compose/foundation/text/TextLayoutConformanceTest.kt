@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.foundation.text
 
 import com.awakekt.awake.compose.ui.unit.sp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
@@ -76,57 +77,77 @@ class TextLayoutConformanceTest {
         return if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)
     }
 
+    // The browser's `font-kerning`: `normal` kerns, as Core does by default, and `none` turns it off.
+    private fun kerningOf(spec: JsonObject): Boolean = when (val value = spec.string("kerning")) {
+        "normal" -> true
+        "none" -> false
+        else -> error("Unsupported font-kerning '$value' in ${spec.string("id")}")
+    }
+
+    private fun numeralsOf(spec: JsonObject): FontNumerals? = when (val value = spec.string("numeric")) {
+        "normal" -> null
+        "tabular-nums" -> FontNumerals.Tabular
+        "proportional-nums" -> FontNumerals.Proportional
+        else -> error("Unsupported font-variant-numeric '$value' in ${spec.string("id")}")
+    }
+
     private fun measure(spec: JsonObject, font: UiFont): Layout {
         val size = spec.number("sizePx").toFloat()
         val density = spec.number("density").toFloat()
-        // The browser's `font-kerning`: `normal` kerns, as Core does by default, and `none` turns it off.
-        val kerning = when (val value = spec.string("kerning")) {
-            "normal" -> true
-            "none" -> false
-            else -> error("Unsupported font-kerning '$value' in ${spec.string("id")}")
-        }
+        val kerning = kerningOf(spec)
+        val numerals = numeralsOf(spec)
+        val resolvedFont = font.withNumerals(numerals)
         val style = TextStyle(
             font = font,
             size = (size / density).sp,
             lineHeight = spec.optionalNumber("lineHeightPx")?.let { (it.toFloat() / density).sp },
             kerning = kerning,
+            numerals = numerals,
         )
         val text = spec.string("text")
         val run = TextRun(text, style, font, size, density, wrapWidthPx = spec.optionalNumber("wrapWidthPx")?.toFloat() ?: Float.POSITIVE_INFINITY)
         val scope = LayoutRecordingScope()
         run.paint(scope, Color(1f, 1f, 1f, 1f))
-        val quads = scope.glyphs.iterator()
-        var cursor = 0
-        val lines = run.lines.map { line ->
+        // TextRun paints a font with several atlas pages one page at a time, each pass in text order (a numeric
+        // variant's substituted figures sit on a page of their own), so the quads are matched to chars that way.
+        val pages = resolvedFont.atlasPages
+        fun pageOf(char: Char): Int = if (pages.size <= 1) 0 else pages.indexOf(resolvedFont.fontFor(char.code, FontWeight.Normal))
+        val sourceLines = run.lines.fold(0 to emptyList<Int>()) { (cursor, starts), line ->
             val start = text.indexOf(line, cursor)
             check(start >= cursor && line.isNotEmpty()) { "Unsupported source range in ${spec.string("id")}" }
-            cursor = start + line.length
+            (start + line.length) to starts + start
+        }.second
+        val painted = run.lines.indices
+            .flatMap { lineIndex -> run.lines[lineIndex].indices.map { lineIndex to it } }
+            .filter { (lineIndex, index) -> resolvedFont.glyphFor(run.lines[lineIndex][index].code, FontWeight.Normal) != null }
+            .sortedBy { (lineIndex, index) -> pageOf(run.lines[lineIndex][index]) }
+        check(painted.size == scope.glyphs.size) { "Painted ${scope.glyphs.size} glyphs for ${painted.size} chars" }
+        val quadByChar = painted.zip(scope.glyphs).toMap()
+        val lines = run.lines.mapIndexed { lineIndex, line ->
+            val start = sourceLines[lineIndex]
             var baseline: Double? = null
             val origins = line.mapIndexed { index, char ->
-                val uv = font.glyphFor(char.code, FontWeight.Normal)
-                val x = if (uv == null) {
+                val uv = resolvedFont.glyphFor(char.code, FontWeight.Normal)
+                val quad = quadByChar[lineIndex to index]
+                if (uv == null || quad == null) {
                     run.offsetAtLine(start + index).toDouble()
                 } else {
-                    check(quads.hasNext()) { "Missing painted glyph $char" }
-                    val quad = quads.next()
-                    if (baseline == null) baseline = (quad.y - uv.offsetYEm * size + font.ascentEm * size).toDouble()
+                    if (baseline == null) baseline = (quad.y - uv.offsetYEm * size + resolvedFont.ascentEm * size).toDouble()
                     (quad.x - uv.offsetXEm * size).toDouble()
                 }
-                x
             }
-            Line(start, cursor, run.offsetAtLine(cursor).toDouble(), checkNotNull(baseline), run.caretPositionAt(start).y.toDouble(), origins)
+            val end = start + line.length
+            Line(start, end, run.offsetAtLine(end).toDouble(), checkNotNull(baseline), run.caretPositionAt(start).y.toDouble(), origins)
         }
-        check(!quads.hasNext()) { "Unaccounted painted glyphs" }
         return Layout(run.lineHeightPx.toDouble(), lines)
     }
 
     private fun compare(spec: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
         val id = spec.string("id")
-        // Kerning (#1022) and the wrap-fit bound (#1021) are implemented, so a kerned or wrapped case is held
-        // to the browser with no expected-failure signature of its own.
-        val featureIssue = if (spec.string("numeric") != "normal") xfail(1023) else null
-        metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), featureIssue)
-        metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), featureIssue, tolerance = 0.0)
+        // Kerning (#1022), tabular/proportional digits (#1023) and the wrap-fit bound (#1021) are implemented,
+        // so featured, kerned and wrapped cases are held to the browser with no expected-failure signature.
+        metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), null)
+        metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), null, tolerance = 0.0)
         // Core advances every line by a whole device pixel (TextLineBox), where the browser advances by
         // a fractional line height at a fractional density or an authored fractional line height. The
         // control is the browser's own first baseline on the pixel grid (half down, as Core rounds it),
@@ -142,9 +163,9 @@ class TextLayoutConformanceTest {
             val expected = expectedLines.getOrNull(index)
             val unfeatured = controlLines.getOrNull(index)
             val prefix = "line[$index]"
-            metric(id, "$prefix.start", line.start.toDouble(), expected.measuredNumber("start"), unfeatured?.number("start"), featureIssue, tolerance = 0.0)
-            metric(id, "$prefix.end", line.end.toDouble(), expected.measuredNumber("end"), unfeatured?.number("end"), featureIssue, tolerance = 0.0)
-            metric(id, "$prefix.advance", line.advance, expected.measuredNumber("advance"), unfeatured?.number("advance"), featureIssue)
+            metric(id, "$prefix.start", line.start.toDouble(), expected.measuredNumber("start"), unfeatured?.number("start"), null, tolerance = 0.0)
+            metric(id, "$prefix.end", line.end.toDouble(), expected.measuredNumber("end"), unfeatured?.number("end"), null, tolerance = 0.0)
+            metric(id, "$prefix.advance", line.advance, expected.measuredNumber("advance"), unfeatured?.number("advance"), null)
             metric(id, "$prefix.baseline", line.baseline, expected.measuredNumber("baseline"), firstBaseline + index * wholeAdvance, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02)
             metric(id, "$prefix.top", line.top, expected.measuredNumber("top"), index * wholeAdvance, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02)
             metric(id, "$prefix.height", actual.height, expected.measuredNumber("height"), null, null)
@@ -152,7 +173,7 @@ class TextLayoutConformanceTest {
             for ((offset, x) in line.origins.withIndex()) {
                 val source = line.start + offset
                 val target = referenceGlyphs[source]
-                metric(id, "$prefix.glyph[$source].x", x, target.measuredNumber("x"), controlGlyphs[source]?.number("x"), featureIssue)
+                metric(id, "$prefix.glyph[$source].x", x, target.measuredNumber("x"), controlGlyphs[source]?.number("x"), null)
             }
         }
     }

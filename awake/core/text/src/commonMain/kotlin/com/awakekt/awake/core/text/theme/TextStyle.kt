@@ -8,6 +8,7 @@ package com.awakekt.awake.core.text.theme
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Sp
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.unicode.WordBreak
@@ -31,6 +32,9 @@ import com.awakekt.awake.core.text.unicode.WordBreak
  *   browser's `font-kerning: auto` does, and measuring, painting, the caret and hit testing all follow it.
  * @property wordBreak How soft line breaking treats unspaced letter runs (such as Korean words vs CJK
  *   syllable/ideograph breaks), matching CSS `word-break`; null to inherit ([WordBreak.Normal] when unset).
+ * @property numerals Numeric figure spacing (`pnum` or `tnum` from the font's OpenType `GSUB` table),
+ *   matching CSS `font-variant-numeric`'s figure-spacing values; null to inherit (leaving the font's
+ *   default digits untouched when unset).
  */
 data class TextStyle(
     val color: Color? = null,
@@ -44,6 +48,7 @@ data class TextStyle(
     val font: UiFont? = null,
     val kerning: Boolean? = null,
     val wordBreak: WordBreak? = null,
+    val numerals: FontNumerals? = null,
 ) {
     /**
      * Default text style constants.
@@ -76,6 +81,7 @@ data class TextStyle(
             other.font ?: font,
             other.kerning ?: kerning,
             other.wordBreak ?: wordBreak,
+            other.numerals ?: numerals,
         )
     }
 
@@ -84,13 +90,15 @@ data class TextStyle(
         setsOrAbsent(color, base.color) && setsOrAbsent(size, base.size) &&
             setsOrAbsent(lineHeight, base.lineHeight) && setsOrAbsent(shadow, base.shadow) &&
             setsOrAbsent(outline, base.outline) && setsOrAbsent(font, base.font) &&
-            setsOrAbsent(kerning, base.kerning) && setsOrAbsent(wordBreak, base.wordBreak)
+            setsOrAbsent(kerning, base.kerning) && setsOrAbsent(wordBreak, base.wordBreak) &&
+            setsOrAbsent(numerals, base.numerals)
 
     /** Whether merging this over [base] gives [base]: every field it sets, [base] already has. */
     private fun changesNothingIn(base: TextStyle): Boolean =
         sameOrUnset(color, base.color) && sameOrUnset(size, base.size) && sameOrUnset(lineHeight, base.lineHeight) &&
             sameOrUnset(shadow, base.shadow) && sameOrUnset(outline, base.outline) && sameOrUnset(font, base.font) &&
             sameOrUnset(kerning, base.kerning) && sameOrUnset(wordBreak, base.wordBreak) &&
+            sameOrUnset(numerals, base.numerals) &&
             scale == base.scale && weight == base.weight && letterSpacing == base.letterSpacing
 }
 

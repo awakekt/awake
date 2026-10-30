@@ -120,6 +120,7 @@ it did, and the next save writes it as components. To move code and tools over:
 | `textArgs` | object | `{}` | Values for `textKey`'s placeholders, by name, such as `{ "count": "3" }`. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `font` | string | `""` | The font of `text`: a `.ttf` or `.otf` file from the project, or a built-in family. See [Use a font](#use-a-font). |
+| `numerals` | `Proportional` · `Tabular` | none | How digits are spaced: `Tabular` gives every digit the same width, so a counter or timer keeps its place; `Proportional` fits each to its shape. None keeps the font's default digits. |
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
 | `maxLength` | integer | `0` | The most a `TextField` lets the player type; `0` for no limit. See [Limit what is typed](#limit-what-is-typed). |
 | `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. |

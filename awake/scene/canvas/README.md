@@ -139,7 +139,9 @@ fields to and from the scene file; a scene saved before them loads as literal te
 A TextField's `placeholder` and any element's `tooltip` are keys into the same tables, with the same
 arguments. `padding` (`horizontal` 12, `vertical` 0) is a TextField's inner space; the three load
 with those defaults from a scene saved before them. Validation reports `placeholder` and `padding` on
-another kind, a negative or non-finite padding, and a blank key.
+another kind, a negative or non-finite padding, and a blank key. `canvas_text.numerals` (`Tabular` or
+`Proportional`, omitted when null) selects OpenType `tnum` or `pnum` figure spacing without adding a
+JSON field when unset.
 
 ## A 3D view and following a node
 
