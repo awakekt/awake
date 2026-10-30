@@ -23,7 +23,7 @@ internal const val MAX_CONCURRENT_PREFETCHES = 6
  * Where [IndexedAssetSource] keeps files it has checked, by SHA-256, so a file read twice, or
  * unchanged between two releases of a project, downloads once and isn't hashed again. A host backs
  * it with what it has: a folder on desktop and mobile, the origin private file system or IndexedDB
- * in a browser.
+ * in a browser. [platformContentCache] answers the platform's default.
  *
  * [get] must return exactly the bytes [put] stored under that SHA-256, or null: [IndexedAssetSource]
  * checks a hit's size but not its hash, so storage that can damage bytes in place has to check them

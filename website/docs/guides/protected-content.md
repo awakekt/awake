@@ -68,6 +68,44 @@ reads the index with the token too, then every file and [content bundle](content
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/ProtectedContentDocsSampleTest.kt:open"
 ```
 
+**4. Keep files between runs.** `platformContentCache(namespace)` answers the platform's default
+`ContentCache`, so the next launch reads every file it already has instead of downloading it again;
+only the index is fetched each time. Pass a name for your app or project that stays the same across
+releases:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/ProtectedContentDocsSampleTest.kt:platform-cache"
+```
+
+On Android, pass the app's cache folder too, since `com.awakekt.awake:project` never reaches a
+`Context`; the one-argument call answers null there, which means no cache:
+
+```kotlin title="Kotlin (Android)"
+--8<-- "awake/project/src/androidHostTest/kotlin/com/awakekt/awake/project/PlatformContentCacheAndroidTest.kt:android-cache"
+```
+
+| Platform | Where the files go | Cache |
+| --- | --- | --- |
+| Web (wasmJs) | The origin's IndexedDB | `IndexedDbContentCache(namespace)` |
+| Linux | `$XDG_CACHE_HOME/<namespace>/awake-content`, else `~/.cache/<namespace>/awake-content` | `FileSystemContentCache` |
+| macOS | `~/Library/Caches/<namespace>/awake-content` | `FileSystemContentCache` |
+| Windows | `%LOCALAPPDATA%\<namespace>\awake-content` | `FileSystemContentCache` |
+| iOS | `Library/Caches/<namespace>/awake-content` in the app's container | `FileSystemContentCache` |
+| Android | `<cacheDir>/<namespace>/awake-content`, with `platformContentCache(namespace, context.cacheDir)` | `FileSystemContentCache` |
+
+- **The namespace is one folder name.** 1 to 128 ASCII letters, digits, `.`, `_` or `-`, starting
+  with a letter or digit, such as `harbor-town` or `com.example.harbortown`. Anything else, a `/`,
+  `..` or a Windows device name such as `CON`, throws `IllegalArgumentException` before any storage
+  is touched. On desktop every app shares the user's cache folder, so make the name your app's own.
+- **The cache never fails a load.** A read the storage refuses is a miss and the file comes from the
+  network; a file it can't keep, on a full disk or past the browser's quota, is dropped, costing the
+  next run a download. When the folder can't be created at all, `platformContentCache` answers null,
+  and the project loads with no cache.
+- **Old releases are pruned.** `open` deletes cached files the new index doesn't list
+  (`retainCachedOnly = true`, the default), so the cache holds one release's files.
+- **The system may empty it.** Every one of these is a cache folder: the user, or the system when
+  space runs short, may delete it, and the next run downloads again.
+
 With an index you already have, pass the fetch function instead:
 `IndexedAssetSource(index, contentFetch::fetch, cache)`. Bundles go through the same fetch: a whole
 bundle with `fetch`, and one member alone with `fetchRange` (`open(..., rangeReads = true)`), which
