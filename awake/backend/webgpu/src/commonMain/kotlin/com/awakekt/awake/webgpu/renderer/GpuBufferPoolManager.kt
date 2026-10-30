@@ -16,6 +16,7 @@ import com.awakekt.awake.webgpu.mesh.InstanceBuffer
 import com.awakekt.awake.webgpu.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
+import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.pipeline.uniformByteSize
 import com.awakekt.awake.webgpu.ui.DynamicMesh
@@ -60,7 +61,7 @@ internal class GpuBufferPoolManager(
     /** Keyed by pipeline AND semantic: one pipeline can read both depth targets, and a single
      * key would let the second overwrite the first. */
     internal val shadowBindGroups =
-        mutableMapOf<Pair<GPURenderPipeline, BindingSemantic>, MaterialBinding>()
+        mutableMapOf<Pair<GPURenderPipeline, BindingSemantic>, WebGpuBindGroupHandle>()
     private val uniformSlotPools = mutableMapOf<GPURenderPipeline, MutableList<UniformSlot>>()
 
     private val skinnedInstancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
@@ -98,7 +99,7 @@ internal class GpuBufferPoolManager(
                     usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
                 ),
             )
-            val bindGroup = device.createBindGroup(
+            val bindGroup = device.createBindGroupReleasingLayout(
                 BindGroupDescriptor(
                     layout = pipeline.pipeline.getBindGroupLayout(0u),
                     entries = listOf(
@@ -144,7 +145,7 @@ internal class GpuBufferPoolManager(
             val singleBufferOnly = group0Entries == null || (group0Entries.size == 1 && group0Entries[0].kind == com.awakekt.awake.render.pipeline.ResourceKind.UniformBuffer)
             val bindGroup = if (singleBufferOnly) {
                 WebGpuBindGroupHandle(
-                    device.createBindGroup(
+                    device.createBindGroupReleasingLayout(
                         BindGroupDescriptor(
                             layout = pipeline.pipeline.getBindGroupLayout(0u),
                             entries = listOf(
@@ -163,9 +164,9 @@ internal class GpuBufferPoolManager(
 
     /** Releases and evicts all buffers and bind groups cached against [pipeline]. */
     fun invalidatePipeline(pipeline: GPURenderPipeline) {
-        uniformSlotPools.remove(pipeline)?.forEach { it.buffer.close() }
-        skinnedInstancedUniformResources.remove(pipeline)?.buffer?.close()
-        shadowBindGroups.keys.filter { it.first == pipeline }.forEach { shadowBindGroups.remove(it) }
+        uniformSlotPools.remove(pipeline)?.forEach(UniformSlot::close)
+        skinnedInstancedUniformResources.remove(pipeline)?.close()
+        shadowBindGroups.keys.filter { it.first == pipeline }.forEach { shadowBindGroups.remove(it)?.bindGroup?.close() }
     }
 
     fun destroy() {
@@ -178,11 +179,12 @@ internal class GpuBufferPoolManager(
         skinnedInstanceBufferPool.forEach { it.destroy() }
         alphaInstanceBufferPool.forEach { it.destroy() }
         frameInstanceBufferPool.forEach { it.destroy() }
-        uniformSlotPools.values.forEach { pool ->
-            pool.forEach { it.buffer.close() }
-        }
-        skinnedInstancedUniformResources.values.forEach { it.buffer.close() }
+        uniformSlotPools.values.forEach { pool -> pool.forEach(UniformSlot::close) }
+        uniformSlotPools.clear()
+        skinnedInstancedUniformResources.values.forEach(WebGpuUniformResources::close)
         skinnedInstancedUniformResources.clear()
+        shadowBindGroups.values.forEach { it.bindGroup.close() }
+        shadowBindGroups.clear()
     }
 }
 
@@ -190,13 +192,25 @@ internal class GpuBufferPoolManager(
 internal class UniformSlot(
     val buffer: GPUBuffer,
     val binding: WebGpuBindGroupHandle?,
-)
+) {
+    /** Closes the bind group, then the buffer it names. */
+    fun close() {
+        binding?.bindGroup?.close()
+        buffer.close()
+    }
+}
 
 internal class WebGpuUniformResources(
     val buffer: GPUBuffer,
     val bindGroup: GPUBindGroup,
     val binding: WebGpuBindGroupHandle,
-)
+) {
+    /** Closes the bind group, then the buffer it names. */
+    fun close() {
+        bindGroup.close()
+        buffer.close()
+    }
+}
 
 /** The depth target's own bind group for [pipeline], created once per pipeline: the group is
  * immutable and the target is shared by every shadowed draw in the frame. An extension rather
@@ -226,7 +240,7 @@ private fun GpuBufferPoolManager.depthBindingFor(
 ): MaterialBinding = shadowBindGroups.getOrPut(pipeline.pipeline to semantic) {
     val device = graphicsDevice.wgpuContext.device
     WebGpuBindGroupHandle(
-        device.createBindGroup(
+        device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.pipeline.getBindGroupLayout(
                     pipeline.bindingLayout.slot(semantic).toUInt(),

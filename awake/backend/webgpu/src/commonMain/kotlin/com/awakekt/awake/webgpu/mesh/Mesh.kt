@@ -124,10 +124,14 @@ class Mesh(
         lineIndexBinding = WebGpuBufferHandle(rawLineIndexBuffer)
     }
 
+    /** Releases the handle-table entries and closes the three buffers behind them. */
     override fun destroy() {
         WebGpuHandles.release(vertexBuffer.handle)
         WebGpuHandles.release(indexBuffer.handle)
         WebGpuHandles.release(lineIndexBuffer.handle)
+        vertexBinding.buffer.close()
+        indexBinding.buffer.close()
+        lineIndexBinding.buffer.close()
     }
 }
 

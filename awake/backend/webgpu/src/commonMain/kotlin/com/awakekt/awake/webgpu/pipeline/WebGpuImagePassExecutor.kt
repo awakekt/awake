@@ -40,6 +40,7 @@ import io.ygdrasil.webgpu.ColorTargetState
 import io.ygdrasil.webgpu.Extent3D
 import io.ygdrasil.webgpu.FragmentState
 import io.ygdrasil.webgpu.GPUAddressMode
+import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBlendFactor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -48,6 +49,7 @@ import io.ygdrasil.webgpu.GPUDevice
 import io.ygdrasil.webgpu.GPUFilterMode
 import io.ygdrasil.webgpu.GPULoadOp
 import io.ygdrasil.webgpu.GPUMipmapFilterMode
+import io.ygdrasil.webgpu.GPUPipelineLayout
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 import io.ygdrasil.webgpu.GPURenderPipeline
@@ -111,6 +113,9 @@ internal class WebGpuImagePassExecutor(
     private val stepSlotsUsed = HashMap<String, Int>()
     private var meshStepsUsed: Int = 0
 
+    /** Each step's bind group, built per draw and closed when the next pass begins. */
+    private val stepBindGroups = mutableListOf<GPUBindGroup>()
+
     /** Number of transient targets currently held in the pool. */
     internal val pooledTargetCount: Int
         get() = transientTargets.size
@@ -129,8 +134,14 @@ internal class WebGpuImagePassExecutor(
 
     /** Resets per-submission uniform and mesh slot counters before recording a new UI pass. */
     fun beginPass() {
+        closeStepBindGroups()
         stepSlotsUsed.clear()
         meshStepsUsed = 0
+    }
+
+    private fun closeStepBindGroups() {
+        stepBindGroups.forEach(GPUBindGroup::close)
+        stepBindGroups.clear()
     }
 
     /**
@@ -271,12 +282,14 @@ internal class WebGpuImagePassExecutor(
 
     /** Frees all pooled transient targets, uniform buffers, samplers, shaders, and pipelines. */
     fun destroy() {
+        closeStepBindGroups()
         releaseTransientTargets()
         stepSlotsByShader.values.forEach { slots ->
             slots.forEach { it.destroy() }
         }
         stepSlotsByShader.clear()
         stepSlotsUsed.clear()
+        pipelines.values.forEach(GPURenderPipeline::close)
         pipelines.clear()
         compiledShaders.values.forEach { it.destroy() }
         compiledShaders.clear()
@@ -357,7 +370,7 @@ internal class WebGpuImagePassExecutor(
             inputs = step.inputs,
             snapshotView = snapshotView,
             activeTransients = activeTransients,
-        )
+        ).also(stepBindGroups::add)
         passEncoder.setPipeline(pipeline)
         passEncoder.bindGroup(0u, bindGroup)
 
@@ -385,7 +398,7 @@ internal class WebGpuImagePassExecutor(
         inputs: List<ImagePassTextureBinding>,
         snapshotView: GPUTextureView,
         activeTransients: Map<String, PooledTransientTarget>,
-    ) = device.createBindGroup(
+    ) = device.createBindGroupReleasingLayout(
         BindGroupDescriptor(
             layout = pipeline.getBindGroupLayout(0u),
             entries = buildList {
@@ -563,9 +576,21 @@ internal class WebGpuImagePassExecutor(
         blendEnabled: Boolean,
         blendMode: BlendMode,
         isPremultiplied: Boolean,
+    ): GPURenderPipeline = device.createAwakePipelineLayout(mapOf(0 to compiled.spec.groupBindings)).use { layout ->
+        createRenderPipeline(compiled, layout, targetFormat, blendEnabled, blendMode, isPremultiplied)
+    }
+
+    @Suppress("LongParameterList")
+    private fun createRenderPipeline(
+        compiled: CompiledShader,
+        layout: GPUPipelineLayout,
+        targetFormat: GPUTextureFormat,
+        blendEnabled: Boolean,
+        blendMode: BlendMode,
+        isPremultiplied: Boolean,
     ): GPURenderPipeline = device.createRenderPipeline(
         RenderPipelineDescriptor(
-            layout = device.createAwakePipelineLayout(mapOf(0 to compiled.spec.groupBindings)),
+            layout = layout,
             vertex = VertexState(
                 module = compiled.shaderModule,
                 entryPoint = VERTEX_ENTRY_POINT,
@@ -646,6 +671,7 @@ internal class WebGpuImagePassExecutor(
         var initialized: Boolean = false,
     ) {
         fun destroy() {
+            view.close()
             texture.close()
         }
     }

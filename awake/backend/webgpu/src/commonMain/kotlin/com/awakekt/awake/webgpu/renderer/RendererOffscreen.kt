@@ -12,6 +12,7 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.webgpu.device.drivePendingWork
+import com.awakekt.awake.webgpu.device.submitAndRelease
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
@@ -121,7 +122,7 @@ private suspend fun Renderer.readColorPixels(
         ),
         copySize = Extent3D(width = width.toUInt(), height = height.toUInt()),
     )
-    device.queue.submit(listOf(encoder.finish()))
+    device.queue.submitAndRelease(encoder)
 
     // The map has to be awaited and the device driven at the same time: on wgpu-native the
     // callback only fires while polling, and without it getMappedRange aborts the process.
