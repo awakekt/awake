@@ -94,6 +94,12 @@ class IndexedAssetSource(
         members = BundleMembers(index, fetch, cache, rangeFetch)
     }
 
+    /**
+     * Whether this source keeps checked files in a [ContentCache]. [prefetch] only pays off then: with
+     * none, a loose file it fetched is dropped and fetched again by the read that follows.
+     */
+    val hasCache: Boolean get() = cache != null
+
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
         readChecked(entry, path.value.removePrefix("/"))
