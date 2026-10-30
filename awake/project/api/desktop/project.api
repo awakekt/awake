@@ -354,6 +354,7 @@ public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/aw
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getHasCache ()Z
 	public final fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun prefetch$default (Lcom/awakekt/awake/project/IndexedAssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

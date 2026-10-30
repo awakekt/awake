@@ -16,6 +16,10 @@ package com.awakekt.awake.project.runtime
  * physics world) and plays the next from its file, with the systems its components call for, so
  * nothing carries across. A scene that can't be read or checked is logged, once, and the one playing
  * goes on.
+ *
+ * A request has a [SceneSwitchState], which a game reads from the app's [SceneSwitchStatus] service to
+ * show a loading curtain or an error: loading with the share of the next scene's bytes that have
+ * arrived, ready once the new scene has had its first frame, or failed with the scene's path and cause.
  */
 fun interface SceneSwitch {
     /**
