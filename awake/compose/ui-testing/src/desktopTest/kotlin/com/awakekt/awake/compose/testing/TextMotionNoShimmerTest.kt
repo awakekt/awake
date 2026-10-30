@@ -172,7 +172,9 @@ class TextMotionNoShimmerTest {
                 Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 24.sp))
             }
         }
-        assertSmoothScale("TextStyle.scale") { s ->
+        // A constant TextStyle.scale is at rest, so frame 0 of a sweep snaps to the atlas step like any
+        // static text; priming at 0.89x establishes the resting node the animation then departs from.
+        assertSmoothScale("TextStyle.scale", primeScale = 0.89f) { s ->
             Box(Modifier.padding(32.dp)) {
                 Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 24.sp, scale = s))
             }
@@ -225,6 +227,64 @@ class TextMotionNoShimmerTest {
             }
         }
         assertWholePixelCoverageGlyphs(staticOut.primitives, "static fractional offset")
+    }
+
+    @Test
+    fun staticStyleScaleKeepsExactSizePixelGlyphsAtTheirAtRestSize() {
+        // A constant TextStyle.scale is at rest: it must not hold the distance field, however many frames pass.
+        val host = ComposeHost(density = 1f)
+        val reference = ComposeHost(density = 1f).frame(FrameInput(320, 80)) {
+            Box(Modifier.padding(8.dp)) { Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 24.sp)) }
+        }.primitives
+        repeat(SETTLE_FRAMES * 2) { frame ->
+            val out = host.frame(FrameInput(320, 80)) {
+                Box(Modifier.padding(8.dp)) { Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 12.sp, scale = 2f)) }
+            }
+            assertCoverageGlyphs(out.primitives, "static scale=2f frame $frame")
+            // 12.sp at scale 2f is the same 24 px pixel glyphs 24.sp draws.
+            assertEquals(reference, out.primitives, "static scale=2f frame $frame must match 24.sp")
+        }
+    }
+
+    @Test
+    fun staticStyleScaleSnapsToTheAtlasStepAsItDidBeforeMotionSupport() {
+        // 12.sp at scale 1.2f snaps to 1.25x, so 15 px glyphs: not the 14.4 px a continuous scale would give.
+        val host = ComposeHost(density = 1f)
+        val reference = ComposeHost(density = 1f).frame(FrameInput(320, 80)) {
+            Box(Modifier.padding(8.dp)) { Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 15.sp)) }
+        }.primitives
+        repeat(SETTLE_FRAMES * 2) { frame ->
+            val out = host.frame(FrameInput(320, 80)) {
+                Box(Modifier.padding(8.dp)) { Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 12.sp, scale = 1.2f)) }
+            }
+            assertCoverageGlyphs(out.primitives, "static scale=1.2f frame $frame")
+            assertEquals(reference, out.primitives, "static scale=1.2f frame $frame must lay out as 15 px text")
+        }
+    }
+
+    @Test
+    fun textReturnsToPixelGlyphsOnceAScaleOrFontSizeAnimationEnds() {
+        fun returnsAfter(name: String, content: context(Composer) (Float) -> Unit) {
+            val host = ComposeHost(density = 1f)
+            val frame = { s: Float -> host.frame(FrameInput(320, 80)) { content(s) }.primitives }
+            frame(1f)
+            for (i in 1..10) {
+                val animating = frame(1f + i * 0.05f)
+                assertTrue(
+                    animating.filterIsInstance<UiDrawPrimitive.Glyph>().any { it.font?.samplingMode != UiFontSamplingMode.CoverageAlpha },
+                    "$name should be on the distance field while animating (step $i)",
+                )
+            }
+            // The animation ends at 1.5x (18 px): hold the end value past the settle window.
+            repeat(SETTLE_FRAMES + 2) { frame(1.5f) }
+            assertCoverageGlyphs(frame(1.5f), "$name after the animation ended")
+        }
+        returnsAfter("TextStyle.scale") { s ->
+            Box(Modifier.padding(8.dp)) { Text("Harbor Town 123", style = TextStyle(color = inkColor, size = 12.sp, scale = s)) }
+        }
+        returnsAfter("fontSize") { s ->
+            Box(Modifier.padding(8.dp)) { Text("Harbor Town 123", style = TextStyle(color = inkColor, size = (12f * s).sp)) }
+        }
     }
 
     private fun assertSmoothTranslation(name: String, content: context(Composer) (Float) -> Unit) {
@@ -288,6 +348,12 @@ class TextMotionNoShimmerTest {
         }
     }
 
+    private fun assertCoverageGlyphs(primitives: List<UiDrawPrimitive>, label: String) {
+        val glyphs = primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
+        assertTrue(glyphs.isNotEmpty(), "$label emitted no glyphs")
+        for (g in glyphs) assertEquals(UiFontSamplingMode.CoverageAlpha, g.font?.samplingMode, "$label is not drawn from pixel glyphs")
+    }
+
     private fun assertWholePixelCoverageGlyphs(primitives: List<UiDrawPrimitive>, label: String) {
         val glyphs = primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
         assertTrue(glyphs.isNotEmpty(), "$label emitted no glyphs")
@@ -337,5 +403,10 @@ class TextMotionNoShimmerTest {
             }
         }
         return diff
+    }
+
+    private companion object {
+        /** Frames the motion state holds the distance field after the last size change (`TextMotionState.SETTLE_FRAMES`). */
+        const val SETTLE_FRAMES = 8
     }
 }

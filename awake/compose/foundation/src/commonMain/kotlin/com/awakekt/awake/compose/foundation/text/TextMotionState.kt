@@ -34,10 +34,13 @@ internal class TextNodeState {
  * - **Scaling or animating em size**: text locks onto continuous fractional sizing and the distance
  *   field for the whole animation, including the single frame where a scale passes through `1.0x` or
  *   an em crosses `UiFont.pixelGlyphMaxSize`.
+ * - **A constant size or `TextStyle.scale`**: at rest, whatever its value, so a static `scale = 2f`
+ *   draws exact-size pixel glyphs as it always did, and text returns to them once an animation ends.
  */
 internal class TextMotionState {
     private var measureInitialized = false
     private var lastRawEmPx = 0f
+    private var lastStyleScale = 1f
     private var sizeHoldFrames = 0
     private var scaleHoldFrames = 0
     private val paintOffsetTracker = SubpixelOffsetTracker()
@@ -46,24 +49,27 @@ internal class TextMotionState {
     var smoothSizing: Boolean = false
         private set
 
-    /** Updates [smoothSizing] from this pass's unrounded device-pixel em [rawEmPx] and [styleScale]. */
+    /**
+     * Updates [smoothSizing] from this pass's unrounded device-pixel em [rawEmPx] and [styleScale].
+     *
+     * Only a *change* of either since the previous pass counts as motion. A constant size or a
+     * constant `TextStyle.scale`, including one that starts away from `1f`, is at rest: it keeps the
+     * snapped, exact-size pixel glyphs and decays off the distance field after the hold like any
+     * other size. The first pass has nothing to compare against, so it is always at rest.
+     */
     fun onMeasure(rawEmPx: Float, styleScale: Float): Boolean {
-        val explicitScale = abs(styleScale - 1f) > SCALE_EPSILON
         if (!measureInitialized) {
             measureInitialized = true
             lastRawEmPx = rawEmPx
-            if (explicitScale) {
-                sizeHoldFrames = SETTLE_FRAMES
-                smoothSizing = true
-            } else {
-                sizeHoldFrames = 0
-                smoothSizing = false
-            }
-            return smoothSizing
+            lastStyleScale = styleScale
+            sizeHoldFrames = 0
+            smoothSizing = false
+            return false
         }
-        val sizeChanged = abs(rawEmPx - lastRawEmPx) > SIZE_EPSILON
+        val changed = abs(rawEmPx - lastRawEmPx) > SIZE_EPSILON || abs(styleScale - lastStyleScale) > SCALE_EPSILON
         lastRawEmPx = rawEmPx
-        if (sizeChanged || explicitScale) {
+        lastStyleScale = styleScale
+        if (changed) {
             sizeHoldFrames = SETTLE_FRAMES
             smoothSizing = true
         } else if (sizeHoldFrames > 0) {

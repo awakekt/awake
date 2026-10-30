@@ -36,9 +36,26 @@ class TextMotionStateTest {
         }
         assertFalse(state.onMeasure(rawEmPx = 14.2f, styleScale = 1f))
 
-        // Starting directly with explicit styleScale != 1f enters smoothSizing on Frame 0.
+        // Starting directly at an explicit styleScale != 1f is at rest, not an animation.
         val scaledStart = TextMotionState()
-        assertTrue(scaledStart.onMeasure(rawEmPx = 21.6f, styleScale = 0.9f))
+        assertFalse(scaledStart.onMeasure(rawEmPx = 21.6f, styleScale = 0.9f))
+        repeat(TextMotionState.SETTLE_FRAMES + 2) {
+            assertFalse(scaledStart.onMeasure(rawEmPx = 21.6f, styleScale = 0.9f))
+        }
+    }
+
+    @Test
+    fun constantStyleScaleStaysAtRestAndChangingItHoldsThenDecays() {
+        val state = TextMotionState()
+        repeat(3) { assertFalse(state.onMeasure(rawEmPx = 24f, styleScale = 2f)) }
+
+        // A scale change with the em compensated to the same pixel size still counts as motion.
+        assertTrue(state.onMeasure(rawEmPx = 24f, styleScale = 2.1f))
+        repeat(TextMotionState.SETTLE_FRAMES - 1) {
+            assertTrue(state.onMeasure(rawEmPx = 24f, styleScale = 2.1f))
+        }
+        assertFalse(state.onMeasure(rawEmPx = 24f, styleScale = 2.1f))
+        assertFalse(state.onMeasure(rawEmPx = 24f, styleScale = 2.1f))
     }
 
     @Test
