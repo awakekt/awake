@@ -1,3 +1,8 @@
+public final class com/awakekt/awake/engine/window/DesktopHostKt {
+	public static final fun desktopHostActions ()Lcom/awakekt/awake/engine/window/HostActions;
+	public static final fun desktopLaunchParameters ([Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+}
+
 public final class com/awakekt/awake/engine/window/DesktopRunLimits {
 	public static final field CAPTURE_PROPERTY Ljava/lang/String;
 	public static final field Companion Lcom/awakekt/awake/engine/window/DesktopRunLimits$Companion;
@@ -103,5 +108,36 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInput$DefaultImpls 
 
 public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
 	public static final fun glfwWindowInput (J)Lcom/awakekt/awake/engine/window/GlfwWindowInput;
+}
+
+public abstract interface class com/awakekt/awake/engine/window/HostActions {
+	public abstract fun getPageReload ()Lcom/awakekt/awake/engine/window/PageReload;
+	public abstract fun openUrl (Ljava/lang/String;)Z
+}
+
+public final class com/awakekt/awake/engine/window/LaunchParameters {
+	public static final field Companion Lcom/awakekt/awake/engine/window/LaunchParameters$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun first (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getKeys ()Ljava/util/Set;
+	public final fun has (Ljava/lang/String;)Z
+	public fun hashCode ()I
+	public final fun isEmpty ()Z
+	public final fun toMap ()Ljava/util/Map;
+	public fun toString ()Ljava/lang/String;
+	public final fun values (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchParameters$Companion {
+	public final fun fromArguments (Ljava/util/List;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun fromEntries (Ljava/lang/Iterable;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun fromQuery (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun fromUrl (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
+	public final fun getEmpty ()Lcom/awakekt/awake/engine/window/LaunchParameters;
+}
+
+public abstract interface class com/awakekt/awake/engine/window/PageReload {
+	public abstract fun reload ()V
 }
 
