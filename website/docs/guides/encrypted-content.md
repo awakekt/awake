@@ -35,6 +35,24 @@ Read the key from a file or a CI secret. Never put it in a build script or the r
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:write"
 ```
 
+With the CLI or the Gradle task, name the key and say where to read it. A key file holds the 32 raw
+bytes or 64 hex digits; an environment variable holds the hex form:
+
+```bash
+awake bundle build/project.index.json --output build/published \
+  --key-id harbor-town-2026 --key-file ~/.secrets/harbor.key   # or --key-env AWAKE_BUNDLE_KEY
+```
+
+```kotlin title="build.gradle.kts"
+projectContent {
+    bundleKeyId.set("harbor-town-2026")
+    bundleKeyEnvironmentVariable.set("AWAKE_BUNDLE_KEY") // or bundleKeyFile.set(file(...)), outside the repository
+}
+```
+
+`generateContentBundles` tracks only a SHA-256 of the key, so a new key reruns it and Gradle never
+stores the key. The CLI and the task write byte-identical bundles for the same key.
+
 Make a key once per project or entitlement tier, for example with `openssl rand 32 > bundle.key`, and
 keep it in your secret store. Rotating a key re-seals every bundle and changes every URL, so don't
 rotate it per session. To revoke a player, stop answering them at your key or index endpoint.

@@ -9,6 +9,7 @@ import com.awakekt.awake.build.project.GenerateProjectIndexTask
 import com.awakekt.awake.build.project.ProjectContentExtension
 import com.awakekt.awake.build.project.ValidateProjectTask
 import com.awakekt.awake.build.project.VerifyAssetsLockTask
+import com.awakekt.awake.build.project.keyFingerprintOf
 import java.util.Properties
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.LibraryElements
@@ -123,6 +124,14 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     pathSalt.set(projectContent.bundlePathSalt)
     bundleUrlPrefix.set(projectContent.bundleUrlPrefix)
     pruneStaleBundles.set(projectContent.pruneStaleBundles)
+    keyId.set(projectContent.bundleKeyId)
+    keyFile.set(projectContent.bundleKeyFile)
+    keyEnvironmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
+    keyFingerprint.set(
+        // A missing file fails in the worker, with a message naming it.
+        projectContent.bundleKeyFile.map { file -> file.asFile.takeIf { it.isFile }?.readBytes()?.let(::keyFingerprintOf) ?: "missing" }
+            .orElse(projectContent.bundleKeyEnvironmentVariable.flatMap { providers.environmentVariable(it) }.map { keyFingerprintOf(it.trim().encodeToByteArray()) }),
+    )
     workerClasspath.from(awakeProjectContentWorker)
 }
 

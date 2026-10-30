@@ -116,14 +116,14 @@ internal class BundleMembers(
         // The key first, so a refused key fails as itself rather than as damaged members.
         val seal = seal!!.also { it.cipher() }
         val toc = readTocByKey(bytes)
-        if (!whole || toc == null || members.any { !matchesTocAndBounds(it, toc[it.key], bytes.size, index.storedSizeOf(it)) }) return null
+        val matches = whole && toc != null && members.all { matchesTocAndBounds(it, toc[it.key], bytes.size, index.storedSizeOf(it)) }
         val opened = HashMap<String, Member>(members.size)
-        for (member in members) {
-            if (member.sha256 in opened) continue
-            val stored = sliceOf(bytes, member, index.storedSizeOf(member)) ?: return null
-            opened[member.sha256] = Member(stored, openOrNull(seal, member, stored) ?: return null)
+        for (member in members.takeIf { matches }.orEmpty().distinctBy { it.sha256 }) {
+            // In bounds: the table of contents check covered it.
+            val stored = sliceOf(bytes, member, index.storedSizeOf(member))!!
+            opened[member.sha256] = Member(stored, openOrNull(seal, member, stored) ?: break)
         }
-        return opened
+        return opened.takeIf { matches && it.size == members.distinctBy { member -> member.sha256 }.size }
     }
 
     /** The keys of [members] whose sealed bytes don't open, for the message of a bundle that fails. */

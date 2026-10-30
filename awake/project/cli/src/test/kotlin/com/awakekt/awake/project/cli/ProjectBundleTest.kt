@@ -145,6 +145,20 @@ class ProjectBundleTest {
         )
         assertEquals(0, cliOpaque.code, cliOpaque.all)
         assertSameTree(cliOpaqueOut, output)
+
+        root.resolve("bundle.key").writeBytes(ByteArray(32) { (it * 3 + 2).toByte() })
+        writeGradleContentBuild(
+            """
+            projectContent {
+                bundleKeyId.set("harbor-1")
+                bundleKeyFile.set(layout.projectDirectory.file("bundle.key"))
+            }
+            """.trimIndent(),
+        )
+        runGenerateContentBundles()
+        val cliSealed = awake("bundle", "build/project.index.json", "--output", "build/cli-sealed", "--project", ".", "--key-id", "harbor-1", "--key-file", "bundle.key")
+        assertEquals(0, cliSealed.code, cliSealed.all)
+        assertSameTree(root.resolve("build/cli-sealed"), output)
     }
 
     private fun writeGradleContentSettings() {

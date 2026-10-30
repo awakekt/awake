@@ -238,6 +238,13 @@ public final class com/awakekt/awake/project/BundleEncryptionKey {
 public final class com/awakekt/awake/project/BundleEncryptionKey$Companion {
 }
 
+public final class com/awakekt/awake/project/BundleKeyFiles {
+	public static final field INSTANCE Lcom/awakekt/awake/project/BundleKeyFiles;
+	public final fun fromEnvironment (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/project/BundleEncryptionKey;
+	public static synthetic fun fromEnvironment$default (Lcom/awakekt/awake/project/BundleKeyFiles;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/project/BundleEncryptionKey;
+	public final fun read (Ljava/lang/String;Ljava/io/File;)Lcom/awakekt/awake/project/BundleEncryptionKey;
+}
+
 public abstract interface class com/awakekt/awake/project/BundleKeyProvider {
 	public abstract fun key (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
