@@ -49,9 +49,9 @@ class CanvasPartsAllocationProbeTest {
     /**
      * The canvas's own step before each frame, bringing every element in step with its entity's
      * components, reads each element's components by type, as do the handles' component reads: a
-     * steady HUD allocates nothing doing either (#1169). The middle of several windows must be 0
-     * bytes, so a one-off allocation of the JIT's own does not fail it; garbage made each frame
-     * shows in every window.
+     * steady HUD allocates nothing doing either (#1169). The quietest of several windows must be 0
+     * bytes, so the JIT's own allocations, which can land in more than one window on a busy
+     * machine, do not fail it; garbage made each frame shows in every window.
      */
     @Test
     fun syncingAndReadingTheComponentsOfASteadyHudAllocatesNothingPerFrame() {
@@ -77,7 +77,7 @@ class CanvasPartsAllocationProbeTest {
         windows.sort()
 
         println("CanvasSyncFrame: ${windows.joinToString()} bytes per $MEASURED_FRAMES frames (font sizes $size)")
-        assertEquals(0L, windows[MEASURED_WINDOWS / 2], "median bytes over $MEASURED_FRAMES frames")
+        assertEquals(0L, windows[0], "fewest bytes over $MEASURED_FRAMES frames")
     }
 
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean

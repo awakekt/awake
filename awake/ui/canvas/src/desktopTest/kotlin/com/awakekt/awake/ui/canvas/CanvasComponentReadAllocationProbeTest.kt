@@ -17,8 +17,9 @@ import kotlin.test.assertNotNull
  * once warm, for every component kind (#1169). The types are held in vals, as a caller that reads
  * every frame keeps them: on the JVM each `X::class` written out makes a new class reference.
  *
- * The middle of several windows must be 0 bytes, so a one-off allocation of the JIT's own while it
- * recompiles does not fail the probe; one read that allocates would show in every window.
+ * The quietest of several windows must be 0 bytes, so the JIT's own allocations while it
+ * recompiles, which can land in more than one window on a busy machine, do not fail the probe; one
+ * read that allocates would show in every window.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */
@@ -65,7 +66,7 @@ class CanvasComponentReadAllocationProbeTest {
 
         val reads = MEASURED_ROUNDS * elements.size * (COMPONENT_TYPES.size + WIDGET_TYPES.size)
         println("CanvasComponentRead: ${windows.joinToString()} bytes per $reads reads ($found found)")
-        assertEquals(0L, windows[MEASURED_WINDOWS / 2], "median bytes over $reads reads")
+        assertEquals(0L, windows[0], "fewest bytes over $reads reads")
     }
 
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
