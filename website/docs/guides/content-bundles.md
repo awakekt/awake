@@ -173,5 +173,6 @@ path (or id), or the header or table when no member is damaged.
 ## See also
 
 - [Protected content](protected-content.md)
+- [Encrypted content](encrypted-content.md)
 - [Run in the browser](../get-started/run-in-the-browser.md)
 - [Modules](../reference/modules.md)

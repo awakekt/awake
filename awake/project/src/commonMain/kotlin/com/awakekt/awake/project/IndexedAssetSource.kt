@@ -25,7 +25,10 @@ internal const val MAX_CONCURRENT_PREFETCHES = 6
  * it with what it has: a folder on desktop and mobile, the origin private file system or IndexedDB
  * in a browser. [platformContentCache] answers the platform's default.
  *
- * [get] must return exactly the bytes [put] stored under that SHA-256, or null: [IndexedAssetSource]
+ * Keys are a file's SHA-256, or for an encrypted index, [ProjectIndex.cacheKeyOf] its entry, under
+ * which the sealed bytes are kept: 64 lowercase hex digits either way.
+ *
+ * [get] must return exactly the bytes [put] stored under that key, or null: [IndexedAssetSource]
  * checks a hit's size but not its hash, so storage that can damage bytes in place has to check them
  * itself. [IndexedAssetSource.prefetch] calls both for several files at once.
  */
@@ -38,7 +41,7 @@ interface ContentCache {
 
     /**
      * Deletes cached files that [index] does not list, such as files an earlier release used and
-     * this one does not.
+     * this one does not. A file is listed under [ProjectIndex.cacheKeyOf] its entry.
      *
      * @param index The project index whose files should be retained.
      * @return The number of deleted files; 0 when the cache does not prune or storage is unavailable.
@@ -61,6 +64,11 @@ interface ContentCache {
  * instead of the whole bundle, while [prefetch] still downloads whole bundles. In an index with
  * [ProjectIndex.pathIds], a path is looked up by its opaque id.
  *
+ * An encrypted index ([ProjectIndex.ENCRYPTED_FORMAT_VERSION]) needs [keys], which is asked once for
+ * the index's key id. Each member is authenticated and opened as it is read; a wrong key or a damaged
+ * byte fails the read. [cache] then holds the sealed bytes, never the plaintext, under
+ * [ProjectIndex.cacheKeyOf], and every hit is opened again; a hit that doesn't open is fetched again.
+ *
  * [fetch] is the host's: it resolves a relative `url` against wherever the index came from, sends any
  * sign-in, retries and resumes, so Core carries no HTTP library. For content that needs a short-lived
  * read token, pass a [TokenAuthorizedFetch]'s `fetch`, which attaches, refreshes and retries the token;
@@ -77,21 +85,36 @@ interface ContentCache {
  * @param rangeFetch Optional: answers `length` bytes from `offset` of the file at a URL, such as with
  * an HTTP `Range` request, for reading one bundle member without its whole bundle; see
  * [TokenAuthorizedFetch.fetchRange].
+ * @param keys Answers the master key of an encrypted index; required for one, unused otherwise.
  */
 class IndexedAssetSource(
     private val index: ProjectIndex,
     private val fetch: suspend (url: String) -> ByteArray,
     private val cache: ContentCache? = null,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
+    keys: BundleKeyProvider? = null,
 ) : AssetSource {
     private val entries: Map<String, ProjectIndexEntry>
+    private val seal: MemberSeal?
     private val members: BundleMembers
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        index: ProjectIndex,
+        fetch: suspend (url: String) -> ByteArray,
+        cache: ContentCache? = null,
+        rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
+    ) : this(index, fetch, cache, rangeFetch, null)
 
     init {
         val issues = ProjectContentValidator.indexIssueDetails(index)
         require(issues.isEmpty()) { "The project index is invalid: ${issues.joinToString("; ") { it.message }}" }
+        require(index.encryption == null || keys != null) {
+            "The project index is encrypted with key ${index.encryption?.keyId}; pass a BundleKeyProvider"
+        }
         entries = index.files.associateBy { it.key }
-        members = BundleMembers(index, fetch, cache, rangeFetch)
+        seal = index.encryption?.let { MemberSeal(it, keys!!) }
+        members = BundleMembers(index, fetch, cache, rangeFetch, seal)
     }
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
@@ -147,7 +170,7 @@ class IndexedAssetSource(
         val first = download.files.first()
         when {
             !download.isBundle -> readChecked(first.entry, first.label)
-            cache == null || download.files.any { cached(it.entry) == null } -> members.load(first.entry.bundle!!)
+            cache == null || download.files.any { !isCached(it.entry) } -> members.load(first.entry.bundle!!)
         }
     }
 
@@ -163,8 +186,17 @@ class IndexedAssetSource(
     private suspend fun readLoose(entry: ProjectIndexEntry, label: String): ByteArray =
         checked(entry, label, fetch(entry.url)).also { cache?.put(entry.sha256, it) }
 
-    private suspend fun cached(entry: ProjectIndexEntry): ByteArray? =
-        cache?.get(entry.sha256)?.takeIf { it.size.toLong() == entry.sizeBytes }
+    /** [entry]'s bytes from [cache]: as stored, of the right size, and, when sealed, opened. */
+    private suspend fun cached(entry: ProjectIndexEntry): ByteArray? {
+        val stored = storedInCache(entry) ?: return null
+        val seal = seal ?: return stored
+        return runCatching { seal.open(entry, stored, entry.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+    }
+
+    private suspend fun isCached(entry: ProjectIndexEntry): Boolean = storedInCache(entry) != null
+
+    private suspend fun storedInCache(entry: ProjectIndexEntry): ByteArray? =
+        cache?.get(index.cacheKeyOf(entry))?.takeIf { it.size.toLong() == index.storedSizeOf(entry) }
 
     /** One path [prefetch] was asked for: its entry, and the path as asked, for messages. */
     private class Requested(val entry: ProjectIndexEntry, val label: String)
@@ -190,6 +222,7 @@ class IndexedAssetSource(
          * @param retainCachedOnly Whether to prune cached entries not listed in the loaded index.
          * @param rangeFetch Optional loader of `length` bytes from `offset` of an entry URL, for
          * reading one bundle member without its whole bundle.
+         * @param keys Answers the master key of an encrypted index; required for one.
          * @return A validated [IndexedAssetSource] backed by the fetched index and [cache].
          */
         suspend fun open(
@@ -198,6 +231,7 @@ class IndexedAssetSource(
             cache: ContentCache? = null,
             retainCachedOnly: Boolean = true,
             rangeFetch: (suspend (AssetPath, offset: Long, length: Long) -> ByteArray)? = null,
+            keys: BundleKeyProvider? = null,
         ): IndexedAssetSource {
             val rawIndex = fetch(indexPath).decodeToString()
             val decodedIndex = indexJson.decodeFromString(ProjectIndex.serializer(), rawIndex)
@@ -209,8 +243,18 @@ class IndexedAssetSource(
                 fetch = { url -> fetch(AssetPath(url)) },
                 cache = cache,
                 rangeFetch = rangeFetch?.let { range -> { url, offset, length -> range(AssetPath(url), offset, length) } },
+                keys = keys,
             )
         }
+
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        suspend fun open(
+            indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
+            fetch: suspend (AssetPath) -> ByteArray,
+            cache: ContentCache? = null,
+            retainCachedOnly: Boolean = true,
+            rangeFetch: (suspend (AssetPath, offset: Long, length: Long) -> ByteArray)? = null,
+        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeFetch, keys = null)
 
         /**
          * Like the other [open], reading the index at [indexPath] and then every file and bundle
@@ -223,6 +267,7 @@ class IndexedAssetSource(
          * @param retainCachedOnly Whether to prune cached entries not listed in the loaded index.
          * @param rangeReads Whether a read of one bundle member asks for just its bytes, with
          * [TokenAuthorizedFetch.fetchRange], instead of fetching its whole bundle.
+         * @param keys Answers the master key of an encrypted index; required for one.
          * @return A validated [IndexedAssetSource] backed by the fetched index and [cache].
          * @throws ContentFetchException when the index can't be read; see [TokenAuthorizedFetch.fetch].
          */
@@ -232,6 +277,7 @@ class IndexedAssetSource(
             cache: ContentCache? = null,
             retainCachedOnly: Boolean = true,
             rangeReads: Boolean = false,
+            keys: BundleKeyProvider? = null,
         ): IndexedAssetSource {
             val ranges: suspend (AssetPath, Long, Long) -> ByteArray = { path, offset, length -> fetch.fetchRange(path.value, offset, length) }
             return open(
@@ -240,7 +286,17 @@ class IndexedAssetSource(
                 cache = cache,
                 retainCachedOnly = retainCachedOnly,
                 rangeFetch = ranges.takeIf { rangeReads },
+                keys = keys,
             )
         }
+
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        suspend fun open(
+            indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
+            fetch: TokenAuthorizedFetch,
+            cache: ContentCache? = null,
+            retainCachedOnly: Boolean = true,
+            rangeReads: Boolean = false,
+        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeReads, keys = null)
     }
 }

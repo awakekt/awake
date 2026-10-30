@@ -25,13 +25,25 @@ import com.awakekt.awake.core.io.Sha256
  * @param targetBundleBytes The size a bundle is filled up to before the next one starts. Positive.
  * @param pathIds With a value, the index and the bundles carry opaque ids instead of readable paths.
  * @param bundleUrlPrefix The folder bundle URLs start with, relative to the index like a loose file's URL.
+ * @param encryption With a key, each distinct member is sealed under it ([ContentBundleFormat.encodeEncrypted])
+ * and the index is [ProjectIndex.ENCRYPTED_FORMAT_VERSION], naming the key's id but never the key. The
+ * same files and key still give byte-identical bundles.
  */
 class ContentBundleWriter(
     private val grouping: ContentBundleGrouping = ContentBundleGrouping.byFolder(),
     private val targetBundleBytes: Long = DEFAULT_TARGET_BUNDLE_BYTES,
     private val pathIds: ProjectPathIds? = null,
     private val bundleUrlPrefix: String = DEFAULT_BUNDLE_URL_PREFIX,
+    private val encryption: BundleEncryptionKey? = null,
 ) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        grouping: ContentBundleGrouping = ContentBundleGrouping.byFolder(),
+        targetBundleBytes: Long = DEFAULT_TARGET_BUNDLE_BYTES,
+        pathIds: ProjectPathIds? = null,
+        bundleUrlPrefix: String = DEFAULT_BUNDLE_URL_PREFIX,
+    ) : this(grouping, targetBundleBytes, pathIds, bundleUrlPrefix, null)
+
     init {
         require(targetBundleBytes > 0) { "targetBundleBytes must be positive: $targetBundleBytes" }
         pathIds?.let { require(it.scheme == ProjectPathIds.SCHEME && it.salt.isNotBlank()) { "pathIds needs a non-blank salt and the ${ProjectPathIds.SCHEME} scheme" } }
@@ -48,7 +60,8 @@ class ContentBundleWriter(
      * bundles and no path ids) listing the files to pack.
      * @param read Answers a file's bytes, such as from the project folder by [ProjectIndexEntry.path].
      * @param emit Stores one written bundle, such as at its [WrittenContentBundle.url] next to the index.
-     * @return A [ProjectIndex.BUNDLED_FORMAT_VERSION] index listing every file of [index] as a bundle member.
+     * @return A [ProjectIndex.BUNDLED_FORMAT_VERSION] index listing every file of [index] as a bundle
+     * member, or with [encryption], a [ProjectIndex.ENCRYPTED_FORMAT_VERSION] one.
      * @throws IllegalArgumentException for an invalid or already bundled [index].
      * @throws IllegalStateException for a file whose bytes don't match its entry, naming its path.
      */
@@ -59,7 +72,7 @@ class ContentBundleWriter(
     ): ProjectIndex {
         val issues = ProjectContentValidator.indexIssueDetails(index)
         require(issues.isEmpty()) { "The project index is invalid: ${issues.joinToString("; ") { it.message }}" }
-        require(index.bundles.isEmpty() && index.pathIds == null && index.files.all { it.bundle == null }) {
+        require(index.bundles.isEmpty() && index.pathIds == null && index.encryption == null && index.files.all { it.bundle == null }) {
             "The project index is already bundled; write bundles from a loose index"
         }
         val keys = index.files.associate { it.path to (pathIds?.idOf(it.path) ?: it.path) }
@@ -69,7 +82,7 @@ class ContentBundleWriter(
         val files = mutableListOf<ProjectIndexEntry>()
         plan(index.files).forEach { chunk ->
             val members = chunk.map { entry -> ContentBundleMember(keys.getValue(entry.path), checkedBytes(entry, read(entry))) }
-            val bytes = ContentBundleFormat.encode(members)
+            val bytes = encryption?.let { ContentBundleFormat.encodeEncrypted(members, it) } ?: ContentBundleFormat.encode(members)
             val sha256 = Sha256.digestHex(bytes)
             val url = "${bundleUrlPrefix.trimEnd('/')}/$sha256.${ContentBundleFormat.FILE_EXTENSION}".removePrefix("/")
             val offsets = ContentBundleFormat.readTableOfContents(bytes).associate { it.key to it.offset }
@@ -88,11 +101,12 @@ class ContentBundleWriter(
             }
         }
         return ProjectIndex(
-            formatVersion = ProjectIndex.BUNDLED_FORMAT_VERSION,
+            formatVersion = if (encryption == null) ProjectIndex.BUNDLED_FORMAT_VERSION else ProjectIndex.ENCRYPTED_FORMAT_VERSION,
             rootPath = index.rootPath,
             files = files.sortedBy { it.key },
             bundles = bundles,
             pathIds = pathIds,
+            encryption = encryption?.let { ProjectBundleEncryption(keyId = it.keyId) },
         )
     }
 
