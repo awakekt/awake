@@ -73,6 +73,7 @@ nav:
           - App lifecycle: guides/app-lifecycle.md
           - Cameras and controls: guides/cameras-and-controls.md
           - Input: guides/input.md
+          - Launch parameters: guides/launch-parameters.md
           - Math: guides/math.md
       - Rendering:
           - Lights and shadows: guides/lights-and-shadows.md

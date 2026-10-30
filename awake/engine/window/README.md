@@ -36,6 +36,14 @@ metrics, and on desktop the monitor the window is on, from its video mode and th
 reports, checked about once a second so a window dragged to another monitor follows). A browser and
 iOS report no dots per inch.
 
+Launch parameters and host actions, on every platform: `LaunchParameters` (a list of values per
+key and bare flags, read from the page URL query, the `main` arguments, an Android launch
+`Intent`, or an iOS launch URL the host app passes in) and `HostActions` (`openUrl` everywhere,
+`pageReload` on the web only, `null` elsewhere). The parsing is common code; each platform has a
+small factory (`browserLaunchParameters`, `desktopLaunchParameters`, `Intent.launchParameters`,
+`iosLaunchParameters`, and `browserHostActions` and its siblings). See
+[Launch parameters](../../../website/docs/guides/launch-parameters.md); they are untrusted input.
+
 ## Does not own
 
 - Surface or swapchain creation, which belong to each backend.
