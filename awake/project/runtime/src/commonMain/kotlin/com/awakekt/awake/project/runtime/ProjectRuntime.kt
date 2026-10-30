@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions") // The four hidden overloads kept for binary compatibility double the loadProject family.
+
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayer
@@ -195,6 +197,49 @@ suspend fun loadProject(
     onProgress: (Float) -> Unit = {},
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene, onProgress)
+
+// The signatures these four had before `onProgress` was added, kept so a consumer compiled against them
+// still links. Hidden: source callers resolve to the overloads above.
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, entryScene, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
+
+/** [loadProject] as it was before `onProgress`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProject(files, entryScene, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
 
 /**
  * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own
