@@ -132,6 +132,22 @@ from it. Both ready-made transports, `KtorContentTransport` and `BrowserContentT
 [Protected content](protected-content.md#the-browser-and-cors) lists. A range request answered 429,
 or 503 with `Retry-After`, waits and is sent again like any other.
 
+## Bundle a public sign-in set
+
+A project that declares a [public sign-in set](protected-content.md#start-on-a-public-sign-in-set)
+gets two loose indexes from `generateProjectIndex`, and each is bundled on its own, so no bundle
+mixes public and protected files:
+
+```bash
+awake bundle build/project.public.index.json --output build/published/public
+awake bundle build/project.index.json --output build/published/protected
+```
+
+Publish `public/` where anyone can read it and `protected/` behind the read token. The public
+bundles are never encrypted, since they load before the player has a key; protected bundles may be.
+The game reads both through one `LayeredAssetSource`, and a bundle member is checked against its own
+index whichever set it comes from.
+
 ## Properties
 
 | Property | Type | Default | What it does |

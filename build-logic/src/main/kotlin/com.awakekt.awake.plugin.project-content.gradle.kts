@@ -24,6 +24,7 @@ projectContent.assetRoots.set(listOf("assets"))
 projectContent.indexRoots.set(listOf("assets", "scenes", "plugins", "strings"))
 projectContent.indexRootPath.convention("/project")
 projectContent.indexBaseUrl.convention("files")
+projectContent.publicIndexOutputFile.convention(layout.buildDirectory.file("project.public.index.json"))
 
 val validateProject = tasks.register<ValidateProjectTask>("validateProject") {
     group = "awake verification"
@@ -55,6 +56,9 @@ val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generatePro
     indexRoots.set(projectContent.indexRoots)
     indexRootPath.set(projectContent.indexRootPath)
     baseUrl.set(projectContent.indexBaseUrl)
+    publicFiles.set(projectContent.publicFiles)
+    publicScenes.set(projectContent.publicScenes)
+    publicIndexOutputFile.set(projectContent.publicIndexOutputFile)
     indexedFiles.from(
         layout.projectDirectory.file("awake.project.json"),
         layout.projectDirectory.file("assets.lock.json"),

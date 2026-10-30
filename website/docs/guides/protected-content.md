@@ -232,6 +232,58 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
     `TokenAuthorizedFetch` retries only a refused token, a 429 and a 503 with `Retry-After`. Network retries, timeouts and
     resumed downloads belong to your HTTP client, behind the transport.
 
+## Start on a public sign-in set
+
+The sign-in screen has to load before the player has a token: the manifest, the sign-in scene, and
+the fonts, strings and images it draws. Declare those files once, in the project's build, and
+`generateProjectIndex` writes two indexes instead of one:
+
+```kotlin title="build.gradle.kts"
+projectContent {
+    // The sign-in scene, and every file it names, its prefabs' files included.
+    publicScenes.add("scenes/sign-in.scene.json")
+    // Files it reaches some other way, such as strings the app looks up by key.
+    publicFiles.addAll("strings/**", "assets/fonts/**")
+}
+```
+
+| Output | Holds | Publish it |
+| --- | --- | --- |
+| `build/project.public.index.json` | `awake.project.json`, the declared files and every file they name | Next to the page, or on a public CDN path |
+| `build/project.index.json` | Every other file, `assets.lock.json` included | Behind the read token, as above |
+
+Each file is in exactly one index, so a signed-in player downloads nothing twice. A file is named when
+a string in a JSON file of the set is its path, or the part before a `#`; files named only inside a
+binary file, such as a model's textures, need a glob. A glob that matches nothing, or a scene that
+isn't project content, fails the build. With neither property set, the build writes one index, as before.
+
+In the game, read both through a `LayeredAssetSource`. Before sign-in it serves the public set alone:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/PublicSignInSetDocsSampleTest.kt:public"
+```
+
+Load the project at its sign-in scene with `loadProject(files, entryScene = "scenes/sign-in.scene.json")`.
+Once sign-in succeeds, open the protected index with the player's token and attach it:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/PublicSignInSetDocsSampleTest.kt:attach"
+```
+
+| When | A read of a path |
+| --- | --- |
+| Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. |
+| After `attachProtected` | Is served by the protected source when it has the path, so it wins for a file both have, and by the public set otherwise. Each read goes to one source, which checks it against its own index's SHA-256. |
+| After `detachProtected`, on sign-out | Is served by the public set alone again. |
+
+The token, and when to sign in or out, stay with your game: Core only takes the source you attach.
+The public set is never encrypted; protected bundles may be.
+
+!!! warning "Give each index its own cache"
+    `IndexedAssetSource.open` prunes every cached file its index doesn't list, so two indexes sharing
+    one `ContentCache` delete each other's files. Open the public set with its own namespace, such as
+    `platformContentCache("harbor-town-public")`, or with `retainCachedOnly = false`.
+
 ## Play a protected project after sign-in
 
 A routed app declares its routes before it starts, but a protected project can be read only once the
