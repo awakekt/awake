@@ -58,7 +58,7 @@ class FileSystemContentCache(
      * @return The number of deleted files.
      */
     override suspend fun retainOnly(index: ProjectIndex): Int {
-        val keep = index.files.map { it.sha256.lowercase() }.toSet()
+        val keep = index.files.map { index.cacheKeyOf(it).lowercase() }.toSet()
         val rootPath = namespace?.let { FilePath.of(it) } ?: FilePath.Root
         val entries = fileSystem.list(rootPath, recursive = true).getOrNull() ?: return 0
         return entries

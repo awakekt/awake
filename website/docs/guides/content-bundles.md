@@ -39,8 +39,9 @@ awake bundle build/project.index.json --output build/published
 ```
 
 Options: `--group folder|one`, `--depth <n>`, `--target-mb <n>` (16 by default),
-`--opaque-ids --salt <text>`, and `--prune`, which deletes `.awkb` files under the output folder that
-the new index doesn't list. Without it, the command keeps them.
+`--opaque-ids --salt <text>`, `--key-id <id>` with `--key-file <path>` or `--key-env <variable>` to
+seal the bundles ([Encrypted content](encrypted-content.md)), and `--prune`, which deletes `.awkb`
+files under the output folder that the new index doesn't list. Without it, the command keeps them.
 
 From Kotlin, for a publish step of your own, `ContentBundleWriter` does the same. It reads each
 file once, checks it against the loose index, and hands you one bundle at a time:
@@ -200,6 +201,9 @@ checked against the index it comes from.
 | `bundlePathSalt` | `Property<String>` | unset | Salt required when `bundleOpaqueIds` is `true`. |
 | `bundleUrlPrefix` | `Property<String>` | `"bundles"` | Folder prefix for bundle URLs under `bundlesOutputDirectory`. |
 | `pruneStaleBundles` | `Property<Boolean>` | `true` inside the build folder, else `false` | Whether `.awkb` files under `bundlesOutputDirectory` that the new index doesn't list are deleted. |
+| `bundleKeyId` | `Property<String>` | unset | With a value, members are sealed under this key; see [Encrypted content](encrypted-content.md). |
+| `bundleKeyFile` | `RegularFileProperty` | unset | File holding the key (32 raw bytes or 64 hex digits), outside the repository. |
+| `bundleKeyEnvironmentVariable` | `Property<String>` | unset | Environment variable holding the key as hex; use this or `bundleKeyFile`. |
 
 ## How it works
 
@@ -238,5 +242,6 @@ no member is damaged.
 ## See also
 
 - [Protected content](protected-content.md)
+- [Encrypted content](encrypted-content.md)
 - [Run in the browser](../get-started/run-in-the-browser.md)
 - [Modules](../reference/modules.md)

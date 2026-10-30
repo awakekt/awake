@@ -17,6 +17,7 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import kotlin.math.tan
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -190,6 +191,64 @@ class ParticleDrawBuilderTest {
         val models = requireNotNull(draws.single().instanceModels)
         assertEquals(2, models.size)
         assertTrue(models[0].m23 < models[1].m23, "the particle at z = -3 (farther from the eye at z = 5) comes first")
+    }
+
+    /**
+     * Each instance carries the simulation's view of its particle: the colour blended over its life,
+     * the alpha curve's opacity and the sprite frame it has reached.
+     */
+    @Test
+    fun anInstanceCarriesItsParticlesColourAlphaAndFrame() {
+        val world = World()
+        val emitter = liveEmitter(
+            ParticleFacing.Camera,
+            visual = ParticleVisual(
+                startColor = Vec3f(1f, 0f, 0f),
+                endColor = Vec3f(0f, 0f, 1f),
+                frameCount = 4,
+                frameRate = 4f,
+                alphaCurve = ParticleAlphaCurve(fadeInEnd = 0.25f, fadeOutStart = 0.5f),
+            ),
+        )
+        emitter.particles[0].apply {
+            age = 0.75f // three quarters of its 1 s life
+            frameOffset = 2
+        }
+        world.add(world.create(), emitter)
+
+        val draws = ArrayList<RenderDrawCommand>()
+        ParticleDrawBuilder().appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
+
+        val color = requireNotNull(draws.single().instanceColors).single()
+        assertEquals(0.25f, color.x, 1e-6f, "red three quarters of the way to blue")
+        assertEquals(0f, color.y, 1e-6f)
+        assertEquals(0.75f, color.z, 1e-6f)
+        assertEquals(0.5f, color.w, 1e-6f, "halfway through the fade-out that starts at half its life")
+        assertEquals(
+            listOf(1f),
+            draws.single().instanceFrames,
+            "frame (0.75 s at 4 fps = 3, plus offset 2) mod 4",
+        )
+    }
+
+    /** Far-to-near order is stable: particles at the same distance keep their slot order. */
+    @Test
+    fun theDepthOrderSortsFarToNearAndKeepsTiesInSlotOrder() {
+        val random = Random(41)
+        for (count in listOf(0, 1, 2, 15, 16, 17, 33, 100, 257, 1000)) {
+            val order = ParticleDepthOrder(count)
+            for (i in 0 until count) {
+                order.indices[i] = i
+                // Few distinct distances, so most entries tie with others.
+                order.distances[i] = random.nextInt(0, 12).toFloat()
+            }
+            val expected = (0 until count).sortedByDescending { order.distances[it] }
+
+            order.sortFarToNear(count)
+
+            assertEquals(expected, order.indices.toList(), "count $count")
+            for (i in 1 until count) assertTrue(order.distances[i - 1] >= order.distances[i], "count $count at $i")
+        }
     }
 
     /** An emitter with one live particle at [at] (none when not [spawned]); `spawnRate = 0f`, so nothing else spawns. */

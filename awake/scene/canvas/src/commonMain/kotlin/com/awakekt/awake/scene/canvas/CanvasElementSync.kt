@@ -42,14 +42,24 @@ import kotlin.reflect.KClass
 /** The [CanvasElement.componentsVersion] the entity's components last agreed with; runtime only, never saved. */
 internal class CanvasElementLink(var version: Int)
 
-/** Every component type a canvas element is made of, the always-present ones first. */
-internal val CANVAS_COMPONENT_TYPES: List<KClass<out Any>> = listOf(
-    CanvasRect::class, CanvasPointerState::class, CanvasText::class, CanvasAppearance::class, CanvasLayout::class,
+// Component types made once: on the JVM without kotlin-reflect each `X::class` makes a new class
+// reference, and the sync runs every frame (#1169).
+private val CANVAS_RECT_TYPE: KClass<CanvasRect> = CanvasRect::class
+private val CANVAS_POINTER_TYPE: KClass<CanvasPointerState> = CanvasPointerState::class
+internal val CANVAS_TEXT_TYPE: KClass<CanvasText> = CanvasText::class
+internal val CANVAS_WIDGET_TYPE: KClass<CanvasWidget> = CanvasWidget::class
+
+/**
+ * Every component type a canvas element is made of, the always-present ones first; an array, so
+ * walking it each frame makes no iterator.
+ */
+internal val CANVAS_COMPONENT_TYPES: Array<KClass<out Any>> = arrayOf(
+    CANVAS_RECT_TYPE, CANVAS_POINTER_TYPE, CANVAS_TEXT_TYPE, CanvasAppearance::class, CanvasLayout::class,
     CanvasCluster::class, CanvasBinding::class, CanvasFollow::class, CanvasFollowArrow::class, CanvasInput::class, CanvasTooltip::class,
 )
 
 /** Every widget component type, in the order a node with more than one keeps them: the first wins. */
-internal val CANVAS_WIDGET_TYPES: List<KClass<out CanvasWidget>> = listOf(
+internal val CANVAS_WIDGET_TYPES: Array<KClass<out CanvasWidget>> = arrayOf(
     CanvasButtonWidget::class, CanvasTextFieldWidget::class, CanvasJoystickWidget::class, CanvasLookAreaWidget::class,
     CanvasStepperWidget::class, CanvasBarWidget::class, CanvasSweepWidget::class, CanvasViewWidget::class, CanvasImageWidget::class,
 )
@@ -69,7 +79,12 @@ fun World.syncCanvasElements() {
     // the links walked first, so those wait until the walk is done.
     var gone: MutableList<Entity>? = null
     family<CanvasElementLink>().forEach { entity, link ->
-        if (!syncLinked(entity, link)) gone = (gone ?: ArrayList()).also { it += entity }
+        if (!syncLinked(entity, link)) {
+            // Not `(gone ?: ArrayList()).also { ... }`: that form keeps `gone` in a heap box each call.
+            val list = gone ?: ArrayList()
+            list += entity
+            gone = list
+        }
     }
     family<CanvasElement>().forEach { entity, element -> if (!has<CanvasElementLink>(entity)) adopt(entity, element, push = true) }
     family<CanvasRect>().forEach { entity, _ ->
@@ -141,7 +156,7 @@ internal fun World.attachCanvasComponent(entity: Entity, component: Any) {
 }
 
 /** A new element with no components but the [CanvasRect] and [CanvasPointerState] every element has: a Panel. */
-internal fun emptyCanvasElement(): CanvasElement = CanvasElement().apply { remove(CanvasText::class) }
+internal fun emptyCanvasElement(): CanvasElement = CanvasElement().apply { remove(CANVAS_TEXT_TYPE) }
 
 private fun World.adopt(entity: Entity, element: CanvasElement, push: Boolean) {
     if (get<CanvasElement>(entity) !== element) add(entity, element)
@@ -172,10 +187,10 @@ private fun World.pull(entity: Entity, element: CanvasElement) {
         when {
             theirs === mine -> Unit
             theirs != null -> element.set(theirs)
-            type == CanvasRect::class || type == CanvasPointerState::class -> add(entity, type as KClass<Any>, checkNotNull(mine))
+            type == CANVAS_RECT_TYPE || type == CANVAS_POINTER_TYPE -> add(entity, type as KClass<Any>, checkNotNull(mine))
             else -> element.remove(type)
         }
     }
     val theirs = CANVAS_WIDGET_TYPES.firstNotNullOfOrNull { get(entity, it) }
-    if (theirs !== element.widget) if (theirs == null) element.remove(CanvasWidget::class) else element.set(theirs)
+    if (theirs !== element.widget) if (theirs == null) element.remove(CANVAS_WIDGET_TYPE) else element.set(theirs)
 }

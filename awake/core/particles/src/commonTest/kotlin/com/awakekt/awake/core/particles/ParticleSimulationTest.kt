@@ -239,4 +239,81 @@ class ParticleSimulationTest {
         assertEquals(1f, bounceSim.posY[0], 1e-5f)
         assertEquals(5f, bounceSim.velY[0], 1e-5f)
     }
+
+    @Test
+    fun anEmptyPoolIsAllowedAndNeverHoldsAParticle() {
+        assertFailsWith<IllegalArgumentException> { ParticleSimulation(maxParticles = -1) }
+        val empty = ParticleSimulation(maxParticles = 0, random = Random(5)).apply {
+            spawnRate = 100f
+            burstLimit = 0
+        }
+
+        empty.step(0.5f)
+        assertEquals(0, empty.emit(3), "an empty pool spawns nothing")
+        assertEquals(3L, empty.droppedParticleCount, "the whole burst is dropped")
+        assertFalse(empty.spawn(0f, 0f, 0f))
+        assertEquals(0, empty.liveParticleCount)
+        assertTrue(empty.isComplete, "a zero-count burst is complete at once")
+    }
+
+    @Test
+    fun livenessOnlyChangesThroughThePoolSoTheLiveCountAgrees() {
+        val sim = ParticleSimulation(maxParticles = 3, random = Random(4)).apply {
+            minLifetime = 5f
+            maxLifetime = 5f
+            burstLimit = 0
+        }
+        assertEquals(2, sim.emit(2))
+        assertTrue(sim.isAlive(0) && sim.isAlive(1))
+        assertFalse(sim.isAlive(2))
+
+        sim.clearSlot(0)
+        sim.clearSlot(0)
+        assertFalse(sim.isAlive(0))
+        assertEquals(1, sim.liveParticleCount, "clearing a slot twice counts it out once")
+        sim.clearSlot(1)
+        assertEquals(0, sim.liveParticleCount)
+        assertTrue(sim.isComplete, "with every slot cleared a spent pool completes")
+    }
+
+    @Test
+    fun theScalarBurstScheduleIsValidatedLikeTheValueType() {
+        val config = ParticleBurstConfig()
+        assertFailsWith<IllegalArgumentException> { config.set(0f, 0f, 0f, 4) }
+        assertFailsWith<IllegalArgumentException> { config.set(1f, 2f, 0.5f, 1) }
+        assertFailsWith<IllegalArgumentException> { config.set(1f, 1f, 0f, 1) }
+        assertFailsWith<IllegalArgumentException> { config.set(1f, 1f, Float.POSITIVE_INFINITY, 1) }
+        assertFailsWith<IllegalArgumentException> { config.set(Float.NaN, 1f, 0.5f, 1) }
+        assertFailsWith<IllegalArgumentException> { config.set(1f, 1f, 0.5f, 0) }
+        assertFalse(config.enabled, "a rejected schedule leaves the holder off")
+
+        config.set(2f, 1f, 0.25f, 3)
+        assertTrue(config.enabled)
+        assertEquals(3, config.burstSize)
+    }
+
+    @Test
+    fun theHooksAreToldOfGroundAndDeath() {
+        var queries = 0
+        var deathY = Float.NaN
+        val sim = ParticleSimulation(maxParticles = 1, random = Random(8)).apply {
+            setOrigin(0f, 2f, 0f)
+            baseVelY = -4f
+            minLifetime = 1f
+            maxLifetime = 1f
+            ground.groundHeightProvider = ParticleGroundHeight { _, _ ->
+                queries += 1
+                1f
+            }
+        }
+        sim.emit(1)
+        sim.step(0.5f) { _, y, _ -> deathY = y }
+        assertEquals(1, queries, "asked once for the one moving particle")
+        assertEquals(1f, sim.posY[0], "landed on the provided height")
+        assertTrue(sim.settled[0])
+
+        sim.step(0.6f) { _, y, _ -> deathY = y }
+        assertEquals(1f, deathY, "told where the particle died")
+        assertEquals(1, queries, "a settled particle is not asked again")
+    }
 }

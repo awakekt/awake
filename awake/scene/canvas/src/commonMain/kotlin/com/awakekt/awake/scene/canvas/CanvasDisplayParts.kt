@@ -18,7 +18,6 @@ import com.awakekt.awake.ui.canvas.CanvasSweepWidget
 import com.awakekt.awake.ui.canvas.CanvasText
 import com.awakekt.awake.ui.canvas.CanvasView
 import com.awakekt.awake.ui.canvas.CanvasViewWidget
-import com.awakekt.awake.ui.canvas.get
 
 // The handles of the element kinds that show something: words, a box, a picture, a camera's view
 // and a fill. The controls a player works are in CanvasControlParts.kt.
@@ -26,7 +25,7 @@ import com.awakekt.awake.ui.canvas.get
 /** A [CanvasElementKind.Text] element: words, typed in or from a string table. */
 class CanvasTextPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Text) {
     /** The [CanvasText] component: the words, their key, font and size. */
-    val words: CanvasText get() = checkNotNull(element.get<CanvasText>()) { "canvas part \"$id\" has no CanvasText" }
+    val words: CanvasText get() = checkNotNull(element.get(CANVAS_TEXT_TYPE)) { "canvas part \"$id\" has no CanvasText" }
 
     /** The words shown while [textKey] is empty; see [CanvasElement.text]. */
     var text: String

@@ -15,6 +15,6 @@ package com.awakekt.awake.ui.canvas
  * @throws IllegalStateException if a real pointer currently holds the joystick.
  */
 fun CanvasElement.setJoystickInput(x: Float, y: Float) {
-    require(get(CanvasJoystickWidget::class) != null) { "Joystick input requires a CanvasJoystickWidget" }
+    require(widget is CanvasJoystickWidget) { "Joystick input requires a CanvasJoystickWidget" }
     pointer.stick.setInput(x, y, this)
 }

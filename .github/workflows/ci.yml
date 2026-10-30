@@ -102,6 +102,9 @@ jobs:
           scripts/vulkan-publication-impact.test.sh
           scripts/vulkan-core-api-impact.test.sh
 
+      - name: Next release milestone
+        run: scripts/next-milestone.test.sh
+
       # Before 1.0 a released public signature stays as a hidden overload, so a consumer built against
       # the last stable release still links. Compares the api dumps with that tag's, modifiers aside.
       - name: Released JVM signatures kept
@@ -119,7 +122,7 @@ jobs:
           scripts/central-upload.test.sh
           scripts/maven-fallback-site.test.sh
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
 

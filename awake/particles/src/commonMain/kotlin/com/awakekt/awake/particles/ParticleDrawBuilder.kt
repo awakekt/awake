@@ -85,11 +85,12 @@ class ParticleDrawBuilder {
     ) {
         emitter.syncToSimulation()
         val sim = emitter.simulation
-        val visibleIndices = emitter.visibleIndicesBuffer
-        val visibleDistances = emitter.visibleDistancesBuffer
+        val depthOrder = emitter.depthOrder
+        val visibleIndices = depthOrder.indices
+        val visibleDistances = depthOrder.distances
         var visibleCount = 0
         for (slot in 0 until sim.maxParticles) {
-            if (sim.alive[slot]) {
+            if (sim.isAlive(slot)) {
                 val px = sim.posX[slot]
                 val py = sim.posY[slot]
                 val pz = sim.posZ[slot]
@@ -104,7 +105,7 @@ class ParticleDrawBuilder {
                 }
             }
         }
-        sortDescendingByDistance(visibleIndices, visibleDistances, visibleCount)
+        depthOrder.sortFarToNear(visibleCount)
         val instanceModels = emitter.instanceModelsBuffer
         val instanceColors = emitter.instanceColorsBuffer
         val instanceFrames = emitter.instanceFramesBuffer
@@ -113,8 +114,6 @@ class ParticleDrawBuilder {
         instanceFrames.clear()
         val visual = emitter.visual
         val stretch = if (visual.stretchWithVelocity) visual.stretchFactor else 0f
-        val startColor = visual.startColor
-        val endColor = visual.endColor
         for (index in 0 until visibleCount) {
             val slot = visibleIndices[index]
             while (emitter.modelPool.size <= index) emitter.modelPool += Mat4()
@@ -130,14 +129,7 @@ class ParticleDrawBuilder {
                 rotation = if (visual.stretchWithVelocity) 0f else sim.rotation[slot],
             )
             instanceModels += model
-            val life = sim.lifetime[slot]
-            val t = if (life > 0f) (sim.age[slot] / life).coerceIn(0f, 1f) else 1f
-            instanceColors += emitter.colorPool[index].also {
-                it.x = startColor.x + (endColor.x - startColor.x) * t
-                it.y = startColor.y + (endColor.y - startColor.y) * t
-                it.z = startColor.z + (endColor.z - startColor.z) * t
-                it.w = sim.alphaAt(slot)
-            }
+            instanceColors += emitter.writeInstanceColor(slot, emitter.colorPool[index])
             instanceFrames += sim.frameAt(slot).toFloat()
         }
         if (instanceModels.isNotEmpty()) {
@@ -187,21 +179,6 @@ class ParticleDrawBuilder {
             if (n.x * x + n.y * y + n.z * z + plane.distance < -radius) return false
         }
         return true
-    }
-
-    private fun sortDescendingByDistance(indices: IntArray, distances: FloatArray, count: Int) {
-        for (i in 1 until count) {
-            val keySlot = indices[i]
-            val keyDist = distances[i]
-            var j = i - 1
-            while (j >= 0 && distances[j] < keyDist) {
-                indices[j + 1] = indices[j]
-                distances[j + 1] = distances[j]
-                j -= 1
-            }
-            indices[j + 1] = keySlot
-            distances[j + 1] = keyDist
-        }
     }
 
     /** [placed]'s +X as the quad's right and its -Z as the quad's up, so a flat quad faces its +Y;

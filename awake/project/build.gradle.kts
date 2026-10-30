@@ -46,6 +46,12 @@ kotlin {
             implementation(project(":awake:ecs"))
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
+            // Encrypted bundles: AES-256-GCM and HKDF-SHA256 through each target's own provider
+            // (JDK on desktop and Android, CryptoKit on iOS, WebCrypto in the browser).
+            implementation(libs.cryptography.core)
+            implementation(libs.cryptography.provider.optimal)
+            // Lifts cryptography-kotlin's kotlinx-io 0.9.0, whose wasm helper breaks browser bundles.
+            implementation(libs.kotlinx.io.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

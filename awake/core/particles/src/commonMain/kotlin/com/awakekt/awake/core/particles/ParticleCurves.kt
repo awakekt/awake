@@ -34,7 +34,7 @@ private const val BURST_BOUNDARY_TOLERANCE: Float = 1e-4f
  * @property fadeInEnd Normalized age (`0..1`) where fade-in reaches full opacity.
  * @property fadeOutStart Normalized age (`0..1`) where fade-out toward zero begins.
  */
-data class ParticleAlphaRamp(
+class ParticleAlphaRamp(
     val fadeInEnd: Float = 0f,
     val fadeOutStart: Float = 0f,
 ) {
@@ -71,28 +71,38 @@ internal fun alphaRampFactorAt(lifeFraction: Float, fadeInEnd: Float, fadeOutSta
  * @property burstInterval Seconds between bursts inside the active window; must be positive and finite.
  * @property burstSize Number of particles requested per burst; must be positive.
  */
-data class ParticleBurstSchedule(
+class ParticleBurstSchedule(
     val cycleSeconds: Float,
     val activeSeconds: Float,
     val burstInterval: Float,
     val burstSize: Int,
 ) {
     init {
-        require(cycleSeconds > 0f && cycleSeconds.isFinite()) {
-            "cycleSeconds must be positive and finite, got $cycleSeconds"
-        }
-        require(activeSeconds > 0f && activeSeconds <= cycleSeconds) {
-            "activeSeconds must be in (0, cycleSeconds], got $activeSeconds of $cycleSeconds"
-        }
-        require(burstInterval > 0f && burstInterval.isFinite()) {
-            "burstInterval must be positive and finite, got $burstInterval"
-        }
-        require(burstSize > 0) { "burstSize must be positive, got $burstSize" }
+        requireValidBurstSchedule(cycleSeconds, activeSeconds, burstInterval, burstSize)
     }
 
     /** Total number of bursts that have started at or before [time] seconds into the emitter's life. */
     fun burstsStartedBy(time: Float): Int =
         scheduleBurstsStartedBy(time, cycleSeconds, activeSeconds, burstInterval)
+}
+
+/** The checks [ParticleBurstSchedule] and the scalar [ParticleBurstConfig.set] share. */
+internal fun requireValidBurstSchedule(
+    cycleSeconds: Float,
+    activeSeconds: Float,
+    burstInterval: Float,
+    burstSize: Int,
+) {
+    require(cycleSeconds > 0f && cycleSeconds.isFinite()) {
+        "cycleSeconds must be positive and finite, got $cycleSeconds"
+    }
+    require(activeSeconds > 0f && activeSeconds <= cycleSeconds) {
+        "activeSeconds must be in (0, cycleSeconds], got $activeSeconds of $cycleSeconds"
+    }
+    require(burstInterval > 0f && burstInterval.isFinite()) {
+        "burstInterval must be positive and finite, got $burstInterval"
+    }
+    require(burstSize > 0) { "burstSize must be positive, got $burstSize" }
 }
 
 internal fun scheduleBurstsStartedBy(
@@ -118,7 +128,7 @@ internal fun scheduleBurstsStartedBy(
  * @property maxDegreesPerSecond Maximum angular velocity in degrees per second (finite, `>= minDegreesPerSecond`).
  * @property randomStartAngle Whether each spawned particle starts at a random orientation instead of `0`.
  */
-data class ParticleSpinRange(
+class ParticleSpinRange(
     val minDegreesPerSecond: Float,
     val maxDegreesPerSecond: Float,
     val randomStartAngle: Boolean = false,

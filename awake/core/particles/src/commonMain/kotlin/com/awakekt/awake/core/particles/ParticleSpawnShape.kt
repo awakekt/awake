@@ -28,14 +28,14 @@ enum class ParticlePlane {
  */
 sealed interface ParticleSpawnShape {
     /** Spawns every particle directly at the emitter's origin with zero RNG calls. */
-    data object Point : ParticleSpawnShape
+    object Point : ParticleSpawnShape
 
     /**
      * Spawns on a horizontal circle of [radius] in the local `XZ` plane (`y = 0`).
      *
      * @property radius Circle radius in simulation units; must be finite and non-negative.
      */
-    data class RingXZ(val radius: Float) : ParticleSpawnShape {
+    class RingXZ(val radius: Float) : ParticleSpawnShape {
         init {
             require(isValidExtent(radius)) {
                 "radius must be finite and not negative, got $radius"
@@ -50,7 +50,7 @@ sealed interface ParticleSpawnShape {
      * @property innerRadius Inner hole radius; must be finite, non-negative, and `<= outerRadius`.
      * @property outerRadius Outer boundary radius; must be finite and `>= innerRadius`.
      */
-    data class RingXY(
+    class RingXY(
         val innerRadius: Float = 0f,
         val outerRadius: Float,
     ) : ParticleSpawnShape {
@@ -71,7 +71,7 @@ sealed interface ParticleSpawnShape {
      * @property halfExtentY Half-height along local Y; must be finite and non-negative.
      * @property halfExtentZ Half-depth along local Z (`0f` for 2D/UI rectangles); must be finite and non-negative.
      */
-    data class Box(
+    class Box(
         val halfExtentX: Float,
         val halfExtentY: Float,
         val halfExtentZ: Float = 0f,
@@ -90,7 +90,7 @@ sealed interface ParticleSpawnShape {
      * @property halfWidth Half-width along local X; must be finite and non-negative.
      * @property halfHeight Half-height along local Y; must be finite and non-negative.
      */
-    data class RectEdge(
+    class RectEdge(
         val halfWidth: Float,
         val halfHeight: Float,
     ) : ParticleSpawnShape {
