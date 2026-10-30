@@ -45,6 +45,9 @@ class AssetMismatchException(val mismatch: AssetMismatch) : IllegalStateExceptio
  * as where it comes from: one read from the same files catches corruption and casual edits, and one
  * built into the game's code, or signed, catches deliberate ones too.
  *
+ * It is gated as [files] is, when [files] is a [GatedAssetSource], so a scene switch through it waits
+ * for content [files] doesn't have yet, such as protected content before sign-in.
+ *
  * @param files Where the assets are read from.
  * @param lock The pins: the project's `assets.lock.json`, decoded.
  * @param refuseMismatches Whether a mismatched asset fails to load, rather than loading as it is.
@@ -55,7 +58,7 @@ class LockVerifiedAssetSource(
     lock: AwakeAssetsLock,
     private val refuseMismatches: Boolean = false,
     private val onMismatch: (AssetMismatch) -> Unit,
-) : AssetSource {
+) : GatedAssetSource {
     private val pins: Map<String, AwakeAssetLockEntry> = lock.assets.mapKeys { (path, _) -> path.removePrefix("/") }
 
     override suspend fun read(path: AssetPath): Result<ByteArray> {
@@ -69,6 +72,14 @@ class LockVerifiedAssetSource(
 
     /** Whether [files] has [path], asked of [files] itself. Nothing is read, so a mismatch is not found here. */
     override suspend fun exists(path: AssetPath): Boolean = files.exists(path)
+
+    /** Whether [files] gates [path]; never, when [files] isn't a [GatedAssetSource]. */
+    override suspend fun isGated(path: AssetPath): Boolean = (files as? GatedAssetSource)?.isGated(path) == true
+
+    /** Waits for [files]'s gate on [path]; at once, when [files] isn't a [GatedAssetSource]. */
+    override suspend fun awaitOpen(path: AssetPath) {
+        (files as? GatedAssetSource)?.awaitOpen(path)
+    }
 
     private fun mismatchOf(path: String, bytes: ByteArray, pin: AwakeAssetLockEntry): AssetMismatch? {
         val expected = pin.sha256.lowercase()

@@ -6,12 +6,14 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayerFactory
+import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.project.GatedAssetSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.audio.AudioSource
@@ -127,6 +129,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         status.requested(path)
         loading = loads.launch {
             val report = ProgressReporter { status.report(number, it) }
+            project.awaitContent(path) { waiting -> status.reportWaiting(number, path, waiting) }
             val result = project.readScene(path, report::report)
             // A load that finishes as the scene stops has nothing left to play it.
             if (finished.trySend(FinishedLoad(number, path, result)).isFailure) result.getOrNull()?.close()
@@ -291,6 +294,19 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
     override fun materialDefaults(name: String): PbrMaterial? = target.materialDefaults(name)
 
     override fun materialDefaults(mesh: String, material: String): PbrMaterial? = target.materialDefaults(mesh, material)
+}
+
+/**
+ * Waits, telling [onWaiting], while the project's files gate the scene at [path], as a
+ * [com.awakekt.awake.project.LayeredAssetSource] gates a protected scene until the app attaches the protected source.
+ */
+private suspend fun LoadedProject.awaitContent(path: String, onWaiting: (Boolean) -> Unit) {
+    val gated = files as? GatedAssetSource ?: return
+    val asset = AssetPath(path)
+    if (!gated.isGated(asset)) return
+    onWaiting(true)
+    gated.awaitOpen(asset)
+    onWaiting(false)
 }
 
 /** The scene at [path], or why it can't be played. Cancelling the load throws, as cancelling does. */

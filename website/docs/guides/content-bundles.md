@@ -154,18 +154,27 @@ or 503 with `Retry-After`, waits and is sent again like any other.
 ## Bundle a public sign-in set
 
 A project that declares a [public sign-in set](protected-content.md#start-on-a-public-sign-in-set)
-gets two loose indexes from `generateProjectIndex`, and each is bundled on its own, so no bundle
-mixes public and protected files:
+gets two loose indexes from `generateProjectIndex`. `generateContentBundles` then bundles each one on
+its own, so no bundle mixes public and protected files:
+
+| Set | Task | Written to |
+| --- | --- | --- |
+| Public | `generatePublicContentBundles`, which `generateContentBundles` runs first | `build/published-public` |
+| Protected | `generateContentBundles` | `build/published` |
+
+Publish `build/published-public` where anyone can read it and `build/published` behind the read
+token. Each folder is pruned of its own stale bundles only, under the same rule as above. Both sets
+use the same grouping, size and opaque-id settings. A project without a public set skips the public
+task. From the command line, bundle each index on its own:
 
 ```bash
-awake bundle build/project.public.index.json --output build/published/public
-awake bundle build/project.index.json --output build/published/protected
+awake bundle build/project.public.index.json --output build/published-public
+awake bundle build/project.index.json --output build/published
 ```
 
-Publish `public/` where anyone can read it and `protected/` behind the read token. The public
-bundles are never encrypted, since they load before the player has a key; protected bundles may be.
-The game reads both through one `LayeredAssetSource`, and a bundle member is checked against its own
-index whichever set it comes from.
+The public bundles are never encrypted, since they load before the player has a key; protected
+bundles may be. The game reads both through one `LayeredAssetSource`, and each bundle member is
+checked against the index it comes from.
 
 ## Properties
 
@@ -183,6 +192,7 @@ index whichever set it comes from.
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `bundlesOutputDirectory` | `DirectoryProperty` | `build/published` | Folder where `bundles/<sha256>.awkb` and the bundled `project.index.json` are written. |
+| `publicBundlesOutputDirectory` | `DirectoryProperty` | `build/published-public` | The same, for the [public sign-in set](protected-content.md#start-on-a-public-sign-in-set), written by `generatePublicContentBundles`. |
 | `bundleGrouping` | `Property<String>` | `"folder"` | `"folder"` (`byFolder`) or `"one"` (`oneGroup`). |
 | `bundleFolderDepth` | `Property<Int>` | `1` | Leading folder count when `bundleGrouping` is `"folder"`. |
 | `targetBundleBytes` | `Property<Long>` | 16 MiB | Upper size target per bundle. |

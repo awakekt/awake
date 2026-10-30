@@ -28,6 +28,7 @@ projectContent.manifestFile.convention(layout.projectDirectory.file("awake.proje
 projectContent.assetsLockFile.convention(layout.projectDirectory.file("assets.lock.json"))
 projectContent.indexOutputFile.convention(layout.buildDirectory.file("project.index.json"))
 projectContent.bundlesOutputDirectory.convention(layout.buildDirectory.dir("published"))
+projectContent.publicBundlesOutputDirectory.convention(layout.buildDirectory.dir("published-public"))
 projectContent.assetRoots.set(listOf("assets"))
 projectContent.indexRoots.set(listOf("assets", "scenes", "plugins", "strings"))
 projectContent.indexRootPath.convention("/project")
@@ -112,14 +113,12 @@ val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generatePro
     )
 }
 
-tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
-    group = "awake codegen"
-    description = "Pack the project index's files into content bundles and write a bundled index."
-    indexFile.set(generateProjectIndex.flatMap { it.outputFile })
+// One bundle configuration for both sets; each set bundles from its own index into its own folder, so
+// neither prunes the other's bundles.
+fun GenerateContentBundlesTask.bundleLike(projectContent: ProjectContentExtension) {
     // The files the loose index lists are the files this reads: one list, kept by the index task.
     indexedFiles.from(generateProjectIndex.map { it.indexedFiles })
     projectDirectory.set(layout.projectDirectory)
-    outputDirectory.set(projectContent.bundlesOutputDirectory)
     grouping.set(projectContent.bundleGrouping)
     folderDepth.set(projectContent.bundleFolderDepth)
     targetBundleBytes.set(projectContent.targetBundleBytes)
@@ -128,6 +127,27 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     bundleUrlPrefix.set(projectContent.bundleUrlPrefix)
     pruneStaleBundles.set(projectContent.pruneStaleBundles)
     workerClasspath.from(awakeProjectContentWorker)
+}
+
+val declaresPublicSet = projectContent.publicFiles.zip(projectContent.publicScenes) { globs, scenes -> globs.isNotEmpty() || scenes.isNotEmpty() }
+
+val generatePublicContentBundles = tasks.register<GenerateContentBundlesTask>("generatePublicContentBundles") {
+    group = "awake codegen"
+    description = "Pack the public sign-in set's files into content bundles and write its bundled index."
+    indexFile.set(generateProjectIndex.flatMap { it.publicIndexOutputFile })
+    outputDirectory.set(projectContent.publicBundlesOutputDirectory)
+    bundleLike(projectContent)
+    // A project with no public set has no public index to bundle.
+    onlyIf("the project declares a public sign-in set") { declaresPublicSet.get() }
+}
+
+tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
+    group = "awake codegen"
+    description = "Pack the project index's files into content bundles and write a bundled index."
+    indexFile.set(generateProjectIndex.flatMap { it.outputFile })
+    outputDirectory.set(projectContent.bundlesOutputDirectory)
+    bundleLike(projectContent)
+    dependsOn(generatePublicContentBundles)
 }
 
 val checkProjectContent = tasks.register("checkProjectContent") {

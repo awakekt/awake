@@ -6,11 +6,18 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.Sha256
+import com.awakekt.awake.engine.bootstrap.dsl.app
+import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.project.IndexedAssetSource
 import com.awakekt.awake.project.LayeredAssetSource
 import com.awakekt.awake.project.ProjectIndex
 import com.awakekt.awake.project.ProjectIndexEntry
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,6 +62,34 @@ class PublicSignInSetTest {
         project.close()
     }
 
+    @Test
+    fun aSwitchToAProtectedSceneWaitsForSignInThenLoads() = runTest {
+        val files = LayeredAssetSource(indexed(publicFiles) { path -> publicFiles.getValue(path).encodeToByteArray() })
+        val project = loadProject(files, SIGN_IN)
+        project.sceneLoads = Dispatchers.Unconfined
+        val app = app { scene("play") { runProject(project) } }
+        app.ready(TestRenderer())
+        val switch: SceneSwitch = app.requireService()
+        val status: SceneSwitchStatus = app.requireService()
+        val frames = { count: Int -> repeat(count) { app.update(DELTA, WIDTH, HEIGHT) } }
+        frames(1)
+
+        switch.request(HARBOR)
+        frames(FRAMES)
+
+        assertEquals(SceneSwitchState.WaitingForContent(HARBOR), status.state.value)
+        assertEquals("sign-in", project.scene.name, "the sign-in scene plays on while the switch waits")
+        assertEquals(emptyList(), protectedRequests)
+
+        signedIn = true
+        files.attachProtected(indexed(protectedFiles, ::protectedFetch))
+        frames(FRAMES)
+
+        assertEquals(SceneSwitchState.Ready(HARBOR), status.state.value)
+        assertEquals("harbor", project.scene.name)
+        project.close()
+    }
+
     /** The protected server: it refuses every request until the player has signed in. */
     private fun protectedFetch(path: String): ByteArray {
         protectedRequests += path
@@ -70,7 +105,17 @@ class PublicSignInSetTest {
         return IndexedAssetSource(ProjectIndex(files = entries), { url -> fetch(url) })
     }
 
+    private class TestRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
+        override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
+    }
+
     private companion object {
+        const val DELTA = 1f / 60f
+        const val WIDTH = 320f
+        const val HEIGHT = 240f
+        const val FRAMES = 3
         const val MANIFEST_PATH = "awake.project.json"
         const val SIGN_IN = "scenes/sign-in.scene.json"
         const val HARBOR = "scenes/harbor.scene.json"

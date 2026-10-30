@@ -101,6 +101,22 @@ class PublicContentSetTest {
         assertFailsWith<GradleException> { task.generate() }
     }
 
+    /** Each set bundles from its own index into its own folder, so neither prunes the other's bundles. */
+    @Test
+    fun thePublicSetBundlesApartFromTheProtectedOne() {
+        val project = ProjectBuilder.builder().build()
+        project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
+        val index = project.tasks.getByName("generateProjectIndex") as GenerateProjectIndexTask
+        val publicBundles = project.tasks.getByName("generatePublicContentBundles") as GenerateContentBundlesTask
+        val bundles = project.tasks.getByName("generateContentBundles") as GenerateContentBundlesTask
+
+        assertEquals(index.publicIndexOutputFile.get().asFile, publicBundles.indexFile.get().asFile)
+        assertEquals(project.layout.buildDirectory.dir("published-public").get().asFile, publicBundles.outputDirectory.get().asFile)
+        assertTrue(publicBundles.outputDirectory.get().asFile != bundles.outputDirectory.get().asFile)
+        assertEquals(bundles.grouping.get(), publicBundles.grouping.get(), "both sets bundle alike")
+        assertTrue(publicBundles in bundles.taskDependencies.getDependencies(bundles), "one command writes both sets")
+    }
+
     /** Harbor Town: a sign-in scene, a protected world, and a prefab and model the sign-in scene names. */
     private fun project(): File = kotlin.io.path.createTempDirectory("public-set").toFile().apply {
         write("awake.project.json", """{"id":"com.example.harbor-town","name":"Harbor Town","version":"1","entryScene":"scenes/harbor.scene.json"}""")

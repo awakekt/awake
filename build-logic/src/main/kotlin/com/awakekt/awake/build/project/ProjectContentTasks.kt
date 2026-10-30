@@ -69,6 +69,9 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     /** Where `generateProjectIndex` writes the public index, when [publicFiles] or [publicScenes] declare a public set. */
     val publicIndexOutputFile: RegularFileProperty = objects.fileProperty()
 
+    /** Where `generatePublicContentBundles` writes the public set's bundles and bundled index, apart from the protected ones. */
+    val publicBundlesOutputDirectory: DirectoryProperty = objects.directoryProperty()
+
     val bundleGrouping: Property<String> = objects.property(String::class.java)
     val bundleFolderDepth: Property<Int> = objects.property(Int::class.java)
     val targetBundleBytes: Property<Long> = objects.property(Long::class.java)

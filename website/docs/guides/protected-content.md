@@ -263,8 +263,13 @@ In the game, read both through a `LayeredAssetSource`. Before sign-in it serves 
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/PublicSignInSetDocsSampleTest.kt:public"
 ```
 
-Load the project at its sign-in scene with `loadProject(files, entryScene = "scenes/sign-in.scene.json")`.
-Once sign-in succeeds, open the protected index with the player's token and attach it:
+Load the project at its sign-in scene with `loadProject(files, entryScene = "scenes/sign-in.scene.json")`
+and play it with `runProject`. The sign-in scene may ask its `SceneSwitch` for a protected scene at
+any time, even before the player has signed in: the switch's `SceneSwitchState` is
+`WaitingForContent(path)` while the sign-in scene plays on, and the switch loads as usual, through
+`Loading` to `Ready`, once the protected source is attached. A loading curtain reads that state, and
+the game needs no polling of its own. Once sign-in succeeds, open the protected index with the
+player's token and attach it:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/PublicSignInSetDocsSampleTest.kt:attach"
@@ -272,7 +277,7 @@ Once sign-in succeeds, open the protected index with the player's token and atta
 
 | When | A read of a path |
 | --- | --- |
-| Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. |
+| Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. A `SceneSwitch` to such a scene waits in `WaitingForContent`; `LoadedProject.switchTo`, for a host without a frame loop, throws instead. |
 | After `attachProtected` | Is served by the protected source when it has the path, so it wins for a file both have, and by the public set otherwise. Each read goes to one source, which checks it against its own index's SHA-256. |
 | After `detachProtected`, on sign-out | Is served by the public set alone again. |
 

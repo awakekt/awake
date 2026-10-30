@@ -37,7 +37,9 @@ class ProtectedContentNotAttachedException(val path: String) : IllegalStateExcep
  * Before the protected source is attached, a read of a path [publicSet] doesn't have fails with
  * [ProtectedContentNotAttachedException] rather than waiting, so a public scene that names an
  * optional protected file loads without it. After it is attached, a path neither layer has fails as
- * the protected source fails it.
+ * the protected source fails it. A scene switch waits instead: as a [GatedAssetSource], a path that
+ * [needsProtected] is gated until the protected source is attached, so a switch to a protected scene
+ * before sign-in reports that it is waiting and loads once the source arrives.
  *
  * Core takes the protected source and nothing else: the token, any key and when to sign in or out
  * are the app's. Typically [publicSet] is an [IndexedAssetSource] over the public index, which ships
@@ -46,7 +48,7 @@ class ProtectedContentNotAttachedException(val path: String) : IllegalStateExcep
  *
  * @param publicSet The public set: what loads before sign-in.
  */
-class LayeredAssetSource(private val publicSet: AssetSource) : AssetSource {
+class LayeredAssetSource(private val publicSet: AssetSource) : GatedAssetSource {
     private val protectedLayer = MutableStateFlow<AssetSource?>(null)
 
     /** Whether a protected source is attached. */
@@ -78,6 +80,14 @@ class LayeredAssetSource(private val publicSet: AssetSource) : AssetSource {
      * [awaitProtected] while this is true. False once a protected source is attached.
      */
     suspend fun needsProtected(path: AssetPath): Boolean = protectedLayer.value == null && !publicSet.exists(path)
+
+    /** [needsProtected]: the protected source isn't attached, and [publicSet] doesn't have [path]. */
+    override suspend fun isGated(path: AssetPath): Boolean = needsProtected(path)
+
+    /** [awaitProtected], for a path that [isGated]; at once for one that isn't. */
+    override suspend fun awaitOpen(path: AssetPath) {
+        if (needsProtected(path)) awaitProtected()
+    }
 
     override suspend fun read(path: AssetPath): Result<ByteArray> {
         val protectedSource = protectedLayer.value
