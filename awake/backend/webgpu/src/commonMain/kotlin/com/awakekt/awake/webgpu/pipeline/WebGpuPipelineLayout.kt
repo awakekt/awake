@@ -11,9 +11,11 @@ import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.SamplerType
 import com.awakekt.awake.render.pipeline.ShaderStage
 import com.awakekt.awake.render.pipeline.TextureSampleType
+import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupLayoutDescriptor
 import io.ygdrasil.webgpu.BindGroupLayoutEntry
 import io.ygdrasil.webgpu.BufferBindingLayout
+import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBindGroupLayout
 import io.ygdrasil.webgpu.GPUBufferBindingType
 import io.ygdrasil.webgpu.GPUDevice
@@ -29,21 +31,42 @@ import io.ygdrasil.webgpu.TextureBindingLayout
 /**
  * Creates a contiguous explicit layout from the shared shader binding ABI, taking [groupZero] as
  * group 0 when given so a bind group built against that layout binds here too.
+ *
+ * The group layouts this creates are released once the pipeline layout holds them; [groupZero]
+ * stays the caller's. The caller closes the returned layout once no pipeline is still to be built
+ * from it.
  */
 internal fun GPUDevice.createAwakePipelineLayout(
     groups: Map<Int, GroupBindings>,
     groupZero: GPUBindGroupLayout? = null,
 ): GPUPipelineLayout {
     val maxGroup = groups.keys.maxOrNull() ?: return createPipelineLayout(PipelineLayoutDescriptor(emptyList()))
-    val layouts = (0..maxGroup).map { group ->
-        groupZero?.takeIf { group == 0 } ?: createBindGroupLayout(
-            BindGroupLayoutDescriptor(
-                entries = groups[group]?.entries.orEmpty().map(ResourceBinding::toWebGpuLayoutEntry),
-            ),
-        )
+    val created = mutableListOf<GPUBindGroupLayout>()
+    try {
+        val layouts = (0..maxGroup).map { group ->
+            groupZero?.takeIf { group == 0 } ?: createBindGroupLayout(
+                BindGroupLayoutDescriptor(
+                    entries = groups[group]?.entries.orEmpty().map(ResourceBinding::toWebGpuLayoutEntry),
+                ),
+            ).also(created::add)
+        }
+        return createPipelineLayout(PipelineLayoutDescriptor(layouts))
+    } finally {
+        created.forEach(GPUBindGroupLayout::close)
     }
-    return createPipelineLayout(PipelineLayoutDescriptor(layouts))
 }
+
+/**
+ * Creates the bind group [descriptor] describes and releases its layout. Use it when the layout
+ * came from `getBindGroupLayout`: every call of that hands out a new native reference, which the
+ * bind group does not need once it exists.
+ */
+internal fun GPUDevice.createBindGroupReleasingLayout(descriptor: BindGroupDescriptor): GPUBindGroup =
+    try {
+        createBindGroup(descriptor)
+    } finally {
+        descriptor.layout.close()
+    }
 
 private fun ResourceBinding.toWebGpuLayoutEntry() = BindGroupLayoutEntry(
     binding = binding.toUInt(),

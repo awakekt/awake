@@ -78,12 +78,18 @@ class SwapchainManager(
 
     /** Closes the depth texture and drops its view. Safe to call when nothing was created. */
     fun destroy() {
-        depthTextureHandle?.close()
+        closeAttachments()
         depthTextureHandle = null
         depthTextureView = null
-        multisampleColorHandle?.close()
         multisampleColorHandle = null
         multisampleColorView = null
+    }
+
+    private fun closeAttachments() {
+        depthTextureView?.close()
+        depthTextureHandle?.close()
+        multisampleColorView?.close()
+        multisampleColorHandle?.close()
     }
 
     /** Does nothing: the browser's frame pacing replaces explicit semaphores and fences. */
@@ -110,8 +116,7 @@ class SwapchainManager(
         if (width == configuredWidth && height == configuredHeight && depthTextureView != null) return
 
         val resized = configuredWidth != 0u || configuredHeight != 0u
-        depthTextureHandle?.close()
-        multisampleColorHandle?.close()
+        closeAttachments()
         multisampleColorHandle = if (sampleCount > 1) {
             graphicsDevice.wgpuContext.device.createTexture(
                 TextureDescriptor(

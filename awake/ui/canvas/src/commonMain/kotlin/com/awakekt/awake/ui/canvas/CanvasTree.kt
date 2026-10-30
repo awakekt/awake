@@ -30,7 +30,15 @@ class CanvasItem(
     val element: CanvasElement,
     val parent: CanvasElement? = null,
     val scaler: CanvasScaler? = null,
-)
+) {
+    /** [CanvasItem] as it was before `scaler`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        id: Int,
+        element: CanvasElement,
+        parent: CanvasElement? = null,
+    ) : this(id, element, parent)
+}
 
 /**
  * The host box a frame's [CanvasOverlay] was measured in, before any canvas or subtree scale is

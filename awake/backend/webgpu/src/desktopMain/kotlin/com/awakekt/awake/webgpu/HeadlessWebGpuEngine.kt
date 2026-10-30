@@ -17,7 +17,7 @@ import com.awakekt.awake.webgpu.device.withGpuTiming
 import io.ygdrasil.webgpu.CompositeAlphaMode
 import io.ygdrasil.webgpu.GPUTextureUsage
 import io.ygdrasil.webgpu.SurfaceConfiguration
-import io.ygdrasil.webgpu.glfwContextRenderer
+import io.ygdrasil.webgpu.WGPU
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -33,6 +33,7 @@ class HeadlessWebGpuEngine(
     plan: RenderPlan,
 ) : WebGpuEngine(lifecycle, plan) {
     private var windowHandle = 0L
+    private var instance: WGPU? = null
     private var presentSurface: (() -> Unit)? = null
 
     /**
@@ -40,12 +41,13 @@ class HeadlessWebGpuEngine(
      * from [surface], returning the initialized [Renderer].
      */
     suspend fun boot(surface: HeadlessSurface = HeadlessSurface(1, 1)): Renderer {
-        val context = glfwContextRenderer(
+        val context = headlessGlfwContext(
             width = surface.width,
             height = surface.height,
             title = "awake-headless-webgpu",
             onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
         )
+        instance = context.instance
         val gpu = context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") }
             .withDisplayEncodedColorFormat()
         // Offscreen probes did not acquire the surface. Full-frame probes do, so configure the
@@ -58,16 +60,25 @@ class HeadlessWebGpuEngine(
                 alphaMode = CompositeAlphaMode.Opaque,
             ),
         )
-        windowHandle = context.windowHandler
+        windowHandle = context.windowHandle
         presentSurface = { gpu.surface.present() }
         create(gpu)
         return renderer
     }
 
     /**
-     * Convenience entry point to expose teardown for test teardown.
+     * Tears the engine down: its resources, the device, queue, adapter and surface, the window, and
+     * last the wgpu instance, which nothing else releases.
      */
     fun destroy() {
+        destroyAndReport()
+    }
+
+    /**
+     * [destroy], returning what the wgpu instance still held just before it was released: the
+     * [liveObjects] count of every kind of native object a complete teardown should have closed.
+     */
+    internal fun destroyAndReport(): Map<String, Long> {
         // A full-frame probe must hand its acquired texture back before closing the surface.
         if ((renderer as? com.awakekt.awake.webgpu.renderer.Renderer)?.presentedColor != null) presentSurface?.invoke()
         try {
@@ -77,6 +88,30 @@ class HeadlessWebGpuEngine(
             windowHandle = 0L
             presentSurface = null
         }
+        val wgpu = instance ?: return emptyMap()
+        instance = null
+        return wgpu.use { it.awaitDeviceRelease() }
+    }
+
+    /**
+     * What [this] instance still holds once the device has gone. wgpu4k's device event pump keeps
+     * its own device reference and gives it back when its coroutine finishes, just after the device
+     * is closed; the device keeps its queue until then. Waits up to [DEVICE_RELEASE_TIMEOUT_MS] for
+     * that, so the instance is released after everything it created.
+     */
+    private fun WGPU.awaitDeviceRelease(): Map<String, Long> {
+        val deadline = System.nanoTime() + DEVICE_RELEASE_TIMEOUT_MS * NANOS_PER_MILLI
+        var live = liveObjects()
+        while ("devices" in live && System.nanoTime() < deadline) {
+            Thread.sleep(1)
+            live = liveObjects()
+        }
+        return live
+    }
+
+    private companion object {
+        const val DEVICE_RELEASE_TIMEOUT_MS = 2_000L
+        const val NANOS_PER_MILLI = 1_000_000L
     }
 }
 

@@ -62,3 +62,10 @@ internal fun browseWith(browser: UrlBrowser?, url: String): Boolean {
         false
     }
 }
+
+/**
+ * The desktop [LaunchEnvironment]: no [LaunchEnvironment.origin], because a desktop app is not served
+ * from a page, and [PrimaryInput.Pointer]. A touchscreen laptop still reports `Pointer`: GLFW does not
+ * say whether a touchscreen is the primary input, and desktop UI is built for the pointer.
+ */
+fun desktopLaunchEnvironment(): LaunchEnvironment = LaunchEnvironment(origin = null, primaryInput = PrimaryInput.Pointer)

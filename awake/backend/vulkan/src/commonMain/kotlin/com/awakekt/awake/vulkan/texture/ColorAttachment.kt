@@ -18,25 +18,34 @@ import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 
-/** Multisampled colour storage resolved by the render pass, never sampled directly. */
+/**
+ * Render-pass-only image storage, never sampled directly: multisampled colour resolved by the render
+ * pass, or a depth attachment when [usage] and [aspectMask] say so.
+ */
 @Suppress("TooGenericExceptionCaught") // Every native-allocation failure must release earlier handles before propagating.
 internal class ColorAttachment(
     private val graphicsDevice: GraphicsDevice,
     width: Int,
     height: Int,
-    format: Int,
-    samples: Int,
+    val format: Int,
+    val samples: Int,
+    usage: Int = VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    aspectMask: Int = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT.value,
 ) {
     private var image = 0L
     private var memory = 0L
     var view = 0L
         private set
 
+    /** Bytes of device memory bound to the image, as the driver required. */
+    var bytes = 0L
+        private set
+
     init {
         try {
             image = VulkanImages.vkCreateImage(
                 graphicsDevice.device,
-                VkImageCreateInfo(width, height, format, VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, samples = samples),
+                VkImageCreateInfo(width, height, format, usage, samples = samples),
             )
             val requirements = VulkanImages.vkGetImageMemoryRequirements(graphicsDevice.device, image)
             val type = VulkanBuffers.findMemoryType(
@@ -45,13 +54,14 @@ internal class ColorAttachment(
                 VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             )
             memory = VulkanBuffers.vkAllocateMemory(graphicsDevice.device, VkMemoryAllocateInfo(requirements.size, type))
+            bytes = requirements.size
             VulkanImages.vkBindImageMemory(graphicsDevice.device, image, memory, 0)
             view = Vulkan.vkCreateImageView(
                 graphicsDevice.device,
                 VkImageViewCreateInfo(
                     image = image,
                     format = VkFormat.entries.first { it.value == format },
-                    subresourceRange = VkImageSubresourceRange(aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT.value),
+                    subresourceRange = VkImageSubresourceRange(aspectMask = aspectMask),
                 ),
             )
         } catch (failure: Throwable) {
