@@ -26,7 +26,6 @@ import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.math.PI
 
 private const val RAD_TO_DEG_CANVAS: Float = (180.0 / PI).toFloat()
-private const val PREMULTIPLIED_CACHE_CAPACITY: Int = 128
 private const val HALF_BYTE_ROUNDING: Int = 127
 private const val BYTE_MAX: Int = 255
 private const val BYTE_MASK: Int = 0xFF
@@ -37,7 +36,28 @@ private val WHITE_PREMULTIPLIED_BITMAP = ImageBitmap(
     pixels = byteArrayOf(-1, -1, -1, -1),
 )
 
-private val premultipliedBitmaps = linkedMapOf<ImageBitmap, ImageBitmap>()
+/**
+ * The premultiplied copies of one overlay's particle sheets, kept by its [CanvasTree] across frames
+ * (the overlay remembers it). It holds only copies of the overlay's current `images` and is cleared
+ * when that map changes, so it is bounded by the images the overlay was given. One overlay draws on
+ * one thread, so it needs no lock.
+ */
+internal class PremultipliedImages {
+    private var source: Map<String, ImageBitmap>? = null
+    private val copies = HashMap<ImageBitmap, ImageBitmap>()
+
+    /** The premultiplied copy of [bitmap], one of [images], made on first use. */
+    fun of(images: Map<String, ImageBitmap>, bitmap: ImageBitmap): ImageBitmap {
+        if (images !== source) {
+            copies.clear()
+            source = images
+        }
+        return copies.getOrPut(bitmap) { premultiplyImageBitmap(bitmap) }
+    }
+
+    /** How many copies it holds, for tests. */
+    val size: Int get() = copies.size
+}
 
 internal class CanvasParticlesClock {
     var stamp: Long = 0L
@@ -82,6 +102,7 @@ internal fun ParticlesOverContent(element: CanvasElement, tree: CanvasTree) {
             CanvasParticlesElement(
                 element = element,
                 images = tree.images,
+                premultiplied = tree.premultiplied,
                 clock = clock,
                 canvasDensity = canvasDensity,
                 behindContent = false,
@@ -97,6 +118,7 @@ internal fun Modifier.canvasParticlesBehind(element: CanvasElement, tree: Canvas
     return this then CanvasParticlesElement(
         element = element,
         images = tree.images,
+        premultiplied = tree.premultiplied,
         clock = clock,
         canvasDensity = canvasDensity,
         behindContent = true,
@@ -106,16 +128,18 @@ internal fun Modifier.canvasParticlesBehind(element: CanvasElement, tree: Canvas
 private class CanvasParticlesElement(
     private val element: CanvasElement,
     private val images: Map<String, ImageBitmap>,
+    private val premultiplied: PremultipliedImages,
     private val clock: CanvasParticlesClock,
     private val canvasDensity: Float,
     private val behindContent: Boolean,
 ) : ModifierNodeElement<CanvasParticlesDrawNode>() {
     override fun create(): CanvasParticlesDrawNode =
-        CanvasParticlesDrawNode(element, images, clock, canvasDensity, behindContent)
+        CanvasParticlesDrawNode(element, images, premultiplied, clock, canvasDensity, behindContent)
 
     override fun update(node: CanvasParticlesDrawNode) {
         node.element = element
         node.images = images
+        node.premultiplied = premultiplied
         node.clock = clock
         node.canvasDensity = canvasDensity
         node.behindContent = behindContent
@@ -125,6 +149,7 @@ private class CanvasParticlesElement(
 private class CanvasParticlesDrawNode(
     var element: CanvasElement,
     var images: Map<String, ImageBitmap>,
+    var premultiplied: PremultipliedImages,
     var clock: CanvasParticlesClock,
     var canvasDensity: Float,
     var behindContent: Boolean,
@@ -137,7 +162,7 @@ private class CanvasParticlesDrawNode(
         if (particles != null) {
             val effectiveCanvasDensity = if (canvasDensity > 0f) canvasDensity else density
             stepEmitterForFrame(particles, element, clock, effectiveCanvasDensity, density)
-            if (particles.enabled && particles.liveParticleCount > 0) {
+            if (particles.enabled && !particles.isFinished && particles.liveParticleCount > 0) {
                 drawEmitterClippedOrUnclipped(particles, effectiveCanvasDensity)
             }
         }
@@ -148,7 +173,7 @@ private class CanvasParticlesDrawNode(
         particles: CanvasParticles,
         effectiveCanvasDensity: Float,
     ) {
-        val bitmap = resolvePremultipliedBitmap(particles, images) ?: return
+        val bitmap = resolvePremultipliedBitmap(particles, images, premultiplied) ?: return
         val widget = element.widget
         val radius = element.style.cornerRadius ?: 0f
         when {
@@ -192,7 +217,7 @@ private class CanvasParticlesDrawNode(
         val originDpY = placed?.y ?: element.offsetY
 
         for (slot in 0 until sim.maxParticles) {
-            val opacity = if (sim.alive[slot]) sim.alphaAt(slot) else 0f
+            val opacity = if (sim.isAlive(slot)) sim.alphaAt(slot) else 0f
             val quadH = if (opacity > 0f) sim.scaleAt(slot) * density else 0f
             val quadW = quadH * aspect
             if (quadW <= 0f || quadH <= 0f) continue
@@ -241,16 +266,14 @@ private fun stepEmitterForFrame(
     }
     if (clock.deltaSeconds > 0f) {
         particles.step(clock.deltaSeconds, element.width, element.height)
-    } else if (particles.enabled && particles.simulation.isComplete) {
-        particles.enabled = false
-        if (particles.autoHideOwnerOnBurstComplete) element.visible = false
+    } else if (particles.enabled && !particles.isFinished && particles.simulation.isComplete) {
+        particles.finish()
     }
 }
 
 private fun CanvasParticles.particleTintAt(slot: Int, opacity: Float): Color {
     val target = endTint ?: return Color(tint.r, tint.g, tint.b, (tint.a * opacity).coerceIn(0f, 1f))
-    val life = simulation.lifetime[slot]
-    val fraction = if (life > 0f) (simulation.age[slot] / life).coerceIn(0f, 1f) else 1f
+    val fraction = simulation.lifeFractionAt(slot)
     val r = tint.r + (target.r - tint.r) * fraction
     val g = tint.g + (target.g - tint.g) * fraction
     val b = tint.b + (target.b - tint.b) * fraction
@@ -261,6 +284,7 @@ private fun CanvasParticles.particleTintAt(slot: Int, opacity: Float): Color {
 internal fun resolvePremultipliedBitmap(
     particles: CanvasParticles,
     images: Map<String, ImageBitmap>,
+    premultiplied: PremultipliedImages,
 ): ImageBitmap? {
     val key = particles.texture
     if (key.isEmpty()) return WHITE_PREMULTIPLIED_BITMAP
@@ -269,14 +293,7 @@ internal fun resolvePremultipliedBitmap(
         source == null -> null
         particles.cachedSourceBitmap === source -> particles.cachedPremultipliedBitmap as ImageBitmap
         else -> {
-            val converted = premultipliedBitmaps.remove(source)?.also { cached ->
-                premultipliedBitmaps[source] = cached
-            } ?: premultiplyImageBitmap(source).also { fresh ->
-                premultipliedBitmaps[source] = fresh
-                if (premultipliedBitmaps.size > PREMULTIPLIED_CACHE_CAPACITY) {
-                    premultipliedBitmaps.remove(premultipliedBitmaps.keys.first())
-                }
-            }
+            val converted = premultiplied.of(images, source)
             particles.cachedSourceBitmap = source
             particles.cachedPremultipliedBitmap = converted
             converted

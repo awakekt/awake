@@ -90,4 +90,23 @@ class DrawRunCoalescerTextureBatchTest {
         val chunkedRun = assertIs<StagedDrawRun.TextureRun>(chunked.single())
         assertEquals(3, chunkedRun.primitives.size)
     }
+
+    @Test
+    fun aQuadBetweenTwoTexturesOfOneSheetKeepsThreeRunsInPaintOrder() {
+        val sheet = Any()
+        val staged = DrawRunCoalescer.coalesce(
+            listOf(
+                DrawCommand.Texture(0f, 0f, 8f, 8f, sheet, premultiplied = true),
+                DrawCommand.Quad(4f, 0f, 8f, 8f, Color(1f, 0f, 0f, 1f)),
+                DrawCommand.Texture(8f, 0f, 8f, 8f, sheet, premultiplied = true),
+            ),
+        )
+
+        assertEquals(3, staged.size, "the quad paints between the two textures, so they may not merge across it")
+        val before = assertIs<StagedDrawRun.TextureRun>(staged[0])
+        assertIs<StagedDrawRun.QuadRun>(staged[1])
+        val after = assertIs<StagedDrawRun.TextureRun>(staged[2])
+        assertEquals(0f, before.primitives.single().vertices[0], "the first texture stays first")
+        assertEquals(8f, after.primitives.single().vertices[0], "the second texture stays last")
+    }
 }

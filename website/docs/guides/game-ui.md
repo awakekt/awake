@@ -1116,7 +1116,7 @@ data class FrameTheme(
 
 Attach `canvas_particles` (`CanvasParticles` in Kotlin) alongside `canvas_rect` to emit particles in
 logical canvas `dp` units (`+X` right, `+Y` down; `-90` degrees points upward on screen) on the same
-zero-allocation `ParticleSimulation` that drives 3D and `scene2d` emitters. Leaving `texture` empty
+`ParticleSimulation` that drives the 3D and 2D emitters. Leaving `texture` empty
 (`""`) draws solid-tinted quads; naming a project image loads and premultiplies it once through
 `loadCanvasImages`, with optional `columns × rows` sprite-sheet cells.
 
@@ -1180,8 +1180,10 @@ its `items` into `CanvasOverlay`:
 ```kotlin title="Kotlin"
 val tapBursts = CanvasBurstPool(maxSlots = 16, slotMaxParticles = 24)
 
-// Zero steady-state allocations; returns false and increments droppedBurstCount when all slots are live.
-tapBursts.spawn(xDp = tapX, yDp = tapY, count = 12) { emitter ->
+// Built once, so firing it allocates nothing: a lambda written at the call, or a Color made inside
+// it, would be a new object on every tap.
+val sparkGold = Color(1f, 0.9f, 0.4f, 1f)
+val tapSpark: (CanvasParticles) -> Unit = { emitter ->
     emitter.clipped = false
     emitter.additive = true
     emitter.lifetime = 0.35f
@@ -1189,9 +1191,16 @@ tapBursts.spawn(xDp = tapX, yDp = tapY, count = 12) { emitter ->
     emitter.endSize = 2f
     emitter.speed = 40f
     emitter.maxSpeed = 90f
-    emitter.tint = Color(1f, 0.9f, 0.4f, 1f)
+    emitter.tint = sparkGold
 }
+
+// Returns false and increments droppedBurstCount when all slots are live.
+tapBursts.spawn(xDp = tapX, yDp = tapY, count = 12, configure = tapSpark)
 ```
+
+Stepping, `emit`, `spawn` and the `onParticleDeath` (`ParticleDeathListener`) and `dynamicSpawnRate`
+(`ParticleSpawnRate`) hooks allocate nothing per frame. Drawing still draws one texture with its own
+tint per live particle each frame.
 
 ### Clipping, layers, scaling, and visibility
 

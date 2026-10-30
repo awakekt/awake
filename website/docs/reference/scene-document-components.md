@@ -395,7 +395,7 @@ Canvas-space particle emitter attached to a canvas element alongside `canvas_rec
 | `turbulence` | number | `0` | Smooth sine flow-field perturbation strength (`0` disables). |
 | `turbulenceFrequency` | number | `1` | Spatial frequency of the turbulence flow field. Not negative. |
 | `spin` | spin | none | Per-particle angular velocity range (`minDegreesPerSecond`, `maxDegreesPerSecond`, `randomStartAngle`). |
-| `burstCount` | integer | none | Lifetime spawn cap; disables `enabled` once all spawned particles expire. Above 0. |
+| `burstCount` | integer | none | Lifetime spawn cap; the emitter finishes once all spawned particles expire, and `enabled` stays as authored. Above 0. |
 | `burstCycle` | burst cycle | none | Repeating pulsed emission schedule (`cycleSeconds`, `activeSeconds`, `burstInterval`, `burstSize`) replacing `spawnRate`. |
 
 ## `canvas_rect`

@@ -14,9 +14,11 @@ import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.particles.ParticleSpawnRate
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
@@ -288,12 +290,110 @@ class CanvasParticlesTest {
         val emitterA = CanvasParticles().apply { texture = "fx/glow.png" }
         val emitterB = CanvasParticles().apply { texture = "fx/glow.png" }
 
-        val first = checkNotNull(resolvePremultipliedBitmap(emitterA, images))
-        val second = checkNotNull(resolvePremultipliedBitmap(emitterB, images))
+        val cache = PremultipliedImages()
+
+        val first = checkNotNull(resolvePremultipliedBitmap(emitterA, images, cache))
+        val second = checkNotNull(resolvePremultipliedBitmap(emitterB, images, cache))
         assertSame(first, second, "Multiple emitters sharing one source bitmap must share one premultiplied upload")
         assertEquals(100, first.pixels[0].toInt() and 0xFF)
         assertEquals(50, first.pixels[1].toInt() and 0xFF)
         assertEquals(25, first.pixels[2].toInt() and 0xFF)
         assertEquals(128, first.pixels[3].toInt() and 0xFF)
+        assertEquals(1, cache.size)
+    }
+
+    @Test
+    fun anOverlaysPremultipliedCopiesAreItsOwnAndGoWhenItsImagesChange() {
+        val glow = ImageBitmap(width = 1, height = 1, pixels = byteArrayOf(-1, 0, 0, -128))
+        val spark = ImageBitmap(width = 1, height = 1, pixels = byteArrayOf(0, -1, 0, -128))
+        val first = mapOf("glow" to glow)
+        val overlayA = PremultipliedImages()
+        val overlayB = PremultipliedImages()
+
+        val copyA = overlayA.of(first, glow)
+        assertSame(copyA, overlayA.of(first, glow))
+        assertEquals(0, overlayB.size, "one overlay's copies are not another's")
+        overlayB.of(first, glow)
+        assertEquals(1, overlayB.size)
+
+        overlayA.of(mapOf("spark" to spark), spark)
+        assertEquals(1, overlayA.size, "a new images map drops the copies of the old one")
+    }
+
+    @Test
+    fun anInvalidBurstCycleFailsWhereItIsSetAndLeavesTheEmitterAsItWas() {
+        val emitter = CanvasParticles(maxParticles = 4)
+        val valid = CanvasParticleBurstCycle(cycleSeconds = 1f, activeSeconds = 0.5f, burstInterval = 0.1f, burstSize = 2)
+        emitter.burstCycle = valid
+
+        assertFailsWith<IllegalArgumentException> {
+            emitter.burstCycle = CanvasParticleBurstCycle(cycleSeconds = 1f, activeSeconds = 2f, burstInterval = 0.1f, burstSize = 4)
+        }
+        assertSame(valid, emitter.burstCycle)
+        emitter.step(0.1f) // a later step cannot throw: the bad cycle never got in
+    }
+
+    @Test
+    fun aFinishedBurstKeepsItsAuthoredEnabledAndEmitStartsItAgain() {
+        val emitter = CanvasParticles(maxParticles = 4, random = Random(6)).apply {
+            spawnRate = 100f
+            burstCount = 2
+            lifetime = 0.1f
+            speed = 0f
+        }
+        emitter.step(0.05f)
+        assertEquals(2, emitter.liveParticleCount)
+        emitter.step(0.2f)
+
+        assertTrue(emitter.isFinished)
+        assertTrue(emitter.enabled, "finishing is runtime state; the authored enabled stays on")
+
+        assertEquals(1, emitter.emit(1))
+        assertFalse(emitter.isFinished, "emit starts a finished emitter again")
+        emitter.step(0.05f)
+        assertEquals(1, emitter.liveParticleCount, "the emitted particle steps")
+        emitter.step(0.2f)
+        assertTrue(emitter.isFinished)
+
+        emitter.reset()
+        assertFalse(emitter.isFinished)
+    }
+
+    @Test
+    fun aZeroOrNegativeBurstCountSpawnsNothingAndFinishes() {
+        for (count in listOf(0, -3)) {
+            val emitter = CanvasParticles(maxParticles = 4).apply {
+                spawnRate = 100f
+                burstCount = count
+            }
+            emitter.step(0.1f)
+            assertEquals(0, emitter.liveParticleCount, "burstCount $count spawns nothing")
+            assertTrue(emitter.isFinished, "burstCount $count is used up at once")
+        }
+    }
+
+    @Test
+    fun dynamicSpawnRateIsAskedOnlyOnTheContinuousRatePath() {
+        var cycleAsks = 0
+        var cappedAsks = 0
+        val cycled = CanvasParticles(maxParticles = 8).apply {
+            burstCycle = CanvasParticleBurstCycle(cycleSeconds = 1f, activeSeconds = 0.5f, burstInterval = 0.1f, burstSize = 1)
+            dynamicSpawnRate = ParticleSpawnRate { 50f.also { cycleAsks += 1 } }
+        }
+        val capped = CanvasParticles(maxParticles = 8).apply {
+            spawnRate = 0f
+            burstCount = 2
+            lifetime = 10f
+            dynamicSpawnRate = ParticleSpawnRate { 100f.also { cappedAsks += 1 } }
+        }
+
+        cycled.step(0.1f)
+        capped.step(0.1f)
+        assertEquals(0, cycleAsks, "a burst cycle replaces the rate, so the provider is never asked")
+        assertEquals(1, cappedAsks)
+        assertEquals(2, capped.liveParticleCount, "the dynamic rate spawns up to burstCount")
+
+        capped.step(0.1f)
+        assertEquals(1, cappedAsks, "a used-up burstCount spawns nothing more, so the provider is not asked again")
     }
 }

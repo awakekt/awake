@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.particles.ParticleDeathListener
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneNode
@@ -59,6 +60,21 @@ class SceneCanvasParticlesTest {
         val exported = world.saveCanvas().single()
         val savedParticles = exported.components.filterIsInstance<SceneCanvasParticles>().single()
         assertEquals(authored, savedParticles)
+    }
+
+    @Test
+    fun aFinishedBurstSavesItsAuthoredEnabledSoTheSceneStartsAgain() {
+        val authored = SceneCanvasParticles(spawnRate = 100f, burstCount = 2, lifetime = 0.1f, speed = 0f)
+        val live = with(CanvasParticlesBinding) { authored.toComponent() }
+        live.step(0.05f)
+        live.step(0.2f)
+        assertTrue(live.isFinished)
+
+        val saved = with(CanvasParticlesBinding) { live.toSceneComponent() }
+        assertTrue(saved.enabled, "a finished burst is runtime state, not saved as disabled")
+        val reloaded = with(CanvasParticlesBinding) { saved.toComponent() }
+        reloaded.step(0.05f)
+        assertEquals(2, reloaded.liveParticleCount, "the reloaded scene bursts again")
     }
 
     private fun sampleFullSceneCanvasParticles(): SceneCanvasParticles = SceneCanvasParticles(
@@ -139,10 +155,8 @@ class SceneCanvasParticlesTest {
         val element = assertNotNull(world.get<CanvasElement>(entity))
         assertSame(initial, element.particles)
         // Linked to element: ElementEdge resolves against element's 80x32 perimeter (|x|=40 or |y|=16).
-        assertEquals(1, initial.emit(1))
-        assertTrue(
-            kotlin.math.abs(initial.simulation.posX[0]) > 1f || kotlin.math.abs(initial.simulation.posY[0]) > 1f,
-        )
+        val (edgeX, edgeY) = initial.firstSpawnPosition()
+        assertTrue(kotlin.math.abs(edgeX) > 1f || kotlin.math.abs(edgeY) > 1f)
 
         val replacement = CanvasParticles(maxParticles = 24).apply {
             shape = CanvasParticleShape(kind = CanvasParticleShapeKind.ElementEdge)
@@ -153,13 +167,9 @@ class SceneCanvasParticlesTest {
         assertSame(replacement, world.get<CanvasParticles>(entity))
         // Unlinked initial falls back to 0x0 element dimensions on subsequent emit.
         initial.reset()
-        initial.emit(1)
-        assertEquals(0f, initial.simulation.posX[0])
-        assertEquals(0f, initial.simulation.posY[0])
-        replacement.emit(1)
-        assertTrue(
-            kotlin.math.abs(replacement.simulation.posX[0]) > 1f || kotlin.math.abs(replacement.simulation.posY[0]) > 1f,
-        )
+        assertEquals(0f to 0f, initial.firstSpawnPosition())
+        val (replacementX, replacementY) = replacement.firstSpawnPosition()
+        assertTrue(kotlin.math.abs(replacementX) > 1f || kotlin.math.abs(replacementY) > 1f)
 
         world.remove<CanvasParticles>(entity)
         world.syncCanvasElements()
@@ -233,4 +243,25 @@ class SceneCanvasParticlesTest {
             ).any { "activeSeconds" in it },
         )
     }
+}
+
+/**
+ * Where a still particle emitted now spawns, in `dp`: it is reported by [CanvasParticles.onParticleDeath]
+ * as it dies one long step later, since the simulation itself is internal to the canvas module.
+ */
+private fun CanvasParticles.firstSpawnPosition(): Pair<Float, Float> {
+    var x = Float.NaN
+    var y = Float.NaN
+    spawnRate = 0f
+    lifetime = 0.01f
+    onParticleDeath = ParticleDeathListener { px, py, _ ->
+        if (x.isNaN()) {
+            x = px
+            y = py
+        }
+    }
+    assertEquals(1, emit(1))
+    step(1f)
+    onParticleDeath = null
+    return x to y
 }

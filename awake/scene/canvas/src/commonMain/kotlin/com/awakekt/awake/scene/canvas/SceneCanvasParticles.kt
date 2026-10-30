@@ -5,13 +5,11 @@
  */
 package com.awakekt.awake.scene.canvas
 
-import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.schema.PropertyRange
-import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.binding.RegisteredBinding
-import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.binding.SavedOnly
+import com.awakekt.awake.scene.binding.SceneBinding
+import com.awakekt.awake.scene.binding.SceneBindingHooks
+import com.awakekt.awake.scene.binding.SceneColorConverter
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -23,10 +21,8 @@ import com.awakekt.awake.ui.canvas.CanvasParticlePlacement
 import com.awakekt.awake.ui.canvas.CanvasParticleShape
 import com.awakekt.awake.ui.canvas.CanvasParticleSpin
 import com.awakekt.awake.ui.canvas.CanvasParticles
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
 
 private const val DEFAULT_CANVAS_MAX_PARTICLES: Int = 64
 private const val DEFAULT_CANVAS_SPAWN_RATE_SCENE: Float = 12f
@@ -80,11 +76,20 @@ private const val FULL_CANVAS_SPREAD_DEGREES_SCENE: Float = 360f
  * @property turbulence Smooth sine flow-field perturbation strength (`0` disables).
  * @property turbulenceFrequency Spatial frequency of the turbulence field. Not negative.
  * @property spin Optional per-particle angular velocity range in degrees per second.
- * @property burstCount Optional lifetime spawn cap; disables [enabled] once all spawned particles expire. Above 0.
+ * @property burstCount Optional lifetime spawn cap; the emitter finishes once all spawned particles expire, and [enabled] stays as authored. Above 0.
  * @property burstCycle Optional repeating pulsed emission schedule replacing continuous [spawnRate].
  */
 @Serializable
 @SerialName("canvas_particles")
+@SceneBinding(
+    CanvasParticles::class,
+    converters = [SceneColorConverter::class],
+    hooks = CanvasParticlesGravity::class,
+    runtimeOnly = [
+        "random", "gravityX", "gravityY", "dynamicSpawnRate", "onParticleDeath", "isFinished", "liveParticleCount",
+        "droppedParticleCount",
+    ],
+)
 data class SceneCanvasParticles(
     val anchor: CanvasAnchor = CanvasAnchor.Center,
     val offsetX: Float = 0f,
@@ -116,7 +121,7 @@ data class SceneCanvasParticles(
     @PropertyRange(min = 0.0, max = 360.0) val spreadDegrees: Float = FULL_CANVAS_SPREAD_DEGREES_SCENE,
     val radialSpeed: Float = 0f,
     val convergeToOrigin: Boolean = false,
-    val gravity: SceneVec2 = SceneVec2(0f, 0f),
+    @SavedOnly val gravity: SceneVec2 = SceneVec2(0f, 0f),
     @PropertyRange(min = 0.0) val drag: Float = 0f,
     val turbulence: Float = 0f,
     @PropertyRange(min = 0.0) val turbulenceFrequency: Float = 1f,
@@ -211,129 +216,19 @@ data class SceneCanvasParticles(
 }
 
 /**
- * Bi-directional binding between [CanvasParticles] and [SceneCanvasParticles], registered in
- * `CanvasSceneComponents`.
+ * Completes the generated `CanvasParticlesBinding`: the saved [SceneCanvasParticles.gravity] vector is
+ * the live emitter's separate `gravityX` and `gravityY`.
  */
-@RegisteredBinding
-object CanvasParticlesBinding : SceneComponentBinding<CanvasParticles, SceneCanvasParticles> {
-    override val componentClass: KClass<CanvasParticles> = CanvasParticles::class
-    override val schemaClass: KClass<SceneCanvasParticles> = SceneCanvasParticles::class
-    override val serializer: KSerializer<SceneCanvasParticles> = SceneCanvasParticles.serializer()
-
-    override fun attachTyped(
-        world: World,
-        entity: Entity,
-        component: SceneCanvasParticles,
-        context: SceneResolutionContext,
-    ) {
-        world.add(entity, component.toComponent())
+internal object CanvasParticlesGravity : SceneBindingHooks<CanvasParticles, SceneCanvasParticles> {
+    override fun afterCopyToLive(saved: SceneCanvasParticles, live: CanvasParticles): CanvasParticles {
+        live.gravityX = saved.gravity.x
+        live.gravityY = saved.gravity.y
+        return live
     }
 
-    override fun export(
-        world: World,
-        entity: Entity,
-        component: CanvasParticles,
-    ): SceneCanvasParticles = component.toSceneComponent()
-
-    /** Converts this saved [SceneCanvasParticles] into a live [CanvasParticles] component. */
-    fun SceneCanvasParticles.toComponent(): CanvasParticles =
-        CanvasParticles(maxParticles = maxParticles.coerceAtLeast(1)).also { live ->
-            applyLayoutAndSheet(live)
-            applyRatesAndAppearance(live)
-            applyVelocityAndForces(live)
-        }
-
-    /** Exports this live [CanvasParticles] component into a serializable [SceneCanvasParticles]. */
-    fun CanvasParticles.toSceneComponent(): SceneCanvasParticles = SceneCanvasParticles(
-        anchor = anchor,
-        offsetX = offsetX,
-        offsetY = offsetY,
-        placement = placement,
-        clipped = clipped,
-        localSpace = localSpace,
-        additive = additive,
-        texture = texture,
-        columns = columns,
-        rows = rows,
-        frameCount = frameCount,
-        frameRate = frameRate,
-        enabled = enabled,
-        maxParticles = maxParticles,
-        spawnRate = spawnRate,
-        lifetime = lifetime,
-        maxLifetime = maxLifetime,
-        size = size,
-        endSize = endSize,
-        startAlpha = startAlpha,
-        alphaCurve = alphaCurve,
-        tint = tint.toSceneColor(),
-        endTint = endTint?.toSceneColor(),
-        shape = shape,
-        speed = speed,
-        maxSpeed = maxSpeed,
-        directionDegrees = directionDegrees,
-        spreadDegrees = spreadDegrees,
-        radialSpeed = radialSpeed,
-        convergeToOrigin = convergeToOrigin,
-        gravity = SceneVec2(gravityX, gravityY),
-        drag = drag,
-        turbulence = turbulence,
-        turbulenceFrequency = turbulenceFrequency,
-        spin = spin,
-        burstCount = burstCount,
-        burstCycle = burstCycle,
-    )
+    override fun afterCopyToSaved(live: CanvasParticles, saved: SceneCanvasParticles): SceneCanvasParticles =
+        saved.copy(gravity = SceneVec2(live.gravityX, live.gravityY))
 }
-
-private fun SceneCanvasParticles.applyLayoutAndSheet(live: CanvasParticles) {
-    live.anchor = anchor
-    live.offsetX = offsetX
-    live.offsetY = offsetY
-    live.placement = placement
-    live.clipped = clipped
-    live.localSpace = localSpace
-    live.additive = additive
-    live.texture = texture
-    live.columns = columns.coerceAtLeast(1)
-    live.rows = rows.coerceAtLeast(1)
-    live.frameCount = frameCount.coerceAtLeast(1)
-    live.frameRate = frameRate
-    live.enabled = enabled
-}
-
-private fun SceneCanvasParticles.applyRatesAndAppearance(live: CanvasParticles) {
-    live.spawnRate = spawnRate
-    live.lifetime = lifetime
-    live.maxLifetime = maxLifetime
-    live.size = size
-    live.endSize = endSize
-    live.startAlpha = startAlpha
-    live.alphaCurve = alphaCurve
-    live.tint = tint.toCanvasColor()
-    live.endTint = endTint?.toCanvasColor()
-    live.shape = shape
-}
-
-private fun SceneCanvasParticles.applyVelocityAndForces(live: CanvasParticles) {
-    live.speed = speed
-    live.maxSpeed = maxSpeed
-    live.directionDegrees = directionDegrees
-    live.spreadDegrees = spreadDegrees
-    live.radialSpeed = radialSpeed
-    live.convergeToOrigin = convergeToOrigin
-    live.gravityX = gravity.x
-    live.gravityY = gravity.y
-    live.drag = drag
-    live.turbulence = turbulence
-    live.turbulenceFrequency = turbulenceFrequency
-    live.spin = spin
-    live.burstCount = burstCount
-    live.burstCycle = burstCycle
-}
-
-private fun SceneColor.toCanvasColor(): Color = Color(r, g, b, a)
-
-private fun Color.toSceneColor(): SceneColor = SceneColor(r, g, b, a)
 
 private fun Float.isNonNegativeFiniteScene(): Boolean = this >= 0f && isFinite()
 

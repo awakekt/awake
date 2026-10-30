@@ -23,7 +23,10 @@ import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.graphics2d.toPath
+import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -144,6 +147,47 @@ class DrawScopeTextureAndUnclippedTest {
         assertEquals(0, depth, "all clip pushes and pops must balance")
         assertEquals(0, redDepth, "quad inside unclipped {} must run at clip depth 0")
         assertEquals(2, greenDepth, "quad after unclipped {} must run back under both clips")
+    }
+
+    @Test
+    fun nestedUnclippedRestoresEachLevelsClips() {
+        val root = LayoutNode(boxPolicy)
+        composeInto(root) {
+            node(Modifier.size(40.dp).clipToBounds()) {
+                node(
+                    Modifier.size(30.dp).clip(CircleShape).drawBehind {
+                        repeat(2) {
+                            unclipped {
+                                clippedPath(DrawShape.Rectangle.toPath(Rectangle(0f, 0f, 20f, 20f), density = 1f)) {
+                                    unclipped {
+                                        drawRect(x = 120f, y = 120f, width = 10f, height = 10f, color = RED)
+                                    }
+                                    drawRect(x = 5f, y = 5f, width = 5f, height = 5f, color = GREEN)
+                                }
+                            }
+                        }
+                        drawRect(x = 10f, y = 10f, width = 5f, height = 5f, color = BLUE)
+                    },
+                )
+            }
+        }
+        root.layoutTree(Constraints.of(0, 200, 0, 200))
+        var depth = 0
+        val depths = mutableListOf<Pair<Color, Int>>()
+        for (p in Painter().paint(root)) {
+            when (p) {
+                is UiDrawPrimitive.ClipPush, is UiDrawPrimitive.ClipPathPush -> depth++
+                is UiDrawPrimitive.ClipPop -> depth--
+                is UiDrawPrimitive.Quad -> depths += p.color to depth
+                else -> Unit
+            }
+        }
+        assertEquals(0, depth, "all clip pushes and pops must balance")
+        assertEquals(
+            listOf(RED to 0, GREEN to 1, RED to 0, GREEN to 1, BLUE to 2),
+            depths,
+            "each unclipped {} drops only the clips around it, and every level's clips come back, twice in a row",
+        )
     }
 
     @Test

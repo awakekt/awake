@@ -72,7 +72,7 @@ class CanvasBurstPool(
     var droppedBurstCount: Long = 0L
         private set
 
-    /** Number of slots currently active (`visible && enabled && !simulation.isComplete`). */
+    /** Number of slots currently active: shown, enabled, and with a burst still running. */
     val activeSlotCount: Int
         get() {
             var count = 0
@@ -175,6 +175,6 @@ class CanvasBurstPool(
     private fun isSlotActive(slot: Int): Boolean {
         val element = slotElements[slot]
         val emitter = slotEmitters[slot]
-        return element.visible && emitter.enabled && !emitter.simulation.isComplete
+        return element.visible && emitter.enabled && !emitter.isFinished && !emitter.simulation.isComplete
     }
 }

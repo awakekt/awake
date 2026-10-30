@@ -66,7 +66,7 @@ class CanvasParticlesExposureTest {
         "onParticleDeath" to "a callback, so it cannot be data",
     )
 
-    /** Backing simulation pool, owner linkage, burst-pool flags, and bitmap/sheet caches. */
+    /** Backing simulation pool, owner linkage, burst-pool flags, runtime finished state, and bitmap/sheet caches. */
     private val internalPlumbing: Set<String> = setOf(
         "simulation",
         "owner",
@@ -79,7 +79,7 @@ class CanvasParticlesExposureTest {
         "cachedSheetCols",
         "cachedSheetRows",
         "cachedSheetRegions",
-        "deathRelay",
+        "isFinished",
     )
 
     private val runtimeFields: Set<String> = CanvasParticles::class.java.declaredFields

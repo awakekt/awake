@@ -7,11 +7,10 @@ package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.TextureRegion
-import com.awakekt.awake.core.particles.ParticleAlphaRamp
-import com.awakekt.awake.core.particles.ParticleBurstSchedule
+import com.awakekt.awake.core.particles.ParticleDeathListener
 import com.awakekt.awake.core.particles.ParticlePlane
 import com.awakekt.awake.core.particles.ParticleSimulation
-import com.awakekt.awake.core.particles.ParticleSpinRange
+import com.awakekt.awake.core.particles.ParticleSpawnRate
 import com.awakekt.awake.core.particles.UNLIMITED_BURST_COUNT
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
@@ -138,8 +137,6 @@ data class CanvasParticleAlphaCurve(
         if (fadeInEnd !in 0f..1f || fadeOutStart !in 0f..1f) add("alphaCurve fractions must be within 0..1")
         if (fadeInEnd > fadeOutStart) add("alphaCurve.fadeInEnd must not come after fadeOutStart")
     }
-
-    internal fun toRamp(): ParticleAlphaRamp = ParticleAlphaRamp(fadeInEnd, fadeOutStart)
 }
 
 /**
@@ -163,9 +160,6 @@ data class CanvasParticleSpin(
             add("spin.minDegreesPerSecond must not be above maxDegreesPerSecond")
         }
     }
-
-    internal fun toSpinRange(): ParticleSpinRange =
-        ParticleSpinRange(minDegreesPerSecond, maxDegreesPerSecond, randomStartAngle)
 }
 
 /**
@@ -192,9 +186,6 @@ data class CanvasParticleBurstCycle(
         if (!(burstInterval > 0f && burstInterval.isFinite())) add("burstCycle.burstInterval must be greater than 0")
         if (burstSize <= 0) add("burstCycle.burstSize must be greater than 0")
     }
-
-    internal fun toSchedule(): ParticleBurstSchedule =
-        ParticleBurstSchedule(cycleSeconds, activeSeconds, burstInterval, burstSize)
 }
 
 /**
@@ -223,17 +214,36 @@ data class CanvasParticleBurstCycle(
  * an offscreen layer, so `clipped = false` inside a faded ancestor both escapes inner clips and
  * inherits the ancestor's premultiplied fade.
  *
- * @property maxParticles Fixed slot capacity of [simulation]; must be greater than `0`.
- * @param random Pseudo-random source for spawn positions, launch spread, frame offsets, and spin.
+ * **Coordinates under a rotated ancestor:** an element's emitter draws inside the element's own
+ * transform, so a `localSpace = false` trail is detached from the element's position but still turns
+ * and scales with any rotated or scaled ancestor, and is drawn within that ancestor's layer.
+ *
+ * @property maxParticles Fixed slot capacity (`>= 0`). With `0` the emitter steps but spawns nothing;
+ * what [emit] and a [burstCycle] ask for is counted in [droppedParticleCount].
+ * @param random Initial [CanvasParticles.random].
  */
 class CanvasParticles(
     val maxParticles: Int = DEFAULT_CANVAS_PARTICLE_CAPACITY,
     random: Random = Random.Default,
 ) {
-    /** Backing structure-of-arrays simulation pool in [ParticlePlane.XY]. */
-    val simulation: ParticleSimulation = ParticleSimulation(maxParticles, random).also {
+    /**
+     * Backing structure-of-arrays simulation pool in [ParticlePlane.XY]. Internal because
+     * [syncToSimulation] rewrites its configuration from this emitter's own fields on every step and
+     * [emit], so a change made on it directly would silently revert.
+     */
+    internal val simulation: ParticleSimulation = ParticleSimulation(maxParticles, random).also {
         it.plane = ParticlePlane.XY
     }
+
+    /**
+     * Pseudo-random source for spawn positions, launch spread, sprite-frame offsets and spin.
+     * [Random.Default] unless set; set a seeded [Random] for repeatable playback.
+     */
+    var random: Random
+        get() = simulation.random
+        set(value) {
+            simulation.random = value
+        }
 
     /** Anchor on the owning element's `width × height` box where particles spawn (`Center` by default). */
     var anchor: CanvasAnchor = CanvasAnchor.Center
@@ -278,8 +288,18 @@ class CanvasParticles(
     /** Sprite-sheet playback rate in frames per second (`>= 0`). */
     var frameRate: Float = DEFAULT_CANVAS_SHEET_FPS
 
-    /** Whether [CanvasOverlay] steps and draws this emitter. */
+    /**
+     * Whether [CanvasOverlay] steps and draws this emitter: authored state, saved with the scene.
+     * A finished [burstCount] does not turn it off; it sets [isFinished] instead.
+     */
     var enabled: Boolean = true
+
+    /**
+     * Runtime state, never saved: `true` once every particle of a used-up [burstCount] has died. A
+     * finished emitter is not stepped or drawn until [emit] or [reset] starts it again.
+     */
+    var isFinished: Boolean = false
+        private set
 
     /** Continuous emission rate in particles per second (`>= 0`). */
     var spawnRate: Float = DEFAULT_CANVAS_SPAWN_RATE
@@ -347,17 +367,41 @@ class CanvasParticles(
     /** Optional per-particle angular velocity range in degrees per second. */
     var spin: CanvasParticleSpin? = null
 
-    /** Optional lifetime spawn cap; disables [enabled] once all spawned particles expire. */
+    /**
+     * Optional lifetime spawn cap; [isFinished] turns `true` once all spawned particles expire. `0`
+     * or a negative count spawns nothing.
+     */
     var burstCount: Int? = null
 
-    /** Optional repeating pulsed emission schedule replacing continuous [spawnRate]. */
+    /**
+     * Optional repeating pulsed emission schedule replacing continuous [spawnRate].
+     *
+     * @throws IllegalArgumentException when set to a cycle with [CanvasParticleBurstCycle.problems],
+     * so a bad cycle fails where it is set, not in a later frame's draw.
+     */
     var burstCycle: CanvasParticleBurstCycle? = null
+        set(value) {
+            if (value != null) {
+                val problems = value.problems()
+                require(problems.isEmpty()) { problems.joinToString("; ") }
+            }
+            field = value
+        }
 
-    /** Optional per-frame spawn-rate override evaluated without allocating. */
-    var dynamicSpawnRate: (() -> Float)? = null
+    /**
+     * Optional spawn-rate override in particles per second, asked once per step in place of
+     * [spawnRate]. It is asked only on the continuous-rate path: not while a [burstCycle] replaces
+     * the rate, and not once a [burstCount] is used up. A `fun interface`, so asking allocates nothing.
+     */
+    var dynamicSpawnRate: ParticleSpawnRate? = null
 
-    /** Optional callback invoked with `(xDp, yDp)` right before an aged-out particle slot is cleared. */
-    var onParticleDeath: ((xDp: Float, yDp: Float) -> Unit)? = null
+    /**
+     * Optional listener told where each aged-out particle dies, right before its slot is cleared.
+     * [ParticleDeathListener.onDeath] receives the simulation's `(x, y)` in `dp` and `z = 0`: relative
+     * to the anchor when [localSpace], in root canvas `dp` otherwise. A `fun interface`, so a death
+     * allocates nothing.
+     */
+    var onParticleDeath: ParticleDeathListener? = null
 
     internal var owner: CanvasElement? = null
     internal var pooledForBurst: Boolean = false
@@ -369,10 +413,6 @@ class CanvasParticles(
     private var cachedSheetCols: Int = 1
     private var cachedSheetRows: Int = 1
     private var cachedSheetRegions: Array<TextureRegion>? = null
-
-    private val deathRelay: (Float, Float, Float) -> Unit = { x, y, _ ->
-        onParticleDeath?.invoke(x, y)
-    }
 
     /** Number of currently live particles (`0..maxParticles`). */
     val liveParticleCount: Int
@@ -399,7 +439,9 @@ class CanvasParticles(
         val heightDp = currentOwner?.height ?: 0f
         syncToSimulation(widthDp, heightDp)
         updateSimulationOrigin(currentOwner, widthDp, heightDp, lastDensityRatio)
-        return simulation.emit(count)
+        val spawned = simulation.emit(count)
+        if (spawned > 0) isFinished = false
+        return spawned
     }
 
     /**
@@ -411,23 +453,31 @@ class CanvasParticles(
         elementWidthDp: Float = owner?.width ?: 0f,
         elementHeightDp: Float = owner?.height ?: 0f,
     ) {
-        if (!enabled) return
+        if (!enabled || isFinished) return
         val currentOwner = owner
+        val sim = simulation
         syncToSimulation(elementWidthDp, elementHeightDp)
         updateSimulationOrigin(currentOwner, elementWidthDp, elementHeightDp, lastDensityRatio)
-        val rateOverride = dynamicSpawnRate?.invoke() ?: Float.NaN
-        val callback = if (onParticleDeath != null) deathRelay else null
-        simulation.step(deltaSeconds, rateOverride, callback)
-        if (simulation.isComplete) {
-            enabled = false
-            if (autoHideOwnerOnBurstComplete) currentOwner?.visible = false
-        }
+        // The dynamic rate is asked only on the continuous-rate path: a burst cycle replaces the
+        // rate, and an emitter whose burstCount is used up spawns nothing more.
+        val continuousRate = !sim.burstSchedule.enabled && (sim.burstLimit < 0 || sim.spawnedTotal < sim.burstLimit)
+        val rateProvider = if (continuousRate) dynamicSpawnRate else null
+        val rateOverride = if (rateProvider != null) rateProvider.particlesPerSecond() else Float.NaN
+        sim.step(deltaSeconds, rateOverride, onParticleDeath)
+        if (sim.isComplete) finish()
     }
 
-    /** Clears all live particles, accumulators, and counters in [simulation]. */
+    /** Marks a used-up [burstCount] finished, hiding a pooled burst's element. */
+    internal fun finish() {
+        isFinished = true
+        if (autoHideOwnerOnBurstComplete) owner?.visible = false
+    }
+
+    /** Clears all live particles, accumulators, and counters in the simulation, and [isFinished]. */
     fun reset() {
         simulation.reset()
         lastFrameStamp = 0L
+        isFinished = false
     }
 
     internal fun regionForFrame(frameIndex: Int, cols: Int, rows: Int): TextureRegion {
@@ -462,6 +512,7 @@ class CanvasParticles(
         frameCount = 1
         frameRate = DEFAULT_CANVAS_SHEET_FPS
         enabled = true
+        isFinished = false
         spawnRate = 0f
         lifetime = DEFAULT_CANVAS_LIFETIME
         maxLifetime = null
@@ -570,7 +621,7 @@ private fun CanvasParticles.syncVelocityAndForces(sim: ParticleSimulation) {
     sim.drag = drag
     sim.turbulence = turbulence
     sim.turbulenceFrequency = turbulenceFrequency
-    sim.burstLimit = burstCount ?: if (pooledForBurst) 0 else UNLIMITED_BURST_COUNT
+    sim.burstLimit = burstCount?.coerceAtLeast(0) ?: if (pooledForBurst) 0 else UNLIMITED_BURST_COUNT
 }
 
 private fun CanvasParticles.syncShapeAndCurves(

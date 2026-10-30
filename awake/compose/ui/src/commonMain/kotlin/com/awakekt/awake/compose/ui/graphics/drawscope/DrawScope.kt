@@ -1285,6 +1285,11 @@ private class DrawTransformState {
 private class ClipStackState {
     private val clipStack = ArrayDeque<Rectangle>()
     private val clipCommandStack = ArrayDeque<UiDrawPrimitive>()
+
+    // The stacks unclipped() sets aside, one pair per nesting depth, kept for reuse so a call makes no lists.
+    private val savedBoundsByDepth = ArrayList<ArrayList<Rectangle>>()
+    private val savedCommandsByDepth = ArrayList<ArrayList<UiDrawPrimitive>>()
+    private var unclippedDepth = 0
     private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
 
     fun reset() {
@@ -1364,24 +1369,38 @@ private class ClipStackState {
             block()
             return
         }
-        val savedBounds = ArrayList(clipStack)
-        val savedCommands = ArrayList(clipCommandStack)
+        val depth = unclippedDepth
+        if (depth == savedBoundsByDepth.size) {
+            savedBoundsByDepth.add(ArrayList())
+            savedCommandsByDepth.add(ArrayList())
+        }
+        val savedBounds = savedBoundsByDepth[depth]
+        val savedCommands = savedCommandsByDepth[depth]
+        savedBounds.clear()
+        savedCommands.clear()
+        // Indexed copies: addAll would make an array or an iterator.
+        for (i in 0 until clipStack.size) savedBounds.add(clipStack[i])
+        for (i in 0 until clipCommandStack.size) savedCommands.add(clipCommandStack[i])
         for (i in savedBounds.lastIndex downTo 0) {
             val restore = if (i > 0) savedBounds[i - 1] else fullClip
             output += UiDrawPrimitive.ClipPop(restore)
         }
         clipStack.clear()
         clipCommandStack.clear()
+        unclippedDepth = depth + 1
         try {
             block()
         } finally {
+            unclippedDepth = depth
             clipStack.clear()
-            clipStack.addAll(savedBounds)
+            for (i in 0 until savedBounds.size) clipStack.addLast(savedBounds[i])
             clipCommandStack.clear()
-            clipCommandStack.addAll(savedCommands)
             for (i in 0 until savedCommands.size) {
+                clipCommandStack.addLast(savedCommands[i])
                 output += savedCommands[i]
             }
+            savedBounds.clear()
+            savedCommands.clear()
         }
     }
 }
