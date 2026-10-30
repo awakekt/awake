@@ -1,2 +1,0 @@
-- Render targets on Vulkan and WebGPU build their multisampled colour and depth on the first scene pass, so a target used only as a UI layer holds its single-sample colour alone instead of reserving scene attachments at the plan's sample count.
-- WebGPU shutdown now releases the native device's queue handle and closes the surface, device and adapter in order, and the desktop headless engine releases its wgpu instance, so repeated full-plan boots in one process no longer leak native devices.
