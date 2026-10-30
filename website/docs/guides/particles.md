@@ -271,25 +271,35 @@ and `directionDegrees`. All fields are listed under
 [`particle_emitter_2d`](../reference/scene-document-components.md#particle_emitter_2d).
 
 For frequent one-shot 2D bursts (hit sparks, pickups, footsteps) without spawning or destroying ECS
-entities each hit, prepare a `BurstEmitter2DPool` once and reuse its resident slots:
+entities each hit, prepare a `BurstEmitter2DPool` once, build a template once, and fire it as often as
+needed. The emitter, its `Particle2DSystem` and the pool are in `awake:particles`, beside the 3D emitter;
+`awake:scene:scene2d` binds them to scene nodes.
 
 ```kotlin title="Kotlin"
 val hitSparks = BurstEmitter2DPool(maxSlots = 24, slotMaxParticles = 32)
 hitSparks.prepare(world)
 
-// Zero steady-state allocations; skips and increments droppedBurstCount if all 24 slots are active.
-hitSparks.spawn(world, x = hitX, y = hitY, count = 16) { emitter ->
-    emitter.lifetime = 0.35f
-    emitter.size = 0.18f
-    emitter.endSize = 0.04f
-    emitter.speed = 3f
-    emitter.maxSpeed = 6f
-    emitter.tint = Color(1f, 0.85f, 0.3f, 1f)
-    emitter.additive = true
-    emitter.sortingLayer = "Foreground"
-    emitter.sortOrder = 20
-}
+// Built once: authored settings are validated here, so a bad one throws at load time, not mid-game.
+val sparks = SceneParticleEmitter2D(
+    lifetime = 0.35f,
+    size = 0.18f,
+    endSize = 0.04f,
+    speed = 3f,
+    maxSpeed = 6f,
+    tint = SceneColor(1f, 0.85f, 0.3f, 1f),
+    additive = true,
+    sortingLayer = "Foreground",
+    sortOrder = 20,
+).toBurstTemplate()
+
+// Each burst copies the template and allocates nothing; it skips and increments
+// droppedBurstCount if all 24 slots are active.
+hitSparks.spawn(world, x = hitX, y = hitY, template = sparks, count = 16)
 ```
+
+Stepping, the `onParticleDeath` (`ParticleDeathListener`) and `dynamicSpawnRate` (`ParticleSpawnRate`)
+hooks, and `spawn` allocate nothing per frame. Drawing reuses each particle's model matrix and an
+unchanged tint, but still builds one sprite draw per live particle each frame, as a sprite does.
 
 ## How it works
 

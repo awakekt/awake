@@ -21,9 +21,11 @@ implementation(project(":awake:scene:scene2d"))
   using the reusable `FrameClipPlayer` in `core:animation`.
 - `SceneTilemap`, `Tilemap` and `TilemapBinding` -- bind editable tile layers to the chunk grid
   and atlas geometry in `awake:tilemap`; the runtime owns their cached GPU batches.
-- `SceneParticleEmitter2D`, `ParticleEmitter2D`, `ParticleEmitter2DBinding`, `Particle2DSystem` and
-  `BurstEmitter2DPool` -- 2D `XY`-plane particle emitters (`particle_emitter_2d`) backed by
-  `awake:core:particles`'s shared `ParticleSimulation`, sorted alongside sprites and tilemaps by
+- `SceneParticleEmitter2D`, `ParticleEmitter2DBinding`, `Transform2DPlacement` and
+  `SceneParticleEmitter2D.toBurstTemplate()` -- bind the 2D particle emitter (`particle_emitter_2d`) to a
+  node. The emitter itself (`ParticleEmitter2D`, `Particle2DSystem` and `BurstEmitter2DPool`) lives in
+  [`awake:particles`](../../particles/README.md), beside the 3D one; `Transform2DPlacement` tells its
+  system where a node is, and `collectSpriteDraws()` sorts its quads alongside sprites and tilemaps by
   `sortingLayer` and `sortOrder` (alpha-blended or additive).
 
 ## Drawing sprites
@@ -205,9 +207,14 @@ cells and `frameCount` animated frames.
 ```
 
 For repeated one-shot bursts (hit sparks, pickups, footsteps) without per-burst entity churn or heap allocations,
-prepare a `BurstEmitter2DPool` once and call `pool.spawn(world, x, y, count = 16) { ... }`. When all `maxSlots`
-resident slots are active, `spawn` skips and increments `droppedBurstCount` rather than evicting an in-flight burst
-or allocating a new entity.
+prepare a `BurstEmitter2DPool` once, build a template once from authored settings with
+`settings.toBurstTemplate()` (it validates them, so a bad setting throws at load time, not mid-game), and call
+`pool.spawn(world, x, y, template)`. When all `maxSlots` resident slots are active, `spawn` skips and increments
+`droppedBurstCount` rather than evicting an in-flight burst or allocating a new entity.
+
+Stepping, the `onParticleDeath` and `dynamicSpawnRate` hooks, and `spawn` allocate nothing. Drawing reuses each
+particle's model matrix and an unchanged tint, but still builds a `SpriteDrawInput` per particle each frame, as a
+sprite does.
 
 ## What stays out of it
 

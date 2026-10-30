@@ -784,8 +784,12 @@ and 2D sprite emitters from sharing the simulation without violating module laye
   to an internal `ParticleSimulation` per emitter and adds `ParticleEmitter.emit(count)`,
   `droppedParticleCount` and `random` while keeping every 0.28 public signature and fixed-seed 3D
   RNG call order intact.
-- 2D scene emitters (`scene:scene2d`) and canvas UI emitters (`ui:canvas`) are planned consumers of
-  the same simulation (#1103); neither exists yet.
+- `awake:particles` also holds the 2D emitter: `ParticleEmitter2D` on an internal
+  `ParticleSimulation` in the `XY` plane, stepped by `Particle2DSystem` through an `EmitterPlacement`,
+  with `BurstEmitter2DPool` for one-shot bursts. `scene:scene2d` binds it to `particle_emitter_2d`,
+  places it by `Transform` (`Transform2DPlacement`) and draws it through the sprite batch beside
+  `Sprite` and `tilemap`.
+- Canvas UI emitters (`ui:canvas`) are a planned consumer of the same simulation (#1103).
 
 ## Adding a new module
 

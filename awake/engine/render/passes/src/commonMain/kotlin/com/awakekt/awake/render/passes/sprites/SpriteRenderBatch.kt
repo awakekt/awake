@@ -96,7 +96,7 @@ data class SpriteDrawInput(
         additive = false,
     )
 
-    /** Binary-compatible `copy` overload from `v0.27.1`, preserving [worldSize] and [additive]. */
+    /** Binary-compatible `copy` overload, with the signature released through `v0.28.1`, preserving [worldSize] and [additive]. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(
         texture: String = this.texture,

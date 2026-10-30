@@ -15,6 +15,8 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
+import com.awakekt.awake.particles.Particle2DSystem
+import com.awakekt.awake.particles.ParticleEmitter2D
 import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.passes.ScenePassCompiler
@@ -29,11 +31,10 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.document.SceneColor
-import com.awakekt.awake.scene.scene2d.Particle2DSystem
-import com.awakekt.awake.scene.scene2d.ParticleEmitter2D
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.Sprite
+import com.awakekt.awake.scene.scene2d.Transform2DPlacement
 import com.awakekt.awake.scene.scene2d.collectSpriteDraws
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -54,7 +55,10 @@ import kotlin.test.assertTrue
  *   - Mid emitter (`Default`, `sortOrder = 0`): untextured `1.0`u opaque red `(255, 0, 0)` at `(0, 0)` -> `[16..47]²`.
  *   - Front sprite (`Default`, `sortOrder = +1`): `1.0`u opaque green `(0, 255, 0)` at `(+0.5, 0)` -> `x in [32..63], y in [16..47]`.
  *   - Foreground emitter (`Foreground`, `sortOrder = -10`, `z = -1`): `0.5`u opaque yellow `(255, 255, 0)` at `(+0.5, 0)` -> `x in [40..55], y in [24..39]`.
+ *   - Low emitter (`Background`, `sortOrder = +50`): `0.5`u opaque magenta at `(-0.5, 0)` -> `x in [8..23], y in [24..39]`, under the blue back sprite, so `(12, 32)` reads blue.
+ *   - Every emitter is untextured (`""`) and the batch resolves only the sprites' `white` sheet, so emitters draw through the batch's white fallback.
  *   - **Negative control**: setting the mid red emitter's `sortOrder = -2` drops it behind the `-1` blue sprite so `(24, 32)` reads pure blue instead of pure red.
+ *   - **Negative control**: putting the low emitter on `Default` draws it last, so `(12, 32)` reads magenta.
  * - **Scenario 2 (`verifyAdditiveInterleaving` in [alphaSortingAndAdditiveInterleavingMatchOnBothBackends])**:
  *   - Same `Default` sorting layer for all three entities:
  *     1. Back alpha sprite (`sortOrder = -1`): `1.5`u opaque red `Color(0.55f, 0f, 0f, 1f)` at `(0, 0)`.
@@ -90,17 +94,19 @@ class Particle2DSortingParityTest {
 
     private suspend fun verifyAlphaSorting(backend: HeadlessUiBackend, renderer: Renderer) {
         val whiteTex = TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)
-        val batch = SpriteRenderBatch(renderer) { whiteTex }
+        // Only the sprites' sheet resolves, so the untextured ("") emitters draw through the batch's
+        // own white fallback.
+        val batch = SpriteRenderBatch(renderer) { name -> if (name == "white") whiteTex else null }
         val target = renderer.createRenderTarget(SIZE, SIZE)
         val layers = SortingLayers(listOf("Background", "Default", "Foreground"))
         try {
-            suspend fun buildAndRender(midSortOrder: Int, tag: String): ByteArray {
-                val world = buildAlphaSortingWorld(midSortOrder)
+            suspend fun buildAndRender(midSortOrder: Int, tag: String, lowLayer: String = "Background"): ByteArray {
+                val world = buildAlphaSortingWorld(midSortOrder, lowLayer)
                 return renderDraws(renderer, target, batch, world.collectSpriteDraws(layers), "particle2d-alpha-$backend-$tag")
             }
 
             val ordered = buildAndRender(midSortOrder = 0, tag = "ordered")
-            ordered.assertRgbNear(backend, 12, 32, listOf(0, 0, 255), "back blue sprite margin")
+            ordered.assertRgbNear(backend, 12, 32, listOf(0, 0, 255), "Background emitter under the Default back blue sprite")
             ordered.assertRgbNear(backend, 24, 32, listOf(255, 0, 0), "mid red particle over back blue sprite")
             ordered.assertRgbNear(backend, 36, 20, listOf(0, 255, 0), "front green sprite occluding mid red particle")
             ordered.assertRgbNear(backend, 48, 32, listOf(255, 255, 0), "Foreground layer emitter over Default front sprite")
@@ -108,6 +114,10 @@ class Particle2DSortingParityTest {
             // Negative control: moving mid red emitter to sortOrder = -2 puts it behind the -1 blue sprite.
             val behindControl = buildAndRender(midSortOrder = -2, tag = "behind-control")
             behindControl.assertRgbNear(backend, 24, 32, listOf(0, 0, 255), "negative control: sortOrder -2 hidden behind -1 blue sprite")
+
+            // Negative control: the same low emitter on Default, where its sortOrder 50 draws it last.
+            val defaultLayerControl = buildAndRender(midSortOrder = 0, tag = "low-on-default-control", lowLayer = "Default")
+            defaultLayerControl.assertRgbNear(backend, 12, 32, listOf(255, 0, 255), "negative control: sortOrder 50 on Default over blue")
         } finally {
             renderer.waitIdle()
             target.destroy()
@@ -115,12 +125,16 @@ class Particle2DSortingParityTest {
         }
     }
 
-    private fun buildAlphaSortingWorld(midSortOrder: Int): World {
+    private fun buildAlphaSortingWorld(midSortOrder: Int, lowLayer: String): World {
         val world = World()
         val transformSystem = TransformSystem()
-        val particleSystem = Particle2DSystem()
+        val particleSystem = Particle2DSystem(Transform2DPlacement())
 
         world.addSolidSprite(x = 0f, scale = 1.5f, tint = SceneColor(0f, 0f, 1f, 1f), sortOrder = -1)
+        // Magenta, its sortOrder above everything, but on the Background layer: under every Default draw.
+        val lowEmitter = world.addSolidEmitter(x = -0.5f, size = 0.5f, tint = Color(1f, 0f, 1f, 1f), sortOrder = 50).apply {
+            sortingLayer = lowLayer
+        }
         val midEmitter = world.addSolidEmitter(x = 0f, size = 1f, tint = Color(1f, 0f, 0f, 1f), sortOrder = midSortOrder)
         world.addSolidSprite(x = 0.5f, scale = 1f, tint = SceneColor(0f, 1f, 0f, 1f), sortOrder = 1)
         val fgEmitter = world.addSolidEmitter(x = 0.5f, size = 0.5f, tint = Color(1f, 1f, 0f, 1f), sortOrder = -10, z = -1f).apply {
@@ -129,6 +143,7 @@ class Particle2DSortingParityTest {
 
         transformSystem.update(world, 0f)
         particleSystem.update(world, 0f)
+        lowEmitter.emit(1)
         midEmitter.emit(1)
         fgEmitter.emit(1)
         particleSystem.update(world, 1f / 60f)
@@ -173,7 +188,7 @@ class Particle2DSortingParityTest {
             suspend fun buildAndRender(additive: Boolean, emitterSortOrder: Int, tag: String): ByteArray {
                 val world = World()
                 val transformSystem = TransformSystem()
-                val particleSystem = Particle2DSystem()
+                val particleSystem = Particle2DSystem(Transform2DPlacement())
 
                 // 1. Back opaque dark-red alpha sprite (sortOrder = -1)
                 world.create().also { e ->

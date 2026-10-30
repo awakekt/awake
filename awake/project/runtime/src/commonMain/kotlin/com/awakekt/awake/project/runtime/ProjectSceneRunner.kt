@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.project.GatedAssetSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -33,7 +34,6 @@ import com.awakekt.awake.scene.runtime.SceneAssetResolver
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.schedule.guardedFor
-import com.awakekt.awake.scene.scene2d.Particle2DSystem
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlinx.coroutines.CancellationException

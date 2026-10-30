@@ -94,7 +94,7 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             buildAdditive = true,
         ),
         // A scene's 2D sprites, tilemaps and particle_emitter_2d quads, alpha-blended or added.
-        spriteScenePipeline(),
+        spriteScenePipeline(buildAdditive = true),
         // A scene's world_text: distance-field glyphs, sharp at any distance and angle.
         worldTextScenePipeline(),
     ),

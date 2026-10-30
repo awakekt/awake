@@ -68,6 +68,28 @@ class ProjectRenderTest {
         }
     }
 
+    /**
+     * A 2D scene's untextured `particle_emitter_2d` quads draw in a played project: the project's
+     * render plan has the sprite pipeline they need, and the particles show red at the centre.
+     */
+    @Test
+    fun aPlayedProjectDraws2DParticles() {
+        root.resolve("awake.project.json").writeText(MANIFEST)
+        root.resolve("scenes").mkdirs()
+        root.resolve("scenes/sparks.scene.json").writeText(scene2d(withParticles = true))
+        root.resolve("scenes/empty.scene.json").writeText(scene2d(withParticles = false))
+
+        backends().forEach { backend ->
+            val sparks = render("sparks", backend, "--frames", "3")
+            val empty = render("empty", backend, "--frames", "3")
+            val shown = difference(centre(sparks), centre(empty))
+            println("$backend: centre with 2D particles ${centre(sparks)}, without ${centre(empty)}")
+            assertTrue(shown >= CUBE_DIFFERENCE, "$backend: the particles in front of the camera show at the centre, by $shown")
+            val (red, green, blue) = centre(sparks)
+            assertTrue(red > green + CUBE_DIFFERENCE && red > blue + CUBE_DIFFERENCE, "$backend: the particles are red: ${centre(sparks)}")
+        }
+    }
+
     /** `awake mcp`'s render tool returns the picture as an image an agent sees, and the cube is in it. */
     @Test
     fun anAgentGetsTheRenderAsAnImageOverMcp() {
@@ -152,6 +174,26 @@ class ProjectRenderTest {
                   "direction": { "x": 0.5, "y": 0.7, "z": 0.4 } } ] },
                 { "name": "Sky", "components": [ { "component": "skybox", "enabled": true, "type": "Procedural" } ] }
                 $cube
+              ]
+            }
+        """.trimIndent()
+    }
+
+    private fun scene2d(withParticles: Boolean): String {
+        val particles = if (withParticles) {
+            """, { "name": "Sparks", "components": [ { "component": "particle_emitter_2d", "texture": "", "maxParticles": 8,
+                "spawnRate": 240.0, "lifetime": 60.0, "size": 3.0, "speed": 0.0, "tint": { "r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0 } } ] }"""
+        } else {
+            ""
+        }
+        return """
+            {
+              "version": 1,
+              "name": "sparks",
+              "nodes": [
+                { "name": "Camera", "components": [ { "component": "camera", "eye": { "x": 0.0, "y": 0.0, "z": 8.0 },
+                  "center": { "x": 0.0, "y": 0.0, "z": 0.0 }, "fovYDegrees": 45.0, "primary": true } ] }
+                $particles
               ]
             }
         """.trimIndent()

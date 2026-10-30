@@ -6,9 +6,14 @@
 package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.core.particles.ParticleAlphaRamp
+import com.awakekt.awake.core.particles.ParticleDeathListener
 import com.awakekt.awake.core.particles.ParticleSpawnShape
 import com.awakekt.awake.core.particles.ParticleSpinRange
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.BurstEmitter2DPool
+import com.awakekt.awake.particles.Particle2DSystem
+import com.awakekt.awake.particles.ParticleEmitter2D
+import com.awakekt.awake.particles.ParticleSpawnRate
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.sun.management.ThreadMXBean
@@ -16,9 +21,12 @@ import java.lang.management.ManagementFactory
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
- * Desktop-only steady-state and burst allocation gate for [Particle2DSystem] and [BurstEmitter2DPool].
+ * Desktop-only steady-state and burst allocation gate for [Particle2DSystem] and [BurstEmitter2DPool]
+ * as a scene runs them, through [Transform2DPlacement]. Drawing is not gated: it builds a
+ * `SpriteDrawInput` per particle, as sprites do (see `appendSpriteDraws`).
  */
 class Particle2DAllocationTest {
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
@@ -27,9 +35,15 @@ class Particle2DAllocationTest {
     fun steadyStateStepEmitAndBurstPoolSpawnAllocateZeroBytes() {
         val world = World()
         val transformSystem = TransformSystem()
-        val particleSystem = Particle2DSystem()
+        val particleSystem = Particle2DSystem(Transform2DPlacement())
         val pool = BurstEmitter2DPool(maxSlots = 16, slotMaxParticles = 16) { Random(it + 10) }
         pool.prepare(world)
+
+        var deaths = 0L
+        var rateAsks = 0L
+        val countDeaths = ParticleDeathListener { _, _, _ -> deaths += 1 }
+        val steadyRate = ParticleSpawnRate { 180f.also { rateAsks += 1 } }
+        val sparks = SceneParticleEmitter2D(speed = 2f, size = 0.25f, lifetime = 0.08f, burstCount = 4).toBurstTemplate()
 
         val ambientEntity = world.create()
         val ambientTransform = Transform().apply {
@@ -52,40 +66,51 @@ class Particle2DAllocationTest {
             turbulence = 0.5f
             spin = ParticleSpinRange(-90f, 90f, randomStartAngle = true)
             inheritOrientation = true
+            onParticleDeath = countDeaths
+            dynamicSpawnRate = steadyRate
         }
         world.add(ambientEntity, ambientTransform)
         world.add(ambientEntity, ambientEmitter)
         transformSystem.update(world, FRAME_DELTA)
 
-        repeat(WARMUP_STEPS) { step ->
+        fun frame(step: Int) {
             ambientEmitter.emit(4)
             if (step % 4 == 0) {
                 pool.spawn(world, x = 2f, y = 1f, count = 4, configure = CONFIGURE_BURST)
+            } else if (step % 4 == 2) {
+                pool.spawn(world, x = -2f, y = 1f, template = sparks)
             }
             particleSystem.update(world, FRAME_DELTA)
         }
+        repeat(WARMUP_STEPS) { frame(it) }
 
-        val before = threadBean.currentThreadAllocatedBytes
-        repeat(MEASURED_STEPS) { step ->
-            ambientEmitter.emit(4)
-            if (step % 4 == 0) {
-                pool.spawn(world, x = 2f, y = 1f, count = 4, configure = CONFIGURE_BURST)
-            }
-            particleSystem.update(world, FRAME_DELTA)
+        // Each window is checked whole, never divided by its steps. The median window is the gate, as
+        // in the other allocation probes: a JIT deoptimisation can materialise a few hundred bytes in
+        // one window while the code settles, but a per-frame allocation fills every window.
+        val windows = LongArray(MEASURED_WINDOWS)
+        repeat(MEASURED_WINDOWS) { window ->
+            val deathsBefore = deaths
+            val asksBefore = rateAsks
+            val before = threadBean.currentThreadAllocatedBytes
+            repeat(MEASURED_STEPS) { frame(it) }
+            windows[window] = threadBean.currentThreadAllocatedBytes - before
+            assertTrue(deaths > deathsBefore, "the death listener must run in every measured window")
+            assertTrue(rateAsks > asksBefore, "the spawn-rate provider must be asked in every measured window")
         }
-        val after = threadBean.currentThreadAllocatedBytes
-
-        val bytesPerStep = (after - before) / MEASURED_STEPS
+        windows.sort()
+        println("Particle2DAllocation: ${windows.joinToString()} bytes per $MEASURED_STEPS steps")
         assertEquals(
             0L,
-            bytesPerStep,
-            "Particle2DSystem.update() + emit() + BurstEmitter2DPool.spawn() must allocate 0 bytes/frame in steady state",
+            windows[MEASURED_WINDOWS / 2],
+            "Particle2DSystem.update() + emit() + both BurstEmitter2DPool.spawn() overloads, with a death listener " +
+                "and a spawn-rate provider, must allocate nothing over $MEASURED_STEPS steady-state steps",
         )
     }
 
     private companion object {
-        const val WARMUP_STEPS = 2_000
+        const val WARMUP_STEPS = 10_000
         const val MEASURED_STEPS = 600
+        const val MEASURED_WINDOWS = 5
         const val FRAME_DELTA = 1f / 60f
         val CONFIGURE_BURST: (ParticleEmitter2D) -> Unit = { emitter ->
             emitter.lifetime = 0.08f

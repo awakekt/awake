@@ -22,6 +22,7 @@ kotlin {
             api(project(":awake:tilemap"))
             api(project(":awake:asset:sprite"))
             api(project(":awake:core:particles"))
+            api(project(":awake:particles"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:ecs"))
             api(project(":awake:engine:render:passes"))

@@ -16,6 +16,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
@@ -43,7 +44,6 @@ import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
-import com.awakekt.awake.scene.scene2d.Particle2DSystem
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlinx.coroutines.test.runTest

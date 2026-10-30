@@ -31,6 +31,8 @@ Published Maven coordinate: `com.awakekt.awake.core:particles`.
 
 - [`awake:particles`](../../particles/README.md) wraps `ParticleSimulation` in 3D `ParticleEmitter`
   and `ParticleSystem`, adding ECS entity lifecycle and instanced GPU draw-packet building.
-- Planned (#1103): 2D scene emitters in `awake:scene:scene2d` and canvas UI emitters in
-  `awake:ui:canvas` will drive the same `ParticleSimulation` in 2D world units and logical canvas
-  `dp` units. Neither exists yet.
+- `awake:particles` also wraps it in the 2D `ParticleEmitter2D`, stepped by `Particle2DSystem` in 2D
+  world units on the `XY` plane; [`awake:scene:scene2d`](../../scene/scene2d/README.md) binds it to
+  scene nodes and draws it through the sprite batch.
+- Planned (#1103): canvas UI emitters in `awake:ui:canvas` will drive the same `ParticleSimulation`
+  in logical canvas `dp` units.
