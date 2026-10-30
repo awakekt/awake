@@ -240,7 +240,11 @@ internal fun WithItemScaler(item: CanvasItem, tree: CanvasTree, content: context
     if (scaler == null) {
         content()
     } else {
-        CompositionLocalProvider(LocalDensity provides tree.box.densityOf(scaler), content = content)
+        CompositionLocalProvider(
+            LocalDensity provides tree.box.densityOf(scaler),
+            LocalFollowerScale provides 1f,
+            content = content,
+        )
     }
 }
 
@@ -293,7 +297,7 @@ internal fun CanvasElementView(
     val state = rememberStyleState(element.interactions)
     val resolved = rememberCanvasStyleState(element.style, back, fill, state, disabled, tree.controls.theme?.transitionSeconds)
     val style = Style { resolved.applyTo(this, element.style, tree.images) }
-    val textStyle = element.textStyle(resolved.textColor, tree.fontOf(element))
+    val textStyle = element.textStyle(resolved.textColor, tree.fontOf(element), LocalFollowerScale.current)
     if (LocalCanvasGhost.current) {
         GhostElementView(element, modifier.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style), textStyle, tree, children)
         return

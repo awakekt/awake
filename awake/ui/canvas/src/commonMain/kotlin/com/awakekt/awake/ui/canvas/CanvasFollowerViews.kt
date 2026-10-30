@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
+import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.Modifier
@@ -47,12 +48,18 @@ private fun PlacedFollower(element: CanvasElement, plan: FollowerPlan, tag: Stri
             CanvasElementView(element, Modifier.size(box.width.dp, box.height.dp).testTag(tag), tree, tree.childrenOf(element))
         } else {
             // A denser dp scales its text, images and children with it; its box is already scaled.
-            CompositionLocalProvider(LocalDensity provides baseDensity * plan.scale) {
+            CompositionLocalProvider(
+                LocalDensity provides baseDensity * plan.scale,
+                LocalFollowerScale provides plan.scale,
+            ) {
                 CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(element))
             }
         }
     }
 }
+
+/** The distance-curve scale active over [LocalDensity] inside a scaled [Follower]; 1 outside one. */
+internal val LocalFollowerScale = compositionLocalOf { 1f }
 
 /**
  * A pinned [owner]'s [item], centred where the line from the owner's centre toward its target

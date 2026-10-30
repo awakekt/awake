@@ -137,6 +137,7 @@ fun BasicTextField(
         val clock = LocalFrameClock.current
         val horizontalOffset = remember { ScrollState() }
         val reveal = remember(state) { LastTypedReveal() }
+        val textState = remember { TextNodeState() }
         // Measure and paint the placeholder through the same run as real text. That keeps baselines,
         // clipping, and the empty-field minimum line height identical instead of treating a placeholder
         // as a decoration with its own layout rules.
@@ -148,6 +149,8 @@ fun BasicTextField(
         // read from, so all of them see the masked glyphs.
         val displayedText = { fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " } }
         val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
+        policy.cache = textState.cache
+        policy.motion = textState.motion
         // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
         val textColor = resolved.color ?: DefaultTextColor
         val color = { if (state.text.isEmpty() && placeholder != null) placeholderColor ?: textColor else textColor }
@@ -172,21 +175,12 @@ fun BasicTextField(
                     val focused = source.isFocused
                     val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
                     clipFieldText(horizontalOffset.takeIf { oneLine }) {
-                        run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
-                            drawRect(
-                                x = x + textOffsetX,
-                                y = y + textOffsetY,
-                                width = width,
-                                height = height,
-                                color = paintColor.withAlpha(0.35f),
-                            )
-                        }
-                        run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
+                        drawSelectionSegments(run, state, textOffsetX, textOffsetY, paintColor.withAlpha(0.35f))
+                        run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY, motion = textState.motion)
                         if (focused && isCaretVisible(clock.totalSeconds)) {
-                            drawRect(
+                            drawFieldCaret(
                                 x = caret.x + textOffsetX,
                                 y = if (oneLine) textOffsetY else caret.y,
-                                width = CARET_WIDTH,
                                 height = run.lineHeightPx,
                                 color = paintColor,
                             )
@@ -196,6 +190,22 @@ fun BasicTextField(
             measurePolicy = policy,
         )
     }
+}
+
+private fun DrawScope.drawSelectionSegments(
+    run: TextRun,
+    state: TextFieldState,
+    offsetX: Float,
+    offsetY: Float,
+    color: Color,
+) {
+    run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
+        drawRect(x = x + offsetX, y = y + offsetY, width = width, height = height, color = color)
+    }
+}
+
+private fun DrawScope.drawFieldCaret(x: Float, y: Float, height: Float, color: Color) {
+    drawRect(x = x, y = y, width = CARET_WIDTH, height = height, color = color)
 }
 
 /**

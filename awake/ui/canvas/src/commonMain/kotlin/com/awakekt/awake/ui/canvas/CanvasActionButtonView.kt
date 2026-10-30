@@ -86,7 +86,7 @@ private fun BoxScope.Badge(element: CanvasElement, slot: CanvasSlot?, state: Can
 /** [textStyle] in the colour [slot]'s style, in [state], gives its text; [textStyle] itself when it gives none. */
 private fun labelStyle(element: CanvasElement, slot: CanvasSlot, state: CanvasControlState, tree: CanvasTree, textStyle: TextStyle): TextStyle {
     val color = (slot.overrideFor(state)?.style?.textColor ?: slot.style?.textColor) ?: return textStyle
-    return element.textStyle(colorOf(color, Color.White), tree.fontOf(element))
+    return element.textStyle(colorOf(color, Color.White), tree.fontOf(element), textStyle.scale)
 }
 
 /** A Button: an action button when it has [CanvasElement.button] settings, and a plain one otherwise. */
