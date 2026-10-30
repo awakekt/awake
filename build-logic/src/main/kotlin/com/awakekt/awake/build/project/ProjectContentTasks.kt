@@ -49,7 +49,7 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     val indexRootPath: Property<String> = objects.property(String::class.java)
     val indexBaseUrl: Property<String> = objects.property(String::class.java)
 
-    /** Globs of project-relative paths in the public sign-in set, such as `strings/**`; see [publicContentSet]. */
+    /** Globs of project-relative paths in the public sign-in set, such as every file under `strings`; see [publicContentSet]. */
     val publicFiles: ListProperty<String> = objects.listProperty(String::class.java)
 
     /** Scenes in the public sign-in set, each with every file it names; see [publicContentSet]. */
