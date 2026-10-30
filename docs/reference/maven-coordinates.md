@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 97 | Existing root `v*` tags and the shared Core release train |
+| Core | 98 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -115,6 +115,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.core:logging` | `:awake:core:logging` | `core` | — |
 | `com.awakekt.awake.core:math` | `:awake:core:math` | `core` | `api` → `:awake:core:math2d` |
 | `com.awakekt.awake.core:math2d` | `:awake:core:math2d` | `core` | — |
+| `com.awakekt.awake.core:particles` | `:awake:core:particles` | `core` | `api` → `:awake:core:math` |
 | `com.awakekt.awake.core:pool` | `:awake:core:pool` | `core` | — |
 | `com.awakekt.awake.core:schema` | `:awake:core:schema` | `core` | — |
 | `com.awakekt.awake.core:spatial` | `:awake:core:spatial` | `core` | `api` → `:awake:core:math` |
@@ -134,7 +135,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.kit:terrain-layers` | `:awake:kit:terrain-layers` | `core` | `api` → `:awake:terrain`; `api` → `:awake:asset:shader-pack`; `api` → `:awake:core:io`; `implementation` → `:awake:core:image` |
 | `com.awakekt.awake:navigation` | `:awake:navigation` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:ecs`; `api` → `:awake:world`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake:node-graph` | `:awake:node-graph` | `core` | — |
-| `com.awakekt.awake:particles` | `:awake:particles` | `core` | `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes` |
+| `com.awakekt.awake:particles` | `:awake:particles` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:particles`; `api` → `:awake:ecs`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes` |
 | `com.awakekt.awake.net:api` | `:awake:net:api` | `core` | — |
 | `com.awakekt.awake.net:server-ktor` | `:awake:net:server-ktor` | `core` | `api` → `:awake:net:api`; `api` → `:awake:ecs` |
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |

@@ -66,8 +66,10 @@ public final class com/awakekt/awake/particles/ParticleDynamics {
 public final class com/awakekt/awake/particles/ParticleEmitter {
 	public fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/core/math/Vec3f;IFFFFLcom/awakekt/awake/particles/ParticleMotion;Lcom/awakekt/awake/particles/ParticleVisual;Lcom/awakekt/awake/particles/ParticleGround;Lcom/awakekt/awake/particles/ParticleLifecycle;Lcom/awakekt/awake/particles/ParticleDynamics;Ljava/util/List;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/core/math/Vec3f;IFFFFLcom/awakekt/awake/particles/ParticleMotion;Lcom/awakekt/awake/particles/ParticleVisual;Lcom/awakekt/awake/particles/ParticleGround;Lcom/awakekt/awake/particles/ParticleLifecycle;Lcom/awakekt/awake/particles/ParticleDynamics;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun emit (I)I
 	public final fun forEachLiveParticle (Lkotlin/jvm/functions/Function2;)V
 	public final fun getChildren ()Ljava/util/List;
+	public final fun getDroppedParticleCount ()J
 	public final fun getDynamics ()Lcom/awakekt/awake/particles/ParticleDynamics;
 	public final fun getGround ()Lcom/awakekt/awake/particles/ParticleGround;
 	public final fun getLifecycle ()Lcom/awakekt/awake/particles/ParticleLifecycle;
@@ -79,6 +81,7 @@ public final class com/awakekt/awake/particles/ParticleEmitter {
 	public final fun getMotion ()Lcom/awakekt/awake/particles/ParticleMotion;
 	public final fun getOrigin ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getScale ()F
+	public final fun getSimulation ()Lcom/awakekt/awake/core/particles/ParticleSimulation;
 	public final fun getSpawnRate ()F
 	public final fun getStartAlpha ()F
 	public final fun getVisual ()Lcom/awakekt/awake/particles/ParticleVisual;

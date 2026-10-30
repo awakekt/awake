@@ -9,66 +9,17 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.particles.DEFAULT_BOUNCE_STOP_VELOCITY
+import com.awakekt.awake.core.particles.ParticleAlphaRamp
+import com.awakekt.awake.core.particles.ParticleBurstSchedule
+import com.awakekt.awake.core.particles.ParticlePlane
+import com.awakekt.awake.core.particles.ParticleSimulation
+import com.awakekt.awake.core.particles.UNLIMITED_BURST_COUNT
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.Poolable
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
-import kotlin.random.Random
-
-/**
- * One live particle slot inside a [ParticleEmitter]'s fixed-capacity pool -- [ParticleSystem]
- * mutates these in place every frame (position/age advance, dead slots respawn) rather than
- * replacing a `List` wholesale, since a particle system's whole point is high per-frame churn
- * (many slots spawning/dying every frame) that a full-list rebuild would allocate for
- * needlessly. [Poolable] because a "dead" slot is reused for the next spawn, not discarded --
- * [reset] must clear EVERY field (including [alive]) or a recycled slot carries stale state
- * into its next life, the exact bug class `CameraRig.needsReset` already shipped once
- * (see `skills/awake-ecs-authoring/SKILL.md`).
- */
-internal class Particle : Poolable {
-    var alive: Boolean = false
-    val position: Vec3f = Vec3f(0f, 0f, 0f)
-    val velocity: Vec3f = Vec3f(0f, 0f, 0f)
-    var age: Float = 0f
-    var lifetime: Float = 0f
-    var startAlpha: Float = 0f
-    var scale: Float = 1f
-
-    /** `true` once this particle has hit its ground height and stopped moving -- still fades
-     * out over its remaining lifetime, it just no longer integrates [velocity]. */
-    var settled: Boolean = false
-
-    /** A random `0 until frameCount` offset chosen at spawn -- added to this particle's own
-     * age-derived frame index so particles sharing one emitter show DIFFERENT sprite-strip
-     * frames at the same instant (desynced), instead of every particle in the emitter switching
-     * frames in lockstep. See [ParticleDrawBuilder], which packs it into each instance, for where
-     * this is read. */
-    var frameOffset: Int = 0
-
-    /** This particle's turn about the axis the quad faces along, in radians, counter-clockwise as the
-     * viewer sees it. Set at spawn from [ParticleVisual.spin] and advanced by [spinRate]; always 0 for
-     * an emitter without a spin. */
-    var rotation: Float = 0f
-
-    /** Radians per second [rotation] advances at, drawn at spawn from [ParticleSpin]; 0 without one. */
-    var spinRate: Float = 0f
-
-    override fun reset() {
-        alive = false
-        position.set(0f, 0f, 0f)
-        velocity.set(0f, 0f, 0f)
-        age = 0f
-        lifetime = 0f
-        startAlpha = 0f
-        scale = 1f
-        settled = false
-        frameOffset = 0
-        rotation = 0f
-        spinRate = 0f
-    }
-}
 
 /**
  * How particles move once spawned -- everything about direction/spread/turbulence lives here,
@@ -97,7 +48,7 @@ internal class Particle : Poolable {
  * dust blown outward. It is ignored with [convergeToOrigin].
  *
  * [turbulence] adds a smooth flow-field offset to velocity every frame, scaled by this strength
- * and sampled at [turbulenceFrequency] -- see [turbulenceOffset]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
+ * and sampled at [turbulenceFrequency]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
  * field, not true Perlin/simplex/curl noise.
  *
  * [acceleration] is a constant world-space acceleration, in units per second squared, added to
@@ -129,7 +80,7 @@ data class ParticleMotion(
  * particle over its own age (constant color when equal, the default). [frameCount] treats the
  * material's texture as a horizontal sprite strip of that many equal-width frames, cycling at
  * [frameRate] frames/second -- `1` (default) is a no-op. Each particle picks a random frame
- * OFFSET at spawn ([Particle.frameOffset]) and advances from there based on its own age, so
+ * OFFSET at spawn ([ParticleSimulation.frameOffset]) and advances from there based on its own age, so
  * particles sharing one emitter are visibly desynced, not switching frames in lockstep -- a
  * real per-instance GPU attribute (`particle.wgsl`'s `inFrame`), not an emitter-wide uniform.
  *
@@ -208,25 +159,10 @@ data class ParticleAlphaCurve(
     val fadeInEnd: Float = 0f,
     val fadeOutStart: Float = 0f,
 ) {
-    init {
-        require(fadeInEnd in 0f..1f && fadeOutStart in 0f..1f) {
-            "alpha curve fractions must be in 0..1, got fadeInEnd=$fadeInEnd fadeOutStart=$fadeOutStart"
-        }
-        require(fadeInEnd <= fadeOutStart) {
-            "fadeInEnd ($fadeInEnd) must not come after fadeOutStart ($fadeOutStart)"
-        }
-    }
+    private val ramp = ParticleAlphaRamp(fadeInEnd, fadeOutStart)
 
     /** The opacity multiplier, `0..1`, at [lifeFraction] (`0` at spawn, `1` at death). */
-    fun factorAt(lifeFraction: Float): Float {
-        val t = lifeFraction.coerceIn(0f, 1f)
-        return when {
-            t < fadeInEnd -> t / fadeInEnd
-            t < fadeOutStart -> 1f
-            t >= 1f -> 0f
-            else -> (1f - t) / (1f - fadeOutStart)
-        }
-    }
+    fun factorAt(lifeFraction: Float): Float = ramp.factorAt(lifeFraction)
 }
 
 /** Which way a [ParticleEmitter]'s quads face. */
@@ -253,8 +189,8 @@ enum class ParticleFacing {
  * means a particle never clamps and simply fades out mid-air/mid-fall.
  *
  * What happens AT the clamp is [restitution]: `0f` (default) is the original behavior -- velocity
- * zeroed, [Particle.settled] set, the particle stops for good. `> 0f` reflects [Particle.velocity]
- * .y instead (scaled by [restitution] -- `1f` is a lossless bounce, values above that gain
+ * zeroed, [ParticleSimulation.settled] set, the particle stops for good. `> 0f` reflects [ParticleSimulation.velY]
+ * instead (scaled by [restitution] -- `1f` is a lossless bounce, values above that gain
  * energy and are the caller's own choice), and [friction] scales the horizontal (x/z) velocity
  * on every bounce (`1f`, the default, keeps it unchanged; `< 1f` bleeds it off, a bounce that
  * skids to a stop instead of bouncing forever sideways). A particle only fully settles once a
@@ -271,7 +207,7 @@ data class ParticleGround(
 
 /** Below this vertical speed (units/second), a bouncing particle settles instead of bouncing
  * again -- see [ParticleGround.restitution]'s own doc comment for why a floor is needed at all. */
-const val BOUNCE_STOP_VELOCITY = 0.3f
+const val BOUNCE_STOP_VELOCITY = DEFAULT_BOUNCE_STOP_VELOCITY
 
 /** Spawn/death lifecycle hooks. [burstCount] caps the LIFETIME total spawn count instead of the
  * per-frame rate -- `null` (default) spawns forever; a non-null value stops spawning once that
@@ -314,22 +250,11 @@ data class ParticleBurstCycle(
         require(burstSize > 0) { "burstSize must be positive, got $burstSize" }
     }
 
-    private val burstsPerCycle: Int =
-        kotlin.math.ceil(activeSeconds / burstInterval - BURST_BOUNDARY_TOLERANCE).toInt().coerceAtLeast(1)
+    private val schedule = ParticleBurstSchedule(cycleSeconds, activeSeconds, burstInterval, burstSize)
 
     /** How many bursts have fired at or before [time] seconds into the emitter's life. */
-    internal fun burstsStartedBy(time: Float): Int {
-        if (time <= 0f) return 0
-        val completeCycles = kotlin.math.floor(time / cycleSeconds).toInt()
-        val phase = time - completeCycles * cycleSeconds
-        val inThisCycle = (kotlin.math.floor(phase / burstInterval).toInt() + 1).coerceAtMost(burstsPerCycle)
-        return completeCycles * burstsPerCycle + inThisCycle
-    }
+    internal fun burstsStartedBy(time: Float): Int = schedule.burstsStartedBy(time)
 }
-
-/** Keeps `activeSeconds / burstInterval` landing exactly on a whole number (1.0 / 0.25) from
- * rounding up to an extra burst when float division comes out a hair over. */
-private const val BURST_BOUNDARY_TOLERANCE = 1e-4f
 
 /** Live, per-frame-reactive knobs. [followEntity], when set, re-anchors
  * [ParticleEmitter.origin] to that entity's world position every frame, as
@@ -418,17 +343,38 @@ class ParticleEmitter(
     var dynamics: ParticleDynamics = ParticleDynamics(),
     val children: List<ParticleEmitter> = emptyList(),
 ) {
-    internal val particles: Array<Particle> = Array(maxParticles) { Particle() }
+    /** Backing structure-of-arrays simulation pool shared across 3D, 2D, and canvas emitters. */
+    val simulation: ParticleSimulation = ParticleSimulation(maxParticles)
+
+    private val scratchPosition: Vec3f = Vec3f(0f, 0f, 0f)
+    private val scratchVelocity: Vec3f = Vec3f(0f, 0f, 0f)
 
     /** How many of this emitter's particles are alive. */
-    val liveParticleCount: Int get() = particles.count { it.alive }
+    val liveParticleCount: Int
+        get() = simulation.liveParticleCount
+
+    /**
+     * Cumulative count of particles requested via [emit] or [ParticleLifecycle.burstCycle] that
+     * were skipped because all [maxParticles] slots were already live.
+     */
+    val droppedParticleCount: Long
+        get() = simulation.droppedParticleCount
+
+    internal val spawnedTotal: Int
+        get() = simulation.spawnedTotal
 
     /**
      * Calls [action] with the position and velocity of each live particle, in no particular order.
-     * The vectors are the particle's own, rewritten as it moves, so copy what you keep.
+     * The vectors are reused across slots, so copy what you keep.
      */
     fun forEachLiveParticle(action: (position: Vec3f, velocity: Vec3f) -> Unit) {
-        for (particle in particles) if (particle.alive) action(particle.position, particle.velocity)
+        for (slot in 0 until maxParticles) {
+            if (simulation.alive[slot]) {
+                scratchPosition.set(simulation.posX[slot], simulation.posY[slot], simulation.posZ[slot])
+                scratchVelocity.set(simulation.velX[slot], simulation.velY[slot], simulation.velZ[slot])
+                action(scratchPosition, scratchVelocity)
+            }
+        }
     }
 
     /**
@@ -439,31 +385,21 @@ class ParticleEmitter(
      * spawn schedule.
      */
     fun spawn(position: Vec3f, velocity: Vec3f = Vec3f(0f, 0f, 0f)): Boolean {
-        val slot = particles.firstOrNull { !it.alive } ?: return false
-        launch(slot, position, velocity)
-        return true
+        syncToSimulation()
+        return simulation.spawn(position.x, position.y, position.z, velocity.x, velocity.y, velocity.z)
     }
 
-    /** Starts [slot], a free particle of this emitter, at [position] with [velocity], aged zero. */
-    internal fun launch(slot: Particle, position: Vec3f, velocity: Vec3f) {
-        slot.alive = true
-        slot.position.set(position.x, position.y, position.z)
-        slot.velocity.set(velocity.x, velocity.y, velocity.z)
-        slot.age = 0f
-        slot.lifetime = lifetime
-        slot.startAlpha = startAlpha
-        slot.scale = scale
-        slot.settled = false
-        slot.frameOffset = Random.nextInt(visual.frameCount.coerceAtLeast(1))
-        val spin = visual.spin
-        if (spin == null) {
-            slot.rotation = 0f
-            slot.spinRate = 0f
-        } else {
-            val degrees = spin.minDegreesPerSecond + Random.nextFloat() * (spin.maxDegreesPerSecond - spin.minDegreesPerSecond)
-            slot.spinRate = degrees * DEGREES_TO_RADIANS
-            slot.rotation = if (spin.randomStartAngle) Random.nextFloat() * FULL_TURN_RADIANS else 0f
-        }
+    /**
+     * Immediately emits up to [count] particles into free pool slots using this emitter's current
+     * [origin], [motion], [visual], [lifetime], [startAlpha], and [scale], without counting toward
+     * [ParticleLifecycle.burstCount].
+     *
+     * Returns the number of particles actually spawned (`0..count`); any remainder when the pool
+     * is full increments [droppedParticleCount] with zero heap allocations.
+     */
+    fun emit(count: Int): Int {
+        syncToSimulation()
+        return simulation.emit(count)
     }
 
     /** [origin]'s value at construction time -- for a [children] entry, this is the fixed LOCAL
@@ -472,27 +408,6 @@ class ParticleEmitter(
      * offset has to be captured once, here, before that first overwrite. Unused for a top-level
      * (non-child) emitter. */
     internal val localOffset: Vec3f = Vec3f(origin.x, origin.y, origin.z)
-
-    /** Fractional particles/second carried across frames -- without this, a [spawnRate] that
-     * isn't an exact multiple of the frame rate (almost always) either spawns nothing some
-     * frames or drops sub-particle remainders every frame, both of which read as visibly
-     * uneven/bursty rather than a steady stream. */
-    internal var spawnAccumulator: Float = 0f
-
-    /** Total particles spawned across this emitter's whole life -- compared against
-     * [ParticleLifecycle.burstCount], not reset per frame (unlike [spawnAccumulator]). Unused
-     * when `burstCount` is `null`. */
-    internal var spawnedTotal: Int = 0
-
-    /** How many of [ParticleLifecycle.burstCycle]'s bursts have already been queued -- compared
-     * against `burstsStartedBy(elapsedTime)` each frame so a long frame fires every burst it
-     * spanned, and never one twice. Unused without a `burstCycle`. */
-    internal var burstsFired: Int = 0
-
-    /** Seconds this emitter has been alive -- unused directly by [ParticleVisual.frameCount]'s
-     * sprite-strip cycling anymore (that's per-particle now, driven by each [Particle]'s own
-     * `age`/[Particle.frameOffset]), kept for anything else that wants an emitter-wide clock. */
-    internal var elapsedTime: Float = 0f
 
     /** `true` once this emitter has come from [BurstEmitterPool.obtain] -- the marker
      * [ParticleSystem] checks before
@@ -522,16 +437,79 @@ class ParticleEmitter(
     internal val modelPool: MutableList<Mat4> = ArrayList(maxParticles)
     internal val colorPool: MutableList<Vec4> = ArrayList(maxParticles)
 
-    /** Reused every frame by [ParticleDrawBuilder] to hold this frame's frustum-visible [Particle]s
-     * (a subset of [particles]), sorted back-to-front before [instanceModelsBuffer]/etc are built
-     * from it -- see that class's own `appendDrawCalls` doc comment. Holds `Particle` references, not floats,
-     * unlike the buffers above -- it's an intermediate filter/sort step, not GPU-bound data. */
-    internal val visibleParticlesBuffer: MutableList<Particle> = ArrayList(maxParticles)
+    /** Reused every frame by [ParticleDrawBuilder] to hold frustum-visible slot indices and their
+     * squared camera distances so back-to-front sorting allocates zero objects. */
+    internal val visibleIndicesBuffer: IntArray = IntArray(maxParticles)
+    internal val visibleDistancesBuffer: FloatArray = FloatArray(maxParticles)
 
     /** Reused every frame for `RenderDrawCommand.extraUniformFloats` (camera basis + frame info) --
      * written in place instead of `cameraBasis + floatArrayOf(...)`, which allocates a new
      * array via concatenation every frame. */
     internal val uniformFloatsBuffer: FloatArray = FloatArray(EXTRA_UNIFORM_FLOAT_COUNT)
+
+    internal fun syncToSimulation() {
+        val sim = simulation
+        sim.plane = ParticlePlane.XZ
+        sim.setOrigin(origin.x, origin.y, origin.z)
+        sim.spawnRate = spawnRate
+        sim.minLifetime = lifetime
+        sim.maxLifetime = lifetime
+        sim.initialAlpha = startAlpha
+        sim.initialScale = scale
+
+        val m = motion
+        sim.spawnShape.setRingXZ(m.spawnRadius)
+        sim.baseVelX = m.baseVelocity.x
+        sim.baseVelY = m.baseVelocity.y
+        sim.baseVelZ = m.baseVelocity.z
+        sim.minSpeed = 0f
+        sim.maxSpeed = 0f
+        sim.velocityJitter = m.velocityJitter
+        val cone = m.coneHalfAngleDegrees
+        sim.hasConeHalfAngle = cone != null
+        sim.coneHalfAngleDegrees = cone ?: 0f
+        sim.convergeToOrigin = m.convergeToOrigin
+        sim.radialSpeed = m.radialSpeed
+        sim.inheritOrientation = m.inheritOrientation
+        sim.accelX = m.acceleration.x
+        sim.accelY = m.acceleration.y
+        sim.accelZ = m.acceleration.z
+        sim.drag = 0f
+        sim.turbulence = m.turbulence
+        sim.turbulenceFrequency = m.turbulenceFrequency
+
+        val v = visual
+        val targetScale = v.endScale
+        sim.hasEndScale = targetScale != null
+        sim.endScale = targetScale ?: scale
+        sim.frameCount = v.frameCount
+        sim.frameRate = v.frameRate
+        val curve = v.alphaCurve
+        if (curve == null) sim.alphaRamp.clear() else sim.alphaRamp.set(curve.fadeInEnd, curve.fadeOutStart)
+        val sp = v.spin
+        if (sp == null) {
+            sim.spin.clear()
+        } else {
+            sim.spin.set(sp.minDegreesPerSecond, sp.maxDegreesPerSecond, sp.randomStartAngle)
+        }
+
+        val g = ground
+        sim.ground.setGroundY(g.groundY)
+        sim.ground.groundHeightProvider = g.groundHeightProvider
+        sim.ground.colliders = g.colliders
+        sim.ground.restitution = g.restitution
+        sim.ground.friction = g.friction
+        sim.ground.bounceStopVelocity = BOUNCE_STOP_VELOCITY
+
+        val lc = lifecycle
+        sim.burstLimit = lc.burstCount ?: UNLIMITED_BURST_COUNT
+        val bc = lc.burstCycle
+        if (bc == null) {
+            sim.burstSchedule.clear()
+        } else {
+            sim.burstSchedule.set(bc.cycleSeconds, bc.activeSeconds, bc.burstInterval, bc.burstSize)
+        }
+    }
 
     /** Rewrites every field a fresh burst config supplies, and resets simulation state (spawn
      * accounting, elapsed time, every pool slot) back to a clean start -- what
@@ -563,11 +541,8 @@ class ParticleEmitter(
         ground = newGround
         lifecycle = newLifecycle
         dynamics = newDynamics
-        spawnAccumulator = 0f
-        spawnedTotal = 0
-        burstsFired = 0
-        elapsedTime = 0f
-        particles.forEach { it.reset() }
+        simulation.reset()
+        syncToSimulation()
     }
 }
 

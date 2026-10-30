@@ -29,6 +29,9 @@ Split out of `awake:core` as they grew independent test surfaces and target-spec
   quantized vertex decoding), no file I/O.
 - [`awake:core:spatial`](spatial/README.md) — uniform 2D-column `SpatialGrid` for AABB, sphere,
   frustum, and `BoundedVolume` queries over integer ids, depending only on `awake:core:math`.
+- [`awake:core:particles`](particles/README.md) — pure structure-of-arrays `ParticleSimulation`
+  (spawn shapes, alpha/size curves, burst schedules, `emit(count)`, turbulence, drag, and ground
+  bounce) depending only on `awake:core:math`.
 - [`awake:core:animation`](animation/README.md) — skeletal animation runtime (`Skeleton`/`Skin`/`AnimationClip`/
   `AnimationPose`, crossfade blending).
 - [`awake:core:input`](input/README.md) — input snapshots, named actions, modifier chords and
