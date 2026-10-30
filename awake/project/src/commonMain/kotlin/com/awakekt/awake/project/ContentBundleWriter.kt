@@ -15,8 +15,9 @@ import com.awakekt.awake.core.io.Sha256
  * The output is deterministic. Files are taken in path order and groups in name order, and
  * [ContentBundleFormat.encode] has no timestamps, so the same files give byte-identical bundles with
  * the same SHA-256 and the same URL, and a publish step uploads only bundles it doesn't already
- * have. Adding, removing or resizing a file changes its own bundle and can move the split points of
- * the bundles after it in its group, but leaves other groups' bundles alone.
+ * have. Within a group larger than [targetBundleBytes], bundle boundaries are chosen at
+ * content-defined hash peaks bounded by [targetBundleBytes], so adding, removing or resizing a file
+ * re-packs its own bundle without shifting the boundaries of later bundles in the group.
  *
  * A file larger than [targetBundleBytes] gets a bundle of its own. Files of the same content in one
  * bundle are stored once.
@@ -96,24 +97,80 @@ class ContentBundleWriter(
         )
     }
 
-    /** The bundles to write, each a list of entries: groups in name order, files in path order, filled to the target. */
+    /**
+     * The bundles to write, each a list of entries: groups in name order, files in path order, split at
+     * content-defined boundaries bounded by [targetBundleBytes].
+     */
     private fun plan(entries: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> =
         entries.sortedBy { it.path }
             .groupBy { grouping.groupOf(it.path) }
             .entries.sortedBy { it.key }
-            .flatMap { (_, group) ->
-                val chunks = mutableListOf<MutableList<ProjectIndexEntry>>()
-                var filled = 0L
-                group.forEach { entry ->
-                    if (chunks.isEmpty() || (filled > 0 && filled + entry.sizeBytes > targetBundleBytes)) {
-                        chunks += mutableListOf<ProjectIndexEntry>()
-                        filled = 0
-                    }
-                    chunks.last() += entry
-                    filled += entry.sizeBytes
+            .flatMap { (_, group) -> chunkGroup(group) }
+
+    private fun chunkGroup(group: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> = buildList {
+        val run = mutableListOf<ProjectIndexEntry>()
+        for (entry in group) {
+            if (entry.sizeBytes >= targetBundleBytes) {
+                if (run.isNotEmpty()) {
+                    addAll(chunkRun(run.toList()))
+                    run.clear()
                 }
-                chunks
+                add(listOf(entry))
+            } else {
+                run += entry
             }
+        }
+        if (run.isNotEmpty()) addAll(chunkRun(run))
+    }
+
+    private fun chunkRun(run: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> {
+        val totalBytes = run.sumOf { it.sizeBytes }
+        if (totalBytes <= targetBundleBytes) return listOf(run)
+        return anchorSegments(run, totalBytes).flatMap(::packBounded)
+    }
+
+    private fun anchorSegments(run: List<ProjectIndexEntry>, totalBytes: Long): List<List<ProjectIndexEntry>> {
+        val windowBytes = maxOf(1L, targetBundleBytes / CDC_WINDOW_DIVISOR)
+        val starts = LongArray(run.size)
+        val ends = LongArray(run.size)
+        var offset = 0L
+        for (index in run.indices) {
+            starts[index] = offset
+            offset += run[index].sizeBytes
+            ends[index] = offset
+        }
+        val digests = Array(run.size) { index ->
+            Sha256.digest("${run[index].path}\u0000${run[index].sha256}".encodeToByteArray())
+        }
+        return buildList {
+            var segmentStart = 0
+            for (index in 0 until run.lastIndex) {
+                val cut = ends[index]
+                if (cut >= windowBytes && totalBytes - cut >= windowBytes &&
+                    isLocalDigestPeak(index, starts, ends, digests, windowBytes)
+                ) {
+                    add(run.subList(segmentStart, index + 1))
+                    segmentStart = index + 1
+                }
+            }
+            add(run.subList(segmentStart, run.size))
+        }
+    }
+
+    private fun packBounded(segment: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> = buildList {
+        var current = mutableListOf<ProjectIndexEntry>()
+        var filled = 0L
+        for (entry in segment) {
+            if (current.isNotEmpty() && filled + entry.sizeBytes > targetBundleBytes) {
+                add(current)
+                current = mutableListOf()
+                filled = 0L
+            }
+            current += entry
+            filled += entry.sizeBytes
+        }
+        if (current.isNotEmpty()) add(current)
+    }
 
     private fun checkedBytes(entry: ProjectIndexEntry, bytes: ByteArray): ByteArray {
         check(bytes.size.toLong() == entry.sizeBytes && Sha256.digestHex(bytes) == entry.sha256) {
@@ -129,6 +186,36 @@ class ContentBundleWriter(
 
         /** The folder bundles go in, next to the index. */
         const val DEFAULT_BUNDLE_URL_PREFIX: String = "bundles"
+
+        /** Local-maxima byte radius (`target / 4`): keeps natural segments above `target / 4` and below `target`. */
+        private const val CDC_WINDOW_DIVISOR: Int = 4
+    }
+}
+
+private const val BYTE_MASK: Int = 0xff
+
+private fun isLocalDigestPeak(
+    index: Int,
+    starts: LongArray,
+    ends: LongArray,
+    digests: Array<ByteArray>,
+    windowBytes: Long,
+): Boolean {
+    val candidate = digests[index]
+    val beatsLeft = ((index - 1) downTo 0)
+        .takeWhile { starts[index] - ends[it] < windowBytes }
+        .all { compareDigests(candidate, digests[it]) > 0 }
+    return beatsLeft && ((index + 1) until digests.size)
+        .takeWhile { starts[it] - ends[index] < windowBytes }
+        .all { compareDigests(candidate, digests[it]) > 0 }
+}
+
+private fun compareDigests(first: ByteArray, second: ByteArray): Int {
+    val mismatch = first.indices.firstOrNull { first[it] != second[it] }
+    return if (mismatch == null) {
+        0
+    } else {
+        (first[mismatch].toInt() and BYTE_MASK) - (second[mismatch].toInt() and BYTE_MASK)
     }
 }
 

@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 import kotlin.io.path.createTempDirectory
 import kotlin.test.AfterTest
@@ -84,6 +85,108 @@ class ProjectBundleTest {
         assertEquals(1, run.code, run.all)
         assertContains(run.err, "assets/models/crate.gltf")
         assertTrue(!output.resolve("project.index.json").exists())
+    }
+
+    @Test
+    fun generateContentBundlesGradleTaskWritesByteIdenticalOutputToCli() {
+        FILES.forEach { (path, text) -> root.resolve(path).apply { parentFile.mkdirs() }.writeText(text) }
+        writeGradleContentSettings()
+
+        writeGradleContentBuild()
+        runGenerateContentBundles()
+        val cliOut = root.resolve("build/cli-published")
+        val cli = awake("bundle", "build/project.index.json", "--output", "build/cli-published", "--project", ".")
+        assertEquals(0, cli.code, cli.all)
+        assertSameTree(cliOut, output)
+
+        writeGradleContentBuild(
+            """
+            projectContent {
+                bundleGrouping.set("one")
+                targetBundleBytes.set(4L * 1024 * 1024)
+                bundleOpaqueIds.set(true)
+                bundlePathSalt.set("com.example.harbor")
+            }
+            """.trimIndent(),
+        )
+        runGenerateContentBundles()
+        val cliOpaqueOut = root.resolve("build/cli-opaque")
+        val cliOpaque = awake(
+            "bundle",
+            "build/project.index.json",
+            "--output",
+            "build/cli-opaque",
+            "--project",
+            ".",
+            "--group",
+            "one",
+            "--target-mb",
+            "4",
+            "--opaque-ids",
+            "--salt",
+            "com.example.harbor",
+        )
+        assertEquals(0, cliOpaque.code, cliOpaque.all)
+        assertSameTree(cliOpaqueOut, output)
+    }
+
+    private fun writeGradleContentSettings() {
+        val buildLogicDir = File(System.getProperty("awake.buildLogic.dir")).invariantSeparatorsPath
+        val gradleJavaHome = File(System.getProperty("awake.gradle.javaHome")).invariantSeparatorsPath
+        root.resolve("settings.gradle.kts").writeText(
+            """
+            pluginManagement {
+                includeBuild("$buildLogicDir")
+                repositories {
+                    gradlePluginPortal()
+                    google()
+                    mavenCentral()
+                }
+            }
+            rootProject.name = "harbor-content"
+            """.trimIndent() + "\n",
+        )
+        root.resolve("gradle.properties").writeText("org.gradle.java.home=$gradleJavaHome\n")
+    }
+
+    private fun writeGradleContentBuild(extraConfig: String = "") {
+        val workerFiles = System.getProperty("awake.project.workerClasspath")
+            .split(File.pathSeparator)
+            .filter(String::isNotBlank)
+            .joinToString(", ") { "\"${File(it).invariantSeparatorsPath}\"" }
+        root.resolve("build.gradle.kts").writeText(
+            """
+            import com.awakekt.awake.build.project.GenerateContentBundlesTask
+
+            plugins {
+                id("com.awakekt.awake.plugin.project-content")
+            }
+
+            $extraConfig
+
+            tasks.named<GenerateContentBundlesTask>("generateContentBundles") {
+                workerClasspath.setFrom(files($workerFiles))
+            }
+            """.trimIndent() + "\n",
+        )
+    }
+
+    private fun runGenerateContentBundles() {
+        GradleRunner.create()
+            .withProjectDir(root)
+            .withArguments("generateContentBundles", "--stacktrace")
+            .build()
+    }
+
+    private fun assertSameTree(expectedDir: File, actualDir: File) {
+        val expected = expectedDir.walkTopDown()
+            .filter(File::isFile)
+            .associate { it.relativeTo(expectedDir).invariantSeparatorsPath to it.readBytes() }
+        val actual = actualDir.walkTopDown()
+            .filter(File::isFile)
+            .associate { it.relativeTo(actualDir).invariantSeparatorsPath to it.readBytes() }
+        assertEquals(expected.keys, actual.keys)
+        expected.forEach { (path, bytes) -> assertContentEquals(bytes, actual.getValue(path), path) }
     }
 
     private fun project() {

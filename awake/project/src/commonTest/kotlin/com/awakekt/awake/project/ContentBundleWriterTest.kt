@@ -148,4 +148,59 @@ class ContentBundleWriterTest {
         assertFalse("bundle" in loose || "\"id\"" in loose || "offset" in loose, "a loose index writes no new field: $loose")
         assertNull(json.decodeFromString(ProjectIndex.serializer(), loose).files.first().bundle)
     }
+
+    @Test
+    fun addingOneFileToAGroupChangesAtMostTwoBundles() = runTest {
+        val writer = ContentBundleWriter(grouping = ContentBundleGrouping.byFolder(), targetBundleBytes = 800)
+        val baseFiles = buildMap {
+            put("awake.project.json", "{\"formatVersion\":1,\"id\":\"com.example.harbor-town\"}".encodeToByteArray())
+            put("scenes/main.scene.json", "{\"version\":1,\"name\":\"harbor\"}".encodeToByteArray())
+            for (index in 0 until 60) {
+                val name = index.toString().padStart(3, '0')
+                put("assets/props/prop-$name.bin", ByteArray(100) { ((index * 31) + it).toByte() })
+            }
+        }
+        val before = BundledProject(files = baseFiles, writer = writer)
+        val beforeAssets = before.bundles.values.filter { it.paths.first().startsWith("assets/") }
+        assertTrue(beforeAssets.size >= 6, "a multi-bundle group: ${beforeAssets.size} bundles")
+
+        val additions = listOf(
+            "assets/props/prop-000-added.bin",
+            "assets/props/prop-014-added.bin",
+            "assets/props/prop-029-added.bin",
+            "assets/props/prop-044-added.bin",
+            "assets/props/prop-059-added.bin",
+        )
+        for ((step, addedPath) in additions.withIndex()) {
+            val addedBytes = ByteArray(100) { ((step + 1) * 53 + it).toByte() }
+            val after = BundledProject(files = baseFiles + (addedPath to addedBytes), writer = writer)
+            val newBundles = after.bundles.keys - before.bundles.keys
+
+            assertTrue(
+                newBundles.size in 1..2,
+                "adding $addedPath changed ${newBundles.size} bundles (expected 1..2): $newBundles",
+            )
+            assertTrue(
+                after.bundles.values.all { bundle -> bundle.paths.sumOf { after.files.getValue(it).size } <= 800 },
+                "every bundle stays within targetBundleBytes",
+            )
+            val source = IndexedAssetSource(after.index, after.server())
+            assertContentEquals(addedBytes, source.read(AssetPath(addedPath)).getOrThrow())
+        }
+    }
+
+    @Test
+    fun duplicateContentFilesWithDistinctPathsStillSplitCleanly() {
+        val writer = ContentBundleWriter(grouping = ContentBundleGrouping.oneGroup(), targetBundleBytes = 500)
+        val identical = ByteArray(80) { 42 }
+        val files = (0 until 30).associate { index ->
+            "assets/tiles/tile-${index.toString().padStart(2, '0')}.png" to identical.copyOf()
+        }
+        val before = BundledProject(files = files, writer = writer)
+        val after = BundledProject(files = files + ("assets/tiles/tile-12a.png" to identical.copyOf()), writer = writer)
+
+        val changed = after.bundles.keys - before.bundles.keys
+        assertTrue(before.bundles.size >= 4, "split into multiple bundles: ${before.bundles.size}")
+        assertTrue(changed.size in 1..2, "adding one identical-content file changed ${changed.size} bundles: $changed")
+    }
 }

@@ -64,6 +64,47 @@ class BundledAssetSourceTest {
     }
 
     @Test
+    fun aValidBundleWhoseIndexDisagreesWithItsTableOfContentsFailsNamingTheMember() = runTest {
+        val tampered = project.index.copy(
+            files = project.index.files.map { entry ->
+                if (entry.path == crate) entry.copy(sha256 = "0".repeat(64)) else entry
+            },
+        )
+        val source = IndexedAssetSource(tampered, project.server())
+
+        val failure = source.read(AssetPath("assets/models/buoy.glb")).exceptionOrNull()
+
+        assertTrue(failure is IllegalStateException, "got $failure")
+        assertTrue(failure.message.orEmpty().contains(crate), "names the mismatched member: $failure")
+    }
+
+    @Test
+    fun nonBundleBytesWhoseShaMatchesTheIndexStillFailOnTableOfContents() = runTest {
+        val bogus = ByteArray(64) { 7 }
+        val bogusSha = com.awakekt.awake.core.io.Sha256.digestHex(bogus)
+        val bogusUrl = "bundles/$bogusSha.awkb"
+        val forged = ProjectIndex(
+            formatVersion = ProjectIndex.BUNDLED_FORMAT_VERSION,
+            files = listOf(
+                ProjectIndexEntry(
+                    path = crate,
+                    sizeBytes = 16,
+                    sha256 = com.awakekt.awake.core.io.Sha256.digestHex(ByteArray(16) { 7 }),
+                    bundle = bogusSha,
+                    offset = 16,
+                ),
+            ),
+            bundles = listOf(ProjectIndexBundle(sha256 = bogusSha, sizeBytes = bogus.size.toLong(), url = bogusUrl)),
+        )
+        val source = IndexedAssetSource(forged, { bogus })
+
+        val failure = source.read(AssetPath(crate)).exceptionOrNull()
+
+        assertTrue(failure is IllegalStateException, "got $failure")
+        assertTrue(failure.message.orEmpty().contains(bogusUrl), "$failure")
+    }
+
+    @Test
     fun aFullLoadMakesOneRequestPerBundleNotPerFile() = runTest {
         val looseRequests = mutableListOf<String>()
         val bundledRequests = mutableListOf<String>()

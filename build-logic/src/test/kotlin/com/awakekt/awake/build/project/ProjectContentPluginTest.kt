@@ -60,4 +60,27 @@ class ProjectContentPluginTest {
         assertEquals("a%20b.png", encodePathSegment("a b.png"))
         assertEquals("caf%C3%A9%2B.png", encodePathSegment("café+.png"), "a real plus stays encoded, apart from the space")
     }
+
+    @Test
+    fun generateContentBundlesTracksTheLooseIndexAndIndexedFilesWithCliDefaults() {
+        val project = ProjectBuilder.builder().build()
+        project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
+        val asset = project.file("assets/models/crate.glb").apply {
+            parentFile.mkdirs()
+            writeBytes(byteArrayOf(1, 2, 3, 4))
+        }
+
+        val task = project.tasks.getByName("generateContentBundles") as GenerateContentBundlesTask
+        val indexTask = project.tasks.getByName("generateProjectIndex") as GenerateProjectIndexTask
+        val check = project.tasks.getByName("check")
+
+        assertEquals(indexTask.outputFile.get().asFile, task.indexFile.get().asFile)
+        assertTrue(asset in task.indexedFiles.asFileTree.files, "an indexed asset is tracked: ${task.indexedFiles.files}")
+        assertEquals(project.layout.buildDirectory.dir("published").get().asFile, task.outputDirectory.get().asFile)
+        assertEquals("folder", task.grouping.get())
+        assertEquals(1, task.folderDepth.get())
+        assertEquals(16L * 1024 * 1024, task.targetBundleBytes.get())
+        assertEquals("bundles", task.bundleUrlPrefix.get())
+        assertTrue("generateContentBundles" !in check.taskDependencies.getDependencies(check).map { it.name })
+    }
 }
