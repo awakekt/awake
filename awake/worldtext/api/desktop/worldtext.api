@@ -1,0 +1,84 @@
+public final class com/awakekt/awake/worldtext/WorldText {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/worldtext/WorldTextStyle;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/worldtext/WorldTextStyle;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBillboard ()Z
+	public final fun getLayout ()Lcom/awakekt/awake/worldtext/WorldTextLayout;
+	public final fun getRevision ()I
+	public final fun getStyle ()Lcom/awakekt/awake/worldtext/WorldTextStyle;
+	public final fun getText ()Ljava/lang/String;
+	public final fun setBillboard (Z)V
+	public final fun setStyle (Lcom/awakekt/awake/worldtext/WorldTextStyle;)V
+	public final fun setText (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextAlign : java/lang/Enum {
+	public static final field Center Lcom/awakekt/awake/worldtext/WorldTextAlign;
+	public static final field End Lcom/awakekt/awake/worldtext/WorldTextAlign;
+	public static final field Start Lcom/awakekt/awake/worldtext/WorldTextAlign;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/worldtext/WorldTextAlign;
+	public static fun values ()[Lcom/awakekt/awake/worldtext/WorldTextAlign;
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextBatch : java/lang/AutoCloseable {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun close ()V
+	public final fun collect (Lcom/awakekt/awake/worldtext/WorldText;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;)V
+	public final fun release (Lcom/awakekt/awake/worldtext/WorldText;)V
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextCoverageKt {
+	public static final fun worldTextCoverage (FFFF)F
+	public static final fun worldTextEdgeWidth (FFFFF)F
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextFacingKt {
+	public static final fun setFacing (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Lens;)Lcom/awakekt/awake/core/math/Mat4;
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextLayout {
+	public fun <init> (Ljava/util/List;FF)V
+	public final fun getHeight ()F
+	public final fun getPages ()Ljava/util/List;
+	public final fun getWidth ()F
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextLayoutKt {
+	public static final fun layoutWorldText (Ljava/lang/String;Lcom/awakekt/awake/worldtext/WorldTextStyle;)Lcom/awakekt/awake/worldtext/WorldTextLayout;
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextPage {
+	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFont;Lcom/awakekt/awake/core/geometry/MeshGeometry;)V
+	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun getGeometry ()Lcom/awakekt/awake/core/geometry/MeshGeometry;
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextStyle {
+	public static final field Companion Lcom/awakekt/awake/worldtext/WorldTextStyle$Companion;
+	public static final field DEFAULT_SIZE F
+	public fun <init> ()V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFont;FILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/worldtext/WorldTextAlign;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFont;FILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/worldtext/WorldTextAlign;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun component2 ()F
+	public final fun component3-IDQ5Rls ()I
+	public final fun component4 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component5 ()Lcom/awakekt/awake/worldtext/WorldTextAlign;
+	public final fun component6 ()F
+	public final fun copy-U-gYwcE (Lcom/awakekt/awake/core/text/font/UiFont;FILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/worldtext/WorldTextAlign;F)Lcom/awakekt/awake/worldtext/WorldTextStyle;
+	public static synthetic fun copy-U-gYwcE$default (Lcom/awakekt/awake/worldtext/WorldTextStyle;Lcom/awakekt/awake/core/text/font/UiFont;FILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/worldtext/WorldTextAlign;FILjava/lang/Object;)Lcom/awakekt/awake/worldtext/WorldTextStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlign ()Lcom/awakekt/awake/worldtext/WorldTextAlign;
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun getLineSpacing ()F
+	public final fun getSize ()F
+	public final fun getWeight-IDQ5Rls ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/worldtext/WorldTextStyle$Companion {
+}
+

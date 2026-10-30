@@ -18,6 +18,12 @@ class DrawUniformPlanTest {
     }
 
     @Test
+    fun worldTextHasAnAbiOfItsOwn() {
+        assertEquals(DrawUniformPlan.WorldText, drawUniformPlan(VertexFormat.PositionUvColor, WorldTextUniformLayout.total, hasShadowCascades = true))
+        assertEquals(DrawUniformPlan.Lit, drawUniformPlan(VertexFormat.PositionUvColor, WorldTextUniformLayout.total + 4, hasShadowCascades = false))
+    }
+
+    @Test
     fun selectsTheSharedAbiInPriorityOrder() {
         assertEquals(
             DrawUniformPlan.LitShadow,

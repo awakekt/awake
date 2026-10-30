@@ -64,6 +64,7 @@ import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.scene.worldtext.WorldTextRenderFeature
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasSlotContent
@@ -528,6 +529,9 @@ class SceneAppLifecycleRuntime internal constructor(
         SceneTilemapRenderFeature(renderer, { requireAssetLibrary().texture(it) }, layers = { sortingLayers }).also(::forgetsTextures)
     }
 
+    // Text a scene places with world_text; it uploads nothing until a scene has some.
+    internal val worldTextFeature by lazy { WorldTextRenderFeature(renderer) }
+
     // A texture the library forgets is uploaded again from what it gives next.
     private fun forgetsTextures(uploads: SceneTextureUploads) {
         session.assetLibraryOrNull()?.addTextureUploads(uploads)
@@ -538,6 +542,7 @@ class SceneAppLifecycleRuntime internal constructor(
             viewStore?.dispose()
             spriteBatch.destroy()
             tilemapFeature.destroy()
+            worldTextFeature.close()
         }
         graphicsLayers.dispose()
         session.dispose(this)
@@ -640,7 +645,7 @@ class SceneAppLifecycleRuntime internal constructor(
             .planCapture(world, camera, width, height)
 
     /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
-    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature, tilemapFeature)) }
+    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature, tilemapFeature, worldTextFeature)) }
 
     /**
      * Retrieves an optional registered application service of the specified [type].
@@ -791,7 +796,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
         RenderSystem3D(
             renderer,
             gpuDrawPreparer,
-            features = listOf(spriteFeature, tilemapFeature),
+            features = listOf(spriteFeature, tilemapFeature, worldTextFeature),
             viewportProvider = viewportProvider,
             renderWorldProvider = renderWorldProvider,
             isRealtimeProvider = isRealtimeProvider,
