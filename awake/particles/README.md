@@ -9,9 +9,11 @@ implementation(project(":awake:particles"))
 
 ## What is in it
 
-- `ParticleEmitter` -- a fixed-capacity pool of particles and every option that shapes them:
-  `ParticleMotion`, `ParticleVisual`, `ParticleGround`, `ParticleLifecycle`, `ParticleDynamics`.
-  `spawn` emits one by hand; `liveParticleCount` and `forEachLiveParticle` read what is alive.
+- `ParticleEmitter` -- a fixed-capacity pool of particles backed by `awake:core:particles`'s
+  `ParticleSimulation`, and every option that shapes them: `ParticleMotion`, `ParticleVisual`,
+  `ParticleGround`, `ParticleLifecycle`, `ParticleDynamics`. `emit(count)` fires an immediate burst,
+  `spawn` emits one by hand, and `liveParticleCount`, `droppedParticleCount`, and
+  `forEachLiveParticle` read pool state.
 - `ParticleSystem` -- an ECS `System` that spawns, moves and ages the particles of every
   `ParticleEmitter` in a `World`.
 - `ParticleDrawBuilder` -- culls, sorts and packs the live particles of a `World` into

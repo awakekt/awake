@@ -768,6 +768,25 @@ rendering stack, and `SpatialGrid.queryShadowCasters` named `ShadowCasterVolume`
   stays a deprecated constant, so code compiled against 0.27 keeps linking. `SpatialIndex.grid`
   keeps that type until 1.0; the scene systems work on `grid.core`. Both forwards go at 1.0.
 
+## 15. `ParticleSimulation` is a core simulation and `particles` is its 3D consumer — **Done**
+
+`ParticleEmitter` and `ParticleSystem` in `awake:particles` couple the particle simulation to `ecs`
+(`World`, `Entity`) and `engine:render:contract` / `engine:render:passes` (`Mesh`, `Material`,
+`RenderDrawCommand`), which prevented `ui:canvas` (whose contract has no ECS or renderer dependency)
+and 2D sprite emitters from sharing the simulation without violating module layering (#1103).
+
+- `core:particles` (`com.awakekt.awake.core.particles`) holds the structure-of-arrays
+  `ParticleSimulation` pool (`step`, `emit(count)`, `spawn`, `reset`), `ParticleSpawnShape`
+  (`Point`, `RingXZ`, `RingXY`, `Box`, `RectEdge`), `ParticlePlane` (`XZ`, `XY`),
+  `ParticleAlphaRamp`, `ParticleBurstSchedule`, and `ParticleSpinRange`, depending on `core:math`
+  alone — no ECS, scene, or renderer dependency.
+- `awake:particles` delegates its pool storage, emission scheduling, integration, and ground bounce
+  to an internal `ParticleSimulation` per emitter and adds `ParticleEmitter.emit(count)`,
+  `droppedParticleCount` and `random` while keeping every 0.28 public signature and fixed-seed 3D
+  RNG call order intact.
+- 2D scene emitters (`scene:scene2d`) and canvas UI emitters (`ui:canvas`) are planned consumers of
+  the same simulation (#1103); neither exists yet.
+
 ## Adding a new module
 
 1. **Name it for the subsystem**, never the layer. If the name is `engine`, `backend`, `common`,

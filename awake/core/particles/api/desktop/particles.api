@@ -1,0 +1,265 @@
+public final class com/awakekt/awake/core/particles/ParticleAlphaConfig {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getEnabled ()Z
+	public final fun getFadeInEnd ()F
+	public final fun getFadeOutStart ()F
+	public final fun set (FF)V
+	public final fun set (Lcom/awakekt/awake/core/particles/ParticleAlphaRamp;)V
+}
+
+public final class com/awakekt/awake/core/particles/ParticleAlphaRamp {
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun factorAt (F)F
+	public final fun getFadeInEnd ()F
+	public final fun getFadeOutStart ()F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleBurstConfig {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getActiveSeconds ()F
+	public final fun getBurstInterval ()F
+	public final fun getBurstSize ()I
+	public final fun getCycleSeconds ()F
+	public final fun getEnabled ()Z
+	public final fun set (FFFI)V
+	public final fun set (Lcom/awakekt/awake/core/particles/ParticleBurstSchedule;)V
+}
+
+public final class com/awakekt/awake/core/particles/ParticleBurstSchedule {
+	public fun <init> (FFFI)V
+	public final fun burstsStartedBy (F)I
+	public final fun getActiveSeconds ()F
+	public final fun getBurstInterval ()F
+	public final fun getBurstSize ()I
+	public final fun getCycleSeconds ()F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleCurvesKt {
+	public static final field DEFAULT_BOUNCE_STOP_VELOCITY F
+}
+
+public abstract interface class com/awakekt/awake/core/particles/ParticleDeathListener {
+	public abstract fun onDeath (FFF)V
+}
+
+public final class com/awakekt/awake/core/particles/ParticleGroundConfig {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getBounceStopVelocity ()F
+	public final fun getColliders ()Ljava/util/List;
+	public final fun getFriction ()F
+	public final fun getGroundHeightProvider ()Lcom/awakekt/awake/core/particles/ParticleGroundHeight;
+	public final fun getGroundY ()F
+	public final fun getHasGroundY ()Z
+	public final fun getRestitution ()F
+	public final fun setBounceStopVelocity (F)V
+	public final fun setColliders (Ljava/util/List;)V
+	public final fun setFriction (F)V
+	public final fun setGroundHeightProvider (Lcom/awakekt/awake/core/particles/ParticleGroundHeight;)V
+	public final fun setGroundY (Ljava/lang/Float;)V
+	public final fun setRestitution (F)V
+}
+
+public abstract interface class com/awakekt/awake/core/particles/ParticleGroundHeight {
+	public abstract fun heightAt (FF)F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleOrientationBasis {
+	public fun <init> ()V
+	public final fun copyFrom (Lcom/awakekt/awake/core/particles/ParticleOrientationBasis;)V
+	public final fun setFromMatrix (Lcom/awakekt/awake/core/math/Mat4;)V
+	public final fun setIdentity ()V
+	public final fun setRotationZ (F)V
+}
+
+public final class com/awakekt/awake/core/particles/ParticlePlane : java/lang/Enum {
+	public static final field XY Lcom/awakekt/awake/core/particles/ParticlePlane;
+	public static final field XZ Lcom/awakekt/awake/core/particles/ParticlePlane;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/particles/ParticlePlane;
+	public static fun values ()[Lcom/awakekt/awake/core/particles/ParticlePlane;
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSimulation {
+	public fun <init> (ILkotlin/random/Random;)V
+	public synthetic fun <init> (ILkotlin/random/Random;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun alphaAt (I)F
+	public final fun clearSlot (I)V
+	public final fun emit (I)I
+	public final fun frameAt (I)I
+	public final fun getAccelX ()F
+	public final fun getAccelY ()F
+	public final fun getAccelZ ()F
+	public final fun getAge ()[F
+	public final fun getAlphaRamp ()Lcom/awakekt/awake/core/particles/ParticleAlphaConfig;
+	public final fun getBaseVelX ()F
+	public final fun getBaseVelY ()F
+	public final fun getBaseVelZ ()F
+	public final fun getBurstLimit ()I
+	public final fun getBurstSchedule ()Lcom/awakekt/awake/core/particles/ParticleBurstConfig;
+	public final fun getBurstsFired ()I
+	public final fun getConeHalfAngleDegrees ()F
+	public final fun getConvergeToOrigin ()Z
+	public final fun getDrag ()F
+	public final fun getDroppedParticleCount ()J
+	public final fun getElapsedTime ()F
+	public final fun getEndScale ()F
+	public final fun getFrameCount ()I
+	public final fun getFrameOffset ()[I
+	public final fun getFrameRate ()F
+	public final fun getGround ()Lcom/awakekt/awake/core/particles/ParticleGroundConfig;
+	public final fun getHasConeHalfAngle ()Z
+	public final fun getHasEndScale ()Z
+	public final fun getInheritOrientation ()Z
+	public final fun getInitialAlpha ()F
+	public final fun getInitialScale ()F
+	public final fun getLifetime ()[F
+	public final fun getLiveParticleCount ()I
+	public final fun getMaxLifetime ()F
+	public final fun getMaxParticles ()I
+	public final fun getMaxSpeed ()F
+	public final fun getMinLifetime ()F
+	public final fun getMinSpeed ()F
+	public final fun getOrientation ()Lcom/awakekt/awake/core/particles/ParticleOrientationBasis;
+	public final fun getOriginX ()F
+	public final fun getOriginY ()F
+	public final fun getOriginZ ()F
+	public final fun getPlane ()Lcom/awakekt/awake/core/particles/ParticlePlane;
+	public final fun getPosX ()[F
+	public final fun getPosY ()[F
+	public final fun getPosZ ()[F
+	public final fun getRadialSpeed ()F
+	public final fun getRandom ()Lkotlin/random/Random;
+	public final fun getRotation ()[F
+	public final fun getScale ()[F
+	public final fun getSettled ()[Z
+	public final fun getSpawnRate ()F
+	public final fun getSpawnShape ()Lcom/awakekt/awake/core/particles/ParticleSpawnConfig;
+	public final fun getSpawnedTotal ()I
+	public final fun getSpin ()Lcom/awakekt/awake/core/particles/ParticleSpinConfig;
+	public final fun getSpinRate ()[F
+	public final fun getStartAlpha ()[F
+	public final fun getTurbulence ()F
+	public final fun getTurbulenceFrequency ()F
+	public final fun getVelX ()[F
+	public final fun getVelY ()[F
+	public final fun getVelZ ()[F
+	public final fun getVelocityJitter ()F
+	public final fun isAlive (I)Z
+	public final fun isComplete ()Z
+	public final fun lifeFractionAt (I)F
+	public final fun reset ()V
+	public final fun scaleAt (I)F
+	public final fun setAccelX (F)V
+	public final fun setAccelY (F)V
+	public final fun setAccelZ (F)V
+	public final fun setBaseVelX (F)V
+	public final fun setBaseVelY (F)V
+	public final fun setBaseVelZ (F)V
+	public final fun setBurstLimit (I)V
+	public final fun setConeHalfAngleDegrees (F)V
+	public final fun setConvergeToOrigin (Z)V
+	public final fun setDrag (F)V
+	public final fun setEndScale (F)V
+	public final fun setFrameCount (I)V
+	public final fun setFrameRate (F)V
+	public final fun setHasConeHalfAngle (Z)V
+	public final fun setHasEndScale (Z)V
+	public final fun setInheritOrientation (Z)V
+	public final fun setInitialAlpha (F)V
+	public final fun setInitialScale (F)V
+	public final fun setMaxLifetime (F)V
+	public final fun setMaxSpeed (F)V
+	public final fun setMinLifetime (F)V
+	public final fun setMinSpeed (F)V
+	public final fun setOrigin (FFF)V
+	public static synthetic fun setOrigin$default (Lcom/awakekt/awake/core/particles/ParticleSimulation;FFFILjava/lang/Object;)V
+	public final fun setOriginX (F)V
+	public final fun setOriginY (F)V
+	public final fun setOriginZ (F)V
+	public final fun setPlane (Lcom/awakekt/awake/core/particles/ParticlePlane;)V
+	public final fun setRadialSpeed (F)V
+	public final fun setRandom (Lkotlin/random/Random;)V
+	public final fun setSpawnRate (F)V
+	public final fun setTurbulence (F)V
+	public final fun setTurbulenceFrequency (F)V
+	public final fun setVelocityJitter (F)V
+	public final fun spawn (FFFFFF)Z
+	public static synthetic fun spawn$default (Lcom/awakekt/awake/core/particles/ParticleSimulation;FFFFFFILjava/lang/Object;)Z
+	public final fun step (FFLcom/awakekt/awake/core/particles/ParticleDeathListener;)V
+	public static synthetic fun step$default (Lcom/awakekt/awake/core/particles/ParticleSimulation;FFLcom/awakekt/awake/core/particles/ParticleDeathListener;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSimulationKt {
+	public static final field UNLIMITED_BURST_COUNT I
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpawnConfig {
+	public fun <init> ()V
+	public final fun set (Lcom/awakekt/awake/core/particles/ParticleSpawnShape;)V
+	public final fun setBox (FFF)V
+	public static synthetic fun setBox$default (Lcom/awakekt/awake/core/particles/ParticleSpawnConfig;FFFILjava/lang/Object;)V
+	public final fun setPoint ()V
+	public final fun setRectEdge (FF)V
+	public final fun setRingXY (FF)V
+	public static synthetic fun setRingXY$default (Lcom/awakekt/awake/core/particles/ParticleSpawnConfig;FFILjava/lang/Object;)V
+	public final fun setRingXZ (F)V
+}
+
+public abstract interface class com/awakekt/awake/core/particles/ParticleSpawnShape {
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpawnShape$Box : com/awakekt/awake/core/particles/ParticleSpawnShape {
+	public fun <init> (FFF)V
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHalfExtentX ()F
+	public final fun getHalfExtentY ()F
+	public final fun getHalfExtentZ ()F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpawnShape$Point : com/awakekt/awake/core/particles/ParticleSpawnShape {
+	public static final field INSTANCE Lcom/awakekt/awake/core/particles/ParticleSpawnShape$Point;
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpawnShape$RectEdge : com/awakekt/awake/core/particles/ParticleSpawnShape {
+	public fun <init> (FF)V
+	public final fun getHalfHeight ()F
+	public final fun getHalfWidth ()F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpawnShape$RingXY : com/awakekt/awake/core/particles/ParticleSpawnShape {
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInnerRadius ()F
+	public final fun getOuterRadius ()F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpawnShape$RingXZ : com/awakekt/awake/core/particles/ParticleSpawnShape {
+	public fun <init> (F)V
+	public final fun getRadius ()F
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpinConfig {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getEnabled ()Z
+	public final fun getMaxDegreesPerSecond ()F
+	public final fun getMinDegreesPerSecond ()F
+	public final fun getRandomStartAngle ()Z
+	public final fun set (FFZ)V
+	public final fun set (Lcom/awakekt/awake/core/particles/ParticleSpinRange;)V
+	public static synthetic fun set$default (Lcom/awakekt/awake/core/particles/ParticleSpinConfig;FFZILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/particles/ParticleSpinRange {
+	public fun <init> (FFZ)V
+	public synthetic fun <init> (FFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getMaxDegreesPerSecond ()F
+	public final fun getMinDegreesPerSecond ()F
+	public final fun getRandomStartAngle ()Z
+}
+

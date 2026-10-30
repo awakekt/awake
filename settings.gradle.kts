@@ -9,6 +9,7 @@ rootProject.name = "Awake"
 include(":awake:core:math")
 include(":awake:core:math2d")
 include(":awake:core:spatial")
+include(":awake:core:particles")
 include(":awake:core:pool")
 include(":awake:core:graphics2d")
 include(":awake:core:color")

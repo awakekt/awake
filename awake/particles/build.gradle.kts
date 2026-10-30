@@ -18,6 +18,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:math"))
+            api(project(":awake:core:particles"))
             api(project(":awake:ecs"))
             api(project(":awake:engine:render:contract"))
             api(project(":awake:engine:render:passes"))

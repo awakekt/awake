@@ -128,10 +128,11 @@ class ParticleSystemTest {
         val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.001f) // spawn, age ~= 0
-        val particle = world.family<ParticleEmitter>().components().first().particles[0]
+        val emitter = world.family<ParticleEmitter>().components().first()
+        val particle = emitter.particles[0]
         assertEquals(
             0.8f,
-            particle.currentAlpha(),
+            particle.currentAlpha(emitter),
             0.01f,
             "just spawned, alpha should be ~startAlpha",
         )
@@ -139,7 +140,7 @@ class ParticleSystemTest {
         system.update(world, 0.5f) // age ~= 0.5 of a 1s lifetime -- halfway faded
         assertEquals(
             0.4f,
-            particle.currentAlpha(),
+            particle.currentAlpha(emitter),
             0.02f,
             "halfway through lifetime, alpha should be ~half",
         )
@@ -343,7 +344,8 @@ class ParticleSystemTest {
         }
 
         assertEquals(0.3f, particle.currentScale(grows), 1e-6f)
-        assertEquals(0.1f, particle.currentScale(emitter().also { it.particles[0].scale = 0.1f }), "no endScale keeps the scale")
+        val plain = emitter().also { it.particles[0].scale = 0.1f }
+        assertEquals(0.1f, plain.particles[0].currentScale(plain), "no endScale keeps the scale")
     }
 
     @Test
@@ -477,6 +479,74 @@ class ParticleSystemTest {
             emitter.particles.count { it.alive },
             "dynamicSpawnRate must be re-read every frame",
         )
+    }
+
+    /** A rate provider is asked only while the continuous rate spawns: not under a burst cycle, nor once a burstCount is spent. */
+    @Test
+    fun dynamicSpawnRateIsOnlyAskedOnTheContinuousRatePath() {
+        val world = World()
+        var cycleAsks = 0
+        val cycled = emitter(maxParticles = 8, spawnRate = 0f, lifetime = 10f).also {
+            it.dynamics = ParticleDynamics(dynamicSpawnRate = { cycleAsks += 1; 100f })
+            it.lifecycle = ParticleLifecycle(burstCycle = ParticleBurstCycle(1f, 1f, 0.5f, 1))
+        }
+        var cappedAsks = 0
+        val capped = emitter(maxParticles = 8, spawnRate = 0f, lifetime = 10f).also {
+            it.dynamics = ParticleDynamics(dynamicSpawnRate = { cappedAsks += 1; 1000f })
+            it.lifecycle = ParticleLifecycle(burstCount = 2)
+        }
+        world.add(world.create(), cycled)
+        world.add(world.create(), capped)
+        val system = ParticleSystem(EmitterPlacement.None)
+
+        system.update(world, 0.1f)
+        assertEquals(0, cycleAsks, "a burst cycle replaces the rate, so the provider is never asked")
+        assertEquals(1, cappedAsks, "asked while the burstCount still has particles to spawn")
+        assertEquals(2, capped.liveParticleCount)
+
+        system.update(world, 0.1f)
+        system.update(world, 0.1f)
+        assertEquals(0, cycleAsks)
+        assertEquals(1, cappedAsks, "not asked once the burstCount is spent")
+    }
+
+    /** An emitter may have no slots, and a burst may have no particles: both run, spawn nothing and finish. */
+    @Test
+    fun anEmptyPoolAndAZeroCountBurstAreAllowed() {
+        val world = World()
+        val empty = emitter(maxParticles = 0, spawnRate = 100f)
+        world.add(world.create(), empty)
+        val system = ParticleSystem(EmitterPlacement.None)
+
+        system.update(world, 0.5f)
+        assertEquals(0, empty.liveParticleCount)
+        assertEquals(0, empty.emit(3))
+        assertEquals(3L, empty.droppedParticleCount, "the whole burst is dropped")
+        assertFalse(empty.spawn(Vec3f(0f, 0f, 0f)))
+
+        val burstWorld = World()
+        spawnParticleBurst(
+            burstWorld, fakeMesh(), fakeMaterial(), Vec3f(0f, 0f, 0f),
+            count = 0, spawnRate = 100f, lifetime = 1f, startAlpha = 1f, baseVelocity = Vec3f(0f, 1f, 0f),
+        )
+        assertEquals(1, burstWorld.family<ParticleEmitter>().size)
+        system.update(burstWorld, 0.016f)
+        assertEquals(0, burstWorld.family<ParticleEmitter>().size, "a burst of nothing is spent at once")
+    }
+
+    /** A negative burstCount spawns nothing, as it did before the shared simulation, rather than spawning forever. */
+    @Test
+    fun aNegativeBurstCountSpawnsNothing() {
+        val world = World()
+        val negative = emitter(maxParticles = 4, spawnRate = 1000f).also {
+            it.lifecycle = ParticleLifecycle(burstCount = -1)
+        }
+        world.add(world.create(), negative)
+
+        ParticleSystem(EmitterPlacement.None).update(world, 0.1f)
+
+        assertEquals(0, negative.liveParticleCount)
+        assertEquals(0, world.family<ParticleEmitter>().size, "an emitter with nothing to spawn is spent")
     }
 
     @Test

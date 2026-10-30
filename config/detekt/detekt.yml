@@ -151,6 +151,7 @@ comments:
       - '**/awake/core/pool/**'
       - '**/awake/core/math/**'
       - '**/awake/core/spatial/**'
+      - '**/awake/core/particles/**'
       - '**/awake/core/graphics2d/**'
       - '**/awake/ecs/src/**'
       - '**/awake/scene/document/**'
