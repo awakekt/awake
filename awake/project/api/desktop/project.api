@@ -238,7 +238,6 @@ public final class com/awakekt/awake/project/ContentBundleDirectoryReport {
 
 public final class com/awakekt/awake/project/ContentBundleDirectoryWriter {
 	public static final field INSTANCE Lcom/awakekt/awake/project/ContentBundleDirectoryWriter;
-	public static final fun runFromWorker (Ljava/io/File;Ljava/io/File;Ljava/io/File;Ljava/lang/String;IJZLjava/lang/String;Ljava/lang/String;)[J
 	public final fun write (Ljava/io/File;Ljava/io/File;Ljava/io/File;Lcom/awakekt/awake/project/ContentBundleWriter;Z)Lcom/awakekt/awake/project/ContentBundleDirectoryReport;
 	public static synthetic fun write$default (Lcom/awakekt/awake/project/ContentBundleDirectoryWriter;Ljava/io/File;Ljava/io/File;Ljava/io/File;Lcom/awakekt/awake/project/ContentBundleWriter;ZILjava/lang/Object;)Lcom/awakekt/awake/project/ContentBundleDirectoryReport;
 }

@@ -31,7 +31,9 @@ class ContentBundleDirectoryReport(
  * disk and writes the bundled `project.index.json` beside them.
  *
  * Shared by the `awake bundle` CLI command and the `generateContentBundles` Gradle task so both run
- * the same [ContentBundleWriter] and emit byte-identical output.
+ * the same [ContentBundleWriter] and emit byte-identical output. Neither prunes unless asked: the CLI
+ * with `--prune`, the Gradle task with `projectContent.pruneStaleBundles`, which is on by default only
+ * while the output folder is inside the build folder.
  */
 object ContentBundleDirectoryWriter {
     private val indexJson = Json {
@@ -88,24 +90,31 @@ object ContentBundleDirectoryWriter {
         return ContentBundleDirectoryReport(indexOut, bundles, bundled.files.size, bytes, written)
     }
 
+    private fun pruneUnlistedBundles(outputDirectory: File, index: ProjectIndex) {
+        if (!outputDirectory.isDirectory) return
+        val keep = index.bundles.mapTo(HashSet()) { outputDirectory.resolve(it.url).canonicalFile }
+        val suffix = ".${ContentBundleFormat.FILE_EXTENSION}"
+        outputDirectory.walkTopDown()
+            .filter { it.isFile && it.name.endsWith(suffix) && it.canonicalFile !in keep }
+            .forEach(File::delete)
+    }
+}
+
+/**
+ * The `generateContentBundles` Gradle task's way in, called by reflection from its isolated worker with
+ * only JDK types across the class-loader boundary. Internal: the parameter list and the [LongArray]
+ * answer are a contract with that task in the same release, not API, and change with it.
+ */
+internal object ContentBundleGradleWorker {
     /**
-     * Entry point invoked reflectively from Gradle's isolated worker in `project-content`, using only
-     * bootstrap JDK parameter and return types across the class-loader boundary.
+     * Runs [ContentBundleDirectoryWriter.write] with a writer built from the task's settings: [grouping]
+     * is `"folder"` or `"one"`, and [pathSalt] is required when [opaqueIds] is `true`.
      *
-     * @param indexFile Loose `project.index.json` file.
-     * @param projectRoot Project directory that indexed paths resolve against.
-     * @param outputDirectory Output directory for the bundled index and `.awkb` files.
-     * @param grouping Grouping mode: `"folder"` or `"one"`.
-     * @param folderDepth Folder depth when [grouping] is `"folder"`.
-     * @param targetBundleBytes Maximum target bytes per bundle.
-     * @param opaqueIds Whether to replace readable paths with salted opaque ids.
-     * @param pathSalt Salt for [ProjectPathIds] when [opaqueIds] is `true`.
-     * @param bundleUrlPrefix Relative folder prefix for bundle URLs.
-     * @return `[bundles, files, bytes, written]` as a 4-element [LongArray].
+     * @return `[bundles, files, bytes, written]`.
      */
     @JvmStatic
     @Suppress("LongParameterList")
-    fun runFromWorker(
+    fun run(
         indexFile: File,
         projectRoot: File,
         outputDirectory: File,
@@ -115,6 +124,7 @@ object ContentBundleDirectoryWriter {
         opaqueIds: Boolean,
         pathSalt: String?,
         bundleUrlPrefix: String,
+        pruneStaleBundles: Boolean,
     ): LongArray {
         val resolvedGrouping = when (grouping) {
             "folder" -> ContentBundleGrouping.byFolder(folderDepth)
@@ -122,9 +132,7 @@ object ContentBundleDirectoryWriter {
             else -> throw IllegalArgumentException("bundleGrouping must be 'folder' or 'one', not '$grouping'")
         }
         val pathIds = if (opaqueIds) {
-            require(!pathSalt.isNullOrBlank()) {
-                "bundlePathSalt must be set when bundleOpaqueIds is true"
-            }
+            require(!pathSalt.isNullOrBlank()) { "bundlePathSalt must be set when bundleOpaqueIds is true" }
             ProjectPathIds(pathSalt)
         } else {
             null
@@ -135,22 +143,7 @@ object ContentBundleDirectoryWriter {
             pathIds = pathIds,
             bundleUrlPrefix = bundleUrlPrefix,
         )
-        val report = write(
-            indexFile = indexFile,
-            projectRoot = projectRoot,
-            outputDirectory = outputDirectory,
-            writer = writer,
-            pruneStaleBundles = true,
-        )
+        val report = ContentBundleDirectoryWriter.write(indexFile, projectRoot, outputDirectory, writer, pruneStaleBundles)
         return longArrayOf(report.bundles.toLong(), report.files.toLong(), report.bytes, report.written.toLong())
-    }
-
-    private fun pruneUnlistedBundles(outputDirectory: File, index: ProjectIndex) {
-        if (!outputDirectory.isDirectory) return
-        val keep = index.bundles.mapTo(HashSet()) { outputDirectory.resolve(it.url).canonicalFile }
-        val suffix = ".${ContentBundleFormat.FILE_EXTENSION}"
-        outputDirectory.walkTopDown()
-            .filter { it.isFile && it.name.endsWith(suffix) && it.canonicalFile !in keep }
-            .forEach(File::delete)
     }
 }

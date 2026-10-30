@@ -63,6 +63,23 @@ class ProjectBundleTest {
     }
 
     @Test
+    fun anUnlistedBundleStaysUnlessPruneIsAsked() {
+        project()
+        awake("bundle", "build/project.index.json", "--output", "build/published", "--project", ".")
+        val listed = output.resolve("bundles").listFiles()!!.map { it.name }.toSet()
+        val stale = output.resolve("bundles/${"0".repeat(64)}.awkb").apply { writeText("the last release's bundle") }
+
+        val kept = awake("bundle", "build/project.index.json", "--output", "build/published", "--project", ".")
+        assertEquals(0, kept.code, kept.all)
+        assertTrue(stale.isFile, "a publish folder may still serve the last release")
+
+        val pruned = awake("bundle", "build/project.index.json", "--output", "build/published", "--project", ".", "--prune")
+        assertEquals(0, pruned.code, pruned.all)
+        assertFalse(stale.exists(), "--prune deletes a bundle the new index doesn't list")
+        assertEquals(listed, output.resolve("bundles").listFiles()!!.map { it.name }.toSet())
+    }
+
+    @Test
     fun opaqueIdsNeedASaltAndLeaveNoPathInTheIndex() {
         project()
 

@@ -83,4 +83,41 @@ class ProjectContentPluginTest {
         assertEquals("bundles", task.bundleUrlPrefix.get())
         assertTrue("generateContentBundles" !in check.taskDependencies.getDependencies(check).map { it.name })
     }
+
+    /** A publish folder outside the build may still serve the last release's bundles to players mid-update. */
+    @Test
+    fun generateContentBundlesPrunesOnlyAnOutputFolderInsideTheBuild() {
+        val project = ProjectBuilder.builder().build()
+        project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
+        val task = project.tasks.getByName("generateContentBundles") as GenerateContentBundlesTask
+        val extension = project.extensions.getByType(ProjectContentExtension::class.java)
+
+        assertTrue(task.pruneStaleBundles.get(), "build/published is the build's own")
+
+        extension.bundlesOutputDirectory.set(project.layout.projectDirectory.dir("site/publish"))
+        assertEquals(false, task.pruneStaleBundles.get(), "a folder outside the build is kept as it is")
+
+        extension.pruneStaleBundles.set(true)
+        assertTrue(task.pruneStaleBundles.get(), "an explicit setting wins")
+    }
+
+    /** The bundles read the files the loose index lists, so they take the index task's inputs, not a copy of them. */
+    @Test
+    fun generateContentBundlesTakesTheIndexTasksInputs() {
+        val project = ProjectBuilder.builder().build()
+        project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
+        project.file("awake.project.json").writeText("{}")
+        project.file("scenes/harbor.scene.json").apply {
+            parentFile.mkdirs()
+            writeText("{}")
+        }
+        val extension = project.extensions.getByType(ProjectContentExtension::class.java)
+        extension.indexRoots.set(listOf("scenes"))
+
+        val bundles = project.tasks.getByName("generateContentBundles") as GenerateContentBundlesTask
+        val index = project.tasks.getByName("generateProjectIndex") as GenerateProjectIndexTask
+
+        assertEquals(index.indexedFiles.asFileTree.files, bundles.indexedFiles.asFileTree.files)
+        assertTrue(project.file("scenes/harbor.scene.json") in bundles.indexedFiles.asFileTree.files)
+    }
 }

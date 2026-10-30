@@ -37,6 +37,12 @@ projectContent.bundleFolderDepth.convention(1)
 projectContent.targetBundleBytes.convention(16L * 1024 * 1024)
 projectContent.bundleOpaqueIds.convention(false)
 projectContent.bundleUrlPrefix.convention("bundles")
+// Prune only a folder the build owns; a publish folder elsewhere may still serve the last release.
+projectContent.pruneStaleBundles.convention(
+    projectContent.bundlesOutputDirectory.zip(layout.buildDirectory) { output, build ->
+        output.asFile.normalize().startsWith(build.asFile.normalize())
+    },
+)
 projectContent.engineVersion.convention(providers.provider {
     val resource = requireNotNull(ProjectContentExtension::class.java.getResourceAsStream("/com/awakekt/awake/build/project-content.properties")) {
         "The Awake project-content plugin is missing its version resource"
@@ -106,11 +112,8 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     group = "awake codegen"
     description = "Pack the project index's files into content bundles and write a bundled index."
     indexFile.set(generateProjectIndex.flatMap { it.outputFile })
-    indexedFiles.from(
-        layout.projectDirectory.file("awake.project.json"),
-        layout.projectDirectory.file("assets.lock.json"),
-        projectContent.indexRoots.map { roots -> roots.map(layout.projectDirectory::dir) },
-    )
+    // The files the loose index lists are the files this reads: one list, kept by the index task.
+    indexedFiles.from(generateProjectIndex.map { it.indexedFiles })
     projectDirectory.set(layout.projectDirectory)
     outputDirectory.set(projectContent.bundlesOutputDirectory)
     grouping.set(projectContent.bundleGrouping)
@@ -119,6 +122,7 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     opaqueIds.set(projectContent.bundleOpaqueIds)
     pathSalt.set(projectContent.bundlePathSalt)
     bundleUrlPrefix.set(projectContent.bundleUrlPrefix)
+    pruneStaleBundles.set(projectContent.pruneStaleBundles)
     workerClasspath.from(awakeProjectContentWorker)
 }
 

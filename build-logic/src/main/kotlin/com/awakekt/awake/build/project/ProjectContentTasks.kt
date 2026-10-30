@@ -65,6 +65,13 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     val bundleOpaqueIds: Property<Boolean> = objects.property(Boolean::class.java)
     val bundlePathSalt: Property<String> = objects.property(String::class.java)
     val bundleUrlPrefix: Property<String> = objects.property(String::class.java)
+
+    /**
+     * Whether `generateContentBundles` deletes `.awkb` files under [bundlesOutputDirectory] that the new
+     * index doesn't list. On by default only while that folder is inside the build folder: a publish
+     * folder that still serves the previous release's bundles keeps them for players mid-update.
+     */
+    val pruneStaleBundles: Property<Boolean> = objects.property(Boolean::class.java)
     val engineVersion: Property<String> = objects.property(String::class.java)
 }
 
@@ -432,6 +439,10 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
     @get:Input
     abstract val bundleUrlPrefix: Property<String>
 
+    /** Whether `.awkb` files under [outputDirectory] that the new index doesn't list are deleted. */
+    @get:Input
+    abstract val pruneStaleBundles: Property<Boolean>
+
     @get:Classpath
     abstract val workerClasspath: ConfigurableFileCollection
 
@@ -456,6 +467,7 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
             opaqueIds.set(this@GenerateContentBundlesTask.opaqueIds)
             pathSalt.set(this@GenerateContentBundlesTask.pathSalt)
             bundleUrlPrefix.set(this@GenerateContentBundlesTask.bundleUrlPrefix)
+            pruneStaleBundles.set(this@GenerateContentBundlesTask.pruneStaleBundles)
         }
         queue.await()
     }
@@ -471,24 +483,36 @@ interface GenerateContentBundlesParameters : WorkParameters {
     val opaqueIds: Property<Boolean>
     val pathSalt: Property<String>
     val bundleUrlPrefix: Property<String>
+    val pruneStaleBundles: Property<Boolean>
 }
 
 abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBundlesParameters> {
     override fun execute() {
         val loader = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
-        val writerClass = Class.forName("com.awakekt.awake.project.ContentBundleDirectoryWriter", true, loader)
-        val method = writerClass.getMethod(
-            "runFromWorker",
-            File::class.java,
-            File::class.java,
-            File::class.java,
-            String::class.java,
-            Int::class.javaPrimitiveType,
-            Long::class.javaPrimitiveType,
-            Boolean::class.javaPrimitiveType,
-            String::class.java,
-            String::class.java,
-        )
+        // A contract with com.awakekt.awake:project of the plugin's own version; an overridden
+        // projectContent.engineVersion from another release may not have it.
+        val method = try {
+            Class.forName(WORKER_CLASS, true, loader).getMethod(
+                "run",
+                File::class.java,
+                File::class.java,
+                File::class.java,
+                String::class.java,
+                Int::class.javaPrimitiveType,
+                Long::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType,
+                String::class.java,
+                String::class.java,
+                Boolean::class.javaPrimitiveType,
+            )
+        } catch (failure: ReflectiveOperationException) {
+            throw GradleException(
+                "generateContentBundles needs com.awakekt.awake:project of the same release as the " +
+                    "com.awakekt.awake.plugin.project-content plugin, and the one on its worker class path doesn't " +
+                    "match ($failure). Leave projectContent.engineVersion unset, or set it to the plugin's version.",
+                failure,
+            )
+        }
         val stats = try {
             method.invoke(
                 null,
@@ -501,6 +525,7 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
                 parameters.opaqueIds.get(),
                 parameters.pathSalt.orNull,
                 parameters.bundleUrlPrefix.get(),
+                parameters.pruneStaleBundles.get(),
             ) as LongArray
         } catch (failure: InvocationTargetException) {
             val cause = failure.targetException ?: failure
@@ -508,6 +533,10 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
         }
         Logging.getLogger(GenerateContentBundlesTask::class.java)
             .lifecycle("Generated content bundles: ${stats[1]} files in ${stats[0]} bundles (${stats[3]} written)")
+    }
+
+    private companion object {
+        const val WORKER_CLASS = "com.awakekt.awake.project.ContentBundleGradleWorker"
     }
 }
 

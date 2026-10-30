@@ -29,10 +29,11 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
 
     /**
      * Packs [indexFile]'s files with [writer], writing only bundles not already in [output], and
-     * answers what it wrote.
+     * answers what it wrote. With [prune], `.awkb` files under [output] that the new index doesn't
+     * list are deleted; without it they stay, as a publish folder serving the last release needs.
      */
-    fun run(indexFile: File, writer: ContentBundleWriter): Report {
-        val report = runCatching { ContentBundleDirectoryWriter.write(indexFile, projectRoot, output, writer) }
+    fun run(indexFile: File, writer: ContentBundleWriter, prune: Boolean = false): Report {
+        val report = runCatching { ContentBundleDirectoryWriter.write(indexFile, projectRoot, output, writer, pruneStaleBundles = prune) }
             .getOrElse { failure ->
                 val reason = if (failure is IOException) "can't read a project file: ${failure.message}" else failure.message.orEmpty()
                 throw CommandFailure(reason, failure)
