@@ -32,6 +32,7 @@ import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import com.awakekt.awake.ui.canvas.CanvasView
 
 /** Keeps an outer element's settings out of reach inside a child's block. */
 @DslMarker
@@ -217,6 +218,9 @@ class CanvasElementScope internal constructor(
     /** A View's camera: the name of a node with a camera. */
     var camera: String = defaults.camera
 
+    /** A View's transparency and picture mask, saved on its focused canvas_view component. */
+    var view: CanvasView? = null
+
     /** Whether a Text's `[[key|words]]` spans draw as links. */
     var links: Boolean = defaults.links
 
@@ -343,8 +347,10 @@ class CanvasElementScope internal constructor(
     internal fun build(): SceneNode {
         val element = toSceneComponent()
         problems += element.unsavedFieldIssues(path)
+        if (view != null && kind != CanvasElementKind.View) problems += SceneValidationIssue(path, "view does nothing on a ${kind.name}, so it is not saved")
         // Saved as the components it is: the same set an older canvas_element reads as.
-        return SceneNode(name = name, components = element.toCanvasComponents() + components, children = children.toList())
+        val parts = element.toCanvasComponents().map { if (it is SceneCanvasView) it.copy(settings = view) else it }
+        return SceneNode(name = name, components = parts + components, children = children.toList())
     }
 
     private fun toSceneComponent(): SceneCanvasElement = SceneCanvasElement(

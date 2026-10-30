@@ -150,6 +150,15 @@ it, and `canvasViews(world)` hands it to a host. An element that follows a node 
 `CanvasProjector`, which reports where the node lands in the frame's pixels; `SceneCanvasResolver`
 is how `CanvasOverlay` reaches both without knowing what a `World`, a node or a camera is.
 
+For a portrait over a translucent or gradient frame, set the focused `canvas_view` component's
+`settings` to `CanvasView(transparent = true)`, or `view = CanvasView(...)` in the prefab
+builder. The runtime clears that camera target to transparent and omits its sky; geometry,
+lighting and fog remain. A `mask = CanvasMask.Circle` clips just the picture; the default
+`Box` mask follows `style.cornerRadius`. Explicit ancestor clips are retained, and the target
+still uses the element's scaled pixel size and safe-area placement. The default stays opaque.
+These settings round-trip through the focused scene binding and normal world export; the
+retired `canvas_element` snapshot helper represents only its older fields.
+
 ## Reacting to a button
 
 ```kotlin

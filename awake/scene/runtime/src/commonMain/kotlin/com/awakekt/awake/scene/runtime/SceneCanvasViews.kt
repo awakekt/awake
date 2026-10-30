@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuPassInput
@@ -28,6 +29,7 @@ internal class SceneCanvasViews(
     private class View(val target: RenderTarget, var world: World, var camera: Camera, renderer: Renderer) {
         val material: Material = renderer.createMaterial(renderTarget = target)
         var shown = true
+        var transparent = false
 
         fun destroy() {
             material.destroy()
@@ -49,6 +51,7 @@ internal class SceneCanvasViews(
         view.world = world
         view.camera = lens
         view.shown = true
+        view.transparent = element.view?.transparent == true
         return view.material
     }
 
@@ -59,7 +62,9 @@ internal class SceneCanvasViews(
             val view = iterator.next()
             if (view.shown) {
                 // Not waited for: the frame that samples the target is submitted after it.
-                renderer.submitToTexture(view.target, plan(view.world, view.camera, view.target.width, view.target.height))
+                val input = plan(view.world, view.camera, view.target.width, view.target.height)
+                val picture = if (view.transparent) input.copy(environment = input.environment.copy(clearColor = Color.Transparent, showSky = false)) else input
+                renderer.submitToTexture(view.target, picture)
                 view.shown = false
             } else {
                 view.destroy()

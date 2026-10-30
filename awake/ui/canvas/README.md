@@ -121,6 +121,13 @@ A `View` shows what the camera named by its `camera` field sees, filling its box
 children, through `CanvasResolver.texture(element, camera, width, height)`. Without a resolver
 that answers it a `View` draws only its style.
 
+`element.view = CanvasView(transparent = true, mask = CanvasMask.Circle)` opts into a
+transparent camera picture and a circular outline. A `Box` mask uses `style.cornerRadius`;
+`Pill` and `CutCorner` use the same shapes as a Sweep. The mask clips the camera picture,
+leaving the element's own background and overlay children as authored. Explicit ancestor
+clips also apply. The resolver supplies a premultiplied texture: a transparent camera target
+must clear to transparent and omit its sky. The default stays opaque with its black backing.
+
 An element that `follow`s a node is placed by `CanvasResolver.point`/`bounds`, which report where
 the node lands in the frame's pixels. `CanvasOverlay` moves that into its own box by where the box
 sat in the frame when it was last placed, so a canvas drawn over part of the window lands on what

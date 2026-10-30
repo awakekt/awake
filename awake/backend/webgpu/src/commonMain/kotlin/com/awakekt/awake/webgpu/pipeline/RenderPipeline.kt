@@ -361,7 +361,7 @@ class RenderPipeline(
                 dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
             ),
             alpha = BlendComponent(
-                srcFactor = GPUBlendFactor.SrcAlpha,
+                srcFactor = GPUBlendFactor.One,
                 dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
             ),
         )

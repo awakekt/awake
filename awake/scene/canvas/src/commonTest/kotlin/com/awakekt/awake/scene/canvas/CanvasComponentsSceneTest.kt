@@ -17,11 +17,13 @@ import com.awakekt.awake.ui.canvas.CanvasButtonWidget
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasGradient
+import com.awakekt.awake.ui.canvas.CanvasMask
 import com.awakekt.awake.ui.canvas.CanvasPointerState
 import com.awakekt.awake.ui.canvas.CanvasRect
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasText
+import com.awakekt.awake.ui.canvas.CanvasView
 import com.awakekt.awake.ui.canvas.get
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,6 +39,22 @@ import kotlin.test.assertTrue
  * is a component of its own that is never saved.
  */
 class CanvasComponentsSceneTest {
+    @Test
+    fun transparentMaskedViewsSurviveWorldExportAndJsonReload() {
+        val settings = CanvasView(transparent = true, mask = CanvasMask.Circle)
+        val node = SceneNode(name = "Portrait", components = listOf(SceneCanvasRect(), SceneCanvasView("Camera", settings)))
+        val world = loadCanvas(listOf(node))
+        assertEquals(settings, world.canvasElements().getValue("Portrait").view)
+        val saved = world.saveCanvas().single()
+        assertEquals(settings, saved.components.filterIsInstance<SceneCanvasView>().single().settings)
+        val json = CanvasPrefabs.json.encodeToString(SceneNode.serializer(), saved)
+        val decoded = CanvasPrefabs.json.decodeFromString(SceneNode.serializer(), json)
+        assertEquals(settings, loadCanvas(listOf(decoded)).canvasElements().getValue("Portrait").view)
+        val older = CanvasPrefabs.json.decodeFromString(SceneCanvasView.serializer(), "{\"camera\":\"Camera\"}")
+        assertNull(older.settings)
+        assertFalse("settings" in CanvasPrefabs.json.encodeToString(SceneCanvasView.serializer(), older), "old views gain no field")
+    }
+
     @Test
     fun middleColoursSurviveTheLegacyAndFocusedSavedForms() {
         val style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF", middle = "#00FF0080"))

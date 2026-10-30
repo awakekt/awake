@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.awakekt.awake.build.extension
+import org.gradle.api.Task
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.testing.Test
 
 /**
- * A build-wide token held by whichever test task is currently driving the GPU.
+ * A build-wide token held by whichever test or evidence task is currently driving the GPU.
  *
  * Carries no state — its only job is to exist once per build and be lent to one holder at a
  * time, which is what a [BuildService] with `maxParallelUsages = 1` gives.
@@ -29,7 +30,10 @@ abstract class ExclusiveGpuService : BuildService<BuildServiceParameters.None>
  * remembers to add it. Sharing one single-use service means opting in is one call at the point
  * that actually needs it, and modules that never touch the GPU keep running in parallel.
  */
-fun requireExclusiveGpu(test: Test) {
+fun requireExclusiveGpu(test: Test) = requireExclusiveGpu(test as Task)
+
+/** Shares the same device token with evidence captures and other GPU tasks. */
+fun requireExclusiveGpu(test: Task) {
     val service = test.project.gradle.sharedServices.registerIfAbsent(
         "awakeExclusiveGpu",
         ExclusiveGpuService::class.java,

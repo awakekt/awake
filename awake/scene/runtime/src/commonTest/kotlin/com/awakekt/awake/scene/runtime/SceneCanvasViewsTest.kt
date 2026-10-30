@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.math.Lens
@@ -23,8 +24,10 @@ import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.scene.rendering.sky.Skybox
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasView
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Test
@@ -43,6 +46,8 @@ class SceneCanvasViewsTest {
         val calls = ArrayList<String>()
         val frames = ArrayList<List<Float>>()
         val renders = ArrayList<List<Float>>()
+        val viewInputs = ArrayList<GpuPassInput>()
+        val frameInputs = ArrayList<GpuPassInput>()
         val live = HashSet<RenderTarget>()
         private val targetOf = HashMap<Material, RenderTarget>()
 
@@ -62,12 +67,14 @@ class SceneCanvasViewsTest {
         override fun draw(input: GpuPassInput) {
             calls += "frame"
             frames += input.viewProjection.data.toList()
+            frameInputs += input
         }
 
         override fun submitToTexture(target: RenderTarget, input: GpuPassInput) {
             check(target in live) { "rendered into a freed target" }
             calls += "view ${target.width}x${target.height}"
             renders += input.viewProjection.data.toList()
+            viewInputs += input
         }
 
         override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
@@ -145,6 +152,26 @@ class SceneCanvasViewsTest {
 
         assertEquals(listOf("frame", "view 120x100", "ui [120x100]"), frame())
         assertEquals(listOf(120 to 100), renderer.live.map { it.width to it.height })
+    }
+
+    @Test
+    fun transparencyCanToggleOnAReusedTargetWithoutChangingTheMainCamera() = runTest {
+        runtime.ready(renderer)
+        runtime.world.add(runtime.world.create(), Skybox())
+        frame()
+        val target = renderer.live.single()
+        val opaque = renderer.viewInputs.last().environment
+        assertTrue(opaque.showSky, "control: this scene has a sky")
+        portrait.view = CanvasView(transparent = true)
+        frame()
+        val transparent = renderer.viewInputs.last().environment
+        assertEquals(Color.Transparent, transparent.clearColor)
+        assertEquals(false, transparent.showSky)
+        assertEquals(opaque, renderer.frameInputs.last().environment, "the main frame keeps its sky and clear")
+        assertEquals(target, renderer.live.single(), "changing coverage does not reallocate")
+        portrait.view = null
+        frame()
+        assertEquals(opaque, renderer.viewInputs.last().environment, "returning to default restores the camera background")
     }
 
     @Test

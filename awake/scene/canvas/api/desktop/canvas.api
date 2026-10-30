@@ -211,6 +211,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementScope {
 	public final fun getTooltip ()Ljava/lang/String;
 	public final fun getTouchOnly ()Z
 	public final fun getValue ()F
+	public final fun getView ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun getVisible ()Z
 	public final fun getWheel ()Z
 	public final fun getWidth-LGk54g8 ()F
@@ -273,6 +274,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementScope {
 	public final fun setTooltip (Ljava/lang/String;)V
 	public final fun setTouchOnly (Z)V
 	public final fun setValue (F)V
+	public final fun setView (Lcom/awakekt/awake/ui/canvas/CanvasView;)V
 	public final fun setVisible (Z)V
 	public final fun setWheel (Z)V
 	public final fun setWidth-Jha-xPg (F)V
@@ -881,8 +883,10 @@ public final class com/awakekt/awake/scene/canvas/CanvasViewBinding : com/awakek
 
 public final class com/awakekt/awake/scene/canvas/CanvasViewPart : com/awakekt/awake/scene/canvas/CanvasPart {
 	public final fun getCamera ()Ljava/lang/String;
+	public final fun getView ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun getWidget ()Lcom/awakekt/awake/ui/canvas/CanvasViewWidget;
 	public final fun setCamera (Ljava/lang/String;)V
+	public final fun setView (Lcom/awakekt/awake/ui/canvas/CanvasView;)V
 }
 
 public abstract interface class com/awakekt/awake/scene/canvas/CanvasViews {
@@ -1871,12 +1875,18 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasView : com/awakekt/
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasView;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasView;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/scene/canvas/SceneCanvasView;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasView;)Lcom/awakekt/awake/scene/canvas/SceneCanvasView;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasView;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasView;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasView;Ljava/lang/String;Lcom/awakekt/awake/ui/canvas/CanvasView;ILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasView;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getCamera ()Ljava/lang/String;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasView;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;

@@ -25,6 +25,7 @@ import com.awakekt.awake.ui.canvas.CanvasStepperWidget
 import com.awakekt.awake.ui.canvas.CanvasSweep
 import com.awakekt.awake.ui.canvas.CanvasSweepWidget
 import com.awakekt.awake.ui.canvas.CanvasTextFieldWidget
+import com.awakekt.awake.ui.canvas.CanvasView
 import com.awakekt.awake.ui.canvas.CanvasViewWidget
 import com.awakekt.awake.ui.canvas.CanvasWidget
 import kotlinx.serialization.SerialName
@@ -201,11 +202,18 @@ data class SceneCanvasTextField(
  * The saved form of a [com.awakekt.awake.ui.canvas.CanvasViewWidget]: what a camera sees.
  *
  * @property camera The name of a node with a camera, whose picture the view shows; empty shows none.
+ * @property settings Transparent compositing and picture masking; null keeps the opaque default.
  */
 @Serializable
 @SerialName("canvas_view")
 @SceneBinding(CanvasViewWidget::class, name = "CanvasViewBinding", runtimeOnly = ["kind"])
-data class SceneCanvasView(val camera: String = "") : SceneComponent {
+data class SceneCanvasView(val camera: String = "", val settings: CanvasView? = null) : SceneComponent {
+    /** Keeps the original constructor and default-mask signature for compiled consumers. */
+    constructor(camera: String = "") : this(camera, null)
+
+    /** Keeps the original copy signature, retaining the new settings. */
+    fun copy(camera: String = this.camera): SceneCanvasView = SceneCanvasView(camera, settings)
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     override fun validate(path: String): List<SceneValidationIssue> = widgetIssues(path, "canvas_view", null, null)
