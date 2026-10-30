@@ -180,8 +180,11 @@ class NodeGraphCanvasFrameProbe {
         // The bytes are mostly the engine's per-node work, chiefly one primitive per glyph. The
         // canvas's own share is small: idle wires redraw retained meshes, and below labelMinZoom the
         // port labels are not composed at all. The editor view read 527,600 until the weighted font stopped
-        // allocating per glyph it resolves (#993), then 341,624.
+        // allocating per glyph it resolves (#993), then 341,624, and 347,672 before #1061. #1061 gives every
+        // glyph primitive a `decoration` reference, its outline and shadow, which takes a `UiDrawPrimitive.Glyph`
+        // from 64 to 72 bytes: 402 glyphs a frame here, 3,216 bytes, read 350,888. The all-visible view draws
+        // no glyphs at zoom 0.25 and did not move.
         const val ALL_VISIBLE_CEILING = 620_000L
-        const val EDITOR_VIEW_CEILING = 349_000L
+        const val EDITOR_VIEW_CEILING = 358_000L
     }
 }
