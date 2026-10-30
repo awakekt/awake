@@ -77,21 +77,25 @@ class TextLayoutConformanceTest {
         return if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)
     }
 
+    // The browser's `font-kerning`: `normal` kerns, as Core does by default, and `none` turns it off.
+    private fun kerningOf(spec: JsonObject): Boolean = when (val value = spec.string("kerning")) {
+        "normal" -> true
+        "none" -> false
+        else -> error("Unsupported font-kerning '$value' in ${spec.string("id")}")
+    }
+
+    private fun numeralsOf(spec: JsonObject): FontNumerals? = when (val value = spec.string("numeric")) {
+        "normal" -> null
+        "tabular-nums" -> FontNumerals.Tabular
+        "proportional-nums" -> FontNumerals.Proportional
+        else -> error("Unsupported font-variant-numeric '$value' in ${spec.string("id")}")
+    }
+
     private fun measure(spec: JsonObject, font: UiFont): Layout {
         val size = spec.number("sizePx").toFloat()
         val density = spec.number("density").toFloat()
-        // The browser's `font-kerning`: `normal` kerns, as Core does by default, and `none` turns it off.
-        val kerning = when (val value = spec.string("kerning")) {
-            "normal" -> true
-            "none" -> false
-            else -> error("Unsupported font-kerning '$value' in ${spec.string("id")}")
-        }
-        val numerals = when (val value = spec.string("numeric")) {
-            "normal" -> null
-            "tabular-nums" -> FontNumerals.Tabular
-            "proportional-nums" -> FontNumerals.Proportional
-            else -> error("Unsupported font-variant-numeric '$value' in ${spec.string("id")}")
-        }
+        val kerning = kerningOf(spec)
+        val numerals = numeralsOf(spec)
         val resolvedFont = font.withNumerals(numerals)
         val style = TextStyle(
             font = font,
