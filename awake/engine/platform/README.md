@@ -10,6 +10,9 @@ host's frame callbacks into a portable application lifecycle; Vulkan and WebGPU 
 - `GraphicsEngine` and its backend-resource lifecycle
 - `WindowConfig`, backend selection, `Input`, and typed app services
 - `AppSpec`, `AppSpecBuilder`, `AppInstaller`, and `AppModule` contracts
+- `AppErrorHandler`, `AppError`, `AppErrorSource`, `AppCoroutineScope` and `launchStep`: Core catches
+  bootstrap, load, scene-switch, coroutine and system failures and routes them to the handler the app
+  registers as a service; it never presents them, and with no handler nothing changes
 
 It does not own a `World`, scene scheduling, Compose UI, editor behavior, Vulkan/WebGPU driver
 objects, or game policy.

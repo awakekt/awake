@@ -374,6 +374,10 @@ public final class com/awakekt/awake/project/LockVerifiedAssetSource : com/awake
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/PlatformContentCacheKt {
+	public static final fun platformContentCache (Ljava/lang/String;)Lcom/awakekt/awake/project/ContentCache;
+}
+
 public final class com/awakekt/awake/project/ProjectContentIssue {
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIssueCode;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/project/ProjectIssueSeverity;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIssueCode;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/project/ProjectIssueSeverity;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.engine.platform.error.AppErrorSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.audio.AudioSource
@@ -29,6 +30,7 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.scene.runtime.schedule.guardedFor
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlinx.coroutines.CancellationException
@@ -166,7 +168,10 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
                 status.loaded(load.path)
                 switchTo(next)
             },
-            onFailure = { failure -> status.refuse(load.path, project.playing.path, failure) },
+            onFailure = { failure ->
+                status.failed(load.path, failure)
+                refuse(runtime, load.path, project.playing.path, failure) { request(load.path) }
+            },
         )
     }
 
@@ -187,7 +192,8 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
             world.destroyAllBut(before)
             models.target = leaving.models
             next.close()
-            status.refuse(next.path, leaving.path, failure)
+            status.failed(next.path, failure)
+            refuse(runtime, next.path, leaving.path, failure) { request(next.path) }
             return
         }
         leave(world, leaving, before)
@@ -232,7 +238,10 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
      */
     private fun systemsFor(scene: ProjectScene): SceneSystemSet {
         val hostRuns = if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) setOf(SPRITE_CLIPS_SYSTEM) else emptySet()
-        return sceneSystemsFor(scene.document, services(scene), project.capabilities, hostRuns)
+        val built = sceneSystemsFor(scene.document, services(scene), project.capabilities, hostRuns)
+        // Each system guarded, so one that throws is reported to the app's error handler and skipped, not
+        // the frame. Built once per scene; the guard adds no allocation to a frame. The set still closes the systems themselves.
+        return SceneSystemSet(built.fixed.map { it.guardedFor(runtime) }, built.frame.map { it.guardedFor(runtime) }, built::close)
     }
 
     private fun services(scene: ProjectScene): SceneHostServices {
@@ -323,17 +332,20 @@ private fun World.destroyAllBut(kept: List<Entity>) {
     liveEntities().filter { it !in keep }.forEach(::destroy)
 }
 
-/** Logs that the scene at [path] can't be played, so the one at [playing] plays on, and publishes the failure. */
-private fun SwitchStatePublisher.refuse(path: String, playing: String, failure: Throwable) {
-    log.error(failure) { "Can't play $path, so $playing plays on: ${failure.message}" }
-    failed(path, failure)
-}
-
 /** Every live entity, copied: the world's own list changes as entities come and go. */
 @Suppress("SpreadOperator") // An empty array, once per switch.
 private fun World.liveEntities(): List<Entity> = query(*NO_COMPONENTS).toList()
 
 /** A query naming no component types, which matches every live entity. */
 private val NO_COMPONENTS = emptyArray<KClass<out Any>>()
+
+/**
+ * Logs that the scene at [path] can't be played, so the one at [playing] plays on, and hands the failure to
+ * the app's error handler, if it registered one, with [retry] to ask for [path] again.
+ */
+private fun refuse(runtime: SceneAppLifecycleRuntime, path: String, playing: String, failure: Throwable, retry: () -> Unit) {
+    log.error(failure) { "Can't play $path, so $playing plays on: ${failure.message}" }
+    runtime.reportError(AppErrorSource.SceneSwitch, failure, retry = retry, subject = path)
+}
 
 private val log = Logger("project.scenes")

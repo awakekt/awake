@@ -30,6 +30,9 @@ import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.platform.error.AppErrorHandler
+import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
@@ -647,6 +650,18 @@ class SceneAppLifecycleRuntime internal constructor(
      * @return The service instance, or `null` if not registered.
      */
     fun <T : Any> service(type: kotlin.reflect.KClass<T>): T? = services.service(type)
+
+    /**
+     * Hands a failure to the app's [AppErrorHandler], if it registered one.
+     *
+     * @param source Where it failed.
+     * @param cause What was thrown.
+     * @param retry Runs the failed step again, or null; see [com.awakekt.awake.engine.platform.error.AppError.retry].
+     * @param subject What failed, for the handler's message.
+     * @return Whether a handler took it; false when none is registered, and the caller does what it did before.
+     */
+    fun reportError(source: AppErrorSource, cause: Throwable, retry: (() -> Unit)? = null, subject: String? = null): Boolean =
+        services.reportError(source, cause, retry, subject)
 
     /**
      * Retrieves a mandatory registered application service, throwing an exception if not found.
