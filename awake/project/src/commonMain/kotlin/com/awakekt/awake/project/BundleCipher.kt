@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project
 
+import com.awakekt.awake.core.io.Sha256
 import dev.whyoleg.cryptography.BinarySize.Companion.bytes
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.DelicateCryptographyApi
@@ -30,6 +31,9 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
     /** [plaintext], whose SHA-256 is [sha256], sealed: [ProjectBundleEncryption.TAG_BYTES] longer. */
     @OptIn(DelicateCryptographyApi::class)
     suspend fun seal(plaintext: ByteArray, sha256: String): ByteArray {
+        // The key and nonce are this plaintext's alone only if sha256 is truly its hash: checked, so no
+        // caller can seal two plaintexts under one nonce.
+        require(Sha256.digestHex(plaintext) == sha256) { "seal needs the plaintext's own SHA-256" }
         val (key, nonce) = derive(sha256)
         // Sealing the same member twice is deterministic by design, but the JDK refuses an encryption
         // whose key and nonce match the last one its pooled Cipher ran. One throwaway encryption under
@@ -52,7 +56,7 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
 
     /**
      * [sealed] opened, once its tag proves it is the member whose plaintext SHA-256 is [sha256] under
-     * this key; otherwise fails naming [label].
+     * this key; otherwise fails with [BundleAuthenticationException] naming [label].
      */
     @OptIn(DelicateCryptographyApi::class)
     suspend fun open(sealed: ByteArray, sha256: String, label: String): ByteArray {
@@ -65,7 +69,7 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
         } catch (@Suppress("TooGenericExceptionCaught") failure: Throwable) {
             // Each provider throws its own type for a bad tag, and WebCrypto's rejection reaches wasm as
             // a JsException, which is a Throwable but not an Exception; all mean the same thing here.
-            throw IllegalStateException("$label failed authentication: the wrong key ($keyId), or damaged bytes", failure)
+            throw BundleAuthenticationException("$label failed authentication: the wrong key ($keyId), or damaged bytes", failure)
         }
     }
 
@@ -75,7 +79,10 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
             .secretDerivation(SHA256, (AES_KEY_BYTES + NONCE_BYTES).bytes, keyId.encodeToByteArray(), INFO_PREFIX + sha256.encodeToByteArray())
             .deriveSecretToByteArray(master)
         val key = provider.get(AES.GCM).keyDecoder().decodeFromByteArray(AES.Key.Format.RAW, okm.copyOfRange(0, AES_KEY_BYTES))
-        return key to okm.copyOfRange(AES_KEY_BYTES, okm.size)
+        val nonce = okm.copyOfRange(AES_KEY_BYTES, okm.size)
+        // The derived bytes are imported into the provider's key; this copy isn't needed any more.
+        okm.fill(0)
+        return key to nonce
     }
 
     override fun toString(): String = "BundleCipher(keyId=$keyId)"
@@ -86,3 +93,6 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
         val INFO_PREFIX = "awake-awkb-v2".encodeToByteArray() + byteArrayOf(0)
     }
 }
+
+/** A sealed member that didn't authenticate under the key: the wrong key, or damaged bytes. */
+internal class BundleAuthenticationException(message: String, cause: Throwable) : IllegalStateException(message, cause)

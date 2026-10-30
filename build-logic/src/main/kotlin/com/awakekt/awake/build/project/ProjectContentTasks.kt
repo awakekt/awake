@@ -511,7 +511,7 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
     @get:Input
     abstract val keyEnvironmentVariable: Property<String>
 
-    /** A SHA-256 of the key, so a new key reruns the task without Gradle keeping the key itself. */
+    /** A labelled SHA-256 of the key ([BundleKeyFingerprintSource]), so a new key reruns the task without Gradle keeping the key. */
     @get:Optional
     @get:Input
     abstract val keyFingerprint: Property<String>
@@ -655,7 +655,3 @@ private fun sha256(file: File): String {
     }
     return digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
 }
-
-/** A SHA-256 of [bytes] as hex, for [GenerateContentBundlesTask.keyFingerprint]. */
-internal fun keyFingerprintOf(bytes: ByteArray): String =
-    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }

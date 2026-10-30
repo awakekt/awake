@@ -51,8 +51,9 @@ where the key comes from:
 6. **The cache holds ciphertext (option B).** `ContentCache` gets each member's stored bytes, under
    a key derived from the key id and the plaintext SHA-256 (`ProjectIndex.cacheKeyOf`), and every
    hit is opened, which authenticates it, before a parser sees it. Nothing readable sits at rest, in
-   IndexedDB or on disk. A hit that fails to open is dropped and fetched again. The cost is a decrypt
-   per read and no sharing of cached bytes with loose or plaintext releases of the same file.
+   IndexedDB or on disk. A hit that fails to open isn't returned: the read fetches the member, and
+   the cached copy is replaced only once a fetched copy opens, so offline it stays. The cost is a
+   decrypt per read and no sharing of cached bytes with loose or plaintext releases of the same file.
 7. **No key store in Core (considered, deferred).** One contract covers every key source because the
    app decides what the provider does: fetch from its own server after sign-in (the priority path),
    return a key it saved earlier, or return a key embedded in the client. A Core store backed by
@@ -62,6 +63,15 @@ where the key comes from:
    the product's. It is tracked on #1149.
 8. **Keys scope to a project or an entitlement tier, not a session.** Rotating a key re-encrypts
    every bundle and changes every URL. Revoke a session at the key or index endpoint instead.
+
+## Limits accepted
+
+- **Membership can be confirmed.** Sealing is deterministic and each table of contents record keeps
+  the plaintext SHA-256, so anyone who already has a file can confirm it is in a bundle, as the
+  index already lets them. Nobody learns a file they don't have.
+- **A new key needs a new key id.** `cacheKeyOf` derives from the key id, not the key, so a key
+  rotated under the same id leaves cached copies that no longer open; each is fetched again before
+  it is replaced. Give every key its own id.
 
 ## Writer side
 

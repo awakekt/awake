@@ -66,7 +66,10 @@ interface ContentCache {
  * An encrypted index ([ProjectIndex.ENCRYPTED_FORMAT_VERSION]) needs [keys], which is asked once for
  * the index's key id. Each member is authenticated and opened as it is read; a wrong key or a damaged
  * byte fails the read. [cache] then holds the sealed bytes, never the plaintext, under
- * [ProjectIndex.cacheKeyOf], and every hit is opened again; a hit that doesn't open is fetched again.
+ * [ProjectIndex.cacheKeyOf], and every hit is opened again. A hit that doesn't open isn't returned:
+ * the read fetches the member, and the cached copy is replaced only once the fetched one opens. The
+ * key is kept for this source's life, so dropping the source, as detaching it from a
+ * [LayeredAssetSource] on sign-out does, drops the key.
  *
  * [fetch] is the host's: it resolves a relative `url` against wherever the index came from, sends any
  * sign-in, retries and resumes, so Core carries no HTTP library. For content that needs a short-lived
@@ -204,7 +207,13 @@ class IndexedAssetSource(
         return if (stored == null || seal == null) {
             stored
         } else {
-            runCatching { seal.open(entry, stored, entry.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+            // The key first, outside the catch: a provider that can't answer fails the read as itself.
+            seal.cipher()
+            try {
+                seal.open(entry, stored, entry.key)
+            } catch (_: BundleAuthenticationException) {
+                null
+            }
         }
     }
 

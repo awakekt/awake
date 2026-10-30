@@ -108,22 +108,28 @@ internal class BundleMembers(
     }
 
     /**
-     * A sealed bundle's members, opened, when the whole bundle matches and every member matches its
-     * table of contents record and opens; otherwise null. Opening checks each member's tag, so the
-     * plaintext needs no hashing.
+     * A sealed bundle's members, opened, when the whole bundle and every member's table of contents
+     * record match the index; otherwise null. Opening checks each member's tag, so the plaintext needs
+     * no hashing. A member of a matching bundle that doesn't open can only be under the wrong key: that
+     * fails as an authentication failure, and the key is dropped so the next read asks for it again.
      */
     private suspend fun openSealed(bytes: ByteArray, members: List<ProjectIndexEntry>, whole: Boolean): Map<String, Member>? {
         // The key first, so a refused key fails as itself rather than as damaged members.
         val seal = seal!!.also { it.cipher() }
         val toc = readTocByKey(bytes)
         val matches = whole && toc != null && members.all { matchesTocAndBounds(it, toc[it.key], bytes.size, index.storedSizeOf(it)) }
-        val opened = HashMap<String, Member>(members.size)
-        for (member in members.takeIf { matches }.orEmpty().distinctBy { it.sha256 }) {
+        if (!matches) return null
+        return members.distinctBy { it.sha256 }.associate { member ->
             // In bounds: the table of contents check covered it.
             val stored = sliceOf(bytes, member, index.storedSizeOf(member))!!
-            opened[member.sha256] = Member(stored, openOrNull(seal, member, stored) ?: break)
+            val read = try {
+                seal.open(member, stored, member.key)
+            } catch (wrongKey: BundleAuthenticationException) {
+                seal.forget()
+                throw wrongKey
+            }
+            member.sha256 to Member(stored, read)
         }
-        return opened.takeIf { matches && it.size == members.distinctBy { member -> member.sha256 }.size }
     }
 
     /** The keys of [members] whose sealed bytes don't open, for the message of a bundle that fails. */
@@ -132,8 +138,11 @@ internal class BundleMembers(
         if (stored != null && openOrNull(seal!!, member, stored) != null) null else member.key
     }
 
-    private suspend fun openOrNull(seal: MemberSeal, member: ProjectIndexEntry, stored: ByteArray): ByteArray? =
-        runCatching { seal.open(member, stored, member.key) }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+    private suspend fun openOrNull(seal: MemberSeal, member: ProjectIndexEntry, stored: ByteArray): ByteArray? = try {
+        seal.open(member, stored, member.key)
+    } catch (_: BundleAuthenticationException) {
+        null
+    }
 
     /** Puts [members] in the cache as stored, or with none, keeps each of [bundle]'s files in memory for the read still to come. */
     private suspend fun keep(bundle: ProjectIndexBundle, members: Map<String, ByteArray>, stored: Map<String, Member>) {
@@ -176,7 +185,9 @@ internal class BundleMembers(
 
 /**
  * Opens an encrypted index's members, with the master key its [BundleKeyProvider] answers, asked
- * once and kept for the source's life; a failed ask is not kept, so the next read asks again.
+ * once and kept until the source is dropped, or until a bundle that matches the index byte for byte
+ * fails to open under it, which only the wrong key does; a failed ask is not kept either, so the next
+ * read asks again.
  */
 internal class MemberSeal(private val encryption: ProjectBundleEncryption, private val keys: BundleKeyProvider) {
     private val lock = Mutex()
@@ -188,6 +199,11 @@ internal class MemberSeal(private val encryption: ProjectBundleEncryption, priva
     /** The cipher, asking for the key the first time; a failure to get it is the provider's own. */
     suspend fun cipher(): BundleCipher =
         lock.withLock { cipher ?: BundleCipher(keys.key(encryption.keyId), encryption.keyId).also { cipher = it } }
+
+    /** Drops the key, which a matching bundle has just proved wrong, so the next read asks again. */
+    suspend fun forget() {
+        lock.withLock { cipher = null }
+    }
 }
 
 /** [bytes], once they match [entry]'s size and SHA-256; otherwise fails naming [label]. */

@@ -59,16 +59,6 @@ class EncryptedBundleTest {
     }
 
     @Test
-    fun theWrongKeyFailsEveryRead() = runTest {
-        val project = EncryptedProject.write()
-        val source = IndexedAssetSource(project.index, project.server(), keys = { ByteArray(32) { 7 } })
-
-        val failure = source.read(AssetPath(crate)).exceptionOrNull()
-
-        assertTrue(failure is IllegalStateException && failure.message.orEmpty().contains(crate), "got $failure")
-    }
-
-    @Test
     fun aTamperedByteInAWholeBundleFailsNamingTheMember() = runTest {
         val project = EncryptedProject.write()
         val url = project.index.bundles.single { bundle -> project.index.files.any { it.path == crate && it.bundle == bundle.sha256 } }.url

@@ -3,13 +3,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import com.awakekt.awake.build.project.BundleKeyFingerprintSource
 import com.awakekt.awake.build.project.GenerateAssetsLockTask
 import com.awakekt.awake.build.project.GenerateContentBundlesTask
 import com.awakekt.awake.build.project.GenerateProjectIndexTask
 import com.awakekt.awake.build.project.ProjectContentExtension
 import com.awakekt.awake.build.project.ValidateProjectTask
 import com.awakekt.awake.build.project.VerifyAssetsLockTask
-import com.awakekt.awake.build.project.keyFingerprintOf
 import java.util.Properties
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.LibraryElements
@@ -153,9 +153,10 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     keyFile.set(projectContent.bundleKeyFile)
     keyEnvironmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
     keyFingerprint.set(
-        // A missing file fails in the worker, with a message naming it.
-        projectContent.bundleKeyFile.map { file -> file.asFile.takeIf { it.isFile }?.readBytes()?.let(::keyFingerprintOf) ?: "missing" }
-            .orElse(projectContent.bundleKeyEnvironmentVariable.flatMap { providers.environmentVariable(it) }.map { keyFingerprintOf(it.trim().encodeToByteArray()) }),
+        providers.of(BundleKeyFingerprintSource::class.java) {
+            parameters.keyFile.set(projectContent.bundleKeyFile)
+            parameters.environmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
+        },
     )
     dependsOn(generatePublicContentBundles)
 }

@@ -26,6 +26,14 @@ depends only on where the key comes from:
 | Saved by the app after a first online sign-in | As strong as the store the app keeps it in. |
 | Fully offline: the key ships inside the client | **Deterrence only.** Anyone who unpacks the client can recover the key. |
 
+Two limits hold whatever the key source:
+
+- **Membership can be confirmed.** Sealing is deterministic and each bundle keeps the plaintext
+  SHA-256 of its members, so anyone who already has a file can confirm it is in your bundles, as the
+  index already allows. Nobody learns a file they don't have.
+- **A new key needs a new key id.** Cached copies are kept by key id, so give every key its own id;
+  a key rotated under the same id makes every cached copy fetch again.
+
 ## Seal bundles when you publish
 
 Give `ContentBundleWriter` a `BundleEncryptionKey`: 32 random bytes and an id that the index names.
@@ -109,7 +117,8 @@ encryption slows an extractor down but doesn't stop them.
 
 `IndexedAssetSource` puts each member's **sealed** bytes in the `ContentCache`, under a key that
 `ProjectIndex.cacheKeyOf` derives from the key id and the member's SHA-256. Every cache hit is
-decrypted and checked again, and a hit that fails to decrypt is fetched again. A
+decrypted and checked again. A hit that fails to decrypt isn't returned: the read fetches the member
+and replaces the cached copy once the fetched one decrypts, so offline the old copy stays. A
 `FileSystemContentCache` or the browser's IndexedDB cache therefore holds nothing readable, and a
 signed-out player can't read it. A cache of your own must prune by `ProjectIndex.cacheKeyOf`, not by
 the entry's `sha256`.
