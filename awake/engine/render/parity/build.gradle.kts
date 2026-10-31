@@ -193,3 +193,8 @@ tasks.register<JavaExec>("captureTextClipEvidence") {
     )
 }
 // <<< text-clip-evidence
+
+// LodParityTest simplifies its model's levels with the cook-time simplifier, as a cooked asset's are.
+kotlin.sourceSets.getByName("desktopTest").dependencies {
+    implementation(project(":awake:asset:mesh-lod"))
+}
