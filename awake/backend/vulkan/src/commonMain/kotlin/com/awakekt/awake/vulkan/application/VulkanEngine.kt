@@ -376,14 +376,16 @@ open class VulkanEngine(
             ::loadShaderPair,
         )
         contentAttacher = ContentFeatureAttacher(gpu)
+        // Shared: the opaque feature owns it, the late one draws the lines after the coverings.
+        val linePass = VulkanLinePass(lineRenderPipeline)
         return buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.beforeGeometry)
-            add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)))
+            add(OpaqueRenderFeature(linePass, defersOverCoverings = true))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.afterGeometry)
             // After every covering, so none paints over an unlit draw -- see OverCoveringsRenderFeature.
-            add(OverCoveringsRenderFeature<VulkanRenderFrameContext>())
+            add(OverCoveringsRenderFeature(linePass))
             add(UiRenderFeature(VulkanUiPass()))
         }
     }

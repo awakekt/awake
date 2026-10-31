@@ -120,6 +120,46 @@ class SharedOpaqueRenderFeatureTest {
         assertEquals(listOf("pipeline(primary)", "pipeline(skinned)", "pipeline(edges)", "pipeline(glass)", "pipeline(lines)"), pipelines)
     }
 
+    /**
+     * With coverings such as fog between them, the opaque feature draws the opaque groups alone and
+     * the late one draws the unlit group over the coverings, then edges, glass and lines over that:
+     * a transparent surface in front of an unlit one still blends over it (#1178). Without
+     * coverings, the opaque feature draws the unlit group in place, right after the opaque groups.
+     */
+    @Test
+    fun overCoveringDrawsFollowTheCoveringsAndPrecedeWhatBlendsOverThem() {
+        val primary = Named("primary")
+        val recorder = FakeRecorder()
+        val frame = object : RenderFrameContext {
+            override val frameIndex = 0
+            override val groupedDrawCalls = linkedMapOf(primary to listOf(draw(primary, "p0")))
+            override val overCoveringDrawCalls = linkedMapOf(Named("unlit") to listOf<PreparedDraw>(draw(Named("unlit"), "u0")))
+            override val transparentDrawCalls = listOf<PreparedDraw>(draw(Named("glass"), "t0"))
+            override val edgeDrawCalls = listOf<PreparedDraw>(draw(Named("edges"), "x0"))
+            override val primaryPipeline = primary
+            override val viewProjection = com.awakekt.awake.core.math.Mat4()
+            override val cameraEye = com.awakekt.awake.core.math.Vec3f(0f, 0f, 0f)
+            override val surfaceWidth = 1
+            override val surfaceHeight = 1
+            override val recorder = recorder
+        }
+        val lineDraw = FakeDraw(Named("lines"), Named("lineUniform"), Named("lineVerts"), null, 2)
+        val lines = object : LinePass<RenderFrameContext> {
+            override fun writeMvp(frameIndex: Int, mvp: FloatArray) = Unit
+            override fun lineDraw(context: RenderFrameContext) = lineDraw
+            override fun destroy() = Unit
+        }
+        fun pipelines() = recorder.calls.filter { it.startsWith("pipeline(") }.also { recorder.calls.clear() }
+
+        OpaqueRenderFeature(lines, defersOverCoverings = true).recordCommands(frame)
+        assertEquals(listOf("pipeline(primary)"), pipelines())
+        OverCoveringsRenderFeature(lines).recordCommands(frame)
+        assertEquals(listOf("pipeline(unlit)", "pipeline(edges)", "pipeline(glass)", "pipeline(lines)"), pipelines())
+
+        OpaqueRenderFeature(lines).recordCommands(frame)
+        assertEquals(listOf("pipeline(primary)", "pipeline(unlit)", "pipeline(edges)", "pipeline(glass)", "pipeline(lines)"), pipelines())
+    }
+
     @Test
     fun emptyLineMeshSkipsItsPipelineBind() {
         val primary = Named("primary")

@@ -19,7 +19,12 @@ class SortedDraws<P : PreparedDraw>(
     val opaqueByPipeline: Map<PipelineHandle, List<P>>,
     val transparent: List<P>,
     val overCoveringsByPipeline: Map<PipelineHandle, List<P>> = emptyMap(),
-)
+) {
+    /** [SortedDraws] as it was before [overCoveringsByPipeline]: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(opaqueByPipeline: Map<PipelineHandle, List<P>>, transparent: List<P>) :
+        this(opaqueByPipeline, transparent, emptyMap())
+}
 
 /**
  * Splits [draws] into the two orderings a frame needs.

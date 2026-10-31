@@ -249,14 +249,16 @@ open class WebGpuEngine(
         val gpu = WebGpuContentFeatureGpu(graphicsDevice, registry, depthPrePass)
         val attacher = ContentFeatureAttacher(gpu).also { contentAttacher = it }
         val content = plan.contentFeaturesFor(RenderBackend.WebGpu).groupBy { it.paint }
+        // Shared: the opaque feature owns it, the late one draws the lines after the coverings.
+        val linePass = WebGpuLinePass(lineRenderPipeline)
         val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.beforeGeometry)
-            add(OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline)))
+            add(OpaqueRenderFeature(linePass, defersOverCoverings = true))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.afterGeometry)
             // After every covering, so none paints over an unlit draw -- see OverCoveringsRenderFeature.
-            add(OverCoveringsRenderFeature<WebGpuRenderFrameContext>())
+            add(OverCoveringsRenderFeature(linePass))
             add(UiRenderFeature(WebGpuUiPass()))
         }
         val renderer = Renderer(
