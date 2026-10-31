@@ -63,6 +63,7 @@ import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
+import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
@@ -253,8 +254,15 @@ class SceneAppLifecycleRuntime internal constructor(
      *
      * Each phase is stored from the *previous* frame, because the overlay that displays them is
      * itself drawn inside phase 1 -- reading a live counter there would report a partial frame.
+     *
+     * Turning it on also turns on [RenderDiagnostics.drawStatsEnabled]: the scene's draws per pass
+     * and why its draws did not fold into instances, in [RenderDiagnostics.drawStats].
      */
     var perfStatsEnabled: Boolean = false
+        set(value) {
+            field = value
+            RenderDiagnostics.drawStatsEnabled = value
+        }
     private var uiBuildMs = 0f
     private var uiWaitMs = 0f
     private var uiStageMs = 0f

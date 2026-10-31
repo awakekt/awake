@@ -129,6 +129,20 @@ public final class com/awakekt/awake/render/passes/GpuResourcePool {
 	public final fun getSize ()I
 }
 
+public final class com/awakekt/awake/render/passes/InstanceFoldMiss : java/lang/Enum {
+	public static final field Blended Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field CullMode Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field DistinctMaterial Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field DistinctUniforms Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field Masked Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field SingleCopy Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field SkinnedNotInstanced Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static final field VertexFormat Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+	public static fun values ()[Lcom/awakekt/awake/render/passes/InstanceFoldMiss;
+}
+
 public final class com/awakekt/awake/render/passes/InstancePacker {
 	public fun <init> (Lcom/awakekt/awake/core/geometry/GpuDataShape;Ljava/lang/String;ILkotlin/jvm/functions/Function3;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/geometry/GpuDataShape;Ljava/lang/String;ILkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -255,9 +269,29 @@ public final class com/awakekt/awake/render/passes/RenderPassSlot : java/lang/En
 	public static fun values ()[Lcom/awakekt/awake/render/passes/RenderPassSlot;
 }
 
+public final class com/awakekt/awake/render/passes/SceneDrawStats {
+	public fun <init> ()V
+	public final fun getAuthoredInstancedDraws ()I
+	public final fun getEdgeDraws ()I
+	public final fun getFoldedCopies ()I
+	public final fun getFoldedDraws ()I
+	public final fun getMainPassDraws ()I
+	public final fun getMaskDraws ()I
+	public final fun getOpaqueDraws ()I
+	public final fun getShadowDraws ()I
+	public final fun getShadowPasses ()I
+	public final fun getSourceDraws ()I
+	public final fun getTotalMisses ()I
+	public final fun getTransparentDraws ()I
+	public final fun misses (Lcom/awakekt/awake/render/passes/InstanceFoldMiss;)I
+	public final fun shadowPassDraws (I)I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/passes/ScenePassCompiler {
 	public static final field INSTANCE Lcom/awakekt/awake/render/passes/ScenePassCompiler;
 	public final fun compile (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;Lcom/awakekt/awake/core/math/ClipSpace;FLcom/awakekt/awake/render/renderer/RenderViewport;Lcom/awakekt/awake/render/command/GpuDrawPreparer;Ljava/util/List;Lcom/awakekt/awake/render/imagepass/ImagePassChain;)Lcom/awakekt/awake/render/command/GpuPassInput;
+	public final fun compile (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;Lcom/awakekt/awake/core/math/ClipSpace;FLcom/awakekt/awake/render/renderer/RenderViewport;Lcom/awakekt/awake/render/command/GpuDrawPreparer;Ljava/util/List;Lcom/awakekt/awake/render/imagepass/ImagePassChain;Lcom/awakekt/awake/render/passes/SceneDrawStats;)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public static synthetic fun compile$default (Lcom/awakekt/awake/render/passes/ScenePassCompiler;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;Lcom/awakekt/awake/core/math/ClipSpace;FLcom/awakekt/awake/render/renderer/RenderViewport;Lcom/awakekt/awake/render/command/GpuDrawPreparer;Ljava/util/List;Lcom/awakekt/awake/render/imagepass/ImagePassChain;ILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuPassInput;
 }
 

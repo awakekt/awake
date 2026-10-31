@@ -85,7 +85,7 @@ private fun MutableList<RenderDrawCommand>.addSplitToCapacity(draw: RenderDrawCo
     }
 }
 
-private fun RenderDrawCommand.foldsIntoInstances(canInstance: (VertexFormat, CullMode) -> Boolean): Boolean =
+internal fun RenderDrawCommand.foldsIntoInstances(canInstance: (VertexFormat, CullMode) -> Boolean): Boolean =
     instanceModels == null &&
         instanceJointPalettes == null &&
         !transparent &&
@@ -137,7 +137,7 @@ private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
         cullMode == other.cullMode
 
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */
-private class InstanceKey(private val draw: RenderDrawCommand) {
+internal class InstanceKey(private val draw: RenderDrawCommand) {
     private val hash: Int =
         ((draw.mesh.hashCode() * 31 + draw.material.hashCode()) * 31 + draw.extraUniformFloats.contentHashCode()) * 31 +
             draw.alphaMode.hashCode()
