@@ -175,13 +175,17 @@ data class SceneCanvasInput(
 
     override val allowsMultiplePerNode: Boolean get() = false
 
-    override fun validate(path: String, peers: List<SceneComponent>): List<SceneValidationIssue> = listOfNotNull(
+    /** What is wrong with the move settings on their own, whatever else is on the node. */
+    override fun validate(path: String): List<SceneValidationIssue> = listOfNotNull(
+        "moveHandle and draggable both drag the element; keep one".takeIf { moveHandle && draggable },
+        "moveStrip must not be negative".takeIf { moveStrip < 0f },
+        "moveStrip only sets how much of a moveHandle's window stays on screen".takeIf { moveStrip > 0f && !moveHandle },
+    ).map { SceneValidationIssue(path, "canvas_input.$it") }
+
+    override fun validate(path: String, peers: List<SceneComponent>): List<SceneValidationIssue> = validate(path) + listOfNotNull(
         "pressable makes an Image or a Panel pressable; a Button always is".takeIf {
             pressable && peers.any { it.isCanvasWidget() && it !is SceneCanvasImage }
         },
-        "moveHandle and draggable both drag the element; keep one".takeIf { moveHandle && draggable },
-        "moveStrip must not be negative".takeIf { moveStrip < 0f },
-        "moveStrip only sets how much of a moveHandle's window stays on screen".takeIf { moveStrip != 0f && !moveHandle },
     ).map { SceneValidationIssue(path, "canvas_input.$it") }
 }
 
