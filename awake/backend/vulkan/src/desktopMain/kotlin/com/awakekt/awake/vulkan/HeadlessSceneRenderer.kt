@@ -177,6 +177,24 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
         variant = PipelineVariant.Instanced,
     )
+
+    // The back-culled twins a render plan builds for the textured format and its instanced pipeline,
+    // so copies of a single-sided textured prop draw, and fold, as a played project's do.
+    fun backCulledTextured(shaders: ShaderSet, variant: PipelineVariant) = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(shaders) },
+        VertexFormat.PositionNormalColorUv,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+        variant = variant,
+        cullMode = com.awakekt.awake.vulkan.enums.VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
+    )
+    val backCulledTexturedPipeline = backCulledTextured(PackShaderSets.Textured, PipelineVariant.Opaque)
+    val backCulledInstancedTexturedPipeline = backCulledTextured(PackShaderSets.InstancedTextured, PipelineVariant.Instanced)
     // The sprite pipeline RenderPlan builds for PipelineKey.Particle.
     val spritePipeline = RenderPipeline(
         graphicsDevice,
@@ -272,6 +290,20 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 cascadeCount = depthTarget.layers,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
+            // As a project plan declares it: folded copies of cut-out foliage cast through their alpha.
+            DepthRenderKey(DepthCasterKind.Instanced, AlphaMode.Masked) to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.InstancedMaskedTexturedShadowDepth) },
+                VertexFormat.PositionNormalColorUv,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+                variant = PipelineVariant.Instanced,
+            ),
         ),
         instancedFormatPipelines = mapOf(
             VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
@@ -328,7 +360,11 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
-            backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
+            backCulledByFormat = mapOf(
+                VertexFormat.PositionNormalColor to backCulledScenePipeline,
+                VertexFormat.PositionNormalColorUv to backCulledTexturedPipeline,
+            ),
+            instancedBackCulledByFormat = mapOf(VertexFormat.PositionNormalColorUv to backCulledInstancedTexturedPipeline),
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
             edgesByFormat = edgePipelines,
         ),
@@ -356,6 +392,8 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             distanceFieldPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
+            backCulledTexturedPipeline.destroy()
+            backCulledInstancedTexturedPipeline.destroy()
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
             spritePipeline.destroy()
