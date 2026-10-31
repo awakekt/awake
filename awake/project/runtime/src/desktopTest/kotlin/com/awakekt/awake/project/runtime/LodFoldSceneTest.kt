@@ -6,7 +6,6 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.asset.meshlod.GltfLodCooker
-import com.awakekt.awake.asset.shaders.ProjectRenderPlan
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.render.passes.SceneDrawStats
 import com.awakekt.awake.scene.authoring.scene
