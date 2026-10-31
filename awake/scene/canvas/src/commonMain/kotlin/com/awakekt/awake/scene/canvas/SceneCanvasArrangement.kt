@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -138,6 +139,10 @@ class SceneCanvasFollowArrow : SceneComponent {
  * @property draggable Whether the element can be picked up and dragged.
  * @property dropTarget Whether a dragged element released over this one is reported here.
  * @property wheel Whether the element takes the mouse wheel while the pointer is over it.
+ * @property moveHandle Whether dragging the element moves its window, its nearest root element: a
+ * window's title bar.
+ * @property moveStrip How much of a [moveHandle]'s window, in the window's dp, stays on the canvas;
+ * 0 keeps its top down to the handle's bottom.
  */
 @Serializable
 @SerialName("canvas_input")
@@ -147,13 +152,36 @@ data class SceneCanvasInput(
     val draggable: Boolean = false,
     val dropTarget: Boolean = false,
     val wheel: Boolean = false,
+    val moveHandle: Boolean = false,
+    @PropertyRange(min = 0.0) val moveStrip: Float = 0f,
 ) : SceneComponent {
+    /** [SceneCanvasInput] as it was before `moveHandle`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        pressable: Boolean = false,
+        draggable: Boolean = false,
+        dropTarget: Boolean = false,
+        wheel: Boolean = false,
+    ) : this(pressable, draggable, dropTarget, wheel, false, 0f)
+
+    /** [copy] as it was before `moveHandle`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        pressable: Boolean = this.pressable,
+        draggable: Boolean = this.draggable,
+        dropTarget: Boolean = this.dropTarget,
+        wheel: Boolean = this.wheel,
+    ): SceneCanvasInput = copy(pressable, draggable, dropTarget, wheel, moveHandle, moveStrip)
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     override fun validate(path: String, peers: List<SceneComponent>): List<SceneValidationIssue> = listOfNotNull(
         "pressable makes an Image or a Panel pressable; a Button always is".takeIf {
             pressable && peers.any { it.isCanvasWidget() && it !is SceneCanvasImage }
         },
+        "moveHandle and draggable both drag the element; keep one".takeIf { moveHandle && draggable },
+        "moveStrip must not be negative".takeIf { moveStrip < 0f },
+        "moveStrip only sets how much of a moveHandle's window stays on screen".takeIf { moveStrip != 0f && !moveHandle },
     ).map { SceneValidationIssue(path, "canvas_input.$it") }
 }
 

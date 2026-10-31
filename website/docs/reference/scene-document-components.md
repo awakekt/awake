@@ -327,6 +327,8 @@ How a canvas element takes the pointer beyond what its widget does. `SceneCanvas
 | `draggable` | boolean | `false` | Can be picked up and dragged, as `canvas_element.draggable` describes. |
 | `dropTarget` | boolean | `false` | Receives a dragged element released over it. |
 | `wheel` | boolean | `false` | Take the mouse wheel while the pointer is over the element or its children. |
+| `moveHandle` | boolean | `false` | Dragging the element moves its window, its nearest root element, by the pointer's travel, live and with no ghost: a title bar. A press under the drag threshold stays a click. Pressing in the window brings it to the front; when the move ends the window's `moved` reads its new offsets once. Not with `draggable`. |
+| `moveStrip` | number | `0` | How much of a `moveHandle`'s window, in the window's dp, stays on the canvas: that height of its top and that width. `0` keeps its top down to the handle's bottom. |
 
 ## `canvas_joystick`
 

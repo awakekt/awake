@@ -10,7 +10,9 @@ import com.awakekt.awake.core.math2d.contains
 /**
  * [items] in the order [CanvasOverlay] draws them, the first drawn first, so the last is on top: a
  * root, then everything inside it, before the next root. The roots, and the children of one element,
- * go by [CanvasElement.order], lowest first, and those of the same order as [items] lists them. An
+ * go by [CanvasElement.order], lowest first, and those of the same order as [items] lists them, but
+ * for roots brought to the front, [CanvasElement.bringToFront], which go last of their order, the
+ * latest last. An
  * element that [CanvasElement.follow]s a node is a root, whatever its [CanvasItem.parent].
  *
  * This is where each element would draw if it were shown: a hidden or touch-only element, and what
@@ -52,7 +54,8 @@ fun canvasItemAt(items: List<CanvasItem>, x: Float, y: Float): CanvasItem? {
 /**
  * [items], each under the nearest element above it, as [CanvasOverlay] draws them: a follower is a
  * root, and the roots and each element's children are sorted by [CanvasElement.order], keeping the
- * order of [items] among equals.
+ * order of [items] among equals; roots of the same order then go by when each was last brought to
+ * the front, never first.
  */
 internal class CanvasHierarchy(items: List<CanvasItem>) {
     val roots = ArrayList<CanvasItem>()
@@ -64,9 +67,15 @@ internal class CanvasHierarchy(items: List<CanvasItem>) {
             (if (parent == null) roots else children.getOrPut(parent) { ArrayList() }) += item
         }
         // Stable sorts, so elements of the same order keep the order the host listed them in.
-        roots.sortBy { it.element.order }
+        roots.sortWith(ROOT_DRAW_ORDER)
         for (siblings in children.values) siblings.sortBy { it.element.order }
     }
 
     fun childrenOf(element: CanvasElement): List<CanvasItem> = children[element].orEmpty()
+}
+
+/** Roots by order, then by when each was brought to the front: a comparator made once, as it sorts every frame. */
+private val ROOT_DRAW_ORDER = Comparator<CanvasItem> { a, b ->
+    val byOrder = a.element.order.compareTo(b.element.order)
+    if (byOrder != 0) byOrder else a.element.pointer.raisedAt.compareTo(b.element.pointer.raisedAt)
 }

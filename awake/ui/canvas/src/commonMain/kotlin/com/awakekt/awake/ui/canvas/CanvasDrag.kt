@@ -33,6 +33,7 @@ internal fun CanvasElement.draggedModifier(hovered: Modifier, tree: CanvasTree, 
         hovered
     } else {
         hovered.dragAfterThreshold(
+            thresholdPx = CANVAS_DRAG_THRESHOLD_PX,
             onDrag = { x, y -> dragCanvasElement(this, units, x, y) },
             onDragEnd = { x, y -> dropCanvasElement(this, tree, units, x, y) },
         )

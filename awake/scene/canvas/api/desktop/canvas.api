@@ -193,6 +193,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementScope {
 	public final fun getMask ()Ljava/lang/String;
 	public final fun getMaxLength ()I
 	public final fun getMaxLengthUnit ()Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public final fun getMoveHandle ()Z
+	public final fun getMoveStrip-LGk54g8 ()F
 	public final fun getNumerals ()Lcom/awakekt/awake/core/text/font/FontNumerals;
 	public final fun getOffsetX-LGk54g8 ()F
 	public final fun getOffsetY-LGk54g8 ()F
@@ -257,6 +259,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementScope {
 	public final fun setMask (Ljava/lang/String;)V
 	public final fun setMaxLength (I)V
 	public final fun setMaxLengthUnit (Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;)V
+	public final fun setMoveHandle (Z)V
+	public final fun setMoveStrip-Jha-xPg (F)V
 	public final fun setNumerals (Lcom/awakekt/awake/core/text/font/FontNumerals;)V
 	public final fun setOffsetX-Jha-xPg (F)V
 	public final fun setOffsetY-Jha-xPg (F)V
@@ -1456,18 +1460,26 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasImage$Companion {
 public final class com/awakekt/awake/scene/canvas/SceneCanvasInput : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/canvas/SceneCanvasInput$Companion;
 	public fun <init> ()V
-	public fun <init> (ZZZZ)V
+	public synthetic fun <init> (ZZZZ)V
 	public synthetic fun <init> (ZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZZZF)V
+	public synthetic fun <init> (ZZZZZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()Z
-	public final fun copy (ZZZZ)Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;
+	public final fun component5 ()Z
+	public final fun component6 ()F
+	public final synthetic fun copy (ZZZZ)Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;
+	public final fun copy (ZZZZZF)Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;ZZZZILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;ZZZZZFILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getDraggable ()Z
 	public final fun getDropTarget ()Z
+	public final fun getMoveHandle ()Z
+	public final fun getMoveStrip ()F
 	public final fun getPressable ()Z
 	public final fun getWheel ()Z
 	public fun hashCode ()I

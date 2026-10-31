@@ -122,6 +122,7 @@ internal fun CanvasElement.dropPointers() {
     if (stick.pointer != null) stick.release(joystick ?: CanvasJoystick.Default)
     buttonPress.cancel(this)
     lookState.clear()
+    dropMove()
 }
 
 /**
