@@ -220,8 +220,9 @@ class RenderSystem3D(
         camera: Camera,
         viewport: RenderViewport?,
         aspect: Float,
-    ): SceneRenderPlanner3D.PlannedFrame =
-        if (camera.viewport == null) {
+    ): SceneRenderPlanner3D.PlannedFrame {
+        val drawStats = RenderDiagnostics.drawStatsForFrame()
+        return if (camera.viewport == null) {
             planner.plan(
                 world = world,
                 camera = camera,
@@ -231,6 +232,7 @@ class RenderSystem3D(
                 cameraEntity = cameraEntity,
                 targetWidth = renderer.surfaceWidth,
                 targetHeight = renderer.surfaceHeight,
+                drawStats = drawStats,
             )
         } else {
             planner.plan(
@@ -242,8 +244,10 @@ class RenderSystem3D(
                 cameraEntity = cameraEntity,
                 targetWidth = renderer.surfaceWidth,
                 targetHeight = renderer.surfaceHeight,
+                drawStats = drawStats,
             )
         }
+    }
 
     private fun isViewDirty(camera: Camera, viewport: RenderViewport?, surfaceAspect: Float): Boolean =
         isCameraDirty(camera) ||

@@ -13,6 +13,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.SceneDrawStats
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -61,6 +62,7 @@ internal class SceneRenderPlanner3D(
         cameraEntity: com.awakekt.awake.ecs.Entity? = null,
         targetWidth: Int = 0,
         targetHeight: Int = 0,
+        drawStats: SceneDrawStats? = null,
     ): PlannedFrame {
         drawCalls.clear()
         // Features first, though their draws go after the opaque geometry: the light they settle
@@ -104,6 +106,7 @@ internal class SceneRenderPlanner3D(
             drawPreparer = drawPreparer,
             maskLayers = world.outlineMaskLayers(),
             postPassChain = postPassChain,
+            drawStats = drawStats,
         )
         return PlannedFrame(
             passInput = passInput,
