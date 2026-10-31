@@ -119,13 +119,14 @@ interface Renderer : GpuDevice {
         set(_) {}
 
     /**
-     * Returns the [ImagePassTargetContext] describing [target] (or the active swapchain surface
-     * when [target] is `null`) so shared effect builders can lower to an `ImagePassChain`.
+     * Returns the [ImagePassTargetContext] describing [target], or, when [target] is `null`, the
+     * presented surface the UI draws into ([outputWidth] by [outputHeight], not the scaled scene
+     * target below full [renderScale]), so shared effect builders can lower to an `ImagePassChain`.
      */
     fun imagePassTargetContext(target: RenderTarget? = null): ImagePassTargetContext =
         ImagePassTargetContext(
-            width = target?.width ?: surfaceWidth,
-            height = target?.height ?: surfaceHeight,
+            width = target?.width ?: outputWidth,
+            height = target?.height ?: outputHeight,
             clipSpace = clipSpace,
             snapshotSupported = true,
             effectQuality = effectQuality,
