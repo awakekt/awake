@@ -162,6 +162,9 @@ internal class CanvasTree(
 
     val roots: List<CanvasItem> get() = hierarchy.roots
 
+    /** The frame's [CanvasInput.moveHandle]s and the windows they move. */
+    internal val windows = CanvasWindows(items)
+
     init {
         // Cleared up front so an element not composed this frame -- hidden, or a follower with
         // nowhere to land -- reports null rather than where it last was.
@@ -266,8 +269,12 @@ internal class CanvasTree(
     }
 }
 
-/** Records the host [box] and whole-canvas [canvasDensity], and resolves every item's subtree density. */
-internal fun CanvasTree.measureBox(box: CanvasBoxMetrics, canvasDensity: Float) = scales.measure(box, canvasDensity)
+/** Records the host [box] and whole-canvas [canvasDensity], resolves every item's subtree density, and keeps windows on the canvas. */
+internal fun CanvasTree.measureBox(box: CanvasBoxMetrics, canvasDensity: Float) {
+    scales.measure(box, canvasDensity)
+    // As soon as the box is known, so a window a resize left off the canvas is drawn back on this frame.
+    keepWindowsOnCanvas()
+}
 
 /** The pixels per dp [element]'s subtree lays out at this pass. */
 internal fun CanvasTree.densityOf(element: CanvasElement): Float = scales.densityOf(element)

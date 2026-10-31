@@ -70,7 +70,7 @@ private val SAVED: Map<String, String> = mapOf(
     "bind" to """{"bind":{"node":"Player","value":"hp","max":"","text":"","textArgs":{},"cooldown":"","cooldownMax":"","charges":"","enabled":""}}""",
     "follow" to """{"node":"Enemy","offset":{"x":0.0,"y":2.0,"z":0.5},"bounds":true,"outset":4.0,"rules":{"cullOffScreen":true,"maxDistance":32.0,"occlusion":false,"group":"","priority":0.0,"pinToEdge":false,"edgeMargin":0.0}}""",
     "follow_arrow" to """{}""",
-    "input" to """{"pressable":true,"draggable":true,"dropTarget":true,"wheel":true}""",
+    "input" to """{"pressable":true,"draggable":true,"dropTarget":true,"wheel":true,"moveHandle":false,"moveStrip":0.0}""",
     "tooltip" to """{"text":"Tip","textArgs":{"n":"2"}}""",
     "button" to """{"action":"jump","doubleAction":"dash","settings":{"trigger":"Tap","longPressSeconds":0.5,"longPressAction":"","releaseAction":"","blockWhileCooling":true,"cooldownSeconds":0.0},"enabled":false}""",
     "bar" to """{"value":0.5,"settings":{"direction":"LeftToRight","thickness":4.0,"trailDelay":0.5,"trailSpeed":1.5,"segments":0,"segmentGap":2.0,"ticks":0,"tickColor":"#00000080","label":false}}""",

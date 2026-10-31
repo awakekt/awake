@@ -122,6 +122,33 @@ class CanvasPointerState {
     val droppedOutside: Vec2?
         get() = droppedOutsideAt.also { droppedOutsideAt = null }
 
+    /** A [CanvasInput.moveHandle]'s live move of its window, while a pointer holds it. */
+    internal val move = CanvasMove()
+
+    /**
+     * Whether a [CanvasInput.moveHandle] inside this window is moving it right now: true on the
+     * window, the root element that moves, not on the handle.
+     */
+    var moving: Boolean = false
+        internal set
+
+    /** Set on the window when a move ends; [moved] reads it. */
+    internal var movedTo: Vec2? = null
+
+    /**
+     * The window's new ([CanvasRect.offsetX], [CanvasRect.offsetY]) when a [CanvasInput.moveHandle]
+     * finished moving it, since the last read, or null; read once. It is what a host saves to put
+     * the window back: setting those two offsets restores it.
+     */
+    val moved: Vec2?
+        get() = movedTo.also { movedTo = null }
+
+    /**
+     * When the window was last brought to the front, as a stamp from a counter shared by every
+     * element; 0 when it never was. Roots of the same order draw by it, the latest on top.
+     */
+    internal var raisedAt: Long = 0L
+
     /** The key of a clicked `[[key|shown words]]` span, until [consumeLink] reads it; [CanvasOverlay] writes this. */
     internal var linkKey: String? = null
 

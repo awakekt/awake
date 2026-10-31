@@ -69,6 +69,19 @@ class CanvasElement : CanvasElementWidgetFields() {
     /** See [CanvasPointerState.droppedOutside]. */
     val droppedOutside: Vec2? get() = pointer.droppedOutside
 
+    /** See [CanvasPointerState.moving]. */
+    val moving: Boolean get() = pointer.moving
+
+    /** See [CanvasPointerState.moved]. */
+    val moved: Vec2? get() = pointer.moved
+
+    /**
+     * Draws this root element over every other root of the same [order], and gives it the pointer
+     * first, as pressing in a window with a [moveHandle] does. On an element inside another it does
+     * nothing; it is never saved.
+     */
+    fun bringToFront() = raiseCanvasElement(this)
+
     /** See [CanvasPointerState.focused]. */
     var focused: Boolean
         get() = pointer.focused

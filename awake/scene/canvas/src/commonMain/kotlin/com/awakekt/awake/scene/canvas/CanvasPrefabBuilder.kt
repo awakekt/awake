@@ -26,6 +26,7 @@ import com.awakekt.awake.ui.canvas.CanvasCluster
 import com.awakekt.awake.ui.canvas.CanvasControlSkin
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFollowRules
+import com.awakekt.awake.ui.canvas.CanvasInput
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLook
@@ -216,6 +217,15 @@ class CanvasElementScope internal constructor(
     /** Whether a dragged element released over this one is reported here. */
     var dropTarget: Boolean = defaults.dropTarget
 
+    /**
+     * Whether dragging the element moves its window, the prefab's root or the nearest root above
+     * it, as a title bar does; saved on its focused canvas_input component. See [CanvasInput.moveHandle].
+     */
+    var moveHandle: Boolean = false
+
+    /** How much of a [moveHandle]'s window stays on screen; 0 keeps its top down to the handle's bottom. */
+    var moveStrip: Dp = Dp(0f)
+
     /** A View's camera: the name of a node with a camera. */
     var camera: String = defaults.camera
 
@@ -354,6 +364,7 @@ class CanvasElementScope internal constructor(
         if (view != null && kind != CanvasElementKind.View) problems += SceneValidationIssue(path, "view does nothing on a ${kind.name}, so it is not saved")
         // Saved as the components it is: the same set an older canvas_element reads as.
         val parts = element.toCanvasComponents().map { if (it is SceneCanvasView) it.copy(settings = view) else it }
+            .withMoveHandle(moveHandle, moveStrip.value)
         return SceneNode(name = name, components = parts + components, children = children.toList())
     }
 
