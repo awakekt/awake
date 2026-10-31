@@ -159,8 +159,12 @@ class Renderer internal constructor(
         kind: com.awakekt.awake.render.pipeline.GpuCapabilityKind<T>,
     ): T? = when (kind) {
         com.awakekt.awake.render.pipeline.ShaderReplacement -> shaderReplacement as T?
+        com.awakekt.awake.render.pipeline.GpuImageUpload -> imageUpload as T
         else -> null
     }
+
+    /** Fills textures from browser images on the GPU; see [ExternalImageUpload]. */
+    private val imageUpload by lazy { ExternalImageUpload(this) }
 
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
@@ -355,6 +359,7 @@ class Renderer internal constructor(
         uiRoundedQuadRenderPipeline?.destroy()
         imagePassTextures.clear()
         textureResources.destroy()
+        imageUpload.close()
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()
         lineMesh.destroy()

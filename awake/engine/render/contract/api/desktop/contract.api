@@ -1133,6 +1133,19 @@ public final class com/awakekt/awake/render/pipeline/GpuDeviceClassKt {
 	public static final fun recommendedEffectQuality (Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
 }
 
+public abstract interface class com/awakekt/awake/render/pipeline/GpuImageUpload : com/awakekt/awake/render/pipeline/GpuCapability {
+	public static final field Companion Lcom/awakekt/awake/render/pipeline/GpuImageUpload$Companion;
+	public abstract fun createMaterial (Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrTextureSet;)Lcom/awakekt/awake/render/material/Material;
+}
+
+public final class com/awakekt/awake/render/pipeline/GpuImageUpload$Companion : com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
+public final class com/awakekt/awake/render/pipeline/GpuImageUploadKt {
+	public static final fun createImageMaterial (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrTextureSet;)Lcom/awakekt/awake/render/material/Material;
+	public static synthetic fun createImageMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrTextureSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
+}
+
 public final class com/awakekt/awake/render/pipeline/GroupBindings {
 	public static final field Companion Lcom/awakekt/awake/render/pipeline/GroupBindings$Companion;
 	public fun <init> (Ljava/util/List;)V
@@ -1929,6 +1942,13 @@ public final class com/awakekt/awake/render/renderer/UniformWriter {
 	public final fun put ([F[Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public static synthetic fun put$default (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun putPadded (Lcom/awakekt/awake/render/renderer/UniformField;[F)Lcom/awakekt/awake/render/renderer/UniformWriter;
+}
+
+public abstract interface class com/awakekt/awake/render/texture/GpuImageSource {
+	public abstract fun getExternalImage ()Ljava/lang/Object;
+	public abstract fun getHeight ()I
+	public abstract fun getWidth ()I
+	public abstract fun readRgba8 ()[B
 }
 
 public final class com/awakekt/awake/render/texture/MipChainKt {
