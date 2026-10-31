@@ -142,6 +142,7 @@ class RangeAnnotationsAreEnforcedTest {
                 "hovered" to state,
                 "pressed" to state,
                 "disabled" to state,
+                "backdrop" to empty,
             ),
         )
     }

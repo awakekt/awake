@@ -17,6 +17,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun materialName (Ljava/lang/String;)Ljava/lang/String;
 	public final fun materialParameters (Ljava/lang/String;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
 	public final fun materialSlots (Ljava/lang/String;)Ljava/util/List;
+	public fun meshLevels (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneMeshLevels;
 	public final fun modelPath (Ljava/lang/String;)Ljava/lang/String;
 	public final fun preload (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun preload (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;

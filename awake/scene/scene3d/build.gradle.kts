@@ -27,6 +27,8 @@ kotlin {
             implementation(project(":awake:particles"))
             api(project(":awake:core:color"))
             api(project(":awake:core:spatial"))
+            // LodGroup carries a LodPolicy, and selects through LodSelector.
+            api(project(":awake:core:lod"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:world"))

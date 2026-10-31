@@ -20,6 +20,8 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:scene:runtime"))
             api(project(":awake:asset:gltf"))
+            // A model's MSFT_lod levels, read as whole assets.
+            implementation(project(":awake:asset:mesh-lod"))
             api(project(":awake:core:color"))
             api(project(":awake:core:geometry"))
             api(project(":awake:core:io"))

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-31
+
+### Added
+
+- Add movable canvas windows: a `moveHandle` canvas input (`CanvasInput.moveHandle` / `moveStrip`, `canvas_input.moveHandle` / `moveStrip`, `CanvasElementScope.moveHandle`) moves its root window by the pointer's travel past the drag threshold, with mouse or one finger, keeps a strip of it on the canvas through resizes, brings a pressed window to the front (`CanvasElement.bringToFront`), and reports the new offset once through `CanvasElement.moved` for a host to save.
+- **Cook-time mesh LOD.** The new `awake:asset:mesh-lod` module simplifies meshes with an attribute-aware quadric simplifier that keeps UVs, normals, tangents, vertex colours, skin joints and weights, and doesn't tear seams or borders, and writes 50%, 25% and 10% levels (configurable) into a glTF asset as `MSFT_lod` with screen-coverage hints. Assets that already carry `MSFT_lod` or `_LOD1`-named levels are kept as authored. A project's `awake.lod.json` sets the defaults, per-asset and per-mesh ratios or opt-outs, and per-joint importance so the vertices a skinned mesh's named joints move (a face, hands) keep their detail longest, and `./gradlew :awake:asset:mesh-optimizer:cookLods` cooks a project's models. `GltfParser.parseMeshPrimitives` reads every primitive of a GLB or `.gltf` (#1185).
+- **Find out why draws don't fold into instances.** With `RenderDiagnostics.drawStatsEnabled` on, or the scene runtime's perf stats (F2), `RenderDiagnostics.drawStats` holds a `SceneDrawStats` for the last planned frame: the draws handed to the main, shadow (per cascade and point face) and mask passes, the instanced draws folding made, and the main-pass draws that stayed on their own counted by `InstanceFoldMiss` reason (single copy, blended, masked, vertex format, cull mode, distinct material, distinct uniforms, skinned not instanced). `ScenePassCompiler.compile` gains an overload that fills one. Off by default, it costs nothing while off.
+
+### Fixed
+
+- **A shrunk release of an app on `awake:project` builds and finds its crypto provider again.** Since content bundle encryption (#1153), `awake:project` uses cryptography-kotlin, whose JDK provider refers to BouncyCastle for when an app ships it. Against Core 0.29.0, a release that shrinks with ProGuard (desktop) or R8 (Android) fails with unresolved `org.bouncycastle` references, and once those are silenced, an obfuscated release finds no crypto provider at run time when it decrypts a bundle or checks a plugin signature. `awake:project` and `awake:plugin-archive` now ship consumer keep rules for both. On 0.29.0, add the same lines to the app's own `proguard-rules.pro`:
+
+  ```
+  -dontwarn org.bouncycastle.**
+  -keep interface dev.whyoleg.cryptography.CryptographyProviderContainer
+  -keep class * implements dev.whyoleg.cryptography.CryptographyProviderContainer { <init>(); }
+  ```
+- **Texture decode on the web no longer reads pixels one JS call at a time.** The wasm `createBitmap` read `getImageData` back one byte per JS call (four per pixel) and drew each image on a new `<canvas>`, which held the browser's main thread while textures streamed in (#1184). The encoded bytes and the decoded pixels now cross between wasm and JS through linear memory in one call each way, and every decode reuses one `willReadFrequently` 2D context (an `OffscreenCanvas` where there is one), so the readback stays on the CPU instead of a GPU readback per texture. A 1024×1024 decode holds headless Chromium's main thread for about 19 ms instead of 70–88 ms. Pixels, packing and orientation are unchanged. The browser now decodes without colour-space conversion, as the desktop decode does, so an image with an embedded colour profile or gamma keeps its stored values.
+- **Copies of a back-culled mesh fold into one instanced draw in a scene.** The scene planner asked the backend whether it could instance a format only for unculled copies, so copies of a single-sided (`cull_mode: Back`) prop drew one by one in every pass although both backends build a back-culled instanced pipeline for them. In a town of glTF models, eight copies each of four models now take 11 main-pass and 33 shadow draws instead of 18 and 54. Skinned characters still draw one each; `SceneDrawStats` reports them as `SkinnedNotInstanced`.
+
 ## [0.29.0] - 2026-10-31
 
 ### Added

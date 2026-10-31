@@ -90,7 +90,10 @@ words, so an option set on the wrong kind still does nothing.
   `hovered`, `pressed` and `disabled` states (`CanvasStateStyle`: fill, gradient, image, border and
   text colour, `shadow`, centre `scale` without moving layout or hit-testing, and `alpha`),
   `transitionSeconds` (interpolated between states, falling back to
-  `CanvasControlTheme.transitionSeconds` and snapping at `0`), and images. `style.image` is an Image's picture, the
+  `CanvasControlTheme.transitionSeconds` and snapping at `0`), `backdrop` (`CanvasBackdrop`: frosted
+  glass over whatever is drawn beneath the element, the 3D scene included, through
+  `Modifier.backdropEffect`; its `fallback` where blur does not run or the host provides
+  `LocalCanvasBackdropBlur` false), and images. `style.image` is an Image's picture, the
   frame of a Panel, Button or Text, or a Bar's track; `style.fillImage` is a Bar's fill, cut at
   `value`, or with `style.fillImageMode` `Squeeze` drawn at the filled width with both end caps kept,
   `Capped` with both caps whole at every value, or `Sweep` swept clockwise over the box.

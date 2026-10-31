@@ -13,8 +13,9 @@ import kotlinx.serialization.json.Json
  *
  * @property ratio The fraction of the full mesh's triangles this level keeps, in `0..1`.
  * @property screenCoverage The smallest screen coverage this level is drawn at: the model's projected
- *   bounding-sphere diameter over the viewport height. Below the last level's value the model is culled,
- *   so `0` keeps the last level drawn at any distance.
+ *   bounding-sphere diameter over the viewport height. The last level's value is where a loader that
+ *   culls small models stops drawing it; Awake draws the last level at any size, and `0` asks every
+ *   loader to.
  */
 @Serializable
 data class LodLevelSetting(val ratio: Float, val screenCoverage: Float) {

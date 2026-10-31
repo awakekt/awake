@@ -55,7 +55,8 @@ cooked.bytes     // the asset, in the container it came in
 Each node with a mesh gets one node per level, listed in `extensions.MSFT_lod.ids`, and its
 `extras.MSFT_screencoverage` holds the smallest screen coverage each level is drawn at, the full mesh
 first. Screen coverage is the model's projected bounding-sphere diameter over the viewport height;
-below the last level's value the model is culled, so the default `0` keeps it drawn. A level is a mesh
+Awake draws the last level at any size; a loader that culls small models stops below the last
+value, so the default `0` keeps it drawn there too. A level is a mesh
 whose primitives are the full mesh's with a new `indices` accessor, so only index data is added. A
 LOD node carries just its mesh and skin and is drawn at its base node's transform; it is not in the
 scene, so a loader that ignores `MSFT_lod` draws the full mesh as before.

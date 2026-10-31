@@ -362,6 +362,7 @@ lengths are dp.
 | `alpha` | number, 0 to 1 | The element's opacity, its children included. |
 | `hovered`, `pressed`, `disabled` | state | What changes while the pointer is over a `Button`, while it is held, and while it is disabled. |
 | `transitionSeconds` | number | Seconds to interpolate between states, falling back to `canvas_controls.theme.transitionSeconds`; `0` or unset snaps at once. |
+| `backdrop` | `{ blur, tint, saturation, fallback }` | Frosted glass: what is drawn under the element this frame, the 3D scene included, blurred inside its `cornerRadius` shape, then tinted, under its own fill. `blur` is a radius in dp (default 16), `saturation` 1 keeps the colours. Where blur does not run, `fallback` fills the shape instead (unset: a colour from `tint`). See [Glass windows](#glass-windows). |
 
 A state may set `background`, `gradient`, `image`, `borderColor`, `textColor`, `shadow`, `scale` and
 `alpha`; anything it leaves out keeps the style's value. `scale` grows or shrinks what is painted
@@ -369,6 +370,40 @@ about the element's centre without moving its layout box or hit-test area. `pres
 `hovered`. A button drawn from a sheet of art changes its `image` region per state, and a state's
 `image` can name a file of its own, which `loadCanvasImages` reads with the rest. A `Joystick` draws
 only its colours.
+
+### Glass windows
+
+A `backdrop` turns a translucent window into frosted glass, so the scene behind a HUD panel stays
+readable without hiding it. The panel's own `background` is the tint over the glass; keep it
+translucent.
+
+```json title="A glass window over the scene"
+{ "component": "canvas_element", "kind": "Panel", "anchor": "BottomLeft",
+  "offsetX": 16, "offsetY": 16, "width": 400, "height": 300, "background": "#10141840",
+  "style": {
+    "cornerRadius": 12, "borderWidth": 1, "borderColor": "#FFFFFF30",
+    "backdrop": { "blur": 16, "tint": "#FFFFFF14", "saturation": 1.2, "fallback": "#141820E0" }
+  } }
+```
+
+What it costs is a few passes over the pixels the window covers, at half resolution or less, not
+the whole frame. One 400 by 300 window at 1920 by 1080, `blur` 16, runs 5 blur passes and a
+composite over a 532 by 432 region, about 268,000 texels written in all; at `Low` quality, 4 passes and
+about 203,000. Windows that do not overlap share one blur; a window over another
+runs its own, since its glass shows the window under it. A canvas with no `backdrop` costs nothing.
+
+The glass is skipped, and `fallback` drawn with no extra pass, when the renderer's effect quality is
+`Off`, when its surface cannot be sampled, or when the host turns it off for the canvas, for example
+below the quality it wants glass at:
+
+```kotlin
+CompositionLocalProvider(LocalCanvasBackdropBlur provides (renderer.effectQuality >= EffectQuality.Medium)) {
+    CanvasOverlay(items)
+}
+```
+
+The glass follows the element's `alpha` and `scale`. A `rotation` turns the element's fill but not
+its glass, and a control theme's slot styles draw no glass.
 
 ## Draw images
 
