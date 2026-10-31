@@ -1414,6 +1414,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#2d-particles-scene2d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2D particles (scene2d)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2810,6 +2821,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#2d-particles-scene2d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2D particles (scene2d)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3246,6 +3268,71 @@ child node's from its world matrix as of the last transform pass);
 <p>For a one-shot burst, <code>spawnParticleBurst(world, mesh, material, position, count, spawnRate,
 lifetime, startAlpha, baseVelocity, ...)</code> creates an entity with a <code>burstCount</code> emitter and returns
 it. <code>ParticleSystem</code> destroys it when the burst is over.</p>
+<h2 id="2d-particles-scene2d">2D particles (<code>scene2d</code>)</h2>
+<p>In 2D scenes (<code>awake:scene:scene2d</code>), place <code>particle_emitter_2d</code> on a node to emit quads on the XY
+plane through <code>awake:core:particles</code>'s shared <code>ParticleSimulation</code> and draw them through
+<code>spriteScenePipeline()</code>, sorted alongside <code>sprite</code> and <code>tilemap</code> nodes by <code>sortingLayer</code> and
+<code>sortOrder</code> (including interleaved <code>additive = true</code> glows between alpha-blended sprites in the same
+layer):</p>
+<div class="language-json highlight"><span class="filename">Scene document</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"particle_emitter_2d"</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">"texture"</span><span class="p">:</span><span class="w"> </span><span class="s2">"assets/fx/ember_sheet.png"</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">"columns"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">"rows"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="nt">"frameCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="nt">"frameRate"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="nt">"maxParticles"</span><span class="p">:</span><span class="w"> </span><span class="mi">96</span><span class="p">,</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="nt">"spawnRate"</span><span class="p">:</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="nt">"lifetime"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span><span class="nt">"maxLifetime"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.1</span><span class="p">,</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span><span class="nt">"endSize"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.55</span><span class="p">,</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span><span class="nt">"alphaCurve"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"fadeInEnd"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="nt">"fadeOutStart"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.65</span><span class="p">},</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span><span class="nt">"tint"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"r"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"g"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span><span class="w"> </span><span class="nt">"b"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span><span class="w"> </span><span class="nt">"a"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">},</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span><span class="nt">"endTint"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"r"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="nt">"g"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.15</span><span class="p">,</span><span class="w"> </span><span class="nt">"b"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="nt">"a"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">},</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span><span class="nt">"shape"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Disc"</span><span class="p">,</span><span class="w"> </span><span class="nt">"radius"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.18</span><span class="p">},</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">  </span><span class="nt">"directionDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">90</span><span class="p">,</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span><span class="nt">"spreadDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">  </span><span class="nt">"speed"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.8</span><span class="p">,</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">  </span><span class="nt">"maxSpeed"</span><span class="p">:</span><span class="w"> </span><span class="mf">3.2</span><span class="p">,</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">  </span><span class="nt">"gravity"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">-3.5</span><span class="p">},</span>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">  </span><span class="nt">"additive"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="w">  </span><span class="nt">"sortingLayer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Foreground"</span><span class="p">,</span>
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">  </span><span class="nt">"sortOrder"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Leave <code>texture</code> empty (<code>""</code>) for solid-tinted quads with no image file. Set <code>localSpace = true</code> to keep
+already-spawned particles attached to a moving node's <code>Transform</code> instead of trailing behind in world
+space, or <code>inheritOrientation = true</code> on a world-space emitter so the node's Z rotation turns <code>shape</code>
+and <code>directionDegrees</code>. All fields are listed under
+<a href="../../reference/scene-document-components/#particle_emitter_2d"><code>particle_emitter_2d</code></a>.</p>
+<p>For frequent one-shot 2D bursts (hit sparks, pickups, footsteps) without spawning or destroying ECS
+entities each hit, prepare a <code>BurstEmitter2DPool</code> once, build a template once, and fire it as often as
+needed. The emitter, its <code>Particle2DSystem</code> and the pool are in <code>awake:particles</code>, beside the 3D emitter;
+<code>awake:scene:scene2d</code> binds them to scene nodes.</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">hitSparks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BurstEmitter2DPool</span><span class="p">(</span><span class="n">maxSlots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">24</span><span class="p">,</span><span class="w"> </span><span class="n">slotMaxParticles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">32</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">hitSparks</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1">// Built once: authored settings are validated here, so a bad one throws at load time, not mid-game.</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="kd">val</span><span class="w"> </span><span class="nv">sparks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneParticleEmitter2D</span><span class="p">(</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="n">lifetime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.35f</span><span class="p">,</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.18f</span><span class="p">,</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="n">endSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.04f</span><span class="p">,</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="n">speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3f</span><span class="p">,</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="n">maxSpeed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">6f</span><span class="p">,</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="n">tint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneColor</span><span class="p">(</span><span class="m">1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.85f</span><span class="p">,</span><span class="w"> </span><span class="m">0.3f</span><span class="p">,</span><span class="w"> </span><span class="m">1f</span><span class="p">),</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="n">additive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="n">sortingLayer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Foreground"</span><span class="p">,</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="n">sortOrder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">20</span><span class="p">,</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="p">).</span><span class="na">toBurstTemplate</span><span class="p">()</span>
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="c1">// Each burst copies the template and allocates nothing; it skips and increments</span>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="c1">// droppedBurstCount if all 24 slots are active.</span>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="n">hitSparks</span><span class="p">.</span><span class="na">spawn</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hitX</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hitY</span><span class="p">,</span><span class="w"> </span><span class="n">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sparks</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Stepping, the <code>onParticleDeath</code> (<code>ParticleDeathListener</code>) and <code>dynamicSpawnRate</code> (<code>ParticleSpawnRate</code>)
+hooks, and <code>spawn</code> allocate nothing per frame. Drawing reuses each particle's model matrix and an
+unchanged tint, but still builds one sprite draw per live particle each frame, as a sprite does.</p>
 <h2 id="how-it-works">How it works</h2>
 <p>Each frame, <code>ParticleSystem</code> spawns into free slots at <code>spawnRate</code>, moves live particles, applies
 ground and turbulence, and ages them. <code>RenderSystem3D</code> then turns each emitter into one instanced
@@ -3268,6 +3355,7 @@ shadow map too. The Engine Showcase plan maps it to <code>PackShaderSets.Particl
 </div>
 <h2 id="see-also">See also</h2>
 <ul>
+<li><a href="../game-ui/#particles-on-a-canvas">Game UI — Particles on a canvas</a> for screen-space HUD emitters (<code>canvas_particles</code> / <code>CanvasParticles</code>) and <code>CanvasBurstPool</code>.</li>
 <li><a href="../meshes-and-materials/">Meshes and materials</a> for instancing static meshes.</li>
 <li><a href="../shaders/">Render plans and shaders</a> for the particle pipeline.</li>
 </ul>

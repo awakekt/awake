@@ -2498,6 +2498,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#particles-on-a-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Particles on a canvas
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Particles on a canvas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#level-up-burst-on-a-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Level-up burst on a bar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#button-press-burst-and-canvasburstpool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Button-press burst and CanvasBurstPool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clipping-layers-scaling-and-visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipping, layers, scaling, and visibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3621,6 +3671,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#particles-on-a-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Particles on a canvas
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Particles on a canvas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#level-up-burst-on-a-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Level-up burst on a bar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#button-press-burst-and-canvasburstpool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Button-press burst and CanvasBurstPool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clipping-layers-scaling-and-visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipping, layers, scaling, and visibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3824,6 +3924,11 @@ directly:</p>
 <td><code>canvas_input</code>, <code>canvas_tooltip</code></td>
 <td><code>CanvasInput</code>, <code>CanvasTooltip</code></td>
 <td>Pressable, draggable, drop target, wheel; a hover hint.</td>
+</tr>
+<tr>
+<td><code>canvas_particles</code></td>
+<td><code>CanvasParticles</code></td>
+<td>Particles emitted from or over the element in canvas <code>dp</code> units.</td>
 </tr>
 <tr>
 <td>one widget</td>
@@ -5455,6 +5560,100 @@ writes the same hex a canvas element saves.</p>
 </span><span id="__span-37-5"><a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ColorHexSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">accent</span><span class="p">:</span><span class="w"> </span><span class="n">Color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Color</span><span class="p">.</span><span class="na">White</span><span class="p">,</span>
 </span><span id="__span-37-6"><a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a><span class="p">)</span>
 </span></code></pre></div>
+<h2 id="particles-on-a-canvas">Particles on a canvas</h2>
+<p>Attach <code>canvas_particles</code> (<code>CanvasParticles</code> in Kotlin) alongside <code>canvas_rect</code> to emit particles in
+logical canvas <code>dp</code> units (<code>+X</code> right, <code>+Y</code> down; <code>-90</code> degrees points upward on screen) on the same
+<code>ParticleSimulation</code> that drives the 3D and 2D emitters. Leaving <code>texture</code> empty
+(<code>""</code>) draws solid-tinted quads; naming a project image loads and premultiplies it once through
+<code>loadCanvasImages</code>, with optional <code>columns × rows</code> sprite-sheet cells.</p>
+<h3 id="level-up-burst-on-a-bar">Level-up burst on a bar</h3>
+<p>Set <code>spawnRate</code> to <code>0</code> on a progress bar's <code>canvas_particles</code> with <code>shape = ElementEdge</code> so particles
+sit idle until gameplay calls <code>emit(count)</code> along the bar's perimeter:</p>
+<div class="language-json highlight"><span class="filename">Scene document</span><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="p">{</span>
+</span><span id="__span-38-2"><a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"XpBar"</span><span class="p">,</span>
+</span><span id="__span-38-3"><a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">  </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-38-4"><a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_rect"</span><span class="p">,</span><span class="w"> </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomCenter"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">280</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">18</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-38-5"><a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_bar"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-38-6"><a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="w">    </span><span class="p">{</span>
+</span><span id="__span-38-7"><a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="w">      </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_particles"</span><span class="p">,</span>
+</span><span id="__span-38-8"><a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a><span class="w">      </span><span class="nt">"clipped"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+</span><span id="__span-38-9"><a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a><span class="w">      </span><span class="nt">"additive"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-38-10"><a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a><span class="w">      </span><span class="nt">"texture"</span><span class="p">:</span><span class="w"> </span><span class="s2">"assets/ui/spark.png"</span><span class="p">,</span>
+</span><span id="__span-38-11"><a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a><span class="w">      </span><span class="nt">"maxParticles"</span><span class="p">:</span><span class="w"> </span><span class="mi">48</span><span class="p">,</span>
+</span><span id="__span-38-12"><a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a><span class="w">      </span><span class="nt">"spawnRate"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-38-13"><a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a><span class="w">      </span><span class="nt">"lifetime"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.45</span><span class="p">,</span>
+</span><span id="__span-38-14"><a id="__codelineno-38-14" name="__codelineno-38-14" href="#__codelineno-38-14"></a><span class="w">      </span><span class="nt">"maxLifetime"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span>
+</span><span id="__span-38-15"><a id="__codelineno-38-15" name="__codelineno-38-15" href="#__codelineno-38-15"></a><span class="w">      </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-38-16"><a id="__codelineno-38-16" name="__codelineno-38-16" href="#__codelineno-38-16"></a><span class="w">      </span><span class="nt">"endSize"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-38-17"><a id="__codelineno-38-17" name="__codelineno-38-17" href="#__codelineno-38-17"></a><span class="w">      </span><span class="nt">"tint"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"r"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"g"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="p">,</span><span class="w"> </span><span class="nt">"b"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="nt">"a"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-38-18"><a id="__codelineno-38-18" name="__codelineno-38-18" href="#__codelineno-38-18"></a><span class="w">      </span><span class="nt">"endTint"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"r"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"g"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="nt">"b"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="nt">"a"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-38-19"><a id="__codelineno-38-19" name="__codelineno-38-19" href="#__codelineno-38-19"></a><span class="w">      </span><span class="nt">"shape"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ElementEdge"</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-38-20"><a id="__codelineno-38-20" name="__codelineno-38-20" href="#__codelineno-38-20"></a><span class="w">      </span><span class="nt">"speed"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span>
+</span><span id="__span-38-21"><a id="__codelineno-38-21" name="__codelineno-38-21" href="#__codelineno-38-21"></a><span class="w">      </span><span class="nt">"maxSpeed"</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span>
+</span><span id="__span-38-22"><a id="__codelineno-38-22" name="__codelineno-38-22" href="#__codelineno-38-22"></a><span class="w">      </span><span class="nt">"directionDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">-90</span><span class="p">,</span>
+</span><span id="__span-38-23"><a id="__codelineno-38-23" name="__codelineno-38-23" href="#__codelineno-38-23"></a><span class="w">      </span><span class="nt">"spreadDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">140</span>
+</span><span id="__span-38-24"><a id="__codelineno-38-24" name="__codelineno-38-24" href="#__codelineno-38-24"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-38-25"><a id="__codelineno-38-25" name="__codelineno-38-25" href="#__codelineno-38-25"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-38-26"><a id="__codelineno-38-26" name="__codelineno-38-26" href="#__codelineno-38-26"></a><span class="p">}</span>
+</span></code></pre></div>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">xpBar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world</span><span class="p">.</span><span class="na">canvasElements</span><span class="p">().</span><span class="na">getValue</span><span class="p">(</span><span class="s">"XpBar"</span><span class="p">)</span>
+</span><span id="__span-39-2"><a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">didLevelUp</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-39-3"><a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="w">    </span><span class="n">xpBar</span><span class="p">.</span><span class="na">particles</span><span class="o">?.</span><span class="na">emit</span><span class="p">(</span><span class="m">24</span><span class="p">)</span>
+</span><span id="__span-39-4"><a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="button-press-burst-and-canvasburstpool">Button-press burst and <code>CanvasBurstPool</code></h3>
+<p>Give a button an idle emitter (<code>spawnRate = 0</code>, <code>placement = OverContent</code> or <code>BehindContent</code>) and
+fire <code>emit(count)</code> when <code>consumePress()</code> triggers:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">craftButton</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world</span><span class="p">.</span><span class="na">canvasElements</span><span class="p">().</span><span class="na">getValue</span><span class="p">(</span><span class="s">"CraftButton"</span><span class="p">)</span>
+</span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">craftButton</span><span class="p">.</span><span class="na">consumePress</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">    </span><span class="n">craftButton</span><span class="p">.</span><span class="na">particles</span><span class="o">?.</span><span class="na">emit</span><span class="p">(</span><span class="m">16</span><span class="p">)</span>
+</span><span id="__span-40-4"><a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>For frequent one-shot bursts at arbitrary <code>(xDp, yDp)</code> canvas coordinates (pointer taps, coin
+pickups, slot flashes) without adding or removing <code>CanvasElement</code>s, keep a <code>CanvasBurstPool</code> and pass
+its <code>items</code> into <code>CanvasOverlay</code>:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">tapBursts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasBurstPool</span><span class="p">(</span><span class="n">maxSlots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span><span class="p">,</span><span class="w"> </span><span class="n">slotMaxParticles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">24</span><span class="p">)</span>
+</span><span id="__span-41-2"><a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>
+</span><span id="__span-41-3"><a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="c1">// Built once, so firing it allocates nothing: a lambda written at the call, or a Color made inside</span>
+</span><span id="__span-41-4"><a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1">// it, would be a new object on every tap.</span>
+</span><span id="__span-41-5"><a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a><span class="kd">val</span><span class="w"> </span><span class="nv">sparkGold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.9f</span><span class="p">,</span><span class="w"> </span><span class="m">0.4f</span><span class="p">,</span><span class="w"> </span><span class="m">1f</span><span class="p">)</span>
+</span><span id="__span-41-6"><a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a><span class="kd">val</span><span class="w"> </span><span class="nv">tapSpark</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="n">CanvasParticles</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">Unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">emitter</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-41-7"><a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">clipped</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</span><span id="__span-41-8"><a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">additive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-41-9"><a id="__codelineno-41-9" name="__codelineno-41-9" href="#__codelineno-41-9"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">lifetime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.35f</span>
+</span><span id="__span-41-10"><a id="__codelineno-41-10" name="__codelineno-41-10" href="#__codelineno-41-10"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">8f</span>
+</span><span id="__span-41-11"><a id="__codelineno-41-11" name="__codelineno-41-11" href="#__codelineno-41-11"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">endSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2f</span>
+</span><span id="__span-41-12"><a id="__codelineno-41-12" name="__codelineno-41-12" href="#__codelineno-41-12"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">40f</span>
+</span><span id="__span-41-13"><a id="__codelineno-41-13" name="__codelineno-41-13" href="#__codelineno-41-13"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">maxSpeed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">90f</span>
+</span><span id="__span-41-14"><a id="__codelineno-41-14" name="__codelineno-41-14" href="#__codelineno-41-14"></a><span class="w">    </span><span class="n">emitter</span><span class="p">.</span><span class="na">tint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sparkGold</span>
+</span><span id="__span-41-15"><a id="__codelineno-41-15" name="__codelineno-41-15" href="#__codelineno-41-15"></a><span class="p">}</span>
+</span><span id="__span-41-16"><a id="__codelineno-41-16" name="__codelineno-41-16" href="#__codelineno-41-16"></a>
+</span><span id="__span-41-17"><a id="__codelineno-41-17" name="__codelineno-41-17" href="#__codelineno-41-17"></a><span class="c1">// Returns false and increments droppedBurstCount when all slots are live.</span>
+</span><span id="__span-41-18"><a id="__codelineno-41-18" name="__codelineno-41-18" href="#__codelineno-41-18"></a><span class="n">tapBursts</span><span class="p">.</span><span class="na">spawn</span><span class="p">(</span><span class="n">xDp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tapX</span><span class="p">,</span><span class="w"> </span><span class="n">yDp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tapY</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12</span><span class="p">,</span><span class="w"> </span><span class="n">configure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tapSpark</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Stepping, <code>emit</code>, <code>spawn</code> and the <code>onParticleDeath</code> (<code>ParticleDeathListener</code>) and <code>dynamicSpawnRate</code>
+(<code>ParticleSpawnRate</code>) hooks allocate nothing per frame. Drawing still draws one texture with its own
+tint per live particle each frame.</p>
+<h3 id="clipping-layers-scaling-and-visibility">Clipping, layers, scaling, and visibility</h3>
+<ul>
+<li><strong>Clip escape (<code>clipped = false</code>).</strong> By default (<code>clipped = true</code>), particles honour enclosing
+  rectangle clips, path clips (<code>Modifier.clip</code>), and canvas masks. Setting <code>clipped = false</code> wraps
+  drawing in <code>DrawScope.unclipped {}</code>, escaping scissor/path clips and canvas masks within the
+  active render target — including inside a faded ancestor (<code>CanvasStyle(alpha = ...)</code>), whose
+  premultiplied fade the escaped particles still inherit without dark fringes. <code>clipped = false</code>
+  <strong>never</strong> escapes an ancestor that renders into an offscreen <code>graphicsLayer</code>
+  (<code>CanvasStyle(rotation != 0f)</code> or <code>Modifier.graphicsLayer</code>): particles inside an offscreen layer
+  remain bounded by that layer's target dimensions and by any clips enclosing the layer.</li>
+<li><strong>Stepping and hidden elements.</strong> <code>CanvasOverlay</code> steps every visible emitter once per frame using
+  <code>LocalFrameClock</code> (even when the element's rectangle sits off-screen or outside a clip), and
+  <strong>pauses stepping while the element or an ancestor is hidden</strong> (<code>visible == false</code>, or a hidden
+  <code>touchOnly</code> control).</li>
+<li><strong>Trailing (<code>localSpace = false</code>) and UI scale.</strong> With <code>localSpace = true</code> (default), live
+  particles move with the element (including subpixel follower motion and subtree <code>CanvasScaler</code>s).
+  With <code>localSpace = false</code>, spawned particles detach into root canvas <code>dp</code> space so moving the
+  element leaves a trail behind; if <code>CanvasScaler</code> or <code>scale</code> changes mid-flight, detached in-flight
+  particles scale uniformly with the root canvas.</li>
+</ul>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../ui/">UI with AwakeKt Compose</a> for menus and tools written in Kotlin.</li>
