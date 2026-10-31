@@ -50,7 +50,7 @@ private val IDENTITY_JOINT = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f
 private val ORANGE = intArrayOf(220, 80, 40, 255)
 
 /** Orange on the left half, clear black on the right; wide enough that filtering blurs only the seam. */
-private val HalfClear = TextureAsset(
+internal val HalfClear = TextureAsset(
     data = ByteArray(HALF_CLEAR_WIDTH * 4) { index ->
         if (index / 4 < HALF_CLEAR_WIDTH / 2) ORANGE[index % 4].toByte() else 0
     },
