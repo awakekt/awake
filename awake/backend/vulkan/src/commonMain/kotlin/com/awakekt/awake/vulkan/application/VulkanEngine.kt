@@ -340,6 +340,17 @@ open class VulkanEngine(
         }
     }
 
+    /**
+     * Arrayed, one layer per mask layer and one for the draws exempt from coverings, read as an
+     * array by whatever samples the mask; null when the plan has no mask pass. Cleared to the far
+     * plane once, so a frame that draws no layer of it still samples a readable image: distance
+     * fog reads the mask on every frame, not only on masked ones.
+     */
+    private fun createMaskTarget(): DepthTarget? = plan.maskShadersFor(RenderBackend.Vulkan)?.let {
+        DepthTarget(graphicsDevice, layers = MASK_TARGET_LAYER_COUNT, arrayed = true)
+            .also { target -> transferContext.runOneTimeCommands(target::clearToFar) }
+    }
+
     /** The mask's pass: scene depth's pipelines again, into the mask's layers, over the masked draws. */
     private suspend fun buildMaskFeature(): DepthPrePassFeature? = maskTarget?.let { map ->
         withPipelineLoadContext("mask") {
@@ -575,8 +586,6 @@ open class VulkanEngine(
                 )
             }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
-            // Arrayed, one layer per mask layer, read as an array by whatever samples the mask.
-            maskTarget = plan.maskShadersFor(RenderBackend.Vulkan)?.let { DepthTarget(graphicsDevice, layers = MASK_TARGET_LAYER_COUNT, arrayed = true) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)
             sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager, rasterState.count)
@@ -589,9 +598,7 @@ open class VulkanEngine(
                 ?.let { SkinnedInstanceBuffer.createDescriptorSetLayout(graphicsDevice) }
             skinnedInstanceDescriptorSetLayout = paletteLayout
             transferContext = TransferContext(graphicsDevice)
-            // Cleared to the far plane once, so a frame that draws no layer of it still samples a
-            // readable image: distance fog reads the mask on every frame, not only masked ones.
-            maskTarget?.let { target -> transferContext.runOneTimeCommands(target::clearToFar) }
+            maskTarget = createMaskTarget()
             depthPrePassPlaceholder = depthPlaceholderWithoutPrePass()
             pipelineRegistry = PipelineRegistry(
                 VulkanPipelineFactory(
