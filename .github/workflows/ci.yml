@@ -237,6 +237,11 @@ jobs:
       - name: Sprite metadata, animation and scene runtime tests
         run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
+      # Cook-time mesh LOD: the attribute-aware simplifier, the MSFT_lod cooker and its round trip
+      # through the glTF importer, and the cookLods tool (#1185).
+      - name: Mesh LOD cook tests
+        run: ./gradlew :awake:asset:mesh-lod:desktopTest :awake:asset:gltf:desktopTest :awake:asset:mesh-optimizer:test
+
       # The game UI canvas: its elements' input, drawing and zero-tolerance pixel baselines, in the
       # scene-free capability and its scene wrapper. Before this step it was only compiled here, so a
       # change to how it draws or routes a tap stayed green.
