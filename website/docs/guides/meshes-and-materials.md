@@ -74,7 +74,10 @@ The render plan needs a `PipelineKey.Instanced` pipeline for this; see
 ## Swap detail with distance
 
 An `LodGroup` holds one `LodLevel` per detail level. Each frame the renderer picks a level by the
-entity's distance from the camera. An entity carries an `LodGroup` instead of a `MeshRenderer`.
+entity's distance from the camera, or by its size on screen. An entity carries an `LodGroup`
+instead of a `MeshRenderer`, or next to one, which then draws the chosen level with its own
+material. To cook levels into your models and decide per entity which keep their detail, see
+[Level of detail](level-of-detail.md).
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/runtime/src/desktopTest/kotlin/com/awakekt/awake/project/runtime/MeshesDocsSampleTest.kt:lod"

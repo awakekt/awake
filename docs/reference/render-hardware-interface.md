@@ -183,6 +183,13 @@ backend imports `RenderDrawCommand`, `SceneLight`, `Lens`, or `EnvironmentUnifor
 lowering remains in `render:passes`; the backends receive resolved GPU packets and hardware
 handles. The verifier makes a regression a build failure.
 
+**Shared vertex buffers.** `GpuDevice.createMeshSharingVertices(vertices, geometry)` uploads only a
+mesh's indices and draws another mesh's vertex buffer, for meshes that differ only in their
+triangles, such as a model's levels of detail. It is core tier: binding one vertex buffer with
+different index buffers is ordinary on both APIs. Vulkan and WebGPU count the meshes drawing a
+buffer and free it with the last; a backend that cannot share uploads the geometry whole, which is
+the interface's default.
+
 ## HAL vs Render Graph — the complete vocabulary boundary
 
 > **D31**: `GpuDevice`/`Renderer` is a pure hardware interface. The types below are the
