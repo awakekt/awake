@@ -239,6 +239,33 @@ keeps showing, so a camera near a threshold does not flicker between levels.
 match to a pipeline or resource). `RenderSystem3D` also exposes `lastFrustumCulledCount` and
 `lastOccludedCount`.
 
+### Find the draws that do not fold
+
+Copies of one mesh and material that differ only in placement fold into one instanced draw on
+their own, with no `InstancedMeshRenderer`. Set `RenderDiagnostics.drawStatsEnabled = true`, or
+turn on the scene runtime's perf stats (F2, `perfStatsEnabled`), and `RenderDiagnostics.drawStats`
+holds the last planned frame's `SceneDrawStats`:
+
+- draws per pass: `opaqueDraws` and `transparentDraws` in the main pass, `shadowDraws` across
+  `shadowPasses` (`shadowPassDraws(index)` for each cascade or point-shadow face), `maskDraws`;
+- what folded: `foldedDraws` instanced draws carrying `foldedCopies` scene draws;
+- what did not: `misses(reason)` for each `InstanceFoldMiss`.
+
+| Reason | What it means | What folds it |
+|---|---|---|
+| `SingleCopy` | Nothing else draws its mesh. | Nothing to fold. |
+| `Blended` | Copies drawn transparent. | Blended draws keep their order; none fold. |
+| `Masked` | Alpha-masked copies of a format with no instanced pipeline. | An instanced pipeline for the format. |
+| `VertexFormat` | Copies of a format with no instanced pipeline. | A `PipelineKey.InstancedFormat` pipeline. |
+| `CullMode` | The format instances, but not with this cull mode. | Front-culled copies never fold. |
+| `DistinctMaterial` | Copies of the mesh, each with its own material. | One material name per glTF material. |
+| `DistinctUniforms` | Same mesh and material, different factors or state. | Equal `PbrMaterial` factors, or one shared instance. |
+| `SkinnedNotInstanced` | Posed skinned copies. | `InstancedSkinnedMeshRenderer`. |
+
+Counts are of draws after folding: one instanced draw of 400 copies is one draw. The renderer's own
+`frameStats` is the backend's total across every pass, image passes and UI included. Counting is
+off by default and costs nothing while it is off.
+
 ## See also
 
 - [Lights and shadows](lights-and-shadows.md) for lighting what you draw.

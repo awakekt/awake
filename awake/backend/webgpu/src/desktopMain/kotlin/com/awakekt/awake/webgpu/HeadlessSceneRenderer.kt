@@ -189,6 +189,25 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.InstancedTextured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.InstancedTextured.webGpu.bindingsMetadataAvailable,
     )
+
+    // The back-culled twins a render plan builds for the textured format and its instanced pipeline,
+    // so copies of a single-sided textured prop draw, and fold, as a played project's do.
+    suspend fun backCulledTextured(shaders: ShaderSet, variant: PipelineVariant) = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(shaders),
+        ByteArray(0),
+        VertexFormat.PositionNormalColorUv,
+        "vertexMain",
+        "fragmentMain",
+        variant = variant,
+        bindingsByGroup = shaders.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = shaders.webGpu.bindingsMetadataAvailable,
+        cullMode = io.ygdrasil.webgpu.GPUCullMode.Back,
+    )
+    val backCulledTexturedPipeline = backCulledTextured(PackShaderSets.Textured, PipelineVariant.Opaque)
+    val backCulledInstancedTexturedPipeline = backCulledTextured(PackShaderSets.InstancedTextured, PipelineVariant.Instanced)
     // The sprite pipeline RenderPlan builds for PipelineKey.Particle.
     val spritePipeline = RenderPipeline(
         graphicsDevice,
@@ -263,6 +282,16 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 bindingsByGroup = PackShaderSets.SkinnedMaskedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.SkinnedMaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
+            // As a project plan declares it: folded copies of cut-out foliage cast through their alpha.
+            DepthRenderKey(DepthCasterKind.Instanced, AlphaMode.Masked) to DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = wgsl(PackShaderSets.InstancedMaskedTexturedShadowDepth),
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                variant = PipelineVariant.Instanced,
+                bindingsByGroup = PackShaderSets.InstancedMaskedTexturedShadowDepth.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.InstancedMaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
+            ),
         ),
         instancedFormatPipelines = mapOf(
             VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
@@ -295,7 +324,11 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
-            backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
+            backCulledByFormat = mapOf(
+                VertexFormat.PositionNormalColor to backCulledScenePipeline,
+                VertexFormat.PositionNormalColorUv to backCulledTexturedPipeline,
+            ),
+            instancedBackCulledByFormat = mapOf(VertexFormat.PositionNormalColorUv to backCulledInstancedTexturedPipeline),
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
             edgesByFormat = edgePipelines,
         ),
@@ -330,6 +363,8 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             distanceFieldPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
+            backCulledTexturedPipeline.destroy()
+            backCulledInstancedTexturedPipeline.destroy()
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
             spritePipeline.destroy()

@@ -13,8 +13,10 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.SceneDrawStats
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.ShadowCasterVolume
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
 
@@ -61,6 +63,7 @@ internal class SceneRenderPlanner3D(
         cameraEntity: com.awakekt.awake.ecs.Entity? = null,
         targetWidth: Int = 0,
         targetHeight: Int = 0,
+        drawStats: SceneDrawStats? = null,
     ): PlannedFrame {
         drawCalls.clear()
         // Features first, though their draws go after the opaque geometry: the light they settle
@@ -104,6 +107,7 @@ internal class SceneRenderPlanner3D(
             drawPreparer = drawPreparer,
             maskLayers = world.outlineMaskLayers(),
             postPassChain = postPassChain,
+            drawStats = drawStats,
         )
         return PlannedFrame(
             passInput = passInput,
@@ -143,4 +147,8 @@ private class RejectionCountingPreparer(private val delegate: GpuDrawPreparer) :
     ): GpuResolvedDraw? = delegate.prepare(request, sourceIndex, context).also { if (it == null) rejected += 1 }
 
     override fun canInstance(format: VertexFormat): Boolean = delegate.canInstance(format)
+
+    // Forwarded, or the interface's default answers for unculled copies only, and copies of a
+    // back-culled prop never reach the back-culled instanced pipeline the backend built for them.
+    override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = delegate.canInstance(format, cullMode)
 }

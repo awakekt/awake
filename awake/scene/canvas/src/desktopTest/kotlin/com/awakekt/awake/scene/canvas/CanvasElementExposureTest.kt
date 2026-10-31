@@ -39,6 +39,8 @@ class CanvasElementExposureTest {
     private val focusedFields = mapOf(
         "view" to SceneCanvasView.serializer().descriptor,
         "particles" to SceneCanvasParticles.serializer().descriptor,
+        "moveHandle" to SceneCanvasInput.serializer().descriptor,
+        "moveStrip" to SceneCanvasInput.serializer().descriptor,
     )
 
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
@@ -82,6 +84,8 @@ class CanvasElementExposureTest {
         assertEquals(emptySet(), targets - sceneFileFields, "mapped to scene file fields that do not exist")
         assertTrue(focusedFields.getValue("view").elementNames.contains("settings"))
         assertTrue(focusedFields.getValue("particles").elementNames.contains("maxParticles"))
+        assertTrue(focusedFields.getValue("moveHandle").elementNames.contains("moveHandle"))
+        assertTrue(focusedFields.getValue("moveStrip").elementNames.contains("moveStrip"))
     }
 
     @Test

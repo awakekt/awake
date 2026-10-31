@@ -115,6 +115,20 @@ sealed class CanvasElementFollowFields : CanvasElementFields() {
             inputFor(value)?.dropTarget = value
         }
 
+    /** See [CanvasInput.moveHandle]. */
+    var moveHandle: Boolean
+        get() = inputPart?.moveHandle ?: false
+        set(value) {
+            inputFor(value)?.moveHandle = value
+        }
+
+    /** See [CanvasInput.moveStrip]. */
+    var moveStrip: Float
+        get() = inputPart?.moveStrip ?: 0f
+        set(value) {
+            inputFor(value != 0f)?.moveStrip = value
+        }
+
     /** See [CanvasInput.wheel]. */
     var wheel: Boolean
         get() = inputPart?.wheel ?: false

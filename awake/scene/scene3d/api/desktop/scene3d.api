@@ -573,12 +573,15 @@ public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSys
 
 public final class com/awakekt/awake/scene/rendering/debug/RenderDiagnostics {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/debug/RenderDiagnostics;
+	public final fun getDrawStats ()Lcom/awakekt/awake/render/passes/SceneDrawStats;
+	public final fun getDrawStatsEnabled ()Z
 	public final fun getFrustumCulled ()I
 	public final fun getOccluded ()I
 	public final fun getSubmittedDrawCalls ()I
 	public final fun getSubmittedInstances ()I
 	public final fun getSurfaceAspect ()F
 	public final fun getUnresolvedDrawCalls ()I
+	public final fun setDrawStatsEnabled (Z)V
 }
 
 public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {

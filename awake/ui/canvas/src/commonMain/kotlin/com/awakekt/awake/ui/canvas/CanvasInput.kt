@@ -7,7 +7,8 @@ package com.awakekt.awake.ui.canvas
 
 /**
  * How a canvas element takes the pointer beyond what its widget does: whether a picture or a panel
- * takes a tap, whether it can be dragged or dropped on, and whether it takes the wheel. What the
+ * takes a tap, whether it can be dragged or dropped on, whether it moves its window, and whether it
+ * takes the wheel. What the
  * pointer then did is in the element's [CanvasPointerState]. An element without one takes none of it.
  */
 class CanvasInput {
@@ -34,6 +35,26 @@ class CanvasInput {
      * [CanvasPointerState.consumeWheel] reads what it collected.
      */
     var wheel: Boolean = false
+
+    /**
+     * Whether dragging the element moves the window it sits in, its nearest root element, by how
+     * far the pointer moved, live and with no ghost: what a window's title bar is. A press that
+     * never moves past the drag threshold [draggable] uses stays a press, so a button on the bar
+     * still clicks. One pointer moves a window at a time; another finger is left alone.
+     *
+     * Only the root's [CanvasRect.offsetX] and [CanvasRect.offsetY] change, kept so a [moveStrip]
+     * of the window stays on the canvas; when the move ends the root reports its new offset through
+     * [CanvasPointerState.moved]. Pressing anywhere in such a window brings it to the front of the
+     * roots of its [CanvasRect.order].
+     */
+    var moveHandle: Boolean = false
+
+    /**
+     * How much of a [moveHandle]'s window, in the window's dp, stays on the canvas: that height of
+     * its top edge, and that width of it, whatever the player does and however the canvas resizes.
+     * 0, the default, keeps the window's top down to the handle's bottom, the whole title bar.
+     */
+    var moveStrip: Float = 0f
 }
 
 /**

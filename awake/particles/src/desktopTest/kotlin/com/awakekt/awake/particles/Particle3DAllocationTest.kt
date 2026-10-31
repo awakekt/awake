@@ -67,20 +67,25 @@ class Particle3DAllocationTest {
             system.update(world, FRAME_DELTA)
         }
 
-        threadBean.currentThreadAllocatedBytes
-        val deathsBefore = deaths
-
-        val before = threadBean.currentThreadAllocatedBytes
-        repeat(MEASURED_FRAMES) {
-            emitter.emit(8)
-            system.update(world, FRAME_DELTA)
+        // Each window is checked whole, never divided by its frames. The median window is the gate, as
+        // in the other allocation probes: a JIT deoptimisation can materialise a few hundred bytes in
+        // one window while the code settles, but a per-frame allocation fills every window.
+        val windows = LongArray(MEASURED_WINDOWS)
+        repeat(MEASURED_WINDOWS) { window ->
+            val deathsBefore = deaths
+            val before = threadBean.currentThreadAllocatedBytes
+            repeat(MEASURED_FRAMES) {
+                emitter.emit(8)
+                system.update(world, FRAME_DELTA)
+            }
+            windows[window] = threadBean.currentThreadAllocatedBytes - before
+            assertTrue(deaths > deathsBefore, "the death hook must run in every measured window")
         }
-        val after = threadBean.currentThreadAllocatedBytes
-
-        assertTrue(deaths > deathsBefore, "the death hook ran in the measured window")
+        windows.sort()
+        println("Particle3DAllocation: ${windows.joinToString()} bytes per $MEASURED_FRAMES frames")
         assertEquals(
             0L,
-            after - before,
+            windows[MEASURED_WINDOWS / 2],
             "Steady-state ParticleEmitter.emit() + ParticleSystem.update() must allocate 0 bytes over $MEASURED_FRAMES frames",
         )
     }
@@ -99,6 +104,7 @@ class Particle3DAllocationTest {
     private companion object {
         const val WARMUP_FRAMES = 2_000
         const val MEASURED_FRAMES = 600
+        const val MEASURED_WINDOWS = 5
         const val FRAME_DELTA = 1f / 60f
     }
 }

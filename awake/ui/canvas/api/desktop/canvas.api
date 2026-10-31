@@ -676,6 +676,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement : com/awakekt/awake
 	public static final field DOUBLE_CLICK_SECONDS D
 	public static final field TOOLTIP_DELAY_SECONDS F
 	public fun <init> ()V
+	public final fun bringToFront ()V
 	public final fun consumeAimCancel ()Z
 	public final fun consumeDoublePress ()Z
 	public final fun consumeDown ()Z
@@ -699,6 +700,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement : com/awakekt/awake
 	public final fun getDroppedOutside ()Lcom/awakekt/awake/core/math2d/Vec2;
 	public final fun getFocused ()Z
 	public final fun getHeldSeconds ()F
+	public final fun getMoved ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun getMoving ()Z
 	public final fun getPresses ()I
 	public final fun getSecondaryPressed ()Z
 	public final fun getSprinting ()Z
@@ -798,6 +801,8 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementFollowFields : co
 	public final fun getFollowOutset ()F
 	public final fun getFollowRules ()Lcom/awakekt/awake/ui/canvas/CanvasFollowRules;
 	public final fun getFollowScore ()F
+	public final fun getMoveHandle ()Z
+	public final fun getMoveStrip ()F
 	public final fun getPinAngle ()F
 	public final fun getPinned ()Z
 	public final fun getPressable ()Z
@@ -812,6 +817,8 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementFollowFields : co
 	public final fun setFollowOutset (F)V
 	public final fun setFollowRules (Lcom/awakekt/awake/ui/canvas/CanvasFollowRules;)V
 	public final fun setFollowScore (F)V
+	public final fun setMoveHandle (Z)V
+	public final fun setMoveStrip (F)V
 	public final fun setPressable (Z)V
 	public final fun setTooltip (Ljava/lang/String;)V
 	public final fun setWheel (Z)V
@@ -1165,10 +1172,14 @@ public final class com/awakekt/awake/ui/canvas/CanvasInput {
 	public fun <init> ()V
 	public final fun getDraggable ()Z
 	public final fun getDropTarget ()Z
+	public final fun getMoveHandle ()Z
+	public final fun getMoveStrip ()F
 	public final fun getPressable ()Z
 	public final fun getWheel ()Z
 	public final fun setDraggable (Z)V
 	public final fun setDropTarget (Z)V
+	public final fun setMoveHandle (Z)V
+	public final fun setMoveStrip (F)V
 	public final fun setPressable (Z)V
 	public final fun setWheel (Z)V
 }
@@ -1854,6 +1865,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasPointerState {
 	public final fun getDroppedOutside ()Lcom/awakekt/awake/core/math2d/Vec2;
 	public final fun getFocused ()Z
 	public final fun getHeldSeconds ()F
+	public final fun getMoved ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun getMoving ()Z
 	public final fun getPresses ()I
 	public final fun getSecondaryPressed ()Z
 	public final fun getSprinting ()Z
