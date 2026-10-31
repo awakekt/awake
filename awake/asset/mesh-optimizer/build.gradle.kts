@@ -22,6 +22,7 @@ application {
 dependencies {
     implementation(project(":awake:core:geometry"))
     implementation(project(":awake:asset:gltf"))
+    implementation(project(":awake:asset:mesh-lod"))
     implementation(libs.kotlinx.serialization.json)
     testImplementation(kotlin("test"))
 }
@@ -36,6 +37,20 @@ tasks.register<JavaExec>("decimate") {
     dependsOn("classes")
     workingDir = projectDir
     mainClass.set("com.awakekt.awake.asset.meshoptimizer.MainKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    if (project.hasProperty("args")) {
+        args((project.property("args") as String).split(" "))
+    }
+}
+
+// Cook levels of detail into a project's glTF models with its awake.lod.json settings. Run via
+// `./gradlew :awake:asset:mesh-optimizer:cookLods --args="<project> <asset> [<asset> ...] --output <dir>"`.
+tasks.register<JavaExec>("cookLods") {
+    group = "awake tools"
+    description = "Generate MSFT_lod levels for glTF models -- args: <project> <asset> [<asset> ...] --output <dir>"
+    dependsOn("classes")
+    workingDir = rootProject.projectDir
+    mainClass.set("com.awakekt.awake.asset.meshoptimizer.LodCookMain")
     classpath = sourceSets.main.get().runtimeClasspath
     if (project.hasProperty("args")) {
         args((project.property("args") as String).split(" "))
