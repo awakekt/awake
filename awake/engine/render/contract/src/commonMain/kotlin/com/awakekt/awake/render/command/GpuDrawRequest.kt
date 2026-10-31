@@ -86,6 +86,13 @@ data class GpuDrawRequest(
      * draw that does not cast draws nowhere. Only an opaque draw casts either way.
      */
     var castsShadows: Boolean = true,
+    /**
+     * Drawn after the frame's covering content features (`ContentPaint.AfterGeometry`, such as
+     * distance fog) instead of before them, so none of them paints over it: a draw whose colour
+     * must reach the target as it left the shader. Opaque draws only; a [transparent] draw keeps
+     * its back-to-front place.
+     */
+    var overCoverings: Boolean = false,
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
@@ -115,6 +122,7 @@ data class GpuDrawRequest(
         maskLayer: Int = NO_MASK_LAYER,
         sortLayer: Int = 0,
         castsShadows: Boolean = true,
+        overCoverings: Boolean = false,
     ): GpuDrawRequest {
         this.mesh = mesh
         this.material = material
@@ -137,6 +145,7 @@ data class GpuDrawRequest(
         this.maskLayer = maskLayer
         this.sortLayer = sortLayer
         this.castsShadows = castsShadows
+        this.overCoverings = overCoverings
         return this
     }
 }

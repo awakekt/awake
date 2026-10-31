@@ -41,6 +41,7 @@ internal fun Renderer.sceneContext(
     encoder = encoder,
     groupedDrawCalls = opaqueDraws.opaqueByPipeline,
     transparentDrawCalls = opaqueDraws.transparent,
+    overCoveringDrawCalls = opaqueDraws.overCoveringsByPipeline,
     primaryPipeline = primaryPipeline,
     viewProjection = viewProjection,
     cameraEye = cameraEye,

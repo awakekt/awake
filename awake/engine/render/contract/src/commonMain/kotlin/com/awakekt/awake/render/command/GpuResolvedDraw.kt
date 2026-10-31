@@ -38,6 +38,7 @@ data class GpuResolvedDraw(
     override val instanceColorBuffer: BufferHandle? = null,
     override val instanceFrameBuffer: BufferHandle? = null,
     override val sortLayer: Int = 0,
+    override val overCoverings: Boolean = false,
 ) : PreparedDraw {
     init {
         require(elementCount >= 0) { "A resolved draw element count must be non-negative." }

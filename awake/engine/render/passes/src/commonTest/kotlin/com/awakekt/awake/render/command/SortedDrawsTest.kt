@@ -47,12 +47,30 @@ class SortedDrawsTest {
         override val sortOrder: Int = 0,
         override val sortLayer: Int = 0,
         override val batchKey: Int = 0,
+        override val overCoverings: Boolean = false,
         val label: String = "",
     ) : PreparedDraw {
         override val materialBinding: MaterialBinding = Binding
         override val vertexBuffer: BufferHandle? = null
         override val indexBuffer: BufferHandle? = null
         override val elementCount: Int = 3
+    }
+
+    /** An unlit draw leaves the opaque groups for its own, drawn after the coverings such as fog. */
+    @Test
+    fun overCoveringDrawsGroupApartAndSurvivePacketConversion() {
+        val draws = listOf(
+            Draw(PipelineA, label = "lit"),
+            Draw(PipelineA, overCoverings = true, label = "unlit"),
+            Draw(PipelineB, transparent = true, label = "glass"),
+        )
+        val sorted = sortForRecording(draws)
+
+        assertEquals(listOf("lit"), sorted.opaqueByPipeline.values.flatten().map { it.label })
+        assertEquals(listOf("unlit"), sorted.overCoveringsByPipeline.getValue(PipelineA).map { it.label })
+        assertEquals(listOf("glass"), sorted.transparent.map { it.label })
+        assertEquals(setOf("lit", "unlit", "glass"), sorted.allDraws.map { it.label }.toSet())
+        assertTrue(draws[1].toGpuResolvedDraw().overCoverings)
     }
 
     @Test

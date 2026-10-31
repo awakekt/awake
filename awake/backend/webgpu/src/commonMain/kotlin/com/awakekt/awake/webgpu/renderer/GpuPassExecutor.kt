@@ -200,6 +200,7 @@ internal class RendererGpuPassExecutor(
                 encoder = scenePass,
                 groupedDrawCalls = sorted.opaqueByPipeline,
                 transparentDrawCalls = sorted.transparent,
+                overCoveringDrawCalls = sorted.overCoveringsByPipeline,
                 primaryPipeline = primary.pipeline,
                 viewProjection = input.viewProjection,
                 cameraEye = input.cameraEye,

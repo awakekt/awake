@@ -19,6 +19,10 @@ import kotlin.test.assertTrue
  * blends fog over every pixel scene depth holds, and it painted over unlit draws too. With a pale
  * fog that reads as "a few levels brighter, more on the darker channels": each channel moves
  * toward the fog colour, and the darker ones are further from it.
+ *
+ * Negative control, measured before the fix on lavapipe, identical on Vulkan and WebGPU: the skin
+ * texel `[221, 173, 152]` drew `[223, 189, 176]` static and skinned, the dark `[96, 64, 32]` drew
+ * `[133, 109, 89]`, and the lit dark texel `[132, 107, 81]`, which this test still requires.
  */
 class UnlitOverFogParityTest {
 
@@ -33,13 +37,10 @@ class UnlitOverFogParityTest {
         var failed = false
         openUnlitOverFogSession(backend).use { session ->
             val renderer = session.renderer
-            for (texel in TEXELS) {
-                for (skinned in listOf(false, true)) {
-                    val rgb = unlitSceneCentreRgb(renderer.renderUnlitOverFogScene(texel, skinned, unlit = true))
-                    val label = "${if (skinned) "skinned" else "static"} ${texel.toList()}"
-                    measured += "$label -> ${rgb.toList()}"
-                    if ((0..2).any { abs(rgb[it] - texel[it]) > TOLERANCE }) failed = true
-                }
+            for ((texel, skinned) in CASES) {
+                val rgb = unlitSceneCentreRgb(renderer.renderUnlitOverFogScene(texel, skinned, unlit = true))
+                measured += "${if (skinned) "skinned" else "static"} ${texel.toList()} -> ${rgb.toList()}"
+                if ((0..2).any { abs(rgb[it] - texel[it]) > TOLERANCE }) failed = true
             }
             // The fog still runs over lit draws: the dark texel's blue rises toward the haze's.
             val lit = unlitSceneCentreRgb(renderer.renderUnlitOverFogScene(DARK, skinned = false, unlit = false))
@@ -57,6 +58,6 @@ class UnlitOverFogParityTest {
         const val MIN_FOG_LIFT = 30
         val SKIN = intArrayOf(0xDD, 0xAD, 0x98)
         val DARK = intArrayOf(0x60, 0x40, 0x20)
-        val TEXELS = listOf(SKIN, DARK)
+        val CASES = listOf(SKIN, DARK).flatMap { texel -> listOf(texel to false, texel to true) }
     }
 }

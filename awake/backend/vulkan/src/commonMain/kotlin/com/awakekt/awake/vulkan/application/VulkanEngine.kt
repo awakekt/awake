@@ -27,6 +27,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.OverCoveringsRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
@@ -381,6 +382,8 @@ open class VulkanEngine(
             add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.afterGeometry)
+            // After every covering, so none paints over an unlit draw -- see OverCoveringsRenderFeature.
+            add(OverCoveringsRenderFeature<VulkanRenderFrameContext>())
             add(UiRenderFeature(VulkanUiPass()))
         }
     }

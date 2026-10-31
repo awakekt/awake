@@ -35,4 +35,5 @@ fun PreparedDraw.toGpuResolvedDraw(): GpuResolvedDraw = GpuResolvedDraw(
     instanceColorBuffer = instanceColorBuffer,
     instanceFrameBuffer = instanceFrameBuffer,
     sortLayer = sortLayer,
+    overCoverings = overCoverings,
 )

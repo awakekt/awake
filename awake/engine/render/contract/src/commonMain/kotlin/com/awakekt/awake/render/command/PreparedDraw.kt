@@ -62,6 +62,10 @@ interface PreparedDraw {
      * grouping, since grouping reorders and back-to-front blending cannot survive that. */
     val transparent: Boolean get() = false
 
+    /** Recorded after the frame's covering content features, from `GpuDrawRequest.overCoverings`.
+     * Grouped by pipeline like any opaque draw, in a group of its own. */
+    val overCoverings: Boolean get() = false
+
     /** Squared distance from this draw to the camera eye. Squared because the sort needs
      * ordering, not distance, and a square root per draw per frame buys nothing. Only read for a
      * [transparent] draw. */

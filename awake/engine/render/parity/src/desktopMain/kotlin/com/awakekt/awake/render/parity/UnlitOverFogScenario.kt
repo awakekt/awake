@@ -109,7 +109,7 @@ fun Renderer.renderUnlitOverFogScene(texel: IntArray, skinned: Boolean, unlit: B
     return try {
         val input = ScenePassCompiler.compile(
             lens = Lens(eye = Vec3f(0f, EYE_Y, EYE_Z), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 50f),
-            drawCalls = listOf(RenderDrawCommand(mesh, material, extraUniformFloats = extras)),
+            drawCalls = listOf(RenderDrawCommand(mesh, material, extraUniformFloats = extras, overCoverings = unlit)),
             light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
             environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false),
             clipSpace = clipSpace,

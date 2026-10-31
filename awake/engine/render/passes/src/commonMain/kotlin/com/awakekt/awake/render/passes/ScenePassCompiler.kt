@@ -103,7 +103,11 @@ object ScenePassCompiler {
             if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
         }
-        val opaque = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
+        // Unlit draws are recorded apart, after the coverings, but are as opaque and cast as any other.
+        val opaque = resolved?.let { sorted ->
+            val covered = sorted.opaqueByPipeline.values.flatten()
+            if (sorted.overCoveringsByPipeline.isEmpty()) covered else covered + sorted.overCoveringsByPipeline.values.flatten()
+        }.orEmpty()
         val casters = opaque.castingWith(shadowOnly)
 
         return GpuPassInput(

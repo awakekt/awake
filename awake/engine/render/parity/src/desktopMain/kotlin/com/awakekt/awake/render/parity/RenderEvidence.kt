@@ -85,6 +85,14 @@ fun main(args: Array<String>) {
             )
         }
     }
+    openUnlitOverFogSession(HeadlessUiBackend.Vulkan, EVIDENCE_SIZE).use { session ->
+        write(
+            "scene-unlit-skin-under-fog",
+            "An unlit skinned plane in #DDAD98 under a pale distance fog: the fog leaves it at its texel",
+            EVIDENCE_SIZE,
+            session.renderer.renderUnlitOverFogScene(intArrayOf(0xDD, 0xAD, 0x98), skinned = true, unlit = true, size = EVIDENCE_SIZE),
+        )
+    }
     withHeadlessUi(HeadlessUiBackend.Vulkan) { renderer ->
         UI_PARITY_SCENARIOS.forEach { scenario ->
             write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", scenario.size, renderer.render(scenario))

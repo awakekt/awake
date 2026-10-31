@@ -79,7 +79,7 @@ internal class WebGpuDrawPreparer(
         val depthKey = request.depthRenderKey()
         // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
         // drawing its whole card.
-        val keyed = resolved.copy(depthRenderKey = depthKey)
+        val keyed = resolved.copy(depthRenderKey = depthKey, overCoverings = request.overCoverings && !request.transparent)
         val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return keyed
         val sourceMaterial = request.material as? com.awakekt.awake.webgpu.material.Material
             ?: return keyed
@@ -100,7 +100,7 @@ internal class WebGpuDrawPreparer(
         } else {
             null
         }
-        return resolved.copy(
+        return keyed.copy(
             depthRenderKey = depthKey,
             alphaCutoff = request.alphaCutoff,
             depthPipeline = depthPipeline.handle,

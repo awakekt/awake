@@ -164,6 +164,8 @@ internal class SceneDrawCollector(
                     worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                     maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
                     castsShadows = casts,
+                    // Unlit colour reaches the target as stored, so no covering such as fog paints over it.
+                    overCoverings = pbr?.unlit == true,
                 ),
             )
         }
@@ -215,10 +217,10 @@ internal class SceneDrawCollector(
 
             val pose = poseStore?.get(entity)
             pose?.drawn = true
+            val pbr = pbrStore?.get(entity)
             val extras = if (pose == null) {
                 EMPTY_DRAW_EXTRAS
             } else {
-                val pbr = pbrStore?.get(entity)
                 if (pbr != null) pose.tintedBy(pbr, beforeTints.obtain()) else pose.jointPalette
             }
 
@@ -237,6 +239,7 @@ internal class SceneDrawCollector(
                         worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                         maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
                         castsShadows = casts,
+                        overCoverings = pose != null && pbr?.unlit == true,
                     ),
                 )
             }
@@ -334,6 +337,7 @@ internal class SceneDrawCollector(
         additive: Boolean = false,
         maskLayer: Int = NO_MASK_LAYER,
         castsShadows: Boolean = true,
+        overCoverings: Boolean = false,
     ): RenderDrawCommand = obtain().set(
         mesh = mesh,
         material = material,
@@ -354,6 +358,7 @@ internal class SceneDrawCollector(
         additive = additive,
         maskLayer = maskLayer,
         castsShadows = castsShadows,
+        overCoverings = overCoverings,
     )
 }
 
