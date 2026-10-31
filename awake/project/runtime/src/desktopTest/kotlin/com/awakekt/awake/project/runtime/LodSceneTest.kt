@@ -124,43 +124,43 @@ class LodSceneTest {
         const val SCENE_FILE = "scenes/main.scene.json"
         const val MANIFEST =
             """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
+    }
+}
 
-        /** A closed unit sphere, one vertex per position, as a positions-only glTF. */
-        fun sphereGltf(segments: Int = 32, rings: Int = 16): String {
-            val positions = mutableListOf(0f, 1f, 0f)
-            for (ring in 1 until rings) {
-                val theta = PI * ring / rings
-                for (segment in 0 until segments) {
-                    val phi = 2 * PI * segment / segments
-                    positions += listOf((sin(theta) * cos(phi)).toFloat(), cos(theta).toFloat(), (sin(theta) * sin(phi)).toFloat())
-                }
-            }
-            positions += listOf(0f, -1f, 0f)
-            val bottom = positions.size / 3 - 1
-            fun at(ring: Int, segment: Int) = 1 + (ring - 1) * segments + segment % segments
-            val indices = mutableListOf<Int>()
-            for (segment in 0 until segments) {
-                indices += listOf(0, at(1, segment + 1), at(1, segment))
-                indices += listOf(bottom, at(rings - 1, segment), at(rings - 1, segment + 1))
-                for (ring in 1 until rings - 1) {
-                    indices += listOf(at(ring, segment), at(ring, segment + 1), at(ring + 1, segment))
-                    indices += listOf(at(ring, segment + 1), at(ring + 1, segment + 1), at(ring + 1, segment))
-                }
-            }
-            val positionBytes = positions.flatMap { value -> (0 until 4).map { (value.toRawBits() ushr (it * 8)).toByte() } }.toByteArray()
-            val indexBytes = indices.flatMap { value -> (0 until 4).map { (value ushr (it * 8)).toByte() } }.toByteArray()
-            val buffer = positionBytes + indexBytes
-            val count = positions.size / 3
-            return """
-            { "asset": {"version": "2.0"},
-              "buffers": [{"uri": "data:application/octet-stream;base64,${Base64.encode(buffer)}", "byteLength": ${buffer.size}}],
-              "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": ${positionBytes.size}},
-                              {"buffer": 0, "byteOffset": ${positionBytes.size}, "byteLength": ${indexBytes.size}}],
-              "accessors": [{"bufferView": 0, "componentType": 5126, "count": $count, "type": "VEC3", "min": [-1,-1,-1], "max": [1,1,1]},
-                            {"bufferView": 1, "componentType": 5125, "count": ${indices.size}, "type": "SCALAR"}],
-              "meshes": [{"name": "Rock", "primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
-              "nodes": [{"name": "Rock", "mesh": 0}], "scenes": [{"nodes": [0]}], "scene": 0 }
-            """.trimIndent()
+/** A closed unit sphere, one vertex per position, as a positions-only glTF. */
+internal fun sphereGltf(segments: Int = 32, rings: Int = 16): String {
+    val positions = mutableListOf(0f, 1f, 0f)
+    for (ring in 1 until rings) {
+        val theta = PI * ring / rings
+        for (segment in 0 until segments) {
+            val phi = 2 * PI * segment / segments
+            positions += listOf((sin(theta) * cos(phi)).toFloat(), cos(theta).toFloat(), (sin(theta) * sin(phi)).toFloat())
         }
     }
+    positions += listOf(0f, -1f, 0f)
+    val bottom = positions.size / 3 - 1
+    fun at(ring: Int, segment: Int) = 1 + (ring - 1) * segments + segment % segments
+    val indices = mutableListOf<Int>()
+    for (segment in 0 until segments) {
+        indices += listOf(0, at(1, segment + 1), at(1, segment))
+        indices += listOf(bottom, at(rings - 1, segment), at(rings - 1, segment + 1))
+        for (ring in 1 until rings - 1) {
+            indices += listOf(at(ring, segment), at(ring, segment + 1), at(ring + 1, segment))
+            indices += listOf(at(ring, segment + 1), at(ring + 1, segment + 1), at(ring + 1, segment))
+        }
+    }
+    val positionBytes = positions.flatMap { value -> (0 until 4).map { (value.toRawBits() ushr (it * 8)).toByte() } }.toByteArray()
+    val indexBytes = indices.flatMap { value -> (0 until 4).map { (value ushr (it * 8)).toByte() } }.toByteArray()
+    val buffer = positionBytes + indexBytes
+    val count = positions.size / 3
+    return """
+    { "asset": {"version": "2.0"},
+      "buffers": [{"uri": "data:application/octet-stream;base64,${Base64.encode(buffer)}", "byteLength": ${buffer.size}}],
+      "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": ${positionBytes.size}},
+                      {"buffer": 0, "byteOffset": ${positionBytes.size}, "byteLength": ${indexBytes.size}}],
+      "accessors": [{"bufferView": 0, "componentType": 5126, "count": $count, "type": "VEC3", "min": [-1,-1,-1], "max": [1,1,1]},
+                    {"bufferView": 1, "componentType": 5125, "count": ${indices.size}, "type": "SCALAR"}],
+      "meshes": [{"name": "Rock", "primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
+      "nodes": [{"name": "Rock", "mesh": 0}], "scenes": [{"nodes": [0]}], "scene": 0 }
+    """.trimIndent()
 }
