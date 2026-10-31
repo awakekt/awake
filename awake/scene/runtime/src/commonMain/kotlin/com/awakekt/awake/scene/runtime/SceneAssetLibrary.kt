@@ -10,6 +10,8 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.rendering.mesh.LodGroup
+import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
@@ -358,6 +360,7 @@ class SceneAssetLibrary(
             if (material == null) releaseMesh(key.mesh)
         }
         resolvedRequests[request] = (resolvedRequests[request] ?: 0) + 1
+        attachLevels(runtime, request, mesh, checkNotNull(material))
         return MeshRenderer(
             mesh = mesh,
             material = checkNotNull(material),
@@ -381,7 +384,24 @@ class SceneAssetLibrary(
         val count = resolvedRequests[request] ?: return
         if (count > 1) resolvedRequests[request] = count - 1 else resolvedRequests.remove(request)
         releaseMesh(request.meshRenderer.mesh)
+        levelsOf(request.meshRenderer.mesh)?.meshes?.forEach(::releaseMesh)
         releaseMaterial(request.meshRenderer.material)
+    }
+
+    private fun levelsOf(mesh: String): SceneMeshLevels? =
+        dynamicResolvers.firstNotNullOfOrNull { resolver -> resolver.takeIf { it.canResolveMesh(mesh) }?.meshLevels(mesh) }
+
+    /**
+     * Gives [request]'s entity an [LodGroup] over its mesh's levels, when a resolver gives it any:
+     * it switches the renderer [resolve] returns between [mesh] and each level by screen coverage,
+     * drawing them all with [material]. Each level is held as [mesh] is, until [releaseRenderable].
+     */
+    private fun attachLevels(runtime: SceneAppLifecycleRuntime, request: SceneRenderableRequest, mesh: Mesh, material: Material) {
+        val levels = levelsOf(request.meshRenderer.mesh) ?: return
+        val meshes = listOf(mesh) + levels.meshes.map { requireMesh(runtime, it) }
+        val group = LodGroup(meshes.map { LodLevel(it, material, maxDistance = Float.MAX_VALUE) })
+        group.minScreenCoverage = levels.minScreenCoverage
+        runtime.world.add(request.entity, group)
     }
 
     private fun SceneMeshRenderer.CullMode.toCullMode(): CullMode = when (this) {

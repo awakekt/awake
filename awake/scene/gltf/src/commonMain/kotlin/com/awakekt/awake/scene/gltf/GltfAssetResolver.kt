@@ -33,6 +33,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
+import com.awakekt.awake.scene.runtime.SceneMeshLevels
 
 /**
  * Resolves `.gltf` and `.glb` model paths in scenes to meshes and materials.
@@ -62,6 +63,7 @@ class GltfAssetResolver(
     private val skinnedPartTextures = mutableMapOf<String, TextureAsset>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
+    private val lodLevels = GltfLodLevels()
     private var assetSource: AssetSource = AssetSource { path ->
         runCatching { bundledResourceReader(path.value) }
     }
@@ -160,6 +162,7 @@ class GltfAssetResolver(
         loadedParts.remove(path)
         loadedMaterialSlots.remove(path)
         loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
+        lodLevels.forget(path, loadedStaticMeshes)
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
@@ -185,8 +188,10 @@ class GltfAssetResolver(
         from.loadedScenes[path]?.let { loadedScenes.getOrPut(path) { it } }
         from.loadedMaterialSlots[path]?.let { loadedMaterialSlots.getOrPut(path) { it } }
         from.loadedStaticMeshes.forEach { (key, geometry) ->
-            if (key == path || key.startsWith("$PRIMITIVE_MESH_PREFIX$path#")) loadedStaticMeshes.getOrPut(key) { geometry }
+            val base = if (lodLevels.isLevelKey(key)) lodLevels.baseKey(key) else key
+            if (base == path || base.startsWith("$PRIMITIVE_MESH_PREFIX$path#")) loadedStaticMeshes.getOrPut(key) { geometry }
         }
+        lodLevels.adopt(path, from.lodLevels)
         from.loadedMaterials.forEach { (key, material) ->
             if (key == path || key.startsWith("$path#")) loadedMaterials.getOrPut(key) { material }
         }
@@ -238,6 +243,19 @@ class GltfAssetResolver(
             )
         }
         loadedMaterialSlots[path] = slots
+        preloadLevels(path, bytes, slots)
+    }
+
+    /** The model's `MSFT_lod` levels, for each mesh its slots name and for the whole model, when it has any. */
+    private suspend fun preloadLevels(path: String, bytes: ByteArray, slots: List<GltfMaterialSlot>) {
+        val external = if (bytes.isGlb()) {
+            emptyMap()
+        } else {
+            GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
+        }
+        val keys = slots.associate { it.mesh to (it.material != UNTEXTURED_MATERIAL) }.toMutableMap()
+        keys.getOrPut(path) { false }
+        lodLevels.preload(path, bytes, external, keys, loadedStaticMeshes)
     }
 
     private suspend fun preloadSkinnedParts(path: String) {
@@ -347,6 +365,9 @@ class GltfAssetResolver(
         return runtime.renderer.createMesh(geometry)
     }
 
+    override fun meshLevels(name: String): SceneMeshLevels? =
+        if (lodLevels.isLevelKey(name)) null else lodLevels.levels(name, modelPath(name))
+
     override fun canResolveMaterial(name: String): Boolean =
         name == "skinned-material" || name.startsWith("gltf-material:")
 
@@ -390,6 +411,7 @@ class GltfAssetResolver(
 private val log = Logger("scene.gltf")
 
 private const val PRIMITIVE_MESH_PREFIX = "gltf-primitive:"
+private const val UNTEXTURED_MATERIAL = "lit-shadow"
 
 /**
  * Associates a primitive mesh with its bound glTF material and parameters.

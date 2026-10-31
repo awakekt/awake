@@ -81,6 +81,7 @@ public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : 
 	public fun forgetTextures ()V
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public fun meshLevels (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneMeshLevels;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
 }
 
@@ -263,6 +264,7 @@ public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolv
 	public fun forgetTextures ()V
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public fun meshLevels (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneMeshLevels;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
 }
 
@@ -275,6 +277,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 	public static fun forgetTextures (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
 	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public static fun meshLevels (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneMeshLevels;
 	public static fun texture (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
 }
 
@@ -323,6 +326,12 @@ public final class com/awakekt/awake/scene/runtime/SceneManager {
 	public final fun getCurrent ()Lcom/awakekt/awake/scene/binding/Scene;
 	public final fun switchTo (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
 	public static synthetic fun switchTo$default (Lcom/awakekt/awake/scene/runtime/SceneManager;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
+}
+
+public final class com/awakekt/awake/scene/runtime/SceneMeshLevels {
+	public fun <init> (Ljava/util/List;[F)V
+	public final fun getMeshes ()Ljava/util/List;
+	public final fun getMinScreenCoverage ()[F
 }
 
 public final class com/awakekt/awake/scene/runtime/ScenePhaseStats {
