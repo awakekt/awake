@@ -131,6 +131,20 @@ fun launchWebGpuGame(
     maxPixelRatio: () -> Float?,
     applicationFactory: () -> WebGpuEngine,
 ) {
+    startWebGpuGame(canvas, cursor, maxPixelRatio, renderScale = null, applicationFactory)
+}
+
+/**
+ * The one body behind every `launchWebGpuGame` overload. [renderScale], when given, is read before
+ * every frame and applied to the renderer; see the overloads that take it.
+ */
+internal fun startWebGpuGame(
+    canvas: HTMLCanvasElement,
+    cursor: (() -> PointerCursor)?,
+    maxPixelRatio: () -> Float?,
+    renderScale: (() -> Float)?,
+    applicationFactory: () -> WebGpuEngine,
+) {
     check(browserExposesWebGpu()) {
         "WebGPU is unavailable in this browser or device. " +
             "Use a current Chrome/Edge build with WebGPU enabled and a compatible adapter."
@@ -146,7 +160,7 @@ fun launchWebGpuGame(
 
     runBrowserCanvas(
         canvas = canvas.unsafeCast<org.w3c.dom.HTMLCanvasElement>(),
-        lifecycle = application,
+        lifecycle = renderScale?.let { RenderScaledLifecycle(application, it) } ?: application,
         onResize = { _, _ ->
             wgpuContext?.let(::configureSurface)
         },

@@ -199,8 +199,10 @@ class RenderSystem3D(
     }
 
     private fun resolveView(camera: Camera, viewport: RenderViewport?): Boolean {
-        val width = renderer.surfaceWidth.toFloat()
-        val height = renderer.surfaceHeight.toFloat()
+        // The presented surface, not the scene target: a viewport and the pointers picking through
+        // it are measured there, whatever the render scale shrinks the scene to.
+        val width = renderer.outputWidth.toFloat()
+        val height = renderer.outputHeight.toFloat()
         if (viewport == null) return cameraViewport.update(camera, width, height)
         return if (camera.viewport != null && width > 0f && height > 0f) {
             // Match the backend's framebuffer clamp before resolving projection and picking.

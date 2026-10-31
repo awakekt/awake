@@ -80,6 +80,11 @@ In `wasmJsMain`, hand the same app and plan to `launchWebGpuGame`:
 `launchWebGpuGame` finds the `<canvas>` with id `awake-canvas`, keeps it the size of the window,
 and draws a frame on every animation frame. Pass `canvasId` to use a different canvas.
 
+On a high-DPI screen the canvas has 2.25 to 9 times the pixels of a 1x one. To trade some of them
+for frame rate, pass `renderScale = { settings.renderScale }`: the 3D scene renders at that fraction
+of the canvas and the UI stays sharp. `maxPixelRatio` caps the whole canvas, UI included. See
+[Resolution and render scale](../guides/webgpu.md#resolution-and-render-scale).
+
 ## Add the page and the loading screen
 
 Put an `index.html` in `src/wasmJsMain/resources/`:

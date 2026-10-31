@@ -95,6 +95,17 @@ open class WebGpuEngine(
     private var contentAttacher: ContentFeatureAttacher<RenderPipeline>? = null
     private lateinit var lineRenderPipeline: LineRenderPipeline
 
+    /** The renderer once the backend is built, for [applyRenderScale]; `null` before that. */
+    private var builtRenderer: Renderer? = null
+
+    /**
+     * Sets the renderer's `renderScale` to [scale]; a no-op until the backend is built. A browser
+     * launcher given a render-scale provider calls this before every frame.
+     */
+    internal fun applyRenderScale(scale: Float) {
+        builtRenderer?.renderScale = scale
+    }
+
     override suspend fun createBackendResources(window: Any): BackendResources {
         graphicsDevice = GraphicsDevice()
         graphicsDevice.create(window)
@@ -268,6 +279,7 @@ open class WebGpuEngine(
             maskPass = maskPass,
             renderFeatures = renderFeatures,
         ).also { renderer ->
+            builtRenderer = renderer
             renderer.contentFeatureHost = attacher
             renderer.shaderReplacement = WebGpuShaderReplacement(
                 registry = registry,
@@ -300,6 +312,7 @@ open class WebGpuEngine(
     }
 
     override fun destroyBackend() {
+        builtRenderer = null
         renderer.destroy()
         swapchainManager.destroy()
         // Through the registry, not the table: the table can name one pipeline under several
