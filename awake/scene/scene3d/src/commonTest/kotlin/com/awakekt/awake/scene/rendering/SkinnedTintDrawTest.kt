@@ -57,9 +57,9 @@ class SkinnedTintDrawTest {
         assertSame(hairExtras, collect(world, culling, collector).single { it.mesh === hairMesh }.extraUniformFloats, "rewritten in place each frame")
     }
 
-    /** An unlit part draws after the frame's coverings, such as fog, which would otherwise paint over it (#1178). */
+    /** An unlit part is exempt from the frame's coverings, such as fog, which would otherwise paint over it (#1178). */
     @Test
-    fun anUnlitPartDrawsOverTheCoveringsAndALitOneDoesNot() {
+    fun anUnlitPartIsExemptFromTheCoveringsAndALitOneIsNot() {
         val world = World()
         val skinMesh = fakeMesh()
         val armourMesh = fakeMesh()
