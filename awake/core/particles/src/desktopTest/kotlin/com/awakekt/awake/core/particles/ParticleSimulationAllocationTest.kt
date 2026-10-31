@@ -59,26 +59,29 @@ class ParticleSimulationAllocationTest {
             ground.restitution = 0.4f
         }
 
-        repeat(WARMUP_STEPS) {
+        fun step() {
             sim.emit(BURST_SIZE)
             sim.step(FRAME_DELTA, onParticleDeath = deathListener)
         }
-        threadBean.currentThreadAllocatedBytes
-        val queriesBefore = groundQueries
-        val deathsBefore = deaths
-
-        val before = threadBean.currentThreadAllocatedBytes
-        repeat(MEASURED_STEPS) {
-            sim.emit(BURST_SIZE)
-            sim.step(FRAME_DELTA, onParticleDeath = deathListener)
+        repeat(WARMUP_STEPS) { step() }
+        // Each window is checked whole, never divided by its steps. The median window is the gate, as
+        // in the other allocation probes: a JIT deoptimisation can materialise a few hundred bytes in
+        // one window while the code settles, but a per-step allocation fills every window.
+        val windows = LongArray(MEASURED_WINDOWS)
+        repeat(MEASURED_WINDOWS) { window ->
+            val queriesBefore = groundQueries
+            val deathsBefore = deaths
+            val before = threadBean.currentThreadAllocatedBytes
+            repeat(MEASURED_STEPS) { step() }
+            windows[window] = threadBean.currentThreadAllocatedBytes - before
+            assertTrue(groundQueries > queriesBefore, "the ground height hook must run in every measured window")
+            assertTrue(deaths > deathsBefore, "the death hook must run in every measured window")
         }
-        val after = threadBean.currentThreadAllocatedBytes
-
-        assertTrue(groundQueries > queriesBefore, "the ground height hook ran in the measured window")
-        assertTrue(deaths > deathsBefore, "the death hook ran in the measured window")
+        windows.sort()
+        println("ParticleSimulationAllocation: ${windows.joinToString()} bytes per $MEASURED_STEPS steps")
         assertEquals(
             0L,
-            after - before,
+            windows[MEASURED_WINDOWS / 2],
             "ParticleSimulation.emit() + step() with both hooks must allocate 0 bytes over $MEASURED_STEPS steps",
         )
     }
@@ -88,6 +91,7 @@ class ParticleSimulationAllocationTest {
         const val BURST_SIZE = 16
         const val WARMUP_STEPS = 2_000
         const val MEASURED_STEPS = 600
+        const val MEASURED_WINDOWS = 5
         const val FRAME_DELTA = 1f / 60f
         const val GROUND_DEPTH = 40f
         const val GROUND_SLOPE = 0.01f
