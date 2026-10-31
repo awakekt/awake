@@ -64,6 +64,17 @@ interface GpuDevice {
     fun createMesh(geometry: MeshGeometry): Mesh
 
     /**
+     * Uploads only [geometry]'s indices, as a mesh that draws [vertices]' own vertex buffer: meshes
+     * that differ only in their triangles, such as one model's levels of detail, then hold one copy
+     * of their vertices between them. [geometry]'s vertices and format are [vertices]'.
+     *
+     * The caller owns the result and destroys it, in either order with [vertices]: the shared buffer
+     * lives until the last mesh drawing it is destroyed. A backend that cannot share, or a
+     * [vertices] it did not create or has destroyed, uploads [geometry] whole, which is the default.
+     */
+    fun createMeshSharingVertices(vertices: Mesh, geometry: MeshGeometry): Mesh = createMesh(geometry)
+
+    /**
      * Builds a [Material] -- the per-object uniform buffer plus its bound textures.
      *
      * [texture] and [renderTarget] are mutually exclusive. [uniformFloatCount] is the uniform

@@ -59,6 +59,8 @@ kotlin {
             implementation(project(":awake:backend:jolt"))
             // The docs sample's loading scene shows its text with the foundation Text.
             implementation(project(":awake:compose:foundation"))
+            // Cooks the MSFT_lod model the level-of-detail scene test plays.
+            implementation(project(":awake:asset:mesh-lod"))
         }
     }
 }

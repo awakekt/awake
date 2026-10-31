@@ -37,16 +37,29 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
  * Material/Shader concern (interleaved between [bind] and [draw] by the caller), not part
  * of what a mesh is.
  */
-class Mesh(
+class Mesh
+@Suppress("LongParameterList")
+private constructor(
     graphicsDevice: GraphicsDevice,
     runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
     vertices: FloatArray,
     indices: IntArray,
-    override val format: VertexFormat = VertexFormat.PositionColorUv,
-    /** The box these vertices occupy -- see `Mesh.localBounds`; `createMesh` fills it from the
-     * geometry, which is the last point anything can. */
-    override val localBounds: Aabb? = null,
+    override val format: VertexFormat,
+    override val localBounds: Aabb?,
+    /** The mesh whose vertex buffer this one draws instead of uploading its own; see [sharingVertices]. */
+    sharedFrom: Mesh?,
 ) : RenderMesh {
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+        vertices: FloatArray,
+        indices: IntArray,
+        format: VertexFormat = VertexFormat.PositionColorUv,
+        /** The box these vertices occupy -- see `Mesh.localBounds`; `createMesh` fills it from the
+         * geometry, which is the last point anything can. */
+        localBounds: Aabb? = null,
+    ) : this(graphicsDevice, runOneTimeCommands, vertices, indices, format, localBounds, null)
+
     private val graphicsDevice = graphicsDevice
     private val runOneTimeCommands = runOneTimeCommands
     private val device get() = graphicsDevice.device
@@ -73,7 +86,10 @@ class Mesh(
     val indexCount: Int = indices.size
 
     override val sizeBytes: Long =
-        vertices.size.toLong() * Float.SIZE_BYTES + indices.size.toLong() * Int.SIZE_BYTES
+        (if (sharedFrom == null) vertices.size.toLong() * Float.SIZE_BYTES else 0L) + indices.size.toLong() * Int.SIZE_BYTES
+
+    /** Counts the meshes drawing [vertexBuffer], so the last one destroyed frees it. */
+    private val vertexOwner: SharedVertices
 
     /** The same two buffers above, as the port's opaque handle type -- built once here so the
      * shared per-draw recording path allocates nothing per frame. */
@@ -85,16 +101,23 @@ class Mesh(
     val indexBinding: VulkanBufferBinding
 
     init {
-        val vertexBufferSize = (vertices.size * Float.SIZE_BYTES).toLong()
-        val (vBuffer, vMemory) = createDeviceLocalBuffer(
-            byteSize = vertexBufferSize,
-            usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            write = { stagingMemory ->
-                VulkanBuffers.writeBufferMemoryFloats(device, stagingMemory, 0, vertices)
-            },
-        )
-        vertexBuffer = BufferHandle(vBuffer)
-        vertexBufferMemory = DeviceMemoryHandle(vMemory)
+        if (sharedFrom != null) {
+            vertexOwner = sharedFrom.vertexOwner.also { it.meshes++ }
+            vertexBuffer = sharedFrom.vertexBuffer
+            vertexBufferMemory = sharedFrom.vertexBufferMemory
+        } else {
+            vertexOwner = SharedVertices()
+            val vertexBufferSize = (vertices.size * Float.SIZE_BYTES).toLong()
+            val (vBuffer, vMemory) = createDeviceLocalBuffer(
+                byteSize = vertexBufferSize,
+                usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                write = { stagingMemory ->
+                    VulkanBuffers.writeBufferMemoryFloats(device, stagingMemory, 0, vertices)
+                },
+            )
+            vertexBuffer = BufferHandle(vBuffer)
+            vertexBufferMemory = DeviceMemoryHandle(vMemory)
+        }
 
         val indexBytes = indices.toByteArrayLE()
         val indexBufferSize = indexBytes.size.toLong()
@@ -216,13 +239,34 @@ class Mesh(
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0)
     }
 
+    /**
+     * A mesh drawing this one's vertex buffer with [indices] instead of its own, or null when this
+     * mesh has been destroyed and its vertex buffer with it.
+     */
+    internal fun sharingVertices(indices: IntArray, bounds: Aabb?): Mesh? = if (vertexOwner.meshes == 0) {
+        null
+    } else {
+        Mesh(graphicsDevice, runOneTimeCommands, EMPTY_VERTICES, indices, format, bounds, this)
+    }
+
     override fun destroy() {
         // Scene replacement can release this mesh while another frame slot still references it.
         // Device idle covers every submitted queue without waiting on a reset, unsubmitted fence.
         VulkanBuffers.vkDeviceWaitIdle(device)
-        VulkanBuffers.vkDestroyBuffer(device, vertexBuffer.handle)
-        VulkanBuffers.vkFreeMemory(device, vertexBufferMemory.handle)
+        if (--vertexOwner.meshes == 0) {
+            VulkanBuffers.vkDestroyBuffer(device, vertexBuffer.handle)
+            VulkanBuffers.vkFreeMemory(device, vertexBufferMemory.handle)
+        }
         VulkanBuffers.vkDestroyBuffer(device, indexBuffer.handle)
         VulkanBuffers.vkFreeMemory(device, indexBufferMemory.handle)
+    }
+
+    /** How many meshes still draw one vertex buffer. */
+    private class SharedVertices {
+        var meshes = 1
+    }
+
+    private companion object {
+        val EMPTY_VERTICES = FloatArray(0)
     }
 }

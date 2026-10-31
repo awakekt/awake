@@ -79,6 +79,7 @@ nav:
           - Lights and shadows: guides/lights-and-shadows.md
           - Sky and fog: guides/sky-and-fog.md
           - Meshes and materials: guides/meshes-and-materials.md
+          - Level of detail: guides/level-of-detail.md
           - glTF models: guides/gltf.md
           - Animation: guides/animation.md
           - Particles: guides/particles.md

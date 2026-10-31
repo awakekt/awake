@@ -69,6 +69,16 @@ interface SceneAssetResolver {
     fun materialDefaults(mesh: String, material: String): PbrMaterial? = materialDefaults(material)
 
     /**
+     * The levels of detail mesh [name] carries, such as a glTF model's `MSFT_lod` levels, or null
+     * when it has none. An entity drawing [name] then gets an `LodGroup` that switches its renderer
+     * between [name] and these meshes by screen coverage, keeping its material.
+     *
+     * @param name The name of the full-detail mesh.
+     * @return The coarser levels' mesh names and the coverage each level draws at, or `null`.
+     */
+    fun meshLevels(name: String): SceneMeshLevels? = null
+
+    /**
      * The texture a `sprite` or `tilemap` names [name] as it stands now, or null when this resolver
      * does not supply it. [SceneAssetLibrary.texture] asks on each frame something using it is drawn,
      * until it is [SceneTextureLoad.Loaded], and again once it is forgotten (see [forgetTexture]), so a resolver that loads it starts on the first ask and
@@ -91,4 +101,20 @@ interface SceneAssetResolver {
 
     /** [forgetTexture] for every texture this resolver keeps. [SceneAssetLibrary.forgetTextures] calls it. */
     fun forgetTextures() {}
+}
+
+/**
+ * A mesh's levels of detail, as [SceneAssetResolver.meshLevels] gives them.
+ *
+ * @property meshes The coarser levels' mesh names, finest first; the full mesh is level 0 and not listed.
+ * @property minScreenCoverage The smallest screen coverage each level draws at, the full mesh's first:
+ *   one more value than [meshes]. Coverage is the model's bounding-sphere diameter over the viewport height.
+ */
+class SceneMeshLevels(val meshes: List<String>, val minScreenCoverage: FloatArray) {
+    init {
+        require(meshes.isNotEmpty()) { "a mesh with levels has at least one coarser level" }
+        require(minScreenCoverage.size == meshes.size + 1) {
+            "minScreenCoverage has ${minScreenCoverage.size} values for ${meshes.size + 1} levels"
+        }
+    }
 }

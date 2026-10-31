@@ -73,6 +73,9 @@ internal class SceneDrawCollector(
      */
     private var resolved: WorldResolution? = null
 
+    /** Picks every [LodGroup]'s level once a frame, before any draw reads it. */
+    private val lodSelection = LodSelectionPass()
+
     /** An animated texture on an entity with no [PbrMaterial]: glTF's default factors, packed once per animation. */
     private val defaultFactorsByAnimation = HashMap<TextureAnimation, FloatArray>()
 
@@ -89,7 +92,9 @@ internal class SceneDrawCollector(
         beforeTints.reset()
 
         val resolution = resolve(world)
+        val lodStore = world.componentStore<LodGroup>(resolution.lodType)
         val boundsStore = world.componentStore<MeshBounds>(resolution.boundsType)
+        lodSelection.select(resolution.lodFamily, lodStore, boundsStore, culling.camera.lens)
         val poseStore = world.componentStore<SkinnedPose>(resolution.poseType)
         val pbrStore = world.componentStore<PbrMaterial>(resolution.pbrType)
         val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)
@@ -143,31 +148,34 @@ internal class SceneDrawCollector(
 
                 else -> EMPTY_DRAW_EXTRAS
             }
-            drawCalls.add(
-                beforeCommands.obtainCommand(
-                    mesh = meshRenderer.mesh,
-                    material = meshRenderer.material,
-                    model = if (meshRenderer.billboard) {
-                        billboardMatrix(transform.worldMatrix, culling.camera.lens, beforeMatrices.obtain())
-                    } else {
-                        transform.worldMatrix
-                    },
-                    extraUniformFloats = extras,
-                    vertexAnimation = meshRenderer.vertexAnimation,
-                    timeSeconds = elapsedTimeSeconds,
-                    cullMode = meshRenderer.cullMode,
-                    alphaMode = pbr?.alphaMode ?: AlphaMode.Opaque,
-                    alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
-                    transparent = meshRenderer.transparent,
-                    additive = meshRenderer.additive,
-                    shadowsOnly = verdict == CullVerdict.ShadowOnly,
-                    worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
-                    maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
-                    castsShadows = casts,
-                    // Unlit colour reaches the target as stored, so no covering such as fog paints over it.
-                    exemptFromCoverings = pbr?.unlit == true,
-                ),
+            // An LodGroup on the entity picks which of its levels this renderer draws, and which casts.
+            val lod = lodStore?.get(entity)?.takeIf { it.activeLevel >= 0 }
+            val shadowMesh = lod?.takeIf { casts && it.shadowLevel != it.activeLevel }?.let { it.levels[it.shadowLevel].mesh }
+            val command = beforeCommands.obtainCommand(
+                mesh = lod?.levels?.get(lod.activeLevel)?.mesh ?: meshRenderer.mesh,
+                material = meshRenderer.material,
+                model = if (meshRenderer.billboard) {
+                    billboardMatrix(transform.worldMatrix, culling.camera.lens, beforeMatrices.obtain())
+                } else {
+                    transform.worldMatrix
+                },
+                extraUniformFloats = extras,
+                vertexAnimation = meshRenderer.vertexAnimation,
+                timeSeconds = elapsedTimeSeconds,
+                cullMode = meshRenderer.cullMode,
+                alphaMode = pbr?.alphaMode ?: AlphaMode.Opaque,
+                alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
+                transparent = meshRenderer.transparent,
+                additive = meshRenderer.additive,
+                shadowsOnly = verdict == CullVerdict.ShadowOnly,
+                worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
+                maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
+                castsShadows = casts && shadowMesh == null,
+                // Unlit colour reaches the target as stored, so no covering such as fog paints over it.
+                exemptFromCoverings = pbr?.unlit == true,
             )
+            if (verdict != CullVerdict.ShadowOnly || shadowMesh == null) drawCalls.add(command)
+            if (shadowMesh != null) drawCalls.add(beforeCommands.shadowTwin(command, shadowMesh))
         }
         // One RenderDrawCommand per entity here too, but instanceModels (not model) carries every
         // copy's transform -- a backend with an instanced pipeline for this mesh's format
@@ -260,17 +268,25 @@ internal class SceneDrawCollector(
         // component's own doc comment for why an entity carries this instead of MeshRenderer,
         // not both. LOD selects detail, it doesn't cull -- MeshBounds/frustum culling still
         // applies on top when present.
+        // A group that drives a MeshRenderer drew through it, in collectBeforeParticles.
+        val rendererStore = world.componentStore<MeshRenderer>(resolution.rendererType)
         resolution.lodFamily.forEach { entity, transform, lodGroup ->
-            val eye = camera.lens.eye
-            val dx = transform.worldMatrix.m03 - eye.x
-            val dy = transform.worldMatrix.m13 - eye.y
-            val dz = transform.worldMatrix.m23 - eye.z
-            val distance = sqrt(dx * dx + dy * dy + dz * dz)
-            // Selection remembers what it drew last frame -- see LodGroup.selectLevel for why a
-            // bare threshold flickers for an entity parked near one.
-            val level = lodGroup.selectLevel(distance)
+            if (rendererStore?.get(entity) != null) return@forEach
+            val level = if (lodSelection.selectedThisFrame(lodGroup)) {
+                lodGroup.levels[lodGroup.activeLevel]
+            } else {
+                val eye = camera.lens.eye
+                val dx = transform.worldMatrix.m03 - eye.x
+                val dy = transform.worldMatrix.m13 - eye.y
+                val dz = transform.worldMatrix.m23 - eye.z
+                // Selection remembers what it drew last frame -- see LodGroup.selectLevel for why a
+                // bare threshold flickers for an entity parked near one.
+                lodGroup.selectLevel(sqrt(dx * dx + dy * dy + dz * dz))
+            }
 
             val bounds = boundsStore?.get(entity)
+            val shadowLevel = lodGroup.levels[lodGroup.shadowLevel.coerceAtLeast(0)]
+            val coarserShadow = lodGroup.castsShadows && shadowLevel !== level
             val casts = lodGroup.castsShadows
             val verdict = if (bounds == null) {
                 CullVerdict.Visible
@@ -278,16 +294,16 @@ internal class SceneDrawCollector(
                 cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
             }
             if (verdict == CullVerdict.Culled) return@forEach
-            drawCalls.add(
-                afterCommands.obtainCommand(
-                    mesh = level.mesh,
-                    material = level.material,
-                    model = transform.worldMatrix,
-                    shadowsOnly = verdict == CullVerdict.ShadowOnly,
-                    worldBounds = bounds?.writeWorldBounds(transform, afterAabbs.obtain()),
-                    castsShadows = casts,
-                ),
+            val command = afterCommands.obtainCommand(
+                mesh = level.mesh,
+                material = level.material,
+                model = transform.worldMatrix,
+                shadowsOnly = verdict == CullVerdict.ShadowOnly,
+                worldBounds = bounds?.writeWorldBounds(transform, afterAabbs.obtain()),
+                castsShadows = casts && !coarserShadow,
             )
+            if (verdict != CullVerdict.ShadowOnly || !coarserShadow) drawCalls.add(command)
+            if (coarserShadow) drawCalls.add(afterCommands.shadowTwin(command, shadowLevel.mesh, shadowLevel.material))
         }
 
         return drawCalls
@@ -314,6 +330,8 @@ internal class SceneDrawCollector(
         val instancedSkinnedFamily = world.family<InstancedSkinnedMeshRenderer>()
         val modularFamily = world.family<Transform, ModularCharacterComponent>()
         val lodFamily = world.family<Transform, LodGroup>()
+        val lodType = world.typeId(LodGroup::class)
+        val rendererType = world.typeId(MeshRenderer::class)
     }
 
     @Suppress("LongParameterList")

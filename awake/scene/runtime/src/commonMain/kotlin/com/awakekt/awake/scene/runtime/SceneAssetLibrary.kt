@@ -6,10 +6,15 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.rendering.mesh.LodFollow
+import com.awakekt.awake.scene.rendering.mesh.LodGroup
+import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
@@ -90,6 +95,9 @@ class SceneAssetLibrary(
 
     // How many times [resolve] took holds for each request, so [releaseRenderable] gives back exactly those.
     private val resolvedRequests = mutableMapOf<SceneRenderableRequest, Int>()
+
+    // The first part of each model, under each parent, to get levels: its other parts follow it.
+    private val levelLeaders = mutableMapOf<Pair<Entity, String>, Entity>()
     private var retainedBytes = 0L
 
     // The textures already reported as not drawn yet, and as failed, so each is logged once.
@@ -358,6 +366,7 @@ class SceneAssetLibrary(
             if (material == null) releaseMesh(key.mesh)
         }
         resolvedRequests[request] = (resolvedRequests[request] ?: 0) + 1
+        attachLevels(runtime, request, mesh, checkNotNull(material))
         return MeshRenderer(
             mesh = mesh,
             material = checkNotNull(material),
@@ -381,7 +390,40 @@ class SceneAssetLibrary(
         val count = resolvedRequests[request] ?: return
         if (count > 1) resolvedRequests[request] = count - 1 else resolvedRequests.remove(request)
         releaseMesh(request.meshRenderer.mesh)
+        levelsOf(request.meshRenderer.mesh)?.meshes?.forEach(::releaseMesh)
+        levelLeaders.values.removeAll { it == request.entity }
         releaseMaterial(request.meshRenderer.material)
+    }
+
+    private fun levelsOf(mesh: String): SceneMeshLevels? =
+        dynamicResolvers.firstNotNullOfOrNull { resolver -> resolver.takeIf { it.canResolveMesh(mesh) }?.meshLevels(mesh) }
+
+    /**
+     * Gives [request]'s entity an [LodGroup] over its mesh's levels, when a resolver gives it any:
+     * it switches the renderer [resolve] returns between [mesh] and each level by screen coverage,
+     * drawing them all with [material]. Each level is held as [mesh] is, until [releaseRenderable].
+     */
+    private fun attachLevels(runtime: SceneAppLifecycleRuntime, request: SceneRenderableRequest, mesh: Mesh, material: Material) {
+        val levels = levelsOf(request.meshRenderer.mesh) ?: return
+        val meshes = listOf(mesh) + levels.meshes.map { requireMesh(runtime, it) }
+        val group = LodGroup(meshes.map { LodLevel(it, material, maxDistance = Float.MAX_VALUE) })
+        group.minScreenCoverage = levels.minScreenCoverage
+        group.follow = partLeader(runtime, request)?.let(::LodFollow)
+        runtime.world.add(request.entity, group)
+    }
+
+    /**
+     * The part [request]'s entity follows when it draws one part (`<model>#<i>`) of a model whose
+     * other parts share its parent: the first such part given levels, so a character's parts switch
+     * on the same frame. Null for the first part, and for anything that is not a part.
+     */
+    private fun partLeader(runtime: SceneAppLifecycleRuntime, request: SceneRenderableRequest): Entity? {
+        val key = request.meshRenderer.mesh.takeIf { '#' in it }?.let { name ->
+            runtime.world.get<Transform>(request.entity)?.parent?.let { parent -> parent to name.substringBeforeLast('#') }
+        } ?: return null
+        val leader = levelLeaders[key]?.takeIf { it != request.entity && runtime.world.get<LodGroup>(it) != null }
+        if (leader == null) levelLeaders[key] = request.entity
+        return leader
     }
 
     private fun SceneMeshRenderer.CullMode.toCullMode(): CullMode = when (this) {

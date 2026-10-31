@@ -60,6 +60,7 @@ import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
+import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.models.VkClearColorValue
 import com.awakekt.awake.vulkan.models.VkClearDepthStencilValue
@@ -399,6 +400,10 @@ class Renderer internal constructor(
     }
 
     override fun createMesh(geometry: MeshGeometry): RenderMesh = performCreateMesh(geometry)
+
+    override fun createMeshSharingVertices(vertices: RenderMesh, geometry: MeshGeometry): RenderMesh =
+        (vertices as? Mesh)?.takeIf { it.format == geometry.format }?.sharingVertices(geometry.indices, geometry.bounds)
+            ?: performCreateMesh(geometry)
 
     override fun createMaterial(
         texture: TextureAsset?,

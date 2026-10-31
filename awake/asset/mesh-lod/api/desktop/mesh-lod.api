@@ -4,6 +4,18 @@ public final class com/awakekt/awake/asset/meshlod/AttributeMeshSimplifier {
 	public static synthetic fun simplify$default (Lcom/awakekt/awake/asset/meshlod/AttributeMeshSimplifier;[F[ILcom/awakekt/awake/asset/meshlod/SimplifyOptions;Ljava/util/List;Lcom/awakekt/awake/asset/meshlod/SkinInfluences;[FILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/SimplifiedMesh;
 }
 
+public final class com/awakekt/awake/asset/meshlod/GltfLodAssets {
+	public static final field Companion Lcom/awakekt/awake/asset/meshlod/GltfLodAssets$Companion;
+	public synthetic fun <init> (Lkotlinx/serialization/json/JsonObject;Lcom/awakekt/awake/asset/meshlod/GlbFile;Ljava/util/List;ILjava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCount ()I
+	public final fun getScreenCoverage ()Ljava/util/List;
+	public final fun level (I)[B
+}
+
+public final class com/awakekt/awake/asset/meshlod/GltfLodAssets$Companion {
+	public final fun read ([B)Lcom/awakekt/awake/asset/meshlod/GltfLodAssets;
+}
+
 public final class com/awakekt/awake/asset/meshlod/GltfLodChain {
 	public fun <init> (ILjava/util/List;Ljava/util/List;)V
 	public final fun component1 ()I
