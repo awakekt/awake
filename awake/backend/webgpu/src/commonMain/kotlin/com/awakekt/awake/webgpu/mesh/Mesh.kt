@@ -41,7 +41,9 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
  * first wireframe use -- keeps this class's resource lifecycle a single, unconditional init
  * block instead of a second lazy-build path a mesh's caller would need to remember to trigger.
  */
-class Mesh @Suppress("LongParameterList") private constructor(
+class Mesh
+@Suppress("LongParameterList")
+private constructor(
     private val graphicsDevice: GraphicsDevice,
     private val runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
     vertices: FloatArray,

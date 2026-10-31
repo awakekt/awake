@@ -44,6 +44,7 @@ import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.webgpu.mesh.FrameInstanceBuffer
 import com.awakekt.awake.webgpu.mesh.InstanceBuffer
+import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
@@ -59,7 +60,6 @@ import com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline
 import com.awakekt.awake.core.color.Color as AwakeColor
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
-import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import io.ygdrasil.webgpu.Color as GpuColor
 

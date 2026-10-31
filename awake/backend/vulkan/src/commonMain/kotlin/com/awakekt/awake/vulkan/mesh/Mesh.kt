@@ -37,7 +37,9 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
  * Material/Shader concern (interleaved between [bind] and [draw] by the caller), not part
  * of what a mesh is.
  */
-class Mesh @Suppress("LongParameterList") private constructor(
+class Mesh
+@Suppress("LongParameterList")
+private constructor(
     graphicsDevice: GraphicsDevice,
     runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
     vertices: FloatArray,

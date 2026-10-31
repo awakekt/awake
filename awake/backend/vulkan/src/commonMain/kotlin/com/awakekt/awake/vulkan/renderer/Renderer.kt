@@ -53,7 +53,6 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineMesh
-import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.device.DeviceCapabilities
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -61,6 +60,7 @@ import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
+import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.models.VkClearColorValue
 import com.awakekt.awake.vulkan.models.VkClearDepthStencilValue
