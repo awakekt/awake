@@ -16,6 +16,7 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.SceneDrawStats
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.ShadowCasterVolume
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
 
@@ -146,4 +147,8 @@ private class RejectionCountingPreparer(private val delegate: GpuDrawPreparer) :
     ): GpuResolvedDraw? = delegate.prepare(request, sourceIndex, context).also { if (it == null) rejected += 1 }
 
     override fun canInstance(format: VertexFormat): Boolean = delegate.canInstance(format)
+
+    // Forwarded, or the interface's default answers for unculled copies only, and copies of a
+    // back-culled prop never reach the back-culled instanced pipeline the backend built for them.
+    override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = delegate.canInstance(format, cullMode)
 }

@@ -29,19 +29,31 @@ class InstancingFoldSceneTest {
         RenderDiagnostics.drawStatsEnabled = false
     }
 
+    /**
+     * Each repeated static model draws as one instanced draw per pass; the skinned characters stay
+     * one draw each, for the measured reason the stats give.
+     *
+     * Before the scene planner forwarded the cull-mode question to the backend, its preparer
+     * answered for unculled copies only: the same scene drew 18 main-pass and 54 shadow draws, the
+     * 8 back-culled houses missing on [InstanceFoldMiss.CullMode]. Now 11 and 33.
+     */
     @Test
-    fun repeatedTownModelsAndWhyTheyDoNotFold() = runTest {
+    fun repeatedTownModelsFoldIntoOneDrawPerModelAndPass() = runTest {
         val stats = playTown()
         println("Town scene, $COPIES copies of 4 models: $stats")
 
         assertEquals(COPIES * MODELS, stats.sourceDraws)
-        // Back-culled props reach the planner's preparer, which answered for unculled copies only.
-        assertEquals(COPIES, stats.misses(InstanceFoldMiss.CullMode), "back-culled houses: $stats")
+        assertEquals(3, stats.foldedDraws, "houses, bushes and fences each fold: $stats")
+        assertEquals(3 * COPIES, stats.foldedCopies)
+        assertEquals(0, stats.misses(InstanceFoldMiss.CullMode), "back-culled houses fold: $stats")
+        // Posed characters stay one draw each: the project plan has no skinned instanced pipeline,
+        // and the one Core has draws untextured, untinted and shaded unlike a single skinned draw.
         assertEquals(COPIES, stats.misses(InstanceFoldMiss.SkinnedNotInstanced), "posed villagers: $stats")
-        assertEquals(2, stats.foldedDraws, "bushes and fences fold: $stats")
-        assertEquals(2 + 2 * COPIES, stats.mainPassDraws)
+        assertEquals(COPIES, stats.totalMisses)
+        assertEquals(3 + COPIES, stats.mainPassDraws)
         // Each cascade draws the same folded casters: nothing folds differently in the shadow passes.
         assertEquals(List(stats.shadowPasses) { stats.opaqueDraws }, List(stats.shadowPasses) { stats.shadowPassDraws(it) })
+        assertEquals(3 * (3 + COPIES), stats.shadowDraws)
     }
 
     @Test
