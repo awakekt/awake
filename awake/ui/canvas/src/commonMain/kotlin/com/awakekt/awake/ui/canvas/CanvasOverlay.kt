@@ -343,7 +343,7 @@ internal fun CanvasElementView(
         .tooltipPointer(element, tree.tooltips, units)
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
-    val styled = element.draggedModifier(hovered, tree, units)
+    val styled = element.movedModifier(element.draggedModifier(hovered, tree, units), tree, units)
     ElementContent(element, styled, if (behindParticles) base else wheeled, back, textStyle, tree, children)
 }
 

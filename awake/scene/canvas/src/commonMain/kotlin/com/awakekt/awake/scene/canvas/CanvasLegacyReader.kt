@@ -38,6 +38,19 @@ fun SceneCanvasElement.toCanvasComponents(): List<SceneComponent> = buildList {
     widgetOrNull()?.let(::add)
 }.sortedBy { savedOrder[it::class] }
 
+/**
+ * These components with a [moveHandle] and its [moveStrip] set on their `canvas_input`, added in its
+ * saved place when there is none: settings the older `canvas_element` never had.
+ */
+internal fun List<SceneComponent>.withMoveHandle(moveHandle: Boolean, moveStrip: Float): List<SceneComponent> {
+    val input = firstNotNullOfOrNull { it as? SceneCanvasInput }
+    return when {
+        !moveHandle && moveStrip == 0f -> this
+        input != null -> map { if (it === input) input.copy(moveHandle = moveHandle, moveStrip = moveStrip) else it }
+        else -> (this + SceneCanvasInput(moveHandle = moveHandle, moveStrip = moveStrip)).sortedBy { savedOrder[it::class] }
+    }
+}
+
 /** Where a node lists each canvas component when saved: the order the canvas registry exports them in. */
 private val savedOrder: Map<KClass<*>, Int> by lazy { CanvasSceneComponents.bindings.withIndex().associate { (index, binding) -> binding.schemaClass to index } }
 

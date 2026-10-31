@@ -3,6 +3,16 @@ public final class com/awakekt/awake/asset/meshoptimizer/GltfWriter {
 	public final fun writePositionOnlyMesh ([F[I)Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/asset/meshoptimizer/LodCook {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshoptimizer/LodCook;
+	public final fun run (Ljava/io/File;Ljava/util/List;Ljava/io/File;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/meshoptimizer/LodCookMain {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshoptimizer/LodCookMain;
+	public static final fun main ([Ljava/lang/String;)V
+}
+
 public final class com/awakekt/awake/asset/meshoptimizer/MainKt {
 	public static final fun main ([Ljava/lang/String;)V
 }

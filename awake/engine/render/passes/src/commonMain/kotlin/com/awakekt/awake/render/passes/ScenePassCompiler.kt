@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.passes
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
@@ -27,6 +28,7 @@ import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.sceneLightUniforms
 import com.awakekt.awake.render.passes.uniforms.shadowCascades
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
 
 /**
@@ -63,6 +65,44 @@ object ScenePassCompiler {
         drawPreparer: GpuDrawPreparer? = null,
         maskLayers: List<FloatArray> = emptyList(),
         postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain = com.awakekt.awake.render.imagepass.ImagePassChain.Empty,
+    ): GpuPassInput = compile(lens, drawCalls, light, environment, clipSpace, aspect, viewport, drawPreparer, maskLayers, postPassChain, null)
+
+    /**
+     * [compile], also counting into [drawStats], when it is not null, the draws each pass receives
+     * and why main-pass draws did not fold into instances. Null counts nothing and costs nothing.
+     * [drawStats] is reset first, so it describes this frame alone.
+     */
+    @Suppress("LongParameterList") // The overload above's parameters, and the stats.
+    fun compile(
+        lens: Lens,
+        drawCalls: List<RenderDrawCommand>,
+        light: SceneLight?,
+        environment: EnvironmentUniforms,
+        clipSpace: ClipSpace,
+        aspect: Float,
+        viewport: RenderViewport?,
+        drawPreparer: GpuDrawPreparer?,
+        maskLayers: List<FloatArray>,
+        postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain,
+        drawStats: SceneDrawStats?,
+    ): GpuPassInput {
+        drawStats?.reset()
+        return compileFrame(lens, drawCalls, light, environment, clipSpace, aspect, viewport, drawPreparer, maskLayers, postPassChain, drawStats)
+    }
+
+    @Suppress("LongParameterList") // [compile]'s.
+    private fun compileFrame(
+        lens: Lens,
+        drawCalls: List<RenderDrawCommand>,
+        light: SceneLight?,
+        environment: EnvironmentUniforms,
+        clipSpace: ClipSpace,
+        aspect: Float,
+        viewport: RenderViewport?,
+        drawPreparer: GpuDrawPreparer?,
+        maskLayers: List<FloatArray>,
+        postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain,
+        drawStats: SceneDrawStats?,
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
         val cameraForward = lens.forwardDirection()
@@ -93,7 +133,7 @@ object ScenePassCompiler {
                 shadowViewProjections = shadowViewProjections,
                 shadowCascadeData = shadowCascadeData,
             )
-            val requests = batchInstances(drawCalls) { format, cullMode -> preparer.canInstance(format, cullMode) }
+            val requests = foldInstances(drawCalls, preparer, drawStats)
             val visible = ArrayList<Caster>(requests.size)
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
@@ -108,24 +148,43 @@ object ScenePassCompiler {
         }
         val opaque = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
         val casters = opaque.castingWith(shadowOnly)
-
+        val prePasses = shadowPrePasses(shadowViewProjections, casters.takeIf { resolved != null }, light, environment)
+        val maskPasses = masked.subPasses(viewProjection)
+        val transparent = resolved?.transparent?.map { it.draw }.orEmpty()
+        drawStats?.recordPasses(prePasses, opaque.size, transparent.size, maskPasses, edges.size)
         return GpuPassInput(
-            prePasses = shadowPrePasses(shadowViewProjections, casters.takeIf { resolved != null }, light, environment),
+            prePasses = prePasses,
             viewProjection = viewProjection,
             cameraEye = lens.eye,
             viewport = viewport,
             passUniforms = packedPassUniforms,
             environment = gpuEnvironment,
             resolvedOpaqueDraws = opaque.map { it.draw },
-            resolvedTransparentDraws = resolved?.transparent?.map { it.draw }.orEmpty(),
+            resolvedTransparentDraws = transparent,
             resolvedPath = resolved != null,
             cameraForward = cameraForward,
             shadowCascadeData = shadowCascadeData,
             resolvedEdgeDraws = edges,
-            maskPasses = masked.subPasses(viewProjection),
+            maskPasses = maskPasses,
             postPassChain = postPassChain,
         )
     }
+}
+
+/**
+ * [drawCalls] with their copies folded into instanced draws as [preparer] can draw them, after
+ * counting into [stats], when there are any, what folds and why the rest does not.
+ */
+private fun foldInstances(drawCalls: List<RenderDrawCommand>, preparer: GpuDrawPreparer, stats: SceneDrawStats?): List<RenderDrawCommand> {
+    val canInstance = { format: VertexFormat, cullMode: CullMode -> preparer.canInstance(format, cullMode) }
+    if (stats != null) diagnoseInstanceFolds(drawCalls, canInstance, stats)
+    return batchInstances(drawCalls, canInstance)
+}
+
+/** Counts the draws each pass of a compiled frame receives. */
+private fun SceneDrawStats.recordPasses(prePasses: List<GpuSubPass>, opaque: Int, transparent: Int, maskPasses: List<GpuSubPass>, edges: Int) {
+    prePasses.forEach { recordShadowPass(it.resolvedDraws.size) }
+    recordMainPass(opaque, transparent, maskPasses.sumOf { it.resolvedDraws.size }, edges)
 }
 
 /** The draws each mask layer names, gathered as they are prepared, and the layers' sub-passes. */

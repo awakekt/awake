@@ -1,0 +1,270 @@
+public final class com/awakekt/awake/asset/meshlod/AttributeMeshSimplifier {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/AttributeMeshSimplifier;
+	public final fun simplify ([F[ILcom/awakekt/awake/asset/meshlod/SimplifyOptions;Ljava/util/List;Lcom/awakekt/awake/asset/meshlod/SkinInfluences;[F)Lcom/awakekt/awake/asset/meshlod/SimplifiedMesh;
+	public static synthetic fun simplify$default (Lcom/awakekt/awake/asset/meshlod/AttributeMeshSimplifier;[F[ILcom/awakekt/awake/asset/meshlod/SimplifyOptions;Ljava/util/List;Lcom/awakekt/awake/asset/meshlod/SkinInfluences;[FILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/SimplifiedMesh;
+}
+
+public final class com/awakekt/awake/asset/meshlod/GltfLodChain {
+	public fun <init> (ILjava/util/List;Ljava/util/List;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (ILjava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/meshlod/GltfLodChain;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/GltfLodChain;ILjava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/GltfLodChain;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLevels ()Ljava/util/List;
+	public final fun getNode ()I
+	public final fun getScreenCoverage ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/meshlod/GltfLodCooker {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/GltfLodCooker;
+	public final fun cook ([BLcom/awakekt/awake/asset/meshlod/MeshLodSettings;Ljava/util/Map;)Lcom/awakekt/awake/asset/meshlod/LodCookResult;
+	public static synthetic fun cook$default (Lcom/awakekt/awake/asset/meshlod/GltfLodCooker;[BLcom/awakekt/awake/asset/meshlod/MeshLodSettings;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/LodCookResult;
+}
+
+public final class com/awakekt/awake/asset/meshlod/GltfLods {
+	public static final field EXTENSION Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/GltfLods;
+	public static final field SCREEN_COVERAGE Ljava/lang/String;
+	public final fun hasAuthoredLods (Lkotlinx/serialization/json/JsonObject;)Z
+	public final fun read (Lkotlinx/serialization/json/JsonObject;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/meshlod/LodCookOutcome : java/lang/Enum {
+	public static final field AuthoredLods Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+	public static final field Generated Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+	public static final field NothingToSimplify Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+	public static final field OptedOut Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+	public static fun values ()[Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+}
+
+public final class com/awakekt/awake/asset/meshlod/LodCookResult {
+	public fun <init> ([BLcom/awakekt/awake/asset/meshlod/LodCookOutcome;Ljava/util/List;)V
+	public final fun getBytes ()[B
+	public final fun getMeshes ()Ljava/util/List;
+	public final fun getOutcome ()Lcom/awakekt/awake/asset/meshlod/LodCookOutcome;
+}
+
+public final class com/awakekt/awake/asset/meshlod/LodLevelSetting {
+	public static final field Companion Lcom/awakekt/awake/asset/meshlod/LodLevelSetting$Companion;
+	public fun <init> (FF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/asset/meshlod/LodLevelSetting;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/LodLevelSetting;FFILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/LodLevelSetting;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRatio ()F
+	public final fun getScreenCoverage ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/meshlod/LodLevelSetting$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/LodLevelSetting$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/meshlod/LodLevelSetting;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/meshlod/LodLevelSetting;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/LodLevelSetting$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/MeshAttribute {
+	public fun <init> ([FIF)V
+	public synthetic fun <init> ([FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getComponents ()I
+	public final fun getValues ()[F
+	public final fun getVertexCount ()I
+	public final fun getWeight ()F
+}
+
+public final class com/awakekt/awake/asset/meshlod/MeshLodOverride {
+	public static final field Companion Lcom/awakekt/awake/asset/meshlod/MeshLodOverride$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Boolean;Ljava/lang/Float;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/Boolean;Ljava/lang/Float;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/Boolean;Ljava/lang/Float;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;Ljava/util/Map;)Lcom/awakekt/awake/asset/meshlod/MeshLodOverride;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/MeshLodOverride;Ljava/lang/Boolean;Ljava/lang/Float;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/MeshLodOverride;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBaseScreenCoverage ()Ljava/lang/Float;
+	public final fun getEnabled ()Ljava/lang/Boolean;
+	public final fun getJointImportance ()Ljava/util/Map;
+	public final fun getLevels ()Ljava/util/List;
+	public final fun getLockBorders ()Ljava/lang/Boolean;
+	public final fun getMeshes ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/meshlod/MeshLodOverride$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/MeshLodOverride$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/meshlod/MeshLodOverride;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/meshlod/MeshLodOverride;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/MeshLodOverride$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/MeshLodReport {
+	public fun <init> (ILjava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (ILjava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/meshlod/MeshLodReport;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/MeshLodReport;ILjava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/MeshLodReport;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrors ()Ljava/util/List;
+	public final fun getMesh ()I
+	public final fun getName ()Ljava/lang/String;
+	public final fun getTriangles ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/meshlod/MeshLodSettings {
+	public static final field Companion Lcom/awakekt/awake/asset/meshlod/MeshLodSettings$Companion;
+	public fun <init> ()V
+	public fun <init> (ZFLjava/util/List;ZFFFFLjava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (ZFLjava/util/List;ZFFFFLjava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component10 ()Ljava/util/Map;
+	public final fun component2 ()F
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Z
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()Ljava/util/Map;
+	public final fun copy (ZFLjava/util/List;ZFFFFLjava/util/Map;Ljava/util/Map;)Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;ZFLjava/util/List;ZFFFFLjava/util/Map;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun forMesh (Ljava/lang/String;)Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public final fun getBaseScreenCoverage ()F
+	public final fun getColorWeight ()F
+	public final fun getEnabled ()Z
+	public final fun getJointImportance ()Ljava/util/Map;
+	public final fun getLevels ()Ljava/util/List;
+	public final fun getLockBorders ()Z
+	public final fun getMeshes ()Ljava/util/Map;
+	public final fun getNormalWeight ()F
+	public final fun getSkinWeight ()F
+	public final fun getUvWeight ()F
+	public fun hashCode ()I
+	public final fun overriddenBy (Lcom/awakekt/awake/asset/meshlod/MeshLodOverride;)Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/meshlod/MeshLodSettings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/MeshLodSettings$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/MeshLodSettings$Companion {
+	public final fun getDEFAULT_LEVELS ()Ljava/util/List;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/ProjectLodSettings {
+	public static final field Companion Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings$Companion;
+	public static final field FILE_NAME Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (ILcom/awakekt/awake/asset/meshlod/MeshLodSettings;Ljava/util/Map;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/asset/meshlod/MeshLodSettings;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (ILcom/awakekt/awake/asset/meshlod/MeshLodSettings;Ljava/util/Map;)Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings;ILcom/awakekt/awake/asset/meshlod/MeshLodSettings;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings;
+	public final fun encode ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun forAsset (Ljava/lang/String;)Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public final fun getAssets ()Ljava/util/Map;
+	public final fun getDefaults ()Lcom/awakekt/awake/asset/meshlod/MeshLodSettings;
+	public final fun getFormatVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/meshlod/ProjectLodSettings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/ProjectLodSettings$Companion {
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/asset/meshlod/ProjectLodSettings;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/meshlod/SimplifiedMesh {
+	public fun <init> ([IF)V
+	public final fun getError ()F
+	public final fun getIndices ()[I
+	public final fun getTriangleCount ()I
+}
+
+public final class com/awakekt/awake/asset/meshlod/SimplifyOptions {
+	public static final field DEFAULT_BORDER_WEIGHT F
+	public fun <init> (FFZF)V
+	public synthetic fun <init> (FFZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Z
+	public final fun component4 ()F
+	public final fun copy (FFZF)Lcom/awakekt/awake/asset/meshlod/SimplifyOptions;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/meshlod/SimplifyOptions;FFZFILjava/lang/Object;)Lcom/awakekt/awake/asset/meshlod/SimplifyOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorderWeight ()F
+	public final fun getLockBorders ()Z
+	public final fun getMaxError ()F
+	public final fun getTargetRatio ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/meshlod/SkinInfluences {
+	public static final field DEFAULT_INFLUENCES I
+	public fun <init> ([I[FIF)V
+	public synthetic fun <init> ([I[FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInfluences ()I
+	public final fun getJoints ()[I
+	public final fun getVertexCount ()I
+	public final fun getWeight ()F
+	public final fun getWeights ()[F
+}
+

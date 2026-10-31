@@ -1,1 +1,0 @@
-- **Played projects draw sprites and tilemaps.** `ProjectRenderPlan`, which `awake render` and a game built on a project draw with, had no pipeline for the sprite batch's `PositionUv` quads, so the renderer dropped every sprite, tilemap and 2D particle draw. It now builds `spriteScenePipeline(buildAdditive = true)`.

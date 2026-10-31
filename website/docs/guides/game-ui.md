@@ -73,7 +73,7 @@ directly:
 | `canvas_layout`, `canvas_cluster` | `CanvasLayout`, `CanvasCluster` | How it places its children. |
 | `canvas_bind` | `CanvasBinding` | Game state it shows without code. |
 | `canvas_follow`, `canvas_follow_arrow` | `CanvasFollow`, `CanvasFollowArrow` | The node it follows; the arrow of a follower pinned to the edge. |
-| `canvas_input`, `canvas_tooltip` | `CanvasInput`, `CanvasTooltip` | Pressable, draggable, drop target, wheel; a hover hint. |
+| `canvas_input`, `canvas_tooltip` | `CanvasInput`, `CanvasTooltip` | Pressable, draggable, drop target, move handle, wheel; a hover hint. |
 | `canvas_particles` | `CanvasParticles` | Particles emitted from or over the element in canvas `dp` units. |
 | one widget | `CanvasButtonWidget`, `CanvasBarWidget`, ... | `canvas_button`, `canvas_bar`, `canvas_sweep`, `canvas_stepper`, `canvas_joystick`, `canvas_look_area`, `canvas_text_field`, `canvas_view` or `canvas_image`: what the element is, with its own values and `settings`. |
 
@@ -459,6 +459,40 @@ above is the parent.
 
 A child is laid out within its parent, so one that would stick out past the parent's edge is
 narrowed to fit.
+
+## Move a window
+
+Mark a window's title bar `moveHandle` on its `canvas_input`, and dragging the bar moves the whole
+window, the root element the bar sits in, by how far the pointer goes, with no ghost. It works with
+the mouse and with one finger; a second finger is left alone. A press that never moves past the drag
+threshold `draggable` uses stays a press, so a close button on the bar still clicks, and a
+`draggable` slot inside the window still drags and drops.
+
+```kotlin title="Kotlin"
+val inventory = canvasPrefab(guid = "4c2d...", name = "Inventory") {
+    size(320.dp, 240.dp)
+    panel("Title Bar") {
+        size(320.dp, 24.dp)
+        moveHandle = true
+        button("Close") { offset(296.dp, 0.dp); size(24.dp, 24.dp); action = "close-inventory" }
+    }
+    panel("Slot") { offset(16.dp, 40.dp); size(40.dp, 40.dp); draggable = true }
+}
+```
+
+Only the window's own `offsetX` and `offsetY` change; what is inside keeps its layout. The window is
+kept so its top, down to the bar's bottom, stays on the canvas, also after the canvas resizes; set
+`moveStrip` to keep a different amount, in the window's dp. A window anchored to an edge stops at
+that edge, so anchor a window that may go part way off the left at `TopCenter` or `Center`.
+
+Pressing anywhere in such a window brings it to the front of the root elements of its `order`;
+`CanvasElement.bringToFront()` does the same from code. When a move ends, the window's `moved` reads
+its new offsets once, which is what to save; set `offsetX` and `offsetY` to put it back:
+
+```kotlin title="Kotlin"
+window.moved?.let { saved[windowId] = it }          // after the player lets go
+saved[windowId]?.let { window.offsetX = it.x; window.offsetY = it.y } // when the window opens
+```
 
 ## Show game state
 

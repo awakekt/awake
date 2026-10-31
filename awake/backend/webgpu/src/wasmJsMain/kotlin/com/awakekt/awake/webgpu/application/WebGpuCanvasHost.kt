@@ -104,6 +104,33 @@ fun launchWebGpuGame(
     cursor: (() -> PointerCursor)? = null,
     applicationFactory: () -> WebGpuEngine,
 ) {
+    launchWebGpuGame(canvas, cursor, maxPixelRatio = { null }, applicationFactory)
+}
+
+/**
+ * Starts a WebGPU game on [canvas], as the overload without [maxPixelRatio] does, with the canvas
+ * drawn at no more than [maxPixelRatio] buffer pixels per CSS pixel.
+ *
+ * This first cut scales the whole swapchain, UI included: the UI's density is the capped ratio, so
+ * layout keeps its size on the page, but text and HUD edges are drawn at the capped ratio too.
+ * [maxPixelRatio] is read on every resize and before every frame; a new value reconfigures the
+ * surface on the next frame, and `null` is no cap, identical to the overload without it.
+ * `Renderer.surfaceWidth`/`surfaceHeight` and pointers report the capped buffer.
+ *
+ * @param canvas The canvas element to render into and to size the surface from.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
+ * alone.
+ * @param maxPixelRatio The most buffer pixels per CSS pixel, or `null` for the device pixel ratio.
+ * @param applicationFactory Builds the engine, called once after the capability check and before
+ * the device is created.
+ * @throws IllegalStateException If the browser or device does not expose WebGPU.
+ */
+fun launchWebGpuGame(
+    canvas: HTMLCanvasElement,
+    cursor: (() -> PointerCursor)? = null,
+    maxPixelRatio: () -> Float?,
+    applicationFactory: () -> WebGpuEngine,
+) {
     check(browserExposesWebGpu()) {
         "WebGPU is unavailable in this browser or device. " +
             "Use a current Chrome/Edge build with WebGPU enabled and a compatible adapter."
@@ -127,6 +154,7 @@ fun launchWebGpuGame(
         // the failure every frame.
         isStopped = { runtimeFailure != null },
         cursor = cursor,
+        maxPixelRatio = maxPixelRatio,
         initBackend = { _, width, height ->
             val resolvedContext = createCanvasGpuContext(
                 canvas,

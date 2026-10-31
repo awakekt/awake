@@ -17,6 +17,8 @@ on:
     paths:
       - templates/game/**
       - templates/project/**
+      # The keep rules Core's modules ship to every app that shrinks its release.
+      - '**/consumer-rules.pro'
       - .github/workflows/obfuscated-templates.yml
       - tools/check_obfuscated_template.sh
       - tools/check_template_consumer.sh

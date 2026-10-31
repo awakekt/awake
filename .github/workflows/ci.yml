@@ -237,6 +237,11 @@ jobs:
       - name: Sprite metadata, animation and scene runtime tests
         run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
+      # Cook-time mesh LOD: the attribute-aware simplifier, the MSFT_lod cooker and its round trip
+      # through the glTF importer, and the cookLods tool (#1185).
+      - name: Mesh LOD cook tests
+        run: ./gradlew :awake:asset:mesh-lod:desktopTest :awake:asset:gltf:desktopTest :awake:asset:mesh-optimizer:test
+
       # The game UI canvas: its elements' input, drawing and zero-tolerance pixel baselines, in the
       # scene-free capability and its scene wrapper. Before this step it was only compiled here, so a
       # change to how it draws or routes a tap stayed green.
@@ -636,6 +641,11 @@ jobs:
       # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest
+
+      # The browser's createBitmap against generated PNGs (same pixels as desktop, bit for bit with
+      # the old decode, no canvas per texture), and the before/after timing of a 1024x1024 decode.
+      - name: Image decode browser tests
+        run: ./gradlew :awake:core:image:wasmJsBrowserTest
 
       # Code that only runs in a browser: copying a fetched response into a ByteArray, the
       # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content

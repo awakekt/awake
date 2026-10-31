@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-10-31
+
+### Added
+
+- Add canvas-space particle emitters (`CanvasParticles`, `CanvasBurstPool`, and `SceneCanvasParticles` / `canvas_particles`) backed by `awake:core:particles`'s `ParticleSimulation` (stepping, `emit`, `spawn` and the `ParticleDeathListener` / `ParticleSpawnRate` hooks allocate nothing per frame; drawing draws a texture per particle), along with `DrawScope.drawTexture`, `DrawScope.unclipped`, and contiguous textured quad coalescing in `DrawRunCoalescer`.
+- **Shared `ParticleSimulation` (`com.awakekt.awake.core:particles`) and `ParticleEmitter.emit(count)`.** Extracted a pure structure-of-arrays `ParticleSimulation` pool (`step`, `emit(count)`, `spawn`, `isAlive`, `clearSlot`, `reset`), `ParticleSpawnShape` (`Point`, `RingXZ`, `RingXY`, `Box`, `RectEdge`), `ParticlePlane` (`XZ`, `XY`), `ParticleAlphaRamp`, `ParticleBurstSchedule`, `ParticleSpinRange`, and the `ParticleDeathListener` and `ParticleGroundHeight` hooks into `:awake:core:particles` depending only on `:awake:core:math`, with zero steady-state or burst heap allocations. `:awake:particles` delegates its simulation storage and stepping to `ParticleSimulation` while preserving every 0.28 public signature and fixed-seed 3D RNG determinism, and exposes `ParticleEmitter.emit(count)`, `droppedParticleCount` and `random` (#1103).
+- **2D particle emitters that sort with sprites.** `awake:particles` gains `ParticleEmitter2D`, `Particle2DSystem` and `BurstEmitter2DPool`, the 2D counterparts of the 3D emitter, on the same `ParticleSimulation` in the `XY` plane. Their `onParticleDeath` (`ParticleDeathListener`) and `dynamicSpawnRate` (`ParticleSpawnRate`) hooks are `fun interface`s, and a pooled burst copies a template emitter, so stepping, the hooks and `spawn` allocate nothing per frame; drawing still builds one sprite draw per live particle, as a sprite does. `awake:scene:scene2d` binds the emitter as `particle_emitter_2d` (`SceneParticleEmitter2D`), places it by `Transform` (`Transform2DPlacement`), builds validated burst templates with `toBurstTemplate()`, and `collectSpriteDraws()` draws its quads alongside sprites and tilemaps by `sortingLayer` and `sortOrder`, alpha-blended or additive. `spriteScenePipeline(buildAdditive = true)` builds the additive companion; the default stays alpha-only.
+- Add a `maxPixelRatio` provider to `launchWebGpuGame` and `runBrowserCanvas` (new overloads; the existing signatures are unchanged) that caps the browser canvas's buffer at that many pixels per CSS pixel. It is read on every resize and before every frame, so a game can expose it as a graphics setting; the UI density follows the capped ratio so layout keeps its size, pointers map onto the capped buffer, and `null` (the default) is pixel-identical to before. This first cut scales the whole swapchain, UI included.
+
+### Changed
+
+- **`ParticleEmitter.forEachLiveParticle` passes scratch vectors.** The `position` and `velocity` it hands to the action are copies refilled for each particle, so writing through them no longer moves the particle. Copy what you keep, and use `spawn` or `emit` to add particles (#1103).
+
+### Fixed
+
+- **Played projects draw sprites and tilemaps.** `ProjectRenderPlan`, which `awake render` and a game built on a project draw with, had no pipeline for the sprite batch's `PositionUv` quads, so the renderer dropped every sprite, tilemap and 2D particle draw. It now builds `spriteScenePipeline(buildAdditive = true)`.
+- **Unlit draws keep their texel under distance fog.** `depthFogContentFeature` blends fog over every pixel the scene depth holds, after the geometry, so it also painted over `PbrMaterial.unlit` draws, which promise to skip fog. With a pale fog an unlit skin came out a few levels brighter than its texture, most on its darker channels. A draw can now be exempt from the frame's coverings (`GpuDrawRequest.exemptFromCoverings`), and the scene sets it for every unlit material, static or skinned. Exempt opaque draws mark their pixels in a reserved mask layer (`COVERING_EXEMPT_MASK_LAYER`), and the fog leaves the pixels whose nearest surface they are as drawn. Paint order is unchanged: lit and transparent draws are fogged as before. A plan with depth fog gets the mask pass, built from its scene-depth shaders when it names no `maskShaderSet` (`RenderPlan.maskShadersFor`).
+
 ## [0.28.1] - 2026-10-30
 
 ### Fixed
