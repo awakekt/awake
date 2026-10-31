@@ -566,6 +566,11 @@ public final class com/awakekt/awake/asset/gltf/GltfMeshDef$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/asset/gltf/GltfMeshPrimitivesKt {
+	public static final fun parseMeshPrimitives (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Ljava/util/List;
+	public static synthetic fun parseMeshPrimitives$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Ljava/util/List;
+}
+
 public final class com/awakekt/awake/asset/gltf/GltfMeshSimplificationKt {
 	public static final fun simplified (Lcom/awakekt/awake/asset/gltf/GltfMesh;FZ)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public static synthetic fun simplified$default (Lcom/awakekt/awake/asset/gltf/GltfMesh;FZILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;

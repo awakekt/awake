@@ -34,3 +34,15 @@ to prove the decimate → write → re-import pipeline round-trips end to end (s
 
 No Draco/meshopt binary compression, no UV-aware simplification, no retopology — see
 `awake:core:geometry`'s own README for the full scope note.
+
+## Cook levels of detail into a project's models
+
+```bash
+./gradlew :awake:asset:mesh-optimizer:cookLods --args="<project> props/rock.glb props/fence.gltf --output build/cooked"
+```
+
+Generates `MSFT_lod` levels for each asset with
+[awake:asset:mesh-lod](../mesh-lod/README.md)'s `GltfLodCooker`, using the project's `awake.lod.json`
+(the defaults when it has none) and each asset's own override or opt-out. Each asset is written to the
+same relative path under `--output`, with a `.gltf` document's external buffers and images copied
+beside it. Unlike `decimate`, it keeps every attribute, the skin and the materials.
