@@ -12,19 +12,11 @@ package com.awakekt.awake.render.command
  * @property opaqueByPipeline Batched by pipeline, then clustered by [PreparedDraw.batchKey]
  * within each group so consecutive draws reuse buffer bindings.
  * @property transparent Back to front, never grouped.
- * @property overCoveringsByPipeline The opaque [PreparedDraw.overCoverings] draws, grouped as
- * [opaqueByPipeline] is, for recording after the frame's covering content features.
  */
 class SortedDraws<P : PreparedDraw>(
     val opaqueByPipeline: Map<PipelineHandle, List<P>>,
     val transparent: List<P>,
-    val overCoveringsByPipeline: Map<PipelineHandle, List<P>> = emptyMap(),
-) {
-    /** [SortedDraws] as it was before [overCoveringsByPipeline]: hidden, and kept so a consumer compiled against it still links. */
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    constructor(opaqueByPipeline: Map<PipelineHandle, List<P>>, transparent: List<P>) :
-        this(opaqueByPipeline, transparent, emptyMap())
-}
+)
 
 /**
  * Splits [draws] into the two orderings a frame needs.
@@ -44,18 +36,13 @@ class SortedDraws<P : PreparedDraw>(
  */
 fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
     val (transparent, opaque) = draws.partition { it.transparent }
-    // Almost every frame has none, so the common case skips the second partition's lists.
-    val overCoverings = if (opaque.any { it.overCoverings }) opaque.filter { it.overCoverings } else emptyList()
-    val covered = if (overCoverings.isEmpty()) opaque else opaque.filterNot { it.overCoverings }
     return SortedDraws(
-        opaqueByPipeline = covered.groupedForRecording(),
+        opaqueByPipeline = opaque
+            .groupBy { it.pipeline }
+            .mapValues { (_, group) -> group.sortedBy { it.batchKey } },
         transparent = transparent.sortedWith(TransparentOrder),
-        overCoveringsByPipeline = overCoverings.groupedForRecording(),
     )
 }
-
-private fun <P : PreparedDraw> List<P>.groupedForRecording(): Map<PipelineHandle, List<P>> =
-    groupBy { it.pipeline }.mapValues { (_, group) -> group.sortedBy { it.batchKey } }
 
 /**
  * Paint layer, then paint order within it, then farthest first. Depth is descending in the comparator
@@ -66,4 +53,4 @@ private val TransparentOrder: Comparator<PreparedDraw> =
 
 /** Flattened list of all prepared draws in this sorted set. */
 val <P : PreparedDraw> SortedDraws<P>.allDraws: List<P>
-    get() = opaqueByPipeline.values.flatten() + overCoveringsByPipeline.values.flatten() + transparent
+    get() = opaqueByPipeline.values.flatten() + transparent

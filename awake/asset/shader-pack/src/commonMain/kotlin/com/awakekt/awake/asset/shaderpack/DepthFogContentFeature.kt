@@ -12,6 +12,7 @@ import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.inverse
+import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.PipelineHandle
@@ -53,7 +54,7 @@ fun depthFogContentFeature(
     color: Color,
     isVisible: () -> Boolean = { true },
 ): ContentFeatureSource = ContentFeatureSource { backend ->
-    val shaders = aslShaderSet(::depthFogShader)
+    val shaders = aslShaderSet { clipSpace -> depthFogShader(clipSpace, exempting = true) }
     val stages = shaders.stagesFor(backend)
     ContentFeature(
         name = "depth_fog",
@@ -64,6 +65,8 @@ fun depthFogContentFeature(
         ),
         paint = ContentPaint.AfterGeometry,
         samplesSceneDepth = true,
+        // Unlit draws mark their pixels in the mask, and the fog leaves those as they drew.
+        samplesMask = true,
     ) { pipeline, uniforms, _ -> DepthFogRenderFeature(pipeline, uniforms, color, isVisible) }
 }
 
@@ -87,9 +90,11 @@ class DepthFogRenderFeature(
         // Null when this frame's viewProjection is singular -- no world position to unproject a
         // fog distance from, the same guard the sky makes for the same reason.
         val inverse = context.viewProjection.inverse() ?: return
+        // The exempt layer holds this frame's depth only when this frame drew into it.
+        val exemptDrawn = context.passInput?.maskPasses?.any { it.targetLayer == COVERING_EXEMPT_MASK_LAYER } == true
         uniforms.write(context.frameIndex) {
             put(DepthFogFields.InverseViewProjection, inverse)
-            put(DepthFogFields.CameraEye, context.cameraEye)
+            put(DepthFogFields.CameraEye, context.cameraEye, if (exemptDrawn) 1f else 0f)
             put(DepthFogFields.FogColor, color)
         }
         val recorder: CommandRecorder = context.recorder
@@ -99,6 +104,10 @@ class DepthFogRenderFeature(
         // RenderFrameContext.sceneDepthBinding.
         context.sceneDepthBinding(pipeline)?.let {
             recorder.bindMaterial(BindingSemantic.SceneDepth, it)
+        }
+        // Null on Vulkan, which binds the mask with the pipeline, as it does scene depth.
+        context.engineBinding(pipeline, BindingSemantic.MaskDepth)?.let {
+            recorder.bindMaterial(BindingSemantic.MaskDepth, it)
         }
         recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
     }

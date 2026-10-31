@@ -73,8 +73,8 @@ class SkinnedTintDrawTest {
 
         val draws = collect(world)
 
-        assertTrue(draws.single { it.mesh === skinMesh }.overCoverings)
-        assertFalse(draws.single { it.mesh === armourMesh }.overCoverings)
+        assertTrue(draws.single { it.mesh === skinMesh }.exemptFromCoverings)
+        assertFalse(draws.single { it.mesh === armourMesh }.exemptFromCoverings)
     }
 
     /** The factors a skinned part was authored with (its glTF material's) tint it, with no material component of its own. */

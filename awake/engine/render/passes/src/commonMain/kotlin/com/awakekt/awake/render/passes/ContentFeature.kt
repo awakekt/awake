@@ -150,11 +150,7 @@ enum class ContentPaint {
     /** Before the opaque geometry, which then paints over it -- a sky. */
     BeforeGeometry,
 
-    /**
-     * After it, covering what it drew -- fog, and anything else reading the scene depth. Draws
-     * that ask for `GpuDrawRequest.overCoverings`, such as unlit materials, are drawn after these
-     * by [OverCoveringsRenderFeature], so a covering never paints over them.
-     */
+    /** After it, covering what it drew -- fog, and anything else reading the scene depth. */
     AfterGeometry,
 }
 

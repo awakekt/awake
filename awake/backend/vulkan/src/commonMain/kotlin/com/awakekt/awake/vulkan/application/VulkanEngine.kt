@@ -24,10 +24,9 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.render.command.MASK_LAYER_COUNT
+import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
-import com.awakekt.awake.render.passes.OverCoveringsRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
@@ -344,7 +343,7 @@ open class VulkanEngine(
     /** The mask's pass: scene depth's pipelines again, into the mask's layers, over the masked draws. */
     private suspend fun buildMaskFeature(): DepthPrePassFeature? = maskTarget?.let { map ->
         withPipelineLoadContext("mask") {
-            casterDepthPass(map, requireNotNull(plan.maskShaderSet), shadowBias = false)
+            casterDepthPass(map, requireNotNull(plan.maskShadersFor(RenderBackend.Vulkan)), shadowBias = false)
         }
     }
 
@@ -376,16 +375,12 @@ open class VulkanEngine(
             ::loadShaderPair,
         )
         contentAttacher = ContentFeatureAttacher(gpu)
-        // Shared: the opaque feature owns it, the late one draws the lines after the coverings.
-        val linePass = VulkanLinePass(lineRenderPipeline)
         return buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.beforeGeometry)
-            add(OpaqueRenderFeature(linePass, defersOverCoverings = true))
+            add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.afterGeometry)
-            // After every covering, so none paints over an unlit draw -- see OverCoveringsRenderFeature.
-            add(OverCoveringsRenderFeature(linePass))
             add(UiRenderFeature(VulkanUiPass()))
         }
     }
@@ -581,7 +576,7 @@ open class VulkanEngine(
             }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
             // Arrayed, one layer per mask layer, read as an array by whatever samples the mask.
-            maskTarget = plan.maskShaderSet?.let { DepthTarget(graphicsDevice, layers = MASK_LAYER_COUNT, arrayed = true) }
+            maskTarget = plan.maskShadersFor(RenderBackend.Vulkan)?.let { DepthTarget(graphicsDevice, layers = MASK_TARGET_LAYER_COUNT, arrayed = true) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)
             sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager, rasterState.count)

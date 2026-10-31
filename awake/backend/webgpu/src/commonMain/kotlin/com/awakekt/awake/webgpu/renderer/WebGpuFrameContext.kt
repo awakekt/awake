@@ -39,7 +39,6 @@ internal class WebGpuFrameContext(
     override var encoder: GPURenderPassEncoder,
     override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>,
     override val transparentDrawCalls: List<PreparedDraw> = emptyList(),
-    override val overCoveringDrawCalls: Map<out PipelineHandle, List<PreparedDraw>> = emptyMap(),
     override val primaryPipeline: PipelineHandle,
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,

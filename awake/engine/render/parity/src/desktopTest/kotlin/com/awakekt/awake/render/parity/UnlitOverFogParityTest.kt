@@ -11,7 +11,8 @@ import kotlin.test.assertTrue
 
 /**
  * An unlit draw reproduces its texel on screen through a frame with distance fog, static and
- * skinned, on both backends (#1178), while a lit draw in the same frame is still fogged.
+ * skinned, on both backends (#1178), while a lit draw and a transparent one over a lit ground are
+ * still fogged.
  *
  * `pbr_material.unlit` promises the stored colour, skipping lighting, tone mapping and fog. The
  * shaders kept it: with the plan's content features stripped, both backends drew the texel
@@ -31,6 +32,25 @@ class UnlitOverFogParityTest {
 
     @Test
     fun webGpuUnlitDrawsKeepTheirTexelUnderFog() = verify(HeadlessUiBackend.WebGpu)
+
+    /**
+     * Exempting unlit draws changes nothing else the fog covers: a transparent plane over a lit
+     * ground, which writes no scene depth, is still fogged by the ground's distance, as before.
+     * Compared with the same plan's frame without its fog.
+     */
+    @Test
+    fun aTransparentDrawIsStillFoggedOnBothBackends() {
+        for (backend in BACKEND_ORDER) {
+            val fogged = openUnlitOverFogSession(backend).use { unlitSceneCentreRgb(it.renderer.renderTransparentOverFogScene()) }
+            val clear = openUnlitOverFogSession(backend, plan = UnlitOverFogPlan.copy(contentFeatures = emptyList())).use {
+                unlitSceneCentreRgb(it.renderer.renderTransparentOverFogScene())
+            }
+            assertTrue(
+                fogged[BLUE] >= clear[BLUE] + MIN_TRANSPARENT_FOG_LIFT,
+                "$backend: the transparent plane is no longer fogged: ${fogged.toList()} with fog, ${clear.toList()} without",
+            )
+        }
+    }
 
     private fun verify(backend: HeadlessUiBackend) {
         val measured = mutableListOf<String>()
@@ -56,6 +76,10 @@ class UnlitOverFogParityTest {
 
         /** Lit, the dark texel's blue is near 20 before fog; the haze at about 28% lifts it past 80. */
         const val MIN_FOG_LIFT = 30
+
+        /** The haze lifts the transparent pair's blue by about a quarter of its distance to 242. */
+        const val MIN_TRANSPARENT_FOG_LIFT = 15
+        val BACKEND_ORDER = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)
         val SKIN = intArrayOf(0xDD, 0xAD, 0x98)
         val DARK = intArrayOf(0x60, 0x40, 0x20)
         val CASES = listOf(SKIN, DARK).flatMap { texel -> listOf(texel to false, texel to true) }

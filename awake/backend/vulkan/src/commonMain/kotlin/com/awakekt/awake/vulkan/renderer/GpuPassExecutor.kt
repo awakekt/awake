@@ -103,7 +103,6 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
                 frameIndex = commandBuffers.size,
                 groupedDrawCalls = sorted.opaqueByPipeline,
                 transparentDrawCalls = sorted.transparent,
-                overCoveringDrawCalls = sorted.overCoveringsByPipeline,
                 primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
                 viewProjection = input.viewProjection,
                 cameraEye = input.cameraEye,

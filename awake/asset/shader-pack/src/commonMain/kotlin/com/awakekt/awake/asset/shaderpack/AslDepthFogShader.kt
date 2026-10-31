@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.div
@@ -22,6 +23,8 @@ import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.step
 import com.awakekt.awake.asset.shaderdsl.textureDepth2d
+import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
+import com.awakekt.awake.asset.shaderdsl.textureSampleArrayLevelDepth
 import com.awakekt.awake.asset.shaderdsl.textureSampleLevelDepth
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
@@ -30,6 +33,7 @@ import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.DepthFogUniformLayout
@@ -42,6 +46,14 @@ import com.awakekt.awake.render.renderer.DepthFogUniformLayout
  * the sky shader's own gradient to blend, not this pass's to overwrite.
  */
 private const val FAR_PLANE = 0.9999f
+
+/**
+ * How far behind the nearest surface an exempt draw may sit and still count as that surface: the
+ * scene depth and mask passes draw it through the same depth pipeline, so the two distances agree
+ * but for rounding in the unprojection, never by a visible gap.
+ */
+private const val EXEMPT_RELATIVE_TOLERANCE = 0.0005f
+private const val EXEMPT_ABSOLUTE_TOLERANCE = 0.001f
 
 /**
  * Full-screen exponential distance fog, blended over the scene from the depth already in front
@@ -61,7 +73,16 @@ private const val FAR_PLANE = 0.9999f
  * coordinate into the depth target and nothing else -- see [ndcToUv], where that decision is made
  * for every shader that needs it.
  */
-fun depthFogShader(clipSpace: ClipSpace): AslShaderDefinition = shader("depth_fog") {
+fun depthFogShader(clipSpace: ClipSpace): AslShaderDefinition = depthFogShader(clipSpace, exempting = false)
+
+/**
+ * [depthFogShader] that, [exempting], also leaves a pixel unfogged where its nearest surface is in
+ * the mask's [COVERING_EXEMPT_MASK_LAYER]: an unlit draw, which promises its colour as stored.
+ * [depthFogContentFeature] draws with it; it declares the mask group, which the plain shader does not.
+ */
+internal fun depthFogShader(clipSpace: ClipSpace, exempting: Boolean): AslShaderDefinition = shader(
+    if (exempting) "depth_fog_exempting" else "depth_fog",
+) {
     val u = uniformBlock(
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -75,6 +96,19 @@ fun depthFogShader(clipSpace: ClipSpace): AslShaderDefinition = shader("depth_fo
     val depthGroup = BindingLayout.Standard.slot(BindingSemantic.SceneDepth)
     val sceneDepth by textureDepth2d(group = depthGroup, binding = 0)
     val sceneDepthSampler by samplerNonFiltering(group = depthGroup, binding = 1)
+
+    // The camera depth of the draws exempt from coverings, an unlit material's, in its own layer.
+    val exemptDepthAt: ((AslExpr) -> AslExpr)? = if (exempting) {
+        val maskGroup = BindingLayout.Standard.slot(BindingSemantic.MaskDepth)
+        val mask by textureDepth2dArray(group = maskGroup, binding = 0)
+        val maskSampler by samplerNonFiltering(group = maskGroup, binding = 1)
+        val sample: (AslExpr) -> AslExpr = { at ->
+            textureSampleArrayLevelDepth(mask, maskSampler, at, COVERING_EXEMPT_MASK_LAYER.lit, 0.lit)
+        }
+        sample
+    } else {
+        null
+    }
 
     val out = varyings("VertexOutput")
     val ndc by out.varying(GpuDataShape.Vec2, location = 0)
@@ -98,6 +132,18 @@ fun depthFogShader(clipSpace: ClipSpace): AslShaderDefinition = shader("depth_fo
         val fog = let("fog", saturate(1f.lit - exp(-fogColor.a * dist)))
         // 1 where something was rasterised, 0 on the cleared far plane -- see [FAR_PLANE].
         val drawn = let("drawn", step(depth, farPlane))
-        colorOutput(vec4(fogColor.rgb, fog * drawn))
+        if (exemptDepthAt == null) {
+            colorOutput(vec4(fogColor.rgb, fog * drawn))
+        } else {
+            // 1 where the nearest surface is an exempt draw: the mask's layer holds it at the
+            // scene's own distance. cameraEye.w is 1 only on a frame that drew that layer;
+            // otherwise the layer holds whatever an earlier frame left there, so it is not read.
+            val exemptDepth = let("exemptDepth", exemptDepthAt(uv))
+            val exemptClip = let("exemptClip", inverseViewProjection * vec4(ndc, exemptDepth, 1f.lit))
+            val exemptDist = let("exemptDist", length(exemptClip.xyz / exemptClip.w - cameraEye.xyz))
+            val reach = let("reach", dist * (1f.lit + EXEMPT_RELATIVE_TOLERANCE.lit) + EXEMPT_ABSOLUTE_TOLERANCE.lit)
+            val exempt = let("exempt", cameraEye.w * step(exemptDepth, farPlane) * step(exemptDist, reach))
+            colorOutput(vec4(fogColor.rgb, fog * drawn * (1f.lit - exempt)))
+        }
     }
 }

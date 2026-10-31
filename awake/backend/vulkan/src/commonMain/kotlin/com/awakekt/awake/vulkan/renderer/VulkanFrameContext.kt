@@ -33,7 +33,6 @@ internal class VulkanFrameContext(
     override val frameIndex: Int,
     override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>,
     override val transparentDrawCalls: List<PreparedDraw> = emptyList(),
-    override val overCoveringDrawCalls: Map<out PipelineHandle, List<PreparedDraw>> = emptyMap(),
     override val primaryPipeline: RenderPipeline,
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,

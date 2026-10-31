@@ -97,24 +97,15 @@ class SkyboxRenderFeature(
  * has no draw calls and no staged lines.
  *
  * @param C The backend's frame-context type.
- * @param lines The backend's debug-line pipeline and staged geometry. Owned here: [destroy] frees it.
- * @param defersOverCoverings Leaves the [RenderFrameContext.overCoveringDrawCalls], the wireframe
- * edges, the transparent draws and the debug lines to an [OverCoveringsRenderFeature] sharing
- * [lines], recorded after the covering content features. False draws them all here, in that
- * order after the opaque groups, for a host with no coverings.
+ * @param lines The backend's debug-line pipeline and staged geometry.
  */
 class OpaqueRenderFeature<C : RenderFrameContext>(
     private val lines: LinePass<C>,
-    private val defersOverCoverings: Boolean = false,
 ) : RenderFeature<C> {
     override val pass = RenderPassSlot.Scene
 
     private val shared = SharedOpaqueRenderFeature()
     private val transparent = SharedTransparentRenderFeature(shared)
-
-    /** [OpaqueRenderFeature] as it was before `defersOverCoverings`: hidden, and kept so a consumer compiled against it still links. */
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    constructor(lines: LinePass<C>) : this(lines, defersOverCoverings = false)
 
     override fun recordCommands(context: C): Unit = with(context) {
         // Debug lines are already in world space (no per-line model matrix), so their MVP is
@@ -125,30 +116,16 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
             primaryPipeline = primaryPipeline,
             grouped = groupedDrawCalls,
         )
-        if (defersOverCoverings) return
-        shared.recordSceneOverlays(context, transparent, lines)
+        // Over the opaque draws, against the depth they wrote, and before anything blends over them.
+        shared.recordEdges(recorder, edgeDrawCalls)
+        // After the opaque draws, in the same scene pass: a transparent surface must depth-test
+        // against opaque geometry already written, and blend over the colour it left behind.
+        // A separate RenderPassSlot would put it after the UI, which paints over the scene.
+        transparent.recordCommands(transparentDrawCalls, recorder)
+        // Last in the scene: debug lines are an overlay over every surface, a skeleton inside its
+        // skinned mesh included. Recorded earlier, a later pipeline group painted over them.
+        shared.recordLines(recorder, lines.lineDraw(context))
     }
 
     override fun destroy() = lines.destroy()
-}
-
-/**
- * What follows the opaque groups in the scene pass, in this order: the over-coverings draws (an
- * unlit material, opaque, against the depth the opaque draws wrote), the wireframe edges over every
- * opaque surface, the transparent draws back to front, blending over all of it, and last the debug
- * lines, an overlay over every surface -- a skeleton inside its skinned mesh included.
- *
- * All in the same scene pass: a separate RenderPassSlot would put them after the UI, which paints
- * over the scene.
- */
-internal fun <C : RenderFrameContext> SharedOpaqueRenderFeature.recordSceneOverlays(
-    context: C,
-    transparent: SharedTransparentRenderFeature,
-    lines: LinePass<C>,
-): Unit = with(context) {
-    val late = overCoveringDrawCalls
-    if (late.isNotEmpty()) recordCommands(recorder = recorder, primaryPipeline = primaryPipeline, grouped = late)
-    recordEdges(recorder, edgeDrawCalls)
-    transparent.recordCommands(transparentDrawCalls, recorder)
-    recordLines(recorder, lines.lineDraw(context))
 }

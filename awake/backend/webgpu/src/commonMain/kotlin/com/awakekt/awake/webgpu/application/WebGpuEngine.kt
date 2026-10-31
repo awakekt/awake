@@ -21,10 +21,9 @@ import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.render.command.MASK_LAYER_COUNT
+import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
-import com.awakekt.awake.render.passes.OverCoveringsRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
@@ -169,11 +168,11 @@ open class WebGpuEngine(
 
         // The mask: scene depth's pipelines again, into a layer per mask layer, over the draws a
         // mask layer names. Its own target, arrayed, which whatever samples the mask reads whole.
-        val maskPass = plan.maskShaderSet?.let { maskShaders ->
+        val maskPass = plan.maskShadersFor(RenderBackend.WebGpu)?.let { maskShaders ->
             casterDepthPass(
                 graphicsDevice = graphicsDevice,
                 plan = plan,
-                target = com.awakekt.awake.webgpu.texture.DepthTarget(graphicsDevice, layers = MASK_LAYER_COUNT, arrayed = true),
+                target = com.awakekt.awake.webgpu.texture.DepthTarget(graphicsDevice, layers = MASK_TARGET_LAYER_COUNT, arrayed = true),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
                     shaderCode = maskShaders.wgsl(),
@@ -184,7 +183,7 @@ open class WebGpuEngine(
                     bindingsMetadataAvailable = maskShaders.webGpu.bindingsMetadataAvailable,
                 ),
                 primaryFormat = vertexFormat,
-                cascadeCount = MASK_LAYER_COUNT,
+                cascadeCount = MASK_TARGET_LAYER_COUNT,
                 shadowBias = false,
             )
         }
@@ -249,16 +248,12 @@ open class WebGpuEngine(
         val gpu = WebGpuContentFeatureGpu(graphicsDevice, registry, depthPrePass)
         val attacher = ContentFeatureAttacher(gpu).also { contentAttacher = it }
         val content = plan.contentFeaturesFor(RenderBackend.WebGpu).groupBy { it.paint }
-        // Shared: the opaque feature owns it, the late one draws the lines after the coverings.
-        val linePass = WebGpuLinePass(lineRenderPipeline)
         val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.beforeGeometry)
-            add(OpaqueRenderFeature(linePass, defersOverCoverings = true))
+            add(OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline)))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(attacher.afterGeometry)
-            // After every covering, so none paints over an unlit draw -- see OverCoveringsRenderFeature.
-            add(OverCoveringsRenderFeature(linePass))
             add(UiRenderFeature(WebGpuUiPass()))
         }
         val renderer = Renderer(

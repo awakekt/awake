@@ -6,11 +6,8 @@ public final class com/awakekt/awake/render/command/DrawCallCompilerKt {
 }
 
 public final class com/awakekt/awake/render/command/SortedDraws {
-	public synthetic fun <init> (Ljava/util/Map;Ljava/util/List;)V
-	public fun <init> (Ljava/util/Map;Ljava/util/List;Ljava/util/Map;)V
-	public synthetic fun <init> (Ljava/util/Map;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/Map;Ljava/util/List;)V
 	public final fun getOpaqueByPipeline ()Ljava/util/Map;
-	public final fun getOverCoveringsByPipeline ()Ljava/util/Map;
 	public final fun getTransparent ()Ljava/util/List;
 }
 
@@ -152,16 +149,6 @@ public abstract interface class com/awakekt/awake/render/passes/LinePass {
 }
 
 public final class com/awakekt/awake/render/passes/OpaqueRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
-	public synthetic fun <init> (Lcom/awakekt/awake/render/passes/LinePass;)V
-	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;Z)V
-	public synthetic fun <init> (Lcom/awakekt/awake/render/passes/LinePass;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun destroy ()V
-	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
-	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
-	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
-}
-
-public final class com/awakekt/awake/render/passes/OverCoveringsRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
 	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
@@ -236,7 +223,6 @@ public abstract interface class com/awakekt/awake/render/passes/RenderFrameConte
 	public abstract fun getFrameIndex ()I
 	public abstract fun getGroupedDrawCalls ()Ljava/util/Map;
 	public fun getLight ()Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
-	public fun getOverCoveringDrawCalls ()Ljava/util/Map;
 	public fun getPassInput ()Lcom/awakekt/awake/render/command/GpuPassInput;
 	public abstract fun getPrimaryPipeline ()Lcom/awakekt/awake/render/command/PipelineHandle;
 	public abstract fun getRecorder ()Lcom/awakekt/awake/render/command/CommandRecorder;
@@ -254,7 +240,6 @@ public final class com/awakekt/awake/render/passes/RenderFrameContext$DefaultImp
 	public static fun getEdgeDrawCalls (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Ljava/util/List;
 	public static fun getEnvironment (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public static fun getLight (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
-	public static fun getOverCoveringDrawCalls (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Ljava/util/Map;
 	public static fun getPassInput (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public static fun getShadowCascades (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public static fun getSunDirection (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/core/math/Vec3f;
