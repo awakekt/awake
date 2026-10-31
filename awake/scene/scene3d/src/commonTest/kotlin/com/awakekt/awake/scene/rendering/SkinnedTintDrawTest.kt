@@ -23,7 +23,9 @@ import com.awakekt.awake.scene.rendering.mesh.SceneDrawCollector
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class SkinnedTintDrawTest {
     private val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
@@ -53,6 +55,26 @@ class SkinnedTintDrawTest {
         assertContentEquals(skinnedMaterialFloats(identity, Color(0.4f, 0.5f, 0.45f), Color.Transparent), hairExtras)
         assertSame(bodyPose.jointPalette, first.single { it.mesh === bodyMesh }.extraUniformFloats)
         assertSame(hairExtras, collect(world, culling, collector).single { it.mesh === hairMesh }.extraUniformFloats, "rewritten in place each frame")
+    }
+
+    /** An unlit part is exempt from the frame's coverings, such as fog, which would otherwise paint over it (#1178). */
+    @Test
+    fun anUnlitPartIsExemptFromTheCoveringsAndALitOneIsNot() {
+        val world = World()
+        val skinMesh = fakeMesh()
+        val armourMesh = fakeMesh()
+        listOf(skinMesh to true, armourMesh to false).forEach { (mesh, unlit) ->
+            val part = world.create()
+            world.add(part, Transform())
+            world.add(part, MeshRenderer(mesh, fakeMaterial()))
+            world.add(part, SkinnedPose(identity))
+            world.add(part, PbrMaterial(unlit = unlit))
+        }
+
+        val draws = collect(world)
+
+        assertTrue(draws.single { it.mesh === skinMesh }.exemptFromCoverings)
+        assertFalse(draws.single { it.mesh === armourMesh }.exemptFromCoverings)
     }
 
     /** The factors a skinned part was authored with (its glTF material's) tint it, with no material component of its own. */

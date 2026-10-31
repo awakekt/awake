@@ -126,6 +126,7 @@ public final class com/awakekt/awake/asset/shaders/RenderPlan {
 	public final fun getSceneDepthVariants ()Ljava/util/Map;
 	public final fun getScenePipelines ()Ljava/util/List;
 	public fun hashCode ()I
+	public final fun maskShadersFor (Lcom/awakekt/awake/asset/shaders/RenderBackend;)Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun toPipelineRequests (Lcom/awakekt/awake/asset/shaders/RenderBackend;Lcom/awakekt/awake/render/pipeline/MultisampleState;)Ljava/util/List;
 	public static synthetic fun toPipelineRequests$default (Lcom/awakekt/awake/asset/shaders/RenderPlan;Lcom/awakekt/awake/asset/shaders/RenderBackend;Lcom/awakekt/awake/render/pipeline/MultisampleState;ILjava/lang/Object;)Ljava/util/List;
 	public fun toString ()Ljava/lang/String;

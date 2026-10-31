@@ -133,6 +133,7 @@ private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
         shadowsOnly == other.shadowsOnly &&
         castsShadows == other.castsShadows &&
         maskLayer == other.maskLayer &&
+        exemptFromCoverings == other.exemptFromCoverings &&
         cullMode == other.cullMode
 
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */

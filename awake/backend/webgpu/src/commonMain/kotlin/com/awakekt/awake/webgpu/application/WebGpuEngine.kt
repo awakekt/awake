@@ -21,7 +21,7 @@ import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.render.command.MASK_LAYER_COUNT
+import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
@@ -168,11 +168,11 @@ open class WebGpuEngine(
 
         // The mask: scene depth's pipelines again, into a layer per mask layer, over the draws a
         // mask layer names. Its own target, arrayed, which whatever samples the mask reads whole.
-        val maskPass = plan.maskShaderSet?.let { maskShaders ->
+        val maskPass = plan.maskShadersFor(RenderBackend.WebGpu)?.let { maskShaders ->
             casterDepthPass(
                 graphicsDevice = graphicsDevice,
                 plan = plan,
-                target = com.awakekt.awake.webgpu.texture.DepthTarget(graphicsDevice, layers = MASK_LAYER_COUNT, arrayed = true),
+                target = com.awakekt.awake.webgpu.texture.DepthTarget(graphicsDevice, layers = MASK_TARGET_LAYER_COUNT, arrayed = true),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
                     shaderCode = maskShaders.wgsl(),
@@ -183,7 +183,7 @@ open class WebGpuEngine(
                     bindingsMetadataAvailable = maskShaders.webGpu.bindingsMetadataAvailable,
                 ),
                 primaryFormat = vertexFormat,
-                cascadeCount = MASK_LAYER_COUNT,
+                cascadeCount = MASK_TARGET_LAYER_COUNT,
                 shadowBias = false,
             )
         }

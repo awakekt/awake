@@ -10,12 +10,15 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
+import com.awakekt.awake.render.command.MASK_LAYER_COUNT
+import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -96,7 +99,7 @@ object ScenePassCompiler {
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
                 val caster = Caster(draw, request.worldBounds, request.castsShadows)
                 when {
-                    !request.shadowsOnly -> visible += caster.also { masked.add(request.maskLayer, draw) }
+                    !request.shadowsOnly -> visible += caster.also { masked.add(request, draw) }
                     !draw.transparent && request.castsShadows -> shadowOnly += caster
                 }
             }
@@ -127,16 +130,28 @@ object ScenePassCompiler {
 
 /** The draws each mask layer names, gathered as they are prepared, and the layers' sub-passes. */
 private class MaskedDraws(private val layers: List<FloatArray>) {
-    private val draws = arrayOfNulls<ArrayList<GpuResolvedDraw>>(layers.size)
+    private val draws = arrayOfNulls<ArrayList<GpuResolvedDraw>>(MASK_TARGET_LAYER_COUNT)
 
-    fun add(layer: Int, draw: GpuResolvedDraw) {
-        if (layer !in layers.indices) return
+    /**
+     * [draw] into the layer its [request] names, and, when it is opaque and exempt from the
+     * coverings, into [COVERING_EXEMPT_MASK_LAYER] as well, which a covering such as fog reads to
+     * leave its pixels alone.
+     */
+    fun add(request: RenderDrawCommand, draw: GpuResolvedDraw) {
+        if (request.maskLayer in layers.indices && request.maskLayer < MASK_LAYER_COUNT) add(request.maskLayer, draw)
+        if (request.exemptFromCoverings && !draw.transparent) add(COVERING_EXEMPT_MASK_LAYER, draw)
+    }
+
+    private fun add(layer: Int, draw: GpuResolvedDraw) {
         (draws[layer] ?: ArrayList<GpuResolvedDraw>().also { draws[layer] = it }) += draw
     }
 
     /** A depth sub-pass from the camera per layer that has draws, carrying that layer's uniforms. */
     fun subPasses(viewProjection: Mat4): List<GpuSubPass> = draws.withIndex().mapNotNull { (layer, drawn) ->
-        drawn?.let { GpuSubPass(target = null, targetLayer = layer, viewProjection = viewProjection, resolvedDraws = it, passUniforms = layers[layer]) }
+        drawn?.let {
+            val uniforms = layers.getOrElse(layer) { NO_LAYER_UNIFORMS }
+            GpuSubPass(target = null, targetLayer = layer, viewProjection = viewProjection, resolvedDraws = it, passUniforms = uniforms)
+        }
     }
 }
 
@@ -217,3 +232,6 @@ internal fun shadowCascadeData(
     environment: EnvironmentUniforms,
 ): GpuShadowCascadeData? =
     if (light != null && environment.shadowsEnabled) light.shadowCascades() else null
+
+/** [COVERING_EXEMPT_MASK_LAYER]'s sub-pass uniforms: nothing reads a style from it. */
+private val NO_LAYER_UNIFORMS = FloatArray(0)

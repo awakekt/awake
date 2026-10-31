@@ -86,6 +86,14 @@ data class GpuDrawRequest(
      * draw that does not cast draws nowhere. Only an opaque draw casts either way.
      */
     var castsShadows: Boolean = true,
+    /**
+     * The frame's covering content features (`ContentPaint.AfterGeometry` passes that shade by
+     * scene depth, such as distance fog) leave the pixels this draw wins as it drew them: a draw
+     * whose colour must reach the target as it left the shader. An opaque draw is also drawn into
+     * the mask's [COVERING_EXEMPT_MASK_LAYER], which those coverings read; a [transparent] one is
+     * not marked.
+     */
+    var exemptFromCoverings: Boolean = false,
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
@@ -115,6 +123,7 @@ data class GpuDrawRequest(
         maskLayer: Int = NO_MASK_LAYER,
         sortLayer: Int = 0,
         castsShadows: Boolean = true,
+        exemptFromCoverings: Boolean = false,
     ): GpuDrawRequest {
         this.mesh = mesh
         this.material = material
@@ -137,8 +146,102 @@ data class GpuDrawRequest(
         this.maskLayer = maskLayer
         this.sortLayer = sortLayer
         this.castsShadows = castsShadows
+        this.exemptFromCoverings = exemptFromCoverings
         return this
     }
+
+    /** [GpuDrawRequest] as it was before `exemptFromCoverings`: hidden, and kept so a consumer compiled against it still links. */
+    @Suppress("LongParameterList")
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mesh: GpuMesh,
+        material: GpuMaterial,
+        model: Mat4 = Mat4(),
+        extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
+        vertexAnimation: Vec3f = Vec3f.ZERO,
+        timeSeconds: Float = 0f,
+        instanceModels: List<Mat4>? = null,
+        instanceJointPalettes: List<FloatArray>? = null,
+        instanceColors: List<Vec4>? = null,
+        instanceFrames: List<Float>? = null,
+        cullMode: CullMode = CullMode.None,
+        alphaMode: AlphaMode = AlphaMode.Opaque,
+        alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
+        transparent: Boolean = false,
+        shadowsOnly: Boolean = false,
+        worldBounds: Aabb? = null,
+        additive: Boolean = false,
+        sortOrder: Int = 0,
+        maskLayer: Int = NO_MASK_LAYER,
+        sortLayer: Int = 0,
+        castsShadows: Boolean = true,
+    ) : this(
+        mesh, material, model, extraUniformFloats, vertexAnimation, timeSeconds, instanceModels, instanceJointPalettes,
+        instanceColors, instanceFrames, cullMode, alphaMode, alphaCutoff, transparent, shadowsOnly, worldBounds, additive,
+        sortOrder, maskLayer, sortLayer, castsShadows, exemptFromCoverings = false,
+    )
+
+    /** [copy] as it was before `exemptFromCoverings`: hidden, and kept so a consumer compiled against it still links. */
+    @Suppress("LongParameterList")
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mesh: GpuMesh = this.mesh,
+        material: GpuMaterial = this.material,
+        model: Mat4 = this.model,
+        extraUniformFloats: FloatArray = this.extraUniformFloats,
+        vertexAnimation: Vec3f = this.vertexAnimation,
+        timeSeconds: Float = this.timeSeconds,
+        instanceModels: List<Mat4>? = this.instanceModels,
+        instanceJointPalettes: List<FloatArray>? = this.instanceJointPalettes,
+        instanceColors: List<Vec4>? = this.instanceColors,
+        instanceFrames: List<Float>? = this.instanceFrames,
+        cullMode: CullMode = this.cullMode,
+        alphaMode: AlphaMode = this.alphaMode,
+        alphaCutoff: Float = this.alphaCutoff,
+        transparent: Boolean = this.transparent,
+        shadowsOnly: Boolean = this.shadowsOnly,
+        worldBounds: Aabb? = this.worldBounds,
+        additive: Boolean = this.additive,
+        sortOrder: Int = this.sortOrder,
+        maskLayer: Int = this.maskLayer,
+        sortLayer: Int = this.sortLayer,
+        castsShadows: Boolean = this.castsShadows,
+    ): GpuDrawRequest = copy(
+        mesh, material, model, extraUniformFloats, vertexAnimation, timeSeconds, instanceModels, instanceJointPalettes,
+        instanceColors, instanceFrames, cullMode, alphaMode, alphaCutoff, transparent, shadowsOnly, worldBounds, additive,
+        sortOrder, maskLayer, sortLayer, castsShadows, exemptFromCoverings = exemptFromCoverings,
+    )
+
+    /** [set] as it was before `exemptFromCoverings`, which it clears: hidden, and kept so a consumer compiled against it still links. */
+    @Suppress("LongParameterList")
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun set(
+        mesh: GpuMesh,
+        material: GpuMaterial,
+        model: Mat4,
+        extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
+        vertexAnimation: Vec3f,
+        timeSeconds: Float = 0f,
+        instanceModels: List<Mat4>? = null,
+        instanceJointPalettes: List<FloatArray>? = null,
+        instanceColors: List<Vec4>? = null,
+        instanceFrames: List<Float>? = null,
+        cullMode: CullMode = CullMode.None,
+        alphaMode: AlphaMode = AlphaMode.Opaque,
+        alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
+        transparent: Boolean = false,
+        shadowsOnly: Boolean = false,
+        worldBounds: Aabb? = null,
+        additive: Boolean = false,
+        sortOrder: Int = 0,
+        maskLayer: Int = NO_MASK_LAYER,
+        sortLayer: Int = 0,
+        castsShadows: Boolean = true,
+    ): GpuDrawRequest = set(
+        mesh, material, model, extraUniformFloats, vertexAnimation, timeSeconds, instanceModels, instanceJointPalettes,
+        instanceColors, instanceFrames, cullMode, alphaMode, alphaCutoff, transparent, shadowsOnly, worldBounds, additive,
+        sortOrder, maskLayer, sortLayer, castsShadows, exemptFromCoverings = false,
+    )
 }
 
 /** A [GpuDrawRequest.maskLayer] that draws into no mask. */
@@ -146,6 +249,16 @@ const val NO_MASK_LAYER = -1
 
 /** How many layers the engine's mask target has: [GpuDrawRequest.maskLayer] is below this. */
 const val MASK_LAYER_COUNT = 2
+
+/**
+ * The mask layer holding the camera depth of [GpuDrawRequest.exemptFromCoverings] draws, after the
+ * [MASK_LAYER_COUNT] layers a draw's [GpuDrawRequest.maskLayer] can name. A covering skips a pixel
+ * whose nearest surface this layer holds.
+ */
+const val COVERING_EXEMPT_MASK_LAYER = MASK_LAYER_COUNT
+
+/** Layers the mask target is built with: every [GpuDrawRequest.maskLayer] and [COVERING_EXEMPT_MASK_LAYER]. */
+const val MASK_TARGET_LAYER_COUNT = MASK_LAYER_COUNT + 1
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)
 private const val DEFAULT_ALPHA_CUTOFF = 0.5f

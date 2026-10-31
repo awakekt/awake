@@ -103,6 +103,14 @@ data class RenderPlan(
         contentFeatures.map { it.resolve(backend) }
 
     /**
+     * The mask pass's shaders on [backend]: [maskShaderSet], or the scene depth's when a content
+     * feature samples the mask and the plan names none. Distance fog reads the mask to leave unlit
+     * draws as they drew, so a plan with fog needs no second declaration for it.
+     */
+    fun maskShadersFor(backend: RenderBackend): ShaderSet? =
+        maskShaderSet ?: sceneDepthShaderSet?.takeIf { contentFeaturesFor(backend).any { it.samplesMask } }
+
+    /**
      * Every pipeline [backend] has to compile for this plan: the primary, its companions, each
      * scene pipeline, and one per content feature.
      *
