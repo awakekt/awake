@@ -1338,6 +1338,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-the-draws-that-do-not-fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find the draws that do not fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2818,6 +2835,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-the-draws-that-do-not-fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find the draws that do not fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3212,6 +3246,71 @@ with it. Use <code>InstancedSkinnedMeshRenderer</code>; see <a href="../animatio
 <code>submittedDrawCalls</code>, <code>submittedInstances</code>, and <code>unresolvedDrawCalls</code> (draws the backend could not
 match to a pipeline or resource). <code>RenderSystem3D</code> also exposes <code>lastFrustumCulledCount</code> and
 <code>lastOccludedCount</code>.</p>
+<h3 id="find-the-draws-that-do-not-fold">Find the draws that do not fold</h3>
+<p>Copies of one mesh and material that differ only in placement fold into one instanced draw on
+their own, with no <code>InstancedMeshRenderer</code>. Set <code>RenderDiagnostics.drawStatsEnabled = true</code>, or
+turn on the scene runtime's perf stats (F2, <code>perfStatsEnabled</code>), and <code>RenderDiagnostics.drawStats</code>
+holds the last planned frame's <code>SceneDrawStats</code>:</p>
+<ul>
+<li>draws per pass: <code>opaqueDraws</code> and <code>transparentDraws</code> in the main pass, <code>shadowDraws</code> across
+  <code>shadowPasses</code> (<code>shadowPassDraws(index)</code> for each cascade or point-shadow face), <code>maskDraws</code>;</li>
+<li>what folded: <code>foldedDraws</code> instanced draws carrying <code>foldedCopies</code> scene draws;</li>
+<li>what did not: <code>misses(reason)</code> for each <code>InstanceFoldMiss</code>.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Reason</th>
+<th>What it means</th>
+<th>What folds it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SingleCopy</code></td>
+<td>Nothing else draws its mesh.</td>
+<td>Nothing to fold.</td>
+</tr>
+<tr>
+<td><code>Blended</code></td>
+<td>Copies drawn transparent.</td>
+<td>Blended draws keep their order; none fold.</td>
+</tr>
+<tr>
+<td><code>Masked</code></td>
+<td>Alpha-masked copies of a format with no instanced pipeline.</td>
+<td>An instanced pipeline for the format.</td>
+</tr>
+<tr>
+<td><code>VertexFormat</code></td>
+<td>Copies of a format with no instanced pipeline.</td>
+<td>A <code>PipelineKey.InstancedFormat</code> pipeline.</td>
+</tr>
+<tr>
+<td><code>CullMode</code></td>
+<td>The format instances, but not with this cull mode.</td>
+<td>Front-culled copies never fold.</td>
+</tr>
+<tr>
+<td><code>DistinctMaterial</code></td>
+<td>Copies of the mesh, each with its own material.</td>
+<td>One material name per glTF material.</td>
+</tr>
+<tr>
+<td><code>DistinctUniforms</code></td>
+<td>Same mesh and material, different factors or state.</td>
+<td>Equal <code>PbrMaterial</code> factors, or one shared instance.</td>
+</tr>
+<tr>
+<td><code>SkinnedNotInstanced</code></td>
+<td>Posed skinned copies.</td>
+<td><code>InstancedSkinnedMeshRenderer</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Counts are of draws after folding: one instanced draw of 400 copies is one draw. The renderer's own
+<code>frameStats</code> is the backend's total across every pass, image passes and UI included. Counting is
+off by default and costs nothing while it is off.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../lights-and-shadows/">Lights and shadows</a> for lighting what you draw.</li>

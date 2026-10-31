@@ -5883,6 +5883,18 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>false</code></td>
 <td>Take the mouse wheel while the pointer is over the element or its children.</td>
 </tr>
+<tr>
+<td><code>moveHandle</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Dragging the element moves its window, its nearest root element, by the pointer's travel, live and with no ghost: a title bar. A press under the drag threshold stays a click. Pressing in the window brings it to the front; when the move ends the window's <code>moved</code> reads its new offsets once. Not with <code>draggable</code>.</td>
+</tr>
+<tr>
+<td><code>moveStrip</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>How much of a <code>moveHandle</code>'s window, in the window's dp, stays on the canvas: that height of its top and that width. <code>0</code> keeps its top down to the handle's bottom. Not negative.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="canvas_joystick"><code>canvas_joystick</code></h2>
