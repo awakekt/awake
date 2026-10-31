@@ -85,14 +85,7 @@ fun main(args: Array<String>) {
             )
         }
     }
-    openUnlitOverFogSession(HeadlessUiBackend.Vulkan, EVIDENCE_SIZE).use { session ->
-        write(
-            "scene-unlit-skin-under-fog",
-            "An unlit skinned plane in #DDAD98 under a pale distance fog: the fog leaves it at its texel",
-            EVIDENCE_SIZE,
-            session.renderer.renderUnlitOverFogScene(intArrayOf(0xDD, 0xAD, 0x98), skinned = true, unlit = true, size = EVIDENCE_SIZE),
-        )
-    }
+    writeUnlitOverFogEvidence(::write)
     withHeadlessUi(HeadlessUiBackend.Vulkan) { renderer ->
         UI_PARITY_SCENARIOS.forEach { scenario ->
             write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", scenario.size, renderer.render(scenario))
@@ -143,6 +136,18 @@ private fun writeSkinnedEvidence(renderer: Renderer, write: (String, String, Int
         EVIDENCE_SIZE,
         renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
     )
+}
+
+/** An unlit skin under a pale depth fog, on its own plan with fog (#1178): the fog leaves it at its texel. */
+private fun writeUnlitOverFogEvidence(write: (String, String, Int, ByteArray) -> Unit) {
+    openUnlitOverFogSession(HeadlessUiBackend.Vulkan, EVIDENCE_SIZE).use { session ->
+        write(
+            "scene-unlit-skin-under-fog",
+            "An unlit skinned plane in #DDAD98 under a pale distance fog: the fog leaves it at its texel",
+            EVIDENCE_SIZE,
+            session.renderer.renderUnlitOverFogScene(intArrayOf(0xDD, 0xAD, 0x98), skinned = true, unlit = true, size = EVIDENCE_SIZE),
+        )
+    }
 }
 
 /** A sign placed in the scene, drawn from the distance field, near, far and at a grazing angle. */
