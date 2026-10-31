@@ -32,13 +32,48 @@ Without it the canvas keeps the page's cursor, as the desktop window does withou
 `applicationFactory` returns a `WebGpuEngine(appLifecycle, requestedPlan)`. Pass the same
 `RenderPlan` you give the Vulkan backend.
 
+## Resolution and render scale
+
+The canvas buffer is the canvas's box on the page times `devicePixelRatio`, so a high-DPI screen
+shades 2.25 (ratio 1.5) to 9 (ratio 3) times the pixels of a 1x screen. Two providers trade those
+pixels for frame rate. Both are lambdas, read before every frame, so a game can put them behind a
+graphics setting and change them while it runs:
+
+| Provider | What it scales | Use it for |
+| --- | --- | --- |
+| `renderScale: () -> Float` | Only the 3D scene, and the passes sized from it (depth, post-processing). A bilinear upscale copies the scene to the canvas, then the UI draws at the full ratio. | Quality settings. Text and HUD edges stay as sharp as the screen can show. |
+| `maxPixelRatio: () -> Float?` | The whole canvas buffer, UI included. The UI's density follows it, so layout keeps its size, but text is drawn at the capped ratio. `null` is no cap. | A hard ceiling on pixels, whatever the scene costs. |
+
+```kotlin
+launchWebGpuGame(
+    game,
+    plan,
+    maxPixelRatio = { 2f },
+    renderScale = { settings.renderScale },
+)
+```
+
+`renderScale` is clamped to `(0, 1]` (values at or below 0 render at `RenderScale.MIN`, 0.1). The
+two compose: the scene renders at `renderScale` of the capped buffer. At 1, the default, the frame
+is the one drawn without a provider: no extra target and no extra pass.
+
+Below 1, `Renderer.surfaceWidth`/`surfaceHeight` and `RenderScale.sceneExtent` report the scene
+target's size, so a settings screen can show what a scale costs. `Renderer.outputWidth`/
+`outputHeight` stay the canvas buffer's size; scene viewports and pointer picking are measured
+there and map onto the scene at any scale. A game without the launcher's provider sets
+`renderer.renderScale` itself.
+
+The render scale is implemented on WebGPU only. The Vulkan backend reads 1 and ignores a new value
+for now.
+
 ## What happens at launch
 
 1. If the browser has no `navigator.gpu`, it stops with "WebGPU is unavailable in this browser or
    device…" before the engine starts.
 2. If no log sink is installed, it installs one that prints warnings and errors.
 3. It listens for pointer, keyboard and text input on the window.
-4. It sizes the canvas to the window times `devicePixelRatio`, and keeps it in step on resize.
+4. It sizes the canvas to its box on the page times `devicePixelRatio`, capped at `maxPixelRatio`
+   when you pass one, and keeps it in step on resize.
 5. It draws one frame per `requestAnimationFrame`.
 
 ## The plan on WebGPU

@@ -39,11 +39,44 @@ interface Renderer : GpuDevice {
     val surfaceAspect: Float
         get() = 16f / 9f
 
-    /** Current drawable width in framebuffer pixels; zero when no extent is available. */
+    /**
+     * Width in pixels of the target the 3D scene renders into; zero when no extent is available.
+     *
+     * The scene target is the presented surface, unless [renderScale] is below 1 on a backend that
+     * implements it: then it is the smaller, scaled target, so a host can show what the scene costs.
+     * [outputWidth] stays the presented surface's width.
+     */
     val surfaceWidth: Int get() = 0
 
-    /** Current drawable height in framebuffer pixels; zero when no extent is available. */
+    /** Height of the scene target in pixels, as [surfaceWidth]; [outputHeight] is the presented surface's. */
     val surfaceHeight: Int get() = 0
+
+    /**
+     * Width in pixels of the surface this renderer presents and the UI draws into, and the space a
+     * scene viewport and pointer picking are measured in. Equals [surfaceWidth] unless the scene
+     * renders at a [renderScale] below 1.
+     */
+    val outputWidth: Int get() = surfaceWidth
+
+    /** Height of the presented surface in pixels, as [outputWidth]. */
+    val outputHeight: Int get() = surfaceHeight
+
+    /**
+     * Fraction of the presented surface's size the 3D scene renders at, in `(0, 1]`; 1 by default.
+     *
+     * Below 1, the scene and every pass sized from it (depth, post-processing) render into a target
+     * [RenderScale.sceneExtent] smaller, which a bilinear upscale copies to the surface before the UI
+     * draws over it at full resolution: the UI stays sharp while the scene costs fewer pixels.
+     * [surfaceWidth]/[surfaceHeight] then report the scaled target. At 1 nothing changes: no extra
+     * target, no extra pass. Out-of-range values are clamped by [RenderScale.coerce]; a new value
+     * takes effect on the next [draw].
+     *
+     * Implemented by the WebGPU backend. On a backend that does not, the getter stays 1 and setting
+     * it does nothing.
+     */
+    var renderScale: Float
+        get() = 1f
+        set(_) {}
 
     /**
      * Draws, instances and triangles of the last submitted frame, plus GPU time where the device
@@ -86,13 +119,14 @@ interface Renderer : GpuDevice {
         set(_) {}
 
     /**
-     * Returns the [ImagePassTargetContext] describing [target] (or the active swapchain surface
-     * when [target] is `null`) so shared effect builders can lower to an `ImagePassChain`.
+     * Returns the [ImagePassTargetContext] describing [target], or, when [target] is `null`, the
+     * presented surface the UI draws into ([outputWidth] by [outputHeight], not the scaled scene
+     * target below full [renderScale]), so shared effect builders can lower to an `ImagePassChain`.
      */
     fun imagePassTargetContext(target: RenderTarget? = null): ImagePassTargetContext =
         ImagePassTargetContext(
-            width = target?.width ?: surfaceWidth,
-            height = target?.height ?: surfaceHeight,
+            width = target?.width ?: outputWidth,
+            height = target?.height ?: outputHeight,
             clipSpace = clipSpace,
             snapshotSupported = true,
             effectQuality = effectQuality,

@@ -67,6 +67,18 @@ class HeadlessWebGpuEngine(
     }
 
     /**
+     * Hands the frame [Renderer.draw] acquired back to the surface, as a browser does after each
+     * animation frame, so the next draw can acquire another. Read the frame with
+     * [Renderer.readPresentedPixels] before calling this; a no-op when nothing was drawn.
+     */
+    fun present() {
+        val webGpu = renderer as? com.awakekt.awake.webgpu.renderer.Renderer ?: return
+        if (webGpu.presentedColor == null) return
+        presentSurface?.invoke()
+        webGpu.presentedColor = null
+    }
+
+    /**
      * Tears the engine down: its resources, the device, queue, adapter and surface, the window, and
      * last the wgpu instance, which nothing else releases.
      */

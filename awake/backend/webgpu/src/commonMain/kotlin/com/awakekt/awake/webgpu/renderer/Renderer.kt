@@ -32,6 +32,7 @@ import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -181,9 +182,22 @@ class Renderer internal constructor(
             if (context.height > 0u) context.width.toFloat() / context.height.toFloat() else 16f / 9f
         }
 
-    override val surfaceWidth: Int get() = graphicsDevice.wgpuContext.renderingContext.width.toInt()
+    override val outputWidth: Int get() = graphicsDevice.wgpuContext.renderingContext.width.toInt()
 
-    override val surfaceHeight: Int get() = graphicsDevice.wgpuContext.renderingContext.height.toInt()
+    override val outputHeight: Int get() = graphicsDevice.wgpuContext.renderingContext.height.toInt()
+
+    /** The scaled scene target's size below full [renderScale], else the surface's. */
+    override val surfaceWidth: Int get() = RenderScale.sceneExtent(outputWidth, renderScale)
+
+    override val surfaceHeight: Int get() = RenderScale.sceneExtent(outputHeight, renderScale)
+
+    override var renderScale: Float = RenderScale.FULL
+        set(value) {
+            field = RenderScale.coerce(value)
+        }
+
+    /** The target the scene renders into below full [renderScale]; see [SceneScaleTarget]. */
+    internal val sceneScale = SceneScaleTarget(graphicsDevice) { renderPipeline.multisample.count }
 
     override var clearColor: AwakeColor = AwakeColor.Black
 
@@ -347,6 +361,7 @@ class Renderer internal constructor(
 
     override fun destroy() {
         gpuFrameTimer?.destroy()
+        sceneScale.release()
         uiRunCache.clear()
         imagePassExecutor.destroy()
         bufferPools.destroy()

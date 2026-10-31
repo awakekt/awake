@@ -1764,6 +1764,15 @@ public final class com/awakekt/awake/render/renderer/RenderFrameStats {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/RenderScale {
+	public static final field FULL F
+	public static final field INSTANCE Lcom/awakekt/awake/render/renderer/RenderScale;
+	public static final field MIN F
+	public final fun coerce (F)F
+	public final fun sceneExtent (IF)I
+	public final fun sceneViewport (Lcom/awakekt/awake/render/renderer/RenderViewport;IIII)Lcom/awakekt/awake/render/renderer/RenderViewport;
+}
+
 public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public static final field TRIANGLE_VERTICES I
 	public fun <init> ()V
@@ -1809,6 +1818,9 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public fun getOutputHeight ()I
+	public fun getOutputWidth ()I
+	public fun getRenderScale ()F
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
@@ -1822,6 +1834,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public abstract fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setEffectQuality (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
+	public fun setRenderScale (F)V
 	public abstract fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 }
@@ -1842,6 +1855,9 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun getEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
+	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
+	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getSurfaceWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
@@ -1852,6 +1868,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun readPresentedPixels (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun renderToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static fun setEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
+	public static fun setRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;F)V
 	public static fun submitToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static fun waitIdle (Lcom/awakekt/awake/render/renderer/Renderer;)V
 }
