@@ -87,6 +87,10 @@ The rule is therefore **not** "never use Vulkan features". It is: **the core may
 what WebGPU cannot do.** Vulkan is free to exceed the core through extensions; web takes the
 fallback path or the feature is simply absent there.
 
+The same tier carries capability only a browser has. `GpuImageUpload` fills a texture straight
+from a browser `ImageBitmap` with `copyExternalImageToTexture`; `createImageMaterial` asks for it
+and otherwise uploads the image's CPU pixels, so Vulkan and every test double take the fallback.
+
 Shorthand for the common case, where a concept exists on both sides but is spelled differently —
 take the WebGPU spelling and let Vulkan translate:
 
@@ -202,6 +206,7 @@ handles. The verifier makes a regression a build failure.
 | `RenderViewport` | Scissor rect — a hardware concept |
 | `RenderTarget` | Framebuffer attachment — hardware |
 | `TextureAsset`, `MipChain` | Texture data shapes |
+| `GpuImageSource`, `GpuImageUpload`, `createImageMaterial` | A decoded platform image a backend may copy on the GPU (a browser `ImageBitmap`), behind an optional capability with a CPU-pixel fallback (#1184) |
 | `Material` | Descriptor set + UBO handle |
 | `Mesh` | Vertex / index buffer handle |
 | `PipelineSpec`, `PipelineTable`, `PipelineRegistry`, `PipelineVariant` | Pipeline objects |
