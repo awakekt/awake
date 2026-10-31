@@ -6,7 +6,13 @@
 package com.awakekt.awake.asset.meshlod
 
 /** What replacing one wedge's attributes with another's costs: weighted squared attribute and skin differences. */
-internal class VertexCost(private val attributes: List<MeshAttribute>, private val skin: SkinInfluences?) {
+internal class VertexCost(
+    private val attributes: List<MeshAttribute>,
+    private val skin: SkinInfluences?,
+    private val importance: FloatArray?,
+) {
+    /** The cost multiplier for moving wedge [wedge]: one plus its importance. */
+    fun scale(wedge: Int): Double = 1.0 + (importance?.get(wedge) ?: 0f)
 
     /** The cost of wedge [from] taking wedge [to]'s attributes. */
     fun between(from: Int, to: Int): Double {

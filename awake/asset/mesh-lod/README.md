@@ -34,6 +34,9 @@ result.error     // the largest collapse error, relative to the mesh's largest e
   `lockBorders`, which keeps separately modelled parts and per-material primitives from opening gaps.
 - **Skinning bends stay.** A collapse between vertices weighted to different joints costs the
   difference in their per-joint weights, so edges across a joint go last.
+- **Important regions last.** `importance` (per vertex, `0` ordinary) makes collapsing a vertex
+  `1 + importance` times as costly, so a face or hands keep their detail while the rest reduces. The
+  target triangle count is still met.
 - A collapse that would flip a triangle or change the surface's topology is refused, and
   `maxError` stops early.
 
@@ -65,7 +68,15 @@ triangles, are skipped.
 ## Project settings
 
 `ProjectLodSettings` is the project's `awake.lod.json`: defaults for every model, and per-asset
-overrides keyed by project-relative path. `enabled: false` opts an asset out.
+overrides keyed by project-relative path. Within an asset, `meshes` overrides settings per glTF mesh
+name, so a game decides which parts keep their detail:
+
+- `enabled: false` opts an asset, or one mesh, out of generated levels.
+- `levels` per asset or per mesh: a head mesh can keep `0.7` / `0.5` / `0.3` while the body uses the
+  defaults.
+- `jointImportance`, keyed by joint node name, for skinned meshes: vertices weighted to those joints
+  cost `1 + importance` times as much to collapse (weighted by their skin weights), so the silhouette
+  and face survive simplification.
 
 ```json
 {
@@ -81,7 +92,18 @@ overrides keyed by project-relative path. `enabled: false` opts an asset out.
   },
   "assets": {
     "props/hero-statue.glb": { "enabled": false },
-    "props/fence.glb": { "levels": [{ "ratio": 0.3, "screenCoverage": 0 }] }
+    "props/fence.glb": { "levels": [{ "ratio": 0.3, "screenCoverage": 0 }] },
+    "actors/character.glb": {
+      "jointImportance": { "head": 4, "neck": 2, "hand_l": 2, "hand_r": 2 },
+      "meshes": {
+        "head": { "levels": [
+          { "ratio": 0.7, "screenCoverage": 0.12 },
+          { "ratio": 0.5, "screenCoverage": 0.05 },
+          { "ratio": 0.3, "screenCoverage": 0 }
+        ] },
+        "eyelashes": { "enabled": false }
+      }
+    }
   }
 }
 ```

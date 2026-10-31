@@ -43,7 +43,7 @@ object TestGlb {
             val bind = floats(identity + identity, "MAT4")
             skinAttributes = ""","JOINTS_0":$joints,"WEIGHTS_0":$weights"""
             skin = ""","skins":[{"joints":[1,2],"inverseBindMatrices":$bind}]"""
-            skinNodes = """,{"name":"Root","children":[2]},{"name":"Tip","translation":[0,2,0]}"""
+            skinNodes = """,{"name":"Body","children":[2]},{"name":"Head","translation":[0,2,0]}"""
         }
         val nodeSkin = if (mesh.joints != null) ""","skin":0""" else ""
         val roots = if (mesh.joints != null) "[0,1]" else "[0]"

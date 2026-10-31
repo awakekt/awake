@@ -80,18 +80,22 @@ object GltfLodCooker {
         if (GltfLods.hasAuthoredLods(root)) return LodCookResult(bytes, LodCookOutcome.AuthoredLods, emptyList())
         val primitives = GltfParser.parseMeshPrimitives(bytes, externalResources)
         val document = LodDocument(root, glb)
-        val lodMeshes = HashMap<Int, List<Int>>()
+        val lodMeshes = HashMap<Int, Pair<List<Int>, MeshLodSettings>>()
         val reports = ArrayList<MeshLodReport>()
         val sourceNodes = document.nodes.size
         for (nodeIndex in 0 until sourceNodes) {
             val node = document.nodes[nodeIndex] as? JsonObject ?: continue
             val mesh = node["mesh"]?.jsonPrimitive?.intOrNull ?: continue
-            val levels = lodMeshes.getOrPut(mesh) {
-                generate(document, mesh, primitives.getOrNull(mesh).orEmpty(), settings)?.also { reports += it.second }?.first.orEmpty()
+            val (levels, meshSettings) = lodMeshes.getOrPut(mesh) {
+                val meshSettings = settings.forMesh((document.meshes.getOrNull(mesh) as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull)
+                val names = JointImportance.jointNames(root, document.nodes, mesh)
+                val generated = if (meshSettings.enabled) generate(document, mesh, primitives.getOrNull(mesh).orEmpty(), meshSettings, names) else null
+                generated?.second?.let(reports::add)
+                generated?.first.orEmpty() to meshSettings
             }
             if (levels.isEmpty()) continue
             val ids = levels.mapIndexed { level, lodMesh -> document.addNode(lodNode(node, lodMesh, level + 1)) }
-            document.nodes[nodeIndex] = withLods(node, ids, coverage(settings, ids.size))
+            document.nodes[nodeIndex] = withLods(node, ids, coverage(meshSettings, ids.size))
         }
         if (reports.isEmpty()) return LodCookResult(bytes, LodCookOutcome.NothingToSimplify, emptyList())
         return LodCookResult(document.encode(), LodCookOutcome.Generated, reports.sortedBy { it.mesh })
@@ -103,6 +107,7 @@ object GltfLodCooker {
         mesh: Int,
         decoded: List<GltfMesh>,
         settings: MeshLodSettings,
+        jointNames: List<String?>,
     ): Pair<List<Int>, MeshLodReport>? {
         val meshJson = document.meshes.getOrNull(mesh) as? JsonObject ?: return null
         val primitives = meshJson["primitives"]?.jsonArray?.map { it.jsonObject } ?: return null
@@ -111,8 +116,9 @@ object GltfLodCooker {
         val triangles = mutableListOf(decoded.sumOf { it.indices.size / 3 })
         val errors = ArrayList<Float>()
         val levels = ArrayList<Int>()
+        val importance = decoded.map { JointImportance.perVertex(it, jointNames, settings.jointImportance) }
         for (level in settings.levels) {
-            val simplified = decoded.map { simplify(it, level.ratio, settings) }
+            val simplified = decoded.mapIndexed { i, primitive -> simplify(primitive, level.ratio, settings, importance[i]) }
             val count = simplified.sumOf { it.triangleCount }
             if (count == 0 || count > triangles.last() * USEFUL_REDUCTION) break
             val lodPrimitives = primitives.mapIndexed { i, primitive ->
@@ -126,7 +132,7 @@ object GltfLodCooker {
         return if (levels.isEmpty()) null else levels to MeshLodReport(mesh, name, triangles, errors)
     }
 
-    private fun simplify(mesh: GltfMesh, ratio: Float, settings: MeshLodSettings): SimplifiedMesh {
+    private fun simplify(mesh: GltfMesh, ratio: Float, settings: MeshLodSettings, importance: FloatArray?): SimplifiedMesh {
         val attributes = listOfNotNull(
             mesh.normals?.let { MeshAttribute(it, 3, settings.normalWeight) },
             mesh.uvs?.let { MeshAttribute(it, 2, settings.uvWeight) },
@@ -136,7 +142,7 @@ object GltfLodCooker {
         val weights = mesh.jointWeights
         val skin = if (joints != null && weights != null) SkinInfluences(joints, weights, weight = settings.skinWeight) else null
         val options = SimplifyOptions(targetRatio = ratio, lockBorders = settings.lockBorders)
-        return AttributeMeshSimplifier.simplify(mesh.positions, mesh.indices, options, attributes, skin)
+        return AttributeMeshSimplifier.simplify(mesh.positions, mesh.indices, options, attributes, skin, importance)
     }
 
     /** A node for one level: its mesh and skin only, drawn at the base node's transform. */

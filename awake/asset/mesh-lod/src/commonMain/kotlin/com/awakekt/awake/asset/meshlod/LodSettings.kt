@@ -37,6 +37,11 @@ data class LodLevelSetting(val ratio: Float, val screenCoverage: Float) {
  * @property uvWeight How much a texture-coordinate change costs.
  * @property colorWeight How much a vertex-colour change costs.
  * @property skinWeight How much a change in joint weights costs, for a skinned mesh.
+ * @property meshes Per-mesh changes, keyed by the glTF mesh's name: different ratios for a mesh that
+ *   should keep more detail, or `enabled = false` to give a mesh no levels.
+ * @property jointImportance For a skinned mesh, how much more it costs to collapse vertices weighted
+ *   to each named joint (keyed by the joint node's name): `0` is ordinary, `4` makes them five times as
+ *   costly, so the parts they move keep their detail longest.
  */
 @Serializable
 data class MeshLodSettings(
@@ -48,6 +53,8 @@ data class MeshLodSettings(
     val uvWeight: Float = 1f,
     val colorWeight: Float = DEFAULT_COLOR_WEIGHT,
     val skinWeight: Float = 1f,
+    val meshes: Map<String, MeshLodOverride> = emptyMap(),
+    val jointImportance: Map<String, Float> = emptyMap(),
 ) {
     init {
         require(baseScreenCoverage >= 0f) { "baseScreenCoverage is $baseScreenCoverage; it can't be negative" }
@@ -60,7 +67,21 @@ data class MeshLodSettings(
         require(levels.firstOrNull()?.let { it.screenCoverage <= baseScreenCoverage } ?: true) {
             "the first level's screenCoverage is above baseScreenCoverage $baseScreenCoverage"
         }
+        jointImportance.forEach { (joint, importance) -> require(importance >= 0f) { "jointImportance[$joint] is $importance; it can't be negative" } }
     }
+
+    /** These settings with [override]'s non-null fields in their place. */
+    fun overriddenBy(override: MeshLodOverride): MeshLodSettings = copy(
+        enabled = override.enabled ?: enabled,
+        baseScreenCoverage = override.baseScreenCoverage ?: baseScreenCoverage,
+        levels = override.levels ?: levels,
+        lockBorders = override.lockBorders ?: lockBorders,
+        meshes = override.meshes ?: meshes,
+        jointImportance = override.jointImportance ?: jointImportance,
+    )
+
+    /** The settings for the mesh named [name]: these, with its entry in [meshes] applied. */
+    fun forMesh(name: String?): MeshLodSettings = name?.let(meshes::get)?.let(::overriddenBy) ?: this
 
     companion object {
         private const val DEFAULT_BASE_COVERAGE = 0.25f
@@ -77,12 +98,16 @@ data class MeshLodSettings(
 }
 
 /**
- * One asset's changes to the project defaults; a field left null takes the default.
+ * Changes to [MeshLodSettings] for one asset, or for one mesh within it; a field left null keeps the
+ * setting it overrides.
  *
- * @property enabled `false` opts the asset out of generated levels.
+ * @property enabled `false` opts the asset, or the mesh, out of generated levels.
  * @property baseScreenCoverage Replaces [MeshLodSettings.baseScreenCoverage].
- * @property levels Replaces [MeshLodSettings.levels].
+ * @property levels Replaces [MeshLodSettings.levels], for example `0.7`, `0.5`, `0.3` for a mesh that
+ *   should keep more detail than the rest.
  * @property lockBorders Replaces [MeshLodSettings.lockBorders].
+ * @property meshes Replaces [MeshLodSettings.meshes]; ignored on a per-mesh entry.
+ * @property jointImportance Replaces [MeshLodSettings.jointImportance].
  */
 @Serializable
 data class MeshLodOverride(
@@ -90,6 +115,8 @@ data class MeshLodOverride(
     val baseScreenCoverage: Float? = null,
     val levels: List<LodLevelSetting>? = null,
     val lockBorders: Boolean? = null,
+    val meshes: Map<String, MeshLodOverride>? = null,
+    val jointImportance: Map<String, Float>? = null,
 )
 
 /**
@@ -105,12 +132,7 @@ data class ProjectLodSettings(
     /** The settings for the asset at project-relative [path]: the defaults with its override applied. */
     fun forAsset(path: String): MeshLodSettings {
         val override = assets[path.replace('\\', '/').removePrefix("./")] ?: return defaults
-        return defaults.copy(
-            enabled = override.enabled ?: defaults.enabled,
-            baseScreenCoverage = override.baseScreenCoverage ?: defaults.baseScreenCoverage,
-            levels = override.levels ?: defaults.levels,
-            lockBorders = override.lockBorders ?: defaults.lockBorders,
-        )
+        return defaults.overriddenBy(override)
     }
 
     /** These settings as the JSON [FILE_NAME] holds. */

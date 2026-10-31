@@ -117,6 +117,8 @@ object AttributeMeshSimplifier {
      * @param options How far to simplify.
      * @param attributes Per-vertex attributes to keep and weigh; each covers every vertex.
      * @param skin The vertices' joint influences, for a skinned mesh.
+     * @param importance Per vertex, how much more collapsing it costs: `0` is ordinary and `k` makes a
+     *   collapse `1 + k` times as costly, so important regions (a face, a hand) keep detail longest.
      */
     fun simplify(
         positions: FloatArray,
@@ -124,6 +126,7 @@ object AttributeMeshSimplifier {
         options: SimplifyOptions,
         attributes: List<MeshAttribute> = emptyList(),
         skin: SkinInfluences? = null,
+        importance: FloatArray? = null,
     ): SimplifiedMesh {
         require(positions.size % POSITION_COMPONENTS == 0) { "positions has ${positions.size} floats, not x, y, z per vertex" }
         require(indices.size % TRIANGLE_CORNERS == 0) { "indices has ${indices.size} entries, not three per triangle" }
@@ -135,8 +138,10 @@ object AttributeMeshSimplifier {
             require(attribute.vertexCount == vertexCount) { "attributes[$i] covers ${attribute.vertexCount} vertices, not $vertexCount" }
         }
         require(skin == null || skin.vertexCount == vertexCount) { "skin covers ${skin?.vertexCount} vertices, not $vertexCount" }
+        require(importance == null || importance.size == vertexCount) { "importance covers ${importance?.size} vertices, not $vertexCount" }
+        require(importance == null || importance.all { it >= 0f }) { "importance can't be negative" }
         val topology = MeshTopology(positions, indices, options)
-        return EdgeCollapse(topology, VertexCost(attributes, skin), options).run()
+        return EdgeCollapse(topology, VertexCost(attributes, skin, importance), options).run()
     }
 }
 

@@ -89,8 +89,12 @@ internal class EdgeCollapse(
         }
         if (!keepsTopology(v, u, shared)) return Double.POSITIVE_INFINITY
         var attributeCost = 0.0
-        for (i in 0 until mapCount) attributeCost += vertexCost.between(mapFrom[i], mapTo[i])
-        return Quadric.error(mesh.quadrics, v, mesh.points, u) + attributeCost * list.size
+        var scale = 1.0
+        for (i in 0 until mapCount) {
+            attributeCost += vertexCost.between(mapFrom[i], mapTo[i])
+            scale = max(scale, vertexCost.scale(mapFrom[i]))
+        }
+        return (Quadric.error(mesh.quadrics, v, mesh.points, u) + attributeCost * list.size) * scale
     }
 
     private fun collapse(v: Int, u: Int) {
