@@ -20,6 +20,7 @@ kotlin {
     sourceSets {
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
         // Browser fetch()/ImageBitmap, and the coroutine `await` that turns their Promises
         // into suspend calls. wasmJs-only -- see the note in awake:core's own history.

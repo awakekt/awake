@@ -637,6 +637,11 @@ jobs:
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest
 
+      # The browser's createBitmap against generated PNGs (same pixels as desktop, bit for bit with
+      # the old decode, no canvas per texture), and the before/after timing of a 1024x1024 decode.
+      - name: Image decode browser tests
+        run: ./gradlew :awake:core:image:wasmJsBrowserTest
+
       # Code that only runs in a browser: copying a fetched response into a ByteArray, the
       # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content
       # transport's real request. Desktop tests can't reach it.
