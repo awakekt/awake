@@ -101,6 +101,7 @@ jobs:
         run: |
           scripts/vulkan-publication-impact.test.sh
           scripts/vulkan-core-api-impact.test.sh
+          scripts/next-vulkan-tag.test.sh
 
       - name: Next release milestone
         run: scripts/next-milestone.test.sh

@@ -857,6 +857,38 @@ jobs:
       - name: Resolve Core ${{ github.ref_name }} with the latest Vulkan release
         run: bash tools/core-alignment-check/check.sh "${GITHUB_REF_NAME#v}"
 
+  # A stable Core release that needs a Vulkan release tags it, as "Cutting a Core release" step 3 in
+  # docs/release-process.md describes: once Core alignment has found the release on Central, it
+  # pushes the next `vulkan-vA.B.C` on the same commit when Vulkan's own code or a Core API it links
+  # against changed since the latest `vulkan-v*` tag (scripts/next-vulkan-tag.sh). That tag's own run
+  # publishes the Vulkan family. A tag pushed with the default token starts no workflow, so this
+  # needs RELEASE_TOKEN; without it the job prints the commands to tag by hand
+  # (scripts/push-vulkan-tag.sh, which the Vulkan tag workflow also runs).
+  vulkan-tag:
+    name: Vulkan tag
+    timeout-minutes: 10
+    if: >-
+      ${{
+        !cancelled() &&
+        startsWith(github.ref, 'refs/tags/v') &&
+        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        needs.core-alignment.result == 'success'
+      }}
+    needs: [core-alignment]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag the Vulkan release this Core release needs
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: scripts/push-vulkan-tag.sh "$GITHUB_REF_NAME"
+
   vulkan-release:
     name: Vulkan Release
     # Room for Central to validate the deployment: the upload waits for its verdict.

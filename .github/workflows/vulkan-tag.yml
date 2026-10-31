@@ -1,0 +1,47 @@
+name: Vulkan tag
+
+# Tags the Vulkan release a stable Core release needs, for a release whose Publish run predates
+# Publish's own Vulkan tag job or skipped it: the same decision and push (scripts/push-vulkan-tag.sh),
+# run by hand with the Core tag. It refuses until that release's BOM is on Maven Central, since the
+# Vulkan release pins it. The pushed tag's Publish run releases the Vulkan family.
+on:
+  workflow_dispatch:
+    inputs:
+      core_tag:
+        description: "The stable Core release to tag Vulkan for, such as v0.28.0"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vulkan-tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Vulkan tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the Core release is on Maven Central
+        env:
+          CORE_TAG: ${{ inputs.core_tag }}
+        run: |
+          [[ "$CORE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::'$CORE_TAG' isn't a stable Core tag like v0.28.0."; exit 1; }
+          git rev-parse -q --verify "refs/tags/$CORE_TAG" > /dev/null || { echo "::error::No tag $CORE_TAG."; exit 1; }
+          version="${CORE_TAG#v}"
+          url="https://repo1.maven.org/maven2/com/awakekt/awake/bom/$version/bom-$version.pom"
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$url")"
+          [[ "$code" == 200 ]] || { echo "::error::$url answers $code: wait for $CORE_TAG to reach Maven Central."; exit 1; }
+
+      - name: Tag the Vulkan release it needs
+        env:
+          CORE_TAG: ${{ inputs.core_tag }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: scripts/push-vulkan-tag.sh "$CORE_TAG"
