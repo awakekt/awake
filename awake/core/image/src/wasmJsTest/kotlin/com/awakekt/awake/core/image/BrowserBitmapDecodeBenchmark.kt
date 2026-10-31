@@ -24,7 +24,8 @@ import kotlin.time.TimeSource
  * GPU canvas, as the consumer profile ran: main thread 88 ms, 19 ms; end to end 104 ms, 40 ms.
  * What remains is the browser's: `getImageData` (about 7.5 ms), the `Blob` (3.3 ms), and the byte
  * copies into and out of linear memory (5.6 ms). Only skipping the readback (step 2 of
- * awakekt/awake#1184) goes further. The floor asserted is a regression guard, well below that.
+ * awakekt/awake#1184) goes further. The floor asserted is a regression guard against the per-element
+ * path (about 1x), kept low because a loaded runner measured as little as 2.6x.
  */
 class BrowserBitmapDecodeBenchmark {
     @Test
@@ -66,6 +67,6 @@ class BrowserBitmapDecodeBenchmark {
     private companion object {
         const val WARM_UP = 2
         const val MEASURED = 5
-        const val MIN_MAIN_THREAD_SPEED_UP = 2.0
+        const val MIN_MAIN_THREAD_SPEED_UP = 1.5
     }
 }

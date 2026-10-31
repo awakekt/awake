@@ -19,14 +19,6 @@ import kotlin.wasm.unsafe.withScopedMemoryAllocator
 // through wasm linear memory instead, in one JS call each way, and every per-pixel step is a plain
 // wasm load or store.
 
-/** A browser `ImageBitmap`, the decoded image `createImageBitmap` resolves to. */
-internal external interface ImageBitmapHandle : JsAny {
-    val width: Int
-    val height: Int
-
-    fun close()
-}
-
 /** A `Blob` holding [bytes], copied out of linear memory by JS in one call. */
 internal fun blobOf(bytes: ByteArray): JsAny = withScopedMemoryAllocator { allocator ->
     val base = allocator.allocate(maxOf(bytes.size, 1))
