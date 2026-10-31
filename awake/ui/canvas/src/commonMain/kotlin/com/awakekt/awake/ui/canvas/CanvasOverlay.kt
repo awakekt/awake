@@ -305,10 +305,16 @@ internal fun CanvasElementView(
     val state = rememberStyleState(element.interactions)
     val resolved = rememberCanvasStyleState(element.style, back, fill, state, disabled, tree.controls.theme?.transitionSeconds)
     val behindParticles = element.particles?.placement == CanvasParticlePlacement.BehindContent
-    val style = Style { resolved.applyTo(this, element.style, tree.images, applyAlpha = !behindParticles) }
+    val backdrop = element.style.backdrop
+    // Glass and particles behind the content draw outside the style, so the element's alpha is
+    // applied ahead of them instead, and they fade with it.
+    val alphaAhead = behindParticles || backdrop != null
+    val style = Style { resolved.applyTo(this, element.style, tree.images, applyAlpha = !alphaAhead) }
     val textStyle = element.textStyle(resolved.textColor, tree.fontOf(element))
     if (LocalCanvasGhost.current) {
-        GhostElementView(element, modifier.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style), textStyle, tree, children)
+        // A drag ghost draws no glass, but keeps the alpha the style left to it.
+        val ghostFaded = if (backdrop != null && !behindParticles) modifier.alpha(resolved.alpha.coerceIn(0f, 1f)) else modifier
+        GhostElementView(element, ghostFaded.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style), textStyle, tree, children)
         return
     }
     // Tree-space pixels back to canvas units: from the canvas box's corner, which its own onPlaced
@@ -328,12 +334,9 @@ internal fun CanvasElementView(
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
     val transformed = wheeled.rotated(element.drawnRotation).scaled(resolved.scale)
-    val base = if (behindParticles) {
-        val faded = if (resolved.alpha < 1f) transformed.alpha(resolved.alpha.coerceIn(0f, 1f)) else transformed
-        faded.canvasParticlesBehind(element, tree)
-    } else {
-        transformed
-    }
+    val faded = if (alphaAhead && resolved.alpha < 1f) transformed.alpha(resolved.alpha.coerceIn(0f, 1f)) else transformed
+    val glass = faded.canvasBackdrop(backdrop, element.style.cornerRadius, LocalCanvasBackdropBlur.current)
+    val base = if (behindParticles) glass.canvasParticlesBehind(element, tree) else glass
     // A Button, or an Image or Panel made pressable, occludes what is under it, like any click
     // target; every other kind only watches, so it must not swallow a tap meant for something it
     // happens to be drawn over.

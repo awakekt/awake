@@ -53,6 +53,8 @@ import kotlinx.serialization.Serializable
  * @property transitionSeconds Seconds to interpolate between this style's states ([hovered],
  * [pressed], [disabled]); null falls back to [CanvasControlTheme.transitionSeconds], and 0 changes
  * at once.
+ * @property backdrop Frosted glass behind the element: what is drawn beneath it, the 3D scene
+ * included, blurred in its [cornerRadius] shape under its fill; null draws no glass.
  */
 @Serializable
 data class CanvasStyle(
@@ -75,7 +77,62 @@ data class CanvasStyle(
     val rotation: Float? = null,
     val linkColor: String? = null,
     @PropertyRange(min = 0.0) val transitionSeconds: Float? = null,
+    val backdrop: CanvasBackdrop? = null,
 ) {
+    /** [CanvasStyle] as it was before `backdrop`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        background: String? = null,
+        gradient: CanvasGradient? = null,
+        image: CanvasImage? = null,
+        fillImage: CanvasImage? = null,
+        fillImageMode: CanvasFillImageMode = CanvasFillImageMode.Cut,
+        cornerRadius: Float? = null,
+        borderWidth: Float? = null,
+        borderColor: String? = null,
+        shadow: CanvasShadow? = null,
+        textColor: String? = null,
+        textShadow: CanvasTextShadow? = null,
+        textOutline: CanvasTextOutline? = null,
+        alpha: Float? = null,
+        hovered: CanvasStateStyle? = null,
+        pressed: CanvasStateStyle? = null,
+        disabled: CanvasStateStyle? = null,
+        rotation: Float? = null,
+        linkColor: String? = null,
+        transitionSeconds: Float? = null,
+    ) : this(
+        background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor, transitionSeconds, null,
+    )
+
+    /** [copy] as it was before `backdrop`, which keeps this one's [backdrop]: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        background: String? = this.background,
+        gradient: CanvasGradient? = this.gradient,
+        image: CanvasImage? = this.image,
+        fillImage: CanvasImage? = this.fillImage,
+        fillImageMode: CanvasFillImageMode = this.fillImageMode,
+        cornerRadius: Float? = this.cornerRadius,
+        borderWidth: Float? = this.borderWidth,
+        borderColor: String? = this.borderColor,
+        shadow: CanvasShadow? = this.shadow,
+        textColor: String? = this.textColor,
+        textShadow: CanvasTextShadow? = this.textShadow,
+        textOutline: CanvasTextOutline? = this.textOutline,
+        alpha: Float? = this.alpha,
+        hovered: CanvasStateStyle? = this.hovered,
+        pressed: CanvasStateStyle? = this.pressed,
+        disabled: CanvasStateStyle? = this.disabled,
+        rotation: Float? = this.rotation,
+        linkColor: String? = this.linkColor,
+        transitionSeconds: Float? = this.transitionSeconds,
+    ): CanvasStyle = copy(
+        background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor, transitionSeconds, backdrop,
+    )
+
     /** [CanvasStyle] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -99,7 +156,7 @@ data class CanvasStyle(
         linkColor: String? = null,
     ) : this(
         background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
-        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor, null, null,
     )
 
     /** [copy] as it was before `transitionSeconds`: hidden, and kept so a consumer compiled against it still links. */
@@ -125,7 +182,7 @@ data class CanvasStyle(
         linkColor: String? = this.linkColor,
     ): CanvasStyle = copy(
         background, gradient, image, fillImage, fillImageMode, cornerRadius, borderWidth, borderColor, shadow,
-        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor,
+        textColor, textShadow, textOutline, alpha, hovered, pressed, disabled, rotation, linkColor, transitionSeconds, backdrop,
     )
 
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
@@ -156,6 +213,7 @@ data class CanvasStyle(
         "hovered" to hovered?.problems(),
         "pressed" to pressed?.problems(),
         "disabled" to disabled?.problems(),
+        "backdrop" to backdrop?.problems(),
     ).flatMap { (field, problems) -> problems.orEmpty().map { "$field.$it" } }
 
     /**
