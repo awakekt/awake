@@ -64,6 +64,9 @@ class GltfAssetResolver(
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
     private val lodLevels = GltfLodLevels()
+
+    /** The last GPU mesh made for each full mesh with levels, whose vertex buffer its levels draw. */
+    private val levelBases = mutableMapOf<String, Mesh>()
     private var assetSource: AssetSource = AssetSource { path ->
         runCatching { bundledResourceReader(path.value) }
     }
@@ -163,6 +166,7 @@ class GltfAssetResolver(
         loadedMaterialSlots.remove(path)
         loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         lodLevels.forget(path, loadedStaticMeshes)
+        levelBases.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
@@ -362,7 +366,14 @@ class GltfAssetResolver(
             "glTF asset '$name' has not been preloaded. Ensure the scene or plugin preloaded it.",
         )
         meshBoundsRegistrar(name, geometry)
-        return runtime.renderer.createMesh(geometry)
+        // A level differs from its full mesh only in its triangles: it draws the full mesh's vertex buffer.
+        val level = lodLevels.isLevelKey(name)
+        val base = if (level) levelBases[lodLevels.baseKey(name)] else null
+        return if (base != null) {
+            runtime.renderer.createMeshSharingVertices(base, geometry)
+        } else {
+            runtime.renderer.createMesh(geometry).also { mesh -> if (!level && meshLevels(name) != null) levelBases[name] = mesh }
+        }
     }
 
     override fun meshLevels(name: String): SceneMeshLevels? =

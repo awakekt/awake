@@ -51,6 +51,7 @@ class LodSceneTest {
         assertTrue(triangles.distinct().size >= 3, "at least two levels besides the full one: $triangles")
         assertTrue(triangles.sum() < full * DISTANCES.size / 2, "fewer than half the triangles: ${triangles.sum()} of ${full * DISTANCES.size}")
         assertEquals(1, drawn.map { it.material }.distinct().size, "every level draws with the model's own material")
+        assertEquals(3, renderer.sharedLevels, "each of the three levels draws the full model's vertex buffer")
     }
 
     @Test
@@ -94,6 +95,15 @@ class LodSceneTest {
         private val draws = ArrayList<GpuDrawRequest>()
 
         override fun createMesh(geometry: MeshGeometry): Mesh = super.createMesh(geometry).also { trianglesByMesh[it] = geometry.indices.size / 3 }
+
+        /** Levels made to share their full mesh's vertices. */
+        var sharedLevels = 0
+            private set
+
+        override fun createMeshSharingVertices(vertices: Mesh, geometry: MeshGeometry): Mesh {
+            sharedLevels++
+            return createMesh(geometry)
+        }
 
         override val gpuDrawPreparer = GpuDrawPreparer { request, sourceIndex, _ ->
             if (sourceIndex == 0) draws.clear()

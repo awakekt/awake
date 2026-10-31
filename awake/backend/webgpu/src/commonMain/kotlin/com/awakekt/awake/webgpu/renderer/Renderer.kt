@@ -59,6 +59,7 @@ import com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline
 import com.awakekt.awake.core.color.Color as AwakeColor
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
+import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import io.ygdrasil.webgpu.Color as GpuColor
 
@@ -278,6 +279,10 @@ class Renderer internal constructor(
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES)
 
     override fun createMesh(geometry: MeshGeometry): RenderMesh = performCreateMesh(geometry)
+
+    override fun createMeshSharingVertices(vertices: RenderMesh, geometry: MeshGeometry): RenderMesh =
+        (vertices as? Mesh)?.takeIf { it.format == geometry.format }?.sharingVertices(geometry.indices, geometry.bounds)
+            ?: performCreateMesh(geometry)
 
     override fun createMaterial(
         texture: TextureAsset?,

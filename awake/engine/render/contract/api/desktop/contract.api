@@ -1098,6 +1098,7 @@ public abstract interface class com/awakekt/awake/render/pipeline/GpuDevice {
 	public abstract fun createMaterial (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;)Lcom/awakekt/awake/render/material/Material;
 	public static synthetic fun createMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
 	public abstract fun createMesh (Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public fun createMeshSharingVertices (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public abstract fun createRenderTarget (II)Lcom/awakekt/awake/render/texture/RenderTarget;
 	public abstract fun destroy ()V
 	public abstract fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
@@ -1112,6 +1113,7 @@ public final class com/awakekt/awake/render/pipeline/GpuDevice$Companion {
 public final class com/awakekt/awake/render/pipeline/GpuDevice$DefaultImpls {
 	public static fun capability (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public static synthetic fun createMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
+	public static fun createMeshSharingVertices (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun waitIdle (Lcom/awakekt/awake/render/pipeline/GpuDevice;)V
 }
@@ -1815,6 +1817,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun awaitFrameResources (Lcom/awakekt/awake/render/renderer/Renderer;)V
 	public static fun capability (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public static fun compositeUiTargets (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
+	public static fun createMeshSharingVertices (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public static fun draw (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static fun drawUi (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public static synthetic fun drawUi$default (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V

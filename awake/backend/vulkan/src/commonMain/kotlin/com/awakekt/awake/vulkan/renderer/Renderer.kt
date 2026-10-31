@@ -53,6 +53,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineMesh
+import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.device.DeviceCapabilities
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -399,6 +400,10 @@ class Renderer internal constructor(
     }
 
     override fun createMesh(geometry: MeshGeometry): RenderMesh = performCreateMesh(geometry)
+
+    override fun createMeshSharingVertices(vertices: RenderMesh, geometry: MeshGeometry): RenderMesh =
+        (vertices as? Mesh)?.takeIf { it.format == geometry.format }?.sharingVertices(geometry.indices, geometry.bounds)
+            ?: performCreateMesh(geometry)
 
     override fun createMaterial(
         texture: TextureAsset?,

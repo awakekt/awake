@@ -41,15 +41,26 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
  * first wireframe use -- keeps this class's resource lifecycle a single, unconditional init
  * block instead of a second lazy-build path a mesh's caller would need to remember to trigger.
  */
-class Mesh(
-    graphicsDevice: GraphicsDevice,
-    runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+class Mesh @Suppress("LongParameterList") private constructor(
+    private val graphicsDevice: GraphicsDevice,
+    private val runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
     vertices: FloatArray,
     indices: IntArray,
-    override val format: VertexFormat = VertexFormat.PositionColorUv,
-    /** The box these vertices occupy -- Vulkan's twin, same reason. */
-    override val localBounds: Aabb? = null,
+    override val format: VertexFormat,
+    override val localBounds: Aabb?,
+    /** The mesh whose vertex buffer this one draws instead of uploading its own; see [sharingVertices]. */
+    sharedFrom: Mesh?,
 ) : RenderMesh {
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+        vertices: FloatArray,
+        indices: IntArray,
+        format: VertexFormat = VertexFormat.PositionColorUv,
+        /** The box these vertices occupy -- Vulkan's twin, same reason. */
+        localBounds: Aabb? = null,
+    ) : this(graphicsDevice, runOneTimeCommands, vertices, indices, format, localBounds, null)
+
     /**
      * Handle of the GPU vertex buffer, as a [WebGpuHandles] table id. Fixed at construction: a mesh
      * never re-uploads its geometry.
@@ -66,7 +77,10 @@ class Mesh(
     val indexCount: Int = indices.size
 
     override val sizeBytes: Long =
-        vertices.size.toLong() * Float.SIZE_BYTES + indices.size.toLong() * Int.SIZE_BYTES
+        (if (sharedFrom == null) vertices.size.toLong() * Float.SIZE_BYTES else 0L) + indices.size.toLong() * Int.SIZE_BYTES
+
+    /** Counts the meshes drawing [vertexBuffer], so the last one destroyed closes it. */
+    private val vertexOwner: SharedVertices
     var lineIndexBuffer: BufferHandle
     val lineIndexCount: Int
 
@@ -86,16 +100,25 @@ class Mesh(
     init {
         val device = graphicsDevice.wgpuContext.device
 
-        val rawVertexBuffer: GPUBuffer = device.createBuffer(
-            BufferDescriptor(
-                size = (vertices.size * Float.SIZE_BYTES).toULong(),
-                usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
-            ),
-        )
-        device.queue.writeBufferData(rawVertexBuffer, 0uL, fastArrayBufferOf(vertices))
-        val vertexHandle = WebGpuHandles.register(rawVertexBuffer)
-        vertexBuffer = BufferHandle(vertexHandle)
-        vertexBufferMemory = DeviceMemoryHandle(vertexHandle)
+        if (sharedFrom != null) {
+            vertexOwner = sharedFrom.vertexOwner.also { it.meshes++ }
+            vertexBuffer = sharedFrom.vertexBuffer
+            vertexBufferMemory = sharedFrom.vertexBufferMemory
+            vertexBinding = sharedFrom.vertexBinding
+        } else {
+            vertexOwner = SharedVertices()
+            val rawVertexBuffer: GPUBuffer = device.createBuffer(
+                BufferDescriptor(
+                    size = (vertices.size * Float.SIZE_BYTES).toULong(),
+                    usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
+                ),
+            )
+            device.queue.writeBufferData(rawVertexBuffer, 0uL, fastArrayBufferOf(vertices))
+            val vertexHandle = WebGpuHandles.register(rawVertexBuffer)
+            vertexBuffer = BufferHandle(vertexHandle)
+            vertexBufferMemory = DeviceMemoryHandle(vertexHandle)
+            vertexBinding = WebGpuBufferHandle(rawVertexBuffer)
+        }
 
         val rawIndexBuffer: GPUBuffer = device.createBuffer(
             BufferDescriptor(
@@ -119,19 +142,39 @@ class Mesh(
         device.queue.writeBufferData(rawLineIndexBuffer, 0uL, fastArrayBufferOf(lineIndices))
         lineIndexBuffer = BufferHandle(WebGpuHandles.register(rawLineIndexBuffer))
 
-        vertexBinding = WebGpuBufferHandle(rawVertexBuffer)
         indexBinding = WebGpuBufferHandle(rawIndexBuffer)
         lineIndexBinding = WebGpuBufferHandle(rawLineIndexBuffer)
     }
 
     /** Releases the handle-table entries and closes the three buffers behind them. */
     override fun destroy() {
-        WebGpuHandles.release(vertexBuffer.handle)
+        if (--vertexOwner.meshes == 0) {
+            WebGpuHandles.release(vertexBuffer.handle)
+            vertexBinding.buffer.close()
+        }
         WebGpuHandles.release(indexBuffer.handle)
         WebGpuHandles.release(lineIndexBuffer.handle)
-        vertexBinding.buffer.close()
         indexBinding.buffer.close()
         lineIndexBinding.buffer.close()
+    }
+
+    /**
+     * A mesh drawing this one's vertex buffer with [indices] instead of its own, or null when this
+     * mesh has been destroyed and its vertex buffer with it.
+     */
+    internal fun sharingVertices(indices: IntArray, bounds: Aabb?): Mesh? = if (vertexOwner.meshes == 0) {
+        null
+    } else {
+        Mesh(graphicsDevice, runOneTimeCommands, EMPTY_VERTICES, indices, format, bounds, this)
+    }
+
+    /** How many meshes still draw one vertex buffer. */
+    private class SharedVertices {
+        var meshes = 1
+    }
+
+    private companion object {
+        val EMPTY_VERTICES = FloatArray(0)
     }
 }
 
