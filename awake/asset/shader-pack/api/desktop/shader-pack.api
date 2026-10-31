@@ -38,6 +38,12 @@ public final class com/awakekt/awake/asset/shaderpack/AslMeshVariantShadersKt {
 	public static final fun getSkinnedTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslMipDownsampleShaderKt {
+	public static final fun getMIP_DOWNSAMPLE_TRIANGLE ()[F
+	public static final fun getMipDownsampleShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getMipDownsampleWgsl ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslOutlineShaderKt {
 	public static final fun outlineShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }

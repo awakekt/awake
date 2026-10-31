@@ -47,19 +47,27 @@ internal fun Renderer.performCreateMaterial(
         material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
         material.sourceTarget = offscreen
     } else if (texture != null) {
-        // Every map gets a texture, a neutral one where the material has none, as on Vulkan: a textured
-        // pipeline's declaration binds all four, so a glTF material with only a base colour must still fill them.
-        val pbr = listOf(
-            pbrTextures?.metallicRoughness to Renderer.NEUTRAL_METALLIC_ROUGHNESS,
-            pbrTextures?.normal to Renderer.NEUTRAL_NORMAL,
-            pbrTextures?.occlusion to Renderer.NEUTRAL_OCCLUSION,
-            pbrTextures?.emissive to Renderer.NEUTRAL_EMISSIVE,
-        ).map { (asset, neutral) ->
-            asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) { uploadTexture(neutral) }
-        }
-        material.createResources(uploadTexture(texture), pbr)
+        createPbrResources(material, uploadTexture(texture), pbrTextures)
     }
     return material
+}
+
+/** A material sampling [base], an already uploaded texture, as [performCreateMaterial] builds one from an asset. */
+internal fun Renderer.createTexturedMaterial(base: Texture, uniformFloatCount: Int, pbrTextures: PbrTextureSet?): RenderMaterial =
+    Material(graphicsDevice, uniformFloatCount).also { createPbrResources(it, base, pbrTextures) }
+
+private fun Renderer.createPbrResources(material: Material, base: Texture, pbrTextures: PbrTextureSet?) {
+    // Every map gets a texture, a neutral one where the material has none, as on Vulkan: a textured
+    // pipeline's declaration binds all four, so a glTF material with only a base colour must still fill them.
+    val pbr = listOf(
+        pbrTextures?.metallicRoughness to Renderer.NEUTRAL_METALLIC_ROUGHNESS,
+        pbrTextures?.normal to Renderer.NEUTRAL_NORMAL,
+        pbrTextures?.occlusion to Renderer.NEUTRAL_OCCLUSION,
+        pbrTextures?.emissive to Renderer.NEUTRAL_EMISSIVE,
+    ).map { (asset, neutral) ->
+        asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) { uploadTexture(neutral) }
+    }
+    material.createResources(base, pbr)
 }
 
 internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =
@@ -92,11 +100,13 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
     return readColorPixels(offscreen.colorTexture, offscreen.width, offscreen.height, offscreen.colorFormat)
 }
 
-private suspend fun Renderer.readColorPixels(
+/** Reads [mipLevel] of [texture] ([width]x[height] at that level) back as tightly packed RGBA8. */
+internal suspend fun Renderer.readColorPixels(
     texture: io.ygdrasil.webgpu.GPUTexture,
     width: Int,
     height: Int,
     format: GPUTextureFormat,
+    mipLevel: Int = 0,
 ): TextureAsset {
     val device = graphicsDevice.wgpuContext.device
     val unpaddedBytesPerRow = width * 4
@@ -110,7 +120,7 @@ private suspend fun Renderer.readColorPixels(
     )
     val encoder = device.createCommandEncoder()
     encoder.copyTextureToBuffer(
-        source = TexelCopyTextureInfo(texture = texture),
+        source = TexelCopyTextureInfo(texture = texture, mipLevel = mipLevel.toUInt()),
         // rowsPerImage is required, not optional: wgpu rejects a zero with "invalid
         // rowsPerImage" and panics across the FFI boundary, which aborts the process rather
         // than throwing. Nothing caught it until this backend gained a pixel test, because

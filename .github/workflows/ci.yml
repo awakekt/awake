@@ -648,6 +648,12 @@ jobs:
       - name: Image decode browser tests
         run: ./gradlew :awake:core:image:wasmJsBrowserTest
 
+      # A texture copied from a browser image on the GPU (copyExternalImageToTexture, GPU mips) against
+      # the CPU decode's upload, texel by texel, under SwiftShader WebGPU, and the main-thread timing of
+      # both. Only these classes: the backend's draw-preparation benchmark is too long for this job.
+      - name: GPU texture upload browser tests
+        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*"
+
       # Code that only runs in a browser: copying a fetched response into a ByteArray, the
       # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content
       # transport's real request. Desktop tests can't reach it.

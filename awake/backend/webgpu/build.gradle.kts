@@ -160,6 +160,8 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.browser)
                 implementation(project(":awake:core:logging"))
+                // BrowserImage, the decoded ImageBitmap copyExternalImageToTexture uploads (#1184).
+                implementation(project(":awake:core:image"))
             }
         }
         named("wasmJsTest").dependencies {
