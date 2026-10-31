@@ -122,8 +122,10 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    `RELEASE_TOKEN`. Its run summary says why, or that no Vulkan release was needed. Previews
    (`-rc`, `-beta`, `-alpha`) get none. That tag's own Publish run uploads the three Vulkan modules
    as one Central deployment and attaches the bundle to the GitHub Release, as a Core release does.
-   Tag by hand (`git tag -a vulkan-vA.B.C -m vulkan-vA.B.C <sha>` and push it, once Core is on
-   Central) only when the job says so: `RELEASE_TOKEN` is not set, or the next version is taken.
+   For a release whose Publish run predates that job or skipped it, run the **Vulkan tag** workflow
+   by hand with the Core tag (`core_tag: v0.28.0`): it makes the same decision and push
+   (`scripts/push-vulkan-tag.sh`) once that release's BOM is on Central. Tag by hand only when either
+   says so: `RELEASE_TOKEN` is not set, or the next version is taken.
 4. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
    starter template repositories (awake-template, awake-project-template, awake-plugin-template)
    need no bump PR: their sources live in Core, under `templates/game`, `templates/project` and
