@@ -589,6 +589,9 @@ open class VulkanEngine(
                 ?.let { SkinnedInstanceBuffer.createDescriptorSetLayout(graphicsDevice) }
             skinnedInstanceDescriptorSetLayout = paletteLayout
             transferContext = TransferContext(graphicsDevice)
+            // Cleared to the far plane once, so a frame that draws no layer of it still samples a
+            // readable image: distance fog reads the mask on every frame, not only masked ones.
+            maskTarget?.let { target -> transferContext.runOneTimeCommands(target::clearToFar) }
             depthPrePassPlaceholder = depthPlaceholderWithoutPrePass()
             pipelineRegistry = PipelineRegistry(
                 VulkanPipelineFactory(
