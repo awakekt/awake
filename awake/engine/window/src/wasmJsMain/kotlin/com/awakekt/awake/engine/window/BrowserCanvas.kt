@@ -179,25 +179,6 @@ fun bindWindowTextInput(input: Input) {
 }
 
 /**
- * The pixel width and height [canvas]'s buffer needs: its box on the page at the device pixel ratio.
- * The box, not the window, since page CSS can make the two differ.
- */
-fun currentCanvasSize(canvas: HTMLCanvasElement = findCanvas()): Pair<Int, Int> =
-    canvas.box().bufferSize(currentWindowDensity())
-
-/** Returns the current browser window device pixel ratio. */
-fun currentWindowDensity(): Double {
-    val scale = window.devicePixelRatio
-    return if (scale.isFinite() && scale > 0.0) scale else 1.0
-}
-
-/** Sets the internal pixel buffer dimensions of [canvas]. */
-fun syncCanvasSize(canvas: HTMLCanvasElement, width: Int, height: Int) {
-    canvas.width = width
-    canvas.height = height
-}
-
-/**
  * Finds an HTMLCanvasElement by [canvasId], or throws if not found.
  */
 fun findCanvas(canvasId: String = "awake-canvas"): HTMLCanvasElement =
@@ -224,13 +205,34 @@ fun findCanvas(canvasId: String = "awake-canvas"): HTMLCanvasElement =
  * @param initBackend Hook invoked asynchronously on [MainScope] after input binding and initial canvas sync,
  *                    allowing the rendering backend (e.g. WebGPU) to initialize its device, context, or surface.
  */
-@Suppress("TooGenericExceptionCaught")
 fun runBrowserCanvas(
     canvas: HTMLCanvasElement,
     lifecycle: WindowLifecycle,
     onResize: (width: Int, height: Int) -> Unit = { _, _ -> },
     isStopped: () -> Boolean = { false },
     cursor: (() -> PointerCursor)? = null,
+    initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
+) {
+    runBrowserCanvas(canvas, lifecycle, onResize, isStopped, cursor, maxPixelRatio = { null }, initBackend)
+}
+
+/**
+ * Runs a browser canvas window host for [lifecycle], as the overload without [maxPixelRatio] does,
+ * with the canvas's buffer drawn at no more than [maxPixelRatio] buffer pixels per CSS pixel.
+ *
+ * [maxPixelRatio] is read on every resize and before every frame, so a game can expose it as a
+ * graphics setting: a new value resizes the buffer on the next frame. `null` is no cap, the device
+ * pixel ratio. The cap scales the whole buffer, UI included; the UI's density is the capped ratio, so
+ * layout keeps its size on the page and pointers land where it was drawn.
+ */
+@Suppress("TooGenericExceptionCaught", "LongParameterList")
+fun runBrowserCanvas(
+    canvas: HTMLCanvasElement,
+    lifecycle: WindowLifecycle,
+    onResize: (width: Int, height: Int) -> Unit = { _, _ -> },
+    isStopped: () -> Boolean = { false },
+    cursor: (() -> PointerCursor)? = null,
+    maxPixelRatio: () -> Float?,
     initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
 ) {
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
@@ -241,19 +243,23 @@ fun runBrowserCanvas(
     val textInput = DomTextInputBridge(input)
     val canvasCursor = CanvasCursor { css -> canvas.style.cursor = css }
 
-    val initialSize = currentCanvasSize(canvas)
-    syncCanvasSize(canvas, initialSize.first, initialSize.second)
-    lifecycle.setDensity(currentWindowDensity().toFloat())
-    lifecycle.setSafeArea(currentSafeArea(canvas))
-
-    window.addEventListener("resize") {
-        val (width, height) = currentCanvasSize(canvas)
-        syncCanvasSize(canvas, width, height)
-        lifecycle.setDensity(currentWindowDensity().toFloat())
+    var pixelRatio = currentCanvasPixelRatio(maxPixelRatio())
+    fun syncCanvas(): Pair<Int, Int> {
+        pixelRatio = currentCanvasPixelRatio(maxPixelRatio())
+        val size = canvas.box().bufferSize(pixelRatio)
+        syncCanvasSize(canvas, size.first, size.second)
+        lifecycle.setDensity(pixelRatio.toFloat())
         lifecycle.setSafeArea(currentSafeArea(canvas))
+        return size
+    }
+    fun resizeCanvas() {
+        val (width, height) = syncCanvas()
         onResize(width, height)
         lifecycle.resize(x = 0, y = 0, width = width, height = height)
     }
+
+    val initialSize = syncCanvas()
+    window.addEventListener("resize") { resizeCanvas() }
 
     MainScope().launch {
         try {
@@ -276,6 +282,8 @@ fun runBrowserCanvas(
                 val deltaSeconds = clampFrameDelta((time - lastFrameTime) / 1000.0).toFloat()
                 lastFrameTime = time
                 try {
+                    // A changed cap, or a device ratio that moved without a resize event.
+                    if (currentCanvasPixelRatio(maxPixelRatio()) != pixelRatio) resizeCanvas()
                     pollBrowserGamepad(input)
                     lifecycle.update(deltaSeconds)
                     textInput.sync()
