@@ -1,0 +1,58 @@
+public final class com/awakekt/awake/core/lod/LodPolicy {
+	public static final field Companion Lcom/awakekt/awake/core/lod/LodPolicy$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Integer;IIII)V
+	public synthetic fun <init> (Ljava/lang/Integer;IIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun copy (Ljava/lang/Integer;IIII)Lcom/awakekt/awake/core/lod/LodPolicy;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/lod/LodPolicy;Ljava/lang/Integer;IIIIILjava/lang/Object;)Lcom/awakekt/awake/core/lod/LodPolicy;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBias ()I
+	public final fun getForcedLevel ()Ljava/lang/Integer;
+	public final fun getMaxLevel ()I
+	public final fun getMinLevel ()I
+	public final fun getShadowLevelOffset ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/lod/LodPolicy$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/core/lod/LodPolicy;
+}
+
+public final class com/awakekt/awake/core/lod/LodQuality {
+	public static final field Companion Lcom/awakekt/awake/core/lod/LodQuality$Companion;
+	public fun <init> ()V
+	public fun <init> (IF)V
+	public synthetic fun <init> (IFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()F
+	public final fun copy (IF)Lcom/awakekt/awake/core/lod/LodQuality;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/lod/LodQuality;IFILjava/lang/Object;)Lcom/awakekt/awake/core/lod/LodQuality;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBias ()I
+	public final fun getCoverageScale ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/lod/LodQuality$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/core/lod/LodQuality;
+}
+
+public final class com/awakekt/awake/core/lod/LodSelector {
+	public static final field INSTANCE Lcom/awakekt/awake/core/lod/LodSelector;
+	public static final field NONE I
+	public final fun applyPolicy (IILcom/awakekt/awake/core/lod/LodPolicy;Lcom/awakekt/awake/core/lod/LodQuality;)I
+	public static synthetic fun applyPolicy$default (Lcom/awakekt/awake/core/lod/LodSelector;IILcom/awakekt/awake/core/lod/LodPolicy;Lcom/awakekt/awake/core/lod/LodQuality;ILjava/lang/Object;)I
+	public final fun coverageLevel (F[FIF)I
+	public final fun followLevel (IIILcom/awakekt/awake/core/lod/LodPolicy;)I
+	public final fun screenCoverage (FFF)F
+	public final fun shadowLevel (IILcom/awakekt/awake/core/lod/LodPolicy;)I
+	public final fun thresholdLevel (FIIFLkotlin/jvm/functions/Function1;)I
+}
+

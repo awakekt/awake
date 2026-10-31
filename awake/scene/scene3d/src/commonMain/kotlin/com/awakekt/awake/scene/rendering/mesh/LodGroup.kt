@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.lod.LodPolicy
+import com.awakekt.awake.core.lod.LodSelector
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.rendering.RenderSystem3D
@@ -38,6 +40,17 @@ data class LodLevel(
  * farther than every level's threshold, the last (coarsest) level still draws rather than the
  * entity vanishing -- LOD selects detail, it doesn't cull (see [MeshBounds]/frustum culling
  * for that, which composes with this independently).
+ *
+ * **Driving a [MeshRenderer].** An entity that has both draws through its [MeshRenderer], with
+ * that renderer's material, factors, culling and flags, and the group only picks which level's
+ * [LodLevel.mesh] it draws; the levels' materials are then unused. This is how an imported model
+ * gets levels without losing its glTF material, and copies at one level still fold into one
+ * instanced draw, since they share that level's mesh and material.
+ *
+ * **What a game decides at run time.** [policy] pins, clamps or biases the level per entity,
+ * [follow] makes a part switch with another model, [minScreenCoverage] switches by size on screen
+ * instead of distance, and [SceneLod.quality] is the host's global setting. Each is read every
+ * frame, so changing one takes effect on the next.
  */
 data class LodGroup(
     val levels: List<LodLevel>,
@@ -68,7 +81,47 @@ data class LodGroup(
      * component holding per-entity state.
      */
     var activeLevel: Int = UNSET
-        private set
+        internal set
+
+    /**
+     * Pins, clamps or biases the level this entity draws, and how much coarser its shadows are;
+     * see [LodPolicy]. Read every frame, so a game can change it at any time.
+     */
+    var policy: LodPolicy = LodPolicy.Default
+
+    /**
+     * Switch with another model instead of by this one's own thresholds: a part of a composed or
+     * skinned character follows its body, so the parts never switch on different frames. Null
+     * switches by this group's own thresholds.
+     */
+    var follow: LodFollow? = null
+
+    /**
+     * The smallest screen coverage each level draws at, one per level and descending, to switch by
+     * size on screen instead of [LodLevel.maxDistance]: a large model then keeps its detail farther
+     * away than a small one. Coverage is the model's bounding-sphere diameter over the viewport
+     * height, the measure a glTF asset's `MSFT_screencoverage` uses. Null switches by distance.
+     */
+    var minScreenCoverage: FloatArray? = null
+        set(value) {
+            require(value == null || value.size == levels.size) {
+                "minScreenCoverage has ${value?.size} values for ${levels.size} levels"
+            }
+            field = value
+        }
+
+    /** The bounding-sphere radius [minScreenCoverage] measures with when the entity has no [MeshBounds]. */
+    var boundingRadius: Float = 1f
+
+    /** The level the shadow passes draw: [activeLevel] plus the [policy]'s shadow offset. -1 before the first frame. */
+    var shadowLevel: Int = UNSET
+        internal set
+
+    /** The level the thresholds alone picked last, which hysteresis holds; [policy] applies on top. */
+    internal var thresholdLevel: Int = UNSET
+
+    /** The frame a selection pass last picked this group's level, so a follower can tell its leader is current. */
+    internal var selectedFrame: Long = -1L
 
     /**
      * The level to draw at [distance], remembering it for the next call.
@@ -83,38 +136,31 @@ data class LodGroup(
      * right level immediately instead of stepping through the ones in between.
      */
     fun selectLevel(distance: Float): LodLevel {
-        val current = activeLevel
-        val index = if (current == UNSET || !holds(current, distance)) thresholdIndex(distance) else current
-        activeLevel = index
-        return levels[index]
+        // The band (see LodSelector.thresholdLevel) runs from the previous level's threshold minus
+        // [hysteresis] to its own plus [hysteresis], open at the bottom and closed at the top, so a
+        // zero [hysteresis] is the bare threshold: at a distance equal to one, the finer level draws.
+        val metric = distance / SceneLod.quality.coverageScale
+        thresholdLevel = LodSelector.thresholdLevel(metric, levels.size, thresholdLevel, hysteresis) { levels[it].maxDistance }
+        return applyPolicy(thresholdLevel)
     }
 
-    /** The first level whose threshold reaches [distance]; the coarsest when none does -- LOD
-     * selects detail, it does not cull. */
-    private fun thresholdIndex(distance: Float): Int {
-        val index = levels.indexOfFirst { distance <= it.maxDistance }
-        return if (index >= 0) index else levels.lastIndex
+    /** The level for a [coverage] of the screen, by [minScreenCoverage], remembering it like [selectLevel]. */
+    internal fun selectByCoverage(coverage: Float, minCoverage: FloatArray): LodLevel {
+        thresholdLevel = LodSelector.coverageLevel(coverage * SceneLod.quality.coverageScale, minCoverage, thresholdLevel, hysteresis)
+        return applyPolicy(thresholdLevel)
     }
 
-    /**
-     * Whether level [index] should keep drawing at [distance].
-     *
-     * Its band runs from the previous level's threshold minus [hysteresis] to its own plus
-     * [hysteresis]. The coarsest level has no upper edge for the same reason it is the fallback
-     * above, and level 0 has no lower one.
-     *
-     * Open at the bottom and closed at the top, which is what makes a zero [hysteresis] behave
-     * exactly like the bare threshold it replaced: at a distance equal to a threshold, the
-     * finer level draws.
-     */
-    private fun holds(index: Int, distance: Float): Boolean {
-        val lower = if (index == 0) Float.NEGATIVE_INFINITY else levels[index - 1].maxDistance * (1f - hysteresis)
-        val upper = if (index == levels.lastIndex) {
-            Float.POSITIVE_INFINITY
-        } else {
-            levels[index].maxDistance * (1f + hysteresis)
-        }
-        return distance > lower && distance <= upper
+    /** Draws [leaderLevel] plus [offset], within this group's [policy]. */
+    internal fun selectFollowing(leaderLevel: Int, offset: Int): LodLevel {
+        activeLevel = LodSelector.followLevel(leaderLevel, offset, levels.size, policy)
+        shadowLevel = LodSelector.shadowLevel(activeLevel, levels.size, policy)
+        return levels[activeLevel]
+    }
+
+    private fun applyPolicy(level: Int): LodLevel {
+        activeLevel = LodSelector.applyPolicy(level, levels.size, policy, SceneLod.quality)
+        shadowLevel = LodSelector.shadowLevel(activeLevel, levels.size, policy)
+        return levels[activeLevel]
     }
 
     private companion object {
