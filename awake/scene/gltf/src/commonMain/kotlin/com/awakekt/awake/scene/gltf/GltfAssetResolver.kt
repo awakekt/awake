@@ -63,7 +63,7 @@ class GltfAssetResolver(
     private val skinnedPartTextures = mutableMapOf<String, TextureAsset>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
-    private val lodLevels = GltfLodLevels()
+    private val lodLevels = GltfLodLevels(loadedStaticMeshes)
 
     /** The last GPU mesh made for each full mesh with levels, whose vertex buffer its levels draw. */
     private val levelBases = mutableMapOf<String, Mesh>()
@@ -165,7 +165,7 @@ class GltfAssetResolver(
         loadedParts.remove(path)
         loadedMaterialSlots.remove(path)
         loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
-        lodLevels.forget(path, loadedStaticMeshes)
+        lodLevels.forget(path)
         levelBases.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
@@ -225,7 +225,7 @@ class GltfAssetResolver(
     suspend fun preloadMaterials(path: String, bytes: ByteArray) {
         if (path in loadedMaterialSlots) return
         val skinned = loadedScenes[path] ?: parseSkinnedScene(path, bytes)?.also { loadedScenes[path] = it }
-        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) preloadSkinnedParts(path) else preloadStaticSlots(path, bytes)
+        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) preloadSkinnedParts(path, bytes) else preloadStaticSlots(path, bytes)
     }
 
     private suspend fun preloadStaticSlots(path: String, bytes: ByteArray) {
@@ -259,10 +259,10 @@ class GltfAssetResolver(
         }
         val keys = slots.associate { it.mesh to (it.material != UNTEXTURED_MATERIAL) }.toMutableMap()
         keys.getOrPut(path) { false }
-        lodLevels.preload(path, bytes, external, keys, loadedStaticMeshes)
+        lodLevels.preload(path, bytes, external, keys)
     }
 
-    private suspend fun preloadSkinnedParts(path: String) {
+    private suspend fun preloadSkinnedParts(path: String, bytes: ByteArray) {
         loadedMaterialSlots[path] = parts(path).orEmpty().mapIndexed { index, part ->
             val key = "$path#$index"
             when (part) {
@@ -287,6 +287,22 @@ class GltfAssetResolver(
                 }
             }
         }
+        preloadPartLevels(path, bytes)
+    }
+
+    /** A skinned model's `MSFT_lod` levels, part by part, when it has any. Its parts keep their vertices. */
+    private suspend fun preloadPartLevels(path: String, bytes: ByteArray) {
+        if (bytes.isGlb()) return
+        val external = GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
+        val keys = loadedMaterialSlots[path].orEmpty().map { it.mesh }
+        lodLevels.preloadParts(path, bytes, keys, ::partGeometry, { level ->
+            runCatching { GltfParser.parseSkinned(level.decodeToString(), external).parts() }.getOrNull()?.map { part ->
+                when (part) {
+                    is GltfPart.Skinned -> part.mesh.indices
+                    is GltfPart.Static -> part.primitive.indices
+                }
+            }
+        })
     }
 
     /** The parts of the skinned model at [path], built once from its loaded scene; null when none is loaded. */
