@@ -1,1 +1,0 @@
-- **`ParticleEmitter.forEachLiveParticle` passes scratch vectors.** The `position` and `velocity` it hands to the action are copies refilled for each particle, so writing through them no longer moves the particle. Copy what you keep, and use `spawn` or `emit` to add particles (#1103).
