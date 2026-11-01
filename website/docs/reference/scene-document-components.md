@@ -779,6 +779,8 @@ stops, so `airborneAbove` must exceed the vertical speed of running up the steep
 | `runAbove` | number | `4` | Ground speed that starts the run; at least `walkAbove`. |
 | `airborneAbove` | number | `2` | Vertical speed that counts as a jump without a `character_controller`; greater than 0. |
 | `crossFade` | number | `0.15` | Seconds each clip change blends over. Not negative. |
+| `walkReferenceSpeed` | number | none | Ground speed the walk cycle was authored for; set it to scale playback so the stride matches travel. Greater than 0. |
+| `runReferenceSpeed` | number | none | Ground speed the run cycle was authored for; set it to scale playback so the stride matches travel. Greater than 0. |
 
 ## `mesh_renderer`
 
