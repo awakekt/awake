@@ -69,51 +69,61 @@ internal object ImageUpload {
         filtering: TextureFiltering,
     ): UploadedImage {
         val device = graphicsDevice.device
-        val physicalDevice = graphicsDevice.physicalDevice
+        // Whatever exists when the upload doesn't finish is released, so a failed upload leaks no GPU
+        // memory: the staging buffer always, and the image, its memory and its view unless returned.
         val (stagingBuffer, stagingMemory) = staging(graphicsDevice, data)
-
-        // The staging buffer and memory are freed even when creating or filling the image throws, so a
-        // failed upload doesn't leak GPU memory. The image itself isn't: the caller's constructor
-        // throws, and nothing ever sees it.
-        val image: Long
-        val memory: Long
+        var image = 0L
+        var memory = 0L
+        var view = 0L
+        var uploaded: UploadedImage? = null
         try {
-            image = VulkanImages.vkCreateImage(
-                device,
-                VkImageCreateInfo(
-                    width = width,
-                    height = height,
-                    format = format.value,
-                    usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_DST_BIT or VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT,
-                    imageType = VkImageType.VK_IMAGE_TYPE_2D,
-                    tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                    initialLayout = VkImageLayout2.VK_IMAGE_LAYOUT_UNDEFINED,
-                    sharingMode = VkSharingMode2.VK_SHARING_MODE_EXCLUSIVE,
-                    mipLevels = mipLevels,
-                    arrayLayers = layerCount,
-                    flags = if (isCubemap) VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT else 0,
-                ),
-            )
-            val requirements = VulkanImages.vkGetImageMemoryRequirements(device, image)
-            memory = VulkanBuffers.vkAllocateMemory(
-                device,
-                VkMemoryAllocateInfo(
-                    allocationSize = requirements.size,
-                    memoryTypeIndex = VulkanBuffers.findMemoryType(
-                        physicalDevice,
-                        requirements.memoryTypeBits,
-                        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    ),
-                ),
-            )
+            image = VulkanImages.vkCreateImage(device, imageInfo(format, width, height, mipLevels, layerCount, isCubemap))
+            memory = deviceLocalMemory(graphicsDevice, image)
             VulkanImages.vkBindImageMemory(device, image, memory, 0)
             runOneTimeCommands { commandBuffer -> copy(commandBuffer, stagingBuffer, image, regions) }
+            view = view(graphicsDevice, image, format, mipLevels, layerCount, isCubemap)
+            uploaded = UploadedImage(image, memory, view, sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels))
+            return uploaded
         } finally {
             VulkanBuffers.vkDestroyBuffer(device, stagingBuffer)
             VulkanBuffers.vkFreeMemory(device, stagingMemory)
+            if (uploaded == null) {
+                if (view != 0L) Vulkan.vkDestroyImageView(device, view)
+                if (image != 0L) VulkanImages.vkDestroyImage(device, image)
+                if (memory != 0L) VulkanBuffers.vkFreeMemory(device, memory)
+            }
         }
-        val view = view(graphicsDevice, image, format, mipLevels, layerCount, isCubemap)
-        return UploadedImage(image, memory, view, sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels))
+    }
+
+    @Suppress("LongParameterList") // The image's format, size, levels and layers, each its own property.
+    private fun imageInfo(format: VkFormat, width: Int, height: Int, mipLevels: Int, layerCount: Int, isCubemap: Boolean) = VkImageCreateInfo(
+        width = width,
+        height = height,
+        format = format.value,
+        usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_DST_BIT or VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT,
+        imageType = VkImageType.VK_IMAGE_TYPE_2D,
+        tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+        initialLayout = VkImageLayout2.VK_IMAGE_LAYOUT_UNDEFINED,
+        sharingMode = VkSharingMode2.VK_SHARING_MODE_EXCLUSIVE,
+        mipLevels = mipLevels,
+        arrayLayers = layerCount,
+        flags = if (isCubemap) VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT else 0,
+    )
+
+    /** DEVICE_LOCAL memory the size [image] needs, not yet bound. */
+    private fun deviceLocalMemory(graphicsDevice: GraphicsDevice, image: Long): Long {
+        val requirements = VulkanImages.vkGetImageMemoryRequirements(graphicsDevice.device, image)
+        return VulkanBuffers.vkAllocateMemory(
+            graphicsDevice.device,
+            VkMemoryAllocateInfo(
+                allocationSize = requirements.size,
+                memoryTypeIndex = VulkanBuffers.findMemoryType(
+                    graphicsDevice.physicalDevice,
+                    requirements.memoryTypeBits,
+                    VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                ),
+            ),
+        )
     }
 
     /** A HOST_VISIBLE staging buffer holding [data], with its memory. */
