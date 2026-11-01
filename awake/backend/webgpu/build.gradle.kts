@@ -169,6 +169,7 @@ kotlin {
             // The engine's own texture loaders, run against this backend's GPU-direct upload (#1184).
             // Tests only: verifyBackendLayering keeps scene vocabulary out of the backend's own sources.
             implementation(project(":awake:scene:gltf"))
+            implementation(project(":awake:asset:shader-document"))
             implementation(project(":awake:scene:particles"))
             implementation(project(":awake:scene:runtime"))
             implementation(project(":awake:engine:render:passes"))

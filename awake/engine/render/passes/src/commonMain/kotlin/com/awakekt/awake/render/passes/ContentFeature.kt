@@ -13,6 +13,7 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 
 /**
@@ -63,6 +64,11 @@ import com.awakekt.awake.render.texture.TextureAsset
  * @property samplesMask Whether this feature's pipeline declares the mask group,
  * [com.awakekt.awake.render.pipeline.BindingSemantic.MaskDepth]. A declaration like
  * [samplesSceneDepth]: the pass is opted into by `RenderPlan.maskShaderSet`.
+ * @property images Decoded images for sampled-texture bindings [textures] leaves out, keyed by binding
+ * index: single 2D images a backend uploads `Linear`, with a full mip chain, as a [TextureAsset] of
+ * the same pixels would be. A browser's WebGPU copies them on the GPU without reading them back
+ * (awakekt/awake#1184); every other backend uploads [GpuImageSource.readRgba8]. They take no
+ * [textureUpdates]. Every declared binding is in exactly one of [textures] and [images].
  * @property build Turns the registry's output into the feature that records with it.
  *
  * Mutable textures opt into [textureUpdates]. Backends prepare regions before any depth or scene
@@ -81,8 +87,24 @@ class ContentFeature(
     /** Sampler binding to texture binding, when different samplers are required. */
     val samplerTextures: Map<Int, Int> = emptyMap(),
     val samplesMask: Boolean = false,
+    val images: Map<Int, GpuImageSource>,
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
+    /** A feature whose textures are all [TextureAsset]s, as before [images]. */
+    constructor(
+        name: String,
+        spec: PipelineSpec,
+        textures: Map<Int, TextureAsset> = emptyMap(),
+        geometry: MeshGeometry? = null,
+        paint: ContentPaint = ContentPaint.BeforeGeometry,
+        samplesSceneDepth: Boolean = false,
+        depth: PipelineSpec? = null,
+        textureUpdates: ContentTextureUpdates? = null,
+        samplerTextures: Map<Int, Int> = emptyMap(),
+        samplesMask: Boolean = false,
+        build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
+    ) : this(name, spec, textures, geometry, paint, samplesSceneDepth, depth, textureUpdates, samplerTextures, samplesMask, emptyMap(), build)
+
     init {
         require(spec.uniforms != null) {
             "Content feature '$name' declares no uniforms. A content feature owns its uniform " +
@@ -94,7 +116,10 @@ class ContentFeature(
             .orEmpty()
             .filter { it.kind == ResourceKind.SampledTexture }
         val declared = sampled.map { it.binding }.toSet()
-        require(textureUpdates?.bindings.orEmpty().all { it in declared && textures.getValue(it).filtering != com.awakekt.awake.render.texture.TextureFiltering.Linear }) {
+        require(textures.keys.none { it in images }) {
+            "Content feature '$name' supplies both a texture and an image at ${textures.keys.filter { it in images }.sorted()}."
+        }
+        require(textureUpdates?.bindings.orEmpty().all { it in declared && it in textures && textures.getValue(it).filtering != com.awakekt.awake.render.texture.TextureFiltering.Linear }) {
             "Mutable content textures must be declared base-level textures."
         }
         require(
@@ -106,8 +131,8 @@ class ContentFeature(
         // with no declared binding is written nowhere; a declared binding with no texture leaves
         // a descriptor the shader samples unwritten -- undefined reads on Vulkan, and a
         // bind-group rejection on WebGPU.
-        require(textures.keys == declared) {
-            "Content feature '$name' supplies textures for ${textures.keys.sorted()} but its " +
+        require(textures.keys + images.keys == declared) {
+            "Content feature '$name' supplies textures for ${(textures.keys + images.keys).sorted()} but its " +
                 "pipeline declares sampled textures at ${declared.sorted()}. Every declared " +
                 "binding needs pixel data and every supplied texture needs a binding."
         }
@@ -115,6 +140,13 @@ class ContentFeature(
         // so it is the one that can disagree. Sampling a 2D view through a `texture_2d_array`
         // declaration is a Vulkan validation error naming a descriptor index, far from the asset.
         sampled.forEach { entry ->
+            if (entry.binding in images) {
+                require(!entry.cubemap && !entry.arrayed) {
+                    "Content feature '$name' supplies an image at binding ${entry.binding}, which its pipeline declares as " +
+                        "${if (entry.cubemap) "texture_cube" else "texture_2d_array"}; an image is a single 2D texture."
+                }
+                return@forEach
+            }
             val texture = textures.getValue(entry.binding)
             val (declaredAs, matches) = when {
                 entry.cubemap -> "texture_cube" to texture.isCubemap

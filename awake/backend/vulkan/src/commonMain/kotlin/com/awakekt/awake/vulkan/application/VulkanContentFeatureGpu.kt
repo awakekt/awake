@@ -14,6 +14,7 @@ import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.texture.toTextureAsset
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -55,7 +56,9 @@ internal class VulkanContentFeatureGpu(
                 isCubemap = asset.isCubemap,
                 filtering = asset.filtering,
             )
-        val textures = feature.textures.mapValues { (_, asset) -> create(asset) }
+        // Images take the CPU path here: Vulkan has no platform image to copy (awakekt/awake#1184).
+        val textures = feature.textures.mapValues { (_, asset) -> create(asset) } +
+            feature.images.mapValues { (_, image) -> create(image.toTextureAsset()) }
         // After the registry compiled the pipeline, because the layout comes from a spec and the
         // pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
         val mutable = feature.textureUpdates?.bindings.orEmpty()

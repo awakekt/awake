@@ -661,10 +661,10 @@ jobs:
 
       # A texture copied from a browser image on the GPU (copyExternalImageToTexture, GPU mips) against
       # the CPU decode's upload, texel by texel, under SwiftShader WebGPU, and the main-thread timing of
-      # both; then the engine's glTF and scene-sprite loaders taking that path, with a glTF model's
+      # both; then the engine's glTF, scene-sprite and shader-effect loaders taking that path, with a glTF model's
       # timing. Only these classes: the backend's draw-preparation benchmark is too long for this job.
       - name: GPU texture upload browser tests
-        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*"
+        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*"
 
       # Code that only runs in a browser: copying a fetched response into a ByteArray, the
       # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content

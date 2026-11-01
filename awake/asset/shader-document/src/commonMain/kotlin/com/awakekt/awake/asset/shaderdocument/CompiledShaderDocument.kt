@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 
 /**
@@ -86,5 +87,20 @@ class CompiledShaderDocument internal constructor(private val checked: CheckedDo
         inputs: ShaderEffectInputs,
         textures: Map<String, TextureAsset> = emptyMap(),
         name: String = "shader-document",
-    ): ContentFeatureSource = feature.source(inputs, textures, name)
+    ): ContentFeatureSource = feature.source(inputs, textures, emptyMap(), name)
+
+    /**
+     * [contentFeature] with some or all of the document's textures as decoded [images], which a browser's
+     * WebGPU copies on the GPU without reading them back (awakekt/awake#1184); every other backend
+     * uploads their CPU pixels. Each texture the document declares is in exactly one of [textures] and
+     * [images].
+     *
+     * @throws ShaderDocumentException When a texture is missing, unknown, given twice, or not a single 2D image.
+     */
+    fun contentFeature(
+        inputs: ShaderEffectInputs,
+        textures: Map<String, TextureAsset>,
+        images: Map<String, GpuImageSource>,
+        name: String = "shader-document",
+    ): ContentFeatureSource = feature.source(inputs, textures, images, name)
 }
