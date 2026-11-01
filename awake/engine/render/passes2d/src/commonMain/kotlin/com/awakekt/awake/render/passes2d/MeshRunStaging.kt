@@ -20,8 +20,14 @@ import kotlin.math.sin
  * here and staged in the same breath, while a mesh arrives finished and only has to be placed.
  */
 
-/** [chunkColoredVertexTriangleMeshes] for meshes still carrying their placement. */
-internal fun chunkPlacedMeshes(runs: MutableList<StagedDrawRun>, meshes: List<DrawCommand.Mesh>, maxQuads: Int) {
+/** [chunkColoredVertexTriangleMeshes] for meshes still carrying their placement. [pool], when
+ * given, supplies reused buffers for a dynamic run instead of allocating per frame. */
+internal fun chunkPlacedMeshes(
+    runs: MutableList<StagedDrawRun>,
+    meshes: List<DrawCommand.Mesh>,
+    maxQuads: Int,
+    pool: DynamicRunArrayPool? = null,
+) {
     val maxVertices = maxQuads * VertexFormats2D.VERTICES_PER_QUAD
     val maxIndices = maxQuads * VertexFormats2D.INDICES_PER_QUAD
     // A shape wider than the batching budget becomes its own run rather than being split. The
@@ -37,7 +43,7 @@ internal fun chunkPlacedMeshes(runs: MutableList<StagedDrawRun>, meshes: List<Dr
 
     fun flushChunk() {
         if (chunk.isEmpty()) return
-        runs += stagePlacedMeshesToRun(chunk)
+        runs += stagePlacedMeshesToRun(chunk, pool)
         chunk = mutableListOf()
         chunkVertices = 0
         chunkIndices = 0
@@ -56,11 +62,12 @@ internal fun chunkPlacedMeshes(runs: MutableList<StagedDrawRun>, meshes: List<Dr
     flushChunk()
 }
 
-private fun stagePlacedMeshesToRun(meshes: List<DrawCommand.Mesh>): StagedDrawRun.QuadRun {
+private fun stagePlacedMeshesToRun(meshes: List<DrawCommand.Mesh>, pool: DynamicRunArrayPool? = null): StagedDrawRun.QuadRun {
     val totalVertices = meshes.sumOf { it.mesh.vertices.size }
     val totalIndices = meshes.sumOf { it.mesh.indices.size }
-    val vertices = FloatArray(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX)
-    val indices = IntArray(totalIndices)
+    val buffers = pool?.take(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX, totalIndices)
+    val vertices = buffers?.vertices ?: FloatArray(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX)
+    val indices = buffers?.indices ?: IntArray(totalIndices)
     var vertexCursor = 0
     var indexCursor = 0
     var vertexOffset = 0

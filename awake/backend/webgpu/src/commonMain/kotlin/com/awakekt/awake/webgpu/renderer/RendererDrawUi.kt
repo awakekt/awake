@@ -53,6 +53,9 @@ internal fun Renderer.performDrawUi(
             imagePasses = imagePasses,
             snapshotSupported = true,
             targetContext = imagePassTargetContext(target),
+            // Only the once-per-frame swapchain overlay (no target) reuses the pooled arrays; an
+            // offscreen pass stages fresh so it never ping-pongs the overlay's buffers out of step.
+            pool = if (target == null) uiRunArrayPool else null,
         ),
         WebGpuUiMeshUploader(this),
         defaultFont = font,

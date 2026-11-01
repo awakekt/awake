@@ -1972,6 +1972,7 @@ public final class com/awakekt/awake/render/renderer/UniformWriter {
 	public final fun put ([F[Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public static synthetic fun put$default (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun putPadded (Lcom/awakekt/awake/render/renderer/UniformField;[F)Lcom/awakekt/awake/render/renderer/UniformWriter;
+	public final fun reset ()Lcom/awakekt/awake/render/renderer/UniformWriter;
 }
 
 public final class com/awakekt/awake/render/texture/CompressedTextureFormat : java/lang/Enum {

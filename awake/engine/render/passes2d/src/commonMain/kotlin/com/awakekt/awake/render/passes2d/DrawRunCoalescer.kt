@@ -156,7 +156,6 @@ object DrawRunCoalescer {
      * @param snapshotSupported Whether the destination surface supports mid-pass snapshot sampling.
      * @param targetContext Target dimensions and quality context used to lower backdrop blurs.
      */
-    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth", "LoopWithTooManyJumpStatements")
     fun coalesce(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int = 1024,
@@ -164,7 +163,27 @@ object DrawRunCoalescer {
         imagePasses: List<ImagePassPlacement> = emptyList(),
         snapshotSupported: Boolean = true,
         targetContext: ImagePassTargetContext? = null,
+    ): List<StagedDrawRun> = coalesce(primitives, maxQuadsPerRun, retained, imagePasses, snapshotSupported, targetContext, null)
+
+    /**
+     * [coalesce] with a trailing `pool` that reuses staging arrays for dynamic (cache-missing) runs,
+     * so a run whose contents change every frame does not allocate per frame. The pool is renderer
+     * owned, or null to allocate fresh; pass one only for a staging sequence that feeds one mesh-slot
+     * set once per frame (the UI overlay), since the identity-skip tolerates fresh allocation for
+     * one-off staging. Kept as a separate overload so the parameterless-pool signature stays
+     * binary-compatible.
+     */
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth", "LoopWithTooManyJumpStatements", "LongParameterList")
+    fun coalesce(
+        primitives: List<DrawCommand>,
+        maxQuadsPerRun: Int = 1024,
+        retained: RetainedDrawRunCache? = null,
+        imagePasses: List<ImagePassPlacement> = emptyList(),
+        snapshotSupported: Boolean = true,
+        targetContext: ImagePassTargetContext? = null,
+        pool: DynamicRunArrayPool?,
     ): List<StagedDrawRun> {
+        pool?.beginFrame()
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
@@ -247,6 +266,11 @@ object DrawRunCoalescer {
                 }
             }
             val stagedRunStart = runs.size
+            // A cacheable span that just missed is routed through the pool only on its later
+            // misses: its first sight is built fresh and stored, so a static span can hit and skip
+            // from the next frame. A pooled span is never stored -- its buffers are overwritten
+            // next frame, which would corrupt a cache entry holding them.
+            val spanPool = if (cacheable && pool != null && !pool.firstSightSpan()) pool else null
 
             // Each branch below casts `slice` (a List<DrawCommand>) to the concrete subtype
             // confirmed by the `is` check that opens the branch.  The inner while-loop above
@@ -275,12 +299,12 @@ object DrawRunCoalescer {
                             }
                             clipped to quad.color
                         }
-                        chunkColoredTriangleMeshes(runs, tessellated, maxQuadsPerRun)
+                        chunkColoredTriangleMeshes(runs, tessellated, maxQuadsPerRun, spanPool)
                     } else {
                         var chunkStart = 0
                         while (chunkStart < quadSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, quadSlice.size)
-                            runs += buildQuadRun(quadSlice.subList(chunkStart, chunkEnd))
+                            runs += buildQuadRun(quadSlice.subList(chunkStart, chunkEnd), spanPool)
                             chunkStart = chunkEnd
                         }
                     }
@@ -305,12 +329,12 @@ object DrawRunCoalescer {
                                 exactClipColored(raw, activePathClips)
                             }
                         }
-                        chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun)
+                        chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun, spanPool)
                     } else {
                         var chunkStart = 0
                         while (chunkStart < gradientSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, gradientSlice.size)
-                            runs += buildGradientQuadRun(gradientSlice.subList(chunkStart, chunkEnd))
+                            runs += buildGradientQuadRun(gradientSlice.subList(chunkStart, chunkEnd), spanPool)
                             chunkStart = chunkEnd
                         }
                     }
@@ -328,12 +352,12 @@ object DrawRunCoalescer {
                                 exactClipColored(triangleMesh, activePathClips)
                             }
                         }
-                        chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun)
+                        chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun, spanPool)
                     } else {
                         var chunkStart = 0
                         while (chunkStart < roundedSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, roundedSlice.size)
-                            runs += buildRoundedQuadRun(roundedSlice.subList(chunkStart, chunkEnd))
+                            runs += buildRoundedQuadRun(roundedSlice.subList(chunkStart, chunkEnd), spanPool)
                             chunkStart = chunkEnd
                         }
                     }
@@ -350,7 +374,7 @@ object DrawRunCoalescer {
                             exactClipColored(triangleMesh, activePathClips)
                         }
                     }
-                    chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun)
+                    chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun, spanPool)
                 }
                 is DrawCommand.StrokedPath -> {
                     @Suppress("UNCHECKED_CAST")
@@ -365,7 +389,7 @@ object DrawRunCoalescer {
                             exactClipColored(triangleMesh, activePathClips)
                         }
                     }
-                    chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun)
+                    chunkColoredVertexTriangleMeshes(runs, tessellated, maxQuadsPerRun, spanPool)
                 }
                 is DrawCommand.Mesh -> {
                     @Suppress("UNCHECKED_CAST")
@@ -381,11 +405,11 @@ object DrawRunCoalescer {
                                 exactClipColored(placed, activePathClips)
                             }
                         }
-                        chunkColoredVertexTriangleMeshes(runs, clipped, maxQuadsPerRun)
+                        chunkColoredVertexTriangleMeshes(runs, clipped, maxQuadsPerRun, spanPool)
                     } else {
                         // Placement folded into the copy the staging pass already makes: a
                         // multiply-add per vertex, and the caller's cached triangles stay untouched.
-                        chunkPlacedMeshes(runs, meshSlice, maxQuadsPerRun)
+                        chunkPlacedMeshes(runs, meshSlice, maxQuadsPerRun, spanPool)
                     }
                 }
                 is DrawCommand.Glyph -> {
@@ -393,7 +417,7 @@ object DrawRunCoalescer {
                     val glyphSlice = slice as List<DrawCommand.Glyph>
                     val font = first.font
                     if (first.decoration != null) {
-                        stageDecoratedGlyphs(runs, glyphSlice, font, activePathClips, safeInteriorRect, maxQuadsPerRun)
+                        stageDecoratedGlyphs(runs, glyphSlice, font, activePathClips, safeInteriorRect, maxQuadsPerRun, spanPool)
                     } else if (canExactClip(activePathClips)) {
                         val clipped = glyphSlice.map { glyph ->
                             val raw = texturedQuadMesh(glyph.x, glyph.y, glyph.w, glyph.h, glyph.u0, glyph.v0, glyph.u1, glyph.v1)
@@ -404,12 +428,12 @@ object DrawRunCoalescer {
                             }
                             mesh to glyph.color
                         }
-                        chunkTexturedTriangleMeshes(runs, clipped, maxQuadsPerRun, font)
+                        chunkTexturedTriangleMeshes(runs, clipped, maxQuadsPerRun, font, spanPool)
                     } else {
                         var chunkStart = 0
                         while (chunkStart < glyphSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, glyphSlice.size)
-                            runs += buildGlyphRun(glyphSlice.subList(chunkStart, chunkEnd), font)
+                            runs += buildGlyphRun(glyphSlice.subList(chunkStart, chunkEnd), font, spanPool)
                             chunkStart = chunkEnd
                         }
                     }
@@ -457,13 +481,13 @@ object DrawRunCoalescer {
                     var chunkStart = 0
                     while (chunkStart < shadowSlice.size) {
                         val chunkEnd = minOf(chunkStart + maxQuadsPerRun, shadowSlice.size)
-                        runs += buildShadowQuadRun(shadowSlice.subList(chunkStart, chunkEnd))
+                        runs += buildShadowQuadRun(shadowSlice.subList(chunkStart, chunkEnd), spanPool)
                         chunkStart = chunkEnd
                     }
                 }
                 is DrawCommand.BackdropBlur -> Unit
             }
-            if (cacheable) {
+            if (cacheable && spanPool == null) {
                 retained.store(
                     primitives = slice,
                     maxQuadsPerRun = maxQuadsPerRun,
@@ -637,6 +661,7 @@ object DrawRunCoalescer {
         activePathClips: List<DrawPath>,
         safeInteriorRect: Rectangle?,
         maxQuadsPerRun: Int,
+        pool: DynamicRunArrayPool? = null,
     ) {
         var chunkStart = 0
         while (chunkStart < glyphs.size) {
@@ -656,9 +681,10 @@ object DrawRunCoalescer {
                         (if (inside) quad else exactClip(quad, activePathClips)) to glyph
                     },
                     font,
+                    pool,
                 )
             } else {
-                DecoratedGlyphStaging.run(chunk, font)
+                DecoratedGlyphStaging.run(chunk, font, pool)
             }
             chunkStart += chunk.size
         }
@@ -695,9 +721,17 @@ object DrawRunCoalescer {
         if (canExactClip(activePathClips)) mesh.clipToConvexPaths(activePathClips) else mesh
 
     /** Builds staged quad vertex and index buffers from a list of solid color [quads]. */
-    fun buildQuadRun(quads: List<DrawCommand.Quad>): StagedDrawRun.QuadRun {
-        val vertices = FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX)
-        val indices = IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
+    fun buildQuadRun(quads: List<DrawCommand.Quad>): StagedDrawRun.QuadRun = buildQuadRun(quads, null)
+
+    /** [buildQuadRun] with a [pool] that supplies reused buffers for a dynamic run instead of
+     * allocating per frame; internal so the public signature stays binary-compatible. */
+    internal fun buildQuadRun(quads: List<DrawCommand.Quad>, pool: DynamicRunArrayPool?): StagedDrawRun.QuadRun {
+        val buffers = pool?.take(
+            quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX,
+            quads.size * VertexFormats2D.INDICES_PER_QUAD,
+        )
+        val vertices = buffers?.vertices ?: FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX)
+        val indices = buffers?.indices ?: IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
         var quadIndex = 0
         while (quadIndex < quads.size) {
             val quad = quads[quadIndex]
@@ -721,9 +755,16 @@ object DrawRunCoalescer {
     }
 
     /** Builds staged quad vertex and index buffers from a list of gradient-filled [quads]. */
-    fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>): StagedDrawRun.QuadRun {
-        val vertices = FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX)
-        val indices = IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
+    fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>): StagedDrawRun.QuadRun = buildGradientQuadRun(quads, null)
+
+    /** [buildGradientQuadRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
+    internal fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>, pool: DynamicRunArrayPool?): StagedDrawRun.QuadRun {
+        val buffers = pool?.take(
+            quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX,
+            quads.size * VertexFormats2D.INDICES_PER_QUAD,
+        )
+        val vertices = buffers?.vertices ?: FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX)
+        val indices = buffers?.indices ?: IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
         var quadIndex = 0
         while (quadIndex < quads.size) {
             val quad = quads[quadIndex]
@@ -747,10 +788,14 @@ object DrawRunCoalescer {
     }
 
     /** Builds staged rounded quad vertex and index buffers from a list of [quads]. */
-    fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>): StagedDrawRun.RoundedQuadRun {
+    fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>): StagedDrawRun.RoundedQuadRun = buildRoundedQuadRun(quads, null)
+
+    /** [buildRoundedQuadRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
+    internal fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>, pool: DynamicRunArrayPool?): StagedDrawRun.RoundedQuadRun {
         val floatsPerVertex = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
-        val vertices = FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
-        val indices = IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
+        val buffers = pool?.take(quads.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex, quads.size * VertexFormats2D.INDICES_PER_QUAD)
+        val vertices = buffers?.vertices ?: FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
+        val indices = buffers?.indices ?: IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
         var quadIndex = 0
         while (quadIndex < quads.size) {
             val quad = quads[quadIndex]
@@ -777,10 +822,14 @@ object DrawRunCoalescer {
     }
 
     /** Builds staged rounded quad vertex and index buffers for blurred box [shadows]. */
-    fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>): StagedDrawRun.RoundedQuadRun {
+    fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>): StagedDrawRun.RoundedQuadRun = buildShadowQuadRun(shadows, null)
+
+    /** [buildShadowQuadRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
+    internal fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>, pool: DynamicRunArrayPool?): StagedDrawRun.RoundedQuadRun {
         val floatsPerVertex = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
-        val vertices = FloatArray(shadows.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
-        val indices = IntArray(shadows.size * VertexFormats2D.INDICES_PER_QUAD)
+        val buffers = pool?.take(shadows.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex, shadows.size * VertexFormats2D.INDICES_PER_QUAD)
+        val vertices = buffers?.vertices ?: FloatArray(shadows.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
+        val indices = buffers?.indices ?: IntArray(shadows.size * VertexFormats2D.INDICES_PER_QUAD)
         var quadIndex = 0
         while (quadIndex < shadows.size) {
             val shadow = shadows[quadIndex]
@@ -830,9 +879,21 @@ object DrawRunCoalescer {
     fun buildGlyphRun(
         glyphs: List<DrawCommand.Glyph>,
         font: UiFont? = glyphs.firstOrNull()?.font,
+    ): StagedDrawRun.GlyphRun = buildGlyphRun(glyphs, font, null)
+
+    /** [buildGlyphRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
+    internal fun buildGlyphRun(
+        glyphs: List<DrawCommand.Glyph>,
+        font: UiFont?,
+        pool: DynamicRunArrayPool?,
     ): StagedDrawRun.GlyphRun {
-        val glyphVertices = FloatArray(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
-        val glyphIndices = IntArray(glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
+        val buffers = pool?.take(
+            glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX,
+            glyphs.size * VertexFormats2D.INDICES_PER_QUAD,
+        )
+        val glyphVertices = buffers?.vertices
+            ?: FloatArray(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
+        val glyphIndices = buffers?.indices ?: IntArray(glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
         var glyphIndex = 0
         while (glyphIndex < glyphs.size) {
             val glyph = glyphs[glyphIndex]
@@ -1047,6 +1108,7 @@ object DrawRunCoalescer {
         runs: MutableList<StagedDrawRun>,
         geometries: List<Pair<TriangleMesh, Color>>,
         maxQuads: Int,
+        pool: DynamicRunArrayPool? = null,
     ) {
         val maxVertices = maxQuads * VertexFormats2D.VERTICES_PER_QUAD
         val maxIndices = maxQuads * VertexFormats2D.INDICES_PER_QUAD
@@ -1056,7 +1118,7 @@ object DrawRunCoalescer {
 
         fun flushChunk() {
             if (chunk.isEmpty()) return
-            runs += stageColoredTriangleMeshesToRun(chunk)
+            runs += stageColoredTriangleMeshesToRun(chunk, pool)
             chunk = mutableListOf()
             chunkVertices = 0
             chunkIndices = 0
@@ -1079,6 +1141,7 @@ object DrawRunCoalescer {
         runs: MutableList<StagedDrawRun>,
         meshes: List<ColoredTriangleMesh>,
         maxQuads: Int,
+        pool: DynamicRunArrayPool? = null,
     ) {
         val maxVertices = maxQuads * VertexFormats2D.VERTICES_PER_QUAD
         val maxIndices = maxQuads * VertexFormats2D.INDICES_PER_QUAD
@@ -1088,7 +1151,7 @@ object DrawRunCoalescer {
 
         fun flushChunk() {
             if (chunk.isEmpty()) return
-            runs += stageColoredVertexTriangleMeshesToRun(chunk)
+            runs += stageColoredVertexTriangleMeshesToRun(chunk, pool)
             chunk = mutableListOf()
             chunkVertices = 0
             chunkIndices = 0
@@ -1114,6 +1177,7 @@ object DrawRunCoalescer {
         geometries: List<Pair<TexturedTriangleMesh, Color>>,
         maxQuads: Int,
         font: UiFont?,
+        pool: DynamicRunArrayPool? = null,
     ) {
         val maxVertices = maxQuads * VertexFormats2D.VERTICES_PER_QUAD
         val maxIndices = maxQuads * VertexFormats2D.INDICES_PER_QUAD
@@ -1123,7 +1187,7 @@ object DrawRunCoalescer {
 
         fun flushChunk() {
             if (chunk.isEmpty()) return
-            runs += stageTexturedTriangleMeshesToRun(chunk, font)
+            runs += stageTexturedTriangleMeshesToRun(chunk, font, pool)
             chunk = mutableListOf()
             chunkVertices = 0
             chunkIndices = 0
@@ -1142,11 +1206,15 @@ object DrawRunCoalescer {
         flushChunk()
     }
 
-    private fun stageColoredTriangleMeshesToRun(geometries: List<Pair<TriangleMesh, Color>>): StagedDrawRun.QuadRun {
+    private fun stageColoredTriangleMeshesToRun(
+        geometries: List<Pair<TriangleMesh, Color>>,
+        pool: DynamicRunArrayPool? = null,
+    ): StagedDrawRun.QuadRun {
         val totalVertices = geometries.sumOf { it.first.points.size }
         val totalIndices = geometries.sumOf { it.first.indices.size }
-        val vertices = FloatArray(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX)
-        val indices = IntArray(totalIndices)
+        val buffers = pool?.take(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX, totalIndices)
+        val vertices = buffers?.vertices ?: FloatArray(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX)
+        val indices = buffers?.indices ?: IntArray(totalIndices)
         var vertexCursor = 0
         var indexCursor = 0
         var vertexOffset = 0
@@ -1165,11 +1233,15 @@ object DrawRunCoalescer {
         return StagedDrawRun.QuadRun(vertices, indices)
     }
 
-    private fun stageColoredVertexTriangleMeshesToRun(meshes: List<ColoredTriangleMesh>): StagedDrawRun.QuadRun {
+    private fun stageColoredVertexTriangleMeshesToRun(
+        meshes: List<ColoredTriangleMesh>,
+        pool: DynamicRunArrayPool? = null,
+    ): StagedDrawRun.QuadRun {
         val totalVertices = meshes.sumOf { it.vertices.size }
         val totalIndices = meshes.sumOf { it.indices.size }
-        val vertices = FloatArray(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX)
-        val indices = IntArray(totalIndices)
+        val buffers = pool?.take(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX, totalIndices)
+        val vertices = buffers?.vertices ?: FloatArray(totalVertices * VertexFormats2D.FLOATS_PER_VERTEX)
+        val indices = buffers?.indices ?: IntArray(totalIndices)
         var vertexCursor = 0
         var indexCursor = 0
         var vertexOffset = 0
@@ -1191,11 +1263,13 @@ object DrawRunCoalescer {
     private fun stageTexturedTriangleMeshesToRun(
         geometries: List<Pair<TexturedTriangleMesh, Color>>,
         font: UiFont?,
+        pool: DynamicRunArrayPool? = null,
     ): StagedDrawRun.GlyphRun {
         val totalVertices = geometries.sumOf { it.first.vertices.size }
         val totalIndices = geometries.sumOf { it.first.indices.size }
-        val vertices = FloatArray(totalVertices * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
-        val indices = IntArray(totalIndices)
+        val buffers = pool?.take(totalVertices * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, totalIndices)
+        val vertices = buffers?.vertices ?: FloatArray(totalVertices * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
+        val indices = buffers?.indices ?: IntArray(totalIndices)
         var vertexCursor = 0
         var indexCursor = 0
         var vertexOffset = 0

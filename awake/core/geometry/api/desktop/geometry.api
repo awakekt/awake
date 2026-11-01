@@ -19,6 +19,7 @@ public final class com/awakekt/awake/core/geometry/GridTopologyKt {
 
 public final class com/awakekt/awake/core/geometry/IndexBytesKt {
 	public static final fun toByteArrayLE ([I)[B
+	public static final fun toByteArrayLE ([I[B)[B
 }
 
 public final class com/awakekt/awake/core/geometry/InterleavedVertices {

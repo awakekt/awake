@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Mat4
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
 
 class UniformWriterTest {
 
@@ -38,6 +39,58 @@ class UniformWriterTest {
             .build()
         assertEquals(9, out.size)
         assertEquals(5f, out[4])
+    }
+
+    @Test
+    fun resetRewindsSoOneWriterRefillsForTheNextDraw() {
+        val writer = UniformWriter(layout)
+        val first = writer
+            .put(floatArrayOf(1f, 2f, 3f, 4f), a)
+            .put(floatArrayOf(5f, 6f, 7f, 8f), b)
+            .put(floatArrayOf(9f), c)
+            .build()
+            .copyOf()
+        val second = writer.reset()
+            .put(floatArrayOf(10f, 20f, 30f, 40f), a)
+            .put(floatArrayOf(50f, 60f, 70f, 80f), b)
+            .put(floatArrayOf(90f), c)
+            .build()
+        assertEquals(listOf(1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f), first.toList())
+        assertEquals(listOf(10f, 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f), second.toList())
+    }
+
+    @Test
+    fun resetReusesTheSameBackingArray() {
+        // The whole point: no FloatArray(layout.total) allocation per draw. The array build()
+        // returns before and after a reset is the same instance.
+        val writer = UniformWriter(layout)
+        val before = writer
+            .put(floatArrayOf(1f, 2f, 3f, 4f), a)
+            .put(floatArrayOf(5f, 6f, 7f, 8f), b)
+            .put(floatArrayOf(9f), c)
+            .build()
+        val after = writer.reset()
+            .put(floatArrayOf(1f, 2f, 3f, 4f), a)
+            .put(floatArrayOf(5f, 6f, 7f, 8f), b)
+            .put(floatArrayOf(9f), c)
+            .build()
+        assertSame(before, after, "reset must keep the same backing array")
+    }
+
+    /** After a reset the completeness guard still fires -- a refill that stops short must fail
+     * exactly as a fresh writer would. Negative control: a reset that forgot to rewind
+     * `nextField` measured this block as already-complete and `build()` returned without throwing. */
+    @Test
+    fun resetRestoresTheIncompleteBlockGuard() {
+        val writer = UniformWriter(layout)
+            .put(floatArrayOf(1f, 2f, 3f, 4f), a)
+            .put(floatArrayOf(5f, 6f, 7f, 8f), b)
+            .put(floatArrayOf(9f), c)
+        writer.build()
+        val error = assertFailsWith<IllegalArgumentException> {
+            writer.reset().put(floatArrayOf(1f, 2f, 3f, 4f), a).build()
+        }
+        assertEquals(true, error.message?.contains("missing") == true)
     }
 
     @Test

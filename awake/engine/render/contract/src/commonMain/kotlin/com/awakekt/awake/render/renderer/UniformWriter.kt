@@ -29,7 +29,13 @@ import com.awakekt.awake.core.math.putVec4
  * the six-term concatenation this replaces allocated five throwaway arrays per draw per frame --
  * the per-frame allocation `skills/awake-core-math` rules out.
  *
- * Single-use: build one per uniform block, call [build] once.
+ * Reusable across draws: a caller that packs one block per draw keeps a single writer per layout
+ * and calls [reset] before refilling it each draw, rather than constructing one per draw -- the
+ * `FloatArray(layout.total)` a fresh writer allocates was a per-draw-per-frame cost of its own.
+ * [build] returns the writer's own internal buffer, so a caller must finish with the array it
+ * returns (copy it, or upload it, which copies) before the next [reset]; a consumer that retains
+ * the returned array across a [reset] would see it overwritten by the next draw and must keep its
+ * own writer instead.
  *
  * @param layout The shader's `Uniforms` struct.
  */
@@ -37,6 +43,22 @@ class UniformWriter(private val layout: UniformLayout) {
     private val out = FloatArray(layout.total)
     private var nextField = 0
     private var offset = 0
+
+    /**
+     * Rewinds the writer so the same buffer can be refilled for the next draw, allocating nothing.
+     *
+     * The field cursor and byte offset return to the start; the backing array is kept and will be
+     * overwritten field by field by the [put] calls that follow. Use this only once the previous
+     * [build] result has been consumed -- see the class note -- since that result is this same
+     * array.
+     *
+     * @return This writer, so a caller can chain the first [put] after it.
+     */
+    fun reset(): UniformWriter {
+        nextField = 0
+        offset = 0
+        return this
+    }
 
     /**
      * Writes [values] as the next [fields], which must be the layout's next fields in order.
