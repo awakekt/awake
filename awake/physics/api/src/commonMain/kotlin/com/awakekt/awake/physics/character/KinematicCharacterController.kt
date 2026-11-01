@@ -249,6 +249,9 @@ class KinematicCharacterController(
     private val steepNormal = Vec3f(0f, 1f, 0f)
     private val supportNormal = Vec3f(0f, 1f, 0f)
 
+    /** The unit direction of a push out of an overlap. */
+    private val pushDirection = Vec3f(0f, 1f, 0f)
+
     /**
      * Shrinks to the crouched capsule, keeping the feet where they are.
      *
@@ -577,21 +580,35 @@ class KinematicCharacterController(
      * never replaces the blocking a contact in the way provides. The push is not swept: it is
      * bounded by the capsule's own size (see [overlapDepth]), and the sweep that follows starts
      * from where it ends.
+     *
+     * Nor may it cross static ground: it stops short of any it would reach (see [clearPushDistance]).
+     * Pushed through a heightfield, a capsule ended under the terrain, which is solid only from
+     * above, and stayed there (#1209). With no room at all, it isn't pushed.
      */
     private fun depenetrate(hit: ShapeCastHit): Boolean {
         val depth = if (hit.fraction <= 0f) overlapDepth(hit) else 0f
-        val overlapping = depth > config.skinWidth
-        if (overlapping) {
-            val normal = hit.normal
-            val scale = (depth + config.skinWidth) / normal.length3()
+        if (depth <= config.skinWidth) return false
+        pushDirection.set(hit.normal).normalize()
+        val push = world.clearPushDistance(
+            position,
+            pushDirection,
+            depth + config.skinWidth,
+            hit.handle,
+            halfExtentAlong(pushDirection) + config.skinWidth,
+        )
+        val pushed = push > config.skinWidth
+        if (pushed) {
             position.set(
-                position.x + normal.x * scale,
-                position.y + normal.y * scale,
-                position.z + normal.z * scale,
+                position.x + pushDirection.x * push,
+                position.y + pushDirection.y * push,
+                position.z + pushDirection.z * push,
             )
         }
-        return overlapping
+        return pushed
     }
+
+    /** Half the capsule's extent along a unit [direction]: the radius plus the cylinder's projection. */
+    private fun halfExtentAlong(direction: Vec3f): Float = activeShape.halfHeight * abs(direction.y) + activeShape.radius
 
     /**
      * How far [hit] reaches into the capsule along its normal, or zero when it is not inside it.

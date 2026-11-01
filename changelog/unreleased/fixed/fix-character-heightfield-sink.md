@@ -1,0 +1,1 @@
+- Stop a character's push out of an overlap short of static ground, so a capsule pressed against a mesh, a wall or other characters is no longer pushed through a heightfield and left under the terrain.
