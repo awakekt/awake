@@ -182,6 +182,49 @@ class LocomotionAnimationTest {
         assertEquals("walk", List(4) { walker.after(dx = 2f * STEP, dy = 0f) }.last(), "walking off cuts the landing short")
     }
 
+    /**
+     * A teleport — a controller reconcile, a respawn, a networked entity's leash home — moves it
+     * faster in one frame than any stride. That jump is not locomotion: it must not spike the
+     * smoothed speed into a run, nor (under speed-matched playback) race the clip. The walk keeps
+     * playing, and the next real step measures from where it landed.
+     */
+    @Test
+    fun aTeleportIsNotReadAsLocomotion() {
+        // walk authored for 2 u/s, run for 6 u/s: speed-matched playback is on, so a bogus speed
+        // would race the clip's playback too, not only mis-select it.
+        val walker = Walker(CLIPS.copy(walkReferenceSpeed = 2f, runReferenceSpeed = 6f))
+        walker.standStill()
+        assertEquals("walk", walker.moving(dx = 2f * STEP), "a settled walk at 2 u/s")
+
+        val teleport = walker.after(dx = 50f, dy = 0f) // ~3000 u/s for one frame: a warp home
+        val after = List(SETTLE_FRAMES) { walker.after(dx = 2f * STEP, dy = 0f) }
+
+        assertEquals("walk", teleport, "a teleport must not switch the clip to a run")
+        assertFalse("run" in after, "the walk keeps playing after a teleport, never flapping to a run: $after")
+        assertTrue(walker.player.speed <= 2f, "a teleport must not race speed-matched playback: ${walker.player.speed}")
+    }
+
+    /**
+     * The inputs the earlier cases never exercised: a huge first-frame delta from an entity spawned
+     * far from the origin, a zero or backward time step, and the speed-matched playback rate. None
+     * may spike the clip to a run or produce a non-finite playback speed.
+     */
+    @Test
+    fun implausibleInputsNeverSpikeOrGoNonFinite() {
+        // Spawned 5 km out: its first observed frame is not a 5 km stride, and walking off, it walks.
+        val spawned = Walker(CLIPS.copy(walkReferenceSpeed = 2f, runReferenceSpeed = 6f), at = 5000f)
+        assertEquals("walk", spawned.moving(dx = 2f * STEP), "a far spawn point is not a run")
+        assertTrue(spawned.player.speed.isFinite(), "playback speed stays finite: ${spawned.player.speed}")
+
+        // A zero and a backward time step tell the mover nothing: it holds its clip, never divides by
+        // the step, and keeps a finite playback speed.
+        val walker = Walker(CLIPS.copy(walkReferenceSpeed = 2f, runReferenceSpeed = 6f))
+        assertEquals("walk", walker.moving(dx = 2f * STEP))
+        assertEquals("walk", walker.after(dx = 3f, dy = 0f, step = 0f), "a zero step is ignored")
+        assertEquals("walk", walker.after(dx = 3f, dy = 0f, step = -STEP), "a backward step is ignored")
+        assertTrue(walker.player.speed.isFinite(), "playback speed stays finite: ${walker.player.speed}")
+    }
+
     @Test
     fun aClipTheModelLacksKeepsWhatPlays() {
         val walker = Walker(CLIPS.copy(run = "sprint"))
