@@ -58,6 +58,7 @@ unchanged in `src/wasmJsMain/resources/basis/` (Apache-2.0, Binomial LLC; see `N
 - **Serving the files:** an app serves `basis/` beside its page, or passes another URL to `load`. In this
   repository the files come with the module's resources. An app outside it copies them, as it copies
   `awake-loader.js`.
-- **Pinned:** `VendoredBasisTranscoderTest` checks both files against the release's SHA-256. To update,
-  copy a new release's `webgl/transcoder/build/` files unchanged and update the digests, the provenance
-  registry and `NOTICE.md` together.
+- **Pinned:** the `verifyBasisTranscoder` task checks both files against the release's SHA-256 before the
+  wasm resources are packed, and with `check`, so a changed file fails the build. To update, copy a new
+  release's `webgl/transcoder/build/` files unchanged and update the digests in `build.gradle.kts`, the
+  provenance registry and `NOTICE.md` together.

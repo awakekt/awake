@@ -26,7 +26,7 @@
       "revision": "v2_50 (9bebe16726b3a61c8c213eeee3b7cffb462ef34e)",
       "copyright": "Binomial LLC",
       "license": "Apache-2.0",
-      "reason": "The official prebuilt Basis Universal transcoder's Emscripten loader, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked by VendoredBasisTranscoderTest."
+      "reason": "The official prebuilt Basis Universal transcoder's Emscripten loader, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked at build time by the verifyBasisTranscoder task, which fails the build on a mismatch."
     },
     {
       "path": "awake/asset/texture-ktx-loader/src/wasmJsMain/resources/basis/basis_transcoder.wasm",
@@ -35,7 +35,7 @@
       "revision": "v2_50 (9bebe16726b3a61c8c213eeee3b7cffb462ef34e)",
       "copyright": "Binomial LLC",
       "license": "Apache-2.0",
-      "reason": "The official prebuilt Basis Universal transcoder's WebAssembly module, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked by VendoredBasisTranscoderTest."
+      "reason": "The official prebuilt Basis Universal transcoder's WebAssembly module, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked at build time by the verifyBasisTranscoder task, which fails the build on a mismatch."
     }
   ]
 }
