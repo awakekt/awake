@@ -15,7 +15,8 @@ implementation(project(":awake:scene:particles"))
 - `ParticleEmitterBinding` and `ParticleEmitterSource` -- bind that component onto an entity.
 - `ParticleEmitterMapping` -- turns the document's options into the library's `ParticleMotion`,
   `ParticleVisual`, `ParticleGround` and `ParticleLifecycle`.
-- `loadParticleSprites` -- loads the sprites a document names.
+- `loadParticleImages` -- loads the sprites a document names, decoded for the GPU: a browser keeps
+  each image for WebGPU to copy without a readback. `loadParticleSprites` loads them as CPU pixels.
 - `ParticleContentSystem` -- gives each `ParticleEmitterSource` entity its `ParticleEmitter` once its
   sprite is loaded.
 - `TransformPlacement` -- tells `ParticleSystem` where an entity is, from its `Transform`. Pass it:
