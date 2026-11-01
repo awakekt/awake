@@ -16,7 +16,7 @@
         <link rel="prev" href="../sky-and-fog/">
       
       
-        <link rel="next" href="../gltf/">
+        <link rel="next" href="../level-of-detail/">
       
       
         
@@ -1082,6 +1082,8 @@
       
         
       
+        
+      
     
     
     
@@ -1372,6 +1374,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../level-of-detail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Level of detail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2983,7 +3013,10 @@ world transform; the entity's own transform is not applied.</p>
 <a href="../shaders/">Render plans and shaders</a>.</p>
 <h2 id="swap-detail-with-distance">Swap detail with distance</h2>
 <p>An <code>LodGroup</code> holds one <code>LodLevel</code> per detail level. Each frame the renderer picks a level by the
-entity's distance from the camera. An entity carries an <code>LodGroup</code> instead of a <code>MeshRenderer</code>.</p>
+entity's distance from the camera, or by its size on screen. An entity carries an <code>LodGroup</code>
+instead of a <code>MeshRenderer</code>, or next to one, which then draws the chosen level with its own
+material. To cook levels into your models and decide per entity which keep their detail, see
+<a href="../level-of-detail/">Level of detail</a>.</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">world</span><span class="p">.</span><span class="na">scene</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">entity</span><span class="p">(</span><span class="s">"tower"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">        </span><span class="n">transform</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="m">4f</span><span class="p">)</span>
@@ -3374,13 +3407,13 @@ off by default and costs nothing while it is off.</p>
         
         
           
-          <a href="../gltf/" class="md-footer__link md-footer__link--next" aria-label="Next: glTF models">
+          <a href="../level-of-detail/" class="md-footer__link md-footer__link--next" aria-label="Next: Level of detail">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                glTF models
+                Level of detail
               </div>
             </div>
             <div class="md-footer__button md-icon">

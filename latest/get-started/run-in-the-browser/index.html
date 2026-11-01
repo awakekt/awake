@@ -1177,6 +1177,8 @@
       
         
       
+        
+      
     
     
     
@@ -1293,6 +1295,34 @@
     
   
     Meshes and materials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/level-of-detail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Level of detail
   
 
     
@@ -2769,7 +2799,7 @@ include it. Each Core release publishes a WebGPU snapshot built from it instead.
 <p>Add the backend to the catalog at your Core version with <code>-SNAPSHOT</code> appended, the WebGPU build of
 that Core release:</p>
 <div class="language-toml highlight"><span class="filename">gradle/libs.versions.toml</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">[libraries]</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">awake-backend-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend:webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"0.30.0-SNAPSHOT"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">awake-backend-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend:webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"0.31.0-SNAPSHOT"</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>Then add a browser target and the dependency:</p>
 <div class="language-kotlin highlight"><span class="filename">build.gradle.kts</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">kotlin</span><span class="w"> </span><span class="p">{</span>
@@ -2790,9 +2820,9 @@ that Core release:</p>
 more setup.</p>
 <div class="admonition warning">
 <p class="admonition-title">Keep WebGPU on your Core release</p>
-<p><code>0.30.0-SNAPSHOT</code> depends on every Core module at exactly <code>0.30.0</code> and
+<p><code>0.31.0-SNAPSHOT</code> depends on every Core module at exactly <code>0.31.0</code> and
 holds them there, so a build that also asks for a newer Core fails to resolve rather than mixing
-two, and an older Core in the build is moved up to <code>0.30.0</code>. Do not take the newest
+two, and an older Core in the build is moved up to <code>0.31.0</code>. Do not take the newest
 <code>-SNAPSHOT</code> in the snapshot repository instead: that one is built from <code>main</code> after the release,
 and it moves the <code>wasmJs</code> target onto Core snapshots.</p>
 </div>
@@ -2804,6 +2834,10 @@ and it moves the <code>wasmJs</code> target onto Core snapshots.</p>
 </span></code></pre></div>
 <p><code>launchWebGpuGame</code> finds the <code>&lt;canvas&gt;</code> with id <code>awake-canvas</code>, keeps it the size of the window,
 and draws a frame on every animation frame. Pass <code>canvasId</code> to use a different canvas.</p>
+<p>On a high-DPI screen the canvas has 2.25 to 9 times the pixels of a 1x one. To trade some of them
+for frame rate, pass <code>renderScale = { settings.renderScale }</code>: the 3D scene renders at that fraction
+of the canvas and the UI stays sharp. <code>maxPixelRatio</code> caps the whole canvas, UI included. See
+<a href="../../guides/webgpu/#resolution-and-render-scale">Resolution and render scale</a>.</p>
 <h2 id="add-the-page-and-the-loading-screen">Add the page and the loading screen</h2>
 <p>Put an <code>index.html</code> in <code>src/wasmJsMain/resources/</code>:</p>
 <div class="language-html highlight"><span class="filename">src/wasmJsMain/resources/index.html</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="cp">&lt;!DOCTYPE html&gt;</span>

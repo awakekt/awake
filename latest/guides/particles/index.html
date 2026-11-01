@@ -1082,6 +1082,8 @@
       
         
       
+        
+      
     
     
     
@@ -1201,6 +1203,34 @@
     
   
     Meshes and materials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../level-of-detail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Level of detail
   
 
     
@@ -2906,9 +2936,11 @@ list, except the ones that are code: the <code>onParticleDeath</code> callback, 
 <p>The emitter spawns at its node's world position and follows the node; the node's scale does not
 apply. <code>loadProject</code> reads every emitter's <code>texture</code> while it loads the project, and <code>runProject</code>
 runs the particle systems when the scene has an emitter. In your own app, read the sprites with
-<code>loadParticleSprites(document, assets)</code> and add
-<code>frameSystem("particle-content") { ParticleContentSystem(renderer, sprites) }</code> next to
-<code>ParticleSystem</code>; <code>close()</code> it when the scene goes. The fields are in the
+<code>loadParticleImages(document, assets)</code> and add
+<code>frameSystem("particle-content") { ParticleContentSystem(renderer, emptyMap(), images) }</code> next to
+<code>ParticleSystem</code>; <code>close()</code> it when the scene goes. In a browser, WebGPU copies those images
+straight to the GPU. <code>loadParticleSprites</code> and <code>ParticleContentSystem(renderer, sprites)</code> still
+work, and upload CPU pixels. The fields are in the
 <a href="../../reference/scene-document-components/#particle_emitter">component reference</a>.</p>
 <h2 id="lay-particles-flat">Lay particles flat</h2>
 <p>Particles face the camera unless <code>facing</code> is <code>Flat</code>. A flat particle lies in the plane perpendicular

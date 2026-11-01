@@ -1082,6 +1082,8 @@
       
         
       
+        
+      
     
     
     
@@ -1201,6 +1203,34 @@
     
   
     Meshes and materials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../level-of-detail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Level of detail
   
 
     
@@ -1453,6 +1483,17 @@
     <span class="md-ellipsis">
       
         Launch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolution-and-render-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolution and render scale
       
     </span>
   </a>
@@ -2711,6 +2752,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#resolution-and-render-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolution and render scale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-happens-at-launch" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2831,13 +2883,57 @@ pointer shape the UI asks for, as a text beam over a text field or a diagonal ar
 Without it the canvas keeps the page's cursor, as the desktop window does without its <code>cursor</code>.</p>
 <p><code>applicationFactory</code> returns a <code>WebGpuEngine(appLifecycle, requestedPlan)</code>. Pass the same
 <code>RenderPlan</code> you give the Vulkan backend.</p>
+<h2 id="resolution-and-render-scale">Resolution and render scale</h2>
+<p>The canvas buffer is the canvas's box on the page times <code>devicePixelRatio</code>, so a high-DPI screen
+shades 2.25 (ratio 1.5) to 9 (ratio 3) times the pixels of a 1x screen. Two providers trade those
+pixels for frame rate. Both are lambdas, read before every frame, so a game can put them behind a
+graphics setting and change them while it runs:</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>What it scales</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>renderScale: () -&gt; Float</code></td>
+<td>Only the 3D scene, and the passes sized from it (depth, post-processing). A bilinear upscale copies the scene to the canvas, then the UI draws at the full ratio.</td>
+<td>Quality settings. Text and HUD edges stay as sharp as the screen can show.</td>
+</tr>
+<tr>
+<td><code>maxPixelRatio: () -&gt; Float?</code></td>
+<td>The whole canvas buffer, UI included. The UI's density follows it, so layout keeps its size, but text is drawn at the capped ratio. <code>null</code> is no cap.</td>
+<td>A hard ceiling on pixels, whatever the scene costs.</td>
+</tr>
+</tbody>
+</table>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">launchWebGpuGame</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="n">game</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="n">plan</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="n">maxPixelRatio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="m">2f</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">renderScale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">settings</span><span class="p">.</span><span class="na">renderScale</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</span></code></pre></div>
+<p><code>renderScale</code> is clamped to <code>(0, 1]</code> (values at or below 0 render at <code>RenderScale.MIN</code>, 0.1). The
+two compose: the scene renders at <code>renderScale</code> of the capped buffer. At 1, the default, the frame
+is the one drawn without a provider: no extra target and no extra pass.</p>
+<p>Below 1, <code>Renderer.surfaceWidth</code>/<code>surfaceHeight</code> and <code>RenderScale.sceneExtent</code> report the scene
+target's size, so a settings screen can show what a scale costs. <code>Renderer.outputWidth</code>/
+<code>outputHeight</code> stay the canvas buffer's size; scene viewports and pointer picking are measured
+there and map onto the scene at any scale. A game without the launcher's provider sets
+<code>renderer.renderScale</code> itself.</p>
+<p>The render scale is implemented on WebGPU only. The Vulkan backend reads 1 and ignores a new value
+for now.</p>
 <h2 id="what-happens-at-launch">What happens at launch</h2>
 <ol>
 <li>If the browser has no <code>navigator.gpu</code>, it stops with "WebGPU is unavailable in this browser or
    device…" before the engine starts.</li>
 <li>If no log sink is installed, it installs one that prints warnings and errors.</li>
 <li>It listens for pointer, keyboard and text input on the window.</li>
-<li>It sizes the canvas to the window times <code>devicePixelRatio</code>, and keeps it in step on resize.</li>
+<li>It sizes the canvas to its box on the page times <code>devicePixelRatio</code>, capped at <code>maxPixelRatio</code>
+   when you pass one, and keeps it in step on resize.</li>
 <li>It draws one frame per <code>requestAnimationFrame</code>.</li>
 </ol>
 <h2 id="the-plan-on-webgpu">The plan on WebGPU</h2>
