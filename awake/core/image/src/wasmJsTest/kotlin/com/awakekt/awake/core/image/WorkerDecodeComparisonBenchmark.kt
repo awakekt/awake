@@ -27,7 +27,7 @@ import kotlin.time.TimeSource
  *
  * What the worker leaves on the main thread is the `Blob` the GPU-bound decode also pays (this fixture
  * is an uncompressed 4 MB PNG), plus the copy of the packed pixels back into wasm and their load into
- * the [Bitmap]. So the worker takes 40 to 45% off a CPU reader's decode, but stays above the GPU-bound
+ * the [Bitmap]. So the worker takes 37 to 44% off a CPU reader's decode, but stays above the GPU-bound
  * decode. A texture decoded this way still uploads from the CPU, with a CPU mip chain, which
  * `ExternalImageUploadBrowserBenchmark` measured at about 200 ms for 1024x1024, against about 3 ms for
  * the GPU copy. For textures the GPU-direct path is the one to take; the worker only helps a caller
