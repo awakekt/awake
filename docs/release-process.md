@@ -349,10 +349,18 @@ or the branch the `AWAKE_PLUGINS_REF` repository variable names. It is not a req
 
 The **Build (JVM/Native)** job in `ci.yml` runs on a Blacksmith runner,
 `blacksmith-8vcpu-ubuntu-2404`, as a measured pilot; every other job stays on GitHub-hosted
-runners, and the macOS jobs (iOS physics, the Vulkan macOS natives) stay there whatever the pilot
-finds. The job reads its runner from the `CORE_BUILD_RUNNER` repository variable, so moving it back
-needs no code change: set `CORE_BUILD_RUNNER` to `ubuntu-latest` under *Settings → Secrets and
-variables → Actions → Variables*, and delete the variable to return to Blacksmith. The job keeps
+runners. Which runner a job uses follows one rule:
+
+- long, CPU-heavy Linux PR jobs go to Blacksmith;
+- short checks, macOS and iOS jobs, and release and publish runs stay on GitHub-hosted runners;
+- the Blacksmith jobs together stay within the 3,000 free Blacksmith minutes a month.
+
+Each moved job reads its runner from a repository variable of its own, defaulting to Blacksmith:
+`runs-on: ${{ vars.CORE_BUILD_RUNNER || 'blacksmith-8vcpu-ubuntu-2404' }}` for Build today, and
+`CORE_VULKAN_RUNNER` (Vulkan (Linux)) and `CORE_WEB_RUNNER` (Web) when those jobs move. A job that
+has not moved keeps `runs-on: ubuntu-latest` and has no variable. Moving a job back needs no code
+change: set its variable to `ubuntu-latest` under *Settings → Secrets and variables → Actions →
+Variables*, and delete the variable to return to Blacksmith. The job keeps
 `gradle/actions/setup-gradle`; on Blacksmith its `actions/cache` traffic goes to Blacksmith's cache
 without any change to the workflow.
 
