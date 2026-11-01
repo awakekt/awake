@@ -37,6 +37,13 @@ interface GpuImageSource {
      * calls it only when it cannot copy [externalImage].
      */
     fun readRgba8(): ByteArray
+
+    /**
+     * The image already in a GPU block format, with its mips, such as a cooked KTX2 texture (#1211), or
+     * null for one that only has pixels. `createImageMaterial` uploads it as it is on a device that
+     * takes its format, and [readRgba8] otherwise. Null by default.
+     */
+    val compressed: CompressedTextureImage? get() = null
 }
 
 /**

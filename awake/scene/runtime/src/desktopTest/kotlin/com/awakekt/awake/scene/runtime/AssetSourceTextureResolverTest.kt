@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.asGpuImageSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -107,6 +109,22 @@ class AssetSourceTextureResolverTest {
         // RGBA8, bottom-up rows; one row here.
         val rgba = byteArrayOf(0x89.toByte(), 0xAB.toByte(), 0xCD.toByte(), 0xFF.toByte(), 0xFE.toByte(), 0x0D, 0x0A, 0xFF.toByte())
         assertEquals(rgba.toList(), loaded.data.toList(), "decoded exactly from the file's bytes")
+        textures.close()
+    }
+
+    @Test
+    fun aCookedLoaderIsTriedFirstAndTheFileDecodedWhenItAnswersNull() = runTest {
+        val cooked = TextureAsset(ByteArray(4 * 4 * 4), 4, 4).asGpuImageSource()
+        val textures = AssetSourceTextureResolver(files, StandardTestDispatcher(testScheduler)) { name -> cooked.takeIf { name == "cooked.png" } }
+        arrived.complete(Unit)
+
+        textures.texture("cooked.png")
+        textures.texture("hero.png")
+        advanceUntilIdle()
+
+        assertSame(cooked, assertIs<SceneTextureLoad.Loaded>(textures.texture("cooked.png")).source)
+        assertEquals(3, assertIs<SceneTextureLoad.Loaded>(textures.texture("hero.png")).image.width, "decoded from its file")
+        assertEquals(listOf("hero.png"), reads, "a cooked texture's own file isn't read")
         textures.close()
     }
 

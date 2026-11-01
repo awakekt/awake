@@ -11,6 +11,25 @@ implementation(project(":awake:asset:texture-ktx-loader"))
 val material = device.createKtx2Material(bytes, LibKtxBasisTranscoder) // desktop
 ```
 
+## A project's cooked textures
+
+`CookedTextureLoader` loads the file an image was cooked to, when the project ships one beside it, and
+answers null when it doesn't, so the caller decodes the image as before. A played project's sprites
+and tilemaps load this way (`runProject`; see `awake:scene:scene2d`).
+
+```kotlin
+val image = CookedTextureLoader(files).load("textures/rock.png", device.compressedTextureFormats)
+val material = image?.let { device.createImageMaterial(it) }
+```
+
+- **Which file:** `rock.astc.ktx2`, then `rock.etc2.ktx2`, for a device that samples that format; then
+  `rock.ktx2`, which needs the platform's transcoder (`platformBasisTranscoder()`). Without one, as on
+  Android and iOS, only the mobile files load.
+- **What comes back:** a `GpuImageSource`. `createImageMaterial` uploads it in its block format when the
+  device takes it, and as RGBA8 otherwise. A material with PBR maps takes the RGBA8 path.
+- **A transcoder that won't load,** such as a page that doesn't serve `basis/`, is asked for once, and
+  the images load instead.
+
 ## What it does with a file
 
 | The file holds | It's loaded as |

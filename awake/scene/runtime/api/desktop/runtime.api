@@ -72,6 +72,7 @@ public final class com/awakekt/awake/scene/binding/SceneWorldExportKt {
 public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : com/awakekt/awake/scene/runtime/SceneAssetResolver, java/lang/AutoCloseable {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
 	public fun canResolveMaterial (Ljava/lang/String;)Z
 	public fun canResolveMesh (Ljava/lang/String;)Z
 	public fun close ()V

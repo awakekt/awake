@@ -90,6 +90,8 @@ fallback path or the feature is simply absent there.
 The same tier carries capability only a browser has. `GpuImageUpload` fills a texture straight
 from a browser `ImageBitmap` with `copyExternalImageToTexture`; `createImageMaterial` asks for it
 and otherwise uploads the image's CPU pixels, so Vulkan and every test double take the fallback.
+An image that is already block-compressed (`GpuImageSource.compressed`, a cooked KTX2 texture) goes
+up as it is through `GpuCompressedTextures` when the device takes its format (#1211).
 
 Shorthand for the common case, where a concept exists on both sides but is spelled differently —
 take the WebGPU spelling and let Vulkan translate:
@@ -213,7 +215,7 @@ the interface's default.
 | `RenderViewport` | Scissor rect — a hardware concept |
 | `RenderTarget` | Framebuffer attachment — hardware |
 | `TextureAsset`, `MipChain` | Texture data shapes |
-| `GpuImageSource`, `PbrImageSet`, `GpuImageUpload`, `createImageMaterial` | A decoded platform image a backend may copy on the GPU (a browser `ImageBitmap`, from `core:image`'s `decodeImage`), behind an optional capability with a CPU-pixel fallback (#1184) |
+| `GpuImageSource`, `PbrImageSet`, `GpuImageUpload`, `createImageMaterial` | A decoded platform image a backend may copy on the GPU (a browser `ImageBitmap`, from `core:image`'s `decodeImage`), behind an optional capability with a CPU-pixel fallback (#1184); or a block-compressed image, uploaded as it is where the device takes its format (#1211) |
 | `Material` | Descriptor set + UBO handle |
 | `Mesh` | Vertex / index buffer handle |
 | `PipelineSpec`, `PipelineTable`, `PipelineRegistry`, `PipelineVariant` | Pipeline objects |

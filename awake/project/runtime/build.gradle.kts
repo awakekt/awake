@@ -28,6 +28,7 @@ kotlin {
             implementation(project(":awake:scene:ai"))
             api(project(":awake:core:geometry"))
             api(project(":awake:core:io"))
+            implementation(project(":awake:asset:texture-ktx-loader"))
             api(project(":awake:core:localization"))
             // ProjectRenderPlan is a RenderPlan built from the pack's shader sets.
             api(project(":awake:asset:shaders"))

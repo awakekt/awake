@@ -40,14 +40,23 @@ import kotlin.coroutines.CoroutineContext
  *
  * Asked on the frame thread only. [close] it when the scene stops, which drops what is still loading.
  *
+ * A [cooked] loader is tried first for each texture, such as one that loads the KTX2 file the texture
+ * was cooked to (`awake:asset:texture-ktx-loader`'s `CookedTextureLoader`, #1211); the file itself is
+ * decoded when it answers null.
+ *
  * @param files Where the textures are read from.
  * @param context Where files are read and decoded; [Dispatchers.Default] by default.
+ * @param cooked Loads a texture another way before its file is decoded, or answers null to decode it.
  */
 class AssetSourceTextureResolver(
     private val files: AssetSource,
-    context: CoroutineContext = Dispatchers.Default,
+    context: CoroutineContext,
+    private val cooked: (suspend (name: String) -> GpuImageSource?)?,
 ) : SceneAssetResolver,
     AutoCloseable {
+    /** Reads each texture from [files] in [context] and decodes it, with no [cooked] loader. */
+    constructor(files: AssetSource, context: CoroutineContext = Dispatchers.Default) : this(files, context, null)
+
     private val loads = CoroutineScope(SupervisorJob() + context)
     private val finished = Channel<Finished>(Channel.UNLIMITED)
 
@@ -106,7 +115,7 @@ class AssetSourceTextureResolver(
     @Suppress("TooGenericExceptionCaught")
     // decodeImage: a browser keeps the decoded image for the GPU, which copies it without a readback.
     private suspend fun read(name: String): Result<GpuImageSource> = try {
-        Result.success(decodeImage(files.read(AssetPath(name)).getOrThrow()).asGpuImageSource())
+        Result.success(cooked?.invoke(name) ?: decodeImage(files.read(AssetPath(name)).getOrThrow()).asGpuImageSource())
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (failure: Exception) {
