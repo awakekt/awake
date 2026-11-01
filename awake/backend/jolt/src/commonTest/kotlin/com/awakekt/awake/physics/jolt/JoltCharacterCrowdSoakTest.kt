@@ -26,7 +26,9 @@ import kotlin.time.Duration.Companion.minutes
  * a small version of the headless soak in which capsules ended under the terrain (#1209).
  *
  * 120 capsules with inner bodies, so they push on one another, spawn in an overlapping ring 4 m out
- * and walk at the trunk for 30 s, weaving so they keep pressing from new angles.
+ * and walk at the trunk for 10 s, weaving so they keep pressing from new angles. The sink this guards
+ * against happens on the second step; the length is for the crowd to keep pressing, and is kept short
+ * enough that the iOS simulator, the slowest target, finishes well inside the timeout.
  *
  * Negative control, measured: with the push out of an overlap unguarded, one capsule is pushed
  * through the slope on the second step, by 1.5 m mostly downward out of its neighbours, and falls
@@ -38,7 +40,7 @@ class JoltCharacterCrowdSoakTest {
         const val SLOPE = 0.35f
         const val SAMPLES = 33
         const val COUNT = 120
-        const val STEPS = 1800
+        const val STEPS = 600
         const val STEP = 1f / 60f
         const val GRAVITY = -20f
         const val SPEED = 3f
@@ -46,7 +48,7 @@ class JoltCharacterCrowdSoakTest {
     }
 
     @Test
-    fun noCapsuleEndsUnderTheTerrain() = runTest(timeout = 2.minutes) {
+    fun noCapsuleEndsUnderTheTerrain() = runTest(timeout = 5.minutes) {
         val world = createJoltPhysicsWorld(gravity = Vec3f(0f, 0f, 0f))
         try {
             val heights = FloatArray(SAMPLES * SAMPLES) { (it % SAMPLES - SAMPLES / 2) * SLOPE }
