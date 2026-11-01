@@ -14,6 +14,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlinx.coroutines.CancellationException
@@ -142,7 +143,7 @@ class ShaderEffectSystem(
             val entry = tracked[index]
             val settings = entry.source.settings
             val shown = entry.shown
-            if (shown == null || assets.documents[settings.shader] !== shown.compiled || assets.texturesOf(settings) != shown.textures) {
+            if (shown?.isCurrentFor(assets, settings) != true) {
                 startAttach(entry)
             }
         }
@@ -172,13 +173,14 @@ class ShaderEffectSystem(
         val compiled = drawableDocument(entry) ?: return
         val settings = entry.source.settings
         val textures = assets.texturesOf(settings)
+        val images = assets.imagesOf(settings)
         val inputs = compiled.newInputs()
         val generation = entry.generation
         entry.job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                val source = compiled.contentFeature(inputs, textures, name = "shader-effect '${settings.shader}'")
+                val source = compiled.contentFeature(inputs, textures, images, name = "shader-effect '${settings.shader}'")
                 val feature = attachTo.attachContentFeature(source)
-                attached.trySend(Attached(entry, generation, Shown(compiled, textures, inputs, feature)))
+                attached.trySend(Attached(entry, generation, Shown(compiled, textures, images, inputs, feature)))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
@@ -262,9 +264,14 @@ class ShaderEffectSystem(
     private class Shown(
         val compiled: CompiledShaderDocument,
         val textures: Map<String, TextureAsset>,
+        val images: Map<String, GpuImageSource>,
         val inputs: ShaderEffectInputs,
         val feature: AttachedContentFeature,
-    )
+    ) {
+        /** Whether this was attached from the document, textures and images [assets] hold now. */
+        fun isCurrentFor(assets: ShaderEffectAssets, settings: SceneShaderEffect): Boolean =
+            assets.documents[settings.shader] === compiled && assets.texturesOf(settings) == textures && assets.imagesOf(settings) == images
+    }
 
     private class Attached(val entry: Tracked, val generation: Int, val shown: Shown)
 }

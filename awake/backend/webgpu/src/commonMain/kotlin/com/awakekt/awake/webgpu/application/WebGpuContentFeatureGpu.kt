@@ -16,11 +16,17 @@ import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.toTextureAsset
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
+import com.awakekt.awake.webgpu.renderer.canCopyExternalImage
+import com.awakekt.awake.webgpu.renderer.copyExternalImage
+import com.awakekt.awake.webgpu.texture.GpuMipmaps
 import com.awakekt.awake.webgpu.texture.Texture
 
 /**
@@ -39,7 +45,7 @@ internal class WebGpuContentFeatureGpu(
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
         val textures = feature.textures.mapValues { (_, asset) ->
             Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
-        }
+        } + feature.images.mapValues { (_, image) -> uploadImage(image) }
         // Before anything binds the group: a GPUBindGroup is immutable once built, so unlike
         // Vulkan these have to arrive ahead of the first bind, not after.
         pipeline.writeContentTextures(textures, feature.samplerTextures)
@@ -56,6 +62,25 @@ internal class WebGpuContentFeatureGpu(
             textures.values.forEach(Texture::destroy)
             mesh?.destroy()
         }
+    }
+
+    /** Draws content images' mips, made on the first image copied. */
+    private var mipmaps: GpuMipmaps? = null
+
+    /** How many content images this has copied on the GPU, for tests that check which path one took. */
+    internal var copies = 0
+        private set
+
+    // Copied on the GPU when the browser can; otherwise its CPU pixels, as a TextureAsset uploads.
+    private fun uploadImage(image: GpuImageSource): Texture {
+        val external = image.externalImage
+        if (external == null || !graphicsDevice.wgpuContext.device.queue.canCopyExternalImage(external)) {
+            val asset = image.toTextureAsset()
+            return Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, filtering = asset.filtering)
+        }
+        copies++
+        val mipmaps = mipmaps ?: GpuMipmaps(graphicsDevice.wgpuContext.device).also { mipmaps = it }
+        return graphicsDevice.copyExternalImage(mipmaps, external, image.width, image.height, TextureFiltering.Linear)
     }
 
     override suspend fun addDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload? {

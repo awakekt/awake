@@ -23,6 +23,7 @@ import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 
 /** Builds the content feature for one compiled document: its pipeline, textures, geometry and per-frame recording. */
@@ -33,12 +34,12 @@ internal class DocumentContentFeature(
 ) {
     private val document = checked.document
 
-    fun source(inputs: ShaderEffectInputs, textures: Map<String, TextureAsset>, name: String): ContentFeatureSource {
+    fun source(inputs: ShaderEffectInputs, textures: Map<String, TextureAsset>, images: Map<String, GpuImageSource>, name: String): ContentFeatureSource {
         require(inputs.parameters.size == document.parameters.size * FLOATS_PER_PARAMETER) {
             "These inputs were made for a document with ${inputs.parameters.size / FLOATS_PER_PARAMETER} parameter(s), " +
                 "not '${document.name}' with ${document.parameters.size}."
         }
-        val bound = bindTextures(textures)
+        val bound = bindTextures(textures, images)
         val geometry = document.plane?.let(::planeGeometry)
         val format = if (geometry == null) VertexFormat.None else VertexFormat.PositionUv
         return ContentFeatureSource { backend ->
@@ -47,13 +48,14 @@ internal class DocumentContentFeature(
                 // A fresh layout per attach: an engine registers one pipeline per spec, and the layout is
                 // what tells two attaches of one document apart.
                 spec = shaders.stagesFor(backend).spec(vertexFormat = format, variant = variant(), uniforms = fields.layout()),
-                textures = bound,
+                textures = bound.first,
                 geometry = geometry,
                 paint = if (document.surface == ShaderSurface.Overlay || checked.blend != ShaderBlend.Opaque) {
                     ContentPaint.AfterGeometry
                 } else {
                     ContentPaint.BeforeGeometry
                 },
+                images = bound.second,
             ) { pipeline, uniforms, uploaded -> DocumentRenderFeature(pipeline, uniforms, uploaded, inputs, fields) }
         }
     }
@@ -66,17 +68,23 @@ internal class DocumentContentFeature(
         else -> PipelineVariant.Opaque
     }
 
-    /** The supplied textures at their bindings, after checking every declared texture is supplied once and nothing else is. */
-    private fun bindTextures(supplied: Map<String, TextureAsset>): Map<Int, TextureAsset> {
+    /**
+     * The supplied textures and images at their bindings, after checking every declared texture is
+     * supplied once, as one or the other, and nothing else is.
+     */
+    private fun bindTextures(supplied: Map<String, TextureAsset>, images: Map<String, GpuImageSource>): Pair<Map<Int, TextureAsset>, Map<Int, GpuImageSource>> {
         val declared = document.textures.map { it.name }
         val issues = buildList {
-            declared.filter { it !in supplied }.forEach { add(ShaderDocumentIssue("textures.$it", "the document samples '$it' and no texture was supplied for it")) }
-            supplied.keys.filter { it !in declared }.forEach { add(ShaderDocumentIssue("textures.$it", "'$it' is not one of this document's textures")) }
+            declared.filter { it !in supplied && it !in images }.forEach { add(ShaderDocumentIssue("textures.$it", "the document samples '$it' and no texture was supplied for it")) }
+            (supplied.keys + images.keys).filter { it !in declared }.forEach { add(ShaderDocumentIssue("textures.$it", "'$it' is not one of this document's textures")) }
+            supplied.keys.filter { it in images }.forEach { add(ShaderDocumentIssue("textures.$it", "'$it' was supplied both as a texture and as an image")) }
             supplied.filter { (_, asset) -> asset.isCubemap || asset.layerCount != 1 }.keys
                 .forEach { add(ShaderDocumentIssue("textures.$it", "'$it' must be a single 2D image, not a cubemap or an array")) }
         }
         if (issues.isNotEmpty()) throw ShaderDocumentException(issues)
-        return declared.withIndex().associate { (i, name) -> FIRST_TEXTURE_BINDING + i to supplied.getValue(name) }
+        val bindings = declared.withIndex().associate { (i, name) -> name to FIRST_TEXTURE_BINDING + i }
+        return supplied.entries.associate { (name, asset) -> bindings.getValue(name) to asset } to
+            images.entries.associate { (name, image) -> bindings.getValue(name) to image }
     }
 }
 

@@ -93,6 +93,10 @@ open class WebGpuEngine(
 
     /** Content features attached after start; the renderer delegates [ContentFeatureHost] here. */
     private var contentAttacher: ContentFeatureAttacher<RenderPipeline>? = null
+
+    /** The GPU half that uploads attached content features, kept for tests that check how their images went up. */
+    internal var contentGpu: WebGpuContentFeatureGpu? = null
+        private set
     private lateinit var lineRenderPipeline: LineRenderPipeline
 
     /** The renderer once the backend is built, for [applyRenderScale]; `null` before that. */
@@ -256,7 +260,7 @@ open class WebGpuEngine(
         // Paint order within a slot: a backdrop feature, then geometry, then a feature that
         // covers it, then the always-present UI capability -- see
         // docs/reference/render-extensibility.md. Mirrors VulkanEngine's identical list.
-        val gpu = WebGpuContentFeatureGpu(graphicsDevice, registry, depthPrePass)
+        val gpu = WebGpuContentFeatureGpu(graphicsDevice, registry, depthPrePass).also { contentGpu = it }
         val attacher = ContentFeatureAttacher(gpu).also { contentAttacher = it }
         val content = plan.contentFeaturesFor(RenderBackend.WebGpu).groupBy { it.paint }
         val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = buildList {

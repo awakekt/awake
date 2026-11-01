@@ -10,6 +10,7 @@ import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.toTextureAsset
+import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.texture.GpuMipmaps
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.texture.mipLevelCount
@@ -75,23 +76,9 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
 
     /** The texture [createMaterial] binds: [image] copied, and its mips drawn when [filtering] is linear. */
     internal fun upload(image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture {
-        val levels = if (filtering == TextureFiltering.Linear) mipLevelCount(width, height) else 1
-        val texture = device.createTexture(
-            TextureDescriptor(
-                size = Extent3D(width = width.toUInt(), height = height.toUInt()),
-                format = GPUTextureFormat.RGBA8Unorm,
-                // RenderAttachment both for the copy, which WebGPU requires of its destination, and for the
-                // mip passes; CopySrc to read it back, as Texture's own uploads allow.
-                usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst or GPUTextureUsage.RenderAttachment or GPUTextureUsage.CopySrc,
-                dimension = GPUTextureDimension.TwoD,
-                mipLevelCount = levels.toUInt(),
-            ),
-        )
-        device.queue.copyExternalImage(image, texture, width, height)
+        val mipmaps = mipmaps ?: GpuMipmaps(device).also { mipmaps = it }
         copies++
-        (mipmaps ?: GpuMipmaps(device).also { mipmaps = it }).generate(texture, levels)
-        val filled = Texture.FilledTexture(texture, width, height, mipLevelCount = levels)
-        return renderer.textureResources.register(Texture.fromFilled(renderer.graphicsDevice, filled, filtering))
+        return renderer.textureResources.register(renderer.graphicsDevice.copyExternalImage(mipmaps, image, width, height, filtering))
     }
 
     override fun close() {
@@ -102,4 +89,28 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
     private companion object {
         const val PBR_MAPS = 4
     }
+}
+
+/**
+ * A texture filled from [image] on the GPU: an `RGBA8Unorm` 2D texture, `copyExternalImageToTexture`
+ * into level 0, then [TextureFiltering.Linear]'s mips drawn by [mipmaps]. The caller owns it. Call it only
+ * after [canCopyExternalImage] said yes for [image].
+ */
+internal fun GraphicsDevice.copyExternalImage(mipmaps: GpuMipmaps, image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture {
+    val device = wgpuContext.device
+    val levels = if (filtering == TextureFiltering.Linear) mipLevelCount(width, height) else 1
+    val texture = device.createTexture(
+        TextureDescriptor(
+            size = Extent3D(width = width.toUInt(), height = height.toUInt()),
+            format = GPUTextureFormat.RGBA8Unorm,
+            // RenderAttachment both for the copy, which WebGPU requires of its destination, and for the
+            // mip passes; CopySrc to read it back, as Texture's own uploads allow.
+            usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst or GPUTextureUsage.RenderAttachment or GPUTextureUsage.CopySrc,
+            dimension = GPUTextureDimension.TwoD,
+            mipLevelCount = levels.toUInt(),
+        ),
+    )
+    device.queue.copyExternalImage(image, texture, width, height)
+    mipmaps.generate(texture, levels)
+    return Texture.fromFilled(this, Texture.FilledTexture(texture, width, height, mipLevelCount = levels), filtering)
 }

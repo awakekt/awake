@@ -1,6 +1,8 @@
 public final class com/awakekt/awake/asset/shaderdocument/CompiledShaderDocument {
 	public final fun contentFeature (Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;Ljava/util/Map;Ljava/lang/String;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public final fun contentFeature (Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;Ljava/util/Map;Ljava/util/Map;Ljava/lang/String;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static synthetic fun contentFeature$default (Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;Ljava/util/Map;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun contentFeature$default (Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;Ljava/util/Map;Ljava/util/Map;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public final fun emitWgsl (Lcom/awakekt/awake/core/math/ClipSpace;)Ljava/lang/String;
 	public final fun getBlend ()Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
 	public final fun getDocument ()Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
