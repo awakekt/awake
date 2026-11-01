@@ -25,7 +25,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * A block-compressed texture draws the same as the same pixels uploaded as RGBA8 (#1211).
+ * A block-compressed texture draws the same as the same pixels uploaded as RGBA8, on both backends (#1211).
  *
  * `cooked/rock.ktx2` is a 64 x 64 ETC1S texture the cook wrote (see `CookedTextures` in
  * awake:asset:texture-ktx-loader). It is drawn twice on the textured PBR plane: transcoded to each
@@ -39,18 +39,19 @@ import kotlin.test.assertTrue
 class CompressedTextureParityTest {
 
     @Test
-    fun aBlockCompressedTextureDrawsAsItsRgba8PixelsDoOnVulkan() {
-        val renderer = session().renderer
-        val formats = renderer.compressedTextureFormats
-        assertTrue(CompressedTextureFormat.Bc7Rgba in formats, "lavapipe enables textureCompressionBC; this device takes $formats")
-        val reference = renderer.draw(Ktx2TextureLoader.decode(ROCK, emptySet(), LibKtxBasisTranscoder))
-        assertTrue(reference.drawnPixels() > MIN_DRAWN_PIXELS, "the RGBA8 plane drew ${reference.drawnPixels()} pixels")
+    fun aBlockCompressedTextureDrawsAsItsRgba8PixelsDoOnBothBackends() {
+        for (backend in BACKEND_ORDER) {
+            val renderer = session(backend).renderer
+            val formats = renderer.compressedTextureFormats
+            assertTrue(CompressedTextureFormat.Bc7Rgba in formats, "$backend: lavapipe has BC, but this device takes $formats")
+            val reference = renderer.draw(Ktx2TextureLoader.decode(ROCK, emptySet(), LibKtxBasisTranscoder))
+            assertTrue(reference.drawnPixels() > MIN_DRAWN_PIXELS, "$backend: the RGBA8 plane drew ${reference.drawnPixels()} pixels")
 
-        for (format in formats.filter { it in LibKtxBasisTranscoder.formats }) {
-            val upload = assertIs<Ktx2Upload.Compressed>(Ktx2TextureLoader.decode(ROCK, setOf(format), LibKtxBasisTranscoder))
-            val pixels = renderer.draw(upload)
-            val psnr = psnr(reference, pixels)
-            assertTrue(psnr > MIN_PSNR, "$format draws ${"%.1f".format(psnr)} dB from the RGBA8 frame")
+            for (format in formats.filter { it in LibKtxBasisTranscoder.formats }) {
+                val upload = assertIs<Ktx2Upload.Compressed>(Ktx2TextureLoader.decode(ROCK, setOf(format), LibKtxBasisTranscoder))
+                val psnr = psnr(reference, renderer.draw(upload))
+                assertTrue(psnr > MIN_PSNR, "$backend: $format draws ${"%.1f".format(psnr)} dB from the RGBA8 frame")
+            }
         }
     }
 
@@ -86,15 +87,17 @@ class CompressedTextureParityTest {
 
     private companion object {
         val ROCK: ByteArray = requireNotNull(CompressedTextureParityTest::class.java.getResourceAsStream("/cooked/rock.ktx2")).use { it.readBytes() }
-        private var vulkan: HeadlessRenderSession? = null
 
-        fun session(): HeadlessRenderSession = vulkan ?: openHeadlessScene(HeadlessUiBackend.Vulkan).also { vulkan = it }
+        /** Vulkan first, for the loader reason [UiBackendParityTest] documents. */
+        val BACKEND_ORDER = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)
+        private val sessions = mutableMapOf<HeadlessUiBackend, HeadlessRenderSession>()
+
+        fun session(backend: HeadlessUiBackend): HeadlessRenderSession = sessions.getOrPut(backend) { openHeadlessScene(backend) }
 
         @AfterClass
         @JvmStatic
         fun tearDown() {
-            vulkan?.close()
-            vulkan = null
+            sessions.remove(HeadlessUiBackend.Vulkan)?.close()
         }
 
         const val MIN_PSNR = 30.0

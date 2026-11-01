@@ -161,11 +161,15 @@ class Renderer internal constructor(
     ): T? = when (kind) {
         com.awakekt.awake.render.pipeline.ShaderReplacement -> shaderReplacement as T?
         com.awakekt.awake.render.pipeline.GpuImageUpload -> imageUpload as T
+        com.awakekt.awake.render.pipeline.GpuCompressedTextures -> compressedTextures as T
         else -> null
     }
 
     /** Fills textures from browser images on the GPU; see [ExternalImageUpload]. */
     private val imageUpload by lazy { ExternalImageUpload(this) }
+
+    /** Uploads block-compressed textures in the families this device was granted. */
+    private val compressedTextures by lazy { WebGpuCompressedTextures(this) }
 
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
