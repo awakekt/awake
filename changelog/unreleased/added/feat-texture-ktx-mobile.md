@@ -1,0 +1,1 @@
+- **Compressed textures on Android, verified.** A device test draws the cook's ASTC 4x4 and ETC2 files on Android Vulkan, loaded as they are with no transcoder, and compares them with the source pattern in RGBA8: the mobile half of #1211, and the first place ETC2 and ASTC are drawn, since lavapipe has neither.
