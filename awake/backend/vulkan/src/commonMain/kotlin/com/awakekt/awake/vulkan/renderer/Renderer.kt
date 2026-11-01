@@ -39,6 +39,7 @@ import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuCapability
 import com.awakekt.awake.render.pipeline.GpuCapabilityKind
+import com.awakekt.awake.render.pipeline.GpuCompressedTextures
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
@@ -177,8 +178,12 @@ class Renderer internal constructor(
     @Suppress("UNCHECKED_CAST")
     override fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = when (kind) {
         ShaderReplacement -> shaderReplacement as T?
+        GpuCompressedTextures -> compressedTextures as T
         else -> null
     }
+
+    /** Block-compressed textures, in the families this device enabled. */
+    private val compressedTextures = VulkanCompressedTextures(this)
 
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()

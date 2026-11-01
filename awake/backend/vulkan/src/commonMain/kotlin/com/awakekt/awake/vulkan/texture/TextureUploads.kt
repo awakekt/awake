@@ -44,6 +44,7 @@ internal class TextureUploads(private val graphicsDevice: GraphicsDevice) : Text
     override fun write(texture: WritableTexture, region: TextureRegion) {
         region.validate(texture)
         val image = texture as Texture
+        require(!image.blockCompressed) { "A block-compressed texture takes no RGBA8 region writes." }
         val staging = acquire(region.data.size.toLong())
         inUse.getOrPut(frameIndex) { mutableListOf() } += staging
         VulkanBuffers.writeBufferMemoryBytes(device, staging.memory, 0, region.data)

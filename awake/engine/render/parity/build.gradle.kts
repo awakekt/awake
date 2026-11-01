@@ -54,6 +54,8 @@ kotlin {
         val desktopTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                // Block-compressed textures, transcoded with libktx, against the RGBA8 path.
+                implementation(project(":awake:asset:texture-ktx-loader"))
                 // Run the actual sample app and its plan. Scene/sample dependencies stay in tests.
                 implementation(project(":samples:engine-showcase"))
                 implementation(project(":awake:scene:authoring"))

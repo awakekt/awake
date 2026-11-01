@@ -51,7 +51,8 @@ private const val BYTE_BLOCK = 16
  * @property width Width of level 0, in pixels.
  * @property height Height of level 0, in pixels.
  * @property srgb Whether the colour is sRGB-encoded, as base colour is, rather than linear, as a normal
- *   map is. A backend picks the format's sRGB variant for it.
+ *   map is. A backend samples the block format as it samples the same pixels in RGBA8: Awake's shaders
+ *   decode base colour from sRGB themselves, so both take the format's UNORM variant.
  * @property levels The mip levels, the largest first. Level `l` is `max(1, width >> l)` by
  *   `max(1, height >> l)` pixels and holds exactly [CompressedTextureFormat.byteSize] bytes. A partial
  *   chain is allowed; a backend samples only the levels given.

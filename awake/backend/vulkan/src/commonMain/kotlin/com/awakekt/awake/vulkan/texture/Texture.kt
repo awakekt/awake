@@ -5,37 +5,21 @@
  */
 package com.awakekt.awake.vulkan.texture
 
+import com.awakekt.awake.render.texture.CompressedTextureFormat
+import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.mipChain
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.VkFormat
-import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
-import com.awakekt.awake.vulkan.enums.VkImageViewType
-import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanImages
 import com.awakekt.awake.vulkan.handles.DeviceMemoryHandle
 import com.awakekt.awake.vulkan.handles.ImageHandle
 import com.awakekt.awake.vulkan.handles.ImageViewHandle
 import com.awakekt.awake.vulkan.handles.SamplerHandle
-import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkBufferImageCopy
-import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
-import com.awakekt.awake.vulkan.models.info.VkFilter
-import com.awakekt.awake.vulkan.models.info.VkImageCreateFlagBits
-import com.awakekt.awake.vulkan.models.info.VkImageCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkImageLayout2
-import com.awakekt.awake.vulkan.models.info.VkImageSubresourceRange
-import com.awakekt.awake.vulkan.models.info.VkImageTiling
-import com.awakekt.awake.vulkan.models.info.VkImageType
-import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
-import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
-import com.awakekt.awake.vulkan.models.info.VkSamplerMipmapMode
-import com.awakekt.awake.vulkan.models.info.VkSharingMode2
 
 /**
  * Phase 2 (renderer abstraction): owns a single 2D texture's image/view/sampler upload --
@@ -51,215 +35,44 @@ import com.awakekt.awake.vulkan.models.info.VkSharingMode2
  * concern, not this class's -- callers read [imageView]/[sampler] to build their own
  * `VkDescriptorImageInfo`.
  */
-class Texture(
+class Texture internal constructor(
     graphicsDevice: GraphicsDevice,
-    runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
-    data: ByteArray,
+    uploaded: UploadedImage,
     override val width: Int,
     override val height: Int,
-    samplerCreateInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
-    /** More than one uploads a `VK_IMAGE_VIEW_TYPE_2D_ARRAY`; see [TextureAsset.layerCount]. */
-    override val layerCount: Int = 1,
-    private val isCubemap: Boolean = false,
-    filtering: TextureFiltering = TextureFiltering.Linear,
+    override val layerCount: Int,
+    /** Whether the image is in a GPU block format, which [TextureUploads] can't write regions into. */
+    internal val blockCompressed: Boolean,
 ) : com.awakekt.awake.render.texture.WritableTexture {
-    private val graphicsDevice = graphicsDevice
-    private val device get() = graphicsDevice.device
-    private val physicalDevice get() = graphicsDevice.physicalDevice
+    private val device = graphicsDevice.device
+
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+        data: ByteArray,
+        width: Int,
+        height: Int,
+        samplerCreateInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
+        /** More than one uploads a `VK_IMAGE_VIEW_TYPE_2D_ARRAY`; see [TextureAsset.layerCount]. */
+        layerCount: Int = 1,
+        isCubemap: Boolean = false,
+        filtering: TextureFiltering = TextureFiltering.Linear,
+    ) : this(
+        graphicsDevice,
+        uploadRgba(graphicsDevice, runOneTimeCommands, TextureAsset(data, width, height, layerCount, isCubemap), samplerCreateInfo, filtering),
+        width,
+        height,
+        layerCount,
+        blockCompressed = false,
+    )
 
     /** The device-local `VkImage` holding every layer and mip level. */
-    var image: ImageHandle = ImageHandle(0)
+    var image: ImageHandle = ImageHandle(uploaded.image)
 
     /** The device memory backing [image]. */
-    var imageMemory: DeviceMemoryHandle = DeviceMemoryHandle(0)
-    var imageView: ImageViewHandle = ImageViewHandle(0)
-    var sampler: SamplerHandle = SamplerHandle(0)
-
-    init {
-        // Neither backend has GPU-side mip generation (no vkCmdBlitImage binding here, no
-        // native blit-based mip gen in WebGPU either) -- the whole chain is box-filtered on
-        // the CPU once at load time and every level uploaded directly. See MipChain.kt.
-        val asset = TextureAsset(data, width, height, layerCount, isCubemap)
-        // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
-        // without one. Cubemaps stay single-level; the sky samples its base level only.
-        val mipLevels = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
-        val combined = ByteArray(mipLevels.sumOf { it.data.size })
-        var writeOffset = 0
-        val levelOffsets = IntArray(mipLevels.size)
-        mipLevels.forEachIndexed { index, level ->
-            levelOffsets[index] = writeOffset
-            level.data.copyInto(combined, writeOffset)
-            writeOffset += level.data.size
-        }
-
-        val stagingBuffer = VulkanBuffers.vkCreateBuffer(
-            device,
-            VkBufferCreateInfo(
-                size = combined.size.toLong(),
-                usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            ),
-        )
-        val stagingRequirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, stagingBuffer)
-        val stagingMemoryTypeIndex = VulkanBuffers.findMemoryType(
-            physicalDevice,
-            stagingRequirements.memoryTypeBits,
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        )
-        val stagingMemory = VulkanBuffers.vkAllocateMemory(
-            device,
-            VkMemoryAllocateInfo(
-                allocationSize = stagingRequirements.size,
-                memoryTypeIndex = stagingMemoryTypeIndex,
-            ),
-        )
-        VulkanBuffers.vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0)
-        VulkanBuffers.writeBufferMemoryBytes(device, stagingMemory, 0, combined)
-
-        // The staging buffer/memory must be freed even if image creation, allocation, or the
-        // copy/transition commands below throw -- otherwise a failed upload leaks GPU memory
-        // silently. The image/imageMemory themselves aren't covered: if the copy fails,
-        // Texture's constructor throws and the object never becomes visible to a caller.
-        val rawImage: Long
-        val rawImageMemory: Long
-        try {
-            rawImage = VulkanImages.vkCreateImage(
-                device,
-                VkImageCreateInfo(
-                    width = width,
-                    height = height,
-                    format = VkFormat.VK_FORMAT_R8G8B8A8_UNORM.value,
-                    usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_DST_BIT or
-                        VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT,
-                    imageType = VkImageType.VK_IMAGE_TYPE_2D,
-                    tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                    initialLayout = VkImageLayout2.VK_IMAGE_LAYOUT_UNDEFINED,
-                    sharingMode = VkSharingMode2.VK_SHARING_MODE_EXCLUSIVE,
-                    mipLevels = mipLevels.size,
-                    arrayLayers = layerCount,
-                    flags = if (isCubemap) VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT else 0,
-                ),
-            )
-            val imageRequirements = VulkanImages.vkGetImageMemoryRequirements(device, rawImage)
-            val imageMemoryTypeIndex = VulkanBuffers.findMemoryType(
-                physicalDevice,
-                imageRequirements.memoryTypeBits,
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            )
-            rawImageMemory = VulkanBuffers.vkAllocateMemory(
-                device,
-                VkMemoryAllocateInfo(
-                    allocationSize = imageRequirements.size,
-                    memoryTypeIndex = imageMemoryTypeIndex,
-                ),
-            )
-            VulkanImages.vkBindImageMemory(device, rawImage, rawImageMemory, 0)
-
-            runOneTimeCommands { commandBuffer ->
-                VulkanImages.vkTransitionImageLayout(
-                    commandBuffer,
-                    rawImage,
-                    VkImageLayout2.VK_IMAGE_LAYOUT_UNDEFINED,
-                    VkImageLayout2.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    levelCount = mipLevels.size,
-                    layerCount = layerCount,
-                )
-                if (layerCount > 1) {
-                    // One copy per layer per level, each at its stated offset: correct whatever
-                    // the packing, for N x levels commands on an upload that happens once.
-                    mipLevels.forEachIndexed { index, level ->
-                        repeat(layerCount) { layer ->
-                            VulkanImages.vkCmdCopyBufferToImage(
-                                commandBuffer,
-                                stagingBuffer,
-                                rawImage,
-                                VkBufferImageCopy(
-                                    imageWidth = level.width,
-                                    imageHeight = level.height,
-                                    bufferOffset = (levelOffsets[index] + level.layerOffset(layer)).toLong(),
-                                    mipLevel = index,
-                                    baseArrayLayer = layer,
-                                    layerCount = 1,
-                                ),
-                            )
-                        }
-                    }
-                } else {
-                    mipLevels.forEachIndexed { index, level ->
-                        VulkanImages.vkCmdCopyBufferToImage(
-                            commandBuffer,
-                            stagingBuffer,
-                            rawImage,
-                            VkBufferImageCopy(
-                                imageWidth = level.width,
-                                imageHeight = level.height,
-                                bufferOffset = levelOffsets[index].toLong(),
-                                mipLevel = index,
-                            ),
-                        )
-                    }
-                }
-                VulkanImages.vkTransitionImageLayout(
-                    commandBuffer,
-                    rawImage,
-                    VkImageLayout2.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                    levelCount = mipLevels.size,
-                    layerCount = layerCount,
-                )
-            }
-        } finally {
-            VulkanBuffers.vkDestroyBuffer(device, stagingBuffer)
-            VulkanBuffers.vkFreeMemory(device, stagingMemory)
-        }
-        image = ImageHandle(rawImage)
-        imageMemory = DeviceMemoryHandle(rawImageMemory)
-
-        imageView = ImageViewHandle(
-            Vulkan.vkCreateImageView(
-                device,
-                VkImageViewCreateInfo(
-                    image = rawImage,
-                    viewType = when {
-                        isCubemap -> VkImageViewType.VK_IMAGE_VIEW_TYPE_CUBE
-                        layerCount > 1 -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D_ARRAY
-                        else -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D
-                    },
-                    format = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
-                    subresourceRange = VkImageSubresourceRange(
-                        aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT.value,
-                        baseMipLevel = 0,
-                        levelCount = mipLevels.size,
-                        baseArrayLayer = 0,
-                        layerCount = layerCount,
-                    ),
-                ),
-            ),
-        )
-
-        // minLod/maxLod always reflect this texture's own real mip count, overriding whatever
-        // the caller passed -- the caller can't know the chain length in advance (it depends on
-        // width/height, resolved above).
-        sampler = SamplerHandle(
-            VulkanImages.vkCreateSampler(
-                device,
-                VkSamplerCreateInfo(
-                    magFilter = if (filtering == TextureFiltering.Nearest) VkFilter.VK_FILTER_NEAREST else samplerCreateInfo.magFilter,
-                    minFilter = if (filtering == TextureFiltering.Nearest) VkFilter.VK_FILTER_NEAREST else samplerCreateInfo.minFilter,
-                    addressModeU = samplerCreateInfo.addressModeU,
-                    addressModeV = samplerCreateInfo.addressModeV,
-                    addressModeW = samplerCreateInfo.addressModeW,
-                    anisotropyEnable = samplerCreateInfo.anisotropyEnable,
-                    maxAnisotropy = samplerCreateInfo.maxAnisotropy,
-                    borderColor = samplerCreateInfo.borderColor,
-                    unnormalizedCoordinates = samplerCreateInfo.unnormalizedCoordinates,
-                    mipmapMode = if (filtering == TextureFiltering.Nearest) VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST else samplerCreateInfo.mipmapMode,
-                    minLod = 0f,
-                    maxLod = (mipLevels.size - 1).toFloat(),
-                ),
-            ),
-        )
-    }
+    var imageMemory: DeviceMemoryHandle = DeviceMemoryHandle(uploaded.memory)
+    var imageView: ImageViewHandle = ImageViewHandle(uploaded.view)
+    var sampler: SamplerHandle = SamplerHandle(uploaded.sampler)
 
     /**
      * Destroys the sampler, image view, image and its memory. Call once, after the GPU has finished
@@ -270,5 +83,74 @@ class Texture(
         Vulkan.vkDestroyImageView(device, imageView.handle)
         VulkanImages.vkDestroyImage(device, image.handle)
         VulkanBuffers.vkFreeMemory(device, imageMemory.handle)
+    }
+
+    internal companion object {
+        /**
+         * A texture of [image], uploaded as it is, every level given and none generated: a block
+         * format a GPU samples without decoding. Sampled as the format's UNORM variant even when the
+         * colour is sRGB, as an RGBA8 texture is, since Awake's shaders decode sRGB themselves.
+         */
+        fun compressed(
+            graphicsDevice: GraphicsDevice,
+            runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+            image: CompressedTextureImage,
+            filtering: TextureFiltering,
+        ): Texture {
+            var offset = 0L
+            val regions = image.levels.mapIndexed { level, bytes ->
+                ImageUpload.Region(image.levelWidth(level), image.levelHeight(level), offset, level).also { offset += bytes.size }
+            }
+            val data = ByteArray(offset.toInt())
+            var at = 0
+            image.levels.forEach { bytes ->
+                bytes.copyInto(data, at)
+                at += bytes.size
+            }
+            val uploaded = ImageUpload.upload(
+                graphicsDevice, runOneTimeCommands, vkFormat(image.format), image.width, image.height,
+                mipLevels = image.levels.size, layerCount = 1, isCubemap = false,
+                data = data, regions = regions, samplerCreateInfo = VkSamplerCreateInfo(), filtering = filtering,
+            )
+            return Texture(graphicsDevice, uploaded, image.width, image.height, layerCount = 1, blockCompressed = true)
+        }
+
+        /** The UNORM `VkFormat` of [format]. */
+        fun vkFormat(format: CompressedTextureFormat): VkFormat = when (format) {
+            CompressedTextureFormat.Bc1Rgba -> VkFormat.VK_FORMAT_BC1_RGBA_UNORM_BLOCK
+            CompressedTextureFormat.Bc3Rgba -> VkFormat.VK_FORMAT_BC3_UNORM_BLOCK
+            CompressedTextureFormat.Bc7Rgba -> VkFormat.VK_FORMAT_BC7_UNORM_BLOCK
+            CompressedTextureFormat.Etc2Rgba8 -> VkFormat.VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK
+            CompressedTextureFormat.Astc4x4 -> VkFormat.VK_FORMAT_ASTC_4x4_UNORM_BLOCK
+        }
+
+        // Neither backend generates mips on the GPU, so the whole chain is box-filtered on the CPU once,
+        // at load, and every level uploaded. Arrays get a full chain: tiled terrain layers shimmer
+        // without one. Cubemaps stay one level; the sky samples its base only. See MipChain.kt.
+        private fun uploadRgba(
+            graphicsDevice: GraphicsDevice,
+            runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+            asset: TextureAsset,
+            samplerCreateInfo: VkSamplerCreateInfo,
+            filtering: TextureFiltering,
+        ): UploadedImage {
+            val levels = if (asset.isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
+            val data = ByteArray(levels.sumOf { it.data.size })
+            val regions = mutableListOf<ImageUpload.Region>()
+            var offset = 0
+            levels.forEachIndexed { index, level ->
+                level.data.copyInto(data, offset)
+                // One copy per layer per level, each at its stated offset: right whatever the packing.
+                repeat(asset.layerCount) { layer ->
+                    regions += ImageUpload.Region(level.width, level.height, (offset + level.layerOffset(layer)).toLong(), index, layer)
+                }
+                offset += level.data.size
+            }
+            return ImageUpload.upload(
+                graphicsDevice, runOneTimeCommands, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, asset.width, asset.height,
+                mipLevels = levels.size, layerCount = asset.layerCount, isCubemap = asset.isCubemap,
+                data = data, regions = regions, samplerCreateInfo = samplerCreateInfo, filtering = filtering,
+            )
+        }
     }
 }

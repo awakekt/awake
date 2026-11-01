@@ -22,6 +22,8 @@ val material = device.createKtx2Material(bytes, LibKtxBasisTranscoder) // deskto
 
 - **Formats come from the device:** `GpuDevice.compressedTextureFormats`, which a backend fills through
   the `GpuCompressedTextures` capability. A device without the capability gets RGBA8.
+  - **Vulkan** takes each family the device enables (`textureCompressionBC`, `ETC2`, `ASTC_LDR`).
+    Lavapipe enables BC only.
 - **Transcoding is a platform's:** `BasisTranscoder`. On desktop it is `LibKtxBasisTranscoder`, libktx
   through LWJGL. Mobile needs none, since it loads the ASTC or ETC2 the cook wrote.
   `Ktx2Formats.variants(path, formats)` lists which cooked file to try first.

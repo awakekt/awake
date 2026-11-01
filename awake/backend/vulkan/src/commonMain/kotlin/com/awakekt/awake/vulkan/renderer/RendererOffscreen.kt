@@ -47,15 +47,7 @@ internal fun Renderer.performCreateMaterial(
 ): RenderMaterial {
     require(texture == null || renderTarget == null) { "Pass at most one of texture/renderTarget." }
     val material = Material(graphicsDevice, uniformFloatCount)
-    val pbr = PbrImageViews(
-        metallicRoughness = pbrImageView(
-            pbrTextures?.metallicRoughness,
-            Renderer.NEUTRAL_METALLIC_ROUGHNESS,
-        ),
-        normal = pbrImageView(pbrTextures?.normal, Renderer.NEUTRAL_NORMAL),
-        occlusion = pbrImageView(pbrTextures?.occlusion, Renderer.NEUTRAL_OCCLUSION),
-        emissive = pbrImageView(pbrTextures?.emissive, Renderer.NEUTRAL_EMISSIVE),
-    )
+    val pbr = pbrImageViews(pbrTextures)
     if (renderTarget != null) {
         val offscreen = renderTarget as OffscreenRenderTarget
         material.createResourcesFromRenderTarget(
@@ -79,21 +71,6 @@ internal fun Renderer.uploadTexture(asset: TextureAsset): Texture = Texture(
     isCubemap = asset.isCubemap,
     filtering = asset.filtering,
 ).let(textureResources::register)
-
-internal fun Renderer.pbrImageView(asset: TextureAsset?, neutral: TextureAsset): Long =
-    if (asset != null) {
-        uploadTexture(asset).imageView.handle
-    } else {
-        textureResources.neutral(neutral) {
-            Texture(
-                graphicsDevice,
-                transferContext::runOneTimeCommands,
-                neutral.data,
-                neutral.width,
-                neutral.height,
-            )
-        }.imageView.handle
-    }
 
 /**
  * The frame the on-screen path just drew, when there is no screen.

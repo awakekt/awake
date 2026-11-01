@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.device
 import com.awakekt.awake.core.config.EnvSource
 import com.awakekt.awake.core.config.defaultPlatformEnvSource
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
+import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.vulkan.Version
 import com.awakekt.awake.vulkan.Version.Companion.vkVersion
 import com.awakekt.awake.vulkan.Vulkan
@@ -23,6 +24,7 @@ import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 import com.awakekt.awake.vulkan.models.info.debug.DebugUtilsFormattedCallback
 import com.awakekt.awake.vulkan.models.info.debug.VkDebugUtilsMessengerCreateInfoEXT
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
+import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
 import com.awakekt.awake.vulkan.utils.QueueFamilyIndices
 import com.awakekt.awake.vulkan.utils.VkResultException
@@ -300,6 +302,14 @@ class GraphicsDevice {
     internal var depthClamp: Boolean = false
         private set
 
+    /**
+     * The block formats this device samples. Vulkan guarantees every format of a family a device
+     * enables `textureCompressionBC`, `textureCompressionETC2` or `textureCompressionASTC_LDR` for can
+     * be sampled with linear filtering, so the features say it without a per-format query.
+     */
+    internal var compressedTextureFormats: Set<CompressedTextureFormat> = emptySet()
+        private set
+
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!
         val physicalDeviceProperties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)
@@ -322,6 +332,7 @@ class GraphicsDevice {
         val features = Vulkan.vkGetPhysicalDeviceFeatures(physicalDevice)
         // Every supported feature is enabled below, so supported here means usable.
         depthClamp = features.depthClamp
+        compressedTextureFormats = compressedFormats(features)
         val availableDeviceExtensions =
             Vulkan.vkEnumerateDeviceExtensionProperties(physicalDevice)
                 .map { it.extensionName }
@@ -526,4 +537,11 @@ private fun CharArray.toNullTerminatedString(): String {
         i++
     }
     return bytes.decodeToString(0, byteCount)
+}
+
+/** The block formats [features] makes samplable: each family its feature enables. */
+internal fun compressedFormats(features: VkPhysicalDeviceFeatures): Set<CompressedTextureFormat> = buildSet {
+    if (features.textureCompressionBC) addAll(listOf(CompressedTextureFormat.Bc1Rgba, CompressedTextureFormat.Bc3Rgba, CompressedTextureFormat.Bc7Rgba))
+    if (features.textureCompressionETC2) add(CompressedTextureFormat.Etc2Rgba8)
+    if (features.textureCompressionASTC_LDR) add(CompressedTextureFormat.Astc4x4)
 }
