@@ -379,6 +379,7 @@ public final class com/awakekt/awake/scene/physics/character/KinematicCharacterC
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun isCrouching ()Z
 	public final fun isGrounded ()Z
+	public final fun liftOutOf (Lcom/awakekt/awake/physics/character/TerrainCollider;)Z
 	public final fun move (Lcom/awakekt/awake/core/math/Vec3f;F)V
 	public static synthetic fun move$default (Lcom/awakekt/awake/scene/physics/character/KinematicCharacterController;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
 	public final fun setOnContact (Lkotlin/jvm/functions/Function2;)V

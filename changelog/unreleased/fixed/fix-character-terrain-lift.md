@@ -1,0 +1,1 @@
+- Put a character found under the scene's terrain back on top of it: `KinematicCharacterController.liftOutOf(TerrainCollider)`, which `CharacterControllerSystem` runs for every character not standing on the terrain. A heightfield is solid only from above, so a capsule under it used to stay there.

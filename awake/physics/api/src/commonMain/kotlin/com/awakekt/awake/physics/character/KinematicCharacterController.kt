@@ -249,6 +249,9 @@ class KinematicCharacterController(
     private val steepNormal = Vec3f(0f, 1f, 0f)
     private val supportNormal = Vec3f(0f, 1f, 0f)
 
+    /** Where [liftOutOf] searches from, then where it puts the character. */
+    private val liftTarget = Vec3f()
+
     /** The unit direction of a push out of an overlap. */
     private val pushDirection = Vec3f(0f, 1f, 0f)
 
@@ -311,6 +314,33 @@ class KinematicCharacterController(
             world.destroyBody(existing)
             body = world.createBody(config.shape, position, Quat.IDENTITY, MotionType.KINEMATIC)
         }
+    }
+
+    /**
+     * Puts the character back on top of [terrain] if it's under it, and reports whether it did.
+     *
+     * Under means the capsule's centre is below the terrain's surface at its x and z, where the
+     * terrain covers that spot. A capsule only partly in the ground isn't under it: a move pushes
+     * that one out. A capsule wholly under a heightfield can't be pushed out. The heightfield is
+     * solid only from above, so the capsule falls, or rests on something buried, for good (#1209).
+     *
+     * Lifted, it's placed a skin width above the surface, as [teleport] places it, ground state
+     * cleared. A caller carrying a fall speed drops it.
+     *
+     * Costs one ray, plus one for each body standing on the terrain at that spot, unless the
+     * capsule is above [TerrainCollider.top] or off the terrain, which costs nothing. A caller runs
+     * it for a character that isn't standing on [terrain]; one that is can't be under it.
+     */
+    fun liftOutOf(terrain: TerrainCollider): Boolean {
+        val halfExtent = activeShape.halfHeight + activeShape.radius
+        val clearOfIt = position.y - halfExtent > terrain.top || !terrain.covers(position.x, position.z)
+        val surface = if (clearOfIt) null else terrain.surfaceAt(world, position.x, position.z, liftTarget)
+        val under = surface != null && position.y < surface
+        if (surface != null && under) {
+            liftTarget.set(position.x, surface + halfExtent + config.skinWidth, position.z)
+            teleport(liftTarget)
+        }
+        return under
     }
 
     /**
