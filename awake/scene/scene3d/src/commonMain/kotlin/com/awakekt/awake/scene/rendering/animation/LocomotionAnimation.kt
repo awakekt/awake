@@ -39,7 +39,10 @@ import kotlin.reflect.KClass
  * node of the moving entity animates with it. A mover stepped at a fixed rate stays put between
  * its steps, so a frame without motion counts as a stop only after a tenth of a second. The speed
  * across the ground is smoothed over about as long, so a frame or two slower, up a step or against
- * a wall, does not switch the clip and restart it; a stop is still a stop at once.
+ * a wall, does not switch the clip and restart it; a stop is still a stop at once. A single frame's
+ * move too fast to be a stride — a controller reconcile, a respawn, a networked entity's leash home —
+ * is a teleport, not locomotion, and is left out of that speed, so a jump in position neither switches
+ * the clip to a run nor races speed-matched playback.
  *
  * When the entity or a node above it has a [GroundContact], as a `character_controller` keeps,
  * [jump] plays exactly while it is off the ground. Otherwise it lands when its fall stops, or when
@@ -135,6 +138,13 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
     /** Speed across the ground, smoothed over about [SPEED_SMOOTHING] seconds. */
     private var across = 0f
 
+    /**
+     * Ground speed above which one frame's move is a teleport rather than a stride, far past any
+     * run: [SceneLocomotionAnimation.runAbove] times [WARP_SPEED_MULTIPLE], and never below
+     * [MIN_WARP_SPEED] so a tiny [SceneLocomotionAnimation.runAbove] still lets real movement through.
+     */
+    private val warpGroundSpeed = maxOf(clips.runAbove * WARP_SPEED_MULTIPLE, MIN_WARP_SPEED)
+
     /** Whether it has left the ground and not yet landed. */
     private var airborne = false
     private var falling = false
@@ -198,8 +208,20 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
         sinceMoved = 0f
         seen = true
         if (!first) {
-            // Staying put this long is a stop, which the smoothing would only blur into a walk.
-            across = if (stayedPut) 0f else across + (sqrt(dx * dx + dz * dz) / elapsed - across) * (1f - exp(-elapsed / SPEED_SMOOTHING))
+            val groundDelta2 = dx * dx + dz * dz
+            across = when {
+                // Staying put this long is a stop, which the smoothing would only blur into a walk.
+                stayedPut -> 0f
+                // A single frame's move too fast to be a stride is a teleport, not locomotion: a
+                // controller reconcile, a respawn, a leash home. Folding it into the smoothed speed
+                // would switch the clip to a run — and, under speed-matched playback, race it — for
+                // the fraction of a second the smoothing takes to bleed the spike off. Ignore it;
+                // lastX/Y/Z already advanced to where it landed, so the next frame measures the real
+                // speed from there. Compared as distance against [warpGroundSpeed] times [elapsed] so a
+                // vanishing step never divides.
+                groundDelta2 > (warpGroundSpeed * elapsed) * (warpGroundSpeed * elapsed) -> across
+                else -> across + (sqrt(groundDelta2) / elapsed - across) * (1f - exp(-elapsed / SPEED_SMOOTHING))
+            }
         }
         return if (first) null else choose(across, vertical, elapsed, ground, durationOf)
     }
@@ -316,6 +338,12 @@ private const val STILL_AFTER = 0.1f
 
 /** Seconds over which the speed across the ground is smoothed: two frames slower stay a run. */
 private const val SPEED_SMOOTHING = 0.1f
+
+/** Multiple of [SceneLocomotionAnimation.runAbove] above which one frame's move is a teleport, not a stride. */
+private const val WARP_SPEED_MULTIPLE = 4f
+
+/** Floor for the teleport threshold, in units per second, far past any character's run. */
+private const val MIN_WARP_SPEED = 30f
 
 /** Vertical units per second below which it neither rises nor falls. */
 private const val STILL = 0.1f
