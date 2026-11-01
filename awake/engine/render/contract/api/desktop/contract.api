@@ -1092,6 +1092,19 @@ public abstract interface class com/awakekt/awake/render/pipeline/GpuCapability 
 public abstract interface class com/awakekt/awake/render/pipeline/GpuCapabilityKind {
 }
 
+public abstract interface class com/awakekt/awake/render/pipeline/GpuCompressedTextures : com/awakekt/awake/render/pipeline/GpuCapability {
+	public static final field Companion Lcom/awakekt/awake/render/pipeline/GpuCompressedTextures$Companion;
+	public abstract fun createMaterial (Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/TextureFiltering;I)Lcom/awakekt/awake/render/material/Material;
+	public abstract fun getFormats ()Ljava/util/Set;
+}
+
+public final class com/awakekt/awake/render/pipeline/GpuCompressedTextures$Companion : com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
+public final class com/awakekt/awake/render/pipeline/GpuCompressedTexturesKt {
+	public static final fun getCompressedTextureFormats (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/util/Set;
+}
+
 public abstract interface class com/awakekt/awake/render/pipeline/GpuDevice {
 	public static final field Companion Lcom/awakekt/awake/render/pipeline/GpuDevice$Companion;
 	public fun capability (Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
@@ -1959,6 +1972,32 @@ public final class com/awakekt/awake/render/renderer/UniformWriter {
 	public final fun put ([F[Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public static synthetic fun put$default (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun putPadded (Lcom/awakekt/awake/render/renderer/UniformField;[F)Lcom/awakekt/awake/render/renderer/UniformWriter;
+}
+
+public final class com/awakekt/awake/render/texture/CompressedTextureFormat : java/lang/Enum {
+	public static final field Astc4x4 Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public static final field Bc1Rgba Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public static final field Bc3Rgba Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public static final field Bc7Rgba Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public static final field Etc2Rgba8 Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public final fun byteSize (II)I
+	public final fun getBlockBytes ()I
+	public final fun getBlockHeight ()I
+	public final fun getBlockWidth ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public static fun values ()[Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+}
+
+public final class com/awakekt/awake/render/texture/CompressedTextureImage {
+	public fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureFormat;IIZLjava/util/List;)V
+	public final fun getFormat ()Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public final fun getHeight ()I
+	public final fun getLevels ()Ljava/util/List;
+	public final fun getSrgb ()Z
+	public final fun getWidth ()I
+	public final fun levelHeight (I)I
+	public final fun levelWidth (I)I
 }
 
 public abstract interface class com/awakekt/awake/render/texture/GpuImageSource {

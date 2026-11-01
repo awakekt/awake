@@ -1,0 +1,57 @@
+public final class com/awakekt/awake/asset/ktx/Ktx2Encoding : java/lang/Enum {
+	public static final field Etc1s Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
+	public static final field Raw Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
+	public static final field Uastc Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
+	public static fun values ()[Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
+}
+
+public final class com/awakekt/awake/asset/ktx/Ktx2FormatException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getLocation ()Ljava/lang/String;
+	public final fun getProblem ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/ktx/Ktx2Level {
+	public fun <init> ([BJ)V
+	public final fun getData ()[B
+	public final fun getUncompressedByteLength ()J
+}
+
+public final class com/awakekt/awake/asset/ktx/Ktx2Reader {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/Ktx2Reader;
+	public final fun isKtx2 ([B)Z
+	public final fun read ([B)Lcom/awakekt/awake/asset/ktx/Ktx2Texture;
+}
+
+public final class com/awakekt/awake/asset/ktx/Ktx2Supercompression : java/lang/Enum {
+	public static final field BasisLz Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+	public static final field None Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+	public static final field Zlib Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+	public static final field Zstandard Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getScheme ()I
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+	public static fun values ()[Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+}
+
+public final class com/awakekt/awake/asset/ktx/Ktx2Texture {
+	public static final field CUBE_FACES I
+	public fun <init> (IIIIIILcom/awakekt/awake/asset/ktx/Ktx2Encoding;Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;ZLjava/util/List;Ljava/util/Map;[B)V
+	public final fun getDepth ()I
+	public final fun getEncoding ()Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
+	public final fun getFaceCount ()I
+	public final fun getHeight ()I
+	public final fun getKeyValues ()Ljava/util/Map;
+	public final fun getLayerCount ()I
+	public final fun getLevels ()Ljava/util/List;
+	public final fun getNeedsTranscoding ()Z
+	public final fun getSrgb ()Z
+	public final fun getSupercompression ()Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
+	public final fun getSupercompressionGlobalData ()[B
+	public final fun getVkFormat ()I
+	public final fun getWidth ()I
+	public final fun isCubemap ()Z
+}
+
