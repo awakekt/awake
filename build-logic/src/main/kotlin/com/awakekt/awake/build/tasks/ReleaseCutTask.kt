@@ -18,7 +18,14 @@ abstract class ReleaseCutTask : DefaultTask() {
     fun cut() {
         val channel = project.findProperty("release.channel")?.toString() ?: "dev"
         val bump = project.findProperty("release.bump")?.toString()
-        val dryRun = project.findProperty("release.dryRun")?.toString()?.toBoolean() ?: false
+        val dryRun = flag("release.dryRun", default = false)
+        // Optional, for a repository that keeps its version in files (docs/release-process.md);
+        // the defaults cut from tags alone, commit and tag, as Core does.
+        val versionKey = option("release.versionKey")
+        val versionFile = option("release.versionFile") ?: "gradle.properties"
+        val syncFiles = option("release.syncVersionFiles").orEmpty()
+        val useGit = flag("release.git", default = true)
+        val createTag = useGit && flag("release.tag", default = true)
         require(channel in setOf("dev", "alpha", "beta", "rc", "stable")) {
             "release.channel must be dev, alpha, beta, rc, or stable"
         }
@@ -27,14 +34,17 @@ abstract class ReleaseCutTask : DefaultTask() {
         }
 
         val root = project.rootProject.projectDir
-        val version = nextReleaseVersion(channel, bump) { pattern -> latestTag(root, pattern) }
+        val propertiesFile = File(root, versionFile)
+        val current = versionKey?.let { readCurrentVersion(propertiesFile, it) }
+        val version = nextReleaseVersion(channel, bump) { pattern ->
+            current?.let { "v$it" } ?: latestTag(root, pattern)
+        }
         val tag = "v$version"
         requireNewTag(root, tag)
-        val changelog = project.rootProject.file("CHANGELOG.md").toPath()
-        require(changelog.toFile().isFile) { "CHANGELOG.md is missing" }
+        val changelog = File(root, "CHANGELOG.md")
         val fragments = readChangelogFragments(File(root, "changelog/unreleased"))
         val updated = promoteUnreleased(
-            changelog.toFile().readText(),
+            withUnreleased(changelog.takeIf(File::isFile)?.readText()),
             version,
             LocalDate.now().toString(),
             fragments.mapValues { (_, files) -> files.map(File::readText) },
@@ -45,13 +55,33 @@ abstract class ReleaseCutTask : DefaultTask() {
             logger.lifecycle(updated.lineSequence().take(40).joinToString("\n"))
             return
         }
-        changelog.toFile().writeText(updated)
-        runGit(root, "add", "CHANGELOG.md")
-        fragments.values.flatten().forEach { runGit(root, "rm", "--quiet", it.relativeTo(root).path) }
+        changelog.writeText(updated)
+        val changed = mutableListOf(changelog)
+        if (versionKey != null) {
+            propertiesFile.writeText(writeVersionProperty(propertiesFile.readText(), versionKey, version))
+            changed += propertiesFile
+        }
+        changed += writeVersionFiles(root, syncFiles, version)
+        val removed = fragments.values.flatten()
+        if (!useGit) {
+            removed.forEach(File::delete)
+            logger.lifecycle("Wrote $tag without git (release.git=false): commit, then tag the merged commit.")
+            return
+        }
+        changed.forEach { runGit(root, "add", it.relativeTo(root).path) }
+        removed.forEach { runGit(root, "rm", "--quiet", it.relativeTo(root).path) }
         runGit(root, "commit", "-m", "chore(release): cut $tag")
+        if (!createTag) {
+            logger.lifecycle("Committed $tag without tagging (release.tag=false): tag the merged commit.")
+            return
+        }
         runGit(root, "tag", "-a", tag, "-m", "Release $tag")
         logger.lifecycle("Created $tag. Push with: git push origin main $tag")
     }
+
+    private fun option(name: String): String? = project.findProperty(name)?.toString()?.ifBlank { null }
+
+    private fun flag(name: String, default: Boolean): Boolean = option(name)?.toBoolean() ?: default
 }
 
 /**
