@@ -471,6 +471,16 @@ This command automatically:
 4. Creates an annotated Git tag `vX.Y.Z-channel.N`. A misnamed section directory fails the cut
    rather than dropping its entries.
 
+Three optional properties, all off by default, serve a repository that keeps its version in files:
+
+- `-Prelease.versionProperty=<key>`: count on from the `<key>` entry of the root `gradle.properties`
+  (a release version such as `0.3.1`) instead of the newest tag, and write the new version back into
+  the same commit. An existing tag of the new version still fails the cut.
+- `-Prelease.versionFiles=<a,b>`: also rewrite each listed file's first JSON `"version"` member or
+  `version =` line. A listed file that is missing, or has no such field, fails the cut.
+- `-Prelease.tag=false`: commit without tagging. The Release workflow always passes it: its `Tag`
+  job tags the squash commit after the PR merges, so a local tag would only be thrown away.
+
 ### From GitHub Actions
 
 `main` only accepts pull requests, so the **Release** workflow splits the same steps in two:
@@ -509,7 +519,8 @@ releases with the same fragments, plugin and workflow; nothing is copied but a 3
    ```
 
    The root needs a `CHANGELOG.md` with a `## [Unreleased]` section. Versions come from the
-   repository's own `v*` tags, as in Core.
+   repository's own `v*` tags, as in Core. A repository with no release tags yet keeps its version
+   in the root `gradle.properties` instead (see `version-property` below).
 2. **Add the caller workflow.** Copy [`templates/release.yml`](templates/release.yml) to
    `.github/workflows/release.yml`. It pins `awakekt/awake/.github/workflows/release-reusable.yml`
    to a Core release tag, never `main`; Dependabot's `github-actions` updates move the pin. Its
@@ -520,7 +531,9 @@ releases with the same fragments, plugin and workflow; nothing is copied but a 3
    | `channel`, `bump` | `dev`, `none` | As `-Prelease.channel` and `-Prelease.bump` |
    | `runs-on` | `["ubuntu-latest"]` | Runner labels as JSON, e.g. `["self-hosted","Linux","X64","docker"]` for a private repository; the runner needs bash, git, curl and `gh` |
    | `java-version` | `17` | The Temurin JDK that runs Gradle |
-   | `gradle-args` | empty | Extra `releaseCut` arguments, e.g. the project's own version property |
+   | `version-property` | empty | A root `gradle.properties` key holding the current version (`release.versionProperty`): the cut counts on from it instead of the tags and writes the new version back |
+   | `version-files` | empty | Comma-separated files whose first `"version"` field (JSON) or `version =` line the cut rewrites, e.g. `awake.project.json` (`release.versionFiles`) |
+   | `gradle-args` | empty | Any other `releaseCut` arguments |
    | `milestone` | the one titled like the tag | The release PR's milestone |
    | `dry-run` | `false` | Print the next version and changelog; push and open nothing |
 

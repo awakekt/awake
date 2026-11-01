@@ -19,6 +19,11 @@ abstract class ReleaseCutTask : DefaultTask() {
         val channel = project.findProperty("release.channel")?.toString() ?: "dev"
         val bump = project.findProperty("release.bump")?.toString()
         val dryRun = project.findProperty("release.dryRun")?.toString()?.toBoolean() ?: false
+        // Optional, for a repository that keeps its version in files: the default cuts from tags
+        // alone and tags locally, as Core does.
+        val versionProperty = project.findProperty("release.versionProperty")?.toString()?.ifBlank { null }
+        val versionFiles = project.findProperty("release.versionFiles")?.toString().orEmpty()
+        val createTag = project.findProperty("release.tag")?.toString()?.toBoolean() ?: true
         require(channel in setOf("dev", "alpha", "beta", "rc", "stable")) {
             "release.channel must be dev, alpha, beta, rc, or stable"
         }
@@ -27,7 +32,19 @@ abstract class ReleaseCutTask : DefaultTask() {
         }
 
         val root = project.rootProject.projectDir
-        val version = nextReleaseVersion(channel, bump) { pattern -> latestTag(root, pattern) }
+        val propertiesFile = File(root, "gradle.properties")
+        val current = versionProperty?.let { key ->
+            requireNotNull(propertiesFile.takeIf(File::isFile)?.readText()?.let { readVersionProperty(it, key) }) {
+                "release.versionProperty is $key, but the root gradle.properties has no $key entry."
+            }.also {
+                require(Regex("\\d+\\.\\d+\\.\\d+(-[A-Za-z]+\\.\\d+)?").matches(it)) {
+                    "$key is '$it'; it must be a release version such as 0.1.0 or 0.1.0-alpha.2."
+                }
+            }
+        }
+        val version = nextReleaseVersion(channel, bump) { pattern ->
+            current?.let { "v$it" } ?: latestTag(root, pattern)
+        }
         val tag = "v$version"
         requireNewTag(root, tag)
         val changelog = project.rootProject.file("CHANGELOG.md").toPath()
@@ -47,8 +64,17 @@ abstract class ReleaseCutTask : DefaultTask() {
         }
         changelog.toFile().writeText(updated)
         runGit(root, "add", "CHANGELOG.md")
+        if (versionProperty != null) {
+            propertiesFile.writeText(writeVersionProperty(propertiesFile.readText(), versionProperty, version))
+            runGit(root, "add", propertiesFile.name)
+        }
+        writeVersionFiles(root, versionFiles, version).forEach { runGit(root, "add", it.relativeTo(root).path) }
         fragments.values.flatten().forEach { runGit(root, "rm", "--quiet", it.relativeTo(root).path) }
         runGit(root, "commit", "-m", "chore(release): cut $tag")
+        if (!createTag) {
+            logger.lifecycle("Committed $tag without tagging (release.tag=false): tag the merged commit.")
+            return
+        }
         runGit(root, "tag", "-a", tag, "-m", "Release $tag")
         logger.lifecycle("Created $tag. Push with: git push origin main $tag")
     }

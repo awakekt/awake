@@ -1,20 +1,14 @@
 name: Release (reusable)
 
-# The release automation around the `com.awakekt.awake.plugin.release-cut` Gradle plugin, shared by
-# Core and every repository that cuts releases from changelog fragments. A caller runs it on
-# `workflow_dispatch` and on `push` to its default branch; docs/templates/release.yml is the caller to
-# copy, and docs/release-process.md ("Releasing another repository with the same workflow") the guide.
-#   1. Dispatch: `prepare` runs `releaseCut`, pushes `release-cut/<tag>` and opens the
-#      `chore(release): cut <tag>` PR. It refuses while another cut is open.
-#   2. Merge that PR: the push of its squash commit runs `tag`, which tags that full SHA and pushes it.
-#
-# RELEASE_TOKEN is required: a fine-grained token with Contents, Pull requests and Workflows read and
-# write. GITHUB_TOKEN cannot do it: the PRs and tags it creates do not start other workflows (CI,
-# Publish), and pushing a tag whose history adds or changes a file under .github/workflows needs the
-# Workflows permission, which GITHUB_TOKEN never has.
-#
-# The callers' code is not checked out with this file, so every script lives inline. Self-hosted
-# runners need bash, git, curl and the GitHub CLI.
+# The release automation around the `release-cut` Gradle plugin, shared by Core and every repository
+# that cuts releases from changelog fragments. Callers copy docs/templates/release.yml; the guide is
+# "Releasing another repository with the same workflow" in docs/release-process.md.
+#   1. Dispatch: `prepare` runs `releaseCut`, pushes `release-cut/<tag>`, opens `chore(release): cut <tag>`.
+#   2. Merging that PR runs `tag`, which tags the squash commit's full SHA and pushes the tag.
+# RELEASE_TOKEN (Contents, Pull requests, Workflows: read and write) is required: PRs and tags made
+# with GITHUB_TOKEN start no other workflow, and a tag over history that changes .github/workflows
+# needs the Workflows permission, which GITHUB_TOKEN never has. Scripts are inline because callers
+# do not check out this repository; self-hosted runners need bash, git, curl and the GitHub CLI.
 
 on:
   workflow_call:
@@ -37,6 +31,14 @@ on:
         default: '17'
       gradle-args:
         description: 'Extra arguments for ./gradlew releaseCut, e.g. a project version property'
+        type: string
+        default: ''
+      version-property:
+        description: 'gradle.properties key holding the version, for a repository without release tags yet (release.versionProperty)'
+        type: string
+        default: ''
+      version-files:
+        description: 'Comma-separated files whose "version" field the cut rewrites, e.g. awake.project.json (release.versionFiles)'
         type: string
         default: ''
       milestone:
@@ -146,25 +148,27 @@ jobs:
           CHANNEL: ${{ inputs.channel }}
           BUMP: ${{ inputs.bump }}
           GRADLE_ARGS: ${{ inputs.gradle-args }}
+          VERSION_PROPERTY: ${{ inputs.version-property }}
+          VERSION_FILES: ${{ inputs.version-files }}
           DRY_RUN: ${{ inputs.dry-run }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          args=("-Prelease.channel=$CHANNEL")
+          # No local tag: `tag` tags the squash commit once the PR merges.
+          args=("-Prelease.channel=$CHANNEL" "-Prelease.tag=false")
           [[ "$BUMP" != none ]] && args+=("-Prelease.bump=$BUMP")
+          [[ -n "$VERSION_PROPERTY" ]] && args+=("-Prelease.versionProperty=$VERSION_PROPERTY")
+          [[ -n "$VERSION_FILES" ]] && args+=("-Prelease.versionFiles=$VERSION_FILES")
           [[ "$DRY_RUN" == true ]] && args+=("-Prelease.dryRun=true")
           read -ra extra <<<"$GRADLE_ARGS"
           ./gradlew releaseCut "${args[@]}" "${extra[@]}" --no-configuration-cache --no-daemon | tee "$RUNNER_TEMP/cut.log"
+          tag="$(sed -nE 's/.* release: [^ ]+ \((v[^)]+)\)$/\1/p' "$RUNNER_TEMP/cut.log" | head -n 1)"
+          [[ -n "$tag" ]] || { echo "::error::releaseCut printed no version."; exit 1; }
           if [[ "$DRY_RUN" == true ]]; then
-            tag="$(sed -nE 's/.*\[DRY RUN\] .* release: [^ ]+ \((v[^)]+)\).*/\1/p' "$RUNNER_TEMP/cut.log" | head -n 1)"
-            [[ -n "$tag" ]] || { echo "::error::releaseCut printed no version."; exit 1; }
             { echo "### Dry run: next release $tag"; echo; echo "Nothing was pushed and no PR was opened."; } >> "$GITHUB_STEP_SUMMARY"
             echo "::notice::Dry run: the next release is $tag. Nothing was pushed."
           else
-            tag="$(git tag --points-at HEAD 'v*' | head -n 1)"
-            [[ -n "$tag" ]] || { echo "::error::releaseCut did not create a tag."; exit 1; }
-            # The tag goes on the squash commit after review; drop the local one.
-            git tag -d "$tag"
+            [[ "$(git log -1 --format=%s)" == "chore(release): cut $tag" ]] || { echo "::error::releaseCut did not commit $tag."; exit 1; }
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
