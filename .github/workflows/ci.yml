@@ -144,7 +144,7 @@ jobs:
     name: Build (JVM/Native)
     needs: platform-impact
     if: needs.platform-impact.outputs.core == 'true'
-    # Blacksmith pilot: the only job off GitHub-hosted runners. Set the `CORE_BUILD_RUNNER`
+    # On Blacksmith, as are Vulkan (Linux) and Web. Set the `CORE_BUILD_RUNNER`
     # repository variable to `ubuntu-latest` to move it back with no code change (see "Build
     # runner" in docs/release-process.md). Outside awakekt (a fork's own CI) no Blacksmith runner
     # exists, so the job would queue forever; it falls back to ubuntu-latest there.
@@ -458,7 +458,9 @@ jobs:
     name: Vulkan (Linux)
     needs: platform-impact
     if: needs.platform-impact.outputs.vulkan == 'true' || needs.platform-impact.outputs.web == 'true'
-    runs-on: ubuntu-latest
+    # On Blacksmith, like Build (JVM/Native). Set `CORE_VULKAN_RUNNER` to `ubuntu-latest` to move it
+    # back (see "Build runner" in docs/release-process.md).
+    runs-on: ${{ vars.CORE_VULKAN_RUNNER || (github.repository_owner == 'awakekt' && 'blacksmith-8vcpu-ubuntu-2404') || 'ubuntu-latest' }}
     timeout-minutes: 45
 
     steps:
@@ -626,7 +628,9 @@ jobs:
     name: Web
     needs: platform-impact
     if: needs.platform-impact.outputs.web == 'true'
-    runs-on: ubuntu-latest
+    # On Blacksmith, like Build (JVM/Native). Set `CORE_WEB_RUNNER` to `ubuntu-latest` to move it
+    # back (see "Build runner" in docs/release-process.md).
+    runs-on: ${{ vars.CORE_WEB_RUNNER || (github.repository_owner == 'awakekt' && 'blacksmith-8vcpu-ubuntu-2404') || 'ubuntu-latest' }}
     timeout-minutes: 20
 
     steps:
