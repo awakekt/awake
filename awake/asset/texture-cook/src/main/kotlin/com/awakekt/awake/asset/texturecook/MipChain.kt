@@ -12,7 +12,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-/** An 8-bit RGBA image, rows top to bottom, four bytes a pixel. */
+/** An 8-bit RGBA image, four bytes a pixel, its bottom row first as every Awake texture is. */
 internal class RgbaImage(val width: Int, val height: Int, val pixels: ByteArray) {
     init {
         require(pixels.size == width * height * CHANNELS) { "a ${width}x$height image is ${width * height * CHANNELS} bytes; was ${pixels.size}" }
@@ -28,14 +28,14 @@ private const val MAX = 255f
 /** Decoding a source image, and filtering its mips the way its [TextureRole] needs. */
 internal object MipChain {
 
-    /** Decodes [bytes], a PNG or JPEG, to RGBA. */
+    /** Decodes [bytes], a PNG or JPEG, to RGBA, bottom row first. */
     fun decode(bytes: ByteArray): RgbaImage {
         val image = requireNotNull(ImageIO.read(ByteArrayInputStream(bytes))) { "not an image Java can decode" }
         val pixels = ByteArray(image.width * image.height * CHANNELS)
         for (y in 0 until image.height) {
             for (x in 0 until image.width) {
                 val argb = image.getRGB(x, y)
-                val at = (y * image.width + x) * CHANNELS
+                val at = ((image.height - 1 - y) * image.width + x) * CHANNELS
                 pixels[at] = (argb shr RED_SHIFT).toByte()
                 pixels[at + 1] = (argb shr GREEN_SHIFT).toByte()
                 pixels[at + 2] = argb.toByte()

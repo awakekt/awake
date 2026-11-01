@@ -49,8 +49,22 @@ class Ktx2Texture(
     /** Whether this texture is a cubemap: six faces per level. */
     val isCubemap: Boolean get() = faceCount == CUBE_FACES
 
+    /**
+     * The `KTXorientation` value, such as `rd` or `ru`: which way x and y run. Null when the file
+     * gives none, which KTX2 reads as `rd`, the top row first.
+     */
+    val orientation: String? get() = keyValues[ORIENTATION_KEY]?.decodeToString()?.trimEnd('\u0000')
+
+    /**
+     * Whether the rows are stored bottom first (`KTXorientation` `ru`), as every Awake texture is.
+     * The cook writes textures this way. A block-compressed texture stored the other way can't be
+     * flipped without decoding it.
+     */
+    val bottomRowFirst: Boolean get() = orientation?.getOrNull(1) == 'u'
+
     private companion object {
         const val CUBE_FACES = 6
+        const val ORIENTATION_KEY = "KTXorientation"
     }
 }
 

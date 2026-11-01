@@ -15,8 +15,8 @@ plugins {
 kotlin {
     android { namespace = "com.awakekt.awake.asset.ktx" }
     sourceSets {
-        // The project's texture cook settings, awake.textures.json.
-        commonMain.dependencies { implementation(libs.kotlinx.serialization.json) }
+        // The project's texture cook settings, awake.textures.json: public @Serializable types.
+        commonMain.dependencies { api(libs.kotlinx.serialization.json) }
         commonTest.dependencies { implementation(kotlin("test")) }
     }
 }

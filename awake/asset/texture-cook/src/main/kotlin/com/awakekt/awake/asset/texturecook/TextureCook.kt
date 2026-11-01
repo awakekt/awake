@@ -58,7 +58,7 @@ object TextureCook {
         if (!settings.enabled) {
             listOf(target)
         } else {
-            (listOf("ktx2") + settings.mobile.distinct().map(::suffix)).map { sibling(target, it) }
+            (listOf(MobileTextureFormat.BASIS_EXTENSION) + settings.mobile.distinct().map { it.extension }).map { sibling(target, it) }
         }
 
     private fun sibling(target: File, extension: String): File = target.resolveSibling("${target.nameWithoutExtension}.$extension")
@@ -71,13 +71,13 @@ object TextureCook {
         }
         val levels = MipChain.levels(MipChain.decode(source.readBytes()), settings.role, settings.mipmaps)
         val basis = KtxEncoder.basis(levels, settings)
-        val written = mutableListOf(write(target, "ktx2", basis))
+        val written = mutableListOf(write(target, MobileTextureFormat.BASIS_EXTENSION, basis))
         settings.mobile.distinct().forEach { format ->
             val bytes = when (format) {
                 MobileTextureFormat.Astc4x4 -> KtxEncoder.astc(levels, settings)
                 MobileTextureFormat.Etc2Rgba8 -> KtxEncoder.etc2(basis)
             }
-            written += write(target, suffix(format), bytes)
+            written += write(target, format.extension, bytes)
         }
         val base = levels.first()
         return "$texture: ${base.width}x${base.height}, ${levels.size} levels, ${settings.role}, " +
@@ -89,12 +89,6 @@ object TextureCook {
         val file = sibling(source, extension)
         file.writeBytes(bytes)
         return file.name to bytes.size
-    }
-
-    /** The extension a cooked mobile file in [format] takes. */
-    private fun suffix(format: MobileTextureFormat): String = when (format) {
-        MobileTextureFormat.Astc4x4 -> "astc.ktx2"
-        MobileTextureFormat.Etc2Rgba8 -> "etc2.ktx2"
     }
 }
 

@@ -22,6 +22,8 @@ The mobile files are written for the formats the settings' `mobile` list names. 
 `enabled: false` is copied unchanged.
 
 - **Sources:** PNG or JPEG, anything `javax.imageio` decodes, read as 8-bit RGBA.
+- **Rows bottom first,** as every Awake texture is stored, written as KTX2's `KTXorientation` `ru`.
+  Block-compressed data can't be flipped once it's encoded, so the cook flips the source first.
 - **Mips:** filtered 2 x 2 down to 1 x 1, in linear light for `Color`, and renormalised for `Normal`.
   `mipmaps: false` writes the base level only.
 - **Quality, measured** on a 64 x 64 gradient with a hard-edged square (`TextureCookTest`): what the GPU
