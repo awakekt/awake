@@ -104,7 +104,7 @@ fun SceneCanvas(
     // Kept from frame to frame: sorting every element and indexing every named node each frame cost
     // more than drawing a large canvas does.
     // Components changed on an entity, or through its element, since the last frame.
-    world.syncCanvasElements()
+    world.syncActiveCanvasElements()
     val order = remember(world) { CanvasItemOrder(world) }
     val named = remember(world) { CanvasNodeNames(world) }
     named.nextFrame()

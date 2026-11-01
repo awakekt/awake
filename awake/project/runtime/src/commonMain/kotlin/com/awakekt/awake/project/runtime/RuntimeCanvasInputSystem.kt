@@ -8,7 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.input.InputActions
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.syncCanvasElements
+import com.awakekt.awake.scene.canvas.syncActiveCanvasElements
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.ui.canvas.CanvasButtonWidget
@@ -28,7 +28,7 @@ internal class RuntimeCanvasInputSystem(input: () -> GameplayInput) : System {
         }
         // Do not synchronize an empty canvas: the compatibility sync has temporary bookkeeping,
         // and an idle/headless scene must keep its allocation-free steady state.
-        if (world.family<CanvasElement>().size > 0 || world.family<CanvasRect>().size > 0) world.syncCanvasElements()
+        if (world.family<CanvasElement>().size > 0 || world.family<CanvasRect>().size > 0) world.syncActiveCanvasElements()
         if (world.needsCanvasActions()) player.update(world, delta)
     }
 }
@@ -65,7 +65,7 @@ internal class RuntimeCanvasActionsSystem : System {
 
     override fun update(world: World, delta: Float) {
         if (world.family<CanvasElement>().size == 0 && world.family<CanvasRect>().size == 0) return
-        world.syncCanvasElements()
+        // The action system syncs the canvas itself, once, before it reads a control.
         actions.update(world, delta)
     }
 }

@@ -80,10 +80,34 @@ class CanvasPartsAllocationProbeTest {
         assertEquals(0L, windows[0], "fewest bytes over $MEASURED_FRAMES frames")
     }
 
+    /** The gated sync the frame's callers use is as quiet as the full one when nothing changed. */
+    @Test
+    fun theGatedSyncOfASteadyHudAllocatesNothingPerFrame() {
+        val world = World()
+        ActionBarParts().resolve(world, world.placeCanvas(actionBarFromParts().root))
+        world.syncActiveCanvasElements()
+        fun frame() {
+            repeat(CALLERS) { world.syncActiveCanvasElements() }
+        }
+        repeat(WARMUP_FRAMES) { frame() }
+
+        val windows = LongArray(MEASURED_WINDOWS)
+        repeat(MEASURED_WINDOWS) { window ->
+            val start = allocated()
+            repeat(MEASURED_FRAMES) { frame() }
+            windows[window] = allocated() - start
+        }
+        windows.sort()
+
+        println("CanvasSyncFrame gated: ${windows.joinToString()} bytes per $MEASURED_FRAMES frames")
+        assertEquals(0L, windows[0], "fewest bytes over $MEASURED_FRAMES frames")
+    }
+
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
     private fun allocated(): Long = threadBean.currentThreadAllocatedBytes
 
     private companion object {
+        const val CALLERS = 3
         const val WARMUP_FRAMES = 300
         const val MEASURED_FRAMES = 600
         const val MEASURED_WINDOWS = 5

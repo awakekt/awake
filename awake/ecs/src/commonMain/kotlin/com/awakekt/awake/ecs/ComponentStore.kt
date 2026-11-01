@@ -17,6 +17,15 @@ class ComponentStore<T : Any>(
     /** Number of entities currently carrying this component. */
     val size: Int get() = membership.size
 
+    /**
+     * How many times a component has been added, replaced, removed or cleared here. A cache of what
+     * this store holds is current while the number is unchanged, whether the change was an entity
+     * gaining or losing the component or one instance replacing another; a component's own fields
+     * changing in place does not count.
+     */
+    var revision: Int = 0
+        private set
+
     /** The storage strategy selected for this component type. */
     val storageKind: ComponentStorageKind
         get() = values?.kind ?: ComponentStorageKind.Uninitialized
@@ -33,6 +42,7 @@ class ComponentStore<T : Any>(
      * @return the previous component instance, or null if none was present.
      */
     fun add(entity: Entity, component: T): T? {
+        revision++
         val storage = values ?: selectStorage(component).also { values = it }
         storage.validate(component)
         val existingIndex = membership.indexOf(entity)
@@ -64,6 +74,7 @@ class ComponentStore<T : Any>(
         val storage = values
         if (index < 0 || storage == null) return null
 
+        revision++
         val lastIndex = membership.removeAt(index)
         val removed = storage.remove(index, lastIndex)
         return removed
@@ -71,6 +82,7 @@ class ComponentStore<T : Any>(
 
     /** Removes all components from this store. */
     fun clear() {
+        revision++
         values?.clear(membership.size)
         membership.clear()
     }
