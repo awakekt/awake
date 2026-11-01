@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
 import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.character.TerrainSurface
 import kotlin.math.cos
 
 /**
@@ -151,6 +152,9 @@ class KinematicCharacterController(
 
     /** Places the character immediately and clears its ground state. */
     fun teleport(to: Vec3f) = controller.teleport(to)
+
+    /** Puts the character back on top of [terrain] if it's under it; see the capability's `liftOutOf`. */
+    fun liftOutOf(terrain: TerrainSurface): Boolean = controller.liftOutOf(terrain)
 
     /** Destroys the optional inner body. */
     fun dispose() = controller.dispose()

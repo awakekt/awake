@@ -44,6 +44,9 @@ class CharacterControllerSystem(
     private val builtFor = ArrayList<Entity>()
     private val built = ArrayList<KinematicCharacterController>()
 
+    /** The scene's terrain bodies, for lifting a character found under one. */
+    private val terrains = SceneTerrainSurfaces()
+
     override fun update(world: World, delta: Float) {
         basis.update(world)
         world.queryEach(TRANSFORM, CHARACTER) { entity, transform, character ->
@@ -73,12 +76,25 @@ class CharacterControllerSystem(
                 moveZ * step + body.groundVelocity.z * delta,
             )
             body.move(motion, delta)
+            if (liftOutOfTerrain(world, body)) character.verticalVelocity = 0f
             transform.position.set(body.position)
             world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
             intent?.turnToward(transform, moveX, moveZ, delta)
             character.record(transform)
         }
         releaseGone(world)
+    }
+
+    /**
+     * Puts [body] back on top of the scene's terrain if it ended up under it, and reports whether
+     * it did (#1209). A heightfield is solid only from above, so nothing else brings it back. A
+     * character standing on the terrain can't be under it, so it costs nothing; any other costs a
+     * ray per terrain under it.
+     */
+    private fun liftOutOfTerrain(world: World, body: KinematicCharacterController): Boolean {
+        val surfaces = terrains.of(world)
+        if (surfaces.isEmpty() || terrains.isTerrain(body.groundBody)) return false
+        return surfaces.any { body.liftOutOf(it) }
     }
 
     /** Keeps [controller] as [entity]'s, disposing one built for it before: its component was replaced. */
