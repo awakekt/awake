@@ -28,3 +28,15 @@ Register `CharacterControllerSystem(physicsWorld)` in the fixed phase after `Phy
 moves each character by its `MovementControl` intent relative to the active camera, adds gravity,
 jumps when the intent asks while it stands on ground, and carries it with a moving platform. Don't
 also run `MatrixRelativeMovementSystem` on these entities; it moves them straight through walls.
+
+## Free motion
+
+Set `CharacterController.motionMode = CharacterMotionMode.Free` for a character that swims, flies or
+floats. The system then reads `MovementControl.moveX`, `moveY` and `moveZ` as a world velocity in
+units per second, applies no gravity, ground snapping, steps or slope limit, and never turns the
+body: the game owns its velocity, yaw and pitch. The same capsule still collides with what a
+walking character does, terrain included. After each step `CharacterController.lastContact` says
+whether it was stopped, the contact normal before the slide (to reflect rather than slide), and
+whether anything lies just below it. `freeMinY` and `freeMaxY` bound its height. Switching back to
+`Grounded` drops any fall speed and finds the ground again on the next step. The mode is run-time
+state and is not saved with the scene.

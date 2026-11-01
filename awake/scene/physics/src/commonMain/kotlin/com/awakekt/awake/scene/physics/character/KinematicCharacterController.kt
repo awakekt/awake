@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
 import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.character.CharacterContact
 import com.awakekt.awake.physics.character.TerrainCollider
 import kotlin.math.cos
 
@@ -84,6 +85,9 @@ data class CharacterConfig(
     /** Ground is walkable when its normal is at least this upright -- compared once, not per hit. */
     internal val minWalkableNormalY: Float = cos(slopeLimitRadians)
 
+    /** Moves in any direction with no ground state, collision kept; see the capability's `moveFree`. */
+    fun moveFree(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.moveFree(motion, deltaTime)
+
     private companion object {
         const val DEFAULT_SLOPE_LIMIT_RADIANS = 0.7853982f // 45 degrees
         const val DEFAULT_SKIN_WIDTH = 0.02f
@@ -143,6 +147,9 @@ class KinematicCharacterController(
     var onContact: ((body: BodyHandle, normal: Vec3f) -> Unit)?
         get() = controller.onContact
         set(value) { controller.onContact = value }
+
+    /** What the last move ran into, and whether anything lay below it after; see the capability's `lastContact`. */
+    val lastContact: CharacterContact get() = controller.lastContact
 
     /** Shrinks the capsule while keeping its feet in place. */
     fun crouch() = controller.crouch()

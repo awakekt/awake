@@ -2,11 +2,18 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public fun <init> (Lcom/awakekt/awake/scene/physics/character/CharacterConfig;FF)V
 	public final fun getBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
 	public final fun getConfig ()Lcom/awakekt/awake/scene/physics/character/CharacterConfig;
+	public final fun getFreeMaxY ()F
+	public final fun getFreeMinY ()F
 	public final fun getGravity ()F
 	public final fun getJumpSpeed ()F
+	public final fun getLastContact ()Lcom/awakekt/awake/physics/character/CharacterContact;
+	public final fun getMotionMode ()Lcom/awakekt/awake/scene/character/CharacterMotionMode;
 	public final fun isGrounded ()Z
+	public final fun setFreeMaxY (F)V
+	public final fun setFreeMinY (F)V
 	public final fun setGravity (F)V
 	public final fun setJumpSpeed (F)V
+	public final fun setMotionMode (Lcom/awakekt/awake/scene/character/CharacterMotionMode;)V
 	public final fun teleport (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;)V
 }
 
@@ -35,6 +42,14 @@ public final class com/awakekt/awake/scene/character/CharacterControllerSystem :
 	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/character/CharacterMotionMode : java/lang/Enum {
+	public static final field Free Lcom/awakekt/awake/scene/character/CharacterMotionMode;
+	public static final field Grounded Lcom/awakekt/awake/scene/character/CharacterMotionMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/character/CharacterMotionMode;
+	public static fun values ()[Lcom/awakekt/awake/scene/character/CharacterMotionMode;
 }
 
 public final class com/awakekt/awake/scene/character/CharacterSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {

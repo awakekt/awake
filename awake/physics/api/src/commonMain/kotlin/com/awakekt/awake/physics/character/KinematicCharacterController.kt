@@ -205,6 +205,9 @@ class KinematicCharacterController(
      */
     var onContact: ((body: BodyHandle, normal: Vec3f) -> Unit)? = null
 
+    /** What the last [move] or [moveFree] ran into, and whether anything lay below it after. */
+    val lastContact: CharacterContact = CharacterContact()
+
     /** Whether the character is currently the shorter shape. */
     var isCrouching: Boolean = false
         private set
@@ -384,21 +387,57 @@ class KinematicCharacterController(
      */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
         safePosition.set(position)
+        lastContact.clear()
         try {
             moveChecked(motion, deltaTime)
             reportedInvalidContact = false
         } catch (failure: InvalidShapeCastResultException) {
-            // No inner-body synchronization has happened yet. Drop the displacement for this
-            // character, clear uncertain ground, and allow the caller to keep stepping others.
-            position.set(safePosition)
-            remaining.set(0f, 0f, 0f)
-            isGrounded = false
-            groundBody = null
-            groundNormal.set(0f, 1f, 0f)
-            groundVelocity.set(0f, 0f, 0f)
-            leftGround = false
-            reportInvalidContact(failure)
+            dropFailedMove(failure)
         }
+    }
+
+    /**
+     * Sweeps [motion] in any direction and slides along whatever stops it, as [move] does, but with
+     * no notion of ground: no step-up, no settling onto ground, no snapping down after it, and no
+     * slope limit, since nothing is walked on. For a character that swims, flies or floats, whose
+     * caller owns its whole velocity, gravity included or not.
+     *
+     * Leaves the character not grounded, with no ground body or ground velocity, and reports the
+     * first contact and whether anything lies below in [lastContact]. Walls, floors, ceilings and
+     * terrain still stop it; depenetration still pushes it out of an overlap once per move. The
+     * capsule stays upright: orientation is the caller's.
+     */
+    fun moveFree(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
+        safePosition.set(position)
+        lastContact.clear()
+        clearGround()
+        try {
+            sweepAndSlide(motion, wasGrounded = false)
+            lastContact.below(probeGround() != null)
+            syncBody(deltaTime)
+            reportedInvalidContact = false
+        } catch (failure: InvalidShapeCastResultException) {
+            dropFailedMove(failure)
+        }
+    }
+
+    /**
+     * No inner-body synchronization has happened yet. Drops the displacement for this character,
+     * clears uncertain ground, and lets the caller keep stepping others.
+     */
+    private fun dropFailedMove(failure: InvalidShapeCastResultException) {
+        position.set(safePosition)
+        remaining.set(0f, 0f, 0f)
+        clearGround()
+        reportInvalidContact(failure)
+    }
+
+    private fun clearGround() {
+        isGrounded = false
+        groundBody = null
+        groundNormal.set(0f, 1f, 0f)
+        groundVelocity.set(0f, 0f, 0f)
+        leftGround = false
     }
 
     private fun reportInvalidContact(failure: InvalidShapeCastResultException) {
@@ -415,10 +454,27 @@ class KinematicCharacterController(
 
     private fun moveChecked(motion: Vec3f, deltaTime: Float) {
         if (standsStill(motion)) {
+            lastContact.below(true)
             syncBody(deltaTime)
             return
         }
         val wasGrounded = isGrounded
+        val depenetrated = sweepAndSlide(motion, wasGrounded)
+        val risingSpeed = if (deltaTime > 0f) motion.y / deltaTime else 0f
+        updateGroundState(
+            ascending = motion.y > MIN_MOTION,
+            risingSpeed = risingSpeed,
+            mayDepenetrate = !depenetrated,
+        )
+        if (wasGrounded && !isGrounded && !leftGround) snapDownToGround()
+        syncBody(deltaTime)
+    }
+
+    /**
+     * The collide-and-slide loop shared by [move] and [moveFree]; reports whether it pushed the
+     * character out of an overlap. Steps up only when [wasGrounded].
+     */
+    private fun sweepAndSlide(motion: Vec3f, wasGrounded: Boolean): Boolean {
         remaining.set(motion)
         var iterations = 0
         var blocked = true
@@ -435,18 +491,16 @@ class KinematicCharacterController(
                 // again from clear space. Once per move, so contacts that keep reporting an
                 // overlap cannot carry the character further than its own size in one step.
                 val pushedOut = !depenetrated && depenetrate(hit)
-                if (pushedOut) depenetrated = true else stepOrSlide(hit, wasGrounded)
+                if (pushedOut) {
+                    depenetrated = true
+                    lastContact.record(hit)
+                } else {
+                    stepOrSlide(hit, wasGrounded)
+                }
                 iterations++
             }
         }
-        val risingSpeed = if (deltaTime > 0f) motion.y / deltaTime else 0f
-        updateGroundState(
-            ascending = motion.y > MIN_MOTION,
-            risingSpeed = risingSpeed,
-            mayDepenetrate = !depenetrated,
-        )
-        if (wasGrounded && !isGrounded && !leftGround) snapDownToGround()
-        syncBody(deltaTime)
+        return depenetrated
     }
 
     /** What a contact the character arrives at does to the move: stepped over, or slid along. */
@@ -458,6 +512,8 @@ class KinematicCharacterController(
             hit.normal.y < config.minWalkableNormalY &&
             tryStepUp()
         if (!stepped) {
+            // Recorded before the slide, so a caller sees the surface it met, not the turn it made.
+            lastContact.record(hit)
             slideAlong(hit.normal, hit.fraction)
             onContact?.invoke(hit.handle, hit.normal)
         }
@@ -568,6 +624,7 @@ class KinematicCharacterController(
             position.y -= config.stepDownDistance * hit.fraction
             position.y += config.skinWidth
             isGrounded = true
+            lastContact.below(true)
             groundNormal.set(hit.normal)
             groundBody = hit.handle
             val velocity = world.getLinearVelocity(hit.handle)
@@ -703,6 +760,7 @@ class KinematicCharacterController(
         // sweep. Out first, or the overlap reads as standing and a still character never moves
         // again; then the probe runs from clear space.
         if (mayDepenetrate && hit != null && depenetrate(hit)) hit = probeGround()
+        lastContact.below(hit != null)
         val velocity = hit?.let { world.getLinearVelocity(it.handle) }
         // Rising faster than the ground is leaving it -- a jump, not a ride on a lift. The probe
         // still reaches the floor for the first steps of a jump, and calling that grounded would
