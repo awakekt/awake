@@ -55,3 +55,152 @@ public final class com/awakekt/awake/asset/ktx/Ktx2Texture {
 	public final fun isCubemap ()Z
 }
 
+public final class com/awakekt/awake/asset/ktx/MobileTextureFormat : java/lang/Enum {
+	public static final field Astc4x4 Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
+	public static final field Companion Lcom/awakekt/awake/asset/ktx/MobileTextureFormat$Companion;
+	public static final field Etc2Rgba8 Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
+	public static fun values ()[Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
+}
+
+public final class com/awakekt/awake/asset/ktx/MobileTextureFormat$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/ktx/ProjectTextureSettings {
+	public static final field Companion Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings$Companion;
+	public static final field FILE_NAME Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (ILcom/awakekt/awake/asset/ktx/TextureCookSettings;Ljava/util/Map;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/asset/ktx/TextureCookSettings;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (ILcom/awakekt/awake/asset/ktx/TextureCookSettings;Ljava/util/Map;)Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings;ILcom/awakekt/awake/asset/ktx/TextureCookSettings;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings;
+	public final fun encode ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun forAsset (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public final fun getAssets ()Ljava/util/Map;
+	public final fun getDefaults ()Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public final fun getFormatVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/ktx/ProjectTextureSettings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/ktx/ProjectTextureSettings$Companion {
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/ProjectTextureSettings;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/ktx/TextureCookOverride {
+	public static final field Companion Lcom/awakekt/awake/asset/ktx/TextureCookOverride$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Boolean;Lcom/awakekt/awake/asset/ktx/TextureRole;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/Boolean;Lcom/awakekt/awake/asset/ktx/TextureRole;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public final fun component2 ()Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/Boolean;Lcom/awakekt/awake/asset/ktx/TextureRole;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;)Lcom/awakekt/awake/asset/ktx/TextureCookOverride;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/ktx/TextureCookOverride;Ljava/lang/Boolean;Lcom/awakekt/awake/asset/ktx/TextureRole;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/ktx/TextureCookOverride;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnabled ()Ljava/lang/Boolean;
+	public final fun getEtc1sQuality ()Ljava/lang/Integer;
+	public final fun getMipmaps ()Ljava/lang/Boolean;
+	public final fun getMobile ()Ljava/util/List;
+	public final fun getRole ()Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public final fun getUastcLevel ()Ljava/lang/Integer;
+	public final fun getZstdLevel ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/ktx/TextureCookOverride$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/TextureCookOverride$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/ktx/TextureCookOverride;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/ktx/TextureCookOverride;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/ktx/TextureCookOverride$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/ktx/TextureCookSettings {
+	public static final field DEFAULT_ETC1S_QUALITY I
+	public static final field DEFAULT_UASTC_LEVEL I
+	public static final field DEFAULT_ZSTD_LEVEL I
+	public static final field MAX_ETC1S_QUALITY I
+	public static final field MAX_UASTC_LEVEL I
+	public static final field MAX_ZSTD_LEVEL I
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/asset/ktx/TextureRole;IIIZLjava/util/List;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/asset/ktx/TextureRole;IIIZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()Z
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (ZLcom/awakekt/awake/asset/ktx/TextureRole;IIIZLjava/util/List;)Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/ktx/TextureCookSettings;ZLcom/awakekt/awake/asset/ktx/TextureRole;IIIZLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnabled ()Z
+	public final fun getEtc1sQuality ()I
+	public final fun getMipmaps ()Z
+	public final fun getMobile ()Ljava/util/List;
+	public final fun getRole ()Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public final fun getSrgb ()Z
+	public final fun getUastcLevel ()I
+	public final fun getZstdLevel ()I
+	public fun hashCode ()I
+	public final fun overriddenBy (Lcom/awakekt/awake/asset/ktx/TextureCookOverride;)Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/ktx/TextureCookSettings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/TextureCookSettings$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/ktx/TextureCookSettings;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/ktx/TextureCookSettings;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/ktx/TextureRole : java/lang/Enum {
+	public static final field Color Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public static final field Companion Lcom/awakekt/awake/asset/ktx/TextureRole$Companion;
+	public static final field Data Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public static final field Normal Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/TextureRole;
+	public static fun values ()[Lcom/awakekt/awake/asset/ktx/TextureRole;
+}
+
+public final class com/awakekt/awake/asset/ktx/TextureRole$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

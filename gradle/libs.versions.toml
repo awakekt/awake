@@ -30,6 +30,7 @@ webgpu-ktypes = "0.0.10-SNAPSHOT"
 # jolt-jni provides JVM bindings for desktop+Android. 6.x, not 5.x: 5.1.0 and 5.2.0 shipped a
 # Linux arm64 native built for SVE2, which dies with SIGILL on arm64 CPUs without it.
 jolt-jni = "6.1.1"
+lwjgl = "3.4.3"
 snaploader = "1.1.1-stable"
 oshi-core = "7.4.0"
 # Desktop-only Ktor WebSocket debug-control channel for sample-hello-cube (see
@@ -73,6 +74,9 @@ cryptography = "0.6.0"
 kotlinx-io = "0.9.1"
 
 [libraries]
+# libktx through LWJGL: the offline texture cook (awake:asset:texture-cook).
+lwjgl-core = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
+lwjgl-ktx = { module = "org.lwjgl:lwjgl-ktx", version.ref = "lwjgl" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
