@@ -2,9 +2,10 @@ name: Release
 
 # Manual Core release. `main` only accepts pull requests, so a release is two steps:
 #   1. Run this workflow: it promotes CHANGELOG.md with `releaseCut` and opens a release PR.
-#   2. Merge that PR: the push to `main` tags the merge commit, and the tag triggers Publish.
-# RELEASE_TOKEN (fine-grained PAT: Contents + Pull requests read/write) is required because
-# PRs and tags pushed with GITHUB_TOKEN do not trigger CI or Publish.
+#   2. Merge that PR: the push to `main` tags the squash commit, and the tag triggers Publish, whose
+#      Vulkan tag job pushes the next `vulkan-v*` tag when one is needed.
+# Both steps run release-reusable.yml, the workflow every other repository calls too
+# (docs/templates/release.yml), so Core is its first consumer. RELEASE_TOKEN is explained there.
 
 on:
   workflow_dispatch:
@@ -21,6 +22,10 @@ on:
         default: none
         type: choice
         options: [none, patch, minor, major]
+      dry-run:
+        description: 'Print the next version and changelog; push and open nothing'
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -32,118 +37,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  prepare:
-    name: Prepare
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # Writes go through RELEASE_TOKEN; the job's own token only reads.
-    permissions:
-      contents: read
-    steps:
-      - name: Check release token
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          [[ -n "$RELEASE_TOKEN" ]] || { echo "RELEASE_TOKEN secret is not set." >&2; exit 1; }
-
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          fetch-depth: 0
-          # No token on disk while releaseCut runs the build: only the push step gets RELEASE_TOKEN.
-          persist-credentials: false
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-
-      - name: Cut release
-        id: cut
-        env:
-          CHANNEL: ${{ inputs.channel }}
-          BUMP: ${{ inputs.bump }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          bump_arg=()
-          [[ "$BUMP" != none ]] && bump_arg=("-Prelease.bump=$BUMP")
-          ./gradlew releaseCut "-Prelease.channel=$CHANNEL" "${bump_arg[@]}" --no-configuration-cache
-          tag="$(git tag --points-at HEAD 'v*' | head -n 1)"
-          [[ -n "$tag" ]] || { echo "releaseCut did not create a tag." >&2; exit 1; }
-          # The tag is created on the merge commit after review; drop the local one.
-          git tag -d "$tag"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
-      - name: Open release pull request
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          TAG: ${{ steps.cut.outputs.tag }}
-        run: |
-          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
-          echo "::add-mask::$basic"
-          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
-          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
-            echo "$TAG already exists." >&2
-            exit 1
-          fi
-          branch="release-cut/$TAG"
-          git switch -c "$branch"
-          git push origin "$branch"
-          milestone="$(gh api "repos/$GITHUB_REPOSITORY/milestones" --jq ".[] | select(.title == \"$TAG\") | .title")"
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "chore(release): cut $TAG" \
-            --body "Promotes \`## [Unreleased]\` to \`$TAG\`. Merging tags the merge commit and publishes it." \
-            ${milestone:+--milestone "$milestone"}
-
-  tag:
-    name: Tag
-    if: >-
-      github.event_name == 'push' &&
-      startsWith(github.event.head_commit.message, 'chore(release): cut v')
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Tag release commit
-        env:
-          MESSAGE: ${{ github.event.head_commit.message }}
-          # A tag pushed with the default token does not start the publish workflow, so tagging needs
-          # RELEASE_TOKEN. Without it the maintainer tags by hand; say how instead of failing.
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          tag="$(sed -nE '1s/^chore\(release\): cut (v[0-9][^ ]*).*/\1/p' <<<"$MESSAGE")"
-          [[ -n "$tag" ]] || { echo "Could not read the tag from: $MESSAGE" >&2; exit 1; }
-          grep -qF "## [${tag#v}]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $tag." >&2; exit 1; }
-          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-            echo "::notice::$tag already exists."
-            exit 0
-          fi
-          if [[ -z "$RELEASE_TOKEN" ]]; then
-            echo "::notice::RELEASE_TOKEN is not set. Tag by hand: git tag -a $tag -m \"Release $tag\" ${GITHUB_SHA} && git push origin $tag"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          basic="$(printf 'x-access-token:%s' "$RELEASE_TOKEN" | base64 -w0)"
-          echo "::add-mask::$basic"
-          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
-          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
-          git tag -a "$tag" -m "Release $tag"
-          git push origin "$tag"
+  release:
+    uses: ./.github/workflows/release-reusable.yml
+    with:
+      channel: ${{ inputs.channel || 'dev' }}
+      bump: ${{ inputs.bump || 'none' }}
+      dry-run: ${{ inputs.dry-run == true }}
+    secrets:
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}

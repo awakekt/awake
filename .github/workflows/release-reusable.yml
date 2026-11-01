@@ -1,0 +1,255 @@
+name: Release (reusable)
+
+# The release automation around the `release-cut` Gradle plugin, shared by Core and every repository
+# that cuts releases from changelog fragments. Callers copy docs/templates/release.yml; the guide is
+# "Releasing another repository with the same workflow" in docs/release-process.md.
+#   1. Dispatch: `prepare` runs `releaseCut`, pushes `release-cut/<tag>`, opens `chore(release): cut <tag>`.
+#   2. Merging that PR runs `tag`, which tags the squash commit's full SHA and pushes the tag.
+# RELEASE_TOKEN (Contents, Pull requests, Workflows: read and write) is required: PRs and tags made
+# with GITHUB_TOKEN start no other workflow, and a tag over history that changes .github/workflows
+# needs the Workflows permission, which GITHUB_TOKEN never has. Scripts are inline (callers do not
+# check out this repository); self-hosted runners need bash, git, curl and the GitHub CLI.
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: 'Release channel: dev, alpha, beta, rc or stable'
+        type: string
+        default: dev
+      bump:
+        description: 'Version bump: none, patch, minor or major'
+        type: string
+        default: none
+      runs-on:
+        description: 'Runner labels as a JSON array, e.g. ["self-hosted","Linux","X64","docker"]'
+        type: string
+        default: '["ubuntu-latest"]'
+      java-version:
+        description: 'Temurin JDK that runs Gradle'
+        type: string
+        default: '17'
+      gradle-args:
+        description: 'Extra arguments for ./gradlew releaseCut, e.g. a project version property'
+        type: string
+        default: ''
+      version-key:
+        description: 'Key holding the current version, for a repository without release tags (release.versionKey)'
+        type: string
+        default: ''
+      version-file:
+        description: 'Properties file holding version-key (release.versionFile)'
+        type: string
+        default: gradle.properties
+      sync-version-files:
+        description: 'Comma-separated files whose "version" field the cut rewrites, e.g. awake.project.json'
+        type: string
+        default: ''
+      milestone:
+        description: 'Milestone for the release PR; default: the milestone titled like the tag, if any'
+        type: string
+        default: ''
+      dry-run:
+        description: 'Compute and print the next version and changelog; push and open nothing'
+        type: boolean
+        default: false
+    secrets:
+      RELEASE_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  token:
+    name: Check RELEASE_TOKEN
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release): cut v'))
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    timeout-minutes: 5
+    steps:
+      - name: Check RELEASE_TOKEN
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          fix="Fix: create a fine-grained token (GitHub > Settings > Developer settings > Fine-grained tokens) for $REPO with Contents, Pull requests and Workflows set to Read and write, then store it with: gh secret set RELEASE_TOKEN --repo $REPO"
+          if [[ -z "$RELEASE_TOKEN" ]]; then
+            echo "::error::RELEASE_TOKEN is empty: the secret is not set, or the caller does not pass it (secrets: RELEASE_TOKEN: \${{ secrets.RELEASE_TOKEN }}). $fix"
+            exit 1
+          fi
+          status="$(curl -sS -o /dev/null -D "$RUNNER_TEMP/headers" -w '%{http_code}' \
+            -H "Authorization: Bearer $RELEASE_TOKEN" "$GITHUB_API_URL/repos/$REPO")"
+          case "$status" in
+            200) ;;
+            401) echo "::error::RELEASE_TOKEN was rejected (HTTP 401): it is expired or revoked. $fix"; exit 1 ;;
+            *) echo "::error::RELEASE_TOKEN cannot read $REPO (HTTP $status): the token's repository access does not include it. $fix"; exit 1 ;;
+          esac
+          # Only a classic token lists scopes; a fine-grained one's gaps are explained where a push fails.
+          scopes="$(sed -n 's/^x-oauth-scopes: *//Ip' "$RUNNER_TEMP/headers" | tr -d '\r')"
+          if [[ -n "$scopes" ]]; then
+            for need in workflow repo; do
+              grep -qwE "$need|public_$need" <<<"$scopes" || { echo "::error::RELEASE_TOKEN is a classic token without the '$need' scope (has: $scopes). $fix"; exit 1; }
+            done
+          fi
+          echo "RELEASE_TOKEN can read $REPO."
+
+  prepare:
+    name: Prepare
+    needs: token
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check inputs and open cuts
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          CHANNEL: ${{ inputs.channel }}
+          BUMP: ${{ inputs.bump }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          [[ "$CHANNEL" =~ ^(dev|alpha|beta|rc|stable)$ ]] || { echo "::error::channel must be dev, alpha, beta, rc or stable, not '$CHANNEL'."; exit 1; }
+          [[ "$BUMP" =~ ^(none|patch|minor|major)$ ]] || { echo "::error::bump must be none, patch, minor or major, not '$BUMP'."; exit 1; }
+          # One owner per release: an open cut owns it (docs/release-process.md, "Who cuts").
+          open="$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/release-cut/" --jq '.[].ref | sub("^refs/heads/"; "")')
+          $(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" \
+            --jq '.[] | select(.title | startswith("chore(release)")) | "PR #\(.number): \(.title)"')"
+          if [[ -n "${open//[[:space:]]/}" ]]; then
+            level=error; [[ "$DRY_RUN" == true ]] && level=warning
+            echo "::$level::Another release cut is open; merge or close it (and delete its branch) first:"
+            sed '/^$/d' <<<"$open"
+            [[ "$level" == warning ]] || exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          # No token on disk while releaseCut runs the build; only the push step gets RELEASE_TOKEN.
+          persist-credentials: false
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java-version }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Cut release
+        id: cut
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          BUMP: ${{ inputs.bump }}
+          GRADLE_ARGS: ${{ inputs.gradle-args }}
+          VERSION_KEY: ${{ inputs.version-key }}
+          VERSION_FILE: ${{ inputs.version-file }}
+          SYNC_FILES: ${{ inputs.sync-version-files }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The cut commits its own files but tags nothing: `tag` tags the squash commit after the merge.
+          args=("-Prelease.channel=$CHANNEL" "-Prelease.tag=false")
+          [[ "$BUMP" != none ]] && args+=("-Prelease.bump=$BUMP")
+          [[ -n "$VERSION_KEY" ]] && args+=("-Prelease.versionKey=$VERSION_KEY" "-Prelease.versionFile=$VERSION_FILE")
+          [[ -n "$SYNC_FILES" ]] && args+=("-Prelease.syncVersionFiles=$SYNC_FILES")
+          [[ "$DRY_RUN" == true ]] && args+=("-Prelease.dryRun=true")
+          read -ra extra <<<"$GRADLE_ARGS"
+          ./gradlew releaseCut "${args[@]}" "${extra[@]}" --no-configuration-cache --no-daemon | tee "$RUNNER_TEMP/cut.log"
+          tag="$(sed -nE 's/.* release: [^ ]+ \((v[^)]+)\)$/\1/p' "$RUNNER_TEMP/cut.log" | head -n 1)"
+          [[ -n "$tag" ]] || { echo "::error::releaseCut printed no version."; exit 1; }
+          if [[ "$DRY_RUN" == true ]]; then
+            { echo "### Dry run: next release $tag"; echo; echo "Nothing was pushed and no PR was opened."; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::Dry run: the next release is $tag. Nothing was pushed."
+          else
+            [[ "$(git log -1 --format=%s)" == "chore(release): cut $tag" ]] || { echo "::error::releaseCut did not commit $tag."; exit 1; }
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Open release pull request
+        if: ${{ !inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAG: ${{ steps.cut.outputs.tag }}
+          BASE: ${{ github.event.repository.default_branch }}
+          MILESTONE_INPUT: ${{ inputs.milestone }}
+        run: |
+          fix="Fix: give RELEASE_TOKEN Contents, Pull requests and Workflows: Read and write on $GITHUB_REPOSITORY."
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$basic"
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::error::$TAG already exists."; exit 1
+          fi
+          branch="release-cut/$TAG"
+          git switch -c "$branch"
+          if ! git push origin "$branch" 2> "$RUNNER_TEMP/push.err"; then
+            cat "$RUNNER_TEMP/push.err" >&2
+            grep -qi 'refusing to allow .*workflow' "$RUNNER_TEMP/push.err" && echo "::error::RELEASE_TOKEN lacks the Workflows permission. $fix"
+            echo "::error::Could not push $branch. $fix"
+            exit 1
+          fi
+          milestone="$MILESTONE_INPUT"
+          [[ -n "$milestone" ]] || milestone="$(gh api "repos/$GITHUB_REPOSITORY/milestones" --jq ".[] | select(.title == \"$TAG\") | .title")"
+          gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$branch" \
+            --title "chore(release): cut $TAG" \
+            --body "Promotes the changelog fragments to \`$TAG\`. Merging tags the squash commit." \
+            ${milestone:+--milestone "$milestone"} \
+            || { echo "::error::Pushed $branch but could not open its PR. $fix"; exit 1; }
+
+  tag:
+    name: Tag
+    needs: token
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      startsWith(github.event.head_commit.message, 'chore(release): cut v')
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag release commit
+        env:
+          MESSAGE: ${{ github.event.head_commit.message }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          # The full SHA of the pushed squash commit; a short SHA is ambiguous and is refused.
+          sha="$GITHUB_SHA"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Expected a full commit SHA, got '$sha'."; exit 1; }
+          tag="$(sed -nE '1s/^chore\(release\): cut (v[0-9][^ ]*).*/\1/p' <<<"$MESSAGE")"
+          [[ -n "$tag" ]] || { echo "::error::Could not read the tag from: $MESSAGE"; exit 1; }
+          grep -qF "## [${tag#v}]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no section for $tag."; exit 1; }
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::notice::$tag already exists."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          basic="$(printf 'x-access-token:%s' "$RELEASE_TOKEN" | base64 -w0)"
+          echo "::add-mask::$basic"
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
+          git tag -a "$tag" -m "Release $tag" "$sha"
+          if ! git push origin "refs/tags/$tag" 2> "$RUNNER_TEMP/push.err"; then
+            cat "$RUNNER_TEMP/push.err" >&2
+            grep -qi 'refusing to allow .*workflow' "$RUNNER_TEMP/push.err" \
+              && echo "::error::RELEASE_TOKEN lacks the Workflows permission, which a tag over history that changes .github/workflows needs."
+            echo "::error::Could not push $tag. Give RELEASE_TOKEN Contents and Workflows: Read and write, or tag by hand: git tag -a $tag -m \"Release $tag\" $sha && git push origin $tag"
+            exit 1
+          fi
+          echo "Tagged $sha as $tag."

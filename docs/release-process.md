@@ -471,18 +471,85 @@ This command automatically:
 4. Creates an annotated Git tag `vX.Y.Z-channel.N`. A misnamed section directory fails the cut
    rather than dropping its entries.
 
+A missing `CHANGELOG.md` is created, and one without `## [Unreleased]` gets the section before its
+first release. Optional properties, all off by default, serve a repository that keeps its version in
+files or commits elsewhere:
+
+- `-Prelease.versionKey=<key>` (with `-Prelease.versionFile=<file>`, default `gradle.properties`):
+  count on from that entry (a release version such as `0.3.1`) instead of the newest tag, and write
+  the new version back. An existing tag of the new version still fails the cut.
+- `-Prelease.syncVersionFiles=<a,b>`: also rewrite each listed file's first JSON `"version"` member
+  or `version =` line. A listed file that is missing, or has no such field, fails the cut.
+- `-Prelease.tag=false`: commit without tagging. The Release workflow always passes it: its `Tag`
+  job tags the squash commit after the PR merges, so a local tag would only be thrown away.
+- `-Prelease.git=false`: only edit files (the changelog, the version files, the deleted fragments);
+  stage, commit and tag nothing, for a caller that commits itself.
+
 ### From GitHub Actions
 
 `main` only accepts pull requests, so the **Release** workflow splits the same steps in two:
 
-1. Actions → **Release** → *Run workflow*, choose the channel and bump. The `Prepare` job runs
-   `releaseCut`, pushes a `release-cut/<tag>` branch, and opens a `chore(release): cut <tag>` PR.
-2. Merge that PR once CI passes. The `Tag` job tags the merge commit and pushes the tag, which
-   triggers **Publish** (Maven Central) and **Docs**.
+1. Actions → **Release** → *Run workflow*, choose the channel and bump (tick *dry-run* to only print
+   the next version and changelog). The `Prepare` job refuses while another `release-cut/*` branch
+   or open `chore(release)` PR exists, runs `releaseCut`, pushes a `release-cut/<tag>` branch, and
+   opens a `chore(release): cut <tag>` PR with the milestone titled like the tag.
+2. Merge that PR once CI passes. The `Tag` job tags the squash commit, by its full SHA, and pushes
+   the tag, which triggers **Publish** (Maven Central, then the Vulkan tag when one is needed) and
+   **Docs**.
+
+Core's `release.yml` only calls `.github/workflows/release-reusable.yml`, the same workflow every
+other repository calls (next section), so Core is its first consumer and the two cannot drift.
 
 The workflow needs a `RELEASE_TOKEN` repository secret: a fine-grained personal access token for
-this repository with *Contents* and *Pull requests* read/write. `GITHUB_TOKEN` cannot be used
-because the PRs and tags it creates do not trigger other workflows.
+this repository with *Contents*, *Pull requests* and *Workflows* read and write. `GITHUB_TOKEN`
+cannot be used: the PRs and tags it creates do not trigger other workflows, and a tag whose history
+adds or changes a file under `.github/workflows` can only be pushed with the Workflows permission.
+A missing, expired or under-scoped token fails the run with the exact fix; the token is never
+printed.
+
+### Releasing another repository with the same workflow
+
+Any repository that builds with Gradle (Awake Studio, an editor plugin, a consumer game) cuts its
+releases with the same fragments, plugin and workflow; nothing is copied but a 30-line caller.
+
+1. **Apply the plugin at the root.** The `release-cut` plugin is one of Core's published build
+   plugins, at the Core version:
+
+   ```kotlin
+   // settings.gradle.kts
+   pluginManagement { repositories { gradlePluginPortal(); mavenCentral() } }
+   // build.gradle.kts (root)
+   plugins { id("com.awakekt.awake.plugin.release-cut") version "0.31.0" }
+   ```
+
+   Versions come from the
+   repository's own `v*` tags, as in Core. A repository with no release tags yet keeps its version
+   in a properties file instead (see `version-key` below). A missing `CHANGELOG.md` is created by the
+   first cut.
+2. **Add the caller workflow.** Copy [`templates/release.yml`](templates/release.yml) to
+   `.github/workflows/release.yml`. It pins `awakekt/awake/.github/workflows/release-reusable.yml`
+   to a Core release tag, never `main`; Dependabot's `github-actions` updates move the pin. Its
+   inputs:
+
+   | Input | Default | Use |
+   |:------|:--------|:----|
+   | `channel`, `bump` | `dev`, `none` | As `-Prelease.channel` and `-Prelease.bump` |
+   | `runs-on` | `["ubuntu-latest"]` | Runner labels as JSON, e.g. `["self-hosted","Linux","X64","docker"]` for a private repository; the runner needs bash, git, curl and `gh` |
+   | `java-version` | `17` | The Temurin JDK that runs Gradle |
+   | `version-key`, `version-file` | empty, `gradle.properties` | The key and properties file holding the current version (`release.versionKey`, `release.versionFile`): the cut counts on from it instead of the tags and writes the new version back |
+   | `sync-version-files` | empty | Comma-separated files whose first `"version"` field (JSON) or `version =` line the cut rewrites, e.g. `awake.project.json` (`release.syncVersionFiles`) |
+   | `gradle-args` | empty | Any other `releaseCut` arguments |
+   | `milestone` | the one titled like the tag | The release PR's milestone |
+   | `dry-run` | `false` | Print the next version and changelog; push and open nothing |
+
+3. **Add `RELEASE_TOKEN`.** A fine-grained token for that repository with *Contents*, *Pull
+   requests* and *Workflows*: read and write, stored with
+   `gh secret set RELEASE_TOKEN --repo <owner>/<repo>`. The reasons are those above.
+4. **Write fragments.** Each change adds `changelog/unreleased/<section>/<branch-name>.md`
+   (`added`, `changed`, `deprecated`, `removed`, `fixed`, `security`), as in Core.
+5. **Release in two steps.** Dispatch **Release** (a dry run first, if in doubt), then merge the
+   `chore(release): cut <tag>` PR it opens; the push of that squash commit tags it automatically.
+   Whatever the repository runs on a `v*` tag (publishing, a GitHub Release) starts from there.
 
 Pushing that tag also publishes the matching version of the public MkDocs site. The documentation
 workflow keeps the full Maven version in the URL and in installation examples, moves the `latest`
