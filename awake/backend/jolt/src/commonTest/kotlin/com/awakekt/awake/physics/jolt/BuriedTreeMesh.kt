@@ -58,12 +58,12 @@ internal fun buriedTreeMesh(slope: Float, roots: Int = 7): MeshShape {
         val left1 = p(ox - wx, oy - 0.25f, oz - wz)
         val right0 = p(ix + wx, iy - 0.25f, iz + wz)
         val right1 = p(ox + wx, oy - 0.25f, oz + wz)
-        quad(left0, left1, ridge1, ridge0)
-        quad(ridge0, ridge1, right1, right0)
-        quad(right0, right1, left1, left0)
+        quad(left0, ridge0, ridge1, left1)
+        quad(ridge0, right0, right1, ridge1)
+        quad(right0, left0, left1, right1)
         // The ends, each a triangle: d repeats c.
-        quad(left0, ridge0, right0, right0)
-        quad(left1, right1, ridge1, ridge1)
+        quad(left0, right0, ridge0, ridge0)
+        quad(left1, ridge1, right1, right1)
     }
     return MeshShape(vertices.toFloatArray(), indices.toIntArray())
 }
