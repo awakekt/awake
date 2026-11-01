@@ -16,6 +16,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -72,6 +73,32 @@ class TextureCookTest {
     }
 
     @Test
+    fun aPathThatWouldOverwriteASourceOrAnotherOutputIsRefusedBeforeAnythingIsWritten() {
+        png("ui/logo.png", SIZE)
+        png("textures/rock.png", SIZE)
+        png("textures/rock.jpg", SIZE)
+        val logo = project.resolve("ui/logo.png")
+        val original = logo.readBytes()
+        // Opted out, so the logo would be copied: onto itself, given a path that leads back to it.
+        project.resolve("awake.textures.json").writeText(
+            """{"defaults":{"enabled":false},"assets":{"textures/rock.png":{"enabled":true},"textures/rock.jpg":{"enabled":true}}}""",
+        )
+
+        val refused = listOf(
+            listOf(logo.absolutePath) to output,
+            listOf("../${project.name}/ui/logo.png") to output,
+            listOf("ui/logo.png") to project,
+            listOf("textures/rock.png", "textures/rock.jpg") to output,
+        )
+        for ((textures, into) in refused) {
+            assertFailsWith<IllegalArgumentException>("$textures into $into") { TextureCook.run(project, textures, into) }
+        }
+
+        assertContentEquals(original, logo.readBytes(), "the source is untouched")
+        assertEquals(emptyList(), output.walk().filter { it.isFile }.toList(), "nothing was written")
+    }
+
+    @Test
     fun whatTheGpuSamplesStaysCloseToTheSource() {
         png("textures/rock.png", SIZE)
         TextureCook.run(project, listOf("textures/rock.png"), output)
@@ -82,6 +109,7 @@ class TextureCookTest {
 
         assertTrue(basis > MIN_ETC1S_PSNR, "ETC1S is $basis dB")
         assertTrue(astc > MIN_ASTC_PSNR, "ASTC is $astc dB")
+        assertFailsWith<IllegalArgumentException>("libktx decodes no ETC2") { KtxEncoder.decodeBase(cooked("textures/rock.etc2.ktx2")) }
     }
 
     /** A [size] x [size] PNG at [path]: smooth gradients, with a hard-edged square. */

@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.ktx.TextureCookSettings
 import com.awakekt.awake.asset.ktx.TextureRole
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.system.libc.LibCStdlib
 import org.lwjgl.util.ktx.KTX.KTX_BASIS_CODEC_ETC1S
 import org.lwjgl.util.ktx.KTX.KTX_BASIS_CODEC_UASTC_LDR_4x4
 import org.lwjgl.util.ktx.KTX.KTX_PACK_ASTC_BLOCK_DIMENSION_4x4
@@ -75,12 +76,15 @@ internal object KtxEncoder {
         written(texture)
     }
 
-    /** The base level of [ktx2], a Basis Universal or ASTC KTX2, decoded back to RGBA: what a GPU samples. */
+    /**
+     * The base level of [ktx2], a Basis Universal or ASTC 4 x 4 KTX2, decoded back to RGBA: what a GPU
+     * samples. Any other format is refused; libktx decodes no other block format.
+     */
     fun decodeBase(ktx2: ByteArray): RgbaImage = loaded(ktx2) { texture ->
-        if (texture.isCompressed && texture.vkFormat() != 0) {
-            ensure(ktxTexture2_DecodeAstc(texture), "ASTC decoding")
-        } else {
-            ensure(ktxTexture2_TranscodeBasis(texture, KTX_TTF_RGBA32, 0), "RGBA transcoding")
+        when (texture.vkFormat()) {
+            VK_FORMAT_UNDEFINED -> ensure(ktxTexture2_TranscodeBasis(texture, KTX_TTF_RGBA32, 0), "RGBA transcoding")
+            VK_FORMAT_ASTC_4x4_UNORM_BLOCK, VK_FORMAT_ASTC_4x4_SRGB_BLOCK -> ensure(ktxTexture2_DecodeAstc(texture), "ASTC decoding")
+            else -> throw IllegalArgumentException("only Basis Universal and ASTC 4x4 decode; this is vkFormat ${texture.vkFormat()}")
         }
         MemoryStack.stackPush().use { stack ->
             val offset = stack.mallocPointer(1)
@@ -145,7 +149,8 @@ internal object KtxEncoder {
         try {
             ByteArray(length.get(0).toInt()).also { MemoryUtil.memByteBuffer(data.get(0), it.size).get(it) }
         } finally {
-            MemoryUtil.nmemFree(data.get(0))
+            // libktx allocated it with the C runtime's malloc, not with LWJGL's allocator.
+            LibCStdlib.nfree(data.get(0))
         }
     }
 
@@ -155,6 +160,9 @@ internal object KtxEncoder {
 
     private fun threads(): Int = Runtime.getRuntime().availableProcessors()
 
+    private const val VK_FORMAT_UNDEFINED = 0
     private const val VK_FORMAT_R8G8B8A8_UNORM = 37
     private const val VK_FORMAT_R8G8B8A8_SRGB = 43
+    private const val VK_FORMAT_ASTC_4x4_UNORM_BLOCK = 157
+    private const val VK_FORMAT_ASTC_4x4_SRGB_BLOCK = 158
 }

@@ -22,16 +22,46 @@ object TextureCook {
     /**
      * Cooks each of [textures], paths relative to [project], into the same relative path under [output].
      * Returns one line per texture.
+     *
+     * Every path must stay inside [project], and no file the run writes may be a source or another
+     * texture's output (`rock.png` and `rock.jpg` would both write `rock.ktx2`). A run that breaks
+     * either is refused before anything is written.
      */
     fun run(project: File, textures: List<String>, output: File): List<String> {
         val settingsFile = project.resolve(ProjectTextureSettings.FILE_NAME)
         val settings = if (settingsFile.isFile) ProjectTextureSettings.decode(settingsFile.readText()) else ProjectTextureSettings()
-        return textures.map { texture ->
-            val source = project.resolve(texture)
-            require(source.isFile) { "no texture $texture in ${project.path}" }
-            cook(source, texture, settings.forAsset(texture), output)
+        val sources = textures.map { texture -> source(project, texture) }
+        val planned = mutableMapOf<File, String>()
+        textures.forEach { texture ->
+            outputs(output.resolve(texture), settings.forAsset(texture)).forEach { file ->
+                val written = file.canonicalFile
+                require(written !in sources) { "$texture would overwrite the source ${written.path}" }
+                val other = planned.put(written, texture)
+                require(other == null) { "$texture and $other both write ${written.path}" }
+            }
         }
+        return textures.mapIndexed { i, texture -> cook(sources[i], texture, settings.forAsset(texture), output) }
     }
+
+    /** The source [texture] names: a file inside [project]. */
+    private fun source(project: File, texture: String): File {
+        val root = project.canonicalFile
+        val source = root.resolve(texture).canonicalFile
+        val relative = File(texture)
+        require(!relative.isAbsolute && !relative.normalize().path.startsWith("..") && source.startsWith(root)) { "$texture is not a path inside ${project.path}" }
+        require(source.isFile) { "no texture $texture in ${project.path}" }
+        return source
+    }
+
+    /** The files cooking to [target] with [settings] writes. */
+    private fun outputs(target: File, settings: TextureCookSettings): List<File> =
+        if (!settings.enabled) {
+            listOf(target)
+        } else {
+            (listOf("ktx2") + settings.mobile.distinct().map(::suffix)).map { sibling(target, it) }
+        }
+
+    private fun sibling(target: File, extension: String): File = target.resolveSibling("${target.nameWithoutExtension}.$extension")
 
     private fun cook(source: File, texture: String, settings: TextureCookSettings, output: File): String {
         val target = output.resolve(texture).also { it.parentFile.mkdirs() }
@@ -56,7 +86,7 @@ object TextureCook {
 
     /** Writes [bytes] beside [source], named as it is with [extension] in place of its own. */
     private fun write(source: File, extension: String, bytes: ByteArray): Pair<String, Int> {
-        val file = source.resolveSibling("${source.nameWithoutExtension}.$extension")
+        val file = sibling(source, extension)
         file.writeBytes(bytes)
         return file.name to bytes.size
     }
