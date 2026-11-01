@@ -144,7 +144,11 @@ jobs:
     name: Build (JVM/Native)
     needs: platform-impact
     if: needs.platform-impact.outputs.core == 'true'
-    runs-on: ubuntu-latest
+    # Blacksmith pilot: the only job off GitHub-hosted runners. Set the `CORE_BUILD_RUNNER`
+    # repository variable to `ubuntu-latest` to move it back with no code change (see "Build
+    # runner" in docs/release-process.md). Outside awakekt (a fork's own CI) no Blacksmith runner
+    # exists, so the job would queue forever; it falls back to ubuntu-latest there.
+    runs-on: ${{ vars.CORE_BUILD_RUNNER || (github.repository_owner == 'awakekt' && 'blacksmith-8vcpu-ubuntu-2404') || 'ubuntu-latest' }}
     timeout-minutes: 45
 
     steps:
