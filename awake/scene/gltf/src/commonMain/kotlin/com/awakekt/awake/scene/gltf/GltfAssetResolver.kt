@@ -72,6 +72,7 @@ class GltfAssetResolver(
     private var assetSource: AssetSource = AssetSource { path ->
         runCatching { bundledResourceReader(path.value) }
     }
+    private var imageDecoder: (suspend (ByteArray) -> GpuImageSource?)? = null
 
     /**
      * Retrieves a previously loaded skinned scene by its path.
@@ -90,7 +91,22 @@ class GltfAssetResolver(
         assetSource = source
     }
 
+    /**
+     * Decodes the model's images with [decode] first, such as the Basis Universal KTX2 a project's
+     * images were cooked to (`awake:asset:texture-ktx-loader`'s `CookedTextureLoader.decode`, #1211),
+     * read in their place by a [setAssetSource] that supplies them. An image [decode] answers null for
+     * is decoded as before.
+     *
+     * @param decode The image in [ByteArray] as a [GpuImageSource], or null to decode it as an image file.
+     */
+    fun setImageDecoder(decode: suspend (ByteArray) -> GpuImageSource?) {
+        imageDecoder = decode
+    }
+
     internal suspend fun readAsset(path: AssetPath): Result<ByteArray> = assetSource.read(path)
+
+    // decodeImage, not createBitmap: nothing here reads the pixels, so a browser keeps them for the GPU.
+    private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource = imageDecoder?.invoke(bytes) ?: decodeImage(bytes).asGpuImageSource()
 
     /**
      * Preloads a glTF or GLB asset and its external dependencies using the configured asset source.
@@ -238,7 +254,7 @@ class GltfAssetResolver(
         val slots = mutableListOf<GltfMaterialSlot>()
         primitives.forEachIndexed { index, primitive ->
             val materialKey = if (primitives.size == 1) path else "$path#$index"
-            val material = primitive.toLoadedMaterial()
+            val material = primitive.toLoadedMaterial(::decodeTexture)
             material?.let { loadedMaterials[materialKey] = it }
             val meshKey = if (primitives.size == 1) path else "$PRIMITIVE_MESH_PREFIX$path#$index"
             loadedStaticMeshes[meshKey] = listOf(primitive).toStaticGeometry(textured = material != null)
@@ -279,7 +295,7 @@ class GltfAssetResolver(
                 }
                 // Drawn and textured as a static model's primitive is, so it takes the same slot.
                 is GltfPart.Static -> {
-                    val material = part.primitive.toLoadedMaterial()
+                    val material = part.primitive.toLoadedMaterial(::decodeTexture)
                     material?.let { loadedMaterials[key] = it }
                     GltfMaterialSlot(
                         mesh = "$PRIMITIVE_MESH_PREFIX$key",
@@ -487,7 +503,7 @@ private data class LoadedGltfMaterial(
     val parameters: GltfMaterialParameters,
 )
 
-private suspend fun LoadedPrimitive.toLoadedMaterial(): LoadedGltfMaterial? {
+private suspend fun LoadedPrimitive.toLoadedMaterial(decodeTexture: suspend (ByteArray) -> GpuImageSource): LoadedGltfMaterial? {
     val baseColorBytes = baseColorImageBytes ?: return null
     val pbrImages = PbrImageSet(
         metallicRoughness = metallicRoughnessImageBytes?.let { decodeTexture(it) },
@@ -501,9 +517,6 @@ private suspend fun LoadedPrimitive.toLoadedMaterial(): LoadedGltfMaterial? {
         parameters = toMaterialParameters(),
     )
 }
-
-// decodeImage, not createBitmap: nothing here reads the pixels, so a browser keeps them for the GPU.
-private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource = decodeImage(bytes).asGpuImageSource()
 
 /** One drawable piece of a skinned model: deformed by the model's pose, or fixed in place. */
 private sealed interface GltfPart {

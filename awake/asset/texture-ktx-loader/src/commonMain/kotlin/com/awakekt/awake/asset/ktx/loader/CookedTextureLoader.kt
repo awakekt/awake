@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.ktx.loader
 
+import com.awakekt.awake.asset.ktx.Ktx2Reader
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.render.texture.CompressedTextureFormat
@@ -50,6 +51,32 @@ class CookedTextureLoader(
                 null -> null
             }
         }
+    }
+
+    /**
+     * [files], with each image that was cooked read from its Basis Universal `.ktx2` instead, when this
+     * platform has a transcoder: for a model's images, which load before the device is known, so before
+     * the mobile files can be picked. [decode] turns those bytes into an image.
+     */
+    fun withCookedImages(): AssetSource = object : AssetSource {
+        override suspend fun read(path: AssetPath): Result<ByteArray> = cookedBytes(path.value) ?: files.read(path)
+
+        override suspend fun exists(path: AssetPath): Boolean = files.exists(path)
+    }
+
+    /**
+     * [bytes] as an image when they are a Basis Universal KTX2 file this platform transcodes, which
+     * [GpuImageSource.compressed] puts in the device's block format when its material is made; null for
+     * any other file, which the caller decodes as before.
+     */
+    suspend fun decode(bytes: ByteArray): GpuImageSource? {
+        if (!Ktx2Reader.isKtx2(bytes)) return null
+        return transcoderOrNull()?.let { Ktx2BasisImageSource(bytes, it) }
+    }
+
+    private suspend fun cookedBytes(source: String): Result<ByteArray>? {
+        val basis = cookedPath(source) ?: return null
+        return transcoderOrNull()?.let { files.read(AssetPath(basis)).takeIf { it.isSuccess } }
     }
 
     // Asked once: a transcoder that can't load isn't tried again for every texture.

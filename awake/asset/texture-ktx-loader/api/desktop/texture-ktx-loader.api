@@ -6,7 +6,9 @@ public abstract interface class com/awakekt/awake/asset/ktx/loader/BasisTranscod
 public final class com/awakekt/awake/asset/ktx/loader/CookedTextureLoader {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun decode ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun load (Ljava/lang/String;Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun withCookedImages ()Lcom/awakekt/awake/core/io/AssetSource;
 }
 
 public final class com/awakekt/awake/asset/ktx/loader/Ktx2Formats {
