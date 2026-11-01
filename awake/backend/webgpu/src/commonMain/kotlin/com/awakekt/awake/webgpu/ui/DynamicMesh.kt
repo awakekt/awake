@@ -7,7 +7,8 @@ package com.awakekt.awake.webgpu.ui
 
 import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import io.ygdrasil.webgpu.ArrayBuffer
+import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -33,15 +34,6 @@ class DynamicMesh(
 
     private var vertexBuffer: GPUBuffer
     private var indexBuffer: GPUBuffer
-
-    /**
-     * Reusable CPU-side upload storage. `queue.writeBuffer` copies its input when called, so the
-     * same storage can be overwritten on the next frame. Allocating a new ArrayBuffer for every
-     * run made the Kotlin/Wasm GC and JS interop pay for the full UI upload even when the run's
-     * geometry size was stable.
-     */
-    private var vertexUploadData = ArrayBuffer.allocate(vertexBufferByteSize(maxVertices))
-    private var indexUploadData = ArrayBuffer.allocate(indexBufferByteSize(maxIndices))
 
     /** The last arrays uploaded to this pooled run. Retained UI runs reuse these exact immutable
      * arrays, which lets us skip the upload without scanning every element in Wasm. */
@@ -99,23 +91,14 @@ class DynamicMesh(
             return
         }
 
-        val device = graphicsDevice.wgpuContext.device
-        vertexUploadData.setFloats(0uL, vertices)
-        indexUploadData.setInts(0uL, indices)
-        device.queue.writeBuffer(
-            buffer = vertexBuffer,
-            bufferOffset = 0uL,
-            data = vertexUploadData,
-            dataOffset = 0uL,
-            size = (vertices.size * Float.SIZE_BYTES).toULong(),
-        )
-        device.queue.writeBuffer(
-            buffer = indexBuffer,
-            bufferOffset = 0uL,
-            data = indexUploadData,
-            dataOffset = 0uL,
-            size = (indices.size * Int.SIZE_BYTES).toULong(),
-        )
+        // One-copy linear-memory staging, the same path textures, meshes and instance buffers
+        // take (see [fastArrayBufferOf]): the floats are stored into wasm linear memory and JS
+        // copies them out in a single call, where `setFloats`/`setInts` crossed into JS once per
+        // value. Desktop stages the bytes in one bulk copy. The retained-run skip above means a
+        // stable run allocates no staging buffer at all.
+        val queue = graphicsDevice.wgpuContext.device.queue
+        queue.writeBufferData(vertexBuffer, bufferOffset = 0uL, fastArrayBufferOf(vertices))
+        queue.writeBufferData(indexBuffer, bufferOffset = 0uL, fastArrayBufferOf(indices))
         lastUploadedVertices = vertices
         lastUploadedIndices = indices
     }
@@ -138,8 +121,6 @@ class DynamicMesh(
         val device = graphicsDevice.wgpuContext.device
         vertexBuffer.close()
         indexBuffer.close()
-        vertexUploadData = ArrayBuffer.allocate(vertexBufferByteSize(maxVertices))
-        indexUploadData = ArrayBuffer.allocate(indexBufferByteSize(maxIndices))
         lastUploadedVertices = null
         lastUploadedIndices = null
         vertexBuffer = device.createBuffer(
