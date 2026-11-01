@@ -68,13 +68,21 @@ class Ktx2ReaderTest {
 
     @Test
     fun aMalformedFileFailsWithWhereAndWhy() {
-        val cases = mapOf(
+        val cases = listOf(
             "identifier" to Ktx2Fixtures.rawRgba8.copyOf(40),
             "header.faceCount" to Ktx2Fixtures.rawRgba8.withU32(FACE_COUNT, 2),
             "header.levelCount" to Ktx2Fixtures.rawRgba8.withU32(LEVEL_COUNT, 40),
             "header.supercompressionScheme" to Ktx2Fixtures.rawRgba8.withU32(SUPERCOMPRESSION, 9),
             "levels[0]" to Ktx2Fixtures.rawRgba8.withU32(LEVEL_INDEX + 8, 100_000),
             "kvd" to Ktx2Fixtures.rawRgba8.withU32(KVD_LENGTH, 100_000),
+            // Offsets and sizes with the top bit set: read unsigned, not as negative numbers.
+            "dfd" to Ktx2Fixtures.rawRgba8.withU32(DFD_OFFSET, 0xFFFF_FFF0.toInt()),
+            "kvd" to Ktx2Fixtures.rawRgba8.withU32(KVD_OFFSET, 0xFFFF_FFF0.toInt()),
+            "header.pixelHeight" to Ktx2Fixtures.rawRgba8.withU32(PIXEL_HEIGHT, Int.MIN_VALUE),
+            // An offset and a length whose sum overflows a Long.
+            "levels[0]" to Ktx2Fixtures.rawRgba8.withU64(LEVEL_INDEX, Long.MAX_VALUE - 8).withU64(LEVEL_INDEX + 8, 64),
+            // BasisLZ is ETC1S's own supercompression; UASTC can't declare it.
+            "header.supercompressionScheme" to Ktx2Fixtures.uastcZstd.withU32(SUPERCOMPRESSION, 1),
         )
         for ((location, bytes) in cases) {
             val failure = assertFailsWith<Ktx2FormatException>(location) { Ktx2Reader.read(bytes) }
@@ -98,11 +106,17 @@ class Ktx2ReaderTest {
         for (byte in 0 until 4) bytes[at + byte] = (value shr (8 * byte)).toByte()
     }
 
+    private fun ByteArray.withU64(at: Int, value: Long) =
+        withU32(at, value.toInt()).withU32(at + 4, (value ushr 32).toInt())
+
     private companion object {
         const val VK_FORMAT_R8G8B8A8_UNORM = 37
+        const val PIXEL_HEIGHT = 24
         const val FACE_COUNT = 36
         const val LEVEL_COUNT = 40
         const val SUPERCOMPRESSION = 44
+        const val DFD_OFFSET = 48
+        const val KVD_OFFSET = 56
         const val KVD_LENGTH = 60
         const val LEVEL_INDEX = 80
     }

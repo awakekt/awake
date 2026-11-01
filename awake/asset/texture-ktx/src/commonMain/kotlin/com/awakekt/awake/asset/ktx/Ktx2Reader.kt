@@ -30,45 +30,43 @@ object Ktx2Reader {
     fun read(bytes: ByteArray): Ktx2Texture {
         ensure(bytes.size >= HEADER_BYTES && isKtx2(bytes), "identifier") { "not a KTX2 file" }
         val input = LittleEndian(bytes)
-        val vkFormat = input.u32(VK_FORMAT)
-        val width = input.u32(PIXEL_WIDTH)
-        val faceCount = input.u32(FACE_COUNT)
-        val declaredLevels = input.u32(LEVEL_COUNT)
+        val width = input.int(PIXEL_WIDTH, "header.pixelWidth")
+        val faceCount = input.int(FACE_COUNT, "header.faceCount")
+        val declaredLevels = input.int(LEVEL_COUNT, "header.levelCount")
         ensure(width > 0, "header.pixelWidth") { "must be at least 1" }
         ensure(faceCount == 1 || faceCount == CUBE_FACES, "header.faceCount") { "must be 1 or 6, was $faceCount" }
-        ensure(declaredLevels in 0..MAX_LEVELS, "header.levelCount") { "must be 0 to $MAX_LEVELS: $declaredLevels" }
-        ensure(input.u32(PIXEL_DEPTH) >= 0 && input.u32(LAYER_COUNT) >= 0, "header") { "a size is out of range" }
-        // 0 levels means one, the base, with the mips left for the loader to generate.
-        val levelCount = declaredLevels.coerceAtLeast(1)
-        val scheme = input.u32(SUPERCOMPRESSION)
+        ensure(declaredLevels <= MAX_LEVELS, "header.levelCount") { "must be 0 to $MAX_LEVELS: $declaredLevels" }
+        val scheme = input.int(SUPERCOMPRESSION, "header.supercompressionScheme")
         val supercompression = Ktx2Supercompression.of(scheme)
             ?: throw Ktx2FormatException("header.supercompressionScheme", "unknown scheme $scheme")
-        val encoding = readEncoding(input, vkFormat, supercompression)
+        val vkFormat = input.int(VK_FORMAT, "header.vkFormat")
         return Ktx2Texture(
             vkFormat = vkFormat,
             width = width,
-            height = input.u32(PIXEL_HEIGHT).coerceAtLeast(1),
-            depth = input.u32(PIXEL_DEPTH),
-            layerCount = input.u32(LAYER_COUNT),
+            // A 1D texture declares a height of 0; it's read as one row.
+            height = input.int(PIXEL_HEIGHT, "header.pixelHeight").coerceAtLeast(1),
+            depth = input.int(PIXEL_DEPTH, "header.pixelDepth"),
+            layerCount = input.int(LAYER_COUNT, "header.layerCount"),
             faceCount = faceCount,
-            encoding = encoding,
+            encoding = readEncoding(input, vkFormat, supercompression),
             supercompression = supercompression,
-            srgb = input.transferFunction() == KHR_DF_TRANSFER_SRGB,
-            levels = List(levelCount) { readLevel(input, it) },
+            srgb = input.dfdByte(DFD_TRANSFER) == KHR_DF_TRANSFER_SRGB,
+            // 0 levels means one, the base, with the mips left for the loader to generate.
+            levels = List(declaredLevels.coerceAtLeast(1)) { readLevel(input, it) },
             keyValues = readKeyValues(input),
             supercompressionGlobalData = input.slice("sgd", input.u64(SGD_OFFSET), input.u64(SGD_LENGTH)),
         )
     }
 
     private fun readEncoding(input: LittleEndian, vkFormat: Int, supercompression: Ktx2Supercompression): Ktx2Encoding {
-        val encoding = when (input.colorModel()) {
+        val encoding = when (input.dfdByte(DFD_COLOR_MODEL)) {
             KHR_DF_MODEL_ETC1S -> Ktx2Encoding.Etc1s
             KHR_DF_MODEL_UASTC -> Ktx2Encoding.Uastc
             else -> Ktx2Encoding.Raw
         }
-        ensure(encoding != Ktx2Encoding.Etc1s || supercompression == Ktx2Supercompression.BasisLz, "dfd") {
-            "ETC1S must be BasisLZ-supercompressed, was $supercompression"
-        }
+        val basisLz = supercompression == Ktx2Supercompression.BasisLz
+        ensure(encoding != Ktx2Encoding.Etc1s || basisLz, "dfd") { "ETC1S must be BasisLZ-supercompressed, was $supercompression" }
+        ensure(encoding == Ktx2Encoding.Etc1s || !basisLz, "header.supercompressionScheme") { "BasisLZ is for ETC1S only" }
         ensure(encoding != Ktx2Encoding.Raw || vkFormat != 0, "header.vkFormat") {
             "a texture that isn't Basis Universal needs a format"
         }
@@ -77,19 +75,18 @@ object Ktx2Reader {
 
     private fun readLevel(input: LittleEndian, level: Int): Ktx2Level {
         val entry = LEVEL_INDEX + level * LEVEL_ENTRY_BYTES
-        input.require(entry + LEVEL_ENTRY_BYTES.toLong(), "levels[$level]")
         val data = input.slice("levels[$level]", input.u64(entry), input.u64(entry + U64))
         return Ktx2Level(data, input.u64(entry + 2 * U64))
     }
 
     private fun readKeyValues(input: LittleEndian): Map<String, ByteArray> {
-        val start = input.u32(KVD_OFFSET).toLong()
-        val end = start + input.u32(KVD_LENGTH)
-        input.require(end, "kvd")
+        val start = input.u32(KVD_OFFSET.toLong())
+        val end = start + input.u32(KVD_LENGTH.toLong())
+        input.within(start, end - start, "kvd")
         val values = LinkedHashMap<String, ByteArray>()
         var at = start
         while (at + U32 <= end) {
-            val length = input.u32(at.toInt()).toLong()
+            val length = input.u32(at)
             val entry = at + U32
             ensure(length in 1..(end - entry), "kvd") { "an entry runs past the key/value data" }
             val bytes = input.slice("kvd", entry, length)
@@ -102,36 +99,49 @@ object Ktx2Reader {
         return values
     }
 
-    /** Little-endian reads over the whole file, each checked against its size. */
+    /**
+     * Little-endian reads over the whole file. Every field is read unsigned, as the format stores it,
+     * and every offset and length is checked against the file's size without overflowing.
+     */
     private class LittleEndian(val bytes: ByteArray) {
-        fun require(end: Long, location: String) =
-            ensure(end <= bytes.size, location) { "runs past the end of the file (${bytes.size} bytes)" }
-
-        fun u32(at: Int): Int {
-            require(at + U32.toLong(), "offset $at")
-            return (bytes[at].toInt() and BYTE) or ((bytes[at + 1].toInt() and BYTE) shl 8) or
-                ((bytes[at + 2].toInt() and BYTE) shl 16) or ((bytes[at + 3].toInt() and BYTE) shl 24)
-        }
-
-        fun u64(at: Int): Long = (u32(at).toLong() and UINT) or (u32(at + U32).toLong() shl 32)
-
-        fun slice(location: String, offset: Long, length: Long): ByteArray {
-            ensure(offset >= 0 && length >= 0 && offset + length <= bytes.size, location) {
+        /** Fails at [location] unless [length] bytes from [offset] lie inside the file. */
+        fun within(offset: Long, length: Long, location: String) =
+            ensure(offset in 0..bytes.size && length in 0..(bytes.size - offset), location) {
                 "offset $offset and length $length run past the end of the file (${bytes.size} bytes)"
             }
+
+        /** The unsigned 32-bit field at [at]. */
+        fun u32(at: Long): Long {
+            within(at, U32.toLong(), "offset $at")
+            val i = at.toInt()
+            return (
+                (bytes[i].toLong() and BYTE) or ((bytes[i + 1].toLong() and BYTE) shl 8) or
+                    ((bytes[i + 2].toLong() and BYTE) shl 16) or ((bytes[i + 3].toLong() and BYTE) shl 24)
+                )
+        }
+
+        /** The unsigned 32-bit header field at [at], which must fit an `Int`. */
+        fun int(at: Int, location: String): Int {
+            val value = u32(at.toLong())
+            ensure(value <= Int.MAX_VALUE, location) { "$value is out of range" }
+            return value.toInt()
+        }
+
+        /** The unsigned 64-bit field at [at]; one past `Long.MAX_VALUE` reads negative and fails [within]. */
+        fun u64(at: Int): Long = u32(at.toLong()) or (u32(at.toLong() + U32) shl 32)
+
+        fun slice(location: String, offset: Long, length: Long): ByteArray {
+            within(offset, length, location)
             return bytes.copyOfRange(offset.toInt(), (offset + length).toInt())
         }
 
-        private fun dfdByte(field: Int): Int {
-            val dfd = u32(DFD_OFFSET)
-            ensure(u32(DFD_LENGTH) >= DFD_BASIC_MIN, "dfd") { "too short for a basic descriptor block" }
-            require(dfd + field + 1L, "dfd")
-            return bytes[dfd + field].toInt() and BYTE
+        /** The byte [field] bytes into the data format descriptor. */
+        fun dfdByte(field: Int): Int {
+            val dfd = u32(DFD_OFFSET.toLong())
+            ensure(u32(DFD_LENGTH.toLong()) >= DFD_BASIC_MIN, "dfd") { "too short for a basic descriptor block" }
+            within(dfd + field, 1, "dfd")
+            return bytes[(dfd + field).toInt()].toInt() and BYTE.toInt()
         }
-
-        fun colorModel(): Int = dfdByte(DFD_COLOR_MODEL)
-
-        fun transferFunction(): Int = dfdByte(DFD_TRANSFER)
     }
 
     private inline fun ensure(condition: Boolean, location: String, problem: () -> String) {
@@ -170,6 +180,5 @@ object Ktx2Reader {
     private const val U32 = 4
     private const val U64 = 8
     private const val PADDING = 4
-    private const val BYTE = 0xFF
-    private const val UINT = 0xFFFFFFFFL
+    private const val BYTE = 0xFFL
 }
