@@ -174,7 +174,7 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAG: ${{ steps.cut.outputs.tag }}
           BASE: ${{ github.event.repository.default_branch }}
-          MILESTONE: ${{ inputs.milestone }}
+          MILESTONE_INPUT: ${{ inputs.milestone }}
         run: |
           fix="Fix: give RELEASE_TOKEN Contents, Pull requests and Workflows: Read and write on $GITHUB_REPOSITORY."
           basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
@@ -192,7 +192,7 @@ jobs:
             echo "::error::Could not push $branch. $fix"
             exit 1
           fi
-          milestone="$MILESTONE"
+          milestone="$MILESTONE_INPUT"
           [[ -n "$milestone" ]] || milestone="$(gh api "repos/$GITHUB_REPOSITORY/milestones" --jq ".[] | select(.title == \"$TAG\") | .title")"
           gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$branch" \
             --title "chore(release): cut $TAG" \
