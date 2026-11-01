@@ -18,6 +18,24 @@
       "copyright": "Unicode, Inc.",
       "license": "Unicode-3.0",
       "reason": "Unicode's own conformance cases for UAX #29 grapheme clusters, copied unchanged so GraphemeBreakConformanceTest checks the iterator against them."
+    },
+    {
+      "path": "awake/asset/texture-ktx-loader/src/wasmJsMain/resources/basis/basis_transcoder.js",
+      "scope": "file",
+      "upstream": "https://github.com/BinomialLLC/basis_universal/blob/9bebe16726b3a61c8c213eeee3b7cffb462ef34e/webgl/transcoder/build/basis_transcoder.js",
+      "revision": "v2_50 (9bebe16726b3a61c8c213eeee3b7cffb462ef34e)",
+      "copyright": "Binomial LLC",
+      "license": "Apache-2.0",
+      "reason": "The official prebuilt Basis Universal transcoder's Emscripten loader, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked by VendoredBasisTranscoderTest."
+    },
+    {
+      "path": "awake/asset/texture-ktx-loader/src/wasmJsMain/resources/basis/basis_transcoder.wasm",
+      "scope": "file",
+      "upstream": "https://github.com/BinomialLLC/basis_universal/blob/9bebe16726b3a61c8c213eeee3b7cffb462ef34e/webgl/transcoder/build/basis_transcoder.wasm",
+      "revision": "v2_50 (9bebe16726b3a61c8c213eeee3b7cffb462ef34e)",
+      "copyright": "Binomial LLC",
+      "license": "Apache-2.0",
+      "reason": "The official prebuilt Basis Universal transcoder's WebAssembly module, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked by VendoredBasisTranscoderTest."
     }
   ]
 }

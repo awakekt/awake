@@ -670,6 +670,11 @@ jobs:
       - name: GPU texture upload browser tests
         run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*"
 
+      # The vendored Basis Universal transcoder, loaded the way an app loads it, transcoding a cooked
+      # KTX2 texture to RGBA8 and to every block format it offers.
+      - name: KTX2 transcoder browser tests
+        run: ./gradlew :awake:asset:texture-ktx-loader:wasmJsBrowserTest
+
       # Code that only runs in a browser: copying a fetched response into a ByteArray, the
       # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content
       # transport's real request. Desktop tests can't reach it.

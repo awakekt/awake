@@ -36,6 +36,13 @@ kotlin {
                 }
             }
         }
+        named("wasmJsMain") {
+            // Awaits the Basis Universal transcoder's asynchronous start.
+            dependencies { implementation(libs.kotlinx.coroutines.core) }
+        }
+        named("wasmJsTest") {
+            dependencies { implementation(libs.kotlinx.coroutines.test) }
+        }
     }
 }
 

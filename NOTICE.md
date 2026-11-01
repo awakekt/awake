@@ -68,3 +68,12 @@ This project includes third-party software components and compiled binaries unde
 * **License**: Unicode License v3 (https://www.unicode.org/license.txt), retained in `LICENSES/Unicode-3.0.txt`
 * **Version**: 18.0.0
 * **Location**: `awake/core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/unicode/GraphemeBreakTable.kt` and `awake/core/text/src/commonTest/resources/unicode/` (license retained verbatim there)
+
+---
+
+### Basis Universal transcoder
+* **Description**: The prebuilt JavaScript and WebAssembly transcoder from Basis Universal, loaded in the browser to transcode KTX2 textures to the GPU's block format.
+* **Copyright**: Copyright (c) 2016-2026 Binomial LLC. "Basis Universal" is a trademark of Binomial LLC.
+* **License**: Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+* **Version**: v2_50 (`9bebe16726b3a61c8c213eeee3b7cffb462ef34e`)
+* **Location**: `awake/asset/texture-ktx-loader/src/wasmJsMain/resources/basis/` (unchanged from upstream `webgl/transcoder/build/`)

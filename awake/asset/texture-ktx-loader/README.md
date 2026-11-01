@@ -27,7 +27,8 @@ val material = device.createKtx2Material(bytes, LibKtxBasisTranscoder) // deskto
   - **WebGPU** requests `texture-compression-bc`, `-etc2` and `-astc` when the adapter offers them, and
     takes the families it's granted. A base size that isn't whole 4 x 4 blocks falls back to RGBA8.
 - **Transcoding is a platform's:** `BasisTranscoder`. On desktop it is `LibKtxBasisTranscoder`, libktx
-  through LWJGL. Mobile needs none, since it loads the ASTC or ETC2 the cook wrote.
+  through LWJGL. In the browser it is `BasisWasmTranscoder` (see below). Mobile needs none, since it
+  loads the ASTC or ETC2 the cook wrote.
   `Ktx2Formats.variants(path, formats)` lists which cooked file to try first.
 - **Rows bottom first.** Every Awake texture is stored with its bottom row first, and the cook writes
   KTX2 that way (`KTXorientation` `ru`). Blocks can't be flipped, so a Basis Universal file stored
@@ -40,3 +41,23 @@ val material = device.createKtx2Material(bytes, LibKtxBasisTranscoder) // deskto
 `lwjgl-ktx` must load beside the same version of every other LWJGL module in the app, such as the
 `lwjgl-glfw` wgpu4k brings. On desktop this module depends on the LWJGL BOM, which lifts them all to
 its version. The WebGPU desktop tests pass with GLFW at that version, under Xvfb and lavapipe.
+
+## In the browser
+
+```kotlin
+val transcoder = BasisWasmTranscoder.load() // basis/basis_transcoder.js beside the page
+val material = device.createKtx2Material(bytes, transcoder)
+```
+
+`BasisWasmTranscoder` is Basis Universal's own prebuilt WebAssembly transcoder, release v2_50, shipped
+unchanged in `src/wasmJsMain/resources/basis/` (Apache-2.0, Binomial LLC; see `NOTICE.md`).
+
+- **Loaded when first needed,** not with the app. `load` adds `basis_transcoder.js` (50 KB) to the page,
+  and it fetches `basis_transcoder.wasm` (1.0 MB) from beside itself. A page that loads no KTX2 texture
+  downloads neither.
+- **Serving the files:** an app serves `basis/` beside its page, or passes another URL to `load`. In this
+  repository the files come with the module's resources. An app outside it copies them, as it copies
+  `awake-loader.js`.
+- **Pinned:** `VendoredBasisTranscoderTest` checks both files against the release's SHA-256. To update,
+  copy a new release's `webgl/transcoder/build/` files unchanged and update the digests, the provenance
+  registry and `NOTICE.md` together.
