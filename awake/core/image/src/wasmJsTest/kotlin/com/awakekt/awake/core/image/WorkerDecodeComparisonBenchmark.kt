@@ -20,13 +20,14 @@ import kotlin.time.TimeSource
  * for a 1024x1024 PNG: step 1's bulk readback ([createBitmap]) and step 2's GPU-bound decode
  * ([decodeBrowserImage], which reads nothing back).
  *
- * Measured on headless Chromium, CPU canvas, production build, three runs, main thread per decode:
- * bulk 38 to 48 ms, worker 22 to 30 ms, GPU-bound 12 to 16.5 ms. End to end: 111 to 132 ms, 106 to
- * 127 ms and 87 to 102 ms.
+ * Measured on headless Chromium, CPU canvas, production build, four runs, main thread per decode:
+ * bulk 30 to 48 ms, worker 16.5 to 30 ms, GPU-bound 12 to 16.5 ms. End to end: 64 to 132 ms, 64 to
+ * 127 ms and 41 to 102 ms. The worker beat the bulk readback in every run, and never the GPU-bound
+ * decode.
  *
  * What the worker leaves on the main thread is the `Blob` the GPU-bound decode also pays (this fixture
  * is an uncompressed 4 MB PNG), plus the copy of the packed pixels back into wasm and their load into
- * the [Bitmap]. So the worker takes 40 to 50% off a CPU reader's decode, but stays above the GPU-bound
+ * the [Bitmap]. So the worker takes 40 to 45% off a CPU reader's decode, but stays above the GPU-bound
  * decode. A texture decoded this way still uploads from the CPU, with a CPU mip chain, which
  * `ExternalImageUploadBrowserBenchmark` measured at about 200 ms for 1024x1024, against about 3 ms for
  * the GPU copy. For textures the GPU-direct path is the one to take; the worker only helps a caller
