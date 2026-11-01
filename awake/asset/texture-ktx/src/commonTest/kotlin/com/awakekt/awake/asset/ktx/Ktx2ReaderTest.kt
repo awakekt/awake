@@ -56,6 +56,7 @@ class Ktx2ReaderTest {
             assertContentEquals(gradient(size, level), texture.levels[level].data, "level $level")
         }
         assertTrue("KTXwriter" in texture.keyValues, "libktx names itself in the key/value data")
+        assertFalse(texture.bottomRowFirst, "no KTXorientation: KTX2's default, the top row first (${texture.orientation})")
     }
 
     @Test

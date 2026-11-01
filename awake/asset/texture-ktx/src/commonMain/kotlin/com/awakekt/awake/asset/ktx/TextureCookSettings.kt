@@ -21,14 +21,25 @@ enum class TextureRole {
     Data,
 }
 
-/** A GPU block format the cook writes for mobile, which loads it without transcoding. */
+/**
+ * A GPU block format the cook writes for mobile, which loads it without transcoding.
+ *
+ * @property extension The cooked file's extension in place of the source's: `rock.png` is cooked to
+ *   `rock.astc.ktx2` and `rock.etc2.ktx2`, beside the Basis Universal `rock.ktx2`.
+ */
 @Serializable
-enum class MobileTextureFormat {
+enum class MobileTextureFormat(val extension: String) {
     /** ASTC with 4 x 4 blocks, encoded straight from the source pixels. */
-    Astc4x4,
+    Astc4x4("astc.ktx2"),
 
     /** ETC2 RGBA8, transcoded from the Basis Universal texture: for GPUs without ASTC. */
-    Etc2Rgba8,
+    Etc2Rgba8("etc2.ktx2"),
+    ;
+
+    companion object {
+        /** The extension of the Basis Universal file every cooked texture has. */
+        const val BASIS_EXTENSION: String = "ktx2"
+    }
 }
 
 /**

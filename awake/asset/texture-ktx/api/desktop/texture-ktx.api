@@ -38,7 +38,9 @@ public final class com/awakekt/awake/asset/ktx/Ktx2Supercompression : java/lang/
 
 public final class com/awakekt/awake/asset/ktx/Ktx2Texture {
 	public static final field CUBE_FACES I
+	public static final field ORIENTATION_KEY Ljava/lang/String;
 	public fun <init> (IIIIIILcom/awakekt/awake/asset/ktx/Ktx2Encoding;Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;ZLjava/util/List;Ljava/util/Map;[B)V
+	public final fun getBottomRowFirst ()Z
 	public final fun getDepth ()I
 	public final fun getEncoding ()Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;
 	public final fun getFaceCount ()I
@@ -47,6 +49,7 @@ public final class com/awakekt/awake/asset/ktx/Ktx2Texture {
 	public final fun getLayerCount ()I
 	public final fun getLevels ()Ljava/util/List;
 	public final fun getNeedsTranscoding ()Z
+	public final fun getOrientation ()Ljava/lang/String;
 	public final fun getSrgb ()Z
 	public final fun getSupercompression ()Lcom/awakekt/awake/asset/ktx/Ktx2Supercompression;
 	public final fun getSupercompressionGlobalData ()[B
@@ -57,9 +60,11 @@ public final class com/awakekt/awake/asset/ktx/Ktx2Texture {
 
 public final class com/awakekt/awake/asset/ktx/MobileTextureFormat : java/lang/Enum {
 	public static final field Astc4x4 Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
+	public static final field BASIS_EXTENSION Ljava/lang/String;
 	public static final field Companion Lcom/awakekt/awake/asset/ktx/MobileTextureFormat$Companion;
 	public static final field Etc2Rgba8 Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getExtension ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
 	public static fun values ()[Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;
 }

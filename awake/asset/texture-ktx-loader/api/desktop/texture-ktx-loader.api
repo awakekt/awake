@@ -1,0 +1,44 @@
+public abstract interface class com/awakekt/awake/asset/ktx/loader/BasisTranscoder {
+	public abstract fun getFormats ()Ljava/util/Set;
+	public abstract fun transcode ([BLcom/awakekt/awake/render/texture/CompressedTextureFormat;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/Ktx2Formats {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/loader/Ktx2Formats;
+	public final fun blockFormat (I)Lkotlin/Pair;
+	public final fun blockFormatOf (Lcom/awakekt/awake/asset/ktx/MobileTextureFormat;)Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public final fun isRgba8 (I)Z
+	public final fun transcodeTargets (Lcom/awakekt/awake/asset/ktx/Ktx2Encoding;)Ljava/util/List;
+	public final fun variants (Ljava/lang/String;Ljava/util/Set;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/Ktx2TextureLoader {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/loader/Ktx2TextureLoader;
+	public final fun decode ([BLjava/util/Set;Lcom/awakekt/awake/asset/ktx/loader/BasisTranscoder;Lcom/awakekt/awake/render/texture/TextureFiltering;)Lcom/awakekt/awake/asset/ktx/loader/Ktx2Upload;
+	public static synthetic fun decode$default (Lcom/awakekt/awake/asset/ktx/loader/Ktx2TextureLoader;[BLjava/util/Set;Lcom/awakekt/awake/asset/ktx/loader/BasisTranscoder;Lcom/awakekt/awake/render/texture/TextureFiltering;ILjava/lang/Object;)Lcom/awakekt/awake/asset/ktx/loader/Ktx2Upload;
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/Ktx2TextureLoaderKt {
+	public static final fun createKtx2Material (Lcom/awakekt/awake/render/pipeline/GpuDevice;[BLcom/awakekt/awake/asset/ktx/loader/BasisTranscoder;Lcom/awakekt/awake/render/texture/TextureFiltering;I)Lcom/awakekt/awake/render/material/Material;
+	public static synthetic fun createKtx2Material$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;[BLcom/awakekt/awake/asset/ktx/loader/BasisTranscoder;Lcom/awakekt/awake/render/texture/TextureFiltering;IILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
+}
+
+public abstract interface class com/awakekt/awake/asset/ktx/loader/Ktx2Upload {
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/Ktx2Upload$Compressed : com/awakekt/awake/asset/ktx/loader/Ktx2Upload {
+	public fun <init> (Lcom/awakekt/awake/render/texture/CompressedTextureImage;)V
+	public final fun getImage ()Lcom/awakekt/awake/render/texture/CompressedTextureImage;
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/Ktx2Upload$Rgba : com/awakekt/awake/asset/ktx/loader/Ktx2Upload {
+	public fun <init> (Lcom/awakekt/awake/render/texture/TextureAsset;)V
+	public final fun getTexture ()Lcom/awakekt/awake/render/texture/TextureAsset;
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/LibKtxBasisTranscoder : com/awakekt/awake/asset/ktx/loader/BasisTranscoder {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/loader/LibKtxBasisTranscoder;
+	public fun getFormats ()Ljava/util/Set;
+	public fun transcode ([BLcom/awakekt/awake/render/texture/CompressedTextureFormat;)Ljava/util/List;
+}
+

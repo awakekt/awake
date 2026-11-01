@@ -18,6 +18,7 @@ if (Ktx2Reader.isKtx2(bytes)) {
     texture.supercompression  // None, BasisLz, Zstandard or Zlib, over every level
     texture.srgb              // sRGB colour, as base colour is, or linear, as a normal map is
     texture.levels            // the mip levels, largest first, each one's bytes as stored
+    texture.bottomRowFirst    // KTXorientation "ru", as the cook writes and every Awake texture is
 }
 ```
 
@@ -32,6 +33,7 @@ if (Ktx2Reader.isKtx2(bytes)) {
 
 Encoding and transcoding come from libraries, not from this module: libktx (through LWJGL) on
 desktop and in the cook step, and the Basis Universal transcoder in the browser.
+[awake:asset:texture-ktx-loader](../texture-ktx-loader/README.md) turns a file into what a device uploads.
 
 ## Cook settings
 

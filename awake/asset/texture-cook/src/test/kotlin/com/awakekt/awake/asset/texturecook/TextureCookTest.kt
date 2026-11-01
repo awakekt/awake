@@ -42,6 +42,7 @@ class TextureCookTest {
         assertEquals(Ktx2Supercompression.BasisLz, basis.supercompression)
         assertTrue(basis.srgb)
         assertEquals(7, basis.levels.size, "64 x 64 down to 1 x 1")
+        assertTrue(basis.bottomRowFirst, "stored bottom row first, as every Awake texture is: ${basis.orientation}")
 
         val astc = Ktx2Reader.read(cooked("textures/rock.astc.ktx2"))
         assertEquals(VK_FORMAT_ASTC_4x4_SRGB_BLOCK, astc.vkFormat)
@@ -50,6 +51,7 @@ class TextureCookTest {
         val etc2 = Ktx2Reader.read(cooked("textures/rock.etc2.ktx2"))
         assertEquals(VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK, etc2.vkFormat)
         assertEquals(7, etc2.levels.size)
+        assertTrue(astc.bottomRowFirst && etc2.bottomRowFirst, "the mobile files too")
     }
 
     @Test
@@ -107,6 +109,9 @@ class TextureCookTest {
         val basis = psnr(source, KtxEncoder.decodeBase(cooked("textures/rock.ktx2")))
         val astc = psnr(source, KtxEncoder.decodeBase(cooked("textures/rock.astc.ktx2")))
 
+        // The first pixel stored is the image's bottom-left: x = 0 has no red, the bottom row full green.
+        val first = KtxEncoder.decodeBase(cooked("textures/rock.ktx2")).let { image -> (0..2).map { image.channel(0, 0, it) } }
+        assertTrue(first[0] < CORNER_TOLERANCE && first[1] > 255 - CORNER_TOLERANCE, "bottom-left first, was $first")
         assertTrue(basis > MIN_ETC1S_PSNR, "ETC1S is $basis dB")
         assertTrue(astc > MIN_ASTC_PSNR, "ASTC is $astc dB")
         assertFailsWith<IllegalArgumentException>("libktx decodes no ETC2") { KtxEncoder.decodeBase(cooked("textures/rock.etc2.ktx2")) }
@@ -148,6 +153,7 @@ class TextureCookTest {
         const val VK_FORMAT_ASTC_4x4_UNORM_BLOCK = 157
         const val VK_FORMAT_ASTC_4x4_SRGB_BLOCK = 158
         const val MIN_ETC1S_PSNR = 30.0
+        const val CORNER_TOLERANCE = 24
         const val MIN_ASTC_PSNR = 42.0
     }
 }

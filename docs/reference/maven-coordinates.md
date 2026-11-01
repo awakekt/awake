@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 101 | Existing root `v*` tags and the shared Core release train |
+| Core | 102 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -89,6 +89,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.asset:sprite` | `:awake:asset:sprite` | `core` | `api` → `:awake:core:animation` |
 | `com.awakekt.awake.asset:terrain` | `:awake:asset:terrain` | `core` | `api` → `:awake:core:color`; `api` → `:awake:core:geometry`; `api` → `:awake:core:image`; `api` → `:awake:core:math` |
 | `com.awakekt.awake.asset:texture-ktx` | `:awake:asset:texture-ktx` | `core` | — |
+| `com.awakekt.awake.asset:texture-ktx-loader` | `:awake:asset:texture-ktx-loader` | `core` | — |
 | `com.awakekt.awake.backend:jolt` | `:awake:backend:jolt` | `core` | `api` → `:awake:physics:api`; `implementation` → `:awake:core:math` |
 | `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` | `vulkan` | `implementation` → `:awake:engine:render:passes2d`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:image`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:text`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:passes`; `api` → `:awake:backend:vulkan:bindings`; `api` → `:awake:engine:platform`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-compiler`; `api` → `:awake:engine:render:testing`; `implementation` → `:awake:asset:shader-pack` |
 | `com.awakekt.awake:vulkan-kmp` | `:awake:backend:vulkan:bindings` | `vulkan` | `api` → `:awake:backend:vulkan:bindings:android-native` |

@@ -12,6 +12,7 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.libc.LibCStdlib
 import org.lwjgl.util.ktx.KTX.KTX_BASIS_CODEC_ETC1S
 import org.lwjgl.util.ktx.KTX.KTX_BASIS_CODEC_UASTC_LDR_4x4
+import org.lwjgl.util.ktx.KTX.KTX_ORIENTATION_KEY
 import org.lwjgl.util.ktx.KTX.KTX_PACK_ASTC_BLOCK_DIMENSION_4x4
 import org.lwjgl.util.ktx.KTX.KTX_PACK_ASTC_ENCODER_MODE_LDR
 import org.lwjgl.util.ktx.KTX.KTX_PACK_ASTC_QUALITY_LEVEL_MEDIUM
@@ -20,6 +21,7 @@ import org.lwjgl.util.ktx.KTX.KTX_TEXTURE_CREATE_ALLOC_STORAGE
 import org.lwjgl.util.ktx.KTX.KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT
 import org.lwjgl.util.ktx.KTX.KTX_TTF_ETC2_RGBA
 import org.lwjgl.util.ktx.KTX.KTX_TTF_RGBA32
+import org.lwjgl.util.ktx.KTX.ktxHashList_AddKVPair
 import org.lwjgl.util.ktx.KTX.ktxTexture2_CompressAstcEx
 import org.lwjgl.util.ktx.KTX.ktxTexture2_CompressBasisEx
 import org.lwjgl.util.ktx.KTX.ktxTexture2_Create
@@ -108,6 +110,9 @@ internal object KtxEncoder {
             ensure(ktxTexture2_Create(info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, created), "creating the texture")
             val texture = ktxTexture2.create(created.get(0))
             try {
+                // Rows are stored bottom first, as every Awake texture is: KTX2's "x right, y up".
+                val orientation = stack.ASCII(BOTTOM_ROW_FIRST, true)
+                ensure(ktxHashList_AddKVPair(texture.address() + ktxTexture2.KVDATAHEAD, KTX_ORIENTATION_KEY, orientation), "orientation")
                 levels.forEachIndexed { level, image ->
                     val pixels = MemoryUtil.memAlloc(image.pixels.size).put(image.pixels).flip()
                     try {
@@ -160,6 +165,7 @@ internal object KtxEncoder {
 
     private fun threads(): Int = Runtime.getRuntime().availableProcessors()
 
+    private const val BOTTOM_ROW_FIRST = "ru"
     private const val VK_FORMAT_UNDEFINED = 0
     private const val VK_FORMAT_R8G8B8A8_UNORM = 37
     private const val VK_FORMAT_R8G8B8A8_SRGB = 43
