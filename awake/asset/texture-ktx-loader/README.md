@@ -29,6 +29,11 @@ val material = image?.let { device.createImageMaterial(it) }
   device takes it, and as RGBA8 otherwise. A material with PBR maps takes the RGBA8 path.
 - **A transcoder that won't load,** such as a page that doesn't serve `basis/`, is asked for once, and
   the images load instead.
+- **Models** load before the device is known, so a model's image can't pick a mobile file. Instead
+  `withCookedImages()` reads each image's Basis Universal `.ktx2` in its place, where the platform has a
+  transcoder. `decode(bytes)` turns it into an image that is transcoded to the device's block format
+  when its material is made (`GpuImageSource.compressed(formats)`). A played project's glTF models load
+  this way (`runProject`); on Android and iOS they keep their images.
 
 ## What it does with a file
 

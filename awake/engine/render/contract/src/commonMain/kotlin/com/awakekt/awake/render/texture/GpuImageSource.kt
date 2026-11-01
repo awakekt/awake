@@ -44,6 +44,13 @@ interface GpuImageSource {
      * takes its format, and [readRgba8] otherwise. Null by default.
      */
     val compressed: CompressedTextureImage? get() = null
+
+    /**
+     * The image in the best of [formats], the block formats a device samples, or null when it can't be
+     * had in any of them. [compressed] by default; a source that is transcoded when it is uploaded, such
+     * as a Basis Universal KTX2 texture loaded before the device was known, picks its format here.
+     */
+    fun compressed(formats: Set<CompressedTextureFormat>): CompressedTextureImage? = compressed?.takeIf { it.format in formats }
 }
 
 /**

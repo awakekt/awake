@@ -91,7 +91,9 @@ The same tier carries capability only a browser has. `GpuImageUpload` fills a te
 from a browser `ImageBitmap` with `copyExternalImageToTexture`; `createImageMaterial` asks for it
 and otherwise uploads the image's CPU pixels, so Vulkan and every test double take the fallback.
 An image that is already block-compressed (`GpuImageSource.compressed`, a cooked KTX2 texture) goes
-up as it is through `GpuCompressedTextures` when the device takes its format (#1211).
+up as it is through `GpuCompressedTextures` when the device takes its format (#1211). A source that
+is transcoded at upload, such as a model's Basis Universal texture loaded before the device was known,
+answers `compressed(formats)` with the device's formats.
 
 Shorthand for the common case, where a concept exists on both sides but is spelled differently —
 take the WebGPU spelling and let Vulkan translate:

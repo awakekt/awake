@@ -118,7 +118,7 @@ internal class SpawnedModels(
     @Suppress("TooGenericExceptionCaught")
     private suspend fun read(path: String): Result<GltfAssetResolver> = try {
         val staged = GltfAssetResolver()
-        staged.setAssetSource(files)
+        staged.readProjectFiles(files)
         staged.preload(path)
         Result.success(staged)
     } catch (cancelled: CancellationException) {

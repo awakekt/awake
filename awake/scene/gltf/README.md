@@ -4,6 +4,9 @@ glTF models in scenes. `GltfAssetResolver` resolves any `.gltf` or `.glb` path a
 names. Register it with `assets { resolver(...) }`. Models must be preloaded (`preload(path)`)
 before the scene asks for them, because image decoding suspends and asset resolution does not. Point
 it at the project's files with `setAssetSource` so a `.gltf` finds its `.bin` and image sidecars.
+`setImageDecoder` decodes its images another way first, such as the KTX2 they were cooked to
+(#1211): a played project reads `rock.ktx2` in place of a model's `rock.png` when the project ships
+one, and the material takes the device's block format. An image embedded in a GLB loads as before.
 
 - A model with one primitive draws as the mesh named by its path, with `materialName(path)`.
 - A model with several primitives draws one `gltf-primitive:<path>#<index>` mesh per primitive; see

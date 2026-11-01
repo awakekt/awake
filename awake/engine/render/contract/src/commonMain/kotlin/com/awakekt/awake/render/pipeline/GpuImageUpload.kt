@@ -47,8 +47,8 @@ interface GpuImageUpload : GpuCapability {
  * - **GPU direct**, when this device has [GpuImageUpload] and it accepts [image], meaning the image
  *   carries an [GpuImageSource.externalImage] the backend can copy: WebGPU in a browser. No pixel
  *   crosses to the CPU, and [TextureFiltering.Linear] mips are generated on the GPU.
- * - **Block-compressed**, when [image] has [GpuImageSource.compressed], [pbrImages] is null and this
- *   device's [GpuCompressedTextures] takes its format: uploaded as it is, with its own mips (#1211).
+ * - **Block-compressed**, when [pbrImages] is null and [image] comes in one of this device's
+ *   [compressedTextureFormats] ([GpuImageSource.compressed]): uploaded as it is, with its own mips (#1211).
  * - **CPU**, otherwise: [GpuImageSource.readRgba8] into a [TextureAsset], uploaded as every texture is.
  *   This covers Vulkan, a test double, and a browser without the API.
  *
@@ -74,6 +74,6 @@ fun GpuDevice.createImageMaterial(
 
 // A block-compressed image goes up as it is, when there are no PBR maps to bind beside it and the device takes its format.
 private fun GpuDevice.compressedMaterial(image: GpuImageSource, filtering: TextureFiltering, uniformFloatCount: Int, pbrImages: PbrImageSet?): Material? {
-    val compressed = image.compressed?.takeIf { pbrImages == null } ?: return null
+    val compressed = image.takeIf { pbrImages == null }?.compressed(compressedTextureFormats) ?: return null
     return capability(GpuCompressedTextures)?.createMaterial(compressed, filtering, uniformFloatCount)
 }
