@@ -5,6 +5,7 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -14,6 +15,8 @@ plugins {
 kotlin {
     android { namespace = "com.awakekt.awake.asset.ktx" }
     sourceSets {
+        // The project's texture cook settings, awake.textures.json.
+        commonMain.dependencies { implementation(libs.kotlinx.serialization.json) }
         commonTest.dependencies { implementation(kotlin("test")) }
     }
 }

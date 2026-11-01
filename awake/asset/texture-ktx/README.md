@@ -1,8 +1,9 @@
 # `awake:asset:texture-ktx`
 
 Reads [KTX2](https://registry.khronos.org/KTX/specs/2.0/ktxspec.v2.html) texture containers: the
-format GPU-compressed textures ship in (#1211). Pure Kotlin, with no dependencies, on every target
-Awake ships, so a loader on any of them can open a cooked texture.
+format GPU-compressed textures ship in (#1211). Pure Kotlin on every target Awake ships, so a loader
+on any of them can open a cooked texture. Its only dependency is kotlinx-serialization, for the cook
+settings below.
 
 ```kotlin
 implementation(project(":awake:asset:texture-ktx"))
@@ -31,3 +32,27 @@ if (Ktx2Reader.isKtx2(bytes)) {
 
 Encoding and transcoding come from libraries, not from this module: libktx (through LWJGL) on
 desktop and in the cook step, and the Basis Universal transcoder in the browser.
+
+## Cook settings
+
+A project says how its textures are cooked in `awake.textures.json` at its root, which
+`ProjectTextureSettings` reads and writes: defaults for every texture, and overrides keyed by
+project-relative path. [awake:asset:texture-cook](../texture-cook/README.md) is the tool that reads it.
+
+```json
+{
+  "defaults": { "etc1sQuality": 128, "mobile": ["Astc4x4", "Etc2Rgba8"] },
+  "assets": {
+    "textures/rock_normal.png": { "role": "Normal" },
+    "textures/rock_orm.png": { "role": "Data" },
+    "ui/logo.png": { "enabled": false }
+  }
+}
+```
+
+- **`role`** decides the encoding. `Color` (the default) is sRGB and cooks to ETC1S, the smallest.
+  `Normal` and `Data` are linear and cook to UASTC with Zstandard, which keeps the detail a normal map
+  or a mask needs.
+- **`mobile`** lists the block formats written beside the Basis Universal file, which mobile loads
+  without a transcoder.
+- **`enabled: false`** leaves a texture as its source image.

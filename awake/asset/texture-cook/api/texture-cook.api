@@ -1,0 +1,10 @@
+public final class com/awakekt/awake/asset/texturecook/TextureCook {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/texturecook/TextureCook;
+	public final fun run (Ljava/io/File;Ljava/util/List;Ljava/io/File;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/texturecook/TextureCookMain {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/texturecook/TextureCookMain;
+	public static final fun main ([Ljava/lang/String;)V
+}
+
