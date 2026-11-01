@@ -24,6 +24,19 @@ data class SkinnedPose(
     internal var culled = false
 
     /**
+     * Distance in world units from the camera eye to this model when a renderer last drew it, written
+     * alongside [drawn]. [AnimationSystem] reads it through an [AnimationUpdateRate]; it is 0 for a
+     * model no renderer has drawn, as in a headless world.
+     */
+    internal var cameraDistance = 0f
+
+    /**
+     * Seconds until [AnimationSystem] next recomputes this pose when an [AnimationUpdateRate] holds it
+     * between poses. 0 recomputes on the next update; unused when the rate poses every frame.
+     */
+    internal var nextPoseIn = 0f
+
+    /**
      * Extracts the translation component of the joint at [jointIndex] from the palette.
      * Writes into [out] if provided, or returns a newly allocated [Vec3f].
      */
