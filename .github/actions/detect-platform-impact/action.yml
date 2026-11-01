@@ -133,6 +133,12 @@ runs:
             web=true
           fi
 
+          # The Web job runs the Jolt and physics browser tests, against JoltPhysics.js, so a change
+          # to either, or to any module's karma configuration, has to run it.
+          if [[ "$path" =~ ^(awake/backend/jolt/|awake/physics/) ]] || [[ "$path" =~ (^|/)karma\.config\.d/ ]]; then
+            web=true
+          fi
+
           # Unknown product paths are conservatively treated as affecting every platform.
           if [[ ! "$path" =~ ^(awake/|samples/|gradle/|build-logic/|\.github/) ]] && \
             [[ ! "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; then
