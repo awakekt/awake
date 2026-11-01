@@ -219,10 +219,10 @@ class WebGpuHeadlessPixelTest {
      * reuses the same pooled `DynamicMesh` run, so it proves a changed run re-uploads this frame's
      * geometry rather than redrawing the first frame's.
      *
-     * Negative control: feeding `writeBufferData` the whole capacity instead of the live byte count
-     * (`size = vertexBuffer.size`) reads uninitialised bytes past the geometry and the centre comes
-     * back cleared; keeping the first frame's arrays (dropping the `lastUploaded*` assignment) leaves
-     * the centre blue on the second draw.
+     * Negative control (verified): dropping the vertex `writeBufferData` in `DynamicMesh.update`
+     * leaves the vertex buffer unwritten and the first assertion fails with the centre read back as
+     * `Pixel(red=0, green=0, blue=0)`; making the retained-run skip unconditional (`if (!buffersGrew)
+     * return` after the first upload) keeps the first frame's blue and fails the second assertion.
      */
     @Test
     fun dynamicMeshUploadRendersEachFramesInsetQuad() = withHeadlessRenderer { renderer ->
