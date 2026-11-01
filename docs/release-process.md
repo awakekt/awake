@@ -345,6 +345,17 @@ fine-grained token with *Contents* read-only on awake-plugins; without it (forks
 before the secret exists) the job skips with a notice and passes. It builds the plugins' `main`,
 or the branch the `AWAKE_PLUGINS_REF` repository variable names. It is not a required check yet.
 
+### Build runner
+
+The **Build (JVM/Native)** job in `ci.yml` runs on a Blacksmith runner,
+`blacksmith-8vcpu-ubuntu-2404`, as a measured pilot; every other job stays on GitHub-hosted
+runners, and the macOS jobs (iOS physics, the Vulkan macOS natives) stay there whatever the pilot
+finds. The job reads its runner from the `CORE_BUILD_RUNNER` repository variable, so moving it back
+needs no code change: set `CORE_BUILD_RUNNER` to `ubuntu-latest` under *Settings → Secrets and
+variables → Actions → Variables*, and delete the variable to return to Blacksmith. The job keeps
+`gradle/actions/setup-gradle`; on Blacksmith its `actions/cache` traffic goes to Blacksmith's cache
+without any change to the workflow.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
