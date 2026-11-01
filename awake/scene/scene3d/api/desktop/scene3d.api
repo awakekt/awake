@@ -71,7 +71,19 @@ public final class com/awakekt/awake/scene/rendering/SceneRenderingCompatKt {
 
 public final class com/awakekt/awake/scene/rendering/animation/AnimationSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public abstract interface class com/awakekt/awake/scene/rendering/animation/AnimationUpdateRate {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate$Companion;
+	public abstract fun intervalFor (F)F
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/AnimationUpdateRate$Companion {
+	public final fun byDistance (FFF)Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;
+	public final fun getEveryFrame ()Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;
 }
 
 public final class com/awakekt/awake/scene/rendering/animation/Animator {

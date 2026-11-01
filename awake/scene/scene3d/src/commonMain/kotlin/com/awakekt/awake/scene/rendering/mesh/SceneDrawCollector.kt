@@ -127,7 +127,11 @@ internal class SceneDrawCollector(
             // Drawn for shadows alone still counts as drawn: the shadow shows the pose, so it has
             // to be the current one.
             val pose = poseStore?.get(entity)
-            pose?.drawn = true
+            if (pose != null) {
+                pose.drawn = true
+                // For AnimationSystem's optional distance-based update rate; free alongside the draw.
+                pose.cameraDistance = cameraDistanceOf(culling.camera, transform)
+            }
             // The entity's own material wins; otherwise the factors its material was authored with.
             val pbr = pbrStore?.get(entity) ?: meshRenderer.defaultMaterial
             val animation = animationStore?.get(entity)
@@ -224,7 +228,10 @@ internal class SceneDrawCollector(
             }
 
             val pose = poseStore?.get(entity)
-            pose?.drawn = true
+            if (pose != null) {
+                pose.drawn = true
+                pose.cameraDistance = cameraDistanceOf(culling.camera, transform)
+            }
             val pbr = pbrStore?.get(entity)
             val extras = if (pose == null) {
                 EMPTY_DRAW_EXTRAS
@@ -406,6 +413,15 @@ private val NO_VERTEX_ANIMATION = Vec3f(0f, 0f, 0f)
 private val IDENTITY_MATRIX = Mat4()
 
 private val EMPTY_DRAW_EXTRAS = FloatArray(0)
+
+/** World distance from [camera]'s eye to [transform]'s placement, for the pose's update rate. Allocation-free. */
+private fun cameraDistanceOf(camera: Camera, transform: Transform): Float {
+    val eye = camera.lens.eye
+    val dx = transform.worldMatrix.m03 - eye.x
+    val dy = transform.worldMatrix.m13 - eye.y
+    val dz = transform.worldMatrix.m23 - eye.z
+    return sqrt(dx * dx + dy * dy + dz * dz)
+}
 
 /** The pose's palette tinted by [material]'s factors, written into [into], a draw's own pooled buffer. */
 private fun SkinnedPose.tintedBy(material: PbrMaterial, into: FloatArray): FloatArray = skinnedMaterialFloats(
