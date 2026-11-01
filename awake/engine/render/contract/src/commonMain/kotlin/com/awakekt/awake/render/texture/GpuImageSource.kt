@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.render.texture
 
+import com.awakekt.awake.core.image.DecodedImage
+import com.awakekt.awake.core.image.toRgba8Bytes
+
 /**
  * A decoded 2D image a backend may copy straight to a GPU texture, without the CPU pixels a
  * [TextureAsset] carries: in a browser, an `ImageBitmap` that WebGPU's `copyExternalImageToTexture`
@@ -34,4 +37,34 @@ interface GpuImageSource {
      * calls it only when it cannot copy [externalImage].
      */
     fun readRgba8(): ByteArray
+}
+
+/**
+ * This decoded image as a [GpuImageSource]: in a browser its `ImageBitmap` is the
+ * [GpuImageSource.externalImage] a WebGPU backend copies, and anywhere else [GpuImageSource.readRgba8]
+ * supplies the CPU pixels. The image stays the caller's, open for as long as a material may be made
+ * from it.
+ */
+fun DecodedImage.asGpuImageSource(): GpuImageSource = DecodedImageSource(this)
+
+/** This single-layer 2D texture as a [GpuImageSource] with no platform image: it always takes the CPU path. */
+fun TextureAsset.asGpuImageSource(): GpuImageSource {
+    require(layerCount == 1 && !isCubemap) { "Only a single 2D image is a GpuImageSource; this has $layerCount layer(s)." }
+    return AssetImageSource(this)
+}
+
+private class DecodedImageSource(private val image: DecodedImage) : GpuImageSource {
+    override val width: Int get() = image.width
+    override val height: Int get() = image.height
+    override val externalImage: Any? get() = image.platformImage
+
+    override fun readRgba8(): ByteArray = image.toBitmap().toRgba8Bytes()
+}
+
+private class AssetImageSource(private val asset: TextureAsset) : GpuImageSource {
+    override val width: Int get() = asset.width
+    override val height: Int get() = asset.height
+    override val externalImage: Any? get() = null
+
+    override fun readRgba8(): ByteArray = asset.data
 }

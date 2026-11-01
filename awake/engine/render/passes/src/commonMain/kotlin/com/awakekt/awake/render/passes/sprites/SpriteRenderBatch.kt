@@ -16,11 +16,13 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.SpriteExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UniformWriter
-import com.awakekt.awake.render.renderer.createMaterial
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.asGpuImageSource
 
 /** A world-space atlas quad, independent of any scene or ECS. */
 @Suppress("LongParameterList")
@@ -149,11 +151,18 @@ const val DEFAULT_SPRITE_PIVOT: Float = 0.5f
  * A sprite whose sheet does not divide into its columns and rows of whole pixels, an authoring mistake
  * a file-backed sheet first shows at run time, is not drawn; this is logged once for each sheet, and
  * the other sprites go on drawing.
+ * @param resolveImage A named sheet as a decoded image, asked before [resolveTexture], with the same
+ * null meaning: uploaded with `createImageMaterial`, so a browser's WebGPU copies it on the GPU
+ * (awakekt/awake#1184).
  */
 class SpriteRenderBatch(
     private val renderer: Renderer,
     private val resolveTexture: (String) -> TextureAsset?,
+    private val resolveImage: (String) -> GpuImageSource?,
 ) {
+    /** A batch whose sheets are only [resolveTexture]'s CPU pixels. */
+    constructor(renderer: Renderer, resolveTexture: (String) -> TextureAsset?) : this(renderer, resolveTexture, { null })
+
     private var mesh: Mesh? = null
     private val sheets = mutableMapOf<String, Sheet>()
 
@@ -190,11 +199,12 @@ class SpriteRenderBatch(
 
     /** The sheet [input] names, uploaded and kept, or null when its pixels are not available yet. */
     private fun upload(input: SpriteDrawInput): Sheet? {
-        val image = resolveTexture(input.texture)
-            ?: (if (input.texture.isEmpty()) DefaultWhiteSpriteTexture else null)
+        // createImageMaterial uploads a decoded image on the GPU where it can, and CPU pixels as before.
+        val image = resolveImage(input.texture)
+            ?: resolveTexture(input.texture)?.also { require(it.layerCount == 1 && !it.isCubemap) { "A sprite sheet must be a single 2D image." } }?.asGpuImageSource()
+            ?: (if (input.texture.isEmpty()) DefaultWhiteSpriteTexture.asGpuImageSource() else null)
             ?: return null
-        require(image.layerCount == 1 && !image.isCubemap) { "A sprite sheet must be a single 2D image." }
-        val material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
+        val material = renderer.createImageMaterial(image, TextureFiltering.Nearest, SpriteUniformLayout.total)
         return Sheet(image.width, image.height, material).also { sheets[input.texture] = it }
     }
 

@@ -10,7 +10,9 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.mesh.LodFollow
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
@@ -132,22 +134,34 @@ class SceneAssetLibrary(
      */
     fun texture(name: String): TextureAsset? {
         textureFactories[name]?.let { return it() }
-        return when (val load = dynamicResolvers.firstNotNullOfOrNull { it.texture(name) }) {
-            is SceneTextureLoad.Loaded -> load.image
-            SceneTextureLoad.Loading -> {
-                if (awaitedTextures.add(name)) log.info { "Texture '$name' has not loaded yet. Not drawn yet; it draws once it has." }
-                null
+        return loadedTexture(name)?.image
+    }
+
+    /**
+     * [texture] as a [GpuImageSource]: what the scene runtime's sprites and tilemaps upload, so a texture
+     * a resolver loaded as a decoded image (in a browser, [AssetSourceTextureResolver]'s) goes to the GPU
+     * without a readback (awakekt/awake#1184). Waiting, failing and logging are [texture]'s.
+     */
+    fun textureImage(name: String): GpuImageSource? {
+        textureFactories[name]?.let { return it().asGpuImageSource() }
+        return loadedTexture(name)?.source
+    }
+
+    private fun loadedTexture(name: String): SceneTextureLoad.Loaded? = when (val load = dynamicResolvers.firstNotNullOfOrNull { it.texture(name) }) {
+        is SceneTextureLoad.Loaded -> load
+        SceneTextureLoad.Loading -> {
+            if (awaitedTextures.add(name)) log.info { "Texture '$name' has not loaded yet. Not drawn yet; it draws once it has." }
+            null
+        }
+        is SceneTextureLoad.Failed -> {
+            if (failedTextures.add(name)) log.error(load.cause) { "Texture '$name' could not load: ${load.cause.message}. Not drawn." }
+            null
+        }
+        null -> {
+            if (failedTextures.add(name)) {
+                log.error { "No scene texture named '$name' is registered or could be resolved by installed resolvers. Not drawn." }
             }
-            is SceneTextureLoad.Failed -> {
-                if (failedTextures.add(name)) log.error(load.cause) { "Texture '$name' could not load: ${load.cause.message}. Not drawn." }
-                null
-            }
-            null -> {
-                if (failedTextures.add(name)) {
-                    log.error { "No scene texture named '$name' is registered or could be resolved by installed resolvers. Not drawn." }
-                }
-                null
-            }
+            null
         }
     }
 

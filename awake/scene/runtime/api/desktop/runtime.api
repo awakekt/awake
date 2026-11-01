@@ -253,6 +253,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public final fun resolve (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/rendering/mesh/SceneRenderableRequest;)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
 	public final fun retainedMeshBytes ()J
 	public final fun texture (Ljava/lang/String;)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun textureImage (Ljava/lang/String;)Lcom/awakekt/awake/render/texture/GpuImageSource;
 }
 
 public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolver {
@@ -507,8 +508,10 @@ public final class com/awakekt/awake/scene/runtime/SceneTextureLoad$Failed : com
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneTextureLoad$Loaded : com/awakekt/awake/scene/runtime/SceneTextureLoad {
+	public fun <init> (Lcom/awakekt/awake/render/texture/GpuImageSource;)V
 	public fun <init> (Lcom/awakekt/awake/render/texture/TextureAsset;)V
 	public final fun getImage ()Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun getSource ()Lcom/awakekt/awake/render/texture/GpuImageSource;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneTextureLoad$Loading : com/awakekt/awake/scene/runtime/SceneTextureLoad {

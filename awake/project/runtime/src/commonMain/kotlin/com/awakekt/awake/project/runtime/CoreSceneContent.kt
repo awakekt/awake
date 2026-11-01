@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.audio.AudioClip
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.canvas.loadCanvasFonts
 import com.awakekt.awake.scene.canvas.loadCanvasImages
@@ -33,8 +34,17 @@ object CoreSceneContent {
      */
     val CollisionMeshes: SceneContentKey<CollisionMeshSource> = SceneContentKey("collision meshes")
 
-    /** The particle emitters' sprite images by path, as `loadParticleSprites` reads them. */
+    /**
+     * The particle emitters' sprite images by path, as `loadParticleSprites` reads them, for a host that
+     * holds them itself. Core's own load fills [ParticleImages] instead; an emitter takes an image there first.
+     */
     val ParticleSprites: SceneContentKey<Map<String, TextureAsset>> = SceneContentKey("particle sprites")
+
+    /**
+     * The particle emitters' sprite images by path, decoded for the GPU as `loadParticleImages` reads
+     * them: what Core's own load fills, so a browser uploads them without a readback (awakekt/awake#1184).
+     */
+    val ParticleImages: SceneContentKey<Map<String, GpuImageSource>> = SceneContentKey("particle images")
 
     /** The images the scene's canvas elements name, by path, as [loadCanvasImages] reads them. */
     val CanvasImages: SceneContentKey<Map<String, ImageBitmap>> = SceneContentKey("canvas images")

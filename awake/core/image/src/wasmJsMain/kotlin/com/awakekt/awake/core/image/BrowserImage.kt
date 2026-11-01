@@ -25,12 +25,15 @@ import kotlin.js.ExperimentalWasmJsInterop
  *
  * The browser keeps the decoded image until [close]; close it once it is uploaded.
  */
-class BrowserImage internal constructor(private var handle: ImageBitmapHandle?) : AutoCloseable {
+class BrowserImage internal constructor(private var handle: ImageBitmapHandle?) : DecodedImage {
     /** Width in pixels. */
-    val width: Int = checkNotNull(handle).width
+    override val width: Int = checkNotNull(handle).width
 
     /** Height in pixels. */
-    val height: Int = checkNotNull(handle).height
+    override val height: Int = checkNotNull(handle).height
+
+    /** This image, for a GPU copy, while it is open; null once closed. */
+    override val platformImage: Any? get() = if (handle != null) this else null
 
     /** Whether [close] has released the browser's image. */
     val isClosed: Boolean get() = handle == null
@@ -49,7 +52,7 @@ class BrowserImage internal constructor(private var handle: ImageBitmapHandle?) 
      *
      * @throws IllegalStateException once closed.
      */
-    fun toBitmap(): Bitmap = readBottomUpArgb(openHandle())
+    override fun toBitmap(): Bitmap = readBottomUpArgb(openHandle())
 
     /** Releases the browser's decoded image. Idempotent. */
     override fun close() {
@@ -68,3 +71,6 @@ class BrowserImage internal constructor(private var handle: ImageBitmapHandle?) 
  */
 suspend fun decodeBrowserImage(bytes: ByteArray): BrowserImage =
     BrowserImage(createUnconvertedImageBitmap(blobOf(bytes)).await<ImageBitmapHandle>())
+
+/** The browser decode: [decodeBrowserImage], whose `ImageBitmap` a WebGPU backend copies on the GPU. */
+actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = decodeBrowserImage(bytes)

@@ -1,5 +1,6 @@
 public final class com/awakekt/awake/scene/particles/ParticleContentSystem : com/awakekt/awake/ecs/System, java/lang/AutoCloseable {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/Map;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/Map;Ljava/util/Map;)V
 	public fun close ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
@@ -25,6 +26,7 @@ public final class com/awakekt/awake/scene/particles/ParticleEmitterSource {
 }
 
 public final class com/awakekt/awake/scene/particles/ParticleSpritesKt {
+	public static final fun loadParticleImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun loadParticleSprites (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

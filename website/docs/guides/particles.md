@@ -37,9 +37,11 @@ list, except the ones that are code: the `onParticleDeath` callback, `groundHeig
 The emitter spawns at its node's world position and follows the node; the node's scale does not
 apply. `loadProject` reads every emitter's `texture` while it loads the project, and `runProject`
 runs the particle systems when the scene has an emitter. In your own app, read the sprites with
-`loadParticleSprites(document, assets)` and add
-`frameSystem("particle-content") { ParticleContentSystem(renderer, sprites) }` next to
-`ParticleSystem`; `close()` it when the scene goes. The fields are in the
+`loadParticleImages(document, assets)` and add
+`frameSystem("particle-content") { ParticleContentSystem(renderer, emptyMap(), images) }` next to
+`ParticleSystem`; `close()` it when the scene goes. In a browser, WebGPU copies those images
+straight to the GPU. `loadParticleSprites` and `ParticleContentSystem(renderer, sprites)` still
+work, and upload CPU pixels. The fields are in the
 [component reference](../reference/scene-document-components.md#particle_emitter).
 
 ## Lay particles flat

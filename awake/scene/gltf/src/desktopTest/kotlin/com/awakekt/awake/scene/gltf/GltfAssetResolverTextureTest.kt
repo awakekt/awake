@@ -7,7 +7,14 @@ package com.awakekt.awake.scene.gltf
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.image.createBitmap
+import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.render.texture.PbrTextureSet
+import com.awakekt.awake.render.texture.RenderTarget
+import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.test.runTest
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -32,6 +39,30 @@ class GltfAssetResolverTextureTest {
         val parameters = assertNotNull(resolver.materialParameters(path))
         assertEquals(0.7f, parameters.metallic)
         assertEquals(0.35f, parameters.roughness)
+    }
+
+    /**
+     * The CPU path, every renderer but a browser's WebGPU: the material gets the model's own pixels, as
+     * `createBitmap` decodes them, which is what the resolver uploaded before it kept decoded images.
+     * A browser's WebGPU copies the same image on the GPU (`TextureLoadersBrowserTest`).
+     */
+    @Test
+    fun aMaterialUploadsTheModelsPixelsOnTheCpuPath() = runTest {
+        val path = "assets/painted-triangle.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preloadMaterials(path, texturedTriangleJson().encodeToByteArray())
+        val uploaded = mutableListOf<TextureAsset?>()
+        val renderer = object : NoopRenderer() {
+            override fun createMaterial(texture: TextureAsset?, renderTarget: RenderTarget?, uniformFloatCount: Int, pbrTextures: PbrTextureSet?): Material {
+                uploaded += texture
+                return super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures)
+            }
+        }
+
+        assertNotNull(resolver.createMaterial(renderer, resolver.materialName(path)))
+
+        val decoded = createBitmap(Base64.decode(PIXEL_PNG))
+        assertEquals(listOf<TextureAsset?>(TextureAsset(decoded.toRgba8Bytes(), decoded.width, decoded.height)), uploaded)
     }
 
     @Test
@@ -287,7 +318,7 @@ class GltfAssetResolverTextureTest {
     /** One triangle skinned to one joint, drawn by two part nodes: the first textured, the second not. */
     private fun skinnedPartsJson(): String {
         val bytes = triangleBufferBytes()
-        val image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        val image = PIXEL_PNG
         val skinning = ByteArray(12) + floatBytes(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f) +
             floatBytes(0f, 0f, 1f, 0f, 0f, 1f) + floatBytes(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
         val buffer = bytes + ByteArray(2) + skinning
@@ -341,7 +372,7 @@ class GltfAssetResolverTextureTest {
         externalBuffer: Boolean = false,
     ): String {
         val bytes = triangleBufferBytes()
-        val image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        val image = PIXEL_PNG
         val imageUri = if (externalImage) "paint.png" else "data:image/png;base64,$image"
         val bufferUri = if (externalBuffer) "triangle.bin" else "data:application/octet-stream;base64,${Base64.encode(bytes)}"
         val materials = List(primitiveCount) {
@@ -388,5 +419,9 @@ class GltfAssetResolverTextureTest {
         }
         bytes[offset + 2] = 2
         return bytes
+    }
+
+    private companion object {
+        const val PIXEL_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
     }
 }

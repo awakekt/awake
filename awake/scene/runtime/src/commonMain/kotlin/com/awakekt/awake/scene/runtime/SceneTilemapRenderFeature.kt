@@ -13,7 +13,7 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.sprites.TilemapRenderBatch
 import com.awakekt.awake.render.passes.sprites.UndividedTextures
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.RenderContribution
 import com.awakekt.awake.scene.rendering.RenderFeature3D
@@ -24,7 +24,7 @@ import com.awakekt.awake.scene.scene2d.Tilemap
 /** GPU resources are owned by the scene runtime, never by the serialized tile component. Layers are placed by the project's [layers]. */
 internal class SceneTilemapRenderFeature(
     private val renderer: Renderer,
-    private val resolveTexture: (String) -> TextureAsset?,
+    private val resolveTexture: (String) -> GpuImageSource?,
     private val layers: () -> SortingLayers = { SortingLayers.None },
 ) : RenderFeature3D,
     SceneTextureUploads {
@@ -43,7 +43,7 @@ internal class SceneTilemapRenderFeature(
         world.queryEach<Transform, Tilemap> { _, transform, tilemap ->
             live.add(tilemap)
             val batch = batches.getOrPut(tilemap) {
-                TilemapRenderBatch(renderer, tilemap.grid, tilemap.columns, tilemap.rows, tilemap.pixelsPerUnit, tilemap.texture, undivided) {
+                TilemapRenderBatch(renderer, tilemap.grid, tilemap.columns, tilemap.rows, tilemap.pixelsPerUnit, tilemap.texture, undivided, { null }) {
                     resolveTexture(tilemap.texture)
                 }
             }

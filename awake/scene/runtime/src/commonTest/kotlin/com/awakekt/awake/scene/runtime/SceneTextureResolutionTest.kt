@@ -132,8 +132,8 @@ class SceneTextureResolutionTest {
 
     /** The runtime's two 2D draws, as `SceneAppLifecycleRuntime` builds them, over [library]. */
     private inner class Drawing(library: SceneAssetLibrary) {
-        private val sprites = SpriteRenderBatch(renderer, library::texture)
-        private val tilemaps = SceneTilemapRenderFeature(renderer, library::texture)
+        private val sprites = SpriteRenderBatch(renderer, { null }, library::textureImage)
+        private val tilemaps = SceneTilemapRenderFeature(renderer, library::textureImage)
         private val context = RenderFeatureContext3D(
             Camera(Lens(eye = Vec3f(1f, 0f, 5f), center = Vec3f(1f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 20f)),
             0f,

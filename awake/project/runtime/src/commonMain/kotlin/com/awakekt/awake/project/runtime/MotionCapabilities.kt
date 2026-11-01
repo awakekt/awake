@@ -17,7 +17,7 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.particles.ParticleContentSystem
 import com.awakekt.awake.scene.particles.SceneParticleEmitter
 import com.awakekt.awake.scene.particles.TransformPlacement
-import com.awakekt.awake.scene.particles.loadParticleSprites
+import com.awakekt.awake.scene.particles.loadParticleImages
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneKeyframeAnimation
@@ -58,13 +58,15 @@ internal object ParticlesCapability : SceneCapability {
     override val id = "com.awakekt.awake.particles"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
-        if (scene.uses(SceneParticleEmitter::class)) content[CoreSceneContent.ParticleSprites] = loadParticleSprites(scene, files)
+        if (scene.uses(SceneParticleEmitter::class)) content[CoreSceneContent.ParticleImages] = loadParticleImages(scene, files)
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(PARTICLES_2D_SYSTEM) { Particle2DSystem(Transform2DPlacement()) }
         if (!scene.uses(SceneParticleEmitter::class) || !plan.hasRenderer) return
-        plan.frame("particle-content") { ParticleContentSystem(it.renderer, it.content[CoreSceneContent.ParticleSprites].orEmpty()) }
+        plan.frame("particle-content") {
+            ParticleContentSystem(it.renderer, it.content[CoreSceneContent.ParticleSprites].orEmpty(), it.content[CoreSceneContent.ParticleImages].orEmpty())
+        }
         plan.frame("particles") { ParticleSystem(TransformPlacement) }
     }
 }

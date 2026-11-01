@@ -17,21 +17,28 @@ import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
+import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
 
 /**
  * Gives each [ParticleEmitterSource] entity its [ParticleEmitter], following the entity, once its
- * sprite is in [sprites] (see [loadParticleSprites]). Emitters share one quad and one material per
+ * sprite is in [images] (see [loadParticleImages]) or [sprites] (see [loadParticleSprites]), an image
+ * first. Emitters share one quad and one material per
  * sprite, created through [renderer] and destroyed by [close]. Run it alongside [ParticleSystem].
  */
 class ParticleContentSystem(
     private val renderer: Renderer,
     private val sprites: Map<String, TextureAsset>,
+    private val images: Map<String, GpuImageSource>,
 ) : System,
     AutoCloseable {
+    /** Emitters drawn from decoded [sprites] only, as before [loadParticleImages]. */
+    constructor(renderer: Renderer, sprites: Map<String, TextureAsset>) : this(renderer, sprites, emptyMap())
+
     private var quad: Mesh? = null
     private val materials = HashMap<String, Material>()
     private val waiting = ArrayList<Entity>()
@@ -55,7 +62,9 @@ class ParticleContentSystem(
         materials.clear()
     }
 
+    // An image from loadParticleImages goes through createImageMaterial, on the GPU where it can.
     private fun materialFor(path: String): Material? = materials[path]
+        ?: images[path]?.let { image -> renderer.createImageMaterial(image, uniformFloatCount = ParticleUniformLayout.total) }?.also { materials[path] = it }
         ?: sprites[path]?.let { sprite -> renderer.createMaterial(ParticleUniformLayout, texture = sprite).also { materials[path] = it } }
 
     private fun emitter(world: World, entity: Entity, settings: SceneParticleEmitter, material: Material): ParticleEmitter {

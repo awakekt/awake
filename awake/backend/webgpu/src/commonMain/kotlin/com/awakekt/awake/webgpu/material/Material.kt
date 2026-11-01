@@ -115,6 +115,9 @@ class Material(
         )
     }
 
+    /** The base colour texture, then the four PBR maps, once [createResources] has run: for parity tests. */
+    internal val sampledTextures: List<Texture> get() = listOfNotNull(texture) + pbrTextures
+
     /** True once [createResources] has run -- a `PositionNormalColorUv` draw call whose
      * material has no texture can't be drawn through `textured.wgsl` at all. */
     val hasTexture: Boolean get() = texture != null

@@ -42,7 +42,7 @@ class SwitchedSceneContentTest {
 
         assertEquals(whole.values.keys, core.values.keys)
         assertTrue(
-            core.values.keys.containsAll(listOf(CoreSceneContent.ShaderEffects, CoreSceneContent.ParticleSprites, CoreSceneContent.AudioClips)),
+            core.values.keys.containsAll(listOf(CoreSceneContent.ShaderEffects, CoreSceneContent.ParticleImages, CoreSceneContent.AudioClips)),
             core.values.keys.toString(),
         )
         assertEquals(setOf(GLOW), core[CoreSceneContent.ShaderEffects]?.documents?.keys)

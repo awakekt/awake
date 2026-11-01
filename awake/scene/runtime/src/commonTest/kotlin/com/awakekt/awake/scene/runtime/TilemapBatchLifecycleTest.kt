@@ -21,6 +21,7 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderFeatureContext3D
@@ -86,7 +87,7 @@ class TilemapBatchLifecycleTest {
     @Test
     fun removingTheComponentReleasesItsGpuResources() {
         val renderer = CountingRenderer()
-        val feature = SceneTilemapRenderFeature(renderer, { TextureAsset(ByteArray(4), 1, 1) })
+        val feature = SceneTilemapRenderFeature(renderer, { TextureAsset(ByteArray(4), 1, 1).asGpuImageSource() })
         val world = World()
         val entity = world.create()
         world.add(entity, Transform())

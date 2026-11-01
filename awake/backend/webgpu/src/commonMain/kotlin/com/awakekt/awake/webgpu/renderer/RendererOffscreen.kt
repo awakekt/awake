@@ -47,26 +47,24 @@ internal fun Renderer.performCreateMaterial(
         material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
         material.sourceTarget = offscreen
     } else if (texture != null) {
-        createPbrResources(material, uploadTexture(texture), pbrTextures)
+        val maps = listOf(pbrTextures?.metallicRoughness, pbrTextures?.normal, pbrTextures?.occlusion, pbrTextures?.emissive)
+        createPbrResources(material, uploadTexture(texture), maps.map { it?.let(::uploadTexture) })
     }
     return material
 }
 
-/** A material sampling [base], an already uploaded texture, as [performCreateMaterial] builds one from an asset. */
-internal fun Renderer.createTexturedMaterial(base: Texture, uniformFloatCount: Int, pbrTextures: PbrTextureSet?): RenderMaterial =
-    Material(graphicsDevice, uniformFloatCount).also { createPbrResources(it, base, pbrTextures) }
+/**
+ * A material sampling [base] and [maps], already uploaded textures in [PbrTextureSet]'s order
+ * (metallic-roughness, normal, occlusion, emissive), as [performCreateMaterial] builds one from assets.
+ */
+internal fun Renderer.createTexturedMaterial(base: Texture, uniformFloatCount: Int, maps: List<Texture?>): RenderMaterial =
+    Material(graphicsDevice, uniformFloatCount).also { createPbrResources(it, base, maps) }
 
-private fun Renderer.createPbrResources(material: Material, base: Texture, pbrTextures: PbrTextureSet?) {
+private fun Renderer.createPbrResources(material: Material, base: Texture, maps: List<Texture?>) {
     // Every map gets a texture, a neutral one where the material has none, as on Vulkan: a textured
     // pipeline's declaration binds all four, so a glTF material with only a base colour must still fill them.
-    val pbr = listOf(
-        pbrTextures?.metallicRoughness to Renderer.NEUTRAL_METALLIC_ROUGHNESS,
-        pbrTextures?.normal to Renderer.NEUTRAL_NORMAL,
-        pbrTextures?.occlusion to Renderer.NEUTRAL_OCCLUSION,
-        pbrTextures?.emissive to Renderer.NEUTRAL_EMISSIVE,
-    ).map { (asset, neutral) ->
-        asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) { uploadTexture(neutral) }
-    }
+    val neutrals = listOf(Renderer.NEUTRAL_METALLIC_ROUGHNESS, Renderer.NEUTRAL_NORMAL, Renderer.NEUTRAL_OCCLUSION, Renderer.NEUTRAL_EMISSIVE)
+    val pbr = maps.zip(neutrals) { map, neutral -> map ?: textureResources.neutral(neutral) { uploadTexture(neutral) } }
     material.createResources(base, pbr)
 }
 

@@ -56,6 +56,9 @@ kotlin {
             // docs/reference/module-architecture.md -- the "prefer implementation" rule's
             // deliberate exception.
             api(project(":awake:core:geometry"))
+            // DecodedImage, which GpuImageSource adapts: api, as asGpuImageSource puts it in this
+            // module's public signatures (awakekt/awake#1184).
+            api(project(":awake:core:image"))
             implementation(libs.kotlinx.atomicfu)
         }
         commonTest.dependencies {

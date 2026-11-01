@@ -39,3 +39,6 @@ fun decodeBitmap(bytes: ByteArray): Bitmap {
 
     return DefaultBitmap(width, height, channel, pixels)
 }
+
+/** The CPU decode: [createBitmap], with no platform image to copy. */
+actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = createBitmap(bytes).asDecodedImage()
