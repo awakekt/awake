@@ -133,9 +133,10 @@ runs:
             web=true
           fi
 
-          # The Web job runs the Jolt and physics browser tests, against JoltPhysics.js, so a change
-          # to either, or to any module's karma configuration, has to run it.
-          if [[ "$path" =~ ^(awake/backend/jolt/|awake/physics/) ]] || [[ "$path" =~ (^|/)karma\.config\.d/ ]]; then
+          # The Web job runs the Jolt and physics browser tests, against JoltPhysics.js, and the KTX2
+          # loader's, against the vendored Basis Universal transcoder, so a change to any of them, or to
+          # any module's karma configuration, has to run it.
+          if [[ "$path" =~ ^(awake/backend/jolt/|awake/physics/|awake/asset/texture-ktx-loader/) ]] || [[ "$path" =~ (^|/)karma\.config\.d/ ]]; then
             web=true
           fi
 
