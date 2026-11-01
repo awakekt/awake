@@ -15,7 +15,7 @@ import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.character.CharacterConfig
 import com.awakekt.awake.physics.character.KinematicCharacterController
-import com.awakekt.awake.physics.character.TerrainSurface
+import com.awakekt.awake.physics.character.TerrainCollider
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.test.Test
@@ -46,12 +46,12 @@ class JoltCharacterTerrainLiftTest {
     private val heights = FloatArray(SAMPLES * SAMPLES) { (it % SAMPLES - SAMPLES / 2) * SLOPE }
     private val shape = HeightFieldShape(heights, SAMPLES, Vec3f(1f, 1f, 1f))
 
-    private suspend fun world(block: suspend (PhysicsWorld, TerrainSurface) -> Unit) {
+    private suspend fun world(block: suspend (PhysicsWorld, TerrainCollider) -> Unit) {
         val world = createJoltPhysicsWorld(gravity = Vec3f(0f, 0f, 0f))
         try {
             val origin = Vec3f(0f, 0f, 0f)
             val terrain = world.createBody(shape, origin, Quat.IDENTITY, MotionType.STATIC)
-            block(world, TerrainSurface(terrain, shape, origin))
+            block(world, TerrainCollider(terrain, shape, origin))
         } finally {
             world.destroy()
         }

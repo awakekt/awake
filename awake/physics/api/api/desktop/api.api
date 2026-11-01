@@ -475,7 +475,7 @@ public final class com/awakekt/awake/physics/character/KinematicCharacterControl
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun isCrouching ()Z
 	public final fun isGrounded ()Z
-	public final fun liftOutOf (Lcom/awakekt/awake/physics/character/TerrainSurface;)Z
+	public final fun liftOutOf (Lcom/awakekt/awake/physics/character/TerrainCollider;)Z
 	public final fun move (Lcom/awakekt/awake/core/math/Vec3f;F)V
 	public static synthetic fun move$default (Lcom/awakekt/awake/physics/character/KinematicCharacterController;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
 	public final fun setOnContact (Lkotlin/jvm/functions/Function2;)V
@@ -483,7 +483,7 @@ public final class com/awakekt/awake/physics/character/KinematicCharacterControl
 	public final fun teleport (Lcom/awakekt/awake/core/math/Vec3f;)V
 }
 
-public final class com/awakekt/awake/physics/character/TerrainSurface {
+public final class com/awakekt/awake/physics/character/TerrainCollider {
 	public synthetic fun <init> (JLcom/awakekt/awake/physics/HeightFieldShape;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun covers (FF)Z
 	public final fun getHandle-IB_h3Cs ()J

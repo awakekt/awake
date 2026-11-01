@@ -29,7 +29,7 @@ import com.awakekt.awake.physics.PhysicsWorld
  * @param shape the heightfield the body was built with.
  * @param position the body's position, where the heightfield is laid.
  */
-class TerrainSurface(val handle: BodyHandle, shape: HeightFieldShape, position: Vec3f) {
+class TerrainCollider(val handle: BodyHandle, shape: HeightFieldShape, position: Vec3f) {
     private val minX: Float
     private val minZ: Float
     private val maxX: Float
@@ -87,7 +87,7 @@ class TerrainSurface(val handle: BodyHandle, shape: HeightFieldShape, position: 
 
 private val DOWN = Vec3f(0f, -1f, 0f)
 
-/** A search runs this far past [TerrainSurface.top] and its bottom, so a surface at either is still hit. */
+/** A search runs this far past [TerrainCollider.top] and its bottom, so a surface at either is still hit. */
 private const val MARGIN = 1f
 
 /** How far under a hit on something else the search goes on, so it doesn't hit that again. */

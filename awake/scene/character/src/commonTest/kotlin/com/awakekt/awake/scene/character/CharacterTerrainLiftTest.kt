@@ -26,8 +26,11 @@ import kotlin.test.assertTrue
  * The terrain is a heightfield body on a scene entity, as a `terrain` collider builds one. The
  * character starts 2 m under it, standing on a buried box.
  *
- * Negative control, measured: with the system's lift taken out, the character stays on the box, its
- * feet 1.98 m under the terrain after 2 s.
+ * Negative controls, measured:
+ * - With the system's lift taken out, the character stays on the box, its feet 1.98 m under the
+ *   terrain after 2 s.
+ * - With the terrains found again only when the body count changes, a terrain swapped for one raised
+ *   3 m in the same step leaves the character 3 m under it, feet at 0.02.
  */
 class CharacterTerrainLiftTest {
 
@@ -36,7 +39,7 @@ class CharacterTerrainLiftTest {
         val world = World()
         val physicsWorld = createJoltPhysicsWorld()
         try {
-            world.body(Vec3f(0f, 0f, 0f), HeightFieldShape(FloatArray(SAMPLES * SAMPLES), SAMPLES, Vec3f(1f, 1f, 1f)))
+            world.body(Vec3f(0f, 0f, 0f), flatTerrain())
             world.body(Vec3f(2f, -2.25f, 0f), BoxShape(Vec3f(1f, 0.25f, 1f)))
             val player = world.create()
             world.add(player, Transform(position = Vec3f(2f, -2f + HALF_EXTENT + 0.02f, 0f)))
@@ -57,10 +60,45 @@ class CharacterTerrainLiftTest {
         }
     }
 
-    private fun World.body(at: Vec3f, shape: com.awakekt.awake.physics.PhysicsShape) {
+    @Test
+    fun aTerrainReplacedInTheSameStepIsTheOneTheCharacterIsLiftedOnto() = runTest {
+        // One terrain swapped for another, raised 3 m, in a single step: the number of bodies doesn't
+        // change, so only noticing that the old terrain's body is gone finds the new one.
+        val world = World()
+        val physicsWorld = createJoltPhysicsWorld()
+        try {
+            val first = world.body(Vec3f(0f, 0f, 0f), flatTerrain())
+            val player = world.create()
+            world.add(player, Transform(position = Vec3f(2f, HALF_EXTENT + 0.02f, 0f)))
+            world.add(player, CharacterController(CharacterConfig(CapsuleShape(0.4f, 0.4f)), jumpSpeed = 0f, gravity = -14f))
+            val physics = PhysicsSystem(physicsWorld)
+            val characters = CharacterControllerSystem(physicsWorld)
+            repeat(STEPS / 2) {
+                physics.update(world, DELTA)
+                characters.update(world, DELTA)
+            }
+
+            world.destroy(first)
+            world.body(Vec3f(0f, 3f, 0f), flatTerrain())
+            repeat(STEPS / 2) {
+                physics.update(world, DELTA)
+                characters.update(world, DELTA)
+            }
+
+            val feet = world.get<Transform>(player)!!.position.y - HALF_EXTENT
+            assertTrue(feet > 3f - 0.05f, "expected on the new terrain at y = 3, feet at $feet")
+        } finally {
+            physicsWorld.destroy()
+        }
+    }
+
+    private fun flatTerrain() = HeightFieldShape(FloatArray(SAMPLES * SAMPLES), SAMPLES, Vec3f(1f, 1f, 1f))
+
+    private fun World.body(at: Vec3f, shape: com.awakekt.awake.physics.PhysicsShape): com.awakekt.awake.ecs.Entity {
         val entity = create()
         add(entity, Transform(position = at))
         add(entity, PhysicsBody(shape = shape, motionType = MotionType.STATIC))
+        return entity
     }
 
     private companion object {

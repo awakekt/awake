@@ -328,10 +328,10 @@ class KinematicCharacterController(
      * cleared. A caller carrying a fall speed drops it.
      *
      * Costs one ray, plus one for each body standing on the terrain at that spot, unless the
-     * capsule is above [TerrainSurface.top] or off the terrain, which costs nothing. A caller runs
+     * capsule is above [TerrainCollider.top] or off the terrain, which costs nothing. A caller runs
      * it for a character that isn't standing on [terrain]; one that is can't be under it.
      */
-    fun liftOutOf(terrain: TerrainSurface): Boolean {
+    fun liftOutOf(terrain: TerrainCollider): Boolean {
         val halfExtent = activeShape.halfHeight + activeShape.radius
         val clearOfIt = position.y - halfExtent > terrain.top || !terrain.covers(position.x, position.z)
         val surface = if (clearOfIt) null else terrain.surfaceAt(world, position.x, position.z, liftTarget)

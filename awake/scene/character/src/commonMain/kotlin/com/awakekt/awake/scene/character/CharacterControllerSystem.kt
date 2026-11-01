@@ -45,7 +45,7 @@ class CharacterControllerSystem(
     private val built = ArrayList<KinematicCharacterController>()
 
     /** The scene's terrain bodies, for lifting a character found under one. */
-    private val terrains = SceneTerrainSurfaces()
+    private val terrains = SceneTerrainColliders()
 
     override fun update(world: World, delta: Float) {
         basis.update(world)
