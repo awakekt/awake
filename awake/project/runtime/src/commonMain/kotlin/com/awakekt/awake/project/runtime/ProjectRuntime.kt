@@ -7,6 +7,7 @@
 
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.asset.ktx.loader.CookedTextureLoader
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
@@ -19,7 +20,9 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
+import com.awakekt.awake.render.pipeline.compressedTextureFormats
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.controls.GameplayInput
@@ -334,7 +337,9 @@ suspend fun LoadedProject.switchTo(path: String) {
  * distance and size comes from the scene; this adds no tuning of its own. A node spawned into it
  * with [spawn] draws a model the scene didn't load once that has loaded. Its `sprite`s and `tilemap`s
  * draw their textures from the project's files: each is read the first time it is drawn, and draws
- * from the frame it has loaded. [LoadedProject.close] the project once the scene has stopped.
+ * from the frame it has loaded. A texture the project ships cooked to KTX2 beside it (`rock.png` with
+ * `rock.ktx2`, and for mobile `rock.astc.ktx2` or `rock.etc2.ktx2`) loads from that file instead, in
+ * the block format the device samples (#1211). [LoadedProject.close] the project once the scene has stopped.
  *
  * A texture is read once. When a host such as an editor changes an image file while the project plays,
  * it has the scene's asset library forget it, on the frame thread, and the next frame reads it again:
@@ -356,8 +361,12 @@ suspend fun LoadedProject.switchTo(path: String) {
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
     val scenes = ProjectSceneRunner(project)
-    // Every scene's sprite and tilemap textures, read from the project as they are first drawn.
-    val textures = AssetSourceTextureResolver(project.files, project.sceneLoads)
+    // Every scene's sprite and tilemap textures, read from the project as they are first drawn: the
+    // KTX2 file each was cooked to when the project ships one, else the image. The device's block
+    // formats are known once the renderer is, before the first frame asks for a texture.
+    var formats = emptySet<CompressedTextureFormat>()
+    val cooked = CookedTextureLoader(project.files)
+    val textures = AssetSourceTextureResolver(project.files, project.sceneLoads) { name -> cooked.load(name, formats) }
     // Put in as the scene populates, as a document's entities are, so they exist before any onReady runs.
     scene(project.scene.name) { scenes.start() }
     assets {
@@ -371,6 +380,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
     service(SceneSwitch::class) { scenes }
     service(SceneSwitchStatus::class) { scenes }
     onReady {
+        formats = renderer.compressedTextureFormats
         showTouchControls = touchControls
         project.componentRegistry?.let { canvasBindings = it.bindings }
     }

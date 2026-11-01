@@ -3,6 +3,12 @@ public abstract interface class com/awakekt/awake/asset/ktx/loader/BasisTranscod
 	public abstract fun transcode ([BLcom/awakekt/awake/render/texture/CompressedTextureFormat;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/asset/ktx/loader/CookedTextureLoader {
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun load (Ljava/lang/String;Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/asset/ktx/loader/Ktx2Formats {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/loader/Ktx2Formats;
 	public final fun blockFormat (I)Lkotlin/Pair;
@@ -40,5 +46,9 @@ public final class com/awakekt/awake/asset/ktx/loader/LibKtxBasisTranscoder : co
 	public static final field INSTANCE Lcom/awakekt/awake/asset/ktx/loader/LibKtxBasisTranscoder;
 	public fun getFormats ()Ljava/util/Set;
 	public fun transcode ([BLcom/awakekt/awake/render/texture/CompressedTextureFormat;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/ktx/loader/PlatformBasisTranscoderKt {
+	public static final fun platformBasisTranscoder (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

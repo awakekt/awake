@@ -22,6 +22,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:asset:texture-ktx"))
             api(project(":awake:engine:render:contract"))
+            api(project(":awake:core:io"))
         }
         commonTest.dependencies { implementation(kotlin("test")) }
         named("desktopMain") {
@@ -41,6 +42,9 @@ kotlin {
         named("wasmJsMain") {
             // Awaits the Basis Universal transcoder's asynchronous start.
             dependencies { implementation(libs.kotlinx.coroutines.core) }
+        }
+        named("desktopTest") {
+            dependencies { implementation(libs.kotlinx.coroutines.test) }
         }
         named("wasmJsTest") {
             dependencies { implementation(libs.kotlinx.coroutines.test) }

@@ -56,6 +56,17 @@ texture that fails to load, or that nothing registers or resolves, draws nothing
 an error. Neither throws. A resolver of your own overrides `SceneAssetResolver.texture`, answering
 `SceneTextureLoad.Loading` until it has the pixels.
 
+A texture cooked to KTX2 (#1211) loads from the cooked file when it ships beside the image: for
+`art/hero.png`, `art/hero.astc.ktx2` or `art/hero.etc2.ktx2` on a device that samples that format,
+else `art/hero.ktx2` transcoded to the device's block format, or decoded to RGBA8 where it takes none.
+`runProject` does this; elsewhere pass a cooked loader, which is tried before the image is decoded:
+
+```kotlin
+var formats = emptySet<CompressedTextureFormat>() // renderer.compressedTextureFormats, once it's ready
+val cooked = CookedTextureLoader(projectFiles) // awake:asset:texture-ktx-loader
+val textures = AssetSourceTextureResolver(projectFiles, Dispatchers.Default) { name -> cooked.load(name, formats) }
+```
+
 A texture is kept once it has loaded. When its file changes, or one that failed has been fixed, forget
 it on the frame thread, and the next frame reads it again and draws the new pixels:
 

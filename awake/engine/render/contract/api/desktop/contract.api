@@ -2001,10 +2001,15 @@ public final class com/awakekt/awake/render/texture/CompressedTextureImage {
 }
 
 public abstract interface class com/awakekt/awake/render/texture/GpuImageSource {
+	public fun getCompressed ()Lcom/awakekt/awake/render/texture/CompressedTextureImage;
 	public abstract fun getExternalImage ()Ljava/lang/Object;
 	public abstract fun getHeight ()I
 	public abstract fun getWidth ()I
 	public abstract fun readRgba8 ()[B
+}
+
+public final class com/awakekt/awake/render/texture/GpuImageSource$DefaultImpls {
+	public static fun getCompressed (Lcom/awakekt/awake/render/texture/GpuImageSource;)Lcom/awakekt/awake/render/texture/CompressedTextureImage;
 }
 
 public final class com/awakekt/awake/render/texture/GpuImageSourceKt {
