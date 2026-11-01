@@ -97,6 +97,13 @@ jobs:
             exit 1
           fi
 
+      # Other repositories call release-reusable.yml by tag, so a broken expression or script there
+      # breaks every repository's release; actionlint runs shellcheck on its inline scripts too.
+      - name: Release workflows lint
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color \
+            .github/workflows/release-reusable.yml .github/workflows/release.yml
+
       - name: Vulkan publication detector
         run: |
           scripts/vulkan-publication-impact.test.sh

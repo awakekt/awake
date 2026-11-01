@@ -475,14 +475,63 @@ This command automatically:
 
 `main` only accepts pull requests, so the **Release** workflow splits the same steps in two:
 
-1. Actions → **Release** → *Run workflow*, choose the channel and bump. The `Prepare` job runs
-   `releaseCut`, pushes a `release-cut/<tag>` branch, and opens a `chore(release): cut <tag>` PR.
-2. Merge that PR once CI passes. The `Tag` job tags the merge commit and pushes the tag, which
-   triggers **Publish** (Maven Central) and **Docs**.
+1. Actions → **Release** → *Run workflow*, choose the channel and bump (tick *dry-run* to only print
+   the next version and changelog). The `Prepare` job refuses while another `release-cut/*` branch
+   or open `chore(release)` PR exists, runs `releaseCut`, pushes a `release-cut/<tag>` branch, and
+   opens a `chore(release): cut <tag>` PR with the milestone titled like the tag.
+2. Merge that PR once CI passes. The `Tag` job tags the squash commit, by its full SHA, and pushes
+   the tag, which triggers **Publish** (Maven Central, then the Vulkan tag when one is needed) and
+   **Docs**.
+
+Core's `release.yml` only calls `.github/workflows/release-reusable.yml`, the same workflow every
+other repository calls (next section), so Core is its first consumer and the two cannot drift.
 
 The workflow needs a `RELEASE_TOKEN` repository secret: a fine-grained personal access token for
-this repository with *Contents* and *Pull requests* read/write. `GITHUB_TOKEN` cannot be used
-because the PRs and tags it creates do not trigger other workflows.
+this repository with *Contents*, *Pull requests* and *Workflows* read and write. `GITHUB_TOKEN`
+cannot be used: the PRs and tags it creates do not trigger other workflows, and a tag whose history
+adds or changes a file under `.github/workflows` can only be pushed with the Workflows permission.
+A missing, expired or under-scoped token fails the run with the exact fix; the token is never
+printed.
+
+### Releasing another repository with the same workflow
+
+Any repository that builds with Gradle (Awake Studio, an editor plugin, a consumer game) cuts its
+releases with the same fragments, plugin and workflow; nothing is copied but a 30-line caller.
+
+1. **Apply the plugin at the root.** The `release-cut` plugin is one of Core's published build
+   plugins, at the Core version:
+
+   ```kotlin
+   // settings.gradle.kts
+   pluginManagement { repositories { gradlePluginPortal(); mavenCentral() } }
+   // build.gradle.kts (root)
+   plugins { id("com.awakekt.awake.plugin.release-cut") version "0.31.0" }
+   ```
+
+   The root needs a `CHANGELOG.md` with a `## [Unreleased]` section. Versions come from the
+   repository's own `v*` tags, as in Core.
+2. **Add the caller workflow.** Copy [`templates/release.yml`](templates/release.yml) to
+   `.github/workflows/release.yml`. It pins `awakekt/awake/.github/workflows/release-reusable.yml`
+   to a Core release tag, never `main`; Dependabot's `github-actions` updates move the pin. Its
+   inputs:
+
+   | Input | Default | Use |
+   |:------|:--------|:----|
+   | `channel`, `bump` | `dev`, `none` | As `-Prelease.channel` and `-Prelease.bump` |
+   | `runs-on` | `["ubuntu-latest"]` | Runner labels as JSON, e.g. `["self-hosted","Linux","X64","docker"]` for a private repository; the runner needs bash, git, curl and `gh` |
+   | `java-version` | `17` | The Temurin JDK that runs Gradle |
+   | `gradle-args` | empty | Extra `releaseCut` arguments, e.g. the project's own version property |
+   | `milestone` | the one titled like the tag | The release PR's milestone |
+   | `dry-run` | `false` | Print the next version and changelog; push and open nothing |
+
+3. **Add `RELEASE_TOKEN`.** A fine-grained token for that repository with *Contents*, *Pull
+   requests* and *Workflows*: read and write, stored with
+   `gh secret set RELEASE_TOKEN --repo <owner>/<repo>`. The reasons are those above.
+4. **Write fragments.** Each change adds `changelog/unreleased/<section>/<branch-name>.md`
+   (`added`, `changed`, `deprecated`, `removed`, `fixed`, `security`), as in Core.
+5. **Release in two steps.** Dispatch **Release** (a dry run first, if in doubt), then merge the
+   `chore(release): cut <tag>` PR it opens; the push of that squash commit tags it automatically.
+   Whatever the repository runs on a `v*` tag (publishing, a GitHub Release) starts from there.
 
 Pushing that tag also publishes the matching version of the public MkDocs site. The documentation
 workflow keeps the full Maven version in the URL and in installation examples, moves the `latest`

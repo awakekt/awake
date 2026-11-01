@@ -1,0 +1,32 @@
+# Copy to .github/workflows/release.yml. Needs the release-cut plugin applied at the root and a
+# RELEASE_TOKEN secret; see "Releasing another repository with the same workflow" in Awake's
+# docs/release-process.md. Pin a Core release tag, never main.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel: { type: choice, options: [dev, alpha, beta, rc, stable], default: dev }
+      bump: { type: choice, options: [none, patch, minor, major], default: none }
+      dry-run: { type: boolean, default: false }
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    uses: awakekt/awake/.github/workflows/release-reusable.yml@v0.31.0
+    with:
+      channel: ${{ inputs.channel || 'dev' }}
+      bump: ${{ inputs.bump || 'none' }}
+      dry-run: ${{ inputs.dry-run == true }}
+      # runs-on: '["self-hosted","Linux","X64","docker"]'
+      # gradle-args: -PmyProject.version=1.2.0
+    secrets:
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
