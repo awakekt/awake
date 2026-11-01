@@ -30,6 +30,7 @@ import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.runBlocking
+import com.awakekt.awake.render.material.Material as RenderMaterial
 
 /** The square every scene scenario renders into. */
 const val SCENE_SIZE: Int = 128
@@ -108,50 +109,15 @@ fun Renderer.renderTexturedPbrScene(
     roughness: Float = 0.45f,
     size: Int = SCENE_SIZE,
 ): ByteArray {
-    val target = createRenderTarget(size, size)
-    val mesh = createMesh(texturedPlane())
     val material = createMaterial(
         texture = texture,
         uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
         pbrTextures = PbrTextureSet(),
     )
     return try {
-        val lens = Lens(
-            eye = Vec3f(0f, EYE_Y, EYE_Z),
-            center = Vec3f(0f, 0f, 0f),
-            fovYRadians = 1f,
-            near = 0.1f,
-            far = 50f,
-        )
-        val draw = RenderDrawCommand(
-            mesh = mesh,
-            material = material,
-            extraUniformFloats = pbrMaterialFloats(
-                metallic = metallic,
-                roughness = roughness,
-                baseColorFactor = Color.White,
-                emissiveFactor = Color.Transparent,
-                textureAnimation = textureAnimation,
-            ),
-            timeSeconds = timeSeconds,
-        )
-        renderToTexture(
-            target,
-            ScenePassCompiler.compile(
-                lens = lens,
-                drawCalls = listOf(draw),
-                light = SceneLight(direction = sunDirection, color = Vec3f(1f, 1f, 1f), points = points, ambient = ambient),
-                environment = environment,
-                clipSpace = clipSpace,
-                aspect = 1f,
-                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
-            ),
-        )
-        runBlocking { readPixels(target) }.data
+        renderTexturedPlane(material, environment, textureAnimation, timeSeconds, sunDirection, ambient, points, metallic, roughness, size)
     } finally {
-        mesh.destroy()
         material.destroy()
-        target.destroy()
     }
 }
 

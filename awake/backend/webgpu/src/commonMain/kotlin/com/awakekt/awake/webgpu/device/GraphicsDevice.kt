@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.device
 
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
+import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.webgpu.WebGpuHandles
 import io.ygdrasil.webgpu.GPUFeatureName
 import io.ygdrasil.webgpu.WGPUContext
@@ -85,6 +86,13 @@ class GraphicsDevice {
         get() = UNCLIPPED_DEPTH_REACHES_PIPELINES && GPUFeatureName.DepthClipControl in wgpuContext.device.features
 
     /**
+     * The block formats this device samples: each family whose texture-compression feature it was
+     * granted. WebGPU guarantees every format of a granted family can be sampled and filtered.
+     */
+    internal val compressedTextureFormats: Set<CompressedTextureFormat>
+        get() = compressedFormats(wgpuContext.device.features)
+
+    /**
      * Adopts a pre-resolved WebGPU context as this device and registers its device in
      * [WebGpuHandles].
      *
@@ -117,4 +125,13 @@ class GraphicsDevice {
         WebGpuHandles.release(device)
         closeContext(wgpuContext)
     }
+}
+
+/** The block formats [features] makes samplable: each family its feature grants. */
+internal fun compressedFormats(features: Set<GPUFeatureName>): Set<CompressedTextureFormat> = buildSet {
+    if (GPUFeatureName.TextureCompressionBC in features) {
+        addAll(listOf(CompressedTextureFormat.Bc1Rgba, CompressedTextureFormat.Bc3Rgba, CompressedTextureFormat.Bc7Rgba))
+    }
+    if (GPUFeatureName.TextureCompressionETC2 in features) add(CompressedTextureFormat.Etc2Rgba8)
+    if (GPUFeatureName.TextureCompressionASTC in features) add(CompressedTextureFormat.Astc4x4)
 }
