@@ -211,6 +211,40 @@ class WebGpuHeadlessPixelTest {
         }
     }
 
+    /**
+     * Guards the UI dynamic-mesh upload after it moved off per-element `setFloats`/`setInts` onto
+     * the shared one-copy linear-memory staging (`fastArrayBufferOf` + `writeBufferData`, #1221).
+     * An inset quad, not a full-target one, so the vertex *positions* must upload correctly and not
+     * just the colour: a zero-length or mis-sized upload leaves the centre cleared. The second draw
+     * reuses the same pooled `DynamicMesh` run, so it proves a changed run re-uploads this frame's
+     * geometry rather than redrawing the first frame's.
+     *
+     * Negative control: feeding `writeBufferData` the whole capacity instead of the live byte count
+     * (`size = vertexBuffer.size`) reads uninitialised bytes past the geometry and the centre comes
+     * back cleared; keeping the first frame's arrays (dropping the `lastUploaded*` assignment) leaves
+     * the centre blue on the second draw.
+     */
+    @Test
+    fun dynamicMeshUploadRendersEachFramesInsetQuad() = withHeadlessRenderer { renderer ->
+        val target = renderer.createRenderTarget(SIZE, SIZE)
+        try {
+            val inset = SIZE / 4f
+            fun insetQuad(color: Color) =
+                listOf(UiDrawPrimitive.Quad(inset, inset, SIZE - 2 * inset, SIZE - 2 * inset, color))
+
+            renderer.drawUiToTexture(target, insetQuad(Color(0f, 0f, 1f, 1f)))
+            val blue = runBlocking { renderer.readPixels(target) }.data
+            assertTrue(blue.pixelAt(SIZE / 2, SIZE / 2).blue >= 253, "the inset quad must upload and cover the centre, was ${blue.pixelAt(SIZE / 2, SIZE / 2)}")
+            assertTrue(blue.alphaAt(2, 2) == 0, "outside the inset quad must stay cleared, so the upload wrote only the quad's own vertices")
+
+            renderer.drawUiToTexture(target, insetQuad(Color(1f, 0f, 0f, 1f)))
+            val red = runBlocking { renderer.readPixels(target) }.data.pixelAt(SIZE / 2, SIZE / 2)
+            assertTrue(red.red >= 253 && red.blue <= FAINT, "a reused dynamic mesh must upload this frame's red quad, not keep the first frame's blue, was $red")
+        } finally {
+            target.destroy()
+        }
+    }
+
     @Test
     fun rendersAQuadOffscreenAndReadsItBack() = withHeadlessRenderer { renderer ->
         val target = renderer.createRenderTarget(SIZE, SIZE)
