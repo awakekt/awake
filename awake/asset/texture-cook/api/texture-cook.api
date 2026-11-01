@@ -8,3 +8,29 @@ public final class com/awakekt/awake/asset/texturecook/TextureCookMain {
 	public static final fun main ([Ljava/lang/String;)V
 }
 
+public final class com/awakekt/awake/asset/texturecook/TextureSizeReport {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/texturecook/TextureSizeReport;
+	public final fun gpuBytes (IILjava/lang/Integer;)J
+	public static synthetic fun gpuBytes$default (Lcom/awakekt/awake/asset/texturecook/TextureSizeReport;IILjava/lang/Integer;ILjava/lang/Object;)J
+	public final fun markdown (Ljava/util/List;)Ljava/lang/String;
+	public final fun measure (Ljava/io/File;Ljava/util/List;Ljava/io/File;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/texturecook/TextureSizeReport$Row {
+	public fun <init> (Ljava/lang/String;IIJJJLjava/util/Map;D)V
+	public final fun getBasis ()J
+	public final fun getHeight ()I
+	public final fun getMobile ()Ljava/util/Map;
+	public final fun getPng ()J
+	public final fun getPngRatio ()D
+	public final fun getPsnr ()D
+	public final fun getSource ()J
+	public final fun getTexture ()Ljava/lang/String;
+	public final fun getWidth ()I
+}
+
+public final class com/awakekt/awake/asset/texturecook/TextureSizeReportMain {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/texturecook/TextureSizeReportMain;
+	public static final fun main ([Ljava/lang/String;)V
+}
+
