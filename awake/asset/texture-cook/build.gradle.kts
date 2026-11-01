@@ -45,3 +45,17 @@ tasks.register<JavaExec>("cookTextures") {
         args((project.property("args") as String).split(" "))
     }
 }
+
+// Measure what cooking saves: download sizes, GPU memory and PSNR, printed as a Markdown table. Run via
+// `./gradlew :awake:asset:texture-cook:textureSizeReport --args="<project> <texture> [<texture> ...] --output <dir>"`.
+tasks.register<JavaExec>("textureSizeReport") {
+    group = "awake tools"
+    description = "Measure cooked textures' download size, GPU memory and PSNR -- args: <project> <texture> [<texture> ...] --output <dir>"
+    dependsOn("classes")
+    workingDir = rootProject.projectDir
+    mainClass.set("com.awakekt.awake.asset.texturecook.TextureSizeReportMain")
+    classpath = sourceSets.main.get().runtimeClasspath
+    if (project.hasProperty("args")) {
+        args((project.property("args") as String).split(" "))
+    }
+}
