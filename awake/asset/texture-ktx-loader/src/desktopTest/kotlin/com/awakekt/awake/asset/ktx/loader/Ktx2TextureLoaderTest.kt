@@ -5,14 +5,17 @@
  */
 package com.awakekt.awake.asset.ktx.loader
 
+import com.awakekt.awake.asset.ktx.Ktx2FormatException
 import com.awakekt.awake.asset.ktx.loader.CookedTextures.SIZE
 import com.awakekt.awake.render.texture.CompressedTextureFormat.Astc4x4
 import com.awakekt.awake.render.texture.CompressedTextureFormat.Bc3Rgba
 import com.awakekt.awake.render.texture.CompressedTextureFormat.Bc7Rgba
 import com.awakekt.awake.render.texture.CompressedTextureFormat.Etc2Rgba8
+import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -75,6 +78,19 @@ class Ktx2TextureLoaderTest {
         assertContentEquals(asStored.flippedRows(), flipped.data, "the same pixels, rows reversed")
     }
 
+    @Test
+    fun aRawRgba8FileIsFlippedToBottomRowFirstAndOneWhoseLevelDoesntFitItsSizeIsRefused() {
+        val texture = assertIs<Ktx2Upload.Rgba>(Ktx2TextureLoader.decode(RAW_RGBA8, desktop, null)).texture
+
+        assertEquals(4 to 4, texture.width to texture.height)
+        // Stored top row first, red along x and green along y: the bottom row, now first, is full green.
+        assertEquals(listOf(0, 255, 0, 255), (0..3).map { texture.data[it].toInt() and 0xFF })
+
+        val wider = RAW_RGBA8.copyOf().also { it[PIXEL_WIDTH] = 8 }
+        val failure = assertFailsWith<Ktx2FormatException> { Ktx2TextureLoader.decode(wider, desktop, null) }
+        assertEquals("levels[0]", failure.location, failure.message)
+    }
+
     /** These bytes with `KTXorientation` renamed, so the file reads as KTX2's default, top row first. */
     private fun ByteArray.withoutOrientation(): ByteArray {
         val key = "KTXorientation".encodeToByteArray()
@@ -89,5 +105,16 @@ class Ktx2TextureLoaderTest {
 
     private companion object {
         const val MIN_ETC1S_PSNR = 30.0
+        const val PIXEL_WIDTH = 20
+
+        /** awake:asset:texture-ktx's raw fixture: 4 x 4 linear RGBA8, three levels, written by libktx. */
+        val RAW_RGBA8: ByteArray = Base64.getDecoder().decode(
+            "q0tUWCAyMLsNChoKJQAAAAEAAAAEAAAABAAAAAAAAAAAAAAAAQAAAAMAAAAAAAAAmAAAAFwAAAD0AAAAOAAAAAAAAAAAAAAA" +
+                "AAAAAAAAAABAAQAAAAAAAEAAAAAAAAAAQAAAAAAAAAAwAQAAAAAAABAAAAAAAAAAEAAAAAAAAAAsAQAAAAAAAAQAAAAAAAAA" +
+                "BAAAAAAAAABcAAAAAAAAAAIAWAABAQEAAAAAAAQAAAAAAAAAAAAHAAAAAAAAAAAA/wAAAAgABwEAAAAAAAAAAP8AAAAQAAcC" +
+                "AAAAAAAAAAD/AAAAGAAHDwAAAAAAAAAA/wAAADEAAABLVFh3cml0ZXIAVW5pZGVudGlmaWVkIGFwcCAvIGxpYmt0eCB2NS4w" +
+                "LjAtcmMyfjEAAAAAAABk/wAAMv//ADL/AP8y////Mv8AAAD/VQAA/6oAAP//AAD/AFUA/1VVAP+qVQD//1UA/wCqAP9VqgD/" +
+                "qqoA//+qAP8A/wD/Vf8A/6r/AP///wD/",
+        )
     }
 }

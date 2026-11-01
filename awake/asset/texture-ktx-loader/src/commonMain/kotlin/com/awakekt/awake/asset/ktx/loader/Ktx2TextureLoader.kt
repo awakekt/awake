@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.ktx.loader
 
+import com.awakekt.awake.asset.ktx.Ktx2FormatException
 import com.awakekt.awake.asset.ktx.Ktx2Reader
 import com.awakekt.awake.asset.ktx.Ktx2Supercompression
 import com.awakekt.awake.asset.ktx.Ktx2Texture
@@ -35,7 +36,7 @@ object Ktx2TextureLoader {
      *   that both take, or to RGBA8 when none is. Null without a [transcoder].
      * - **A block format** (the ASTC or ETC2 the cook writes for mobile): as it is, when [formats]
      *   has it. Null otherwise, since no decoder for it ships.
-     * - **RGBA8:** as it is.
+     * - **RGBA8:** as it is. A level that isn't width x height x 4 bytes throws [Ktx2FormatException].
      *
      * A block-compressed upload needs the rows stored bottom first, as the cook writes them, since
      * blocks can't be flipped. A Basis Universal file stored the other way is decoded to RGBA8 and
@@ -84,6 +85,10 @@ object Ktx2TextureLoader {
     }
 
     private fun rgba(pixels: ByteArray, texture: Ktx2Texture, filtering: TextureFiltering): Ktx2Upload.Rgba {
+        val expected = texture.width.toLong() * texture.height * RGBA_BYTES
+        if (pixels.size.toLong() != expected) {
+            throw Ktx2FormatException("levels[0]", "a ${texture.width}x${texture.height} RGBA8 level is $expected bytes; was ${pixels.size}")
+        }
         val rows = if (texture.bottomRowFirst) pixels else flipped(pixels, texture.width, texture.height)
         return Ktx2Upload.Rgba(TextureAsset(rows, texture.width, texture.height, filtering = filtering))
     }
