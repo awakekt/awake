@@ -8,7 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.input.InputActions
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.syncCanvasElements
+import com.awakekt.awake.scene.canvas.syncActiveCanvasElements
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.camera.turnBy
@@ -51,7 +51,7 @@ class CanvasActionSystem : System {
 
     override fun update(world: World, delta: Float) {
         // A control added or changed by code this frame is read as it is now.
-        world.syncCanvasElements()
+        world.syncActiveCanvasElements()
         val actions = world.inputActions()
         world.family<CanvasLookAreaWidget, CanvasPointerState>().forEach { _, area, pointer -> look(world, area, pointer, actions) }
         if (actions == null) return

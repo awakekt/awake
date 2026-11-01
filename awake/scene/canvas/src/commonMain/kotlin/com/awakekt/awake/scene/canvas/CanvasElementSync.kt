@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("MatchingDeclarationName") // Named for what it does: the link is the one class it needs.
+@file:Suppress("MatchingDeclarationName", "TooManyFunctions") // Named for what it does: the link is the one class it needs.
 
 package com.awakekt.awake.scene.canvas
 
@@ -76,11 +76,18 @@ internal val CANVAS_WIDGET_TYPES: Array<KClass<out CanvasWidget>> = arrayOf(
  * entity's components code changed, in the same frame; a system that runs before the canvas draws,
  * as an action system does, calls it first.
  */
-fun World.syncCanvasElements() {
+fun World.syncCanvasElements() = reconcileCanvasElements(null)
+
+/** How many elements [syncLinked] has pushed or pulled, in all worlds: what a test reads to see how much a sync did. */
+internal var canvasReconcileCount: Long = 0L
+
+/** [syncCanvasElements], leaving alone the linked elements [skip] says are hidden. */
+internal fun World.reconcileCanvasElements(skip: CanvasSyncGate?) {
     // Each pass changes only families other than the one it walks; removing an element would change
     // the links walked first, so those wait until the walk is done.
     var gone: MutableList<Entity>? = null
     family<CanvasElementLink>().forEach { entity, link ->
+        if (skip != null && skip.isHidden(entity)) return@forEach
         if (!syncLinked(entity, link)) {
             // Not `(gone ?: ArrayList()).also { ... }`: that form keeps `gone` in a heap box each call.
             val list = gone ?: ArrayList()
@@ -115,6 +122,7 @@ fun World.syncCanvasElement(entity: Entity) {
  * entity has lost its element or its [CanvasRect] and so is no longer a canvas element.
  */
 private fun World.syncLinked(entity: Entity, link: CanvasElementLink): Boolean {
+    canvasReconcileCount++
     val element = get<CanvasElement>(entity)
     val changedHere = element != null && element.componentsVersion != link.version
     if (element == null || !changedHere && !has<CanvasRect>(entity)) return false
