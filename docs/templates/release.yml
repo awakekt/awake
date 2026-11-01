@@ -27,7 +27,7 @@ jobs:
       bump: ${{ inputs.bump || 'none' }}
       dry-run: ${{ inputs.dry-run == true }}
       # runs-on: '["self-hosted","Linux","X64","docker"]'
-      # version-property: game.version     # no release tags yet: the version lives in gradle.properties
-      # version-files: awake.project.json
+      # version-key: game.version          # no release tags: the version lives in gradle.properties
+      # sync-version-files: awake.project.json
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}

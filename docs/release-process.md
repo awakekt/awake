@@ -471,15 +471,19 @@ This command automatically:
 4. Creates an annotated Git tag `vX.Y.Z-channel.N`. A misnamed section directory fails the cut
    rather than dropping its entries.
 
-Three optional properties, all off by default, serve a repository that keeps its version in files:
+A missing `CHANGELOG.md` is created, and one without `## [Unreleased]` gets the section before its
+first release. Optional properties, all off by default, serve a repository that keeps its version in
+files or commits elsewhere:
 
-- `-Prelease.versionProperty=<key>`: count on from the `<key>` entry of the root `gradle.properties`
-  (a release version such as `0.3.1`) instead of the newest tag, and write the new version back into
-  the same commit. An existing tag of the new version still fails the cut.
-- `-Prelease.versionFiles=<a,b>`: also rewrite each listed file's first JSON `"version"` member or
-  `version =` line. A listed file that is missing, or has no such field, fails the cut.
+- `-Prelease.versionKey=<key>` (with `-Prelease.versionFile=<file>`, default `gradle.properties`):
+  count on from that entry (a release version such as `0.3.1`) instead of the newest tag, and write
+  the new version back. An existing tag of the new version still fails the cut.
+- `-Prelease.syncVersionFiles=<a,b>`: also rewrite each listed file's first JSON `"version"` member
+  or `version =` line. A listed file that is missing, or has no such field, fails the cut.
 - `-Prelease.tag=false`: commit without tagging. The Release workflow always passes it: its `Tag`
   job tags the squash commit after the PR merges, so a local tag would only be thrown away.
+- `-Prelease.git=false`: only edit files (the changelog, the version files, the deleted fragments);
+  stage, commit and tag nothing, for a caller that commits itself.
 
 ### From GitHub Actions
 
@@ -518,9 +522,10 @@ releases with the same fragments, plugin and workflow; nothing is copied but a 3
    plugins { id("com.awakekt.awake.plugin.release-cut") version "0.31.0" }
    ```
 
-   The root needs a `CHANGELOG.md` with a `## [Unreleased]` section. Versions come from the
+   Versions come from the
    repository's own `v*` tags, as in Core. A repository with no release tags yet keeps its version
-   in the root `gradle.properties` instead (see `version-property` below).
+   in a properties file instead (see `version-key` below). A missing `CHANGELOG.md` is created by the
+   first cut.
 2. **Add the caller workflow.** Copy [`templates/release.yml`](templates/release.yml) to
    `.github/workflows/release.yml`. It pins `awakekt/awake/.github/workflows/release-reusable.yml`
    to a Core release tag, never `main`; Dependabot's `github-actions` updates move the pin. Its
@@ -531,8 +536,8 @@ releases with the same fragments, plugin and workflow; nothing is copied but a 3
    | `channel`, `bump` | `dev`, `none` | As `-Prelease.channel` and `-Prelease.bump` |
    | `runs-on` | `["ubuntu-latest"]` | Runner labels as JSON, e.g. `["self-hosted","Linux","X64","docker"]` for a private repository; the runner needs bash, git, curl and `gh` |
    | `java-version` | `17` | The Temurin JDK that runs Gradle |
-   | `version-property` | empty | A root `gradle.properties` key holding the current version (`release.versionProperty`): the cut counts on from it instead of the tags and writes the new version back |
-   | `version-files` | empty | Comma-separated files whose first `"version"` field (JSON) or `version =` line the cut rewrites, e.g. `awake.project.json` (`release.versionFiles`) |
+   | `version-key`, `version-file` | empty, `gradle.properties` | The key and properties file holding the current version (`release.versionKey`, `release.versionFile`): the cut counts on from it instead of the tags and writes the new version back |
+   | `sync-version-files` | empty | Comma-separated files whose first `"version"` field (JSON) or `version =` line the cut rewrites, e.g. `awake.project.json` (`release.syncVersionFiles`) |
    | `gradle-args` | empty | Any other `releaseCut` arguments |
    | `milestone` | the one titled like the tag | The release PR's milestone |
    | `dry-run` | `false` | Print the next version and changelog; push and open nothing |

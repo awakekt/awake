@@ -11,11 +11,34 @@ import java.io.File
 // files rather than only in tags. Core passes none of them and keeps cutting from tags alone.
 
 /**
- * The value of [key] in a `.properties` file's text, or null when the key is absent.
- *
- * With `-Prelease.versionProperty=game.version`, this is the repository's current version: the cut
- * counts on from it as it would from the newest tag, and writes the new version back.
+ * The current version under [key] in [file] (`-Prelease.versionFile`, `-Prelease.versionKey`): the
+ * cut counts on from it as it would from the newest tag, and writes the new version back.
  */
+internal fun readCurrentVersion(file: File, key: String): String {
+    val value = requireNotNull(file.takeIf(File::isFile)?.readText()?.let { readVersionProperty(it, key) }) {
+        "release.versionKey is $key, but ${file.name} has no $key entry."
+    }
+    require(Regex("\\d+\\.\\d+\\.\\d+(-[A-Za-z]+\\.\\d+)?").matches(value)) {
+        "$key is '$value'; it must be a release version such as 0.1.0 or 0.1.0-alpha.2."
+    }
+    return value
+}
+
+/**
+ * [changelog] with a `## [Unreleased]` section to promote: a new changelog when there is none yet,
+ * or the section inserted before the first release of one that lacks it.
+ */
+internal fun withUnreleased(changelog: String?): String = when {
+    changelog == null -> "# Changelog\n\nAll notable changes to this project are documented in this file.\n\n" +
+        "## [Unreleased]\n"
+    "## [Unreleased]" in changelog -> changelog
+    else -> changelog.indexOf("\n## [").let { at ->
+        if (at < 0) changelog.trimEnd() + "\n\n## [Unreleased]\n"
+        else changelog.substring(0, at + 1) + "## [Unreleased]\n\n" + changelog.substring(at + 1)
+    }
+}
+
+/** The value of [key] in a `.properties` file's text, or null when the key is absent. */
 internal fun readVersionProperty(properties: String, key: String): String? =
     propertyLine(key).find(properties)?.groupValues?.get(2)?.trim()
 
@@ -41,7 +64,7 @@ internal fun writeVersionField(text: String, version: String, name: String): Str
 internal fun writeVersionFiles(root: File, paths: String, version: String): List<File> =
     paths.split(',').map(String::trim).filter(String::isNotEmpty).map { path ->
         val file = File(root, path)
-        require(file.isFile) { "release.versionFiles lists $path, which does not exist." }
+        require(file.isFile) { "release.syncVersionFiles lists $path, which does not exist." }
         file.writeText(writeVersionField(file.readText(), version, path))
         file
     }

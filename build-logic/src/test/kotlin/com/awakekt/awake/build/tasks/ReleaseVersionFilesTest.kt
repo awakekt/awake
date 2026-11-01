@@ -38,10 +38,40 @@ class ReleaseVersionFilesTest {
     /** A cut from the property counts on exactly as it would from a tag of the same version. */
     @Test
     fun aCutCountsOnFromTheVersionProperty() {
-        val current = readVersionProperty("game.version=0.3.1\n", "game.version")
+        val file = File(dir, "gradle.properties").apply { writeText("game.version=0.3.1\n") }
+        val current = readCurrentVersion(file, "game.version")
 
         assertEquals("0.4.0", nextReleaseVersion("stable", bump = "minor") { "v$current" })
         assertEquals("0.3.2-rc.1", nextReleaseVersion("rc", bump = "patch") { "v$current" })
+    }
+
+    @Test
+    fun aMissingOrUnreleasableVersionFailsTheCut() {
+        val file = File(dir, "gradle.properties").apply { writeText("game.version=0.3.1-SNAPSHOT\n") }
+
+        assertContains(
+            assertFailsWith<IllegalArgumentException> { readCurrentVersion(file, "game.version") }.message.orEmpty(),
+            "must be a release version",
+        )
+        assertContains(
+            assertFailsWith<IllegalArgumentException> { readCurrentVersion(file, "app.version") }.message.orEmpty(),
+            "has no app.version entry",
+        )
+    }
+
+    @Test
+    fun aChangelogIsCreatedOrGivenAnUnreleasedSection() {
+        val created = withUnreleased(null)
+        assertContains(created, "# Changelog")
+        assertContains(promoteUnreleased(created, "0.1.0", "2026-11-01", emptyMap()), "## [0.1.0] - 2026-11-01")
+
+        val existing = "# Changelog\n\n## [Unreleased]\n\n- Entry\n"
+        assertEquals(existing, withUnreleased(existing))
+        assertEquals(
+            "# Changelog\n\n## [Unreleased]\n\n## [0.1.0] - 2026-10-01\n",
+            withUnreleased("# Changelog\n\n## [0.1.0] - 2026-10-01\n"),
+        )
+        assertEquals("# Notes\n\n## [Unreleased]\n", withUnreleased("# Notes\n"))
     }
 
     @Test

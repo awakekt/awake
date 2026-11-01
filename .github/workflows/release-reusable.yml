@@ -7,8 +7,8 @@ name: Release (reusable)
 #   2. Merging that PR runs `tag`, which tags the squash commit's full SHA and pushes the tag.
 # RELEASE_TOKEN (Contents, Pull requests, Workflows: read and write) is required: PRs and tags made
 # with GITHUB_TOKEN start no other workflow, and a tag over history that changes .github/workflows
-# needs the Workflows permission, which GITHUB_TOKEN never has. Scripts are inline because callers
-# do not check out this repository; self-hosted runners need bash, git, curl and the GitHub CLI.
+# needs the Workflows permission, which GITHUB_TOKEN never has. Scripts are inline (callers do not
+# check out this repository); self-hosted runners need bash, git, curl and the GitHub CLI.
 
 on:
   workflow_call:
@@ -33,12 +33,16 @@ on:
         description: 'Extra arguments for ./gradlew releaseCut, e.g. a project version property'
         type: string
         default: ''
-      version-property:
-        description: 'gradle.properties key holding the version, for a repository without release tags yet (release.versionProperty)'
+      version-key:
+        description: 'Key holding the current version, for a repository without release tags (release.versionKey)'
         type: string
         default: ''
-      version-files:
-        description: 'Comma-separated files whose "version" field the cut rewrites, e.g. awake.project.json (release.versionFiles)'
+      version-file:
+        description: 'Properties file holding version-key (release.versionFile)'
+        type: string
+        default: gradle.properties
+      sync-version-files:
+        description: 'Comma-separated files whose "version" field the cut rewrites, e.g. awake.project.json'
         type: string
         default: ''
       milestone:
@@ -51,7 +55,6 @@ on:
         default: false
     secrets:
       RELEASE_TOKEN:
-        description: 'Fine-grained token: Contents, Pull requests and Workflows, read and write'
         required: true
 
 permissions:
@@ -70,7 +73,6 @@ jobs:
         env:
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           REPO: ${{ github.repository }}
-        # Never echoes the token: only the HTTP status and the scopes header of one API call.
         run: |
           fix="Fix: create a fine-grained token (GitHub > Settings > Developer settings > Fine-grained tokens) for $REPO with Contents, Pull requests and Workflows set to Read and write, then store it with: gh secret set RELEASE_TOKEN --repo $REPO"
           if [[ -z "$RELEASE_TOKEN" ]]; then
@@ -84,8 +86,7 @@ jobs:
             401) echo "::error::RELEASE_TOKEN was rejected (HTTP 401): it is expired or revoked. $fix"; exit 1 ;;
             *) echo "::error::RELEASE_TOKEN cannot read $REPO (HTTP $status): the token's repository access does not include it. $fix"; exit 1 ;;
           esac
-          # A classic token lists its scopes; a fine-grained one cannot be inspected, so its missing
-          # permissions are explained where a push or the PR fails.
+          # Only a classic token lists scopes; a fine-grained one's gaps are explained where a push fails.
           scopes="$(sed -n 's/^x-oauth-scopes: *//Ip' "$RUNNER_TEMP/headers" | tr -d '\r')"
           if [[ -n "$scopes" ]]; then
             for need in workflow repo; do
@@ -100,7 +101,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     timeout-minutes: 30
-    # Writes go through RELEASE_TOKEN; the job's own token only reads.
     permissions:
       contents: read
     steps:
@@ -117,11 +117,10 @@ jobs:
           open="$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/release-cut/" --jq '.[].ref | sub("^refs/heads/"; "")')
           $(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" \
             --jq '.[] | select(.title | startswith("chore(release)")) | "PR #\(.number): \(.title)"')"
-          open="$(sed '/^$/d' <<<"$open")"
-          if [[ -n "$open" ]]; then
+          if [[ -n "${open//[[:space:]]/}" ]]; then
             level=error; [[ "$DRY_RUN" == true ]] && level=warning
             echo "::$level::Another release cut is open; merge or close it (and delete its branch) first:"
-            echo "$open"
+            sed '/^$/d' <<<"$open"
             [[ "$level" == warning ]] || exit 1
           fi
 
@@ -130,7 +129,7 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
-          # No token on disk while releaseCut runs the build: only the push step gets RELEASE_TOKEN.
+          # No token on disk while releaseCut runs the build; only the push step gets RELEASE_TOKEN.
           persist-credentials: false
 
       - name: Set up JDK ${{ inputs.java-version }}
@@ -148,17 +147,18 @@ jobs:
           CHANNEL: ${{ inputs.channel }}
           BUMP: ${{ inputs.bump }}
           GRADLE_ARGS: ${{ inputs.gradle-args }}
-          VERSION_PROPERTY: ${{ inputs.version-property }}
-          VERSION_FILES: ${{ inputs.version-files }}
+          VERSION_KEY: ${{ inputs.version-key }}
+          VERSION_FILE: ${{ inputs.version-file }}
+          SYNC_FILES: ${{ inputs.sync-version-files }}
           DRY_RUN: ${{ inputs.dry-run }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # No local tag: `tag` tags the squash commit once the PR merges.
+          # The cut commits its own files but tags nothing: `tag` tags the squash commit after the merge.
           args=("-Prelease.channel=$CHANNEL" "-Prelease.tag=false")
           [[ "$BUMP" != none ]] && args+=("-Prelease.bump=$BUMP")
-          [[ -n "$VERSION_PROPERTY" ]] && args+=("-Prelease.versionProperty=$VERSION_PROPERTY")
-          [[ -n "$VERSION_FILES" ]] && args+=("-Prelease.versionFiles=$VERSION_FILES")
+          [[ -n "$VERSION_KEY" ]] && args+=("-Prelease.versionKey=$VERSION_KEY" "-Prelease.versionFile=$VERSION_FILE")
+          [[ -n "$SYNC_FILES" ]] && args+=("-Prelease.syncVersionFiles=$SYNC_FILES")
           [[ "$DRY_RUN" == true ]] && args+=("-Prelease.dryRun=true")
           read -ra extra <<<"$GRADLE_ARGS"
           ./gradlew releaseCut "${args[@]}" "${extra[@]}" --no-configuration-cache --no-daemon | tee "$RUNNER_TEMP/cut.log"
