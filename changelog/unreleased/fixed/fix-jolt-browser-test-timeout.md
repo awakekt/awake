@@ -1,0 +1,1 @@
+- Give the Jolt browser tests a 120 s mocha timeout, so the character crowd soak from #1210, which takes about 19 s against JoltPhysics.js, no longer fails the Web job.
