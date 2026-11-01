@@ -7,9 +7,10 @@ package com.awakekt.awake.render.pipeline
 
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.texture.GpuImageSource
-import com.awakekt.awake.render.texture.PbrTextureSet
+import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.toTextureAsset
 
 /**
  * Optional capability: a device that fills a texture straight from a platform image
@@ -23,12 +24,15 @@ interface GpuImageUpload : GpuCapability {
      * when this device cannot copy this particular image, such as one with no [GpuImageSource.externalImage].
      * The texture has the same format, orientation, straight alpha and filtering (with mips for
      * [TextureFiltering.Linear]) as one made from a [TextureAsset] of the same pixels.
+     *
+     * Each map in [pbrImages] is copied the same way when it can be, and uploaded from
+     * [GpuImageSource.readRgba8] when it cannot; maps are always [TextureFiltering.Linear].
      */
     fun createMaterial(
         image: GpuImageSource,
         filtering: TextureFiltering,
         uniformFloatCount: Int,
-        pbrTextures: PbrTextureSet?,
+        pbrImages: PbrImageSet?,
     ): Material?
 
     /** The key [GpuDevice.capability] answers with this device's image upload, when it has one. */
@@ -46,6 +50,10 @@ interface GpuImageUpload : GpuCapability {
  * - **CPU**, otherwise: [GpuImageSource.readRgba8] into a [TextureAsset], uploaded as every texture is.
  *   This covers Vulkan, a test double, and a browser without the API.
  *
+ * The PBR maps in [pbrImages] follow the base colour: on the GPU path each map that can be copied is,
+ * and on the CPU path every map is read into the [com.awakekt.awake.render.texture.PbrTextureSet] a
+ * `createMaterial(texture = ...)` call takes.
+ *
  * Neither path is for a texture whose pixels a CPU consumer reads, a layer array or a cubemap. Those
  * keep a [TextureAsset].
  */
@@ -53,10 +61,10 @@ fun GpuDevice.createImageMaterial(
     image: GpuImageSource,
     filtering: TextureFiltering = TextureFiltering.Linear,
     uniformFloatCount: Int = GpuDevice.DEFAULT_UNIFORM_FLOAT_COUNT,
-    pbrTextures: PbrTextureSet? = null,
-): Material = capability(GpuImageUpload)?.createMaterial(image, filtering, uniformFloatCount, pbrTextures)
+    pbrImages: PbrImageSet? = null,
+): Material = capability(GpuImageUpload)?.createMaterial(image, filtering, uniformFloatCount, pbrImages)
     ?: createMaterial(
-        texture = TextureAsset(image.readRgba8(), image.width, image.height, filtering = filtering),
+        texture = image.toTextureAsset(filtering),
         uniformFloatCount = uniformFloatCount,
-        pbrTextures = pbrTextures,
+        pbrTextures = pbrImages?.readTextures(),
     )

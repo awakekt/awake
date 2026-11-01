@@ -5,6 +5,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun adopt (Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfAssetResolver;)V
 	public fun canResolveMaterial (Ljava/lang/String;)Z
 	public fun canResolveMesh (Ljava/lang/String;)Z
+	public final fun createMaterial (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public final fun forget (Ljava/lang/String;)V

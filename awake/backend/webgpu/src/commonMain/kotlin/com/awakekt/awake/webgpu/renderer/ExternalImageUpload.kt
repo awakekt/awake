@@ -7,8 +7,9 @@ package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.render.pipeline.GpuImageUpload
 import com.awakekt.awake.render.texture.GpuImageSource
-import com.awakekt.awake.render.texture.PbrTextureSet
+import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.toTextureAsset
 import com.awakekt.awake.webgpu.texture.GpuMipmaps
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.texture.mipLevelCount
@@ -46,15 +47,30 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
     private val device get() = renderer.graphicsDevice.wgpuContext.device
     private var mipmaps: GpuMipmaps? = null
 
+    /** How many images this has copied on the GPU, for tests that check which path a loader took. */
+    internal var copies = 0
+        private set
+
     override fun createMaterial(
         image: GpuImageSource,
         filtering: TextureFiltering,
         uniformFloatCount: Int,
-        pbrTextures: PbrTextureSet?,
+        pbrImages: PbrImageSet?,
     ): RenderMaterial? {
         val external = image.externalImage
         if (external == null || !device.queue.canCopyExternalImage(external)) return null
-        return renderer.createTexturedMaterial(upload(external, image.width, image.height, filtering), uniformFloatCount, pbrTextures)
+        val maps = pbrImages?.maps?.map { it?.let(::uploadMap) } ?: List(PBR_MAPS) { null }
+        return renderer.createTexturedMaterial(upload(external, image.width, image.height, filtering), uniformFloatCount, maps)
+    }
+
+    // A map is copied when it can be and uploaded from its CPU pixels when not, linear like every map.
+    private fun uploadMap(map: GpuImageSource): Texture {
+        val external = map.externalImage
+        return if (external != null && device.queue.canCopyExternalImage(external)) {
+            upload(external, map.width, map.height, TextureFiltering.Linear)
+        } else {
+            renderer.uploadTexture(map.toTextureAsset())
+        }
     }
 
     /** The texture [createMaterial] binds: [image] copied, and its mips drawn when [filtering] is linear. */
@@ -72,6 +88,7 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
             ),
         )
         device.queue.copyExternalImage(image, texture, width, height)
+        copies++
         (mipmaps ?: GpuMipmaps(device).also { mipmaps = it }).generate(texture, levels)
         val filled = Texture.FilledTexture(texture, width, height, mipLevelCount = levels)
         return renderer.textureResources.register(Texture.fromFilled(renderer.graphicsDevice, filled, filtering))
@@ -80,5 +97,9 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
     override fun close() {
         mipmaps?.close()
         mipmaps = null
+    }
+
+    private companion object {
+        const val PBR_MAPS = 4
     }
 }

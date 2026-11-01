@@ -12,17 +12,13 @@ import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
-import com.awakekt.awake.webgpu.texture.Texture
-import com.awakekt.awake.webgpu.texture.asGpuImageSource
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.webgpu.texture.mipLevelCount
-import io.ygdrasil.webgpu.GPUTextureFormat
 import kotlinx.coroutines.test.runTest
-import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.fail
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -100,19 +96,6 @@ class ExternalImageUploadBrowserTest {
         }
         assertEquals(emptyList(), renderer.errors(), "$name: WebGPU validation errors")
     }
-
-    private suspend fun Renderer.readLevel(texture: Texture, level: Int): TextureAsset =
-        readColorPixels(texture.texture, (texture.width shr level).coerceAtLeast(1), (texture.height shr level).coerceAtLeast(1), GPUTextureFormat.RGBA8Unorm, level)
-
-    private fun assertTexels(name: String, want: TextureAsset, got: TextureAsset, tolerance: Int) {
-        assertEquals(want.width to want.height, got.width to got.height, name)
-        val first = want.data.indices.firstOrNull { abs((want.data[it].toInt() and 0xFF) - (got.data[it].toInt() and 0xFF)) > tolerance } ?: return
-        val at = first - first % 4
-        val texel = at / 4
-        fail("$name texel $texel (x ${texel % want.width}, row ${texel / want.width} from the bottom): GPU ${rgba(got, at)}, CPU ${rgba(want, at)}")
-    }
-
-    private fun rgba(asset: TextureAsset, at: Int) = (0..3).joinToString(",", "(", ")") { (asset.data[at + it].toInt() and 0xFF).toString() }
 
     private var engine: ImageUploadEngine? = null
 

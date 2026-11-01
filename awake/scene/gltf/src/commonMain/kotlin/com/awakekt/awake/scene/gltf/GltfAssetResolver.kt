@@ -18,18 +18,20 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.host.readResourceBytes
-import com.awakekt.awake.core.image.createBitmap
-import com.awakekt.awake.core.image.toRgba8Bytes
+import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.createImageMaterial
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
-import com.awakekt.awake.render.texture.PbrTextureSet
-import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.PbrImageSet
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
@@ -60,7 +62,7 @@ class GltfAssetResolver(
     private val loadedScenes = mutableMapOf<String, LoadedSkinnedScene>()
     private val loadedStaticMeshes = mutableMapOf<String, MeshGeometry>()
     private val loadedMaterials = mutableMapOf<String, LoadedGltfMaterial>()
-    private val skinnedPartTextures = mutableMapOf<String, TextureAsset>()
+    private val skinnedPartTextures = mutableMapOf<String, GpuImageSource>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
     private val lodLevels = GltfLodLevels(loadedStaticMeshes)
@@ -398,12 +400,19 @@ class GltfAssetResolver(
     override fun canResolveMaterial(name: String): Boolean =
         name == "skinned-material" || name.startsWith("gltf-material:")
 
-    override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = when {
-        name == "skinned-material" -> runtime.renderer.createMaterial(SkinnedUniformLayout)
+    override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = createMaterial(runtime.renderer, name)
+
+    /**
+     * The material [name] resolves to, made through [renderer]: what [createMaterial] does with a scene
+     * runtime's renderer. Its textures go through `createImageMaterial`, so a browser's WebGPU copies them
+     * on the GPU (awakekt/awake#1184) and every other renderer uploads their CPU pixels.
+     */
+    fun createMaterial(renderer: Renderer, name: String): Material? = when {
+        name == "skinned-material" -> renderer.createMaterial(SkinnedUniformLayout)
         name.startsWith("gltf-material:") && name.removePrefix("gltf-material:") in skinnedPartTextures ->
-            runtime.renderer.createMaterial(SkinnedUniformLayout, texture = skinnedPartTextures.getValue(name.removePrefix("gltf-material:")))
+            renderer.createImageMaterial(skinnedPartTextures.getValue(name.removePrefix("gltf-material:")), uniformFloatCount = SkinnedUniformLayout.total)
         name.startsWith("gltf-material:") -> loadedMaterials[name.removePrefix("gltf-material:")]?.let { loaded ->
-            runtime.renderer.createMaterial(TexturedUniformLayout, texture = loaded.texture, pbrTextures = loaded.pbrTextures)
+            renderer.createImageMaterial(loaded.texture, uniformFloatCount = TexturedUniformLayout.total, pbrImages = loaded.pbrImages)
         }
         else -> null
     }
@@ -470,35 +479,31 @@ data class GltfMaterialParameters(
     val alphaMode: AlphaMode,
 )
 
+// The images stay decoded for as long as the resolver keeps the model: in a browser that is the
+// ImageBitmap a WebGPU material copies, where the CPU pixels a TextureAsset held used to be.
 private data class LoadedGltfMaterial(
-    val texture: TextureAsset,
-    val pbrTextures: PbrTextureSet?,
+    val texture: GpuImageSource,
+    val pbrImages: PbrImageSet?,
     val parameters: GltfMaterialParameters,
 )
 
 private suspend fun LoadedPrimitive.toLoadedMaterial(): LoadedGltfMaterial? {
     val baseColorBytes = baseColorImageBytes ?: return null
-    val pbrTextures = PbrTextureSet(
+    val pbrImages = PbrImageSet(
         metallicRoughness = metallicRoughnessImageBytes?.let { decodeTexture(it) },
         normal = normalImageBytes?.let { decodeTexture(it) },
         occlusion = occlusionImageBytes?.let { decodeTexture(it) },
         emissive = emissiveImageBytes?.let { decodeTexture(it) },
     )
-    val hasPbrTextures = pbrTextures.metallicRoughness != null ||
-        pbrTextures.normal != null ||
-        pbrTextures.occlusion != null ||
-        pbrTextures.emissive != null
     return LoadedGltfMaterial(
         texture = decodeTexture(baseColorBytes),
-        pbrTextures = pbrTextures.takeIf { hasPbrTextures },
+        pbrImages = pbrImages.takeUnless { it.isEmpty },
         parameters = toMaterialParameters(),
     )
 }
 
-private suspend fun decodeTexture(bytes: ByteArray): TextureAsset {
-    val bitmap = createBitmap(bytes)
-    return TextureAsset(bitmap.toRgba8Bytes(), bitmap.width, bitmap.height)
-}
+// decodeImage, not createBitmap: nothing here reads the pixels, so a browser keeps them for the GPU.
+private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource = decodeImage(bytes).asGpuImageSource()
 
 /** One drawable piece of a skinned model: deformed by the model's pose, or fixed in place. */
 private sealed interface GltfPart {

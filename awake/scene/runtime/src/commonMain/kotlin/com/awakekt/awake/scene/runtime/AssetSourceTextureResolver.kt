@@ -5,11 +5,11 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.core.image.createBitmap
-import com.awakekt.awake.core.image.toRgba8Bytes
+import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
-import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.GpuImageSource
+import com.awakekt.awake.render.texture.asGpuImageSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -104,14 +104,14 @@ class AssetSourceTextureResolver(
 
     // TooGenericExceptionCaught: a file that fails to read or decode, for whatever reason, only fails its texture.
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun read(name: String): Result<TextureAsset> = try {
-        val bitmap = createBitmap(files.read(AssetPath(name)).getOrThrow())
-        Result.success(TextureAsset(bitmap.toRgba8Bytes(), bitmap.width, bitmap.height))
+    // decodeImage: a browser keeps the decoded image for the GPU, which copies it without a readback.
+    private suspend fun read(name: String): Result<GpuImageSource> = try {
+        Result.success(decodeImage(files.read(AssetPath(name)).getOrThrow()).asGpuImageSource())
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (failure: Exception) {
         Result.failure(failure)
     }
 
-    private class Finished(val name: String, val load: Job, val result: Result<TextureAsset>)
+    private class Finished(val name: String, val load: Job, val result: Result<GpuImageSource>)
 }

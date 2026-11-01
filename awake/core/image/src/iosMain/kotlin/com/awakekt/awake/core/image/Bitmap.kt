@@ -105,3 +105,6 @@ fun createBitmap(image: UIImage, flipY: Boolean): Bitmap {
         pixels = pixels,
     )
 }
+
+/** The CPU decode: [createBitmap], with no platform image to copy. */
+actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = createBitmap(bytes).asDecodedImage()

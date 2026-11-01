@@ -605,10 +605,10 @@ class SceneAppLifecycleRuntime internal constructor(
 
     private val ownCanvasViews by lazy { views().forWorld(world) }
 
-    internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().texture(it) } }
+    internal val spriteBatch by lazy { SpriteRenderBatch(renderer, { null }) { requireAssetLibrary().textureImage(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) { sortingLayers }.also(::forgetsTextures) }
     internal val tilemapFeature by lazy {
-        SceneTilemapRenderFeature(renderer, { requireAssetLibrary().texture(it) }, layers = { sortingLayers }).also(::forgetsTextures)
+        SceneTilemapRenderFeature(renderer, { requireAssetLibrary().textureImage(it) }, layers = { sortingLayers }).also(::forgetsTextures)
     }
 
     // Text a scene places with world_text; it uploads nothing until a scene has some.

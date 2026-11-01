@@ -461,6 +461,7 @@ public final class com/awakekt/awake/render/passes/sprites/SpriteDrawInput {
 
 public final class com/awakekt/awake/render/passes/sprites/SpriteRenderBatch {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function1;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public final fun collect (Ljava/util/List;)Ljava/util/List;
 	public final fun destroy ()V
 	public final fun forgetTexture (Ljava/lang/String;)V
@@ -477,6 +478,8 @@ public final class com/awakekt/awake/render/passes/sprites/SpriteRenderBatchKt {
 public final class com/awakekt/awake/render/passes/sprites/TilemapRenderBatch {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/tilemap/TilemapGrid;IIFLjava/lang/String;Lcom/awakekt/awake/render/passes/sprites/UndividedTextures;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/tilemap/TilemapGrid;IIFLjava/lang/String;Lcom/awakekt/awake/render/passes/sprites/UndividedTextures;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/tilemap/TilemapGrid;IIFLjava/lang/String;Lcom/awakekt/awake/render/passes/sprites/UndividedTextures;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/tilemap/TilemapGrid;IIFLjava/lang/String;Lcom/awakekt/awake/render/passes/sprites/UndividedTextures;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun collect (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/color/Color;ILjava/util/List;Ljava/util/List;I)V
 	public static synthetic fun collect$default (Lcom/awakekt/awake/render/passes/sprites/TilemapRenderBatch;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/color/Color;ILjava/util/List;Ljava/util/List;IILjava/lang/Object;)V
 	public final fun destroy ()V

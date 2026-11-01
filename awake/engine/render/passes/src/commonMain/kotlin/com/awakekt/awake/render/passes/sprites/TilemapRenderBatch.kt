@@ -15,11 +15,13 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.SpriteExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UniformWriter
-import com.awakekt.awake.render.renderer.createMaterial
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.tilemap.TilemapAtlas
 import com.awakekt.awake.tilemap.TilemapGrid
 
@@ -41,7 +43,11 @@ import com.awakekt.awake.tilemap.TilemapGrid
  * [columns] by [rows] cells of whole pixels, an authoring mistake a file-backed atlas first shows at
  * run time, is logged once for its name (see [undivided]), and the layer draws nothing and asks no
  * more until it is [destroy]ed.
+ * @param resolveImage Supplies the atlas as a decoded image, asked before [resolveTexture], with the
+ * same null meaning: uploaded with `createImageMaterial`, so a browser's WebGPU copies it on the GPU
+ * (awakekt/awake#1184).
  */
+@Suppress("LongParameterList") // A layer's grid, cell layout, name, shared log and two texture sources.
 class TilemapRenderBatch(
     private val renderer: Renderer,
     private val grid: TilemapGrid,
@@ -51,7 +57,20 @@ class TilemapRenderBatch(
     private val texture: String? = null,
     private val undivided: UndividedTextures = UndividedTextures(),
     private val resolveTexture: () -> TextureAsset?,
+    private val resolveImage: () -> GpuImageSource?,
 ) {
+    /** A layer whose atlas is only [resolveTexture]'s CPU pixels. */
+    constructor(
+        renderer: Renderer,
+        grid: TilemapGrid,
+        columns: Int,
+        rows: Int,
+        pixelsPerUnit: Float,
+        texture: String? = null,
+        undivided: UndividedTextures = UndividedTextures(),
+        resolveTexture: () -> TextureAsset?,
+    ) : this(renderer, grid, columns, rows, pixelsPerUnit, texture, undivided, resolveTexture, { null })
+
     private var atlas: TilemapAtlas? = null
     private var material: Material? = null
     private val cache = Array(grid.chunks.size) { CachedChunk() }
@@ -114,17 +133,18 @@ class TilemapRenderBatch(
      * do not divide into its cells.
      */
     private fun upload(): TilemapAtlas? {
-        val image = resolveTexture()?.takeIf(::fitsCells) ?: return null
+        val image = (resolveImage() ?: resolveTexture()?.also(::requireSingleImage)?.asGpuImageSource())?.takeIf(::fitsCells) ?: return null
         // The atlas checks the image's cells before the material is made, so a bad image leaves nothing to free.
         return TilemapAtlas(image.width, image.height, columns, rows, pixelsPerUnit).also {
-            material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
+            material = renderer.createImageMaterial(image, TextureFiltering.Nearest, SpriteUniformLayout.total)
             atlas = it
         }
     }
 
+    private fun requireSingleImage(image: TextureAsset) = require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
+
     /** Whether [image] divides into this layer's cells; one that does not is logged once for its name, and not asked for again. */
-    private fun fitsCells(image: TextureAsset): Boolean {
-        require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
+    private fun fitsCells(image: GpuImageSource): Boolean {
         atlasUndivided = !dividesIntoCells(image.width, image.height, columns, rows)
         if (atlasUndivided && (texture == null || undivided.firstReport(texture))) {
             log.error {
