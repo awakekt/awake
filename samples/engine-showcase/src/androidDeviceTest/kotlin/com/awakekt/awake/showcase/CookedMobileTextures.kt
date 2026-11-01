@@ -1,0 +1,200 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+@file:OptIn(ExperimentalEncodingApi::class)
+
+package com.awakekt.awake.showcase
+
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+
+/**
+ * The mobile files the texture cook wrote for `rock.png`, the 64 x 64 pattern [sourceRgba] draws:
+ * ASTC 4x4 and ETC2 RGBA8, sRGB, 7 levels, bottom row first. The same cook run as the KTX2 loader's
+ * desktop fixtures (see `CookedTextures` in awake:asset:texture-ktx-loader).
+ */
+internal object CookedMobileTextures {
+    const val SIZE = 64
+
+    /** `rock.astc.ktx2`: 5872 bytes. */
+    val astc: ByteArray = Base64.decode(
+        "q0tUWCAyMLsNChoKngAAAAEAAABAAAAAQAAAAAAAAAAAAAAAAQAAAAcAAAAAAAAA+AAAACwAAAAkAQAAUAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAADwBgAAAAAAAAAQAAAAAAAAABAAAAAAAADwAgAAAAAAAAAEAAAAAAAAAAQAAAAAAADwAQAAAAAAAAABAAAAAAAAAAEAAAAA" +
+            "AACwAQAAAAAAAEAAAAAAAAAAQAAAAAAAAACgAQAAAAAAABAAAAAAAAAAEAAAAAAAAACQAQAAAAAAABAAAAAAAAAAEAAAAAAAAACA" +
+            "AQAAAAAAABAAAAAAAAAAEAAAAAAAAAAsAAAAAAAAAAIAKACiAQIAAwMAABAAAAAAAAAAAAB/AAAAAAAAAAAA/////xIAAABLVFhv" +
+            "cmllbnRhdGlvbgBydQAAADEAAABLVFh3cml0ZXIAVW5pZGVudGlmaWVkIGFwcCAvIGxpYmt0eCB2NS4wLjAtcmMyfjEAAAAAAAAA" +
+            "AAAAAAAAAAAA/P3///////+jo5aWYGD//1HICVCCYRjDSPiRMEx6djJCcBHwB2WzIM0oLDMAulX/QgRJNZ1BDEZMCG4qXRl/O0KQ" +
+            "E3DrZ9tW3d5NMycnJydDBOPjzIQgBMLU0JSVi5IRQgR7BwRNDEZMCG4qXRl/O0IEgRmPQAxGTAhuKl0ZfztCkBNQPGk3RcykLTMn" +
+            "JycnQpAT8D9p20XcPi0zJycnJ0IogmFMczJmTDEyBicnJydCBIEZn0gMRkwIbipdGX87QgQhPZ9IDEZMCG4qXRl/O0KQE/B/a9vN" +
+            "3D4/MycnJydCBF8Dn0gMRkwIbipdGX87QgTB2RAPDEZMCG4qXRl/O/z9//////////8gIGBg//9CKILha5Qy5mvWMgYnJycnQiiC" +
+            "YUyUMmZM1jIGJycnJ0IEwdkARgxGTAhuKl0ZfztCBKE9IEYMRkwIbipdGX87QgT/IyBGDEZMCG4qXRl/O0IE3wMgRgxGTAhuKl0Z" +
+            "fztCJMEZzfm3R0wIbipdGX87QiThGc35t0dMCG4qXRl/O0KQE3I5MXhEHobdAScnJydCBLG8xyAMRkwIbipdGX87QgT/8scgDEZM" +
+            "CG4qXRl/O0KQE9InMZBFBjTdAScnJydCBJ+SxyAMRkwIbipdGX87QpATsrcxyEcect0BJycnJ0KQExJ4OwZMBoDfASeXJydCkBNS" +
+            "eDsWTAaE3wEnJycnQpATcnk7eEweht8BJycnJ0IogmnUNyhg1DUoQCcnJydCkBOSZzuATQYw3wEnpycnQpAT0mc7kE0GNN8BJycn" +
+            "J1GQExIVcQF1fwFVf0FVscpCKIJpqzcoYKs1KEAnJycnQiTBGdD5t09MCG4qXRl/O0Ik4RnQ+bdPTAhuKl0ZfztCKILp1PQsgCWt" +
+            "MQYnJycnQgSxvPcoDEZMCG4qXRl/O0IE//L3KAxGTAhuKl0ZfztCKIKJqfQsgKn2LEAnJycnQgSfkvcoDEZMCG4qXRl/O0Iogmmr" +
+            "9Cxgq/YsQCcnJydRkBMSJn4BZnABRnBBlekqUZATkiZ+gWZwgUZwQZXpKkIogunU8CyAJe8xBicnJydCKIJp1PAs4HF7MwYnJycn" +
+            "QiiCCanwLACp8ixAJycnJ1GQE5I2foF2cIFWcEGV6SpRkBMSNX4BdXABVXBBlekqUZATkjV+gXVwgVVwQZXpKkIoggEFzjEGkRko" +
+            "QCcnJydCKIJBFc4xhpEZKEAnJycn/P3//////////yAgYGD///z9//////////8gIGBg//9CKIJhbdYyBqkZKEAnJycnQiiCoSzO" +
+            "MYapGShAJycnJ0IogumrGyngqxkoQCcnJydCKIJpqxspYKsZKEAnJycnQiTBGF/2p09MCG4qXRl/O0Ik4Rhf9qdPTAhuKl0Zfzv8" +
+            "/f//////////ICBgYP///P3//////////yAgYGD//0IE1290NAxGTAhuKl0ZfztCJCHnX/anT0wIbipdGX87QgSfklArDEZMCG4q" +
+            "XRl/O0Ikm6cf9qdPTAhuKl0ZfztCJMEYcPaHT0wIbipdGX87QiThGHD2h09MCG4qXRl/O0Ikv5hw9odPTAhuKl0ZfztCJF8YcPaH" +
+            "T0wIbipdGX87QiSB5xD2h09MCG4qXRl/O0IkIedw9odPTAhuKl0ZfztCJDsrcPaHT0wIbipdGX87QiSb5xD2h09MCG4qXRl/O0Ik" +
+            "wRhg9odPTAhuKl0ZfztCJOEYYPaHT0wIbipdGX87QiS/mGD2h09MCG4qXRl/O0IkXxhg9odPTAhuKl0ZfztCJIHnAPaHT0wIbipd" +
+            "GX87QiQh52D2h09MCG4qXRl/O0IkOytg9odPTAhuKl0ZfztCJJvnAPaHT0wIbipdGX87QgSBxeMADEZMCG4qXRl/O0IEic3jAAxG" +
+            "TAhuKl0ZfztCBJHV4wAMRkwIbipdGX87QgSZ3eMADEZMCG4qXRl/O0IEoeXjAAxGTAhuKl0ZfztRKIJB0UPI+EZEIQFQlbEqQiTf" +
+            "DMf8t09MCG4qXRl/O0IkzwzH/LdPTAhuKl0ZfztCBL97owAMRkwIbipdGX87QgS3c6MADEZMCG4qXRl/O1IoAhJNDi9A08MLJPGn" +
+            "ShZCJHHzx/y3T0wIbipdGX87QiR/s8f8t09MCG4qXRl/O0Ikb7PH/LdPTAhuKl0ZfztCJF+zx/y3T0wIbipdGX87USgCEjdz8A1w" +
+            "swffQJXpKkIoggkFOygAgDkzBicnJydCKIJJBTsoQAXrLEAnJyUnQiiCiQU7KECQOTMGJycnJ0IogskFOyjABessQCcnJSdCKILp" +
+            "xDsogKA5MwYnJycnUSiCQdHHyPhGVCEBUJWxKkIogsG2OTTGsDkzBicnJydCxPLYxe4BADMCu4p3Rv/OQsQS2cXuAQAzAruKd0b/" +
+            "zkIoguE+MTTmOjkzBicnJydCKIKJODsogDjrLEAnJycnQiiCoS4xNKYqOTMGJycnJ0Iogul8OyjgfOssQCcnJydCKIKpfDsoYBo5" +
+            "MwYnJycnQiiCaXw7KGB86yxAJycnJ0IogiEOMTQmCjkzBicnJydCKIIJBT0oAAXtLEAnJyUnQiiCSQU9KEAF7SxAJyclJ0IogokF" +
+            "PSiABe0sQCcnJSdCKILJBT0owAXtLEAnJyUnQsSOusXqAQAzAruKd0b/zlEogkHRS8n4RmQhAVCVsSpCxNK4xewBADMCu4p3Rv/O" +
+            "M8TyuMXsAcdBAM+jIP/P4zPEErnF7gHHIQDPwyD/r+NRKAIyKdX/DZLS/d9AlekqQiiCiTg9KIA47SxAJycnJ1EogiHPS8l4pmch" +
+            "AVCVsSpCKILpfD0o4HztLEAnJycnQiiCqXw9KKB87SxAJycnJ0Iogml8PShgfO0sQCcnJydCKIIpfD0oIHztLEAnJycnQiiCCQU/" +
+            "KAAF7yxAJyclJ0IogkkFPyhABe8sQCcnJydCKIKJBT8ogAXvLEAnJycnQiiCyQU/KMAF7yxAJycnJ0IogunEPyjgxO8sQCcnJydC" +
+            "KILpBT8o4AXvLEAnJycnQiiCwbZ7NMawezMGJycnJ0IoginEPyggxO8sQCcnJy9CKIIJeD8oAHjvLEAvJyefQiiC4T5zNOY6ezMG" +
+            "JycnJ0Iogok4PyiAOO8sQCcnJydCKIKhLnM0pip7MwYnJycnQiiC6Xw/KOB87yxAJycnJ0Iogql8PyigfO8sQCcnJydCKIJpfD8o" +
+            "YHzvLEAnJycnQiiCIQ5zNCYKezMGJycnJ0IoggkF7iwABy4oQCUnJydCKIJJBe4sQAcuKEAlJycnQiiCiQXuLIAHLihAJScnJ0Io" +
+            "gskF7izABy4oQCUnJydCKILpxO4s4MYuKEAHJycHUSgCEjW0/w1Qw/vfQJXpKlEoAhI2tP8NYMP730CV6SpRKAISN7T/DXDD+99A" +
+            "lekqUSgCMii1/w2C0vvfQJXpKlEoAjIptf8NktL730CV6SpCKIKJOO4sgD4+KEAnJycnQiiCyTjuLMA+PihAJycnJ0Iogul87izg" +
+            "fi4oQCcnJydCKIKpfO4soH4uKEAnJycnQiiCaXzuLGB+LihAJycnJ1EoAhI3tf8NcNP730CV6SpCBIHF9xoMRkwIbipdGX87QgSJ" +
+            "zfcaDEZMCG4qXRl/O0IEkdX3GgxGTAhuKl0ZfztCBJnd9xoMRkwIbipdGX87QgSh5fcaDEZMCG4qXRl/O0IE6S23GgxGTAhuKl0Z" +
+            "fztCBL2wwUMMRkwIbipdGX87QgTz/sFDDEZMCG4qXRl/O0IE4+7BQwxGTAhuKl0ZfztCBNPewUMMRkwIbipdGX87QiiCiTgsKIA+" +
+            "PChAJycnJ0IE52PXGgxGTAhuKl0ZfztCBN9b1xoMRkwIbipdGX87QgTXU9caDEZMCG4qXRl/O0IEz0vXGgxGTAhuKl0ZfztCBIcD" +
+            "txoMRkwIbipdGX87QiiCCQUqKAAF+ixAJyclJ0IogkkFKihABfosQCcnJSdCKIKJBSoogAX6LEAnJycnQiiCAQZrNMYF+ixAJycn" +
+            "J0IogkEWazTG4v0sQCcnJydCKIKBJms0hiRrMQYnJycnQiiCwTZrNCbi/SxAJycnJ0IoguF/azRGm/0sQCcnJydCKIKhb2s0xpv9" +
+            "LEAnJycnQpATcno7nkwGlt8BJycnJ0Iogok4Kigg2f0sQCcnJydCKILJOCoowDj6LEAnJyenQiiC6XwqKOB8+ixAJycnJ0Iogql8" +
+            "KiigfPosQCcnJydCKIJpfCooYHz6LEAnJycnQiiCKXwqKCB8+ixAJycnJ1IoAhKM8C8AY/wLZHHnShJRKIJBkN/LeELIPwFQlekq" +
+            "QiiCQZb/NEaQ/zMGJycnJ0IoggEGrTQGBK0xBicnJydCKILJ4jQowOI2KEAnJycnUSiCQdHfy5hcsy8BUJWxKkIoginiNCgg4jYo" +
+            "QCcnJydCKIJJmzQoQJs2KEAnJycnQiiCyZs0KMCbNihAJycnJ1EoArKdp/8N2nn730CV6SpCKIIp2TQoINk2KEAnJycnQiiCoS73" +
+            "NKYq/zMGJycnJ0Iogul86CzgfPgsQCcnJydCKIJhHvc0Zhr/MwYnJycnUigCEsvwL8By/Atk8edKFkIogiEO9zQmCv8zBicnJydC" +
+            "KIIJBwkoAIbeNAYnJycnQiiCSQcJKEAFySxAJycnKUIogokHCShAlt40BicnJydCKILJBwkoAATvMQYnJycn/P3//////////yAg" +
+            "YGD///z9//////////8gIGBg///8/f//////////ICBgYP///P3//////////yAgYGD//1EoAtBFwxDDXLQsMUyV6SpCkBNykjH+" +
+            "woYfiAEnJycnQiiCiT4ZKCDZMihAJycnJ0Iogsk+GSigLtY0BicnJydCKILpfgko4HzJLEAnJycnQiiCqX4JKGAe1jQGJycnJ0Io" +
+            "gml+CShgfMksQCcnJydCKIIpfgkoIA7WNAYnJycnUigCEgwMLgBDgwtk8edKFkIogkkHCyhABcssQCcnJylSKAISDQwuQEODCyRx" +
+            "p0oSQiiCyQcLKAAE3jMGJycnJ/z9//////////8gIGBg///8/f//////////ICBgYP///P3//////////yAgYGD///z9////////" +
+            "//8gIGBg//9CKILJmxsooG3eMwYnJycnUSgCsp1l4A3aWQfeQJXpKlIoAhJNDC5AU4MLZPHnShZCKILJPhsowDjLLEAnJ6cnUigC" +
+            "Ek4MLoBTgwskcadKEkIogql+CyigfMssQCcnJydCKIJpfgsoYHzLLEAnJycnQiiCKX4LKCB8yyxAJycnJ0IEAcQUSwxGTAhuKl0Z" +
+            "fztCBAnMFEsMRkwIbipdGX87QgQR1BRLDEZMCG4qXRl/O0IEDQBWGAxGTAhuKl0Zfzv8/f//////////ICBgYP///P3/////////" +
+            "/yAgYGD///z9//////////8gIGBg///8/f//////////ICBgYP//QgTj7lYYDEZMCG4qXRl/O0IE095WGAxGTAhuKl0ZfztCKIKJ" +
+            "Ph0oINkdKEAnJycnQgTnYhRLDEZMCG4qXRl/O0IE31oUSwxGTAhuKl0ZfztCBNdSFEsMRkwIbipdGX87QgTPShRLDEZMCG4qXRl/" +
+            "O0Iogil+DSggDpQ0BicnJydCKIIJBw8oAAXPLEAnJycpQiiCSQcPKEAFzyxAJycnJUIogokHDyiABc8sQCcnJyVCKILJBw8oAARa" +
+            "MwYnJycn/P3//////////yAgYGD///z9//////////8gIGBg///8/f//////////ICBgYP///P3//////////yAgYGD//0Iogsmb" +
+            "DCigbVozBicnJydCKILhOoQwZl1aMwYnJycnQgQvaxA5DEZMCG4qXRl/O0IogqEqhDDGOM8sQCcnpydCKILpfg8o4HzPLEAnJycn" +
+            "QiiCqX4PKKB8zyxAJycnJ0Iogml+DyhgfM8sQCcnJydCBAcDEDkMRkwIbipdGX87QgQBxAw3DEZMCG4qXRl/O0IECcwMNwxGTAhu" +
+            "Kl0ZfztCBBHUDDcMRkwIbipdGX87QgQNAAYADEZMCG4qXRl/O0IEHRAGAAxGTAhuKl0ZfztCBK1gBgAMRkwIbipdGX87QgS9sAYA" +
+            "DEZMCG4qXRl/O0IE8/4GAAxGTAhuKl0ZfztCBOPuBgAMRkwIbipdGX87QgTT3gYADEZMCG4qXRl/O0IEL2sMNwxGTAhuKl0ZfztC" +
+            "BOdiDDcMRkwIbipdGX87QgTfWgw3DEZMCG4qXRl/O0IE11IMNwxGTAhuKl0ZfztCBM9KDDcMRkwIbipdGX87QgQHAww3DEZMCG4q" +
+            "XRl/O0IEAcQINQxGTAhuKl0ZfztCBAnMCDUMRkwIbipdGX87QgQR1Ag1DEZMCG4qXRl/O0IEGdwINQxGTAhuKl0ZfztCBCHkCDUM" +
+            "RkwIbipdGX87QgRpLQg1DEZMCG4qXRl/O0Ik3wwQ84dPTAhuKl0ZfztCJM8MEPOHT0wIbipdGX87QgQ/ewg1DEZMCG4qXRl/O0IE" +
+            "N3MINQxGTAhuKl0ZfztCBC9rCDUMRkwIbipdGX87QgTnYgg1DEZMCG4qXRl/O0IE31oINQxGTAhuKl0ZfztCBNdSCDUMRkwIbipd" +
+            "GX87QgTPSgg1DEZMCG4qXRl/O0IEBwMINQxGTAhuKl0ZfztCBAHEBDMMRkwIbipdGX87QgQJzAQzDEZMCG4qXRl/O0IEEdQEMwxG" +
+            "TAhuKl0ZfztCBBncBDMMRkwIbipdGX87QgQh5AQzDEZMCG4qXRl/O0IEaS0EMwxGTAhuKl0ZfztCJN8MCPOHT0wIbipdGX87QiTP" +
+            "DAjzh09MCG4qXRl/O0IEP3sEMwxGTAhuKl0ZfztCBDdzBDMMRkwIbipdGX87QgQvawQzDEZMCG4qXRl/O0IE52IEMwxGTAhuKl0Z" +
+            "fztCBN9aBDMMRkwIbipdGX87QgTXUgQzDEZMCG4qXRl/O0IEz0oEMwxGTAhuKl0ZfztCBAcDBDMMRkwIbipdGX87QgQBxAAxDEZM" +
+            "CG4qXRl/O0IECcwAMQxGTAhuKl0ZfztCBBHUADEMRkwIbipdGX87QgQZ3AAxDEZMCG4qXRl/O0IEIeQAMQxGTAhuKl0ZfztCBGkt" +
+            "ADEMRkwIbipdGX87QiTfDADzh09MCG4qXRl/O0IkzwwA84dPTAhuKl0ZfztCBD97ADEMRkwIbipdGX87QgQ3cwAxDEZMCG4qXRl/" +
+            "O0IEL2sAMQxGTAhuKl0ZfztCBOdiADEMRkwIbipdGX87QgTfWgAxDEZMCG4qXRl/O0IE11IAMQxGTAhuKl0ZfztCBM9KADEMRkwI" +
+            "bipdGX87QgQHAwAxDEZMCG4qXRl/Ow==",
+    )
+
+    /** `rock.etc2.ktx2`: 5888 bytes. */
+    val etc2: ByteArray = Base64.decode(
+        "q0tUWCAyMLsNChoKmAAAAAEAAABAAAAAQAAAAAAAAAAAAAAAAQAAAAcAAAAAAAAA+AAAADwAAAA0AQAAUAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAABwAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAwAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAgAAAAAAAAABAAAAAAAAAAEAAAAA" +
+            "AADAAQAAAAAAAEAAAAAAAAAAQAAAAAAAAACwAQAAAAAAABAAAAAAAAAAEAAAAAAAAACgAQAAAAAAABAAAAAAAAAAEAAAAAAAAACQ" +
+            "AQAAAAAAABAAAAAAAAAAEAAAAAAAAAA8AAAAAAAAAAIAOAChAQIAAwMAABAAAAAAAAAAAAA/HwAAAAAAAAAA/////0AAPwIAAAAA" +
+            "AAAAAP////8SAAAAS1RYb3JpZW50YXRpb24AcnUAAAAxAAAAS1RYd3JpdGVyAFVuaWRlbnRpZmllZCBhcHAgLyBsaWJrdHggdjUu" +
+            "MC4wLXJjMn4xAAAAAAAAAAAAAAAAAAAAAP8dkkkkkkkkmIhYSgAAAAD/HZJJJJJJJLhoaJLu7hEe/x2SSSSSSSSQgGiSzM6Z3f8d" +
+            "kkkkkkkkQMBgbszOmYj/HZJJJJJJJMDAYG7MzpmI/x2SSSSSSSRoMGCSzM6ZiP8dkkkkkkkkuEBgSszOmYj/HZJJJJJJJCDgYCbM" +
+            "7pnM/x2SSSSSSSRY4GAmzO6ZzP8dkkkkkkkkmNhYJozMOZn/HZJJJJJJJNjYWCaMzDmZ/x2SSSSSSSQgoGAmzO6ZzP8dkkkkkkkk" +
+            "YKBgJszumcz/HZJJJJJJJKCgYCbM7pnM/x2SSSSSSSTgoGAmzO6ZzP8dkkkkkkkkIGBgJszumcz/HZJJJJJJJPgYWAIAAP///x2S" +
+            "SSSSSSSYWGAmjMw5mf8dkkkkkkkk2FhgJozMOZn/HZJJJJJJJCAgYCbM7pnM/x2SSSSSSSRgIGAmzO6ZzP8dkkkkkkkkoCBgJszu" +
+            "mcz/HZJJJJJJJOAgYCbM7pnM/x2SSSSSSSQQ6GACzMy5nf8dkkkkkkkkMOhgAszMuZ3/HZJJJJJJJEjwWALMzLmd/x2SSSSSSSRw" +
+            "6GACzMy5nf8dkkkkkkkkiOhgAszMuZ3/HZJJJJJJJLDoYALMzLmd/x2SSSSSSSTI6GACzMy5nf8dkkkkkkkk8OhgAszMuZ3/HZJJ" +
+            "JJJJJAjQYCbM7oiI/x2SSSSSSSQo0FgCzMy5nf8dkkkkkkkkSMhgAszMuZ3/HZJJJJJJJHDIYALMzLmd/x2SSSSSSSSQ0FgCzu7c" +
+            "zP8dkkkkkkkkqNBgAs7u3Mz/HZJJJJJJJMjQYALO7tzM/x2SSSSSSSTwyGACzMy5nf8dkkkkkkkkCLBgJszuiIj/HZJJJJJJJDCo" +
+            "YALMzLmd/x2SSSSSSSRQsFgCzu7czP8dkkkkkkkkaLBYAszMuZ3/HZJJJJJJJIiwYALO7tzM/x2SSSSSSSSwqGACzMy5nf8dkkkk" +
+            "kkkk0KhgAszMuZ3/HZJJJJJJJPCoYALMzLmd/x2SSSSSSSQIiGACiMwzuf8dkkkkkkkkKIhgAojMM7n/HZJJJJJJJEiIYAKIzDO5" +
+            "/x2SSSSSSSRoiGACiMwzuf8dkkkkkkkkiIhgAojMM7n/HZJJJJJJJKiIYAKIzDO5/x2SSSSSSSTQiGACzMy5nf8dkkkkkkkk6JBg" +
+            "As7u3Mz/HZJJJJJJJBBoYAKIzDO5/x2SSSSSSSQwaGACzMy5nf8dkkkkkkkk+BhYAgAA////HZJJJJJJJPgYWAIAAP///x2SSSSS" +
+            "SSSQaGACzMy5nf8dkkkkkkkksHBgAs7u3Mz/HZJJJJJJJNBwYALO7tzM/x2SSSSSSSToaGACiMwzuf8dkkkkkkkkCFBYAszMuZ3/" +
+            "HZJJJJJJJDBQWALO7tzM/x2SSSSSSST4GFgCAAD///8dkkkkkkkk+BhYAgAA////HZJJJJJJJIhIYAKIzDO5/x2SSSSSSSSwSGAC" +
+            "iMwzuf8dkkkkkkkk0EhgAszMuZ3/HZJJJJJJJOBQWALMzLmd/x2SSSSSSSQIKGACiMwzuf8dkkkkkkkkKDBgAszMuZ3/HZJJJJJJ" +
+            "JFAwYALO7tzM/x2SSSSSSSRwKGACiMwzuf8dkkkkkkkkiDBgAszMuZ3/HZJJJJJJJLAwYALO7tzM/x2SSSSSSSTQKGACiMwzuf8d" +
+            "kkkkkkkk8ChgAojMM7n/HZJJJJJJJBAIYAKIzDO5/x2SSSSSSSQoCGACiMwzuf8dkkkkkkkkSAhgAojMM7n/HZJJJJJJJHAIYAKI" +
+            "zDO5/x2SSSSSSSSIEGACzMy5nf8dkkkkkkkkqAhgAojMM7n/HZJJJJJJJNAIYAKIzDO5/x2SSSSSSSTgEFgCzMy5nf8dkkkkkkkk" +
+            "EPBgAszuCIj/HZJJJJJJJBDwYAKIzBER/x2SSSSSSSQo8FgCiMwREf8dkkkkkkkkKPBYAojMERH/HZJJJJJJJEjwWAKIzBER/x2S" +
+            "SSSSSSRQ8FgCiMwREf8dkkkkkkkkaPBYAojMERH/HZJJJJJJJGjwWAKIzBER/x2SSSSSSSSI8FgCiMwREf8dkkkkkkkkiPBYAojM" +
+            "ERH/HZJJJJJJJKDwWAKIzBER/x2SSSSSSSSw8FgCiMwREf8dkkkkkkkksPBYAojMERH/HZJJJJJJJNDoYAIAAHcz/x2SSSSSSSTo" +
+            "8GACzO4IiP8dkkkkkkkk6PBgAojMERH/HZJJJJJJJAjgYALMzBAI/x2SSSSSSSQQ6GACzO4IiP8dkkkkkkkkIOBgJojMAAD/HZJJ" +
+            "JJJJJDDoYALu/4zM/x2SSSSSSSRA4FgCiMwREf8dkkkkkkkkWOBgJojMAAD/HZJJJJJJJGDYYAIAAHcz/x2SSSSSSSRw6GAC7v+M" +
+            "zP8dkkkkkkkkiOhgAv//zO7/HZJJJJJJJJDgWAKIzBER/x2SSSSSSSSY2FgmAAAzEf8dkkkkkkkksOhgAu7/jMz/HZJJJJJJJMjo" +
+            "YAL//8zu/x2SSSSSSSTQ6GAC7v+MzP8dkkkkkkkk2NhYJgAAMxH/HZJJJJJJJPDoYALu/4zM/x2SSSSSSSQI0GAmiMwAAP8dkkkk" +
+            "kkkkENBYAojMERH/HZJJJJJJJCjQWAKIzBER/x2SSSSSSSQw0FgCiMwREf8dkkkkkkkkSNBYAojMERH/HZJJJJJJJEjQWAIAADMR" +
+            "/x2SSSSSSSRg2GAC7v+MzP8dkkkkkkkkeNBYAojMERH/HZJJJJJJJHjQWAIAADMR/x2SSSSSSSSQ0FgCiMwREf8dkkkkkkkkqNBg" +
+            "AszMEAj/HZJJJJJJJLDQWAKIzBER/x2SSSSSSSTI0GACzMwQCP8dkkkkkkkk0NBYAojMERH/HZJJJJJJJOjQYALMzBAI/x2SSSSS" +
+            "SSTo0GACiMwREf8dkkkkkkkkEMBgAszuCIj/HZJJJJJJJBDAYAKIzBER/x2SSSSSSSQguGACAAB3M/8dkkkkkkkkMMBYAojMERH/" +
+            "HZJJJJJJJEjIYAL//8zu/x2SSSSSSSRQwFgCiMwREf8dkkkkkkkkYMBYAojMERH/HZJJJJJJJHDIYALu/4zM/x2SSSSSSSSIwFgC" +
+            "zMwQCP8dkkkkkkkkiMBYAgAAMxH/HZJJJJJJJKjAWALMzBAI/x2SSSSSSSSowFgCAAAzEf8dkkkkkkkkwMBYAojMERH/HZJJJJJJ" +
+            "JNjAWALMzBAI/x2SSSSSSSTYwFgCAAAzEf8dkkkkkkkk8MhgAu7/jMz/HZJJJJJJJAiwYCaIzAAA/x2SSSSSSSQQsFgCAAAzEf8d" +
+            "kkkkkkkkILhgAszuCIj/HZJJJJJJJEC4YAL//8zu/x2SSSSSSSRAuGAC7v+MzP8dkkkkkkkkULBYAgAAMxH/HZJJJJJJJGiwWAKI" +
+            "zBER/x2SSSSSSSRosFgCAAB3M/8dkkkkkkkkiLBgAszMEAj/HZJJJJJJJIiwYAIAADMR/x2SSSSSSSSgsFgCiMwREf8dkkkkkkkk" +
+            "sLBYAgiIMxH/HZJJJJJJJMiwWAKIzBER/x2SSSSSSSTIsFgCAAAzEf8dkkkkkkkk6LBYAojMERH/HZJJJJJJJOiwWAIIiDMR/x2S" +
+            "SSSSSSQIoGAmiMwAAP8dkkkkkkkkEKBYAgiIMxH/HZJJJJJJJCCgYCaIzAAA/x2SSSSSSSQwqGAC7v+MzP8dkkkkkkkkQKBYAgiI" +
+            "MxH/HZJJJJJJJFCgWAIIiDMR/x2SSSSSSSRgoGAmiMwAAP8dkkkkkkkkeKBYAojMERH/HZJJJJJJJHigWAIIiDMR/x2SSSSSSSSQ" +
+            "qGAC7v+MzP8dkkkkkkkkoKBgJojMAAD/HZJJJJJJJLCoYALu/4zM/x2SSSSSSSTAoFgCCIgzEf8dkkkkkkkk0KhgAu7/jMz/HZJJ" +
+            "JJJJJOCgYCaIzAAA/x2SSSSSSSTwqGAC7v+MzP8dkkkkkkkkCKBgJv//zO7/HZJJJJJJJBiIYAIAAHcz/x2SSSSSSSQYiGACAAB3" +
+            "M/8dkkkkkkkkMJBYAgiIMxH/HZJJJJJJJDCQWAIAAHcz/x2SSSSSSSRQiGACAAB3M/8dkkkkkkkkaIhgAgAAdzP/HZJJJJJJJGiI" +
+            "YAIAAHcz/x2SSSSSSSSIiGACAAB3M/8dkkkkkkkkkJBYAgiIMxH/HZJJJJJJJKiQWAKIzBER/x2SSSSSSSSokFgCAAAzEf8dkkkk" +
+            "kkkkyJBYAojMERH/HZJJJJJJJMiQWAIAADMR/x2SSSSSSSTokGACzMwQCP8dkkkkkkkk8JBYAgiIMxH/HZJJJJJJJAiIYALu/4zM" +
+            "/x2SSSSSSSQYiGAC7v+MzP8dkkkkkkkkKIhgAu7/jMz/HZJJJJJJJDCAWAIIiDMR/x2SSSSSSSRIiGAC7v+MzP8dkkkkkkkkUIhg" +
+            "AszuCIj/HZJJJJJJJGiIYALu/4zM/x2SSSSSSSRwiGAC7v+MzP8dkkkkkkkkiIhgAu7/jMz/HZJJJJJJJJCAYCaIzAAA/x2SSSSS" +
+            "SSSoiGAC7v+MzP8dkkkkkkkksIBYAgiIMxH/HZJJJJJJJMB4YAIAAHcz/x2SSSSSSSTQiGAC7v+MzP8dkkkkkkkk4HhgAgAAdzP/" +
+            "HZJJJJJJJPB4WCYAADMR/x2SSSSSSSQQeGAC7v+MzP8dkkkkkkkkEHhgAszuCIj/HZJJJJJJJChwYAKIzBER/x2SSSSSSSQ4eGAC" +
+            "7v+MzP8dkkkkkkkk+BhYAgAA////HZJJJJJJJPgYWAIAAP///x2SSSSSSST4GFgCAAD///8dkkkkkkkk+BhYAgAA////HZJJJJJJ" +
+            "JJCAYCb//8zu/x2SSSSSSSSQaGACAAD///8dkkkkkkkkoGhgAgAA////HZJJJJJJJLBwYAIIiDMR/x2SSSSSSSTAeGACzO4IiP8d" +
+            "kkkkkkkk0HBgAgiIMxH/HZJJJJJJJOB4YALM7giI/x2SSSSSSSTweFgmzu4AAP8dkkkkkkkkCGhgAu7/jMz/HZJJJJJJJBBoYALM" +
+            "7giI/x2SSSSSSSQwaGAC///M7v8dkkkkkkkkMGhgAszuCIj/HZJJJJJJJPgYWAIAAP///x2SSSSSSST4GFgCAAD///8dkkkkkkkk" +
+            "+BhYAgAA////HZJJJJJJJPgYWAIAAP///x2SSSSSSSSQaGAC///M7v8dkkkkkkkkkGhgAszuCIj/HZJJJJJJJKBoYALM7giI/x2S" +
+            "SSSSSSS4aGAC7v+MzP8dkkkkkkkkyGBYAojMERH/HZJJJJJJJMhgWAIAAHcz/x2SSSSSSSToYGACiMwREf8dkkkkkkkk6GBgAgiI" +
+            "MxH/HZJJJJJJJAhQWAIIiDMR/x2SSSSSSSQYWGAC7v+MzP8dkkkkkkkkKFhgAu7/jMz/HZJJJJJJJDBQWAIIiDMR/x2SSSSSSST4" +
+            "GFgCAAD///8dkkkkkkkk+BhYAgAA////HZJJJJJJJPgYWAIAAP///x2SSSSSSST4GFgCAAD///8dkkkkkkkkkFhgAu7/jMz/HZJJ" +
+            "JJJJJJBYYALM7giI/x2SSSSSSSSwWGAC///M7v8dkkkkkkkksFhgAszuCIj/HZJJJJJJJMBQWAIIiDMR/x2SSSSSSSTQUFgCCIgz" +
+            "Ef8dkkkkkkkk4FBYAgiIMxH/HZJJJJJJJPBQYAIIiDMR/x2SSSSSSSQQSGAC7v+MzP8dkkkkkkkkEEhgAszuCIj/HZJJJJJJJDBI" +
+            "YAL//8zu/x2SSSSSSSQwSGACzO4IiP8dkkkkkkkk+BhYAgAA////HZJJJJJJJPgYWAIAAP///x2SSSSSSST4GFgCAAD///8dkkkk" +
+            "kkkk+BhYAgAA////HZJJJJJJJIhIYALu/4zM/x2SSSSSSSSYQFgCiMwREf8dkkkkkkkkmEBYAgAAdzP/HZJJJJJJJLBIYALM7giI" +
+            "/x2SSSSSSSTAQFgCCIgzEf8dkkkkkkkk0EhgAszuCIj/HZJJJJJJJOhAYAKIzBER/x2SSSSSSSToQGACCIgzEf8dkkkkkkkkEDhg" +
+            "Au7/jMz/HZJJJJJJJBA4YALM7giI/x2SSSSSSSQoMGACCIgzEf8dkkkkkkkkODBgAgiIMxH/HZJJJJJJJEg4YALu/4zM/x2SSSSS" +
+            "SSRQMGACCIgzEf8dkkkkkkkkaDhgAu7/jMz/HZJJJJJJJHg4YALu/4zM/x2SSSSSSSSIMGACiMwREf8dkkkkkkkkiDBgAgAAMxH/" +
+            "HZJJJJJJJKg4YALu/4zM/x2SSSSSSSSwMGACCIgzEf8dkkkkkkkkyDBYAgiIMxH/HZJJJJJJJMgwWAIAAHcz/x2SSSSSSSToOGAC" +
+            "7v+MzP8dkkkkkkkk6DhgAszMEAj/HZJJJJJJJAgoYALM7giI/x2SSSSSSSQYKGACzO4IiP8dkkkkkkkkKChgAu7/jMz/HZJJJJJJ" +
+            "JDgwYAL//8zu/x2SSSSSSSRIIGACiMwREf8dkkkkkkkkYChgAu7/jMz/HZJJJJJJJGAoYALM7giI/x2SSSSSSSRwKGACzO4IiP8d" +
+            "kkkkkkkkiDBgAv//zO7/HZJJJJJJJJgwYAL//8zu/x2SSSSSSSSwKGAC///M7v8dkkkkkkkksChgAszuCIj/HZJJJJJJJMAgWAII" +
+            "iDMR/x2SSSSSSSTQKGACzO4IiP8dkkkkkkkk4CBgJojMAAD/HZJJJJJJJPAoYALM7giI/x2SSSSSSSQQGGAC7v+MzP8dkkkkkkkk" +
+            "EBhgAszMEAj/HZJJJJJJJDAYYALu/4zM/x2SSSSSSSQwGGACzMwQCP8dkkkkkkkkSCBgAv//zO7/HZJJJJJJJFgQYAIIiDMR/x2S" +
+            "SSSSSSRoEGACCIgzEf8dkkkkkkkkeBhgAszuCIj/HZJJJJJJJIgQYAIIiDMR/x2SSSSSSSSYGGACzO4IiP8dkkkkkkkksBhgAu7/" +
+            "jMz/HZJJJJJJJLAYYALM7giI/x2SSSSSSSTIGGAC7v+MzP8dkkkkkkkkyBhgAszMEAj/HZJJJJJJJOAQWAIAADMR/x2SSSSSSST4" +
+            "GFgCzO4IiP8dkkkkkkkkCAhgAszuCIj/HZJJJJJJJBAIYALMzBAI/x2SSSSSSSQoCGACzO4IiP8dkkkkkkkkMAhgAszMEAj/HZJJ" +
+            "JJJJJEgIYALM7giI/x2SSSSSSSRYEGAC///M7v8dkkkkkkkkaBBgAv//zO7/HZJJJJJJJHAIYALM7giI/x2SSSSSSSSIEGAC7v+M" +
+            "zP8dkkkkkkkkkAhgAszuCIj/HZJJJJJJJKgIYALM7giI/x2SSSSSSSSwCGACzO4IiP8dkkkkkkkkwABYAgAAdzP/HZJJJJJJJNAI" +
+            "YALM7giI/x2SSSSSSSToCGAC7v+MzP8dkkkkkkkk6AhgAszMEAg=",
+    )
+
+    /** The source's pixels as RGBA8, bottom row first: smooth gradients with a hard-edged square. */
+    val sourceRgba: ByteArray = ByteArray(SIZE * SIZE * 4).also { pixels ->
+        for (y in 0 until SIZE) {
+            for (x in 0 until SIZE) {
+                val square = x in SIZE / 4 until SIZE / 2 && y in SIZE / 4 until SIZE / 2
+                val at = ((SIZE - 1 - y) * SIZE + x) * 4
+                pixels[at] = (if (square) 255 else x * 255 / (SIZE - 1)).toByte()
+                pixels[at + 1] = (if (square) 32 else y * 255 / (SIZE - 1)).toByte()
+                pixels[at + 2] = 96
+                pixels[at + 3] = 255.toByte()
+            }
+        }
+    }
+}

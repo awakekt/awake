@@ -109,6 +109,8 @@ kotlin {
         named("androidDeviceTest") {
             dependencies {
                 implementation(libs.androidx.test.runner)
+                // The cooked ASTC and ETC2 files, loaded on the device's Vulkan as a phone loads them.
+                implementation(project(":awake:asset:texture-ktx-loader"))
             }
         }
         val appMain = create("appMain") {
