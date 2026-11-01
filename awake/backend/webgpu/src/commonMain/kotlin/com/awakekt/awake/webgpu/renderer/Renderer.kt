@@ -25,6 +25,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
+import com.awakekt.awake.render.passes2d.DynamicRunArrayPool
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.EffectQuality
@@ -291,6 +292,11 @@ class Renderer internal constructor(
 
     /** Renderer-owned retained staging; its cached texture handles must die with this renderer. */
     internal val uiRunCache = RetainedDrawRunCache()
+
+    /** Renderer-owned ping-pong staging arrays for the swapchain UI overlay's dynamic runs, so a
+     * changing run reuses buffers instead of allocating per frame (#1224). Only the once-per-frame
+     * overlay staging uses it; offscreen staging allocates fresh to avoid cross-contaminating it. */
+    internal val uiRunArrayPool = DynamicRunArrayPool()
 
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)

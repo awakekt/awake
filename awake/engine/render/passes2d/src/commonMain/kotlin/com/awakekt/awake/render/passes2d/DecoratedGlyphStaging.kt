@@ -22,10 +22,12 @@ import com.awakekt.awake.core.text.font.UiFont
 internal object DecoratedGlyphStaging {
     private const val STRIDE = VertexFormats2D.DECORATED_GLYPH_FLOATS_PER_VERTEX
 
-    /** One run of [glyphs], every one decorated, sampling [font]'s atlas. */
-    fun run(glyphs: List<DrawCommand.Glyph>, font: UiFont?): StagedDrawRun.GlyphRun {
-        val vertices = FloatArray(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * STRIDE)
-        val indices = IntArray(glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
+    /** One run of [glyphs], every one decorated, sampling [font]'s atlas. [pool], when given,
+     * supplies reused buffers for a dynamic run instead of allocating per frame. */
+    fun run(glyphs: List<DrawCommand.Glyph>, font: UiFont?, pool: DynamicRunArrayPool? = null): StagedDrawRun.GlyphRun {
+        val buffers = pool?.take(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * STRIDE, glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
+        val vertices = buffers?.vertices ?: FloatArray(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * STRIDE)
+        val indices = buffers?.indices ?: IntArray(glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
         val bounds = FloatArray(4)
         for (index in glyphs.indices) {
             val glyph = glyphs[index]
@@ -47,10 +49,16 @@ internal object DecoratedGlyphStaging {
         return DrawRunCoalescer.texturedQuadMesh(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1])
     }
 
-    /** One run of [clipped] decorated glyphs, each the mesh [quad] gave and a path clip cut, sampling [font]'s atlas. */
-    fun clippedRun(clipped: List<Pair<TexturedTriangleMesh, DrawCommand.Glyph>>, font: UiFont?): StagedDrawRun.GlyphRun {
-        val vertices = FloatArray(clipped.sumOf { it.first.vertices.size } * STRIDE)
-        val indices = IntArray(clipped.sumOf { it.first.indices.size })
+    /** One run of [clipped] decorated glyphs, each the mesh [quad] gave and a path clip cut, sampling [font]'s atlas.
+     * [pool], when given, supplies reused buffers for a dynamic run instead of allocating per frame. */
+    fun clippedRun(
+        clipped: List<Pair<TexturedTriangleMesh, DrawCommand.Glyph>>,
+        font: UiFont?,
+        pool: DynamicRunArrayPool? = null,
+    ): StagedDrawRun.GlyphRun {
+        val buffers = pool?.take(clipped.sumOf { it.first.vertices.size } * STRIDE, clipped.sumOf { it.first.indices.size })
+        val vertices = buffers?.vertices ?: FloatArray(clipped.sumOf { it.first.vertices.size } * STRIDE)
+        val indices = buffers?.indices ?: IntArray(clipped.sumOf { it.first.indices.size })
         var vertexCount = 0
         var indexCount = 0
         for ((mesh, glyph) in clipped) {

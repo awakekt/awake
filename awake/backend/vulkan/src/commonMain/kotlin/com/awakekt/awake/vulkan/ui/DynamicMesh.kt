@@ -77,6 +77,9 @@ class DynamicMesh(
         /** The arrays last written here. Staged runs are never mutated, so the same arrays are the same contents. */
         var writtenVertices: FloatArray? = null,
         var writtenIndices: IntArray? = null,
+        /** Reused little-endian index bytes for this slot, so a per-frame upload converts in place
+         * rather than allocating a fresh `ByteArray` each time (see [toByteArrayLE]). */
+        var indexBytes: ByteArray = EMPTY_INDEX_BYTES,
     ) {
         /** What `vkCmdBindVertexBuffers` takes, kept so binding allocates nothing. */
         var vertexBinding = longArrayOf(vertexBuffer.handle)
@@ -155,7 +158,10 @@ class DynamicMesh(
         // A UI that did not change hands back the same staged arrays, already in this slot.
         if (vertices === frame.writtenVertices && indices === frame.writtenIndices) return
         VulkanBuffers.writeBufferMemoryFloats(device, frame.vertexBufferMemory.handle, 0, vertices)
-        VulkanBuffers.writeBufferMemoryBytes(device, frame.indexBufferMemory.handle, 0, indices.toByteArrayLE())
+        // writeBufferMemoryBytes copies into mapped memory synchronously, so the reused buffer is
+        // free to be overwritten on the next frame's upload.
+        frame.indexBytes = indices.toByteArrayLE(frame.indexBytes)
+        VulkanBuffers.writeBufferMemoryBytes(device, frame.indexBufferMemory.handle, 0, frame.indexBytes)
         frame.writtenVertices = vertices
         frame.writtenIndices = indices
     }
@@ -294,6 +300,9 @@ class DynamicMesh(
     companion object {
         /** Every vertex buffer here binds at offset 0; shared so binding allocates nothing. */
         private val ZERO_OFFSET = longArrayOf(0L)
+
+        /** A slot's index-byte buffer before its first upload grows it to fit. */
+        private val EMPTY_INDEX_BYTES = ByteArray(0)
 
         /** Default (colored-quad) layout: pos (vec2) + color (vec4) + transform (vec4:
          * scale.xy + pivot.xy, see `UiPrimitiveTransform`) -- see `ui_quad.vert`. */
