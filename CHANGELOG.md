@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-11-02
+
+### Changed
+
+- **Collider wireframes are drawn by `awake:physics:api`, with no scene.** The shape-to-lines half of the physics debug overlay moved out of `awake:scene:physics` into `PhysicsShapeWireframe` (`com.awakekt.awake.physics.debug`), which writes one `PhysicsShape` at a position and rotation into any `DebugLines` without allocating, so a body created on a `PhysicsWorld` with no entity behind it can be drawn too. `awake:physics:api` now exposes `awake:core:diagnostics` (math and colour only, no renderer). `PhysicsDebugSource` and `physicsDebugLines(world)` keep their signatures and draw the same lines; the writer they used was internal, so nothing is deprecated (#1252).
+- **0.34.0 was not published.** Its tag exists, but its publish run's Verify job ran past its time limit, so the release job was skipped and nothing reached Maven Central. 0.35.0 is the first published version with the changes listed under 0.34.0 below.
+
+### Fixed
+
+- **A web page without the Basis Universal transcoder keeps running.** When `basis/basis_transcoder.js` or its `.wasm` couldn't be loaded, the browser's rejection reached Kotlin as a `JsException`, which isn't an `Exception`, so `CookedTextureLoader` didn't catch it and the uncaught error stopped the app at its first cooked texture. The loader now catches it, logs one error naming the path and the fix, and loads each texture's mobile file or source image instead; `BasisWasmTranscoder.load` fails with an `IllegalStateException` that says which file was missing or refused and to ship `basis/` beside the page, as the browser guide now explains (#1261).
+- **WebGPU (desktop): a headless shutdown no longer reports a queue that is still being released.** wgpu4k gives the device's last reference back on its event-pump thread, and wgpu-native's release of it unregisters the device before the queue the device owns, so `HeadlessWebGpuEngine`'s shutdown report, which waited only for the device to go, could read `queues=1` in between. It now waits for the device's whole release, device and queue, before reading what the instance still holds; a handle nobody releases is still reported (#1263).
+
 ## [0.34.0] - 2026-11-02
 
 ### Added
