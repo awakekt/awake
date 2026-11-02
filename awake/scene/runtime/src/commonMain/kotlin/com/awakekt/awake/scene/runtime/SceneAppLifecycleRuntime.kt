@@ -17,6 +17,7 @@ import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Log
@@ -116,6 +117,18 @@ class SceneAppLifecycleRuntime internal constructor(
      * call ever consumed. */
     var cursor: PointerCursor = PointerCursor.Default
         private set
+
+    /**
+     * A custom cursor image the application asks the host to show, overriding the system [cursor]
+     * shape while it is non-null; `null` leaves the system [cursor] in effect. Unlike [cursor],
+     * which the UI layer drives, this is the application's to set -- for an in-world or branded
+     * pointer the UI tree does not express. A desktop host applies it by passing
+     * `cursorImage = pointerCursorImageOf(game)` alongside `cursor = pointerCursorOf(game)`.
+     *
+     * Reuse one [CursorImage] instance rather than building a new one each frame: the host caches
+     * the native cursor per instance.
+     */
+    var cursorImage: CursorImage? = null
 
     /**
      * What the UI claimed from the last frame's input.
@@ -901,6 +914,21 @@ fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor =
     game.service(SceneAppLifecycleRuntime::class)?.let { runtime -> { runtime.cursor } }
         ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.cursor } }
         ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.cursor } }
+        ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
+
+/**
+ * Returns a provider for the custom cursor image [game]'s application asks for this frame, or
+ * `null` to fall back to the [pointerCursorOf] system shape, for a desktop or browser host's
+ * `cursorImage` parameter.
+ *
+ * Reads [SceneAppLifecycleRuntime.cursorImage] from the installed [SceneAppLifecycleRuntime],
+ * [SceneRouterRuntime], or [ComposeAppRuntime]. Throws [IllegalStateException] when [game] installs
+ * none of them.
+ */
+fun pointerCursorImageOf(game: AwakeAppLifecycle): () -> CursorImage? =
+    game.service(SceneAppLifecycleRuntime::class)?.let { runtime -> { runtime.cursorImage } }
+        ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.cursorImage } }
+        ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.cursorImage } }
         ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
 
 /** The subjects of the frame work the app supplies, as an `AppError` names them. */

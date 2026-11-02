@@ -116,6 +116,17 @@ object GlfwWindow {
     /** Sets the system cursor icon on [window] to standard cursor [shape]. */
     external fun glfwSetCursorShape(window: Long, shape: Int)
 
+    /**
+     * Sets [window]'s cursor to a custom image: [width] by [height] straight (non-premultiplied)
+     * RGBA [pixels], one byte per channel, top row first, clicking at ([hotspotX], [hotspotY]).
+     *
+     * [key] is a stable per-image id the native side caches the created cursor under, so a
+     * per-frame call never rebuilds it; [applyCustomCursor] assigns one per image. A platform that
+     * refuses the image leaves the default arrow.
+     */
+    @Suppress("LongParameterList")
+    external fun glfwSetCursorImage(window: Long, key: Int, pixels: ByteArray, width: Int, height: Int, hotspotX: Int, hotspotY: Int)
+
     /** Returns the value of window attribute [attrib] for [window]. */
     external fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
 

@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.platform.toFrameInput
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
@@ -67,6 +68,12 @@ class ComposeAppRuntime internal constructor(
 
     /** Active pointer cursor style requested by the topmost hovered UI element. */
     var cursor: PointerCursor = PointerCursor.Default
+
+    /**
+     * A custom cursor image the application asks the host to show, overriding the system [cursor]
+     * shape while non-null. The application's to set; the UI layer does not drive it.
+     */
+    var cursorImage: CursorImage? = null
         private set
 
     internal fun ready(renderer: Renderer) {
