@@ -74,6 +74,9 @@ data class HeardNoise(
 class PerceptionMemory {
     private val known = LinkedHashMap<Entity, PerceivedEntity>()
 
+    // The same entries in the same order, read by index so a reader each frame needs no iterator.
+    private val ordered = ArrayList<PerceivedEntity>()
+
     /** The perception clock, in seconds, at this agent's latest update. */
     var now: Double = 0.0
         internal set
@@ -84,6 +87,9 @@ class PerceptionMemory {
 
     /** Everything remembered, in the order it was first sensed. */
     val entities: Collection<PerceivedEntity> get() = known.values
+
+    /** Everything remembered, in the order it was first sensed, as a list a reader indexes without an iterator. */
+    internal val inOrder: List<PerceivedEntity> get() = ordered
 
     /** What is remembered of [entity], or `null`. */
     operator fun get(entity: Entity): PerceivedEntity? = known[entity]
@@ -102,19 +108,20 @@ class PerceptionMemory {
 
     /** Forgets [entity]. */
     fun forget(entity: Entity) {
-        known.remove(entity)
+        known.remove(entity)?.let(ordered::remove)
     }
 
     /** Forgets everything. */
     fun clear() {
         known.clear()
+        ordered.clear()
         noise = null
     }
 
-    internal fun remember(entity: Entity): PerceivedEntity = known.getOrPut(entity) { PerceivedEntity(entity) }
+    internal fun remember(entity: Entity): PerceivedEntity = known.getOrPut(entity) { PerceivedEntity(entity).also(ordered::add) }
 
     internal fun forgetOlderThan(cutoff: Double) {
-        known.values.removeAll { it.lastSensed < cutoff }
+        if (known.values.removeAll { it.lastSensed < cutoff }) ordered.removeAll { it.lastSensed < cutoff }
         if ((noise?.heardAt ?: cutoff) < cutoff) noise = null
     }
 
@@ -140,6 +147,7 @@ class PerceptionMemory {
     /** Replaces what is remembered with [snapshot]. */
     fun restore(snapshot: PerceptionMemorySnapshot) {
         known.clear()
+        ordered.clear()
         now = snapshot.now
         for (saved in snapshot.entities) {
             remember(Entity(saved.entity)).apply {

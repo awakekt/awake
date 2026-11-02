@@ -26,6 +26,8 @@ kotlin {
             api(project(":awake:core:schema"))
             // The node catalogue and tree graphs a visual editor edits.
             api(project(":awake:node-graph"))
+            // PerceptionDebugSource is a DebugSource (its Color comes with it).
+            api(project(":awake:core:diagnostics"))
             api(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
