@@ -12,8 +12,8 @@
 
 <div class="awake-figures" markdown>
 <figure markdown>
-![A ground plane seen from above at an angle. Square cell outlines around a player cube are coloured green, yellow and red by their streaming state, inside a blue loading circle and a violet unloading circle. A dark panel in the bottom right lists the Cells readings and the Spawner readings.](../assets/guides/debug-tools/cells-and-panel.png)
-<figcaption>The <code>cells</code> and <code>spawner</code> sources on, rendered by the engine</figcaption>
+![A ground plane seen from above at an angle. Square cell outlines around a player cube are coloured green, yellow and red by their streaming state, inside a blue loading circle and a violet unloading circle, and a short pink post at the spawner's spawn point. A dark panel in the bottom right lists the Cells readings and the Spawner readings.](../assets/guides/debug-tools/cells-and-panel.png)
+<figcaption>The <code>cells</code> and <code>spawner</code> sources on, rendered by the engine. The short pink line on the left is the spawner source's post, drawn by <code>SpawnerDebugSource.lines</code> below.</figcaption>
 </figure>
 </div>
 
