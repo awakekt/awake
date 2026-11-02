@@ -11,6 +11,10 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
   so a source depends on nothing that draws.
 - **`DebugRegistry`**: the sources a game has, and which are on. A source that is off is never added, so no
   host ever calls it. Hold one registry and pass it to every host.
+- **`DebugRowBuffer`**: the rows of every source that is on, laid out in fixed slots for an overlay. It
+  turns a number into text only when the number, its decimals or its warn flag changed, keeps each slot's
+  `String` between readings, and says which slots changed (`consumeChanged`), so a host writes only those.
+  It draws nothing, so the overlay's logic is tested without a canvas.
 - **`DebugFlags`**: the ids to turn on, from `?debug=a,b` on the web or `--debug=a,b` on desktop.
 
 ```kotlin
@@ -30,5 +34,13 @@ infrastructure systems gets that by registering its registry as an app service:
 service(DebugRegistry::class, registry)
 ```
 
-An overlay that shows the sources' rows follows (#1218). With no renderer, headless or on a server, hosts
-do nothing and the probes still count.
+In `awake:scene:canvas`, `DebugPanelSystem(registry)` shows the sources' rows in a panel on the canvas: a
+source's title on a row of its own, then its rows, a label on the left and a value on the right, a warning in
+amber. It reads the registry ten times a second (`DebugPanelStyle.refreshSeconds`), writes only the slots that
+changed, and makes no panel, and allocates nothing, until the first source is on. The same
+`service(DebugRegistry::class, registry)` gives a scene app on the default infrastructure systems the panel as
+well as the lines. `DebugPanelStyle` sets the slot count (16 by default), the anchor (bottom right), the offsets,
+the width and the draw order; `debugPanelPrefab(style)` is the panel as a prefab an editor can open. Rows past
+the last slot are dropped, so keep a source to a few rows.
+
+With no renderer, headless or on a server, hosts do nothing and the probes still count.

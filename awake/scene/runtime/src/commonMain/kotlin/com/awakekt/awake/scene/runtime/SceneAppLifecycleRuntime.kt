@@ -55,6 +55,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.canvas.CanvasProjector
 import com.awakekt.awake.scene.canvas.CanvasViews
+import com.awakekt.awake.scene.canvas.DebugPanelSystem
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.canvas.globalCanvasBindings
 import com.awakekt.awake.scene.core.Name
@@ -869,14 +870,17 @@ class SceneAppLifecycleRuntime internal constructor(
  * toggles it on -- every existing scene is unaffected by its presence here.
  *
  * When the app registers a [DebugRegistry] service, [DebugVisualizationSystem] also draws the
- * lines of every debug source it has on, in the same call as its own toggles. */
+ * lines of every debug source it has on, in the same call as its own toggles, and a [DebugPanelSystem]
+ * shows their rows in a panel on the canvas, made when the first source is on. */
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     viewportProvider: () -> RenderViewport? = { null },
     renderWorldProvider: (World) -> World = { it },
     isRealtimeProvider: () -> Boolean = { true },
     isDirtyProvider: () -> Boolean = { false },
-): List<System> =
-    listOf(
+): List<System> {
+    // A game turns its debug sources on by registering its DebugRegistry as an app service.
+    val debugRegistry = service(DebugRegistry::class)
+    return listOf(
         SpriteClipSystem(isRealtimeProvider),
         TransformSystem(),
         // After TransformSystem resolves world matrices and before RenderSystem3D collects sprite quads.
@@ -890,9 +894,13 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
             isRealtimeProvider = isRealtimeProvider,
             isDirtyProvider = isDirtyProvider,
         ),
-        // A game turns its debug sources' lines on by registering its DebugRegistry as an app service.
-        DebugVisualizationSystem(renderer, viewportProvider, service(DebugRegistry::class) ?: DebugRegistry.Off),
+        // The sources' lines draw with the world's own debug lines, in one call.
+        DebugVisualizationSystem(renderer, viewportProvider, debugRegistry ?: DebugRegistry.Off),
+    ) + listOfNotNull(
+        // Their rows show in a canvas panel that exists only while a source is on.
+        debugRegistry?.let { DebugPanelSystem(it) },
     )
+}
 
 /**
  * Returns a provider for the pointer shape [game]'s UI asks for each frame, such as a text beam

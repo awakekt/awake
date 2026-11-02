@@ -22,6 +22,31 @@ public final class com/awakekt/awake/core/diagnostics/DebugRegistry$Companion {
 	public final fun getOff ()Lcom/awakekt/awake/core/diagnostics/DebugRegistry;
 }
 
+public final class com/awakekt/awake/core/diagnostics/DebugRowBuffer : com/awakekt/awake/core/diagnostics/DebugRows {
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/DebugRowBuffer$Companion;
+	public static final field DEFAULT_SLOTS I
+	public static final field MAX_DECIMALS I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun consumeChanged (I)Z
+	public final fun getCount ()I
+	public final fun getDropped ()I
+	public final fun getSlots ()I
+	public final fun invalidate ()V
+	public final fun isTitle (I)Z
+	public final fun isWarn (I)Z
+	public final fun label (I)Ljava/lang/String;
+	public final fun refresh (Lcom/awakekt/awake/core/diagnostics/DebugRegistry;)I
+	public fun row (Ljava/lang/String;FIZ)V
+	public fun row (Ljava/lang/String;IZ)V
+	public fun row (Ljava/lang/String;Ljava/lang/String;Z)V
+	public final fun value (I)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/diagnostics/DebugRowBuffer$Companion {
+}
+
 public abstract interface class com/awakekt/awake/core/diagnostics/DebugRows {
 	public abstract fun row (Ljava/lang/String;FIZ)V
 	public abstract fun row (Ljava/lang/String;IZ)V
