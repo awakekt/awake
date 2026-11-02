@@ -337,7 +337,8 @@ pull request's Core, so a change that breaks the plugins or makes them allocate 
 release, not after it (#1169 reached 0.28.0 and needed 0.28.1). Through
 `tools/check_plugins_consumer.sh`, it publishes to Maven Local, at `0.0.0-plugins-consumer`, the Core
 modules the plugins' version catalog names and every Core project they depend on (JVM and wasm only),
-points the plugins' `awake` version at it, and runs their JVM tests, plain and obfuscated, and
+builds the plugins against it with `-Pawake.version` (awakekt/awake-plugins#127; an older plugins
+checkout has its catalog's `awake` version edited instead), and runs their JVM tests, plain and obfuscated, and
 `pluginScorecard`, whose allocation gate holds the HUD modules, rpg-hud-studio's install path among
 them, to `config/scorecards/hud-baselines.json`. It runs only when the change reaches one of those
 modules or the build that publishes them. It needs the `PLUGINS_READ_TOKEN` repository secret, a

@@ -21,11 +21,15 @@
 #   tools/check_plugins_consumer.sh publish   <plugins-dir> <version>
 #       Publishes those projects to Maven Local at <version>, a version no release uses.
 #   tools/check_plugins_consumer.sh point     <plugins-dir> <version>
-#       Points the plugins' catalog (`awake = "..."`) at <version>. It edits that checkout in place.
-#   tools/check_plugins_consumer.sh test      <plugins-dir>
-#       Runs every plugin's JVM tests, plain and obfuscated.
-#   tools/check_plugins_consumer.sh scorecard <plugins-dir>
+#       Makes the plugins build against <version>. A checkout whose settings read `-Pawake.version`
+#       is left as it is, since the builds below pass that property; an older one has its catalog
+#       (`awake = "..."`) edited in place.
+#   tools/check_plugins_consumer.sh test      <plugins-dir> <version>
+#       Runs every plugin's JVM tests, plain and obfuscated, against <version>.
+#   tools/check_plugins_consumer.sh scorecard <plugins-dir> <version>
 #       Runs the HUD scorecard, whose allocation gate holds rpg-hud-studio's install path among others.
+#   tools/check_plugins_consumer.sh report    <plugins-dir> <version>
+#       Writes the scorecard table from what was measured, after a scorecard run that failed.
 set -euo pipefail
 
 ENGINE_ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -127,8 +131,17 @@ publish() {
     -Pawake.version="$version" --no-configuration-cache --stacktrace)
 }
 
+# Whether the plugins' settings take the Core version from -Pawake.version (awakekt/awake-plugins#127).
+reads_version_property() {
+  grep -q 'gradleProperty("awake.version")' "$1/settings.gradle.kts"
+}
+
 point() {
   local plugins="$1" version="$2" catalog
+  if reads_version_property "$plugins"; then
+    echo "==> awake-plugins builds against Core $version through -Pawake.version; its catalog is unchanged"
+    return
+  fi
   catalog="$plugins/gradle/libs.versions.toml"
   grep -qE '^awake *= *"' "$catalog" || { echo "No 'awake = \"...\"' version in $catalog" >&2; exit 1; }
   sed -i.bak -E "s/^awake *= *\"[^\"]*\"/awake = \"$version\"/" "$catalog" && rm -f "$catalog.bak"
@@ -143,7 +156,8 @@ NO_APPLE_KLIBS=-Pkotlin.native.enableKlibsCrossCompilation=false
 # Every plugin's JVM suite, on its own jar and on the R8-renamed one a game ships, which also proves
 # R8 still resolves everything the plugins reach in Core.
 run_tests() {
-  (cd "$1" && ./gradlew jvmTest jvmObfuscatedTest "$NO_APPLE_KLIBS" --continue --max-workers=2 --stacktrace)
+  (cd "$1" && ./gradlew jvmTest jvmObfuscatedTest "$NO_APPLE_KLIBS" -Pawake.version="$2" --continue \
+    --max-workers=2 --stacktrace)
 }
 
 # The HUD modules' ABI, coverage and source gates, the zero-allocation read ratchet, and the JMH
@@ -151,7 +165,14 @@ run_tests() {
 # rpg-hud-studio's install path is held. Nothing changes on the plugins' side, so HEAD is the base
 # their detekt baseline is compared with. Throughput stays informational on a shared runner.
 scorecard() {
-  (cd "$1" && ./gradlew pluginScorecard "$NO_APPLE_KLIBS" --continue -Pscorecard.baseRef=HEAD --max-workers=2 --stacktrace)
+  (cd "$1" && ./gradlew pluginScorecard "$NO_APPLE_KLIBS" -Pawake.version="$2" --continue \
+    -Pscorecard.baseRef=HEAD --max-workers=2 --stacktrace)
+}
+
+# The table pluginScorecard writes even when its own gate fails, but not when a task it depends on failed
+# first: this writes what was measured and marks the rest unverified. It never fails the step itself.
+report() {
+  (cd "$1" && ./gradlew pluginScorecardReport -Pawake.version="$2" --max-workers=2) || true
 }
 
 command="${1:-}"
@@ -160,7 +181,8 @@ case "$command" in
   affected) [[ $# -eq 4 ]] || usage; affected "$2" "$3" "$4" ;;
   publish) [[ $# -eq 3 ]] || usage; publish "$2" "$3" ;;
   point) [[ $# -eq 3 ]] || usage; point "$2" "$3" ;;
-  test) [[ $# -eq 2 ]] || usage; run_tests "$2" ;;
-  scorecard) [[ $# -eq 2 ]] || usage; scorecard "$2" ;;
+  test) [[ $# -eq 3 ]] || usage; run_tests "$2" "$3" ;;
+  scorecard) [[ $# -eq 3 ]] || usage; scorecard "$2" "$3" ;;
+  report) [[ $# -eq 3 ]] || usage; report "$2" "$3" ;;
   *) usage ;;
 esac
