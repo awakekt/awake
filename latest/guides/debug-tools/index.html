@@ -1141,6 +1141,61 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#visualization-toggles-from-the-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization toggles from the flag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-sight-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sight source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-physics-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The physics source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-navigation-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The navigation source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-culling-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The culling source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#zero-cost-when-off" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2826,6 +2881,61 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#visualization-toggles-from-the-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization toggles from the flag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-sight-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sight source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-physics-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The physics source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-navigation-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The navigation source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-culling-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The culling source
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#zero-cost-when-off" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2873,6 +2983,9 @@
 <div class="awake-badges">
 <p><span class="awake-badge">module: <code>awake:core:diagnostics</code></span>
 <span class="awake-badge">module: <code>awake:world</code></span>
+<span class="awake-badge">module: <code>awake:scene:physics</code></span>
+<span class="awake-badge">module: <code>awake:navigation</code></span>
+<span class="awake-badge">module: <code>awake:ai</code></span>
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge awake-badge--ok">WebGPU</span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span></p>
@@ -3053,6 +3166,309 @@ Tag the player with <code>StreamObserver</code>, as <a href="../large-worlds/">L
 height would show them edge on. Under a floating origin, cells are counted in absolute space and
 drawn where the world currently is. A cell only reads when the system has an
 <code>asyncStreamListener</code> and a <code>loadScope</code>; with a frame-thread listener every cell loads at once.</p>
+<h2 id="visualization-toggles-from-the-flag">Visualization toggles from the flag</h2>
+<p>The <code>WorldDebugSettings</code> toggles answer to the same flag, so a game can turn them on without adding
+the component in code: <code>--debug=bounds,grid</code> on desktop, <code>?debug=bounds,grid</code> on the web. The
+default systems' <code>DebugVisualizationSystem</code> turns them on once in each world it runs, adding a
+<code>WorldDebugSettings</code> when the world has none; after that a debug panel can still turn them off.</p>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Turns on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bounds</code></td>
+<td>Each mesh's bounds</td>
+</tr>
+<tr>
+<td><code>instance-bounds</code></td>
+<td>Each static instance's bounds</td>
+</tr>
+<tr>
+<td><code>occluders</code></td>
+<td>Occluder boxes</td>
+</tr>
+<tr>
+<td><code>lights</code></td>
+<td>Light gizmos</td>
+</tr>
+<tr>
+<td><code>shadow-frustum</code></td>
+<td>The shadow cascades' volumes</td>
+</tr>
+<tr>
+<td><code>grid</code></td>
+<td>The ground grid</td>
+</tr>
+<tr>
+<td><code>axes</code></td>
+<td>The X, Y and Z axis lines</td>
+</tr>
+<tr>
+<td><code>skeleton</code></td>
+<td>Each animated skin's bones</td>
+</tr>
+<tr>
+<td><code>wireframe</code></td>
+<td>Triangle edges over opaque meshes</td>
+</tr>
+<tr>
+<td><code>view-&lt;name&gt;</code></td>
+<td>A shader view, its <code>RenderDebugView</code> name in kebab case: <code>view-world-normals</code>, <code>view-linear-depth</code>, <code>view-shadow-visibility</code>, <code>view-albedo</code>, <code>view-clay</code></td>
+</tr>
+</tbody>
+</table>
+<p>The camera frustum has no id, because it needs a target camera; the <code>culling</code> source draws the
+frozen culling camera's frustum. <code>DebugToggleIds</code> holds the ids.</p>
+<h2 id="the-sight-source">The sight source</h2>
+<p><code>PerceptionDebugSource</code> shows what each <code>Perceiver</code> sees, hears and remembers, with the id <code>sight</code>.
+Give it the world and the same <code>PerceptionSpace</code> the <code>PerceptionSystem</code> was made with, so it draws
+from where the system looks:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">PerceptionDebugSource</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="n">space</span><span class="p">))</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>What it counts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Perceivers</td>
+<td>Entities with a <code>Perceiver</code>.</td>
+</tr>
+<tr>
+<td>In sight</td>
+<td>Entities the perceivers see now, summed over them.</td>
+</tr>
+<tr>
+<td>Remembered</td>
+<td>Entities the perceivers remember, in sight or not.</td>
+</tr>
+<tr>
+<td>Heard</td>
+<td>Perceivers that remember a noise.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Colour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The focus cone: two edge rays out to <code>focusRange</code> and an arc of 16 lines joining them</td>
+<td>Amber (<code>PerceptionDebugSource.FOCUS</code>)</td>
+</tr>
+<tr>
+<td>The peripheral cone, the same out to <code>peripheralRange</code></td>
+<td>Blue (<code>PERIPHERAL</code>)</td>
+</tr>
+<tr>
+<td>The hearing range for a sound of loudness 1, a circle of 32 lines</td>
+<td>Dim violet (<code>HEARING</code>)</td>
+</tr>
+<tr>
+<td>From the eye to each remembered entity's last known position, with a small cross there</td>
+<td>Red (<code>IN_SIGHT</code>) when it is in sight now, grey (<code>REMEMBERED</code>) when it is only remembered</td>
+</tr>
+<tr>
+<td>A cross where the remembered noise came from</td>
+<td>Dim violet (<code>HEARING</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The cones lie flat at the perceiver's eye, <code>eyeHeight</code> over its position, so they show from above
+the sight the system tests in three dimensions. A cone of 360 degrees is a full circle. A perceiver
+with no facing sees with its peripheral cone all round and not with its focus cone, so it shows a
+peripheral circle and no focus cone. Attack and aggro ranges are a game's rules, not perception's:
+a game draws them with a source of its own, registered the same way.</p>
+<h2 id="the-physics-source">The physics source</h2>
+<p><code>PhysicsDebugSource(world)</code>, in <code>awake:scene:physics</code>, shows the physics bodies of a <code>World</code>, with the
+id <code>physics</code>:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">PhysicsDebugSource</span><span class="p">(</span><span class="n">world</span><span class="p">))</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>What it counts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Static, Dynamic, Kinematic</td>
+<td><code>PhysicsBody</code> components with each motion type.</td>
+</tr>
+<tr>
+<td>Sensors</td>
+<td>Bodies that are sensors (triggers).</td>
+</tr>
+<tr>
+<td>Unbuilt</td>
+<td>Bodies with no backing body yet, in amber when it isn't 0. A body is built the next time <code>PhysicsSystem</code> runs, so one that stays unbuilt has no <code>PhysicsWorld</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Its lines are each collider at its entity's <code>Transform</code>, the same ones <code>physicsDebugLines(world)</code>
+returns: a box's 12 edges, three rings of 16 lines for a sphere, two rings and five lines for a capsule,
+a heightfield's footprint at its lowest sample, and the box around a mesh's or convex hull's points.
+Static bodies are blue (<code>PhysicsDebugSource.STATIC</code>), dynamic ones green (<code>DYNAMIC</code>) and kinematic ones
+amber (<code>KINEMATIC</code>).</p>
+<h2 id="the-navigation-source">The navigation source</h2>
+<p><code>NavDebugSource</code>, in <code>awake:navigation</code>, shows a navigation grid and the routes agents walk on it, with
+the id <code>nav</code>. Make it over one baked <code>NavGridTile</code> or over a <code>StreamedNavGrid</code>:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">ground</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavGroundHeight</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">heightAtWorld</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">).</span><span class="na">let</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">it</span><span class="p">.</span><span class="na">isNaN</span><span class="p">())</span><span class="w"> </span><span class="m">0f</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="nb">it</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">NavDebugSource</span><span class="p">(</span><span class="n">streamedGrid</span><span class="p">,</span><span class="w"> </span><span class="n">ground</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">routes</span><span class="w"> </span><span class="p">})</span>
+</span></code></pre></div>
+<p><code>ground</code> lays the lines on the terrain; <code>NavGroundHeight.FLAT</code>, the default, is level ground at <code>y = 0</code>.
+The last argument returns the routes to draw, as <code>AgentRoute</code>s. The navigation module can't see who
+walks a route, so the game keeps one list and changes it when a route changes; the source reads it
+once a frame.</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>What it counts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cells</td>
+<td>Resident cells of a streamed grid. A single tile has no such row.</td>
+</tr>
+<tr>
+<td>Walkable</td>
+<td>Navigation samples an agent can stand on, over every resident cell.</td>
+</tr>
+<tr>
+<td>Blocked</td>
+<td>Samples an agent can't stand on.</td>
+</tr>
+<tr>
+<td>Routes</td>
+<td>Agents whose route has at least one point.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Colour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A cross on each blocked sample, 0.05 m over the ground</td>
+<td>Red (<code>BLOCKED_COLOR</code>); on a streamed grid, alternating with orange (<code>BLOCKED_COLOR_ALTERNATE</code>) by cell, so a tile placed at the wrong cell breaks the pattern</td>
+</tr>
+<tr>
+<td>Each resident cell's outline, 8 lines an edge so it follows the ground</td>
+<td>Blue</td>
+</tr>
+<tr>
+<td>Each route, 0.35 m over the ground, ending in a larger cross on its goal</td>
+<td>One of <code>ROUTE_COLORS</code>, picked by the agent's entity id</td>
+</tr>
+</tbody>
+</table>
+<p>They are the lines <code>navGridDebugLines</code> returns for the same grid and routes. A streamed grid's cells
+are read again only after a tile loads or unloads.</p>
+<h2 id="the-culling-source">The culling source</h2>
+<p>A scene app on the default systems turns culling into lines with the id <code>culling</code>: no
+registration needed beyond its <code>DebugRegistry</code> service. <code>RenderSystem3D</code> then records, into a
+<code>CullingProbe</code>, what culling decided for every mesh with <code>MeshBounds</code>, and <code>CullingDebugSource</code>
+draws each one's world box in the colour of that decision.</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>What it counts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>drawn</td>
+<td>Meshes in the camera's view and not hidden: drawn.</td>
+</tr>
+<tr>
+<td>outside view</td>
+<td>Meshes outside the camera's view.</td>
+</tr>
+<tr>
+<td>occluded</td>
+<td>Meshes in view but behind an <code>Occluder</code>.</td>
+</tr>
+<tr>
+<td>shadow only</td>
+<td>Meshes the camera rejected that are still drawn into the shadow maps.</td>
+</tr>
+<tr>
+<td>not culled (instanced)</td>
+<td>Copies of <code>InstancedMeshRenderer</code> and <code>InstancedSkinnedMeshRenderer</code> meshes, drawn every frame without being culled. Only shown above 0.</td>
+</tr>
+<tr>
+<td>frozen (F9)</td>
+<td>Whether culling is frozen.</td>
+</tr>
+<tr>
+<td>boxes not shown</td>
+<td>Meshes past <code>CullingProbe.maxBoxes</code> (4096): counted, not drawn. Only shown above 0.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Colour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A drawn mesh's box</td>
+<td>Green (<code>CullingDebugSource.DRAWN</code>)</td>
+</tr>
+<tr>
+<td>An outside-view mesh's box</td>
+<td>Grey (<code>OUTSIDE_VIEW</code>)</td>
+</tr>
+<tr>
+<td>An occluded mesh's box</td>
+<td>Red (<code>OCCLUDED</code>)</td>
+</tr>
+<tr>
+<td>A shadow-only mesh's box</td>
+<td>Violet (<code>SHADOW_ONLY</code>)</td>
+</tr>
+<tr>
+<td>A copy of an instanced mesh, which is never culled</td>
+<td>Cyan (<code>NOT_CULLED</code>)</td>
+</tr>
+<tr>
+<td>The frozen view's frustum, its far plane at most 60 m out</td>
+<td>Yellow (<code>FROZEN_VIEW</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>F9 freezes culling.</strong> Culling keeps the camera it had at that moment while the scene still draws
+from the live one, so you can fly out and see what the frozen view kept (green) and dropped (grey
+and red). Press F9 again to thaw. In code, set <code>CullingProbe.frozen</code>.</p>
+<p>Outside the default systems, give a render system the probe yourself:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">probe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CullingProbe</span><span class="p">()</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">renderSystem</span><span class="p">.</span><span class="na">cullingProbe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">probe</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">CullingDebugSource</span><span class="p">(</span><span class="n">probe</span><span class="p">))</span>
+</span></code></pre></div>
+<p>A mesh without <code>MeshBounds</code> is never culled, so it has no box. Culled meshes aren't drawn at all, so
+the boxes, not the meshes, show what was dropped.</p>
 <h2 id="zero-cost-when-off">Zero cost when off</h2>
 <ul>
 <li>A source whose id is not in the flags is never added to the registry, so no host ever calls it.</li>
@@ -3066,6 +3482,8 @@ drawn where the world currently is. A cell only reads when the system has an
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../large-worlds/">Large worlds</a> for <code>WorldPartitionSystem</code> and its radii.</li>
+<li><a href="../physics/">Physics</a> for bodies, shapes and <code>PhysicsSystem</code>.</li>
+<li><a href="../navigation/">Navigation</a> for baking a grid and streaming it.</li>
 <li><a href="../launch-parameters/">Launch parameters</a> for reading flags on every platform.</li>
 <li><a href="../game-ui/">Game UI</a> for the canvas the panel is drawn on.</li>
 </ul>

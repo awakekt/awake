@@ -2992,7 +2992,9 @@ search does not stall the frame, and repath on an interval rather than every fra
 </div>
 <h2 id="debugging">Debugging</h2>
 <p><code>navGridDebugLines</code> returns world-space lines: a cross on every blocked sample, and each agent's
-route if you pass <code>routes</code>.</p>
+route if you pass <code>routes</code>. <code>NavDebugSource</code> draws the same lines through the debug registry, turned
+on with <code>--debug=nav</code>, and counts walkable and blocked samples on the debug panel; see
+<a href="../debug-tools/#the-navigation-source">Debug tools</a>.</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">navGridDebugLines</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span><span class="w"> </span><span class="n">surfaceAt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">heightAtWorld</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="p">})</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1">// Hand `lines` to the renderer's debug-line pass with any other debug lines you draw.</span>
 </span></code></pre></div>

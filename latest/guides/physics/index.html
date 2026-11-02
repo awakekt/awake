@@ -3474,7 +3474,9 @@ interpolation between fixed steps. Changing <code>PhysicsBody.motionType</code> 
 <h2 id="debugging">Debugging</h2>
 <p><code>physicsDebugLines(world)</code> returns world-space wireframes of every body's collider at its simulated
 pose, coloured by motion type. Draw them with your other debug lines to see where a collider and its
-mesh disagree.</p>
+mesh disagree. <code>PhysicsDebugSource(world)</code> draws the same lines through the debug registry, turned on
+with <code>--debug=physics</code>, and counts the bodies by motion type on the debug panel; see
+<a href="../debug-tools/#the-physics-source">Debug tools</a>.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../physics-jolt/">Jolt backend</a> for creating a <code>PhysicsWorld</code> and platform notes.</li>
