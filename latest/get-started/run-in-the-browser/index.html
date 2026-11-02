@@ -2851,7 +2851,7 @@ include it. Each Core release publishes a WebGPU snapshot built from it instead.
 <p>Add the backend to the catalog at your Core version with <code>-SNAPSHOT</code> appended, the WebGPU build of
 that Core release:</p>
 <div class="language-toml highlight"><span class="filename">gradle/libs.versions.toml</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">[libraries]</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">awake-backend-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend:webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"0.35.0-SNAPSHOT"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">awake-backend-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend:webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"0.36.0-SNAPSHOT"</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>Then add a browser target and the dependency:</p>
 <div class="language-kotlin highlight"><span class="filename">build.gradle.kts</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">kotlin</span><span class="w"> </span><span class="p">{</span>
@@ -2872,9 +2872,9 @@ that Core release:</p>
 more setup.</p>
 <div class="admonition warning">
 <p class="admonition-title">Keep WebGPU on your Core release</p>
-<p><code>0.35.0-SNAPSHOT</code> depends on every Core module at exactly <code>0.35.0</code> and
+<p><code>0.36.0-SNAPSHOT</code> depends on every Core module at exactly <code>0.36.0</code> and
 holds them there, so a build that also asks for a newer Core fails to resolve rather than mixing
-two, and an older Core in the build is moved up to <code>0.35.0</code>. Do not take the newest
+two, and an older Core in the build is moved up to <code>0.36.0</code>. Do not take the newest
 <code>-SNAPSHOT</code> in the snapshot repository instead: that one is built from <code>main</code> after the release,
 and it moves the <code>wasmJs</code> target onto Core snapshots.</p>
 </div>
@@ -2928,17 +2928,27 @@ screen turns neutral monochrome, so it suits any art direction, shows your game'
 small "Made with AwakeKt" line. Add <code>data-attribution="none"</code> to drop that line.</p>
 <h2 id="ship-the-texture-transcoder">Ship the texture transcoder</h2>
 <p>A project's cooked textures (<code>.ktx2</code>) are transcoded in the browser by Basis Universal, which the page
-loads from <code>basis/basis_transcoder.js</code> and <code>basis/basis_transcoder.wasm</code> beside <code>index.html</code>. Copy the
-two files from the <code>basis/</code> folder of the <code>texture-ktx-loader-wasm-js</code> klib of your Core version, so
-they match it. The klib is on Maven Central under <code>com.awakekt.awake.asset</code>, and in your Gradle cache
+loads from <code>basis/basis_transcoder.js</code> and <code>basis/basis_transcoder.wasm</code> beside <code>index.html</code>. Apply
+Core's Gradle plugin to your web module and it puts them there, for the development server and the
+production build:</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">plugins</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="n">id</span><span class="p">(</span><span class="s">"com.awakekt.awake.plugin.basis-transcoder"</span><span class="p">)</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="s">"&lt;your Core version&gt;"</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>It takes the files from the <code>texture-ktx-loader-wasm-js</code> klib your app already depends on and checks
+them against the digests Core pins, so the build fails if they aren't the release's own; keep the plugin
+on the same version as Core. An app that doesn't use KTX2 textures gets nothing added. The game template
+applies it already.</p>
+<p>If you can't apply the plugin, copy the two files by hand from the <code>basis/</code> folder of the klib of your
+Core version. The klib is on Maven Central under <code>com.awakekt.awake.asset</code>, and in your Gradle cache
 once the app has built:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>unzip<span class="w"> </span>texture-ktx-loader-wasm-js-&lt;version&gt;.klib<span class="w"> </span><span class="s1">'basis/basis_transcoder.js'</span><span class="w"> </span><span class="s1">'basis/basis_transcoder.wasm'</span><span class="w"> </span>-d<span class="w"> </span>src/wasmJsMain/resources
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>unzip<span class="w"> </span>texture-ktx-loader-wasm-js-&lt;version&gt;.klib<span class="w"> </span><span class="s1">'basis/basis_transcoder.js'</span><span class="w"> </span><span class="s1">'basis/basis_transcoder.wasm'</span><span class="w"> </span>-d<span class="w"> </span>src/wasmJsMain/resources
 </span></code></pre></div>
 <p>To check, open <code>basis/basis_transcoder.js</code> from the running page: it must be JavaScript, not an HTML
 404 page. Without the files the app still runs, logs "No Basis Universal transcoder" once with the
 path it tried, and loads each texture's mobile file or source image instead.</p>
 <h2 id="run-it">Run it</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./gradlew<span class="w"> </span>:your-module:wasmJsBrowserDevelopmentRun
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./gradlew<span class="w"> </span>:your-module:wasmJsBrowserDevelopmentRun
 </span></code></pre></div>
 <p>Open the address it prints in a browser with WebGPU. The loading screen suggests a current Chrome
 or Edge, or Safari 26 or later.</p>
