@@ -1,0 +1,1 @@
+- **0.35.0 was not published.** Its tag exists, but GitHub never gave its publish run's release job a macOS runner, so the job was cancelled before it ran and nothing reached Maven Central. 0.36.0 is the first published version with the changes listed under 0.35.0 and 0.34.0 below.
