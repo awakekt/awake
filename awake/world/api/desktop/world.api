@@ -32,6 +32,15 @@ public final class com/awakekt/awake/world/WorldCellCoord$Companion {
 	public final fun fromWorldPosition (FFF)Lcom/awakekt/awake/world/WorldCellCoord;
 }
 
+public final class com/awakekt/awake/world/WorldCellState : java/lang/Enum {
+	public static final field Leaving Lcom/awakekt/awake/world/WorldCellState;
+	public static final field Reading Lcom/awakekt/awake/world/WorldCellState;
+	public static final field Shown Lcom/awakekt/awake/world/WorldCellState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/world/WorldCellState;
+	public static fun values ()[Lcom/awakekt/awake/world/WorldCellState;
+}
+
 public final class com/awakekt/awake/world/WorldPartitionConfig {
 	public fun <init> ()V
 	public fun <init> (FFF)V
@@ -47,5 +56,49 @@ public final class com/awakekt/awake/world/WorldPartitionConfig {
 	public final fun getUnloadRadius ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/world/WorldPartitionDebugSource : com/awakekt/awake/core/diagnostics/DebugSource {
+	public static final field CELL_LINES I
+	public static final field CIRCLE_SEGMENTS I
+	public static final field Companion Lcom/awakekt/awake/world/WorldPartitionDebugSource$Companion;
+	public static final field ID Ljava/lang/String;
+	public static final field LIFT F
+	public fun <init> (Lcom/awakekt/awake/world/WorldPartitionProbe;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getTitle ()Ljava/lang/String;
+	public fun lines (Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+	public fun rows (Lcom/awakekt/awake/core/diagnostics/DebugRows;)V
+}
+
+public final class com/awakekt/awake/world/WorldPartitionDebugSource$Companion {
+	public final fun colorOf (Lcom/awakekt/awake/world/WorldCellState;)Lcom/awakekt/awake/core/color/Color;
+	public final fun getLEAVING ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getLOAD ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getREADING ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSHOWN ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getUNLOAD ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public final class com/awakekt/awake/world/WorldPartitionProbe {
+	public static final field INITIAL_CELLS I
+	public fun <init> (Lcom/awakekt/awake/world/WorldPartitionConfig;)V
+	public final fun addCell (IILcom/awakekt/awake/world/WorldCellState;)V
+	public final fun begin (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun cellXAt (I)I
+	public final fun cellZAt (I)I
+	public final fun getCellCount ()I
+	public final fun getConfig ()Lcom/awakekt/awake/world/WorldPartitionConfig;
+	public final fun getHasObserver ()Z
+	public final fun getLeaving ()I
+	public final fun getObserver ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getObserverCellX ()I
+	public final fun getObserverCellZ ()I
+	public final fun getObserverLocal ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getReading ()I
+	public final fun getShown ()I
+	public final fun lostObserver ()V
+	public final fun reset ()V
+	public final fun stateAt (I)Lcom/awakekt/awake/world/WorldCellState;
 }
 

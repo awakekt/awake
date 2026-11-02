@@ -107,3 +107,4 @@ and `onCellUnload` called.
 - [Terrain](terrain.md) for the heightmaps streamed cells are built from.
 - [Physics](physics.md) for colliders and `shiftOrigin`.
 - [Navigation](navigation.md) for streamed navigation grids.
+- [Debug tools](debug-tools.md) for the `cells` source: the observer's cell and each cell's state, on screen.

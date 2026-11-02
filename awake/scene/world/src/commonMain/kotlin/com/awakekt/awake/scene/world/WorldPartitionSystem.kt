@@ -12,7 +12,9 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.world.AsyncWorldCellStreamListener
 import com.awakekt.awake.world.CellContent
 import com.awakekt.awake.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellState
 import com.awakekt.awake.world.WorldPartitionConfig
+import com.awakekt.awake.world.WorldPartitionProbe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -49,6 +51,8 @@ interface WorldCellStreamListener {
  * - Hysteresis band ([WorldPartitionConfig.unloadRadius] > [WorldPartitionConfig.loadingRadius])
  *   to prevent thrashing (rapid loading/unloading) at cell boundaries.
  * - Zero-allocation query checks during stationary camera frames.
+ * - A [probe] of what it streams, kept every update, for tests and for
+ *   [WorldPartitionDebugSource][com.awakekt.awake.world.WorldPartitionDebugSource].
  *
  * @property config Configuration settings controlling cell size and load/unload radii.
  * @property streamListener Synchronous cell load and unload lifecycle listener.
@@ -80,6 +84,13 @@ class WorldPartitionSystem(
     /** Active cell coordinates currently resident within the loading radius. */
     val activeCells: Set<WorldCellCoord> get() = _activeCells
 
+    /**
+     * What this system streams as of its last update: the observer, its cell and each active cell's
+     * [WorldCellState]. Written every update whether or not anything reads it, with no allocation
+     * in steady frames; a debug view reads it rather than this system's own sets.
+     */
+    val probe: WorldPartitionProbe = WorldPartitionProbe(config)
+
     private var lastObserverPos: Vec3f = Vec3f(Float.NaN, Float.NaN, Float.NaN)
 
     /**
@@ -102,13 +113,17 @@ class WorldPartitionSystem(
         world.family<Transform, StreamObserver>().forEach { _, transform, _ ->
             if (observed == null) observed = transform.position
         }
-        val local = observed ?: return
+        val local = observed
+        if (local == null) {
+            probe.lostObserver()
+            return
+        }
         // Cell coordinates are absolute and outlive any shift, so the observer is converted up
         // rather than the grid being converted down: FloatingOriginSystem moving the world under
         // this observer must not move which cells are loaded. In a scene that never shifts the
         // origin is absent and this is the same position it always was.
         val origin = world.findWorldOrigin()
-        updateObserverPosition(world, if (origin == null) local else origin.toAbsolute(local, absoluteObserver))
+        stream(world, if (origin == null) local else origin.toAbsolute(local, absoluteObserver), local)
     }
 
     /** Scratch for the conversion above -- this runs every frame and allocates nothing. */
@@ -122,7 +137,10 @@ class WorldPartitionSystem(
      * [WorldOrigin]. The two are the same in a scene with no floating origin, which is every
      * scene that has not added [FloatingOriginSystem].
      */
-    fun updateObserverPosition(world: World, observerPosition: Vec3f) {
+    fun updateObserverPosition(world: World, observerPosition: Vec3f) = stream(world, observerPosition, observerPosition)
+
+    /** Streams around [observerPosition], absolute, which the world draws at [localPosition]. */
+    private fun stream(world: World, observerPosition: Vec3f, localPosition: Vec3f) {
         val size = config.cellSize
         val loadRadiusSq = config.loadingRadius * config.loadingRadius
         val unloadRadiusSq = config.unloadRadius * config.unloadRadius
@@ -152,7 +170,8 @@ class WorldPartitionSystem(
             }
         }
 
-        // 2. Identify out-of-range cells beyond unload radius
+        // 2. Identify out-of-range cells beyond unload radius, and record the rest in the probe
+        probe.begin(observerPosition, localPosition)
         val iterator = _activeCells.iterator()
         while (iterator.hasNext()) {
             val coord = iterator.next()
@@ -169,6 +188,13 @@ class WorldPartitionSystem(
                 loadJobs.remove(coord)?.cancel()
                 asyncStreamListener?.onCellUnload(world, coord)
                 streamListener?.onCellUnload(world, coord)
+            } else {
+                val state = when {
+                    coord in loadJobs -> WorldCellState.Reading
+                    distSq > loadRadiusSq -> WorldCellState.Leaving
+                    else -> WorldCellState.Shown
+                }
+                probe.addCell(coord.x, coord.z, state)
             }
         }
 
@@ -221,6 +247,7 @@ class WorldPartitionSystem(
             streamListener?.onCellUnload(world, coord)
         }
         _activeCells.clear()
+        probe.reset()
         lastObserverPos = Vec3f(Float.NaN, Float.NaN, Float.NaN)
     }
 }

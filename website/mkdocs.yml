@@ -74,6 +74,7 @@ nav:
           - Cameras and controls: guides/cameras-and-controls.md
           - Input: guides/input.md
           - Launch parameters: guides/launch-parameters.md
+          - Debug tools: guides/debug-tools.md
           - Math: guides/math.md
       - Rendering:
           - Lights and shadows: guides/lights-and-shadows.md

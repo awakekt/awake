@@ -112,7 +112,7 @@ class FirstSceneDocsSampleTest {
 }
 
 /** Runs a scene's systems with no GPU: the scene renderer gets a preparer that draws nothing. */
-internal class DrawlessRenderer :
+internal open class DrawlessRenderer :
     NoopRenderer(),
     GpuDrawPreparationSource {
     override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
