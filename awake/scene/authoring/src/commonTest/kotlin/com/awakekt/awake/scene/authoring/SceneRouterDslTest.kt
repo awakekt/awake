@@ -5,11 +5,17 @@
  */
 package com.awakekt.awake.scene.authoring
 
+import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.Text
+import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.input.pointer.pointerCursor
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
@@ -26,11 +32,15 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.dsl.cameraEntity
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneRouterRuntime
+import com.awakekt.awake.scene.runtime.pointerCursorImageOf
 import com.awakekt.awake.scene.runtime.pointerCursorOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class SceneRouterDslTest {
@@ -117,6 +127,59 @@ class SceneRouterDslTest {
 
         routed.ready(RouterRecordingRenderer())
         assertEquals(PointerCursor.Default, routedCursor())
+    }
+
+    @Test
+    fun pointerCursorImageOfPrefersTheHoveredNodesImageOverTheScenesAndFallsBackToIt() = runTest {
+        val nodeImage = CursorImage(ByteArray(4 * 4 * CursorImage.PIXEL_STRIDE), 4, 4)
+        val sceneImage = CursorImage(ByteArray(2 * 2 * CursorImage.PIXEL_STRIDE), 2, 2)
+        val game = app {
+            scene("single") {
+                cameraEntity("camera")
+                ui { Box(Modifier.size(40.dp).pointerCursor(nodeImage)) }
+            }
+        }
+        val image = pointerCursorImageOf(game)
+        val hover = { x: Float ->
+            game.input.setPointer(false, x, 10f)
+            game.input.updateSnapshot()
+            // Twice: pointer input is dispatched against the previous frame's placed tree.
+            repeat(2) { game.update(0.016f, 100f, 100f) }
+        }
+        game.ready(RouterRecordingRenderer())
+
+        hover(10f)
+        assertSame(nodeImage, image(), "over the node: its image")
+
+        hover(90f)
+        assertNull(image(), "off the node with no scene image: the system shape")
+
+        game.requireService<SceneAppLifecycleRuntime>().cursorImage = sceneImage
+        assertSame(sceneImage, image(), "off the node: the scene's image")
+
+        hover(10f)
+        assertSame(nodeImage, image(), "the node's image beats the scene's")
+
+        hover(90f)
+        assertSame(sceneImage, image(), "leaving the node falls back to the scene's image")
+    }
+
+    @Test
+    fun pointerCursorImageOfResolvesRoutedAppsBeforeAndAfterReady() = runTest {
+        val routed = app {
+            scenes {
+                route("login") { cameraEntity("camera") }
+            }
+        }
+        val image = pointerCursorImageOf(routed)
+        assertNull(image(), "before ready(), no scene is active")
+
+        routed.ready(RouterRecordingRenderer())
+        assertNull(image())
+
+        val sceneImage = CursorImage(ByteArray(CursorImage.PIXEL_STRIDE), 1, 1)
+        routed.requireService<SceneRouterRuntime>().sceneRuntime.cursorImage = sceneImage
+        assertSame(sceneImage, image())
     }
 }
 

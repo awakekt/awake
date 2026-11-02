@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.application
 
 import com.awakekt.awake.asset.shaders.RenderPlan
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
@@ -29,6 +30,7 @@ fun runVulkanDesktopGame(
     beforeFrame: () -> Unit = {},
     afterLoop: () -> Unit = {},
     cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
 ) {
     runVulkanDesktopGame(
         game = game,
@@ -42,6 +44,7 @@ fun runVulkanDesktopGame(
         beforeFrame = beforeFrame,
         afterLoop = afterLoop,
         cursor = cursor,
+        cursorImage = cursorImage,
     )
 }
 
@@ -58,6 +61,7 @@ fun runVulkanDesktopGame(
     beforeFrame: () -> Unit = {},
     afterLoop: () -> Unit = {},
     cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
 ) {
     runVulkanDesktopGame(
         game = game,
@@ -66,6 +70,7 @@ fun runVulkanDesktopGame(
         beforeFrame = beforeFrame,
         afterLoop = afterLoop,
         cursor = cursor,
+        cursorImage = cursorImage,
     )
 }
 
@@ -86,6 +91,8 @@ fun runVulkanDesktopGame(
  * @param beforeFrame Runs after input is read and before the frame is updated.
  * @param afterLoop Runs once the loop ends, before the engine is disposed.
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the cursor alone.
+ * @param cursorImage A custom cursor image to show this frame, overriding [cursor] while non-null;
+ * pair with `pointerCursorImageOf(game)`. A capture run skips it, as it skips [cursor].
  * @param limits How many frames to play, and whether to capture the last; see [DesktopRunLimits].
  * @throws IllegalStateException If [game] asks for a window backend other than Vulkan or the
  * default, or a limited run's engine never starts.
@@ -102,6 +109,7 @@ fun runVulkanDesktopGame(
     // existing caller keeps its current zero-cursor-management behavior; a caller opts in by
     // returning its own UiContext's `finishFrame().effects.cursor` each frame.
     cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
     limits: DesktopRunLimits = DesktopRunLimits.fromSystemProperties(),
 ) {
     check(
@@ -129,9 +137,76 @@ fun runVulkanDesktopGame(
             afterLoop()
         },
         cursor = cursor,
+        cursorImage = cursorImage,
         frames = limits.frames,
         onDpi = application::setDpi,
     )
     // A limited run is a check: frames played by an engine that never started prove nothing.
     if (limits.frames != null) check(started) { notStarted(application) }
+}
+
+/** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    plan: RenderPlan,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+) {
+    runVulkanDesktopGame(
+        game = game,
+        plan = plan,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+    )
+}
+
+/** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    applicationFactory: (AwakeAppLifecycle) -> VulkanEngine,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+) {
+    runVulkanDesktopGame(
+        game = game,
+        applicationFactory = applicationFactory,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+    )
+}
+
+/** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    application: VulkanEngine,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    limits: DesktopRunLimits = DesktopRunLimits.fromSystemProperties(),
+) {
+    runVulkanDesktopGame(
+        game = game,
+        application = application,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+        limits = limits,
+    )
 }

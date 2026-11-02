@@ -172,6 +172,7 @@ class ComposeHost(
             effects = PlatformEffects(
                 requestKeyboard = textFocused,
                 cursor = dispatcher.hoveredCursor,
+                cursorImage = dispatcher.hoveredCursorImage,
                 passwordKeyboard = passwordFocused,
                 clipboardText = clipboardText,
             ),

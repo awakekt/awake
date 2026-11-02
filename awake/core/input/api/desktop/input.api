@@ -169,6 +169,22 @@ public final class com/awakekt/awake/core/input/ClipboardCommand : java/lang/Enu
 	public static fun values ()[Lcom/awakekt/awake/core/input/ClipboardCommand;
 }
 
+public final class com/awakekt/awake/core/input/CursorImage {
+	public static final field Companion Lcom/awakekt/awake/core/input/CursorImage$Companion;
+	public static final field PIXEL_STRIDE I
+	public fun <init> ([BIIII)V
+	public synthetic fun <init> ([BIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHeight ()I
+	public final fun getHotspotX ()I
+	public final fun getHotspotY ()I
+	public final fun getRgba ()[B
+	public final fun getWidth ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/CursorImage$Companion {
+}
+
 public final class com/awakekt/awake/core/input/ExtraModifiers : java/lang/Enum {
 	public static final field Allow Lcom/awakekt/awake/core/input/ExtraModifiers;
 	public static final field Block Lcom/awakekt/awake/core/input/ExtraModifiers;

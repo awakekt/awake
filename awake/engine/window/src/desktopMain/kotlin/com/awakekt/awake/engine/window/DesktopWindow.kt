@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.host.DesktopFrameLoop
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
@@ -28,6 +29,8 @@ private const val GLFW_NO_API = 0
  * @param beforeFrame Runs after input is read and before [onFrame].
  * @param afterLoop Runs once the loop ends, before [onDispose].
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave it alone.
+ * @param cursorImage A custom cursor image to show this frame, overriding [cursor] while non-null;
+ * `null` (or a provider returning `null`) falls back to [cursor]. See [applyCustomCursor].
  * @param frames How many frames to run before ending the loop as if the window had closed, such as
  * a smoke check's [DesktopRunLimits.frames]; null runs until the window closes.
  * @param onDpi Hears the real dots per inch of the monitor the window is on, after [onCreate] and
@@ -43,6 +46,7 @@ fun runDesktopWindow(
     beforeFrame: () -> Unit = {},
     afterLoop: () -> Unit = {},
     cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
     frames: Int? = null,
     onDpi: (dpi: Float) -> Unit = {},
 ) {
@@ -63,7 +67,7 @@ fun runDesktopWindow(
         try {
             onCreate(window)
             val dpi = MonitorDpi(window, onDpi)
-            runFrames(window, game, onFrame, pollInput, beforeFrame = { dpi.check(); beforeFrame() }, cursor, frames)
+            runFrames(window, game, onFrame, pollInput, beforeFrame = { dpi.check(); beforeFrame() }, cursor, cursorImage, frames)
         } finally {
             afterLoop()
             onDispose()
@@ -74,6 +78,36 @@ fun runDesktopWindow(
     }
 }
 
+/** [runDesktopWindow] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runDesktopWindow(
+    game: AwakeAppLifecycle,
+    onCreate: (window: Long) -> Unit,
+    onFrame: (deltaSeconds: Float) -> Unit,
+    onDispose: () -> Unit,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    frames: Int? = null,
+    onDpi: (dpi: Float) -> Unit = {},
+) {
+    runDesktopWindow(
+        game = game,
+        onCreate = onCreate,
+        onFrame = onFrame,
+        onDispose = onDispose,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+        frames = frames,
+        onDpi = onDpi,
+    )
+}
+
 @Suppress("LongParameterList")
 private fun runFrames(
     window: Long,
@@ -82,6 +116,7 @@ private fun runFrames(
     pollInput: (window: Long, input: Input) -> Unit,
     beforeFrame: () -> Unit,
     cursor: (() -> PointerCursor)?,
+    cursorImage: (() -> CursorImage?)?,
     frames: Int?,
 ) {
     var played = 0
@@ -98,7 +133,9 @@ private fun runFrames(
             onFrame(deltaTime.toFloat())
             played++
         }
-        cursor?.let { applyUiCursor(window, it()) }
+        // A custom image, when the app asks for one this frame, wins over the system shape.
+        val image = cursorImage?.invoke()
+        if (image != null) applyCustomCursor(window, image) else cursor?.let { applyUiCursor(window, it()) }
     }
 }
 

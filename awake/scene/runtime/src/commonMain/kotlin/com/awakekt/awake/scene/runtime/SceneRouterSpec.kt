@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
@@ -261,6 +262,20 @@ class SceneRouterRuntime internal constructor(
      */
     val cursor: PointerCursor
         get() = currentRuntime?.cursor ?: PointerCursor.Default
+
+    /**
+     * The custom cursor image the active scene's application asks for, or `null` to fall back to the
+     * system [cursor] shape, and `null` before a scene is ready.
+     */
+    val cursorImage: CursorImage?
+        get() = currentRuntime?.cursorImage
+
+    /**
+     * The cursor image a host shows: the one a node hovered in the active scene's UI asked for, else
+     * that scene's [cursorImage], else `null` for the system [cursor] shape.
+     */
+    val effectiveCursorImage: CursorImage?
+        get() = currentRuntime?.effectiveCursorImage
 
     override suspend fun ready(renderer: Renderer) {
         this.renderer = renderer

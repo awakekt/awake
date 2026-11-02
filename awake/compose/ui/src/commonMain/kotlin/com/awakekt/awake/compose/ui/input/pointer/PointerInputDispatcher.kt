@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.node.activeDismissableLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import kotlin.math.abs
 
@@ -254,6 +255,26 @@ class PointerInputDispatcher(
             return PointerCursor.Default
         }
 
+    /**
+     * The cursor image the innermost hovered cursor request asks for, or null when that request is a
+     * system shape or nothing hovered asks for one.
+     *
+     * The same innermost-wins scan as [hoveredCursor], over the same requests: a node that asks for a
+     * shape inside one that asks for an image shows the shape, so this is null there, and the
+     * scene's own image, if it has one, is the host's fallback. An image node inside a shape node
+     * shows the image, with [hoveredCursor] still reporting the outer shape for a host that cannot
+     * draw an image.
+     */
+    val hoveredCursorImage: CursorImage?
+        get() {
+            for (i in hovered.indices.reversed()) {
+                val node = hovered[i]
+                if (node.pointerCursor == null && node.pointerCursorImage == null) continue
+                if (node.linkHolds(node.pointerCursorDepth, hoverX, hoverY)) return node.pointerCursorImage
+            }
+            return null
+        }
+
     private fun updateHover(root: LayoutNode, x: Int, y: Int) {
         hoverX = x
         hoverY = y
@@ -491,7 +512,7 @@ class PointerInputDispatcher(
 
     /** Whether the cursor request, if there is one, covers ([x], [y]) -- see [linkHolds]. */
     private fun LayoutNode.holdsCursor(x: Int, y: Int): Boolean =
-        pointerCursor != null && linkHolds(pointerCursorDepth, x, y)
+        (pointerCursor != null || pointerCursorImage != null) && linkHolds(pointerCursorDepth, x, y)
 
     /** Whether any focus link covers ([x], [y]) -- see [linkHolds]. */
     private fun LayoutNode.holdsFocusTarget(x: Int, y: Int): Boolean {

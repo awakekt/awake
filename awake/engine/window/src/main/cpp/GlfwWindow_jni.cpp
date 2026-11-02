@@ -506,6 +506,61 @@ Java_com_awakekt_awake_engine_window_GlfwWindow_glfwSetCursorShape(
 }
 
 
+// Custom image cursors, the same cache reasoning as glfwSetCursorShape above but keyed by the
+// caller's own stable id per image (GlfwCursor.kt assigns one per CursorImage instance), since
+// pixels rather than a shape constant identify the cursor. glfwCreateCursor copies the pixels, so
+// the marshalling buffer is released as soon as this returns. Never freed, as above
+// (glfwTerminate() takes every outstanding GLFWcursor* with it).
+static std::unordered_map<int32_t, GLFWcursor*> g_imageCursorCache;
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_engine_window_GlfwWindow_glfwSetCursorImage(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window,
+        jint key,
+        jbyteArray pixels,
+        jint width,
+        jint height,
+        jint hotspot_x,
+        jint hotspot_y) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+    int32_t key_val = static_cast<int32_t>(key);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwSetCursorImage: window not initialized");
+        return;
+    }
+
+    auto cached = g_imageCursorCache.find(key_val);
+    GLFWcursor* cursor;
+    if (cached != g_imageCursorCache.end()) {
+        cursor = cached->second;
+    } else {
+        const int32_t w = static_cast<int32_t>(width);
+        const int32_t h = static_cast<int32_t>(height);
+        const jsize expected = static_cast<jsize>(w) * static_cast<jsize>(h) * 4;
+        if (w <= 0 || h <= 0 || env->GetArrayLength(pixels) < expected) {
+            throw_illegal_state(env, "glfwSetCursorImage: pixel buffer smaller than width*height*4");
+            return;
+        }
+        std::vector<unsigned char> buffer(static_cast<size_t>(expected));
+        env->GetByteArrayRegion(pixels, 0, expected, reinterpret_cast<jbyte*>(buffer.data()));
+        GLFWimage image;
+        image.width = w;
+        image.height = h;
+        image.pixels = buffer.data();
+        // null when the platform refuses the image; glfwSetCursor(window, null) then shows the
+        // default arrow, the same fallback a missing standard shape gets above.
+        cursor = glfwCreateCursor(&image, static_cast<int>(hotspot_x), static_cast<int>(hotspot_y));
+        g_imageCursorCache[key_val] = cursor;
+    }
+    glfwSetCursor(reinterpret_cast<GLFWwindow*>(window_ptr), cursor);
+}
+
+
 extern "C" JNIEXPORT jint JNICALL
 Java_com_awakekt_awake_engine_window_GlfwWindow_glfwGetWindowAttrib(
         JNIEnv* env,

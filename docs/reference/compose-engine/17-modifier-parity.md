@@ -68,7 +68,7 @@ Landed above. Not shipped, with reasons:
 | `transformable` | **Defer.** Pointer capture supports concurrent contacts, but platform touch adaptation and a transform contract are not yet designed |
 | `nestedScroll` | **Defer.** Wants a design; no blocked recipe needs it |
 | `indication` | **N/A.** Compose's ripple abstraction. Styling here goes through `Style`/`InteractionSource` |
-| `pointerHoverIcon` | **Defer.** Needs a platform cursor API that does not exist yet |
+| `pointerHoverIcon` | **Done, renamed.** `Modifier.pointerCursor(PointerCursor)` asks for a system shape while hovered, and `Modifier.pointerCursor(CursorImage)` for a custom image with a hotspot; the innermost request wins and a node makes one, the later of its two. The frame reports them as `PlatformEffects.cursor` and `PlatformEffects.cursorImage`. A host applies a hovered node's image, else the scene's own `SceneAppLifecycleRuntime.cursorImage` (via `pointerCursorImageOf(game)`), over the shape: the desktop host through GLFW, the browser canvas as a CSS `url(data:image/png;base64,...) x y, auto` cursor |
 
 ### Batch 4 — focus, position, semantics (done 2026-08-23)
 

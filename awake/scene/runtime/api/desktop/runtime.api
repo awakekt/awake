@@ -151,10 +151,13 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getCanvasSlotContent ()Ljava/util/Map;
 	public final fun getCanvasStrings ()Lcom/awakekt/awake/core/localization/Strings;
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
+	public final fun getCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getDrawsSceneCanvas ()Z
+	public final fun getEffectiveCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getFps ()F
 	public final fun getHostInputState ()Lcom/awakekt/awake/core/input/HostInputState;
+	public final fun getHoveredCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getLastInputDevice ()Lcom/awakekt/awake/core/input/InputDevice;
 	public final fun getPerfStatsEnabled ()Z
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
@@ -198,6 +201,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun setCanvasScale (F)V
 	public final fun setCanvasSlotContent (Ljava/util/Map;)V
 	public final fun setCanvasStrings (Lcom/awakekt/awake/core/localization/Strings;)V
+	public final fun setCursorImage (Lcom/awakekt/awake/core/input/CursorImage;)V
 	public final fun setDrawsSceneCanvas (Z)V
 	public final fun setPerfStatsEnabled (Z)V
 	public final fun setShowTouchControls (Z)V
@@ -213,6 +217,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntimeKt {
 	public static final fun defaultInfrastructureSystems (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Ljava/util/List;
 	public static synthetic fun defaultInfrastructureSystems$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun pointerCursorImageOf (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lkotlin/jvm/functions/Function0;
 	public static final fun pointerCursorOf (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lkotlin/jvm/functions/Function0;
 }
 
@@ -456,6 +461,8 @@ public final class com/awakekt/awake/scene/runtime/SceneRouterRuntime : com/awak
 	public final fun getActiveSceneId ()Ljava/lang/String;
 	public final fun getActiveSceneLabel ()Ljava/lang/String;
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
+	public final fun getCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
+	public final fun getEffectiveCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getSceneRuntime ()Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;
 	public final fun getScenes ()Ljava/util/List;
 	public fun pause ()V

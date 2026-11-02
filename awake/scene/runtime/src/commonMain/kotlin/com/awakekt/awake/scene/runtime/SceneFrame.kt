@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 
 /**
@@ -24,4 +25,5 @@ internal data class SceneFrame(
     val requestKeyboard: Boolean,
     val passwordKeyboard: Boolean = false,
     val clipboardText: String? = null,
+    val cursorImage: CursorImage? = null,
 )

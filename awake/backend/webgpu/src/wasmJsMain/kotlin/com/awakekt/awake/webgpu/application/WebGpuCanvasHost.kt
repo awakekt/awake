@@ -8,6 +8,7 @@
 package com.awakekt.awake.webgpu.application
 
 import com.awakekt.awake.asset.shaders.RenderPlan
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.LogLevel
@@ -145,6 +146,19 @@ internal fun startWebGpuGame(
     renderScale: (() -> Float)?,
     applicationFactory: () -> WebGpuEngine,
 ) {
+    startWebGpuGame(canvas, cursor, maxPixelRatio, renderScale, cursorImage = null, applicationFactory)
+}
+
+/** [startWebGpuGame] with [cursorImage], the custom cursor image the canvas shows over [cursor]'s shape. */
+@Suppress("LongParameterList")
+internal fun startWebGpuGame(
+    canvas: HTMLCanvasElement,
+    cursor: (() -> PointerCursor)?,
+    maxPixelRatio: () -> Float?,
+    renderScale: (() -> Float)?,
+    cursorImage: (() -> CursorImage?)?,
+    applicationFactory: () -> WebGpuEngine,
+) {
     check(browserExposesWebGpu()) {
         "WebGPU is unavailable in this browser or device. " +
             "Use a current Chrome/Edge build with WebGPU enabled and a compatible adapter."
@@ -168,6 +182,7 @@ internal fun startWebGpuGame(
         // the failure every frame.
         isStopped = { runtimeFailure != null },
         cursor = cursor,
+        cursorImage = cursorImage,
         maxPixelRatio = maxPixelRatio,
         initBackend = { _, width, height ->
             val resolvedContext = createCanvasGpuContext(

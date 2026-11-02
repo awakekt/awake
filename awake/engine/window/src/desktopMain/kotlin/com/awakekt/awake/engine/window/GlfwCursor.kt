@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.window
 
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.window.GlfwWindow
 
@@ -43,4 +44,18 @@ internal fun PointerCursor.toGlfwCursorShape(): Int = when (this) {
  * [runDesktopWindow]'s `cursor` parameter. */
 internal fun applyUiCursor(window: Long, cursor: PointerCursor) {
     GlfwWindow.glfwSetCursorShape(window, cursor.toGlfwCursorShape())
+}
+
+/** Stable id per [CursorImage] instance (the type has identity equality), so the native side caches
+ * one GLFW cursor per image and a per-frame call never rebuilds it. Only the desktop loop thread
+ * touches this, the same single-threaded assumption [applyUiCursor]'s native cache rests on. */
+private val customCursorIds = HashMap<CursorImage, Int>()
+private var nextCustomCursorId = 1
+
+/** The desktop application point for a custom image [cursor] on [window], the counterpart to
+ * [applyUiCursor] for the system shapes. Reuses the native-cached cursor for an image already shown
+ * (see [GlfwWindow.glfwSetCursorImage]). */
+internal fun applyCustomCursor(window: Long, cursor: CursorImage) {
+    val key = customCursorIds.getOrPut(cursor) { nextCustomCursorId++ }
+    GlfwWindow.glfwSetCursorImage(window, key, cursor.rgba, cursor.width, cursor.height, cursor.hotspotX, cursor.hotspotY)
 }
