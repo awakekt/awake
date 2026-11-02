@@ -106,6 +106,22 @@ public final class com/awakekt/awake/navigation/grid/NavCellSummaryKt {
 	public static final fun summarize (Lcom/awakekt/awake/navigation/grid/NavGridTile;)Lcom/awakekt/awake/navigation/grid/NavCellSummary;
 }
 
+public final class com/awakekt/awake/navigation/grid/NavDebugSource : com/awakekt/awake/core/diagnostics/DebugSource {
+	public static final field Companion Lcom/awakekt/awake/navigation/grid/NavDebugSource$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun <init> (Lcom/awakekt/awake/navigation/grid/NavGridTile;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/navigation/grid/NavGridTile;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/navigation/grid/StreamedNavGrid;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/navigation/grid/StreamedNavGrid;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getTitle ()Ljava/lang/String;
+	public fun lines (Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+	public fun rows (Lcom/awakekt/awake/core/diagnostics/DebugRows;)V
+}
+
+public final class com/awakekt/awake/navigation/grid/NavDebugSource$Companion {
+}
+
 public abstract interface class com/awakekt/awake/navigation/grid/NavField {
 	public fun getOriginX ()F
 	public fun getOriginZ ()F
@@ -195,6 +211,15 @@ public final class com/awakekt/awake/navigation/grid/NavGridTileKt {
 	public static synthetic fun bakeNavGrid$default (Lcom/awakekt/awake/asset/terrain/Heightmap;FFILjava/lang/Object;)Lcom/awakekt/awake/navigation/grid/NavGridTile;
 	public static final fun bakeNavGridCell (Lcom/awakekt/awake/asset/terrain/Heightmap;IFF)Lcom/awakekt/awake/navigation/grid/NavGridTile;
 	public static synthetic fun bakeNavGridCell$default (Lcom/awakekt/awake/asset/terrain/Heightmap;IFFILjava/lang/Object;)Lcom/awakekt/awake/navigation/grid/NavGridTile;
+}
+
+public abstract interface class com/awakekt/awake/navigation/grid/NavGroundHeight {
+	public static final field Companion Lcom/awakekt/awake/navigation/grid/NavGroundHeight$Companion;
+	public abstract fun heightAt (FF)F
+}
+
+public final class com/awakekt/awake/navigation/grid/NavGroundHeight$Companion {
+	public final fun getFLAT ()Lcom/awakekt/awake/navigation/grid/NavGroundHeight;
 }
 
 public final class com/awakekt/awake/navigation/grid/StreamedNavGrid : com/awakekt/awake/navigation/NavMesh {

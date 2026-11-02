@@ -73,7 +73,9 @@ Tiles are immutable once baked, which is what lets a search read one off the fra
 ## Debugging
 
 `navGridDebugLines` returns world-space lines: a cross on every blocked sample, and each agent's
-route if you pass `routes`.
+route if you pass `routes`. `NavDebugSource` draws the same lines through the debug registry, turned
+on with `--debug=nav`, and counts walkable and blocked samples on the debug panel; see
+[Debug tools](debug-tools.md#the-navigation-source).
 
 ```kotlin title="Kotlin"
 --8<-- "awake/navigation/src/desktopTest/kotlin/com/awakekt/awake/navigation/NavigationDocsSampleTest.kt:debug-lines"

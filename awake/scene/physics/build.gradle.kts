@@ -38,6 +38,8 @@ kotlin {
             // For LineSegment only, so collider wireframes can be built here rather than in a
             // sample -- the same reason :awake:scene:navigation depends on it.
             api(project(":awake:engine:render:contract"))
+            // PhysicsDebugSource is a DebugSource.
+            api(project(":awake:core:diagnostics"))
         }
         named("androidDeviceTest") {
             dependencies {

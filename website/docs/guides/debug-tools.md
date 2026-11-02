@@ -5,6 +5,8 @@
 <div class="awake-badges" markdown>
 <span class="awake-badge">module: <code>awake:core:diagnostics</code></span>
 <span class="awake-badge">module: <code>awake:world</code></span>
+<span class="awake-badge">module: <code>awake:scene:physics</code></span>
+<span class="awake-badge">module: <code>awake:navigation</code></span>
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge awake-badge--ok">WebGPU</span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
@@ -121,6 +123,58 @@ height would show them edge on. Under a floating origin, cells are counted in ab
 drawn where the world currently is. A cell only reads when the system has an
 `asyncStreamListener` and a `loadScope`; with a frame-thread listener every cell loads at once.
 
+## The physics source
+
+`PhysicsDebugSource(world)`, in `awake:scene:physics`, shows the physics bodies of a `World`, with the
+id `physics`:
+
+```kotlin title="Kotlin"
+registry.register(PhysicsDebugSource(world))
+```
+
+| Row | What it counts |
+| --- | --- |
+| Static, Dynamic, Kinematic | `PhysicsBody` components with each motion type. |
+| Sensors | Bodies that are sensors (triggers). |
+| Unbuilt | Bodies with no backing body yet, in amber when it isn't 0. A body is built the next time `PhysicsSystem` runs, so one that stays unbuilt has no `PhysicsWorld`. |
+
+Its lines are each collider at its entity's `Transform`, the same ones `physicsDebugLines(world)`
+returns: a box's 12 edges, three rings of 16 lines for a sphere, two rings and five lines for a capsule,
+a heightfield's footprint at its lowest sample, and the box around a mesh's or convex hull's points.
+Static bodies are blue (`PhysicsDebugSource.STATIC`), dynamic ones green (`DYNAMIC`) and kinematic ones
+amber (`KINEMATIC`).
+
+## The navigation source
+
+`NavDebugSource`, in `awake:navigation`, shows a navigation grid and the routes agents walk on it, with
+the id `nav`. Make it over one baked `NavGridTile` or over a `StreamedNavGrid`:
+
+```kotlin title="Kotlin"
+val ground = NavGroundHeight { x, z -> heightmap.heightAtWorld(x, z).let { if (it.isNaN()) 0f else it } }
+registry.register(NavDebugSource(streamedGrid, ground) { routes })
+```
+
+`ground` lays the lines on the terrain; `NavGroundHeight.FLAT`, the default, is level ground at `y = 0`.
+The last argument returns the routes to draw, as `AgentRoute`s. The navigation module can't see who
+walks a route, so the game keeps one list and changes it when a route changes; the source reads it
+once a frame.
+
+| Row | What it counts |
+| --- | --- |
+| Cells | Resident cells of a streamed grid. A single tile has no such row. |
+| Walkable | Navigation samples an agent can stand on, over every resident cell. |
+| Blocked | Samples an agent can't stand on. |
+| Routes | Agents whose route has at least one point. |
+
+| Line | Colour |
+| --- | --- |
+| A cross on each blocked sample, 0.05 m over the ground | Red (`BLOCKED_COLOR`); on a streamed grid, alternating with orange (`BLOCKED_COLOR_ALTERNATE`) by cell, so a tile placed at the wrong cell breaks the pattern |
+| Each resident cell's outline, 8 lines an edge so it follows the ground | Blue |
+| Each route, 0.35 m over the ground, ending in a larger cross on its goal | One of `ROUTE_COLORS`, picked by the agent's entity id |
+
+They are the lines `navGridDebugLines` returns for the same grid and routes. A streamed grid's cells
+are read again only after a tile loads or unloads.
+
 ## Zero cost when off
 
 - A source whose id is not in the flags is never added to the registry, so no host ever calls it.
@@ -135,5 +189,7 @@ With no renderer, headless or on a server, the hosts do nothing and the probes s
 ## See also
 
 - [Large worlds](large-worlds.md) for `WorldPartitionSystem` and its radii.
+- [Physics](physics.md) for bodies, shapes and `PhysicsSystem`.
+- [Navigation](navigation.md) for baking a grid and streaming it.
 - [Launch parameters](launch-parameters.md) for reading flags on every platform.
 - [Game UI](game-ui.md) for the canvas the panel is drawn on.
