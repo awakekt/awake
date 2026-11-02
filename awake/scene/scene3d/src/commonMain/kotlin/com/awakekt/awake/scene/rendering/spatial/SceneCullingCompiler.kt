@@ -26,6 +26,7 @@ import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.CullResult
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
+import kotlin.math.abs
 import kotlin.math.max
 
 private const val HALF = 0.5f
@@ -181,6 +182,19 @@ internal class SceneCullingCompiler(
         probe.record(result, bounds.writeWorldBounds(transform, scratchBounds))
     }
 
+    /**
+     * Records, for the [probe], each copy of an instanced mesh: they are drawn every frame without
+     * being culled, so each is [CullResult.NotCulled]. Does nothing without a probe or bounds.
+     */
+    fun recordNotCulled(localBounds: Aabb?, instances: List<Mat4>) {
+        val probe = probe ?: return
+        if (localBounds == null) return
+        for (i in instances.indices) {
+            writeWorldBounds(localBounds, instances[i], scratchBounds)
+            probe.record(CullResult.NotCulled, scratchBounds)
+        }
+    }
+
     /** Whether the frame's caster volume admits the entity, and it is not below the size cutoff. */
     private fun reachesShadowMaps(entityId: Int, transform: Transform, bounds: MeshBounds, culling: FrameCulling): Boolean {
         val casters = culling.casters ?: return false
@@ -261,4 +275,22 @@ internal class SceneCullingCompiler(
         ) ?: return false
         return occluderBounds.any { isOccludedBy(candidateBounds, it) }
     }
+}
+
+/** [local] moved by [matrix], written into [into]'s corners: `Aabb.transformed` without the new box. */
+private fun writeWorldBounds(local: Aabb, matrix: Mat4, into: Aabb) {
+    val cx = (local.min.x + local.max.x) * HALF
+    val cy = (local.min.y + local.max.y) * HALF
+    val cz = (local.min.z + local.max.z) * HALF
+    val ex = (local.max.x - local.min.x) * HALF
+    val ey = (local.max.y - local.min.y) * HALF
+    val ez = (local.max.z - local.min.z) * HALF
+    val centerX = matrix.m00 * cx + matrix.m01 * cy + matrix.m02 * cz + matrix.m03
+    val centerY = matrix.m10 * cx + matrix.m11 * cy + matrix.m12 * cz + matrix.m13
+    val centerZ = matrix.m20 * cx + matrix.m21 * cy + matrix.m22 * cz + matrix.m23
+    val extentX = abs(matrix.m00) * ex + abs(matrix.m01) * ey + abs(matrix.m02) * ez
+    val extentY = abs(matrix.m10) * ex + abs(matrix.m11) * ey + abs(matrix.m12) * ez
+    val extentZ = abs(matrix.m20) * ex + abs(matrix.m21) * ey + abs(matrix.m22) * ez
+    into.min.set(centerX - extentX, centerY - extentY, centerZ - extentZ)
+    into.max.set(centerX + extentX, centerY + extentY, centerZ + extentZ)
 }

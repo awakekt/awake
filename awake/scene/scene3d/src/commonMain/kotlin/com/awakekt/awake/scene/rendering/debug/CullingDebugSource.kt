@@ -20,6 +20,7 @@ import com.awakekt.awake.core.math.Vec3f
  * - **Grey:** outside the camera's view.
  * - **Red:** in view, but hidden behind an occluder.
  * - **Violet:** rejected by the camera, but still drawn into the shadow maps.
+ * - **Cyan:** a copy of an instanced mesh, drawn every frame without being culled.
  *
  * While [CullingProbe.frozen] is on, the frozen view's frustum is drawn in yellow.
  *
@@ -43,6 +44,7 @@ class CullingDebugSource(
         out.row("outside view", probe.outsideView)
         out.row("occluded", probe.occluded)
         out.row("shadow only", probe.shadowOnly)
+        if (probe.notCulled > 0) out.row("not culled (instanced)", probe.notCulled)
         out.row("frozen (F9)", if (probe.frozen) YES else NO)
         if (probe.boxesNotKept > 0) out.row("boxes not shown", probe.boxesNotKept, warn = true)
     }
@@ -87,6 +89,9 @@ class CullingDebugSource(
         /** Meshes drawn into the shadow maps only. */
         val SHADOW_ONLY: Color = Color(r = 0.65f, g = 0.4f, b = 0.95f, a = 1f)
 
+        /** Copies of instanced meshes, which are never culled. */
+        val NOT_CULLED: Color = Color(r = 0.2f, g = 0.85f, b = 0.95f, a = 1f)
+
         /** The frozen view's frustum. */
         val FROZEN_VIEW: Color = Color(r = 1f, g = 0.9f, b = 0.1f, a = 1f)
 
@@ -97,6 +102,7 @@ class CullingDebugSource(
                 CullResult.OutsideView -> OUTSIDE_VIEW
                 CullResult.Occluded -> OCCLUDED
                 CullResult.ShadowOnly -> SHADOW_ONLY
+                CullResult.NotCulled -> NOT_CULLED
             }
 
         private const val YES = "yes"

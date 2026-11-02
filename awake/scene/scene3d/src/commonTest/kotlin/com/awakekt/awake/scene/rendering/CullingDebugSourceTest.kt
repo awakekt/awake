@@ -22,6 +22,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.debug.CullResult
 import com.awakekt.awake.scene.rendering.debug.CullingDebugSource
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
+import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneDrawCollector
@@ -145,6 +146,48 @@ class CullingDebugSourceTest {
             mapOf("drawn" to "1", "outside view" to "1", "occluded" to "0", "shadow only" to "0", "frozen (F9)" to "no"),
             rows.values,
         )
+    }
+
+    @Test
+    fun eachCopyOfAnInstancedMeshIsRecordedAsNotCulled() {
+        val world = World()
+        val bounded = object : Mesh {
+            override val format = VertexFormat.PositionNormalColorUv
+            override val sizeBytes = 0L
+            override val localBounds = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
+            override fun destroy() = Unit
+        }
+        // One copy far behind the camera: instanced copies are drawn anyway, so it is not culled either.
+        val copies = listOf(Mat4().translate(0f, 0f, 0f), Mat4().translate(4f, 0f, 0f), Mat4().translate(0f, 0f, 50f))
+        world.add(world.create(), InstancedMeshRenderer(bounded, fakeMaterial(), copies))
+        val probe = CullingProbe()
+
+        plan(world, camera(), probe)
+
+        assertEquals(3, probe.notCulled)
+        assertEquals(List(3) { CullResult.NotCulled }, resultsOf(probe))
+        assertEquals(Vec3f(3f, -1f, -1f), probe.writeMin(1, Vec3f(0f, 0f, 0f)), "each copy's box is in world space")
+        assertEquals(Vec3f(5f, 1f, 1f), probe.writeMax(1, Vec3f(0f, 0f, 0f)))
+
+        val lines = RecordedLines()
+        CullingDebugSource(probe).lines(lines)
+        assertEquals(List(36) { CullingDebugSource.NOT_CULLED }, lines.colors)
+
+        val rows = RecordedRows()
+        CullingDebugSource(probe).rows(rows)
+        assertEquals("3", rows.values["not culled (instanced)"])
+    }
+
+    @Test
+    fun anInstancedMeshWithoutBoundsIsCountedNowhere() {
+        val world = World()
+        world.add(world.create(), InstancedMeshRenderer(fakeMesh(), fakeMaterial(), listOf(Mat4())))
+        val probe = CullingProbe()
+
+        plan(world, camera(), probe)
+
+        assertEquals(0, probe.notCulled)
+        assertEquals(0, probe.boxCount)
     }
 
     private fun plan(world: World, camera: Camera, probe: CullingProbe): Int {

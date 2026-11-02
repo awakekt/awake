@@ -187,6 +187,7 @@ internal class SceneDrawCollector(
         // why this is a separate opt-in component/query rather than folding into the
         // MeshRenderer loop above.
         resolution.instancedFamily.forEach { _, instanced ->
+            cullingCompiler.recordNotCulled(instanced.mesh.localBounds, instanced.transforms)
             drawCalls.add(
                 beforeCommands.obtainCommand(
                     mesh = instanced.mesh,
@@ -201,6 +202,7 @@ internal class SceneDrawCollector(
         // InstancedSkinnedMeshRenderer's own doc comment for why this is a separate component
         // rather than folding into InstancedMeshRenderer.
         resolution.instancedSkinnedFamily.forEach { _, instanced ->
+            cullingCompiler.recordNotCulled(instanced.mesh.localBounds, instanced.transforms)
             drawCalls.add(
                 beforeCommands.obtainCommand(
                     mesh = instanced.mesh,
