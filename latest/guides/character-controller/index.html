@@ -3006,6 +3006,10 @@ given for an agent, adds gravity and
 any jump, and sweeps the capsule through the world with shape casts. A wall stops it and the rest of
 the move slides along the wall; a step or slope within its limits does not stop it. Standing on a
 moving body carries the character with it. The result is written back to the <code>Transform</code>.</p>
+<p>A character that ends up under the scene's terrain is put back on top of it. A heightfield is solid
+only from above, so nothing else would bring it back. The system checks each character that isn't
+standing on the terrain, at the cost of a ray. Outside a scene, call
+<code>KinematicCharacterController.liftOutOf</code> with a <code>TerrainCollider</code> built from your heightfield body.</p>
 <p><code>CharacterConfig</code> has settings a scene document does not carry: <code>skinWidth</code>, <code>maxSlideIterations</code>,
 <code>groundProbeDistance</code>, <code>stepDownDistance</code>, <code>crouchHalfHeight</code> and <code>innerBody</code>. Set them in Kotlin.
 For crouching, teleporting and contact callbacks, use <code>KinematicCharacterController</code> directly: it has
