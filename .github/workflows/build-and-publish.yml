@@ -280,7 +280,9 @@ jobs:
   # a snapshot nobody can resolve wastes the same afternoon a broken release does.
   verify:
     name: Verify
-    timeout-minutes: 30
+    # API surface alone takes 20-25 minutes on macos-15; v0.34.0's Verify passed every step and was
+    # still cancelled at 33 minutes, which skipped its release.
+    timeout-minutes: 50
     needs: ref
     runs-on: macos-15
     steps:
