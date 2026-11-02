@@ -1,1 +1,0 @@
-- **The physics debug overlay draws a corner-anchored heightfield where it collides.** `physicsDebugLines` and `PhysicsDebugSource` drew every heightfield footprint centred on its body, so a `GridOrigin.Corner` field showed half a field off; the footprint now follows the field's `origin` as the physics backend places it, and turns with the body's rotation.

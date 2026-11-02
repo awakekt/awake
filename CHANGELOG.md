@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-11-02
+
+### Added
+
+- The `culling` debug source draws each copy of an instanced mesh (`InstancedMeshRenderer`, `InstancedSkinnedMeshRenderer`) in cyan and counts them as "not culled (instanced)": they are drawn every frame without being culled, which the overlay now shows rather than leaving them out.
+- **Culling debug source:** `--debug=culling` draws each mesh's bounds coloured by what culling decided (drawn, outside the view, occluded, shadow only), with the counts in the overlay, and F9 freezes culling so you can fly out and see what the frozen view kept.
+- **Physics and navigation debug sources.** `PhysicsDebugSource(world)` in `awake:scene:physics`, id `physics` (`--debug=physics`, `?debug=physics`), counts bodies by motion type, sensors and bodies not yet built on the debug panel, and draws every collider's wireframe coloured by motion type. `NavDebugSource` in `awake:navigation`, id `nav`, over a `NavGridTile` or a `StreamedNavGrid`, counts resident cells, walkable and blocked samples and agents with a route, and draws blocked-sample crosses, resident cell outlines and each agent's route, laid on the ground by a `NavGroundHeight`. Both write their lines through `DebugLines` with reused points, so a steady frame allocates nothing, and draw the same lines as `physicsDebugLines` and `navGridDebugLines`, which now share their writers. `awake:navigation` and `awake:scene:physics` now depend on `awake:core:diagnostics` (#1252).
+- **A `sight` debug source for AI perception.** `PerceptionDebugSource(world, space)` in `awake:ai`, turned on with `--debug=sight` or `?debug=sight`, draws each perceiver's focus and peripheral cones, its hearing range, and a line to everything it remembers, red while it is in sight and grey once only remembered; its rows count the perceivers and what they see, remember and hear. It allocates nothing per frame and costs nothing while off (#1252).
+- **Visualization toggles from the debug flag:** `--debug=bounds,grid,skeleton,wireframe,view-world-normals` (or `?debug=` on the web) turns on `WorldDebugSettings` toggles and shader views without adding the component in code (`DebugToggleIds`).
+
+### Fixed
+
+- **The physics debug overlay draws a corner-anchored heightfield where it collides.** `physicsDebugLines` and `PhysicsDebugSource` drew every heightfield footprint centred on its body, so a `GridOrigin.Corner` field showed half a field off; the footprint now follows the field's `origin` as the physics backend places it, and turns with the body's rotation.
+- `WorldPartitionSystem` no longer allocates a `WorldCellCoord` for every cell around the observer each frame, nor an iterator over its active cells: a frame that loads and unloads nothing now allocates nothing in its scan, with the observer still or moving (#1250).
+
 ## [0.33.0] - 2026-11-02
 
 ### Added
