@@ -88,6 +88,7 @@ public final class com/awakekt/awake/scene/world/WorldPartitionSystem : com/awak
 	public final fun getActiveCells ()Ljava/util/Set;
 	public final fun getAsyncStreamListener ()Lcom/awakekt/awake/world/AsyncWorldCellStreamListener;
 	public final fun getConfig ()Lcom/awakekt/awake/world/WorldPartitionConfig;
+	public final fun getProbe ()Lcom/awakekt/awake/world/WorldPartitionProbe;
 	public final fun getStreamListener ()Lcom/awakekt/awake/scene/world/WorldCellStreamListener;
 	public final fun setAsyncStreamListener (Lcom/awakekt/awake/world/AsyncWorldCellStreamListener;)V
 	public final fun setStreamListener (Lcom/awakekt/awake/scene/world/WorldCellStreamListener;)V

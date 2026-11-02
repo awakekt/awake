@@ -43,4 +43,17 @@ well as the lines. `DebugPanelStyle` sets the slot count (16 by default), the an
 the width and the draw order; `debugPanelPrefab(style)` is the panel as a prefab an editor can open. Rows past
 the last slot are dropped, so keep a source to a few rows.
 
+## Built-in sources
+
+| Id | Source | Module | Shows |
+| --- | --- | --- | --- |
+| `cells` | `WorldPartitionDebugSource(partition.probe)` | `awake:world` | Rows: the observer's cell, and how many active cells are reading, shown and leaving. Lines: each active cell's outline coloured by its state (yellow reading, green shown, red leaving) and the loading and unloading radius circles (blue, violet) around the observer. |
+
+A built-in source lives in the module that already knows its capability's types, never here: this module
+depends on nothing new for it. Its probe, such as `WorldPartitionSystem.probe`, is written whether or not the
+source is on.
+
 With no renderer, headless or on a server, hosts do nothing and the probes still count.
+
+The [Debug tools guide](../../../website/docs/guides/debug-tools.md) walks through writing a source and
+turning it on.

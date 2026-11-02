@@ -20,6 +20,8 @@ kotlin {
         commonMain.dependencies {
             // A cell's content is applied to an ECS World on the frame thread.
             api(project(":awake:ecs"))
+            // WorldPartitionDebugSource is a DebugSource; the probe's observer is a Vec3f, which this brings with it.
+            api(project(":awake:core:diagnostics"))
             // CompositeCellStreamListener loads its listeners' cells concurrently.
             implementation(libs.kotlinx.coroutines.core)
         }

@@ -17,6 +17,12 @@ implementation(project(":awake:world"))
   which applies it to the `World` on the frame thread; unloads on the frame thread.
 - `CompositeCellStreamListener` -- several listeners as one: loads run together, applies in order,
   unloads in reverse.
+- `WorldPartitionProbe` -- what a partition streams as of its last update: the observer, its cell,
+  and each active cell's `WorldCellState` (reading, shown or leaving), with a count of each.
+  `WorldPartitionSystem` in `scene:world` writes one every update, allocation-free in steady frames.
+- `WorldPartitionDebugSource` -- the probe as a debug source, id `cells`: the observer's cell and the
+  counts on the debug panel, and each cell's outline coloured by its state with the loading and
+  unloading circles as lines. It brings `awake:core:diagnostics`, which draws nothing.
 
 ## Why it is its own module
 
