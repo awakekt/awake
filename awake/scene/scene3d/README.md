@@ -89,6 +89,12 @@ with no scene dependency. `CameraViewport` only binds its result to a camera and
   light, and calls `Renderer.draw`.
 - `DebugVisualizationSystem` -- turns `WorldDebugSettings`'s toggles into `Renderer`
   debug-line draws (frustum/bounds/occlusion wireframes).
+  Given a `DebugRegistry` (`awake:core:diagnostics`), it also draws the lines of every debug
+  source that is on, in the same `drawDebugLines` call: that call replaces the frame's line
+  buffer, so two callers would wipe out each other's lines.
+- `DebugLineBuffer` -- one frame's debug lines, kept from frame to frame so steady frames
+  allocate nothing, capped at the renderer's line ceiling. An editor that draws its own lines
+  merges them here with `debugVisualizationLines` and `addSources(registry)`.
 - `RenderSystemSupport.kt` -- shared helpers (`primaryCamera`, `CONSERVATIVE_ASPECT`) used by
   both systems above.
 

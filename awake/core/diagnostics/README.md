@@ -22,6 +22,6 @@ registry.register(object : DebugSource {
 })
 ```
 
-The module draws nothing itself. Hosts that do follow in separate modules: a line host that submits every
-on source's lines through the renderer, and an overlay that shows their rows (#1218). With no renderer,
-headless or on a server, hosts do nothing and the probes still count.
+The module draws nothing itself. In `awake:scene:scene3d`, `DebugVisualizationSystem(renderer, viewport,
+registry)` draws every on source's lines with its own, in one call; an overlay that shows their rows
+follows (#1218). With no renderer, headless or on a server, hosts do nothing and the probes still count.

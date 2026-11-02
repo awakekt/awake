@@ -8,6 +8,8 @@
 package com.awakekt.awake.scene.rendering.debug
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.diagnostics.DebugRegistry
+import com.awakekt.awake.core.diagnostics.DebugSource
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Grid
 import com.awakekt.awake.core.math.Lens
@@ -47,23 +49,47 @@ import kotlin.math.min
  * -- both call `renderer.draw`/`drawDebugLines` independently, order between them doesn't
  * matter for correctness (only which one's lines end up in this frame's line buffer, and
  * [Renderer.drawDebugLines] replaces the whole buffer each call, not appends).
+ *
+ * It also draws the lines of every [DebugSource] that [debugRegistry] has on, in the same call as its
+ * own, so a game's debug sources and these toggles never wipe each other out. With no source on it
+ * draws exactly what it did before.
  */
 class DebugVisualizationSystem(
     private val renderer: Renderer,
     private val viewportProvider: () -> RenderViewport?,
+    private val debugRegistry: DebugRegistry,
 ) : System {
+    /** Retains the constructor used before debug sources, drawing no source's lines. */
+    constructor(renderer: Renderer, viewportProvider: () -> RenderViewport?) :
+        this(renderer, viewportProvider, DebugRegistry.Off)
+
     /** Retains the original constructor used by standalone debug-system consumers. */
     constructor(renderer: Renderer) : this(renderer, { null })
 
+    private val buffer = DebugLineBuffer()
+
     override fun update(world: World, delta: Float) {
-        val settings = world.family<WorldDebugSettings>().components().firstOrNull() ?: return
-        val lines = debugVisualizationLines(
-            world,
-            renderer,
-            settings,
-            viewportProvider()?.aspect ?: renderer.surfaceAspect,
-        )
-        if (lines.isNotEmpty()) renderer.drawDebugLines(lines)
+        val settings = world.family<WorldDebugSettings>().components().firstOrNull()
+        val sourcesOn = debugRegistry.active.isNotEmpty()
+        if (settings == null && !sourcesOn) return
+        val lines = if (settings == null) {
+            emptyList()
+        } else {
+            debugVisualizationLines(
+                world,
+                renderer,
+                settings,
+                viewportProvider()?.aspect ?: renderer.surfaceAspect,
+            )
+        }
+        if (!sourcesOn) {
+            if (lines.isNotEmpty()) renderer.drawDebugLines(lines)
+            return
+        }
+        buffer.clear()
+        buffer.addAll(lines)
+        buffer.addSources(debugRegistry)
+        if (buffer.lines.isNotEmpty()) renderer.drawDebugLines(buffer.lines)
     }
 }
 
