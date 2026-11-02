@@ -375,6 +375,7 @@ public final class com/awakekt/awake/scene/physics/character/KinematicCharacterC
 	public final fun getGroundBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
 	public final fun getGroundNormal ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getGroundVelocity ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getLastContact ()Lcom/awakekt/awake/physics/character/CharacterContact;
 	public final fun getOnContact ()Lkotlin/jvm/functions/Function2;
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun isCrouching ()Z
@@ -382,6 +383,8 @@ public final class com/awakekt/awake/scene/physics/character/KinematicCharacterC
 	public final fun liftOutOf (Lcom/awakekt/awake/physics/character/TerrainCollider;)Z
 	public final fun move (Lcom/awakekt/awake/core/math/Vec3f;F)V
 	public static synthetic fun move$default (Lcom/awakekt/awake/scene/physics/character/KinematicCharacterController;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
+	public final fun moveFree (Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public static synthetic fun moveFree$default (Lcom/awakekt/awake/scene/physics/character/KinematicCharacterController;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
 	public final fun setOnContact (Lkotlin/jvm/functions/Function2;)V
 	public final fun standUp ()Z
 	public final fun teleport (Lcom/awakekt/awake/core/math/Vec3f;)V

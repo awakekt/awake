@@ -23,7 +23,9 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
  * steps and slopes within its limits don't.
  *
  * Register it in the fixed phase, after `PhysicsSystem`, so it collides with bodies that step
- * built, and falls the same on every frame rate. Between steps, [interpolate] shows each character
+ * built, and falls the same on every frame rate. A character whose [CharacterController.motionMode] is
+ * [CharacterMotionMode.Free] is moved by its intent as a world velocity instead, with no gravity and
+ * no ground, through the same collision. Between steps, [interpolate] shows each character
  * between its last two stepped poses, so a following camera and its walk move on every frame. Don't also run `MatrixRelativeMovementSystem`
  * on these entities: it moves them straight through walls.
  *
@@ -36,6 +38,10 @@ class CharacterControllerSystem(
 ) : InterpolatedSystem {
     private val basis = CameraRelativeBasis()
     private val motion = Vec3f()
+
+    // The world direction the last grounded step walked, for turning toward it.
+    private var moveX = 0f
+    private var moveZ = 0f
 
     // Each controller this system built, beside its character's entity, so the body a character
     // carries of its own (CharacterConfig.innerBody) is destroyed when the character goes. Left in
@@ -58,31 +64,62 @@ class CharacterControllerSystem(
                         track(entity, built)
                     }
             val intent = world.get<MovementControl>(entity)
-            val moveX = intent?.worldX(basis) ?: 0f
-            val moveZ = intent?.worldZ(basis) ?: 0f
-            val step = (intent?.currentSpeed(defaultSpeed) ?: defaultSpeed) * delta
-
-            // Just after take-off the ground probe still reaches the floor, so a rising character
-            // is airborne whatever the probe says; otherwise the next step would cancel the jump.
-            val standing = body.isGrounded && character.verticalVelocity <= 0f
-            character.verticalVelocity = when {
-                standing && intent?.jump == true && character.jumpSpeed > 0f -> character.jumpSpeed
-                standing -> 0f
-                else -> character.verticalVelocity + character.gravity * delta
+            if (character.motionMode == CharacterMotionMode.Free) {
+                moveFree(character, body, intent, delta)
+            } else {
+                walk(character, body, intent, delta)
             }
-            motion.set(
-                moveX * step + body.groundVelocity.x * delta,
-                character.verticalVelocity * delta + body.groundVelocity.y * delta,
-                moveZ * step + body.groundVelocity.z * delta,
-            )
-            body.move(motion, delta)
             if (liftOutOfTerrain(world, body)) character.verticalVelocity = 0f
             transform.position.set(body.position)
-            world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
-            intent?.turnToward(transform, moveX, moveZ, delta)
+            world.get<GroundContact>(entity)?.grounded = character.isGrounded && character.verticalVelocity <= 0f
+            if (character.motionMode == CharacterMotionMode.Grounded) intent?.turnToward(transform, moveX, moveZ, delta)
             character.record(transform)
         }
         releaseGone(world)
+    }
+
+    /** One grounded step: the intent's direction at its speed, gravity or a jump, and the ground's motion. */
+    private fun walk(
+        character: CharacterController,
+        body: KinematicCharacterController,
+        intent: MovementControl?,
+        delta: Float,
+    ) {
+        moveX = intent?.worldX(basis) ?: 0f
+        moveZ = intent?.worldZ(basis) ?: 0f
+        val step = (intent?.currentSpeed(defaultSpeed) ?: defaultSpeed) * delta
+
+        // Just after take-off the ground probe still reaches the floor, so a rising character
+        // is airborne whatever the probe says; otherwise the next step would cancel the jump.
+        val standing = body.isGrounded && character.verticalVelocity <= 0f
+        character.verticalVelocity = when {
+            standing && intent?.jump == true && character.jumpSpeed > 0f -> character.jumpSpeed
+            standing -> 0f
+            else -> character.verticalVelocity + character.gravity * delta
+        }
+        motion.set(
+            moveX * step + body.groundVelocity.x * delta,
+            character.verticalVelocity * delta + body.groundVelocity.y * delta,
+            moveZ * step + body.groundVelocity.z * delta,
+        )
+        body.move(motion, delta)
+    }
+
+    /**
+     * One free step: the intent's `moveX`, `moveY`, `moveZ` as a world velocity, its height held
+     * within [CharacterController.freeMinY] and [CharacterController.freeMaxY].
+     */
+    private fun moveFree(
+        character: CharacterController,
+        body: KinematicCharacterController,
+        intent: MovementControl?,
+        delta: Float,
+    ) {
+        val y = body.position.y
+        val wanted = y + (intent?.moveY ?: 0f) * delta
+        val held = minOf(maxOf(wanted, character.freeMinY), character.freeMaxY)
+        motion.set((intent?.moveX ?: 0f) * delta, held - y, (intent?.moveZ ?: 0f) * delta)
+        body.moveFree(motion, delta)
     }
 
     /**

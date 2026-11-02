@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.physics.character.CharacterContact
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
@@ -75,6 +76,32 @@ class CharacterController(
     internal var controller: KinematicCharacterController? = null
     internal var verticalVelocity: Float = 0f
 
+    /**
+     * How it moves: [CharacterMotionMode.Grounded], walking, or [CharacterMotionMode.Free], moved
+     * by a world velocity with gravity and ground off and collision on. Switched at run time, not
+     * saved with the scene.
+     *
+     * Switching either way drops the fall speed, so nothing carried from one mode moves the other.
+     * Entering free motion leaves the ground at once; returning to walking finds the ground again on
+     * the next step, falling onto it from wherever the character is.
+     */
+    var motionMode: CharacterMotionMode = CharacterMotionMode.Grounded
+        set(value) {
+            if (value != field) verticalVelocity = 0f
+            field = value
+        }
+
+    /**
+     * The lowest height, in world units, free motion moves the character's centre to. A step that
+     * would end below it asks for no more than reaching it, and a character below it is moved up,
+     * swept like any other move so the clamp never pushes it into something. Unbounded by default;
+     * ignored while [motionMode] is [CharacterMotionMode.Grounded]. When above [freeMaxY], [freeMaxY] wins.
+     */
+    var freeMinY: Float = Float.NEGATIVE_INFINITY
+
+    /** The highest height free motion moves the character's centre to; see [freeMinY]. Unbounded by default. */
+    var freeMaxY: Float = Float.POSITIVE_INFINITY
+
     // The last two stepped poses, which CharacterControllerSystem blends between rendered frames.
     private val previousPosition = Vec3f()
     private val currentPosition = Vec3f()
@@ -83,8 +110,16 @@ class CharacterController(
     private var blendedYaw = Float.NaN
     private var stepped = false
 
-    /** Whether it stood on walkable ground after its last move. */
-    val isGrounded: Boolean get() = controller?.isGrounded ?: false
+    /** Whether it stood on walkable ground after its last move. Never while [motionMode] is free. */
+    val isGrounded: Boolean
+        get() = motionMode == CharacterMotionMode.Grounded && controller?.isGrounded ?: false
+
+    /**
+     * What its last step ran into: whether it was stopped, the contact normal as the sweep met it,
+     * before any slide, and whether anything lay just below it. A free-moving character reads this
+     * to bounce, damp or find the floor without becoming grounded. Null until the first step.
+     */
+    val lastContact: CharacterContact? get() = controller?.lastContact
 
     /**
      * The character's own body in the physics world, when its config gives it one

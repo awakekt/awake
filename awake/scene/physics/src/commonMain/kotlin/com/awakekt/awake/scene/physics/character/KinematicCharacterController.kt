@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
 import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.character.CharacterContact
 import com.awakekt.awake.physics.character.TerrainCollider
 import kotlin.math.cos
 
@@ -144,6 +145,9 @@ class KinematicCharacterController(
         get() = controller.onContact
         set(value) { controller.onContact = value }
 
+    /** What the last move ran into, and whether anything lay below it after; see the capability's `lastContact`. */
+    val lastContact: CharacterContact get() = controller.lastContact
+
     /** Shrinks the capsule while keeping its feet in place. */
     fun crouch() = controller.crouch()
 
@@ -161,6 +165,9 @@ class KinematicCharacterController(
 
     /** Moves through physics; an invalid contact blocks this move and is logged. */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.move(motion, deltaTime)
+
+    /** Moves in any direction with no ground state, collision kept; see the capability's `moveFree`. */
+    fun moveFree(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.moveFree(motion, deltaTime)
 
     private companion object {
         const val MIN_MOTION = 1e-5f
