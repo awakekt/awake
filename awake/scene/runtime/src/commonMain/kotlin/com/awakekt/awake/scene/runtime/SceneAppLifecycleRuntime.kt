@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
+import com.awakekt.awake.core.diagnostics.DebugRegistry
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.Input
@@ -865,7 +866,10 @@ class SceneAppLifecycleRuntime internal constructor(
  * of being wired through the authoring DSL. [DebugVisualizationSystem] is a no-op (draws
  * nothing extra) unless a scene adds a
  * [com.awakekt.awake.scene.rendering.debug.WorldDebugSettings] entity and
- * toggles it on -- every existing scene is unaffected by its presence here. */
+ * toggles it on -- every existing scene is unaffected by its presence here.
+ *
+ * When the app registers a [DebugRegistry] service, [DebugVisualizationSystem] also draws the
+ * lines of every debug source it has on, in the same call as its own toggles. */
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     viewportProvider: () -> RenderViewport? = { null },
     renderWorldProvider: (World) -> World = { it },
@@ -886,7 +890,8 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
             isRealtimeProvider = isRealtimeProvider,
             isDirtyProvider = isDirtyProvider,
         ),
-        DebugVisualizationSystem(renderer, viewportProvider),
+        // A game turns its debug sources' lines on by registering its DebugRegistry as an app service.
+        DebugVisualizationSystem(renderer, viewportProvider, service(DebugRegistry::class) ?: DebugRegistry.Off),
     )
 
 /**

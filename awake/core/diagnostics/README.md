@@ -23,5 +23,12 @@ registry.register(object : DebugSource {
 ```
 
 The module draws nothing itself. In `awake:scene:scene3d`, `DebugVisualizationSystem(renderer, viewport,
-registry)` draws every on source's lines with its own, in one call; an overlay that shows their rows
-follows (#1218). With no renderer, headless or on a server, hosts do nothing and the probes still count.
+registry)` draws every on source's lines with its own, in one call. A scene app on the default
+infrastructure systems gets that by registering its registry as an app service:
+
+```kotlin
+service(DebugRegistry::class, registry)
+```
+
+An overlay that shows the sources' rows follows (#1218). With no renderer, headless or on a server, hosts
+do nothing and the probes still count.
