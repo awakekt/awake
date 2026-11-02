@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.physics
 
+import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BoxShape
@@ -116,6 +117,48 @@ class PhysicsDebugLinesTest {
     }
 
     @Test
+    fun aCornerAnchoredHeightfieldGrowsIntoPlusXAndPlusZFromItsBody() {
+        // The backend lays a corner field out from the body's position with no offset, so its
+        // footprint must too: drawn centred, it sits half a field from where it collides.
+        val shape = HeightFieldShape(
+            heights = FloatArray(16) { it - 2f },
+            sampleCount = 4,
+            scale = Vec3f(2f, 0.5f, 3f),
+            origin = GridOrigin.Corner,
+        )
+
+        val lines = physicsDebugLines(worldWith(shape, Vec3f(10f, 1f, -5f), MotionType.STATIC))
+
+        // Three cells each way: six units across x, nine along z, at the lowest sample (-2 * 0.5).
+        val expected = listOf(
+            Vec3f(10f, 0f, -5f),
+            Vec3f(16f, 0f, -5f),
+            Vec3f(16f, 0f, 4f),
+            Vec3f(10f, 0f, 4f),
+        )
+        assertEquals(4, lines.size)
+        lines.forEachIndexed { index, line ->
+            assertTrue(line.start.near(expected[index]), "corner $index at ${line.start}, not ${expected[index]}")
+            assertTrue(line.end.near(expected[(index + 1) % 4]), "edge $index ends at ${line.end}")
+        }
+    }
+
+    @Test
+    fun aCentredHeightfieldStaysCentredOnItsBody() {
+        val shape = HeightFieldShape(
+            heights = FloatArray(16),
+            sampleCount = 4,
+            scale = Vec3f(2f, 1f, 3f),
+            origin = GridOrigin.Centered,
+        )
+
+        val lines = physicsDebugLines(worldWith(shape, Vec3f(10f, 1f, -5f), MotionType.STATIC))
+
+        val (min, max) = lines.bounds()
+        assertTrue(min.near(Vec3f(7f, 1f, -9.5f)) && max.near(Vec3f(13f, 1f, -0.5f)), "$min..$max")
+    }
+
+    @Test
     fun motionTypeIsVisibleAsColour() {
         val staticLines = physicsDebugLines(
             worldWith(BoxShape(Vec3f(1f, 1f, 1f)), motionType = MotionType.STATIC),
@@ -174,4 +217,7 @@ class PhysicsDebugLinesTest {
         assertTrue(abs(min.x - 10f) < 1e-4f && abs(max.x - 12f) < 1e-4f, "x $min..$max")
         assertTrue(abs(min.y) < 1e-4f && abs(max.y - 2f) < 1e-4f, "y $min..$max")
     }
+
+    private fun Vec3f.near(other: Vec3f): Boolean =
+        abs(x - other.x) < 1e-4f && abs(y - other.y) < 1e-4f && abs(z - other.z) < 1e-4f
 }
