@@ -2,13 +2,19 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public fun <init> (Lcom/awakekt/awake/scene/physics/character/CharacterConfig;FF)V
 	public final fun getBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
 	public final fun getConfig ()Lcom/awakekt/awake/scene/physics/character/CharacterConfig;
+	public final fun getFreeCollidesWithMoving ()Z
+	public final fun getFreeHalfHeight ()Ljava/lang/Float;
 	public final fun getFreeMaxY ()F
 	public final fun getFreeMinY ()F
 	public final fun getGravity ()F
 	public final fun getJumpSpeed ()F
 	public final fun getLastContact ()Lcom/awakekt/awake/physics/character/CharacterContact;
 	public final fun getMotionMode ()Lcom/awakekt/awake/scene/character/CharacterMotionMode;
+	public final fun groundHeightBelow (F)Ljava/lang/Float;
+	public final fun isFreeShape ()Z
 	public final fun isGrounded ()Z
+	public final fun setFreeCollidesWithMoving (Z)V
+	public final fun setFreeHalfHeight (Ljava/lang/Float;)V
 	public final fun setFreeMaxY (F)V
 	public final fun setFreeMinY (F)V
 	public final fun setGravity (F)V
