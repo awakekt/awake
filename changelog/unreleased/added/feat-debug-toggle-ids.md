@@ -1,1 +1,0 @@
-- **Visualization toggles from the debug flag:** `--debug=bounds,grid,skeleton,wireframe,view-world-normals` (or `?debug=` on the web) turns on `WorldDebugSettings` toggles and shader views without adding the component in code (`DebugToggleIds`).

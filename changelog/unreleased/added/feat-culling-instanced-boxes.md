@@ -1,1 +1,0 @@
-- The `culling` debug source draws each copy of an instanced mesh (`InstancedMeshRenderer`, `InstancedSkinnedMeshRenderer`) in cyan and counts them as "not culled (instanced)": they are drawn every frame without being culled, which the overlay now shows rather than leaving them out.
