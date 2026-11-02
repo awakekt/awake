@@ -104,6 +104,27 @@ jobs:
     permissions:
       contents: read
     steps:
+      # A bare self-hosted runner (the ghcr.io/actions/actions-runner image) has no GitHub CLI, which the
+      # steps below use; GitHub-hosted runners have one. Install a pinned, checksum-verified copy when missing.
+      - name: Install the GitHub CLI when the runner has none
+        env:
+          GH_VERSION: 2.63.0
+        run: |
+          if command -v gh >/dev/null; then gh --version | head -1; exit 0; fi
+          case "$(uname -m)" in
+            x86_64) arch=amd64 ;;
+            aarch64 | arm64) arch=arm64 ;;
+            *) echo "::error::No GitHub CLI build for $(uname -m)."; exit 1 ;;
+          esac
+          name="gh_${GH_VERSION}_linux_${arch}"
+          base="https://github.com/cli/cli/releases/download/v${GH_VERSION}"
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "$base/$name.tar.gz"
+          curl -fsSL "$base/gh_${GH_VERSION}_checksums.txt" | grep " $name.tar.gz\$" | sha256sum -c -
+          tar -xzf "$name.tar.gz"
+          echo "$RUNNER_TEMP/$name/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/$name/bin/gh" --version | head -1
+
       - name: Check inputs and open cuts
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
