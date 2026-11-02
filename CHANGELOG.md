@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-11-02
+
+### Added
+
+- **Custom image cursors (desktop, web and per node).** `core:input` adds `CursorImage` (RGBA pixels + hotspot). A scene application sets `SceneAppLifecycleRuntime.cursorImage`, and `Modifier.pointerCursor(image)` asks for one while a node is hovered; `pointerCursorImageOf` reads the one to show (the hovered node's, else the scene's) and a host shows it over the system `PointerCursor` shape, falling back to the shape otherwise. The desktop host (`runVulkanDesktopGame`, `runDesktopWindow`, a new `glfwSetCursorImage` binding backed by `glfwCreateCursor`, one native cursor cached per image) and the browser host (`runBrowserCanvas` and the `launchWebGpuGame` overloads that take `cursorImage`, as a CSS `url(data:image/png;base64,...) x y, auto` cursor encoded once per image) both apply it. `PlatformEffects` gains `cursorImage`, `ComposeAppRuntime` and `SceneRouterRuntime` gain `effectiveCursorImage`, and released signatures stay as hidden overloads.
+
+### Changed
+
+- **0.36.0 was not published.** Its tag exists, but a build-logic test from #1271 failed on the macOS runner of its publish run, so the release job was skipped and nothing reached Maven Central (#1278 fixes the test). 0.37.0 is the first published version with the changes listed under 0.36.0, 0.35.0 and 0.34.0 below.
+
+### Fixed
+
+- **A model image that fails as its material is made fails only that material.** A cooked model image is transcoded from Basis Universal when its material is made, and a transcode that failed there threw out of `GltfAssetResolver.createMaterial`, which stopped the scene from loading, refused a scene switch, or stopped spawned models attaching. The resolver now logs the failure and makes that material with a plain white texture under the model's own factors, as a model whose images fail to load draws untextured, and the model's other materials keep their images (#1261).
+
 ## [0.36.0] - 2026-11-02
 
 ### Added
