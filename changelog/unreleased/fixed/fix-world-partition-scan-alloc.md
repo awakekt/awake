@@ -1,0 +1,1 @@
+- `WorldPartitionSystem` no longer allocates a `WorldCellCoord` for every cell around the observer each frame, nor an iterator over its active cells: a frame that loads and unloads nothing now allocates nothing in its scan, with the observer still or moving (#1250).

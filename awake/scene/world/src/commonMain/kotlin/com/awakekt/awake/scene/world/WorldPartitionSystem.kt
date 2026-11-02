@@ -50,7 +50,7 @@ interface WorldCellStreamListener {
  * - Dynamic cell activation based on spherical distance rings.
  * - Hysteresis band ([WorldPartitionConfig.unloadRadius] > [WorldPartitionConfig.loadingRadius])
  *   to prevent thrashing (rapid loading/unloading) at cell boundaries.
- * - Zero-allocation query checks during stationary camera frames.
+ * - An allocation-free scan in every frame that loads and unloads nothing, the observer moving or not.
  * - A [probe] of what it streams, kept every update, for tests and for
  *   [WorldPartitionDebugSource][com.awakekt.awake.world.WorldPartitionDebugSource].
  *
@@ -67,6 +67,12 @@ class WorldPartitionSystem(
 ) : System {
 
     private val _activeCells = HashSet<WorldCellCoord>()
+
+    // The same cells twice more, for the per-frame scan: packed keys answer "already streamed?"
+    // without a key object per candidate, and a list walks them by index without an iterator.
+    // All three change together, in stream() and clear().
+    private val activeKeys = CellKeySet()
+    private val activeList = ArrayList<WorldCellCoord>()
 
     /** In-flight loads, so a cell leaving the radius can cancel its own and only its own. */
     private val loadJobs = HashMap<WorldCellCoord, Job>()
@@ -150,11 +156,11 @@ class WorldPartitionSystem(
         val minCellZ = floor((observerPosition.z - config.loadingRadius) / size).toInt()
         val maxCellZ = ceil((observerPosition.z + config.loadingRadius) / size).toInt()
 
-        // 1. Identify newly entered cells within loading radius
+        // 1. Identify newly entered cells within loading radius. A cell's coordinate object is made
+        // only when it starts loading, so a frame that loads nothing allocates nothing here.
         for (cz in minCellZ..maxCellZ) {
             for (cx in minCellX..maxCellX) {
-                val coord = WorldCellCoord(cx, cz)
-                if (coord in _activeCells) continue
+                if (activeKeys.contains(cx, cz)) continue
 
                 // Check distance from observer to cell center
                 val cellCenterX = (cx + 0.5f) * size
@@ -164,7 +170,10 @@ class WorldPartitionSystem(
                 val distSq = dx * dx + dz * dz
 
                 if (distSq <= loadRadiusSq) {
+                    val coord = WorldCellCoord(cx, cz)
                     _activeCells.add(coord)
+                    activeKeys.add(cx, cz)
+                    activeList.add(coord)
                     beginLoad(world, coord)
                 }
             }
@@ -172,9 +181,9 @@ class WorldPartitionSystem(
 
         // 2. Identify out-of-range cells beyond unload radius, and record the rest in the probe
         probe.begin(observerPosition, localPosition)
-        val iterator = _activeCells.iterator()
-        while (iterator.hasNext()) {
-            val coord = iterator.next()
+        var i = 0
+        while (i < activeList.size) {
+            val coord = activeList[i]
             val cellCenterX = (coord.x + 0.5f) * size
             val cellCenterZ = (coord.z + 0.5f) * size
             val dx = observerPosition.x - cellCenterX
@@ -182,7 +191,11 @@ class WorldPartitionSystem(
             val distSq = dx * dx + dz * dz
 
             if (distSq > unloadRadiusSq) {
-                iterator.remove()
+                _activeCells.remove(coord)
+                activeKeys.remove(coord.x, coord.z)
+                // Swap-remove: the last cell takes this slot and is checked next, so i stays.
+                activeList[i] = activeList[activeList.lastIndex]
+                activeList.removeAt(activeList.lastIndex)
                 // Cancel first: the job checks nothing itself, so this is what stops a load whose
                 // cell is already gone from finishing and being applied.
                 loadJobs.remove(coord)?.cancel()
@@ -195,6 +208,7 @@ class WorldPartitionSystem(
                     else -> WorldCellState.Shown
                 }
                 probe.addCell(coord.x, coord.z, state)
+                i++
             }
         }
 
@@ -247,6 +261,8 @@ class WorldPartitionSystem(
             streamListener?.onCellUnload(world, coord)
         }
         _activeCells.clear()
+        activeKeys.clear()
+        activeList.clear()
         probe.reset()
         lastObserverPos = Vec3f(Float.NaN, Float.NaN, Float.NaN)
     }
