@@ -41,6 +41,7 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/command/GpuDrawPreparer;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/command/GpuDrawPreparer;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getCameraViewport ()Lcom/awakekt/awake/scene/rendering/camera/CameraViewport;
+	public final fun getCullingProbe ()Lcom/awakekt/awake/scene/rendering/debug/CullingProbe;
 	public final fun getLastFramePlanned ()Z
 	public final fun getLastFrustumCulledCount ()I
 	public final fun getLastOccludedCount ()I
@@ -48,6 +49,7 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public final fun getMinShadowCasterRatio ()F
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;II)Lcom/awakekt/awake/render/command/GpuPassInput;
+	public final fun setCullingProbe (Lcom/awakekt/awake/scene/rendering/debug/CullingProbe;)V
 	public final fun setMinShadowCasterRatio (F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
@@ -572,6 +574,62 @@ public final class com/awakekt/awake/scene/rendering/camera/SceneViewport$Scalin
 
 public final class com/awakekt/awake/scene/rendering/camera/SceneViewportKt {
 	public static final fun toSceneViewport (Lcom/awakekt/awake/core/math/VirtualViewport;)Lcom/awakekt/awake/scene/rendering/camera/SceneViewport;
+}
+
+public final class com/awakekt/awake/scene/rendering/debug/CullResult : java/lang/Enum {
+	public static final field Drawn Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public static final field Occluded Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public static final field OutsideView Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public static final field ShadowOnly Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+}
+
+public final class com/awakekt/awake/scene/rendering/debug/CullingDebugSource : com/awakekt/awake/core/diagnostics/DebugSource {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/debug/CullingDebugSource$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/debug/CullingProbe;)V
+	public fun getId ()Ljava/lang/String;
+	public final fun getProbe ()Lcom/awakekt/awake/scene/rendering/debug/CullingProbe;
+	public fun getTitle ()Ljava/lang/String;
+	public fun lines (Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+	public fun rows (Lcom/awakekt/awake/core/diagnostics/DebugRows;)V
+}
+
+public final class com/awakekt/awake/scene/rendering/debug/CullingDebugSource$Companion {
+	public final fun colorOf (Lcom/awakekt/awake/scene/rendering/debug/CullResult;)Lcom/awakekt/awake/core/color/Color;
+	public final fun getDRAWN ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getFROZEN_VIEW ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getOCCLUDED ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getOUTSIDE_VIEW ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSHADOW_ONLY ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public final class com/awakekt/awake/scene/rendering/debug/CullingProbe {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/debug/CullingProbe$Companion;
+	public static final field DEFAULT_MAX_BOXES I
+	public static final field MAX_SHOWN_FAR F
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun frozenCorner (ILcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getBoxCount ()I
+	public final fun getBoxesNotKept ()I
+	public final fun getDrawn ()I
+	public final fun getFrozen ()Z
+	public final fun getHasFrozenView ()Z
+	public final fun getMaxBoxes ()I
+	public final fun getOccluded ()I
+	public final fun getOutsideView ()I
+	public final fun getShadowOnly ()I
+	public final fun result (I)Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public final fun setFrozen (Z)V
+	public final fun writeMax (ILcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun writeMin (ILcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public final class com/awakekt/awake/scene/rendering/debug/CullingProbe$Companion {
 }
 
 public final class com/awakekt/awake/scene/rendering/debug/DebugLineBuffer : com/awakekt/awake/core/diagnostics/DebugLines {

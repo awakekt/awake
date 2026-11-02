@@ -144,6 +144,45 @@ default systems' `DebugVisualizationSystem` turns them on once in each world it 
 The camera frustum has no id, because it needs a target camera; the `culling` source draws the
 frozen culling camera's frustum. `DebugToggleIds` holds the ids.
 
+## The culling source
+
+A scene app on the default systems turns culling into lines with the id `culling`: no
+registration needed beyond its `DebugRegistry` service. `RenderSystem3D` then records, into a
+`CullingProbe`, what culling decided for every mesh with `MeshBounds`, and `CullingDebugSource`
+draws each one's world box in the colour of that decision.
+
+| Row | What it counts |
+| --- | --- |
+| drawn | Meshes in the camera's view and not hidden: drawn. |
+| outside view | Meshes outside the camera's view. |
+| occluded | Meshes in view but behind an `Occluder`. |
+| shadow only | Meshes the camera rejected that are still drawn into the shadow maps. |
+| frozen (F9) | Whether culling is frozen. |
+| boxes not shown | Meshes past `CullingProbe.maxBoxes` (4096): counted, not drawn. Only shown above 0. |
+
+| Line | Colour |
+| --- | --- |
+| A drawn mesh's box | Green (`CullingDebugSource.DRAWN`) |
+| An outside-view mesh's box | Grey (`OUTSIDE_VIEW`) |
+| An occluded mesh's box | Red (`OCCLUDED`) |
+| A shadow-only mesh's box | Violet (`SHADOW_ONLY`) |
+| The frozen view's frustum, its far plane at most 60 m out | Yellow (`FROZEN_VIEW`) |
+
+**F9 freezes culling.** Culling keeps the camera it had at that moment while the scene still draws
+from the live one, so you can fly out and see what the frozen view kept (green) and dropped (grey
+and red). Press F9 again to thaw. In code, set `CullingProbe.frozen`.
+
+Outside the default systems, give a render system the probe yourself:
+
+```kotlin title="Kotlin"
+val probe = CullingProbe()
+renderSystem.cullingProbe = probe
+registry.register(CullingDebugSource(probe))
+```
+
+A mesh without `MeshBounds` is never culled, so it has no box. Culled meshes aren't drawn at all, so
+the boxes, not the meshes, show what was dropped.
+
 ## Zero cost when off
 
 - A source whose id is not in the flags is never added to the registry, so no host ever calls it.
