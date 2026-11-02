@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.physics
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.diagnostics.DebugLines
+import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
@@ -45,7 +46,8 @@ import kotlin.math.sin
  *
  * A [HeightFieldShape] is drawn as its footprint rather than its samples: a terrain of any size is
  * thousands of quads, and the useful question about a heightfield collider is almost always where
- * its edges are, not what its middle looks like.
+ * its edges are, not what its middle looks like. The footprint honours the field's
+ * [HeightFieldShape.origin], so a corner-anchored field is drawn where it collides.
  */
 fun physicsDebugLines(world: World): List<LineSegment> {
     val lines = mutableListOf<LineSegment>()
@@ -144,24 +146,42 @@ internal class PhysicsDebugWriter {
     /**
      * The outline of a heightfield's extent, at the height of its lowest sample.
      *
-     * A heightfield is laid out from its centre, matching the engine's own convention, so this draws
-     * where the collider believes its edges are -- the half-tile disagreements that convention exists
-     * to prevent are exactly what this makes visible.
+     * Laid out exactly as the backend places the collider: a [GridOrigin.Centered] field spans
+     * `-extent/2 .. +extent/2` around the body and a [GridOrigin.Corner] one `0 .. extent` from it, with
+     * no half-cell shift either way, all turned by the body's rotation. Drawing every field centred put
+     * a corner-anchored one half a field from where it collides -- the very disagreement this overlay
+     * exists to make visible, so it must not reproduce it.
      */
     private fun heightFieldFootprint(out: DebugLines, shape: HeightFieldShape, origin: Vec3f, color: Color) {
-        val halfX = (shape.sampleCount - 1) * shape.scale.x * 0.5f
-        val halfZ = (shape.sampleCount - 1) * shape.scale.z * 0.5f
+        val width = (shape.sampleCount - 1) * shape.scale.x
+        val depth = (shape.sampleCount - 1) * shape.scale.z
+        val minX: Float
+        val minZ: Float
+        when (shape.origin) {
+            GridOrigin.Centered -> {
+                minX = -width * HALF
+                minZ = -depth * HALF
+            }
+            GridOrigin.Corner -> {
+                minX = 0f
+                minZ = 0f
+            }
+        }
         val heights = shape.heights
         var lowest = 0f
         if (heights.isNotEmpty()) {
             lowest = heights[0]
             for (index in 1 until heights.size) lowest = minOf(lowest, heights[index])
         }
-        val y = origin.y + lowest * shape.scale.y
-        corners[0].set(origin.x - halfX, y, origin.z - halfZ)
-        corners[1].set(origin.x + halfX, y, origin.z - halfZ)
-        corners[2].set(origin.x + halfX, y, origin.z + halfZ)
-        corners[3].set(origin.x - halfX, y, origin.z + halfZ)
+        val y = lowest * shape.scale.y
+        // Corners in order round the edge: (min, min), (max, min), (max, max), (min, max).
+        for (index in 0 until FOOTPRINT_CORNERS) {
+            val x = if (index == 1 || index == 2) minX + width else minX
+            val z = if (index >= 2) minZ + depth else minZ
+            val corner = corners[index]
+            rotate(x, y, z, corner)
+            corner.set(origin.x + corner.x, origin.y + corner.y, origin.z + corner.z)
+        }
         for (index in 0 until FOOTPRINT_CORNERS) {
             out.line(corners[index], corners[(index + 1) % FOOTPRINT_CORNERS], color)
         }

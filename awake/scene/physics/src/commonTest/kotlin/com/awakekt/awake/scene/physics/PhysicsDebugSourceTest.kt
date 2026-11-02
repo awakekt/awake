@@ -8,12 +8,14 @@ package com.awakekt.awake.scene.physics
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.diagnostics.DebugLines
 import com.awakekt.awake.core.diagnostics.DebugRows
+import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.SphereShape
@@ -110,6 +112,35 @@ class PhysicsDebugSourceTest {
         val along = Vec3f(2f, 3f, 4f) + rotation.rotate(Vec3f(1f, -2f, -3f))
         val first = lines.drawn.first()
         assertTrue(first.a.near(corner) && first.b.near(along), "$first, not $corner to $along")
+        assertEquals(physicsDebugLines(world).map { it.start }, lines.drawn.map { it.a })
+    }
+
+    @Test
+    fun aRotatedCornerHeightfieldIsTurnedAboutItsBodyLikeTheCollider() {
+        // The backend turns a heightfield by its body's rotation about the body position, which for a
+        // corner field is its first sample -- not the middle of the field.
+        val world = World()
+        val entity = world.create()
+        val euler = Vec3f(0f, 0.6f, 0f)
+        world.add(entity, Transform(position = Vec3f(2f, 0f, 4f), rotation = euler))
+        val shape = HeightFieldShape(
+            heights = FloatArray(16),
+            sampleCount = 4,
+            scale = Vec3f(1f, 1f, 2f),
+            origin = GridOrigin.Corner,
+        )
+        world.add(entity, PhysicsBody(shape = shape, motionType = MotionType.STATIC))
+        val lines = RecordedLines()
+
+        PhysicsDebugSource(world).lines(lines)
+
+        val rotation = Quat.fromEuler(euler)
+        val expected = listOf(Vec3f(0f, 0f, 0f), Vec3f(3f, 0f, 0f), Vec3f(3f, 0f, 6f), Vec3f(0f, 0f, 6f))
+            .map { Vec3f(2f, 0f, 4f) + rotation.rotate(it) }
+        assertEquals(4, lines.drawn.size)
+        lines.drawn.forEachIndexed { index, line ->
+            assertTrue(line.a.near(expected[index]), "corner $index at ${line.a}, not ${expected[index]}")
+        }
         assertEquals(physicsDebugLines(world).map { it.start }, lines.drawn.map { it.a })
     }
 
