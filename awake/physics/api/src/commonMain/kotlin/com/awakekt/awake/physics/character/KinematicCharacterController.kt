@@ -10,6 +10,8 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.InvalidShapeCastResultException
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
@@ -221,14 +223,50 @@ class KinematicCharacterController(
     }
 
     /**
-     * How much lower the crouched capsule's centre sits, with its feet in the same place.
+     * The cylinder half-height of a shorter capsule for [moveFree] to sweep, or null to fly with the
+     * walking one. A flyer then fits under arches and low overhangs the walking capsule catches on.
      *
-     * A capsule's origin is its centre, so shrinking it without moving it leaves the character
-     * hovering by half the difference. Feet stay planted instead, which is what a crouch looks
-     * like.
+     * Only the height changes; the radius stays. As with a crouch, the feet stay where they are: the
+     * first [moveFree] shrinks to it, which always fits, and the first [move] after grows back, swept
+     * for headroom as [standUp] is. With no room, [move] walks with the short capsule and tries again
+     * on every move, so a flyer that lands under an arch straightens once it walks out from under it.
+     *
+     * Must be positive and shorter than [CharacterConfig.shape]'s half-height. A change takes effect
+     * the next time free motion starts. Not part of [CharacterConfig], whose constructor is published.
      */
-    private val crouchDrop: Float =
-        config.crouchHalfHeight?.let { config.shape.halfHeight - it } ?: 0f
+    var freeHalfHeight: Float? = null
+        set(value) {
+            value?.let {
+                require(it > 0f && it < config.shape.halfHeight) {
+                    "freeHalfHeight must be positive and shorter than the standing half-height " +
+                        "(${config.shape.halfHeight}): $it"
+                }
+            }
+            if (value != field) freeShape = value?.let { CapsuleShape(halfHeight = it, radius = config.shape.radius) }
+            field = value
+        }
+
+    /** The capsule [freeHalfHeight] describes, built when it's set rather than on every move. */
+    private var freeShape: CapsuleShape? = null
+
+    /** Whether the character is the shorter capsule [freeHalfHeight] asked for. */
+    var isFreeShape: Boolean = false
+        private set
+
+    /**
+     * Whether [moveFree] collides with moving bodies -- kinematic and dynamic ones, such as other
+     * characters' own bodies, crates and moving platforms -- as well as with static geometry. True by
+     * default.
+     *
+     * False sweeps static geometry only: walls, floors, ceilings and terrain still stop a free
+     * character, and everything that moves is passed through. That is every moving body, not only
+     * characters: [PhysicsWorld.shapeCast] filters by one layer rather than by a set, so "static only"
+     * can be asked for and "everything but characters" can't. [move] always collides with everything.
+     */
+    var freeCollidesWithMoving: Boolean = true
+
+    /** The one layer this move's sweeps are limited to, or null for every layer; see [freeCollidesWithMoving]. */
+    private var sweepLayer: CollisionLayer? = null
 
     // Scratch, reused every call: move() runs per character per fixed step forever, and these
     // would otherwise be garbage at exactly the rate the game is played.
@@ -258,18 +296,22 @@ class KinematicCharacterController(
     /** The unit direction of a push out of an overlap. */
     private val pushDirection = Vec3f(0f, 1f, 0f)
 
+    /** Where [groundHeightBelow] casts its ray from. */
+    private val rayOrigin = Vec3f()
+
     /**
      * Shrinks to the crouched capsule, keeping the feet where they are.
      *
      * Always allowed: there is no such thing as being too cramped to crouch. Does nothing if the
-     * character is already crouching, or if [CharacterConfig.crouchHalfHeight] was never set.
+     * character is already crouching, or if [CharacterConfig.crouchHalfHeight] was never set. While
+     * the free capsule ([freeHalfHeight]) is in use it keeps that one, and the move that ends free
+     * motion becomes the crouched capsule instead of the standing one.
      */
     fun crouch() {
         val crouched = crouchedShape ?: return
         if (isCrouching) return
-        activeShape = crouched
-        position.y -= crouchDrop
         isCrouching = true
+        if (!isFreeShape) resizeTo(crouched)
     }
 
     /**
@@ -283,6 +325,9 @@ class KinematicCharacterController(
      *
      * Holding crouch is therefore the caller's job: try this every frame while the key is up, and
      * the character stands the moment it walks out from under something.
+     *
+     * While the free capsule ([freeHalfHeight]) is in use, this only changes the capsule the move
+     * that ends free motion grows back to, and reports true; that move tests the headroom.
      */
     fun standUp(): Boolean = try {
         tryStandUp()
@@ -292,16 +337,74 @@ class KinematicCharacterController(
     }
 
     private fun tryStandUp(): Boolean {
-        if (!isCrouching) return true
+        val stood = !isCrouching || isFreeShape || fitsGrownTo(config.shape)
+        if (stood && isCrouching && !isFreeShape) resizeTo(config.shape)
+        if (stood) isCrouching = false
+        return stood
+    }
+
+    /**
+     * Whether the character has room to become [shape], of the same radius, with its feet where they
+     * are. A shorter one always has. A taller one has when the current capsule, swept straight up by
+     * twice the height it would gain, meets nothing: that puts its top where the taller one's top
+     * would be, so anything in the way is something the character's head would occupy.
+     */
+    private fun fitsGrownTo(shape: CapsuleShape): Boolean {
+        val gain = shape.halfHeight - activeShape.halfHeight
+        if (gain <= 0f) return true
         target.set(position)
-        target.y += crouchDrop * 2f
-        val blocked = cast() != null
-        if (!blocked) {
-            activeShape = config.shape
-            position.y += crouchDrop
-            isCrouching = false
+        target.y += gain * 2f
+        return cast() == null
+    }
+
+    /**
+     * Becomes [shape], of the same radius, keeping the feet where they are.
+     *
+     * A capsule's origin is its centre, so resizing it without moving it leaves the character
+     * hovering, or sunk, by the difference in half-height. Feet stay planted instead, which is what
+     * a crouch looks like.
+     */
+    private fun resizeTo(shape: CapsuleShape) {
+        position.y += shape.halfHeight - activeShape.halfHeight
+        activeShape = shape
+    }
+
+    /** Shrinks or grows to the free capsule, keeping the feet in place, if there is room. */
+    private fun enterFreeShape() {
+        val free = freeShape ?: return
+        if (fitsGrownTo(free)) {
+            resizeTo(free)
+            isFreeShape = true
         }
-        return !blocked
+    }
+
+    /** Back to the capsule free motion replaced, crouched or standing, if there is room. */
+    private fun leaveFreeShape() {
+        val resting = if (isCrouching) crouchedShape ?: config.shape else config.shape
+        if (fitsGrownTo(resting)) {
+            resizeTo(resting)
+            isFreeShape = false
+        }
+    }
+
+    /**
+     * The height of the first static surface straight below the character, such as terrain, a floor
+     * or a rooftop, or null when there is none within [maxDistance] of its feet.
+     *
+     * One ray, down from the capsule's centre, against static geometry only: the character's own body,
+     * other characters, crates and platforms are passed through, so a flyer above a crowd still learns
+     * its height above the ground. A ray from inside a static body stops at once, so a character sunk
+     * into one gets its own centre back.
+     *
+     * Costs a ray per call, and the hit is allocated. The controller never calls it; it is for an
+     * altimeter, a landing check, or a shadow under a flyer.
+     */
+    fun groundHeightBelow(maxDistance: Float): Float? {
+        require(maxDistance >= 0f) { "maxDistance cannot be negative: $maxDistance" }
+        rayOrigin.set(position)
+        val reach = activeShape.halfHeight + activeShape.radius + maxDistance
+        val hit = world.raycast(rayOrigin, DOWN, reach, CollisionLayers.World) ?: return null
+        return rayOrigin.y - hit.distance
     }
 
     /** Places the character without sweeping. For spawning, not for movement. */
@@ -384,11 +487,19 @@ class KinematicCharacterController(
      * worth, on a body the simulation isn't moving, it keeps the ground state it has. A ground body that
      * starts to move, such as a lift setting off, is active, and the probe runs again from that step.
      * Known limit: ground destroyed under a character that stands still holds it up until it moves.
+     *
+     * A character still the short free capsule ([freeHalfHeight]) grows back to its walking one
+     * first, swept for headroom; with no room it walks short and tries again on the next move.
      */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
         safePosition.set(position)
         lastContact.clear()
         try {
+            // Resized before the move, so a move that fails falls back to the resized position.
+            if (isFreeShape) {
+                leaveFreeShape()
+                safePosition.set(position)
+            }
             moveChecked(motion, deltaTime)
             reportedInvalidContact = false
         } catch (failure: InvalidShapeCastResultException) {
@@ -406,18 +517,28 @@ class KinematicCharacterController(
      * first contact and whether anything lies below in [lastContact]. Walls, floors, ceilings and
      * terrain still stop it; depenetration still pushes it out of an overlap once per move. The
      * capsule stays upright: orientation is the caller's.
+     *
+     * Sweeps the shorter capsule [freeHalfHeight] asks for, if set, and passes through moving bodies
+     * when [freeCollidesWithMoving] is false.
      */
     fun moveFree(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
         safePosition.set(position)
         lastContact.clear()
         clearGround()
+        sweepLayer = if (freeCollidesWithMoving) null else CollisionLayers.World
         try {
+            if (!isFreeShape) {
+                enterFreeShape()
+                safePosition.set(position)
+            }
             sweepAndSlide(motion, wasGrounded = false)
             lastContact.below(probeGround() != null)
             syncBody(deltaTime)
             reportedInvalidContact = false
         } catch (failure: InvalidShapeCastResultException) {
             dropFailedMove(failure)
+        } finally {
+            sweepLayer = null
         }
     }
 
@@ -449,7 +570,7 @@ class KinematicCharacterController(
 
     private fun cast(): ShapeCastHit? {
         queryFrom.set(position)
-        return world.shapeCast(activeShape, position, target, ignore = body)
+        return world.shapeCast(activeShape, position, target, onlyLayer = sweepLayer, ignore = body)
     }
 
     private fun moveChecked(motion: Vec3f, deltaTime: Float) {
@@ -858,5 +979,8 @@ class KinematicCharacterController(
 
         /** Rising this much faster than the ground, in m/s, counts as leaving it. */
         const val LEAVE_GROUND_SPEED = 0.01f
+
+        /** The direction [groundHeightBelow] looks in. Read only, never written. */
+        val DOWN = Vec3f(0f, -1f, 0f)
     }
 }

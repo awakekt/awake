@@ -148,6 +148,22 @@ class KinematicCharacterController(
     /** What the last move ran into, and whether anything lay below it after; see the capability's `lastContact`. */
     val lastContact: CharacterContact get() = controller.lastContact
 
+    /** A shorter capsule to sweep in free motion, or null; see the capability's `freeHalfHeight`. */
+    var freeHalfHeight: Float?
+        get() = controller.freeHalfHeight
+        set(value) { controller.freeHalfHeight = value }
+
+    /** Whether the shorter free capsule is in use; see the capability's `isFreeShape`. */
+    val isFreeShape: Boolean get() = controller.isFreeShape
+
+    /** Whether free motion collides with moving bodies; see the capability's `freeCollidesWithMoving`. */
+    var freeCollidesWithMoving: Boolean
+        get() = controller.freeCollidesWithMoving
+        set(value) { controller.freeCollidesWithMoving = value }
+
+    /** The height of the first static surface below, or null; see the capability's `groundHeightBelow`. */
+    fun groundHeightBelow(maxDistance: Float): Float? = controller.groundHeightBelow(maxDistance)
+
     /** Shrinks the capsule while keeping its feet in place. */
     fun crouch() = controller.crouch()
 
