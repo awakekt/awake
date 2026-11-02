@@ -58,6 +58,12 @@ class StreamedNavGrid(
     val residentCells: Set<WorldCellCoord> get() = tiles.keys
 
     /**
+     * The resident tiles by cell. A new map each time a tile loads or unloads and the same one in between, so a
+     * reader that compares it by identity knows when to read it again ([NavDebugSource]).
+     */
+    internal val residentTiles: Map<WorldCellCoord, NavGridTile> get() = tiles
+
+    /**
      * Returns the baked [NavGridTile] for [coord], or `null` when that cell is not resident.
      *
      * @param coord The world cell coordinate to query.

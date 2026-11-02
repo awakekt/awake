@@ -299,7 +299,9 @@ interpolation between fixed steps. Changing `PhysicsBody.motionType` rebuilds th
 
 `physicsDebugLines(world)` returns world-space wireframes of every body's collider at its simulated
 pose, coloured by motion type. Draw them with your other debug lines to see where a collider and its
-mesh disagree.
+mesh disagree. `PhysicsDebugSource(world)` draws the same lines through the debug registry, turned on
+with `--debug=physics`, and counts the bodies by motion type on the debug panel; see
+[Debug tools](debug-tools.md#the-physics-source).
 
 ## See also
 
