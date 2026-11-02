@@ -1,1 +1,0 @@
-- **0.36.0 was not published.** Its tag exists, but a build-logic test from #1271 failed on the macOS runner of its publish run, so the release job was skipped and nothing reached Maven Central (#1278 fixes the test). 0.37.0 is the first published version with the changes listed under 0.36.0, 0.35.0 and 0.34.0 below.
