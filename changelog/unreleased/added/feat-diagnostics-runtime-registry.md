@@ -1,0 +1,1 @@
+- **Diagnostics: a scene app's debug sources.** A scene app on the default infrastructure systems draws its debug sources' lines once it registers its `DebugRegistry` as an app service (`service(DebugRegistry::class, registry)`): `defaultInfrastructureSystems` hands that registry to the `DebugVisualizationSystem` it creates, with no change to its signature (#1218).
