@@ -113,9 +113,23 @@ small "Made with AwakeKt" line. Add `data-attribution="none"` to drop that line.
 ## Ship the texture transcoder
 
 A project's cooked textures (`.ktx2`) are transcoded in the browser by Basis Universal, which the page
-loads from `basis/basis_transcoder.js` and `basis/basis_transcoder.wasm` beside `index.html`. Copy the
-two files from the `basis/` folder of the `texture-ktx-loader-wasm-js` klib of your Core version, so
-they match it. The klib is on Maven Central under `com.awakekt.awake.asset`, and in your Gradle cache
+loads from `basis/basis_transcoder.js` and `basis/basis_transcoder.wasm` beside `index.html`. Apply
+Core's Gradle plugin to your web module and it puts them there, for the development server and the
+production build:
+
+```kotlin
+plugins {
+    id("com.awakekt.awake.plugin.basis-transcoder") version "<your Core version>"
+}
+```
+
+It takes the files from the `texture-ktx-loader-wasm-js` klib your app already depends on and checks
+them against the digests Core pins, so the build fails if they aren't the release's own; keep the plugin
+on the same version as Core. An app that doesn't use KTX2 textures gets nothing added. The game template
+applies it already.
+
+If you can't apply the plugin, copy the two files by hand from the `basis/` folder of the klib of your
+Core version. The klib is on Maven Central under `com.awakekt.awake.asset`, and in your Gradle cache
 once the app has built:
 
 ```bash

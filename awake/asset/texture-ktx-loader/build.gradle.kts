@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import java.security.MessageDigest
+import com.awakekt.awake.build.tasks.BasisTranscoderRelease
 
 plugins {
     id("com.awakekt.awake.plugin.library")
@@ -58,12 +58,11 @@ kotlin {
 // prebuilt release byte for byte: webgl/transcoder/build/ at tag v2_50
 // (9bebe16726b3a61c8c213eeee3b7cffb462ef34e), as NOTICE.md and source-provenance.json record. It is
 // checked before the wasm resources are packed and with `check`, so a changed file fails the build.
-// To update it, copy the new release's two files unchanged and update the tag, the commit and these
-// digests here, in the provenance registry and in NOTICE.md.
-val basisTranscoderRelease = mapOf(
-    "basis_transcoder.js" to "720dd9bd09c7cada6d87f1b7b70cec713df04da88cd641ac3212559353834dc8",
-    "basis_transcoder.wasm" to "a0f65d4a30ecb3269d01ead7d0a3477d2b0208146d083625a90623f473f6c139",
-)
+// The digests are BasisTranscoderRelease's (build-logic), the pin the `basis-transcoder` Gradle plugin
+// checks the copy it puts beside a web app against. To update it, copy the new release's two files
+// unchanged and update the tag, the commit and those digests, here, in the provenance registry and in
+// NOTICE.md.
+val basisTranscoderRelease = BasisTranscoderRelease.digests
 val basisTranscoderDirectory = layout.projectDirectory.dir("src/wasmJsMain/resources/basis")
 val verifyBasisTranscoder = tasks.register("verifyBasisTranscoder") {
     group = "verification"
@@ -73,10 +72,9 @@ val verifyBasisTranscoder = tasks.register("verifyBasisTranscoder") {
     inputs.files(files.values)
     doLast {
         files.forEach { (name, file) ->
-            val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
-                .joinToString("") { "%02x".format(it) }
+            val digest = BasisTranscoderRelease.sha256(file.readBytes())
             check(digest == expected.getValue(name)) {
-                "$name is not the pinned Basis Universal v2_50 file: its SHA-256 is $digest, not ${expected.getValue(name)}"
+                "$name is not the pinned Basis Universal ${BasisTranscoderRelease.TAG} file: its SHA-256 is $digest, not ${expected.getValue(name)}"
             }
         }
     }
