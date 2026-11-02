@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.1] - 2026-11-02
+
+### Fixed
+
+- **The starter templates' desktop apps build against the latest Vulkan release again.** They passed `cursorImage` to `runVulkanDesktopGame`, which only the next Vulkan release adds, so v0.37.0's publish run failed in its Consumer job and 0.37.0 was not published. They pass the pointer shape only, as before; the image cursor returns on desktop with that Vulkan release (#1282). The web templates keep it.
+- **0.37.0 was not published.** Its tag exists, but its publish run's Consumer job failed (see above), so the release job was skipped and nothing reached Maven Central. The next release carries its changes.
+
 ## [0.37.0] - 2026-11-02
 
 ### Added
