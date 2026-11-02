@@ -5,7 +5,11 @@
  */
 package com.awakekt.awake.asset.ktx.loader
 
+import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.LogRingBuffer
 import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import kotlinx.coroutines.test.runTest
@@ -68,6 +72,25 @@ class CookedTextureLoaderTest {
         assertEquals(1, asked, "a transcoder that failed to load isn't asked for again")
         assertNull(CookedTextureLoader(files("textures/rock.ktx2")) { LibKtxBasisTranscoder }.load("textures/rock.txt", setOf(Bc7)), "not an image")
     }
+
+    @Test
+    fun aTranscoderThatFailsWithAnyThrowableIsLoggedOnceAndLeavesEachTextureToItsSourceImage() = runTest {
+        val records = LogRingBuffer()
+        Log.install(records)
+        try {
+            // A browser's rejected script load arrives as a JsException: a Throwable, not an Exception (#1261).
+            val loader = CookedTextureLoader(files("textures/rock.ktx2")) { throw NotAnException("transcoder not found") }
+
+            assertNull(loader.load("textures/rock.png", setOf(Bc7)), "the caller decodes the source image")
+            assertNull(loader.decode(CookedTextures.bytes("rock.ktx2")), "a model's image is left to its decoder")
+            assertTrue(loader.withCookedImages().read(AssetPath("textures/rock.png")).isFailure, "the source image is read, and isn't here")
+            assertEquals(1, records.countAtLeast(LogLevel.Error), "the failure is said once, not per texture")
+        } finally {
+            Log.remove(records)
+        }
+    }
+
+    private class NotAnException(message: String) : Throwable(message)
 
     // Each of [names] holds the cooked file of the same name in test resources: `rock.ktx2` or `rock.astc.ktx2`.
     private fun files(vararg names: String) = AssetSource { path ->

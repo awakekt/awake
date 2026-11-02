@@ -9,7 +9,9 @@ package com.awakekt.awake.asset.ktx.loader
 
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import kotlinx.coroutines.await
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsException
 import kotlin.js.Promise
 
 /**
@@ -19,7 +21,9 @@ import kotlin.js.Promise
  * It's loaded the first time it's needed, not with the app: [load] adds `basis_transcoder.js` to the
  * page, which fetches `basis_transcoder.wasm` from beside it. The app serves the two files at the
  * path it passes, `basis/` beside its page by default. In this repository they come with this
- * module's resources; an app outside it copies them, as it copies `awake-loader.js`.
+ * module's resources; an app outside it copies the `basis/` folder of this module's wasm-js klib into
+ * its `src/wasmJsMain/resources/`. A page without them still runs: [load] throws, and
+ * [CookedTextureLoader] loads each texture without the transcoder.
  */
 class BasisWasmTranscoder private constructor(private val module: JsAny) : BasisTranscoder {
     override val formats: Set<CompressedTextureFormat> = TARGETS.keys
@@ -37,11 +41,29 @@ class BasisWasmTranscoder private constructor(private val module: JsAny) : Basis
         private var loaded: BasisWasmTranscoder? = null
 
         /**
-         * The transcoder, loaded from [scriptUrl] the first time and the same one after that. Fails
-         * when the script or its `.wasm` can't be fetched.
+         * The transcoder, loaded from [scriptUrl] the first time and the same one after that. Throws an
+         * [IllegalStateException] naming [scriptUrl] and the fix when the script or its `.wasm` can't be
+         * fetched or started; a later call tries again. [CookedTextureLoader] logs that once and loads
+         * each texture without it.
          */
-        suspend fun load(scriptUrl: String = DEFAULT_SCRIPT_URL): BasisWasmTranscoder =
-            loaded ?: BasisWasmTranscoder(loadModule(scriptUrl).await()).also { loaded = it }
+        @Suppress("TooGenericExceptionCaught") // A rejected load arrives as a JsException, a Throwable.
+        suspend fun load(scriptUrl: String = DEFAULT_SCRIPT_URL): BasisWasmTranscoder {
+            loaded?.let { return it }
+            val module = try {
+                loadModule(scriptUrl).await<JsAny>()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Throwable) {
+                val reason = (failure as? JsException)?.let { jsMessage(it.thrownValue) } ?: failure.message
+                throw IllegalStateException(
+                    "Basis Universal transcoder not loaded from $scriptUrl: $reason. Serve basis_transcoder.js " +
+                        "and basis_transcoder.wasm at that path: copy the basis/ folder of the texture-ktx-loader " +
+                        "wasm-js klib into the app's src/wasmJsMain/resources/",
+                    failure,
+                )
+            }
+            return loaded ?: BasisWasmTranscoder(module).also { loaded = it }
+        }
 
         // Basis Universal's names for each format; looked up at runtime, since v2 renumbered them.
         private val TARGETS: Map<CompressedTextureFormat, String> = mapOf(
@@ -66,11 +88,18 @@ private fun loadModule(scriptUrl: String): Promise<JsAny> = js(
                 const script = document.createElement('script');
                 script.src = scriptUrl;
                 script.onload = resolve;
-                script.onerror = () => reject(new Error('Basis Universal transcoder not found at ' + scriptUrl));
+                script.onerror = () => reject(new Error('the script was not found, or was refused'));
                 document.head.appendChild(script);
             });
+            // A server that answers a missing file with an HTML page may still fire onload.
+            if (typeof globalThis.BASIS !== 'function') throw new Error('the file there is not the transcoder script');
         }
-        const module = await globalThis.BASIS();
+        let module;
+        try {
+            module = await globalThis.BASIS();
+        } catch (e) {
+            throw new Error('its basis_transcoder.wasm did not start (' + e + ')');
+        }
         module.initializeBasis();
         return module;
     })()""",
@@ -98,6 +127,10 @@ private fun transcodeLevels(module: JsAny, data: JsAny, format: String): JsAny =
         }
     }""",
 )
+
+/** What a thrown JS value says: an `Error`'s message, or the value itself as a string. */
+@Suppress("UnusedParameter") // Read by the JS body.
+private fun jsMessage(value: JsAny?): String = js("String(value && value.message || value)")
 
 @Suppress("UnusedParameter") // Read by the JS body.
 private fun arrayLength(array: JsAny): Int = js("array.length")

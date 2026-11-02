@@ -8,6 +8,7 @@ package com.awakekt.awake.asset.ktx.loader
 import com.awakekt.awake.asset.ktx.Ktx2Reader
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.asGpuImageSource
@@ -82,18 +83,34 @@ class CookedTextureLoader(
     // Asked once: a transcoder that can't load isn't tried again for every texture.
     private var loaded: Result<BasisTranscoder?>? = null
 
-    // TooGenericExceptionCaught: a transcoder that can't load, such as a page without its script, leaves the source image.
+    /**
+     * The transcoder, or null when there is none or it won't load. A failure is logged once and leaves
+     * each Basis Universal texture to its mobile file or its source image, as when nothing was cooked.
+     */
+    private suspend fun transcoderOrNull(): BasisTranscoder? = (loaded ?: firstAnswer(askTranscoder())).getOrNull()
+
+    /**
+     * [transcoder]'s answer. It catches [Throwable], not [Exception]: in a browser a rejected script load
+     * arrives as a `JsException`, which isn't an [Exception], and it took the app down with it (#1261).
+     */
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun transcoderOrNull(): BasisTranscoder? {
-        loaded?.let { return it.getOrNull() }
-        val result = try {
-            Result.success(transcoder())
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (failure: Exception) {
-            Result.failure(failure)
+    private suspend fun askTranscoder(): Result<BasisTranscoder?> = try {
+        Result.success(transcoder())
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Throwable) {
+        Result.failure(failure)
+    }
+
+    // Textures loading together may each have asked: the first answer stands, and only it is logged.
+    private fun firstAnswer(result: Result<BasisTranscoder?>): Result<BasisTranscoder?> = loaded ?: result.also { answer ->
+        loaded = answer
+        answer.exceptionOrNull()?.let { failure ->
+            log.error(failure) {
+                "No Basis Universal transcoder, so each Basis Universal .ktx2 texture loads its mobile file or " +
+                    "its source image instead: ${failure.message}"
+            }
         }
-        return result.also { loaded = it }.getOrNull()
     }
 
     private fun rgba(bytes: ByteArray, codec: BasisTranscoder?): ByteArray {
@@ -102,6 +119,8 @@ class CookedTextureLoader(
     }
 
     private companion object {
+        val log = Logger("texture-ktx-loader")
+
         val IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp")
 
         /** `textures/rock.ktx2` for `textures/rock.png`, or null for a path that isn't an image. */
