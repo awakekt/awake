@@ -78,6 +78,36 @@ fun runDesktopWindow(
     }
 }
 
+/** [runDesktopWindow] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runDesktopWindow(
+    game: AwakeAppLifecycle,
+    onCreate: (window: Long) -> Unit,
+    onFrame: (deltaSeconds: Float) -> Unit,
+    onDispose: () -> Unit,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    frames: Int? = null,
+    onDpi: (dpi: Float) -> Unit = {},
+) {
+    runDesktopWindow(
+        game = game,
+        onCreate = onCreate,
+        onFrame = onFrame,
+        onDispose = onDispose,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+        frames = frames,
+        onDpi = onDpi,
+    )
+}
+
 @Suppress("LongParameterList")
 private fun runFrames(
     window: Long,

@@ -12,12 +12,12 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
-import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Log

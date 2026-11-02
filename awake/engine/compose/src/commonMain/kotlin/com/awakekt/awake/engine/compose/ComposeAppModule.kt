@@ -10,8 +10,8 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.platform.toFrameInput
-import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.CursorImage
+import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts

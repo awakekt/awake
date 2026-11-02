@@ -26,7 +26,9 @@ package com.awakekt.awake.core.input
  */
 class CursorImage(
     rgba: ByteArray,
+    /** The image width in pixels. */
     val width: Int,
+    /** The image height in pixels. */
     val height: Int,
     val hotspotX: Int = 0,
     val hotspotY: Int = 0,
@@ -46,6 +48,7 @@ class CursorImage(
 
     override fun toString(): String = "CursorImage(${width}x$height, hotspot=($hotspotX, $hotspotY))"
 
+    /** Constants for [CursorImage]'s pixel layout. */
     companion object {
         /** Bytes per pixel: R, G, B, A. */
         const val PIXEL_STRIDE: Int = 4

@@ -144,3 +144,69 @@ fun runVulkanDesktopGame(
     // A limited run is a check: frames played by an engine that never started prove nothing.
     if (limits.frames != null) check(started) { notStarted(application) }
 }
+
+/** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    plan: RenderPlan,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+) {
+    runVulkanDesktopGame(
+        game = game,
+        plan = plan,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+    )
+}
+
+/** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    applicationFactory: (AwakeAppLifecycle) -> VulkanEngine,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+) {
+    runVulkanDesktopGame(
+        game = game,
+        applicationFactory = applicationFactory,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+    )
+}
+
+/** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    application: VulkanEngine,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    limits: DesktopRunLimits = DesktopRunLimits.fromSystemProperties(),
+) {
+    runVulkanDesktopGame(
+        game = game,
+        application = application,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
+        cursorImage = null,
+        limits = limits,
+    )
+}
