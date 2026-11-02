@@ -47,6 +47,9 @@ kotlin {
             // the same way every other grid mesh in the engine is, and that winding is one
             // definition shared, not four copies that agree until one of them does not.
             implementation(project(":awake:core:geometry"))
+            // DebugLines, which PhysicsShapeWireframe writes collider wireframes into. Diagnostics is
+            // math and colour only, so a headless or server build still reaches no renderer.
+            api(project(":awake:core:diagnostics"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

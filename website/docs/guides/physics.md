@@ -303,6 +303,15 @@ mesh disagree. `PhysicsDebugSource(world)` draws the same lines through the debu
 with `--debug=physics`, and counts the bodies by motion type on the debug panel; see
 [Debug tools](debug-tools.md#the-physics-source).
 
+Both draw each collider with `PhysicsShapeWireframe`, in `awake:physics:api`, which needs no scene.
+Use it directly to draw a body you placed yourself, for example one created on a `PhysicsWorld` with
+no entity behind it:
+
+```kotlin title="Kotlin"
+val wireframe = PhysicsShapeWireframe() // keep one; writing reuses its points
+wireframe.write(shape, position, rotation, color, debugLines)
+```
+
 ## See also
 
 - [Jolt backend](physics-jolt.md) for creating a `PhysicsWorld` and platform notes.

@@ -17,6 +17,7 @@ implementation(project(":awake:physics:api"))
 - `DegreesOfFreedom` — unrestricted motion (`ALL`) or X/Y translation and Z rotation (`PLANE_2D`).
 - `BodyTransform` — position (`Vec3`) and orientation (`Quat`) representation.
 - `RaycastHit` — raycast intersection result (hit position, normal, distance, body handle).
+- `PhysicsShapeWireframe` — writes a shape's collider wireframe at a pose into a `DebugLines`, allocation-free; `PhysicsDebugSource` in `:awake:scene:physics` draws every body's with it.
 
 ## Usage Example
 

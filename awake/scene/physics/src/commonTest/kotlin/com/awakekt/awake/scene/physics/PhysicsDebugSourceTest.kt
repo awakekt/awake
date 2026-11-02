@@ -19,6 +19,7 @@ import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.SphereShape
+import com.awakekt.awake.physics.debug.PhysicsShapeWireframe
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -84,7 +85,7 @@ class PhysicsDebugSourceTest {
 
         PhysicsDebugSource(knownWorld()).lines(lines)
 
-        val ring = PhysicsDebugWriter.CIRCLE_SEGMENTS
+        val ring = PhysicsShapeWireframe.CIRCLE_SEGMENTS
         // A box is twelve edges, a sphere three rings, a capsule two rings, the line between its extremes and four sides.
         assertEquals(BOX_EDGES + 3 * ring + 2 * ring + 1 + 4, lines.drawn.size)
         assertTrue(lines.drawn.take(BOX_EDGES).all { it.color == PhysicsDebugSource.STATIC })
