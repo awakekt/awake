@@ -188,7 +188,7 @@ class CharacterFreeMotionTest {
         /** Floor top at 0, capsule centre half its height above it. */
         const val STANDING_Y = 1f
 
-        val SCENE = """
+        const val SCENE = """
 { "version": 1, "name": "x", "nodes": [
   { "name": "Floor", "transform": { "position": { "x": 0.0, "y": -0.1, "z": 0.0 } }, "components": [
     { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 10.0, "y": 0.1, "z": 10.0 } } }

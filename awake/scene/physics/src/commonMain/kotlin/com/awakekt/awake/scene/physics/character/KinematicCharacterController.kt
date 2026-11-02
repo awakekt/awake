@@ -85,9 +85,6 @@ data class CharacterConfig(
     /** Ground is walkable when its normal is at least this upright -- compared once, not per hit. */
     internal val minWalkableNormalY: Float = cos(slopeLimitRadians)
 
-    /** Moves in any direction with no ground state, collision kept; see the capability's `moveFree`. */
-    fun moveFree(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.moveFree(motion, deltaTime)
-
     private companion object {
         const val DEFAULT_SLOPE_LIMIT_RADIANS = 0.7853982f // 45 degrees
         const val DEFAULT_SKIN_WIDTH = 0.02f
@@ -168,6 +165,9 @@ class KinematicCharacterController(
 
     /** Moves through physics; an invalid contact blocks this move and is logged. */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.move(motion, deltaTime)
+
+    /** Moves in any direction with no ground state, collision kept; see the capability's `moveFree`. */
+    fun moveFree(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.moveFree(motion, deltaTime)
 
     private companion object {
         const val MIN_MOTION = 1e-5f
