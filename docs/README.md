@@ -63,6 +63,7 @@
 | **Reference** | [`UI Testing Dictionary`](reference/glossary/ui-testing.md) | `Active` | Plain-English meanings for terms used in Awake UI code and tests. This page is for people who |
 | **Reference** | [`KMP Architecture Stance`](reference/kmp-architecture-stance.md) | `Active` | Awake is a Kotlin Multiplatform project that deliberately skips most of what people mean by |
 | **Reference** | [`Library API Boundaries`](reference/library-api-boundaries.md) | `Active` | This document is the canonical rule for how Awake splits public library surface from DSL |
+| **Reference** | [`Locomotion and warps`](reference/locomotion-and-warps.md) | `Active` | Any system deriving motion from a per-frame world-position delta must reject warps (respawn, leash, ... |
 | **Reference** | [`Maven coordinates and publication dependency graph`](reference/maven-coordinates.md) | `Active` | This page is the current Maven publication inventory. **It is maintained by hand:** a pull request |
 | **Reference** | [`Mirror Map: Awake UI DSL vs. Jetpack Compose`](reference/mirror-map.md) | `Active` | Awake's retained UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks, |
 | **Reference** | [`Module Architecture`](reference/module-architecture.md) | `Active` | How Awake's 44 modules are grouped, why, and how to decide where a new one goes. |
