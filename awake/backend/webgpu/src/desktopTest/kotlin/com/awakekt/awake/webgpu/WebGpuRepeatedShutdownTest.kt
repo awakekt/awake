@@ -34,6 +34,10 @@ import kotlin.test.assertTrue
  * modules, 37 texture views, 7 bind groups, 3 buffers, 3 samplers and 3 command buffers. Negative
  * control: skipping the queue release leaves `queues=2` after the first shutdown, the timing
  * upgrade's discarded queue and the engine's own, each keeping its native device, and fails there.
+ *
+ * The device's last release runs on wgpu4k's event-pump thread and unregisters the device before its
+ * queue, so the count is read only once that release has finished, device and queue both gone
+ * (#1263); a sample in between read `queues=1` for a queue that was going away.
  */
 class WebGpuRepeatedShutdownTest {
     @Test

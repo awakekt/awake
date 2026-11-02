@@ -106,20 +106,15 @@ class HeadlessWebGpuEngine(
     }
 
     /**
-     * What [this] instance still holds once the device has gone. wgpu4k's device event pump keeps
-     * its own device reference and gives it back when its coroutine finishes, just after the device
-     * is closed; the device keeps its queue until then. Waits up to [DEVICE_RELEASE_TIMEOUT_MS] for
-     * that, so the instance is released after everything it created.
+     * What [this] instance still holds once the device and the queue it owns have gone. wgpu4k's
+     * device event pump keeps its own device reference and gives it back on a worker thread when its
+     * coroutine finishes, just after the device is closed, and that last release unregisters the
+     * device before its queue. Waits up to [DEVICE_RELEASE_TIMEOUT_MS] for the whole release, see
+     * [awaitDeviceRelease], so the report never catches it halfway and the instance is released
+     * after everything it created.
      */
-    private fun WGPU.awaitDeviceRelease(): Map<String, Long> {
-        val deadline = System.nanoTime() + DEVICE_RELEASE_TIMEOUT_MS * NANOS_PER_MILLI
-        var live = liveObjects()
-        while ("devices" in live && System.nanoTime() < deadline) {
-            Thread.sleep(1)
-            live = liveObjects()
-        }
-        return live
-    }
+    private fun WGPU.awaitDeviceRelease(): Map<String, Long> =
+        awaitDeviceRelease(timeoutNanos = DEVICE_RELEASE_TIMEOUT_MS * NANOS_PER_MILLI) { liveObjects() }
 
     private companion object {
         const val DEVICE_RELEASE_TIMEOUT_MS = 2_000L
