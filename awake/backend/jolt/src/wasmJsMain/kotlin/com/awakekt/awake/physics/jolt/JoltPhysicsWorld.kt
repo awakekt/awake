@@ -516,7 +516,7 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a shape type.
 @JsFun(
     """
-    (world, samples, sampleCount, offsetX, offsetZ, sx, sy, sz, px, py, pz) => {
+    (world, samples, sampleCount, offsetX, offsetZ, sx, sy, sz, px, py, pz, layer) => {
         const jolt = world.jolt;
         const heights = new jolt.ArrayFloat();
         heights.reserve(samples.length);
@@ -533,7 +533,7 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(0, 0, 0, 1);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
-            shape, position, rotation, jolt.EMotionType_Static, 0
+            shape, position, rotation, jolt.EMotionType_Static, layer
         );
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
@@ -561,6 +561,7 @@ private external fun joltCreateHeightFieldBody(
     positionX: Double,
     positionY: Double,
     positionZ: Double,
+    layer: Int,
 ): Int
 
 // Shape discriminators for [joltCreateBody]/[joltShapeCast]'s flattened parameter lists -- the
@@ -1151,7 +1152,7 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a ray type.
 @JsFun(
     """
-    (world, ox, oy, oz, dx, dy, dz, onlyLayer) => {
+    (world, ox, oy, oz, dx, dy, dz, onlyLayer, ignoreId) => {
         const query = world.query;
         query.point.Set(ox, oy, oz);
         query.vector.Set(dx, dy, dz);
@@ -1160,9 +1161,9 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
         ray.mDirection = query.vector;
         const collector = query.rayCollector;
         collector.Reset();
-        // A sensor is not solid, so it is not what a ray is stopped by -- the same rule the sweep
-        // above follows. A ray ignores no body by id.
-        world.ignoreId = -1;
+        // A sensor is not solid, so it is not what a ray is stopped by, and the ignored body (or
+        // none, at -1) is skipped inside the query -- the same rules the sweep above follows.
+        world.ignoreId = ignoreId;
         world.physicsSystem.GetNarrowPhaseQuery().CastRay(
             ray, query.raySettings, collector,
             query.anyBroadPhase, world.layerFilter(onlyLayer),
@@ -1182,6 +1183,7 @@ private external fun joltRaycast(
     directionY: Double,
     directionZ: Double,
     onlyLayer: Int,
+    ignoreId: Int,
 ): JsAny?
 
 // Called from syncTransforms()/raycast() below; detekt's unused-check can't trace
@@ -1279,7 +1281,7 @@ class JoltPhysicsWorld private constructor(
         // is a sample grid, a mesh a triangle list, a hull a point cloud -- so each has its own
         // entry point and this dispatches rather than falling through a chain of guards.
         val ownEntryPoint = when (shape) {
-            is HeightFieldShape -> createHeightFieldBody(shape, position, motionType)
+            is HeightFieldShape -> createHeightFieldBody(shape, position, motionType, layer)
             is MeshShape -> createMeshBody(shape, position, rotation, motionType, layer)
             is ConvexHullShape ->
                 createHullBody(shape, position, rotation, motionType, layer, sensor, degreesOfFreedom)
@@ -1400,6 +1402,7 @@ class JoltPhysicsWorld private constructor(
         shape: HeightFieldShape,
         position: Vec3f,
         motionType: MotionType,
+        layer: CollisionLayer,
     ): BodyHandle {
         shape.requireSupportedMotionType(motionType)
         val samples = jsNewArray()
@@ -1416,6 +1419,9 @@ class JoltPhysicsWorld private constructor(
             position.x.toDouble(),
             position.y.toDouble(),
             position.z.toDouble(),
+            // The body's own layer: this was 0, the world layer, whatever the caller asked for, so
+            // a query restricted to a game's own static layer never saw its terrain (#1241).
+            layer.index,
         )
         trackedBodyIds.add(idNum)
         return BodyHandle(idNum.toLong())
@@ -1689,6 +1695,14 @@ class JoltPhysicsWorld private constructor(
         direction: Vec3f,
         maxDistance: Float,
         onlyLayer: CollisionLayer?,
+    ): RaycastHit? = raycast(origin, direction, maxDistance, onlyLayer, ignore = null)
+
+    override fun raycast(
+        origin: Vec3f,
+        direction: Vec3f,
+        maxDistance: Float,
+        onlyLayer: CollisionLayer?,
+        ignore: BodyHandle?,
     ): RaycastHit? {
         val normalizedDirection = direction.normalized()
         val castVector = Vec3f(
@@ -1705,6 +1719,7 @@ class JoltPhysicsWorld private constructor(
             castVector.y.toDouble(),
             castVector.z.toDouble(),
             onlyLayer?.index ?: -1,
+            ignore?.id?.toInt() ?: -1,
         ) ?: return null
 
         val fraction = jsArrayGet(result, 0).toFloat()

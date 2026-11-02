@@ -8,6 +8,7 @@ package com.awakekt.awake.physics.character
 import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.PhysicsWorld
@@ -59,19 +60,26 @@ class TerrainCollider(val handle: BodyHandle, shape: HeightFieldShape, position:
     /**
      * The height of this terrain's surface at [x], [z], or `null` where it isn't there.
      *
-     * One ray down from above [top], against static world geometry. A tree or a rock standing on
+     * One ray down from above [top], against [onlyLayer], skipping [ignore]. A tree or a rock standing on
      * the terrain is hit first, so the search goes on from just under each hit that isn't this
      * terrain, up to [MAX_LAYERS_ABOVE] of them. Under a convex body standing on the terrain, such as
      * a crate, there's no answer: a ray from inside it stops at once. That spot gives `null`, and
      * a character there isn't lifted.
      */
-    internal fun surfaceAt(world: PhysicsWorld, x: Float, z: Float, origin: Vec3f): Float? {
+    internal fun surfaceAt(
+        world: PhysicsWorld,
+        x: Float,
+        z: Float,
+        origin: Vec3f,
+        onlyLayer: CollisionLayer? = CollisionLayers.World,
+        ignore: BodyHandle? = null,
+    ): Float? {
         origin.set(x, top + MARGIN, z)
         var reach = top - bottom + 2f * MARGIN
         var surface: Float? = null
         var layers = 0
         while (surface == null && reach > 0f && layers <= MAX_LAYERS_ABOVE) {
-            val hit = world.raycast(origin, DOWN, reach, CollisionLayers.World) ?: break
+            val hit = world.raycast(origin, DOWN, reach, onlyLayer, ignore) ?: break
             if (hit.handle == handle) {
                 surface = origin.y - hit.distance
             } else {

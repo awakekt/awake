@@ -541,6 +541,14 @@ class JoltPhysicsWorld(
         direction: Vec3f,
         maxDistance: Float,
         onlyLayer: CollisionLayer?,
+    ): RaycastHit? = raycast(origin, direction, maxDistance, onlyLayer, ignore = null)
+
+    override fun raycast(
+        origin: Vec3f,
+        direction: Vec3f,
+        maxDistance: Float,
+        onlyLayer: CollisionLayer?,
+        ignore: BodyHandle?,
     ): RaycastHit? {
         // Normalized here rather than through Vec3f.normalized(), so a ray allocates only its answer.
         // A zero direction stays zero, as normalized() leaves it.
@@ -559,11 +567,13 @@ class JoltPhysicsWorld(
             closestRayHit.reset()
             castRayInto(ray, onlyLayer, closestRayHit)
             // Same rule as shapeCast: a sensor is not solid, so it is never the answer to what a ray
-            // is stopped by. Only when the closest hit is one does the whole set have to be collected.
+            // is stopped by, and the ignored body is skipped. Only when the closest hit is one of
+            // those does the whole set have to be collected: jolt-jni's BodyFilter can't be
+            // overridden to skip them inside the query (see shapeCast).
             val closest = if (closestRayHit.hadHit()) closestRayHit.hit else null
             val solid = when {
                 closest == null -> null
-                bodyInterface.isSensor(closest.bodyId) -> nearestSolidRayHit(ray, onlyLayer)
+                !isReportable(closest.bodyId, ignore) -> nearestReportableRayHit(ray, onlyLayer, ignore)
                 else -> closest
             } ?: return@use null
 
@@ -576,14 +586,14 @@ class JoltPhysicsWorld(
         }
     }
 
-    /** The nearest ray hit that is not a sensor; see [raycast] for when this is reached. */
-    private fun nearestSolidRayHit(ray: RRayCast, onlyLayer: CollisionLayer?): RayCastResult? {
+    /** The nearest ray hit that is neither a sensor nor [ignore]; see [raycast] for when this is reached. */
+    private fun nearestReportableRayHit(ray: RRayCast, onlyLayer: CollisionLayer?, ignore: BodyHandle?): RayCastResult? {
         allRayHits.reset()
         castRayInto(ray, onlyLayer, allRayHits)
         var nearest: RayCastResult? = null
         for (index in 0 until allRayHits.countHits()) {
             val candidate = allRayHits.get(index)
-            if (bodyInterface.isSensor(candidate.bodyId)) continue
+            if (!isReportable(candidate.bodyId, ignore)) continue
             if (nearest == null || candidate.fraction < nearest.fraction) nearest = candidate
         }
         return nearest

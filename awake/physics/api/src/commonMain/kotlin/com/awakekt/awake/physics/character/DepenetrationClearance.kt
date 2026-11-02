@@ -7,6 +7,7 @@ package com.awakekt.awake.physics.character
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.PhysicsWorld
 
@@ -30,9 +31,10 @@ import com.awakekt.awake.physics.PhysicsWorld
  * same body as the one being left when the overlap is with the terrain itself.
  *
  * Limits:
- * - The ray asks only the [CollisionLayers.World] layer, where static bodies go by default. A ray
- *   starting inside the character's own body, or a neighbour's, would otherwise stop at once.
- *   Static geometry a game puts on its own layer isn't guarded.
+ * - The ray asks only [onlyLayer], the controller's static layer ([CollisionLayers.World] by
+ *   default), and skips [ignore], the character's own body. With no layer it also stops short of
+ *   moving bodies, and a ray starting inside a neighbour's body stops at once, leaving that push
+ *   unguarded.
  * - Only the centre line is checked. A capsule whose side clips a surface the line misses ends
  *   overlapping that surface with its centre still in front, and the next push-out leaves the
  *   right way.
@@ -44,6 +46,8 @@ import com.awakekt.awake.physics.PhysicsWorld
  * @param leaving the body the push moves the character out of.
  * @param clearance the capsule's reach from its centre along [direction], plus the gap to keep from
  *   the surface the push stops at.
+ * @param onlyLayer the one layer the ray looks at, or null for every layer.
+ * @param ignore the character's own body, which the ray sees through.
  * @return the distance to push, between zero and [distance].
  */
 internal fun PhysicsWorld.clearPushDistance(
@@ -52,8 +56,10 @@ internal fun PhysicsWorld.clearPushDistance(
     distance: Float,
     leaving: BodyHandle,
     clearance: Float,
+    onlyLayer: CollisionLayer? = CollisionLayers.World,
+    ignore: BodyHandle? = null,
 ): Float {
-    val hit = raycast(from, direction, distance + clearance, CollisionLayers.World)
+    val hit = raycast(from, direction, distance + clearance, onlyLayer, ignore)
     val fromInside = hit != null && hit.handle == leaving && hit.distance <= FROM_INSIDE
     if (hit == null || fromInside) return distance
     return (hit.distance - clearance).coerceIn(0f, distance)

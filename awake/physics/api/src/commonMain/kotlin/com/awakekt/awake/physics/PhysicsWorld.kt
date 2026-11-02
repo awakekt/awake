@@ -213,6 +213,33 @@ interface PhysicsWorld {
     ): RaycastHit?
 
     /**
+     * The first body along a ray other than [ignore], or `null`.
+     *
+     * [ignore] skips one body inside the query, as it does for [shapeCast], so the hit reported is
+     * the nearest *other* body rather than nothing. It exists for a ray cast from inside a body of
+     * the caller's own: a character asking what is below it or ahead of a push sees through its own
+     * capsule, and so can look at every layer rather than only the static one its body isn't on.
+     * Everything else is as the overload without it: sensors are never reported, and [onlyLayer]
+     * restricts the ray to one layer.
+     *
+     * Every backend in Awake implements it. The default here serves a [PhysicsWorld] written
+     * before it existed: with no body to ignore it is that world's own [raycast], and asked to
+     * ignore one it throws [PhysicsCapabilityException] rather than answer with that body.
+     */
+    fun raycast(
+        origin: Vec3f,
+        direction: Vec3f,
+        maxDistance: Float,
+        onlyLayer: CollisionLayer? = null,
+        ignore: BodyHandle?,
+    ): RaycastHit? {
+        if (ignore != null) {
+            throw PhysicsCapabilityException("This PhysicsWorld can't skip a body in a raycast")
+        }
+        return raycast(origin, direction, maxDistance, onlyLayer)
+    }
+
+    /**
      * Sweeps [shape] from [from] to [to] and returns the first thing it hits, or `null`.
      *
      * The one query a kinematic character controller needs: sweep, take the earliest hit, slide
@@ -243,8 +270,7 @@ interface PhysicsWorld {
      * *other* body rather than nothing -- which is the whole difference from filtering the result
      * afterwards, where the ignored body hides everything behind it.
      *
-     * There is no matching parameter on [raycast]. Nothing casts a ray from inside its own body
-     * today; the character sweeps. Add it when something does.
+     * [raycast] takes the same parameter, for a ray cast from inside the caller's own body.
      *
      * [onlyLayer] restricts the sweep to a single layer rather than to a set of them. That is what
      * every backend can actually do: jolt-jni exposes only `SpecifiedObjectLayerFilter`, whose

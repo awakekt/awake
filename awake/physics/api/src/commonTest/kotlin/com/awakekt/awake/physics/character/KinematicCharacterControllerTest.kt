@@ -135,6 +135,13 @@ class KinematicCharacterControllerTest {
             maxDistance: Float,
             onlyLayer: CollisionLayer?,
         ): RaycastHit? = null
+        override fun raycast(
+            origin: Vec3f,
+            direction: Vec3f,
+            maxDistance: Float,
+            onlyLayer: CollisionLayer?,
+            ignore: BodyHandle?,
+        ): RaycastHit? = null
         override fun overlapShape(
             shape: PhysicsShape,
             position: Vec3f,

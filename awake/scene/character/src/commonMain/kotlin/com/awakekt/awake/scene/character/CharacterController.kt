@@ -11,6 +11,8 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.character.CharacterContact
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -78,6 +80,7 @@ class CharacterController(
             field = value
             value?.freeHalfHeight = freeHalfHeight
             value?.freeCollidesWithMoving = freeCollidesWithMoving
+            value?.staticLayer = staticLayer
         }
     internal var verticalVelocity: Float = 0f
 
@@ -138,13 +141,26 @@ class CharacterController(
             controller?.freeCollidesWithMoving = value
         }
 
+    /**
+     * The layer its rays look for static ground on: the guard that keeps a push out of an overlap
+     * from crossing the ground, the lift out from under terrain, and [groundHeightBelow].
+     * [CollisionLayers.World], where static bodies go by default; a game with its static geometry on
+     * a layer of its own sets that here. Null looks at every layer, moving bodies included, always
+     * skipping its own body. Run-time state.
+     */
+    var staticLayer: CollisionLayer? = CollisionLayers.World
+        set(value) {
+            field = value
+            controller?.staticLayer = value
+        }
+
     /** Whether it is the shorter free capsule right now; see [freeHalfHeight]. */
     val isFreeShape: Boolean get() = controller?.isFreeShape ?: false
 
     /**
      * The height of the first static surface straight below it, such as terrain, a floor or a rooftop,
-     * or null when there is none within [maxDistance] of its feet, or before its first step. Static
-     * geometry only, so other characters and crates under it are passed through. One ray per call.
+     * or null when there is none within [maxDistance] of its feet, or before its first step. Only
+     * [staticLayer], so other characters and crates under it are passed through. One ray per call.
      */
     fun groundHeightBelow(maxDistance: Float): Float? = controller?.groundHeightBelow(maxDistance)
 
