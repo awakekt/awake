@@ -32,6 +32,8 @@ kotlin {
             api(project(":awake:core:math"))
             api(project(":awake:core:math2d"))
             api(project(":awake:core:color"))
+            // DebugRegistry and DebugRowBuffer appear in DebugPanelSystem and DebugPanelStyle.
+            api(project(":awake:core:diagnostics"))
             api(project(":awake:core:text"))
             api(project(":awake:core:localization"))
             implementation(libs.kotlinx.serialization.json)

@@ -926,6 +926,42 @@ public abstract class com/awakekt/awake/scene/canvas/CanvasWidgetParts : com/awa
 	public fun <init> (Ljava/lang/String;)V
 }
 
+public final class com/awakekt/awake/scene/canvas/DebugPanelKt {
+	public static final fun debugPanelPrefab (Lcom/awakekt/awake/scene/canvas/DebugPanelStyle;)Lcom/awakekt/awake/scene/document/ScenePrefab;
+	public static synthetic fun debugPanelPrefab$default (Lcom/awakekt/awake/scene/canvas/DebugPanelStyle;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/ScenePrefab;
+}
+
+public final class com/awakekt/awake/scene/canvas/DebugPanelStyle {
+	public static final field Companion Lcom/awakekt/awake/scene/canvas/DebugPanelStyle$Companion;
+	public static final field DEFAULT_OFFSET F
+	public static final field DEFAULT_ORDER I
+	public static final field DEFAULT_REFRESH_SECONDS F
+	public static final field DEFAULT_WIDTH F
+	public fun <init> ()V
+	public fun <init> (ILcom/awakekt/awake/ui/canvas/CanvasAnchor;FFFFI)V
+	public synthetic fun <init> (ILcom/awakekt/awake/ui/canvas/CanvasAnchor;FFFFIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public final fun getOrder ()I
+	public final fun getRefreshSeconds ()F
+	public final fun getSlots ()I
+	public final fun getWidth ()F
+	public fun hashCode ()I
+	public final fun height (I)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/canvas/DebugPanelStyle$Companion {
+}
+
+public final class com/awakekt/awake/scene/canvas/DebugPanelSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/core/diagnostics/DebugRegistry;Lcom/awakekt/awake/scene/canvas/DebugPanelStyle;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/DebugRegistry;Lcom/awakekt/awake/scene/canvas/DebugPanelStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public final class com/awakekt/awake/scene/canvas/SceneCanvasAppearance : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/canvas/SceneCanvasAppearance$Companion;
 	public fun <init> ()V
