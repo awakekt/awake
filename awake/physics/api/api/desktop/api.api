@@ -512,3 +512,13 @@ public final class com/awakekt/awake/physics/character/TerrainCollider {
 	public final fun getTop ()F
 }
 
+public final class com/awakekt/awake/physics/debug/PhysicsShapeWireframe {
+	public static final field CIRCLE_SEGMENTS I
+	public static final field Companion Lcom/awakekt/awake/physics/debug/PhysicsShapeWireframe$Companion;
+	public fun <init> ()V
+	public final fun write (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+}
+
+public final class com/awakekt/awake/physics/debug/PhysicsShapeWireframe$Companion {
+}
+

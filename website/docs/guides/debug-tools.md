@@ -197,7 +197,9 @@ Its lines are each collider at its entity's `Transform`, the same ones `physicsD
 returns: a box's 12 edges, three rings of 16 lines for a sphere, two rings and five lines for a capsule,
 a heightfield's footprint at its lowest sample, and the box around a mesh's or convex hull's points.
 Static bodies are blue (`PhysicsDebugSource.STATIC`), dynamic ones green (`DYNAMIC`) and kinematic ones
-amber (`KINEMATIC`).
+amber (`KINEMATIC`). The source only walks the bodies: each shape is drawn by `PhysicsShapeWireframe`, in
+`awake:physics:api`, which writes one `PhysicsShape` at a position and rotation into any `DebugLines` and
+needs no scene.
 
 ## The navigation source
 
