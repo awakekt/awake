@@ -1,6 +1,7 @@
 package com.awakekt.awake.template
 
 import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.StringTableSource
@@ -61,4 +62,15 @@ fun createGame(
 fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor {
     val runtime = game.requireService<SceneAppLifecycleRuntime>()
     return { runtime.cursor }
+}
+
+/**
+ * The custom cursor image [game] asks for each frame: the hovered UI node's
+ * (`Modifier.pointerCursor(image)`), else the scene's own `cursorImage`, else `null`. While it is not
+ * null the desktop window and the browser canvas show it, given it as `cursorImage`, over the
+ * [pointerCursorOf] shape.
+ */
+fun pointerCursorImageOf(game: AwakeAppLifecycle): () -> CursorImage? {
+    val runtime = game.requireService<SceneAppLifecycleRuntime>()
+    return { runtime.effectiveCursorImage }
 }
