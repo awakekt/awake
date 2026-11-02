@@ -578,6 +578,7 @@ public final class com/awakekt/awake/scene/rendering/camera/SceneViewportKt {
 
 public final class com/awakekt/awake/scene/rendering/debug/CullResult : java/lang/Enum {
 	public static final field Drawn Lcom/awakekt/awake/scene/rendering/debug/CullResult;
+	public static final field NotCulled Lcom/awakekt/awake/scene/rendering/debug/CullResult;
 	public static final field Occluded Lcom/awakekt/awake/scene/rendering/debug/CullResult;
 	public static final field OutsideView Lcom/awakekt/awake/scene/rendering/debug/CullResult;
 	public static final field ShadowOnly Lcom/awakekt/awake/scene/rendering/debug/CullResult;
@@ -601,6 +602,7 @@ public final class com/awakekt/awake/scene/rendering/debug/CullingDebugSource$Co
 	public final fun colorOf (Lcom/awakekt/awake/scene/rendering/debug/CullResult;)Lcom/awakekt/awake/core/color/Color;
 	public final fun getDRAWN ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getFROZEN_VIEW ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getNOT_CULLED ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getOCCLUDED ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getOUTSIDE_VIEW ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getSHADOW_ONLY ()Lcom/awakekt/awake/core/color/Color;
@@ -620,6 +622,7 @@ public final class com/awakekt/awake/scene/rendering/debug/CullingProbe {
 	public final fun getFrozen ()Z
 	public final fun getHasFrozenView ()Z
 	public final fun getMaxBoxes ()I
+	public final fun getNotCulled ()I
 	public final fun getOccluded ()I
 	public final fun getOutsideView ()I
 	public final fun getShadowOnly ()I

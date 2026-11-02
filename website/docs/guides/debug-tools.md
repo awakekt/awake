@@ -243,6 +243,7 @@ draws each one's world box in the colour of that decision.
 | outside view | Meshes outside the camera's view. |
 | occluded | Meshes in view but behind an `Occluder`. |
 | shadow only | Meshes the camera rejected that are still drawn into the shadow maps. |
+| not culled (instanced) | Copies of `InstancedMeshRenderer` and `InstancedSkinnedMeshRenderer` meshes, drawn every frame without being culled. Only shown above 0. |
 | frozen (F9) | Whether culling is frozen. |
 | boxes not shown | Meshes past `CullingProbe.maxBoxes` (4096): counted, not drawn. Only shown above 0. |
 
@@ -252,6 +253,7 @@ draws each one's world box in the colour of that decision.
 | An outside-view mesh's box | Grey (`OUTSIDE_VIEW`) |
 | An occluded mesh's box | Red (`OCCLUDED`) |
 | A shadow-only mesh's box | Violet (`SHADOW_ONLY`) |
+| A copy of an instanced mesh, which is never culled | Cyan (`NOT_CULLED`) |
 | The frozen view's frustum, its far plane at most 60 m out | Yellow (`FROZEN_VIEW`) |
 
 **F9 freezes culling.** Culling keeps the camera it had at that moment while the scene still draws

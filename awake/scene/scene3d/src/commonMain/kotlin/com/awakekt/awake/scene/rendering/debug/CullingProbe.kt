@@ -26,6 +26,12 @@ enum class CullResult {
 
     /** In the camera's view, but hidden behind an occluder. */
     Occluded,
+
+    /**
+     * Drawn without being culled at all: a copy of an instanced mesh (`InstancedMeshRenderer`,
+     * `InstancedSkinnedMeshRenderer`), whose every copy is drawn every frame.
+     */
+    NotCulled,
 }
 
 /**
@@ -74,6 +80,10 @@ class CullingProbe(
     var shadowOnly: Int = 0
         private set
 
+    /** Copies of instanced meshes last frame, which are drawn without being culled. */
+    var notCulled: Int = 0
+        private set
+
     /** Meshes past [maxBoxes] last frame: counted, but their boxes were not kept. */
     var boxesNotKept: Int = 0
         private set
@@ -120,6 +130,7 @@ class CullingProbe(
         outsideView = 0
         occluded = 0
         shadowOnly = 0
+        notCulled = 0
         boxesNotKept = 0
         boxCount = 0
     }
@@ -144,6 +155,7 @@ class CullingProbe(
             CullResult.ShadowOnly -> shadowOnly++
             CullResult.OutsideView -> outsideView++
             CullResult.Occluded -> occluded++
+            CullResult.NotCulled -> notCulled++
         }
         if (boxCount >= maxBoxes) {
             boxesNotKept++
