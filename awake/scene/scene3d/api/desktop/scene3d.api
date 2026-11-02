@@ -650,6 +650,24 @@ public final class com/awakekt/awake/scene/rendering/debug/DebugSettingsAccessKt
 	public static final fun debugSettingsOrNull (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
 }
 
+public final class com/awakekt/awake/scene/rendering/debug/DebugToggleIds {
+	public static final field AXES Ljava/lang/String;
+	public static final field BOUNDS Ljava/lang/String;
+	public static final field GRID Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/debug/DebugToggleIds;
+	public static final field INSTANCE_BOUNDS Ljava/lang/String;
+	public static final field LIGHTS Ljava/lang/String;
+	public static final field OCCLUDERS Ljava/lang/String;
+	public static final field SHADOW_FRUSTUM Ljava/lang/String;
+	public static final field SKELETON Ljava/lang/String;
+	public static final field VIEW_PREFIX Ljava/lang/String;
+	public static final field WIREFRAME Ljava/lang/String;
+	public final fun anyIn (Ljava/util/Set;)Z
+	public final fun applyTo (Lcom/awakekt/awake/ecs/World;Ljava/util/Set;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
+	public final fun applyTo (Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;Ljava/util/Set;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
+	public final fun viewId (Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;)Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSystem : com/awakekt/awake/ecs/System {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;)V

@@ -68,7 +68,15 @@ class DebugVisualizationSystem(
 
     private val buffer = DebugLineBuffer()
 
+    // The flag's ids that turn on WorldDebugSettings toggles (DebugToggleIds), applied once to each world.
+    private val toggleIds: Set<String>? = debugRegistry.enabled.takeIf(DebugToggleIds::anyIn)
+    private var toggledWorld: World? = null
+
     override fun update(world: World, delta: Float) {
+        if (toggleIds != null && toggledWorld !== world) {
+            DebugToggleIds.applyTo(world, toggleIds)
+            toggledWorld = world
+        }
         val settings = world.family<WorldDebugSettings>().components().firstOrNull()
         val sourcesOn = debugRegistry.active.isNotEmpty()
         if (settings == null && !sourcesOn) return
