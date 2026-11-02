@@ -61,7 +61,10 @@ class BasisTranscoderPluginTest {
             }
             val result = GradleRunner.create().withProjectDir(dir).withPluginClasspath()
                 .withArguments("wasmJsProcessResources", "--stacktrace", "--max-workers=2").buildAndFail()
-            assertContains(result.output, "Entry basis/basis_transcoder.js is a duplicate")
+            // Gradle names whichever duplicate it reaches first, in the file system's order, which differs
+            // between Linux and macOS.
+            val duplicate = Regex("""Entry basis/basis_transcoder\.(js|wasm) is a duplicate""")
+            assertTrue(duplicate.containsMatchIn(result.output), "a duplicate basis/ file is reported:\n${result.output}")
         }
     }
 
