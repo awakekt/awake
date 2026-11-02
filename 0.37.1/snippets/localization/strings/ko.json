@@ -1,0 +1,13 @@
+{
+  "menu": {
+    "start": "시작",
+    "settings": "설정"
+  },
+  "quest": {
+    "harbor": {
+      "title": "잃어버린 등불",
+      "objective": "등불 {total}개 중 {found}개 찾음"
+    }
+  },
+  "greeting": "다시 오신 것을 환영합니다, {name}님!"
+}
