@@ -74,6 +74,11 @@ class CharacterController(
     var gravity: Float,
 ) {
     internal var controller: KinematicCharacterController? = null
+        set(value) {
+            field = value
+            value?.freeHalfHeight = freeHalfHeight
+            value?.freeCollidesWithMoving = freeCollidesWithMoving
+        }
     internal var verticalVelocity: Float = 0f
 
     /**
@@ -101,6 +106,47 @@ class CharacterController(
 
     /** The highest height free motion moves the character's centre to; see [freeMinY]. Unbounded by default. */
     var freeMaxY: Float = Float.POSITIVE_INFINITY
+
+    /**
+     * The cylinder half-height of a shorter capsule to fly with in [CharacterMotionMode.Free], or null
+     * to keep the walking one. A flyer then fits under arches and low overhangs the walking capsule
+     * catches on. Only the height changes, and the feet stay put: entering free motion shrinks it, and
+     * walking again grows it back once there is headroom, so a flyer that lands under an arch
+     * straightens once it walks out from under it. Must be positive and shorter than the capsule's
+     * half-height. Run-time state, like [motionMode]: not saved with the scene.
+     */
+    var freeHalfHeight: Float? = null
+        set(value) {
+            value?.let {
+                require(it > 0f && it < config.shape.halfHeight) {
+                    "freeHalfHeight must be positive and shorter than the half-height (${config.shape.halfHeight}): $it"
+                }
+            }
+            field = value
+            controller?.freeHalfHeight = value
+        }
+
+    /**
+     * Whether free motion collides with moving bodies, such as other characters' own bodies, crates and
+     * moving platforms, as well as static geometry. True by default. False flies through everything that
+     * moves while walls, floors, ceilings and terrain still stop it. That is every moving body, not only
+     * characters: physics queries filter by one layer, not a set. Walking is unaffected. Run-time state.
+     */
+    var freeCollidesWithMoving: Boolean = true
+        set(value) {
+            field = value
+            controller?.freeCollidesWithMoving = value
+        }
+
+    /** Whether it is the shorter free capsule right now; see [freeHalfHeight]. */
+    val isFreeShape: Boolean get() = controller?.isFreeShape ?: false
+
+    /**
+     * The height of the first static surface straight below it, such as terrain, a floor or a rooftop,
+     * or null when there is none within [maxDistance] of its feet, or before its first step. Static
+     * geometry only, so other characters and crates under it are passed through. One ray per call.
+     */
+    fun groundHeightBelow(maxDistance: Float): Float? = controller?.groundHeightBelow(maxDistance)
 
     // The last two stepped poses, which CharacterControllerSystem blends between rendered frames.
     private val previousPosition = Vec3f()
