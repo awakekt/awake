@@ -7,6 +7,7 @@
 <span class="awake-badge">module: <code>awake:world</code></span>
 <span class="awake-badge">module: <code>awake:scene:physics</code></span>
 <span class="awake-badge">module: <code>awake:navigation</code></span>
+<span class="awake-badge">module: <code>awake:ai</code></span>
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge awake-badge--ok">WebGPU</span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
@@ -145,6 +146,37 @@ default systems' `DebugVisualizationSystem` turns them on once in each world it 
 
 The camera frustum has no id, because it needs a target camera; the `culling` source draws the
 frozen culling camera's frustum. `DebugToggleIds` holds the ids.
+
+## The sight source
+
+`PerceptionDebugSource` shows what each `Perceiver` sees, hears and remembers, with the id `sight`.
+Give it the world and the same `PerceptionSpace` the `PerceptionSystem` was made with, so it draws
+from where the system looks:
+
+```kotlin title="Kotlin"
+registry.register(PerceptionDebugSource(world, space))
+```
+
+| Row | What it counts |
+| --- | --- |
+| Perceivers | Entities with a `Perceiver`. |
+| In sight | Entities the perceivers see now, summed over them. |
+| Remembered | Entities the perceivers remember, in sight or not. |
+| Heard | Perceivers that remember a noise. |
+
+| Line | Colour |
+| --- | --- |
+| The focus cone: two edge rays out to `focusRange` and an arc of 16 lines joining them | Amber (`PerceptionDebugSource.FOCUS`) |
+| The peripheral cone, the same out to `peripheralRange` | Blue (`PERIPHERAL`) |
+| The hearing range for a sound of loudness 1, a circle of 32 lines | Dim violet (`HEARING`) |
+| From the eye to each remembered entity's last known position, with a small cross there | Red (`IN_SIGHT`) when it is in sight now, grey (`REMEMBERED`) when it is only remembered |
+| A cross where the remembered noise came from | Dim violet (`HEARING`) |
+
+The cones lie flat at the perceiver's eye, `eyeHeight` over its position, so they show from above
+the sight the system tests in three dimensions. A cone of 360 degrees is a full circle. A perceiver
+with no facing sees with its peripheral cone all round and not with its focus cone, so it shows a
+peripheral circle and no focus cone. Attack and aggro ranges are a game's rules, not perception's:
+a game draws them with a source of its own, registered the same way.
 
 ## The physics source
 
