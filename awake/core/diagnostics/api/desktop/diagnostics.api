@@ -1,0 +1,50 @@
+public final class com/awakekt/awake/core/diagnostics/DebugFlags {
+	public static final field INSTANCE Lcom/awakekt/awake/core/diagnostics/DebugFlags;
+	public final fun fromArgs (Ljava/util/List;)Ljava/util/Set;
+	public final fun fromPage (Lkotlin/jvm/functions/Function1;)Ljava/util/Set;
+	public final fun parse (Ljava/lang/String;)Ljava/util/Set;
+}
+
+public abstract interface class com/awakekt/awake/core/diagnostics/DebugLines {
+	public abstract fun line (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;)V
+}
+
+public final class com/awakekt/awake/core/diagnostics/DebugRegistry {
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/DebugRegistry$Companion;
+	public fun <init> (Ljava/util/Set;)V
+	public final fun getActive ()Ljava/util/List;
+	public final fun getEnabled ()Ljava/util/Set;
+	public final fun isOn (Ljava/lang/String;)Z
+	public final fun register (Lcom/awakekt/awake/core/diagnostics/DebugSource;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/awakekt/awake/core/diagnostics/DebugRegistry$Companion {
+	public final fun getOff ()Lcom/awakekt/awake/core/diagnostics/DebugRegistry;
+}
+
+public abstract interface class com/awakekt/awake/core/diagnostics/DebugRows {
+	public abstract fun row (Ljava/lang/String;FIZ)V
+	public abstract fun row (Ljava/lang/String;IZ)V
+	public abstract fun row (Ljava/lang/String;Ljava/lang/String;Z)V
+	public static synthetic fun row$default (Lcom/awakekt/awake/core/diagnostics/DebugRows;Ljava/lang/String;FIZILjava/lang/Object;)V
+	public static synthetic fun row$default (Lcom/awakekt/awake/core/diagnostics/DebugRows;Ljava/lang/String;IZILjava/lang/Object;)V
+	public static synthetic fun row$default (Lcom/awakekt/awake/core/diagnostics/DebugRows;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/diagnostics/DebugRows$DefaultImpls {
+	public static synthetic fun row$default (Lcom/awakekt/awake/core/diagnostics/DebugRows;Ljava/lang/String;FIZILjava/lang/Object;)V
+	public static synthetic fun row$default (Lcom/awakekt/awake/core/diagnostics/DebugRows;Ljava/lang/String;IZILjava/lang/Object;)V
+	public static synthetic fun row$default (Lcom/awakekt/awake/core/diagnostics/DebugRows;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)V
+}
+
+public abstract interface class com/awakekt/awake/core/diagnostics/DebugSource {
+	public abstract fun getId ()Ljava/lang/String;
+	public abstract fun getTitle ()Ljava/lang/String;
+	public fun lines (Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+	public abstract fun rows (Lcom/awakekt/awake/core/diagnostics/DebugRows;)V
+}
+
+public final class com/awakekt/awake/core/diagnostics/DebugSource$DefaultImpls {
+	public static fun lines (Lcom/awakekt/awake/core/diagnostics/DebugSource;Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+}
+
