@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-11-02
+
+### Added
+
+- **A web app gets the Basis Universal transcoder from a Gradle plugin.** Applying `com.awakekt.awake.plugin.basis-transcoder` to a module with a `wasmJs` target takes `basis/basis_transcoder.js` and `.wasm` out of the `texture-ktx-loader` klib on its runtime classpath, fails the build if either isn't Core's pinned Basis Universal file, and adds them to the web resources, so the development server and the production distribution serve them beside the page without a hand-copied `unzip`; a module that doesn't depend on the loader gets nothing. `templates/game`'s web app applies it (#1261).
+
+### Changed
+
+- **0.35.0 was not published.** Its tag exists, but GitHub never gave its publish run's release job a macOS runner, so the job was cancelled before it ran and nothing reached Maven Central. 0.36.0 is the first published version with the changes listed under 0.35.0 and 0.34.0 below.
+
+### Fixed
+
+- **The engine showcase's web build loads its Basis Universal textures.** Its wasm distribution now puts `basis/basis_transcoder.js` and `.wasm` beside its page, from the single copy `texture-ktx-loader` vendors and checks against the pinned release digests, so the cooked textures it reaches through `project:runtime` transcode instead of falling back to their source images (#1261).
+- **A Basis Universal file the browser can't transcode fails only its texture.** `BasisWasmTranscoder.transcode` turned a bad file's JavaScript error into a `JsException`, which isn't an `Exception` and escaped a caller's `catch (Exception)` as the missing transcoder did. It now throws an `IllegalStateException` carrying the transcoder's message, and `Ktx2TextureLoader` wraps any transcoder's non-`Exception` throwable the same way, so `CookedTextureLoader` fails that texture as it does a broken image and the app keeps running (#1261).
+- **A shrunk desktop release builds with the KTX texture loader on its classpath.** `texture-ktx-loader` now ships a ProGuard rule (`META-INF/proguard`) that ignores `lwjgl-ktx`'s references to LWJGL's Vulkan bindings: its `KTXVulkan` helper is never called, and `lwjgl-vulkan` isn't on Awake's classpath, so ProGuard stopped on "can't find referenced class org.lwjgl.vulkan.*" in obfuscated desktop builds.
+
 ## [0.35.0] - 2026-11-02
 
 ### Changed
