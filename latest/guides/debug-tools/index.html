@@ -3321,7 +3321,9 @@ id <code>physics</code>:</p>
 returns: a box's 12 edges, three rings of 16 lines for a sphere, two rings and five lines for a capsule,
 a heightfield's footprint at its lowest sample, and the box around a mesh's or convex hull's points.
 Static bodies are blue (<code>PhysicsDebugSource.STATIC</code>), dynamic ones green (<code>DYNAMIC</code>) and kinematic ones
-amber (<code>KINEMATIC</code>).</p>
+amber (<code>KINEMATIC</code>). The source only walks the bodies: each shape is drawn by <code>PhysicsShapeWireframe</code>, in
+<code>awake:physics:api</code>, which writes one <code>PhysicsShape</code> at a position and rotation into any <code>DebugLines</code> and
+needs no scene.</p>
 <h2 id="the-navigation-source">The navigation source</h2>
 <p><code>NavDebugSource</code>, in <code>awake:navigation</code>, shows a navigation grid and the routes agents walk on it, with
 the id <code>nav</code>. Make it over one baked <code>NavGridTile</code> or over a <code>StreamedNavGrid</code>:</p>

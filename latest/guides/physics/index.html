@@ -3477,6 +3477,12 @@ pose, coloured by motion type. Draw them with your other debug lines to see wher
 mesh disagree. <code>PhysicsDebugSource(world)</code> draws the same lines through the debug registry, turned on
 with <code>--debug=physics</code>, and counts the bodies by motion type on the debug panel; see
 <a href="../debug-tools/#the-physics-source">Debug tools</a>.</p>
+<p>Both draw each collider with <code>PhysicsShapeWireframe</code>, in <code>awake:physics:api</code>, which needs no scene.
+Use it directly to draw a body you placed yourself, for example one created on a <code>PhysicsWorld</code> with
+no entity behind it:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">wireframe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PhysicsShapeWireframe</span><span class="p">()</span><span class="w"> </span><span class="c1">// keep one; writing reuses its points</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">wireframe</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span><span class="w"> </span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">rotation</span><span class="p">,</span><span class="w"> </span><span class="n">color</span><span class="p">,</span><span class="w"> </span><span class="n">debugLines</span><span class="p">)</span>
+</span></code></pre></div>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="../physics-jolt/">Jolt backend</a> for creating a <code>PhysicsWorld</code> and platform notes.</li>
