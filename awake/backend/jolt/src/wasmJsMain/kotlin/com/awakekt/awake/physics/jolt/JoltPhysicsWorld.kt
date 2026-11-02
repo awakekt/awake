@@ -516,7 +516,7 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a shape type.
 @JsFun(
     """
-    (world, samples, sampleCount, offsetX, offsetZ, sx, sy, sz, px, py, pz) => {
+    (world, samples, sampleCount, offsetX, offsetZ, sx, sy, sz, px, py, pz, layer) => {
         const jolt = world.jolt;
         const heights = new jolt.ArrayFloat();
         heights.reserve(samples.length);
@@ -533,7 +533,7 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(0, 0, 0, 1);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
-            shape, position, rotation, jolt.EMotionType_Static, 0
+            shape, position, rotation, jolt.EMotionType_Static, layer
         );
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
@@ -561,6 +561,7 @@ private external fun joltCreateHeightFieldBody(
     positionX: Double,
     positionY: Double,
     positionZ: Double,
+    layer: Int,
 ): Int
 
 // Shape discriminators for [joltCreateBody]/[joltShapeCast]'s flattened parameter lists -- the
@@ -1280,7 +1281,7 @@ class JoltPhysicsWorld private constructor(
         // is a sample grid, a mesh a triangle list, a hull a point cloud -- so each has its own
         // entry point and this dispatches rather than falling through a chain of guards.
         val ownEntryPoint = when (shape) {
-            is HeightFieldShape -> createHeightFieldBody(shape, position, motionType)
+            is HeightFieldShape -> createHeightFieldBody(shape, position, motionType, layer)
             is MeshShape -> createMeshBody(shape, position, rotation, motionType, layer)
             is ConvexHullShape ->
                 createHullBody(shape, position, rotation, motionType, layer, sensor, degreesOfFreedom)
@@ -1401,6 +1402,7 @@ class JoltPhysicsWorld private constructor(
         shape: HeightFieldShape,
         position: Vec3f,
         motionType: MotionType,
+        layer: CollisionLayer,
     ): BodyHandle {
         shape.requireSupportedMotionType(motionType)
         val samples = jsNewArray()
@@ -1417,6 +1419,9 @@ class JoltPhysicsWorld private constructor(
             position.x.toDouble(),
             position.y.toDouble(),
             position.z.toDouble(),
+            // The body's own layer: this was 0, the world layer, whatever the caller asked for, so
+            // a query restricted to a game's own static layer never saw its terrain (#1241).
+            layer.index,
         )
         trackedBodyIds.add(idNum)
         return BodyHandle(idNum.toLong())
