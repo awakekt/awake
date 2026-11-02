@@ -23,6 +23,8 @@ kotlin {
             api(project(":awake:asset:texture-ktx"))
             api(project(":awake:engine:render:contract"))
             api(project(":awake:core:io"))
+            // Says once, by name, when a page's Basis Universal transcoder won't load.
+            implementation(project(":awake:core:logging"))
         }
         commonTest.dependencies { implementation(kotlin("test")) }
         named("desktopMain") {

@@ -27,8 +27,8 @@ val material = image?.let { device.createImageMaterial(it) }
   Android and iOS, only the mobile files load.
 - **What comes back:** a `GpuImageSource`. `createImageMaterial` uploads it in its block format when the
   device takes it, and as RGBA8 otherwise. A material with PBR maps takes the RGBA8 path.
-- **A transcoder that won't load,** such as a page that doesn't serve `basis/`, is asked for once, and
-  the images load instead.
+- **A transcoder that won't load,** such as a page that doesn't serve `basis/`, is asked for once, logged
+  once as an error that names the path and the fix, and the images load instead. The app keeps running.
 - **Models** load before the device is known, so a model's image can't pick a mobile file. Instead
   `withCookedImages()` reads each image's Basis Universal `.ktx2` in its place, where the platform has a
   transcoder. `decode(bytes)` turns it into an image that is transcoded to the device's block format
@@ -80,8 +80,21 @@ unchanged in `src/wasmJsMain/resources/basis/` (Apache-2.0, Binomial LLC; see `N
   and it fetches `basis_transcoder.wasm` (1.0 MB) from beside itself. A page that loads no KTX2 texture
   downloads neither.
 - **Serving the files:** an app serves `basis/` beside its page, or passes another URL to `load`. In this
-  repository the files come with the module's resources. An app outside it copies them, as it copies
-  `awake-loader.js`.
+  repository the files come with the module's resources. An app outside it copies them from the
+  `basis/` folder of the `texture-ktx-loader-wasm-js` klib of the Core version it builds against, so
+  they match that release's pinned digests:
+
+  ```bash
+  unzip texture-ktx-loader-wasm-js-<version>.klib 'basis/basis_transcoder.js' 'basis/basis_transcoder.wasm' -d src/wasmJsMain/resources
+  ```
+
+  The Kotlin plugin doesn't copy a library's resources into an app's web distribution, so nothing does
+  this for the app yet.
+- **Checking:** the built distribution holds `basis/basis_transcoder.js` and `basis/basis_transcoder.wasm`
+  beside `index.html`, and the running page answers `basis/basis_transcoder.js` with JavaScript, not an
+  HTML 404 page. A page without them still runs: `load` throws an `IllegalStateException` naming the URL
+  and the fix, and `CookedTextureLoader` logs it once (`texture-ktx-loader`, "No Basis Universal
+  transcoder") and loads each texture's mobile file or source image instead.
 - **Pinned:** the `verifyBasisTranscoder` task checks both files against the release's SHA-256 before the
   wasm resources are packed, and with `check`, so a changed file fails the build. To update, copy a new
   release's `webgl/transcoder/build/` files unchanged and update the digests in `build.gradle.kts`, the

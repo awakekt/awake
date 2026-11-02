@@ -110,6 +110,22 @@ For a game rather than an AwakeKt product, set `data-mode="game"` and `data-titl
 screen turns neutral monochrome, so it suits any art direction, shows your game's title, and keeps a
 small "Made with AwakeKt" line. Add `data-attribution="none"` to drop that line.
 
+## Ship the texture transcoder
+
+A project's cooked textures (`.ktx2`) are transcoded in the browser by Basis Universal, which the page
+loads from `basis/basis_transcoder.js` and `basis/basis_transcoder.wasm` beside `index.html`. Copy the
+two files from the `basis/` folder of the `texture-ktx-loader-wasm-js` klib of your Core version, so
+they match it. The klib is on Maven Central under `com.awakekt.awake.asset`, and in your Gradle cache
+once the app has built:
+
+```bash
+unzip texture-ktx-loader-wasm-js-<version>.klib 'basis/basis_transcoder.js' 'basis/basis_transcoder.wasm' -d src/wasmJsMain/resources
+```
+
+To check, open `basis/basis_transcoder.js` from the running page: it must be JavaScript, not an HTML
+404 page. Without the files the app still runs, logs "No Basis Universal transcoder" once with the
+path it tried, and loads each texture's mobile file or source image instead.
+
 ## Run it
 
 ```bash
