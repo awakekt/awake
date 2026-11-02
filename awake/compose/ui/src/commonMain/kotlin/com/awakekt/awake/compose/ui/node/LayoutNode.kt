@@ -20,6 +20,7 @@ import com.awakekt.awake.compose.ui.layout.Placeable
 import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.unit.Constraints
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
 
 /**
@@ -249,7 +250,14 @@ class LayoutNode(
     /** The cursor this node asks for while hovered, or null when it does not care. */
     internal var pointerCursor: PointerCursor? = null
 
-    /** How many layout links sit outside the link that asked for [pointerCursor], as [pointerDepths] counts them. */
+    /**
+     * The cursor image this node asks for while hovered, or null. Exclusive with [pointerCursor]: a
+     * node makes one request, the last in its modifier chain, and an image request clears a shape one.
+     */
+    internal var pointerCursorImage: CursorImage? = null
+        private set
+
+    /** How many layout links sit outside the link that asked for [pointerCursor] or [pointerCursorImage], as [pointerDepths] counts them. */
     internal var pointerCursorDepth: Int = 0
         private set
 
@@ -402,6 +410,7 @@ class LayoutNode(
         // Not a local: the fold's lambda would capture a local it assigns in a heap box, one per
         // node per frame, which the node graph canvas's allocation ratchet counted.
         pointerCursorDepth = 0
+        pointerCursorImage = null
         var nodeZIndex = 0f
         var modifierIndex = 0
         modifier.foldIn(Unit) { _, declaredElement ->
@@ -442,6 +451,7 @@ class LayoutNode(
             if (element is KeyInputNode) keyInputNodes += element
             if (element is ZIndexModifierNode) nodeZIndex = element.modifyZIndex(nodeZIndex)
             cursorRequest = element.cursorOrKeep(cursorRequest)
+            pointerCursorImage = element.cursorImageOrKeep(pointerCursorImage)
             pointerCursorDepth = element.cursorDepthOrKeep(pointerCursorDepth, layoutModifiersOutside)
             if (element is NodeAttachedModifierNode) element.onAttachedTo(this)
             if (element is ParentDataModifierNode) data = element.modifyParentData(data)
@@ -641,9 +651,19 @@ private fun List<Int>?.snapshotIntoOrEmpty(existing: IntArray): IntArray =
  * more branch tipped it over, and `LayoutNode` was at its function ceiling too. Both limits stay
  * doing their job instead of being raised for a two-line classification.
  */
-private fun Any.cursorOrKeep(current: PointerCursor?): PointerCursor? =
-    if (this is PointerCursorNode) cursor else current
+private fun Any.cursorOrKeep(current: PointerCursor?): PointerCursor? = when (this) {
+    is PointerCursorNode -> cursor
+    is PointerCursorImageNode -> null // A later image request replaces an earlier shape one.
+    else -> current
+}
 
-/** The layout links outside this element's cursor request, or [current] when it makes none. */
+/** This element's cursor image request, or [current] when it makes none; a shape request clears it. */
+private fun Any.cursorImageOrKeep(current: CursorImage?): CursorImage? = when (this) {
+    is PointerCursorImageNode -> cursorImage
+    is PointerCursorNode -> null
+    else -> current
+}
+
+/** The layout links outside this element's cursor or cursor image request, or [current] when it makes none. */
 private fun Any.cursorDepthOrKeep(current: Int, outside: Int): Int =
-    if (this is PointerCursorNode) outside else current
+    if (this is PointerCursorNode || this is PointerCursorImageNode) outside else current

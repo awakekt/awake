@@ -127,8 +127,26 @@ class SceneAppLifecycleRuntime internal constructor(
      *
      * Reuse one [CursorImage] instance rather than building a new one each frame: the host caches
      * the native cursor per instance.
+     *
+     * A hovered node's own image, from `Modifier.pointerCursor(image)`, takes precedence over this;
+     * see [effectiveCursorImage].
      */
     var cursorImage: CursorImage? = null
+
+    /**
+     * The custom cursor image the innermost hovered UI node asked for in the last frame, or `null`
+     * when no hovered node asked for one (or the innermost request there is a system shape).
+     */
+    var hoveredCursorImage: CursorImage? = null
+        private set
+
+    /**
+     * The cursor image a host shows: the [hoveredCursorImage] a hovered node asked for, else the
+     * application's [cursorImage], else `null`, which leaves the system [cursor] shape in effect.
+     * Whichever image is shown overrides [cursor]. `pointerCursorImageOf(game)` reads this.
+     */
+    val effectiveCursorImage: CursorImage?
+        get() = hoveredCursorImage ?: cursorImage
 
     /**
      * What the UI claimed from the last frame's input.
@@ -403,6 +421,7 @@ class SceneAppLifecycleRuntime internal constructor(
             input.textInputPassword = uiFrame.passwordKeyboard
             uiFrame.clipboardText?.let { input.clipboardWrite = it }
             cursor = uiFrame.cursor
+            hoveredCursorImage = uiFrame.cursorImage
             uiOwnership = uiFrame.ownership
             uiSemantics = uiFrame.semantics
             uiPrimitives = stagedUiPrimitives + uiFrame.primitives
@@ -413,10 +432,13 @@ class SceneAppLifecycleRuntime internal constructor(
             if (composeRuntime != null) {
                 uiOwnership = composeRuntime.inputOwnership
                 cursor = composeRuntime.cursor
+                hoveredCursorImage = composeRuntime.hoveredCursorImage
                 composeRuntime.lastFrame?.let { last ->
                     uiSemantics = last.semantics
                     uiPrimitives = last.primitives
                 }
+            } else {
+                hoveredCursorImage = null // No UI this frame, so nothing is hovered.
             }
         }
 
@@ -552,6 +574,7 @@ class SceneAppLifecycleRuntime internal constructor(
             frame.effects.requestKeyboard,
             frame.effects.passwordKeyboard,
             frame.effects.clipboardText,
+            frame.effects.cursorImage,
         )
     }
 
@@ -917,18 +940,18 @@ fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor =
         ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
 
 /**
- * Returns a provider for the custom cursor image [game]'s application asks for this frame, or
- * `null` to fall back to the [pointerCursorOf] system shape, for a desktop or browser host's
- * `cursorImage` parameter.
+ * Returns a provider for the custom cursor image to show this frame, or `null` to fall back to the
+ * [pointerCursorOf] system shape, for a desktop or browser host's `cursorImage` parameter.
  *
- * Reads [SceneAppLifecycleRuntime.cursorImage] from the installed [SceneAppLifecycleRuntime],
- * [SceneRouterRuntime], or [ComposeAppRuntime]. Throws [IllegalStateException] when [game] installs
- * none of them.
+ * The image is the hovered UI node's (`Modifier.pointerCursor(image)`) if one is hovered, else the
+ * application's own `cursorImage`: [SceneAppLifecycleRuntime.effectiveCursorImage] from the
+ * installed [SceneAppLifecycleRuntime], [SceneRouterRuntime], or [ComposeAppRuntime]. Throws
+ * [IllegalStateException] when [game] installs none of them.
  */
 fun pointerCursorImageOf(game: AwakeAppLifecycle): () -> CursorImage? =
-    game.service(SceneAppLifecycleRuntime::class)?.let { runtime -> { runtime.cursorImage } }
-        ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.cursorImage } }
-        ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.cursorImage } }
+    game.service(SceneAppLifecycleRuntime::class)?.let { runtime -> { runtime.effectiveCursorImage } }
+        ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.effectiveCursorImage } }
+        ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.effectiveCursorImage } }
         ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
 
 /** The subjects of the frame work the app supplies, as an `AppError` names them. */

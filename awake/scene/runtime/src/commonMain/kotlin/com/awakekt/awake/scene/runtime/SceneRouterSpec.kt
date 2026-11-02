@@ -270,6 +270,13 @@ class SceneRouterRuntime internal constructor(
     val cursorImage: CursorImage?
         get() = currentRuntime?.cursorImage
 
+    /**
+     * The cursor image a host shows: the one a node hovered in the active scene's UI asked for, else
+     * that scene's [cursorImage], else `null` for the system [cursor] shape.
+     */
+    val effectiveCursorImage: CursorImage?
+        get() = currentRuntime?.effectiveCursorImage
+
     override suspend fun ready(renderer: Renderer) {
         this.renderer = renderer
         activate(initialRoute.id)

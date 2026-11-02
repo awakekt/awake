@@ -952,6 +952,7 @@ public final class com/awakekt/awake/compose/ui/input/nestedscroll/NestedScrollS
 }
 
 public final class com/awakekt/awake/compose/ui/input/pointer/PointerCursorModifierKt {
+	public static final fun pointerCursor (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/input/CursorImage;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun pointerCursor (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/input/PointerCursor;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
@@ -1011,6 +1012,7 @@ public final class com/awakekt/awake/compose/ui/input/pointer/PointerInputDispat
 	public final fun getFocusOwner ()Lcom/awakekt/awake/compose/ui/focus/FocusOwner;
 	public final fun getHasCapture ()Z
 	public final fun getHoveredCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
+	public final fun getHoveredCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun isModalOpen ()Z
 	public final fun isOverScrollable ()Z
 }
@@ -1387,6 +1389,10 @@ public abstract interface class com/awakekt/awake/compose/ui/node/ParentDataModi
 	public abstract fun modifyParentData (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
+public abstract interface class com/awakekt/awake/compose/ui/node/PointerCursorImageNode {
+	public abstract fun getCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
+}
+
 public abstract interface class com/awakekt/awake/compose/ui/node/PointerCursorNode {
 	public abstract fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
 }
@@ -1597,17 +1603,23 @@ public final class com/awakekt/awake/compose/ui/platform/InputSnapshotAdapterKt 
 
 public final class com/awakekt/awake/compose/ui/platform/PlatformEffects {
 	public fun <init> ()V
-	public fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;Lcom/awakekt/awake/core/input/CursorImage;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;Lcom/awakekt/awake/core/input/CursorImage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/core/input/PointerCursor;
 	public final fun component3 ()Z
 	public final fun component4 ()Ljava/lang/String;
-	public final fun copy (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
+	public final fun component5 ()Lcom/awakekt/awake/core/input/CursorImage;
+	public final synthetic fun copy (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
+	public final fun copy (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;Lcom/awakekt/awake/core/input/CursorImage;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;Lcom/awakekt/awake/core/input/CursorImage;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClipboardText ()Ljava/lang/String;
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
+	public final fun getCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getPasswordKeyboard ()Z
 	public final fun getRequestKeyboard ()Z
 	public fun hashCode ()I

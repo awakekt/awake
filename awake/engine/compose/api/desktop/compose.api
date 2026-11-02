@@ -6,11 +6,13 @@ public final class com/awakekt/awake/engine/compose/ComposeAppModuleKt {
 public final class com/awakekt/awake/engine/compose/ComposeAppRuntime {
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
 	public final fun getCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
+	public final fun getEffectiveCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getHost ()Lcom/awakekt/awake/compose/ui/platform/ComposeHost;
+	public final fun getHoveredCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getInputOwnership ()Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
 	public final fun getLastFrame ()Lcom/awakekt/awake/compose/ui/platform/FrameOutput;
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
-	public final fun setCursor (Lcom/awakekt/awake/core/input/PointerCursor;)V
+	public final fun setCursorImage (Lcom/awakekt/awake/core/input/CursorImage;)V
 }
 
 public final class com/awakekt/awake/engine/compose/GraphicsLayerCompositor {

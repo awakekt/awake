@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.semantics.SemanticsConfiguration
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
@@ -227,6 +228,19 @@ interface ScrollableNode {
 interface PointerCursorNode {
     /** The pointer shape to request while this node is hovered. */
     val cursor: PointerCursor
+}
+
+/**
+ * Declares the custom cursor image to request while this node is hovered: [PointerCursorNode]'s
+ * counterpart for a [CursorImage] rather than a system shape.
+ *
+ * Shares [PointerCursorNode]'s rules. Innermost wins, and a node asks for one thing: where a node's
+ * modifier chain holds both kinds, the later one wins. A request, not a call -- the frame reports it
+ * as `PlatformEffects.cursorImage` and the host applies it over whatever shape is requested.
+ */
+interface PointerCursorImageNode {
+    /** The cursor image to request while this node is hovered. */
+    val cursorImage: CursorImage
 }
 
 /**

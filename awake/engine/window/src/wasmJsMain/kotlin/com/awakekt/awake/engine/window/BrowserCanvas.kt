@@ -8,6 +8,7 @@
 package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.host.clampFrameDelta
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
@@ -213,7 +214,7 @@ fun runBrowserCanvas(
     cursor: (() -> PointerCursor)? = null,
     initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
 ) {
-    runBrowserCanvas(canvas, lifecycle, onResize, isStopped, cursor, maxPixelRatio = { null }, initBackend)
+    runBrowserCanvas(canvas, lifecycle, onResize, isStopped, cursor, cursorImage = null, maxPixelRatio = { null }, initBackend = initBackend)
 }
 
 /**
@@ -224,6 +225,10 @@ fun runBrowserCanvas(
  * graphics setting: a new value resizes the buffer on the next frame. `null` is no cap, the device
  * pixel ratio. The cap scales the whole buffer, UI included; the UI's density is the capped ratio, so
  * layout keeps its size on the page and pointers land where it was drawn.
+ *
+ * [cursorImage] is a custom cursor image to show this frame, or `null` (or a provider returning
+ * `null`) to fall back to [cursor]. It is set as a CSS `url(data:image/png;base64,...)` cursor with
+ * the image's hotspot, encoded once per image and reused while that instance is requested.
  */
 @Suppress("TooGenericExceptionCaught", "LongParameterList")
 fun runBrowserCanvas(
@@ -232,6 +237,7 @@ fun runBrowserCanvas(
     onResize: (width: Int, height: Int) -> Unit = { _, _ -> },
     isStopped: () -> Boolean = { false },
     cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
     maxPixelRatio: () -> Float?,
     initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
 ) {
@@ -287,7 +293,8 @@ fun runBrowserCanvas(
                     pollBrowserGamepad(input)
                     lifecycle.update(deltaSeconds)
                     textInput.sync()
-                    cursor?.let { canvasCursor.show(it()) }
+                    // An image the app asks for wins over the shape, as on the desktop host.
+                    canvasCursor.showFrame(cursor, cursorImage)
                 } catch (error: Throwable) {
                     frameLoopStopped = true
                     reportBrowserFrameFailure(
@@ -304,6 +311,21 @@ fun runBrowserCanvas(
             )
         }
     }
+}
+
+/** [runBrowserCanvas] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runBrowserCanvas(
+    canvas: HTMLCanvasElement,
+    lifecycle: WindowLifecycle,
+    onResize: (width: Int, height: Int) -> Unit = { _, _ -> },
+    isStopped: () -> Boolean = { false },
+    cursor: (() -> PointerCursor)? = null,
+    maxPixelRatio: () -> Float?,
+    initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
+) {
+    runBrowserCanvas(canvas, lifecycle, onResize, isStopped, cursor, cursorImage = null, maxPixelRatio, initBackend)
 }
 
 /** Keeps startup failures visible in browser console instead of leaving a black canvas. */

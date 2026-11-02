@@ -68,13 +68,25 @@ class ComposeAppRuntime internal constructor(
 
     /** Active pointer cursor style requested by the topmost hovered UI element. */
     var cursor: PointerCursor = PointerCursor.Default
+        private set
 
     /**
      * A custom cursor image the application asks the host to show, overriding the system [cursor]
-     * shape while non-null. The application's to set; the UI layer does not drive it.
+     * shape while non-null. The application's to set; the UI layer does not drive it. A hovered
+     * node's own image takes precedence; see [effectiveCursorImage].
      */
     var cursorImage: CursorImage? = null
+
+    /** The custom cursor image the innermost hovered node asked for in the last frame, or `null`. */
+    var hoveredCursorImage: CursorImage? = null
         private set
+
+    /**
+     * The cursor image a host shows: the [hoveredCursorImage] a hovered node asked for, else the
+     * application's [cursorImage], else `null`, which leaves the system [cursor] shape in effect.
+     */
+    val effectiveCursorImage: CursorImage?
+        get() = hoveredCursorImage ?: cursorImage
 
     internal fun ready(renderer: Renderer) {
         this.renderer = renderer
@@ -108,6 +120,7 @@ class ComposeAppRuntime internal constructor(
         output.effects.clipboardText?.let { input.clipboardWrite = it }
         inputOwnership = output.ownership
         cursor = output.effects.cursor
+        hoveredCursorImage = output.effects.cursorImage
         lastFrame = output
     }
 

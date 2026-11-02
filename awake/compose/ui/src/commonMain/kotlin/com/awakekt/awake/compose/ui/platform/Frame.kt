@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerModifiers
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.input.ClipboardCommand
+import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
@@ -219,7 +220,32 @@ data class PlatformEffects(
      * a password field that refused.
      */
     val clipboardText: String? = null,
-)
+    /**
+     * The custom cursor image the hovered content asked for, or `null` when it asked for none
+     * (including when the innermost request is a system [cursor] shape). A request like [cursor]:
+     * a host that shows it does so over the [cursor] shape; the application's own scene-wide image
+     * is the host's fallback when this is `null`.
+     */
+    val cursorImage: CursorImage? = null,
+) {
+    /** [PlatformEffects] as it was before [cursorImage]: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        requestKeyboard: Boolean = false,
+        cursor: PointerCursor = PointerCursor.Default,
+        passwordKeyboard: Boolean = false,
+        clipboardText: String? = null,
+    ) : this(requestKeyboard, cursor, passwordKeyboard, clipboardText, null)
+
+    /** `copy` as it was before [cursorImage]: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        requestKeyboard: Boolean = this.requestKeyboard,
+        cursor: PointerCursor = this.cursor,
+        passwordKeyboard: Boolean = this.passwordKeyboard,
+        clipboardText: String? = this.clipboardText,
+    ): PlatformEffects = PlatformEffects(requestKeyboard, cursor, passwordKeyboard, clipboardText, cursorImage)
+}
 
 /**
  * One frame's worth of output.
