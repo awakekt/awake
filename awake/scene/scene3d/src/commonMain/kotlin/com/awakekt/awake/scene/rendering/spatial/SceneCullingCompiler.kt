@@ -23,6 +23,8 @@ import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.CONSERVATIVE_ASPECT
 import com.awakekt.awake.scene.rendering.camera.Camera
+import com.awakekt.awake.scene.rendering.debug.CullResult
+import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import kotlin.math.max
 
@@ -32,7 +34,8 @@ private const val HALF = 0.5f
  * Per-frame culling inputs shared by every 3D draw family.
  *
  * [casters] is what can shadow this frame, null when nothing does; [casterIds] is the spatial
- * index's answer to the same question, null when there is no index.
+ * index's answer to the same question, null when there is no index. [cullingCamera] is the camera
+ * the culling tests use: [camera] itself, unless a [CullingProbe] froze culling.
  */
 internal class FrameCulling(
     val camera: Camera,
@@ -41,6 +44,7 @@ internal class FrameCulling(
     val occlusionViewProjection: Mat4?,
     val casters: ShadowCasterVolume? = null,
     val casterIds: Set<Int>? = null,
+    val cullingCamera: Camera = camera,
 )
 
 /** What one entity's culling decided: drawn, drawn into the shadow maps only, or not drawn. */
@@ -75,6 +79,12 @@ internal class SceneCullingCompiler(
      */
     var minShadowCasterRatio: Float = 0f
 
+    /** Records each bounded mesh's result while set, for the `culling` debug source; it can also freeze culling. */
+    var probe: CullingProbe? = null
+
+    /** Whether the last [passesCulling] that failed did so because the mesh was outside the view. */
+    private var lastOutsideView = false
+
     var lastOccludedCount: Int = 0
         private set
     var lastFrustumCulledCount: Int = 0
@@ -100,13 +110,17 @@ internal class SceneCullingCompiler(
         lastFrustumCulledCount = 0
         lastShadowOnlyCount = 0
         val cullingAspect = if (camera.lens.projection == Lens.Projection.Orthographic) aspect else max(aspect, CONSERVATIVE_ASPECT)
+        val probe = probe
+        probe?.begin()
+        // The camera culling tests against: this one, or the one a probe froze.
+        val cullCamera = probe?.cullingCamera(camera, cullingAspect) ?: camera
 
         val occluderFamily = world.family<Transform, Occluder>()
         val occlusionViewProjection: Mat4? = if (occluderFamily.size > 0) {
-            val viewProjection = camera.lens.viewProjectionMatrix(cullingAspect, clipSpace)
+            val viewProjection = cullCamera.lens.viewProjectionMatrix(cullingAspect, clipSpace)
             occluderFamily.forEach { _, transform, occluder ->
                 val worldBounds = occluder.localBounds.transformed(transform.worldMatrix)
-                camera.lens.screenBounds(worldBounds, viewProjection, 1f, 1f, clipSpace)
+                cullCamera.lens.screenBounds(worldBounds, viewProjection, 1f, 1f, clipSpace)
                     ?.let(occluderBounds::add)
             }
             viewProjection
@@ -115,19 +129,20 @@ internal class SceneCullingCompiler(
         }
 
         val grid = world.findSpatialIndex()?.grid?.core
-        val visible = grid?.let { visibleByIndex(it, camera, cullingAspect) }
+        val visible = grid?.let { visibleByIndex(it, cullCamera, cullingAspect) }
         val casters = shadows?.takeUnless { it.isEmpty }
         return FrameCulling(
             camera = camera,
             visible = visible,
             planes = if (visible == null) {
-                Frustum.planes(camera.lens, cullingAspect)
+                Frustum.planes(cullCamera.lens, cullingAspect)
             } else {
                 null
             },
             occlusionViewProjection = occlusionViewProjection,
             casters = casters,
             casterIds = if (casters != null && grid != null) casterIdsByIndex(grid, casters) else null,
+            cullingCamera = cullCamera,
         )
     }
 
@@ -152,7 +167,18 @@ internal class SceneCullingCompiler(
             else -> CullVerdict.Culled
         }
         if (verdict == CullVerdict.ShadowOnly) lastShadowOnlyCount++
+        probe?.let { record(it, verdict, transform, bounds) }
         return verdict
+    }
+
+    private fun record(probe: CullingProbe, verdict: CullVerdict, transform: Transform, bounds: MeshBounds) {
+        val result = when {
+            verdict == CullVerdict.Visible -> CullResult.Drawn
+            verdict == CullVerdict.ShadowOnly -> CullResult.ShadowOnly
+            lastOutsideView -> CullResult.OutsideView
+            else -> CullResult.Occluded
+        }
+        probe.record(result, bounds.writeWorldBounds(transform, scratchBounds))
     }
 
     /** Whether the frame's caster volume admits the entity, and it is not below the size cutoff. */
@@ -160,7 +186,7 @@ internal class SceneCullingCompiler(
         val casters = culling.casters ?: return false
         val admitted = culling.casterIds?.contains(entityId)
             ?: casters.admits(bounds.writeWorldBounds(transform, scratchBounds))
-        return admitted && !isTooSmallToCast(transform, bounds, culling.camera)
+        return admitted && !isTooSmallToCast(transform, bounds, culling.cullingCamera)
     }
 
     /** Whether [bounds] is below [minShadowCasterRatio] seen from [camera]'s eye. */
@@ -190,13 +216,14 @@ internal class SceneCullingCompiler(
         } else {
             culling.planes?.let { planes -> bounds.intersects(transform, planes) } != false
         }
+        lastOutsideView = !inFrustum
         if (!inFrustum) {
             lastFrustumCulledCount++
             return false
         }
         val occluded = culling.occlusionViewProjection != null &&
             isOccluded(
-                culling.camera.lens,
+                culling.cullingCamera.lens,
                 bounds.worldBounds(transform),
                 culling.occlusionViewProjection,
                 clipSpace,

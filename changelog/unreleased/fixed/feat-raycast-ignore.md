@@ -1,1 +1,0 @@
-- **Physics (web): a heightfield keeps the layer it was created on.** The wasm Jolt backend put every heightfield body on the world layer whatever layer the caller asked for, so on the web a query restricted to a game's own static layer never saw its terrain, and one restricted to the world layer saw terrain it shouldn't have (#1241).
