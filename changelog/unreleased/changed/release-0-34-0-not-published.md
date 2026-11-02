@@ -1,0 +1,1 @@
+- **0.34.0 was not published.** Its tag exists, but its publish run's Verify job ran past its time limit, so the release job was skipped and nothing reached Maven Central. 0.35.0 is the first published version with the changes listed under 0.34.0 below.
