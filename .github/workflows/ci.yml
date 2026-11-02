@@ -843,13 +843,13 @@ jobs:
       - name: Plugin JVM tests (plain and obfuscated)
         id: tests
         if: steps.reach.outputs.run == 'true'
-        run: tools/check_plugins_consumer.sh test awake-plugins
+        run: tools/check_plugins_consumer.sh test awake-plugins "$CORE_VERSION"
 
       # Allocations are the gate; shared-runner throughput is reported, not enforced.
       - name: HUD scorecard (allocation gate, rpg-hud-studio install included)
         id: scorecard
         if: ${{ !cancelled() && steps.reach.outputs.run == 'true' && steps.tests.outcome != 'skipped' }}
-        run: tools/check_plugins_consumer.sh scorecard awake-plugins
+        run: tools/check_plugins_consumer.sh scorecard awake-plugins "$CORE_VERSION"
 
       - name: Scorecard summary
         if: ${{ !cancelled() && (steps.scorecard.outcome == 'success' || steps.scorecard.outcome == 'failure') }}
@@ -860,7 +860,7 @@ jobs:
           # pluginScorecard writes its table even when its own gate fails, but not when a task it depends
           # on failed first; the report task then writes what was measured, marking the rest unverified.
           if [[ "$SCORECARD_OUTCOME" != 'success' ]]; then
-            ./gradlew pluginScorecardReport --max-workers=2 || true
+            ../tools/check_plugins_consumer.sh report . "$CORE_VERSION"
           fi
           {
             echo "### awake-plugins HUD scorecard against Core $CORE_VERSION ($PLUGINS_REF)"
