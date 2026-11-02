@@ -91,6 +91,8 @@ jobs:
         run: |
           ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
           ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+          # The template applies build-logic's public plugins (basis-transcoder) at Core's version.
+          ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
 
       - name: Build and run the obfuscated releases
         env:

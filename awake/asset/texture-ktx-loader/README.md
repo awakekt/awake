@@ -80,22 +80,35 @@ unchanged in `src/wasmJsMain/resources/basis/` (Apache-2.0, Binomial LLC; see `N
   and it fetches `basis_transcoder.wasm` (1.0 MB) from beside itself. A page that loads no KTX2 texture
   downloads neither.
 - **Serving the files:** an app serves `basis/` beside its page, or passes another URL to `load`. In this
-  repository the files come with the module's resources. An app outside it copies them from the
-  `basis/` folder of the `texture-ktx-loader-wasm-js` klib of the Core version it builds against, so
-  they match that release's pinned digests:
+  repository the files come with the module's resources. An app outside it applies Core's Gradle plugin
+  to its web module, at the Core version it builds against:
+
+  ```kotlin
+  plugins { id("com.awakekt.awake.plugin.basis-transcoder") version "<Core version>" }
+  ```
+
+  The Kotlin plugin doesn't copy a library's resources into an app's web distribution, so the plugin
+  does. It finds this module's `texture-ktx-loader-wasm-js` klib on the app's `wasmJsRuntimeClasspath`,
+  checks its `basis/basis_transcoder.js` and `.wasm` against the pinned digests below, and adds them to
+  the `wasmJsMain` resources (`extractBasisTranscoder`), which the development server and the production
+  distribution both serve beside `index.html`. An app that doesn't depend on this module gets nothing,
+  and a file that isn't the pinned one fails the build, so keep the plugin on the same version as Core.
+  The `templates/game` web app applies it. Drop any copy of `basis/` you vendored by hand, or the
+  resources collide.
+
+  Without the plugin, copy the two files from the klib yourself, so they match that release's pinned
+  digests:
 
   ```bash
   unzip texture-ktx-loader-wasm-js-<version>.klib 'basis/basis_transcoder.js' 'basis/basis_transcoder.wasm' -d src/wasmJsMain/resources
   ```
-
-  The Kotlin plugin doesn't copy a library's resources into an app's web distribution, so nothing does
-  this for the app yet.
 - **Checking:** the built distribution holds `basis/basis_transcoder.js` and `basis/basis_transcoder.wasm`
   beside `index.html`, and the running page answers `basis/basis_transcoder.js` with JavaScript, not an
   HTML 404 page. A page without them still runs: `load` throws an `IllegalStateException` naming the URL
   and the fix, and `CookedTextureLoader` logs it once (`texture-ktx-loader`, "No Basis Universal
   transcoder") and loads each texture's mobile file or source image instead.
 - **Pinned:** the `verifyBasisTranscoder` task checks both files against the release's SHA-256 before the
-  wasm resources are packed, and with `check`, so a changed file fails the build. To update, copy a new
-  release's `webgl/transcoder/build/` files unchanged and update the digests in `build.gradle.kts`, the
-  provenance registry and `NOTICE.md` together.
+  wasm resources are packed, and with `check`, so a changed file fails the build. The digests are
+  `BasisTranscoderRelease`'s in `build-logic`, which the plugin checks against too. To update, copy a new
+  release's `webgl/transcoder/build/` files unchanged and update those digests, the provenance registry
+  and `NOTICE.md` together.

@@ -24,6 +24,7 @@ val publicPluginIds = setOf(
     "com.awakekt.awake.plugin.detekt",
     "com.awakekt.awake.plugin.spotless",
     "com.awakekt.awake.plugin.release-cut",
+    "com.awakekt.awake.plugin.basis-transcoder",
 )
 
 repositories {
