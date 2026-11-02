@@ -31,6 +31,7 @@ import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrImageSet
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -422,15 +423,37 @@ class GltfAssetResolver(
      * The material [name] resolves to, made through [renderer]: what [createMaterial] does with a scene
      * runtime's renderer. Its textures go through `createImageMaterial`, so a browser's WebGPU copies them
      * on the GPU (awakekt/awake#1184) and every other renderer uploads their CPU pixels.
+     *
+     * An image that fails as its material is made, such as a Basis Universal one whose transcode fails
+     * there (#1261), fails that material alone: it draws plain white under the model's own factors, as a
+     * model whose images fail to load draws untextured, and the model's other materials keep theirs.
      */
     fun createMaterial(renderer: Renderer, name: String): Material? = when {
         name == "skinned-material" -> renderer.createMaterial(SkinnedUniformLayout)
         name.startsWith("gltf-material:") && name.removePrefix("gltf-material:") in skinnedPartTextures ->
-            renderer.createImageMaterial(skinnedPartTextures.getValue(name.removePrefix("gltf-material:")), uniformFloatCount = SkinnedUniformLayout.total)
+            renderer.imageMaterialOrPlain(name, SkinnedUniformLayout.total) {
+                createImageMaterial(skinnedPartTextures.getValue(name.removePrefix("gltf-material:")), uniformFloatCount = SkinnedUniformLayout.total)
+            }
         name.startsWith("gltf-material:") -> loadedMaterials[name.removePrefix("gltf-material:")]?.let { loaded ->
-            renderer.createImageMaterial(loaded.texture, uniformFloatCount = TexturedUniformLayout.total, pbrImages = loaded.pbrImages)
+            renderer.imageMaterialOrPlain(name, TexturedUniformLayout.total) {
+                createImageMaterial(loaded.texture, uniformFloatCount = TexturedUniformLayout.total, pbrImages = loaded.pbrImages)
+            }
         }
         else -> null
+    }
+
+    /**
+     * [image], or a material of [uniformFloatCount] floats with a white texture when [image] throws: a
+     * decoder or transcoder reports a bad file in its own [Exception], and the scene that draws [name]
+     * must still load.
+     */
+    // TooGenericExceptionCaught: whatever an image throws as it is uploaded, only its own material fails.
+    @Suppress("TooGenericExceptionCaught")
+    private fun Renderer.imageMaterialOrPlain(name: String, uniformFloatCount: Int, image: Renderer.() -> Material): Material = try {
+        image()
+    } catch (failure: Exception) {
+        log.warn { "Drawing '$name' untextured: its image failed to upload (${failure.message})" }
+        createMaterial(texture = PLAIN_TEXTURE, uniformFloatCount = uniformFloatCount)
     }
 
     private val materialDefaults = HashMap<String, PbrMaterial>()
@@ -464,6 +487,9 @@ private val log = Logger("scene.gltf")
 
 private const val PRIMITIVE_MESH_PREFIX = "gltf-primitive:"
 private const val UNTEXTURED_MATERIAL = "lit-shadow"
+
+// What a material whose image fails to upload draws: white, so the model's base colour factor shows as it is.
+private val PLAIN_TEXTURE = TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)
 
 /**
  * Associates a primitive mesh with its bound glTF material and parameters.
