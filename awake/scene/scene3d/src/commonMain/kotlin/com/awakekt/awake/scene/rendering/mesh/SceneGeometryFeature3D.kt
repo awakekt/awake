@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.scene.rendering.camera.Camera
+import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.spatial.FrameCulling
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 
@@ -25,6 +26,13 @@ internal class SceneGeometryFeature3D(clipSpace: ClipSpace) {
     val lastOccludedCount: Int get() = cullingCompiler.lastOccludedCount
     val lastFrustumCulledCount: Int get() = cullingCompiler.lastFrustumCulledCount
     val lastShadowOnlyCount: Int get() = cullingCompiler.lastShadowOnlyCount
+
+    /** See [SceneCullingCompiler.probe]. */
+    var cullingProbe: CullingProbe?
+        get() = cullingCompiler.probe
+        set(value) {
+            cullingCompiler.probe = value
+        }
 
     /** See [SceneCullingCompiler.minShadowCasterRatio]. */
     var minShadowCasterRatio: Float

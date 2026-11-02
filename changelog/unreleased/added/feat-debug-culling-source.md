@@ -1,0 +1,1 @@
+- **Culling debug source:** `--debug=culling` draws each mesh's bounds coloured by what culling decided (drawn, outside the view, occluded, shadow only), with the counts in the overlay, and F9 freezes culling so you can fly out and see what the frozen view kept.

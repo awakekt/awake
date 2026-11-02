@@ -64,6 +64,8 @@ import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
+import com.awakekt.awake.scene.rendering.debug.CullingDebugSource
+import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.runtime.session.SceneSession
@@ -249,6 +251,12 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 
     /**
+     * What the default render system's culling decided, made by [defaultInfrastructureSystems] once,
+     * and only when the app's debug registry has `culling` on. F9 toggles its [CullingProbe.frozen].
+     */
+    internal var cullingProbe: CullingProbe? = null
+
+    /**
      * Splits the frame into its phases so a slow frame can be attributed instead of
      * guessed at. F2 toggles it (F3 and F5 are browser Find and reload, and web is where the split
      * matters most). It no longer arms anything: `ui-core`'s per-trial timing was the expensive
@@ -338,6 +346,8 @@ class SceneAppLifecycleRuntime internal constructor(
         // frame begins, which is why it owns the counter rather than each logging call site.
         Log.advanceFrame()
         if (snapshot.wasPressed(Key.F2)) perfStatsEnabled = !perfStatsEnabled
+        // F9 freezes culling while the `culling` debug source is on.
+        if (snapshot.wasPressed(Key.F9)) cullingProbe?.let { it.frozen = !it.frozen }
 
         stagedUiPrimitives.clear()
 
@@ -880,6 +890,14 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
 ): List<System> {
     // A game turns its debug sources on by registering its DebugRegistry as an app service.
     val debugRegistry = service(DebugRegistry::class)
+    // `--debug=culling` colours each mesh's bounds by what culling decided. One probe for the
+    // runtime, so building the systems again doesn't register the source twice.
+    val cullingProbe = cullingProbe ?: debugRegistry?.takeIf { it.isOn(CullingDebugSource.ID) }?.let { registry ->
+        CullingProbe().also { probe ->
+            registry.register(CullingDebugSource(probe))
+            this.cullingProbe = probe
+        }
+    }
     return listOf(
         SpriteClipSystem(isRealtimeProvider),
         TransformSystem(),
@@ -893,7 +911,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
             renderWorldProvider = renderWorldProvider,
             isRealtimeProvider = isRealtimeProvider,
             isDirtyProvider = isDirtyProvider,
-        ),
+        ).also { it.cullingProbe = cullingProbe },
         // The sources' lines draw with the world's own debug lines, in one call.
         DebugVisualizationSystem(renderer, viewportProvider, debugRegistry ?: DebugRegistry.Off),
     ) + listOfNotNull(
