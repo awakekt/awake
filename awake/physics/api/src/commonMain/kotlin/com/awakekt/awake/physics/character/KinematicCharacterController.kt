@@ -268,6 +268,19 @@ class KinematicCharacterController(
     /** The one layer this move's sweeps are limited to, or null for every layer; see [freeCollidesWithMoving]. */
     private var sweepLayer: CollisionLayer? = null
 
+    /**
+     * The layer the controller's rays look for static ground on: the guard that stops a push out of
+     * an overlap short of static ground, [liftOutOf]'s search for the terrain's surface, and
+     * [groundHeightBelow]. [CollisionLayers.World], where static bodies go by default, unless a game
+     * puts its static geometry on a layer of its own and sets that here.
+     *
+     * Null looks at every layer. The rays always skip the controller's own [body], so they see
+     * through the character itself, but with no layer they also stop on moving bodies: other
+     * characters, crates and platforms. A ray filters by one layer rather than by a set, so "every
+     * static layer" can't be asked for (#1241).
+     */
+    var staticLayer: CollisionLayer? = CollisionLayers.World
+
     // Scratch, reused every call: move() runs per character per fixed step forever, and these
     // would otherwise be garbage at exactly the rate the game is played.
     private val remaining = Vec3f()
@@ -391,7 +404,7 @@ class KinematicCharacterController(
      * The height of the first static surface straight below the character, such as terrain, a floor
      * or a rooftop, or null when there is none within [maxDistance] of its feet.
      *
-     * One ray, down from the capsule's centre, against static geometry only: the character's own body,
+     * One ray, down from the capsule's centre, against [staticLayer] only: the character's own body,
      * other characters, crates and platforms are passed through, so a flyer above a crowd still learns
      * its height above the ground. A ray from inside a static body stops at once, so a character sunk
      * into one gets its own centre back.
@@ -403,7 +416,7 @@ class KinematicCharacterController(
         require(maxDistance >= 0f) { "maxDistance cannot be negative: $maxDistance" }
         rayOrigin.set(position)
         val reach = activeShape.halfHeight + activeShape.radius + maxDistance
-        val hit = world.raycast(rayOrigin, DOWN, reach, CollisionLayers.World) ?: return null
+        val hit = world.raycast(rayOrigin, DOWN, reach, staticLayer, ignore = body) ?: return null
         return rayOrigin.y - hit.distance
     }
 
@@ -440,7 +453,7 @@ class KinematicCharacterController(
     fun liftOutOf(terrain: TerrainCollider): Boolean {
         val halfExtent = activeShape.halfHeight + activeShape.radius
         val clearOfIt = position.y - halfExtent > terrain.top || !terrain.covers(position.x, position.z)
-        val surface = if (clearOfIt) null else terrain.surfaceAt(world, position.x, position.z, liftTarget)
+        val surface = if (clearOfIt) null else terrain.surfaceAt(world, position.x, position.z, liftTarget, staticLayer, body)
         val under = surface != null && position.y < surface
         if (surface != null && under) {
             liftTarget.set(position.x, surface + halfExtent + config.skinWidth, position.z)
@@ -803,6 +816,8 @@ class KinematicCharacterController(
             depth + config.skinWidth,
             hit.handle,
             halfExtentAlong(pushDirection) + config.skinWidth,
+            staticLayer,
+            body,
         )
         val pushed = push > config.skinWidth
         if (pushed) {

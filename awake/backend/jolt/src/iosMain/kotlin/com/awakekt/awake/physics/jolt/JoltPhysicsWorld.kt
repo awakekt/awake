@@ -1100,6 +1100,14 @@ class JoltPhysicsWorld(
         direction: Vec3f,
         maxDistance: Float,
         onlyLayer: CollisionLayer?,
+    ): RaycastHit? = raycast(origin, direction, maxDistance, onlyLayer, ignore = null)
+
+    override fun raycast(
+        origin: Vec3f,
+        direction: Vec3f,
+        maxDistance: Float,
+        onlyLayer: CollisionLayer?,
+        ignore: BodyHandle?,
     ): RaycastHit? =
         memScoped {
             val normalizedDirection = direction.normalized()
@@ -1115,8 +1123,9 @@ class JoltPhysicsWorld(
             args.ShapeFilter = null
             // These were both null until a commonTest run put this backend on a simulator for the
             // first time: `onlyLayer` was accepted and then ignored, so a camera meant to see only
-            // the level was stopped by every crate, and sensors were reported as solid.
-            val filters = queryFilters(onlyLayer, ignore = null)
+            // the level was stopped by every crate, and sensors were reported as solid. The body
+            // filter skips [ignore] inside the query, as it does for shapeCast.
+            val filters = queryFilters(onlyLayer, ignore)
             args.ObjectLayerFilter = filters.layerFilter
             args.BodyFilter = filters.bodyFilter
 

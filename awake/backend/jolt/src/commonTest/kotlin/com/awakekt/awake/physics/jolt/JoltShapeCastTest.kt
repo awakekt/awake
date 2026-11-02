@@ -249,6 +249,54 @@ class JoltShapeCastTest {
     }
 
     @Test
+    fun aRaycastCanIgnoreTheBodyItStartsIn() = runTest {
+        world { world ->
+            // A character's own body around the ray's origin: a convex body is solid to a ray from
+            // inside, so without ignore the ray stops at once and never reaches the wall.
+            val own = world.createBody(BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(0f, 0f, 0f), Quat.IDENTITY, MotionType.KINEMATIC)
+            val wall = world.addWall()
+
+            val blocked = assertNotNull(world.raycast(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f), maxDistance = 10f))
+            val seen = assertNotNull(world.raycast(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f), maxDistance = 10f, ignore = own))
+
+            assertEquals(own, blocked.handle, "precondition: the ray stops on its own body")
+            assertEquals(wall, seen.handle, "the nearest other body, not nothing")
+            assertTrue(abs(seen.distance - 4.5f) < 1e-3f, "the wall's near face is 4.5 away, got ${seen.distance}")
+        }
+    }
+
+    @Test
+    fun ignoringABodyTheRayDoesNotReachChangesNothing() = runTest {
+        world { world ->
+            val wall = world.addWall()
+            val behind = world.createBody(BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(8f, 0f, 0f), Quat.IDENTITY, MotionType.STATIC)
+
+            val hit = assertNotNull(world.raycast(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f), maxDistance = 10f, ignore = behind))
+
+            assertEquals(wall, hit.handle)
+            assertNull(world.raycast(Vec3f(0f, 0f, 0f), Vec3f(-1f, 0f, 0f), maxDistance = 10f, ignore = wall))
+        }
+    }
+
+    @Test
+    fun anIgnoringRaycastStillKeepsToItsLayerAndPassesSensors() = runTest {
+        world { world ->
+            val own = world.createBody(BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(0f, 0f, 0f), Quat.IDENTITY, MotionType.KINEMATIC)
+            // A sensor and a crate between the origin and the wall: a ray restricted to the world
+            // layer passes the crate, and no ray is stopped by a sensor.
+            world.createBody(BoxShape(Vec3f(0.2f, 0.2f, 0.2f)), Vec3f(1.5f, 0f, 0f), Quat.IDENTITY, MotionType.STATIC, sensor = true)
+            val crate = world.createBody(BoxShape(Vec3f(0.2f, 0.2f, 0.2f)), Vec3f(3f, 0f, 0f), Quat.IDENTITY, MotionType.DYNAMIC)
+            val wall = world.addWall()
+
+            val anyLayer = assertNotNull(world.raycast(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f), 10f, ignore = own))
+            val worldOnly = assertNotNull(world.raycast(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f), 10f, CollisionLayers.World, ignore = own))
+
+            assertEquals(crate, anyLayer.handle)
+            assertEquals(wall, worldOnly.handle)
+        }
+    }
+
+    @Test
     fun bodiesInLayersThatDoNotCollidePassThroughEachOther() = runTest {
         // Debris that falls through the player but still lands on the ground: the reason a
         // matrix exists at all rather than a single static/moving split.

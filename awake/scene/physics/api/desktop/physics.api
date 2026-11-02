@@ -380,6 +380,7 @@ public final class com/awakekt/awake/scene/physics/character/KinematicCharacterC
 	public final fun getLastContact ()Lcom/awakekt/awake/physics/character/CharacterContact;
 	public final fun getOnContact ()Lkotlin/jvm/functions/Function2;
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getStaticLayer-YxGriTw ()Lcom/awakekt/awake/physics/CollisionLayer;
 	public final fun groundHeightBelow (F)Ljava/lang/Float;
 	public final fun isCrouching ()Z
 	public final fun isFreeShape ()Z
@@ -392,6 +393,7 @@ public final class com/awakekt/awake/scene/physics/character/KinematicCharacterC
 	public final fun setFreeCollidesWithMoving (Z)V
 	public final fun setFreeHalfHeight (Ljava/lang/Float;)V
 	public final fun setOnContact (Lkotlin/jvm/functions/Function2;)V
+	public final fun setStaticLayer-TDYnX-U (Lcom/awakekt/awake/physics/CollisionLayer;)V
 	public final fun standUp ()Z
 	public final fun teleport (Lcom/awakekt/awake/core/math/Vec3f;)V
 }

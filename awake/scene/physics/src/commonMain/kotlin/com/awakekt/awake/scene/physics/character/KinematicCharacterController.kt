@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.physics.character
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.character.CharacterContact
 import com.awakekt.awake.physics.character.TerrainCollider
@@ -160,6 +161,11 @@ class KinematicCharacterController(
     var freeCollidesWithMoving: Boolean
         get() = controller.freeCollidesWithMoving
         set(value) { controller.freeCollidesWithMoving = value }
+
+    /** The layer the controller's rays look for static ground on; see the capability's `staticLayer`. */
+    var staticLayer: CollisionLayer?
+        get() = controller.staticLayer
+        set(value) { controller.staticLayer = value }
 
     /** The height of the first static surface below, or null; see the capability's `groundHeightBelow`. */
     fun groundHeightBelow(maxDistance: Float): Float? = controller.groundHeightBelow(maxDistance)

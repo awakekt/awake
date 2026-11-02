@@ -18,6 +18,7 @@ public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorld : com/awakekt
 	public fun moveKinematic-QB6aDRY (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;F)V
 	public fun overlapShape-Wy0u3Nk (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;)V
 	public fun raycast-DMjTmNA (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;)Lcom/awakekt/awake/physics/RaycastHit;
+	public fun raycast-KJBOitM (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/physics/RaycastHit;
 	public fun setActive-5Z1epPo (JZ)V
 	public fun setAngularVelocity-5Z1epPo (JLcom/awakekt/awake/core/math/Vec3f;)V
 	public fun setContactReporting-5Z1epPo (JZ)V

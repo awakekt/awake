@@ -10,6 +10,7 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public final fun getJumpSpeed ()F
 	public final fun getLastContact ()Lcom/awakekt/awake/physics/character/CharacterContact;
 	public final fun getMotionMode ()Lcom/awakekt/awake/scene/character/CharacterMotionMode;
+	public final fun getStaticLayer-YxGriTw ()Lcom/awakekt/awake/physics/CollisionLayer;
 	public final fun groundHeightBelow (F)Ljava/lang/Float;
 	public final fun isFreeShape ()Z
 	public final fun isGrounded ()Z
@@ -20,6 +21,7 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public final fun setGravity (F)V
 	public final fun setJumpSpeed (F)V
 	public final fun setMotionMode (Lcom/awakekt/awake/scene/character/CharacterMotionMode;)V
+	public final fun setStaticLayer-TDYnX-U (Lcom/awakekt/awake/physics/CollisionLayer;)V
 	public final fun teleport (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;)V
 }
 

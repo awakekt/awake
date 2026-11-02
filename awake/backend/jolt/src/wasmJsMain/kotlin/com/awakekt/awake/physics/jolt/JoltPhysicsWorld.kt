@@ -1151,7 +1151,7 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a ray type.
 @JsFun(
     """
-    (world, ox, oy, oz, dx, dy, dz, onlyLayer) => {
+    (world, ox, oy, oz, dx, dy, dz, onlyLayer, ignoreId) => {
         const query = world.query;
         query.point.Set(ox, oy, oz);
         query.vector.Set(dx, dy, dz);
@@ -1160,9 +1160,9 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
         ray.mDirection = query.vector;
         const collector = query.rayCollector;
         collector.Reset();
-        // A sensor is not solid, so it is not what a ray is stopped by -- the same rule the sweep
-        // above follows. A ray ignores no body by id.
-        world.ignoreId = -1;
+        // A sensor is not solid, so it is not what a ray is stopped by, and the ignored body (or
+        // none, at -1) is skipped inside the query -- the same rules the sweep above follows.
+        world.ignoreId = ignoreId;
         world.physicsSystem.GetNarrowPhaseQuery().CastRay(
             ray, query.raySettings, collector,
             query.anyBroadPhase, world.layerFilter(onlyLayer),
@@ -1182,6 +1182,7 @@ private external fun joltRaycast(
     directionY: Double,
     directionZ: Double,
     onlyLayer: Int,
+    ignoreId: Int,
 ): JsAny?
 
 // Called from syncTransforms()/raycast() below; detekt's unused-check can't trace
@@ -1689,6 +1690,14 @@ class JoltPhysicsWorld private constructor(
         direction: Vec3f,
         maxDistance: Float,
         onlyLayer: CollisionLayer?,
+    ): RaycastHit? = raycast(origin, direction, maxDistance, onlyLayer, ignore = null)
+
+    override fun raycast(
+        origin: Vec3f,
+        direction: Vec3f,
+        maxDistance: Float,
+        onlyLayer: CollisionLayer?,
+        ignore: BodyHandle?,
     ): RaycastHit? {
         val normalizedDirection = direction.normalized()
         val castVector = Vec3f(
@@ -1705,6 +1714,7 @@ class JoltPhysicsWorld private constructor(
             castVector.y.toDouble(),
             castVector.z.toDouble(),
             onlyLayer?.index ?: -1,
+            ignore?.id?.toInt() ?: -1,
         ) ?: return null
 
         val fraction = jsArrayGet(result, 0).toFloat()
