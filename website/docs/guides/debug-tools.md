@@ -123,6 +123,29 @@ height would show them edge on. Under a floating origin, cells are counted in ab
 drawn where the world currently is. A cell only reads when the system has an
 `asyncStreamListener` and a `loadScope`; with a frame-thread listener every cell loads at once.
 
+## Visualization toggles from the flag
+
+The `WorldDebugSettings` toggles answer to the same flag, so a game can turn them on without adding
+the component in code: `--debug=bounds,grid` on desktop, `?debug=bounds,grid` on the web. The
+default systems' `DebugVisualizationSystem` turns them on once in each world it runs, adding a
+`WorldDebugSettings` when the world has none; after that a debug panel can still turn them off.
+
+| Id | Turns on |
+| --- | --- |
+| `bounds` | Each mesh's bounds |
+| `instance-bounds` | Each static instance's bounds |
+| `occluders` | Occluder boxes |
+| `lights` | Light gizmos |
+| `shadow-frustum` | The shadow cascades' volumes |
+| `grid` | The ground grid |
+| `axes` | The X, Y and Z axis lines |
+| `skeleton` | Each animated skin's bones |
+| `wireframe` | Triangle edges over opaque meshes |
+| `view-<name>` | A shader view, its `RenderDebugView` name in kebab case: `view-world-normals`, `view-linear-depth`, `view-shadow-visibility`, `view-albedo`, `view-clay` |
+
+The camera frustum has no id, because it needs a target camera; the `culling` source draws the
+frozen culling camera's frustum. `DebugToggleIds` holds the ids.
+
 ## The physics source
 
 `PhysicsDebugSource(world)`, in `awake:scene:physics`, shows the physics bodies of a `World`, with the
