@@ -12,6 +12,9 @@ import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.render.texture.CompressedTextureFormat
+import com.awakekt.awake.render.texture.CompressedTextureImage
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -63,6 +66,64 @@ class GltfAssetResolverTextureTest {
 
         val decoded = createBitmap(Base64.decode(PIXEL_PNG))
         assertEquals(listOf<TextureAsset?>(TextureAsset(decoded.toRgba8Bytes(), decoded.width, decoded.height)), uploaded)
+    }
+
+    /**
+     * An image that throws as its material is made, as a Basis Universal one whose transcode fails then
+     * does (#1261), fails that material alone: it is made white, so a scene that draws it still loads,
+     * and the model's other material keeps its own image.
+     */
+    @Test
+    fun anImageThatFailsAsItsMaterialIsMadeFailsThatMaterialAlone() = runTest {
+        val path = "assets/models/two-materials.gltf"
+        val resolver = GltfAssetResolver()
+        var decoded = 0
+        resolver.setImageDecoder { if (decoded++ == 0) UntranscodableImage else null }
+        resolver.preloadMaterials(path, texturedTriangleJson(primitiveCount = 2).encodeToByteArray())
+        val uploaded = mutableListOf<TextureAsset?>()
+        val renderer = recordingRenderer(uploaded)
+
+        assertNotNull(resolver.createMaterial(renderer, "gltf-material:$path#0"))
+        assertNotNull(resolver.createMaterial(renderer, "gltf-material:$path#1"))
+
+        val pixel = createBitmap(Base64.decode(PIXEL_PNG))
+        assertEquals(
+            listOf<TextureAsset?>(TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1), TextureAsset(pixel.toRgba8Bytes(), pixel.width, pixel.height)),
+            uploaded,
+        )
+    }
+
+    /** A skinned part's image failing as its material is made fails that part's material alone, as a static model's does. */
+    @Test
+    fun aSkinnedPartsImageThatFailsAsItsMaterialIsMadeFailsThatMaterialAlone() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.setImageDecoder { UntranscodableImage }
+        resolver.preload(path, skinnedPartsJson().encodeToByteArray())
+        val uploaded = mutableListOf<TextureAsset?>()
+
+        assertNotNull(resolver.createMaterial(recordingRenderer(uploaded), "gltf-material:$path#0"))
+
+        assertEquals(listOf<TextureAsset?>(TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)), uploaded)
+    }
+
+    private fun recordingRenderer(uploaded: MutableList<TextureAsset?>) = object : NoopRenderer() {
+        override fun createMaterial(texture: TextureAsset?, renderTarget: RenderTarget?, uniformFloatCount: Int, pbrTextures: PbrTextureSet?): Material {
+            uploaded += texture
+            return super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures)
+        }
+    }
+
+    /** A Basis Universal image whose transcode fails when its material is made, on every path a device takes. */
+    private object UntranscodableImage : GpuImageSource {
+        override val width: Int = 1
+        override val height: Int = 1
+        override val externalImage: Any? = null
+
+        override fun readRgba8(): ByteArray = error("Basis Universal could not transcode the file to RGBA8")
+
+        override fun compressed(formats: Set<CompressedTextureFormat>): CompressedTextureImage? =
+            error("Basis Universal could not transcode the file to $formats")
     }
 
     @Test

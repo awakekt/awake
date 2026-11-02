@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -54,6 +55,19 @@ class CookedModelImagesTest {
         assertTrue(CookedTextures.psnr(CookedTextures.sourceRgba, assertNotNull(none.rgba).data) > MIN_PSNR, "RGBA8 where the device takes no block format")
     }
 
+    /**
+     * A transcode that fails when the material is made throws an ordinary [Exception] out of
+     * `createImageMaterial`, on the block-format path and the RGBA8 one, so the model resolver that makes
+     * the material fails that material alone (#1261).
+     */
+    @Test
+    fun aTranscodeThatFailsWhenTheMaterialIsMadeThrowsAnException() = runTest {
+        val image = assertNotNull(CookedTextureLoader(FILES) { FailingTranscoder }.decode(CookedTextures.bytes("rock.ktx2")))
+
+        assertFailsWith<IllegalStateException> { FakeDevice(FakeCompressedTextures(setOf(Bc7), accepts = true)).createImageMaterial(image) }
+        assertFailsWith<IllegalStateException> { FakeDevice(null).createImageMaterial(image) }
+    }
+
     @Test
     fun aFileThatIsNotKtx2IsLeftToTheCaller() = runTest {
         assertNull(CookedTextureLoader(FILES) { LibKtxBasisTranscoder }.decode(PNG))
@@ -66,6 +80,14 @@ class CookedModelImagesTest {
         val PNG = byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte())
         val BUFFER = byteArrayOf(1, 2, 3)
 
+        /** A transcoder that takes BC7 and fails every file, as a browser's does on a bad one. */
+        val FailingTranscoder = object : BasisTranscoder {
+            override val formats: Set<CompressedTextureFormat> = setOf(Bc7)
+
+            override fun transcode(ktx2: ByteArray, format: CompressedTextureFormat?): List<ByteArray> =
+                throw TranscodeFailure("the file is corrupt")
+        }
+
         val FILES = AssetSource { path ->
             when (path.value) {
                 "textures/rock.ktx2" -> Result.success(CookedTextures.bytes("rock.ktx2"))
@@ -76,3 +98,6 @@ class CookedModelImagesTest {
         }
     }
 }
+
+/** What a browser's transcoder throws: a [Throwable] that is neither an [Exception] nor an [Error], as a `JsException` is. */
+private class TranscodeFailure(message: String) : Throwable(message)
