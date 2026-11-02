@@ -26,6 +26,8 @@ kotlin {
             implementation(project(":awake:core:pool"))
             implementation(project(":awake:particles"))
             api(project(":awake:core:color"))
+            // DebugVisualizationSystem draws a DebugRegistry's sources and DebugLineBuffer is DebugLines.
+            api(project(":awake:core:diagnostics"))
             api(project(":awake:core:spatial"))
             // LodGroup carries a LodPolicy, and selects through LodSelector.
             api(project(":awake:core:lod"))
