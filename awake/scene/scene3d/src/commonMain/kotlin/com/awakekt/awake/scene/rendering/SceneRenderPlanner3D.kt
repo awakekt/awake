@@ -18,6 +18,7 @@ import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
+import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
 
 /**
@@ -45,6 +46,13 @@ internal class SceneRenderPlanner3D(
     val lastFrustumCulledCount: Int get() = geometryFeature.lastFrustumCulledCount
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
     val lastShadowOnlyCount: Int get() = geometryFeature.lastShadowOnlyCount
+
+    /** See `RenderSystem3D.cullingProbe`. */
+    var cullingProbe: CullingProbe?
+        get() = geometryFeature.cullingProbe
+        set(value) {
+            geometryFeature.cullingProbe = value
+        }
 
     /** See `RenderSystem3D.minShadowCasterRatio`. */
     var minShadowCasterRatio: Float

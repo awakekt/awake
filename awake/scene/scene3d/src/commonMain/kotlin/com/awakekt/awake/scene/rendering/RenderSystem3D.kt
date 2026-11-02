@@ -17,6 +17,8 @@ import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
+import com.awakekt.awake.scene.rendering.debug.CullingDebugSource
+import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 
 /**
@@ -121,6 +123,16 @@ class RenderSystem3D(
         set(value) {
             require(value >= 0f && value.isFinite()) { "minShadowCasterRatio must be finite and >= 0, was $value" }
             planner.minShadowCasterRatio = value
+        }
+
+    /**
+     * Records what culling decided for each mesh with bounds while set, for a [CullingDebugSource],
+     * and can freeze culling ([CullingProbe.frozen]). Null, the default, records nothing.
+     */
+    var cullingProbe: CullingProbe?
+        get() = planner.cullingProbe
+        set(value) {
+            planner.cullingProbe = value
         }
 
     /** Whether the previous frame triggered a full scene plan or reused a clean frame. */
