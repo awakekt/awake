@@ -5,11 +5,9 @@
 <div class="awake-badges" markdown>
 <span class="awake-badge">module: <code>awake:core:diagnostics</code></span>
 <span class="awake-badge">module: <code>awake:world</code></span>
-<span class="awake-badge">module: <code>awake:ai</code></span>
-
 <span class="awake-badge">module: <code>awake:scene:physics</code></span>
 <span class="awake-badge">module: <code>awake:navigation</code></span>
-
+<span class="awake-badge">module: <code>awake:ai</code></span>
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge awake-badge--ok">WebGPU</span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
@@ -134,15 +132,6 @@ from where the system looks:
 
 ```kotlin title="Kotlin"
 registry.register(PerceptionDebugSource(world, space))
-
-## The physics source
-
-`PhysicsDebugSource(world)`, in `awake:scene:physics`, shows the physics bodies of a `World`, with the
-id `physics`:
-
-```kotlin title="Kotlin"
-registry.register(PhysicsDebugSource(world))
-
 ```
 
 | Row | What it counts |
@@ -166,6 +155,17 @@ with no facing sees with its peripheral cone all round and not with its focus co
 peripheral circle and no focus cone. Attack and aggro ranges are a game's rules, not perception's:
 a game draws them with a source of its own, registered the same way.
 
+## The physics source
+
+`PhysicsDebugSource(world)`, in `awake:scene:physics`, shows the physics bodies of a `World`, with the
+id `physics`:
+
+```kotlin title="Kotlin"
+registry.register(PhysicsDebugSource(world))
+```
+
+| Row | What it counts |
+| --- | --- |
 | Static, Dynamic, Kinematic | `PhysicsBody` components with each motion type. |
 | Sensors | Bodies that are sensors (triggers). |
 | Unbuilt | Bodies with no backing body yet, in amber when it isn't 0. A body is built the next time `PhysicsSystem` runs, so one that stays unbuilt has no `PhysicsWorld`. |
