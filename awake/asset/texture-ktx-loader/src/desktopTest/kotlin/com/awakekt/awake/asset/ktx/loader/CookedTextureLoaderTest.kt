@@ -15,6 +15,8 @@ import com.awakekt.awake.render.texture.CompressedTextureFormat
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -88,6 +90,37 @@ class CookedTextureLoaderTest {
         } finally {
             Log.remove(records)
         }
+    }
+
+    @Test
+    fun aTranscodeThatFailsWithAnyThrowableFailsThatTextureWithAnException() = runTest {
+        // A browser's failed transcode of a bad file arrives as a JsException: a Throwable, not an Exception (#1261).
+        val failing = object : BasisTranscoder {
+            override val formats = setOf(Bc7)
+
+            override fun transcode(ktx2: ByteArray, format: CompressedTextureFormat?): List<ByteArray> = throw NotAnException("bad file")
+        }
+        val loader = CookedTextureLoader(files("textures/rock.ktx2")) { failing }
+
+        // What a caller that fails a texture on an Exception sees, as AssetSourceTextureResolver does.
+        val loaded = assertFailsWith<IllegalStateException> { loader.load("textures/rock.png", setOf(Bc7)) }
+        assertIs<NotAnException>(loaded.cause, "the transcoder's failure is kept")
+        assertTrue("bad file" in loaded.message.orEmpty(), "and what it said")
+
+        val modelImage = assertNotNull(loader.decode(CookedTextures.bytes("rock.ktx2")), "a model's image transcodes when its material is made")
+        assertIs<NotAnException>(assertFailsWith<IllegalStateException> { modelImage.compressed(setOf(Bc7)) }.cause)
+        assertIs<NotAnException>(assertFailsWith<IllegalStateException> { modelImage.readRgba8() }.cause)
+    }
+
+    @Test
+    fun anErrorFromTheTranscoderIsNotWrapped() = runTest {
+        val failing = object : BasisTranscoder {
+            override val formats = setOf(Bc7)
+
+            override fun transcode(ktx2: ByteArray, format: CompressedTextureFormat?): List<ByteArray> = throw OutOfMemoryError("no room")
+        }
+
+        assertFailsWith<OutOfMemoryError> { CookedTextureLoader(files("textures/rock.ktx2")) { failing }.load("textures/rock.png", setOf(Bc7)) }
     }
 
     private class NotAnException(message: String) : Throwable(message)

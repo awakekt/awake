@@ -30,8 +30,21 @@ class BasisWasmTranscoder private constructor(private val module: JsAny) : Basis
 
     override fun transcode(ktx2: ByteArray, format: CompressedTextureFormat?): List<ByteArray> {
         val target = if (format == null) RGBA32 else requireNotNull(TARGETS[format]) { "Basis Universal doesn't transcode to $format" }
-        val levels = transcodeLevels(module, ktx2.toUint8Array(), target)
+        val levels = levels(ktx2, target)
         return List(arrayLength(levels)) { level -> arrayItem(levels, level).toByteArray() }
+    }
+
+    /**
+     * Every level of [ktx2] in [target]. A file Basis Universal can't read or transcode throws an
+     * [IllegalStateException] with the transcoder's message: what it throws is a `JsException`, which
+     * isn't an [Exception], and would escape a caller's `catch (Exception)` as a failed [load] did (#1261).
+     */
+    @Suppress("TooGenericExceptionCaught") // A failed transcode arrives as a JsException, a Throwable.
+    private fun levels(ktx2: ByteArray, target: String): JsAny = try {
+        transcodeLevels(module, ktx2.toUint8Array(), target)
+    } catch (failure: Throwable) {
+        val reason = (failure as? JsException)?.let { jsMessage(it.thrownValue) } ?: failure.message
+        throw IllegalStateException("Basis Universal could not transcode the KTX2 file to $target: $reason", failure)
     }
 
     companion object {

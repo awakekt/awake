@@ -3,12 +3,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package com.awakekt.awake.asset.ktx.loader
 
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import kotlinx.coroutines.test.runTest
+import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -42,6 +47,18 @@ class BasisWasmTranscoderTest {
             assertEquals(LEVELS, image.levels.size, "$format: 64 x 64 down to 1 x 1")
         }
         assertSame(transcoder, BasisWasmTranscoder.load(SCRIPT), "loaded once per page")
+    }
+
+    @Test
+    fun aFileItCannotTranscodeFailsWithAKotlinException() = runTest {
+        val transcoder = BasisWasmTranscoder.load(SCRIPT)
+        val broken = "not a KTX2 file".encodeToByteArray()
+
+        // Basis Universal's own failure is a JsException, not an Exception; a caller's catch (Exception) catches this (#1261).
+        val failure = assertFailsWith<IllegalStateException> { transcoder.transcode(broken, null) }
+
+        assertIs<JsException>(failure.cause)
+        assertTrue("could not transcode" in failure.message.orEmpty())
     }
 
     private companion object {

@@ -140,9 +140,15 @@ kotlin {
                 implementation(libs.kotlinx.browser)
             }
             resources.srcDir(project(":awake:backend:webgpu").file("src/wasmJsMain/resources"))
+            // basis/basis_transcoder.{js,wasm} beside the page, for the cooked Basis Universal textures
+            // project:runtime loads (#1261): the one copy texture-ktx-loader vendors and digest-checks.
+            resources.srcDir(project(":awake:asset:texture-ktx-loader").file("src/wasmJsMain/resources"))
         }
     }
 }
+
+// The transcoder is packed only once it is checked against its release's pinned digests.
+tasks.named("wasmJsProcessResources") { dependsOn(":awake:asset:texture-ktx-loader:verifyBasisTranscoder") }
 
 // Production-plan MSAA probes exercise wgpu-native as well as Vulkan. Its FFM binding needs JDK 25;
 // published sample classes continue to target 17.
