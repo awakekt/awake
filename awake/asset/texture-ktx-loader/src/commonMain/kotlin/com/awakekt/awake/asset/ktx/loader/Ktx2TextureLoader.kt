@@ -38,6 +38,10 @@ object Ktx2TextureLoader {
      *   has it. Null otherwise, since no decoder for it ships.
      * - **RGBA8:** as it is. A level that isn't width x height x 4 bytes throws [Ktx2FormatException].
      *
+     * A file [transcoder] can't transcode throws an [Exception], as a broken image does: an
+     * [IllegalStateException] carrying what the transcoder threw when that wasn't an [Exception], such as
+     * a browser's `JsException`, so a caller's `catch (Exception)` fails that texture alone (#1261).
+     *
      * A block-compressed upload needs the rows stored bottom first, as the cook writes them, since
      * blocks can't be flipped. A Basis Universal file stored the other way is decoded to RGBA8 and
      * flipped instead.
@@ -66,10 +70,26 @@ object Ktx2TextureLoader {
         val target = Ktx2Formats.transcodeTargets(texture.encoding)
             .firstOrNull { it in formats && it in transcoder.formats && texture.bottomRowFirst }
         return if (target != null) {
-            Ktx2Upload.Compressed(CompressedTextureImage(target, texture.width, texture.height, texture.srgb, transcoder.transcode(bytes, target)))
+            Ktx2Upload.Compressed(CompressedTextureImage(target, texture.width, texture.height, texture.srgb, transcoder.levels(bytes, target)))
         } else {
-            rgba(transcoder.transcode(bytes, null).first(), texture, filtering)
+            rgba(transcoder.levels(bytes, null).first(), texture, filtering)
         }
+    }
+
+    /**
+     * [BasisTranscoder.transcode], failing with an [Exception]. A transcoder may throw a [Throwable] that is
+     * neither an [Exception] nor an [Error], as a browser's `JsException` is; it's wrapped, so it doesn't
+     * escape a caller's `catch (Exception)` and stop the app. An [Error] is left as it is.
+     */
+    @Suppress("TooGenericExceptionCaught") // Only a Throwable that isn't an Exception or an Error is wrapped.
+    private fun BasisTranscoder.levels(bytes: ByteArray, format: CompressedTextureFormat?): List<ByteArray> = try {
+        transcode(bytes, format)
+    } catch (failure: Exception) {
+        throw failure
+    } catch (failure: Error) {
+        throw failure
+    } catch (failure: Throwable) {
+        throw IllegalStateException("Basis Universal could not transcode the file to ${format ?: "RGBA8"}: ${failure.message}", failure)
     }
 
     private fun raw(texture: Ktx2Texture, formats: Set<CompressedTextureFormat>, filtering: TextureFiltering): Ktx2Upload? {

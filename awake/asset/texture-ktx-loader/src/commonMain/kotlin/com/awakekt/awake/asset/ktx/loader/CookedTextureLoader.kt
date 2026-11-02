@@ -33,8 +33,9 @@ class CookedTextureLoader(
 ) {
     /**
      * The cooked texture for the source image at [source], as the device sampling [formats] best takes
-     * it, or null when none can be read or loaded here. A cooked file that reads but isn't valid KTX2
-     * throws, as a broken image does.
+     * it, or null when none can be read or loaded here. A cooked file that reads but isn't valid KTX2, or
+     * that the transcoder can't transcode, throws an [Exception], as a broken image does, so a caller that
+     * fails a texture on one fails this texture alone: a browser's `JsException` isn't let through (#1261).
      */
     suspend fun load(source: String, formats: Set<CompressedTextureFormat>): GpuImageSource? {
         val basis = cookedPath(source) ?: return null
