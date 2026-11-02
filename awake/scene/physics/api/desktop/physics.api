@@ -113,6 +113,22 @@ public final class com/awakekt/awake/scene/physics/PhysicsDebugLinesKt {
 	public static final fun physicsDebugLines (Lcom/awakekt/awake/ecs/World;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/scene/physics/PhysicsDebugSource : com/awakekt/awake/core/diagnostics/DebugSource {
+	public static final field Companion Lcom/awakekt/awake/scene/physics/PhysicsDebugSource$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun <init> (Lcom/awakekt/awake/ecs/World;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getTitle ()Ljava/lang/String;
+	public fun lines (Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+	public fun rows (Lcom/awakekt/awake/core/diagnostics/DebugRows;)V
+}
+
+public final class com/awakekt/awake/scene/physics/PhysicsDebugSource$Companion {
+	public final fun getDYNAMIC ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getKINEMATIC ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSTATIC ()Lcom/awakekt/awake/core/color/Color;
+}
+
 public final class com/awakekt/awake/scene/physics/PhysicsOriginShiftListener : com/awakekt/awake/scene/world/OriginShiftListener {
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;)V
 	public fun onOriginShift (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/scene/world/WorldOrigin;)V

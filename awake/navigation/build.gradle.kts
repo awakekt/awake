@@ -30,6 +30,8 @@ kotlin {
             api(project(":awake:asset:terrain"))
             // LineSegment, for navGridDebugLines. The contract module only, never a backend.
             api(project(":awake:engine:render:contract"))
+            // NavDebugSource is a DebugSource.
+            api(project(":awake:core:diagnostics"))
             // PathRequestSystem runs its queries off the frame thread; it moved here
             // with the rest of the navigation contract.
             implementation(libs.kotlinx.coroutines.core)
