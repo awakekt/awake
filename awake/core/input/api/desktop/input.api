@@ -643,7 +643,8 @@ public final class com/awakekt/awake/core/input/KeyModifier : java/lang/Enum {
 }
 
 public final class com/awakekt/awake/core/input/Keymap {
-	public fun <init> (Ljava/util/List;)V
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/input/InputActions;)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/input/InputActions;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun changedBindings ()Lcom/awakekt/awake/core/input/InputBindings;
 	public final fun dispatch (Ljava/lang/Object;Lcom/awakekt/awake/core/input/ActionInputSource;)V
 	public static synthetic fun dispatch$default (Lcom/awakekt/awake/core/input/Keymap;Ljava/lang/Object;Lcom/awakekt/awake/core/input/ActionInputSource;ILjava/lang/Object;)V
@@ -657,6 +658,7 @@ public final class com/awakekt/awake/core/input/Keymap {
 	public final fun resetAll ()V
 	public final fun unbind (Ljava/lang/String;)V
 	public final fun update (Lcom/awakekt/awake/core/input/ActionInputSource;Ljava/lang/Object;)V
+	public final fun usePreset (Lcom/awakekt/awake/core/input/InputBindings;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/core/input/KeymapBuilder {

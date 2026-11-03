@@ -207,6 +207,14 @@ applies. A keymap also knows the defaults:
 never changed it. `unbind` leaves an action on no key, `resetAll` puts back every default, and
 `entriesBoundTo(chord)` gives the entries, with their labels, that a new chord would clash with.
 
+A preset, such as arrows or a left-handed layout picked in settings, is a set of bindings too.
+`usePreset` makes it the defaults, so `reset` goes back to it and it is not saved as the player's
+change; load the player's own changes after it:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:preset"
+```
+
 In a scene, `KeymapSystem` (`com.awakekt.awake.scene:controls`) runs a keymap each frame, its handlers
 given the world or a context made from it:
 
@@ -214,8 +222,25 @@ given the world or a context made from it:
 --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:keymap-system"
 ```
 
-Read a `GameplayInput` so a focused text field keeps its keys. A keymap's actions are its own, apart
-from the scene's `input_actions`, so a `canvas_element` control does not press them.
+Read a `GameplayInput` so a focused text field keeps its keys.
+
+### One set of actions on every platform
+
+A keymap made with `KeymapSystem` alone keeps its actions to itself. `world.shareKeymap(entries)`
+makes its actions and the scene's `input_actions` one set, the world's `inputActions()`: keys read by
+`PlayerInputSystem`, a played project's `canvas_element` joystick and buttons, and the keymap's
+handlers all work on the same actions. W A S D on a desktop or in a browser and a joystick on a phone
+then steer the same `move`, and the systems reading it never ask which device it was:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:shared-keymap"
+```
+
+The scene's own actions stay. An entry named like one of them replaces it, keeping the scene's
+binding where the scene declared that action itself. A saved scene leaves out the actions only the
+keymap added. `KeymapSystem` sees that the keymap is shared and only runs its handlers, so add it
+after `PlayerInputSystem` and `CanvasActionSystem`. To show on-screen controls only while the player
+plays by touch, read `HostInputState.lastInputDevice`.
 
 ## Properties
 
