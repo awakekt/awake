@@ -16,16 +16,16 @@ class PredictedEntityTest {
 
     @Test
     fun aShiftMovesThePoseAndHistoryAndGlidesOnScreen() {
-        val entity = PredictedEntity(shiftGlideSeconds = 0.1f)
+        val entity = PredictedEntity(glideHalfLifeSeconds = 0.1f)
         entity.apply(Correction.Shift(2f, 0f, 0f), history)
         assertEquals(2f, entity.position.x)
         history.poseAt(1, out)
         assertEquals(2f, out.x, "the history moved with it")
         assertEquals(0f, entity.drawnX, "drawn where it was")
-        entity.update(0.05f)
-        assertEquals(1f, entity.drawnX, 1e-4f, "half the jump left halfway through the glide")
-        entity.update(0.05f)
-        assertEquals(2f, entity.drawnX, 1e-4f, "drawn where it is once the glide is over")
+        entity.update(0.1f)
+        assertEquals(1f, entity.drawnX, 1e-4f, "half the jump left after one half-life")
+        entity.update(1f)
+        assertEquals(2f, entity.drawnX, 1e-2f, "drawn where it is once the glide has faded")
     }
 
     @Test

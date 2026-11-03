@@ -91,9 +91,9 @@ public final class com/awakekt/awake/net/prediction/PredictedEntity {
 	public final fun getDrawnX ()F
 	public final fun getDrawnY ()F
 	public final fun getDrawnZ ()F
+	public final fun getGlideHalfLifeSeconds ()F
 	public final fun getOwed ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
-	public final fun getShiftGlideSeconds ()F
 	public final fun getSpeedScale ()F
 	public final fun update (F)V
 }

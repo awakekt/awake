@@ -44,7 +44,7 @@ guess while the client's inputs are held up, which it may undo once they arrive.
 | --- | --- |
 | `None` | Nothing; move at full speed. |
 | `Blend(dx, dy, dz)` | Owe the drift and put it right a little each step as the entity moves (`PredictedEntity.blend`). |
-| `Shift(dx, dy, dz)` | Move the entity and every recorded pose by the drift. Draw the jump as a short glide (0.15 s in `PredictedEntity`). |
+| `Shift(dx, dy, dz)` | Move the entity and every recorded pose by the drift. Draw the jump as a short glide: `PredictedEntity` fades it with `core.math`'s `ErrorOffset`, a 0.05 s half-life, mostly gone within 0.15 s. |
 | `Snap(x, y, z, reason)` | Put the entity on the server's pose now, and the history with it. |
 | `Wait(speedScale)` | Scale the entity's speed, from 1 to 0 over the `capEaseSeconds` before the cap. It wins over a shift and a blend while it lasts. |
 
