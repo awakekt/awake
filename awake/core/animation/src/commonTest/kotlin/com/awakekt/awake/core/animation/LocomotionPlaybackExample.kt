@@ -7,7 +7,7 @@ package com.awakekt.awake.core.animation
 
 // --8<-- [start:locomotion]
 /** Use the same playback mechanism with positions supplied by any movement owner. */
-class AnimatedMover(private val player: AnimationPlayer) {
+class LocomotionPlaybackExample(private val player: AnimationPlayer) {
     private val locomotion = LocomotionPlayer(
         LocomotionConfig(
             idle = "idle",

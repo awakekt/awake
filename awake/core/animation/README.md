@@ -56,7 +56,7 @@ speed-matched playback are preserved. The scene's `LocomotionAnimation` componen
 settings to this capability and supplies its world position and nearest ancestor's ground contact.
 
 A compiled usage example lives in
-[`AnimatedMover.kt`](src/commonTest/kotlin/com/awakekt/awake/core/animation/AnimatedMover.kt):
+[`LocomotionPlaybackExample.kt`](src/commonTest/kotlin/com/awakekt/awake/core/animation/LocomotionPlaybackExample.kt):
 
 ```kotlin
 val locomotion = LocomotionPlayer(LocomotionConfig(idle = "idle", walk = "walk", run = "run"))

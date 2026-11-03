@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 class LocomotionPlayerTest {
     @Test
     fun standaloneLocomotionSelectsIdleWalkRunAndStopsWithoutWalkingInPlace() {
-        val mover = Mover()
+        val mover = LocomotionTestDriver()
         assertNull(mover.motion.playing, "the first position is only an observation")
         assertEquals("idle", mover.stand())
         assertEquals("walk", mover.move(2f))
@@ -31,7 +31,7 @@ class LocomotionPlayerTest {
 
     @Test
     fun extractedDampingMatchesThePreviousExponentialForVariableFrameSteps() {
-        val mover = Mover()
+        val mover = LocomotionTestDriver()
         var expected = 0f
         val rates = floatArrayOf(1f / 30f, 1f / 60f, 1f / 120f, 1f / 240f, 0.267f)
         repeat(100) { step ->
@@ -50,7 +50,7 @@ class LocomotionPlayerTest {
     @Test
     fun speedSmoothingIsIndependentOfFrameRate() {
         val results = listOf(30, 60, 120, 240).map { fps ->
-            val mover = Mover()
+            val mover = LocomotionTestDriver()
             repeat(fps / 2) { mover.step(6f, dt = 1f / fps) }
             assertEquals("run", mover.motion.playing)
             mover.motion.groundSpeed
@@ -60,7 +60,7 @@ class LocomotionPlayerTest {
 
     @Test
     fun aTeleportPreservesTheWalkAndReferenceSpeedPlayback() {
-        val mover = Mover(CONFIG.copy(walkReferenceSpeed = 2f, runReferenceSpeed = 6f))
+        val mover = LocomotionTestDriver(CONFIG.copy(walkReferenceSpeed = 2f, runReferenceSpeed = 6f))
         mover.move(2f)
         val speed = mover.motion.groundSpeed
         mover.x += 50f
@@ -73,7 +73,7 @@ class LocomotionPlayerTest {
 
     @Test
     fun suppliedGroundContactDrivesPhasesAndLandingCanBeInterruptedByMovement() {
-        val mover = Mover(CONFIG.copy(takeOff = "takeoff", fall = "fall", land = "land"))
+        val mover = LocomotionTestDriver(CONFIG.copy(takeOff = "takeoff", fall = "fall", land = "land"))
         mover.stand()
         assertEquals("takeoff", mover.step(0f, dy = 0.1f, grounded = false))
         assertTrue(mover.motion.playingOnce)
@@ -88,7 +88,7 @@ class LocomotionPlayerTest {
 
     @Test
     fun unknownGroundContactInfersTheJumpFromVerticalMotion() {
-        val mover = Mover()
+        val mover = LocomotionTestDriver()
         mover.stand()
         assertEquals("jump", mover.step(0f, dy = 0.1f))
         repeat(30) { mover.step(0f) }
@@ -97,7 +97,7 @@ class LocomotionPlayerTest {
 
     @Test
     fun missingClipsPreservePlaybackAndInvalidStepsDoNotChangeMotionState() {
-        val mover = Mover(CONFIG.copy(run = "missing"))
+        val mover = LocomotionTestDriver(CONFIG.copy(run = "missing"))
         mover.move(2f)
         assertEquals("walk", mover.move(6f))
         val speed = mover.motion.groundSpeed
@@ -110,14 +110,14 @@ class LocomotionPlayerTest {
     @Test
     fun theDocumentedStandaloneLoopRunsWithoutAScene() {
         val playback = player()
-        val mover = AnimatedMover(playback)
+        val mover = LocomotionPlaybackExample(playback)
         mover.frame(0f, 0f, 0f, DT, true)
         repeat(60) { frame -> mover.frame((frame + 1) * 2f * DT, 0f, 0f, DT, true) }
         assertEquals("walk", playback.activeClipId)
         assertEquals(1f, playback.speed, 1e-3f)
     }
 
-    private class Mover(config: LocomotionConfig = CONFIG) {
+    private class LocomotionTestDriver(config: LocomotionConfig = CONFIG) {
         val player = player()
         val motion = LocomotionPlayer(config)
         var x = 0f
