@@ -137,5 +137,6 @@ protocol's business, so it stays in your code on the page, timed with `arrivalLa
 
 ## See also
 
+- [Client prediction](client-prediction.md): predict the player's own entity and correct it from the snapshots
 - [Run in the browser](../get-started/run-in-the-browser.md)
 - [Modules](../reference/modules.md)

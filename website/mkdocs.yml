@@ -99,6 +99,7 @@ nav:
           - Audio: guides/audio.md
       - Networking:
           - Networking in the browser: guides/web-networking.md
+          - Client prediction: guides/client-prediction.md
       - Content:
           - Protected content: guides/protected-content.md
           - Content bundles: guides/content-bundles.md

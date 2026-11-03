@@ -11,9 +11,11 @@ net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing & backpre
                  GameServerHost (fixed-rate tick loop, MessageRouter, GameFeature, SaveScheduler)
 net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
                  WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page
+net:prediction   PredictionHistory, reconcile -> Correction (None, Blend, Shift, Snap, Wait),
+                 ReconcileRules, PredictedEntity: client-side prediction and reconciliation
 ```
 
-`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor` and `:awake:net:client-browser`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor`, `:awake:net:client-browser` and `:awake:net:prediction`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
 
 ## Browser client (`:awake:net:client-browser`)
 
@@ -25,6 +27,16 @@ reads. The worker's script ships in the klib as `awake-net/socket-worker.js`; ap
 `com.awakekt.awake.plugin.socket-worker` Gradle plugin to the web app so its page serves it. Without
 it, or in a browser without `Worker`, the socket falls back to the page and says so once. The
 [web networking guide](../../website/docs/guides/web-networking.md) says what runs where.
+
+## Client prediction (`:awake:net:prediction`)
+
+A client moves its own entity at once and corrects it from the server's snapshots. `PredictionHistory`
+keeps the pose each input left the entity at; `reconcile` compares a snapshot with the pose kept for
+the input it acknowledged, not the pose drawn now, and answers with a `Correction`: blend a small
+drift, shift by a real one, snap only for a far drift, a lost history or a game's own rule
+(`ReconcileRules`), or ease to a stop once the server has heard no input for as long as it guesses
+on. It depends on `:awake:core:math` alone, with no transport, ECS or scene. The
+[client prediction guide](../../website/docs/guides/client-prediction.md) shows a client loop.
 
 ---
 
