@@ -5,6 +5,10 @@
 #
 # A pull request runs it when it can break a template: the templates themselves, Core's public API
 # (its dumps change with it), the version catalog, and the build logic that publishes Core.
+#
+# A Core release builds the templates against the latest Vulkan release on Maven Central, not against
+# its own commit's Vulkan, so a pull request that changes a template with a desktop app also compiles
+# that app against the latest Vulkan release (#1282).
 name: Templates
 
 on:
@@ -71,6 +75,7 @@ jobs:
 
       # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
       - name: Publish this pull request's Core locally
+        id: publish
         run: |
           ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
           ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
@@ -85,6 +90,54 @@ jobs:
           tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/project"
           tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/plugin"
           tools/check_scene_components_consumer.sh "$RUNNER_TEMP/scene-components"
+
+      # A Core release's Consumer job (build-and-publish.yml) builds the templates against the latest
+      # Vulkan release on Maven Central, not this commit's Vulkan: the Vulkan family is released by its
+      # own vulkan-v* tag, after Core is on Central (docs/release-process.md, "Independent Vulkan
+      # family"). A template that calls a Vulkan API added since that release passes the step above and
+      # fails the release, as v0.37.0's did (#1282). So compile the desktop apps, where the templates
+      # call the Vulkan backend, against that release and this pull request's Core, as that job does.
+      # Only a template change can fail this: the Vulkan release on Central is fixed.
+      - name: Compile the desktop apps against the latest Vulkan release
+        if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          TEMPLATE_CORE_VERSION: ${{ env.LOCAL_VERSION }}
+          TEMPLATE_PREPARE_ONLY: '1'
+        run: |
+          if [[ "$EVENT_NAME" == pull_request ]]; then
+            # The whole diff first: `grep -q` exits at its first match, and the SIGPIPE to a
+            # still-writing git diff would turn a match into a skip under pipefail.
+            changed=$(git diff --name-only "$BASE_SHA" HEAD)
+            if ! grep -Eq '^(templates/(game|project)/|tools/(check_template_consumer|stamp_template_versions)\.sh$|\.github/workflows/templates\.yml$)' <<< "$changed"; then
+              echo "No change to templates/game or templates/project: their desktop apps build as on the base branch."
+              exit 0
+            fi
+          fi
+          # Central's own latest release, read as the Consumer job's "Resolve both publication-family
+          # versions" step reads it.
+          TEMPLATE_VULKAN_VERSION=$(curl -fsS --retry 5 --retry-all-errors \
+            https://repo.maven.apache.org/maven2/com/awakekt/awake/backend/vulkan/maven-metadata.xml \
+            | sed -n 's:.*<release>\(.*\)</release>.*:\1:p')
+          if [[ -z "$TEMPLATE_VULKAN_VERSION" ]]; then
+            echo "::error::Could not read the latest Vulkan release from Maven Central's maven-metadata.xml."
+            exit 1
+          fi
+          export TEMPLATE_VULKAN_VERSION
+          failed=()
+          for template in game project; do
+            work="$RUNNER_TEMP/$template-released-vulkan"
+            # TEMPLATE_PREPARE_ONLY: copy the template and stamp Core and Vulkan into it, then stop.
+            tools/check_template_consumer.sh "templates/$template" "$work"
+            echo "==> templates/$template desktop app against Core $TEMPLATE_CORE_VERSION and Vulkan $TEMPLATE_VULKAN_VERSION"
+            (cd "$work/awake-template" && ./gradlew :app:desktopApp:compileKotlin --no-configuration-cache --console=plain) \
+              || failed+=("templates/$template")
+          done
+          for template in "${failed[@]}"; do
+            echo "::error::$template: this template uses a Vulkan API newer than the latest Vulkan release $TEMPLATE_VULKAN_VERSION; it has to wait for that Vulkan release (see docs/release-process.md)"
+          done
+          (( ${#failed[@]} == 0 ))
 
   scene-components-native:
     name: Scene component consumer (native)
