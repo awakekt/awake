@@ -314,6 +314,12 @@ val project = loadProject(files, capabilities = listOf(GrapplingHookCapability),
   before the physics world exists.
 - `plan` adds the systems the scene uses, with `plan.fixed` or `plan.frame`. A system that holds
   something to give back implements `AutoCloseable` and is closed when the scene stops.
+- A frame runs at most as many fixed steps as the scene's cap, 5 unless the scene block sets
+  `maxFixedStepsPerFrame(...)`, and drops the rest of its time. `SceneHostServices.fixedStep` reports
+  the steps each frame ran and what it dropped, and takes a `TimeDroppedListener`. A networked game
+  that predicts its local player sends or replays the dropped steps, or raises the cap. A host that
+  steps the systems itself passes its own `FixedTimestepLoop` with `withFixedStep`, or to
+  `project.sceneSystems(input, fixedStep = loop)`.
 - Core's capabilities run first, then the ones passed in, in order. Pass the same list to
   `loadProject`, or to `loadSceneContent` and `sceneSystemsFor`.
 - A plugin the manifest marks `required` must have a capability with its `id`, or the load is refused.

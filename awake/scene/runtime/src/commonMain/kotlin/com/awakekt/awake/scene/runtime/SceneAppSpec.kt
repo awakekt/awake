@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.host.FixedTimestepLoop
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.platform.core.AppModule
@@ -47,6 +48,19 @@ class SceneAppSpec(
     val infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems,
 ) : AppModule {
+    /**
+     * The most fixed steps the scene runs in one frame, 5 unless set: a frame that brings more time
+     * than that runs these and drops the rest, which [SceneAppLifecycleRuntime.fixedStep] reports. A
+     * higher cap lets the fixed steps keep up with real time through longer frames, at the cost of a
+     * longer frame still when the steps themselves are what is slow. Read when the spec is installed;
+     * at least 1. The scene DSL sets it with `maxFixedStepsPerFrame(...)`.
+     */
+    var maxFixedStepsPerFrame: Int = FixedTimestepLoop.DEFAULT_MAX_STEPS_PER_FRAME
+        set(value) {
+            require(value >= 1) { "maxFixedStepsPerFrame must be at least 1, was $value" }
+            field = value
+        }
+
     /**
      * Installs this scene module into the host application specification.
      *

@@ -123,8 +123,10 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
-	public static final fun sceneSystems (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+	public static final synthetic fun sceneSystems (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+	public static final fun sceneSystems (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/host/FixedStepReport;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 	public static synthetic fun sceneSystems$default (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+	public static synthetic fun sceneSystems$default (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/host/FixedStepReport;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 	public static final fun switchTo (Lcom/awakekt/awake/project/runtime/LoadedProject;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -184,6 +186,7 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public final fun getAudio ()Lcom/awakekt/awake/core/audio/AudioPlayer;
 	public final fun getCanSpawn ()Z
 	public final fun getContent ()Lcom/awakekt/awake/project/runtime/SceneContent;
+	public final fun getFixedStep ()Lcom/awakekt/awake/core/host/FixedStepReport;
 	public final fun getHasRenderer ()Z
 	public final fun getInput ()Lkotlin/jvm/functions/Function0;
 	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
@@ -192,6 +195,7 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public final fun getSceneSwitchStatus ()Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;
 	public final fun spawn (Lcom/awakekt/awake/scene/document/SceneNode;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 	public final fun withAudio (Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public final fun withFixedStep (Lcom/awakekt/awake/core/host/FixedStepReport;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSceneSwitch (Lcom/awakekt/awake/project/runtime/SceneSwitch;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSceneSwitchStatus (Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSpawner (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/project/runtime/SceneHostServices;

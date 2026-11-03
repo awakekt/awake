@@ -126,6 +126,7 @@ class SceneAppDsl internal constructor() {
     private val serviceRegistrations = mutableListOf<SceneServiceRegistration<*>>()
     private var infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems
+    private var fixedStepCap: Int? = null
 
     /**
      * Sets the descriptive name of the scene.
@@ -340,6 +341,19 @@ class SceneAppDsl internal constructor() {
         infrastructureSystemsFactory = factory
     }
 
+    /**
+     * Lets the scene run up to [value] fixed steps in one frame, instead of 5, before it drops the rest
+     * of the frame's time. A game whose fixed steps must keep up with real time through long frames, such
+     * as a networked game predicting its local player against a server, raises it; the time still dropped
+     * is reported by [SceneAppLifecycleRuntime.fixedStep]. See [SceneAppSpec.maxFixedStepsPerFrame].
+     *
+     * @param value The most fixed steps a frame runs; at least 1.
+     */
+    fun maxFixedStepsPerFrame(value: Int) {
+        require(value >= 1) { "maxFixedStepsPerFrame must be at least 1, was $value" }
+        fixedStepCap = value
+    }
+
     internal fun build(): SceneAppSpec = SceneAppSpec(
         sceneName = sceneName,
         systems = systemsDsl.build(),
@@ -352,7 +366,7 @@ class SceneAppDsl internal constructor() {
         onDisposeBlock = { onDisposeBlocks.forEach { it(this) } },
         serviceRegistrations = serviceRegistrations.toList(),
         infrastructureSystemsFactory = infrastructureSystemsFactory,
-    )
+    ).also { spec -> fixedStepCap?.let { spec.maxFixedStepsPerFrame = it } }
 }
 
 /**

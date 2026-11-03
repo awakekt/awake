@@ -9,6 +9,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.asset.ktx.loader.CookedTextureLoader
 import com.awakekt.awake.core.audio.AudioPlayer
+import com.awakekt.awake.core.host.FixedStepReport
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.StringLayer
@@ -287,16 +288,29 @@ suspend fun loadProject(
  * With no [renderer], as on a game server or in a test, the systems that draw are left out and the
  * rest simulate as they do in a drawn game. A host that never draws loads the project with
  * `hasRenderer = false` too, so it decodes no images. With [audio], the scene's `audio_source`s play through it;
- * without, they run silently. [SceneSystemSet.close] them when the scene stops.
+ * without, they run silently. With [fixedStep], the loop the host runs the fixed systems in, they read the
+ * steps it ran and the time it dropped from [SceneHostServices.fixedStep], as they do under `runProject`.
+ * [SceneSystemSet.close] them when the scene stops.
  */
-fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null, audio: AudioPlayer? = null): SceneSystemSet {
+fun LoadedProject.sceneSystems(
+    input: () -> GameplayInput,
+    renderer: Renderer? = null,
+    audio: AudioPlayer? = null,
+    fixedStep: FixedStepReport? = null,
+): SceneSystemSet {
     val drawn = if (renderer == null) {
         SceneHostServices.headless(input, physics, content)
     } else {
         SceneHostServices(input, renderer, physics, content)
     }
-    return sceneSystemsFor(scene, audio?.let(drawn::withAudio) ?: drawn, capabilities)
+    val stepped = fixedStep?.let(drawn::withFixedStep) ?: drawn
+    return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities)
 }
+
+/** [sceneSystems] as it was before `fixedStep`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null, audio: AudioPlayer? = null): SceneSystemSet =
+    sceneSystems(input, renderer, audio, fixedStep = null)
 
 /**
  * Moves this project to its scene at [path], relative to the project root, such as

@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayer
+import com.awakekt.awake.core.host.FixedStepReport
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -45,6 +46,19 @@ class SceneHostServices private constructor(
      * one; null wherever [sceneSwitch] is, unless the host adds its own with [withSceneSwitchStatus].
      */
     val sceneSwitchStatus: SceneSwitchStatus? = null,
+    /**
+     * The fixed-step loop the scene's [SceneSystemSet.fixed] systems run in, as they read it: the steps
+     * each frame ran and the time it dropped once it had run as many as its cap allows. `runProject`
+     * gives the scene's own, as configured by `maxFixedStepsPerFrame`. Null where the host gave none:
+     * a host that steps the systems with its own [com.awakekt.awake.core.host.FixedTimestepLoop] adds it
+     * with [withFixedStep].
+     *
+     * A system that keeps a clock of its own in step with the fixed steps reads it, or adds a
+     * [com.awakekt.awake.core.host.TimeDroppedListener] to it, instead of working the dropped time out
+     * from the frame's delta: a networked game that predicts its local player sends or replays the
+     * steps it dropped, so the player walks as long as the server does.
+     */
+    val fixedStep: FixedStepReport? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -77,19 +91,27 @@ class SceneHostServices private constructor(
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
     fun withAudio(audio: AudioPlayer): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
 
     /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
     fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
 
     /** These services, with [sceneSwitchStatus] reporting what the [sceneSwitch] is doing, as `runProject` does. */
     fun withSceneSwitchStatus(sceneSwitchStatus: SceneSwitchStatus): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
+
+    /**
+     * These services, with [fixedStep] reporting the fixed-step loop the host steps the systems in, as
+     * `runProject` does with the scene's own. A game server or a test that runs [SceneSystemSet.fixed]
+     * from its own [com.awakekt.awake.core.host.FixedTimestepLoop] passes that loop.
+     */
+    fun withFixedStep(fixedStep: FixedStepReport): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
 
     /** Makes services for a host with no renderer. */
     companion object {

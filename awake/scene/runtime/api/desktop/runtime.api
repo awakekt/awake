@@ -154,6 +154,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
 	public final fun getDrawsSceneCanvas ()Z
 	public final fun getEffectiveCursorImage ()Lcom/awakekt/awake/core/input/CursorImage;
+	public final fun getFixedStep ()Lcom/awakekt/awake/core/host/FixedStepReport;
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getFps ()F
 	public final fun getHostInputState ()Lcom/awakekt/awake/core/input/HostInputState;
@@ -225,6 +226,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/aw
 	public fun <init> (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getInfrastructureSystemsFactory ()Lkotlin/jvm/functions/Function1;
+	public final fun getMaxFixedStepsPerFrame ()I
 	public final fun getOnDisposeBlock ()Lkotlin/jvm/functions/Function1;
 	public final fun getOnReadyBlock ()Lkotlin/jvm/functions/Function2;
 	public final fun getRenderableFactory ()Lkotlin/jvm/functions/Function2;
@@ -235,6 +237,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/aw
 	public final fun getUpdateBlock ()Lkotlin/jvm/functions/Function3;
 	public fun install (Lcom/awakekt/awake/engine/platform/dsl/AppSpecBuilder;)V
 	public final fun installInto (Lcom/awakekt/awake/engine/platform/dsl/AppSpecBuilder;)Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;
+	public final fun setMaxFixedStepsPerFrame (I)V
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {

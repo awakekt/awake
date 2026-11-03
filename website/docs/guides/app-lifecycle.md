@@ -158,7 +158,28 @@ runs one frame pass with a delta of 0 right after `onReady`.
 
 !!! warning "At most five fixed steps per frame"
     After a long frame the runtime runs five fixed steps and drops the rest of the backlog, so the
-    simulation slows down instead of freezing the display.
+    simulation slows down instead of freezing the display. `maxFixedStepsPerFrame(15)` in the scene
+    block raises the cap. The runtime's `fixedStep` reports what each frame did, before the frame
+    systems run: `stepsThisFrame`, the `droppedSeconds` and whole `droppedSteps` it dropped, and
+    `droppedStepsTotal`. To be told instead of reading it each frame, add a listener with
+    `fixedStep.addTimeDroppedListener { seconds, steps -> }`.
+
+### Dropped time in a networked game
+
+A game that predicts its local player against a server has to account for every fixed step. After a
+long frame, such as a garbage collection pause in the browser, the player has walked less than the
+time that passed, while the server walked on. The two drift apart until a correction warps the
+player back. Either:
+
+- **Send or replay the dropped steps.** In a frame system, or a `TimeDroppedListener`, read
+  `droppedSteps` and send the inputs those steps would have sent, or step the local player that many
+  more times, so it walks as long as the server does.
+- **Raise the cap** with `maxFixedStepsPerFrame(...)`, so ordinary long frames drop nothing. Keep a
+  cap: when the steps themselves are what is slow, running more of them makes the next frame slower
+  still.
+
+A capability's systems read the same report from `SceneHostServices.fixedStep`. Don't copy the
+default cap of 5 into the game and work out the dropped steps from the frame's delta: read them.
 
 !!! tip "One `Input` per app"
     Every app has one `Input` service, created with it. Look it up with `requireService(Input::class)`;

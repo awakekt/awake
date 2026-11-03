@@ -350,6 +350,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     private fun services(scene: ProjectScene): SceneHostServices {
         val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = scene.content)
             .withSpawner(spawner)
+            .withFixedStep(runtime.fixedStep)
             .withSceneSwitch(this)
             .withSceneSwitchStatus(this)
         return if (scene.document.uses(SceneAudioSource::class)) services.withAudio(audio.value) else services
