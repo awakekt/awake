@@ -364,6 +364,8 @@ jobs:
 
       - name: Verify Awake repository gates
         run: ./gradlew awakeVerify --no-configuration-cache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify API surface
         run: ./gradlew apiCheck
