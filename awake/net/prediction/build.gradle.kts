@@ -5,7 +5,7 @@
  */
 // Client-side prediction and reconciliation for a locally controlled entity: a history of the poses
 // its inputs left it at, and a pure decision of what a server snapshot corrects. Plain numbers in and
-// out, so it needs no ECS, scene, renderer or transport; a scene binding can wrap it later.
+// out, so it needs no ECS, scene, renderer or transport; `awake:scene:net` wraps it for root ECS transforms.
 plugins {
     id("com.awakekt.awake.plugin.library")
     id("com.awakekt.awake.plugin.publish")

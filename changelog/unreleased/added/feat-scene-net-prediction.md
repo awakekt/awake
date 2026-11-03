@@ -1,0 +1,1 @@
+- Added `awake:scene:net`: a `predicted_entity` scene schema, runtime prediction component and fixed-step system binding `net:prediction` to root scene transforms.

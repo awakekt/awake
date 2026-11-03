@@ -37,6 +37,7 @@ drift, shift by a real one, snap only for a far drift, a lost history or a game'
 (`ReconcileRules`), or ease to a stop once the server has heard no input for as long as it guesses
 on. It depends on `:awake:core:math` alone, with no transport, ECS or scene. The
 [client prediction guide](../../website/docs/guides/client-prediction.md) shows a client loop.
+The opt-in [`awake:scene:net`](../scene/net/README.md) module binds it to root ECS transforms.
 
 ---
 

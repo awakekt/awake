@@ -48,9 +48,35 @@ guess while the client's inputs are held up, which it may undo once they arrive.
 | `Snap(x, y, z, reason)` | Put the entity on the server's pose now, and the history with it. |
 | `Wait(speedScale)` | Scale the entity's speed, from 1 to 0 over the `capEaseSeconds` before the cap. It wins over a shift and a blend while it lasts. |
 
-`PredictedEntity` applies a correction to a plain pose. If your entity's pose lives in a character
-controller or a component, apply the same way: move the pose and call `history.shift` by the same
-amount, so the next snapshot isn't corrected for the same drift.
+`PredictedEntity` applies a correction to a plain pose. For ECS entities whose movement owns a
+root `Transform`, add `com.awakekt.awake.scene:net` and use its binding:
+
+## Scene transforms
+
+Register `NetSceneComponents` with the project's `SceneComponentRegistry` (`registerNet()`), decode
+with that registry's `sceneJson`, and author `predicted_entity` alongside the root transform. The
+schema exposes every `ReconcileConfig` option plus `historyCapacity`, `glideHalfLifeSeconds` and
+`blendShare`. A missing `predictionCapSeconds` follows the authored guess window plus ease.
+
+Install `PredictionSystem` before the game's fixed-step movement, and `TransformSystem` after it.
+Movement reads `PredictedTransform.speedScale` and calls `recordInput` after moving, with the input
+sequence and a timestamp on the system's monotonic clock. Keep sending and recording while stopped.
+Snapshots are supplied on the world thread before the system runs. The system ignores older
+acknowledgements and consumes each correction once.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/net/src/commonTest/kotlin/com/awakekt/awake/scene/net/PredictionSceneDocsSample.kt:scene"
+```
+
+The transform holds simulation state. For a visual glide, copy `drawnX/Y/Z` onto a separate root
+visual entity; never feed that pose into simulation or history. The offset decays at fixed-step
+frequency. Parented simulation transforms are rejected. Physics characters and rigid bodies must
+apply `net:prediction` through their own position owner instead of this direct-transform binding.
+
+Convert world-absolute snapshot positions to scene coordinates at ingress. On an origin shift,
+translate the simulation root and call `prediction.rebase(dx, dy, dz)` with the same translation,
+before prediction or recording, so its snapshot and history shift together. Replace the component
+when reconnecting or restarting input sequences; no previous session state is serialized.
 
 ## Your game's rules
 
