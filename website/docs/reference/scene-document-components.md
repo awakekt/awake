@@ -760,6 +760,12 @@ A directional or point light. `SceneLight`.
 
 Plays a skinned model's clip for how its entity moves: idle, walking, running and jumping. `SceneLocomotionAnimation`.
 
+The scene component maps every field below to `core:animation`'s `LocomotionConfig`.
+`LocomotionPlayer` owns the scene-independent movement measurement, clip phases and playback rate;
+`LocomotionAnimationSystem` supplies world position and ground contact. Ground-speed smoothing
+uses `damp` with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
+finite and satisfy the ranges below; scene validation rejects invalid settings before loading.
+
 Speeds are measured from the entity's world position, so it animates however the entity is moved,
 and a model on a child node animates with it. Clip names are the model's own animations; a clip
 left out, or one the model lacks, keeps whatever already plays. With a `character_controller` on the

@@ -104,3 +104,15 @@ This module has no rendering-backend code of its own -- it only builds `DrawCall
 them to whatever `Renderer` the app is running (`awake:backend:vulkan`/`awake:backend:webgpu`).
 It also has no scene-authoring/DSL surface -- that's `awake:scene:authoring`; this module is
 consumed by it, not the other way around.
+
+## Locomotion binding
+
+`SceneLocomotionAnimation` is the `locomotion_animation` saved format. Its runtime component,
+`LocomotionAnimation`, wraps `core:animation`'s `LocomotionPlayer`. `LocomotionMapping.kt` maps every
+authored option to `LocomotionConfig`, with exposure and value-mapping tests preventing omissions.
+Scene validation reports invalid settings before nodes or components are created.
+
+`LocomotionAnimationSystem` supplies the entity's world position and the nearest ancestor's
+`GroundContact`, then lets the capability choose and crossfade clips and match playback speed.
+It runs after transforms settle and before `AnimationSystem` advances playback. Motion measurement,
+airborne phases, teleport rejection and ground-speed smoothing live outside the scene module.
