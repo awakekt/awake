@@ -1,0 +1,1 @@
+- Restored custom image cursors in the game and project desktop templates now that Vulkan 0.1.44 publishes the required cursor-image API.
