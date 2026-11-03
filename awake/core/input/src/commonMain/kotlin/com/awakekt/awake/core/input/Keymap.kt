@@ -11,9 +11,11 @@ package com.awakekt.awake.core.input
  * drives it the same way.
  *
  * Each frame, [update] reads a source into [actions] and runs the handlers of the actions pressed.
- * A caller that feeds [actions] itself, such as on-screen buttons pressing them, calls
- * [InputActions.beginFrame], reads and presses, then [dispatch]. Held actions and axes stay polled:
- * a system asks [actions] for them, as it does without a keymap.
+ * A caller that feeds [actions] itself, such as on-screen controls pushing an axis or pressing a
+ * button, calls [InputActions.beginFrame], reads and pushes, then [dispatch]. Held actions and axes
+ * stay polled: a system asks [actions] for them, as it does without a keymap. A joystick that pushes
+ * `move` and keys bound to `move` drive the same action, so the systems reading it never ask which
+ * device moved the player.
  *
  * A press shared by several handled actions, such as Escape closing a window or else opening a menu,
  * goes to the highest [KeymapEntry.priority] first, then in the order declared. An action whose
@@ -23,27 +25,38 @@ package com.awakekt.awake.core.input
  *
  * A player's bindings are the [actions]' own: [InputActions.rebind] changes one, [unbind] and [reset]
  * clear one or put back its default, [changedBindings] is what a settings file saves and [load] reads
- * it back.
+ * it back. [usePreset] swaps the defaults themselves, such as for a left-handed layout.
  *
  * @param C What handlers are given each frame.
- * @param entries The actions, each with a different name.
- * @throws IllegalArgumentException when two entries have the same name or a name is not an action name.
+ * @param entries The actions with labels and handlers, each with a different name.
+ * @property actions The actions' state this frame and their bindings now, read by [update]. By default
+ * the entries' own; a larger set, such as a scene's actions with the entries added, shares one set
+ * with other readers. It must have every entry's action, of the same kind, and its bindings as given
+ * become the [defaults].
+ * @throws IllegalArgumentException when two entries have the same name, a name is not an action name,
+ * or [actions] lacks an entry's action or has it as the other kind.
  */
-class Keymap<C>(entries: List<KeymapEntry<C>>) {
-    /** The actions in the order given, with their defaults and handlers. */
+class Keymap<C>(
+    entries: List<KeymapEntry<C>>,
+    val actions: InputActions = InputActions(entries.map { it.action }),
+) {
+    /** The actions with labels and handlers, in the order given. */
     val entries: List<KeymapEntry<C>> = entries.toList()
 
-    /** The actions' state this frame and their bindings now, read by [update]. */
-    val actions: InputActions = InputActions(this.entries.map { it.action })
-
-    /** Every action's default binding, by name. */
-    val defaults: InputBindings = InputBindings(this.entries.associate { it.name to it.action.binding })
+    /** Every action's default binding, by name: what [reset] puts back and [changedBindings] measures from. */
+    var defaults: InputBindings = actions.bindings()
+        private set
 
     private val byName = this.entries.associateBy { it.name }
     private val handled = this.entries.filter { it.onPress != null }.sortedByDescending { it.priority }
     private val claims = PressClaims()
 
-    /** The entry named [name], or null when none is. */
+    init {
+        require(byName.size == this.entries.size) { "Two entries are named \"${this.entries.duplicateName()}\"" }
+        for (entry in this.entries) require(actions.binding(entry.name).isFor(entry.action)) { actions.refusal(entry) }
+    }
+
+    /** The entry named [name], or null when none is, such as for an action only [actions] has. */
     fun entry(name: String): KeymapEntry<C>? = byName[name]
 
     /** Starts a frame, reads [source] into [actions], and runs the handlers of what it pressed. */
@@ -61,23 +74,38 @@ class Keymap<C>(entries: List<KeymapEntry<C>>) {
     fun dispatch(context: C, source: ActionInputSource? = null) {
         claims.clear()
         for (entry in handled) {
-            if (reaches(entry, context, source)) entry.onPress?.invoke(context)
+            if (actions.reaches(entry, context, source, claims)) entry.onPress?.invoke(context)
         }
     }
 
     /** Leaves [name] bound to nothing, so only an on-screen control or code triggers it. */
     fun unbind(name: String) {
-        actions.rebind(name, byName.named(name).action.unbound())
+        val binding = requireNotNull(actions.binding(name)) { "No action is named \"$name\"" }
+        actions.rebind(name, binding.unbound())
     }
 
     /** Puts back [name]'s default binding. */
     fun reset(name: String) {
-        actions.rebind(name, byName.named(name).action.binding)
+        actions.rebind(name, requireNotNull(defaults.actions[name]) { "No action is named \"$name\"" })
     }
 
     /** Puts back every action's default binding. */
     fun resetAll() {
         actions.rebindAll(defaults)
+    }
+
+    /**
+     * Rebinds every action [preset] names, and makes every action's binding then its default, so a
+     * layout picked in settings, such as arrows or a left-handed set, is what [reset] puts back and
+     * [changedBindings] leaves out. Load a player's own changes after it.
+     *
+     * @return The names it skipped: no action has them, or the binding is for the other kind of action.
+     */
+    fun usePreset(preset: InputBindings): List<String> {
+        resetAll()
+        val skipped = actions.rebindAll(preset)
+        defaults = actions.bindings()
+        return skipped
     }
 
     /** The bindings that differ from the defaults, for a settings file to save; [load] reads them back. */
@@ -92,22 +120,32 @@ class Keymap<C>(entries: List<KeymapEntry<C>>) {
      */
     fun load(bindings: InputBindings): List<String> = actions.rebindAll(bindings)
 
-    /** The entries a player pressing [chord] would also trigger, for a rebinding screen to warn about. */
-    fun entriesBoundTo(chord: InputChord): List<KeymapEntry<C>> = actions.actionsBoundTo(chord).map(byName::getValue)
-
-    /** Whether this frame's press of [entry] reaches its handler: pressed, enabled, and not all taken already. */
-    private fun reaches(entry: KeymapEntry<C>, context: C, source: ActionInputSource?): Boolean =
-        actions.wasPressed(entry.name) &&
-            entry.enabledWhen(context) &&
-            (actions.binding(entry.name) as? ButtonBinding)?.let { source == null || claims.take(it, source) } == true
+    /**
+     * The entries a player pressing [chord] would also trigger, for a rebinding screen to warn about.
+     * An action only [actions] has is left out; [InputActions.actionsBoundTo] names every one.
+     */
+    fun entriesBoundTo(chord: InputChord): List<KeymapEntry<C>> = actions.actionsBoundTo(chord).mapNotNull(byName::get)
 }
 
-private fun <C> Map<String, KeymapEntry<C>>.named(name: String): KeymapEntry<C> =
-    requireNotNull(this[name]) { "No action is named \"$name\"" }
+/** Whether this frame's press of [entry] reaches its handler: pressed, enabled, and not all taken already. */
+private fun <C> InputActions.reaches(entry: KeymapEntry<C>, context: C, source: ActionInputSource?, claims: PressClaims): Boolean =
+    wasPressed(entry.name) &&
+        entry.enabledWhen(context) &&
+        (binding(entry.name) as? ButtonBinding)?.let { source == null || claims.take(it, source) } == true
 
-private fun InputActionDefinition.unbound(): ActionBinding = when (this) {
-    is ButtonAction -> ButtonBinding()
-    is AxisAction -> AxisBinding()
+private fun ActionBinding?.isFor(action: InputActionDefinition): Boolean = when (action) {
+    is ButtonAction -> this is ButtonBinding
+    is AxisAction -> this is AxisBinding
+}
+
+private fun InputActions.refusal(entry: KeymapEntry<*>): String =
+    if (entry.name in this) "\"${entry.name}\" is the other kind of action in the actions given" else "The actions given have no \"${entry.name}\""
+
+private fun List<KeymapEntry<*>>.duplicateName(): String? = groupingBy { it.name }.eachCount().entries.firstOrNull { it.value > 1 }?.key
+
+private fun ActionBinding.unbound(): ActionBinding = when (this) {
+    is ButtonBinding -> ButtonBinding()
+    is AxisBinding -> AxisBinding()
 }
 
 /** The keys, controller buttons and pointer buttons the handlers run so far this frame were pressed with. */

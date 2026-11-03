@@ -54,6 +54,8 @@ together, and `layer` gives handlers a priority and a condition. A press shared 
 goes to the highest priority enabled one first, which takes the keys it was pressed with. Held
 actions and axes stay polled from `Keymap.actions`. `keymapEntries { }` declares a feature's actions
 apart, for one keymap to `include`. `unbind`, `reset`, `resetAll`, `changedBindings` and `load` work
-on the defaults the keymap was built with.
+on the defaults, and `usePreset` swaps the defaults for a layout picked in settings. A keymap can run
+over a larger `InputActions` it shares with other readers, such as a scene's, whose bindings become
+its defaults; an on-screen joystick pushing `move` and the keys bound to `move` then drive one action.
 
 The guide is [Input](../../../website/docs/guides/input.md).

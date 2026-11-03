@@ -223,5 +223,69 @@ class KeymapTest {
         assertEquals(emptyList(), keymap.entriesBoundTo(KeyChord(Key.K)))
     }
 
+    @Test
+    fun aJoystickAndTheKeysDriveTheSameAxis() {
+        val keymap = keymap()
+
+        keymap.update(ChordSource(down = setOf(Key.W), pressed = setOf(Key.W)), Game())
+        val byKeys = keymap.actions.axisY("move")
+        keymap.actions.beginFrame()
+        keymap.actions.read(ChordSource())
+        keymap.actions.push("move", 0.6f, -0.8f) // a phone's knob, no key held
+        keymap.dispatch(Game())
+
+        assertEquals(1f, byKeys)
+        assertEquals(0.6f, keymap.actions.axisX("move"))
+        assertEquals(-0.8f, keymap.actions.axisY("move"))
+    }
+
+    @Test
+    fun aKeymapCanShareALargerSetOfActions() {
+        val shared = InputActions(
+            listOf(
+                ButtonAction("interact", keys = setOf(Key.E), trigger = ActionTrigger.Press),
+                ButtonAction("window.inventory", keys = setOf(Key.Tab), trigger = ActionTrigger.Press),
+            ),
+        )
+        val entries = keymapEntries<Game> { press("window.inventory", "Inventory", Key.I) { it.ran += "inventory" } }
+        val keymap = Keymap(entries, shared)
+        val game = Game()
+
+        keymap.update(ChordSource(down = setOf(Key.Tab), pressed = setOf(Key.Tab)), game)
+        keymap.actions.rebind("interact", ButtonBinding(keys = setOf(Key.F)))
+        keymap.reset("interact")
+
+        assertEquals(listOf("inventory"), game.ran, "the shared set's binding, Tab, is the one read")
+        assertEquals(shared.bindings(), keymap.defaults, "its bindings as given are the defaults")
+        assertNull(keymap.entry("interact"))
+        assertEquals(ButtonBinding(keys = setOf(Key.E)), keymap.actions.binding("interact"), "an action with no entry resets too")
+        assertEquals(emptyList(), keymap.entriesBoundTo(KeyChord(Key.E)), "an action with no entry has no label to show")
+        assertFailsWith<IllegalArgumentException>("an entry the actions lack") { Keymap(keymapEntries<Game> { hold("attack", "Attack", Key.F) }, shared) }
+        assertFailsWith<IllegalArgumentException>("the other kind") { Keymap(keymapEntries<Game> { axis("interact", "Interact") }, shared) }
+    }
+
+    @Test
+    fun aPresetBecomesTheDefaultsAndOnlyThePlayersOwnChangesAreSaved() {
+        val keymap = keymap()
+        val arrows = InputBindings(
+            mapOf(
+                "move" to AxisBinding(up = setOf(Key.ArrowUp), down = setOf(Key.ArrowDown), left = setOf(Key.ArrowLeft), right = setOf(Key.ArrowRight)),
+                "dash" to ButtonBinding(keys = setOf(Key.Q)),
+            ),
+        )
+
+        keymap.actions.rebind("attack", ButtonBinding(keys = setOf(Key.G)))
+        val skipped = keymap.usePreset(arrows)
+        assertEquals(listOf("dash"), skipped)
+        assertEquals(ButtonBinding(keys = setOf(Key.F)), keymap.actions.binding("attack"), "a preset starts from the built defaults")
+        assertEquals(InputBindings(), keymap.changedBindings(), "the preset is not the player's change")
+
+        keymap.actions.rebind("attack", ButtonBinding(keys = setOf(Key.G)))
+        assertEquals(setOf("attack"), keymap.changedBindings().actions.keys)
+        keymap.resetAll()
+
+        assertEquals(arrows.actions["move"], keymap.actions.binding("move"), "reset goes back to the preset")
+    }
+
     private fun escape() = ChordSource(down = setOf(Key.Escape), pressed = setOf(Key.Escape))
 }

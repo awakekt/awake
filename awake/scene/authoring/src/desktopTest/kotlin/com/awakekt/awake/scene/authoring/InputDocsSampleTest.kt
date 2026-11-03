@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.authoring
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.ActionTrigger
 import com.awakekt.awake.core.input.AxisAction
+import com.awakekt.awake.core.input.AxisBinding
 import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.ButtonBinding
 import com.awakekt.awake.core.input.GamepadButton
@@ -21,6 +22,7 @@ import com.awakekt.awake.core.input.KeyChord
 import com.awakekt.awake.core.input.KeyModifier
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.input.keymap
+import com.awakekt.awake.core.input.keymapEntries
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
@@ -30,6 +32,7 @@ import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.input.KeymapSystem
 import com.awakekt.awake.scene.controls.input.inputActions
+import com.awakekt.awake.scene.controls.input.shareKeymap
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.document.SceneLoader
@@ -348,5 +351,58 @@ class InputDocsSampleTest {
 
         assertEquals(1, interactions.count, "a press runs its handler once however long E is held")
         game.dispose()
+    }
+
+    @Test
+    fun aSharedKeymapMovesThePlayerByKeysOrJoystickAndTakesAPreset() {
+        DefaultSceneComponentResolvers.install()
+        val registry = SceneComponentRegistry().registerControls()
+        val scene = SceneLoader.decode(
+            """{ "version": 1, "name": "harbor-town", "nodes": [ { "name": "Controls", "components": [
+                { "component": "input_actions", "actions": [ { "type": "button", "name": "interact", "keys": ["E"], "trigger": "Press" } ] }
+            ] } ] }""",
+        )
+        val world = World()
+        scene.instantiate(world = world, componentRegistry = registry)
+        val input = Input()
+        val gameplayInput = { GameplayInput(input.currentSnapshot, InputOwnership()) }
+
+        // --8<-- [start:shared-keymap]
+        // Once the scene is in the world:
+        val controls = world.shareKeymap(
+            keymapEntries<World> {
+                axis(
+                    "move",
+                    "input.move",
+                    up = setOf(Key.W, Key.ArrowUp),
+                    down = setOf(Key.S, Key.ArrowDown),
+                    left = setOf(Key.A, Key.ArrowLeft),
+                    right = setOf(Key.D, Key.ArrowRight),
+                )
+                hold("attack", "input.attack", Key.F)
+            },
+        )
+        val players = PlayerInputSystem(gameplayInput) // reads the keys into the shared actions
+        val handlers = KeymapSystem(controls, gameplayInput) // after PlayerInputSystem and CanvasActionSystem
+        // --8<-- [end:shared-keymap]
+
+        input.setKeyDown(Key.ArrowUp, true)
+        input.updateSnapshot()
+        players.update(world, 1f / 60f)
+        handlers.update(world, 1f / 60f)
+        assertEquals(1f, world.inputActions()!!.axisY("move"), "keys drive the shared move")
+        assertTrue("interact" in controls.actions, "the scene's own actions are in the set")
+
+        val savedChanges = InputBindings()
+        // --8<-- [start:preset]
+        val leftHanded = InputBindings(
+            mapOf("move" to AxisBinding(up = setOf(Key.I), down = setOf(Key.K), left = setOf(Key.J), right = setOf(Key.L))),
+        )
+        controls.usePreset(leftHanded) // now the defaults: reset goes back to it, and it is not saved as a change
+        controls.load(savedChanges) // then the player's own changes
+        // --8<-- [end:preset]
+
+        assertEquals(InputBindings(), controls.changedBindings())
+        assertEquals(leftHanded.actions["move"], controls.actions.binding("move"))
     }
 }

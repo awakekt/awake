@@ -369,6 +369,7 @@ public final class com/awakekt/awake/scene/controls/input/KeymapSystem : com/awa
 
 public final class com/awakekt/awake/scene/controls/input/KeymapSystemKt {
 	public static final fun KeymapSystem (Lcom/awakekt/awake/core/input/Keymap;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/scene/controls/input/KeymapSystem;
+	public static final fun shareKeymap (Lcom/awakekt/awake/ecs/World;Ljava/util/List;)Lcom/awakekt/awake/core/input/Keymap;
 }
 
 public final class com/awakekt/awake/scene/controls/input/SceneAxisAction : com/awakekt/awake/scene/controls/input/SceneInputAction {

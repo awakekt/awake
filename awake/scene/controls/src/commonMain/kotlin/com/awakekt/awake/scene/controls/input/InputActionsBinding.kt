@@ -133,9 +133,13 @@ object InputActionsBinding : SceneComponentBinding<InputActions, SceneInputActio
         world.add(entity, InputActions(component.withDefaults()))
     }
 
-    /** Leaves out the defaults, so a scene that rebinds nothing saves as it was written. */
-    override fun export(world: World, entity: Entity, component: InputActions): SceneInputActions =
-        SceneInputActions(component.definitions.filterNot { it in MovementActions.defaults }.map { it.toScene() })
+    /** Leaves out the defaults and the actions a shared keymap added, so a scene that rebinds nothing saves as it was written. */
+    override fun export(world: World, entity: Entity, component: InputActions): SceneInputActions {
+        val added = world.get(entity, KeymapActions::class)?.names.orEmpty()
+        return SceneInputActions(
+            component.definitions.filterNot { it in MovementActions.defaults || it.name in added }.map { it.toScene() },
+        )
+    }
 }
 
 private fun SceneInputAction.toDefinition(): InputActionDefinition = when (this) {
