@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0-rc.2] - 2026-11-04
+
+### Added
+
+- **One set of actions for keys, touch controls and a keymap.** `world.shareKeymap(entries)` in `awake:scene:controls` makes a keymap's actions and the scene's `input_actions` one set, so W A S D on desktop and web and a `canvas_element` joystick on a phone steer the same `move`, and the keymap's handlers run on presses from either. The scene keeps its own actions and bindings, and a saved scene leaves out the actions only the keymap added. `Keymap` takes a larger `InputActions` to share, whose bindings become its defaults, and `usePreset` makes a layout picked in settings the defaults, so `reset` goes back to it and `changedBindings` saves only the player's own changes (#1300).
+- **Keymaps put labels, groups and handlers around input actions.** `Keymap<C>` in `awake:core:input`, built with `keymap { press(...); hold(...); toggle(...); axis(...) }`, gives each action a label and group for a rebinding screen and an optional handler a press runs with a context of the caller's choosing. A `layer` gives handlers a priority and a condition: a press shared by several handlers goes to the highest enabled one, which takes the keys it was pressed with, so Escape closes an open window without also opening the menu. Features declare their own actions with `keymapEntries { }` for one keymap to `include`. `unbind`, `reset`, `resetAll`, `changedBindings` (only what differs from the defaults) and `load` handle a player's bindings, and `entriesBoundTo` finds clashes. `KeymapSystem` in `awake:scene:controls` runs a keymap over a world each frame (#1300).
+
 ## [0.38.0-rc.1] - 2026-11-03
 
 ### Added
