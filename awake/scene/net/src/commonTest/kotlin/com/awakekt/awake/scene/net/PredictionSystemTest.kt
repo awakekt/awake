@@ -207,6 +207,80 @@ class PredictionSystemTest {
         assertFailsWith<IllegalArgumentException> { system.update(world, DT) }
     }
 
+    @Test
+    fun aFadingVisualShiftDoesNotHideANewerSimulationDivergence() {
+        record(1, 0f)
+        prediction.snapshot(1, 0, 3f, 0f, 0f)
+        system.update(world, DT)
+        assertIs<Correction.Shift>(prediction.lastCorrection)
+        prediction.recordInput(transform, 2, now)
+        // Simulation is at +3, but the visual offset still draws it near 0. The new server
+        // position is -2 from simulation, so it needs a shift even if close to the drawn pose.
+        prediction.snapshot(2, 0, 1f, 0f, 0f)
+        system.update(world, DT)
+        assertEquals(-2f, assertIs<Correction.Shift>(prediction.lastCorrection).dx)
+        assertEquals(1f, transform.position.x)
+    }
+
+    @Test
+    fun aPlanarFallDoesNotRepayHorizontalDrift() {
+        val planar = PredictedTransform(config = ReconcileConfig(planar = true))
+        world.add(entity, planar)
+        system.update(world, DT)
+        planar.recordInput(transform, 1, now)
+        planar.snapshot(1, 0, 1f, 0f, 0f)
+        system.update(world, DT)
+        assertIs<Correction.Blend>(planar.lastCorrection)
+        transform.position.y -= 1f
+        planar.recordInput(transform, 2, now)
+        assertEquals(0f, transform.position.x, "falling is not horizontal locomotion")
+        assertEquals(-1f, transform.position.y)
+    }
+
+    @Test
+    fun anExplicitMotionBudgetExcludesExternalTranslationsAndBoundsBlending() {
+        record(1, 0f)
+        prediction.snapshot(1, 0, 1f, 0f, 0f)
+        system.update(world, DT)
+        // Knockback or a teleport must not repay the outstanding input drift.
+        transform.position.x += 20f
+        prediction.recordInput(transform, 2, walked = 0f)
+        assertEquals(20f, transform.position.x)
+        transform.position.x += 5f
+        prediction.recordInput(transform, 3, walked = 0.5f)
+        assertEquals(25.1f, transform.position.x, EPS, "only the eligible half metre repays drift")
+        assertPose(1, 0.1f)
+        assertPose(3, 25.1f)
+    }
+
+    @Test
+    fun gameRulesReadTheSimulationRatherThanTheGlidingVisualPose() {
+        record(1, 0f)
+        prediction.snapshot(1, 0, 3f, 0f, 0f)
+        system.update(world, DT)
+        var seenX = Float.NaN
+        prediction.rules = ReconcileRules { input -> seenX = input.drawnX; null }
+        system.update(world, DT)
+        assertEquals(3f, seenX)
+        assertTrue(prediction.drawnX < seenX)
+    }
+
+    @Test
+    fun recordingDefaultsToTheSystemsSampledClockAndRejectsInvalidMotionBudgets() {
+        now = 12.5
+        system.update(world, DT)
+        prediction.recordInput(transform, 0)
+        assertEquals(now, prediction.history.oldestUnackedTime(-1))
+        for (distance in listOf(-1f, Float.NaN, Float.POSITIVE_INFINITY)) {
+            assertFailsWith<IllegalArgumentException> { prediction.recordInput(transform, 1, walked = distance) }
+        }
+        assertEquals(0L, prediction.history.newestSeq, "invalid budgets cannot partly record an input")
+        val unstepped = PredictedTransform()
+        assertFailsWith<IllegalArgumentException> { unstepped.recordInput(transform, 0) }
+        unstepped.recordInput(transform, 0, timeSeconds = now)
+        assertEquals(now, unstepped.history.oldestUnackedTime(-1))
+    }
+
     private fun record(seq: Long, x: Float) {
         transform.position.x = x
         prediction.recordInput(transform, seq, now)

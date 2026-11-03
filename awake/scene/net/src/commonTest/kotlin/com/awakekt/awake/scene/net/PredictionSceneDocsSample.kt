@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.net
 
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -37,7 +38,7 @@ class ScenePredictionClient {
         reconcile.update(world, dt)
         val velocity = velocityX * prediction.speedScale
         transform.position.x += velocity * dt
-        prediction.recordInput(transform, ++sequence, now)
+        prediction.recordInput(transform, ++sequence, walked = abs(velocity) * dt)
         send(sequence, velocity)
         // TransformSystem runs after movement. A separate root visual entity may copy
         // prediction.drawnX/Y/Z; never write the visual glide into this simulation transform.
@@ -51,9 +52,11 @@ class PredictionSceneDocsSampleTest {
         val client = ScenePredictionClient()
         var sent = 0L
         repeat(10) { tick -> client.fixedStep(tick / 30.0, 1f / 30f, 6f) { seq, _ -> sent = seq } }
-        client.snapshot(8, 0, 1.6f, 0f, 0f)
+        client.snapshot(8, 0, 1.9f, 0f, 0f)
         client.fixedStep(10 / 30.0, 1f / 30f, 6f) { seq, _ -> sent = seq }
         assertEquals(11L, sent)
-        assertEquals(2.2f, client.transform.position.x, 1e-5f)
+        // +0.3 m drift at input 8 repays 20% of this step's 0.2 m walk, preserving
+        // the unacknowledged steps and recording the corrected simulation pose.
+        assertEquals(2.24f, client.transform.position.x, 1e-5f)
     }
 }

@@ -12,6 +12,8 @@ import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneValidationException
 import kotlin.reflect.KClass
 
 /** Loads only authored settings; history, acknowledgements and game rules start empty. */
@@ -22,7 +24,9 @@ object PredictedTransformBinding : SceneComponentBinding<PredictedTransform, Sce
     override val serializer = ScenePredictedEntity.serializer()
 
     override fun attachTyped(world: World, entity: Entity, component: ScenePredictedEntity, context: SceneResolutionContext) {
-        require(component.validate("predicted_entity").isEmpty()) { "invalid predicted_entity settings" }
+        val issues = component.validate("predicted_entity")
+        if (issues.isNotEmpty()) throw SceneValidationException(issues)
+        require(world.get<Transform>(entity)?.parent == null) { "predicted_entity requires a scene root; parented transforms are not supported" }
         world.add(entity, component.toPrediction())
     }
 

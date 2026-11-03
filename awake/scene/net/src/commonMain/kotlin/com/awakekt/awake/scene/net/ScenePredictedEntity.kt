@@ -42,6 +42,8 @@ data class ScenePredictedEntity(
     @PropertyRange(min = 0.0) val glideHalfLifeSeconds: Float = 0.05f,
     @PropertyRange(min = 0.0, max = 1.0) val blendShare: Float = 0.2f,
 ) : SceneComponent {
+    override val allowsMultiplePerNode: Boolean get() = false
+
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         fun check(valid: Boolean, field: String) {
             if (!valid) add(SceneValidationIssue("$path.$field", "predicted_entity.$field is outside its valid range"))

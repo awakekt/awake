@@ -20,7 +20,9 @@ public final class com/awakekt/awake/scene/net/PredictedTransform {
 	public final fun getRules ()Lcom/awakekt/awake/net/prediction/ReconcileRules;
 	public final fun getSpeedScale ()F
 	public final fun rebase (FFF)V
-	public final fun recordInput (Lcom/awakekt/awake/scene/core/transform/Transform;JD)V
+	public final synthetic fun recordInput (Lcom/awakekt/awake/scene/core/transform/Transform;JD)V
+	public final fun recordInput (Lcom/awakekt/awake/scene/core/transform/Transform;JDF)V
+	public static synthetic fun recordInput$default (Lcom/awakekt/awake/scene/net/PredictedTransform;Lcom/awakekt/awake/scene/core/transform/Transform;JDFILjava/lang/Object;)V
 	public final fun setRules (Lcom/awakekt/awake/net/prediction/ReconcileRules;)V
 	public final fun snapshot (JIFFF)Z
 }

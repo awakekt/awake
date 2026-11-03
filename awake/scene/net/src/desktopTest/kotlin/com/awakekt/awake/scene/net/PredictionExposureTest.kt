@@ -10,7 +10,6 @@ import com.awakekt.awake.net.prediction.PredictionHistory
 import com.awakekt.awake.net.prediction.ReconcileConfig
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.elementNames
-import java.lang.reflect.Modifier
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,14 +18,15 @@ import kotlin.test.assertEquals
 class PredictionExposureTest {
     @Test
     fun everyCapabilitySettingHasASceneField() {
-        fun fields(type: Class<*>): Set<String> = type.declaredFields
-            .filter { !Modifier.isStatic(it.modifiers) && !it.isSynthetic }.map { it.name }.toSet()
-        // Code-only runtime state, not options: poses, drift, speed, visual decay and ring storage.
-        val poseState = setOf("position", "owed", "speedScale", "glide")
-        val historyState = setOf("seqs", "xs", "ys", "zs", "times", "newestSeq")
-        val configSettings = fields(ReconcileConfig::class.java)
-        val poseSettings = fields(PredictedEntity::class.java) - poseState
-        val historySettings = fields(PredictionHistory::class.java) - historyState
+        fun properties(type: Class<*>): Set<String> = type.methods
+            .filter { it.declaringClass == type && it.parameterCount == 0 && it.name.startsWith("get") && !it.isSynthetic }
+            .map { it.name.removePrefix("get").replaceFirstChar(Char::lowercase) }.toSet()
+        // Public runtime state and presentation outputs, not authored options. Private storage and
+        // decay implementation names are deliberately absent: this tests the capability's API.
+        val poseState = setOf("position", "owed", "speedScale", "drawnX", "drawnY", "drawnZ")
+        val configSettings = properties(ReconcileConfig::class.java)
+        val poseSettings = properties(PredictedEntity::class.java) - poseState
+        val historySettings = properties(PredictionHistory::class.java) - setOf("newestSeq")
         assertEquals(setOf("glideHalfLifeSeconds", "blendShare"), poseSettings)
         assertEquals(setOf("capacity"), historySettings)
         val sceneFields = ScenePredictedEntity.serializer().descriptor.elementNames.toSet()

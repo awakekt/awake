@@ -49,7 +49,7 @@ guess while the client's inputs are held up, which it may undo once they arrive.
 | `Wait(speedScale)` | Scale the entity's speed, from 1 to 0 over the `capEaseSeconds` before the cap. It wins over a shift and a blend while it lasts. |
 
 `PredictedEntity` applies a correction to a plain pose. For ECS entities whose movement owns a
-root `Transform`, add `com.awakekt.awake.scene:net` and use its binding:
+root `Transform`, add `com.awakekt.awake.scene:net` and use its binding.
 
 ## Scene transforms
 
@@ -60,7 +60,10 @@ schema exposes every `ReconcileConfig` option plus `historyCapacity`, `glideHalf
 
 Install `PredictionSystem` before the game's fixed-step movement, and `TransformSystem` after it.
 Movement reads `PredictedTransform.speedScale` and calls `recordInput` after moving, with the input
-sequence and a timestamp on the system's monotonic clock. Keep sending and recording while stopped.
+sequence; its timestamp defaults to the system's last update time. Pass `walked` as the distance
+of self-directed movement eligible to repay a small drift, or zero for platform motion, knockback or
+teleports. When omitted, it infers displacement, ignoring height in planar mode. Use inference only
+when all displacement is input movement. Keep sending and recording while stopped.
 Snapshots are supplied on the world thread before the system runs. The system ignores older
 acknowledgements and consumes each correction once.
 
@@ -70,7 +73,8 @@ acknowledgements and consumes each correction once.
 
 The transform holds simulation state. For a visual glide, copy `drawnX/Y/Z` onto a separate root
 visual entity; never feed that pose into simulation or history. The offset decays at fixed-step
-frequency. Parented simulation transforms are rejected. Physics characters and rigid bodies must
+frequency. Reconciliation and game rules read the simulation pose, excluding this visual offset.
+Parented prediction components are rejected at attachment, and a node can declare at most one. Physics characters and rigid bodies must
 apply `net:prediction` through their own position owner instead of this direct-transform binding.
 
 Convert world-absolute snapshot positions to scene coordinates at ingress. On an origin shift,

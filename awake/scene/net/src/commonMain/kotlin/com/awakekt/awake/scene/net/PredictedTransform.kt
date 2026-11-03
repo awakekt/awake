@@ -13,6 +13,7 @@ import com.awakekt.awake.net.prediction.ReconcileInput
 import com.awakekt.awake.net.prediction.ReconcileRules
 import com.awakekt.awake.net.prediction.reconcile
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlin.math.sqrt
 
 /**
  * Runtime prediction state for a root [Transform]. [PredictionSystem] reconciles before movement;
@@ -42,12 +43,16 @@ class PredictedTransform(
         require(blendShare.isFinite() && blendShare in 0f..1f)
     }
 
-    /** Recorded simulated poses, never the visual glide. */
+    /**
+     * Recorded simulated poses, never the visual glide. Advanced access to the capability's history;
+     * use [recordInput] for ordinary recording so sequence, blend and clock checks are applied.
+     */
     val history: PredictionHistory = PredictionHistory(historyCapacity)
     private val pose = PredictedEntity(glideHalfLifeSeconds, blendShare)
     private val input = ReconcileInput()
     private var readAck = -1L
     private var initialized = false
+    private var lastUpdateSeconds = Double.NaN
 
     /** Movement's allowed speed multiplier, updated before each fixed step. */
     val speedScale: Float get() = pose.speedScale
@@ -78,21 +83,39 @@ class PredictedTransform(
     }
 
     /**
-     * After movement, blends the small drift using the distance actually moved, writes the corrected
-     * simulated pose to [transform], and records the pose for the input just sent. Call once per sent
-     * input, after [PredictionSystem], even while stopped by the cap. [timeSeconds] uses the same
-     * monotonic clock as that system. This never chooses a sequence or sends a packet for the game.
+     * After movement, blends a small drift, writes the simulation pose to [transform], and records
+     * the input just sent. Call once per sent input after [PredictionSystem], even while stopped.
+     *
+     * [walked] is the distance of self-directed movement eligible to repay drift. Pass zero for an
+     * external translation (a platform, knockback or teleport). When omitted, infer displacement
+     * since the system/previous record, ignoring height when [ReconcileConfig.planar] is set. That
+     * inference is suitable only when the transform's displacement is entirely input movement.
+     *
+     * [timeSeconds] defaults to the system's last update time. An explicit timestamp must be finite
+     * and use the same monotonic clock. Recording before the first system update requires one.
      */
-    fun recordInput(transform: Transform, seq: Long, timeSeconds: Double) {
+    fun recordInput(transform: Transform, seq: Long, timeSeconds: Double = lastUpdateSeconds, walked: Float = displacementTo(transform)) {
         require(seq > history.newestSeq) { "input sequences must increase; replace the component on reconnect" }
-        require(timeSeconds.isFinite())
+        require(timeSeconds.isFinite()) { "timeSeconds must be finite; run PredictionSystem before using its default clock" }
+        require(walked.isFinite() && walked >= 0f) { "walked must be finite and non-negative" }
         require(transform.parent == null) { "predicted transforms must be scene roots" }
-        val walked = if (initialized) pose.position.distanceTo(transform.position) else 0f
         pose.position.set(transform.position)
         initialized = true
         pose.blend(walked, history)
         transform.position.set(pose.position)
         history.record(seq, pose.position, timeSeconds)
+    }
+
+    /** Retains the original JVM entry point for binaries compiled against the three-argument form. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun recordInput(transform: Transform, seq: Long, timeSeconds: Double) = recordInput(transform, seq, timeSeconds, walked = displacementTo(transform))
+
+    private fun displacementTo(transform: Transform): Float {
+        if (!initialized) return 0f
+        val dx = transform.position.x - pose.position.x
+        val dy = if (config.planar) 0f else transform.position.y - pose.position.y
+        val dz = transform.position.z - pose.position.z
+        return sqrt(dx * dx + dy * dy + dz * dz)
     }
 
     /**
@@ -108,12 +131,13 @@ class PredictedTransform(
 
     internal fun update(transform: Transform, nowSeconds: Double, delta: Float) {
         require(transform.parent == null) { "predicted transforms must be scene roots" }
+        lastUpdateSeconds = nowSeconds
         pose.position.set(transform.position)
         initialized = true
         pose.update(delta)
         if (input.ackSeq < 0L) return
         input.ackUnread = input.ackSeq > readAck
-        input.drawn(pose.drawnX, pose.drawnY, pose.drawnZ).lookUp(history, nowSeconds)
+        input.drawn(pose.position.x, pose.position.y, pose.position.z).lookUp(history, nowSeconds)
         val correction = reconcile(input, config, rules)
         if (correction is Correction.Blend || correction.corrects) readAck = input.ackSeq
         input.ackFresh = false

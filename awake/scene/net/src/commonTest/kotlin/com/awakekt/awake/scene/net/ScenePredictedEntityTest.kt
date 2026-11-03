@@ -10,13 +10,17 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.net.prediction.ReconcileConfig
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.document.SceneValidationException
+import com.awakekt.awake.scene.document.SceneValidator
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ScenePredictedEntityTest {
@@ -53,6 +57,38 @@ class ScenePredictedEntityTest {
     }
 
     @Test
+    fun duplicatePredictionComponentsAreRejectedByDocumentValidation() {
+        val document = SceneDocument(
+            name = "duplicate prediction",
+            nodes = listOf(SceneNode(name = "Local", components = listOf(ScenePredictedEntity(), ScenePredictedEntity()))),
+        )
+        assertTrue(SceneValidator.validate(document).any { "at most 1" in it.message })
+    }
+
+    @Test
+    fun aParentedTransformIsRejectedAtAttachmentAndReportsTheConstraint() {
+        val world = World()
+        val entity = world.create()
+        world.add(entity, Transform(parent = world.create()))
+        val failure = assertFailsWith<IllegalArgumentException> {
+            PredictedTransformBinding.attachTyped(world, entity, ScenePredictedEntity(), NoLinks(world))
+        }
+        assertTrue(failure.message.orEmpty().contains("scene root"))
+        assertNull(world.get<PredictedTransform>(entity))
+    }
+
+    @Test
+    fun attachmentReportsInvalidSettingFields() {
+        val world = World()
+        val entity = world.create()
+        val failure = assertFailsWith<SceneValidationException> {
+            PredictedTransformBinding.attachTyped(world, entity, ScenePredictedEntity(historyCapacity = 0), NoLinks(world))
+        }
+        assertTrue(failure.message.orEmpty().contains("historyCapacity"))
+        assertNull(world.get<PredictedTransform>(entity))
+    }
+
+    @Test
     fun defaultSettingsMatchTheCapabilityAndTheCapFollowsAuthoredTiming() {
         val live = ScenePredictedEntity().toPrediction()
         assertEquals(ReconcileConfig(), live.config)
@@ -76,4 +112,9 @@ class ScenePredictedEntityTest {
         assertFailsWith<IllegalArgumentException> { PredictedTransform(blendShare = -1f) }
         assertFailsWith<IllegalArgumentException> { PredictedTransform(glideHalfLifeSeconds = Float.NaN) }
     }
+}
+
+private class NoLinks(override val world: World) : SceneResolutionContext {
+    override fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit) = Unit
+    override fun recordRequest(request: Any) = Unit
 }

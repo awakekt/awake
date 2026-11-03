@@ -7,8 +7,8 @@
   glide half-life and blend share. `PredictedTransformBinding.kt` maps every option to the capability.
 - `PredictedTransform` holds one entity's history, acknowledgement state and game-owned rules.
 - `PredictionSystem` reconciles a root `Transform` before fixed-step movement. The game's movement
-  reads `speedScale`, moves, then calls `recordInput` with the input sequence and a timestamp from
-  the system's monotonic clock. Keep recording and sending input while the cap stops movement.
+  reads `speedScale`, moves, then calls `recordInput` with the input sequence. The timestamp
+  defaults to that system's last sampled time. Keep recording and sending while the cap stops movement.
 
 Register `NetSceneComponents` with the project's `SceneComponentRegistry` (`registerNet()`), and
 use that registry's `sceneJson` for decoding. Loading attaches settings, not live session state.
@@ -16,14 +16,24 @@ The system is explicitly installed by the host, before movement and `TransformSy
 
 The root transform is always simulation state. The optional visual glide is exposed as
 `drawnX/Y/Z`, decayed on each fixed update; a separate root visual entity can copy those coordinates.
-Do not copy them back into the simulation transform or the input history. Rotation and scale stay
+Do not copy them back into the simulation transform or the input history. Reconciliation and game
+rules also read only the simulation pose. Rotation and scale stay
 under their existing systems' ownership. Parented transforms are rejected because their local
-position is not a scene position.
+position is not a scene position. Loading rejects a parented prediction component during attachment;
+a node can declare at most one `predicted_entity`.
 
 This binding is for movement that owns a transform. A physics character or rigid body owns its
 position elsewhere and must use `net:prediction` with that controller's movement API instead.
 There is no controller integration in this module. No movement, gravity, packet schema or input
 sequence policy is chosen here.
+
+
+`recordInput(..., walked = distance)` supplies the self-directed movement eligible to repay a small
+drift. Pass zero for external translations such as knockback, a platform ride or a teleport. Without
+an explicit budget it infers displacement, excluding height in planar mode; use that inference only
+when the transform's displacement consists entirely of input movement. An explicit `timeSeconds`
+is available for a custom input clock and must share the system's monotonic time base. Public
+`history` is advanced capability access; ordinary input recording goes through `recordInput`.
 
 World-absolute network coordinates must be converted into scene coordinates before `snapshot`.
 When rebasing an origin, translate the root transform and call `prediction.rebase` with the same
