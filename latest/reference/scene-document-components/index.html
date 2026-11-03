@@ -634,6 +634,8 @@
       
         
       
+        
+      
     
     
     
@@ -1778,8 +1780,6 @@
       
         
       
-        
-      
     
     
     
@@ -1803,7 +1803,7 @@
   <span class="md-ellipsis">
     
   
-    Content
+    Networking
   
 
     
@@ -1816,6 +1816,130 @@
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Networking
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/web-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking in the browser
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/client-prediction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client prediction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1947,10 +2071,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
         
           
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
             
   
   
@@ -1968,8 +2092,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2123,10 +2247,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
         
           
-          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
             
   
   
@@ -2144,8 +2268,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -7285,6 +7409,11 @@ number for alpha.</p>
 </table>
 <h2 id="locomotion_animation"><code>locomotion_animation</code></h2>
 <p>Plays a skinned model's clip for how its entity moves: idle, walking, running and jumping. <code>SceneLocomotionAnimation</code>.</p>
+<p>The scene component maps every field below to <code>core:animation</code>'s <code>LocomotionConfig</code>.
+<code>LocomotionPlayer</code> owns the scene-independent movement measurement, clip phases and playback rate;
+<code>LocomotionAnimationSystem</code> supplies world position and ground contact. Ground-speed smoothing
+uses <code>damp</code> with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
+finite and satisfy the ranges below; scene validation rejects invalid settings before loading.</p>
 <p>Speeds are measured from the entity's world position, so it animates however the entity is moved,
 and a model on a child node animates with it. Clip names are the model's own animations; a clip
 left out, or one the model lacks, keeps whatever already plays. With a <code>character_controller</code> on the
