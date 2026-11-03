@@ -20,6 +20,7 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.KeyChord
 import com.awakekt.awake.core.input.KeyModifier
 import com.awakekt.awake.core.input.PointerButton
+import com.awakekt.awake.core.input.keymap
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
@@ -27,6 +28,7 @@ import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
+import com.awakekt.awake.scene.controls.input.KeymapSystem
 import com.awakekt.awake.scene.controls.input.inputActions
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.registerControls
@@ -259,5 +261,92 @@ class InputDocsSampleTest {
 
         assertEquals(emptyList(), skipped)
         assertEquals(ButtonBinding(chords = setOf(chord)), actions.binding("slot11"))
+    }
+
+    @Test
+    fun aKeymapRunsHandlersInLayersAndSavesWhatThePlayerChanged() {
+        // --8<-- [start:keymap]
+        class Windows {
+            var inventoryOpen = false
+            var menuOpen = false
+        }
+
+        val controls = keymap<Windows> {
+            group("windows") {
+                press("window.inventory", "input.window.inventory", Key.I) { it.inventoryOpen = !it.inventoryOpen }
+                press("menu.open", "input.menu.open", Key.Escape) { it.menuOpen = true }
+            }
+            group("combat") {
+                hold("attack", "input.attack", Key.F) // no handler: a system polls it
+            }
+            // While the inventory is open, Escape closes it and does not also open the menu.
+            layer(priority = 10, enabledWhen = { it.inventoryOpen }) {
+                press("window.close", "input.window.close", Key.Escape) { it.inventoryOpen = false }
+            }
+        }
+        // --8<-- [end:keymap]
+        val windows = Windows()
+        val input = Input()
+
+        input.setKeyDown(Key.I, true)
+        // --8<-- [start:keymap-frame]
+        // Once a frame: read the input, run the handlers of what was pressed.
+        controls.update(input.updateSnapshot(), windows)
+        val attacking = controls.actions.isActive("attack")
+        // --8<-- [end:keymap-frame]
+        input.setKeyDown(Key.I, false)
+        input.setKeyDown(Key.Escape, true)
+        controls.update(input.updateSnapshot(), windows)
+
+        assertFalse(attacking)
+        assertFalse(windows.inventoryOpen, "I opened the inventory and Escape closed it")
+        assertFalse(windows.menuOpen, "the open inventory took Escape")
+
+        // --8<-- [start:keymap-save]
+        controls.actions.rebind("window.inventory", ButtonBinding(keys = setOf(Key.B)))
+
+        // Save only what the player changed, and load it back next time:
+        val saved = Json.encodeToString(InputBindings.serializer(), controls.changedBindings())
+        controls.load(Json.decodeFromString(InputBindings.serializer(), saved))
+
+        // A "reset" button puts back the default:
+        controls.reset("window.inventory")
+        // --8<-- [end:keymap-save]
+
+        assertEquals("""{"actions":{"window.inventory":{"type":"button","keys":["B"]}}}""", saved)
+        assertEquals(controls.defaults, controls.actions.bindings())
+    }
+
+    @Test
+    fun aKeymapSystemRunsAKeymapOverTheWorld() = runTest {
+        // --8<-- [start:keymap-system]
+        val controls = keymap<World> {
+            press("interact", "input.interact", Key.E) { world ->
+                world.queryEach<Interactions> { _, interactions -> interactions.count += 1 }
+            }
+        }
+
+        val game = app {
+            scene("harbor-town") {
+                entity("player") { with(Interactions()) }
+                frameSystem("keymap") {
+                    KeymapSystem(controls) { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) }
+                }
+            }
+        }
+        // --8<-- [end:keymap-system]
+        game.ready(RecordingRenderer())
+        val input = game.requireService<Input>()
+        val interactions = game.requireService<com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime>()
+            .world.let { world -> world.get<Interactions>(world.query(Interactions::class).single())!! }
+
+        input.setKeyDown(Key.E, true)
+        input.updateSnapshot()
+        game.update(1f / 60f, 320f, 240f)
+        input.updateSnapshot()
+        game.update(1f / 60f, 320f, 240f)
+
+        assertEquals(1, interactions.count, "a press runs its handler once however long E is held")
+        game.dispose()
     }
 }

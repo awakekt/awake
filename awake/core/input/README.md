@@ -45,4 +45,15 @@ clash with. `ButtonBinding.describe()` lists each way to trigger an action as a
 `InputLabels` in `awake:core:localization` names a `BindingDescription`, a chord or an action's
 bindings in the player's language and platform style.
 
+## Keymaps
+
+A `Keymap<C>` puts what a rebinding screen and a game's commands need around an `InputActions`: a
+label and a group for each action, and an optional handler a press runs, given a context `C`. Build
+one with `keymap { }`: `press`, `hold`, `toggle` and `axis` declare actions, `group` lists them
+together, and `layer` gives handlers a priority and a condition. A press shared by several handlers
+goes to the highest priority enabled one first, which takes the keys it was pressed with. Held
+actions and axes stay polled from `Keymap.actions`. `keymapEntries { }` declares a feature's actions
+apart, for one keymap to `include`. `unbind`, `reset`, `resetAll`, `changedBindings` and `load` work
+on the defaults the keymap was built with.
+
 The guide is [Input](../../../website/docs/guides/input.md).
