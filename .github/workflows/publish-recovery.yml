@@ -1,0 +1,106 @@
+name: Publish recovery
+
+# Re-runs a Publish run's failed jobs once when none of them ever started (#1285). When GitHub has no
+# hosted runner to give a job, it ends the job, failed or cancelled, with the annotation "The job was
+# not acquired by Runner of type hosted even after multiple attempts", and the job runs no step. That
+# cost 0.35.0 its release, and 0.37.1's re-run of exactly those jobs then published it.
+#
+# Such a job cannot have uploaded anything, and a re-run sends nothing twice anyway:
+# scripts/central-upload.sh asks Central whether the version is already published. So the run's
+# failed jobs (and the jobs they skipped) are re-run once, but only when every failed or cancelled job
+# in it ran no step and carries that annotation. One failed job that ran a step leaves the whole run
+# alone, as docs/release-process.md ("A failed publish is not re-run") says: it may have reached an
+# upload.
+#
+# It cannot loop: it acts only on a run's first attempt, and the re-run is a second attempt, whose own
+# completion it skips. It checks out nothing and runs no code from the run it reads; it reads that
+# run's jobs and annotations through the API and asks for the re-run.
+on:
+  workflow_run:
+    workflows: [Publish]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: publish-recovery-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  rerun:
+    name: Re-run jobs that never started
+    # `push`: a publish run (main, release/**, a tag), not a release-cut pull request's rehearsal,
+    # which is re-run by hand at no cost.
+    if: >-
+      ${{
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.run_attempt == 1 &&
+        (github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'cancelled')
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write # read the run and its jobs, and re-run its failed jobs
+      checks: read # read each failed job's check-run annotations
+    steps:
+      - name: Re-run the failed jobs once if none of them started
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          marker='was not acquired by Runner'
+
+          # The event can be stale: someone may have re-run the run by hand since it completed.
+          run=$(gh api "repos/$REPO/actions/runs/$RUN_ID")
+          attempt=$(jq -r '.run_attempt' <<< "$run")
+          status=$(jq -r '.status' <<< "$run")
+          conclusion=$(jq -r '.conclusion' <<< "$run")
+          if [[ "$attempt" != 1 || "$status" != completed ]]; then
+            echo "::notice::Run $RUN_ID is at attempt $attempt ($status); it has been re-run already."
+            exit 0
+          fi
+
+          jobs=$(gh api --paginate "repos/$REPO/actions/runs/$RUN_ID/attempts/1/jobs?per_page=100" | jq -s '[.[].jobs[]]')
+          # Every job that did not pass or skip, each with how many of its steps started.
+          failed=$(jq -r '.[]
+            | select(.conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral")
+            | [ (.check_run_url | sub(".*/"; "")),
+                ([.steps // [] | .[] | select(.status != "queued" and .status != "pending" and .conclusion != "skipped")] | length),
+                .name ]
+            | @tsv' <<< "$jobs")
+          if [[ -z "$failed" ]]; then
+            echo "::notice::Run $RUN_ID has no failed or cancelled job."
+            exit 0
+          fi
+
+          eligible=true
+          while IFS=$'\t' read -r check_run started name; do
+            if (( started > 0 )); then
+              echo "::notice::$name started $started step(s), so it may have reached an upload. Run $RUN_ID is not re-run (docs/release-process.md)."
+              eligible=false
+              continue
+            fi
+            if messages=$(gh api --paginate "repos/$REPO/check-runs/$check_run/annotations?per_page=100" --jq '.[].message'); then
+              if grep -qF "$marker" <<< "$messages"; then
+                echo "$name never started: no runner acquired it."
+              else
+                echo "::notice::$name started no step, but has no \"$marker\" annotation (cancelled by hand?). Run $RUN_ID is not re-run."
+                eligible=false
+              fi
+            elif [[ "$conclusion" == failure ]]; then
+              # A run a person cancels concludes `cancelled`; one whose jobs found no runner, `failure`.
+              echo "::warning::Could not read $name's annotations; it started no step, which is what makes a re-run safe."
+            else
+              echo "::notice::Could not read $name's annotations, and run $RUN_ID was cancelled. It is not re-run."
+              eligible=false
+            fi
+          done <<< "$failed"
+
+          if [[ "$eligible" != true ]]; then
+            exit 0
+          fi
+          echo "Every failed job of run $RUN_ID ran no step; re-running them once."
+          gh api -X POST "repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs"
+          echo "Re-ran the failed jobs of Publish run $RUN_ID: none of them had started (#1285)." >> "$GITHUB_STEP_SUMMARY"

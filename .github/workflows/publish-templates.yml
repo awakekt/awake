@@ -40,7 +40,12 @@ jobs:
     name: Resolve
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # `push`: a release-cut pull request's rehearsal of Publish also completes, and publishes nothing.
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+      }}
     permissions:
       contents: read
     outputs:

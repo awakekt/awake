@@ -95,7 +95,8 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 `release-cut/*` branch or open `chore(release)` PR exists; if one does, that cut owns the release.
 
 1. Branch `release-cut/vX.Y.Z` from `main`, run the cut, push the branch, open
-   `chore(release): cut vX.Y.Z` with the milestone, and squash-merge it.
+   `chore(release): cut vX.Y.Z` with the milestone, and squash-merge it once its **release
+   rehearsal** is green (below).
 2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
    **Publish** run stages the Core family, its alignment BOM and build-logic's plugins in one folder
    and uploads them as one Central deployment (`scripts/central-bundle.sh`,
@@ -135,6 +136,16 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    Re-record moved baselines only after stating which ones should move and why.
 5. Close the milestone.
 
+**The release rehearsal.** A `release-cut/*` pull request runs the **Publish** workflow itself,
+as a rehearsal that uploads nothing (#1285): Verify, Consumer, which builds the starter templates
+against the latest Vulkan release on Central, and the natives the release collects, on the runners
+the tag's run uses, with a throwaway local tag giving the checkout the release's version. Every job
+that uploads or holds a publish secret requires a `push` event, so a pull request reaches none of
+them. These checks used to run first on the tag, where a failure cost the version number: 0.34.0 to
+0.37.1 all failed there. **A release-cut pull request must be green on the rehearsal before it is
+merged.** The rehearsal is not a required check, so wait for its **Publish** run rather than for
+the required ones alone, and fix a red one on the pull request.
+
 **A failed publish is not re-run.** A tag whose Publish run failed may still have reached Central,
 and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the
 next version; the failed number stays a gap on Central (as `rc.4`, `rc.5`, `rc.7` and `rc.10` did). A release
@@ -142,6 +153,17 @@ Central refused is still served by the fallback repository when its bundle was b
 ([releasing](reference/releasing.md#fallback-repository)). A run that is re-run anyway cannot
 send a version twice: `scripts/central-upload.sh` asks Central whether the bundle's version is
 already published and, if it is, uploads nothing and lets the GitHub release steps finish.
+
+**The one exception: a run that never reached an upload.** A Publish run whose failed jobs never
+started (GitHub found no runner for them: "The job was not acquired by Runner of type hosted even
+after multiple attempts"), or that failed before any upload step ran, may have its failed jobs
+re-run, once. Nothing was sent, so the version is still free. **Publish recovery**
+(`.github/workflows/publish-recovery.yml`) does this automatically for a run's first attempt when
+every failed or cancelled job ran no step and carries that annotation; its summary says when it
+did. A run that failed before an upload step for another reason is re-run by hand, once, with
+*Re-run failed jobs*, after checking in the run's log that no `Publish to Maven Central`,
+`Publish snapshots` or `Verify and publish` step started. A run that reached an upload step is
+still never re-run.
 
 ### Independent Vulkan family
 
@@ -381,6 +403,15 @@ Variables*, and delete the variable to return to Blacksmith. The job keeps
 `gradle/actions/setup-gradle`; on Blacksmith its `actions/cache` traffic goes to Blacksmith's cache
 without any change to the workflow.
 
+In the **Publish** workflow, only a job that builds for an Apple target runs on GitHub's
+`macos-15`: Consumer (it publishes the iOS klibs and links the templates' iOS framework), Release
+and Snapshot (they publish the iOS klibs), the macOS rows of Natives, Naga desktop and Window
+natives (macOS native libraries), and the Vulkan release and snapshot jobs (MoltenVK). Verify reads
+sources and the JVM API dumps, so it runs on `ubuntu-latest`, as the pull-request Verify does. A
+short macOS arm64 pool can cancel any of those jobs before it starts; Publish recovery (above)
+re-runs them once. build-logic's tests run on macOS on any pull request that changes build-logic
+(`.github/workflows/build-logic-macos.yml`).
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
@@ -529,7 +560,8 @@ files or commits elsewhere:
    the next version and changelog). The `Prepare` job refuses while another `release-cut/*` branch
    or open `chore(release)` PR exists, runs `releaseCut`, pushes a `release-cut/<tag>` branch, and
    opens a `chore(release): cut <tag>` PR with the milestone titled like the tag.
-2. Merge that PR once CI passes. The `Tag` job tags the squash commit, by its full SHA, and pushes
+2. Merge that PR once CI and its release rehearsal (the **Publish** run on the pull request, see
+   "The release rehearsal" above) pass. The `Tag` job tags the squash commit, by its full SHA, and pushes
    the tag, which triggers **Publish** (Maven Central, then the Vulkan tag when one is needed) and
    **Docs**.
 
