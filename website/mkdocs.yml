@@ -97,6 +97,8 @@ nav:
           - Terrain: guides/terrain.md
           - Large worlds: guides/large-worlds.md
           - Audio: guides/audio.md
+      - Networking:
+          - Networking in the browser: guides/web-networking.md
       - Content:
           - Protected content: guides/protected-content.md
           - Content bundles: guides/content-bundles.md

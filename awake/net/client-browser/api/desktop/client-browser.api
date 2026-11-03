@@ -1,0 +1,30 @@
+public final class com/awakekt/awake/net/browser/BrowserSocketFailed : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;I)V
+	public final fun getCode ()I
+	public final fun getUrl ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/browser/BrowserSocketMode : java/lang/Enum {
+	public static final field Auto Lcom/awakekt/awake/net/browser/BrowserSocketMode;
+	public static final field Page Lcom/awakekt/awake/net/browser/BrowserSocketMode;
+	public static final field Worker Lcom/awakekt/awake/net/browser/BrowserSocketMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/browser/BrowserSocketMode;
+	public static fun values ()[Lcom/awakekt/awake/net/browser/BrowserSocketMode;
+}
+
+public abstract interface class com/awakekt/awake/net/browser/BrowserSocketTransport : com/awakekt/awake/net/DirectTransport {
+	public abstract fun getCloseCode ()Ljava/lang/Integer;
+	public abstract fun getCloseReason ()Ljava/lang/String;
+	public abstract fun getRunsInWorker ()Z
+}
+
+public final class com/awakekt/awake/net/browser/BrowserSocketTransport$DefaultImpls {
+	public static fun getArrivalLag (Lcom/awakekt/awake/net/browser/BrowserSocketTransport;)D
+}
+
+public final class com/awakekt/awake/net/browser/SocketWorkerFailed : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getScript ()Ljava/lang/String;
+}
+

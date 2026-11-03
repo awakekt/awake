@@ -59,6 +59,18 @@ public final class com/awakekt/awake/net/DeliveryChannel : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/net/DeliveryChannel;
 }
 
+public abstract interface class com/awakekt/awake/net/DirectTransport : com/awakekt/awake/net/Transport {
+	public fun getArrivalLag ()D
+	public abstract fun getBufferedBytes ()J
+	public abstract fun listen (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
+	public abstract fun schedule (ILkotlin/jvm/functions/Function0;)V
+	public abstract fun sendNow ([B)V
+}
+
+public final class com/awakekt/awake/net/DirectTransport$DefaultImpls {
+	public static fun getArrivalLag (Lcom/awakekt/awake/net/DirectTransport;)D
+}
+
 public abstract interface class com/awakekt/awake/net/InboundDropMetrics {
 	public abstract fun getDroppedInbound ()J
 }
