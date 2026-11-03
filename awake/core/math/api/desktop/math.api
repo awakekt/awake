@@ -226,6 +226,51 @@ public final class com/awakekt/awake/core/math/CubemapFaces {
 	public final fun orientation (I)Lcom/awakekt/awake/core/math/CubemapFaceOrientation;
 }
 
+public final class com/awakekt/awake/core/math/DampedFloat {
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getValue ()F
+	public final fun getVelocity ()F
+	public final fun setValue (F)V
+	public final fun setVelocity (F)V
+	public final fun smoothDamp (FFFF)F
+	public static synthetic fun smoothDamp$default (Lcom/awakekt/awake/core/math/DampedFloat;FFFFILjava/lang/Object;)F
+	public final fun snapTo (F)F
+}
+
+public final class com/awakekt/awake/core/math/DampedVec3 {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getValue ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getVelocity ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun smoothDamp (Lcom/awakekt/awake/core/math/Vec3f;FFF)Lcom/awakekt/awake/core/math/Vec3f;
+	public static synthetic fun smoothDamp$default (Lcom/awakekt/awake/core/math/DampedVec3;Lcom/awakekt/awake/core/math/Vec3f;FFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun snapTo (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public final class com/awakekt/awake/core/math/DampingKt {
+	public static final fun damp (DDDD)D
+	public static final fun damp (FFFF)F
+	public static final fun damp (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FF)Lcom/awakekt/awake/core/math/Vec3f;
+	public static final fun dampAngle (FFFF)F
+	public static final fun dampingFraction (FF)F
+	public static final fun halfLifeForRate (F)F
+}
+
+public final class com/awakekt/awake/core/math/ErrorOffset {
+	public fun <init> (F)V
+	public final fun add (FFF)V
+	public final fun clear ()V
+	public final fun getHalfLife ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public final fun isSettled (F)Z
+	public final fun update (F)V
+}
+
 public final class com/awakekt/awake/core/math/Frustum {
 	public static final field INSTANCE Lcom/awakekt/awake/core/math/Frustum;
 	public final fun corners (Lcom/awakekt/awake/core/math/Lens;F)Ljava/util/List;

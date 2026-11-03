@@ -80,6 +80,21 @@ Designed around strict **zero per-frame allocation** rules for ECS simulation lo
 - `clamp(value, min, max)` — Range bounding.
 - `Angle.toDegrees(radians)` / `Angle.toRadians(degrees)`.
 
+### Damping (frame-rate-independent smoothing)
+
+Damping closes the gap between a value and its target over several frames, the same at any frame
+rate. `lerp(value, target, 0.1f)` per frame is not: it converges faster at 144 Hz than at 60 Hz.
+Everything below takes the frame's `dt` in seconds and allocates nothing per call (`Damping.kt`).
+
+| API | What it does | Use it for |
+|---|---|---|
+| `damp(current, target, halfLife, dt)` (`Float`, `Double`), `Vec3f.damp(target, halfLife, dt)` (in place), `dampAngle(...)` (shortest arc) | Exponential smoothing: half the remaining gap closes every `halfLife` seconds. Never overshoots. | The default: follow cameras, fades, smoothing a noisy reading. |
+| `DampedFloat` / `DampedVec3` `.smoothDamp(target, smoothTime, dt, maxSpeed)` | A critically damped spring with a velocity: eases in and out, no overshoot, optional speed cap. | Motion where a sudden start would show, or that needs a speed limit. |
+| `ErrorOffset(halfLife)` | A correction applied to the simulation at once and shown as a fading offset (`add`, `update`, `x/y/z`, `isSettled`, `clear`). | Netcode snapshots and prediction reconciles: a glide instead of a pop. |
+| `dampingFraction(halfLife, dt)`, `halfLifeForRate(rate)` | The fraction closed this frame; the half-life equal to `1 - exp(-rate * dt)`. | Driving `slerp` or a colour blend; porting hand-written exponential lerps. |
+
+`halfLife <= 0` (or `smoothTime <= 0`) snaps to the target; `dt <= 0` changes nothing.
+
 ---
 
 ## Invariants & Performance Rules
