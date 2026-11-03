@@ -500,16 +500,25 @@ concerns (boundary rule 3). The engine supplies mechanism only: ownership enforc
 limits, bounded decode, and a validation hook the game fills with its own movement/ability
 rules.
 
-## Why `:awake:scene:net` does not exist yet
+## The first `:awake:scene:net` binding
+
+`awake:scene:net` now binds `awake:net:prediction` to root ECS transforms: the authored
+`predicted_entity` settings, `PredictedTransform` runtime state and `PredictionSystem`. It has no
+transport, renderer or physics backend. Games supply validated snapshots and input sequences on
+the world thread, and keep their own movement and rules. This is the scene-binding follow-up to
+#1290; the pure prediction capability remains usable without a scene.
+
+This does not promote replication, remote interpolation or interest management out of the demo.
+The reasons for keeping those mechanisms there still apply:
 
 Phase 2's capabilities are built and its exit criteria are met, but they live in
 `samples:net-demo` rather than in an engine module. Two reasons, both of which the plan itself
 argues for elsewhere:
 
-1. **Nothing consumes an ECS bridge.** `:awake:scene:net` would carry `NetTransform` /
-   `NetOwner` components and systems that read an ECS `World`. The demo server owns a plain map
-   of players, not a world — so building the module now means inventing its only consumer to
-   justify it, which is the shape boundary rule 2 exists to prevent.
+1. **The demo does not consume an ECS replication bridge.** Adding `NetTransform` /
+   `NetOwner` components and replication systems still needs a consumer. The demo server owns a
+   plain map of players, not a world, so inventing an ECS replication consumer would not clear
+   boundary rule 2. The prediction binding above does not require replication to use ECS.
 2. **Interest management needs a partitioned world to be interesting.** `WorldPartitionSystem`
    already streams cells by proximity; replicating only nearby entities is a handful of lines
    *once entities live in cells*. Against 16 players standing in one grid it measures nothing.
@@ -529,9 +538,9 @@ The measured Phase 2 numbers: **994 B/s per client at 16 clients, 20 Hz** (`Band
 and violation detail retained under a 500-packet flood stays bounded at ≤25 objects
 (`ViolationEnforcementTest`).
 
-Promote to `:awake:scene:net` when a game puts replicated entities in an ECS world. That is the
-second consumer the gate is waiting for, and it will also be the thing that makes interest
-management measurable.
+Promote the remaining replication mechanisms to `:awake:scene:net` when a game puts replicated
+entities in an ECS world. That is the second consumer the gate is waiting for, and it will also
+be the thing that makes interest management measurable.
 
 ## Out of scope: asset delivery
 

@@ -14,6 +14,7 @@ scene:scene-core   Transform, Name, the scene graph's shared components
 scene:scene3d      the scene's 3D wrapper: cameras, lights, mesh renderers, render planning
 scene:physics      binds physics into the scene: physics-facing components and synchronization
 scene:controls     reusable camera and movement controls
+scene:net          binds client prediction to root scene transforms
 scene:runtime      document loading, scene switching, runtime/session plumbing
 scene:authoring    scene/document/entity/assets DSL and convenience builders
 scene              public facade
