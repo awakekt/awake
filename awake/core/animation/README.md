@@ -50,10 +50,15 @@ Positions, delta time, ground contact and the animation player are runtime input
 contact infers airborne motion from vertical speed; a supplied contact keeps a grounded slope from
 looking like a jump. Missing clips preserve the clip already selected.
 
-Ground speed uses `core.math.damp` with `halfLifeForRate(1f / 0.1f)`, equivalent to the previous
-`1 - exp(-elapsed / 0.1f)` smoother. Stop grace, teleport rejection, take-off/landing timing and
-speed-matched playback are preserved. The scene's `LocomotionAnimation` component maps its saved
-settings to this capability and supplies its world position and nearest ancestor's ground contact.
+Ground speed uses `core.math.damp` with a 0.1-second time constant. A short pause between movement
+steps keeps the current clip, a sustained stop selects idle, and a teleport is excluded from stride
+speed. Take-off and landing can play once, while walk/run clips can match their playback rate to
+travel. With either reference speed set, locomotion owns `player.speed` on every update; leave both
+null if another system owns that rate. The scene's `LocomotionAnimation` component supplies world
+position and the nearest ancestor's ground contact to the same capability.
+
+`LocomotionConfig` rejects non-finite or out-of-range thresholds, fade times and reference speeds
+at construction, before any playback is updated.
 
 A compiled usage example lives in
 [`LocomotionPlaybackExample.kt`](src/commonTest/kotlin/com/awakekt/awake/core/animation/LocomotionPlaybackExample.kt):
@@ -67,5 +72,6 @@ val pose = player.update(deltaSeconds)
 
 ## Scope
 
-Skeletal pose evaluation, blending, frame-index playback, and position-driven locomotion clip selection. GPU joint matrix palette generation,
-skinning shaders, and applying frames to image atlases belong downstream.
+Skeletal pose evaluation, blending, frame-index playback, and position-driven locomotion clip
+selection. GPU joint matrix palette generation, skinning shaders, and applying frames to image
+atlases belong downstream.

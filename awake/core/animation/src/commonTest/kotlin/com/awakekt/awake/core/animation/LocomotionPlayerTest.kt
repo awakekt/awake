@@ -11,6 +11,7 @@ import kotlin.math.exp
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -115,6 +116,37 @@ class LocomotionPlayerTest {
         repeat(60) { frame -> mover.frame((frame + 1) * 2f * DT, 0f, 0f, DT, true) }
         assertEquals("walk", playback.activeClipId)
         assertEquals(1f, playback.speed, 1e-3f)
+    }
+
+    @Test
+    fun invalidConfigurationFailsAtConstructionInsteadOfDuringPlayback() {
+        val invalid = listOf<() -> LocomotionConfig>(
+            { LocomotionConfig(walkAbove = -1f) },
+            { LocomotionConfig(runAbove = 0f, walkAbove = 1f) },
+            { LocomotionConfig(airborneAbove = 0f) },
+            { LocomotionConfig(crossFade = -1f) },
+            { LocomotionConfig(walkReferenceSpeed = 0f) },
+            { LocomotionConfig(runReferenceSpeed = -1f) },
+        )
+        invalid.forEach { create -> assertFailsWith<IllegalArgumentException> { create() } }
+    }
+
+    @Test
+    fun nonFiniteConfigurationAndInvalidCopiesAreRejected() {
+        for (value in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+            val invalid = listOf<() -> LocomotionConfig>(
+                { LocomotionConfig(walkAbove = value) },
+                { LocomotionConfig(runAbove = value) },
+                { LocomotionConfig(airborneAbove = value) },
+                { LocomotionConfig(crossFade = value) },
+                { LocomotionConfig(walkReferenceSpeed = value) },
+                { LocomotionConfig(runReferenceSpeed = value) },
+            )
+            invalid.forEach { create -> assertFailsWith<IllegalArgumentException> { create() } }
+        }
+        assertFailsWith<IllegalArgumentException> { CONFIG.copy(walkReferenceSpeed = 0f) }
+        // Inclusive threshold/fade boundaries and absent reference speeds remain valid.
+        LocomotionConfig(walkAbove = 0f, runAbove = 0f, crossFade = 0f)
     }
 
     private class LocomotionTestDriver(config: LocomotionConfig = CONFIG) {

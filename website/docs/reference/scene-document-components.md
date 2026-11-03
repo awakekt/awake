@@ -762,10 +762,9 @@ Plays a skinned model's clip for how its entity moves: idle, walking, running an
 
 The scene component maps every field below to `core:animation`'s `LocomotionConfig`.
 `LocomotionPlayer` owns the scene-independent movement measurement, clip phases and playback rate;
-`LocomotionAnimationSystem` only supplies world position and ground contact. The existing saved
-format and scene API are unchanged. Ground-speed smoothing uses the shared `damp` helper with the
-same 0.1-second time constant as before.
-
+`LocomotionAnimationSystem` supplies world position and ground contact. Ground-speed smoothing
+uses `damp` with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
+finite and satisfy the ranges below; scene validation rejects invalid settings before loading.
 
 Speeds are measured from the entity's world position, so it animates however the entity is moved,
 and a model on a child node animates with it. Clip names are the model's own animations; a clip

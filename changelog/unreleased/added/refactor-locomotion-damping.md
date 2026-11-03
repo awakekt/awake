@@ -1,0 +1,1 @@
+- Added scene-independent `LocomotionPlayer` and validated `LocomotionConfig` APIs in `core:animation`; the scene binding delegates playback to them and uses shared damping with equivalent timing while retaining its public API and saved format.

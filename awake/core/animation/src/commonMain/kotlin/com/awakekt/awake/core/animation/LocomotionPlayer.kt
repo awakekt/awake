@@ -80,6 +80,8 @@ class LocomotionPlayer(val config: LocomotionConfig = LocomotionConfig()) {
      * [grounded] is the caller's ground contact, or null to infer airborne motion from height. A
      * non-positive step leaves all state and playback alone. The first observation initializes the
      * position without counting the spawn offset as movement. Keep one instance per moving actor.
+     * With either reference speed configured, this owns [AnimationPlayer.speed] on every update;
+     * leave both null when another system controls that player's playback rate.
      */
     fun update(player: AnimationPlayer, x: Float, y: Float, z: Float, delta: Float, grounded: Boolean? = null) {
         if (delta <= 0f) return

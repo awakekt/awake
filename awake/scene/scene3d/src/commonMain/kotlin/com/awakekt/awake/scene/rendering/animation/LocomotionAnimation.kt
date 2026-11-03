@@ -104,16 +104,16 @@ data class SceneLocomotionAnimation(
     )
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
-        if (walkAbove < 0f || runAbove < walkAbove) {
-            add(SceneValidationIssue(path, "locomotion_animation needs 0 <= walkAbove <= runAbove"))
+        if (!walkAbove.isFiniteNonNegative() || !runAbove.isFinite() || runAbove < walkAbove) {
+            add(SceneValidationIssue(path, "locomotion_animation needs finite 0 <= walkAbove <= runAbove"))
         }
-        if (airborneAbove <= 0f) add(SceneValidationIssue(path, "locomotion_animation.airborneAbove must be greater than 0"))
-        if (crossFade < 0f) add(SceneValidationIssue(path, "locomotion_animation.crossFade must not be negative"))
-        if (walkReferenceSpeed != null && walkReferenceSpeed <= 0f) {
-            add(SceneValidationIssue(path, "locomotion_animation.walkReferenceSpeed must be greater than 0"))
+        if (!airborneAbove.isFinitePositive()) add(SceneValidationIssue(path, "locomotion_animation.airborneAbove must be finite and greater than 0"))
+        if (!crossFade.isFiniteNonNegative()) add(SceneValidationIssue(path, "locomotion_animation.crossFade must be finite and non-negative"))
+        if (walkReferenceSpeed != null && !walkReferenceSpeed.isFinitePositive()) {
+            add(SceneValidationIssue(path, "locomotion_animation.walkReferenceSpeed must be finite and greater than 0"))
         }
-        if (runReferenceSpeed != null && runReferenceSpeed <= 0f) {
-            add(SceneValidationIssue(path, "locomotion_animation.runReferenceSpeed must be greater than 0"))
+        if (runReferenceSpeed != null && !runReferenceSpeed.isFinitePositive()) {
+            add(SceneValidationIssue(path, "locomotion_animation.runReferenceSpeed must be finite and greater than 0"))
         }
     }
 }
@@ -196,3 +196,7 @@ private const val DEFAULT_WALK_ABOVE = 0.1f
 private const val DEFAULT_RUN_ABOVE = 4f
 private const val DEFAULT_AIRBORNE_ABOVE = 2f
 private const val DEFAULT_CROSS_FADE = 0.15f
+
+private fun Float.isFiniteNonNegative(): Boolean = isFinite() && this >= 0f
+
+private fun Float.isFinitePositive(): Boolean = isFinite() && this > 0f
