@@ -1,0 +1,230 @@
+public abstract interface class com/awakekt/awake/net/prediction/Correction {
+	public fun getCorrects ()Z
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$Blend : com/awakekt/awake/net/prediction/Correction {
+	public fun <init> (FFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/net/prediction/Correction$Blend;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/prediction/Correction$Blend;FFFILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/Correction$Blend;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCorrects ()Z
+	public final fun getDx ()F
+	public final fun getDy ()F
+	public final fun getDz ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$DefaultImpls {
+	public static fun getCorrects (Lcom/awakekt/awake/net/prediction/Correction;)Z
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$None : com/awakekt/awake/net/prediction/Correction {
+	public static final field INSTANCE Lcom/awakekt/awake/net/prediction/Correction$None;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCorrects ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$Shift : com/awakekt/awake/net/prediction/Correction {
+	public fun <init> (FFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/net/prediction/Correction$Shift;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/prediction/Correction$Shift;FFFILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/Correction$Shift;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCorrects ()Z
+	public final fun getDx ()F
+	public final fun getDy ()F
+	public final fun getDz ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$Snap : com/awakekt/awake/net/prediction/Correction {
+	public fun <init> (FFFLcom/awakekt/awake/net/prediction/SnapReason;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Lcom/awakekt/awake/net/prediction/SnapReason;
+	public final fun copy (FFFLcom/awakekt/awake/net/prediction/SnapReason;)Lcom/awakekt/awake/net/prediction/Correction$Snap;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/prediction/Correction$Snap;FFFLcom/awakekt/awake/net/prediction/SnapReason;ILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/Correction$Snap;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCorrects ()Z
+	public final fun getReason ()Lcom/awakekt/awake/net/prediction/SnapReason;
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$Wait : com/awakekt/awake/net/prediction/Correction {
+	public static final field Companion Lcom/awakekt/awake/net/prediction/Correction$Wait$Companion;
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Lcom/awakekt/awake/net/prediction/Correction$Wait;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/prediction/Correction$Wait;FILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/Correction$Wait;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCorrects ()Z
+	public final fun getSpeedScale ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/Correction$Wait$Companion {
+	public final fun getStopped ()Lcom/awakekt/awake/net/prediction/Correction$Wait;
+}
+
+public final class com/awakekt/awake/net/prediction/PredictedEntity {
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun apply (Lcom/awakekt/awake/net/prediction/Correction;Lcom/awakekt/awake/net/prediction/PredictionHistory;)V
+	public final fun blend (FLcom/awakekt/awake/net/prediction/PredictionHistory;)V
+	public final fun getBlendShare ()F
+	public final fun getDrawnX ()F
+	public final fun getDrawnY ()F
+	public final fun getDrawnZ ()F
+	public final fun getOwed ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getShiftGlideSeconds ()F
+	public final fun getSpeedScale ()F
+	public final fun update (F)V
+}
+
+public final class com/awakekt/awake/net/prediction/PredictionHistory {
+	public static final field Companion Lcom/awakekt/awake/net/prediction/PredictionHistory$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun contains (J)Z
+	public final fun getCapacity ()I
+	public final fun getNewestSeq ()J
+	public final fun oldestUnacked (J)J
+	public final fun oldestUnackedTime (J)D
+	public final fun poseAt (JLcom/awakekt/awake/core/math/Vec3f;)Z
+	public final fun record (JFFFD)V
+	public final fun record (JLcom/awakekt/awake/core/math/Vec3f;D)V
+	public static synthetic fun record$default (Lcom/awakekt/awake/net/prediction/PredictionHistory;JFFFDILjava/lang/Object;)V
+	public static synthetic fun record$default (Lcom/awakekt/awake/net/prediction/PredictionHistory;JLcom/awakekt/awake/core/math/Vec3f;DILjava/lang/Object;)V
+	public final fun secondsSinceOldestUnacked (JD)D
+	public final fun shift (FFF)V
+}
+
+public final class com/awakekt/awake/net/prediction/PredictionHistory$Companion {
+}
+
+public final class com/awakekt/awake/net/prediction/ReconcileConfig {
+	public fun <init> ()V
+	public fun <init> (FFIDDDZ)V
+	public synthetic fun <init> (FFIDDDZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()I
+	public final fun component4 ()D
+	public final fun component5 ()D
+	public final fun component6 ()D
+	public final fun component7 ()Z
+	public final fun copy (FFIDDDZ)Lcom/awakekt/awake/net/prediction/ReconcileConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/prediction/ReconcileConfig;FFIDDDZILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/ReconcileConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapEaseSeconds ()D
+	public final fun getCorrectMetres ()F
+	public final fun getFarMetres ()F
+	public final fun getPlanar ()Z
+	public final fun getPredictionCapSeconds ()D
+	public final fun getServerGuessWindowSeconds ()D
+	public final fun getTrustedGuessedTicks ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/ReconcileInput {
+	public fun <init> ()V
+	public final fun ackDrift (Z)F
+	public static synthetic fun ackDrift$default (Lcom/awakekt/awake/net/prediction/ReconcileInput;ZILjava/lang/Object;)F
+	public final fun drawn (FFF)Lcom/awakekt/awake/net/prediction/ReconcileInput;
+	public final fun drawnDrift (Z)F
+	public static synthetic fun drawnDrift$default (Lcom/awakekt/awake/net/prediction/ReconcileInput;ZILjava/lang/Object;)F
+	public final fun getAckFresh ()Z
+	public final fun getAckKnown ()Z
+	public final fun getAckSeq ()J
+	public final fun getAckUnread ()Z
+	public final fun getAckX ()F
+	public final fun getAckY ()F
+	public final fun getAckZ ()F
+	public final fun getDrawnX ()F
+	public final fun getDrawnY ()F
+	public final fun getDrawnZ ()F
+	public final fun getGuessedTicks ()I
+	public final fun getHeardSeq ()J
+	public final fun getSecondsSinceOldestUnheard ()D
+	public final fun getServerX ()F
+	public final fun getServerY ()F
+	public final fun getServerZ ()F
+	public final fun lookUp (Lcom/awakekt/awake/net/prediction/PredictionHistory;D)Lcom/awakekt/awake/net/prediction/ReconcileInput;
+	public final fun server (FFF)Lcom/awakekt/awake/net/prediction/ReconcileInput;
+	public final fun setAckFresh (Z)V
+	public final fun setAckKnown (Z)V
+	public final fun setAckSeq (J)V
+	public final fun setAckUnread (Z)V
+	public final fun setAckX (F)V
+	public final fun setAckY (F)V
+	public final fun setAckZ (F)V
+	public final fun setDrawnX (F)V
+	public final fun setDrawnY (F)V
+	public final fun setDrawnZ (F)V
+	public final fun setGuessedTicks (I)V
+	public final fun setSecondsSinceOldestUnheard (D)V
+	public final fun setServerX (F)V
+	public final fun setServerY (F)V
+	public final fun setServerZ (F)V
+}
+
+public final class com/awakekt/awake/net/prediction/ReconcileKt {
+	public static final fun reconcile (Lcom/awakekt/awake/net/prediction/ReconcileInput;Lcom/awakekt/awake/net/prediction/ReconcileConfig;Lcom/awakekt/awake/net/prediction/ReconcileRules;)Lcom/awakekt/awake/net/prediction/Correction;
+	public static synthetic fun reconcile$default (Lcom/awakekt/awake/net/prediction/ReconcileInput;Lcom/awakekt/awake/net/prediction/ReconcileConfig;Lcom/awakekt/awake/net/prediction/ReconcileRules;ILjava/lang/Object;)Lcom/awakekt/awake/net/prediction/Correction;
+	public static final fun speedScale (DLcom/awakekt/awake/net/prediction/ReconcileConfig;)F
+}
+
+public abstract interface class com/awakekt/awake/net/prediction/ReconcileRules {
+	public static final field Companion Lcom/awakekt/awake/net/prediction/ReconcileRules$Companion;
+	public abstract fun forceSnap (Lcom/awakekt/awake/net/prediction/ReconcileInput;)Lcom/awakekt/awake/net/prediction/SnapReason;
+}
+
+public final class com/awakekt/awake/net/prediction/ReconcileRules$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/net/prediction/ReconcileRules;
+}
+
+public abstract interface class com/awakekt/awake/net/prediction/SnapReason {
+	public fun getLabel ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/SnapReason$DefaultImpls {
+	public static fun getLabel (Lcom/awakekt/awake/net/prediction/SnapReason;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/SnapReason$Far : com/awakekt/awake/net/prediction/SnapReason {
+	public static final field INSTANCE Lcom/awakekt/awake/net/prediction/SnapReason$Far;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLabel ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/prediction/SnapReason$NoHistory : com/awakekt/awake/net/prediction/SnapReason {
+	public static final field INSTANCE Lcom/awakekt/awake/net/prediction/SnapReason$NoHistory;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLabel ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
