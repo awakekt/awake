@@ -13,6 +13,14 @@ name: Publish
 # A tag publishes one snapshot, limited to WebGPU: the release pin, the backend at `<tag>-SNAPSHOT`
 # built from the tagged commit with every Core module held at the release. WebGPU builds on wgpu4k
 # snapshots, so Central releases refuse it, and the pin is the WebGPU a consumer pairs with the release.
+#
+# A `release-cut/*` pull request runs a rehearsal of its tag's run, which uploads nothing (#1285).
+# Verify, Consumer and the natives the release collects run as the tag will run them: Consumer
+# builds the templates against the latest Vulkan release on Central, and a throwaway local tag gives
+# the checkout the release's version. Every job that uploads or holds a publish secret requires a
+# `push` event as well as a publish ref, so a pull request reaches none of them. A red rehearsal is
+# fixed on the pull request, before the tag spends the version number. Other pull requests that
+# touch CHANGELOG.md (only a release cut may, ci.yml's Changelog job says) skip every job.
 on:
   push:
     branches:
@@ -21,15 +29,21 @@ on:
     tags:
       - 'v*'
       - 'vulkan-v*'
+  # A pull request's head branch cannot be filtered here, so the path a release cut always edits
+  # narrows the trigger and the Ref job's `if` keeps only a `release-cut/*` head from this repository.
+  pull_request:
+    paths:
+      - CHANGELOG.md
 
 # One run per ref, and a run in progress always finishes. A run publishes its snapshot about an hour
 # in, so cancelling it for a newer push threw the snapshot away, and a day of steady merges published
 # none (#573). Runs do not pile up either: a concurrency group keeps at most one waiting run, and a
 # newer push replaces it, so a snapshot lags `main` by at most one run and arrives in commit order.
-# A tag has its own ref, so a release never waits behind snapshots.
+# A tag has its own ref, so a release never waits behind snapshots. A rehearsal publishes nothing, so
+# a newer push to its pull request cancels the one in progress.
 concurrency:
   group: publish-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Every job runs build code, so the default token only reads. The two jobs that create GitHub
 # releases ask for `contents: write` themselves.
@@ -48,15 +62,37 @@ jobs:
   # `;` and `|` are all legal), and every later job builds and publishes from it, so a ref that is
   # not one of the shapes this workflow publishes stops the run here. Steps read the ref through
   # `env:`, never as `${{ }}` inside a script, so even an accepted name is never shell syntax.
+  #
+  # Every other job needs this one, directly or through Changes, so a pull request that is not a
+  # release cut from this repository skips the whole run here.
   ref:
     name: Ref
+    if: >-
+      ${{
+        github.event_name == 'push' ||
+        (
+          github.event_name == 'pull_request' &&
+          startsWith(github.head_ref, 'release-cut/') &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        )
+      }}
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - name: Refuse a ref this workflow does not publish from
         env:
+          EVENT_NAME: ${{ github.event_name }}
           REF: ${{ github.ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
+          if [[ "$EVENT_NAME" == pull_request ]]; then
+            if [[ "$HEAD_REF" =~ ^release-cut/v[0-9A-Za-z.+-]+$ ]]; then
+              echo "Rehearsing the release $HEAD_REF cuts; this run uploads nothing."
+              exit 0
+            fi
+            echo "::error::Refusing to rehearse from '$HEAD_REF': not release-cut/v* with [0-9A-Za-z.+-] only."
+            exit 1
+          fi
           if [[ "$REF" =~ ^refs/heads/main$ ]] \
             || [[ "$REF" =~ ^refs/heads/release/[0-9A-Za-z._/+-]+$ ]] \
             || [[ "$REF" =~ ^refs/tags/v[0-9A-Za-z.+-]+$ ]] \
@@ -79,7 +115,7 @@ jobs:
       vulkan: ${{ steps.impact.outputs.vulkan }}
       web: ${{ steps.impact.outputs.web }}
       docs_only: ${{ steps.impact.outputs.docs_only }}
-      vulkan_publish: ${{ steps.vulkan-publish.outputs.vulkan_publish }}
+      vulkan_publish: ${{ github.event_name == 'pull_request' && 'false' || steps.vulkan-publish.outputs.vulkan_publish }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,7 +129,11 @@ jobs:
       # Platform impact and publication impact are intentionally separate. A shared Gradle or
       # workflow change may need Vulkan validation in CI, but it must not republish the independent
       # Vulkan version train when no Vulkan-family source changed.
+      #
+      # A rehearsal skips this and takes `false` (the job's output above), as a Core tag's run does:
+      # the detector answers `false` for every `v*` tag, and a pull request has no `before` to diff.
       - id: vulkan-publish
+        if: github.event_name == 'push'
         uses: ./.github/actions/detect-vulkan-publication-impact
         with:
           base-sha: ${{ github.event.before }}
@@ -280,18 +320,23 @@ jobs:
   # a snapshot nobody can resolve wastes the same afternoon a broken release does.
   verify:
     name: Verify
-    # API surface alone takes 20-25 minutes on macos-15; v0.34.0's Verify passed every step and was
-    # still cancelled at 33 minutes, which skipped its release.
+    # v0.34.0's Verify, then on macos-15, passed every step and was still cancelled at 33 minutes,
+    # which skipped its release.
     timeout-minutes: 50
     needs: ref
-    runs-on: macos-15
+    # Linux, as the pull-request Verify (verify.yml) has run since #1164: every gate here is
+    # host-independent. The API dumps are `api/desktop/*.api` (JVM, no klib validation), and the
+    # repository gates and build-logic's plugin checks and tests read sources or run on the JVM. On
+    # macOS apiCheck also compiled the iOS targets, which the Consumer and Release jobs compile again
+    # on macOS before any upload, so no check is lost. Off macOS, this job no longer waits for one of
+    # the Apple runners a release needs (#1285). build-logic's tests on macOS run on the pull request
+    # that changes them (build-logic-macos.yml).
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # awakeVerify checks Maven coordinates against the release tags.
           fetch-depth: 0
-          # MoltenVK and JoltC are submodules, and apiCheck pulls iOS cinterop into its task
-          # graph, so without them it fails on a missing header rather than on any API change.
-          submodules: recursive
 
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
@@ -300,11 +345,22 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
-      # apiCheck compiles every target, including the iOS ones.
-      - name: Install Vulkan (macOS)
-        run: brew install vulkan-loader molten-vk glfw
+      # Configuring the build installs the NDK the Vulkan android-native module pins. Install it up
+      # front, as verify.yml does, rather than as a side effect of the first task.
+      - name: Install the Android NDK
+        run: |
+          version=$(sed -n 's/^ *ndkVersion = "\(.*\)"/\1/p' awake/backend/vulkan/bindings/android-native/build.gradle.kts)
+          test -n "$version" || { echo "::error::No ndkVersion in awake/backend/vulkan/bindings/android-native/build.gradle.kts"; exit 1; }
+          # `yes` dies of SIGPIPE once sdkmanager exits, which pipefail would count as a failure.
+          (yes || true) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
 
-      - uses: ./.github/actions/ios-native
+      # A rehearsal (a release-cut pull request) builds the version its tag will: a throwaway tag on
+      # this checkout, never pushed. The Ref job has checked the branch name.
+      - name: Tag this commit as the release it cuts, locally
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: git tag -f "${HEAD_REF#release-cut/}"
 
       - name: Verify Awake repository gates
         run: ./gradlew awakeVerify --no-configuration-cache
@@ -360,6 +416,14 @@ jobs:
         run: brew install vulkan-loader molten-vk glfw
 
       - uses: ./.github/actions/ios-native
+
+      # As in Verify: a rehearsal builds and checks the release version, so the WebGPU release pin
+      # step below runs as it will on the tag.
+      - name: Tag this commit as the release it cuts, locally
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: git tag -f "${HEAD_REF#release-cut/}"
 
       # Resolve versions before downloading natives. Core-only changes use the last published
       # Vulkan release and therefore do not need the native artifact matrix at all.
@@ -464,10 +528,13 @@ jobs:
   snapshot:
     name: Snapshot
     timeout-minutes: 60
-    # `!cancelled()` for the reason given on Consumer.
+    # `!cancelled()` for the reason given on Consumer. `push`, here and on every job that uploads or
+    # holds a publish secret, so a release-cut rehearsal (a pull request) reaches none of them even
+    # if a ref test were wrong.
     if: >-
       ${{
         !cancelled() &&
+        github.event_name == 'push' &&
         (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) &&
         needs.verify.result == 'success' &&
         needs.consumer.result == 'success' &&
@@ -578,7 +645,7 @@ jobs:
   vulkan-snapshot:
     name: Vulkan Snapshot
     timeout-minutes: 60
-    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.platform-impact.outputs.vulkan_publish == 'true'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.platform-impact.outputs.vulkan_publish == 'true'
     needs: [platform-impact, natives, verify, snapshot]
     runs-on: macos-15
     steps:
@@ -627,6 +694,7 @@ jobs:
     if: >-
       ${{
         !cancelled() &&
+        github.event_name == 'push' &&
         startsWith(github.ref, 'refs/tags/v') &&
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.verify.result == 'success' &&
@@ -804,6 +872,7 @@ jobs:
     if: >-
       ${{
         !cancelled() &&
+        github.event_name == 'push' &&
         startsWith(github.ref, 'refs/tags/v') &&
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.release.result == 'success'
@@ -840,6 +909,7 @@ jobs:
     if: >-
       ${{
         !cancelled() &&
+        github.event_name == 'push' &&
         startsWith(github.ref, 'refs/tags/v') &&
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.release.result == 'success'
@@ -872,6 +942,7 @@ jobs:
     if: >-
       ${{
         !cancelled() &&
+        github.event_name == 'push' &&
         startsWith(github.ref, 'refs/tags/v') &&
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.core-alignment.result == 'success'
@@ -895,7 +966,7 @@ jobs:
     name: Vulkan Release
     # Room for Central to validate the deployment: the upload waits for its verdict.
     timeout-minutes: 90
-    if: startsWith(github.ref, 'refs/tags/vulkan-v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/vulkan-v')
     needs: [natives, verify]
     runs-on: macos-15
     # Creates the GitHub release and attaches its bundle.

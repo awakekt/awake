@@ -9,7 +9,8 @@ name: Maven fallback
 #
 # It runs once a Publish run finishes, from the default branch: workflow_run always does, and the
 # github-pages environment deploys only from there, whatever tag the release ran on. A Publish run
-# Central refused still counts; its bundle is attached whenever it was built.
+# Central refused still counts; its bundle is attached whenever it was built. A release-cut pull
+# request's rehearsal of Publish (a `pull_request` run) attaches nothing, so it starts nothing here.
 on:
   workflow_run:
     workflows: [Publish]
@@ -29,7 +30,7 @@ jobs:
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
-        startsWith(github.event.workflow_run.head_branch, 'v')
+        (github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v'))
       }}
     runs-on: ubuntu-latest
     permissions:
