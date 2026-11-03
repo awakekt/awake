@@ -642,6 +642,61 @@ public final class com/awakekt/awake/core/input/KeyModifier : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/core/input/KeyModifier;
 }
 
+public final class com/awakekt/awake/core/input/Keymap {
+	public fun <init> (Ljava/util/List;)V
+	public final fun changedBindings ()Lcom/awakekt/awake/core/input/InputBindings;
+	public final fun dispatch (Ljava/lang/Object;Lcom/awakekt/awake/core/input/ActionInputSource;)V
+	public static synthetic fun dispatch$default (Lcom/awakekt/awake/core/input/Keymap;Ljava/lang/Object;Lcom/awakekt/awake/core/input/ActionInputSource;ILjava/lang/Object;)V
+	public final fun entriesBoundTo (Lcom/awakekt/awake/core/input/InputChord;)Ljava/util/List;
+	public final fun entry (Ljava/lang/String;)Lcom/awakekt/awake/core/input/KeymapEntry;
+	public final fun getActions ()Lcom/awakekt/awake/core/input/InputActions;
+	public final fun getDefaults ()Lcom/awakekt/awake/core/input/InputBindings;
+	public final fun getEntries ()Ljava/util/List;
+	public final fun load (Lcom/awakekt/awake/core/input/InputBindings;)Ljava/util/List;
+	public final fun reset (Ljava/lang/String;)V
+	public final fun resetAll ()V
+	public final fun unbind (Ljava/lang/String;)V
+	public final fun update (Lcom/awakekt/awake/core/input/ActionInputSource;Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/input/KeymapBuilder {
+	public final fun action (Lcom/awakekt/awake/core/input/InputActionDefinition;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun action$default (Lcom/awakekt/awake/core/input/KeymapBuilder;Lcom/awakekt/awake/core/input/InputActionDefinition;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun axis (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public static synthetic fun axis$default (Lcom/awakekt/awake/core/input/KeymapBuilder;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)V
+	public final fun group (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun hold (Ljava/lang/String;Ljava/lang/String;[Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun hold$default (Lcom/awakekt/awake/core/input/KeymapBuilder;Ljava/lang/String;Ljava/lang/String;[Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun include (Ljava/util/List;)V
+	public final fun layer (ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun layer$default (Lcom/awakekt/awake/core/input/KeymapBuilder;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun press (Ljava/lang/String;Ljava/lang/String;[Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun press$default (Lcom/awakekt/awake/core/input/KeymapBuilder;Ljava/lang/String;Ljava/lang/String;[Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun toggle (Ljava/lang/String;Ljava/lang/String;[Lcom/awakekt/awake/core/input/Key;ZLjava/util/Set;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun toggle$default (Lcom/awakekt/awake/core/input/KeymapBuilder;Ljava/lang/String;Ljava/lang/String;[Lcom/awakekt/awake/core/input/Key;ZLjava/util/Set;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/input/KeymapBuilderKt {
+	public static final fun keymap (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/input/Keymap;
+	public static final fun keymapEntries (Lkotlin/jvm/functions/Function1;)Ljava/util/List;
+}
+
+public abstract interface annotation class com/awakekt/awake/core/input/KeymapDsl : java/lang/annotation/Annotation {
+}
+
+public final class com/awakekt/awake/core/input/KeymapEntry {
+	public fun <init> (Lcom/awakekt/awake/core/input/InputActionDefinition;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/input/InputActionDefinition;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAction ()Lcom/awakekt/awake/core/input/InputActionDefinition;
+	public final fun getEnabledWhen ()Lkotlin/jvm/functions/Function1;
+	public final fun getGroup ()Ljava/lang/String;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOnPress ()Lkotlin/jvm/functions/Function1;
+	public final fun getPriority ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/input/NumberStepping {
 	public static final field INSTANCE Lcom/awakekt/awake/core/input/NumberStepping;
 	public static final field MAX_DECIMALS I

@@ -362,6 +362,15 @@ public final class com/awakekt/awake/scene/controls/input/KeybindingProfileKt {
 	public static final fun keybindingProfile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 }
 
+public final class com/awakekt/awake/scene/controls/input/KeymapSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/core/input/Keymap;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/controls/input/KeymapSystemKt {
+	public static final fun KeymapSystem (Lcom/awakekt/awake/core/input/Keymap;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/scene/controls/input/KeymapSystem;
+}
+
 public final class com/awakekt/awake/scene/controls/input/SceneAxisAction : com/awakekt/awake/scene/controls/input/SceneInputAction {
 	public static final field Companion Lcom/awakekt/awake/scene/controls/input/SceneAxisAction$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V

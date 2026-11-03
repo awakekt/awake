@@ -164,6 +164,59 @@ Android. One controller is read, and only one the platform maps by position; a b
 only after a button on it is pressed. `GameplayInput` passes controller buttons to the actions
 whatever the UI holds, since the UI reads no controller.
 
+## Keymaps
+
+A `Keymap` puts what a rebinding screen and a game's commands need around the actions: a label and
+a group for each, and what a press of it does. It is in `com.awakekt.awake.core:input` and needs no
+ECS or UI, so a game loop, a system or a tool drives it the same way:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:keymap"
+```
+
+`press`, `hold` and `toggle` declare a button with its trigger, `axis` a direction, and `action` one
+made elsewhere. The label is a localisation key for the rebinding screen, or the text itself for a
+tool with one language. Each frame, `update` reads the input and runs the handlers of what was
+pressed; held actions and axes stay polled from `actions`:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:keymap-frame"
+```
+
+When one press could reach several handlers, as Escape closing a window or else opening the menu:
+
+- **The highest priority goes first**, then the order declared. A `layer` block gives its handlers a
+  priority and a condition; a `group` block only lists them together on the rebinding screen.
+- **A handler that is not enabled lets the press go on.** Its `enabledWhen`, and its layer's, are
+  asked each frame.
+- **A handler that runs takes the keys it was pressed with**, so a handler further down on the same
+  key does not run too. A press from an on-screen control, made with `actions.press`, takes nothing
+  and always reaches its handler; call `dispatch` after pressing.
+
+Each feature can declare its own actions with `keymapEntries { }`, and one keymap takes them all
+with `include` or `Keymap(windows + combat)`. Two actions with one name are refused.
+
+The player's bindings are the actions' own, so everything in [Chords and rebinding](#chords-and-rebinding)
+applies. A keymap also knows the defaults:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:keymap-save"
+```
+
+`changedBindings` saves only what differs from the defaults, so a later default reaches a player who
+never changed it. `unbind` leaves an action on no key, `resetAll` puts back every default, and
+`entriesBoundTo(chord)` gives the entries, with their labels, that a new chord would clash with.
+
+In a scene, `KeymapSystem` (`com.awakekt.awake.scene:controls`) runs a keymap each frame, its handlers
+given the world or a context made from it:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:keymap-system"
+```
+
+Read a `GameplayInput` so a focused text field keeps its keys. A keymap's actions are its own, apart
+from the scene's `input_actions`, so a `canvas_element` control does not press them.
+
 ## Properties
 
 `InputSnapshot`:
