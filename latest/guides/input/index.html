@@ -1098,6 +1098,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keymaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keymaps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keymaps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-set-of-actions-on-every-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One set of actions on every platform
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2997,6 +3025,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keymaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keymaps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keymaps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-set-of-actions-on-every-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One set of actions on every platform
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3266,6 +3322,118 @@ Gamepad API in a browser, GameController on iOS, and a controller's key and joys
 Android. One controller is read, and only one the platform maps by position; a browser lists one
 only after a button on it is pressed. <code>GameplayInput</code> passes controller buttons to the actions
 whatever the UI holds, since the UI reads no controller.</p>
+<h2 id="keymaps">Keymaps</h2>
+<p>A <code>Keymap</code> puts what a rebinding screen and a game's commands need around the actions: a label and
+a group for each, and what a press of it does. It is in <code>com.awakekt.awake.core:input</code> and needs no
+ECS or UI, so a game loop, a system or a tool drives it the same way:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kd">class</span><span class="w"> </span><span class="nc">Windows</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nv">inventoryOpen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nv">menuOpen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="p">}</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="kd">val</span><span class="w"> </span><span class="nv">controls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">keymap</span><span class="o">&lt;</span><span class="n">Windows</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="n">group</span><span class="p">(</span><span class="s">"windows"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">        </span><span class="n">press</span><span class="p">(</span><span class="s">"window.inventory"</span><span class="p">,</span><span class="w"> </span><span class="s">"input.window.inventory"</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">I</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">inventoryOpen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">!</span><span class="nb">it</span><span class="p">.</span><span class="na">inventoryOpen</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">        </span><span class="n">press</span><span class="p">(</span><span class="s">"menu.open"</span><span class="p">,</span><span class="w"> </span><span class="s">"input.menu.open"</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">Escape</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">menuOpen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">    </span><span class="n">group</span><span class="p">(</span><span class="s">"combat"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">        </span><span class="n">hold</span><span class="p">(</span><span class="s">"attack"</span><span class="p">,</span><span class="w"> </span><span class="s">"input.attack"</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">F</span><span class="p">)</span><span class="w"> </span><span class="c1">// no handler: a system polls it</span>
+</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span><span class="c1">// While the inventory is open, Escape closes it and does not also open the menu.</span>
+</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span><span class="n">layer</span><span class="p">(</span><span class="n">priority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span><span class="p">,</span><span class="w"> </span><span class="n">enabledWhen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">inventoryOpen</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">        </span><span class="n">press</span><span class="p">(</span><span class="s">"window.close"</span><span class="p">,</span><span class="w"> </span><span class="s">"input.window.close"</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">Escape</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">inventoryOpen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="p">}</span>
+</span></code></pre></div>
+<p><code>press</code>, <code>hold</code> and <code>toggle</code> declare a button with its trigger, <code>axis</code> a direction, and <code>action</code> one
+made elsewhere. The label is a localisation key for the rebinding screen, or the text itself for a
+tool with one language. Each frame, <code>update</code> reads the input and runs the handlers of what was
+pressed; held actions and axes stay polled from <code>actions</code>:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">// Once a frame: read the input, run the handlers of what was pressed.</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">controls</span><span class="p">.</span><span class="na">update</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">updateSnapshot</span><span class="p">(),</span><span class="w"> </span><span class="n">windows</span><span class="p">)</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">attacking</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">controls</span><span class="p">.</span><span class="na">actions</span><span class="p">.</span><span class="na">isActive</span><span class="p">(</span><span class="s">"attack"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>When one press could reach several handlers, as Escape closing a window or else opening the menu:</p>
+<ul>
+<li><strong>The highest priority goes first</strong>, then the order declared. A <code>layer</code> block gives its handlers a
+  priority and a condition; a <code>group</code> block only lists them together on the rebinding screen.</li>
+<li><strong>A handler that is not enabled lets the press go on.</strong> Its <code>enabledWhen</code>, and its layer's, are
+  asked each frame.</li>
+<li><strong>A handler that runs takes the keys it was pressed with</strong>, so a handler further down on the same
+  key does not run too. A press from an on-screen control, made with <code>actions.press</code>, takes nothing
+  and always reaches its handler; call <code>dispatch</code> after pressing.</li>
+</ul>
+<p>Each feature can declare its own actions with <code>keymapEntries { }</code>, and one keymap takes them all
+with <code>include</code> or <code>Keymap(windows + combat)</code>. Two actions with one name are refused.</p>
+<p>The player's bindings are the actions' own, so everything in <a href="#chords-and-rebinding">Chords and rebinding</a>
+applies. A keymap also knows the defaults:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">controls</span><span class="p">.</span><span class="na">actions</span><span class="p">.</span><span class="na">rebind</span><span class="p">(</span><span class="s">"window.inventory"</span><span class="p">,</span><span class="w"> </span><span class="n">ButtonBinding</span><span class="p">(</span><span class="n">keys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">B</span><span class="p">)))</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1">// Save only what the player changed, and load it back next time:</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="kd">val</span><span class="w"> </span><span class="nv">saved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Json</span><span class="p">.</span><span class="na">encodeToString</span><span class="p">(</span><span class="n">InputBindings</span><span class="p">.</span><span class="na">serializer</span><span class="p">(),</span><span class="w"> </span><span class="n">controls</span><span class="p">.</span><span class="na">changedBindings</span><span class="p">())</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">controls</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">Json</span><span class="p">.</span><span class="na">decodeFromString</span><span class="p">(</span><span class="n">InputBindings</span><span class="p">.</span><span class="na">serializer</span><span class="p">(),</span><span class="w"> </span><span class="n">saved</span><span class="p">))</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1">// A "reset" button puts back the default:</span>
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">controls</span><span class="p">.</span><span class="na">reset</span><span class="p">(</span><span class="s">"window.inventory"</span><span class="p">)</span>
+</span></code></pre></div>
+<p><code>changedBindings</code> saves only what differs from the defaults, so a later default reaches a player who
+never changed it. <code>unbind</code> leaves an action on no key, <code>resetAll</code> puts back every default, and
+<code>entriesBoundTo(chord)</code> gives the entries, with their labels, that a new chord would clash with.</p>
+<p>A preset, such as arrows or a left-handed layout picked in settings, is a set of bindings too.
+<code>usePreset</code> makes it the defaults, so <code>reset</code> goes back to it and it is not saved as the player's
+change; load the player's own changes after it:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">leftHanded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InputBindings</span><span class="p">(</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="n">mapOf</span><span class="p">(</span><span class="s">"move"</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">AxisBinding</span><span class="p">(</span><span class="n">up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">I</span><span class="p">),</span><span class="w"> </span><span class="n">down</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">K</span><span class="p">),</span><span class="w"> </span><span class="n">left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">J</span><span class="p">),</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">L</span><span class="p">))),</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">)</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">controls</span><span class="p">.</span><span class="na">usePreset</span><span class="p">(</span><span class="n">leftHanded</span><span class="p">)</span><span class="w"> </span><span class="c1">// now the defaults: reset goes back to it, and it is not saved as a change</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">controls</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">savedChanges</span><span class="p">)</span><span class="w"> </span><span class="c1">// then the player's own changes</span>
+</span></code></pre></div>
+<p>In a scene, <code>KeymapSystem</code> (<code>com.awakekt.awake.scene:controls</code>) runs a keymap each frame, its handlers
+given the world or a context made from it:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">controls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">keymap</span><span class="o">&lt;</span><span class="n">World</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span><span class="n">press</span><span class="p">(</span><span class="s">"interact"</span><span class="p">,</span><span class="w"> </span><span class="s">"input.interact"</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">E</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">world</span><span class="w"> </span><span class="o">-&gt;</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">        </span><span class="n">world</span><span class="p">.</span><span class="na">queryEach</span><span class="o">&lt;</span><span class="n">Interactions</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">interactions</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">interactions</span><span class="p">.</span><span class="na">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="p">}</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"harbor-town"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">        </span><span class="n">entity</span><span class="p">(</span><span class="s">"player"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">with</span><span class="p">(</span><span class="n">Interactions</span><span class="p">())</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">        </span><span class="n">frameSystem</span><span class="p">(</span><span class="s">"keymap"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">            </span><span class="n">KeymapSystem</span><span class="p">(</span><span class="n">controls</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">GameplayInput</span><span class="p">(</span><span class="n">requireService</span><span class="p">(</span><span class="n">Input</span><span class="o">::</span><span class="n">class</span><span class="p">).</span><span class="na">currentSnapshot</span><span class="p">,</span><span class="w"> </span><span class="n">uiOwnership</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-15-13"><a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-15-14"><a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Read a <code>GameplayInput</code> so a focused text field keeps its keys.</p>
+<h3 id="one-set-of-actions-on-every-platform">One set of actions on every platform</h3>
+<p>A keymap made with <code>KeymapSystem</code> alone keeps its actions to itself. <code>world.shareKeymap(entries)</code>
+makes its actions and the scene's <code>input_actions</code> one set, the world's <code>inputActions()</code>: keys read by
+<code>PlayerInputSystem</code>, a played project's <code>canvas_element</code> joystick and buttons, and the keymap's
+handlers all work on the same actions. W A S D on a desktop or in a browser and a joystick on a phone
+then steer the same <code>move</code>, and the systems reading it never ask which device it was:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1">// Once the scene is in the world:</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">controls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world</span><span class="p">.</span><span class="na">shareKeymap</span><span class="p">(</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="n">keymapEntries</span><span class="o">&lt;</span><span class="n">World</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">        </span><span class="n">axis</span><span class="p">(</span>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">            </span><span class="s">"move"</span><span class="p">,</span>
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">            </span><span class="s">"input.move"</span><span class="p">,</span>
+</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">            </span><span class="n">up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">W</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">ArrowUp</span><span class="p">),</span>
+</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">            </span><span class="n">down</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">S</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">ArrowDown</span><span class="p">),</span>
+</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">            </span><span class="n">left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">A</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">ArrowLeft</span><span class="p">),</span>
+</span><span id="__span-16-10"><a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">            </span><span class="n">right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">D</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">ArrowRight</span><span class="p">),</span>
+</span><span id="__span-16-11"><a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">        </span><span class="p">)</span>
+</span><span id="__span-16-12"><a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">        </span><span class="n">hold</span><span class="p">(</span><span class="s">"attack"</span><span class="p">,</span><span class="w"> </span><span class="s">"input.attack"</span><span class="p">,</span><span class="w"> </span><span class="n">Key</span><span class="p">.</span><span class="na">F</span><span class="p">)</span>
+</span><span id="__span-16-13"><a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">    </span><span class="p">},</span>
+</span><span id="__span-16-14"><a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="p">)</span>
+</span><span id="__span-16-15"><a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="kd">val</span><span class="w"> </span><span class="nv">players</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PlayerInputSystem</span><span class="p">(</span><span class="n">gameplayInput</span><span class="p">)</span><span class="w"> </span><span class="c1">// reads the keys into the shared actions</span>
+</span><span id="__span-16-16"><a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="kd">val</span><span class="w"> </span><span class="nv">handlers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">KeymapSystem</span><span class="p">(</span><span class="n">controls</span><span class="p">,</span><span class="w"> </span><span class="n">gameplayInput</span><span class="p">)</span><span class="w"> </span><span class="c1">// after PlayerInputSystem and CanvasActionSystem</span>
+</span></code></pre></div>
+<p>The scene's own actions stay. An entry named like one of them replaces it, keeping the scene's
+binding where the scene declared that action itself. A saved scene leaves out the actions only the
+keymap added. <code>KeymapSystem</code> sees that the keymap is shared and only runs its handlers, so add it
+after <code>PlayerInputSystem</code> and <code>CanvasActionSystem</code>. To show on-screen controls only while the player
+plays by touch, read <code>HostInputState.lastInputDevice</code>.</p>
 <h2 id="properties">Properties</h2>
 <p><code>InputSnapshot</code>:</p>
 <table>
