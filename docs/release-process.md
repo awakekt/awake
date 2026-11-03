@@ -179,6 +179,19 @@ A tag alone does not prove availability. Missing files and transient repository 
 retried within that deadline; authentication and other permanent HTTP errors fail immediately.
 When the job publishes Vulkan locally, this remote availability check is unnecessary.
 
+**A template may only use Vulkan APIs already on Central.** A `v*` tag never publishes Vulkan, so
+its Consumer job builds `templates/game` and `templates/project` against the latest Vulkan release
+on Maven Central, and the Vulkan release with a new API comes only after Core is on Central. A
+template that calls a Vulkan API added since that release fails the Core release, as v0.37.0's
+desktop `main.kt` did (#1282). Add the API first, wait for the `vulkan-v*` release that carries it
+to reach Central, then use it in a template; until then keep the template on the released API,
+with a comment saying what waits. The web apps are not affected: WebGPU is in the Core family. The
+**Templates** workflow checks this before the merge. When a pull request changes `templates/game`
+or `templates/project`, it also compiles their desktop apps against the latest Vulkan release on
+Central and the pull request's Core, and fails with "this template uses a Vulkan API newer than the
+latest Vulkan release". It compiles only the desktop apps; the Android and iOS entry points also
+call the Vulkan backend, so the same rule holds for them.
+
 Publication-family selection skips Central preparation and automatic-release registration as
 well as uploads. An excluded stable module must not register an empty release bundle during a
 Core snapshot run. A run with no selected publications succeeds without contacting Central;
