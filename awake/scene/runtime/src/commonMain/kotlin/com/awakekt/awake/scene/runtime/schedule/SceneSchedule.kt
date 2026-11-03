@@ -27,7 +27,11 @@ import kotlin.time.TimeSource
 class SceneSchedule internal constructor(
     private val spec: SceneAppSpec,
 ) {
-    private val fixedTimestepLoop = FixedTimestepLoop()
+    /**
+     * The scene's fixed-step loop, capped at [SceneAppSpec.maxFixedStepsPerFrame] steps a frame. The
+     * runtime gives it to systems as its [com.awakekt.awake.core.host.FixedStepReport].
+     */
+    internal val fixedTimestepLoop = FixedTimestepLoop(maxStepsPerFrame = spec.maxFixedStepsPerFrame)
     private val registeredSystems = linkedMapOf<SceneSystemHandle<out System>, System>()
     private val fixedSystems = mutableListOf<System>()
 

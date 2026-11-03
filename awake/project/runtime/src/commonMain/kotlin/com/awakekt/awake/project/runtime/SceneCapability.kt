@@ -73,7 +73,12 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
     fun physicsSystem(services: SceneHostServices): PhysicsSystem =
         physicsSystem ?: PhysicsSystem(requireNotNull(services.physics)).also { physicsSystem = it }
 
-    /** Adds a system run on every fixed step, named [name] in the scene's schedule. */
+    /**
+     * Adds a system run on every fixed step, named [name] in the scene's schedule. A frame runs at most
+     * as many fixed steps as the scene's cap and drops the time past them; a system that must account for
+     * every step, such as a networked game's prediction, reads what was dropped from
+     * [SceneHostServices.fixedStep].
+     */
     fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, create)
 
     /** Adds a system run once per rendered frame, named [name] in the scene's schedule. */

@@ -6,6 +6,7 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun infrastructureSystems (Lkotlin/jvm/functions/Function1;)V
+	public final fun maxFixedStepsPerFrame (I)V
 	public final fun name (Ljava/lang/String;)V
 	public final fun onDispose (Lkotlin/jvm/functions/Function1;)V
 	public final fun onReady (Lkotlin/jvm/functions/Function2;)V

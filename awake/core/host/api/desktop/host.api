@@ -15,13 +15,37 @@ public final class com/awakekt/awake/core/host/DesktopFrameLoop : com/awakekt/aw
 	public fun tick (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class com/awakekt/awake/core/host/FixedTimestepLoop {
+public abstract interface class com/awakekt/awake/core/host/FixedStepReport {
+	public abstract fun addTimeDroppedListener (Lcom/awakekt/awake/core/host/TimeDroppedListener;)V
+	public abstract fun getDroppedSeconds ()F
+	public abstract fun getDroppedSteps ()I
+	public abstract fun getDroppedStepsTotal ()J
+	public abstract fun getFixedDelta ()F
+	public abstract fun getMaxStepsPerFrame ()I
+	public abstract fun getStepsThisFrame ()I
+	public abstract fun removeTimeDroppedListener (Lcom/awakekt/awake/core/host/TimeDroppedListener;)V
+}
+
+public final class com/awakekt/awake/core/host/FixedTimestepLoop : com/awakekt/awake/core/host/FixedStepReport {
+	public static final field Companion Lcom/awakekt/awake/core/host/FixedTimestepLoop$Companion;
 	public static final field DEFAULT_FIXED_DELTA F
 	public static final field DEFAULT_MAX_STEPS_PER_FRAME I
 	public fun <init> ()V
 	public fun <init> (FI)V
 	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun addTimeDroppedListener (Lcom/awakekt/awake/core/host/TimeDroppedListener;)V
 	public final fun advance (FLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public fun getDroppedSeconds ()F
+	public fun getDroppedSteps ()I
+	public fun getDroppedStepsTotal ()J
+	public fun getFixedDelta ()F
+	public fun getMaxStepsPerFrame ()I
+	public fun getStepsThisFrame ()I
+	public fun removeTimeDroppedListener (Lcom/awakekt/awake/core/host/TimeDroppedListener;)V
+	public fun setMaxStepsPerFrame (I)V
+}
+
+public final class com/awakekt/awake/core/host/FixedTimestepLoop$Companion {
 }
 
 public abstract interface class com/awakekt/awake/core/host/FrameLoop {
@@ -76,5 +100,9 @@ public final class com/awakekt/awake/core/host/NativeLibrary {
 
 public final class com/awakekt/awake/core/host/ResourceKt {
 	public static final fun readResourceBytes (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/host/TimeDroppedListener {
+	public abstract fun onTimeDropped (FI)V
 }
 

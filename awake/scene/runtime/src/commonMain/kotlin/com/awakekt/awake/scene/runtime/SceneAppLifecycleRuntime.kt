@@ -13,6 +13,7 @@ import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.diagnostics.DebugRegistry
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.host.FixedStepReport
 import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.Input
@@ -95,6 +96,16 @@ class SceneAppLifecycleRuntime internal constructor(
     /** The active ECS [World] instance. */
     val world: World
         get() = session.world
+
+    /**
+     * The scene's fixed-step loop as its systems read it: the fixed steps the frame ran, and the time it
+     * dropped once it had run [SceneAppSpec.maxFixedStepsPerFrame] of them. Each frame's numbers are in
+     * place before the frame systems run, and a [com.awakekt.awake.core.host.TimeDroppedListener] added
+     * here hears of the dropped time then. A networked game that predicts its local player sends or
+     * replays the dropped steps; see [FixedStepReport].
+     */
+    val fixedStep: FixedStepReport
+        get() = session.schedule.fixedTimestepLoop
 
     /** The active [Renderer] instance initialized at backend readiness. */
     lateinit var renderer: Renderer

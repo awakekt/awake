@@ -33,6 +33,9 @@ and runs a system that pulses every beacon:
   each rendered frame. `scene.uses(type)` says whether any node has a component. Each system needs a
   name of its own. A system that holds something to give back, such as GPU content, implements
   `AutoCloseable` and is closed when the scene stops.
+  A system that must account for every fixed step reads `services.fixedStep`: the steps each frame
+  ran and the time it dropped past the scene's cap. See
+  [Dropped time in a networked game](app-lifecycle.md#dropped-time-in-a-networked-game).
 
 ## Run it
 
