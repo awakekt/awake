@@ -9,9 +9,22 @@ net:api          Transport, DeliveryChannel, SessionId, NetId, PacketWriter, Pac
                  PacketFormat, PacketOpcodeRegistry, NetViolation, ViolationSink
 net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing & backpressure),
                  GameServerHost (fixed-rate tick loop, MessageRouter, GameFeature, SaveScheduler)
+net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
+                 WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page
 ```
 
-`:awake:net` is a pure container directory (`:awake:net:api` and `:awake:net:server-ktor`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor` and `:awake:net:client-browser`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+
+## Browser client (`:awake:net:client-browser`)
+
+On wasmJs, `connectBrowserSocket(url)` opens the browser's own `WebSocket` (binary messages, one per
+packet, so the Ktor server transport needs no change) and returns a `BrowserSocketTransport`, a
+`DirectTransport` from `:awake:net:api`. By default the socket runs in a dedicated Web Worker, so a
+frame that holds the page's thread delays neither when a reply is stamped nor what `bufferedAmount`
+reads. The worker's script ships in the klib as `awake-net/socket-worker.js`; apply the
+`com.awakekt.awake.plugin.socket-worker` Gradle plugin to the web app so its page serves it. Without
+it, or in a browser without `Worker`, the socket falls back to the page and says so once. The
+[web networking guide](../../website/docs/guides/web-networking.md) says what runs where.
 
 ---
 

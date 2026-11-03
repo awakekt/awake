@@ -140,6 +140,13 @@ To check, open `basis/basis_transcoder.js` from the running page: it must be Jav
 404 page. Without the files the app still runs, logs "No Basis Universal transcoder" once with the
 path it tried, and loads each texture's mobile file or source image instead.
 
+## Ship the socket worker
+
+A game that talks to its server with `awake:net:client-browser` runs its `WebSocket` in a Web Worker
+from `awake-net/socket-worker.js`. Apply `com.awakekt.awake.plugin.socket-worker` to your web module
+the same way and the page serves it; without it the socket runs on the page. See
+[Networking in the browser](../guides/web-networking.md).
+
 ## Run it
 
 ```bash

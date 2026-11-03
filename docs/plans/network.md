@@ -68,6 +68,7 @@ backend + ECS bridge):
 | --- | --- | --- |
 | `:awake:net:api` | `Transport`, `Channel`, `ConnectionState`, `NetworkClock`, `SnapshotCodec`, `NetId`. Pure Kotlin. | `:awake:core:math`, kotlinx-coroutines. **No Ktor.** |
 | `:awake:net:ktor` | Ktor WebSocket client/server transport. | `:awake:net:api`, ktor |
+| `:awake:net:client-browser` | Browser `WebSocket` client (wasmJs) as a `DirectTransport`, its socket in a dedicated Web Worker or on the page (#1280; [guide](../../website/docs/guides/web-networking.md)). | `:awake:net:api`. **No Ktor.** |
 | `:awake:net:udp` (later) | `ktor-network` datagram transport, non-web targets only. | `:awake:net:api` |
 | `:awake:scene:net` | ECS systems: replication apply, interpolation buffer, prediction/reconciliation, `NetTransform`/`NetOwner` components. | `:awake:net:api`, `:awake:ecs`, `:awake:scene:scene-core` |
 
