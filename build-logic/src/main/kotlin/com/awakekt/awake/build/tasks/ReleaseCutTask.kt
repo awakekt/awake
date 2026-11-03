@@ -36,7 +36,8 @@ abstract class ReleaseCutTask : DefaultTask() {
         val root = project.rootProject.projectDir
         val propertiesFile = File(root, versionFile)
         val current = versionKey?.let { readCurrentVersion(propertiesFile, it) }
-        val version = nextReleaseVersion(channel, bump) { pattern ->
+        val explicitVersion = option("release.version")
+        val version = explicitVersion?.removePrefix("v") ?: nextReleaseVersion(channel, bump) { pattern ->
             current?.let { "v$it" } ?: latestTag(root, pattern)
         }
         val tag = "v$version"
