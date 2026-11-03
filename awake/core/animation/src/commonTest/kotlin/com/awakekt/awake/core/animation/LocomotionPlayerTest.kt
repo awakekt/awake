@@ -1,0 +1,161 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.core.animation
+
+import com.awakekt.awake.core.math.Quat
+import com.awakekt.awake.core.math.Vec3f
+import kotlin.math.exp
+import kotlin.math.sqrt
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/** Locomotion is usable with only core animation/math, with no world or scene on its classpath. */
+class LocomotionPlayerTest {
+    @Test
+    fun standaloneLocomotionSelectsIdleWalkRunAndStopsWithoutWalkingInPlace() {
+        val mover = Mover()
+        assertNull(mover.motion.playing, "the first position is only an observation")
+        assertEquals("idle", mover.stand())
+        assertEquals("walk", mover.move(2f))
+        assertEquals("run", mover.move(6f))
+        val stopping = List(30) { mover.step(0f) }
+        assertEquals(listOf("run", "idle"), stopping.filterIndexed { i, value -> i == 0 || value != stopping[i - 1] })
+        assertEquals(0f, mover.motion.groundSpeed)
+    }
+
+    @Test
+    fun extractedDampingMatchesThePreviousExponentialForVariableFrameSteps() {
+        val mover = Mover()
+        var expected = 0f
+        val rates = floatArrayOf(1f / 30f, 1f / 60f, 1f / 120f, 1f / 240f, 0.267f)
+        repeat(100) { step ->
+            val dt = rates[step % rates.size]
+            val speed = if (step % 3 == 0) 6f else 2.57f
+            val oldX = mover.x
+            mover.step(speed, dt = dt)
+            // Use actual measured displacement, just as the previous scene implementation did.
+            val dx = mover.x - oldX
+            val measured = sqrt(dx * dx) / dt
+            expected += (measured - expected) * (1f - exp(-dt / 0.1f))
+            assertEquals(expected, mover.motion.groundSpeed, 2e-5f, "step $step")
+        }
+    }
+
+    @Test
+    fun speedSmoothingIsIndependentOfFrameRate() {
+        val results = listOf(30, 60, 120, 240).map { fps ->
+            val mover = Mover()
+            repeat(fps / 2) { mover.step(6f, dt = 1f / fps) }
+            assertEquals("run", mover.motion.playing)
+            mover.motion.groundSpeed
+        }
+        results.forEach { assertEquals(results.first(), it, 5e-5f) }
+    }
+
+    @Test
+    fun aTeleportPreservesTheWalkAndReferenceSpeedPlayback() {
+        val mover = Mover(CONFIG.copy(walkReferenceSpeed = 2f, runReferenceSpeed = 6f))
+        mover.move(2f)
+        val speed = mover.motion.groundSpeed
+        mover.x += 50f
+        mover.motion.update(mover.player, mover.x, 0f, 0f, DT)
+        assertEquals("walk", mover.motion.playing)
+        assertEquals(speed, mover.motion.groundSpeed)
+        assertEquals(speed / 2f, mover.player.speed)
+        assertEquals("walk", mover.step(2f))
+    }
+
+    @Test
+    fun suppliedGroundContactDrivesPhasesAndLandingCanBeInterruptedByMovement() {
+        val mover = Mover(CONFIG.copy(takeOff = "takeoff", fall = "fall", land = "land"))
+        mover.stand()
+        assertEquals("takeoff", mover.step(0f, dy = 0.1f, grounded = false))
+        assertTrue(mover.motion.playingOnce)
+        repeat(20) { mover.step(0f, dy = 0.1f, grounded = false) }
+        assertEquals("jump", mover.motion.playing)
+        assertEquals("fall", mover.step(0f, dy = -0.1f, grounded = false))
+        assertEquals("land", mover.step(0f, dy = -0.001f, grounded = true))
+        assertTrue(mover.motion.playingOnce)
+        assertEquals("walk", List(4) { mover.step(2f, grounded = true) }.last())
+        assertFalse(mover.motion.playingOnce)
+    }
+
+    @Test
+    fun unknownGroundContactInfersTheJumpFromVerticalMotion() {
+        val mover = Mover()
+        mover.stand()
+        assertEquals("jump", mover.step(0f, dy = 0.1f))
+        repeat(30) { mover.step(0f) }
+        assertEquals("idle", mover.motion.playing)
+    }
+
+    @Test
+    fun missingClipsPreservePlaybackAndInvalidStepsDoNotChangeMotionState() {
+        val mover = Mover(CONFIG.copy(run = "missing"))
+        mover.move(2f)
+        assertEquals("walk", mover.move(6f))
+        val speed = mover.motion.groundSpeed
+        mover.motion.update(mover.player, 100f, 100f, 100f, 0f)
+        mover.motion.update(mover.player, 100f, 100f, 100f, -DT)
+        assertEquals(speed, mover.motion.groundSpeed)
+        assertEquals("walk", mover.motion.playing)
+    }
+
+    @Test
+    fun theDocumentedStandaloneLoopRunsWithoutAScene() {
+        val playback = player()
+        val mover = AnimatedMover(playback)
+        mover.frame(0f, 0f, 0f, DT, true)
+        repeat(60) { frame -> mover.frame((frame + 1) * 2f * DT, 0f, 0f, DT, true) }
+        assertEquals("walk", playback.activeClipId)
+        assertEquals(1f, playback.speed, 1e-3f)
+    }
+
+    private class Mover(config: LocomotionConfig = CONFIG) {
+        val player = player()
+        val motion = LocomotionPlayer(config)
+        var x = 0f
+        private var y = 0f
+
+        init {
+            motion.update(player, x, y, 0f, DT)
+        }
+
+        fun step(speed: Float, dy: Float = 0f, dt: Float = DT, grounded: Boolean? = null): String? {
+            x += speed * dt
+            y += dy
+            motion.update(player, x, y, 0f, dt, grounded)
+            player.advance(dt)
+            return motion.playing
+        }
+
+        fun move(speed: Float): String? {
+            repeat(60) { step(speed) }
+            return motion.playing
+        }
+
+        fun stand(): String? {
+            repeat(30) { step(0f) }
+            return motion.playing
+        }
+    }
+
+    private companion object {
+        const val DT = 1f / 60f
+        val CONFIG = LocomotionConfig(idle = "idle", walk = "walk", run = "run", jump = "jump", walkAbove = 0.5f)
+
+        fun player(): AnimationPlayer {
+            val skeleton = Skeleton(listOf(Bone(Vec3f(), Quat(), Vec3f(1f, 1f, 1f), null, emptyList())), listOf(0))
+            val clips = listOf("idle", "walk", "run", "jump", "takeoff", "fall", "land").associateWith { name ->
+                AnimationClip(name, listOf(AnimationChannel(0, AnimationProperty.Translation, AnimationSampler(floatArrayOf(0f, 0.25f), FloatArray(6), 3))))
+            }
+            return AnimationPlayer(AnimationLibrary(skeleton, clips))
+        }
+    }
+}

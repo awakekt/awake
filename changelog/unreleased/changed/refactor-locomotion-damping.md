@@ -1,0 +1,1 @@
+- Extracted position-driven locomotion playback into `core:animation` as `LocomotionPlayer` and `LocomotionConfig`, keeping the scene API and saved format; ground-speed smoothing now uses the shared damping helper with equivalent timing.
