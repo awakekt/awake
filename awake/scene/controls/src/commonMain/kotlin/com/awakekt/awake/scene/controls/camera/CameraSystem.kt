@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.controls.camera
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.damp
+import com.awakekt.awake.core.math.halfLifeForRate
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.ecs.System
@@ -18,7 +20,6 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.exp
 import kotlin.math.sin
 
 /**
@@ -229,7 +230,7 @@ class CameraSystem(
                 core.center.set(pivot)
                 forwardFrom(config.yaw, config.pitch, forward)
                 desiredEye.set(core.center).sub(forward.scale(config.distance))
-                core.eye.lerp(desiredEye, (1f - exp(-SMOOTHING * delta)).coerceIn(0f, 1f))
+                core.eye.damp(desiredEye, SMOOTHING_HALF_LIFE, delta)
             }
 
             CameraMode.FreeFly -> {
@@ -271,8 +272,10 @@ class CameraSystem(
         const val CINEMATIC_OFFSET = 10f
         const val CINEMATIC_HEIGHT = 5f
 
-        // Exponential easing rate for the third-person eye pose.
+        // Exponential easing rate for the third-person eye pose, per second, and the half-life it
+        // amounts to (about 0.069 s): the same easing as `lerp(eye, desired, 1 - exp(-10 * delta))`.
         const val SMOOTHING = 10f
+        val SMOOTHING_HALF_LIFE = halfLifeForRate(SMOOTHING)
 
         const val FAST_FLY = 4f
     }
