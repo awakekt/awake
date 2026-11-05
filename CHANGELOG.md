@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0-rc.3] - 2026-11-05
+
+### Fixed
+
+- Keep changing UI geometry up to date when staging arrays are reused across frame-in-flight slots; retained immutable runs still skip redundant uploads.
+
 ## [0.38.0-rc.2] - 2026-11-04
 
 ### Added

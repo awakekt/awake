@@ -1,1 +1,0 @@
-- Keep changing UI geometry up to date when staging arrays are reused across frame-in-flight slots; retained immutable runs still skip redundant uploads.
