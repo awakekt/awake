@@ -9,6 +9,7 @@ package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.BorderSides
 import com.awakekt.awake.compose.foundation.clickable
+import com.awakekt.awake.compose.foundation.focusable
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
+import com.awakekt.awake.compose.ui.input.key.onKeyEvent
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
@@ -242,9 +244,8 @@ private fun ToggleGroupItem(
     TooltipIf(!labelled, item.label) {
         Box(
             sizingModifier
-                .hoverable(interaction, enabled = item.enabled)
-                .clickable(interaction) {
-                    if (item.enabled) onSelectedChange(selected.toggling(item.value, selection))
+                .toggleItemInteractive(item.enabled, interaction) {
+                    onSelectedChange(selected.toggling(item.value, selection))
                 }
                 .styleable(styleState, borderSides, style)
                 .semantics {
@@ -271,6 +272,22 @@ private fun ToggleGroupItem(
         }
     }
 }
+
+private fun Modifier.toggleItemInteractive(
+    enabled: Boolean,
+    interaction: InteractionSource,
+    onActivate: () -> Unit,
+): Modifier = hoverable(interaction, enabled = enabled)
+    .let { if (enabled) it.clickable(interaction) { onActivate() } else it }
+    .focusable(enabled = enabled, interactionSource = interaction)
+    .onKeyEvent { event ->
+        if (enabled && isButtonActivationKey(event)) {
+            onActivate()
+            true
+        } else {
+            false
+        }
+    }
 
 /**
  * [content] with a tooltip, or plainly when [enabled] is false.
