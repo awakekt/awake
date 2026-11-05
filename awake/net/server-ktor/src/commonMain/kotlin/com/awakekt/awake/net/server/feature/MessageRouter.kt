@@ -11,37 +11,34 @@ import kotlin.reflect.KClass
  * High-performance, O(1) typed message dispatcher that routes incoming messages directly to registered lambdas
  * without allocation or central `when` branches.
  *
- * @param P The player or session representation.
- * @param M The base message type.
+ * Delegates internally to the multiplatform [com.awakekt.awake.net.MessageRouter] in `:awake:net:api` while
+ * preserving the server feature binary signature.
  */
-@Suppress("OutdatedDocumentation")
 class MessageRouter<P, M : Any> private constructor(
-    private val handlers: Map<KClass<out M>, (P, M) -> Unit>,
+    handlers: Map<KClass<out M>, (P, M) -> Unit>,
 ) {
+    private val delegate = com.awakekt.awake.net.MessageRouter.from(handlers)
+
     /** Set of message classes handled by this router. */
-    val handledTypes: Set<KClass<out M>> get() = handlers.keys
+    val handledTypes: Set<KClass<out M>> get() = delegate.handledTypes
 
     /** Whether this router has a handler registered for the runtime class of [message]. */
-    fun handles(message: M): Boolean = handlers.containsKey(message::class)
+    fun handles(message: M): Boolean = delegate.handles(message)
 
     /** Whether this router has a handler registered for [messageClass]. */
-    fun handles(messageClass: KClass<out M>): Boolean = handlers.containsKey(messageClass)
+    fun handles(messageClass: KClass<out M>): Boolean = delegate.handles(messageClass)
 
     /**
-     * Routes [message] to its registered handler for [player].
-     *
-     * @return `true` if a handler was found and executed; `false` otherwise.
+     * Routes [message] to its registered handler for [player], returning `true` if a handler was found
+     * and executed or `false` otherwise.
      */
-    fun route(player: P, message: M): Boolean {
-        val handler = handlers[message::class] ?: return false
-        handler(player, message)
-        return true
-    }
+    fun route(player: P, message: M): Boolean = delegate.route(player, message)
 
+    /** Factory methods for constructing [MessageRouter] instances. */
     companion object {
         /** Creates a [MessageRouter] from an immutable copy of [handlers]. */
         fun <P, M : Any> from(handlers: Map<KClass<out M>, (P, M) -> Unit>): MessageRouter<P, M> =
-            MessageRouter(HashMap(handlers))
+            MessageRouter(handlers)
 
         /** Creates an empty [MessageRouter]. */
         fun <P, M : Any> empty(): MessageRouter<P, M> = MessageRouter(emptyMap())
