@@ -71,7 +71,11 @@ class CharacterControllerSystem(
             }
             if (liftOutOfTerrain(world, body)) character.verticalVelocity = 0f
             transform.position.set(body.position)
-            world.get<GroundContact>(entity)?.grounded = character.isGrounded && character.verticalVelocity <= 0f
+            world.get<GroundContact>(entity)?.let { contact ->
+                val isFree = character.motionMode == CharacterMotionMode.Free
+                contact.freeMotion = isFree
+                contact.grounded = !isFree && character.isGrounded && character.verticalVelocity <= 0f
+            }
             if (character.motionMode == CharacterMotionMode.Grounded) intent?.turnToward(transform, moveX, moveZ, delta)
             character.record(transform)
         }

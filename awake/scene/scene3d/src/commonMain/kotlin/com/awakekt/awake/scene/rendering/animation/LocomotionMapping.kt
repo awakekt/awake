@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.animation
 
+import com.awakekt.awake.core.animation.FreeLocomotionConfig
 import com.awakekt.awake.core.animation.LocomotionConfig
 
 /** All authored locomotion options cross the scene/capability boundary here. */
@@ -22,4 +23,20 @@ internal fun SceneLocomotionAnimation.toLocomotionConfig(): LocomotionConfig = L
     crossFade = crossFade,
     walkReferenceSpeed = walkReferenceSpeed,
     runReferenceSpeed = runReferenceSpeed,
+    free = free?.toFreeLocomotionConfig(),
+)
+
+/** Maps authored 3D free-motion locomotion options to the scene-independent capability config. */
+internal fun SceneFreeLocomotionAnimation.toFreeLocomotionConfig(): FreeLocomotionConfig = FreeLocomotionConfig(
+    idle = idle,
+    move = move,
+    fast = fast,
+    ascend = ascend,
+    descend = descend,
+    moveAbove = moveAbove,
+    fastAbove = fastAbove,
+    verticalAbove = verticalAbove,
+    crossFade = crossFade,
+    moveReferenceSpeed = moveReferenceSpeed,
+    fastReferenceSpeed = fastReferenceSpeed,
 )

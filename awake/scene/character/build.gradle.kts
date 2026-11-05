@@ -28,6 +28,7 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":awake:core:animation"))
             implementation(project(":awake:scene:runtime"))
             implementation(project(":awake:backend:jolt"))
         }

@@ -168,15 +168,51 @@ public final class com/awakekt/awake/core/animation/FrameClipPlayer {
 	public final fun setSpeed (F)V
 }
 
+public final class com/awakekt/awake/core/animation/FreeLocomotionConfig {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/Float;
+	public final fun component11 ()Ljava/lang/Float;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()Ljava/lang/Float;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFLjava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAscend ()Ljava/lang/String;
+	public final fun getCrossFade ()Ljava/lang/Float;
+	public final fun getDescend ()Ljava/lang/String;
+	public final fun getFast ()Ljava/lang/String;
+	public final fun getFastAbove ()F
+	public final fun getFastReferenceSpeed ()Ljava/lang/Float;
+	public final fun getIdle ()Ljava/lang/String;
+	public final fun getMove ()Ljava/lang/String;
+	public final fun getMoveAbove ()F
+	public final fun getMoveReferenceSpeed ()Ljava/lang/Float;
+	public final fun getVerticalAbove ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/animation/LocomotionConfig {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()F
 	public final fun component11 ()F
 	public final fun component12 ()Ljava/lang/Float;
 	public final fun component13 ()Ljava/lang/Float;
+	public final fun component14 ()Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
@@ -185,12 +221,15 @@ public final class com/awakekt/awake/core/animation/LocomotionConfig {
 	public final fun component7 ()Ljava/lang/String;
 	public final fun component8 ()F
 	public final fun component9 ()F
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/core/animation/LocomotionConfig;
+	public final synthetic fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/core/animation/LocomotionConfig;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;)Lcom/awakekt/awake/core/animation/LocomotionConfig;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/core/animation/LocomotionConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/core/animation/LocomotionConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/animation/LocomotionConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFLjava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;ILjava/lang/Object;)Lcom/awakekt/awake/core/animation/LocomotionConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAirborneAbove ()F
 	public final fun getCrossFade ()F
 	public final fun getFall ()Ljava/lang/String;
+	public final fun getFree ()Lcom/awakekt/awake/core/animation/FreeLocomotionConfig;
 	public final fun getIdle ()Ljava/lang/String;
 	public final fun getJump ()Ljava/lang/String;
 	public final fun getLand ()Ljava/lang/String;
@@ -213,8 +252,11 @@ public final class com/awakekt/awake/core/animation/LocomotionPlayer {
 	public final fun getGroundSpeed ()F
 	public final fun getPlaying ()Ljava/lang/String;
 	public final fun getPlayingOnce ()Z
-	public final fun update (Lcom/awakekt/awake/core/animation/AnimationPlayer;FFFFLjava/lang/Boolean;)V
+	public final fun getSpeed ()F
+	public final synthetic fun update (Lcom/awakekt/awake/core/animation/AnimationPlayer;FFFFLjava/lang/Boolean;)V
+	public final fun update (Lcom/awakekt/awake/core/animation/AnimationPlayer;FFFFLjava/lang/Boolean;Z)V
 	public static synthetic fun update$default (Lcom/awakekt/awake/core/animation/LocomotionPlayer;Lcom/awakekt/awake/core/animation/AnimationPlayer;FFFFLjava/lang/Boolean;ILjava/lang/Object;)V
+	public static synthetic fun update$default (Lcom/awakekt/awake/core/animation/LocomotionPlayer;Lcom/awakekt/awake/core/animation/AnimationPlayer;FFFFLjava/lang/Boolean;ZILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/animation/Skeleton {

@@ -5,6 +5,17 @@
  */
 package com.awakekt.awake.scene.character
 
+import com.awakekt.awake.core.animation.AnimationChannel
+import com.awakekt.awake.core.animation.AnimationClip
+import com.awakekt.awake.core.animation.AnimationLibrary
+import com.awakekt.awake.core.animation.AnimationPlayer
+import com.awakekt.awake.core.animation.AnimationProperty
+import com.awakekt.awake.core.animation.AnimationSampler
+import com.awakekt.awake.core.animation.Bone
+import com.awakekt.awake.core.animation.Skeleton
+import com.awakekt.awake.core.animation.Skin
+import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
@@ -22,9 +33,17 @@ import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.physics.registerPhysics
+import com.awakekt.awake.scene.rendering.animation.AnimationSystem
+import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.rendering.animation.LocomotionAnimation
+import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
+import com.awakekt.awake.scene.rendering.animation.SceneFreeLocomotionAnimation
+import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
+import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -209,6 +228,110 @@ class CharacterControllerTest {
         assertTrue(arena.simulates(assertNotNull(arena.character.controller?.body)), "and the new one has its own")
     }
 
+    @Test
+    fun groundContactTracksFreeMotionTransitions() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+        assertTrue(arena.ground.grounded)
+        assertFalse(arena.ground.freeMotion)
+
+        // Switching from standing on the floor to Free sets freeMotion = true and grounded = false.
+        arena.character.motionMode = CharacterMotionMode.Free
+        arena.run(1)
+        assertTrue(arena.ground.freeMotion)
+        assertFalse(arena.ground.grounded)
+
+        // Flying upward, horizontally, and descending back onto the floor keeps freeMotion = true and grounded = false.
+        arena.intent.moveY = 2f
+        arena.run(STEPS / 4)
+        assertTrue(arena.ground.freeMotion)
+        assertFalse(arena.ground.grounded)
+
+        arena.intent.moveX = 3f
+        arena.intent.moveY = 0f
+        arena.intent.moveZ = 1f
+        arena.run(STEPS / 4)
+        assertTrue(arena.ground.freeMotion)
+        assertFalse(arena.ground.grounded)
+
+        arena.intent.moveX = 0f
+        arena.intent.moveY = -3f
+        arena.intent.moveZ = 0f
+        arena.run(STEPS / 2)
+        arena.intent.moveY = 0f
+        arena.run(1)
+        assertEquals(1f, arena.position.y, GROUND_TOLERANCE)
+        assertTrue(arena.ground.freeMotion)
+        assertFalse(arena.ground.grounded)
+
+        // Returning to Grounded on the floor restores freeMotion = false and grounded = true.
+        arena.character.motionMode = CharacterMotionMode.Grounded
+        arena.run(1)
+        assertFalse(arena.ground.freeMotion)
+        assertTrue(arena.ground.grounded)
+    }
+
+    @Test
+    fun aChildRigFollowsGroundedAndFreeMotionWithoutMisfiringTakeOffOrLand() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+        arena.intent.driver = MovementDriver.Agent
+        val rig = RigHarness(arena)
+
+        // 1. Standing and walking in Grounded mode play "stand" and "walk".
+        rig.step(30)
+        assertEquals("stand", rig.playing)
+        assertEquals("stand", rig.activeClipId)
+
+        rig.move(x = 0.5f, steps = 25)
+        assertEquals("walk", rig.playing)
+        assertEquals("walk", rig.activeClipId)
+
+        rig.move(steps = 30)
+        assertEquals("stand", rig.playing)
+
+        // 2. Switching to Free updates GroundContact and drives "hover", "glide", and "boost" across 3D intent without "takeoff" or "land".
+        arena.character.motionMode = CharacterMotionMode.Free
+        val enterFree = rig.step(1)
+        assertTrue(arena.ground.freeMotion)
+        assertFalse(arena.ground.grounded)
+        assertEquals(listOf("hover"), enterFree)
+
+        val freeClimb = rig.move(y = 2f, steps = 25)
+        assertEquals("glide", rig.playing)
+        assertFalse("takeoff" in freeClimb || "land" in freeClimb, "free climb must never fire takeoff or land: $freeClimb")
+
+        val freeBoost = rig.move(x = 3f, y = 3f, z = 2f, steps = 25)
+        assertEquals("boost", rig.playing)
+        assertFalse("takeoff" in freeBoost || "land" in freeBoost, "free boost must never fire takeoff or land: $freeBoost")
+
+        // 3. Returning to the floor in Free and switching back to Grounded transitions cleanly without "takeoff" or "land".
+        rig.move(y = -4f, steps = 60)
+        rig.move(steps = 30)
+        assertEquals("hover", rig.playing)
+        assertEquals(1f, arena.position.y, GROUND_TOLERANCE)
+
+        arena.character.motionMode = CharacterMotionMode.Grounded
+        val exitFreeOnFloor = rig.step(5)
+        assertFalse(arena.ground.freeMotion)
+        assertTrue(arena.ground.grounded)
+        assertEquals("stand", rig.playing)
+        assertFalse("takeoff" in exitFreeOnFloor || "land" in exitFreeOnFloor, "mode switch on floor must not fire takeoff or land: $exitFreeOnFloor")
+
+        // 4. Hovering above the floor in Free and switching back to Grounded updates freeMotion = false without firing "takeoff" or "land" on the toggle.
+        arena.character.motionMode = CharacterMotionMode.Free
+        rig.move(y = 3f, steps = 30)
+        rig.move(steps = 30)
+        assertEquals("hover", rig.playing)
+        assertTrue(arena.position.y > 2f)
+
+        arena.character.motionMode = CharacterMotionMode.Grounded
+        val exitFreeMidAir = rig.step(1).single()
+        assertFalse(arena.ground.freeMotion)
+        assertFalse(arena.ground.grounded)
+        assertEquals("fall", exitFreeMidAir, "leaving free motion in mid-air enters fall without firing takeoff or land")
+    }
+
     private suspend fun arena(jumpSpeed: Float): Arena {
         val world = World()
         SceneLoader.decode(scene(jumpSpeed)).instantiate(world = world, componentRegistry = registry)
@@ -261,6 +384,58 @@ class CharacterControllerTest {
         }
     }
 
+    private class RigHarness(private val arena: Arena) {
+        private val transforms = TransformSystem()
+        private val locomotionSystem = LocomotionAnimationSystem()
+        private val animationSystem = AnimationSystem()
+        private val player = AnimationPlayer(
+            AnimationLibrary(
+                skeleton = Skeleton(bones = listOf(Bone(Vec3f.ZERO, Quat(), Vec3f(1f, 1f, 1f), null, emptyList())), roots = listOf(0)),
+                clips = RIG_CLIPS.mapValues { (name, seconds) ->
+                    AnimationClip(name, listOf(AnimationChannel(0, AnimationProperty.Translation, AnimationSampler(floatArrayOf(0f, seconds), FloatArray(6), 3))))
+                },
+            ),
+        )
+        private val locomotion = LocomotionAnimation(
+            SceneLocomotionAnimation(
+                idle = "stand",
+                walk = "walk",
+                run = "run",
+                jump = "rise",
+                takeOff = "takeoff",
+                fall = "fall",
+                land = "land",
+                free = SceneFreeLocomotionAnimation(idle = "hover", move = "glide", fast = "boost"),
+            ),
+        )
+
+        init {
+            val rig = arena.world.create()
+            arena.world.add(rig, Transform(parent = arena.player))
+            arena.world.add(rig, Animator(player, Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))))
+            arena.world.add(rig, SkinnedPose(FloatArray(16)))
+            arena.world.add(rig, locomotion)
+        }
+
+        val playing: String? get() = locomotion.playing
+        val activeClipId: String? get() = player.activeClipId
+
+        fun step(count: Int): List<String?> = List(count) {
+            arena.run(1)
+            transforms.update(arena.world, DELTA)
+            locomotionSystem.update(arena.world, DELTA)
+            animationSystem.update(arena.world, DELTA)
+            locomotion.playing
+        }
+
+        fun move(x: Float = 0f, y: Float = 0f, z: Float = 0f, steps: Int): List<String?> {
+            arena.intent.moveX = x
+            arena.intent.moveY = y
+            arena.intent.moveZ = z
+            return step(steps)
+        }
+    }
+
     private fun World.named(name: String): Entity {
         var found: Entity? = null
         queryEach(Name::class) { entity, value -> if (value.value == name) found = entity }
@@ -290,5 +465,18 @@ class CharacterControllerTest {
 
         /** How much farther the longest frame's move may be than the shortest's. */
         const val EVEN_FRAMES = 1.5f
+
+        val RIG_CLIPS = mapOf(
+            "stand" to 1f,
+            "walk" to 1f,
+            "run" to 1f,
+            "rise" to 0.3f,
+            "takeoff" to 0.25f,
+            "fall" to 0.4f,
+            "land" to 0.4f,
+            "hover" to 1f,
+            "glide" to 1f,
+            "boost" to 1f,
+        )
     }
 }

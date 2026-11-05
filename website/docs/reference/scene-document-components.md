@@ -758,19 +758,21 @@ A directional or point light. `SceneLight`.
 
 ## `locomotion_animation`
 
-Plays a skinned model's clip for how its entity moves: idle, walking, running and jumping. `SceneLocomotionAnimation`.
+Plays a skinned model's clip for how its entity moves: idle, walking, running, jumping, and optional 3D free motion. `SceneLocomotionAnimation`.
 
-The scene component maps every field below to `core:animation`'s `LocomotionConfig`.
+The scene component maps every field below to `core:animation`'s `LocomotionConfig` and `FreeLocomotionConfig`.
 `LocomotionPlayer` owns the scene-independent movement measurement, clip phases and playback rate;
-`LocomotionAnimationSystem` supplies world position and ground contact. Ground-speed smoothing
-uses `damp` with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
+`LocomotionAnimationSystem` supplies world position, ground contact, and free-motion state. Ground-speed and 3D-speed smoothing
+use `damp` with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
 finite and satisfy the ranges below; scene validation rejects invalid settings before loading.
 
 Speeds are measured from the entity's world position, so it animates however the entity is moved,
 and a model on a child node animates with it. Clip names are the model's own animations; a clip
 left out, or one the model lacks, keeps whatever already plays. With a `character_controller` on the
-entity or above it, the jump clips follow its ground contact. Otherwise a jump ends when the fall
-stops, so `airborneAbove` must exceed the vertical speed of running up the steepest walkable slope.
+entity or above it, the jump clips follow its ground contact, and `CharacterMotionMode.Free` switches
+playback to `free` (or reuses `idle`, `walk` and `run` against 3D speed) without firing `takeOff` or
+`land`. Otherwise a jump ends when the fall stops, so `airborneAbove` must exceed the vertical speed
+of running up the steepest walkable slope.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
@@ -787,6 +789,23 @@ stops, so `airborneAbove` must exceed the vertical speed of running up the steep
 | `crossFade` | number | `0.15` | Seconds each clip change blends over. Not negative. |
 | `walkReferenceSpeed` | number | none | Ground speed the walk cycle was authored for; set it to scale playback so the stride matches travel. Greater than 0. |
 | `runReferenceSpeed` | number | none | Ground speed the run cycle was authored for; set it to scale playback so the stride matches travel. Greater than 0. |
+| `free` | object | none | Optional 3D free-motion clips and speed thresholds (`SceneFreeLocomotionAnimation`), described below; none reuses `idle`, `walk` and `run` against 3D travel speed while in free motion. |
+
+`free` is a `SceneFreeLocomotionAnimation` object used while `GroundContact.freeMotion` is `true`:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `idle` | string | none | Clip while hovering or stationary in 3D space. |
+| `move` | string | none | Clip above `moveAbove` 3D travel speed when neither `fast`, `ascend` nor `descend` applies. |
+| `fast` | string | none | Clip above `fastAbove` 3D travel speed. |
+| `ascend` | string | none | Clip while climbing faster than `verticalAbove` and at least as fast vertically as horizontally. |
+| `descend` | string | none | Clip while descending faster than `verticalAbove` downward and at least as fast vertically as horizontally. |
+| `moveAbove` | number | `0.1` | 3D travel speed that starts `move`. Not negative. |
+| `fastAbove` | number | `4` | 3D travel speed that starts `fast`; at least `moveAbove`. Not negative. |
+| `verticalAbove` | number | `0.5` | Vertical speed magnitude above which `ascend` or `descend` can apply. Greater than 0. |
+| `crossFade` | number | none | Seconds each clip change blends over while in free motion; none uses `locomotion_animation.crossFade`. Not negative. |
+| `moveReferenceSpeed` | number | none | 3D speed the `move` cycle was authored for; set it to scale playback to 3D travel. Greater than 0. |
+| `fastReferenceSpeed` | number | none | 3D speed the `fast` cycle was authored for; set it to scale playback to 3D travel. Greater than 0. |
 
 ## `mesh_renderer`
 

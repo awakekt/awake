@@ -23,6 +23,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
+import com.awakekt.awake.scene.rendering.animation.SceneFreeLocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -234,6 +235,84 @@ class LocomotionAnimationTest {
         assertEquals("walk", walker.after(dx = 6f * STEP, dy = 0f))
     }
 
+    /** A parent node's free-motion contact drives hover, glide, boost, ascend and descend from 3D travel. */
+    @Test
+    fun aFreeMotionContactOnTheParentDrivesThreeDimensionalClips() {
+        val walker = Walker(FREE_PHASES, ground = GroundContact(grounded = false, freeMotion = true))
+
+        assertEquals("hover", walker.standStill())
+        assertFalse(walker.playsOnce, "hover loops")
+
+        // Shallow horizontal glide selects "glide" and scales playback by 3D speed / moveReferenceSpeed (3f).
+        repeat(SETTLE_FRAMES) { walker.after(dx = 2.4f * STEP, dy = 0.6f * STEP) }
+        assertEquals("glide", walker.playing)
+        assertFalse(walker.playsOnce, "glide loops")
+        assertEquals(walker.speed / 3f, walker.player.speed, 1e-4f)
+
+        // Steep vertical climb and dive select "ascend" and "descend" at authored rate 1f.
+        repeat(SETTLE_FRAMES) { walker.after(dx = 0.5f * STEP, dy = 2f * STEP) }
+        assertEquals("ascend", walker.playing)
+        assertEquals(1f, walker.player.speed, 1e-5f)
+
+        repeat(SETTLE_FRAMES) { walker.after(dx = 0.5f * STEP, dy = -2f * STEP) }
+        assertEquals("descend", walker.playing)
+        assertEquals(1f, walker.player.speed, 1e-5f)
+
+        // Diagonal XYZ travel whose 3D speed (5 u/s) exceeds fastAbove (4 u/s) while planar speed (3 u/s) does not.
+        repeat(SETTLE_FRAMES) { walker.after(dx = 1.8f * STEP, dy = 4f * STEP, dz = 2.4f * STEP) }
+        assertEquals("boost", walker.playing)
+        assertEquals(walker.speed / 8f, walker.player.speed, 1e-4f)
+    }
+
+    /** A 3D teleport in free motion neither spikes into boost/ascend nor races speed-matched playback. */
+    @Test
+    fun aThreeDimensionalTeleportInFreeMotionIsIgnored() {
+        val walker = Walker(FREE_PHASES, ground = GroundContact(grounded = false, freeMotion = true))
+        walker.standStill()
+        repeat(SETTLE_FRAMES) { walker.after(dx = 2.4f * STEP, dy = 0f) }
+        assertEquals("glide", walker.playing)
+        val settledRate = walker.player.speed
+
+        assertEquals("glide", walker.after(dx = 0f, dy = 50f), "a vertical warp must not switch to boost or ascend")
+        assertEquals(settledRate, walker.player.speed, 1e-5f)
+
+        assertEquals("glide", walker.after(dx = 30f, dy = -30f, dz = 30f), "a diagonal warp must keep glide steady")
+        assertEquals(settledRate, walker.player.speed, 1e-5f)
+    }
+
+    /** Toggling GroundContact.freeMotion on the ground or in mid-air never misfires takeoff or land. */
+    @Test
+    fun switchingBetweenGroundedAndFreeMotionNeverMisfiresTakeOffOrLand() {
+        val contact = GroundContact(grounded = true, freeMotion = false)
+        val walker = Walker(FREE_PHASES, ground = contact)
+        assertEquals("stand", walker.standStill())
+
+        // Grounded on floor -> Free: immediate "hover", never "takeoff".
+        contact.grounded = false
+        contact.freeMotion = true
+        assertEquals("hover", walker.after(dx = 0f, dy = 0f))
+        assertFalse(walker.playsOnce)
+
+        // Free -> Grounded on floor: immediate "stand", never "land".
+        contact.freeMotion = false
+        contact.grounded = true
+        assertEquals("stand", walker.after(dx = 0f, dy = 0f))
+        assertFalse(walker.playsOnce)
+
+        // Free mid-air -> Grounded mid-air: enters airborne pose directly without firing "takeoff", then lands on touchdown.
+        contact.grounded = false
+        contact.freeMotion = true
+        repeat(SETTLE_FRAMES) { walker.after(dx = 0f, dy = 0f) }
+        assertEquals("hover", walker.playing)
+
+        contact.freeMotion = false
+        assertEquals("fall", walker.after(dx = 0f, dy = -2f * STEP), "entering grounded mid-air skips takeoff")
+        assertTrue(walker.playsOnce)
+
+        contact.grounded = true
+        assertEquals("land", walker.after(dx = 0f, dy = -0.001f), "actual touchdown plays land")
+    }
+
     /** One skinned entity with stand, walk, run and jump clips, moved by hand. */
     private class Walker(clips: SceneLocomotionAnimation, val ground: GroundContact? = null, at: Float = 0f) {
         private val world = World()
@@ -264,10 +343,11 @@ class LocomotionAnimationTest {
             system.update(world, STEP)
         }
 
-        /** Moves by ([dx], [dy]) in one frame of [step] seconds, and returns the clip chosen. */
-        fun after(dx: Float, dy: Float, step: Float = STEP): String? {
+        /** Moves by ([dx], [dy], [dz]) in one frame of [step] seconds, and returns the clip chosen. */
+        fun after(dx: Float, dy: Float, dz: Float = 0f, step: Float = STEP): String? {
             transform.position.x += dx
             transform.position.y += dy
+            transform.position.z += dz
             transform.computeLocalMatrix()
             system.update(world, step)
             return locomotion.playing
@@ -279,7 +359,9 @@ class LocomotionAnimationTest {
             return locomotion.playing
         }
 
+        val playing: String? get() = locomotion.playing
         val playsOnce: Boolean get() = locomotion.playingOnce
+        val speed: Float get() = locomotion.runtime.speed
 
         /** Stays put long enough to count as standing, and returns the clip chosen. */
         fun standStill(): String? {
@@ -306,6 +388,11 @@ class LocomotionAnimationTest {
             "rise" to 0.3f,
             "fall" to 0.4f,
             "land" to 0.4f,
+            "hover" to 1f,
+            "glide" to 1f,
+            "boost" to 1f,
+            "ascend" to 1f,
+            "descend" to 1f,
         )
         val PHASES = SceneLocomotionAnimation(
             idle = "stand",
@@ -316,6 +403,20 @@ class LocomotionAnimationTest {
             fall = "fall",
             land = "land",
             walkAbove = 0.5f,
+        )
+        val FREE_PHASES = PHASES.copy(
+            free = SceneFreeLocomotionAnimation(
+                idle = "hover",
+                move = "glide",
+                fast = "boost",
+                ascend = "ascend",
+                descend = "descend",
+                moveAbove = 0.2f,
+                fastAbove = 4f,
+                verticalAbove = 0.5f,
+                moveReferenceSpeed = 3f,
+                fastReferenceSpeed = 8f,
+            ),
         )
         const val TAKE_OFF_FRAMES = 16
         const val STEP = 1f / 60f
