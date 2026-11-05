@@ -339,4 +339,16 @@ private class VulkanUiMeshUploader(
 
     override fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
         renderer.decoratedGlyphMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices) }
+
+    override fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
+        renderer.quadMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices, forceUpload) }
+
+    override fun roundedQuadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
+        renderer.roundedQuadMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices, forceUpload) }
+
+    override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
+        renderer.glyphMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices, forceUpload) }
+
+    override fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
+        renderer.decoratedGlyphMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices, forceUpload) }
 }

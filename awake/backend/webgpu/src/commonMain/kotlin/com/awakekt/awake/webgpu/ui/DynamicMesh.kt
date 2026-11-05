@@ -78,7 +78,10 @@ class DynamicMesh(
      * @param indices Triangle-list indices into [vertices], 32-bit ([indexFormat]). An empty array
      * draws nothing and leaves the buffers untouched.
      */
-    fun update(vertices: FloatArray, indices: IntArray) {
+    fun update(vertices: FloatArray, indices: IntArray) = update(vertices, indices, forceUpload = false)
+
+    /** [update] for reusable staging arrays, whose identity does not imply unchanged contents. */
+    fun update(vertices: FloatArray, indices: IntArray, forceUpload: Boolean) {
         val buffersGrew = growTo(vertexFloats = vertices.size, indexCount = indices.size)
         drawIndexCount = indices.size
         if (indices.isEmpty()) return
@@ -87,7 +90,8 @@ class DynamicMesh(
         // identity check is intentional here: contentEquals scans the complete vertex and index
         // payload in Wasm on every frame, which can cost more than the WebGPU upload it was meant
         // to avoid. Non-retained callers still produce fresh arrays and therefore upload normally.
-        if (!buffersGrew && lastUploadedVertices === vertices && lastUploadedIndices === indices) {
+        val unchanged = lastUploadedVertices === vertices && lastUploadedIndices === indices
+        if (!forceUpload && !buffersGrew && unchanged) {
             return
         }
 

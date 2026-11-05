@@ -5,8 +5,12 @@
  */
 package com.awakekt.awake.vulkan
 
+import com.awakekt.awake.render.passes2d.DynamicRunArrayPool
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.ui.DynamicMesh
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -28,6 +32,35 @@ import kotlin.test.assertTrue
  * N-1 slots are silently undersized.
  */
 class DynamicMeshSlotGrowthTest {
+
+    /** Read actual host-visible GPU memory: the same pooled array returns to each of two frame slots. */
+    @Test
+    fun reusedStagingArraysUploadTheirChangedContentsToEveryFrameSlot() {
+        val device = GraphicsDevice()
+        device.createHeadless()
+        try {
+            val mesh = DynamicMesh(device, maxQuads = 1, framesInFlight = 2)
+            try {
+                val pool = DynamicRunArrayPool()
+                repeat(8) { frame ->
+                    pool.beginFrame()
+                    val data = pool.take(4 * DynamicMesh.FLOATS_PER_VERTEX, 6)
+                    data.vertices[0] = frame.toFloat()
+                    val slot = frame % 2
+                    mesh.update(slot, data.vertices, data.indices, forceUpload = true)
+                    val resources = mesh.javaClass.getDeclaredField("frameResources").also { it.isAccessible = true }.get(mesh) as Array<*>
+                    val resource = resources[slot]!!
+                    val memory = resource.javaClass.getDeclaredField("vertexBufferMemory").also { it.isAccessible = true }.getLong(resource)
+                    val bytes = VulkanBuffers.readBufferMemoryBytes(device.device, memory, 0, Float.SIZE_BYTES)
+                    assertEquals(frame.toFloat(), ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).float, "stale GPU contents in frame slot $slot")
+                }
+            } finally {
+                mesh.destroy()
+            }
+        } finally {
+            device.destroy()
+        }
+    }
 
     @Test
     fun everySlotGrowsForItselfRatherThanTrustingAnotherSlotsCapacity() {

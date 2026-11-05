@@ -71,6 +71,11 @@ class UiRunStagingAllocationProbeTest {
         override fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray) = runIndex
         override fun roundedQuadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray) = runIndex
         override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray) = runIndex
+
+        // Model current backends, which can force a mutable upload without copying its payload.
+        override fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean) = runIndex
+        override fun roundedQuadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean) = runIndex
+        override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean) = runIndex
     }
 
     // Frames are pre-built once, so the measured loop allocates only in staging, never in the

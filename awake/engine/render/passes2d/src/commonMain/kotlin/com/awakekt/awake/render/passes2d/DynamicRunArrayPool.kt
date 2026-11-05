@@ -25,13 +25,12 @@ package com.awakekt.awake.render.passes2d
  * contents changed, that skip would misfire and the changed run would not upload, leaving stale or
  * garbled UI.
  *
- * This pool prevents that with a **generation flip**: it keeps two disjoint generations of buffers
- * and alternates which one it serves every frame ([beginFrame]). Any buffer handed this frame comes
- * from a different generation than last frame's, so it is a different instance than whatever a mesh
- * slot last saw -- a dynamic run therefore always re-uploads correctly. Within a frame the active
- * generation hands out a distinct buffer per [take] call, so two runs never alias. Retained
- * (unchanged) runs keep their own immutable arrays from [RetainedDrawRunCache] and never pass
- * through this pool, so their upload-skip keeps working.
+ * The coalescer marks pooled runs with [StagedDrawRun.requiresUpload], and uploaders force their
+ * upload independently of identity. A generation flip alone cannot guarantee this: a renderer
+ * with two frame-in-flight slots revisits the same generation in each slot, and a mesh slot can
+ * also return after a gap. The two generations here bound allocation; they are not a cache key.
+ * Within a frame each [take] returns a distinct buffer, so two runs never alias. Retained unchanged
+ * runs keep immutable arrays from [RetainedDrawRunCache] and retain their upload-skip optimization.
  *
  * ## First sight of a span
  *

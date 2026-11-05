@@ -7,13 +7,21 @@ public final class com/awakekt/awake/render/passes2d/BackdropBlurWork {
 
 public abstract interface class com/awakekt/awake/render/passes2d/DrawMeshUploader {
 	public fun decoratedGlyphMesh (I[F[I)Ljava/lang/Object;
+	public fun decoratedGlyphMesh (I[F[IZ)Ljava/lang/Object;
 	public abstract fun glyphMesh (I[F[I)Ljava/lang/Object;
+	public fun glyphMesh (I[F[IZ)Ljava/lang/Object;
 	public abstract fun quadMesh (I[F[I)Ljava/lang/Object;
+	public fun quadMesh (I[F[IZ)Ljava/lang/Object;
 	public abstract fun roundedQuadMesh (I[F[I)Ljava/lang/Object;
+	public fun roundedQuadMesh (I[F[IZ)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawMeshUploader$DefaultImpls {
 	public static fun decoratedGlyphMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[I)Ljava/lang/Object;
+	public static fun decoratedGlyphMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[IZ)Ljava/lang/Object;
+	public static fun glyphMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[IZ)Ljava/lang/Object;
+	public static fun quadMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[IZ)Ljava/lang/Object;
+	public static fun roundedQuadMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[IZ)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawMeshUploaderKt {
@@ -168,6 +176,7 @@ public final class com/awakekt/awake/render/passes2d/SharedRenderFeature2D {
 }
 
 public abstract class com/awakekt/awake/render/passes2d/StagedDrawRun {
+	public final fun getRequiresUpload ()Z
 }
 
 public final class com/awakekt/awake/render/passes2d/StagedDrawRun$ClipRun : com/awakekt/awake/render/passes2d/StagedDrawRun {
