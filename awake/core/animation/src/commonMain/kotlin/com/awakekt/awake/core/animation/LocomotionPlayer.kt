@@ -19,6 +19,16 @@ import kotlin.math.sqrt
  * @property config Clip names, movement thresholds, crossfade and optional reference speeds.
  */
 class LocomotionPlayer(val config: LocomotionConfig = LocomotionConfig()) {
+    private val managedClips: Set<String> = setOfNotNull(
+        config.idle,
+        config.walk,
+        config.run,
+        config.jump,
+        config.takeOff,
+        config.fall,
+        config.land,
+    )
+
     private var lastX = 0f
     private var lastY = 0f
     private var lastZ = 0f
@@ -46,6 +56,9 @@ class LocomotionPlayer(val config: LocomotionConfig = LocomotionConfig()) {
     private var once: String? = null
     private var onceLeft = 0f
 
+    /** Latest playable locomotion clip chosen from tracked motion, retained across [STILL_AFTER] sub-steps. */
+    private var desired: String? = null
+
     /** The clip it last chose, or null before it has moved or stood still. */
     var playing: String? = null
         private set
@@ -67,7 +80,7 @@ class LocomotionPlayer(val config: LocomotionConfig = LocomotionConfig()) {
     /** The authored reference speed for [clip] under speed-matched playback, or null when it plays at its authored rate. */
     private fun referenceSpeedFor(clip: String?): Float? = when {
         clip == null -> null
-        clip == config.walk -> config.walkReferenceSpeed
+        clip == config.walk -> config.walkReferenceSpeed ?: if (clip == config.run) config.runReferenceSpeed else null
         clip == config.run -> config.runReferenceSpeed
         else -> null
     }
@@ -80,40 +93,57 @@ class LocomotionPlayer(val config: LocomotionConfig = LocomotionConfig()) {
      * [grounded] is the caller's ground contact, or null to infer airborne motion from height. A
      * non-positive step leaves all state and playback alone. The first observation initializes the
      * position without counting the spawn offset as movement. Keep one instance per moving actor.
-     * With either reference speed configured, this owns [AnimationPlayer.speed] on every update;
-     * leave both null when another system controls that player's playback rate.
+     * While an unfinished clip outside [config] is active on [player], motion is still tracked so
+     * speed and phase stay current, while clip selection and [AnimationPlayer.speed] yield until that
+     * clip finishes or playback returns to a [config] clip. With either reference speed configured,
+     * this controls [AnimationPlayer.speed] from [AnimationPlayer.activeClipId] whenever it is not
+     * yielding; leave both null when another system controls playback rate on locomotion clips too.
      */
     fun update(player: AnimationPlayer, x: Float, y: Float, z: Float, delta: Float, grounded: Boolean? = null) {
         if (delta <= 0f) return
-        val wanted = clipFor(player, x, y, z, delta, grounded)
+        if (player.activeClipId != playing) playing = null
+        trackMotion(player, x, y, z, delta, grounded)
+        if (isYieldingToExternalClip(player)) return
+        val wanted = desired
         if (wanted != null && wanted != playing && wanted in player.clipEntries) {
             playing = wanted
-            val playback = if (playingOnce) AnimationPlayback.Once else AnimationPlayback.Loop
-            player.crossFadeTo(wanted, config.crossFade, playback)
+            if (player.activeClipId != wanted || player.isFinished) {
+                val playback = if (playingOnce) AnimationPlayback.Once else AnimationPlayback.Loop
+                player.crossFadeTo(wanted, config.crossFade, playback)
+            }
         }
-        if (matchesPlaybackToSpeed) {
-            val reference = referenceSpeedFor(playing)
-            player.speed = if (reference != null) groundSpeed / reference else 1f
-        }
+        applyPlaybackSpeed(player)
+    }
+
+    private fun isYieldingToExternalClip(player: AnimationPlayer): Boolean {
+        val active = player.activeClipId ?: return false
+        return active !in managedClips && !player.isFinished
+    }
+
+    private fun applyPlaybackSpeed(player: AnimationPlayer) {
+        if (!matchesPlaybackToSpeed) return
+        val reference = referenceSpeedFor(player.activeClipId)
+        player.speed = if (reference != null) groundSpeed / reference else 1f
     }
 
     /**
-     * The clip for how it moved to world ([x], [y], [z]) over the last [delta] seconds, or null when
-     * this frame tells nothing new: its first, or a pause between a fixed-rate mover's steps.
+     * Tracks motion to world ([x], [y], [z]) over the last [delta] seconds and updates [desired]
+     * whenever the frame carries a new motion sample beyond the initial observation or a brief pause
+     * between a fixed-rate mover's steps.
      */
-    private fun clipFor(
+    private fun trackMotion(
         player: AnimationPlayer,
         x: Float,
         y: Float,
         z: Float,
         delta: Float,
         grounded: Boolean? = null,
-    ): String? {
+    ) {
         val elapsed = sinceMoved + delta
         val stayedPut = x == lastX && y == lastY && z == lastZ
         if (seen && stayedPut && elapsed < STILL_AFTER) {
             sinceMoved = elapsed
-            return null
+            return
         }
         val first = !seen
         val dx = x - lastX
@@ -139,8 +169,9 @@ class LocomotionPlayer(val config: LocomotionConfig = LocomotionConfig()) {
                 groundDelta2 > (warpGroundSpeed * elapsed) * (warpGroundSpeed * elapsed) -> across
                 else -> damp(across, sqrt(groundDelta2) / elapsed, SPEED_HALF_LIFE, elapsed)
             }
+            val chosen = choose(across, vertical, elapsed, grounded, player)
+            if (chosen == null || chosen in player.clipEntries) desired = chosen
         }
-        return if (first) null else choose(across, vertical, elapsed, grounded, player)
     }
 
     private fun choose(across: Float, vertical: Float, elapsed: Float, grounded: Boolean?, player: AnimationPlayer): String? {

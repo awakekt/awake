@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering
 import com.awakekt.awake.core.animation.AnimationChannel
 import com.awakekt.awake.core.animation.AnimationClip
 import com.awakekt.awake.core.animation.AnimationLibrary
+import com.awakekt.awake.core.animation.AnimationPlayback
 import com.awakekt.awake.core.animation.AnimationPlayer
 import com.awakekt.awake.core.animation.AnimationProperty
 import com.awakekt.awake.core.animation.AnimationSampler
@@ -19,12 +20,16 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
+import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Speed-matched locomotion playback (#1226): scaling the walk/run clip by ground speed over the
@@ -69,6 +74,54 @@ class LocomotionSpeedMatchTest {
         assertEquals(authoredStride, fastStride, authoredStride * 0.1f, "fast mover's ground stride per cycle")
     }
 
+    @Test
+    fun externalOneShotOnAnimatorPlaysThroughLocomotionAndAnimationSystemsAndResumesStand() {
+        val walker = Walker(CLIPS.copy(walkReferenceSpeed = 1.4f, runReferenceSpeed = 5f))
+        repeat(30) { walker.frame(speed = 5f) }
+        assertEquals("run", walker.player.activeClipId)
+
+        walker.player.play("attack", AnimationPlayback.Once)
+        walker.player.speed = 1.25f
+
+        // 0.5s clip at 1.25x finishes on frame 24 (0.4s at 60 Hz) while standing still.
+        repeat(24) { step ->
+            walker.frame(speed = 0f)
+            assertEquals("attack", walker.player.activeClipId, "step $step")
+            assertEquals(1.25f, walker.player.speed, "step $step")
+            if (step < 23) assertFalse(walker.player.isFinished, "step $step")
+        }
+        assertTrue(walker.player.isFinished, "attack completed at 0.4s")
+
+        // Next frame: LocomotionAnimationSystem resumes "stand" at 1x and AnimationSystem advances it.
+        walker.frame(speed = 0f)
+        assertEquals("stand", walker.player.activeClipId)
+        assertEquals(1f, walker.player.speed)
+        assertTrue(walker.player.isPlaying)
+        assertEquals(STEP, walker.player.time, 1e-6f)
+    }
+
+    @Test
+    fun movingDuringExternalOneShotResumesSpeedMatchedRunThroughSceneSystems() {
+        val runReference = 5f
+        val walker = Walker(CLIPS.copy(walkReferenceSpeed = 1.4f, runReferenceSpeed = runReference))
+        repeat(30) { walker.frame(speed = 0f) }
+        assertEquals("stand", walker.player.activeClipId)
+
+        walker.player.play("attack", AnimationPlayback.Once)
+        walker.player.speed = 1.25f
+
+        repeat(24) { step ->
+            walker.frame(speed = 6f)
+            assertEquals("attack", walker.player.activeClipId, "step $step")
+            assertEquals(1.25f, walker.player.speed, "step $step")
+        }
+        assertTrue(walker.player.isFinished)
+
+        walker.frame(speed = 6f)
+        assertEquals("run", walker.player.activeClipId)
+        assertEquals(6f / runReference, walker.player.speed, 0.05f)
+    }
+
     /** Ground distance covered during exactly one walk-clip cycle at the given settled [speed]. */
     private fun strideOverOneCycle(speed: Float, reference: Float): Float {
         val walker = Walker(CLIPS.copy(walkReferenceSpeed = reference))
@@ -84,6 +137,7 @@ class LocomotionSpeedMatchTest {
         private val world = World()
         private val transform = Transform()
         private val system = LocomotionAnimationSystem()
+        private val animationSystem = AnimationSystem()
         private val entity = world.create()
         val player = AnimationPlayer(
             AnimationLibrary(
@@ -99,6 +153,7 @@ class LocomotionSpeedMatchTest {
             world.add(entity, transform)
             world.add(entity, LocomotionAnimation(clips))
             world.add(entity, Animator(player, Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))))
+            world.add(entity, SkinnedPose(FloatArray(16)))
             system.update(world, STEP)
         }
 
@@ -108,6 +163,13 @@ class LocomotionSpeedMatchTest {
             system.update(world, STEP)
             // AnimationSystem advances the clock in the real pipeline; mirror that so the clip plays.
             player.advance(STEP)
+        }
+
+        fun frame(speed: Float) {
+            transform.position.x += speed * STEP
+            transform.computeLocalMatrix()
+            system.update(world, STEP)
+            animationSystem.update(world, STEP)
         }
 
         fun glide(speed: Float, seconds: Float) = repeat((seconds / STEP).toInt()) { step(speed) }
@@ -133,7 +195,7 @@ class LocomotionSpeedMatchTest {
     private companion object {
         const val STEP = 1f / 60f
 
-        val CLIP_SECONDS = mapOf("stand" to 1f, "walk" to 1f, "run" to 1f, "jump" to 1f)
+        val CLIP_SECONDS = mapOf("stand" to 1f, "walk" to 1f, "run" to 1f, "jump" to 1f, "attack" to 0.5f)
 
         val CLIPS = SceneLocomotionAnimation(idle = "stand", walk = "walk", run = "run", jump = "jump", walkAbove = 0.5f, runAbove = 4f, airborneAbove = 2f)
 

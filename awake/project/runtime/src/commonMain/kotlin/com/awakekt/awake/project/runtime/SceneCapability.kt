@@ -84,6 +84,13 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
     /** Adds a system run once per rendered frame, named [name] in the scene's schedule. */
     fun frame(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, create)
 
+    /**
+     * Adds a system run once per rendered frame before world matrices are propagated for animation,
+     * camera and [frame] systems, named [name] in the scene's schedule.
+     */
+    fun preAnimation(name: String, create: (SceneHostServices) -> System) =
+        add(name, SceneSystemPhase.PreAnimation, create)
+
     private fun add(name: String, phase: SceneSystemPhase, create: (SceneHostServices) -> System) {
         require(specs.none { it.name == name }) { "Two systems are named '$name'; each system in a scene needs its own name" }
         specs += SceneSystemSpec(name, phase, create)

@@ -165,6 +165,7 @@ private class ProjectOpenCheck(
         attempt(ProjectOpenIssueKind.SceneSystems, path) {
             project.sceneSystems({ GameplayInput(idle.currentSnapshot, InputOwnership()) }).use { systems ->
                 systems.fixed.forEach { it.update(world, STEP) }
+                systems.preAnimation.forEach { it.update(world, STEP) }
                 systems.frame.forEach { it.update(world, STEP) }
             }
         }

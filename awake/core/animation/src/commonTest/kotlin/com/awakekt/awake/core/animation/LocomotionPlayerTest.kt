@@ -149,6 +149,185 @@ class LocomotionPlayerTest {
         LocomotionConfig(walkAbove = 0f, runAbove = 0f, crossFade = 0f)
     }
 
+    @Test
+    fun externalOneShotClipPlaysUninterruptedAtItsOwnSpeedAndResumesStandOnTheNextUpdate() {
+        val config = CONFIG.copy(idle = "stand", walkReferenceSpeed = 2f, runReferenceSpeed = 6f)
+        for (startRunning in listOf(false, true)) {
+            val playback = player(mapOf("stand" to 1f, "attack" to 0.5f))
+            val motion = LocomotionPlayer(config)
+            var x = 0f
+            motion.update(playback, x, 0f, 0f, DT, grounded = true)
+            val warmupFrames = if (startRunning) 60 else 30
+            val warmupSpeed = if (startRunning) 6f else 0f
+            repeat(warmupFrames) {
+                x += warmupSpeed * DT
+                motion.update(playback, x, 0f, 0f, DT, grounded = true)
+                playback.advance(DT)
+            }
+            assertEquals(if (startRunning) "run" else "stand", playback.activeClipId)
+
+            playback.play("attack", AnimationPlayback.Once)
+            playback.speed = 1.25f
+
+            // A 0.5s one-shot at 1.25x finishes in 0.4s (24 steps at 60 Hz) while standing still.
+            repeat(24) { step ->
+                motion.update(playback, x, 0f, 0f, DT, grounded = true)
+                assertEquals("attack", playback.activeClipId, "step $step (startRunning=$startRunning)")
+                assertEquals(1.25f, playback.speed, "step $step (startRunning=$startRunning)")
+                assertFalse(playback.isFinished, "before advance on step $step (startRunning=$startRunning)")
+                playback.advance(DT)
+            }
+            assertTrue(playback.isFinished, "completed at 0.4s (startRunning=$startRunning)")
+
+            // On the very next update, locomotion resumes "stand" at rate 1f without waiting STILL_AFTER.
+            motion.update(playback, x, 0f, 0f, DT, grounded = true)
+            assertEquals("stand", playback.activeClipId, "resumed stand immediately (startRunning=$startRunning)")
+            assertEquals("stand", motion.playing, "resynced playing (startRunning=$startRunning)")
+            assertEquals(1f, playback.speed, "stand rate is 1f (startRunning=$startRunning)")
+            assertTrue(playback.isPlaying, "stand is looping (startRunning=$startRunning)")
+        }
+    }
+
+    @Test
+    fun movingDuringExternalOneShotClipTracksSpeedAndResumesSpeedMatchedRun() {
+        val runReference = 6f
+        val config = CONFIG.copy(idle = "stand", walkReferenceSpeed = 2f, runReferenceSpeed = runReference)
+        val playback = player(mapOf("stand" to 1f, "attack" to 0.5f))
+        val motion = LocomotionPlayer(config)
+        var x = 0f
+        motion.update(playback, x, 0f, 0f, DT, grounded = true)
+        repeat(30) {
+            motion.update(playback, x, 0f, 0f, DT, grounded = true)
+            playback.advance(DT)
+        }
+        assertEquals("stand", playback.activeClipId)
+
+        playback.play("attack", AnimationPlayback.Once)
+        playback.speed = 1.25f
+
+        val travelSpeed = 7.5f
+        repeat(24) { step ->
+            x += travelSpeed * DT
+            motion.update(playback, x, 0f, 0f, DT, grounded = true)
+            assertEquals("attack", playback.activeClipId, "step $step")
+            assertEquals(1.25f, playback.speed, "step $step")
+            playback.advance(DT)
+        }
+        assertTrue(playback.isFinished)
+        assertTrue(motion.groundSpeed > config.runAbove)
+
+        x += travelSpeed * DT
+        motion.update(playback, x, 0f, 0f, DT, grounded = true)
+        assertEquals("run", playback.activeClipId)
+        assertEquals("run", motion.playing)
+        assertEquals(motion.groundSpeed / runReference, playback.speed, 1e-5f)
+    }
+
+    @Test
+    fun externalLoopingClipStaysUntouchedAndManagedHandBackPreservesPlaybackTime() {
+        val config = CONFIG.copy(idle = "stand", crossFade = 0f, walkReferenceSpeed = 2f, runReferenceSpeed = 6f)
+        val playback = player(mapOf("stand" to 1f, "emote" to 1f))
+        val motion = LocomotionPlayer(config)
+        var x = 0f
+        motion.update(playback, x, 0f, 0f, DT, grounded = true)
+        repeat(30) {
+            motion.update(playback, x, 0f, 0f, DT, grounded = true)
+            playback.advance(DT)
+        }
+        assertEquals("stand", playback.activeClipId)
+
+        playback.play("emote", AnimationPlayback.Loop)
+        playback.speed = 0.75f
+
+        // Across standing, running, and stopping, the external looping clip and its custom speed stay intact.
+        repeat(120) { step ->
+            if (step in 30 until 90) x += 6f * DT
+            motion.update(playback, x, 0f, 0f, DT, grounded = true)
+            assertEquals("emote", playback.activeClipId, "step $step")
+            assertEquals(0.75f, playback.speed, "step $step")
+            assertNull(motion.playing, "step $step")
+            playback.advance(DT)
+        }
+
+        // Handing back via a managed looping clip adopts it without resetting its clock even at crossFade == 0f.
+        playback.play("stand", AnimationPlayback.Loop)
+        playback.speed = 1f
+        playback.advance(0.3f)
+        val standTimeBefore = playback.time
+        motion.update(playback, x, 0f, 0f, DT, grounded = true)
+        assertEquals("stand", playback.activeClipId)
+        assertEquals("stand", motion.playing)
+        assertEquals(standTimeBefore, playback.time, 1e-6f)
+        assertEquals(1f, playback.speed)
+    }
+
+    @Test
+    fun externalLoopingClipHandsBackCleanlyAfterFinishingExternalOneShot() {
+        val config = CONFIG.copy(idle = "stand", walkReferenceSpeed = 2f, runReferenceSpeed = 6f)
+        val playback = player(mapOf("stand" to 1f, "emote" to 1f, "recover" to 0.125f))
+        val motion = LocomotionPlayer(config)
+        motion.update(playback, 0f, 0f, 0f, DT, grounded = true)
+        repeat(30) {
+            motion.update(playback, 0f, 0f, 0f, DT, grounded = true)
+            playback.advance(DT)
+        }
+
+        playback.play("emote", AnimationPlayback.Loop)
+        playback.speed = 0.5f
+        motion.update(playback, 0f, 0f, 0f, DT, grounded = true)
+        assertEquals("emote", playback.activeClipId)
+
+        playback.play("recover", AnimationPlayback.Once)
+        playback.speed = 1f
+        repeat(8) {
+            motion.update(playback, 0f, 0f, 0f, DT, grounded = true)
+            playback.advance(DT)
+        }
+        assertTrue(playback.isFinished)
+
+        motion.update(playback, 0f, 0f, 0f, DT, grounded = true)
+        assertEquals("stand", playback.activeClipId)
+        assertEquals("stand", motion.playing)
+        assertEquals(1f, playback.speed)
+    }
+
+    @Test
+    fun referenceSpeedUsesActiveClipIdBeforeLocomotionChoosesClipAndWhenWalkEqualsRun() {
+        val walkOnlyActive = player()
+        walkOnlyActive.play("walk", AnimationPlayback.Loop)
+        val motion = LocomotionPlayer(
+            LocomotionConfig(idle = null, walk = "walk", run = "run", walkAbove = 3f, runAbove = 5f, walkReferenceSpeed = 2f, runReferenceSpeed = 6f),
+        )
+        var x = 0f
+        motion.update(walkOnlyActive, x, 0f, 0f, DT, grounded = true)
+        assertNull(motion.playing)
+        assertEquals(0f, walkOnlyActive.speed, 1e-6f)
+
+        repeat(30) {
+            x += 1.5f * DT
+            motion.update(walkOnlyActive, x, 0f, 0f, DT, grounded = true)
+            walkOnlyActive.advance(DT)
+        }
+        assertNull(motion.playing, "speed stays below walkAbove while idle is unconfigured")
+        assertEquals("walk", walkOnlyActive.activeClipId)
+        assertEquals(motion.groundSpeed / 2f, walkOnlyActive.speed, 1e-5f)
+
+        // When walk and run share a clip name and only runReferenceSpeed is set, that clip uses runReferenceSpeed.
+        val sharedClipPlayer = player(mapOf("stride" to 0.5f))
+        val sharedMotion = LocomotionPlayer(
+            LocomotionConfig(idle = "idle", walk = "stride", run = "stride", walkAbove = 0.5f, runAbove = 4f, runReferenceSpeed = 5f),
+        )
+        var sx = 0f
+        sharedMotion.update(sharedClipPlayer, sx, 0f, 0f, DT, grounded = true)
+        repeat(30) {
+            sx += 5f * DT
+            sharedMotion.update(sharedClipPlayer, sx, 0f, 0f, DT, grounded = true)
+            sharedClipPlayer.advance(DT)
+        }
+        assertEquals("stride", sharedClipPlayer.activeClipId)
+        assertEquals(sharedMotion.groundSpeed / 5f, sharedClipPlayer.speed, 1e-5f)
+    }
+
     private class LocomotionTestDriver(config: LocomotionConfig = CONFIG) {
         val player = player()
         val motion = LocomotionPlayer(config)
@@ -182,10 +361,11 @@ class LocomotionPlayerTest {
         const val DT = 1f / 60f
         val CONFIG = LocomotionConfig(idle = "idle", walk = "walk", run = "run", jump = "jump", walkAbove = 0.5f)
 
-        fun player(): AnimationPlayer {
+        fun player(extraDurations: Map<String, Float> = emptyMap()): AnimationPlayer {
             val skeleton = Skeleton(listOf(Bone(Vec3f(), Quat(), Vec3f(1f, 1f, 1f), null, emptyList())), listOf(0))
-            val clips = listOf("idle", "walk", "run", "jump", "takeoff", "fall", "land").associateWith { name ->
-                AnimationClip(name, listOf(AnimationChannel(0, AnimationProperty.Translation, AnimationSampler(floatArrayOf(0f, 0.25f), FloatArray(6), 3))))
+            val durations = listOf("idle", "walk", "run", "jump", "takeoff", "fall", "land").associateWith { 0.25f } + extraDurations
+            val clips = durations.mapValues { (name, seconds) ->
+                AnimationClip(name, listOf(AnimationChannel(0, AnimationProperty.Translation, AnimationSampler(floatArrayOf(0f, seconds), FloatArray(6), 3))))
             }
             return AnimationPlayer(AnimationLibrary(skeleton, clips))
         }

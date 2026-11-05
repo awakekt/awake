@@ -390,6 +390,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
     }
     // Built before the scene populates, which is how the runner learns its runtime.
     fixedSystem(PROJECT_FIXED_SYSTEMS) { scenes.bind(this) }
+    preAnimationSystem(PROJECT_PRE_ANIMATION_SYSTEMS) { scenes.preAnimationSystems }
     frameSystem(PROJECT_FRAME_SYSTEMS) { scenes.frameSystems }
     service(SceneSwitch::class) { scenes }
     service(SceneSwitchStatus::class) { scenes }
@@ -431,6 +432,7 @@ private fun fallbackLens() = Lens(
 
 private const val FALLBACK_FOV_DEGREES = 60f
 
-/** The names of the two systems that run the playing scene's own, in the app's schedule. */
+/** The names of the three systems that run the playing scene's own, in the app's schedule. */
 private const val PROJECT_FIXED_SYSTEMS = "project-fixed"
+private const val PROJECT_PRE_ANIMATION_SYSTEMS = "project-pre-animation"
 private const val PROJECT_FRAME_SYSTEMS = "project-frame"

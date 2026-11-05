@@ -498,6 +498,7 @@ public final class com/awakekt/awake/scene/runtime/SceneSystemHandle {
 public final class com/awakekt/awake/scene/runtime/SceneSystemPhase : java/lang/Enum {
 	public static final field Fixed Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;
 	public static final field Frame Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;
+	public static final field PreAnimation Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;
 	public static fun values ()[Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;

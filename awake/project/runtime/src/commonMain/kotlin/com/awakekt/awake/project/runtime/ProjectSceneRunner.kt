@@ -49,8 +49,8 @@ import kotlin.reflect.KClass
 
 /**
  * Plays [project]'s scenes in one app scene, one at a time, for [runProject]: the playing scene's
- * entities, its systems in [fixedSystems] and [frameSystems], and the [SceneSwitch] that moves the
- * project to another of its scenes.
+ * entities, its systems in [fixedSystems], [preAnimationSystems] and [frameSystems], and the
+ * [SceneSwitch] that moves the project to another of its scenes.
  *
  * A request reads the next scene off the frame thread, in [LoadedProject.sceneLoads]. The scene that
  * asked plays on meanwhile, and the next takes its place at a safe point on the frame thread: the start
@@ -62,10 +62,11 @@ import kotlin.reflect.KClass
  * last one's systems close, its sounds stop, its spawned nodes despawn, its entities go with every
  * other entity the world held, and its physics world is destroyed.
  *
- * The runner's own steps run inside `project-fixed` and `project-frame`, which the schedule guards as one
- * system each, so they contain their failures themselves: a step that throws must not end either system,
- * which would be skipped for the rest of the scene and stop the project from switching at all. A failure
- * reaches the app's `AppErrorHandler` once, and the runner is able to switch again at once.
+ * The runner's own steps run inside `project-fixed`, `project-pre-animation` and `project-frame`, which
+ * the schedule guards as one system each, so they contain their failures themselves: a step that throws
+ * must not end any of those systems, which would be skipped for the rest of the scene and stop the
+ * project from switching at all. A failure reaches the app's `AppErrorHandler` once, and the runner is
+ * able to switch again at once.
  * - **A switch that fails before the last scene is taken out** is reported as `AppErrorSource.SceneSwitch`,
  *   with the scene's path as its subject and a retry that asks for it again, and the last scene plays on.
  * - **A switch that fails after** has no last scene to go back to, so the next one is the scene that
@@ -94,6 +95,12 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     /** Carries out a switch that has loaded, then runs the playing scene's fixed systems. */
     val fixedSystems: InterpolatedSystem = FixedSystems()
 
+    /**
+     * Carries out a switch that has loaded, gives spawned nodes their models, and runs the playing
+     * scene's pre-animation systems before world matrices are propagated.
+     */
+    val preAnimationSystems: System = PreAnimationSystems()
+
     /** Carries out a switch that has loaded, then gives spawned nodes their models and runs the frame systems. */
     val frameSystems: System = FrameSystems()
 
@@ -121,6 +128,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     private var requests = 0
     private var stopped = false
     private var spawnedModelsFailed = false
+    private var frameOpen = false
 
     private val input: () -> GameplayInput = { runtime.gameplayInput() }
     private val spawner: (SceneNode) -> SpawnedNode = { node -> runtime.spawn(project, node) }
@@ -162,6 +170,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     fun stop() {
         if (stopped) return
         stopped = true
+        frameOpen = false
         status.stopped()
         systems?.close()
         systems = null
@@ -344,7 +353,12 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         val built = sceneSystemsFor(scene.document, services(scene), project.capabilities, hostRuns)
         // Each system guarded, so one that throws is reported to the app's error handler and skipped, not
         // the frame. Built once per scene; the guard adds no allocation to a frame. The set still closes the systems themselves.
-        return SceneSystemSet(built.fixed.map { it.guardedFor(runtime) }, built.frame.map { it.guardedFor(runtime) }, built::close)
+        return SceneSystemSet(
+            built.fixed.map { it.guardedFor(runtime) },
+            built.frame.map { it.guardedFor(runtime) },
+            built::close,
+            built.preAnimation.map { it.guardedFor(runtime) },
+        )
     }
 
     private fun services(scene: ProjectScene): SceneHostServices {
@@ -368,10 +382,27 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         }
     }
 
-    private inner class FrameSystems : System {
+    private inner class PreAnimationSystems : System {
         override fun update(world: World, delta: Float) {
+            frameOpen = false
             status.frameStarted()
             carryOut()
+            attachSpawnedModels()
+            val preAnimation = systems?.preAnimation
+            if (preAnimation != null) {
+                for (index in preAnimation.indices) preAnimation[index].update(world, delta)
+            }
+            frameOpen = true
+        }
+    }
+
+    private inner class FrameSystems : System {
+        override fun update(world: World, delta: Float) {
+            if (!frameOpen) {
+                status.frameStarted()
+                carryOut()
+            }
+            frameOpen = false
             attachSpawnedModels()
             val frame = systems?.frame
             if (frame != null) for (index in frame.indices) frame[index].update(world, delta)

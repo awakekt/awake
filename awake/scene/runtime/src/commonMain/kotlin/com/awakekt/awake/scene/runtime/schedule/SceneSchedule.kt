@@ -9,6 +9,7 @@ import com.awakekt.awake.core.host.FixedTimestepLoop
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
@@ -20,9 +21,9 @@ import kotlin.time.TimeSource
 /**
  * Owns one scene's ECS execution order.
  *
- * Systems retain their feature ownership; this type only assigns them to fixed, frame, or standard
- * infrastructure stages. It deliberately has no UI, renderer staging, document, or app lifecycle
- * responsibilities.
+ * Systems retain their feature ownership; this type only assigns them to fixed, pre-animation,
+ * frame, or standard infrastructure stages. It deliberately has no UI, renderer staging, document,
+ * or app lifecycle responsibilities.
  */
 class SceneSchedule internal constructor(
     private val spec: SceneAppSpec,
@@ -42,12 +43,14 @@ class SceneSchedule internal constructor(
      * filter over every system would allocate at exactly that rate.
      */
     private val interpolatedSystems = mutableListOf<InterpolatedSystem>()
+    private val preAnimationSystems = mutableListOf<System>()
     private val frameSystems = mutableListOf<System>()
     private lateinit var infrastructureSystems: List<System>
 
     // What runs each frame: the systems above, each guarded so one that throws is reported to the app's
     // error handler and skipped (see guardedFor). Built once; the lists above keep the systems themselves.
     private var guardedInfrastructure: List<System> = emptyList()
+    private var preFrameTransform: System? = null
 
     /** Whether [advance] splits its time into [gameMs] and [renderMs]. Off, it reads no clock. */
     internal var timed = false
@@ -55,9 +58,9 @@ class SceneSchedule internal constructor(
     private var renderNanos = 0L
 
     /**
-     * Fixed and frame systems, interpolation included, in the last *completed* [advance]. A system
-     * reading this mid-advance, such as a frame-time logger, sees the previous frame whole rather
-     * than this one half-counted.
+     * Fixed, pre-animation, and frame systems, interpolation included, in the last *completed*
+     * [advance]. A system reading this mid-advance, such as a frame-time logger, sees the previous
+     * frame whole rather than this one half-counted.
      */
     internal var gameMs: Float = 0f
         private set
@@ -78,8 +81,15 @@ class SceneSchedule internal constructor(
                     fixedSystems += guarded
                     if (guarded is InterpolatedSystem) interpolatedSystems += guarded
                 }
+                SceneSystemPhase.PreAnimation -> preAnimationSystems += guarded
                 SceneSystemPhase.Frame -> frameSystems += guarded
             }
+        }
+        val transformIndex = infrastructureSystems.indexOfFirst { it is TransformSystem }
+        preFrameTransform = when {
+            transformIndex >= 0 -> guardedInfrastructure[transformIndex]
+            preAnimationSystems.isNotEmpty() -> TransformSystem().guardedFor(runtime)
+            else -> null
         }
     }
 
@@ -98,14 +108,16 @@ class SceneSchedule internal constructor(
             frameDelta = delta,
             fixedUpdate = { step ->
                 gameNanos += timed {
-                    fixedSystems.forEach { it.update(world, step) }
+                    for (index in fixedSystems.indices) fixedSystems[index].update(world, step)
                     fixedUpdate(step)
                 }
             },
             render = { alpha ->
                 // Before the frame systems, because they are what reads a Transform to draw it:
                 // interpolating after them would show the blend one frame late.
-                gameNanos += timed { interpolatedSystems.forEach { it.interpolate(world, alpha) } }
+                gameNanos += timed {
+                    for (index in interpolatedSystems.indices) interpolatedSystems[index].interpolate(world, alpha)
+                }
                 runFrame(world, delta)
             },
         )
@@ -139,14 +151,24 @@ class SceneSchedule internal constructor(
         registeredSystems.clear()
         fixedSystems.clear()
         interpolatedSystems.clear()
+        preAnimationSystems.clear()
         frameSystems.clear()
         if (::infrastructureSystems.isInitialized) infrastructureSystems = emptyList()
         guardedInfrastructure = emptyList()
+        preFrameTransform = null
     }
 
     private fun runFrame(world: World, delta: Float) {
-        gameNanos += timed { frameSystems.forEach { it.update(world, delta) } }
-        renderNanos += timed { guardedInfrastructure.forEach { it.update(world, delta) } }
+        gameNanos += timed {
+            for (index in preAnimationSystems.indices) preAnimationSystems[index].update(world, delta)
+        }
+        renderNanos += timed { preFrameTransform?.update(world, delta) }
+        gameNanos += timed {
+            for (index in frameSystems.indices) frameSystems[index].update(world, delta)
+        }
+        renderNanos += timed {
+            for (index in guardedInfrastructure.indices) guardedInfrastructure[index].update(world, delta)
+        }
     }
 
     /** Nanoseconds [block] took while [timed], else 0 without reading the clock. */
