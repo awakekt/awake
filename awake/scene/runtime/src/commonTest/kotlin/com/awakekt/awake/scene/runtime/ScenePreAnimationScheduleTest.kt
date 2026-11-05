@@ -45,16 +45,20 @@ class ScenePreAnimationScheduleTest {
             systems = listOf(
                 registration("fixed", SceneSystemPhase.Fixed) { fixedProbe(actorTransform, events) },
                 registration("pre-animation", SceneSystemPhase.PreAnimation) {
-                    system { _, _ ->
-                        m03InPreAnimation = actorTransform.worldMatrix.m03
-                        actorTransform.position.x = 3f
+                    system { _, delta ->
+                        if (delta > 0f) {
+                            m03InPreAnimation = actorTransform.worldMatrix.m03
+                            actorTransform.position.x = 3f
+                        }
                         events += "pre-animation"
                     }
                 },
                 registration("frame", SceneSystemPhase.Frame) {
-                    system { _, _ ->
-                        m03InFrame = actorTransform.worldMatrix.m03
-                        frameMovedTransform.position.x = 9f
+                    system { _, delta ->
+                        if (delta > 0f) {
+                            m03InFrame = actorTransform.worldMatrix.m03
+                            frameMovedTransform.position.x = 9f
+                        }
                         events += "frame"
                     }
                 },
