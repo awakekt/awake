@@ -17,55 +17,78 @@ import kotlin.js.ExperimentalWasmJsInterop
  * the page's side once it has opened. Fails with [SocketWorkerFailed] when the worker can't start or
  * its script doesn't run, and with [BrowserSocketFailed] when the socket closes before it opens.
  */
-internal suspend fun connectInWorker(url: String, script: String): BrowserSocketTransport = suspendCancellableCoroutine { waiting ->
+internal suspend fun connectInWorker(
+    url: String,
+    script: String,
+    holdWakeLock: Boolean = true,
+    acquireWakeLock: () -> WakeLock = ::acquireBrowserWakeLock,
+): BrowserSocketTransport = suspendCancellableCoroutine { waiting ->
     val worker = if (workerDefined()) newWorker(script) else null
     if (worker == null) {
         waiting.resumeWithException(SocketWorkerFailed(script))
         return@suspendCancellableCoroutine
     }
-    val connection = SocketConnection(WorkerPort(worker), runsInWorker = true, nowMillis = ::epochMillis)
+    var port: WorkerPort? = null
+    var connection: SocketConnection? = null
     onWorkerMessages(
         worker,
-        opened = { if (waiting.isActive) waiting.resume(connection) },
-        message = { data, at -> connection.received(data.toByteArray(), at) },
-        buffered = { amount, taken -> connection.buffered(amount.toLong(), taken.toLong()) },
+        opened = {
+            if (waiting.isActive) {
+                val workerPort = WorkerPort(worker)
+                val opened = SocketConnection(
+                    port = workerPort,
+                    runsInWorker = true,
+                    nowMillis = ::epochMillis,
+                    holdWakeLock = holdWakeLock,
+                    acquireWakeLock = acquireWakeLock,
+                )
+                port = workerPort
+                connection = opened
+                waiting.resume(opened)
+            } else {
+                terminate(worker)
+            }
+        },
+        message = { data, at -> connection?.received(data.toByteArray(), at) },
+        buffered = { amount, taken -> connection?.buffered(amount.toLong(), taken.toLong()) },
         closed = { code, reason ->
+            port?.cancelScheduled()
             terminate(worker)
-            if (waiting.isActive) waiting.resumeWithException(BrowserSocketFailed(url, code)) else connection.closed(code, reason)
+            val opened = connection
+            if (opened != null) {
+                opened.closed(code, reason)
+            } else if (waiting.isActive) {
+                waiting.resumeWithException(BrowserSocketFailed(url, code))
+            }
         },
     )
     onWorkerError(worker) {
+        port?.cancelScheduled()
         terminate(worker)
-        if (waiting.isActive) {
+        val opened = connection
+        if (opened != null) {
+            opened.closed(ABNORMAL_CLOSE, "the socket worker failed")
+        } else if (waiting.isActive) {
             waiting.resumeWithException(SocketWorkerFailed(script))
-        } else {
-            connection.closed(ABNORMAL_CLOSE, "the socket worker failed")
         }
     }
     postOpen(worker, url)
-    waiting.invokeOnCancellation { terminate(worker) }
-}
-
-private class WorkerPort(private val worker: JsAny) : SocketPort {
-    /** One copy out of linear memory into a new `ArrayBuffer`, which then moves to the worker without another. */
-    override fun send(packet: ByteArray) = postBuffer(worker, packet.toArrayBuffer())
-
-    override fun close() = postClose(worker)
-
-    override fun schedule(millis: Int, action: () -> Unit) = setTimeout(millis, action)
-
-    override fun bufferedAmount(): Long = 0L
+    waiting.invokeOnCancellation {
+        port?.cancelScheduled()
+        terminate(worker)
+    }
 }
 
 /** A dedicated worker running [script], or null when the browser refuses to start it (a cross-origin URL). */
 @JsFun("(script) => { try { return new Worker(script); } catch (_) { return null; } }")
-private external fun newWorker(script: String): JsAny?
+internal external fun newWorker(script: String): JsAny?
 
 /** The worker's messages to the page, by kind (`socket-worker.js`). */
 @JsFun(
     """(w, opened, message, buffered, closed) => {
         w.addEventListener('message', (e) => {
             const m = e.data;
+            if (!m) return;
             switch (m.t) {
                 case 'm': message(m.data, m.at); break;
                 case 'b': buffered(m.buffered, m.taken); break;
@@ -90,12 +113,5 @@ private external fun onWorkerError(worker: JsAny, failed: () -> Unit)
 @JsFun("(w, url) => w.postMessage({ t: 'open', url })")
 private external fun postOpen(worker: JsAny, url: String)
 
-/** [buffer] to the worker, transferred rather than copied. */
-@JsFun("(w, b) => w.postMessage(b, [b])")
-private external fun postBuffer(worker: JsAny, buffer: JsAny)
-
-@JsFun("(w) => w.postMessage({ t: 'close' })")
-private external fun postClose(worker: JsAny)
-
 @JsFun("(w) => w.terminate()")
-private external fun terminate(worker: JsAny)
+internal external fun terminate(worker: JsAny)

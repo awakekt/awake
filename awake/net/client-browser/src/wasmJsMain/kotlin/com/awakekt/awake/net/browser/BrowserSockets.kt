@@ -31,27 +31,45 @@ fun socketWorkerSupported(): Boolean = workerDefined()
  * opens, and in [BrowserSocketMode.Worker] with [SocketWorkerFailed] when the worker can't run.
  * Cancelling it closes the socket and ends the worker.
  *
+ * While [holdWakeLock] is true, the open connection holds a shared Web Lock (`navigator.locks`) so the
+ * browser is less likely to freeze a backgrounded tab while the socket stays connected, releasing it
+ * as soon as the connection closes; where `navigator.locks` is unavailable or refuses, it is a no-op.
+ *
  * Call it on the page's thread, and use the connection there.
  */
 suspend fun connectBrowserSocket(
     url: String,
     mode: BrowserSocketMode = BrowserSocketMode.Auto,
     workerScript: String = SOCKET_WORKER_SCRIPT,
+    holdWakeLock: Boolean = true,
 ): BrowserSocketTransport = when (mode) {
-    BrowserSocketMode.Page -> connectOnPage(url)
-    BrowserSocketMode.Worker -> connectInWorker(url, workerScript)
+    BrowserSocketMode.Page -> connectOnPage(url, holdWakeLock)
+    BrowserSocketMode.Worker -> connectInWorker(url, workerScript, holdWakeLock)
     BrowserSocketMode.Auto -> if (socketWorkerSupported()) {
         try {
-            connectInWorker(url, workerScript)
+            connectInWorker(url, workerScript, holdWakeLock)
         } catch (failed: SocketWorkerFailed) {
             fallingBack { "${failed.message}, so the socket runs on the page; serve it with the socket-worker Gradle plugin" }
-            connectOnPage(url)
+            connectOnPage(url, holdWakeLock)
         }
     } else {
         fallingBack { "This browser has no Worker, so the socket runs on the page" }
-        connectOnPage(url)
+        connectOnPage(url, holdWakeLock)
     }
 }
+
+// Binary-compatible entry point for callers compiled before holdWakeLock was added.
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+suspend fun connectBrowserSocket(
+    url: String,
+    mode: BrowserSocketMode = BrowserSocketMode.Auto,
+    workerScript: String = SOCKET_WORKER_SCRIPT,
+): BrowserSocketTransport = connectBrowserSocket(
+    url = url,
+    mode = mode,
+    workerScript = workerScript,
+    holdWakeLock = true,
+)
 
 private val log = Logger("net-client-browser")
 private var saidWhy = false

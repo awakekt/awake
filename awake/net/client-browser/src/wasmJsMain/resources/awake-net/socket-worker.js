@@ -9,6 +9,7 @@
 // reported back as it changes. com.awakekt.awake.net.browser's SocketConnection is the page's side.
 //
 // Page to worker: {t: 'open', url} once; then each packet to send as a bare ArrayBuffer, transferred;
+// {t: 's', id, ms} to fire timer `id` after `ms` milliseconds on the worker's unthrottled clock;
 // {t: 'close'}.
 // Worker to page:
 //   {t: 'open'}                     the socket opened;
@@ -17,6 +18,7 @@
 //                                   has posted that the worker has taken (sent, or dropped once the
 //                                   socket closed): after each send, then every 50 ms while
 //                                   bufferedAmount isn't 0, and once more as it reaches 0;
+//   {t: 's', id}                    scheduled timer `id` came due;
 //   {t: 'x', code, reason, error}   the socket closed (`error` is true when an error event came first).
 //
 // Times are milliseconds since the Unix epoch on the high-resolution clock: performance.timeOrigin
@@ -32,12 +34,18 @@ let socket = null;
 let taken = 0;
 let reporting = 0;
 let errored = false;
+const timers = new Map();
 
 const now = () => performance.timeOrigin + performance.now();
 
 function stopReporting() {
     if (reporting) clearInterval(reporting);
     reporting = 0;
+}
+
+function stopTimers() {
+    for (const handle of timers.values()) clearTimeout(handle);
+    timers.clear();
 }
 
 function report() {
@@ -70,6 +78,7 @@ function open(url) {
     socket.addEventListener('error', () => { errored = true; });
     socket.addEventListener('close', (e) => {
         stopReporting();
+        stopTimers();
         postMessage({ t: 'x', code: e.code, reason: e.reason, error: errored });
         close();
     });
@@ -83,7 +92,16 @@ onmessage = (e) => {
         report();
     } else if (m.t === 'open') {
         open(m.url);
+    } else if (m.t === 's') {
+        const id = m.id;
+        const delay = m.ms > 0 ? m.ms : 0;
+        const handle = setTimeout(() => {
+            timers.delete(id);
+            postMessage({ t: 's', id });
+        }, delay);
+        timers.set(id, handle);
     } else if (m.t === 'close') {
+        stopTimers();
         try { if (socket) socket.close(1000); } catch (_) {}
     }
 };
