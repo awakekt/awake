@@ -5,14 +5,17 @@
 ## Modules
 
 ```text
-net:api          Transport, DeliveryChannel, SessionId, NetId, PacketWriter, PacketReader,
-                 PacketFormat, PacketOpcodeRegistry, NetViolation, ViolationSink
-net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing & backpressure),
+net:api          Transport, DirectTransport, TransportKeepAlive, SplitPacketInbox, SessionId,
+                 NetId, PacketWriter, PacketReader, PacketFormat, PacketOpcodeRegistry,
+                 NetViolation, ViolationSink, ViolationWindow
+net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing, ping keepalive & backpressure),
                  GameServerHost (fixed-rate tick loop, MessageRouter, GameFeature, SaveScheduler)
 net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
-                 WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page
+                 WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page,
+                 with shared Web Lock & unthrottled worker timer scheduling
 net:prediction   PredictionHistory, reconcile -> Correction (None, Blend, Shift, Snap, Wait),
-                 ReconcileRules, PredictedEntity: client-side prediction and reconciliation
+                 ReconcileRules, PredictedEntity, SnapshotTimeline: client-side prediction,
+                 reconciliation, and pause-safe snapshot playback timing
 ```
 
 `:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor`, `:awake:net:client-browser` and `:awake:net:prediction`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
@@ -38,6 +41,15 @@ drift, shift by a real one, snap only for a far drift, a lost history or a game'
 on. It depends on `:awake:core:math` alone, with no transport, ECS or scene. The
 [client prediction guide](../../website/docs/guides/client-prediction.md) shows a client loop.
 The opt-in [`awake:scene:net`](../scene/net/README.md) module binds it to root ECS transforms.
+
+## Idle connection & background-pause resilience
+
+Idle sessions and multi-minute background-tab or window-focus pauses require coordination across transport timers, inbound queues, playback clocks, and server timeouts:
+
+- **Shared Web Lock & worker timer scheduling (`:awake:net:client-browser`)**: `connectBrowserSocket` holds a shared browser Web Lock (`navigator.locks`, enabled by default when available with graceful no-op fallback) for the socket's connected lifetime so Chromium-based browsers do not freeze background tabs after five minutes and stall WebSocket `PONG` replies. When running in `socket-worker.js`, `DirectTransport.schedule` executes timers on the worker thread rather than the throttled page thread.
+- **Unthrottled keepalive & two-lane inbox (`:awake:net:api`)**: `TransportKeepAlive` (`DirectTransport.startKeepAlive`) drives periodic heartbeats via `DirectTransport.schedule` (optionally `onlyWhenIdle = true` with `notifyOutbound()`) to keep NAT mappings and reverse proxies warm without per-tick closure allocations. `SplitPacketInbox<M, S>` separates bounded discrete reliable messages (`offerMessage` / `drainMessages`) from a `DROP_OLDEST` world-snapshot lane (`offerSnapshot` / `latestSnapshot`) so high-rate snapshots arriving while the render loop is paused never evict or head-of-line block discrete events.
+- **Pause-aware snapshot timeline (`:awake:net:prediction`)**: `SnapshotTimeline` smooths `clientTime - serverTime` clock offsets (`gain`) behind `bufferSeconds` during normal play, and immediately rebases both `offset` and `playbackTime` once drift exceeds `maxBehindSeconds` so clamped frame deltas on resume do not leave remote entity interpolation minutes behind server time.
+- **Decaying violation counters & server WebSocket pings (`:awake:net:api`, `:awake:net:server-ktor`)**: `ViolationWindow` (`decayTicks`, `record`, `countAt`) decays isolated post-pause burst counts over clean simulation ticks while sustained floods still cross enforcement thresholds. On the server, `GameTransportConfig` configures WebSocket `pingPeriod` and `timeout` (`Duration.ZERO` or `Duration.INFINITE` to disable), coexists with pre-installed Ktor `WebSockets`, and closes unresponsive peers cleanly with `SessionCloseReason.PeerClosed`.
 
 ---
 

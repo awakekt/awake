@@ -36,7 +36,10 @@ internal class SocketConnection(
     private val port: SocketPort,
     override val runsInWorker: Boolean,
     private val nowMillis: () -> Double,
+    holdWakeLock: Boolean = true,
+    acquireWakeLock: () -> WakeLock = { WakeLock.None },
 ) : BrowserSocketTransport {
+    private val wakeLock: WakeLock = if (holdWakeLock) acquireWakeLock() else WakeLock.None
     private val connection = MutableStateFlow<ConnectionState>(ConnectionState.Connected(SessionId(0)))
 
     /** Packets that came before [listen], or for a reader of [incoming]. */
@@ -94,7 +97,10 @@ internal class SocketConnection(
         if (!open) onClosed()
     }
 
-    override fun schedule(millis: Int, action: () -> Unit) = port.schedule(millis, action)
+    override fun schedule(millis: Int, action: () -> Unit) {
+        if (!open) return
+        port.schedule(millis, action)
+    }
 
     override fun incoming(): ReceiveChannel<ByteArray> {
         streamed = true
@@ -148,6 +154,7 @@ internal class SocketConnection(
     private fun ended() {
         if (!open) return
         open = false
+        wakeLock.release()
         connection.value = ConnectionState.Disconnected
         reportedBuffered = 0
         taken = posted
@@ -176,4 +183,17 @@ internal interface SocketPort {
 
     /** The page's socket's `bufferedAmount`, read now. Not called for a socket in a worker, which reports it instead. */
     fun bufferedAmount(): Long
+}
+
+/**
+ * Holds a shared lifecycle lock while a [SocketConnection] stays open, so a backgrounded tab with an
+ * open socket is less likely to be frozen; released once as soon as the connection ends.
+ */
+internal fun interface WakeLock {
+    /** Releases this lock; called once when the connection ends, and safe to call again. */
+    fun release()
+
+    companion object {
+        val None: WakeLock = WakeLock {}
+    }
 }

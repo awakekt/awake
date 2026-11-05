@@ -18,6 +18,7 @@ import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.hooks.MonitoringEvent
 import io.ktor.server.application.install
+import io.ktor.server.application.pluginOrNull
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
@@ -26,6 +27,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.FrameTooBigException
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
@@ -47,6 +49,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -62,10 +65,17 @@ class GameTransportConfig {
     /** WebSocket route path (default: `"/net"`). */
     var path: String = "/net"
 
-    /** Ping period interval (default: 15s). */
+    /**
+     * Interval between server-initiated WebSocket `PING` frames (default: 15s).
+     *
+     * Set to [Duration.ZERO] or [Duration.INFINITE] to disable WebSocket-level server pings.
+     */
     var pingPeriod: Duration = 15.seconds
 
-    /** Connection timeout duration (default: 15s). */
+    /**
+     * Maximum duration to wait for a peer `PONG` reply after sending a WebSocket `PING` frame
+     * before terminating the session with [SessionCloseReason.PeerClosed] (default: 15s).
+     */
     var timeout: Duration = 15.seconds
 
     /** Maximum inbound frame size in bytes (default: 64 KB). */
@@ -131,25 +141,45 @@ val GameTransportKey: AttributeKey<KtorGameTransport> = AttributeKey("GameTransp
 
 /**
  * Ktor plugin installing [KtorGameTransport] into the [Application].
+ *
+ * Installs Ktor [WebSockets] with [GameTransportConfig.pingPeriod], [GameTransportConfig.timeout],
+ * and [GameTransportConfig.maxFrameSize] when not already installed on the [Application], and
+ * applies those settings to accepted sessions on [GameTransportConfig.path] even when [WebSockets]
+ * was installed beforehand with different application-wide defaults.
  */
 val GameTransport: ApplicationPlugin<GameTransportConfig> =
     createApplicationPlugin("GameTransport", ::GameTransportConfig) {
         val cfg = pluginConfig
+        require(!cfg.pingPeriod.isNegative()) {
+            "GameTransportConfig.pingPeriod must be non-negative, got ${cfg.pingPeriod}."
+        }
+        require(cfg.timeout.isFinite() && !cfg.timeout.isNegative()) {
+            "GameTransportConfig.timeout must be finite and non-negative, got ${cfg.timeout}."
+        }
+        require(cfg.maxFrameSize > 0L) {
+            "GameTransportConfig.maxFrameSize must be positive, got ${cfg.maxFrameSize}."
+        }
+
         val transport = KtorGameTransport(cfg)
         application.attributes.put(GameTransportKey, transport)
 
-        val pingMs = cfg.pingPeriod.inWholeMilliseconds
+        val pingMs = cfg.resolvedPingMillis()
         val timeoutMs = cfg.timeout.inWholeMilliseconds
         val maxFrame = cfg.maxFrameSize
 
-        application.install(WebSockets) {
-            pingPeriodMillis = pingMs
-            timeoutMillis = timeoutMs
-            maxFrameSize = maxFrame
+        if (application.pluginOrNull(WebSockets) == null) {
+            application.install(WebSockets) {
+                pingPeriodMillis = pingMs
+                timeoutMillis = timeoutMs
+                maxFrameSize = maxFrame
+            }
         }
 
         application.routing {
             webSocket(cfg.path) {
+                if (this.maxFrameSize != maxFrame) this.maxFrameSize = maxFrame
+                if (this.timeoutMillis != timeoutMs) this.timeoutMillis = timeoutMs
+                if (pingIntervalMillis != pingMs) pingIntervalMillis = pingMs
                 transport.onConnect(this, cfg.principal(call))
             }
         }
@@ -157,6 +187,13 @@ val GameTransport: ApplicationPlugin<GameTransportConfig> =
         on(MonitoringEvent(ApplicationStopping)) {
             runBlocking { transport.stop() }
         }
+    }
+
+private fun GameTransportConfig.resolvedPingMillis(): Long =
+    if (!pingPeriod.isFinite() || pingPeriod == Duration.ZERO) {
+        0L
+    } else {
+        pingPeriod.inWholeMilliseconds.coerceAtLeast(1L)
     }
 
 /**
@@ -227,6 +264,10 @@ internal class KtorTransportSession(
                 .collect { packet ->
                     inbox.send(packet)
                 }
+        } catch (_: IOException) {
+            // Peer disconnect or WebSocket ping timeout; recorded as PeerClosed in finally.
+        } catch (_: FrameTooBigException) {
+            // Oversized inbound frame terminated by the WebSocket layer; recorded as PeerClosed in finally.
         } finally {
             finish(drain = true, SessionCloseReason.PeerClosed)
         }

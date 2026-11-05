@@ -14,6 +14,7 @@ import kotlin.math.round
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -191,6 +192,76 @@ class SocketConnectionTest {
         socket.listen(onPacket = { seen = it }, onClosed = {})
         socket.received(every, arrivedAtMillis = 0.0)
         assertContentEquals(every, seen)
+    }
+
+    @Test
+    fun acquiresWakeLockOnOpenAndReleasesIdempotentlyOnClose() {
+        val wakeLocks = FakeWakeLock()
+        val socket = SocketConnection(FakePort(), runsInWorker = true, nowMillis = Clock(0.0)::read, acquireWakeLock = wakeLocks::acquire)
+        assertEquals(1, wakeLocks.acquired)
+        assertEquals(0, wakeLocks.released)
+        runAtOnce { socket.close() }
+        assertEquals(1, wakeLocks.released)
+        runAtOnce { socket.close() }
+        socket.closed(code = 1000, reason = "")
+        assertEquals(1, wakeLocks.released, "the wake lock is released once")
+    }
+
+    @Test
+    fun releasesWakeLockIdempotentlyOnRemoteClose() {
+        val wakeLocks = FakeWakeLock()
+        val socket = SocketConnection(FakePort(), runsInWorker = false, nowMillis = Clock(0.0)::read, acquireWakeLock = wakeLocks::acquire)
+        assertEquals(1, wakeLocks.acquired)
+        socket.closed(code = 1006, reason = "dropped")
+        assertEquals(1, wakeLocks.released)
+        socket.closed(code = 1000, reason = "")
+        runAtOnce { socket.close() }
+        assertEquals(1, wakeLocks.released)
+    }
+
+    @Test
+    fun releasesWakeLockEvenWhenClosedListenerThrows() {
+        val wakeLocks = FakeWakeLock()
+        val socket = SocketConnection(FakePort(), runsInWorker = true, nowMillis = Clock(0.0)::read, acquireWakeLock = wakeLocks::acquire)
+        socket.listen(onPacket = {}, onClosed = { error("listener failure") })
+        assertFailsWith<IllegalStateException> { socket.closed(code = 1006, reason = "") }
+        assertEquals(1, wakeLocks.released)
+    }
+
+    @Test
+    fun skipsWakeLockWhenHoldWakeLockIsFalse() {
+        val wakeLocks = FakeWakeLock()
+        val socket = SocketConnection(
+            FakePort(),
+            runsInWorker = true,
+            nowMillis = Clock(0.0)::read,
+            holdWakeLock = false,
+            acquireWakeLock = wakeLocks::acquire,
+        )
+        assertEquals(0, wakeLocks.acquired)
+        runAtOnce { socket.close() }
+        socket.closed(code = 1000, reason = "")
+        assertEquals(0, wakeLocks.acquired)
+        assertEquals(0, wakeLocks.released)
+    }
+
+    @Test
+    fun scheduleAfterCloseIsIgnored() {
+        val port = FakePort()
+        val socket = SocketConnection(port, runsInWorker = true, nowMillis = Clock(0.0)::read)
+        socket.closed(code = 1000, reason = "")
+        socket.schedule(RETRY_MILLIS) {}
+        assertTrue(port.scheduledMillis.isEmpty())
+    }
+
+    private class FakeWakeLock {
+        var acquired = 0
+        var released = 0
+
+        fun acquire(): WakeLock {
+            acquired++
+            return WakeLock { released++ }
+        }
     }
 
     private class Clock(var now: Double) {

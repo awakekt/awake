@@ -16,7 +16,11 @@ import kotlin.js.ExperimentalWasmJsInterop
  * Opens the socket at [url] on the page's own thread, and returns it once it has opened. Fails with
  * [BrowserSocketFailed] when the socket closes before it opens.
  */
-internal suspend fun connectOnPage(url: String): BrowserSocketTransport = suspendCancellableCoroutine { waiting ->
+internal suspend fun connectOnPage(
+    url: String,
+    holdWakeLock: Boolean = true,
+    acquireWakeLock: () -> WakeLock = ::acquireBrowserWakeLock,
+): BrowserSocketTransport = suspendCancellableCoroutine { waiting ->
     val socket = newSocket(url)
     if (socket == null) {
         waiting.resumeWithException(BrowserSocketFailed(url, ABNORMAL_CLOSE))
@@ -26,9 +30,19 @@ internal suspend fun connectOnPage(url: String): BrowserSocketTransport = suspen
     onSocketEvents(
         socket,
         opened = {
-            val opened = SocketConnection(PagePort(socket), runsInWorker = false, nowMillis = ::epochMillis)
-            connection = opened
-            if (waiting.isActive) waiting.resume(opened)
+            if (waiting.isActive) {
+                val opened = SocketConnection(
+                    port = PagePort(socket),
+                    runsInWorker = false,
+                    nowMillis = ::epochMillis,
+                    holdWakeLock = holdWakeLock,
+                    acquireWakeLock = acquireWakeLock,
+                )
+                connection = opened
+                waiting.resume(opened)
+            } else {
+                closeSocket(socket)
+            }
         },
         message = { data -> connection?.received(data.toByteArray()) },
         closed = { code, reason ->

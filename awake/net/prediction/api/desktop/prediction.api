@@ -228,3 +228,31 @@ public final class com/awakekt/awake/net/prediction/SnapReason$NoHistory : com/a
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/net/prediction/SnapshotTimeline {
+	public static final field Companion Lcom/awakekt/awake/net/prediction/SnapshotTimeline$Companion;
+	public static final field DEFAULT_BUFFER_SECONDS D
+	public static final field DEFAULT_GAIN D
+	public static final field DEFAULT_MAX_BEHIND_SECONDS D
+	public fun <init> ()V
+	public fun <init> (DDD)V
+	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advance (DD)D
+	public static synthetic fun advance$default (Lcom/awakekt/awake/net/prediction/SnapshotTimeline;DDILjava/lang/Object;)D
+	public final fun getBufferSeconds ()D
+	public final fun getClientTime ()D
+	public final fun getGain ()D
+	public final fun getMaxBehindSeconds ()D
+	public final fun getOffset ()D
+	public final fun getPlaybackTime ()D
+	public final fun getReady ()Z
+	public final fun getRebaseCount ()J
+	public final fun observe (DD)V
+	public static synthetic fun observe$default (Lcom/awakekt/awake/net/prediction/SnapshotTimeline;DDILjava/lang/Object;)V
+	public final fun observeAt (DD)V
+	public final fun reset ()V
+	public final fun step (D)D
+}
+
+public final class com/awakekt/awake/net/prediction/SnapshotTimeline$Companion {
+}
+
