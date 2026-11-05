@@ -9,6 +9,7 @@ package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.BorderSides
 import com.awakekt.awake.compose.foundation.clickable
+import com.awakekt.awake.compose.foundation.focusable
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Arrangement
@@ -29,7 +30,14 @@ import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
+import com.awakekt.awake.compose.ui.input.key.KeyEvent
+import com.awakekt.awake.compose.ui.input.key.KeyEventType
+import com.awakekt.awake.compose.ui.input.key.onKeyEvent
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
+import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
+import com.awakekt.awake.compose.ui.semantics.SemanticsRole
+import com.awakekt.awake.compose.ui.semantics.semantics
+import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
@@ -151,8 +159,7 @@ internal fun shadcnButtonContent(
             // than the same label unbordered; Awake's border paints inside the bounds and reserves
             // nothing, which left outline 2.53px narrow against the reference while every unbordered
             // variant matched. Same fix as `popoverSurfaceStyle`.
-            .hoverable(interaction, enabled = enabled)
-            .clickable(interaction) { if (enabled) onClick() }
+            .buttonInteractive(interaction, enabled, pressSource, onClick)
         val surface = if (shape == null) {
             interactive.styleable(state, borderSides, style, boxModel)
         } else {
@@ -185,6 +192,40 @@ internal fun shadcnButtonContent(
             }
         }
     }
+}
+
+private fun Modifier.buttonInteractive(
+    interaction: InteractionSource,
+    enabled: Boolean,
+    pressSource: InteractionSource?,
+    onClick: () -> Unit,
+): Modifier {
+    // Hold-repeat spin buttons (`pressSource != null`, e.g. `ShadcnNumberStepper`) keep their press
+    // node attached so a mid-hold `enabled = false` clamp still observes `PointerEventType.Release`,
+    // and stay out of the Tab ring because keyboard stepping belongs to the stepper's input field.
+    val canFocus = enabled && pressSource == null
+    return hoverable(interaction, enabled = enabled)
+        .let { if (enabled || pressSource != null) it.clickable(interaction) { if (enabled) onClick() } else it }
+        .focusable(enabled = canFocus, interactionSource = interaction)
+        .onKeyEvent { event ->
+            if (canFocus && isButtonActivationKey(event)) {
+                onClick()
+                true
+            } else {
+                false
+            }
+        }
+        .semantics(mergeDescendants = true) {
+            this[SemanticsProperties.Role] = SemanticsRole.Button
+            if (!enabled) this[SemanticsProperties.Disabled] = true
+        }
+}
+
+/** Standard unmodified `Enter` / `Space` key-down activation shared across button and toggle recipes. */
+internal fun isButtonActivationKey(event: KeyEvent): Boolean {
+    if (event.type != KeyEventType.Down) return false
+    val unmodified = !event.isCtrlPressed && !event.isAltPressed && !event.isMetaPressed
+    return unmodified && (event.key == Key.Enter || event.key == Key.Space)
 }
 
 /** Keys this component's `remember` slots as one group in its caller's node. */

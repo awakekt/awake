@@ -24,6 +24,8 @@ import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
+import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -58,6 +60,7 @@ fun ShadcnInputGroup(
     )? = null,
     focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
     onClick: (() -> Unit)? = null,
+    onSubmit: (() -> Unit)? = null,
 ) {
     rememberGroup(ShadcnInputGroupGroup) {
         val theme = shadcnTheme
@@ -72,6 +75,7 @@ fun ShadcnInputGroup(
 
         Row(
             modifier = modifier.fillMaxWidth().height(density.fieldHeight())
+                .let { if (enabled) it else it.semantics { this[SemanticsProperties.Disabled] = true } }
                 .focusRing(
                     alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
                     width = FieldFocusRingWidth,
@@ -101,6 +105,8 @@ fun ShadcnInputGroup(
                 placeholderColor = theme.palette.mutedForeground,
                 singleLine = true,
                 onClick = onClick,
+                onSubmit = onSubmit,
+                enabled = enabled,
             )
             if (suffix != null) {
                 Box(Modifier.padding(start = if (density.isCompact) Tw.Spacing.s1 else Tw.Spacing.s1_5, end = edge)) {
@@ -110,6 +116,36 @@ fun ShadcnInputGroup(
         }
     }
 }
+
+/** Binary-compatible overload without `onSubmit`. */
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+context(_: Composer)
+fun ShadcnInputGroup(
+    state: TextFieldState,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    placeholder: String? = null,
+    prefix: (
+        context(Composer)
+        RowScope.() -> Unit
+    )? = null,
+    suffix: (
+        context(Composer)
+        RowScope.() -> Unit
+    )? = null,
+    focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
+    onClick: (() -> Unit)? = null,
+) = ShadcnInputGroup(
+    state = state,
+    modifier = modifier,
+    enabled = enabled,
+    placeholder = placeholder,
+    prefix = prefix,
+    suffix = suffix,
+    focusRingMode = focusRingMode,
+    onClick = onClick,
+    onSubmit = null,
+)
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
 private object ShadcnInputGroupGroup

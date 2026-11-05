@@ -66,6 +66,7 @@ fun ShadcnTextarea(
                 .styleable(styleState, box),
             style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
             interactionSource = interaction,
+            enabled = enabled,
         )
     }
 }

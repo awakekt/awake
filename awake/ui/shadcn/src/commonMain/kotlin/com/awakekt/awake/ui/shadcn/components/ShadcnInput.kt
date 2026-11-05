@@ -53,6 +53,7 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * calls for another character; see `BasicTextField` for which characters the bundled font can draw.
  * @param revealLastTyped With [mask], shows each typed character in clear for 1.5 seconds, as
  * Android and iOS do on a touch keyboard. Off by default, as in a desktop browser.
+ * @param onSubmit Optional callback invoked when `Enter` is pressed while the field is focused and enabled.
  *
  * Keywords: input, textfield, text input, single line input, search field, form input, password input.
  */
@@ -66,6 +67,7 @@ fun ShadcnInput(
     onClick: (() -> Unit)? = null,
     mask: Char? = null,
     revealLastTyped: Boolean = false,
+    onSubmit: (() -> Unit)? = null,
 ) {
     rememberGroup(ShadcnInputGroup) {
         val theme = shadcnTheme
@@ -97,9 +99,35 @@ fun ShadcnInput(
             onClick = onClick,
             mask = mask,
             revealLastTyped = revealLastTyped,
+            onSubmit = onSubmit,
+            enabled = enabled,
         )
     }
 }
+
+/** Binary-compatible overload without `onSubmit`. */
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+context(_: Composer)
+fun ShadcnInput(
+    state: TextFieldState,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    placeholder: String? = null,
+    focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
+    onClick: (() -> Unit)? = null,
+    mask: Char? = null,
+    revealLastTyped: Boolean = false,
+) = ShadcnInput(
+    state = state,
+    modifier = modifier,
+    enabled = enabled,
+    placeholder = placeholder,
+    focusRingMode = focusRingMode,
+    onClick = onClick,
+    mask = mask,
+    revealLastTyped = revealLastTyped,
+    onSubmit = null,
+)
 
 private val DENSITY_COUNT = ShadcnDensity.entries.size
 

@@ -31,7 +31,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.focus.focusTarget
 import com.awakekt.awake.compose.ui.input.key.KeyEvent
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
-import com.awakekt.awake.compose.ui.input.key.onKeyEvent
+import com.awakekt.awake.compose.ui.input.key.onPreviewKeyEvent
 import com.awakekt.awake.compose.ui.layout.Layer
 import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.platform.LocalDensity
@@ -227,7 +227,7 @@ fun ShadcnDropdownMenu(
         Box(
             modifier
                 .focusTarget()
-                .onKeyEvent { event ->
+                .onPreviewKeyEvent { event ->
                     handleMenuKey(event, entries, expanded, keyboard, onExpandedChange, onItemSelected)
                 }
                 .popupAnchor(anchor),

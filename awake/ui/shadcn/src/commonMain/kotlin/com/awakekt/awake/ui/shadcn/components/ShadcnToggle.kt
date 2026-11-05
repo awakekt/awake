@@ -6,6 +6,7 @@
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.clickable
+import com.awakekt.awake.compose.foundation.focusable
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.input.key.onKeyEvent
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
@@ -73,7 +75,16 @@ fun ShadcnToggle(
         modifier
             .size(toggleSize)
             .hoverable(interaction, enabled = enabled)
-            .clickable(interaction) { if (enabled) state.clicked = true }
+            .let { if (enabled) it.clickable(interaction) { state.clicked = true } else it }
+            .focusable(enabled = enabled, interactionSource = interaction)
+            .onKeyEvent { event ->
+                if (enabled && isButtonActivationKey(event)) {
+                    state.clicked = true
+                    true
+                } else {
+                    false
+                }
+            }
             .styleable(styleState, style)
             .semantics {
                 this[SemanticsProperties.Role] = SemanticsRole.Button

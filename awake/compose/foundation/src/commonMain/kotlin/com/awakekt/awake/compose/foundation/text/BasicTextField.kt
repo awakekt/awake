@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@file:Suppress("FunctionNaming", "UndocumentedPublicFunction", "ktlint:standard:function-naming")
 
 package com.awakekt.awake.compose.foundation.text
 
@@ -70,6 +70,7 @@ private const val LAST_TYPED_REVEAL_SECONDS = 1.5f
 // Shared rather than built per pass: a configuration is never mutated once declared (the tree
 // builder merges into a fresh one), so one instance serves every masked field with no allocation.
 private val PasswordSemantics: Modifier = Modifier.semantics { this[SemanticsProperties.Password] = true }
+private val DisabledSemantics: Modifier = Modifier.semantics { this[SemanticsProperties.Disabled] = true }
 
 context(_: Composer)
 /**
@@ -81,6 +82,10 @@ context(_: Composer)
  * Focusable, so Tab reaches it and a click puts the caret where it landed. While it holds focus the
  * frame reports `isTextInputFocused`, which is how gameplay knows W/A/S/D is being typed rather
  * than walking the player -- the bug `ui-core` shipped by gating on pointer capture alone.
+ *
+ * When [enabled] is `false`, the field leaves the focus ring, publishes
+ * [SemanticsProperties.Disabled], and ignores pointer selection, typing, paste, and IME edits while
+ * keeping [state]'s text and selection untouched until re-enabled.
  *
  * A non-null [mask] makes it a password field, the shape of Compose's `PasswordVisualTransformation`
  * and of `<input type=password>`. [state] keeps the real text; only what is drawn changes, one
@@ -126,6 +131,7 @@ fun BasicTextField(
     revealLastTyped: Boolean = false,
     onSubmit: (() -> Unit)? = null,
     passThroughKeys: Set<Key> = emptySet(),
+    enabled: Boolean = true,
 ) {
     rememberGroup(BasicTextFieldGroup) {
         // A newline in a password could only draw as one more mask, so the field never breaks lines.
@@ -152,32 +158,33 @@ fun BasicTextField(
         policy.cache = textState.cache
         policy.motion = textState.motion
         // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
-        val textColor = resolved.color ?: DefaultTextColor
-        val color = { if (state.text.isEmpty() && placeholder != null) placeholderColor ?: textColor else textColor }
+        val color = { resolveFieldColor(state, resolved.color, placeholder, placeholderColor) }
+        val inputModifier = if (enabled) {
+            TextFieldInputElement(
+                state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
+                policy, density, horizontalOffset, onClick, onSubmit, passThroughKeys,
+            ).clickable { }
+        } else {
+            DisabledSemantics
+        }
 
         Layout(
             nodeType = TextFieldNodeType,
             modifier = modifier
-                .focusable(interactionSource = source)
+                .focusable(enabled = enabled, interactionSource = source)
                 .then(if (mask != null) PasswordSemantics else Modifier)
-                .then(
-                    TextFieldInputElement(
-                        state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
-                        policy, density, horizontalOffset, onClick, onSubmit, passThroughKeys,
-                    ),
-                )
-                .clickable { }
+                .then(inputModifier)
                 .drawBehind {
                     val paintColor = color()
                     val run = policy.runFor(density, policy.measuredFontScale)
                     val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
                     val caret = TextRunOf(state, policy, density).position()
-                    val focused = source.isFocused
+                    val focused = enabled && source.isFocused
                     val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
                     clipFieldText(horizontalOffset.takeIf { oneLine }) {
-                        drawSelectionSegments(run, state, textOffsetX, textOffsetY, paintColor.withAlpha(0.35f))
+                        if (enabled) drawSelectionSegments(run, state, textOffsetX, textOffsetY, paintColor.withAlpha(0.35f))
                         run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY, motion = textState.motion)
-                        if (focused && isCaretVisible(clock.totalSeconds)) {
+                        if (shouldDrawCaret(focused, clock.totalSeconds)) {
                             drawFieldCaret(
                                 x = caret.x + textOffsetX,
                                 y = if (oneLine) textOffsetY else caret.y,
@@ -190,6 +197,48 @@ fun BasicTextField(
             measurePolicy = policy,
         )
     }
+}
+
+/** Binary-compatible overload without `enabled`. */
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+context(_: Composer)
+fun BasicTextField(
+    state: TextFieldState,
+    modifier: Modifier = Modifier,
+    style: TextStyle = TextStyle.Default,
+    interactionSource: InteractionSource? = null,
+    placeholder: String? = null,
+    placeholderColor: Color? = null,
+    singleLine: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    mask: Char? = null,
+    revealLastTyped: Boolean = false,
+    onSubmit: (() -> Unit)? = null,
+    passThroughKeys: Set<Key> = emptySet(),
+) = BasicTextField(
+    state = state,
+    modifier = modifier,
+    style = style,
+    interactionSource = interactionSource,
+    placeholder = placeholder,
+    placeholderColor = placeholderColor,
+    singleLine = singleLine,
+    onClick = onClick,
+    mask = mask,
+    revealLastTyped = revealLastTyped,
+    onSubmit = onSubmit,
+    passThroughKeys = passThroughKeys,
+    enabled = true,
+)
+
+private fun resolveFieldColor(
+    state: TextFieldState,
+    resolvedColor: Color?,
+    placeholder: String?,
+    placeholderColor: Color?,
+): Color {
+    val textColor = resolvedColor ?: DefaultTextColor
+    return if (state.text.isEmpty() && placeholder != null) placeholderColor ?: textColor else textColor
 }
 
 private fun DrawScope.drawSelectionSegments(
@@ -328,8 +377,8 @@ internal class LastTypedReveal {
         revealedText != null && revealedText === state.text && !state.hasComposition && now < until
 }
 
-private fun isCaretVisible(totalSeconds: Float): Boolean =
-    (totalSeconds % CARET_BLINK_PERIOD_SECONDS) < CARET_BLINK_PERIOD_SECONDS / 2f
+private fun shouldDrawCaret(focused: Boolean, totalSeconds: Float): Boolean =
+    focused && (totalSeconds % CARET_BLINK_PERIOD_SECONDS) < CARET_BLINK_PERIOD_SECONDS / 2f
 
 /**
  * Caret x from the same run geometry the glyphs are painted with.
