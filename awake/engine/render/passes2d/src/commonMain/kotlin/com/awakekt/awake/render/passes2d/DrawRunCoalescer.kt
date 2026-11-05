@@ -487,6 +487,9 @@ object DrawRunCoalescer {
                 }
                 is DrawCommand.BackdropBlur -> Unit
             }
+            if (spanPool != null) {
+                for (runIndex in stagedRunStart until runs.size) runs[runIndex].requiresUpload = true
+            }
             if (cacheable && spanPool == null) {
                 retained.store(
                     primitives = slice,

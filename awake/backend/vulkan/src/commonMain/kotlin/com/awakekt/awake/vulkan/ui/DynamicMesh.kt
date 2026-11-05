@@ -37,6 +37,7 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
  * quads move every frame) -- merging them would force one class to carry two lifecycle
  * branches neither caller needs to know about.
  */
+@Suppress("TooManyFunctions") // Public update overloads preserve the released JVM signatures.
 class DynamicMesh(
     private val graphicsDevice: GraphicsDevice,
     private val maxQuads: Int,
@@ -74,7 +75,7 @@ class DynamicMesh(
         var maxVertices: Int,
         var maxIndices: Int,
         var drawIndexCount: Int = 0,
-        /** The arrays last written here. Staged runs are never mutated, so the same arrays are the same contents. */
+        /** Last uploaded arrays. Identity can skip an upload only when the caller supplies immutable content. */
         var writtenVertices: FloatArray? = null,
         var writtenIndices: IntArray? = null,
         /** Reused little-endian index bytes for this slot, so a per-frame upload converts in place
@@ -149,14 +150,18 @@ class DynamicMesh(
      * @param indices Triangle-list indices into [vertices], as 32-bit values.
      * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
      */
-    fun update(frameIndex: Int, vertices: FloatArray, indices: IntArray) {
+    fun update(frameIndex: Int, vertices: FloatArray, indices: IntArray) =
+        update(frameIndex, vertices, indices, forceUpload = false)
+
+    /** [update] for reusable staging arrays, whose identity does not imply unchanged contents. */
+    fun update(frameIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean) {
         val frame = resourcesFor(frameIndex)
         growTo(frame, vertexFloats = vertices.size, indexCount = indices.size)
         activeFrameIndex = frameIndex
         frame.drawIndexCount = indices.size
         if (indices.isEmpty()) return
         // A UI that did not change hands back the same staged arrays, already in this slot.
-        if (vertices === frame.writtenVertices && indices === frame.writtenIndices) return
+        if (!forceUpload && vertices === frame.writtenVertices && indices === frame.writtenIndices) return
         VulkanBuffers.writeBufferMemoryFloats(device, frame.vertexBufferMemory.handle, 0, vertices)
         // writeBufferMemoryBytes copies into mapped memory synchronously, so the reused buffer is
         // free to be overwritten on the next frame's upload.

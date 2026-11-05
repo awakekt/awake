@@ -15,9 +15,8 @@ import kotlin.test.assertEquals
  *
  * Both backends' `DynamicMesh.update` skip the GPU upload when the staged arrays are the same
  * instances the mesh slot last received. [IdentitySkipUploader] models exactly that rule, so these
- * tests prove the two halves the pool must keep true:
- *  - a run whose contents change every frame is handed a different array instance each frame and
- *    therefore re-uploads (never wrongly skipped into a stale buffer), and
+ * tests prove the two halves the upload boundary must keep true:
+ *  - a changing pooled run forces its upload even when a mesh slot sees the same arrays again, and
  *  - an unchanged, retained run is handed the same immutable array each frame and therefore skips.
  */
 class UiRunStagingIdentityTest {
@@ -26,18 +25,23 @@ class UiRunStagingIdentityTest {
      * when handed the same array instance as last time, counting uploads and skips. */
     private class IdentitySkipUploader : DrawMeshUploader<Int> {
         private val lastVertices = HashMap<String, FloatArray>()
+        private val uploadedX = HashMap<String, Float>()
+        var frameSlot = 0
         var uploads = 0
             private set
         var skips = 0
             private set
 
         private fun record(key: String, vertices: FloatArray): Int {
-            if (lastVertices[key] === vertices) {
+            val slot = "$key:$frameSlot"
+            if (lastVertices[slot] === vertices) {
                 skips += 1
             } else {
                 uploads += 1
-                lastVertices[key] = vertices
+                lastVertices[slot] = vertices
+                uploadedX[slot] = vertices[0]
             }
+            assertEquals(vertices[0], uploadedX[slot], "GPU position must match this frame, including after an idle slot")
             return key.hashCode()
         }
 
@@ -71,6 +75,35 @@ class UiRunStagingIdentityTest {
         }
         assertEquals(FRAMES, uploader.uploads, "every changed frame must upload")
         assertEquals(0, uploader.skips, "a changing run must never be skipped")
+    }
+
+    /** Two alternating frame slots revisit the same pool generation: identity alone skips changed data. */
+    @Test
+    fun aChangingRunUploadsIntoEveryFrameInFlightSlot() {
+        for (frameSlots in listOf(1, 2, 3)) {
+            val cache = RetainedDrawRunCache()
+            val pool = DynamicRunArrayPool()
+            val uploader = IdentitySkipUploader()
+            repeat(12) { frame ->
+                uploader.frameSlot = frame % frameSlots
+                val staged = DrawRunCoalescer.coalesce(listOf(quad(frame.toFloat())), retained = cache, pool = pool)
+                uploadDrawRuns(staged, uploader)
+            }
+            assertEquals(12, uploader.uploads, "$frameSlots frame slots must all receive changed content")
+        }
+    }
+
+    /** An unused mesh slot can retain an array for arbitrarily many frames, beyond a generation ring. */
+    @Test
+    fun aChangingRunUploadsWhenItsMeshSlotReturnsAfterAGap() {
+        val cache = RetainedDrawRunCache()
+        val pool = DynamicRunArrayPool()
+        val uploader = IdentitySkipUploader()
+        repeat(12) { frame ->
+            val staged = DrawRunCoalescer.coalesce(listOf(quad(frame.toFloat())), retained = cache, pool = pool)
+            if (frame == 1 || frame == 5 || frame == 9) uploadDrawRuns(staged, uploader)
+        }
+        assertEquals(3, uploader.uploads)
     }
 
     /**

@@ -29,6 +29,25 @@ interface DrawMeshUploader<M> {
      */
     fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M =
         glyphMesh(DECORATED_RUN_INDEX_BASE + runIndex, vertices, indices)
+
+    /**
+     * Uploads mutable staging arrays even if their identity matches an earlier frame.
+     * Older uploaders receive immutable copies; backends may override this to upload in place.
+     */
+    fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): M =
+        if (forceUpload) quadMesh(runIndex, vertices.copyOf(), indices.copyOf()) else quadMesh(runIndex, vertices, indices)
+
+    /** Mutable-array counterpart of [roundedQuadMesh], with the same compatibility fallback as [quadMesh]. */
+    fun roundedQuadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): M =
+        if (forceUpload) roundedQuadMesh(runIndex, vertices.copyOf(), indices.copyOf()) else roundedQuadMesh(runIndex, vertices, indices)
+
+    /** Mutable-array counterpart of [glyphMesh], with the same compatibility fallback as [quadMesh]. */
+    fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): M =
+        if (forceUpload) glyphMesh(runIndex, vertices.copyOf(), indices.copyOf()) else glyphMesh(runIndex, vertices, indices)
+
+    /** Mutable-array counterpart of [decoratedGlyphMesh], preserving the decorated layout on older uploaders. */
+    fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): M =
+        if (forceUpload) decoratedGlyphMesh(runIndex, vertices.copyOf(), indices.copyOf()) else decoratedGlyphMesh(runIndex, vertices, indices)
 }
 
 /** Where [DrawMeshUploader.decoratedGlyphMesh]'s default starts counting, past any frame's plain glyph runs. */
@@ -65,21 +84,22 @@ fun <M> uploadDrawRuns(
                         quadRunCount++,
                         run.vertices,
                         run.indices,
+                        run.requiresUpload,
                     ),
                 )
 
             is StagedDrawRun.RoundedQuadRun ->
                 runs += DrawRun.RoundedQuadRun(
-                    uploader.roundedQuadMesh(roundedQuadRunCount++, run.vertices, run.indices),
+                    uploader.roundedQuadMesh(roundedQuadRunCount++, run.vertices, run.indices, run.requiresUpload),
                 )
 
             is StagedDrawRun.GlyphRun -> {
                 val font = run.font ?: defaultFont
                 if (font != null && run.decorated) {
-                    val mesh = uploader.decoratedGlyphMesh(decoratedGlyphRunCount++, run.vertices, run.indices)
+                    val mesh = uploader.decoratedGlyphMesh(decoratedGlyphRunCount++, run.vertices, run.indices, run.requiresUpload)
                     runs += DrawRun.GlyphRun(mesh, font, decorated = true)
                 } else if (font != null) {
-                    runs += DrawRun.GlyphRun(uploader.glyphMesh(glyphRunCount++, run.vertices, run.indices), font)
+                    runs += DrawRun.GlyphRun(uploader.glyphMesh(glyphRunCount++, run.vertices, run.indices, run.requiresUpload), font)
                 }
             }
 

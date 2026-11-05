@@ -16,6 +16,10 @@ import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
  * A typed, coalesced 2D draw command in paint order, ready for GPU buffer upload and recording.
  */
 sealed class StagedDrawRun {
+    /** Pooled arrays may change in place, so their upload must not be skipped by array identity. */
+    var requiresUpload: Boolean = false
+        internal set
+
     /**
      * Flat colored 2D quads, gradients, clipped paths, or AA-tessellated convex polygons.
      *
