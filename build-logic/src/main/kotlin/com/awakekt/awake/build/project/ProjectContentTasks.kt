@@ -103,6 +103,10 @@ abstract class ValidateProjectTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val manifestFile: RegularFileProperty
 
+    /** Optional on disk; read if present to validate its format and asset root bounds. */
+    @get:Internal
+    abstract val assetsLockFile: RegularFileProperty
+
     @get:Input
     abstract val assetRoots: ListProperty<String>
 
@@ -223,12 +227,13 @@ abstract class ValidateProjectTask : DefaultTask() {
     }
 
     private fun validateAssetsLock(root: File, roots: List<String>, errors: MutableList<String>, warnings: MutableList<String>) {
-        val lockFile = root.resolve("assets.lock.json")
+        val lockFile = assetsLockFile.orNull?.asFile ?: root.resolve("assets.lock.json")
         if (!lockFile.isFile) return
-        val lock = parseObject(lockFile, errors, "assets.lock.json") ?: return
-        if (lock["formatVersion"]?.jsonPrimitive?.intOrNull != 1) errors += "assets.lock.json.formatVersion must be integer 1"
+        val label = projectRelativeFile(root, lockFile)?.relativeTo(root)?.invariantSeparatorsPath ?: lockFile.name
+        val lock = parseObject(lockFile, errors, label) ?: return
+        if (lock["formatVersion"]?.jsonPrimitive?.intOrNull != 1) errors += "$label.formatVersion must be integer 1"
         val assets = lock["assets"] as? JsonObject ?: run {
-            errors += "assets.lock.json.assets must be an object"
+            errors += "$label.assets must be an object"
             return
         }
         assets.forEach { (path, pinValue) ->
@@ -364,6 +369,14 @@ abstract class GenerateAssetsLockTask : DefaultTask() {
 
 @DisableCachingByDefault(because = "Scans the mutable project tree to generate an index")
 abstract class GenerateProjectIndexTask : DefaultTask() {
+    /** Tracked as an input through [indexedFiles] so a missing file does not fail input validation. */
+    @get:Internal
+    abstract val manifestFile: RegularFileProperty
+
+    /** Tracked as an input through [indexedFiles] so a project without a lock file still indexes cleanly. */
+    @get:Internal
+    abstract val assetsLockFile: RegularFileProperty
+
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
@@ -401,8 +414,14 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
     @TaskAction
     fun generate() {
         val root = project.projectDir
+        val metadataFiles = listOf(
+            manifestFile.orNull?.asFile ?: root.resolve("awake.project.json"),
+            assetsLockFile.orNull?.asFile ?: root.resolve("assets.lock.json"),
+        )
         val files = buildList {
-            listOf("awake.project.json", "assets.lock.json").map(root::resolve).filter(File::isFile).forEach(::add)
+            metadataFiles
+                .mapNotNull { candidate -> projectRelativeFile(root, candidate)?.takeIf(File::isFile) }
+                .forEach(::add)
             indexRoots.get().forEach { relativeRoot ->
                 root.resolve(relativeRoot).walkTopDown()
                     .filter(File::isFile)
@@ -637,13 +656,27 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
  */
 internal fun encodePathSegment(segment: String): String = java.net.URLEncoder.encode(segment, Charsets.UTF_8).replace("+", "%20")
 
+private fun projectRelativeFile(root: File, candidate: File): File? {
+    val normalizedRoot = root.normalize()
+    val normalizedCandidate = candidate.normalize()
+    if (normalizedCandidate.startsWith(normalizedRoot)) {
+        return root.resolve(normalizedCandidate.relativeTo(normalizedRoot))
+    }
+    val canonicalRoot = root.canonicalFile
+    val canonicalCandidate = candidate.canonicalFile
+    if (canonicalCandidate.startsWith(canonicalRoot)) {
+        return root.resolve(canonicalCandidate.relativeTo(canonicalRoot))
+    }
+    return null
+}
+
 private fun safePath(path: String?): Boolean = path != null && path.isNotBlank() &&
     !path.startsWith('/') && !path.matches(Regex("^[A-Za-z]:.*")) &&
     '\\' !in path && path.split('/').none { it.isBlank() || it == "." || it == ".." }
 
 private fun underRoot(path: String, roots: List<String>): Boolean = roots.any { path == it || path.startsWith("$it/") }
 
-private fun sha256(file: File): String {
+internal fun sha256(file: File): String {
     val digest = MessageDigest.getInstance("SHA-256")
     file.inputStream().buffered().use { input ->
         val buffer = ByteArray(1024 * 1024)
