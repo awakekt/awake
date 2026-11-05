@@ -74,22 +74,7 @@ if (localProjectModule != null) {
     })
 }
 
-val validateProject = tasks.register<ValidateProjectTask>("validateProject") {
-    group = "awake verification"
-    description = "Validate the Awake project manifest, scenes, assets, and plugins."
-    manifestFile.set(projectContent.manifestFile)
-    assetRoots.set(projectContent.assetRoots)
-    indexRoots.set(projectContent.indexRoots)
-}
-
-val verifyAssetsLock = tasks.register<VerifyAssetsLockTask>("verifyAssetsLock") {
-    group = "awake verification"
-    description = "Verify every tracked asset against assets.lock.json."
-    assetsLockFile.set(projectContent.assetsLockFile)
-    assetRoots.set(projectContent.assetRoots)
-}
-
-tasks.register<GenerateAssetsLockTask>("generateAssetsLock") {
+val generateAssetsLock = tasks.register<GenerateAssetsLockTask>("generateAssetsLock") {
     group = "awake codegen"
     description = "Generate the canonical assets.lock.json."
     outputFile.set(projectContent.assetsLockFile)
@@ -97,9 +82,31 @@ tasks.register<GenerateAssetsLockTask>("generateAssetsLock") {
     assetFiles.from(projectContent.assetRoots.map { roots -> roots.map(layout.projectDirectory::dir) })
 }
 
+val validateProject = tasks.register<ValidateProjectTask>("validateProject") {
+    group = "awake verification"
+    description = "Validate the Awake project manifest, scenes, assets, and plugins."
+    manifestFile.set(projectContent.manifestFile)
+    assetsLockFile.set(projectContent.assetsLockFile)
+    assetRoots.set(projectContent.assetRoots)
+    indexRoots.set(projectContent.indexRoots)
+    mustRunAfter(generateAssetsLock)
+}
+
+val verifyAssetsLock = tasks.register<VerifyAssetsLockTask>("verifyAssetsLock") {
+    group = "awake verification"
+    description = "Verify every tracked asset against assets.lock.json."
+    assetsLockFile.set(projectContent.assetsLockFile)
+    assetRoots.set(projectContent.assetRoots)
+    mustRunAfter(generateAssetsLock)
+}
+
+// assets.lock.json is checked in and optional, so standalone indexing and `check` read it in place without
+// regenerating it; when a build also selects generateAssetsLock, write the lock before any task reads or hashes it.
 val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generateProjectIndex") {
     group = "awake codegen"
     description = "Generate the metadata-only browser project index."
+    manifestFile.set(projectContent.manifestFile)
+    assetsLockFile.set(projectContent.assetsLockFile)
     outputFile.set(projectContent.indexOutputFile)
     indexRoots.set(projectContent.indexRoots)
     indexRootPath.set(projectContent.indexRootPath)
@@ -108,10 +115,11 @@ val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generatePro
     publicScenes.set(projectContent.publicScenes)
     publicIndexOutputFile.set(projectContent.publicIndexOutputFile)
     indexedFiles.from(
-        layout.projectDirectory.file("awake.project.json"),
-        layout.projectDirectory.file("assets.lock.json"),
+        projectContent.manifestFile,
+        projectContent.assetsLockFile,
         projectContent.indexRoots.map { roots -> roots.map(layout.projectDirectory::dir) },
     )
+    mustRunAfter(generateAssetsLock)
 }
 
 // One bundle configuration for both sets; each set bundles from its own index into its own folder, so
@@ -128,6 +136,7 @@ fun GenerateContentBundlesTask.bundleLike(projectContent: ProjectContentExtensio
     bundleUrlPrefix.set(projectContent.bundleUrlPrefix)
     pruneStaleBundles.set(projectContent.pruneStaleBundles)
     workerClasspath.from(awakeProjectContentWorker)
+    mustRunAfter(generateAssetsLock)
 }
 
 val declaresPublicSet = projectContent.publicFiles.zip(projectContent.publicScenes) { globs, scenes -> globs.isNotEmpty() || scenes.isNotEmpty() }
