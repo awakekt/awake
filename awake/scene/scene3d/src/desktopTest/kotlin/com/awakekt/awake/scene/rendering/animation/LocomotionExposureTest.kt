@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.animation
 
+import com.awakekt.awake.core.animation.FreeLocomotionConfig
 import com.awakekt.awake.core.animation.LocomotionConfig
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.elementNames
@@ -20,7 +21,11 @@ class LocomotionExposureTest {
         val options = LocomotionConfig::class.java.declaredFields
             .filter { !Modifier.isStatic(it.modifiers) && !it.isSynthetic }.map { it.name }.toSet()
         assertEquals(options, SceneLocomotionAnimation.serializer().descriptor.elementNames.toSet())
-        // No code-only configuration: position, delta, ground contact and AnimationPlayer are
-        // runtime update inputs rather than authored options. LocomotionMappingTest checks values.
+        val freeOptions = FreeLocomotionConfig::class.java.declaredFields
+            .filter { !Modifier.isStatic(it.modifiers) && !it.isSynthetic }.map { it.name }.toSet()
+        assertEquals(freeOptions, SceneFreeLocomotionAnimation.serializer().descriptor.elementNames.toSet())
+        // No code-only configuration: position, delta, ground contact, free-motion state and
+        // AnimationPlayer are runtime update inputs rather than authored options.
+        // LocomotionMappingTest checks values.
     }
 }

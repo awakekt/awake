@@ -125,6 +125,7 @@ class RangeAnnotationsAreEnforcedTest {
             JsonObject(base + ("theme" to theme) + ("playerLayout" to layout))
         },
         "perceiver" to { base -> JsonObject(base + ("faction" to JsonPrimitive("watch"))) },
+        "locomotion_animation" to { base -> JsonObject(base + ("free" to JsonObject(emptyMap()))) },
     )
 
     /** A style with every object that holds a ranged number, so each can be set out of range. */
@@ -243,6 +244,8 @@ class RangeAnnotationsAreEnforcedTest {
             "physics_body.layer",
             "locomotion_animation.airborneAbove",
             "locomotion_animation.crossFade",
+            "locomotion_animation.free.moveAbove",
+            "locomotion_animation.free.verticalAbove",
             "keyframe_animation.duration",
             "texture_animation.columns",
             "texture_animation.rows",
