@@ -5,9 +5,10 @@
 ## Modules
 
 ```text
-net:api          Transport, DirectTransport, TransportKeepAlive, SplitPacketInbox, SessionId,
-                 NetId, PacketWriter, PacketReader, PacketFormat, PacketOpcodeRegistry,
-                 NetViolation, ViolationSink, ViolationWindow
+net:api          Transport, DirectTransport, DeliveryChannel, TransportKeepAlive, SplitPacketInbox,
+                 SessionId, NetId, PacketWriter, PacketReader, PacketFormat, PacketOpcodeRegistry,
+                 MessageRouter, ClientNetFeature, ClientNetFeatures, NetViolation, ViolationSink,
+                 ViolationWindow
 net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing, ping keepalive & backpressure),
                  GameServerHost (fixed-rate tick loop, MessageRouter, GameFeature, SaveScheduler)
 net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
@@ -106,3 +107,25 @@ val registry = PacketOpcodeRegistry<GamePacket>().apply {
 
 - **Pre-allocation DoS safety**: `@PacketMaxBytes` and `@PacketCollectionSize` verify wire lengths against `reader.remaining` and configured maximums *before* allocating arrays or collections. Anything malformed flips `reader.ok = false` and returns `null` without throwing exceptions.
 - **Hot-path coexistence**: `PacketOpcodeRegistry.encode(writer, msg)` returns `false` for unregistered hot-path messages (like bit-packed `Input` or `Snapshot`), allowing custom bit-level encoding on the exact same `PacketWriter` and `PacketReader`.
+
+---
+
+## Modular Client Feature Routing (`MessageRouter` & `ClientNetFeature`)
+
+Multiplatform clients (`wasmJs`, Desktop, Android, iOS) split inbound packet handlers, outbound request pumps, and session lifecycle hooks by feature using `clientNetFeature` and `clientNetFeatures` from `:awake:net:api` instead of accumulating a monolithic `when (packet)` dispatcher:
+
+```kotlin
+val navigationFeature = clientNetFeature<ClientNetContext, GamePacket>("navigation") {
+    on<GamePacket.NaviPoint> { ctx, packet -> ctx.applyNaviPoint(packet) }
+    flushOutbound { ctx -> ctx.drainQueuedWaypoints() }
+    onConnected { ctx -> ctx.resetWaypoints() }
+    onDisconnected { ctx -> ctx.resetWaypoints() }
+}
+
+val features = clientNetFeatures<ClientNetContext, GamePacket> {
+    install(navigationFeature)
+}
+```
+
+- **`O(1)` zero-allocation dispatch**: `MessageRouter<C, M>` and `ClientNetFeatures<C, M>` index handlers by `KClass<out M>` in a single `HashMap` and iterate lifecycle/flush hooks over flat arrays.
+- **Fail-fast registration**: Duplicate feature IDs or colliding message handler registrations throw `IllegalArgumentException` at setup time.

@@ -1,3 +1,60 @@
+public abstract interface class com/awakekt/awake/net/ClientNetFeature {
+	public fun flushOutbound (Ljava/lang/Object;)V
+	public abstract fun getId ()Ljava/lang/String;
+	public fun onConnected (Ljava/lang/Object;)V
+	public fun onDisconnected (Ljava/lang/Object;)V
+	public abstract fun router ()Lcom/awakekt/awake/net/MessageRouter;
+}
+
+public final class com/awakekt/awake/net/ClientNetFeature$DefaultImpls {
+	public static fun flushOutbound (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
+	public static fun onConnected (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
+	public static fun onDisconnected (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/net/ClientNetFeatureKt {
+	public static final fun clientNetFeature (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/net/ClientNetFeature;
+}
+
+public final class com/awakekt/awake/net/ClientNetFeatureScope {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun build ()Lcom/awakekt/awake/net/ClientNetFeature;
+	public final fun flushOutbound (Lkotlin/jvm/functions/Function1;)V
+	public final fun getId ()Ljava/lang/String;
+	public final fun on (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
+	public final fun onConnected (Lkotlin/jvm/functions/Function1;)V
+	public final fun onDisconnected (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/awakekt/awake/net/ClientNetFeatures {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun flushOutbound (Ljava/lang/Object;)V
+	public final fun getFeatureIds ()Ljava/util/Set;
+	public final fun getHandledTypes ()Ljava/util/Set;
+	public final fun getRouter ()Lcom/awakekt/awake/net/MessageRouter;
+	public final fun getSize ()I
+	public final fun handles (Ljava/lang/Object;)Z
+	public final fun handles (Lkotlin/reflect/KClass;)Z
+	public final fun install (Ljava/util/Collection;)Lcom/awakekt/awake/net/ClientNetFeatures;
+	public final fun install ([Lcom/awakekt/awake/net/ClientNetFeature;)Lcom/awakekt/awake/net/ClientNetFeatures;
+	public final fun onConnected (Ljava/lang/Object;)V
+	public final fun onDisconnected (Ljava/lang/Object;)V
+	public final fun route (Ljava/lang/Object;Ljava/lang/Object;)Z
+}
+
+public final class com/awakekt/awake/net/ClientNetFeaturesKt {
+	public static final fun clientNetFeatures (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/net/ClientNetFeatures;
+}
+
+public final class com/awakekt/awake/net/ClientNetFeaturesScope {
+	public final fun install (Lcom/awakekt/awake/net/ClientNetFeature;)V
+	public final fun install (Ljava/lang/Iterable;)V
+	public final fun install (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun install ([Lcom/awakekt/awake/net/ClientNetFeature;)V
+}
+
 public abstract interface class com/awakekt/awake/net/ConnectionState {
 }
 
@@ -73,6 +130,32 @@ public final class com/awakekt/awake/net/DirectTransport$DefaultImpls {
 
 public abstract interface class com/awakekt/awake/net/InboundDropMetrics {
 	public abstract fun getDroppedInbound ()J
+}
+
+public final class com/awakekt/awake/net/MessageRouter {
+	public static final field Companion Lcom/awakekt/awake/net/MessageRouter$Companion;
+	public final fun getHandledTypes ()Ljava/util/Set;
+	public final fun getSize ()I
+	public final fun handles (Ljava/lang/Object;)Z
+	public final fun handles (Lkotlin/reflect/KClass;)Z
+	public final fun route (Ljava/lang/Object;Ljava/lang/Object;)Z
+}
+
+public final class com/awakekt/awake/net/MessageRouter$Companion {
+	public final fun empty ()Lcom/awakekt/awake/net/MessageRouter;
+	public final fun from (Ljava/util/Map;)Lcom/awakekt/awake/net/MessageRouter;
+}
+
+public final class com/awakekt/awake/net/MessageRouterBuilder {
+	public fun <init> ()V
+	public final fun on (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/awakekt/awake/net/MessageRouterKt {
+	public static final fun messageRouter (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/net/MessageRouter;
+}
+
+public abstract interface annotation class com/awakekt/awake/net/NetFeatureDsl : java/lang/annotation/Annotation {
 }
 
 public final class com/awakekt/awake/net/NetId {
