@@ -213,8 +213,9 @@ handler registered a failure is logged (switch, load) or thrown out of the frame
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without
 a project on disk and without an app builder. `sceneSystemsFor(scene, services)` returns them as
-plain `System`s: `fixed` ones to run on each fixed step, then `frame` ones once per rendered frame,
-in the order `runProject` runs them. `runProject` is built on the same decision, so a component
+plain `System`s: `fixed` ones to run on each fixed step, `preAnimation` ones to run once per rendered
+frame before world matrices are propagated, and `frame` ones to run after, in the order `runProject`
+runs them. `runProject` is built on the same decision, so a component
 that gains a system gains it in both. `loadSceneContent` reads what the systems need from the
 project's files, such as particle sprites, collision meshes, shader documents and a paged terrain's
 index.
@@ -231,7 +232,7 @@ val systems = sceneSystemsFor(
     SceneHostServices(input = { gameplayInput }, renderer = renderer, physics = physicsWorld, content = loadSceneContent(scene, files)),
 )
 // each fixed step:        systems.fixed.forEach { it.update(world, step) }
-// each rendered frame:    systems.interpolate(world, alpha); systems.frame.forEach { it.update(world, delta) }
+// each rendered frame:    systems.interpolate(world, alpha); systems.preAnimation.forEach { it.update(world, delta) }; transformSystem.update(world, delta); systems.frame.forEach { it.update(world, delta) }
 // when the scene stops:   systems.close()
 ```
 
@@ -312,7 +313,8 @@ val project = loadProject(files, capabilities = listOf(GrapplingHookCapability),
 - `load` reads what the systems need from the project's files into `SceneContent`, under a
   `SceneContentKey` the capability declares; systems read it from `SceneHostServices.content`. It runs
   before the physics world exists.
-- `plan` adds the systems the scene uses, with `plan.fixed` or `plan.frame`. A system that holds
+- `plan` adds the systems the scene uses, with `plan.fixed`, `plan.preAnimation` (before world
+  matrices are propagated for animation and camera systems) or `plan.frame`. A system that holds
   something to give back implements `AutoCloseable` and is closed when the scene stops.
 - A frame runs at most as many fixed steps as the scene's cap, 5 unless the scene block sets
   `maxFixedStepsPerFrame(...)`, and drops the rest of its time. `SceneHostServices.fixedStep` reports

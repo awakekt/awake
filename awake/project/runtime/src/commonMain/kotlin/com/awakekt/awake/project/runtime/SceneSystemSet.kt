@@ -129,21 +129,26 @@ class SceneHostServices private constructor(
 
 /**
  * The systems a scene plays with, in the order they run: every [fixed] system on each fixed step,
- * then [interpolate], then every [frame] system once per rendered frame, which is the order
+ * then [interpolate], then every [preAnimation] system once per rendered frame before world matrices
+ * are propagated, and then every [frame] system once per rendered frame, which is the order
  * `runProject` runs them in. [close] when the scene stops, to release what the systems created.
  */
 class SceneSystemSet internal constructor(
+    /** The systems run on each fixed simulation step, in capability order. */
     val fixed: List<System>,
+    /** The systems run once per rendered frame after world matrices are propagated. */
     val frame: List<System>,
     private val release: () -> Unit,
+    /** The systems run once per rendered frame after [interpolate] and before world-matrix propagation. */
+    val preAnimation: List<System> = emptyList(),
 ) : AutoCloseable {
     private val interpolated = fixed.filterIsInstance<InterpolatedSystem>()
 
     /**
      * Blends the last two states of every [fixed] system that keeps them, as
      * [InterpolatedSystem.interpolate] describes, by the [alpha] the host's fixed-step loop reports.
-     * Call it after the fixed steps and before the [frame] systems, which read what it places, as
-     * `runProject` does; without it, bodies move in fixed-step jumps.
+     * Call it after the fixed steps and before [preAnimation] and [frame] systems, which read what it
+     * places, as `runProject` does; without it, bodies move in fixed-step jumps.
      */
     fun interpolate(world: World, alpha: Float) {
         // By index: forEach takes an iterator, a small allocation every frame.
@@ -207,6 +212,7 @@ internal fun sceneSystemsFor(
     hostRuns: Set<String>,
 ): SceneSystemSet {
     val fixed = mutableListOf<System>()
+    val preAnimation = mutableListOf<System>()
     val frame = mutableListOf<System>()
     val releasing = SystemReleases()
     val specs = sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities, hasRenderer = services.hasRenderer)
@@ -214,10 +220,11 @@ internal fun sceneSystemsFor(
         val system = releasing.keep(spec.create(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system
+            SceneSystemPhase.PreAnimation -> preAnimation += system
             SceneSystemPhase.Frame -> frame += system
         }
     }
-    return SceneSystemSet(fixed, frame, releasing::release)
+    return SceneSystemSet(fixed, frame, releasing::release, preAnimation)
 }
 
 /** One system a scene runs: its name, the phase it runs in, and how to build it. */

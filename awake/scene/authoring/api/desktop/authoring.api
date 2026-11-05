@@ -10,6 +10,7 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun name (Ljava/lang/String;)V
 	public final fun onDispose (Lkotlin/jvm/functions/Function1;)V
 	public final fun onReady (Lkotlin/jvm/functions/Function2;)V
+	public final fun preAnimationSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;)V
 	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)V
 	public final fun scene (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
@@ -66,6 +67,7 @@ public final class com/awakekt/awake/scene/authoring/SceneRouterDslKt {
 public final class com/awakekt/awake/scene/authoring/SceneSystemsDsl {
 	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun preAnimationSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 }
 

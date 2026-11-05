@@ -49,6 +49,7 @@ class CameraSystem(
 
     /** The point being orbited, when it is composed rather than taken straight from a rig. */
     private val scratchPivot = Vec3f(0f, 0f, 0f)
+    private val scratchTarget = Vec3f()
 
     // Scratch vectors -- this runs every frame, so the pose math must not allocate.
     private val forward = Vec3f()
@@ -185,10 +186,11 @@ class CameraSystem(
 
             CameraMode.Cinematic -> {
                 if (target != null) {
+                    val position = targetPosition(target)
                     camera.lens.eye.set(
-                        target.position.x + CINEMATIC_OFFSET,
-                        target.position.y + CINEMATIC_HEIGHT,
-                        target.position.z + CINEMATIC_OFFSET,
+                        position.x + CINEMATIC_OFFSET,
+                        position.y + CINEMATIC_HEIGHT,
+                        position.z + CINEMATIC_OFFSET,
                     )
                 }
             }
@@ -214,13 +216,14 @@ class CameraSystem(
         // cinematic's look-at) still need one.
         if (target == null && config.mode.needsTarget) return
         val core = camera.lens
+        val targetPos = if (target != null) targetPosition(target) else null
         // The point being orbited: the target's position offset, or the offset alone when a rig
         // orbits a place rather than a thing.
-        val pivot = if (target == null) config.offsetPosition else scratchPivot.set(target.position).add(config.offsetPosition)
+        val pivot = if (targetPos == null) config.offsetPosition else scratchPivot.set(targetPos).add(config.offsetPosition)
         when (config.mode) {
             CameraMode.FirstPerson -> {
-                if (target != null) {
-                    core.eye.set(target.position).add(config.offsetPosition)
+                if (targetPos != null) {
+                    core.eye.set(targetPos).add(config.offsetPosition)
                 }
                 forwardFrom(config.yaw, config.pitch, forward)
                 core.center.set(core.eye).add(forward)
@@ -239,8 +242,8 @@ class CameraSystem(
             }
 
             CameraMode.Cinematic -> {
-                if (target != null) {
-                    core.center.set(target.position)
+                if (targetPos != null) {
+                    core.center.set(targetPos)
                 }
             }
 
@@ -253,6 +256,13 @@ class CameraSystem(
             }
         }
     }
+
+    private fun targetPosition(target: Transform): Vec3f =
+        if (target.parent != null && target.worldVersion > 0) {
+            scratchTarget.set(target.worldMatrix.m03, target.worldMatrix.m13, target.worldMatrix.m23)
+        } else {
+            target.position
+        }
 
     private fun forwardFrom(yaw: Float, pitch: Float, out: Vec3f) {
         val cp = cos(pitch)

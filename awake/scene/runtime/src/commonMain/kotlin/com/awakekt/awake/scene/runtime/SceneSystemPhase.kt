@@ -17,4 +17,11 @@ enum class SceneSystemPhase {
 
     /** Run once for every rendered frame. Use for cameras, transforms, rendering, and UI-adjacent drivers. */
     Frame,
+
+    /**
+     * Run once for every rendered frame after fixed-step interpolation and before world matrices
+     * are propagated for animation, camera and frame systems. Use for snapshot smoothing and pose
+     * drivers whose transform updates must be seen in the same frame.
+     */
+    PreAnimation,
 }

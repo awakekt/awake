@@ -278,12 +278,14 @@ public final class com/awakekt/awake/project/runtime/SceneSystemPlan {
 	public final fun getHasPhysics ()Z
 	public final fun getHasRenderer ()Z
 	public final fun physicsSystem (Lcom/awakekt/awake/project/runtime/SceneHostServices;)Lcom/awakekt/awake/scene/physics/PhysicsSystem;
+	public final fun preAnimation (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class com/awakekt/awake/project/runtime/SceneSystemSet : java/lang/AutoCloseable {
 	public fun close ()V
 	public final fun getFixed ()Ljava/util/List;
 	public final fun getFrame ()Ljava/util/List;
+	public final fun getPreAnimation ()Ljava/util/List;
 	public final fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
 }
 

@@ -253,6 +253,20 @@ class SceneAppDsl internal constructor() {
     ): SceneSystemHandle<T> = systemsDsl.frameSystem(name, factory)
 
     /**
+     * Registers a lifecycle-managed system in the per-frame pre-animation phase, after fixed-step
+     * interpolation and before world matrices are propagated for animation, camera, and frame systems.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
+    fun <T : System> preAnimationSystem(
+        name: String,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = systemsDsl.preAnimationSystem(name, factory)
+
+    /**
      * Configures multiple lifecycle-managed systems within a [SceneSystemsDsl] block.
      *
      * @param block The configuration block declaring systems and phases.
@@ -423,6 +437,20 @@ class SceneSystemsDsl internal constructor() {
         name: String,
         factory: SceneAppLifecycleRuntime.() -> T,
     ): SceneSystemHandle<T> = system(name, SceneSystemPhase.Frame, factory)
+
+    /**
+     * Registers a system in the per-frame pre-animation phase, after fixed-step interpolation and
+     * before world matrices are propagated for animation, camera, and frame systems.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
+    fun <T : System> preAnimationSystem(
+        name: String,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = system(name, SceneSystemPhase.PreAnimation, factory)
 
     internal fun build(): List<SceneSystemRegistration> = registrations.toList()
 }

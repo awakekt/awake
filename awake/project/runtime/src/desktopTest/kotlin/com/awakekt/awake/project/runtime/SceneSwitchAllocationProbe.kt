@@ -54,6 +54,7 @@ class SceneSwitchAllocationProbe {
     private fun ProjectSceneRunner.tick(world: World) {
         fixedSystems.update(world, STEP)
         fixedSystems.interpolate(world, HALF)
+        preAnimationSystems.update(world, STEP)
         frameSystems.update(world, STEP)
     }
 

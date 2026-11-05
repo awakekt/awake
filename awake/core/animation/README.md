@@ -53,9 +53,12 @@ looking like a jump. Missing clips preserve the clip already selected.
 Ground speed uses `core.math.damp` with a 0.1-second time constant. A short pause between movement
 steps keeps the current clip, a sustained stop selects idle, and a teleport is excluded from stride
 speed. Take-off and landing can play once, while walk/run clips can match their playback rate to
-travel. With either reference speed set, locomotion owns `player.speed` on every update; leave both
-null if another system owns that rate. The scene's `LocomotionAnimation` component supplies world
-position and the nearest ancestor's ground contact to the same capability.
+travel. While an unfinished clip outside `LocomotionConfig` is playing on `player`, locomotion keeps
+tracking motion and yields both clip selection and `player.speed` until that clip finishes or a
+configured clip becomes active again. With either reference speed set, locomotion controls
+`player.speed` from `player.activeClipId` while a configured clip is active; leave both null if
+another system controls locomotion playback rates too. The scene's `LocomotionAnimation` component
+supplies world position and the nearest ancestor's ground contact to the same capability.
 
 `LocomotionConfig` rejects non-finite or out-of-range thresholds, fade times and reference speeds
 at construction, before any playback is updated.
