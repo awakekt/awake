@@ -23,6 +23,7 @@ internal actual fun GPUQueue.canCopyExternalImage(image: Any?): Boolean =
 // The browser's own call rather than wgpu4k's, which is deprecated and takes a DrawableHolder.
 // A browser can refuse the copy (a source it can't read, a driver that won't), and the call throws. That
 // mustn't escape into the frame, which would stop the frame loop: the caller uploads the CPU pixels.
+@Suppress("TooGenericExceptionCaught") // A refused copy arrives as a JsException, a Throwable.
 internal actual fun GPUQueue.copyExternalImage(image: Any, texture: GPUTexture, width: Int, height: Int): Boolean =
     try {
         copyImageBitmap((this as Queue).handler, (image as BrowserImage).imageBitmap, (texture as WgpuTexture).handler, width, height)

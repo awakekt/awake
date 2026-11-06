@@ -59,10 +59,9 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
         uniformFloatCount: Int,
         pbrImages: PbrImageSet?,
     ): RenderMaterial? {
-        val external = image.externalImage
-        if (external == null || !device.queue.canCopyExternalImage(external)) return null
+        val external = image.externalImage?.takeIf { device.queue.canCopyExternalImage(it) }
         // The base first: if the browser refuses it, nothing else was uploaded, and the caller reads the pixels.
-        val base = upload(external, image.width, image.height, filtering) ?: return null
+        val base = external?.let { upload(it, image.width, image.height, filtering) } ?: return null
         val maps = pbrImages?.maps?.map { it?.let(::uploadMap) } ?: List(PBR_MAPS) { null }
         return renderer.createTexturedMaterial(base, uniformFloatCount, maps)
     }
