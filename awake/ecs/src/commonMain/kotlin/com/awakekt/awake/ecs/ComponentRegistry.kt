@@ -10,8 +10,9 @@ import kotlin.reflect.KClass
 /** Thin internal façade coordinating type, pool, and storage registries. */
 @PublishedApi
 @Suppress("TooManyFunctions") // Deliberate façade: methods delegate policy to focused registries.
-internal class ComponentRegistry {
-    private val types = ComponentTypeCatalog()
+internal class ComponentRegistry(frameThread: FrameThreadGuard) {
+    // A new type is registered on the frame thread only, as every other structural change is.
+    private val types = ComponentTypeCatalog { frameThread.check(REGISTER_TYPE) }
     private val pools = ComponentPoolRegistry()
     private val storage = ComponentStorageRegistry()
 
@@ -81,3 +82,6 @@ internal class ComponentRegistry {
         }
     }
 }
+
+/** What a type registered off the frame thread is reported as. */
+private const val REGISTER_TYPE = "World.add of a new component type"

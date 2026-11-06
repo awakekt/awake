@@ -17,18 +17,19 @@ import kotlin.reflect.KClass
  * `ecs-dev` agent docs).
  */
 class World {
+    /**
+     * The frame thread this world's structural changes must happen on, checked in debug builds once
+     * the scene runtime binds it; see [FrameThreadGuard]. Registering a component type, as the first
+     * [add] of a type does, is checked too, before anything is registered.
+     */
+    val frameThread = FrameThreadGuard()
+
     @PublishedApi internal val entities = EntityArena()
 
-    @PublishedApi internal val components = ComponentRegistry()
+    @PublishedApi internal val components = ComponentRegistry(frameThread)
     private val collector = QueryCollector(entities, components)
     private val familyRegistry = FamilyRegistry(this, collector)
     private val queryCache = QueryCache { types -> collector.collect(types) }
-
-    /**
-     * The frame thread this world's structural changes must happen on, checked in debug builds once
-     * the scene runtime binds it; see [FrameThreadGuard].
-     */
-    val frameThread = FrameThreadGuard()
 
     /**
      * Creates a new entity in this world.
@@ -107,8 +108,10 @@ class World {
      * @return the new component instance.
      */
     fun <T : Any> add(entity: Entity, type: KClass<T>): T {
+        // The type first, so a new type is registered, and checked, before its pool is made.
+        val typeId = components.typeId(type)
         val instance = components.pool(type).obtain() as T
-        add(entity, type, instance)
+        addInternal(entity, typeId, components.store(typeId, type), instance)
         return instance
     }
 

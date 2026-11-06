@@ -23,6 +23,10 @@ kotlin {
             api(project(":awake:engine:platform"))
             api(project(":awake:core:input"))
         }
+        androidMain.dependencies {
+            // FrameThreadGuard, which the Android window turns on in a debuggable app.
+            implementation(project(":awake:ecs"))
+        }
         iosMain.dependencies {
             implementation(project(":awake:core:logging"))
         }
