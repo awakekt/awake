@@ -583,6 +583,23 @@ jobs:
         with:
           cache-provider: basic
 
+      # Kotlin/Native keeps its compiler, LLVM and its compiled caches of the standard and
+      # platform libraries under ~/.konan. A fresh runner downloads the first and rebuilds the
+      # caches inside the first test link. Restored on every run, keyed on the Kotlin version;
+      # saved from pushes to main only, so PR branches don't each store a copy of a large entry
+      # and evict the MoltenVK and Naga caches.
+      - name: Resolve the Kotlin version
+        id: kotlin
+        shell: bash
+        run: echo "version=$(sed -n 's/^kotlin = "\(.*\)"/\1/p' gradle/libs.versions.toml)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Kotlin/Native
+        id: konan-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.konan
+          key: konan-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.kotlin.outputs.version }}
+
       - name: Install Vulkan tools (macOS)
         run: brew install vulkan-loader molten-vk glfw
 
@@ -612,17 +629,38 @@ jobs:
       - name: iOS device cinterop and compile (MoltenVK, JoltC)
         run: ./gradlew :awake:backend:vulkan:bindings:compileKotlinIosArm64 :awake:backend:jolt:compileKotlinIosArm64
 
-      - name: Jolt iOS simulator physics tests
-        run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
+      # One Gradle call for every module's simulator tests: each separate call spent ~30s
+      # configuring the build again. --continue still runs and reports every module when one
+      # fails. Covered: the Jolt binding and scene physics; ECS, sprites and 2D scenes; plugin
+      # archives (signature checks through Apple's Security framework, inflation through zlib);
+      # and the window module.
+      - name: iOS simulator tests
+        run: >-
+          ./gradlew --continue
+          :awake:backend:jolt:iosSimulatorArm64Test
+          :awake:scene:physics:iosSimulatorArm64Test
+          :awake:ecs:iosSimulatorArm64Test
+          :awake:asset:sprite:iosSimulatorArm64Test
+          :awake:scene:scene2d:iosSimulatorArm64Test
+          :awake:plugin-archive:iosSimulatorArm64Test
+          :awake:engine:window:iosSimulatorArm64Test
 
-      - name: ECS and sprite iOS simulator tests
-        run: ./gradlew :awake:ecs:iosSimulatorArm64Test :awake:asset:sprite:iosSimulatorArm64Test :awake:scene:scene2d:iosSimulatorArm64Test
+      # The showcase links the whole engine into one simulator test binary, about 3 minutes of a
+      # PR's iOS job. The modules it exercises are tested above, so it runs on pushes to main
+      # and dev/** only, where a failure still names the commit that caused it.
+      - name: Engine showcase iOS simulator tests
+        if: github.event_name == 'push'
+        run: ./gradlew :samples:engine-showcase:iosSimulatorArm64Test
 
-      # Signature checks through Apple's Security framework and archive inflation through zlib.
-      - name: Plugin archive iOS simulator tests
-        run: ./gradlew :awake:plugin-archive:iosSimulatorArm64Test
-      - name: Window iOS simulator tests
-        run: ./gradlew :awake:engine:window:iosSimulatorArm64Test
+      # After the test links, so the entry holds the library caches they built.
+      - name: Save Kotlin/Native
+        if: >-
+          steps.konan-cache.outputs.cache-hit != 'true' &&
+          github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.konan
+          key: ${{ steps.konan-cache.outputs.cache-primary-key }}
 
       - name: Upload iOS physics test reports
         if: always()
@@ -635,6 +673,8 @@ jobs:
             awake/ecs/build/reports/tests/
             awake/asset/sprite/build/reports/tests/
             awake/scene/scene2d/build/reports/tests/
+            awake/plugin-archive/build/reports/tests/
+            awake/engine/window/build/reports/tests/
             samples/engine-showcase/build/reports/tests/
           if-no-files-found: warn
 
