@@ -9,7 +9,6 @@ import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.MotionType
