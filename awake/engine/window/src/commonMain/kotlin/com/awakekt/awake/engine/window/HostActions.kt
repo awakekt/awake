@@ -14,8 +14,8 @@ package com.awakekt.awake.engine.window
  * Only [openUrl] exists everywhere. What the other actions mean differs by platform, so each is an
  * optional capability that is `null` where it has no meaning, and a game checks for it rather than
  * calling something that silently does nothing. Today those are [pageReload], on the web only,
- * [fullscreen], on the web and on a desktop given its window, and [windowFrame], on a desktop given
- * its window.
+ * [fullscreen], on the web, on a desktop given its window and on Android given an `Activity`, and
+ * [windowFrame], on a desktop given its window.
  */
 interface HostActions {
     /**
@@ -41,8 +41,9 @@ interface HostActions {
     val pageReload: PageReload?
 
     /**
-     * Fullscreen for the game's view, or null where the host can't offer it: Android and iOS today,
-     * a desktop host made without its window (`desktopHostActions()`; pass the window to have it),
+     * Fullscreen for the game's view, or null where the host can't offer it: iOS today, Android given
+     * the application context instead of an `Activity`, a desktop host made without its window
+     * (`desktopHostActions()`; pass the window to have it),
      * and a page whose browser or embedding (an `<iframe>` without `allow="fullscreen"`, Safari on
      * iPhone) does not allow it. A game hides or disables its fullscreen control when this is null.
      * See [Fullscreen].
