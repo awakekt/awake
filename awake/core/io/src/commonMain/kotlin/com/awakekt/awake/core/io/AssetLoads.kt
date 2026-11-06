@@ -43,6 +43,7 @@ sealed interface AssetLoad<out T> {
  *
  * Made, asked and closed on the frame thread.
  *
+ * @param T What a load decodes to.
  * @param context Where loads run when [request] names no scope; [Dispatchers.Default] by default. A
  *   [Job] in it is the parent of this one's own loads.
  * @param read Reads and decodes the asset at a path, throwing when it can't.
