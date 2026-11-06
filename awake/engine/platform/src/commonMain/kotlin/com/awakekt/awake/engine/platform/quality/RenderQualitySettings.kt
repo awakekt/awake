@@ -40,7 +40,7 @@ interface RenderQualityPersistence {
  * thread; the next frame applies it.
  *
  * @param persistence Loads the starting preset and saves each change; `null` keeps it in memory.
- * @param budgets The short-edge budgets [RenderQualityPolicy] resolves each preset with.
+ * @property budgets The short-edge budgets [RenderQualityPolicy] resolves each preset with.
  * @param initial The preset when [persistence] has none saved.
  */
 class RenderQualitySettings(
@@ -63,6 +63,7 @@ class RenderQualitySettings(
      * Resolves the selected preset against [renderer]'s presented surface and device, and sets its
      * [Renderer.renderScale] and [Renderer.effectQuality]. Allocation free; called once per frame.
      *
+     * @param renderer The renderer this frame draws with.
      * @param applyScale `false` leaves [Renderer.renderScale] to a host override.
      */
     fun applyTo(renderer: Renderer, applyScale: Boolean = true) {
