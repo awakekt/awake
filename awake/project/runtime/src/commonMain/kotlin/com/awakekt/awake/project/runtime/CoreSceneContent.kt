@@ -7,6 +7,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.audio.AudioClip
+import com.awakekt.awake.core.io.AssetLoads
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
@@ -54,6 +55,20 @@ object CoreSceneContent {
 
     /** The clips the scene's `audio_source`s name, decoded, by project path, as `loadAudioClips` reads them. */
     val AudioClips: SceneContentKey<Map<String, AudioClip>> = SceneContentKey("audio clips")
+
+    /**
+     * The played scene's shared clips, as `audioClipLoads` makes them, which its `AudioSystem` plays from
+     * instead of [AudioClips]: `runProject` gives each scene its own and registers it on the runtime's
+     * asset library, so a prewarm decodes into what the scene plays. A host that builds the systems itself
+     * may give its own.
+     */
+    val AudioClipLoads: SceneContentKey<AssetLoads<AudioClip>> = SceneContentKey("audio clip loads")
+
+    /**
+     * The played scene's shared particle images, as `particleImageLoads` makes them, which its
+     * `ParticleContentSystem` draws from after [ParticleSprites]: given and registered as [AudioClipLoads] is.
+     */
+    val ParticleImageLoads: SceneContentKey<AssetLoads<GpuImageSource>> = SceneContentKey("particle image loads")
 
     /** The scene's shader documents and their images, as `loadShaderEffects` reads them. */
     val ShaderEffects: SceneContentKey<ShaderEffectAssets> = SceneContentKey("shader effects")

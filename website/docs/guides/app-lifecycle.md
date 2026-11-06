@@ -158,11 +158,13 @@ inside `runCatching`, and a `try` around one whose `catch` can see a `Cancellati
 rethrowing it. The cases that predate it are in each module's `detekt-baseline-mainDesktop.xml`.
 
 A debug build also checks rule 3. The scene session records its frame thread when it initializes, and
-`World`'s structural changes, `SceneAssetLibrary.requireMesh` and `requireMaterial`, and
-`ScenePrewarm.close` then throw on any other thread. The checks are on when `FrameThreadGuard.enabled`
-is: on the JVM when assertions are on (`-ea`, as in Gradle's tests) or the `awake.frameThreadChecks`
-system property is `true`, and in a debug Kotlin/Native binary. A debug Android app sets it itself. On
-wasmJs, which has one thread, they never fire. With the flag off, each check is one field read.
+`World`'s structural changes, including the first `add` of a component type, which registers it,
+`SceneAssetLibrary.requireMesh` and `requireMaterial`, and `ScenePrewarm.close` then throw on any
+other thread. The checks are on when `FrameThreadGuard.enabled` is: on the JVM when assertions are on
+(`-ea`, as in Gradle's tests) or the `awake.frameThreadChecks` system property is `true`, in a debug
+Kotlin/Native binary, and on Android in a debuggable app, where `AwakeSurfaceView` turns it on from
+`ApplicationInfo.FLAG_DEBUGGABLE`. On wasmJs, which has one thread, they never fire. With the flag
+off, each check is one field read.
 
 ## Properties
 

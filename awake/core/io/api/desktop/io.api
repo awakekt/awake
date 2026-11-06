@@ -1,3 +1,49 @@
+public abstract interface class com/awakekt/awake/core/io/AssetLoad {
+}
+
+public final class com/awakekt/awake/core/io/AssetLoad$Failed : com/awakekt/awake/core/io/AssetLoad {
+	public fun <init> (Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/Throwable;)Lcom/awakekt/awake/core/io/AssetLoad$Failed;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/AssetLoad$Failed;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoad$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/AssetLoad$Loaded : com/awakekt/awake/core/io/AssetLoad {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoad$Loaded;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/AssetLoad$Loaded;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoad$Loaded;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/AssetLoad$Loading : com/awakekt/awake/core/io/AssetLoad {
+	public static final field INSTANCE Lcom/awakekt/awake/core/io/AssetLoad$Loading;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/AssetLoads : java/lang/AutoCloseable {
+	public fun <init> (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun forget (Ljava/lang/String;)V
+	public final fun getLoaded ()Ljava/util/Map;
+	public final fun hold (Ljava/lang/String;)V
+	public final fun holdCount (Ljava/lang/String;)I
+	public final fun put (Ljava/lang/String;Ljava/lang/Object;)V
+	public final fun release (Ljava/lang/String;)V
+	public final fun request (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/core/io/AssetLoad;
+	public static synthetic fun request$default (Lcom/awakekt/awake/core/io/AssetLoads;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoad;
+}
+
 public final class com/awakekt/awake/core/io/AssetPath {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun asFilePath ()Lcom/awakekt/awake/core/io/FilePath;
