@@ -128,11 +128,11 @@ class ScenePrewarm internal constructor(
     }
 
     private enum class State { Pending, Ready, Closed, Disposed }
-
-    private companion object {
-        const val LABEL_NAMES = 3
-    }
 }
+
+// How many asset names a prewarm's log label lists before "and N more". Top level, so it stays private:
+// a const in a private companion object still compiles to a public static field on the JVM.
+private const val LABEL_NAMES = 3
 
 /**
  * Starts getting the assets [references] names ready, as [ScenePrewarm] describes; the first frame
