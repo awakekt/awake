@@ -33,7 +33,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.di.container
 import com.awakekt.awake.core.di.module
 import com.awakekt.awake.core.text.theme.TextStyle
-import com.awakekt.awake.sample.composeshowcase.ui.LocalShowcaseAppScope
+import com.awakekt.awake.engine.compose.LocalAppCoroutineScope
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcasePage
 
@@ -104,7 +104,7 @@ internal val StateDiPage = ShowcasePage(
 
 context(composer: Composer)
 private fun DemoCounterSection() {
-    val counterStore = rememberStore(LocalShowcaseAppScope.current, "demo_counter") { CounterState() }
+    val counterStore = rememberStore(LocalAppCoroutineScope.current, "demo_counter") { CounterState() }
     val state = counterStore.value
 
     Row(
@@ -135,7 +135,7 @@ private fun DemoCounterSection() {
 context(composer: Composer)
 private fun DemoTasksSection() {
     val taskStore = rememberReducerStore<TaskState, TaskIntent, Nothing>(
-        parent = LocalShowcaseAppScope.current,
+        parent = LocalAppCoroutineScope.current,
         key = "demo_tasks",
         initialState = { TaskState() },
     ) { state, intent ->

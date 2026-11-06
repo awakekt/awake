@@ -18,11 +18,10 @@ private val composeShowcaseDefinition = appDefinition(createState = { Unit }) {
     }
     module {
         appModule {
-            // The app's own scope. The State & DI page's stores run under it, and the app closes it,
-            // cancelling them, when it is disposed.
-            val appScope = AppCoroutineScope(serviceLookup())
-            service(AppCoroutineScope::class, appScope)
-            scene { content { ShowcaseApp(appScope) } }
+            // The app's own scope. Its UI reads it as LocalAppCoroutineScope, the State & DI page's
+            // stores run under it, and the app closes it, cancelling them, when it is disposed.
+            service(AppCoroutineScope::class, AppCoroutineScope(serviceLookup()))
+            scene { content { ShowcaseApp() } }
         }
     }
 }

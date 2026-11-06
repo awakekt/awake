@@ -5,8 +5,10 @@
  */
 package com.awakekt.awake.sample.composeshowcase.app
 
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.state.rememberStore
 import com.awakekt.awake.core.state.Store
+import com.awakekt.awake.engine.compose.LocalAppCoroutineScope
 import com.awakekt.awake.engine.compose.composeAppModule
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.error.AppCoroutineScope
@@ -38,7 +40,7 @@ class AppStoreParentTest {
         // Unconfined, so a launched store coroutine runs and fails before `launch` returns.
         val appScope = AppCoroutineScope(serviceLookup(), Dispatchers.Unconfined)
         service(AppCoroutineScope::class, appScope)
-        composeAppModule(content = { store = rememberStore(appScope) { 0 } }).install(this)
+        composeAppModule(content = { store = rememberStore(LocalAppCoroutineScope.current) { 0 } }).install(this)
         build().createLifecycle()
     }
 

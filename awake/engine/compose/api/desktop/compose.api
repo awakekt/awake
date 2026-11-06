@@ -1,3 +1,8 @@
+public final class com/awakekt/awake/engine/compose/AppCoroutineScopeLocalKt {
+	public static final fun ProvideAppCoroutineScope (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/engine/platform/error/AppCoroutineScope;Lkotlin/jvm/functions/Function1;)V
+	public static final fun getLocalAppCoroutineScope ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+}
+
 public final class com/awakekt/awake/engine/compose/ComposeAppModuleKt {
 	public static final fun composeAppModule (Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/text/font/UiFont;Z)Lcom/awakekt/awake/engine/platform/core/AppModule;
 	public static synthetic fun composeAppModule$default (Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/text/font/UiFont;ZILjava/lang/Object;)Lcom/awakekt/awake/engine/platform/core/AppModule;

@@ -74,12 +74,12 @@ fun CounterWidget() {
 
 ### C. Stores under the app's coroutine scope
 
-Pass the app's scope as the parent, and the store's uncaught failures reach the app's `AppErrorHandler`, while disposing the app cancels its work:
+Pass the app's scope as the parent, and the store's uncaught failures reach the app's `AppErrorHandler`, while disposing the app cancels its work. In an Awake app, the app's Compose host provides its registered `AppCoroutineScope` as `LocalAppCoroutineScope` (`:awake:engine:compose`):
 
 ```kotlin
 context(_: Composer)
-fun Hud(appScope: CoroutineScope) {
-    val store = rememberStore(appScope) { HudState() }
+fun Hud() {
+    val store = rememberStore(LocalAppCoroutineScope.current) { HudState() }
     // ...
 }
 ```
