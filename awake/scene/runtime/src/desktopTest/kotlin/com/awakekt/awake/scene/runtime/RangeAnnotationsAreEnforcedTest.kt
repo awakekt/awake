@@ -126,6 +126,7 @@ class RangeAnnotationsAreEnforcedTest {
         },
         "perceiver" to { base -> JsonObject(base + ("faction" to JsonPrimitive("watch"))) },
         "locomotion_animation" to { base -> JsonObject(base + ("free" to JsonObject(emptyMap()))) },
+        "camera_rig" to { base -> JsonObject(base + ("collision" to JsonObject(emptyMap()))) },
     )
 
     /** A style with every object that holds a ranged number, so each can be set out of range. */
@@ -203,6 +204,9 @@ class RangeAnnotationsAreEnforcedTest {
             "tone_mapping.exposure",
             "spin_control.speed",
             "camera_rig.flySpeed",
+            "camera_rig.collision.groundMargin",
+            "camera_rig.collision.radius",
+            "camera_rig.collision.easeOutSeconds",
             "movement_control.speed",
             "movement_control.runSpeed",
             "movement_control.turnSpeed",

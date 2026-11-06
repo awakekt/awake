@@ -82,7 +82,13 @@ internal object ControlsCapability : SceneCapability {
         // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
         plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
-        if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
+        if (scene.uses(SceneCameraRig::class)) {
+            plan.frame("camera") { services ->
+                // Asked only for a rig with collision on, so a scene without it behaves as before.
+                val probes = SceneCameraCollisionProbes(services.physics, services.content[StreamedTerrainCapability.Terrain]?.terrain?.heights)
+                CameraSystem(inputProvider = services.input, viewportBounds = { null }, collisionProbes = probes)
+            }
+        }
     }
 }
 

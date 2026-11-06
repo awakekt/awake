@@ -1,0 +1,43 @@
+public final class com/awakekt/awake/core/camera/CameraCollision {
+	public static final field Companion Lcom/awakekt/awake/core/camera/CameraCollision$Companion;
+	public static final field DEFAULT_EASE_OUT_SECONDS F
+	public static final field DEFAULT_GROUND_MARGIN F
+	public static final field DEFAULT_RADIUS F
+	public fun <init> ()V
+	public fun <init> (ZZFFF)V
+	public synthetic fun <init> (ZZFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (ZZFFF)Lcom/awakekt/awake/core/camera/CameraCollision;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/camera/CameraCollision;ZZFFFILjava/lang/Object;)Lcom/awakekt/awake/core/camera/CameraCollision;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEaseOutSeconds ()F
+	public final fun getGround ()Z
+	public final fun getGroundMargin ()F
+	public final fun getObstacles ()Z
+	public final fun getRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/camera/CameraCollision$Companion {
+}
+
+public final class com/awakekt/awake/core/camera/CameraCollisionSolver {
+	public fun <init> ()V
+	public final fun getDistance ()F
+	public final fun reset ()V
+	public final fun solve (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/camera/CameraCollision;Lcom/awakekt/awake/core/camera/CameraGround;Lcom/awakekt/awake/core/camera/CameraObstruction;FFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public abstract interface class com/awakekt/awake/core/camera/CameraGround {
+	public abstract fun heightAt (FF)F
+}
+
+public abstract interface class com/awakekt/awake/core/camera/CameraObstruction {
+	public abstract fun clearFraction (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)F
+}
+

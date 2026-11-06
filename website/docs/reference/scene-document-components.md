@@ -175,6 +175,19 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `yaw` | number | `0` | Yaw in radians. |
 | `offset` | vector | `{x: 0, y: 1.8, z: 0}` | Aim point relative to the target, or the pivot when there is none. |
 | `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
+| `collision` | object | none | `ThirdPerson` camera collision; see below. Without it the eye goes wherever the rig puts it. |
+
+`collision` keeps a third-person eye above the ground and in front of static obstacles. A played
+project answers the ground from its `terrain` and `paged_terrain` heights, and the obstacles from its
+physics world's static bodies; with no physics world, only the ground is kept.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `ground` | boolean | `true` | Keep the eye `groundMargin` above the ground, sampled around it the size of the near plane. |
+| `obstacles` | boolean | `true` | Sweep a sphere from the pivot to the eye and stop the eye short of the first static body. |
+| `groundMargin` | number | `0.3` | Least height of the eye above the ground. At least 0. |
+| `radius` | number | `0.2` | Radius of the swept sphere. At least 0. |
+| `easeOutSeconds` | number | `0.25` | Half-life of the ease back out once an obstacle clears. Pulling in is immediate. At least 0. |
 
 ## `canvas_controls`
 

@@ -33,6 +33,8 @@ import kotlin.reflect.KClass
  * @property yaw Initial yaw rotation angle in radians.
  * @property offset Aim or pivot offset in world units.
  * @property flySpeed Translation speed in units per second when in free-fly mode.
+ * @property collision Keeps a third-person eye above the ground and in front of obstacles; `null`,
+ *   the default, leaves it free.
  */
 @Serializable
 @SerialName("camera_rig")
@@ -46,6 +48,7 @@ data class SceneCameraRig(
     val yaw: Float = 0f,
     val offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
     @PropertyRange(min = 0.0, exclusiveMin = true) val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
+    val collision: SceneCameraCollision? = null,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (minDistance < 0f || minDistance > maxDistance) {
@@ -55,6 +58,7 @@ data class SceneCameraRig(
             add(SceneValidationIssue(path, "camera_rig.distance must be between minDistance and maxDistance"))
         }
         if (flySpeed <= 0f) add(SceneValidationIssue(path, "camera_rig.flySpeed must be greater than 0"))
+        collision?.let { addAll(it.validate(path)) }
     }
 }
 
@@ -82,6 +86,7 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
             yaw = component.yaw
             offsetPosition.set(component.offset.x, component.offset.y, component.offset.z)
             flySpeed = component.flySpeed
+            collision = component.collision?.toCameraCollision()
             // The mode's reset would replace the authored angles and distance.
             needsReset = false
         }
@@ -103,5 +108,6 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
         yaw = component.yaw,
         offset = component.offsetPosition.let { SceneVec3(it.x, it.y, it.z) },
         flySpeed = component.flySpeed,
+        collision = component.collision?.toScene(),
     )
 }

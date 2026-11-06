@@ -32,7 +32,14 @@ class CameraSystem(
     private val viewportBounds: () -> Rectangle?,
     /** Configurable gesture policy for camera navigation. */
     private val gesturePolicy: CameraGesturePolicy = CameraGesturePolicy.Default,
+    /** The ground and obstacles a rig's [CameraRig.collision] keeps its eye out of. */
+    private val collisionProbes: CameraCollisionProbes = CameraCollisionProbes.None,
 ) : System {
+    constructor(
+        inputProvider: () -> GameplayInput,
+        viewportBounds: () -> Rectangle?,
+        gesturePolicy: CameraGesturePolicy,
+    ) : this(inputProvider, viewportBounds, gesturePolicy, CameraCollisionProbes.None)
     constructor(inputProvider: () -> GameplayInput) : this(inputProvider, { null }, CameraGesturePolicy.Default)
     constructor(inputProvider: () -> GameplayInput, viewportBounds: () -> Rectangle?) : this(
         inputProvider,
@@ -69,6 +76,7 @@ class CameraSystem(
         lastPointerX = input.pointerX
         lastPointerY = input.pointerY
         activeDrag = drag
+        collisionProbes.prepare(world)
 
         world.queryEach(Camera::class, CameraRig::class) { entity, camera, config ->
             if (!world.has(entity, ActiveCamera::class)) return@queryEach
@@ -77,6 +85,7 @@ class CameraSystem(
 
             if (config.needsReset) {
                 resetCameraForMode(config, camera, targetTransform)
+                config.collisionState.reset()
                 config.needsReset = false
             }
 
@@ -140,7 +149,10 @@ class CameraSystem(
         val shift = up.scale(dy * scale).add(right.scale(-dx * scale))
         moving.add(shift)
         // The third-person eye eases toward its pose; a pan carries it along instead.
-        if (moving !== camera.lens.eye) camera.lens.eye.add(shift)
+        if (moving !== camera.lens.eye) {
+            camera.lens.eye.add(shift)
+            config.collisionState.follow.add(shift)
+        }
     }
 
     /** Moves a free-fly eye along the view with [CameraGesturePolicy.flyActions]. */
@@ -233,7 +245,12 @@ class CameraSystem(
                 core.center.set(pivot)
                 forwardFrom(config.yaw, config.pitch, forward)
                 desiredEye.set(core.center).sub(forward.scale(config.distance))
-                core.eye.damp(desiredEye, SMOOTHING_HALF_LIFE, delta)
+                val collision = config.collision
+                if (collision == null) {
+                    core.eye.damp(desiredEye, SMOOTHING_HALF_LIFE, delta)
+                } else {
+                    config.collisionState.place(collision, collisionProbes, core, desiredEye, SMOOTHING_HALF_LIFE, delta)
+                }
             }
 
             CameraMode.FreeFly -> {

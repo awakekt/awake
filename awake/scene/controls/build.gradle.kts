@@ -23,6 +23,8 @@ kotlin {
             api(project(":awake:core:input"))
             api(project(":awake:scene:scene-core"))
             implementation(project(":awake:core:math"))
+            // CameraRig.collision and the probes a host answers it through.
+            api(project(":awake:core:camera"))
             api(project(":awake:scene:scene3d"))
             api(project(":awake:compose:ui"))
         }

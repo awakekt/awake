@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.controls.camera
 
+import com.awakekt.awake.core.camera.CameraCollision
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
@@ -58,6 +59,16 @@ class CameraRig : Poolable {
     /** Units per second a [CameraMode.FreeFly] camera moves. */
     var flySpeed: Float = DEFAULT_FLY_SPEED
 
+    /**
+     * Keeps a [CameraMode.ThirdPerson] eye above the ground and in front of obstacles, through the
+     * [CameraCollisionProbes] the [CameraSystem] was given. `null`, the default, leaves the eye free,
+     * exactly as a rig without it.
+     */
+    var collision: CameraCollision? = null
+
+    /** The eased distance and free eye [collision] works from; started afresh when the mode changes. */
+    internal val collisionState = CameraRigCollisionState()
+
     override fun reset() {
         mode = CameraMode.FirstPerson
         needsReset = false
@@ -69,6 +80,8 @@ class CameraRig : Poolable {
         yaw = 0f
         offsetPosition.set(0f, DEFAULT_EYE_HEIGHT, 0f)
         flySpeed = DEFAULT_FLY_SPEED
+        collision = null
+        collisionState.reset()
     }
 
     /**

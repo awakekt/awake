@@ -101,6 +101,7 @@ forward.
 | `pitch`, `yaw` | radians | `0` | Starting angles. Negative pitch looks down. |
 | `offset` | vector | `(0, 1.8, 0)` | Added to the target's position to get the pivot, or the pivot itself with no target. |
 | `flySpeed` | number | `10` | Units per second for `FreeFly`. Greater than 0. |
+| `collision` | object | none | Keeps a `ThirdPerson` eye out of the ground and walls; see [Camera collision](#camera-collision). |
 
 In the scene DSL these are `CameraRig` fields; `target` is `targetEntity` and `offset` is
 `offsetPosition`.
@@ -112,6 +113,28 @@ In the scene DSL these are `CameraRig` fields; `target` is `targetEntity` and `o
 | `FreeFly` | no | W A S D move along the view, Q and E down and up, Shift is faster; dragging looks around. A host rebinds the keys with `CameraGesturePolicy(flyActions = ...)`, named as in `CameraFlyActions`. |
 | `Cinematic` | yes | Looks at the target from a fixed spot; no input. |
 | `TopDown` | no | Looks down at 60 degrees from `distance`; dragging turns yaw, scrolling zooms. |
+
+#### Camera collision
+
+A third-person eye goes wherever its pitch and distance put it, through a slope or a wall included,
+until the rig asks for `collision`:
+
+```json
+{ "component": "camera_rig", "mode": "ThirdPerson", "target": "Player", "distance": 6.0,
+  "collision": { "groundMargin": 0.4, "radius": 0.25, "easeOutSeconds": 0.3 } }
+```
+
+- `ground` (on by default) keeps the eye `groundMargin` above the terrain, sampled around the eye
+  the size of the near plane so the view's edge stays out of a slope too.
+- `obstacles` (on by default) sweeps a sphere of `radius` from the pivot to the eye and stops the eye
+  just short of the first static body it touches. The eye pulls in at once and eases back out with
+  a half-life of `easeOutSeconds`, so it neither clips nor jitters.
+
+A played project answers both from the scene: the ground from its `terrain` and `paged_terrain`
+heights, the obstacles from its physics world's static bodies. Only static bodies stop the camera, so
+the player's own character never does. A host that runs its own systems passes
+`CameraSystem(..., collisionProbes = ...)`; the maths is `CameraCollisionSolver` in
+`awake:core:camera`, usable without a scene. In code, set `CameraRig.collision = CameraCollision(...)`.
 
 ### `movement_control`
 
