@@ -27,7 +27,12 @@ internal object ShaderEffectsCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneShaderEffect::class) || !plan.hasRenderer) return
         plan.frame("shader-effects") {
-            ShaderEffectSystem(it.renderer as? ContentFeatureHost, it.content[CoreSceneContent.ShaderEffects] ?: ShaderEffectAssets.Empty)
+            ShaderEffectSystem(
+                it.renderer as? ContentFeatureHost,
+                it.content[CoreSceneContent.ShaderEffects] ?: ShaderEffectAssets.Empty,
+                // The system parents its attaches under a job of its own, which its close cancels.
+                checkNotNull(it.coroutineScope) { "shader_effect attaches in the background; its host passes a scope with withCoroutineScope" },
+            )
         }
     }
 }

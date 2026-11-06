@@ -153,7 +153,8 @@ A node names the document and sets its parameters:
 your own app, call `loadShaderEffects` with the decoded scene document and the project's
 `AssetSource`, and give the result to a `ShaderEffectSystem`. The system attaches each document's
 pipeline after the engine starts, through `host`, which is `renderer as? ContentFeatureHost`. Both
-backends implement it:
+backends implement it. The attaches run in the scope you pass, such as the scene session's
+`coroutineScope`, so disposing the scene stops them:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/scene/shader/src/desktopTest/kotlin/com/awakekt/awake/scene/shader/ShaderEffectDocsSampleTest.kt:attach"

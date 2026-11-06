@@ -11,5 +11,5 @@ awake/engine/platform/src/commonMain/kotlin/com/awakekt/awake/engine/platform/Gr
 awake/engine/window/src/wasmJsMain/kotlin/com/awakekt/awake/engine/window/BrowserCanvas.kt 1
 # Compatibility path for released API, remove with the deprecated overload.
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/HostlessSceneScope.kt 1
+# Compatibility path for released API, remove with the deprecated overload.
 awake/scene/shader/src/commonMain/kotlin/com/awakekt/awake/scene/shader/ShaderEffectSystem.kt 1
-awake/scene/worldstream/src/commonMain/kotlin/com/awakekt/awake/scene/worldstream/WorldstreamTerrainDriver.kt 1
