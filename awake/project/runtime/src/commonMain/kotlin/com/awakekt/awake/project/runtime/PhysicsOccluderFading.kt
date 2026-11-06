@@ -11,7 +11,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
@@ -87,7 +87,7 @@ class PhysicsOccluderFading(private val physics: PhysicsWorld, private val bodie
         direction.scale(1f / remaining)
         var hits = 0
         while (hits < MAX_HITS_PER_RAY && remaining > 0f) {
-            val hit = physics.raycast(origin, direction, remaining, CollisionLayer.World) ?: break
+            val hit = physics.raycast(origin, direction, remaining, CollisionLayers.World) ?: break
             val owner = bodies.entityFor(hit.handle)
             if (owner != null && owner != target && world.get<PhysicsBody>(owner)?.shape !is HeightFieldShape) fader.blocking(owner)
             val step = hit.distance + STEP_PAST
