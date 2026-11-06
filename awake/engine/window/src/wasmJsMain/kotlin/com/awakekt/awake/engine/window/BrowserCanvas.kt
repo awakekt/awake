@@ -287,7 +287,7 @@ fun runBrowserCanvas(
                 // The first frame's timestamp can come before lastFrameTime's performance.now().
                 val deltaSeconds = clampFrameDelta((time - lastFrameTime) / 1000.0).toFloat()
                 lastFrameTime = time
-                try {
+                return try {
                     // A changed cap, or a device ratio that moved without a resize event.
                     if (currentCanvasPixelRatio(maxPixelRatio()) != pixelRatio) resizeCanvas()
                     pollBrowserGamepad(input)
@@ -295,13 +295,13 @@ fun runBrowserCanvas(
                     textInput.sync()
                     // An image the app asks for wins over the shape, as on the desktop host.
                     canvasCursor.showFrame(cursor, cursorImage)
+                    true
                 } catch (error: Throwable) {
                     reportBrowserFrameFailure(
                         "Browser frame failed: ${error.message ?: error::class.simpleName}",
                     )
-                    return false
+                    false
                 }
-                return true
             }
             // The work runs as a posted task, not inside the frame callback, so a worker's messages (a socket's pongs
             // and snapshots) still get their turn while a key is held on a slow frame (TaskFrameLoop).
