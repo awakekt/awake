@@ -45,7 +45,8 @@ class FrameThreadGuard {
          * Whether a guard bound from now on checks. On by default where a debug build can be told
          * apart cheaply: on the JVM when assertions are on (`-ea`, as Gradle's test tasks run) or the
          * `awake.frameThreadChecks` system property is `true`, and in a debug Kotlin/Native binary.
-         * Off on Android, where a debug app turns it on itself, and meaningless on wasmJs.
+         * Off on Android until the window host, `AwakeSurfaceView`, turns it on in a debuggable app
+         * (`ApplicationInfo.FLAG_DEBUGGABLE`), and meaningless on wasmJs.
          */
         var enabled: Boolean = frameThreadChecksByDefault()
     }
