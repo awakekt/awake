@@ -10,6 +10,7 @@ package com.awakekt.awake.compose.ui.layout
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.Composition
 import com.awakekt.awake.compose.runtime.ProvidedLocals
+import com.awakekt.awake.compose.runtime.RememberObserver
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.node
 import com.awakekt.awake.compose.runtime.remember
@@ -62,7 +63,7 @@ fun interface SubcomposeSlotReusePolicy {
  */
 class SubcomposeLayoutState(
     val slotReusePolicy: SubcomposeSlotReusePolicy = SubcomposeSlotReusePolicy.Default,
-) {
+) : RememberObserver {
     internal class SlotRecord(
         val slotId: Any?,
         val rootNode: LayoutNode,
@@ -116,16 +117,25 @@ class SubcomposeLayoutState(
             val entry = iterator.next()
             if (entry.key !in activeSlots && entry.key !in retained) {
                 iterator.remove()
+                entry.value.composition.dispose()
             }
         }
         activeSlots.clear()
     }
 
-    /** Discards every retained subcomposition, active or not. */
+    /**
+     * Discards every retained subcomposition, active or not, telling what each one remembers that it
+     * was forgotten.
+     */
     fun dispose() {
+        val records = slotMap.values.toList()
         slotMap.clear()
         activeSlots.clear()
+        records.forEach { it.composition.dispose() }
     }
+
+    /** The node holding this state left the composition, so its subcompositions go with it. */
+    override fun onForgotten() = dispose()
 }
 
 private object SubcomposeLayoutNodeType
