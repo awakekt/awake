@@ -74,13 +74,17 @@ internal class WebGpuContentFeatureGpu(
     // Copied on the GPU when the browser can; otherwise its CPU pixels, as a TextureAsset uploads.
     private fun uploadImage(image: GpuImageSource): Texture {
         val external = image.externalImage
-        if (external == null || !graphicsDevice.wgpuContext.device.queue.canCopyExternalImage(external)) {
-            val asset = image.toTextureAsset()
-            return Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, filtering = asset.filtering)
+        if (external != null && graphicsDevice.wgpuContext.device.queue.canCopyExternalImage(external)) {
+            val mipmaps = mipmaps ?: GpuMipmaps(graphicsDevice.wgpuContext.device).also { mipmaps = it }
+            val copied = graphicsDevice.copyExternalImage(mipmaps, external, image.width, image.height, TextureFiltering.Linear)
+            if (copied != null) {
+                copies++
+                return copied
+            }
         }
-        copies++
-        val mipmaps = mipmaps ?: GpuMipmaps(graphicsDevice.wgpuContext.device).also { mipmaps = it }
-        return graphicsDevice.copyExternalImage(mipmaps, external, image.width, image.height, TextureFiltering.Linear)
+        // A refused copy lands here too.
+        val asset = image.toTextureAsset()
+        return Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, filtering = asset.filtering)
     }
 
     override suspend fun addDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload? {
