@@ -261,7 +261,7 @@ interface FileSystem {
     suspend fun read(path: FilePath): Result<ByteArray> =
         openRead(path).fold(
             onSuccess = { session ->
-                runCatching {
+                suspendRunCatching {
                     val chunks = mutableListOf<ByteArray>()
                     while (true) {
                         val chunk = session.readChunk() ?: break
@@ -292,7 +292,7 @@ interface FileSystem {
     suspend fun write(path: FilePath, bytes: ByteArray, mode: WriteMode = WriteMode.Replace): Result<Unit> =
         openWrite(path, mode).fold(
             onSuccess = { session ->
-                runCatching {
+                suspendRunCatching {
                     session.writeChunk(bytes)
                     session.commit().getOrThrow()
                 }.also { if (it.isFailure) session.abort() }
