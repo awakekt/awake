@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>CyclomaticComplexMethod:DepthPrePassFeature.kt:DepthPrePassFeature$private fun recordCascade</ID>
-    <ID>LargeClass:RendererHeadlessCascadedShadowTest.kt:RendererHeadlessCascadedShadowTest</ID>
     <ID>LargeClass:UiRenderPipeline.kt:UiRenderPipeline</ID>
     <ID>LongMethod:DepthPrePassFeature.kt:DepthPrePassFeature$private fun recordCascade</ID>
     <ID>LongMethod:HeadlessSceneRenderer.kt:fun vulkanHeadlessScene: HeadlessRenderSession</ID>
@@ -18,7 +17,7 @@
     <ID>LongMethod:UiRenderPipeline.kt:UiRenderPipeline$private fun createGraphicsPipeline</ID>
     <ID>LongMethod:UiUploadCostBenchmark.kt:UiUploadCostBenchmark$@Test fun drawUiUploadCost</ID>
     <ID>LongMethod:VulkanEngine.kt:VulkanEngine$@Suppress("TooGenericExceptionCaught", "CyclomaticComplexMethod") override suspend fun createBackendResources: BackendResources</ID>
-    <ID>LoopWithTooManyJumpStatements:RendererHeadlessCascadedShadowTest.kt:RendererHeadlessCascadedShadowTest$for</ID>
+    <ID>LoopWithTooManyJumpStatements:RendererHeadlessCascadedShadowTest.kt:for</ID>
     <ID>MatchingDeclarationName:GpuPassExecutor.kt:RendererGpuPassExecutor : GpuPassExecutor</ID>
     <ID>ReturnCount:RendererDraw3D.kt:internal fun VulkanRenderer.prepareGpuDraw: PreparedDrawCall?</ID>
     <ID>ReturnCount:SwapchainManager.kt:internal fun chooseSwapPresentMode: VkPresentModeKHR</ID>

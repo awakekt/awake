@@ -36,6 +36,7 @@ import com.awakekt.awake.tailwind.Tw
  * }
  * ```
  *
+ * @param T The type of each slide's data.
  * @param items List of item data elements to render in the carousel.
  * @param currentIndex Index of the currently active slide.
  * @param onIndexChange Callback triggered when navigating between slides.

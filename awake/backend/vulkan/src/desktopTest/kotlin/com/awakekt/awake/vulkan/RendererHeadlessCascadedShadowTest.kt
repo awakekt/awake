@@ -191,44 +191,10 @@ class RendererHeadlessCascadedShadowTest {
     }
 
     /** Looking straight down, so ground positions map to pixels without foreshortening. */
-    private fun topDownCamera(eyeHeight: Float = PROBE_EYE_HEIGHT, viewDistance: Float = 100f) = Lens(
-        eye = Vec3f(0f, eyeHeight, 0.001f),
-        center = Vec3f(0f, 0f, 0f),
-        fovYRadians = 1f,
-        near = 0.1f,
-        far = viewDistance,
-    )
 
     /** Where the light drops the caster onto the ground, in pixels. */
-    private fun expectedShadowPixel(camera: Lens, clipSpace: ClipSpace): Pair<Float, Float> {
-        val direction = PROBE_LIGHT.normalized()
-        val world = Vec3f(
-            -direction.x * (PROBE_HEIGHT / direction.y),
-            0f,
-            -direction.z * (PROBE_HEIGHT / direction.y),
-        )
-        val clip = Vec4(world.x, world.y, world.z, 1f) * camera.viewProjectionMatrix(ASPECT, clipSpace)
-        val ndcX = clip.x / clip.w
-        val ndcY = clip.y / clip.w
-        return (ndcX + 1f) * 0.5f * TARGET_SIZE to (ndcY + 1f) * 0.5f * TARGET_SIZE
-    }
 
     /** The centre of mass of everything darker than [SHADOW_CUTOFF]. */
-    private fun shadowCentroid(pixels: ByteArray): Pair<Float, Float>? {
-        var sumX = 0f
-        var sumY = 0f
-        var count = 0
-        for (y in 0 until TARGET_SIZE) {
-            for (x in 0 until TARGET_SIZE) {
-                if (pixels.redAt(x, y) < SHADOW_CUTOFF) {
-                    sumX += x
-                    sumY += y
-                    count += 1
-                }
-            }
-        }
-        return if (count == 0) null else sumX / count to sumY / count
-    }
 
     /** A wide ground plane with one small caster floating above the origin. */
     private fun Renderer.renderProbeScene(target: RenderTarget, camera: Lens): ByteArray {
@@ -255,16 +221,6 @@ class RendererHeadlessCascadedShadowTest {
     }
 
     /** A horizontal quad at [y], centred on the origin. */
-    private fun centredPlane(half: Float, y: Float) = MeshGeometry(
-        floatArrayOf(
-            -half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f,
-            half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f,
-            half, y, half, 0f, 1f, 0f, 1f, 1f, 1f,
-            -half, y, half, 0f, 1f, 0f, 1f, 1f, 1f,
-        ),
-        intArrayOf(0, 1, 2, 2, 3, 0),
-        VertexFormat.PositionNormalColor,
-    )
 
     /**
      * The shadow touches what casts it.
@@ -564,51 +520,8 @@ class RendererHeadlessCascadedShadowTest {
     }
 
     /** Dark pixels whose neighbours are all lit -- acne, as distinct from a shadow's edge. */
-    private fun ByteArray.isolatedShadowPixels(): Int {
-        var isolated = 0
-        for (y in 1 until TARGET_SIZE - 1) {
-            for (x in 1 until TARGET_SIZE - 1) {
-                if (redAt(x, y) >= SHADOW_CUTOFF) continue
-                val lit = listOf(redAt(x - 1, y), redAt(x + 1, y), redAt(x, y - 1), redAt(x, y + 1))
-                    .count { it >= SHADOW_CUTOFF }
-                if (lit >= LIT_NEIGHBOURS_FOR_SPECKLE) isolated++
-            }
-        }
-        return isolated
-    }
 
     /** The scene this test mirrors, found from the module's own directory. */
-    private fun showcaseSceneFile(): File {
-        var directory: File? = File(System.getProperty("user.dir"))
-        while (directory != null && !File(directory, "settings.gradle.kts").exists()) {
-            directory = directory.parentFile
-        }
-        val root = requireNotNull(directory) { "No settings.gradle.kts above ${System.getProperty("user.dir")}." }
-        return File(root, SHOWCASE_SCENE_PATH).also {
-            require(it.exists()) { "The showcase scene has moved: nothing at ${it.path}." }
-        }
-    }
-
-    private fun SceneDocument.cameraLens(): Lens? = nodes
-        .firstNotNullOfOrNull { node -> node.components.filterIsInstance<SceneCamera>().firstOrNull() }
-        ?.let { camera ->
-            Lens.perspective(
-                eye = Vec3f(camera.eye.x, camera.eye.y, camera.eye.z),
-                center = Vec3f(camera.center.x, camera.center.y, camera.center.z),
-                fovYDegrees = camera.fovYDegrees,
-                near = camera.near,
-                far = camera.far,
-            )
-        }
-
-    private fun SceneDocument.sunLight(): SceneLight? = nodes
-        .firstNotNullOfOrNull { node -> node.components.filterIsInstance<SceneDocumentLight>().firstOrNull() }
-        ?.let { light ->
-            SceneLight(
-                direction = Vec3f(light.direction.x, light.direction.y, light.direction.z),
-                color = Vec3f(light.color.r, light.color.g, light.color.b),
-            )
-        }
 
     /**
      * A lit face must not shadow itself.
@@ -699,22 +612,6 @@ class RendererHeadlessCascadedShadowTest {
     }
 
     /** Shadowed pixels well inside the face, which no geometry is in front of. */
-    private fun selfShadowedFacePixels(pixels: ByteArray): Int {
-        val metresPerPixel = 2f * CONTACT_VIEW_HALF / TARGET_SIZE
-        // Inset off the silhouette: an edge pixel is half ground and dark for reasons that are
-        // not acne.
-        val inset = CONTACT_HALF - 2f * metresPerPixel
-        var count = 0
-        for (y in 0 until TARGET_SIZE) {
-            for (x in 0 until TARGET_SIZE) {
-                val across = (x - TARGET_SIZE / 2f) * metresPerPixel
-                val up = (TARGET_SIZE / 2f - y) * metresPerPixel
-                val onFace = kotlin.math.abs(across) < inset && kotlin.math.abs(up) < inset
-                if (onFace && pixels.redAt(x, y) < SHADOW_CUTOFF) count++
-            }
-        }
-        return count
-    }
 
     /**
      * World distance from the caster's footprint to the nearest shadowed ground pixel.
@@ -723,58 +620,10 @@ class RendererHeadlessCascadedShadowTest {
      * maps pixels to world linearly -- so a pixel's world position is its offset from centre
      * times the metres-per-pixel this camera sees.
      */
-    private fun shadowGapFromFootprint(pixels: ByteArray): Float? {
-        val metresPerPixel = 2f * CONTACT_VIEW_HALF / TARGET_SIZE
-        var nearest: Float? = null
-        for (y in 0 until TARGET_SIZE) {
-            for (x in 0 until TARGET_SIZE) {
-                val worldX = (x - TARGET_SIZE / 2f) * metresPerPixel
-                val worldZ = (y - TARGET_SIZE / 2f) * metresPerPixel
-                // Distance outside the footprint square, which under this ortho camera is exactly
-                // the pixels the box covers.
-                val dx = maxOf(0f, kotlin.math.abs(worldX) - CONTACT_HALF)
-                val dz = maxOf(0f, kotlin.math.abs(worldZ) - CONTACT_HALF)
-                // Only ground OUTSIDE the footprint counts. Pixels on the box itself are dark
-                // wherever it shadows its own top, and scoring those as distance zero passes this
-                // test no matter how far the real shadow has slid.
-                val shadowedGround = pixels.redAt(x, y) < SHADOW_CUTOFF && (dx > 0f || dz > 0f)
-                if (!shadowedGround) continue
-                val distance = kotlin.math.sqrt(dx * dx + dz * dz)
-                if (distance < (nearest ?: Float.POSITIVE_INFINITY)) nearest = distance
-            }
-        }
-        return nearest
-    }
 
     /** World distance from the caster footprint to the first pixel darkened by point shadowing. */
-    private fun pointShadowGapFromFootprint(shadowed: ByteArray, unshadowed: ByteArray): Float? {
-        val metresPerPixel = 2f * POINT_CONTACT_VIEW_HALF / TARGET_SIZE
-        var nearest: Float? = null
-        for (y in 0 until TARGET_SIZE) {
-            for (x in 0 until TARGET_SIZE) {
-                val worldX = (x - TARGET_SIZE / 2f) * metresPerPixel
-                val worldZ = (y - TARGET_SIZE / 2f) * metresPerPixel
-                val dx = maxOf(0f, kotlin.math.abs(worldX) - CONTACT_HALF)
-                val dz = maxOf(0f, kotlin.math.abs(worldZ) - CONTACT_HALF)
-                if (dx == 0f && dz == 0f) continue
-                val offset = (y * TARGET_SIZE + x) * BYTES_PER_PIXEL
-                val shadowDelta = (unshadowed[offset].toInt() and 0xFF) -
-                    (shadowed[offset].toInt() and 0xFF)
-                if (shadowDelta < POINT_SHADOW_DELTA) continue
-                val distance = kotlin.math.sqrt(dx * dx + dz * dz)
-                if (distance < (nearest ?: Float.POSITIVE_INFINITY)) nearest = distance
-            }
-        }
-        return nearest
-    }
 
     /** The lit and shadowed extremes of a band of pure ground, and the spread between them. */
-    private class GroundBand(val shadowed: Int, val lit: Int) {
-        val contrast: Int get() = lit - shadowed
-    }
-
-    private fun ByteArray.redAt(x: Int, y: Int): Int =
-        this[(y * TARGET_SIZE + x) * BYTES_PER_PIXEL].toInt() and 0xFF
 
     /**
      * The ground-and-caster scene, standing [SCENE_OFFSET] units from the origin.
@@ -818,20 +667,6 @@ class RendererHeadlessCascadedShadowTest {
     }
 
     /** A horizontal quad at [y] centred on the scene's offset position, facing up. */
-    private fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float = 1f): MeshGeometry {
-        val min = SCENE_OFFSET - half
-        val max = SCENE_OFFSET + half
-        return MeshGeometry(
-            floatArrayOf(
-                min, y, min, 0f, 1f, 0f, r, g, b,
-                max, y, min, 0f, 1f, 0f, r, g, b,
-                max, y, max, 0f, 1f, 0f, r, g, b,
-                min, y, max, 0f, 1f, 0f, r, g, b,
-            ),
-            intArrayOf(0, 1, 2, 2, 3, 0),
-            VertexFormat.PositionNormalColor,
-        )
-    }
 
     companion object {
         private var cachedRenderer: Renderer? = null
@@ -845,120 +680,6 @@ class RendererHeadlessCascadedShadowTest {
             cachedRenderer = null
         }
 
-        private const val TARGET_SIZE = 128
-        private const val TIMING_WIDTH = 640
-        private const val TIMING_HEIGHT = 360
-        private const val TIMING_WARMUP_FRAMES = 30
-        private const val TIMING_FRAMES = 120
-        private const val TIMING_GROUND_HALF = 20f
-        private const val TIMING_CASTER_SIZE = 2f
-        private const val TIMING_ASPECT = 16f / 9f
-        private const val BYTES_PER_PIXEL = 4
-        private const val ASPECT = 1f
-
-        /** Far outside the fixed box's 12-unit half-extent at the origin. */
-        private const val SCENE_OFFSET = 200f
-
-        private const val BAND_TOP = 70
-        private const val BAND_BOTTOM = 100
-        private const val BAND_LEFT = 12
-        private const val BAND_RIGHT = 116
-        private const val LIT_FLOOR = 60
-        private const val MIN_SHADOW_CONTRAST = 25
-        private const val GROUND_HALF = 6f
-        private const val CASTER_HALF = 1.5f
-        private const val CASTER_Y = 2f
-        private const val EYE_Y = 6f
-        private const val EYE_Z = 9f
-        private const val LIGHT_X = 2f
-
-        /** The caster's height above the ground in the position probe. */
-        private const val PROBE_HEIGHT = 3f
-        private const val PROBE_EYE_HEIGHT = 14f
-        private const val PROBE_GROUND_HALF = 12f
-        private const val PROBE_CASTER_HALF = 1f
-
-        /** Well off vertical, so a shadow directly under the caster would fail this. */
-        private val PROBE_LIGHT = Vec3f(1f, 2f, 0.5f)
-
-        /** Lit ground reads far above this; the shadow reads far below it. */
-        private const val SHADOW_CUTOFF = 90
-
-        /** Pixels. Generous next to the offset being measured -- a 128px frame at this camera is
-         * about 5 world units wide, and the shadow sits 1.5 units from the caster. */
-
-        /** Pixels, against a measured 3.2 on a 128px frame -- the slack is PCF's soft edge and the
-         * centroid of a quantised region, not room for a wrong matrix. */
-        private const val POSITION_TOLERANCE = 8f
-
-        /** Half-width of the resting caster in the contact probe. */
-        private const val CONTACT_HALF = 1f
-        private const val CONTACT_GROUND_HALF = 5f
-        private const val POINT_CONTACT_EYE_HEIGHT = 8f
-        private const val POINT_CONTACT_VIEW_HALF = 4f
-        private const val POINT_VIEW_DISTANCE = 20f
-        private const val MAX_POINT_CONTACT_GAP = 0.08f
-        private const val POINT_SHADOW_DELTA = 8
-
-        /** The showcase scene's own values -- see `cascaded-shadows.scene.json`. */
-
-        /** `EngineShowcaseModule` registers "ground" as a 10-unit plane; the scene scales it. */
-        private const val SHOWCASE_GROUND_MESH_SIZE = 10f
-        private const val SHOWCASE_SCENE_PATH =
-            "samples/engine-showcase/src/commonMain/resources/assets/examples/cascaded-shadows.scene.json"
-        private const val GROUND_MESH = "ground"
-
-        /** Measured 77 on this scene; half that is a shadow pass that lost most of its casters. */
-        private const val MIN_SHOWCASE_SHADOW_PIXELS = 40
-
-        /**
-         * All four, not three: the convex corner of a real shadow has three lit neighbours, so a
-         * threshold of three counts every shadow's corners as acne. Acne is an ISOLATED dark
-         * pixel, which is what four means.
-         */
-        private const val LIT_NEIGHBOURS_FOR_SPECKLE = 4
-        private const val MAX_SHOWCASE_SPECKLES = 0
-
-        private const val CONTACT_EYE_HEIGHT = 6f
-
-        /**
-         * Far enough down the view axis to land the box in a FAR cascade, where a texel is tens
-         * of centimetres. The near cascade resolves millimetres, so a probe standing next to its
-         * subject cannot see the acne a far cascade produces. Ortho, so the distance costs no
-         * apparent size.
-         */
-        private const val FACE_EYE_DISTANCE = 30f
-
-        /** The camera's far plane, and so the scale the cascades are fitted over. */
-        private const val FACE_VIEW_DISTANCE = 1000f
-
-        /** Almost parallel to the +X face it lights: `n dot l` is about 0.2. */
-        val GRAZING_LIGHT = Vec3f(0.2f, 1f, 0f)
-
-        /** Half the world height the ortho probe frames: 5m over 128px, so 3.9cm per pixel. */
-        private const val CONTACT_VIEW_HALF = 2.5f
-
-        /**
-         * Lower than [PROBE_LIGHT] on purpose: depth bias slides a shadow sideways by
-         * bias * horizontal/vertical, so a light at 2:1 turns a depth error into twice as much
-         * visible gap. At the overhead angle the probe uses, half a metre of bias moves the
-         * contact edge by less than this test's own tolerance and the assertion means nothing.
-         */
-        val CONTACT_LIGHT = Vec3f(2f, 1f, 0f)
-
-        /**
-         * Metres. A shadow may soften at its edge; it may not walk away from its caster.
-         *
-         * Two pixels at this camera, against a measured 1.4 -- unchanged when the camera's far
-         * plane goes from 100m to 1000m, which is what says the bias tracks the cascade.
-         *
-         * What it catches is gross panning: 50x the current bias measures 0.25m and fails here.
-         * It does NOT distinguish the bias unit -- this scene fits its near cascade over ~20m, so
-         * metres and NDC differ by less than one pixel of slide. Scenes with a tighter cascade,
-         * which is where the unit matters, would need their own probe.
-         */
-        private const val MAX_CONTACT_GAP = 0.08f
-
         private fun sharedRenderer(): Renderer = cachedRenderer ?: newRenderer().let { (renderer, release) ->
             cachedRenderer = renderer
             releaseCached = release
@@ -967,4 +688,294 @@ class RendererHeadlessCascadedShadowTest {
 
         private fun newRenderer() = newHeadlessShadowRenderer(TARGET_SIZE)
     }
+}
+
+private const val TARGET_SIZE = 128
+private const val TIMING_WIDTH = 640
+private const val TIMING_HEIGHT = 360
+private const val TIMING_WARMUP_FRAMES = 30
+private const val TIMING_FRAMES = 120
+private const val TIMING_GROUND_HALF = 20f
+private const val TIMING_CASTER_SIZE = 2f
+private const val TIMING_ASPECT = 16f / 9f
+private const val BYTES_PER_PIXEL = 4
+private const val ASPECT = 1f
+
+/** Far outside the fixed box's 12-unit half-extent at the origin. */
+private const val SCENE_OFFSET = 200f
+
+private const val BAND_TOP = 70
+private const val BAND_BOTTOM = 100
+private const val BAND_LEFT = 12
+private const val BAND_RIGHT = 116
+private const val LIT_FLOOR = 60
+private const val MIN_SHADOW_CONTRAST = 25
+private const val GROUND_HALF = 6f
+private const val CASTER_HALF = 1.5f
+private const val CASTER_Y = 2f
+private const val EYE_Y = 6f
+private const val EYE_Z = 9f
+private const val LIGHT_X = 2f
+
+/** The caster's height above the ground in the position probe. */
+private const val PROBE_HEIGHT = 3f
+private const val PROBE_EYE_HEIGHT = 14f
+private const val PROBE_GROUND_HALF = 12f
+private const val PROBE_CASTER_HALF = 1f
+
+/** Well off vertical, so a shadow directly under the caster would fail this. */
+private val PROBE_LIGHT = Vec3f(1f, 2f, 0.5f)
+
+/** Lit ground reads far above this; the shadow reads far below it. */
+private const val SHADOW_CUTOFF = 90
+
+/** Pixels. Generous next to the offset being measured -- a 128px frame at this camera is
+ * about 5 world units wide, and the shadow sits 1.5 units from the caster. */
+
+/** Pixels, against a measured 3.2 on a 128px frame -- the slack is PCF's soft edge and the
+ * centroid of a quantised region, not room for a wrong matrix. */
+private const val POSITION_TOLERANCE = 8f
+
+/** Half-width of the resting caster in the contact probe. */
+private const val CONTACT_HALF = 1f
+private const val CONTACT_GROUND_HALF = 5f
+private const val POINT_CONTACT_EYE_HEIGHT = 8f
+private const val POINT_CONTACT_VIEW_HALF = 4f
+private const val POINT_VIEW_DISTANCE = 20f
+private const val MAX_POINT_CONTACT_GAP = 0.08f
+private const val POINT_SHADOW_DELTA = 8
+
+/** The showcase scene's own values -- see `cascaded-shadows.scene.json`. */
+
+/** `EngineShowcaseModule` registers "ground" as a 10-unit plane; the scene scales it. */
+private const val SHOWCASE_GROUND_MESH_SIZE = 10f
+private const val SHOWCASE_SCENE_PATH =
+    "samples/engine-showcase/src/commonMain/resources/assets/examples/cascaded-shadows.scene.json"
+private const val GROUND_MESH = "ground"
+
+/** Measured 77 on this scene; half that is a shadow pass that lost most of its casters. */
+private const val MIN_SHOWCASE_SHADOW_PIXELS = 40
+
+/**
+ * All four, not three: the convex corner of a real shadow has three lit neighbours, so a
+ * threshold of three counts every shadow's corners as acne. Acne is an ISOLATED dark
+ * pixel, which is what four means.
+ */
+private const val LIT_NEIGHBOURS_FOR_SPECKLE = 4
+private const val MAX_SHOWCASE_SPECKLES = 0
+
+private const val CONTACT_EYE_HEIGHT = 6f
+
+/**
+ * Far enough down the view axis to land the box in a FAR cascade, where a texel is tens
+ * of centimetres. The near cascade resolves millimetres, so a probe standing next to its
+ * subject cannot see the acne a far cascade produces. Ortho, so the distance costs no
+ * apparent size.
+ */
+private const val FACE_EYE_DISTANCE = 30f
+
+/** The camera's far plane, and so the scale the cascades are fitted over. */
+private const val FACE_VIEW_DISTANCE = 1000f
+
+/** Almost parallel to the +X face it lights: `n dot l` is about 0.2. */
+private val GRAZING_LIGHT = Vec3f(0.2f, 1f, 0f)
+
+/** Half the world height the ortho probe frames: 5m over 128px, so 3.9cm per pixel. */
+private const val CONTACT_VIEW_HALF = 2.5f
+
+/**
+ * Lower than [PROBE_LIGHT] on purpose: depth bias slides a shadow sideways by
+ * bias * horizontal/vertical, so a light at 2:1 turns a depth error into twice as much
+ * visible gap. At the overhead angle the probe uses, half a metre of bias moves the
+ * contact edge by less than this test's own tolerance and the assertion means nothing.
+ */
+private val CONTACT_LIGHT = Vec3f(2f, 1f, 0f)
+
+/**
+ * Metres. A shadow may soften at its edge; it may not walk away from its caster.
+ *
+ * Two pixels at this camera, against a measured 1.4 -- unchanged when the camera's far
+ * plane goes from 100m to 1000m, which is what says the bias tracks the cascade.
+ *
+ * What it catches is gross panning: 50x the current bias measures 0.25m and fails here.
+ * It does NOT distinguish the bias unit -- this scene fits its near cascade over ~20m, so
+ * metres and NDC differ by less than one pixel of slide. Scenes with a tighter cascade,
+ * which is where the unit matters, would need their own probe.
+ */
+private const val MAX_CONTACT_GAP = 0.08f
+
+private fun topDownCamera(eyeHeight: Float = PROBE_EYE_HEIGHT, viewDistance: Float = 100f) = Lens(
+    eye = Vec3f(0f, eyeHeight, 0.001f),
+    center = Vec3f(0f, 0f, 0f),
+    fovYRadians = 1f,
+    near = 0.1f,
+    far = viewDistance,
+)
+
+private fun expectedShadowPixel(camera: Lens, clipSpace: ClipSpace): Pair<Float, Float> {
+    val direction = PROBE_LIGHT.normalized()
+    val world = Vec3f(
+        -direction.x * (PROBE_HEIGHT / direction.y),
+        0f,
+        -direction.z * (PROBE_HEIGHT / direction.y),
+    )
+    val clip = Vec4(world.x, world.y, world.z, 1f) * camera.viewProjectionMatrix(ASPECT, clipSpace)
+    val ndcX = clip.x / clip.w
+    val ndcY = clip.y / clip.w
+    return (ndcX + 1f) * 0.5f * TARGET_SIZE to (ndcY + 1f) * 0.5f * TARGET_SIZE
+}
+
+private fun shadowCentroid(pixels: ByteArray): Pair<Float, Float>? {
+    var sumX = 0f
+    var sumY = 0f
+    var count = 0
+    for (y in 0 until TARGET_SIZE) {
+        for (x in 0 until TARGET_SIZE) {
+            if (pixels.redAt(x, y) < SHADOW_CUTOFF) {
+                sumX += x
+                sumY += y
+                count += 1
+            }
+        }
+    }
+    return if (count == 0) null else sumX / count to sumY / count
+}
+
+private fun centredPlane(half: Float, y: Float) = MeshGeometry(
+    floatArrayOf(
+        -half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f,
+        half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f,
+        half, y, half, 0f, 1f, 0f, 1f, 1f, 1f,
+        -half, y, half, 0f, 1f, 0f, 1f, 1f, 1f,
+    ),
+    intArrayOf(0, 1, 2, 2, 3, 0),
+    VertexFormat.PositionNormalColor,
+)
+
+private fun ByteArray.isolatedShadowPixels(): Int {
+    var isolated = 0
+    for (y in 1 until TARGET_SIZE - 1) {
+        for (x in 1 until TARGET_SIZE - 1) {
+            if (redAt(x, y) >= SHADOW_CUTOFF) continue
+            val lit = listOf(redAt(x - 1, y), redAt(x + 1, y), redAt(x, y - 1), redAt(x, y + 1))
+                .count { it >= SHADOW_CUTOFF }
+            if (lit >= LIT_NEIGHBOURS_FOR_SPECKLE) isolated++
+        }
+    }
+    return isolated
+}
+
+private fun showcaseSceneFile(): File {
+    var directory: File? = File(System.getProperty("user.dir"))
+    while (directory != null && !File(directory, "settings.gradle.kts").exists()) {
+        directory = directory.parentFile
+    }
+    val root = requireNotNull(directory) { "No settings.gradle.kts above ${System.getProperty("user.dir")}." }
+    return File(root, SHOWCASE_SCENE_PATH).also {
+        require(it.exists()) { "The showcase scene has moved: nothing at ${it.path}." }
+    }
+}
+
+private fun SceneDocument.cameraLens(): Lens? = nodes
+    .firstNotNullOfOrNull { node -> node.components.filterIsInstance<SceneCamera>().firstOrNull() }
+    ?.let { camera ->
+        Lens.perspective(
+            eye = Vec3f(camera.eye.x, camera.eye.y, camera.eye.z),
+            center = Vec3f(camera.center.x, camera.center.y, camera.center.z),
+            fovYDegrees = camera.fovYDegrees,
+            near = camera.near,
+            far = camera.far,
+        )
+    }
+
+private fun SceneDocument.sunLight(): SceneLight? = nodes
+    .firstNotNullOfOrNull { node -> node.components.filterIsInstance<SceneDocumentLight>().firstOrNull() }
+    ?.let { light ->
+        SceneLight(
+            direction = Vec3f(light.direction.x, light.direction.y, light.direction.z),
+            color = Vec3f(light.color.r, light.color.g, light.color.b),
+        )
+    }
+
+private fun selfShadowedFacePixels(pixels: ByteArray): Int {
+    val metresPerPixel = 2f * CONTACT_VIEW_HALF / TARGET_SIZE
+    // Inset off the silhouette: an edge pixel is half ground and dark for reasons that are
+    // not acne.
+    val inset = CONTACT_HALF - 2f * metresPerPixel
+    var count = 0
+    for (y in 0 until TARGET_SIZE) {
+        for (x in 0 until TARGET_SIZE) {
+            val across = (x - TARGET_SIZE / 2f) * metresPerPixel
+            val up = (TARGET_SIZE / 2f - y) * metresPerPixel
+            val onFace = kotlin.math.abs(across) < inset && kotlin.math.abs(up) < inset
+            if (onFace && pixels.redAt(x, y) < SHADOW_CUTOFF) count++
+        }
+    }
+    return count
+}
+
+private fun shadowGapFromFootprint(pixels: ByteArray): Float? {
+    val metresPerPixel = 2f * CONTACT_VIEW_HALF / TARGET_SIZE
+    var nearest: Float? = null
+    for (y in 0 until TARGET_SIZE) {
+        for (x in 0 until TARGET_SIZE) {
+            val worldX = (x - TARGET_SIZE / 2f) * metresPerPixel
+            val worldZ = (y - TARGET_SIZE / 2f) * metresPerPixel
+            // Distance outside the footprint square, which under this ortho camera is exactly
+            // the pixels the box covers.
+            val dx = maxOf(0f, kotlin.math.abs(worldX) - CONTACT_HALF)
+            val dz = maxOf(0f, kotlin.math.abs(worldZ) - CONTACT_HALF)
+            // Only ground OUTSIDE the footprint counts. Pixels on the box itself are dark
+            // wherever it shadows its own top, and scoring those as distance zero passes this
+            // test no matter how far the real shadow has slid.
+            val shadowedGround = pixels.redAt(x, y) < SHADOW_CUTOFF && (dx > 0f || dz > 0f)
+            if (!shadowedGround) continue
+            val distance = kotlin.math.sqrt(dx * dx + dz * dz)
+            if (distance < (nearest ?: Float.POSITIVE_INFINITY)) nearest = distance
+        }
+    }
+    return nearest
+}
+
+private fun pointShadowGapFromFootprint(shadowed: ByteArray, unshadowed: ByteArray): Float? {
+    val metresPerPixel = 2f * POINT_CONTACT_VIEW_HALF / TARGET_SIZE
+    var nearest: Float? = null
+    for (y in 0 until TARGET_SIZE) {
+        for (x in 0 until TARGET_SIZE) {
+            val worldX = (x - TARGET_SIZE / 2f) * metresPerPixel
+            val worldZ = (y - TARGET_SIZE / 2f) * metresPerPixel
+            val dx = maxOf(0f, kotlin.math.abs(worldX) - CONTACT_HALF)
+            val dz = maxOf(0f, kotlin.math.abs(worldZ) - CONTACT_HALF)
+            if (dx == 0f && dz == 0f) continue
+            val offset = (y * TARGET_SIZE + x) * BYTES_PER_PIXEL
+            val shadowDelta = (unshadowed[offset].toInt() and 0xFF) -
+                (shadowed[offset].toInt() and 0xFF)
+            if (shadowDelta < POINT_SHADOW_DELTA) continue
+            val distance = kotlin.math.sqrt(dx * dx + dz * dz)
+            if (distance < (nearest ?: Float.POSITIVE_INFINITY)) nearest = distance
+        }
+    }
+    return nearest
+}
+
+private class GroundBand(val shadowed: Int, val lit: Int) {
+    val contrast: Int get() = lit - shadowed
+}
+
+private fun ByteArray.redAt(x: Int, y: Int): Int =
+    this[(y * TARGET_SIZE + x) * BYTES_PER_PIXEL].toInt() and 0xFF
+
+private fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float = 1f): MeshGeometry {
+    val min = SCENE_OFFSET - half
+    val max = SCENE_OFFSET + half
+    return MeshGeometry(
+        floatArrayOf(
+            min, y, min, 0f, 1f, 0f, r, g, b,
+            max, y, min, 0f, 1f, 0f, r, g, b,
+            max, y, max, 0f, 1f, 0f, r, g, b,
+            min, y, max, 0f, 1f, 0f, r, g, b,
+        ),
+        intArrayOf(0, 1, 2, 2, 3, 0),
+        VertexFormat.PositionNormalColor,
+    )
 }
