@@ -76,6 +76,7 @@ internal class WebGpuShaderReplacement(
             }
         }
         val candidates = LinkedHashMap<Any, Result<GPURenderPipeline>>()
+        var prepared = false
         try {
             builders.forEach { (identity, build) ->
                 // prepare does not know which old program will be selected. Retain failures for
@@ -88,10 +89,10 @@ internal class WebGpuShaderReplacement(
                     Result.failure(ShaderReplacementException("A replacement pipeline failed to build: ${failure.message}", failure))
                 }
             }
-            return PreparedWebGpuShaderProgram(this, new, candidates)
-        } catch (failure: Throwable) {
-            candidates.values.forEach { it.getOrNull()?.close() }
-            throw failure
+            return PreparedWebGpuShaderProgram(this, new, candidates).also { prepared = true }
+        } finally {
+            // Failed or cancelled part way: close the pipelines already built.
+            if (!prepared) candidates.values.forEach { it.getOrNull()?.close() }
         }
     }
 

@@ -38,13 +38,15 @@ class WebGpuUploadContext(
         submit: (T) -> Unit,
     ) {
         lease.submit()
+        var completed = false
         try {
             submit(lease.payload)
             graphicsDevice.wgpuContext.device.queue.onSubmittedWorkDone().getOrThrow()
             lease.complete()
-        } catch (failure: Throwable) {
-            lease.fail()
-            throw failure
+            completed = true
+        } finally {
+            // Failed or cancelled before it completed: the lease fails, and what stopped it goes on.
+            if (!completed) lease.fail()
         }
     }
 }

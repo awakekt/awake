@@ -56,6 +56,9 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice) 
         return TimedEncoder(device.createCommandEncoder(), buffers, counter.beginSubmission())
     }
 
+    // SuspendFunSwallowedCancellation: the readback's Result is read on the render thread with getCompleted,
+    // so a readback the timer's scope cancelled must end as a failed result, not a Deferred that throws there.
+    @Suppress("SuspendFunSwallowedCancellation")
     fun submitted(encoder: GPUCommandEncoder) {
         val timed = encoder as TimedEncoder
         val buffers = timed.resources
