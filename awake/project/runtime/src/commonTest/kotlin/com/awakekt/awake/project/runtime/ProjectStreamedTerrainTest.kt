@@ -17,6 +17,7 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
@@ -29,9 +30,8 @@ import com.awakekt.awake.terrain.TerrainPageIndex
 import com.awakekt.awake.terrain.TerrainPageIndexCodec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.TestScope
-import com.awakekt.awake.engine.platform.error.childScope
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
