@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>TooManyFunctions:GltfParser.kt$GltfParser</ID>
+    <ID>TooManyFunctions:GltfParser.kt:GltfParser</ID>
   </CurrentIssues>
 </SmellBaseline>

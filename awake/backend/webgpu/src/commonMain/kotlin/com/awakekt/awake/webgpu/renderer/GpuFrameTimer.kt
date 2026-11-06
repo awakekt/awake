@@ -23,7 +23,6 @@ import io.ygdrasil.webgpu.GPURenderPassDescriptor
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 import io.ygdrasil.webgpu.QuerySetDescriptor
 import io.ygdrasil.webgpu.RenderPassTimestampWrites
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -59,6 +58,9 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice, 
         return TimedEncoder(device.createCommandEncoder(), buffers, counter.beginSubmission())
     }
 
+    // SuspendFunSwallowedCancellation: the readback's Result is read on the render thread with getCompleted,
+    // so a readback the timer's scope cancelled must end as a failed result, not a Deferred that throws there.
+    @Suppress("SuspendFunSwallowedCancellation")
     fun submitted(encoder: GPUCommandEncoder) {
         val timed = encoder as TimedEncoder
         val buffers = timed.resources
@@ -67,19 +69,10 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice, 
             buffers?.let { available += it }
             return
         }
-        val result = scope.async(start = CoroutineStart.UNDISPATCHED) { mapForReading(buffers) }
+        val result = scope.async(start = CoroutineStart.UNDISPATCHED) {
+            runCatching { buffers.readback.mapAsync(GPUMapMode.Read).getOrThrow() }
+        }
         pending += Readback(timed.ticket, buffers, result, timed.queryCount, timed.overflow)
-    }
-
-    // TooGenericExceptionCaught: a map the driver refuses only loses this submission's time.
-    @Suppress("TooGenericExceptionCaught")
-    private suspend fun mapForReading(buffers: Resources): Result<Unit> = try {
-        buffers.readback.mapAsync(GPUMapMode.Read).getOrThrow()
-        Result.success(Unit)
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (failure: Exception) {
-        Result.failure(failure)
     }
 
     fun publish() {

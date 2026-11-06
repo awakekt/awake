@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>TooGenericExceptionCaught:ShaderSetLoading.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ShaderSetLoading.kt:e: Exception</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -14,18 +14,19 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /** WebGPU can return an invalid object instead of throwing. Await its validation before use. */
-@Suppress("TooGenericExceptionCaught")
 internal suspend fun <T : AutoCloseable> GPUDevice.createValidated(create: () -> T): T {
     pushErrorScope(GPUErrorFilter.Validation)
     val created = runCatching(create)
+    var popped = false
     val error = try {
         // Pop the scope even if preparation was cancelled while waiting for the driver.
         withContext(NonCancellable) { popValidationError() }.also {
             currentCoroutineContext().ensureActive()
+            popped = true
         }
-    } catch (failure: Throwable) {
-        created.getOrNull()?.close()
-        throw failure
+    } finally {
+        // Failed or cancelled while popping: close what was created, and let what stopped it go on.
+        if (!popped) created.getOrNull()?.close()
     }
     if (error != null) {
         created.getOrNull()?.close()

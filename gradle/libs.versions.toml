@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.4.20"
 agp = "9.2.1"
-detekt = "1.23.8"
+detekt = "2.0.0-alpha.6"
 spotless = "7.0.2"
 dokka = "2.0.0"
 fleks = "2.14"
@@ -116,7 +116,7 @@ kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 # Wraps browser fetch()/DOM APIs for Kotlin/Wasm -- used by awake:base's wasmJs
 # readResourceBytes actual (see docs/MVP_PLAN.md's web-demo decision log entry).
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinx-browser" }
-detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 # JVM library (platform-independent Java classes) -- desktop build only, this machine is

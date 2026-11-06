@@ -18,13 +18,14 @@ import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Backend-neutral render bootstrap shared by `VulkanEngine` (`awake-backend-vulkan`)
@@ -107,7 +108,9 @@ abstract class GraphicsEngine(
 
     // TooGenericExceptionCaught intentional: native GPU/JNI layers can throw Throwable
     // (e.g. OutOfMemoryError, UnsatisfiedLinkError); catching Exception alone would miss them.
-    @Suppress("TooGenericExceptionCaught")
+    // SuspendFunSwallowedCancellation: start-up stops quietly only when its own scope is cancelled; a
+    // cancellation start-up raised itself, such as a backend's own timeout, is a failure the app hears of.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     final override fun create(surface: Any?) {
         // NOT MainScope(): its Dispatchers.Main can resolve to a Swing/AWT dispatcher on
         // desktop, deadlocking against -XstartOnFirstThread (already claimed by GLFW).
@@ -119,10 +122,9 @@ abstract class GraphicsEngine(
                     logger.debug { "GraphicsEngine create() starting, initializing backend resources" }
                     setupCommon(window)
                     logger.info { "GraphicsEngine created and ready" }
-                } catch (cancelled: CancellationException) {
-                    // Disposed while starting: not a start-up failure.
-                    throw cancelled
                 } catch (t: Throwable) {
+                    // Disposed while starting cancels the engine's scope: ensureActive rethrows, so it is no failure.
+                    if (t is CancellationException) ensureActive()
                     startupError = t
                     logger.error(t) { "Failed to initialize graphics engine" }
                     // After the log and startupError, so a handler that looks at either sees them. The backend

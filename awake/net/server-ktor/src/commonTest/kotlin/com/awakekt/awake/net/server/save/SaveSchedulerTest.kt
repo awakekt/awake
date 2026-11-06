@@ -6,8 +6,12 @@
 package com.awakekt.awake.net.server.save
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class SaveSchedulerTest {
@@ -79,6 +83,36 @@ class SaveSchedulerTest {
         assertEquals(listOf("A", "B"), writeLog[1].map { it.saveKey }.sorted())
         assertEquals(60, writeLog[1].first { it.saveKey == "A" }.balance)
 
+        scheduler.close()
+    }
+
+    /** A writer's own timeout fails that write; it must not stop the scheduler saving what comes next. */
+    @Test
+    fun aWriterThatTimesOutFailsItsWriteAndLaterSavesStillRun() {
+        var first = true
+        val failures = mutableListOf<Throwable?>()
+        val scheduler = SaveScheduler<Account>(
+            dispatcher = Dispatchers.Default,
+            writer = {
+                if (first) {
+                    first = false
+                    withTimeout(1) { awaitCancellation() }
+                }
+                true
+            },
+            onFailed = { _, error -> failures += error },
+        )
+        var firstWritten: Boolean? = null
+        var secondWritten: Boolean? = null
+
+        scheduler.save(Account("A", 1)) { firstWritten = it }
+        assertTrue(scheduler.flush(3000L))
+        scheduler.save(Account("B", 2)) { secondWritten = it }
+        assertTrue(scheduler.flush(3000L), "the scheduler still runs after the timed-out write")
+
+        assertEquals(false, firstWritten)
+        assertIs<TimeoutCancellationException>(failures.single())
+        assertEquals(true, secondWritten)
         scheduler.close()
     }
 }

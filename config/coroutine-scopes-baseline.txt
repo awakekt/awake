@@ -6,6 +6,9 @@
 # does a line that allows more sites than its file has left: lower it, or delete it once none remain.
 # Never add a line; run the work in a child of an owner instead (website/docs/guides/app-lifecycle.md,
 # "Coroutine scopes").
+# Arrived with #1331 in the base branch, after this check was written: AssetLoads' own fallback scope,
+# used when request() names none. Tracked on #1321; it goes when every caller passes an owned scope.
+awake/core/io/src/commonMain/kotlin/com/awakekt/awake/core/io/AssetLoads.kt 1
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/ProjectScene.kt 1
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/ProjectSceneRunner.kt 1
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/StreamedTerrainCapability.kt 2

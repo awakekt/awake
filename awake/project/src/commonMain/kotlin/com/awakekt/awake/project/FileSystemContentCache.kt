@@ -9,6 +9,7 @@ import com.awakekt.awake.core.io.FileKind
 import com.awakekt.awake.core.io.FilePath
 import com.awakekt.awake.core.io.FileSystem
 import com.awakekt.awake.core.io.WriteMode
+import com.awakekt.awake.core.io.suspendRunCatching
 
 /**
  * Caches [IndexedAssetSource]'s verified files on a [FileSystem], keyed by SHA-256.
@@ -41,7 +42,7 @@ class FileSystemContentCache(
 
     override suspend fun put(sha256: String, bytes: ByteArray) {
         val path = filePathFor(sha256) ?: return
-        runCatching {
+        suspendRunCatching {
             val parent = path.value.substringBeforeLast('/', "")
             if (parent.isNotEmpty()) {
                 fileSystem.createDirectories(FilePath.of(parent))

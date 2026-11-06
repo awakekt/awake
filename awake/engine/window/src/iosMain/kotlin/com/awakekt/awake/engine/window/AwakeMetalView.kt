@@ -123,7 +123,7 @@ class AwakeMetalView(
     }
 
     @ObjCAction
-    @Suppress("UnusedPrivateMember", "TooGenericExceptionCaught")
+    @Suppress("UnusedPrivateFunction", "TooGenericExceptionCaught")
     private fun tick(displayLink: CADisplayLink) {
         try {
             val currentTimestamp = displayLink.timestamp

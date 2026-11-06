@@ -7,6 +7,8 @@
 
 package com.awakekt.awake.core.io
 
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -19,6 +21,7 @@ import java.nio.file.StandardWatchEventKinds.OVERFLOW
 import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import kotlin.concurrent.thread
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Creates the default platform filesystem rooted at [root] using Java NIO.
@@ -109,15 +112,21 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         val after = staged.list(FilePath.Root, recursive = true).getOrThrow()
             .filter { it.kind == FileKind.File }
             .associate { it.path to staged.read(it.path).getOrThrow() }
+        var applied = false
         return try {
             reconcile(before, after)
+            applied = true
             result
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (cause: Throwable) {
-            runCatching { reconcile(after, before) }
             Result.failure(
                 cause.takeIf { it is FileSystemException }
                     ?: FileSystemException(FileSystemError.IoFailure("transaction", cause.message ?: cause::class.simpleName.orEmpty())),
             )
+        } finally {
+            // All or nothing: a reconcile that failed, or was cancelled, part way puts the files back.
+            if (!applied) withContext(NonCancellable) { suspendRunCatching { reconcile(after, before) } }
         }
     }
 

@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>LongMethod:Main.kt$fun main()</ID>
+    <ID>LongMethod:Main.kt:fun main</ID>
   </CurrentIssues>
 </SmellBaseline>

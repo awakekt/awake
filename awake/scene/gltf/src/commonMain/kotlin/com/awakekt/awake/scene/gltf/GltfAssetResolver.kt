@@ -21,6 +21,7 @@ import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.suspendRunCatching
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -73,7 +74,7 @@ class GltfAssetResolver(
     /** The last GPU mesh made for each full mesh with levels, whose vertex buffer its levels draw. */
     private val levelBases = mutableMapOf<String, Mesh>()
     private var assetSource: AssetSource = AssetSource { path ->
-        runCatching { bundledResourceReader(path.value) }
+        suspendRunCatching { bundledResourceReader(path.value) }
     }
     private var imageDecoder: (suspend (ByteArray) -> GpuImageSource?)? = null
     private val loads = GltfModelLoads(this, ::staging)
@@ -145,7 +146,7 @@ class GltfAssetResolver(
         }
         if (path !in loadedMaterialSlots) {
             // A model whose textures fail to load still draws, untextured, with lit-shadow.
-            runCatching { preloadMaterials(path, bytes) }
+            suspendRunCatching { preloadMaterials(path, bytes) }
                 .onFailure { log.warn { "Drawing '$path' untextured: its materials failed to load (${it.message})" } }
         }
     }
