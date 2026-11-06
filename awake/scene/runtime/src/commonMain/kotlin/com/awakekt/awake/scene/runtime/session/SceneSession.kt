@@ -15,6 +15,7 @@ import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneAssetLibrary
 import com.awakekt.awake.scene.runtime.SceneManager
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
+import com.awakekt.awake.scene.runtime.runPrewarms
 import com.awakekt.awake.scene.runtime.schedule.SceneSchedule
 
 /**
@@ -64,6 +65,8 @@ class SceneSession internal constructor(
     internal fun advance(delta: Float, fixedUpdate: (Float) -> Unit) {
         // Before anything this frame draws, so a texture forgotten from another thread is asked for again whole.
         assetLibrary?.applyRequestedForgets()
+        // Before the frame's systems, so a prewarm that became ready lets this frame's spawns draw at once.
+        assetLibrary?.runPrewarms()
         schedule.advance(world, delta, fixedUpdate)
     }
 

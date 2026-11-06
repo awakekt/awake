@@ -99,6 +99,31 @@ bytes that have arrived, ready once the new scene has had its first frame, or fa
 path and cause. See
 [`awake:project:runtime`](https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene).
 
+## Get a node ready before it spawns
+
+`spawn` builds a node's meshes the first time it draws them, and a texture a resolver loads from
+files draws a frame or more later. For something that must look right the moment it appears, such as
+a character arriving or a short effect, prewarm it first. `prewarm` lists what the node and its
+children draw (`node.assetReferences()`), then each frame builds and uploads its meshes and
+materials and loads its textures off the frame:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmTest.kt:prewarm"
+```
+
+Once it is ready, a spawn draws the node on its first frame and shares what the prewarm built. The
+prewarm holds those assets so nothing frees them in the meantime; close it after the spawn:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmTest.kt:spawn"
+```
+
+`SceneAssetLibrary.prewarmFrameBudgetBytes` caps the new mesh uploaded per frame, so prewarming
+while the game plays doesn't stall a frame. An asset that can't be built is listed in `failed`, and
+is built when it is first drawn instead. Closing a prewarm before it is ready, or tearing the scene
+down, stops it, and `await` then throws `CancellationException`. Expand prefab links first
+(`withPrefabs`): `assetReferences` lists a link it can't follow in `prefabLinks`.
+
 ## Save a world
 
 `fromWorld` walks the entities that have a `Transform`, follows their parent links to rebuild the

@@ -112,6 +112,9 @@ class SceneAssetLibrary(
     // Forgets asked for from any thread, applied on the frame thread by [applyRequestedForgets].
     private val requestedForgets = AtomicReference(NoForgets)
 
+    // The open prewarms; see [prewarm].
+    internal val prewarms = ScenePrewarmQueue(this)
+
     /**
      * Supplies decoded image data registered under [name]; the sprite render batch caches and owns its
      * GPU material. Throws when none is registered. Drawing asks [texture] instead, which also asks the
@@ -233,6 +236,18 @@ class SceneAssetLibrary(
         val asked = requestedForgets.exchange(NoForgets)
         if (asked.all) forgetTextures() else asked.names.forEach(::forgetTexture)
     }
+
+    /** Whether [name] is registered by name, so it is ready without a resolver loading it. */
+    internal fun isTextureRegistered(name: String): Boolean = name in textureFactories
+
+    /**
+     * Where a resolver's texture [name] stands for a prewarm: [texture]'s answer, without its logging.
+     * Asking starts the resolver's load, as drawing does.
+     */
+    internal fun prewarmTexture(name: String): SceneTextureLoad? = dynamicResolvers.firstNotNullOfOrNull { it.texture(name) }
+
+    /** Whether [key] draws through a renderer factory of its own, so it holds nothing to prewarm. */
+    internal fun hasCustomRenderer(key: SceneRenderableKey): Boolean = key in rendererFactories
 
     /** Has [uploads] let go of what it made from a texture each time [forgetTexture] or [forgetTextures] forgets it. */
     internal fun addTextureUploads(uploads: SceneTextureUploads) {
@@ -409,7 +424,7 @@ class SceneAssetLibrary(
         releaseMaterial(request.meshRenderer.material)
     }
 
-    private fun levelsOf(mesh: String): SceneMeshLevels? =
+    internal fun levelsOf(mesh: String): SceneMeshLevels? =
         dynamicResolvers.firstNotNullOfOrNull { resolver -> resolver.takeIf { it.canResolveMesh(mesh) }?.meshLevels(mesh) }
 
     /**
@@ -451,9 +466,11 @@ class SceneAssetLibrary(
      *
      * Session teardown outranks refcounting: a consumer that leaked a reference should not leak
      * the GPU resource too. Anything already released is gone from the caches, so this cannot
-     * double-destroy it.
+     * double-destroy it. Every open [ScenePrewarm] stops, and its [ScenePrewarm.await] throws.
      */
     fun dispose() {
+        // Before the caches clear, so no prewarm releases what this destroys.
+        prewarms.dispose()
         meshes.values.forEach { mesh -> mesh.destroy() }
         retainedMeshes.values.forEach { mesh -> mesh.destroy() }
         materials.values.forEach { material -> material.destroy() }
