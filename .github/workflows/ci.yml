@@ -702,7 +702,7 @@ jobs:
       # model decoded in the session's scope and adopted on the frame thread, where wasm has one
       # thread and Dispatchers.Default is the browser's event loop.
       - name: Scene prewarm verification (wasmJs)
-        run: ./gradlew :awake:scene:runtime:wasmJsTest :awake:project:runtime:wasmJsTest
+        run: ./gradlew --continue :awake:scene:runtime:wasmJsTest :awake:project:runtime:wasmJsTest
 
   # The WebGPU release pin is built only from a commit tagged v<release>, and on the tag run its
   # Consumer gate builds it before the release can publish. Without this job a tag would be the
