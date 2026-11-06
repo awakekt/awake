@@ -47,11 +47,13 @@ import kotlin.concurrent.Volatile
 class Strings internal constructor(
     source: StringTableSource,
     val defaultLocale: LocaleId,
-    internal val pluralRules: (LocaleId) -> PluralRule,
-    internal val ordinalRules: (LocaleId) -> PluralRule,
+    pluralRules: (LocaleId) -> PluralRule,
+    ordinalRules: (LocaleId) -> PluralRule,
     initialLocale: LocaleId,
 ) {
-    // Internal state, changed under [switchLock] by the steps in StringsSourceChanges.kt.
+    // Internal state, read and changed under [switchLock] by the steps in StringsSourceChanges.kt.
+    internal val pluralRules = pluralRules
+    internal val ordinalRules = ordinalRules
     internal val switchLock = Mutex()
 
     /** Sources [removeSourceSoon] was asked to take out, applied by whoever holds [switchLock] next. */
