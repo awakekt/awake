@@ -23,10 +23,11 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
 
 /**
@@ -158,14 +159,18 @@ suspend fun loadAudioClip(path: String, assets: AssetSource): AudioClip {
  * loaded, are kept for as long as it lives. Close it when the scene stops.
  *
  * @param assets Where the clips are read from.
+ * @param scope The scene's scope, such as its session's: a clip asked for without a scope of its own
+ *   decodes in it, so ending the scene stops it.
  * @param preloaded Clips already decoded, kept for as long as the loads live.
- * @param context Where a clip decodes when the one asking names no scope; [Dispatchers.Default] by default.
+ * @param context Added to a clip's load when the one asking names no scope, such as the dispatcher it
+ *   decodes on; [scope]'s own unless given.
  */
 fun audioClipLoads(
     assets: AssetSource,
+    scope: CoroutineScope,
     preloaded: Map<String, AudioClip> = emptyMap(),
-    context: CoroutineContext = Dispatchers.Default,
-): AssetLoads<AudioClip> = AssetLoads(context) { path -> loadAudioClip(path, assets) }.apply {
+    context: CoroutineContext = EmptyCoroutineContext,
+): AssetLoads<AudioClip> = AssetLoads(scope, context) { path -> loadAudioClip(path, assets) }.apply {
     preloaded.forEach { (path, value) -> put(path, value) }
 }
 

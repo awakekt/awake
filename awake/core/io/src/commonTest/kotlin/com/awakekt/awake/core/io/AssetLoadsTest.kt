@@ -6,6 +6,7 @@
 package com.awakekt.awake.core.io
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlin.test.Test
@@ -17,7 +18,7 @@ class AssetLoadsTest {
     private val scheduler = TestCoroutineScheduler()
     private val readable = CompletableDeferred<Unit>()
     private var reads = 0
-    private val loads = AssetLoads(StandardTestDispatcher(scheduler)) { path ->
+    private val loads = AssetLoads(CoroutineScope(StandardTestDispatcher(scheduler))) { path ->
         reads++
         readable.await()
         if (path == "bad") error("not an asset") else path.uppercase()

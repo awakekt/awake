@@ -65,12 +65,14 @@ class ShaderEffectDocsSampleTest {
         val recording = RecordingHost()
         val host: ContentFeatureHost? = recording
         val world = World().also { it.add(it.create(), ShaderEffectSource(effect)) }
+        val sessionScope = backgroundScope
 
         // --8<-- [start:attach]
         // When the project loads: read, check and compile every document the scene names, once each.
         val effects = loadShaderEffects(scene, files)
         // The system attaches each effect to the renderer's content-feature host, and runs its clock.
-        val system = ShaderEffectSystem(host, effects)
+        // Its attaches run in the scene session's scope, here the test's.
+        val system = ShaderEffectSystem(host, effects, sessionScope)
         // --8<-- [end:attach]
         repeat(2) { system.update(world, FRAME) }
         val first = recording.live.single()

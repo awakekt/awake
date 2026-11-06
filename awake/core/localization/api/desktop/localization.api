@@ -216,6 +216,7 @@ public final class com/awakekt/awake/core/localization/Strings {
 	public final fun getLocale ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getResolvedLocales ()Ljava/util/List;
 	public final fun removeSource (Lcom/awakekt/awake/core/localization/StringTableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeSourceSoon (Lcom/awakekt/awake/core/localization/StringTableSource;)V
 	public final fun setLocale (Lcom/awakekt/awake/core/localization/LocaleId;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun text (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 	public final fun text (Ljava/lang/String;[Lkotlin/Pair;)Ljava/lang/String;

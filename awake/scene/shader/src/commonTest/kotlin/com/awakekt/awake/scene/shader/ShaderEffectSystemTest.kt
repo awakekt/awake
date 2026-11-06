@@ -11,6 +11,8 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -28,7 +30,10 @@ class ShaderEffectSystemTest {
     )
     private val world = World()
     private val host = RecordingHost()
-    private val system = ShaderEffectSystem(host, assets)
+
+    // The scene session's scope in a game; the attaches run unconfined, so they need no dispatcher here.
+    private val scope = CoroutineScope(SupervisorJob())
+    private val system = ShaderEffectSystem(host, assets, scope)
 
     private fun spawn(effect: SceneShaderEffect, transform: Transform? = null): Entity =
         world.create().also { entity ->
@@ -194,7 +199,7 @@ class ShaderEffectSystemTest {
 
     @Test
     fun withNoHostNothingIsAttachedAndNothingFails() {
-        val headless = ShaderEffectSystem(host = null, assets)
+        val headless = ShaderEffectSystem(host = null, assets, scope)
         spawn(SceneShaderEffect("sky.shader.json"))
 
         repeat(3) { headless.update(world, 0.1f) }
