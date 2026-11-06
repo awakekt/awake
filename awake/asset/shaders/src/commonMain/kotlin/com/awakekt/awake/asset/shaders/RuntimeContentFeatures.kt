@@ -198,9 +198,6 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     val afterGeometry = AttachedContentSlot()
     private val attached = mutableListOf<Attachment>()
 
-    // TooGenericExceptionCaught: whatever fails mid-build, what it allocated is released and the
-    // failure rethrown unchanged.
-    @Suppress("TooGenericExceptionCaught")
     override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature {
         val feature = source.resolve(gpu.backend)
         require(!feature.samplesSceneDepth && !feature.samplesMask) {
@@ -213,18 +210,22 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
         }
         gpu.registry.register(listOf(PipelineRequest(PipelineKey.Content(feature.name), feature.spec)))
         val uploads = mutableListOf<ContentUpload>()
+        var builtWhole = false
         val built = try {
             gpu.buildContentFeature(feature, uploads).also {
                 require(it.pass == RenderPassSlot.Scene) {
                     "Content feature '${feature.name}' records in ${it.pass}; attached features " +
                         "record in the scene pass."
                 }
+                builtWhole = true
             }
-        } catch (failure: Throwable) {
-            // Nothing has recorded with them yet, so no frame can be reading them.
-            gpu.registry.remove(feature.spec)?.let(gpu::destroyPipeline)
-            uploads.forEach(ContentUpload::release)
-            throw failure
+        } finally {
+            // Whatever failed or cancelled the build mid-way, release what it allocated. Nothing has
+            // recorded with them yet, so no frame can be reading them.
+            if (!builtWhole) {
+                gpu.registry.remove(feature.spec)?.let(gpu::destroyPipeline)
+                uploads.forEach(ContentUpload::release)
+            }
         }
         val slot = if (feature.paint == ContentPaint.BeforeGeometry) beforeGeometry else afterGeometry
         slot.add(built)

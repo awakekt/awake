@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.gltf.LoadedScene
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.suspendRunCatching
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.transformPosition
 import com.awakekt.awake.physics.MeshShape
@@ -19,7 +20,6 @@ import com.awakekt.awake.scene.physics.MeshColliderSystem
 import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Reads the model behind every `mesh` and `convex_hull` collision shape in [scene] from [files],
@@ -35,8 +35,7 @@ suspend fun loadCollisionMeshes(scene: SceneDocument, files: AssetSource): Colli
         val key = meshPath to primitive
         if (key in shapes) continue
         val model = models.getOrPut(meshPath) {
-            runCatching { readGltfScene(meshPath, files) }.getOrElse { cause ->
-                if (cause is CancellationException) throw cause
+            suspendRunCatching { readGltfScene(meshPath, files) }.getOrElse { cause ->
                 throw IllegalArgumentException("Can't load $meshPath, the collision mesh of node $node: ${cause.message}", cause)
             }
         }
