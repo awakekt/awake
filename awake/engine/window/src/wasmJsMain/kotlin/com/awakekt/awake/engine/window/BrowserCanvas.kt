@@ -17,9 +17,11 @@ import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.LogLevel
 import com.awakekt.awake.core.logging.PrintLogSink
 import com.awakekt.awake.engine.platform.WindowLifecycle
+import com.awakekt.awake.engine.platform.error.appChildScope
 import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.KeyboardEvent
@@ -203,7 +205,8 @@ fun findCanvas(canvasId: String = "awake-canvas"): HTMLCanvasElement =
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
  *               alone. It is read after every frame and set as the canvas's CSS `cursor` when it
  *               changes, as the desktop window does with GLFW.
- * @param initBackend Hook invoked asynchronously on [MainScope] after input binding and initial canvas sync,
+ * @param initBackend Hook invoked asynchronously on the browser's main dispatcher, in a child of the app's
+ *                    `AppCoroutineScope` found through [WindowLifecycle.services], after input binding and initial canvas sync,
  *                    allowing the rendering backend (e.g. WebGPU) to initialize its device, context, or surface.
  */
 fun runBrowserCanvas(
@@ -267,7 +270,8 @@ fun runBrowserCanvas(
     val initialSize = syncCanvas()
     window.addEventListener("resize") { resizeCanvas() }
 
-    MainScope().launch {
+    // The app's scope, so disposing the app stops a start-up still in flight; the page's event loop runs it.
+    lifecycle.services.appChildScope(Dispatchers.Main).launch {
         try {
             lifecycle.resize(
                 x = 0,
@@ -305,6 +309,9 @@ fun runBrowserCanvas(
                 window.requestAnimationFrame(::frame)
             }
             window.requestAnimationFrame(::frame)
+        } catch (cancelled: CancellationException) {
+            // The app was disposed while the backend started: not a start-up failure.
+            throw cancelled
         } catch (error: Throwable) {
             reportBrowserStartupFailure(
                 "Browser window startup failed before the first frame: ${error.message ?: error::class.simpleName}",

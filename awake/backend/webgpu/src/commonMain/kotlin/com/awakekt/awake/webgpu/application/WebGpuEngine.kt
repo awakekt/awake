@@ -282,6 +282,7 @@ open class WebGpuEngine(
             sceneDepthPass = sceneDepthPass,
             maskPass = maskPass,
             renderFeatures = renderFeatures,
+            backgroundScope = coroutineScope,
         ).also { renderer ->
             builtRenderer = renderer
             renderer.contentFeatureHost = attacher

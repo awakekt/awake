@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.render.renderer.GpuFrameTimeCounter
 import com.awakekt.awake.webgpu.device.submitAndRelease
 import com.awakekt.awake.webgpu.device.timestampPeriodNs
@@ -22,12 +23,12 @@ import io.ygdrasil.webgpu.GPURenderPassDescriptor
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 import io.ygdrasil.webgpu.QuerySetDescriptor
 import io.ygdrasil.webgpu.RenderPassTimestampWrites
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 
@@ -36,9 +37,11 @@ import kotlinx.coroutines.cancel
  * Mapping is asynchronous. Only completed mappings are collected on the render thread; a busy
  * driver never stalls rendering, and a bounded readback pool prevents profiler memory growth.
  */
-internal class GpuFrameTimer private constructor(private val device: GPUDevice) {
+internal class GpuFrameTimer private constructor(private val device: GPUDevice, parent: CoroutineScope) {
     private val counter = GpuFrameTimeCounter()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    // Readbacks wait in a child of the engine's scope, so disposing the engine or the app stops them; destroy cancels it.
+    private val scope = parent.childScope(Dispatchers.Default)
     private val resources = ArrayList<Resources>()
     private val available = ArrayDeque<Resources>()
     private val pending = ArrayList<Readback>()
@@ -64,10 +67,19 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice) 
             buffers?.let { available += it }
             return
         }
-        val result = scope.async(start = CoroutineStart.UNDISPATCHED) {
-            runCatching { buffers.readback.mapAsync(GPUMapMode.Read).getOrThrow() }
-        }
+        val result = scope.async(start = CoroutineStart.UNDISPATCHED) { mapForReading(buffers) }
         pending += Readback(timed.ticket, buffers, result, timed.queryCount, timed.overflow)
+    }
+
+    // TooGenericExceptionCaught: a map the driver refuses only loses this submission's time.
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun mapForReading(buffers: Resources): Result<Unit> = try {
+        buffers.readback.mapAsync(GPUMapMode.Read).getOrThrow()
+        Result.success(Unit)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        Result.failure(failure)
     }
 
     fun publish() {
@@ -177,8 +189,12 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice) 
     }
 
     companion object {
-        fun createOrNull(device: GPUDevice): GpuFrameTimer? =
-            if (GPUFeatureName.TimestampQuery in device.features) GpuFrameTimer(device) else null
+        /**
+         * A timer for [device] when it was granted timestamp queries, else null. Readbacks run in a
+         * child of [scope], the engine's, which [destroy] cancels.
+         */
+        fun createOrNull(device: GPUDevice, scope: CoroutineScope): GpuFrameTimer? =
+            if (GPUFeatureName.TimestampQuery in device.features) GpuFrameTimer(device, scope) else null
 
         private const val MAX_READBACKS = 32
         private const val MAX_QUERIES = 256

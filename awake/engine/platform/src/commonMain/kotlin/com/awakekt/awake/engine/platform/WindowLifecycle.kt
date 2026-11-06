@@ -7,7 +7,9 @@ package com.awakekt.awake.engine.platform
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.engine.platform.config.WindowConfig
+import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import kotlin.reflect.KClass
 
 /**
  * The window/surface shell a backend drives, plus the subsystems a game reaches through it.
@@ -29,6 +31,15 @@ interface WindowLifecycle {
 
     /** Configuration describing window dimensions and presentation options, or `null`. */
     val windowConfig: WindowConfig? get() = null
+
+    /**
+     * The app's services, for a window host that runs work of its own for this window, such as a
+     * browser canvas starting its backend in a child of the app's
+     * [com.awakekt.awake.engine.platform.error.AppCoroutineScope] (see
+     * [com.awakekt.awake.engine.platform.error.appChildScope]). A [GraphicsEngine] answers with its
+     * app's; a lifecycle that belongs to no app, such as a test's, has none.
+     */
+    val services: AppServiceLookup get() = NoAppServices
 
     /**
      * Initializes the platform window and rendering surface.
@@ -97,4 +108,9 @@ interface WindowLifecycle {
      * @param dpi The screen's physical pixels per inch.
      */
     fun setDpi(dpi: Float) = Unit
+}
+
+/** The services of a lifecycle that belongs to no app: none. */
+private object NoAppServices : AppServiceLookup {
+    override fun <T : Any> service(type: KClass<T>): T? = null
 }

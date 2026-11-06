@@ -8,7 +8,9 @@ package com.awakekt.awake.engine.platform
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.config.WindowConfig
+import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.appChildScope
 import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
@@ -16,9 +18,11 @@ import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 
@@ -38,6 +42,9 @@ abstract class GraphicsEngine(
 
     /** The session's window configuration. */
     override val windowConfig: WindowConfig get() = appLifecycle.windowConfig
+
+    /** This engine's app's services. */
+    final override val services: AppServiceLookup get() = appLifecycle
 
     /**
      * Whether the backend is up and the app ready, so [update] plays frames. [create] starts the
@@ -85,6 +92,19 @@ abstract class GraphicsEngine(
         appLifecycle.reportError(AppErrorSource.Coroutine, throwable)
     }
 
+    // A child of the app's AppCoroutineScope, made by create and cancelled by dispose: the start-up, and
+    // what the backend runs in the background for as long as this engine lives.
+    private var engineScope: CoroutineScope? = null
+
+    /**
+     * Where a backend runs its own background work for as long as this engine lives, such as reading
+     * GPU timestamps back: a child of the app's
+     * [com.awakekt.awake.engine.platform.error.AppCoroutineScope], on [Dispatchers.Unconfined], that
+     * [dispose] cancels. [createBackendResources] runs in it. Throws before [create].
+     */
+    protected val coroutineScope: CoroutineScope
+        get() = checkNotNull(engineScope) { "The engine's coroutine scope exists once create() has run." }
+
     // TooGenericExceptionCaught intentional: native GPU/JNI layers can throw Throwable
     // (e.g. OutOfMemoryError, UnsatisfiedLinkError); catching Exception alone would miss them.
     @Suppress("TooGenericExceptionCaught")
@@ -93,11 +113,15 @@ abstract class GraphicsEngine(
         // desktop, deadlocking against -XstartOnFirstThread (already claimed by GLFW).
         // Dispatchers.Unconfined keeps every call on this calling thread instead.
         surface?.let { window ->
-            CoroutineScope(Dispatchers.Unconfined + exceptionHandler).launch {
+            val scope = appLifecycle.appChildScope(Dispatchers.Unconfined + exceptionHandler).also { engineScope = it }
+            scope.launch {
                 try {
                     logger.debug { "GraphicsEngine create() starting, initializing backend resources" }
                     setupCommon(window)
                     logger.info { "GraphicsEngine created and ready" }
+                } catch (cancelled: CancellationException) {
+                    // Disposed while starting: not a start-up failure.
+                    throw cancelled
                 } catch (t: Throwable) {
                     startupError = t
                     logger.error(t) { "Failed to initialize graphics engine" }
@@ -179,6 +203,8 @@ abstract class GraphicsEngine(
         // meshes/materials in dispose(), and the last frame's command buffers can still be
         // pending on them at that point.
         if (isReady) renderer.waitIdle()
+        engineScope?.cancel()
+        engineScope = null
         appLifecycle.dispose()
         if (isReady) destroyBackend()
     }
