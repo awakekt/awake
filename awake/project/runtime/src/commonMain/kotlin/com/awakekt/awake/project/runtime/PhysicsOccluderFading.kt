@@ -55,7 +55,7 @@ class PhysicsOccluderFading(private val physics: PhysicsWorld, private val bodie
         world.queryEach(Camera::class, CameraRig::class) { entity, camera, rig ->
             val fade = rig.occluderFade
             val target = rig.targetEntity?.let { world.get<Transform>(it) }
-            if (fade != null && target != null && rig.mode == CameraMode.ThirdPerson && world.has(entity, ActiveCamera::class)) {
+            if (fade != null && target != null && fades(world, entity, rig)) {
                 settings = fade
                 findOccluders(world, camera.lens.eye, target, rig)
             }
@@ -68,6 +68,10 @@ class PhysicsOccluderFading(private val physics: PhysicsWorld, private val bodie
         }
         applyFades(world)
     }
+
+    /** Whether [rig], on [camera], is the active third-person camera, the one whose view is faded clear. */
+    private fun fades(world: World, camera: Entity, rig: CameraRig): Boolean =
+        rig.mode == CameraMode.ThirdPerson && world.has(camera, ActiveCamera::class)
 
     /** Reports every occluder on the rays from [eye] to [target]'s feet, chest and head. */
     private fun findOccluders(world: World, eye: Vec3f, target: Transform, rig: CameraRig) {
