@@ -65,7 +65,10 @@ internal object ParticlesCapability : SceneCapability {
         if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(PARTICLES_2D_SYSTEM) { Particle2DSystem(Transform2DPlacement()) }
         if (!scene.uses(SceneParticleEmitter::class) || !plan.hasRenderer) return
         plan.frame("particle-content") {
-            ParticleContentSystem(it.renderer, it.content[CoreSceneContent.ParticleSprites].orEmpty(), it.content[CoreSceneContent.ParticleImages].orEmpty())
+            val sprites = it.content[CoreSceneContent.ParticleSprites].orEmpty()
+            // The shared loads already hold the scene's own images, so the map isn't given beside them.
+            it.content[CoreSceneContent.ParticleImageLoads]?.let { loads -> ParticleContentSystem(it.renderer, sprites, emptyMap(), loads) }
+                ?: ParticleContentSystem(it.renderer, sprites, it.content[CoreSceneContent.ParticleImages].orEmpty())
         }
         plan.frame("particles") { ParticleSystem(TransformPlacement) }
     }

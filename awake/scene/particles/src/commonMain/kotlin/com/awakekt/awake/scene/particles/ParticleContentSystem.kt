@@ -7,6 +7,8 @@ package com.awakekt.awake.scene.particles
 
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.io.AssetLoad
+import com.awakekt.awake.core.io.AssetLoads
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
@@ -27,17 +29,29 @@ import com.awakekt.awake.scene.core.transform.Transform
 /**
  * Gives each [ParticleEmitterSource] entity its [ParticleEmitter], following the entity, once its
  * sprite is in [images] (see [loadParticleImages]) or [sprites] (see [loadParticleSprites]), an image
- * first. Emitters share one quad and one material per
+ * first, or else once [loads] has decoded it. Emitters share one quad and one material per
  * sprite, created through [renderer] and destroyed by [close]. Run it alongside [ParticleSystem].
+ *
+ * [loads] are the scene's particle images, as [particleImageLoads] makes them, shared with a prewarm:
+ * an image no map has starts decoding the first frame an emitter shows it, and one decoded ahead of a
+ * spawn draws on the emitter's first frame. Null draws only what the maps hold.
  */
 class ParticleContentSystem(
     private val renderer: Renderer,
     private val sprites: Map<String, TextureAsset>,
     private val images: Map<String, GpuImageSource>,
+    private val loads: AssetLoads<GpuImageSource>?,
 ) : System,
     AutoCloseable {
+    /** Emitters drawn from decoded [sprites] and [images] only, as before [particleImageLoads]. */
+    constructor(renderer: Renderer, sprites: Map<String, TextureAsset>, images: Map<String, GpuImageSource>) :
+        this(renderer, sprites, images, null)
+
     /** Emitters drawn from decoded [sprites] only, as before [loadParticleImages]. */
     constructor(renderer: Renderer, sprites: Map<String, TextureAsset>) : this(renderer, sprites, emptyMap())
+
+    /** Emitters drawn from the images [loads] decodes. */
+    constructor(renderer: Renderer, loads: AssetLoads<GpuImageSource>) : this(renderer, emptyMap(), emptyMap(), loads)
 
     private var quad: Mesh? = null
     private val materials = HashMap<String, Material>()
@@ -66,6 +80,15 @@ class ParticleContentSystem(
     private fun materialFor(path: String): Material? = materials[path]
         ?: images[path]?.let { image -> renderer.createImageMaterial(image, uniformFloatCount = ParticleUniformLayout.total) }?.also { materials[path] = it }
         ?: sprites[path]?.let { sprite -> renderer.createMaterial(ParticleUniformLayout, texture = sprite).also { materials[path] = it } }
+        ?: loaded(path)?.let { image ->
+            renderer.createImageMaterial(image, uniformFloatCount = ParticleUniformLayout.total).also { materials[path] = it }
+        }
+
+    // The image [loads] has decoded for [path], asking it to start when it has not.
+    private fun loaded(path: String): GpuImageSource? {
+        val load = loads?.request(path)
+        return if (load is AssetLoad.Loaded) load.value else null
+    }
 
     private fun emitter(world: World, entity: Entity, settings: SceneParticleEmitter, material: Material): ParticleEmitter {
         val placed = world.get<Transform>(entity)?.worldMatrix
