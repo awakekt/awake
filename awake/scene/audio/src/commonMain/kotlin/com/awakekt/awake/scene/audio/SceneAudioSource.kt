@@ -163,7 +163,9 @@ fun audioClipLoads(
     assets: AssetSource,
     preloaded: Map<String, AudioClip> = emptyMap(),
     context: CoroutineContext = Dispatchers.Default,
-): AssetLoads<AudioClip> = AssetLoads(context) { path -> loadAudioClip(path, assets) }.apply { preloaded.forEach(::put) }
+): AssetLoads<AudioClip> = AssetLoads(context) { path -> loadAudioClip(path, assets) }.apply {
+    preloaded.forEach { (path, value) -> put(path, value) }
+}
 
 private fun SceneNode.audioSources(parent: String): List<Pair<String, SceneAudioSource>> {
     val path = if (parent.isEmpty()) name ?: "(unnamed)" else "$parent/${name ?: "(unnamed)"}"

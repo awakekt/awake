@@ -83,7 +83,9 @@ fun particleImageLoads(
     assets: AssetSource,
     preloaded: Map<String, GpuImageSource> = emptyMap(),
     context: CoroutineContext = Dispatchers.Default,
-): AssetLoads<GpuImageSource> = AssetLoads(context) { path -> loadParticleImage(path, assets) }.apply { preloaded.forEach(::put) }
+): AssetLoads<GpuImageSource> = AssetLoads(context) { path -> loadParticleImage(path, assets) }.apply {
+    preloaded.forEach { (path, value) -> put(path, value) }
+}
 
 private fun SceneNode.particleTextures(): List<String> =
     components.filterIsInstance<SceneParticleEmitter>().map { it.texture } + children.flatMap { it.particleTextures() }

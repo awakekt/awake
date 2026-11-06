@@ -92,7 +92,7 @@ class ScenePrewarmAudioTest : PrewarmFixture() {
 
         assertEquals(1, cancelledReads)
         assertEquals(0, clips.holdCount(BELL))
-        assertNull(clips[BELL])
+        assertNull(clips.loaded[BELL])
     }
 
     @Test

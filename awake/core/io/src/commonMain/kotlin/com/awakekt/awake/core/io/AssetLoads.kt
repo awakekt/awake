@@ -33,7 +33,7 @@ sealed interface AssetLoad<out T> {
  *
  * [request] starts a path's load the first time it is asked for, in the scope given or this one's own,
  * and answers [AssetLoad.Loading] until a later ask finds it finished. A load hands its result back
- * through a channel, so [request], [get] and [loaded] only change on the thread that asks: the frame
+ * through a channel, so [request] and [loaded] only change on the thread that asks: the frame
  * thread. A load cancelled before it finished, by its scope ending or by [release], is forgotten, so the
  * next ask starts it again.
  *
@@ -49,8 +49,9 @@ sealed interface AssetLoad<out T> {
  */
 class AssetLoads<T : Any>(
     context: CoroutineContext = Dispatchers.Default,
-    private val read: suspend (path: String) -> T,
+    read: suspend (path: String) -> T,
 ) : AutoCloseable {
+    private val reader = read
     private val own = CoroutineScope(context + SupervisorJob(context[Job]))
     private val finished = Channel<Finished<T>>(Channel.UNLIMITED)
     private val states = HashMap<String, AssetLoad<T>>()
@@ -69,7 +70,7 @@ class AssetLoads<T : Any>(
 
     /** Adds an asset already decoded, such as one read when the scene loaded; it is kept until [forget]. */
     fun put(path: String, value: T) {
-        cancelLoad(path)
+        jobs.remove(path)?.cancel()
         states[path] = AssetLoad.Loaded(value)
         values[path] = value
         kept += path
@@ -81,8 +82,11 @@ class AssetLoads<T : Any>(
      */
     fun request(path: String, scope: CoroutineScope = own): AssetLoad<T> {
         receiveFinished()
-        states[path]?.let { return it }
-        if (closed) return AssetLoad.Loading
+        if (path !in states && !closed) start(path, scope)
+        return states[path] ?: AssetLoad.Loading
+    }
+
+    private fun start(path: String, scope: CoroutineScope) {
         states[path] = AssetLoad.Loading
         val job = scope.launch { finished.trySend(Finished(path, coroutineContext[Job], attempt(path))) }
         jobs[path] = job
@@ -90,11 +94,7 @@ class AssetLoads<T : Any>(
         job.invokeOnCompletion { cause -> if (cause != null) finished.trySend(Finished(path, job, null)) }
         // A dispatcher that runs the load at once, as a test's may, has finished it already.
         receiveFinished()
-        return states[path] ?: AssetLoad.Loading
     }
-
-    /** [path]'s asset if it is loaded, without starting a load. */
-    operator fun get(path: String): T? = loaded[path]
 
     /** Keeps [path]'s asset until a matching [release]; [request] it to start its load. */
     fun hold(path: String) {
@@ -120,7 +120,7 @@ class AssetLoads<T : Any>(
 
     /** Drops [path]'s asset, or cancels its load, so the next [request] reads it again. */
     fun forget(path: String) {
-        cancelLoad(path)
+        jobs.remove(path)?.cancel()
         states -= path
         values -= path
         kept -= path
@@ -141,15 +141,11 @@ class AssetLoads<T : Any>(
     // TooGenericExceptionCaught: a reader reports an asset it can't decode in its own exception type.
     @Suppress("TooGenericExceptionCaught")
     private suspend fun attempt(path: String): AssetLoad<T> = try {
-        AssetLoad.Loaded(read(path))
+        AssetLoad.Loaded(reader(path))
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (failure: Exception) {
         AssetLoad.Failed(failure)
-    }
-
-    private fun cancelLoad(path: String) {
-        jobs.remove(path)?.cancel()
     }
 
     private fun receiveFinished() {

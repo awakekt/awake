@@ -52,7 +52,7 @@ class AssetLoadsTest {
         loads.release("a")
         finish()
 
-        assertNull(loads["a"])
+        assertNull(loads.loaded["a"])
         assertEquals(AssetLoad.Loading, loads.request("a"))
         scheduler.runCurrent()
         assertEquals(2, reads)
@@ -64,7 +64,7 @@ class AssetLoadsTest {
         loads.hold("a")
         loads.release("a")
 
-        assertEquals("ready", loads["a"])
+        assertEquals("ready", loads.loaded["a"])
     }
 
     private fun finish() {
