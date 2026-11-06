@@ -31,7 +31,7 @@ class ScenePrewarmParticleTest : PrewarmFixture() {
     private val game = SceneAppLifecycleRuntime(spec().apply { sessionDispatcher = dispatcher }).apply { initialize(NoServices) }
     private val readable = CompletableDeferred<Unit>()
     private var imageReads = 0
-    private val images = AssetLoads<GpuImageSource>(dispatcher) {
+    private val images = AssetLoads<GpuImageSource>(game.session.coroutineScope) {
         imageReads++
         readable.await()
         TextureAsset(ByteArray(4), 1, 1).asGpuImageSource()
