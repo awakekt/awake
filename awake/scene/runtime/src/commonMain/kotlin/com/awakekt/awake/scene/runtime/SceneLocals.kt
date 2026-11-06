@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.render.renderer.Renderer
 
 /**
@@ -47,3 +48,11 @@ val LocalRenderer = compositionLocalOf<Renderer> { error("No Renderer provided -
 val LocalFrameStats = compositionLocalOf {
     SceneFrameStats(frameTimeMs = 0f, fps = 0f, trialPasses = 0, textCacheHits = 0, textCacheMisses = 0)
 }
+
+/**
+ * The app's render quality setting, so a settings overlay can read and change the preset.
+ *
+ * `null`, not a throwing default, because render quality is opt in: an app that never called
+ * `renderQuality { }` in `app { }` has none, and that is not a missing provider.
+ */
+val LocalRenderQuality = compositionLocalOf<RenderQualitySettings?> { null }

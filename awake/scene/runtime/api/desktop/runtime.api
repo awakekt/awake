@@ -323,6 +323,7 @@ public final class com/awakekt/awake/scene/runtime/SceneFrameStats {
 
 public final class com/awakekt/awake/scene/runtime/SceneLocalsKt {
 	public static final fun getLocalFrameStats ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun getLocalRenderQuality ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
 	public static final fun getLocalRenderer ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
 	public static final fun getLocalWorld ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
 }

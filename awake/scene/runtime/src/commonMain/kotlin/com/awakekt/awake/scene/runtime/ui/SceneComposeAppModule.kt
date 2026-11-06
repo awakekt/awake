@@ -13,8 +13,10 @@ import com.awakekt.awake.engine.compose.composeAppModule
 import com.awakekt.awake.engine.platform.core.AppModule
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.runtime.LocalFrameStats
+import com.awakekt.awake.scene.runtime.LocalRenderQuality
 import com.awakekt.awake.scene.runtime.LocalRenderer
 import com.awakekt.awake.scene.runtime.LocalWorld
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -46,9 +48,11 @@ private class SceneComposeAppModule(
         val services = into.serviceLookup()
         lateinit var session: SceneSession
         lateinit var renderer: Renderer
+        var renderQuality: RenderQualitySettings? = null
         into.ready { activeRenderer ->
             session = services.requireService(SceneSession::class)
             renderer = activeRenderer
+            renderQuality = services.service(RenderQualitySettings::class)
         }
         into.install(
             composeAppModule(
@@ -57,6 +61,7 @@ private class SceneComposeAppModule(
                     CompositionLocalProvider(
                         LocalWorld provides session.world,
                         LocalRenderer provides renderer,
+                        LocalRenderQuality provides renderQuality,
                         LocalFrameStats provides (runtime?.frameStats() ?: SceneFrameStats(0f, 0f, 0, 0, 0)),
                     ) {
                         content()

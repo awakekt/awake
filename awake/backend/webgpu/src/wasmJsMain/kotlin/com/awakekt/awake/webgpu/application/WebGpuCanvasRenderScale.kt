@@ -9,7 +9,6 @@ package com.awakekt.awake.webgpu.application
 
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.core.input.PointerCursor
-import com.awakekt.awake.engine.platform.WindowLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.window.findCanvas
 import web.html.HTMLCanvasElement
@@ -25,6 +24,9 @@ import web.html.HTMLCanvasElement
  * maxPixelRatio caps the whole canvas buffer, UI included, and is the hard ceiling on pixels for
  * hosts that must bound memory or fill rate whatever the scene costs. The two compose: the scene
  * renders at renderScale of the capped buffer.
+ *
+ * A renderScale given here is the host's explicit override (GraphicsEngine.renderScaleOverride): it
+ * wins over the scale an app's renderQuality { } setting resolves, which still picks effect quality.
  */
 
 /**
@@ -105,15 +107,4 @@ fun launchWebGpuGame(
     renderScale: () -> Float,
 ) {
     startWebGpuGame(canvas, cursor, maxPixelRatio, renderScale) { WebGpuEngine(appLifecycle = game, requestedPlan = plan) }
-}
-
-/** [engine], with [renderScale] read and applied to its renderer before each frame it updates. */
-internal class RenderScaledLifecycle(
-    private val engine: WebGpuEngine,
-    private val renderScale: () -> Float,
-) : WindowLifecycle by engine {
-    override fun update(delta: Float) {
-        engine.applyRenderScale(renderScale())
-        engine.update(delta)
-    }
 }
