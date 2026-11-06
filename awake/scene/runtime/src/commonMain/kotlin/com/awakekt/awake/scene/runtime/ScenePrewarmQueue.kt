@@ -64,11 +64,15 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
         val names = prewarm.pendingTextures.iterator()
         while (names.hasNext() && prewarm.isPending) {
             val name = names.next()
-            val failure = if (library.isTextureRegistered(name)) null else when (val load = library.prewarmTexture(name)) {
-                SceneTextureLoad.Loading -> continue
-                is SceneTextureLoad.Loaded -> null
-                is SceneTextureLoad.Failed -> load.cause
-                null -> IllegalStateException("No scene texture named '$name' is registered or could be resolved by installed resolvers.")
+            val failure = if (library.isTextureRegistered(name)) {
+                null
+            } else {
+                when (val load = library.prewarmTexture(name)) {
+                    SceneTextureLoad.Loading -> continue
+                    is SceneTextureLoad.Loaded -> null
+                    is SceneTextureLoad.Failed -> load.cause
+                    null -> IllegalStateException("No scene texture named '$name' is registered or could be resolved by installed resolvers.")
+                }
             }
             names.remove()
             prewarm.settle(name, failure)
