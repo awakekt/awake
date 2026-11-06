@@ -10,14 +10,17 @@ import kotlin.reflect.KClass
 /**
  * Stable component type IDs, keyed by the platform token [componentTypeKeyOf] gives a class, never
  * by the `KClass` itself: on Kotlin/Wasm a `KClass` hashes by building its qualified name anew.
+ *
+ * @param beforeRegister Runs before a type not seen yet gets its ID, and may throw to refuse it.
  */
-internal class ComponentTypeCatalog {
+internal class ComponentTypeCatalog(private val beforeRegister: () -> Unit = {}) {
     private val typeIdsByKey = mutableMapOf<Any, ComponentTypeId>()
     private var typesById = arrayOfNulls<KClass<out Any>>(INITIAL_CAPACITY)
 
     val size: Int get() = typeIdsByKey.size
 
     fun register(type: KClass<out Any>): ComponentTypeId = typeIdsByKey.getOrPut(componentTypeKeyOf(type)) {
+        beforeRegister()
         val id = typeIdsByKey.size
         ensureCapacity(id)
         typesById[id] = type
