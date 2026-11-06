@@ -23,6 +23,8 @@ import com.awakekt.awake.terrain.TerrainSurfaceProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.TestScope
+import com.awakekt.awake.engine.platform.error.childScope
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,11 +35,12 @@ import kotlin.test.fail
 class ProjectTerrainTest {
     private val input = Input()
 
-    private fun services(renderer: HostRenderer, content: SceneContent) = SceneHostServices(
+    // Surfaces resolve off the test thread, as in a session, in a scope the test owns.
+    private fun TestScope.services(renderer: HostRenderer, content: SceneContent) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = renderer,
         content = content,
-    )
+    ).withCoroutineScope(backgroundScope.childScope(Dispatchers.Default))
 
     @Test
     fun aPlainTerrainDrawsAndIsDetachedWhenTheSceneCloses() = runTest {

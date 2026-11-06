@@ -12,7 +12,6 @@ import com.awakekt.awake.core.localization.StringLayer
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.localization.systemLocale
-import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
@@ -23,11 +22,6 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.SpawnedNode
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -131,27 +125,16 @@ internal suspend fun addProjectStrings(strings: Strings, tables: StringTableSour
 
 /**
  * Takes [tables], which [addProjectStrings] added, out of [strings] again, from a caller that can't
- * suspend, such as [LoadedProject.close].
+ * suspend, such as [LoadedProject.close], through [Strings.removeSourceSoon], which starts no coroutine.
  *
- * [Strings.removeSource] starts at once on the calling thread. It takes the lock every change to
- * [strings] takes and rebuilds the active locale from the tables its other sources already hold, so
- * when nothing else is changing [strings] it finishes before this returns, and text read after it has
+ * When nothing else is changing [strings] it finishes before this returns, and text read after it has
  * no project text. A locale switch or source change in flight finishes first, and the removal runs
  * right after it, on the thread that finished it. Lookups in flight keep the tables they started
  * with, as for any change to [strings]. Only [tables] is removed, never the app's own.
  */
 internal fun removeProjectStrings(strings: Strings, tables: StringTableSource) {
-    CoroutineScope(Dispatchers.Unconfined + stringsRemovalFailed).launch(start = CoroutineStart.UNDISPATCHED) {
-        strings.removeSource(tables)
-    }
+    strings.removeSourceSoon(tables)
 }
-
-/** Logs a removal that failed, which leaves the project's tables in the app's [Strings]. */
-private val stringsRemovalFailed = CoroutineExceptionHandler { _, failure ->
-    log.error(failure) { "The project's string tables could not be removed from the app's Strings: ${failure.message}" }
-}
-
-private val log = Logger("project.strings")
 
 /**
  * The project's `strings/` tables, in the device's locale, read through [files] as the rest of its

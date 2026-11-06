@@ -32,6 +32,7 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.AssetSourceTextureResolver
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.PI
@@ -290,6 +291,9 @@ suspend fun loadProject(
  * `hasRenderer = false` too, so it decodes no images. With [audio], the scene's `audio_source`s play through it;
  * without, they run silently. With [fixedStep], the loop the host runs the fixed systems in, they read the
  * steps it ran and the time it dropped from [SceneHostServices.fixedStep], as they do under `runProject`.
+ * With [coroutineScope], the systems that read in the background, such as a streamed terrain's cells,
+ * read in children of it, as [SceneHostServices.withCoroutineScope] describes; a scene that has such a
+ * system throws without one. Pass the host's scene scope, or another it cancels when the scene goes.
  * [SceneSystemSet.close] them when the scene stops.
  */
 fun LoadedProject.sceneSystems(
@@ -297,15 +301,26 @@ fun LoadedProject.sceneSystems(
     renderer: Renderer? = null,
     audio: AudioPlayer? = null,
     fixedStep: FixedStepReport? = null,
+    coroutineScope: CoroutineScope? = null,
 ): SceneSystemSet {
     val drawn = if (renderer == null) {
         SceneHostServices.headless(input, physics, content)
     } else {
         SceneHostServices(input, renderer, physics, content)
     }
-    val stepped = fixedStep?.let(drawn::withFixedStep) ?: drawn
+    val scoped = coroutineScope?.let(drawn::withCoroutineScope) ?: drawn
+    val stepped = fixedStep?.let(scoped::withFixedStep) ?: scoped
     return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities)
 }
+
+/** [sceneSystems] as it was before `coroutineScope`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun LoadedProject.sceneSystems(
+    input: () -> GameplayInput,
+    renderer: Renderer? = null,
+    audio: AudioPlayer? = null,
+    fixedStep: FixedStepReport? = null,
+): SceneSystemSet = sceneSystems(input, renderer, audio, fixedStep, coroutineScope = null)
 
 /** [sceneSystems] as it was before `fixedStep`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

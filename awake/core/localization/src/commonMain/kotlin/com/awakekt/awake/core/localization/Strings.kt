@@ -7,6 +7,8 @@ package com.awakekt.awake.core.localization
 
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.text.unicode.CodePoints
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,6 +55,9 @@ class Strings internal constructor(
 ) {
     private val switchLock = Mutex()
 
+    /** Sources [removeSourceSoon] was asked to take out, applied by whoever holds [switchLock] next. */
+    private val removals = Channel<StringTableSource>(Channel.UNLIMITED)
+
     /** Every source, the one that wins first. Replaced whole, under [switchLock]. */
     private var sources: List<Source> = listOf(Source(source, StringLayer.Game))
 
@@ -82,7 +87,7 @@ class Strings internal constructor(
      * @param locale The locale to show text in.
      */
     suspend fun setLocale(locale: LocaleId) {
-        switchLock.withLock { switchTo(locale) }
+        changing { switchTo(locale) }
     }
 
     /**
@@ -98,7 +103,7 @@ class Strings internal constructor(
      * @param layer Which layer the tables belong to.
      */
     suspend fun addSource(source: StringTableSource, layer: StringLayer = StringLayer.Plugin) {
-        switchLock.withLock {
+        changing {
             if (sources.none { it.source === source }) {
                 // A stable sort, so within a layer the newest source stays first.
                 sources = (listOf(Source(source, layer)) + sources).sortedBy { it.layer.ordinal }
@@ -114,22 +119,89 @@ class Strings internal constructor(
      * @param source The tables, the same instance that was added.
      * @return Whether it was here.
      */
-    suspend fun removeSource(source: StringTableSource): Boolean = switchLock.withLock {
+    suspend fun removeSource(source: StringTableSource): Boolean = changing {
+        val removed = drop(source)
+        if (removed) publish(localeState.value)
+        removed
+    }
+
+    /**
+     * Removes a source [addSource] added, from a caller that can't suspend, such as a project being
+     * closed, without starting a coroutine: removing needs no table read, since the tables the other
+     * sources hold for the active locale are already loaded.
+     *
+     * When nothing else is changing these strings, it is removed before this returns, and text read
+     * after it has none of [source]'s. A locale switch or source change in flight finishes first, and
+     * the removal runs right after it, on the thread that finished it. Removing a source that is not
+     * here does nothing.
+     *
+     * @param source The tables, the same instance that was added.
+     */
+    fun removeSourceSoon(source: StringTableSource) {
+        removals.trySend(source)
+        applyRemovalsIfFree()
+    }
+
+    /** Runs [change] under [switchLock], with the removals asked for so far applied first and any asked for meanwhile after. */
+    private suspend fun <T> changing(change: suspend () -> T): T {
+        val result = switchLock.withLock {
+            applyRemovals()
+            change()
+        }
+        applyRemovalsIfFree()
+        return result
+    }
+
+    /**
+     * Applies the pending removals while nothing else holds [switchLock]. Whoever holds it calls this
+     * once it lets go, after a removal is queued, so none is left behind.
+     */
+    // isEmpty is read only to decide whether to take the lock again; a stale answer costs one more try.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun applyRemovalsIfFree() {
+        while (!removals.isEmpty && switchLock.tryLock()) {
+            try {
+                applyRemovals()
+            } finally {
+                switchLock.unlock()
+            }
+        }
+    }
+
+    /** Takes out every source queued by [removeSourceSoon] and republishes the active locale. Runs under [switchLock]. */
+    private fun applyRemovals() {
+        var removed = false
+        while (true) {
+            val source = removals.tryReceive().getOrNull() ?: break
+            if (drop(source)) removed = true
+        }
+        if (removed) publish(localeState.value)
+    }
+
+    private fun drop(source: StringTableSource): Boolean {
         val kept = sources.filter { it.source !== source }
         val removed = kept.size != sources.size
-        if (removed) {
-            sources = kept
-            switchTo(localeState.value)
-        }
-        removed
+        sources = kept
+        return removed
     }
 
     /** Loads [locale]'s chain from every source and publishes it. Runs under [switchLock]. */
     private suspend fun switchTo(locale: LocaleId) {
-        val wanted = (locale.fallbackChain + defaultLocale.fallbackChain).distinct()
+        for (tag in wantedFor(locale)) sources.forEach { it.tableFor(tag) }
+        publish(locale)
+    }
+
+    private fun wantedFor(locale: LocaleId): List<LocaleId> = (locale.fallbackChain + defaultLocale.fallbackChain).distinct()
+
+    /**
+     * Publishes [locale]'s chain from the tables the sources have loaded, which [switchTo] reads first;
+     * the active locale's are loaded already. Runs under [switchLock].
+     */
+    private fun publish(locale: LocaleId) {
+        val wanted = wantedFor(locale)
         val tables = wanted.mapNotNull { tag ->
             // Every source's table for exactly this locale, merged key by key with the winning source's last.
-            val found = sources.mapNotNull { it.tableFor(tag) }
+            val found = sources.mapNotNull { it.loaded[tag] }
             when (found.size) {
                 0 -> null
                 1 -> Table(tag, found.single(), pluralRules(tag), ordinalRules(tag))

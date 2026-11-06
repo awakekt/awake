@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.project.GatedAssetSource
 import com.awakekt.awake.render.material.Material
@@ -40,7 +41,6 @@ import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +52,8 @@ import kotlin.reflect.KClass
  * entities, its systems in [fixedSystems], [preAnimationSystems] and [frameSystems], and the
  * [SceneSwitch] that moves the project to another of its scenes.
  *
- * A request reads the next scene off the frame thread, in [LoadedProject.sceneLoads]. The scene that
+ * A request reads the next scene off the frame thread, in [LoadedProject.sceneLoads], in a child of the
+ * scene session's scope, so disposing the session stops a load in flight. The scene that
  * asked plays on meanwhile, and the next takes its place at a safe point on the frame thread: the start
  * of a fixed step, or of the frame's own systems once the fixed steps have run. Nothing else in the
  * frame runs then, so no system sees the world change under it.
@@ -119,7 +120,8 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     // with the app's scene.
     private val audio = lazy { AudioPlayerFactory.create() }
 
-    private val loads = CoroutineScope(SupervisorJob() + project.sceneLoads)
+    // A child of the session's scope, made by the first request: the runtime is bound by then.
+    private var loads: CoroutineScope? = null
     private val finished = Channel<FinishedLoad>(Channel.UNLIMITED)
 
     // Read and written on the frame thread only.
@@ -157,7 +159,8 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         val number = ++requests
         loadingPath = path
         status.requested(path)
-        loading = loads.launch {
+        val scope = loads ?: runtime.session.coroutineScope.childScope(project.sceneLoads).also { loads = it }
+        loading = scope.launch {
             val report = ProgressReporter { status.report(number, it) }
             project.awaitContent(path) { waiting -> status.reportWaiting(number, path, waiting) }
             val result = project.readScene(path, report::report)
@@ -175,7 +178,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         systems?.close()
         systems = null
         if (audio.isInitialized()) audio.value.dispose()
-        loads.cancel()
+        loads?.cancel()
         finished.close()
         while (true) {
             val load = finished.tryReceive().getOrNull() ?: break
@@ -367,6 +370,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
             .withFixedStep(runtime.fixedStep)
             .withSceneSwitch(this)
             .withSceneSwitchStatus(this)
+            .withCoroutineScope(runtime.session.coroutineScope)
         return if (scene.document.uses(SceneAudioSource::class)) services.withAudio(audio.value) else services
     }
 
