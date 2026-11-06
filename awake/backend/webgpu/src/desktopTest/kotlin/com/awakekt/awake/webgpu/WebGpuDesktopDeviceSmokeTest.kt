@@ -5,8 +5,13 @@
  */
 package com.awakekt.awake.webgpu
 
+import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.webgpu.device.GraphicsDevice
+import com.awakekt.awake.webgpu.device.HostMobileHint
+import com.awakekt.awake.webgpu.device.classifyWebGpuDevice
+import com.awakekt.awake.webgpu.device.report
 import com.awakekt.awake.webgpu.device.unormCounterpart
+import com.awakekt.awake.webgpu.renderer.Renderer
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -76,6 +81,23 @@ class WebGpuDesktopDeviceSmokeTest {
             assertNull(adopted.unormCounterpart(), "the device still draws into the sRGB format $adopted")
         } finally {
             graphicsDevice.destroy()
+        }
+    }
+
+    /**
+     * The device is classified from its adapter as it is created, so the renderer built on it reads
+     * the class, not `Unknown`, and takes its effect quality from it (#1365). wgpu-native has no
+     * browser, so there is no mobile hint and the adapter alone decides.
+     */
+    @Test
+    fun classifiesTheAdapterBeforeTheRendererReadsIt() {
+        webGpuHeadlessUi().use { session ->
+            val renderer = session.renderer as Renderer
+            val report = renderer.graphicsDevice.wgpuContext.adapter.report()
+            val expected = classifyWebGpuDevice(report, HostMobileHint.None)
+            println("adapter $report is $expected")
+            assertEquals(expected, renderer.deviceClass)
+            assertEquals(expected.recommendedEffectQuality(), renderer.effectQuality)
         }
     }
 
