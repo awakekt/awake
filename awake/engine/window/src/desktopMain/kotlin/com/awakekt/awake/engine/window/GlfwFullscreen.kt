@@ -68,8 +68,8 @@ internal class GlfwFullscreen(private val window: GlfwFullscreenWindow) : Fullsc
 
     override fun exit() {
         if (!isActive) return
-        val (x, y, width, height) = windowed ?: FALLBACK_BOUNDS
-        window.goWindowed(x, y, width, height)
+        val bounds = windowed ?: FALLBACK_BOUNDS
+        window.goWindowed(bounds[X], bounds[Y], bounds[WIDTH], bounds[HEIGHT])
     }
 
     private fun usable(bounds: IntArray): IntArray? =
@@ -77,6 +77,8 @@ internal class GlfwFullscreen(private val window: GlfwFullscreenWindow) : Fullsc
 
     private companion object {
         const val BOUNDS_SIZE = 4
+        const val X = 0
+        const val Y = 1
         const val WIDTH = 2
         const val HEIGHT = 3
 
