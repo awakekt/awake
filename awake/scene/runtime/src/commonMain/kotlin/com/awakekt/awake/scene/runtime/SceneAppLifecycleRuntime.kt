@@ -41,6 +41,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
@@ -362,6 +363,7 @@ class SceneAppLifecycleRuntime internal constructor(
      * Reading this frame's input goes through [AppFrame.input] instead. Resolved once, not per
      * frame -- [services] is only set in [initialize], hence `lazy`. */
     private val input: Input by lazy { services.requireService(Input::class) }
+    private val renderQuality: RenderQualitySettings? by lazy { services.service(RenderQualitySettings::class) }
 
     /** Called at install time (see [SceneAppSpec.installInto]). */
     fun initialize(services: AppServiceLookup) {
@@ -569,6 +571,7 @@ class SceneAppLifecycleRuntime internal constructor(
             CompositionLocalProvider(
                 LocalWorld provides world,
                 LocalRenderer provides renderer,
+                LocalRenderQuality provides renderQuality,
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
