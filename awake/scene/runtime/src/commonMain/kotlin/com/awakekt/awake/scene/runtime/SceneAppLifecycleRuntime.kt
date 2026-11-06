@@ -119,9 +119,13 @@ class SceneAppLifecycleRuntime internal constructor(
     val sceneManager: SceneManager
         get() = session.sceneManager
 
+    // Kept apart from the property, and declared before it, so dispose can tell whether the host
+    // was ever made.
+    private val uiHostHolder = lazy(::ComposeHost)
+
     /** Compatibility-only host for the legacy `content {}` DSL. New applications install an
      * app-level Compose module instead. */
-    val uiHost: ComposeHost by lazy(::ComposeHost)
+    val uiHost: ComposeHost by uiHostHolder
     private val graphicsLayers = GraphicsLayerCompositor()
 
     /** Default font used for UI and debug text rendering. */
@@ -682,6 +686,8 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 
     override fun dispose() {
+        // The legacy UI first, while the renderer is still alive; a host never made is not made now.
+        if (uiHostHolder.isInitialized()) uiHost.dispose()
         if (::renderer.isInitialized) {
             viewStore?.dispose()
             spriteBatch.destroy()

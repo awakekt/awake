@@ -125,6 +125,8 @@ class ComposeAppRuntime internal constructor(
     }
 
     internal fun dispose() {
+        // The UI first, while the renderer is still alive: what it remembered is told it was forgotten.
+        host.dispose()
         graphicsLayers.dispose()
     }
 }
