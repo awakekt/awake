@@ -5,35 +5,32 @@
  */
 package com.awakekt.awake.project.runtime
 
-import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.SceneMeshLoad
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.spawn
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 
 /**
  * Puts [node] into the running scene of [project], as [spawn] does, and starts its skinned glTF models
  * playing their first clip on a loop, as [runProject] starts the scene's own.
  *
- * A glTF model [project] hasn't loaded, such as an item picked at runtime that its scene never places,
- * loads from the project's files off the frame thread. The node is in the scene at once, without that
- * model's renderer, which is attached, and its clip started, on the first frame after the model has
- * loaded. A model loads once, however many nodes wait for it, and stays loaded while the project
- * plays, so the next node to draw it draws at once and shares its mesh, as a node drawing a model the
- * scene loaded does. A model that can't be loaded is logged as an error naming it, and the nodes that
- * waited for it stay in the scene without it.
+ * A glTF model [project] has loaded, or a prewarm of the node (`prewarm(node)`) has, draws on the frame
+ * the node spawns. One that hasn't loaded, such as an item picked at runtime that its scene never places
+ * and nothing prewarmed, loads from the project's files off the frame thread, in the scene session's
+ * coroutine scope, sharing a prewarm's load of it that is under way. The node is in the scene at once,
+ * without that model's renderer, which is attached, and its clip started, on the first frame after the
+ * model has loaded. A model loads once, however many nodes wait for it, and stays loaded while the
+ * project plays, so the next node to draw it draws at once and shares its mesh, as a node drawing a model
+ * the scene loaded does. A model that can't be loaded is logged as an error naming it, and the nodes
+ * that waited for it stay in the scene without it.
  *
  * Call it on the frame thread of a scene that plays [project] with [runProject], which attaches what
  * has loaded. [SpawnedNode.despawn] takes the node out, whether its models have loaded or not, and a
@@ -49,22 +46,15 @@ fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): Spa
 }
 
 /**
- * The glTF models of spawned nodes that a project's scene didn't load. Each loads once, off the frame
- * thread, into a resolver of its own that nothing else reads; [attachLoaded] adopts it into the
- * project's resolver on the frame thread, where meshes resolve, and attaches the renderers that waited
- * for it. Loads run in a child of the scene session's scope, so disposing the session stops them, and
- * [close], when a switch leaves the project scene, stops what is still loading.
+ * The glTF models of spawned nodes that a project's scene didn't load. Each loads once, through
+ * [GltfAssetResolver.loadModel], which reads it off the frame thread and shares a load already under way,
+ * such as a prewarm's; [attachLoaded] polls those loads on the frame thread, where a finished one is
+ * adopted into the project's resolver, and attaches the renderers that waited for it. [close] stops
+ * waiting, which cancels a load nothing else waits for.
  */
-internal class SpawnedModels(
-    private val models: GltfAssetResolver,
-    private val files: AssetSource,
-) : AutoCloseable {
-    // A child of the session scope the first load runs under; null until something loads.
-    private var loads: CoroutineScope? = null
-    private val finished = Channel<FinishedLoad>(Channel.UNLIMITED)
-
+internal class SpawnedModels(private val models: GltfAssetResolver) : AutoCloseable {
     // Read and written on the frame thread only.
-    private val loading = mutableSetOf<String>()
+    private val loading = mutableMapOf<String, SceneMeshLoad>()
     private val waiting = mutableListOf<SpawnedNode>()
     private var closed = false
 
@@ -74,18 +64,12 @@ internal class SpawnedModels(
         return models.canResolveMesh(mesh) && !models.isPreloaded(models.modelPath(mesh))
     }
 
-    /**
-     * Waits for the models [spawned] has no renderer for, starting each load not already under way in a
-     * child of [sessionScope], the scene session's scope.
-     */
-    fun load(spawned: SpawnedNode, sessionScope: CoroutineScope) {
+    /** Waits for the models [spawned] has no renderer for, starting, in [scope], each load not already under way. */
+    fun load(spawned: SpawnedNode, scope: CoroutineScope) {
         val paths = spawned.unattachedRenderables.map(::modelOf).toSet()
         if (closed || paths.isEmpty()) return
         waiting += spawned
-        val scope = loads ?: sessionScope.childScope().also { loads = it }
-        paths.filter(loading::add).forEach { path ->
-            scope.launch { finished.trySend(FinishedLoad(path, read(path))) }
-        }
+        paths.filter { it !in loading }.forEach { path -> loading[path] = models.loadModel(path, scope) }
     }
 
     /**
@@ -93,18 +77,16 @@ internal class SpawnedModels(
      * renderers that waited for it and starts their clips, and logs each model that failed.
      */
     fun attachLoaded(runtime: SceneAppLifecycleRuntime) {
-        if (closed) return
         // Only while something loads, so a frame with nothing to adopt polls nothing.
-        while (loading.isNotEmpty()) {
-            val load = finished.tryReceive().getOrNull() ?: break
-            loading -= load.path
-            load.result.fold(
-                onSuccess = { staged ->
-                    models.adopt(load.path, staged)
-                    attach(runtime, load.path)
-                },
-                onFailure = { failure -> giveUp(runtime, load.path, failure) },
-            )
+        if (closed || loading.isEmpty()) return
+        for ((path, load) in loading.entries.toList()) {
+            if (!load.poll()) continue
+            loading -= path
+            load.close()
+            when (val failure = load.failure) {
+                null -> attach(runtime, path)
+                else -> giveUp(runtime, path, failure)
+            }
         }
         // A node despawned, or one left waiting only for models that failed, waits no longer.
         if (waiting.isNotEmpty()) waiting.removeAll { node -> node.unattachedRenderables.none { modelOf(it) in loading } }
@@ -113,23 +95,9 @@ internal class SpawnedModels(
     override fun close() {
         if (closed) return
         closed = true
-        loads?.cancel()
-        finished.close()
+        loading.values.forEach(SceneMeshLoad::close)
         loading.clear()
         waiting.clear()
-    }
-
-    // TooGenericExceptionCaught: an asset source or the parser reports a bad model in its own exception type.
-    @Suppress("TooGenericExceptionCaught")
-    private suspend fun read(path: String): Result<GltfAssetResolver> = try {
-        val staged = GltfAssetResolver()
-        staged.readProjectFiles(files)
-        staged.preload(path)
-        Result.success(staged)
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (failure: Exception) {
-        Result.failure(failure)
     }
 
     // TooGenericExceptionCaught: one node that can't draw the model it loaded must not stop the frame.
@@ -158,8 +126,6 @@ internal class SpawnedModels(
 
     private fun SpawnedNode.label(runtime: SceneAppLifecycleRuntime): String =
         runtime.world.get<Name>(root)?.let { "'${it.value}'" } ?: "unnamed"
-
-    private class FinishedLoad(val path: String, val result: Result<GltfAssetResolver>)
 }
 
 private val log = Logger("project.spawn")

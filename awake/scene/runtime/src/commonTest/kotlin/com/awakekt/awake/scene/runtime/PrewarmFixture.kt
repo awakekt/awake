@@ -23,8 +23,9 @@ import kotlin.reflect.KClass
 /**
  * A scene with three meshes ([MESHES]), one material (`lit`) and textures decoded on a test scheduler
  * until [finishDecoding]: what the prewarm tests share. [BOAT] draws two of the meshes and a sprite.
+ * A test adds resolvers of its own after the texture one with [extraResolvers].
  */
-abstract class PrewarmFixture {
+abstract class PrewarmFixture(protected val extraResolvers: List<SceneAssetResolver> = emptyList()) {
     protected class FakeMesh(override val sizeBytes: Long) : Mesh {
         override val format = VertexFormat.PositionNormalColor
         var destroyed = false
@@ -55,7 +56,7 @@ abstract class PrewarmFixture {
         meshFactories = MESHES.associateWith { name -> { FakeMesh(MESH_BYTES).also { built.getOrPut(name) { mutableListOf() } += it } } },
         materialFactories = mapOf("lit" to { FakeMaterial }),
         rendererFactories = emptyMap(),
-        dynamicResolvers = listOf(textures),
+        dynamicResolvers = listOf(textures) + extraResolvers,
     )
     protected val runtime = SceneAppLifecycleRuntime(spec()).apply { initialize(NoServices) }
 
