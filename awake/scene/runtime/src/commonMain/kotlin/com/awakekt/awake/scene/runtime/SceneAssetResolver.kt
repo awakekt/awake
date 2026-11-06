@@ -8,11 +8,13 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Pluggable resolver for dynamic GPU assets. Allows plugins (e.g. glTF, terrain, a custom model format)
  * to resolve asset names on demand without hardcoding asset names or paths in the scene fixture.
  */
+@Suppress("TooManyFunctions") // One contract: each hook has a default, so a resolver overrides only what it supplies.
 interface SceneAssetResolver {
     /**
      * Determines whether this resolver can construct a [Mesh] for the given asset [name].
@@ -77,6 +79,19 @@ interface SceneAssetResolver {
      * @return The coarser levels' mesh names and the coverage each level draws at, or `null`.
      */
     fun meshLevels(name: String): SceneMeshLevels? = null
+
+    /**
+     * Starts loading what mesh [name] needs before [createMesh] can build it, such as the model file a
+     * glTF resolver reads and decodes, and returns that load; null when [createMesh] can build it now,
+     * which is the default. A prewarm calls it on the frame thread, and polls the load each frame until
+     * it finishes, then builds the mesh. The load runs off the frame thread in [scope], a scene session's
+     * scope, so tearing the session down cancels it; one already under way for the same file is joined.
+     *
+     * @param name The descriptive name or URI of the requested mesh asset.
+     * @param scope Where the load runs: the scene session's coroutine scope.
+     * @return The load, or `null` if nothing need load first.
+     */
+    fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? = null
 
     /**
      * The texture a `sprite` or `tilemap` names [name] as it stands now, or null when this resolver

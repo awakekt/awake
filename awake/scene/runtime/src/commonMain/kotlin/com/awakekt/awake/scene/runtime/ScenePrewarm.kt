@@ -30,8 +30,10 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * every prewarm and destroys what they held, as it destroys every asset; a ready prewarm that was never
  * closed is logged then as a warning naming its assets, since it kept them for the whole scene.
  *
- * Audio clips, and glTF models the resolver has not preloaded, are not prepared here yet (#1316); a
- * model that can't be built yet fails its renderable, which [failed] names.
+ * A mesh its resolver has to load first, such as a glTF model the resolver has not preloaded, is loaded
+ * off the frame thread in the session's scope ([SceneAssetResolver.loadMesh]), sharing a load already
+ * under way for the same file with other prewarms and spawns, then built like the rest. A model that
+ * fails to load fails its renderables, which [failed] names. Audio clips are not prepared here yet (#1316).
  *
  * It lives in the session's `SceneSession.coroutineScope`: a child of the app's `AppCoroutineScope`
  * when one is registered. A coroutine cancelled while it waits in [await], such as a loading screen that closes,
@@ -44,11 +46,14 @@ class ScenePrewarm internal constructor(
     private val library: SceneAssetLibrary,
     internal val runtime: SceneAppLifecycleRuntime,
     references: SceneAssetReferences,
-    scope: CoroutineScope,
+    internal val scope: CoroutineScope,
     private val onProgress: (settled: Int, total: Int) -> Unit,
 ) : AutoCloseable {
     internal val pendingRenderables = ArrayDeque(references.renderables)
     internal val pendingTextures: MutableSet<String> = references.textures.toMutableSet()
+
+    /** Renderables whose model a resolver loads first, with that load; each is built once it has loaded. */
+    internal val loadingModels = mutableListOf<Pair<SceneRenderableKey, SceneMeshLoad>>()
     internal val heldMeshes = mutableListOf<String>()
     internal val heldMaterials = mutableListOf<String>()
     private val failures = linkedMapOf<String, Throwable>()
@@ -103,6 +108,7 @@ class ScenePrewarm internal constructor(
         heldMaterials.forEach(library::releaseMaterial)
         heldMeshes.clear()
         heldMaterials.clear()
+        stopLoads()
         done.cancel(CancellationException("The prewarm was closed before it was ready."))
     }
 
@@ -112,7 +118,15 @@ class ScenePrewarm internal constructor(
         state = State.Disposed
         heldMeshes.clear()
         heldMaterials.clear()
+        stopLoads()
         done.cancel(CancellationException("The scene was torn down before the prewarm was ready."))
+    }
+
+    // Stops waiting for the models still loading; a load nothing else waits for is cancelled.
+    private fun stopLoads() {
+        val loads = loadingModels.toList()
+        loadingModels.clear()
+        loads.forEach { (_, load) -> load.close() }
     }
 
     internal fun settle(name: String, failure: Throwable?) {
@@ -122,7 +136,7 @@ class ScenePrewarm internal constructor(
     }
 
     internal fun finishIfDone() {
-        if (state != State.Pending || pendingRenderables.isNotEmpty() || pendingTextures.isNotEmpty()) return
+        if (state != State.Pending || pendingRenderables.isNotEmpty() || pendingTextures.isNotEmpty() || loadingModels.isNotEmpty()) return
         state = State.Ready
         done.complete(Unit)
     }

@@ -20,6 +20,7 @@ import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
+import kotlinx.coroutines.CoroutineScope
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -245,6 +246,17 @@ class SceneAssetLibrary(
      * Asking starts the resolver's load, as drawing does.
      */
     internal fun prewarmTexture(name: String): SceneTextureLoad? = dynamicResolvers.firstNotNullOfOrNull { it.texture(name) }
+
+    /**
+     * The load mesh [name] needs before it can be built, started or joined in [scope]; null when it can
+     * be built now: one registered or already built, or one its resolver has loaded.
+     */
+    internal fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? =
+        if (name in meshFactories || name in meshes || name in retainedMeshes) {
+            null
+        } else {
+            dynamicResolvers.firstOrNull { it.canResolveMesh(name) }?.loadMesh(name, scope)
+        }
 
     /** Whether [key] draws through a renderer factory of its own, so it holds nothing to prewarm. */
     internal fun hasCustomRenderer(key: SceneRenderableKey): Boolean = key in rendererFactories
