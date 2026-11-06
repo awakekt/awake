@@ -1017,6 +1017,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Handle errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stores-under-the-apps-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stores under the app's scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coroutine-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coroutine scopes
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2956,6 +2984,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Handle errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stores-under-the-apps-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stores under the app's scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coroutine-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coroutine scopes
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3188,6 +3244,12 @@ the state your UI reads:</p>
 </table>
 <p>Call <code>retry</code> on the frame thread. It returns at once, and a second failure reaches the handler as a
 new error.</p>
+<p>Work that should stop with the scene, such as waiting on a server's reply for something the scene
+spawns, goes in the session's <code>runtime.session.coroutineScope</code> instead. It is a child of the
+<code>AppCoroutineScope</code> when one is registered, so its failures reach the same handler, and it is cancelled
+when the scene's session is disposed. It runs off the frame thread, on <code>sessionDispatcher</code> (default
+<code>Dispatchers.Default</code>): send results to a system through a channel rather than changing the world from
+the coroutine.</p>
 <p>A system that throws is reported once and then <strong>skipped for the rest of the scene</strong>: the frame
 carries on with the other systems, the renderer and the UI, and a system that fails every frame does
 not call the handler every frame. Its scene's next switch builds the system afresh. Guarding costs one
@@ -3202,6 +3264,55 @@ A project you load yourself before the app exists can use the same contract with
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="n">loadProject</span><span class="p">(</span><span class="n">files</span><span class="p">,</span><span class="w"> </span><span class="n">physicsWorld</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">createJoltPhysicsWorld</span><span class="p">)</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="p">}</span>
 </span></code></pre></div>
+<h3 id="stores-under-the-apps-scope">Stores under the app's scope</h3>
+<p>The app's Compose host gives its UI the registered <code>AppCoroutineScope</code> as <code>LocalAppCoroutineScope</code>, in
+a <code>composeAppModule</code> and in a scene's <code>content { }</code> alike. Remember a store under it, and the store's
+uncaught failures reach the handler as <code>Coroutine</code> errors while disposing the app cancels its work:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">context</span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">Composer</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">Hud</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">store</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rememberStore</span><span class="p">(</span><span class="n">LocalAppCoroutineScope</span><span class="p">.</span><span class="na">current</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">HudState</span><span class="p">()</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The store keeps its own lifetime: it is closed, cancelling only its own coroutines, when its node
+leaves the tree. Reading <code>LocalAppCoroutineScope</code> in an app that registered no scope fails with a
+message saying how to register one.</p>
+<h2 id="coroutine-scopes">Coroutine scopes</h2>
+<p>Every long-lived coroutine scope in Awake has an owner that cancels it:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>AppCoroutineScope (engine:platform; the app; failures go to AppErrorHandler)
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>├── SceneSession.coroutineScope (scene:runtime; one scene session; cancelled when it is disposed)
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>└── store scopes (core:state; one store)
+</span></code></pre></div>
+<p>The approved owners are <code>AppCoroutineScope</code>, <code>SceneSession</code>, <code>core:state</code>'s store scopes
+(<code>DefaultStoreScope</code>, <code>MutableStore</code>, the <code>reducerStore</code> factories), and the game server host in
+<code>net:server-ktor</code> (<code>ServerHost</code>, <code>SaveScheduler</code>, <code>GameTransport</code>, <code>GameServerHostPlugin</code>). Four rules
+hold for everything else:</p>
+<ol>
+<li><strong>Only an owner builds a long-lived scope.</strong> Anything else runs its work in a child of one:
+   <code>scope.childScope(dispatcher)</code> under a scope it was given, <code>runtime.session.coroutineScope</code> for work
+   that ends with the scene, or <code>services.appChildScope(dispatcher)</code> for work that outlives one scene,
+   as the scene router's deferred loads do. A scene asset resolver that loads off the frame gets the
+   session's scope from <code>SceneAssetResolver.attach</code> before the first frame.</li>
+<li><strong>No <code>GlobalScope</code>.</strong></li>
+<li><strong>Background coroutines never write to the <code>World</code>, the renderer or the <code>SceneAssetLibrary</code>.</strong> They
+   send results through a <code>Channel</code> that a system drains on the frame thread.</li>
+<li><strong>Cancellation is never swallowed.</strong> A <code>catch</code> that can see a <code>CancellationException</code> rethrows it.</li>
+</ol>
+<p>The build checks them. <code>./gradlew awakeVerify</code> runs <code>verifyCoroutineScopes</code>, which fails on a
+<code>CoroutineScope(...)</code> or <code>MainScope()</code> built outside an owner and on any <code>GlobalScope</code>. The sites that
+predate the rule are listed in <code>config/coroutine-scopes-baseline.txt</code>, which only shrinks. Detekt's
+<code>GlobalCoroutineUsage</code> runs with <code>./gradlew detekt</code>. <code>SuspendFunSwallowedCancellation</code>, which needs
+type resolution, runs with <code>./gradlew detektMainDesktop</code> and checks rule 4. It reports a suspend call
+inside <code>runCatching</code>, and a <code>try</code> around one whose <code>catch</code> can see a <code>CancellationException</code> without
+rethrowing it. It has no baseline: every case is fixed, or carries a commented <code>@Suppress</code> where
+catching the cancellation is intended, such as a timeout the work raised itself.</p>
+<p>A debug build also checks rule 3. The scene session records its frame thread when it initializes, and
+<code>World</code>'s structural changes, including the first <code>add</code> of a component type, which registers it,
+<code>SceneAssetLibrary.requireMesh</code> and <code>requireMaterial</code>, and <code>ScenePrewarm.close</code> then throw on any
+other thread. The checks are on when <code>FrameThreadGuard.enabled</code> is: on the JVM when assertions are on
+(<code>-ea</code>, as in Gradle's tests) or the <code>awake.frameThreadChecks</code> system property is <code>true</code>, in a debug
+Kotlin/Native binary, and on Android in a debuggable app, where <code>AwakeSurfaceView</code> turns it on from
+<code>ApplicationInfo.FLAG_DEBUGGABLE</code>. On wasmJs, which has one thread, they never fire. With the flag
+off, each check is one field read.</p>
 <h2 id="properties">Properties</h2>
 <p><code>window { }</code>:</p>
 <table>

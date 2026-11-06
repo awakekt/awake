@@ -3045,7 +3045,10 @@ desktop target.</p>
 <h2 id="how-it-works">How it works</h2>
 <p>Each target has its own <code>JoltPhysicsWorld</code> class behind the shared <code>PhysicsWorld</code> interface, so game
 code never names a binding. The world owns native memory that the garbage collector does not reclaim:
-call <code>destroy()</code> when you are done, after which every handle from it is dead.</p>
+call <code>destroy()</code> when you are done, after which every handle from it is dead. On the Web that memory
+is a heap of fixed size (128 MiB) and each world reserves room for 65,536 bodies when it is made, so a
+page that keeps a few finished worlds alive runs out and every later Jolt call fails: destroy each
+world, and <code>close()</code> each played project, as soon as you are done with it.</p>
 <div class="admonition tip">
 <p class="admonition-title">Step with a fixed delta</p>
 <p>Physics integrates, so a variable <code>deltaTime</code> makes the same scene behave differently on

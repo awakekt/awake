@@ -3519,11 +3519,13 @@ document draws a sky that mixes two colours by how far up each pixel looks:</p>
 your own app, call <code>loadShaderEffects</code> with the decoded scene document and the project's
 <code>AssetSource</code>, and give the result to a <code>ShaderEffectSystem</code>. The system attaches each document's
 pipeline after the engine starts, through <code>host</code>, which is <code>renderer as? ContentFeatureHost</code>. Both
-backends implement it:</p>
+backends implement it. The attaches run in the scope you pass, such as the scene session's
+<code>coroutineScope</code>, so disposing the scene stops them:</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// When the project loads: read, check and compile every document the scene names, once each.</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">effects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">loadShaderEffects</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span><span class="w"> </span><span class="n">files</span><span class="p">)</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">// The system attaches each effect to the renderer's content-feature host, and runs its clock.</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kd">val</span><span class="w"> </span><span class="nv">system</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ShaderEffectSystem</span><span class="p">(</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">effects</span><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">// Its attaches run in the scene session's scope, here the test's.</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kd">val</span><span class="w"> </span><span class="nv">system</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ShaderEffectSystem</span><span class="p">(</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">effects</span><span class="p">,</span><span class="w"> </span><span class="n">sessionScope</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Add the system to the scene's frame systems, and <code>close()</code> it when the scene closes.</p>
 <h3 id="what-a-document-says">What a document says</h3>

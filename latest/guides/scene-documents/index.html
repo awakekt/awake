@@ -880,6 +880,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#get-a-node-ready-before-it-spawns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get a node ready before it spawns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#save-a-world" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2975,6 +2986,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#get-a-node-ready-before-it-spawns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get a node ready before it spawns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#save-a-world" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3235,11 +3257,54 @@ app's <code>SceneSwitchStatus</code> service: its <code>state</code> is idle, lo
 bytes that have arrived, ready once the new scene has had its first frame, or failed with the scene's
 path and cause. See
 <a href="https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene"><code>awake:project:runtime</code></a>.</p>
+<h2 id="get-a-node-ready-before-it-spawns">Get a node ready before it spawns</h2>
+<p><code>spawn</code> builds a node's meshes the first time it draws them, and a texture a resolver loads from
+files draws a frame or more later. For something that must look right the moment it appears, such as
+a character arriving or a short effect, prewarm it first. <code>prewarm</code> lists what the node and its
+children draw (<code>node.assetReferences()</code>), then each frame builds and uploads its meshes and
+materials and loads its textures off the frame:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">prewarm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">prewarm</span><span class="p">(</span><span class="n">BOAT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">settled</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">progress</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">settled</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p>Once it is ready, a spawn draws the node on its first frame and shares what the prewarm built. The
+prewarm holds those assets so nothing frees them in the meantime; close it after the spawn:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">prewarm</span><span class="p">.</span><span class="na">await</span><span class="p">()</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">spawned</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">spawn</span><span class="p">(</span><span class="n">BOAT</span><span class="p">)</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">prewarm</span><span class="p">.</span><span class="na">close</span><span class="p">()</span>
+</span></code></pre></div>
+<p><code>SceneAssetLibrary.prewarmFrameBudgetBytes</code> caps the new mesh uploaded per frame, so prewarming
+while the game plays doesn't stall a frame. An asset that can't be built is listed in <code>failed</code>, and
+is built when it is first drawn instead. Closing a prewarm before it is ready, or tearing the scene
+down, stops it, and <code>await</code> then throws <code>CancellationException</code>. A ready prewarm still open at teardown
+held its assets for the whole scene, so teardown logs a warning naming them. Expand prefab links first
+(<code>withPrefabs</code>): <code>assetReferences</code> lists a link it can't follow in <code>prefabLinks</code>.</p>
+<p>A glTF model the scene's resolver hasn't loaded is read and decoded off the frame thread in the
+session's <code>coroutineScope</code>, then built like the rest. Prewarms and a project <code>spawn</code> of the same model
+share one load, and closing every one of them, or tearing the scene down, cancels it. In a played
+project, a node whose models a prewarm loaded draws them on the frame it spawns; a model that fails to
+load is listed in <code>failed</code>. A resolver of your own joins in by overriding <code>SceneAssetResolver.loadMesh</code>
+for a mesh it has to load before it can build it.</p>
+<p>A prewarm also decodes the node's <code>audio_source</code> clips, off the frame and without playing them, and
+reads the images its 3D <code>particle_emitter</code>s show. These don't go through the library's textures: they
+go into the scene's own clips and particle images, the same ones its <code>AudioSystem</code> and
+<code>ParticleContentSystem</code> use, which the host gives the library as <code>SceneAssetLibrary.audioClips</code> and
+<code>SceneAssetLibrary.particleImages</code>. <code>runProject</code> does that for each scene it plays, and closes them
+when the scene stops; a host that runs the scene's systems itself does it like this:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// One set of clips for the scene: its AudioSystem plays them, and a prewarm decodes into them.</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">clips</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">audioClipLoads</span><span class="p">(</span><span class="n">files</span><span class="p">,</span><span class="w"> </span><span class="n">game</span><span class="p">.</span><span class="na">session</span><span class="p">.</span><span class="na">coroutineScope</span><span class="p">).</span><span class="na">also</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">library</span><span class="p">.</span><span class="na">audioClips</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">it</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">audio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AudioSystem</span><span class="p">(</span><span class="n">player</span><span class="p">,</span><span class="w"> </span><span class="n">clips</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Each clip and image decodes once, whether the prewarm or the system asks first, and the prewarm holds
+it until it is closed, so the spawn's first frame plays the clip and draws the emitter. Closing the
+prewarm, or tearing the scene down, cancels a decode nothing else waits for. A clip that isn't a 16-bit
+PCM WAV file, an image that can't be read, or a scene that gave the library no clips or particle images
+is listed in <code>failed</code>, by path. <code>particleImageLoads(files, session.coroutineScope)</code> makes the particle
+images as <code>audioClipLoads(files, session.coroutineScope)</code> makes the clips: a decode nobody gave a scope
+of its own runs in the scene session's, so disposing the session stops it.</p>
 <h2 id="save-a-world">Save a world</h2>
 <p><code>fromWorld</code> walks the entities that have a <code>Transform</code>, follows their parent links to rebuild the
 tree, and writes each component that has a registered binding:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">saved</span><span class="p">:</span><span class="w"> </span><span class="n">SceneDocument</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneLoader</span><span class="p">.</span><span class="na">fromWorld</span><span class="p">(</span><span class="n">scene</span><span class="p">.</span><span class="na">world</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Harbor Town"</span><span class="p">)</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneLoader</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="n">saved</span><span class="p">)</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">saved</span><span class="p">:</span><span class="w"> </span><span class="n">SceneDocument</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneLoader</span><span class="p">.</span><span class="na">fromWorld</span><span class="p">(</span><span class="n">scene</span><span class="p">.</span><span class="na">world</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Harbor Town"</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneLoader</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="n">saved</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Pass <code>extraComponents = { entity -&gt; listOf(…) }</code> to write components that have no binding of their
 own.</p>
@@ -3290,21 +3355,21 @@ names each one. A game keeps the default, so a component it doesn't link still f
 <h2 id="validate-a-document">Validate a document</h2>
 <p><code>SceneValidator.validate</code> returns every issue with the path of the node it is on. <code>instantiate</code> runs
 it first and throws <code>SceneValidationException</code> listing them all.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">document</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneLoader</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="s">"""</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s">    {</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s">      "nodes": [</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s">        { "name": "dock" },</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s">        { "name": "dock", "components": [ { "component": "spin_control", "speed": -1.0 } ] }</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s">      ]</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s">    }</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="s">    """</span><span class="p">,</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="p">)</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="kd">val</span><span class="w"> </span><span class="nv">issues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneValidator</span><span class="p">.</span><span class="na">validate</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">issues</span><span class="p">.</span><span class="na">forEach</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">println</span><span class="p">(</span><span class="s">"</span><span class="si">${</span><span class="nb">it</span><span class="p">.</span><span class="na">path</span><span class="si">}</span><span class="s">: </span><span class="si">${</span><span class="nb">it</span><span class="p">.</span><span class="na">message</span><span class="si">}</span><span class="s">"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">document</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneLoader</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="s">"""</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="s">    {</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="s">      "nodes": [</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="s">        { "name": "dock" },</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="s">        { "name": "dock", "components": [ { "component": "spin_control", "speed": -1.0 } ] }</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s">      ]</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s">    }</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s">    """</span><span class="p">,</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="p">)</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="kd">val</span><span class="w"> </span><span class="nv">issues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SceneValidator</span><span class="p">.</span><span class="na">validate</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="n">issues</span><span class="p">.</span><span class="na">forEach</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">println</span><span class="p">(</span><span class="s">"</span><span class="si">${</span><span class="nb">it</span><span class="p">.</span><span class="na">path</span><span class="si">}</span><span class="s">: </span><span class="si">${</span><span class="nb">it</span><span class="p">.</span><span class="na">message</span><span class="si">}</span><span class="s">"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
-<div class="language-text highlight"><span class="filename">Output</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>dock: duplicate node name 'dock' already used at dock
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>dock: spinControl.speed must not be negative
+<div class="language-text highlight"><span class="filename">Output</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>dock: duplicate node name 'dock' already used at dock
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>dock: spinControl.speed must not be negative
 </span></code></pre></div>
 <p>Node names must be unique across the whole document, because components such as <code>camera_rig</code> refer
 to nodes by name. A prefab instance is its own scope: the nodes a <code>prefab_link</code> brings in need
