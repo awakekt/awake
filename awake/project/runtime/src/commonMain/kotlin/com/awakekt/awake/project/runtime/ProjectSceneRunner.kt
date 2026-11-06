@@ -116,6 +116,10 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     private var systems: SceneSystemSet? = null
     private var instance: Scene? = null
 
+    // The playing scene's clips and particle images, shared by its systems and the runtime's prewarms;
+    // closed with its systems.
+    private var playLoads: PlayedSceneLoads? = null
+
     // The platform's player, opened for the first scene with sound and kept for the ones after it rather
     // than opened again: a browser starts a page's sound only from a tap, which a switch is not. Closed
     // with the app's scene.
@@ -149,7 +153,9 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     /** Plays the project's entry scene, as the runtime's scene populates. */
     fun start() {
         val scene = project.playing
-        systems = systemsFor(scene)
+        val sceneLoads = loadsFor(scene)
+        systems = runCatching { systemsFor(scene, sceneLoads) }.onFailure { sceneLoads.close() }.getOrThrow()
+        playLoads = sceneLoads
         instance = runtime.instantiate(scene, project.componentRegistry)
         begin()
     }
@@ -178,6 +184,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         status.stopped()
         systems?.close()
         systems = null
+        playLoads = null
         if (audio.isInitialized()) audio.value.dispose()
         loads?.cancel()
         finished.close()
@@ -243,11 +250,13 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         models.target = next.models
         var nextSystems: SceneSystemSet? = null
         var nextInstance: Scene? = null
+        val nextLoads = loadsFor(next)
         try {
-            nextSystems = systemsFor(next)
+            nextSystems = systemsFor(next, nextLoads)
             nextInstance = runtime.instantiate(next, project.componentRegistry)
         } catch (failure: Exception) {
-            nextSystems?.close()
+            // The systems close the loads they were built with.
+            nextSystems?.close() ?: nextLoads.close()
             world.destroyAllBut(before)
             models.target = leaving.models
             next.close()
@@ -261,6 +270,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         val teardownFailure = leave(world, leaving, before)
         project.playing = next
         systems = nextSystems
+        playLoads = nextLoads
         instance = nextInstance
         spawnedModelsFailed = false
         var setupFailure: Exception? = null
@@ -292,6 +302,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         }
         val closing = systems
         systems = null
+        playLoads = null
         step { closing?.close() }
         step {
             world.queryEach(AudioSource::class) { _, source -> source.stop() }
@@ -314,6 +325,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
 
     /** What every scene does once its entities are in: its canvas images, fonts and strings, its camera and its skinned clips. */
     private fun begin() {
+        playLoads?.register(runtime.requireAssetLibrary())
         runtime.canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
         runtime.canvasFonts = project.content[CoreSceneContent.CanvasFonts].orEmpty()
         runtime.canvasStrings = project.strings
@@ -349,24 +361,30 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
      * it: `defaultInfrastructureSystems` advances sprite clips, and a second clip system would advance
      * them twice a frame.
      */
-    private fun systemsFor(scene: ProjectScene): SceneSystemSet {
+    private fun systemsFor(scene: ProjectScene, sceneLoads: PlayedSceneLoads): SceneSystemSet {
         val hostRuns = buildSet {
             if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) add(SPRITE_CLIPS_SYSTEM)
             if (runtime.hasInfrastructureSystem(Particle2DSystem::class)) add(PARTICLES_2D_SYSTEM)
         }
-        val built = sceneSystemsFor(scene.document, services(scene), project.capabilities, hostRuns)
+        val built = sceneSystemsFor(scene.document, services(scene, sceneLoads), project.capabilities, hostRuns)
         // Each system guarded, so one that throws is reported to the app's error handler and skipped, not
         // the frame. Built once per scene; the guard adds no allocation to a frame. The set still closes the systems themselves.
         return SceneSystemSet(
             built.fixed.map { it.guardedFor(runtime) },
             built.frame.map { it.guardedFor(runtime) },
-            built::close,
+            {
+                built.close()
+                sceneLoads.close()
+            },
             built.preAnimation.map { it.guardedFor(runtime) },
         )
     }
 
-    private fun services(scene: ProjectScene): SceneHostServices {
-        val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = scene.content)
+    private fun loadsFor(scene: ProjectScene) = PlayedSceneLoads(project.files, scene.content, runtime.session.coroutineScope.coroutineContext)
+
+    private fun services(scene: ProjectScene, sceneLoads: PlayedSceneLoads): SceneHostServices {
+        val content = scene.content + sceneLoads.content
+        val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = content)
             .withSpawner(spawner)
             .withFixedStep(runtime.fixedStep)
             .withSceneSwitch(this)
