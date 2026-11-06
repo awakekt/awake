@@ -19,6 +19,7 @@ import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -63,21 +64,21 @@ class ScenePrewarmTest {
         rendererFactories = emptyMap(),
         dynamicResolvers = listOf(textures),
     )
-    private val runtime = SceneAppLifecycleRuntime(
-        SceneAppSpec(
-            sceneName = null,
-            systems = emptyList(),
-            scenePopulationBlock = {},
-            renderableFactory = { request -> library.resolve(this, request) },
-            assetLibraryFactory = { library },
-            updateBlock = { _, _ -> },
-            ui = null,
-            onReadyBlock = {},
-            onDisposeBlock = {},
-            serviceRegistrations = emptyList(),
-            infrastructureSystemsFactory = { emptyList() },
-        ),
-    ).apply { initialize(NoServices) }
+    private val runtime = SceneAppLifecycleRuntime(spec()).apply { initialize(NoServices) }
+
+    private fun spec() = SceneAppSpec(
+        sceneName = null,
+        systems = emptyList(),
+        scenePopulationBlock = {},
+        renderableFactory = { request -> library.resolve(this, request) },
+        assetLibraryFactory = { library },
+        updateBlock = { _, _ -> },
+        ui = null,
+        onReadyBlock = {},
+        onDisposeBlock = {},
+        serviceRegistrations = emptyList(),
+        infrastructureSystemsFactory = { emptyList() },
+    )
 
     @Test
     fun aPrewarmedTreeSpawnsDrawnOnItsFirstFrameWithoutBuildingAgain() = runTest {
@@ -203,12 +204,30 @@ class ScenePrewarmTest {
     @Test
     fun closingTheAppScopeStopsAPrewarm() = runTest {
         val app = AppCoroutineScope(NoServices)
-        val appRuntime = SceneAppLifecycleRuntime(runtime.spec).apply { initialize(Services(app)) }
+        val appRuntime = SceneAppLifecycleRuntime(spec()).apply { initialize(Services(app)) }
         val prewarm = appRuntime.prewarm(BOAT)
 
         app.close()
 
         assertFailsWith<CancellationException> { prewarm.await() }
+    }
+
+    /** The session's own scope runs on the spec's dispatcher, and ends with the session. */
+    @Test
+    fun theSessionScopeRunsOnTheSpecDispatcherAndEndsWithTheSession() = runTest {
+        val owner = SceneAppLifecycleRuntime(spec().apply { sessionDispatcher = StandardTestDispatcher(testScheduler) })
+        owner.initialize(NoServices)
+        var started = false
+        val work = owner.session.coroutineScope.launch {
+            started = true
+            awaitCancellation()
+        }
+        testScheduler.runCurrent()
+
+        owner.session.dispose(owner)
+
+        assertTrue(started, "it ran on the dispatcher the spec gave")
+        assertTrue(work.isCancelled)
     }
 
     private class Services(private val app: AppCoroutineScope) : AppServiceLookup {

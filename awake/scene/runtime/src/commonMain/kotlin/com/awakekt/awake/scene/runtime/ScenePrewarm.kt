@@ -32,8 +32,8 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * Audio clips, and glTF models the resolver has not preloaded, are not prepared here yet (#1316); a
  * model that can't be built yet fails its renderable, which [failed] names.
  *
- * It lives in the session's asset scope: a child of the app's `AppCoroutineScope` when one is
- * registered. A coroutine cancelled while it waits in [await], such as a loading screen that closes,
+ * It lives in the session's `SceneSession.coroutineScope`: a child of the app's `AppCoroutineScope`
+ * when one is registered. A coroutine cancelled while it waits in [await], such as a loading screen that closes,
  * gives the prewarm up, and the next frame closes it, so a caller that is cancelled leaks no holds.
  *
  * Made, [close]d and read on the frame thread; [await] from any coroutine.
@@ -135,7 +135,7 @@ fun SceneAssetLibrary.prewarm(
     runtime: SceneAppLifecycleRuntime,
     references: SceneAssetReferences,
     onProgress: (settled: Int, total: Int) -> Unit = { _, _ -> },
-): ScenePrewarm = ScenePrewarm(this, runtime, references, runtime.session.assetScope, onProgress).also { prewarm ->
+): ScenePrewarm = ScenePrewarm(this, runtime, references, runtime.session.coroutineScope, onProgress).also { prewarm ->
     prewarms.add(prewarm)
     prewarm.finishIfDone()
 }

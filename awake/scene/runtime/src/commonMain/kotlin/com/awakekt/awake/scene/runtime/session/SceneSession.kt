@@ -20,10 +20,10 @@ import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.runPrewarms
 import com.awakekt.awake.scene.runtime.schedule.SceneSchedule
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * The ECS state and schedule for one active scene.
@@ -52,13 +52,22 @@ class SceneSession internal constructor(
     internal val schedule = SceneSchedule(spec)
     private var assetLibrary: SceneAssetLibrary? = null
 
+    private var scope: CoroutineScope? = null
+
     /**
-     * Owns the session's asset work, such as each prewarm and what it decodes off the frame: a child of
-     * the app's [AppCoroutineScope] when one is registered, so its failures reach the app's error
-     * handler and the app's disposal stops it, and cancelled when this session is disposed.
+     * Where work that lives as long as this session runs: a prewarm and what it decodes off the frame,
+     * and a game's own work that should stop with the scene, such as waiting on a server's reply.
+     *
+     * It is a child of the app's [AppCoroutineScope] when one is registered, so its failures reach the
+     * app's error handler and disposing the app stops it, and it is cancelled when this session is
+     * disposed. One child's failure stops neither its siblings nor the scope. It runs on
+     * [SceneAppSpec.sessionDispatcher], off the frame thread: hand results back to the frame through a
+     * channel a system reads, never by changing the [world] from here.
+     *
+     * Throws until the session is initialized, before its first frame.
      */
-    internal var assetScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        private set
+    val coroutineScope: CoroutineScope
+        get() = checkNotNull(scope) { "The scene session's coroutine scope exists once the session is initialized." }
 
     // Whether ready began. The dispose hooks undo what the ready hooks did, so a scene whose backend
     // never started, and that never became ready, has nothing for them to undo.
@@ -67,7 +76,7 @@ class SceneSession internal constructor(
     internal fun initialize(services: AppServiceLookup) {
         world = World()
         val app = services.service(AppCoroutineScope::class)?.coroutineContext
-        assetScope = CoroutineScope((app ?: Dispatchers.Default) + SupervisorJob(app?.get(Job)))
+        scope = CoroutineScope((app ?: EmptyCoroutineContext) + SupervisorJob(app?.get(Job)) + spec.sessionDispatcher)
         assetLibrary = spec.assetLibraryFactory?.invoke()
     }
 
@@ -92,7 +101,7 @@ class SceneSession internal constructor(
         sceneManager.close()
         assetLibrary?.dispose()
         assetLibrary = null
-        assetScope.cancel()
+        scope?.cancel()
         schedule.dispose()
     }
 

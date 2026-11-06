@@ -28,7 +28,8 @@ kotlin {
             // AssetSourceTextureResolver reads sprite and tilemap textures from a project's files.
             api(project(":awake:core:io"))
             implementation(project(":awake:core:image"))
-            implementation(libs.kotlinx.coroutines.core)
+            // SceneSession.coroutineScope and SceneAppSpec.sessionDispatcher are coroutine types.
+            api(libs.kotlinx.coroutines.core)
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
             api(project(":awake:scene:scene-core"))

@@ -43,12 +43,6 @@ data class SceneAssetReferences(
         audioClips = audioClips + other.audioClips,
         prefabLinks = prefabLinks + other.prefabLinks,
     )
-
-    /** Names nothing. */
-    companion object {
-        /** The references of a tree that draws and plays nothing. */
-        val None: SceneAssetReferences = SceneAssetReferences()
-    }
 }
 
 /** The assets this node and its children name; see [SceneAssetReferences]. */

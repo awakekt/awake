@@ -11,6 +11,8 @@ import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.platform.core.AppModule
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.scene.runtime.session.SceneSession
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlin.reflect.KClass
 
 /**
@@ -48,6 +50,12 @@ class SceneAppSpec(
     val infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems,
 ) : AppModule {
+    /**
+     * Where the scene session's [SceneSession.coroutineScope] runs its work, [Dispatchers.Default] unless
+     * set: a test sets its own to run that work step by step. Read when the session is initialized.
+     */
+    var sessionDispatcher: CoroutineDispatcher = Dispatchers.Default
+
     /**
      * The most fixed steps the scene runs in one frame, 5 unless set: a frame that brings more time
      * than that runs these and drops the rest, which [SceneAppLifecycleRuntime.fixedStep] reports. A
