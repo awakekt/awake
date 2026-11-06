@@ -79,6 +79,18 @@ private val DOM_MOUSE_BUTTONS = mapOf(
  * pixels: each point is measured from the canvas's box, whichever element the event reached.
  */
 fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas()) {
+    bindWindowPointerInput(input, canvas) { release -> window.requestAnimationFrame { release() } }
+}
+
+/**
+ * [bindWindowPointerInput], with the modifiers a wheel arrived with held until [afterFrame] runs its
+ * action: once the frame that reads that wheel has run ([PostedFrameLoop.afterNextFrame]).
+ */
+internal fun bindWindowPointerInput(
+    input: Input,
+    canvas: HTMLCanvasElement,
+    afterFrame: (release: () -> Unit) -> Unit,
+) {
     fun scaledPointer(event: MouseEvent): Pair<Float, Float> =
         canvas.box().bufferPoint(event.clientX.toDouble(), event.clientY.toDouble(), canvas.width, canvas.height)
 
@@ -122,7 +134,7 @@ fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas(
     // Without this the browser's own context menu covers the app's.
     window.addEventListener("contextmenu") { event -> event.preventDefault() }
     bindWindowTouchInput(input, canvas)
-    val wheelModifiers = WheelModifiers(input) { release -> window.requestAnimationFrame { release() } }
+    val wheelModifiers = WheelModifiers(input, afterFrame)
     // Non-passive: a browser treats a wheel listener on the window as passive unless told otherwise,
     // and ignores preventDefault in a passive one.
     addNonPassiveListener("wheel") { event ->
@@ -247,7 +259,15 @@ fun runBrowserCanvas(
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
     val input = lifecycle.input
 
-    bindWindowPointerInput(input, canvas)
+    // The frame runs as an ordinary task, so a worker's messages aren't held behind input and frames.
+    var runFrame: (timeMillis: Double) -> Boolean = { true }
+    val poster = MessageChannelPoster()
+    val frameLoop = PostedFrameLoop(
+        requestFrame = { callback -> window.requestAnimationFrame { time -> callback(time) } },
+        post = poster::post,
+        frame = { time -> runFrame(time) },
+    )
+    bindWindowPointerInput(input, canvas, frameLoop::afterNextFrame)
     bindWindowKeyboardInput(input)
     val textInput = DomTextInputBridge(input)
     val canvasCursor = CanvasCursor { css -> canvas.style.cursor = css }
@@ -303,14 +323,8 @@ fun runBrowserCanvas(
                     false
                 }
             }
-            // The work runs as a posted task, not inside the frame callback, so a worker's messages (a socket's pongs
-            // and snapshots) still get their turn while a key is held on a slow frame (TaskFrameLoop).
-            val taskPort = createTaskPort()
-            TaskFrameLoop(
-                requestFrame = { callback -> window.requestAnimationFrame(callback) },
-                postTask = { work -> postTask(taskPort, work) },
-                runFrame = ::frame,
-            ).start()
+            runFrame = ::frame
+            frameLoop.start()
         } catch (cancelled: CancellationException) {
             // The app was disposed while the backend started: not a start-up failure.
             throw cancelled
@@ -342,22 +356,31 @@ fun runBrowserCanvas(
 private external fun reportBrowserStartupFailure(message: String)
 
 /**
- * A `MessageChannel` whose receiving port runs the work posted with [postTask], one task per message, in order. A
- * message task waits behind the tasks already queued, such as a worker's messages, rather than running ahead of them.
+ * Posts a task through a `MessageChannel`: an ordinary task, which the browser runs in its turn with
+ * other tasks such as a worker's messages, not ahead of them as it does animation-frame callbacks.
+ * One task waits at a time, as [PostedFrameLoop] posts.
  */
-@JsFun(
-    """() => {
-        const channel = new MessageChannel();
-        const queue = [];
-        channel.port1.onmessage = () => { const work = queue.shift(); if (work) work(); };
-        return { post: (work) => { queue.push(work); channel.port2.postMessage(null); } };
-    }""",
-)
-private external fun createTaskPort(): JsAny
+private class MessageChannelPoster {
+    private var task: (() -> Unit)? = null
+    private val send: JsAny = messageChannelSender(::run)
 
-/** Runs [work] as a task of its own on [port] ([createTaskPort]). */
-@JsFun("(port, work) => port.post(work)")
-private external fun postTask(port: JsAny, work: () -> Unit)
+    fun post(next: () -> Unit) {
+        task = next
+        callSender(send)
+    }
+
+    private fun run() {
+        val next = task ?: return
+        task = null
+        next()
+    }
+}
+
+@JsFun("(run) => { const c = new MessageChannel(); c.port1.onmessage = () => run(); return () => c.port2.postMessage(0); }")
+private external fun messageChannelSender(run: () -> Unit): JsAny
+
+@JsFun("(send) => send()")
+private external fun callSender(send: JsAny)
 
 /** Keeps frame failures visible in browser console instead of leaving a black canvas. */
 @JsFun("(message) => console.error(message)")
