@@ -22,8 +22,9 @@ depends only on where the key comes from:
 
 | Key delivery | Strength |
 | --- | --- |
-| Online: your endpoint answers the key after sign-in | Bundles on a public CDN are ciphertext to anyone not signed in. |
-| Saved by the app after a first online sign-in | As strong as the store the app keeps it in. |
+| Session-wrapped (`BundleKeyProvider.wrapped` + `BundleEncryptionKey.wrapFor`) | Wrapped per session with RSA-OAEP-SHA256; in browsers the unwrapped `HKDF` `CryptoKey` stays `extractable = false` and never enters Wasm linear memory. |
+| Online raw bytes (`BundleKeyProvider { … }`) | Bundles on a public CDN are ciphertext to anyone not signed in. |
+| Saved after a first online sign-in (`BundleKeyStore`) | As strong as the store (`platformBundleKeyStore` stores structured-cloned non-extractable `CryptoKey`s in browser IndexedDB; native apps supply Keystore/Keychain stores). |
 | Fully offline: the key ships inside the client | **Deterrence only.** Anyone who unpacks the client can recover the key. |
 
 Two limits hold whatever the key source:
@@ -93,28 +94,33 @@ With a [public sign-in set](protected-content.md), only the full set is sealed:
 has it. Open the sealed set with your `BundleKeyProvider` after sign-in and attach it to the
 `LayeredAssetSource`; the key is asked for on the first read that needs it.
 
-## Online: fetch the key after sign-in
+## Online: session-wrapped keys (recommended)
 
-Pass a `BundleKeyProvider` to `IndexedAssetSource` or `IndexedAssetSource.open`. The engine asks it
-once per distinct `keyId` per source, only when a bundle sealed under that `keyId` is read or
-prefetched, so a player in a shared zone never asks for an expansion's key until entering it. If the
-request fails, the read fails, and the next read asks again.
+Use `BundleKeyProvider.wrapped` so your client generates an ephemeral RSA-2048-OAEP-SHA256 keypair,
+sends its X.509 `SubjectPublicKeyInfo` DER public key to your authenticated key endpoint, and unwraps
+the response directly into an opaque `BundleKeyHandle`. On Web (`wasmJs`), SubtleCrypto unwraps the
+bundle key into a non-extractable `HKDF` `CryptoKey` (`extractable = false`) and derives and opens
+every member inside SubtleCrypto, so neither the 32-byte master key nor any derived AES key enters
+`WebAssembly.Memory`:
 
 ```kotlin title="Kotlin"
---8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:online"
+--8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:wrapped"
 ```
 
-The key endpoint is yours. A minimal one in Ktor checks the session and answers the raw key:
+On the server, wrap the `BundleEncryptionKey` for the client's SPKI public key with `wrapFor`
+(`RSA-OAEP` with `SHA-256` digest, `MGF1-SHA256`, and empty OAEP label):
 
 ```kotlin title="Kotlin (Ktor server, an example only)"
 routing {
     authenticate("session") {
-        get("/content-keys/{keyId}") {
+        post("/content-keys/{keyId}/wrap") {
             val keyId = call.parameters.getOrFail("keyId")
             val player = call.principal<PlayerSession>()!!
-            if (!entitlements.canPlay(player, keyId)) return@get call.respond(HttpStatusCode.Forbidden)
+            if (!entitlements.canPlay(player, keyId)) return@post call.respond(HttpStatusCode.Forbidden)
+            val clientSpki = call.receive<ByteArray>()
+            val wrapped = secrets.bundleEncryptionKey(keyId).wrapFor(clientSpki)
             call.response.header(HttpHeaders.CacheControl, "no-store")
-            call.respondBytes(secrets.bundleKey(keyId), ContentType.Application.OctetStream)
+            call.respondBytes(wrapped, ContentType.Application.OctetStream)
         }
     }
 }
@@ -123,11 +129,23 @@ routing {
 Serve it over HTTPS only, never cache it, and keep the bundles themselves on a public CDN with
 `Cache-Control: public, max-age=31536000, immutable`.
 
+If your host already receives raw 32-byte keys over an authenticated channel, the SAM form of
+`BundleKeyProvider` works as well; the engine asks it once per distinct `keyId` per source, only when
+a bundle sealed under that `keyId` is read or prefetched:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:online"
+```
+
 ## Offline play
 
-`BundleKeyProvider` is the only key contract, and your app decides what it does. The same provider
-can answer a key the app saved after an earlier online sign-in, in a store of its choosing such as
-the Android Keystore, the iOS Keychain or a non-extractable WebCrypto key:
+In a browser, pass `platformBundleKeyStore(namespace)` to `BundleKeyProvider.wrapped(store)`:
+`IndexedDbBundleKeyStore` persists unwrapped WebCrypto `CryptoKey` handles in IndexedDB via HTML
+structured clone while keeping `extractable = false`, so return visits open cached encrypted bundles
+offline without storing raw key bytes. On desktop, Android, and iOS, `platformBundleKeyStore` returns
+`null` so Core never writes raw software keys to disk by default; pass a `BundleKeyStore` backed by
+your app's `AndroidKeyStore`, iOS Keychain, or OS credential store, or supply a custom
+`BundleKeyProvider`:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:offline"

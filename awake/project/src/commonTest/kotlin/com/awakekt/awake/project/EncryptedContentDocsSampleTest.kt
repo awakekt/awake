@@ -104,4 +104,26 @@ class EncryptedContentDocsSampleTest {
         assertContentEquals(BundledProject.SAMPLE_FILES.getValue(scene), source.read(AssetPath(scene)).getOrThrow())
         assertEquals(listOf("common-2026"), asked)
     }
+
+    @Test
+    fun aSessionWrappedKeyProviderUnwrapsNonExtractableHandlesAndSupportsKeyStores() = runTest {
+        val project = EncryptedProject.write()
+        val serverKey = BundleEncryptionKey(keyId = EncryptedProject.KEY_ID, bytes = project.key)
+
+        /** Stands in for the app's authenticated key-wrapping endpoint. */
+        suspend fun requestWrappedBundleKey(keyId: String, publicKeySpki: ByteArray): ByteArray {
+            check(keyId == serverKey.keyId)
+            return serverKey.wrapFor(publicKeySpki)
+        }
+
+        // --8<-- [start:wrapped]
+        val store = platformBundleKeyStore("harbor-town")
+        val keys = BundleKeyProvider.wrapped(store) { keyId, publicKeySpki ->
+            requestWrappedBundleKey(keyId, publicKeySpki)
+        }
+        val files = IndexedAssetSource(project.index, fetch = project.server(), keys = keys)
+        // --8<-- [end:wrapped]
+
+        assertContentEquals(project.files.getValue(scene), files.read(AssetPath(scene)).getOrThrow())
+    }
 }

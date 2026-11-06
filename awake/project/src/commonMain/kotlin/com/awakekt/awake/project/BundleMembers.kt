@@ -213,13 +213,17 @@ internal class MemberSeal(private val keyId: String, private val keys: BundleKey
     /** [stored], [entry]'s sealed bytes, opened; fails naming [label] when they don't authenticate. */
     suspend fun open(entry: ProjectIndexEntry, stored: ByteArray, label: String): ByteArray = cipher().open(stored, entry.sha256, label)
 
-    /** The cipher, asking for the key the first time; a failure to get it is the provider's own. */
+    /** The cipher, asking for the key handle the first time; a failure to get it is the provider's own. */
     suspend fun cipher(): BundleCipher =
-        lock.withLock { cipher ?: BundleCipher(keys.key(keyId), keyId).also { cipher = it } }
+        lock.withLock { cipher ?: BundleCipher(keys.keyHandle(keyId)).also { cipher = it } }
 
-    /** Drops the key, which a matching bundle has just proved wrong, so the next read asks again. */
+    /** Drops and closes the key handle, which a matching bundle has just proved wrong, so the next read asks again. */
     suspend fun forget() {
-        lock.withLock { cipher = null }
+        lock.withLock {
+            cipher?.close()
+            cipher = null
+            (keys as? WrappedBundleKeyProvider)?.forgetStored(keyId)
+        }
     }
 }
 
