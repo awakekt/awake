@@ -380,7 +380,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         )
     }
 
-    private fun loadsFor(scene: ProjectScene) = PlayedSceneLoads(project.files, scene.content, runtime.session.coroutineScope.coroutineContext)
+    private fun loadsFor(scene: ProjectScene) = PlayedSceneLoads(project.files, scene.content, runtime.session.coroutineScope)
 
     private fun services(scene: ProjectScene, sceneLoads: PlayedSceneLoads): SceneHostServices {
         val content = scene.content + sceneLoads.content

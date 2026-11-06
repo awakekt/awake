@@ -7,13 +7,12 @@ package com.awakekt.awake.core.io
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** Where one of an [AssetLoads]' assets is: still loading, loaded, or failed. */
 sealed interface AssetLoad<out T> {
@@ -31,7 +30,8 @@ sealed interface AssetLoad<out T> {
  * Assets read and decoded by path, off the frame, each once however many ask for it: a sound's clip or
  * an image that a system and a prewarm both want share the one load.
  *
- * [request] starts a path's load the first time it is asked for, in the scope given or this one's own,
+ * [request] starts a path's load the first time it is asked for, in the scope given or, when it names
+ * none, under a job of this one's own that is a child of its owner's scope,
  * and answers [AssetLoad.Loading] until a later ask finds it finished. A load hands its result back
  * through a channel, so [request] and [loaded] only change on the thread that asks: the frame
  * thread. A load cancelled before it finished, by its scope ending or by [release], is forgotten, so the
@@ -44,16 +44,26 @@ sealed interface AssetLoad<out T> {
  * Made, asked and closed on the frame thread.
  *
  * @param T What a load decodes to.
- * @param context Where loads run when [request] names no scope; [Dispatchers.Default] by default. A
- *   [Job] in it is the parent of this one's own loads.
+ * @param scope The owner's scope, such as the scene session's: a load [request] starts without naming a
+ *   scope runs in it, under a job of this one's own, so ending [scope] stops it and [close] stops only
+ *   this one's.
+ * @param context Added to a load's context when [request] names no scope, such as the dispatcher it
+ *   runs on; [scope]'s own unless given. It holds no [Job].
  * @param read Reads and decodes the asset at a path, throwing when it can't.
  */
 class AssetLoads<T : Any>(
-    context: CoroutineContext = Dispatchers.Default,
+    private val scope: CoroutineScope,
+    context: CoroutineContext = EmptyCoroutineContext,
     read: suspend (path: String) -> T,
 ) : AutoCloseable {
     private val reader = read
-    private val own = CoroutineScope(context + SupervisorJob(context[Job]))
+
+    // The parent of the loads started with no scope named: a child of [scope]'s job, which [close] cancels.
+    private val ownJob = SupervisorJob(scope.coroutineContext[Job])
+    private val ownContext: CoroutineContext = run {
+        require(context[Job] == null) { "AssetLoads' context holds no Job: its loads run under its owner's scope" }
+        context + ownJob
+    }
     private val finished = Channel<Finished<T>>(Channel.UNLIMITED)
     private val states = HashMap<String, AssetLoad<T>>()
     private val values = HashMap<String, T>()
@@ -78,18 +88,22 @@ class AssetLoads<T : Any>(
     }
 
     /**
-     * Where [path]'s asset is, starting its load in [scope] the first time it is asked for. After [close]
-     * an unknown path answers [AssetLoad.Loading] and starts nothing.
+     * Where [path]'s asset is, starting its load the first time it is asked for: in [scope], or with
+     * none, in the owner's scope under this one's job. After [close] an unknown path answers
+     * [AssetLoad.Loading] and starts nothing.
      */
-    fun request(path: String, scope: CoroutineScope = own): AssetLoad<T> {
+    fun request(path: String, scope: CoroutineScope? = null): AssetLoad<T> {
         receiveFinished()
         if (path !in states && !closed) start(path, scope)
         return states[path] ?: AssetLoad.Loading
     }
 
-    private fun start(path: String, scope: CoroutineScope) {
+    private fun start(path: String, scope: CoroutineScope?) {
         states[path] = AssetLoad.Loading
-        val job = scope.launch { finished.trySend(Finished(path, coroutineContext[Job], attempt(path))) }
+        // With no scope named, the load runs in the owner's scope under this one's job.
+        val job = (scope ?: this.scope).launch(if (scope == null) ownContext else EmptyCoroutineContext) {
+            finished.trySend(Finished(path, coroutineContext[Job], attempt(path)))
+        }
         jobs[path] = job
         // A load cancelled before it finished, such as when its scope ends, is forgotten for the next ask.
         job.invokeOnCompletion { cause -> if (cause != null) finished.trySend(Finished(path, job, null)) }
@@ -130,7 +144,7 @@ class AssetLoads<T : Any>(
     /** Cancels every load and drops every asset. Closing twice is harmless. */
     override fun close() {
         closed = true
-        own.cancel()
+        ownJob.cancel()
         jobs.values.forEach { it.cancel() }
         jobs.clear()
         states.clear()

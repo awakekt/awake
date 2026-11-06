@@ -147,8 +147,9 @@ Each clip and image decodes once, whether the prewarm or the system asks first, 
 it until it is closed, so the spawn's first frame plays the clip and draws the emitter. Closing the
 prewarm, or tearing the scene down, cancels a decode nothing else waits for. A clip that isn't a 16-bit
 PCM WAV file, an image that can't be read, or a scene that gave the library no clips or particle images
-is listed in `failed`, by path. `particleImageLoads(files)` makes the particle images as
-`audioClipLoads(files)` makes the clips.
+is listed in `failed`, by path. `particleImageLoads(files, session.coroutineScope)` makes the particle
+images as `audioClipLoads(files, session.coroutineScope)` makes the clips: a decode nobody gave a scope
+of its own runs in the scene session's, so disposing the session stops it.
 
 ## Save a world
 
