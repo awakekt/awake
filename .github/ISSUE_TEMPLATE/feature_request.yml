@@ -7,6 +7,13 @@ body:
     attributes:
       value: |
         We welcome ideas for expanding the capabilities of Awake Engine!
+  - type: checkboxes
+    id: neutral
+    attributes:
+      label: Neutral wording
+      options:
+        - label: This names no consumer game, its repository, or its characters, places, items or file formats. A consumer is "a private consumer pack", and nothing here links to a consumer's repository, issue or PR.
+          required: true
   - type: dropdown
     id: subsystem
     attributes:
