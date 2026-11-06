@@ -333,6 +333,7 @@ jobs:
           :awake:scene:binding:desktopTest
           :awake:scene:scene-core:desktopTest
           :awake:scene:controls:desktopTest
+          :awake:core:camera:desktopTest
           :awake:scene:audio:desktopTest
           :awake:scene:character:desktopTest
           :awake:scene:navigation:desktopTest

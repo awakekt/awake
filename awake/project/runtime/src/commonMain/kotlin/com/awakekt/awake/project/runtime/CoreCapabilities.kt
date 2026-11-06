@@ -82,7 +82,17 @@ internal object ControlsCapability : SceneCapability {
         // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
         plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
-        if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
+        if (scene.uses(SceneCameraRig::class)) {
+            plan.frame("camera") { services ->
+                // Asked only for a rig with collision on, so a scene without it behaves as before.
+                val probes = SceneCameraCollisionProbes(services.physics, services.content[StreamedTerrainCapability.Terrain]?.terrain?.heights)
+                CameraSystem(inputProvider = services.input, viewportBounds = { null }, collisionProbes = probes)
+            }
+        }
+        // Fades what a rig's occluderFade finds between its eye and its target, from the physics world's rays.
+        if (plan.hasPhysics && scene.nodes.any { it.fadesOccluders() }) {
+            plan.frame("occluder-fade") { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
+        }
     }
 }
 
@@ -178,6 +188,10 @@ internal fun SceneNode.hasMeshCollider(): Boolean =
 
 internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
+
+/** Whether [this] node, or one under it, has a camera rig that fades its occluders. */
+private fun SceneNode.fadesOccluders(): Boolean =
+    components.any { it is SceneCameraRig && it.occluderFade != null } || children.any { it.fadesOccluders() }
 
 internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
 

@@ -175,6 +175,32 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `yaw` | number | `0` | Yaw in radians. |
 | `offset` | vector | `{x: 0, y: 1.8, z: 0}` | Aim point relative to the target, or the pivot when there is none. |
 | `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
+| `collision` | object | none | `ThirdPerson` camera collision; see below. Without it the eye goes wherever the rig puts it. |
+| `occluderFade` | object | none | Fades what stands between a `ThirdPerson` eye and its target; see below. Without it nothing fades. |
+
+`collision` keeps a third-person eye above the ground and in front of the terrain. Props, trees
+and buildings don't pull it in unless their physics layer is listed in `obstacleLayers`. A played
+project answers the ground from its `terrain` and `paged_terrain` heights, and the obstacle layers
+from its physics world.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `ground` | boolean | `true` | Keep the eye `groundMargin` above the ground, sampled around it the size of the near plane. |
+| `terrain` | boolean | `true` | Pull the eye in front of the ground where it rises between the pivot and the eye. |
+| `groundMargin` | number | `0.3` | Least height of the eye above the ground. At least 0. |
+| `radius` | number | `0.2` | Clearance kept between the line from the pivot to the eye and what blocks it. At least 0. |
+| `easeOutSeconds` | number | `0.25` | Half-life of the ease back out once the way clears. Pulling in is immediate. At least 0. |
+| `obstacleLayers` | list of integers | `[]` | Physics layers whose bodies also pull the eye in, through a swept sphere. Not negative. |
+
+`occluderFade` fades the static bodies between a third-person eye and its target: each frame a
+played project with a physics world casts rays from the eye to the target's feet, chest and head,
+and every body hit other than terrain fades. Its meshes take a dither fade: the shader discards a
+share of their pixels in a fixed pattern, so they stay opaque, need no sorting and keep their shadow.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `opacity` | number | `0.35` | Opacity an occluder fades to, 0 to 1. |
+| `fadeSeconds` | number | `0.2` | Half-life of the fade, both ways. At least 0. |
 
 ## `canvas_controls`
 

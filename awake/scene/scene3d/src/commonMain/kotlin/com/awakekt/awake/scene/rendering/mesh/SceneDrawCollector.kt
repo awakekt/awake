@@ -99,6 +99,7 @@ internal class SceneDrawCollector(
         val pbrStore = world.componentStore<PbrMaterial>(resolution.pbrType)
         val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)
         val outlineStore = world.componentStore<Outlined>(resolution.outlineType)
+        val fadeStore = world.componentStore<DitherFade>(resolution.fadeType)
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
             if (!meshRenderer.visible) return@forEach
@@ -178,6 +179,7 @@ internal class SceneDrawCollector(
                 // Unlit colour reaches the target as stored, so no covering such as fog paints over it.
                 exemptFromCoverings = pbr?.unlit == true,
             )
+            fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
             if (verdict != CullVerdict.ShadowOnly || shadowMesh == null) drawCalls.add(command)
             if (shadowMesh != null) drawCalls.add(beforeCommands.shadowTwin(command, shadowMesh))
         }
@@ -245,20 +247,20 @@ internal class SceneDrawCollector(
             for (slotIndex in 0 until modularCharacter.slotCount) {
                 val slot = modularCharacter.slotAt(slotIndex)
                 if (!slot.isVisible) continue
-                drawCalls.add(
-                    beforeCommands.obtainCommand(
-                        mesh = slot.mesh,
-                        material = slot.material,
-                        model = transform.worldMatrix,
-                        extraUniformFloats = extras,
-                        timeSeconds = elapsedTimeSeconds,
-                        shadowsOnly = verdict == CullVerdict.ShadowOnly,
-                        worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
-                        maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
-                        castsShadows = casts,
-                        exemptFromCoverings = pose != null && pbr?.unlit == true,
-                    ),
+                val command = beforeCommands.obtainCommand(
+                    mesh = slot.mesh,
+                    material = slot.material,
+                    model = transform.worldMatrix,
+                    extraUniformFloats = extras,
+                    timeSeconds = elapsedTimeSeconds,
+                    shadowsOnly = verdict == CullVerdict.ShadowOnly,
+                    worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
+                    maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
+                    castsShadows = casts,
+                    exemptFromCoverings = pose != null && pbr?.unlit == true,
                 )
+                fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
+                drawCalls.add(command)
             }
         }
         return drawCalls
@@ -333,6 +335,7 @@ internal class SceneDrawCollector(
         val pbrType = world.typeId(PbrMaterial::class)
         val animationType = world.typeId(TextureAnimation::class)
         val outlineType = world.typeId(Outlined::class)
+        val fadeType = world.typeId(DitherFade::class)
 
         val meshFamily = world.family<Transform, MeshRenderer>()
         val instancedFamily = world.family<InstancedMeshRenderer>()

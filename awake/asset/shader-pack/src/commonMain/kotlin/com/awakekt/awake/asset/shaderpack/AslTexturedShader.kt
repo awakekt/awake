@@ -322,6 +322,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             // Coverage is applied after every derivative, including those used by debug views.
             val debugColor = let("debugColor", debugViewColor(debugView, cameraPosition, surface, shaded))
             val coverage = materialCoverage(sourceAlpha, pbrFactors.z, debugColor.a)
+            ditherFade(exposure.y)
             colorOutput(vec4(debugColor.rgb, coverage))
         }
     }

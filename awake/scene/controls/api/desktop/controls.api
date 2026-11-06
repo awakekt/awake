@@ -84,6 +84,23 @@ public final class com/awakekt/awake/scene/controls/camera/ActiveCamera : com/aw
 	public fun reset ()V
 }
 
+public abstract interface class com/awakekt/awake/scene/controls/camera/CameraCollisionProbes {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes$Companion;
+	public fun getGround ()Lcom/awakekt/awake/core/camera/CameraGround;
+	public fun getObstruction ()Lcom/awakekt/awake/core/camera/CameraObstruction;
+	public fun prepare (Lcom/awakekt/awake/ecs/World;)V
+}
+
+public final class com/awakekt/awake/scene/controls/camera/CameraCollisionProbes$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;
+}
+
+public final class com/awakekt/awake/scene/controls/camera/CameraCollisionProbes$DefaultImpls {
+	public static fun getGround (Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;)Lcom/awakekt/awake/core/camera/CameraGround;
+	public static fun getObstruction (Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;)Lcom/awakekt/awake/core/camera/CameraObstruction;
+	public static fun prepare (Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;Lcom/awakekt/awake/ecs/World;)V
+}
+
 public abstract interface class com/awakekt/awake/scene/controls/camera/CameraDragPredicate {
 	public abstract fun isDragging (Lcom/awakekt/awake/scene/controls/GameplayInput;)Z
 }
@@ -188,23 +205,27 @@ public final class com/awakekt/awake/scene/controls/camera/CameraRig : com/awake
 	public static final field DEFAULT_MAX_DISTANCE F
 	public static final field DEFAULT_MIN_DISTANCE F
 	public fun <init> ()V
+	public final fun getCollision ()Lcom/awakekt/awake/core/camera/CameraCollision;
 	public final fun getDistance ()F
 	public final fun getFlySpeed ()F
 	public final fun getMaxDistance ()F
 	public final fun getMinDistance ()F
 	public final fun getMode ()Lcom/awakekt/awake/scene/controls/camera/CameraMode;
 	public final fun getNeedsReset ()Z
+	public final fun getOccluderFade ()Lcom/awakekt/awake/core/camera/OccluderFade;
 	public final fun getOffsetPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getPitch ()F
 	public final fun getTargetEntity-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
 	public final fun getYaw ()F
 	public fun reset ()V
+	public final fun setCollision (Lcom/awakekt/awake/core/camera/CameraCollision;)V
 	public final fun setDistance (F)V
 	public final fun setFlySpeed (F)V
 	public final fun setMaxDistance (F)V
 	public final fun setMinDistance (F)V
 	public final fun setMode (Lcom/awakekt/awake/scene/controls/camera/CameraMode;)V
 	public final fun setNeedsReset (Z)V
+	public final fun setOccluderFade (Lcom/awakekt/awake/core/camera/OccluderFade;)V
 	public final fun setOffsetPosition (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun setPitch (F)V
 	public final fun setTargetEntity-eOpPV3Q (Lcom/awakekt/awake/ecs/Entity;)V
@@ -251,15 +272,61 @@ public final class com/awakekt/awake/scene/controls/camera/CameraSystem : com/aw
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;Lcom/awakekt/awake/scene/controls/camera/CameraCollisionProbes;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/controls/camera/SceneCameraCollision {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision$Companion;
+	public fun <init> ()V
+	public fun <init> (ZZFFFLjava/util/List;)V
+	public synthetic fun <init> (ZZFFFLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Ljava/util/List;
+	public final fun copy (ZZFFFLjava/util/List;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;ZZFFFLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEaseOutSeconds ()F
+	public final fun getGround ()Z
+	public final fun getGroundMargin ()F
+	public final fun getObstacleLayers ()Ljava/util/List;
+	public final fun getRadius ()F
+	public final fun getTerrain ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/controls/camera/SceneCameraCollision$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/camera/SceneCameraCollision$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;F)V
 	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/controls/camera/CameraMode;
+	public final fun component10 ()Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;
+	public final fun component11 ()Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()F
 	public final fun component4 ()F
@@ -268,15 +335,19 @@ public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig : com/
 	public final fun component7 ()F
 	public final fun component8 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component9 ()F
-	public final fun copy (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;F)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public final synthetic fun copy (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;F)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public final fun copy (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCollision ()Lcom/awakekt/awake/scene/controls/camera/SceneCameraCollision;
 	public final fun getDistance ()F
 	public final fun getFlySpeed ()F
 	public final fun getMaxDistance ()F
 	public final fun getMinDistance ()F
 	public final fun getMode ()Lcom/awakekt/awake/scene/controls/camera/CameraMode;
+	public final fun getOccluderFade ()Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;
 	public final fun getOffset ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun getPitch ()F
 	public final fun getTarget ()Ljava/lang/String;
@@ -299,6 +370,38 @@ public final synthetic class com/awakekt/awake/scene/controls/camera/SceneCamera
 }
 
 public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/camera/SceneOccluderFade {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade$Companion;
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFadeSeconds ()F
+	public final fun getOpacity ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/controls/camera/SceneOccluderFade$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/controls/camera/SceneOccluderFade;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/camera/SceneOccluderFade$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
