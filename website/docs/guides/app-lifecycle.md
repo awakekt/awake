@@ -172,7 +172,8 @@ predate the rule are listed in `config/coroutine-scopes-baseline.txt`, which onl
 `GlobalCoroutineUsage` runs with `./gradlew detekt`. `SuspendFunSwallowedCancellation`, which needs
 type resolution, runs with `./gradlew detektMainDesktop` and checks rule 4. It reports a suspend call
 inside `runCatching`, and a `try` around one whose `catch` can see a `CancellationException` without
-rethrowing it. The cases that predate it are in each module's `detekt-baseline-mainDesktop.xml`.
+rethrowing it. It has no baseline: every case is fixed, or carries a commented `@Suppress` where
+catching the cancellation is intended, such as a timeout the work raised itself.
 
 A debug build also checks rule 3. The scene session records its frame thread when it initializes, and
 `World`'s structural changes, including the first `add` of a component type, which registers it,
