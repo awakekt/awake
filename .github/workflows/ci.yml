@@ -740,6 +740,16 @@ jobs:
             --tests "*.SkinnedPlaybackTest" \
             --tests "*.SwitchedSceneContentTest"
 
+      # Temporary diagnostic for #1316's Jolt-on-wasmJs follow-up: one Jolt class alone in a fresh
+      # page, then the six that fail after the other suites, with the browser's errors printed.
+      - name: Jolt on wasmJs diagnostic (temporary)
+        continue-on-error: true
+        run: |
+          ./gradlew --continue :awake:project:runtime:wasmJsBrowserTest --tests "*.TerrainColliderTest" || true
+          ./gradlew --continue :awake:project:runtime:wasmJsBrowserTest \
+            --tests "*.ProjectRuntimeTest" --tests "*.ProjectStreamedTerrainTest" --tests "*.ProjectSwitchToTest" \
+            --tests "*.SceneSwitchTest" --tests "*.SceneSystemSetTest" --tests "*.TerrainColliderTest" || true
+
   # The WebGPU release pin is built only from a commit tagged v<release>, and on the tag run its
   # Consumer gate builds it before the release can publish. Without this job a tag would be the
   # first run of that build, its strictly constraints and its metadata check, on Linux at least. A
