@@ -10,6 +10,8 @@ public final class com/awakekt/awake/core/state/DefaultStoreScope : com/awakekt/
 	public fun <init> ()V
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;)V
 	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlinx/coroutines/CoroutineScope;Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineScope;Lkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close ()V
 	public fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
 }
@@ -82,5 +84,10 @@ public abstract interface class com/awakekt/awake/core/state/StoreScope : java/l
 
 public final class com/awakekt/awake/core/state/StoreScope$DefaultImpls {
 	public static fun close (Lcom/awakekt/awake/core/state/StoreScope;)V
+}
+
+public final class com/awakekt/awake/core/state/StoreScopeKt {
+	public static final fun childStoreScope (Lkotlinx/coroutines/CoroutineScope;Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineScope;
+	public static synthetic fun childStoreScope$default (Lkotlinx/coroutines/CoroutineScope;Lkotlinx/coroutines/CoroutineDispatcher;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineScope;
 }
 
