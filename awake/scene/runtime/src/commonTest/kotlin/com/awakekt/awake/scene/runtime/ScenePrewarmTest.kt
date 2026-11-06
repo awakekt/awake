@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.texture.TextureAsset
@@ -18,6 +19,8 @@ import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
@@ -178,6 +181,39 @@ class ScenePrewarmTest {
         assertFailsWith<CancellationException> { waiting.await() }
         assertTrue(built.getValue("hull").single().destroyed, "teardown destroys what it held")
         waiting.close()
+    }
+
+    /** A loading screen that closes while it waits leaks nothing: the next frame closes the prewarm. */
+    @Test
+    fun aCallerCancelledWhileWaitingGivesThePrewarmUp() = runTest {
+        val prewarm = runtime.prewarm(BOAT)
+        library.runPrewarms()
+        val waiting = launch { prewarm.await() }
+        testScheduler.runCurrent()
+
+        waiting.cancelAndJoin()
+        library.runPrewarms()
+
+        assertFalse(prewarm.isReady)
+        assertEquals(0, library.meshHolderCount("hull"))
+        assertTrue(built.getValue("hull").single().destroyed)
+    }
+
+    /** The session's asset work is a child of the app's scope, so closing the app stops a prewarm. */
+    @Test
+    fun closingTheAppScopeStopsAPrewarm() = runTest {
+        val app = AppCoroutineScope(NoServices)
+        val appRuntime = SceneAppLifecycleRuntime(runtime.spec).apply { initialize(Services(app)) }
+        val prewarm = appRuntime.prewarm(BOAT)
+
+        app.close()
+
+        assertFailsWith<CancellationException> { prewarm.await() }
+    }
+
+    private class Services(private val app: AppCoroutineScope) : AppServiceLookup {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : Any> service(type: KClass<T>): T? = if (type == AppCoroutineScope::class) app as T else null
     }
 
     private fun finishDecoding() {

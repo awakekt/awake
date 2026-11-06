@@ -9,6 +9,10 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 /**
  * Assets a scene tree draws, got ready ahead of its first spawn by [prewarm], and held until [close].
@@ -28,12 +32,18 @@ import kotlinx.coroutines.CompletableDeferred
  * Audio clips, and glTF models the resolver has not preloaded, are not prepared here yet (#1316); a
  * model that can't be built yet fails its renderable, which [failed] names.
  *
+ * It lives in the session's asset scope: a child of the app's `AppCoroutineScope` when one is
+ * registered. A coroutine cancelled while it waits in [await], such as a loading screen that closes,
+ * gives the prewarm up, and the next frame closes it, so a caller that is cancelled leaks no holds.
+ *
  * Made, [close]d and read on the frame thread; [await] from any coroutine.
  */
+@OptIn(ExperimentalAtomicApi::class)
 class ScenePrewarm internal constructor(
     private val library: SceneAssetLibrary,
     internal val runtime: SceneAppLifecycleRuntime,
     references: SceneAssetReferences,
+    scope: CoroutineScope,
     private val onProgress: (settled: Int, total: Int) -> Unit,
 ) : AutoCloseable {
     internal val pendingRenderables = ArrayDeque(references.renderables)
@@ -41,7 +51,8 @@ class ScenePrewarm internal constructor(
     internal val heldMeshes = mutableListOf<String>()
     internal val heldMaterials = mutableListOf<String>()
     private val failures = linkedMapOf<String, Throwable>()
-    private val done = CompletableDeferred<Unit>()
+    private val done = CompletableDeferred<Unit>(scope.coroutineContext[Job])
+    private val givenUp = AtomicBoolean(false)
     private var state = State.Pending
 
     /** How many renderables and textures it prepares. */
@@ -59,11 +70,23 @@ class ScenePrewarm internal constructor(
 
     internal val isPending: Boolean get() = state == State.Pending
 
+    /** Whether a coroutine was cancelled while it waited in [await], so the next frame closes this. */
+    internal val isGivenUp: Boolean get() = givenUp.load()
+
     /**
      * Suspends until the prewarm [isReady]. Throws [CancellationException] when it is closed, or the
-     * scene torn down, before then.
+     * scene torn down, before then. Cancelling the coroutine that waits here gives the prewarm up: the
+     * next frame closes it, letting go of what it holds.
      */
-    suspend fun await() = done.await()
+    suspend fun await() {
+        try {
+            done.await()
+        } catch (cancelled: CancellationException) {
+            // The prewarm itself ended, or the caller stopped waiting: only the latter gives it up.
+            if (!done.isCompleted) givenUp.store(true)
+            throw cancelled
+        }
+    }
 
     /** Lets go of what it holds, and stops it if it is not ready yet. Closing twice is harmless. */
     override fun close() {
@@ -112,7 +135,7 @@ fun SceneAssetLibrary.prewarm(
     runtime: SceneAppLifecycleRuntime,
     references: SceneAssetReferences,
     onProgress: (settled: Int, total: Int) -> Unit = { _, _ -> },
-): ScenePrewarm = ScenePrewarm(this, runtime, references, onProgress).also { prewarm ->
+): ScenePrewarm = ScenePrewarm(this, runtime, references, runtime.session.assetScope, onProgress).also { prewarm ->
     prewarms.add(prewarm)
     prewarm.finishIfDone()
 }

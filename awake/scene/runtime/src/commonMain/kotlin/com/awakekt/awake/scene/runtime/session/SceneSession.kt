@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.runtime.session
 
 import com.awakekt.awake.ecs.System
+import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -17,6 +19,11 @@ import com.awakekt.awake.scene.runtime.SceneManager
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.runPrewarms
 import com.awakekt.awake.scene.runtime.schedule.SceneSchedule
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 /**
  * The ECS state and schedule for one active scene.
@@ -45,12 +52,22 @@ class SceneSession internal constructor(
     internal val schedule = SceneSchedule(spec)
     private var assetLibrary: SceneAssetLibrary? = null
 
+    /**
+     * Owns the session's asset work, such as each prewarm and what it decodes off the frame: a child of
+     * the app's [AppCoroutineScope] when one is registered, so its failures reach the app's error
+     * handler and the app's disposal stops it, and cancelled when this session is disposed.
+     */
+    internal var assetScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        private set
+
     // Whether ready began. The dispose hooks undo what the ready hooks did, so a scene whose backend
     // never started, and that never became ready, has nothing for them to undo.
     private var becameReady = false
 
-    internal fun initialize() {
+    internal fun initialize(services: AppServiceLookup) {
         world = World()
+        val app = services.service(AppCoroutineScope::class)?.coroutineContext
+        assetScope = CoroutineScope((app ?: Dispatchers.Default) + SupervisorJob(app?.get(Job)))
         assetLibrary = spec.assetLibraryFactory?.invoke()
     }
 
@@ -75,6 +92,7 @@ class SceneSession internal constructor(
         sceneManager.close()
         assetLibrary?.dispose()
         assetLibrary = null
+        assetScope.cancel()
         schedule.dispose()
     }
 

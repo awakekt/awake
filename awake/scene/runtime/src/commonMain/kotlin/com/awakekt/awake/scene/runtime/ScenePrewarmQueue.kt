@@ -31,6 +31,7 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
         var spent = 0L
         // A copy: a progress callback may close a prewarm, or open another, while this runs.
         for (prewarm in open.toList()) {
+            if (prewarm.isGivenUp) prewarm.close()
             if (!prewarm.isPending) continue
             pollTextures(prewarm)
             while (prewarm.isPending && prewarm.pendingRenderables.isNotEmpty() && spent < frameBudgetBytes) {
