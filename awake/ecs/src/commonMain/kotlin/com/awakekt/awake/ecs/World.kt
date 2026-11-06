@@ -26,7 +26,7 @@ class World {
 
     @PublishedApi internal val entities = EntityArena()
 
-    @PublishedApi internal val components = ComponentRegistry(frameThread)
+    @PublishedApi internal val components = ComponentRegistry().also { it.frameThread = frameThread }
     private val collector = QueryCollector(entities, components)
     private val familyRegistry = FamilyRegistry(this, collector)
     private val queryCache = QueryCache { types -> collector.collect(types) }
