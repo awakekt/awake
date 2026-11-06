@@ -293,8 +293,9 @@ complexity:
 
 coroutines:
   active: true
+  # GlobalScope's coroutines outlive every owner (see "Coroutine scopes" in website/docs/guides/app-lifecycle.md).
   GlobalCoroutineUsage:
-    active: false
+    active: true
   InjectDispatcher:
     active: true
     dispatcherNames:
@@ -305,8 +306,11 @@ coroutines:
     active: true
   SleepInsteadOfDelay:
     active: true
+  # Needs type resolution, which detekt 1.23.8 cannot do here: its embedded compiler rejects this
+  # repository's Kotlin 2.4 class metadata, so the rule reports nothing until detekt is upgraded to a
+  # release built on Kotlin 2.4 (#1321). On now so the upgrade turns it on with no config change.
   SuspendFunSwallowedCancellation:
-    active: false
+    active: true
   SuspendFunWithCoroutineScopeReceiver:
     active: false
   SuspendFunWithFlowReturnType:
