@@ -48,3 +48,38 @@ public abstract interface class com/awakekt/awake/core/camera/CameraObstruction 
 	public abstract fun clearFraction (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FI)F
 }
 
+public final class com/awakekt/awake/core/camera/OccluderFade {
+	public static final field Companion Lcom/awakekt/awake/core/camera/OccluderFade$Companion;
+	public static final field DEFAULT_FADE_SECONDS F
+	public static final field DEFAULT_OPACITY F
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/core/camera/OccluderFade;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/camera/OccluderFade;FFILjava/lang/Object;)Lcom/awakekt/awake/core/camera/OccluderFade;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFadeSeconds ()F
+	public final fun getOpacity ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/camera/OccluderFade$Companion {
+}
+
+public final class com/awakekt/awake/core/camera/OccluderFader {
+	public static final field SETTLED F
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun blocking (Ljava/lang/Object;)V
+	public final fun clear ()V
+	public final fun entries ()Ljava/util/Set;
+	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
+	public final fun getSize ()I
+	public final fun opacityOf (Ljava/lang/Object;)F
+	public final fun step (Lcom/awakekt/awake/core/camera/OccluderFade;F)V
+}
+
