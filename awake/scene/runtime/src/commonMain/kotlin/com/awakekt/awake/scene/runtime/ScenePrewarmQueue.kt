@@ -86,10 +86,9 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
      * not preloaded yet; if so, [prewarm] waits for that load, which costs the frame nothing.
      */
     private fun startedLoading(prewarm: ScenePrewarm, key: SceneRenderableKey): Boolean {
-        if (library.hasCustomRenderer(key)) return false
-        val load = library.loadMesh(key.mesh, prewarm.scope) ?: return false
-        prewarm.loadingModels += key to load
-        return true
+        val load = if (library.hasCustomRenderer(key)) null else library.loadMesh(key.mesh, prewarm.scope)
+        if (load != null) prewarm.loadingModels += key to load
+        return load != null
     }
 
     /**

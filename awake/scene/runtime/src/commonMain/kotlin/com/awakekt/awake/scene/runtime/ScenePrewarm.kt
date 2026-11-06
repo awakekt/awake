@@ -135,8 +135,12 @@ class ScenePrewarm internal constructor(
         onProgress(settled, total)
     }
 
+    // Whether any renderable or texture is still waiting to be built, loaded or polled.
+    private val hasWork: Boolean
+        get() = pendingRenderables.isNotEmpty() || pendingTextures.isNotEmpty() || loadingModels.isNotEmpty()
+
     internal fun finishIfDone() {
-        if (state != State.Pending || pendingRenderables.isNotEmpty() || pendingTextures.isNotEmpty() || loadingModels.isNotEmpty()) return
+        if (state != State.Pending || hasWork) return
         state = State.Ready
         done.complete(Unit)
     }
