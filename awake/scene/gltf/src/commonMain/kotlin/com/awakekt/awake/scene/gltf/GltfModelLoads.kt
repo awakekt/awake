@@ -51,13 +51,15 @@ internal class GltfModelLoads(
 
         /** On the frame thread: whether it finished; the first poll that sees it loaded adopts the model. */
         fun poll(): Boolean {
-            if (finished) return true
-            if (!job.isCompleted) return false
+            if (!finished && job.isCompleted) finish()
+            return finished
+        }
+
+        private fun finish() {
             finished = true
             if (inFlight[path] === this) inFlight.remove(path)
             val result = staged.load() ?: Result.failure(CancellationException("The load of $path was cancelled."))
             result.fold(onSuccess = { model -> resolver.adopt(path, model) }, onFailure = { failure = it })
-            return true
         }
 
         fun leave() {
