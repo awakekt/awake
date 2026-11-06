@@ -233,6 +233,7 @@ public final class com/awakekt/awake/project/BundleEncryptionKey {
 	public fun <init> (Ljava/lang/String;[B)V
 	public final fun getKeyId ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
+	public final fun wrapFor ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/BundleEncryptionKey$Companion {
@@ -245,8 +246,54 @@ public final class com/awakekt/awake/project/BundleKeyFiles {
 	public final fun read (Ljava/lang/String;Ljava/io/File;)Lcom/awakekt/awake/project/BundleEncryptionKey;
 }
 
+public final class com/awakekt/awake/project/BundleKeyHandle : java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/project/BundleKeyHandle$Companion;
+	public fun close ()V
+	public final fun getKeyId ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/BundleKeyHandle$Companion {
+	public final fun fromRawBytes (Ljava/lang/String;[B)Lcom/awakekt/awake/project/BundleKeyHandle;
+}
+
 public abstract interface class com/awakekt/awake/project/BundleKeyProvider {
+	public static final field Companion Lcom/awakekt/awake/project/BundleKeyProvider$Companion;
 	public abstract fun key (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun keyHandle (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/BundleKeyProvider$Companion {
+	public final fun wrapped (Lcom/awakekt/awake/project/BundleKeyStore;Lkotlin/jvm/functions/Function3;)Lcom/awakekt/awake/project/BundleKeyProvider;
+	public final fun wrapped (Lkotlin/jvm/functions/Function3;)Lcom/awakekt/awake/project/BundleKeyProvider;
+}
+
+public final class com/awakekt/awake/project/BundleKeyProvider$DefaultImpls {
+	public static fun keyHandle (Lcom/awakekt/awake/project/BundleKeyProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/project/BundleKeyStore {
+	public abstract fun delete (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun put (Lcom/awakekt/awake/project/BundleKeyHandle;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/BundleKeyStoreKt {
+	public static final fun platformBundleKeyStore (Ljava/lang/String;)Lcom/awakekt/awake/project/BundleKeyStore;
+}
+
+public final class com/awakekt/awake/project/BundleSessionKeyExchange : java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/project/BundleSessionKeyExchange$Companion;
+	public static final field DEFAULT_MODULUS_BITS I
+	public static final field MIN_MODULUS_BITS I
+	public fun close ()V
+	public final fun getPublicKeySpki ()[B
+	public fun toString ()Ljava/lang/String;
+	public final fun unwrap (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/BundleSessionKeyExchange$Companion {
+	public final fun generate (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/ContentBundleDirectoryReport {
