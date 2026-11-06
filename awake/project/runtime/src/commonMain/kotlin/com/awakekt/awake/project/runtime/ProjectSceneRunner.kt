@@ -32,6 +32,7 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
 import com.awakekt.awake.scene.runtime.SceneMeshLevels
+import com.awakekt.awake.scene.runtime.SceneMeshLoad
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.schedule.guardedFor
@@ -428,6 +429,8 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
     override fun materialDefaults(mesh: String, material: String): PbrMaterial? = target.materialDefaults(mesh, material)
 
     override fun meshLevels(name: String): SceneMeshLevels? = target.meshLevels(name)
+
+    override fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? = target.loadMesh(name, scope)
 }
 
 /**
