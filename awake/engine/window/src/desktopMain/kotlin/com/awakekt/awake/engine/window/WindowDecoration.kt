@@ -11,8 +11,8 @@ import kotlin.math.roundToInt
 internal const val GLFW_DECORATED = 0x00020005
 
 /**
- * Whether a desktop window has the OS title bar and border. Choose it when the window opens, with the
- * [runDesktopWindow] that takes one, or change it later with [setWindowDecoration].
+ * Whether a desktop window has the OS title bar and border. Choose it when the window opens, with
+ * [DesktopWindowOptions.decoration], or change it later with [setWindowDecoration].
  */
 enum class WindowDecoration {
     /** The OS title bar and border: the player moves, resizes and closes the window with them. */
@@ -72,17 +72,24 @@ class WindowDrag internal constructor(private val window: GlfwDragWindow) {
             return
         }
         val (x, y) = window.cursor()
-        if (!grabbed) {
-            grabX = x
-            grabY = y
-            grabbed = true
-            return
-        }
+        if (grabbed) follow(x, y) else grab(x, y)
+    }
+
+    /** The drag's first frame: remembers where in the window the pointer took hold. */
+    private fun grab(x: Double, y: Double) {
+        grabX = x
+        grabY = y
+        grabbed = true
+    }
+
+    /** Moves the window by how far the pointer is from where it took hold, when that is a pixel or more. */
+    private fun follow(x: Double, y: Double) {
         val dx = (x - grabX).roundToInt()
         val dy = (y - grabY).roundToInt()
-        if (dx == 0 && dy == 0) return
-        val bounds = window.bounds()
-        window.moveTo(bounds[0] + dx, bounds[1] + dy)
+        if (dx != 0 || dy != 0) {
+            val bounds = window.bounds()
+            window.moveTo(bounds[0] + dx, bounds[1] + dy)
+        }
     }
 }
 

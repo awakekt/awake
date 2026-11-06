@@ -52,19 +52,18 @@ fun runDesktopWindow(
     frames: Int? = null,
     onDpi: (dpi: Float) -> Unit = {},
 ) = runDesktopWindow(
-    game, WindowDecoration.System, onCreate, onFrame, onDispose, pollInput, beforeFrame, afterLoop, cursor,
+    game, DesktopWindowOptions(), onCreate, onFrame, onDispose, pollInput, beforeFrame, afterLoop, cursor,
     cursorImage, frames, onDpi,
 )
 
 /**
- * [runDesktopWindow] with the window's [decoration] chosen as it opens: [WindowDecoration.None]
- * opens it frameless, with no OS title bar or border. Change it later with [setWindowDecoration].
- * Every other parameter is the same.
+ * [runDesktopWindow] opened with [options], such as frameless with
+ * `desktopWindowOptions { decoration = WindowDecoration.None }`. Every other parameter is the same.
  */
 @Suppress("LongParameterList")
 fun runDesktopWindow(
     game: AwakeAppLifecycle,
-    decoration: WindowDecoration,
+    options: DesktopWindowOptions,
     onCreate: (window: Long) -> Unit,
     onFrame: (deltaSeconds: Float) -> Unit,
     onDispose: () -> Unit,
@@ -79,7 +78,8 @@ fun runDesktopWindow(
     require(frames == null || frames > 0) { "A run lasts at least one frame; was $frames." }
     check(GlfwWindow.glfwInit()) { "glfwInit failed" }
     GlfwWindow.glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
-    GlfwWindow.glfwWindowHint(GLFW_DECORATED, if (decoration == WindowDecoration.System) GLFW_TRUE else GLFW_FALSE)
+    val decorated = if (options.decoration == WindowDecoration.System) GLFW_TRUE else GLFW_FALSE
+    GlfwWindow.glfwWindowHint(GLFW_DECORATED, decorated)
     val window = GlfwWindow.glfwCreateWindow(
         game.windowConfig.width,
         game.windowConfig.height,
