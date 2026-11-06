@@ -99,6 +99,57 @@ bytes that have arrived, ready once the new scene has had its first frame, or fa
 path and cause. See
 [`awake:project:runtime`](https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene).
 
+## Get a node ready before it spawns
+
+`spawn` builds a node's meshes the first time it draws them, and a texture a resolver loads from
+files draws a frame or more later. For something that must look right the moment it appears, such as
+a character arriving or a short effect, prewarm it first. `prewarm` lists what the node and its
+children draw (`node.assetReferences()`), then each frame builds and uploads its meshes and
+materials and loads its textures off the frame:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmTest.kt:prewarm"
+```
+
+Once it is ready, a spawn draws the node on its first frame and shares what the prewarm built. The
+prewarm holds those assets so nothing frees them in the meantime; close it after the spawn:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmTest.kt:spawn"
+```
+
+`SceneAssetLibrary.prewarmFrameBudgetBytes` caps the new mesh uploaded per frame, so prewarming
+while the game plays doesn't stall a frame. An asset that can't be built is listed in `failed`, and
+is built when it is first drawn instead. Closing a prewarm before it is ready, or tearing the scene
+down, stops it, and `await` then throws `CancellationException`. A ready prewarm still open at teardown
+held its assets for the whole scene, so teardown logs a warning naming them. Expand prefab links first
+(`withPrefabs`): `assetReferences` lists a link it can't follow in `prefabLinks`.
+
+A glTF model the scene's resolver hasn't loaded is read and decoded off the frame thread in the
+session's `coroutineScope`, then built like the rest. Prewarms and a project `spawn` of the same model
+share one load, and closing every one of them, or tearing the scene down, cancels it. In a played
+project, a node whose models a prewarm loaded draws them on the frame it spawns; a model that fails to
+load is listed in `failed`. A resolver of your own joins in by overriding `SceneAssetResolver.loadMesh`
+for a mesh it has to load before it can build it.
+
+A prewarm also decodes the node's `audio_source` clips, off the frame and without playing them, and
+reads the images its 3D `particle_emitter`s show. These don't go through the library's textures: they
+go into the scene's own clips and particle images, the same ones its `AudioSystem` and
+`ParticleContentSystem` use, which the host gives the library as `SceneAssetLibrary.audioClips` and
+`SceneAssetLibrary.particleImages`. `runProject` does that for each scene it plays, and closes them
+when the scene stops; a host that runs the scene's systems itself does it like this:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmAudioTest.kt:audio"
+```
+
+Each clip and image decodes once, whether the prewarm or the system asks first, and the prewarm holds
+it until it is closed, so the spawn's first frame plays the clip and draws the emitter. Closing the
+prewarm, or tearing the scene down, cancels a decode nothing else waits for. A clip that isn't a 16-bit
+PCM WAV file, an image that can't be read, or a scene that gave the library no clips or particle images
+is listed in `failed`, by path. `particleImageLoads(files)` makes the particle images as
+`audioClipLoads(files)` makes the clips.
+
 ## Save a world
 
 `fromWorld` walks the entities that have a `Transform`, follows their parent links to rebuild the

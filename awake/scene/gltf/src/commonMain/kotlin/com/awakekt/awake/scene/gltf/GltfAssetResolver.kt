@@ -37,6 +37,8 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
 import com.awakekt.awake.scene.runtime.SceneMeshLevels
+import com.awakekt.awake.scene.runtime.SceneMeshLoad
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Resolves `.gltf` and `.glb` model paths in scenes to meshes and materials.
@@ -74,6 +76,7 @@ class GltfAssetResolver(
         runCatching { bundledResourceReader(path.value) }
     }
     private var imageDecoder: (suspend (ByteArray) -> GpuImageSource?)? = null
+    private val loads = GltfModelLoads(this, ::staging)
 
     /**
      * Retrieves a previously loaded skinned scene by its path.
@@ -221,6 +224,27 @@ class GltfAssetResolver(
         from.skinnedPartTextures.forEach { (key, texture) ->
             if (key.startsWith("$path#")) skinnedPartTextures.getOrPut(key) { texture }
         }
+    }
+
+    /**
+     * Starts loading the model file at [path] off the frame thread, in [scope], or joins the load of it
+     * already under way, however it was started: by a prewarm, a spawn or this. It reads and decodes the
+     * file into a resolver of its own, with this one's asset source and image decoder, and the first
+     * [SceneMeshLoad.poll] after it finishes [adopt]s it here, so its meshes and materials resolve.
+     * Closing every caller's load before then cancels it, as cancelling [scope] does.
+     *
+     * Call it, and poll and close what it returns, on the frame thread.
+     */
+    fun loadModel(path: String, scope: CoroutineScope): SceneMeshLoad = loads.join(path, scope)
+
+    /** [loadModel] for the model [name] is drawn from, when this resolves it and hasn't loaded that model. */
+    override fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? =
+        modelPath(name).takeIf { canResolveMesh(name) && !isPreloaded(it) }?.let { loadModel(it, scope) }
+
+    // A resolver like this one, for a load to read a model into off the frame thread.
+    private fun staging(): GltfAssetResolver = GltfAssetResolver(bundledResourceReader).also { staged ->
+        staged.assetSource = assetSource
+        staged.imageDecoder = imageDecoder
     }
 
     /**

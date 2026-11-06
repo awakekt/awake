@@ -376,7 +376,7 @@ class SceneAppLifecycleRuntime internal constructor(
         // rather than in DefaultSceneComponentResolvers.init{} so tests can run without
         // triggering global state, and so subclasses can opt out or replace the set.
         DefaultSceneComponentResolvers.install()
-        session.initialize()
+        session.initialize(services)
     }
 
     override suspend fun ready(renderer: Renderer) {

@@ -1,0 +1,160 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.scene.runtime
+
+import com.awakekt.awake.core.audio.AudioClip
+import com.awakekt.awake.core.io.AssetLoads
+import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.render.texture.GpuImageSource
+
+/**
+ * The open [ScenePrewarm]s of one [SceneAssetLibrary], worked on oldest first, a frame at a time, on the
+ * frame thread. A ready prewarm stays open, holding its assets, until it is closed or [dispose]d.
+ */
+internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
+    private val open = mutableListOf<ScenePrewarm>()
+
+    /** Bytes of new mesh one [step] may upload; one mesh is uploaded whatever its size. */
+    var frameBudgetBytes: Long = Long.MAX_VALUE
+
+    /** The scene's clips and particle images; see [SceneAssetLibrary.audioClips]. */
+    var audioClips: AssetLoads<AudioClip>? = null
+    var particleImages: AssetLoads<GpuImageSource>? = null
+
+    fun add(prewarm: ScenePrewarm) {
+        open += prewarm
+    }
+
+    fun remove(prewarm: ScenePrewarm) {
+        open -= prewarm
+    }
+
+    /** Polls each pending prewarm's textures, and builds renderables until the frame's budget is spent. */
+    fun step() {
+        if (open.isEmpty()) return
+        var spent = 0L
+        // A copy: a progress callback may close a prewarm, or open another, while this runs.
+        for (prewarm in open.toList()) {
+            if (prewarm.isGivenUp) prewarm.close()
+            if (!prewarm.isPending) continue
+            pollTextures(prewarm)
+            pollModels(prewarm)
+            prewarm.audioClips.poll(prewarm, prewarm.scope)
+            prewarm.particleImages.poll(prewarm, prewarm.scope)
+            while (prewarm.isPending && prewarm.pendingRenderables.isNotEmpty() && spent < frameBudgetBytes) {
+                val key = prewarm.pendingRenderables.removeFirst()
+                if (!startedLoading(prewarm, key)) spent += build(prewarm, key)
+            }
+            prewarm.finishIfDone()
+        }
+    }
+
+    /**
+     * Stops every prewarm without releasing: the library is destroying what they held. A ready one that
+     * was never closed is a leak, since it held its assets for the rest of the scene, so it is logged; one
+     * still loading is not, as a scene switched while it loaded stops it on purpose.
+     */
+    fun dispose() {
+        val all = open.toList()
+        open.clear()
+        all.forEach { prewarm ->
+            if (prewarm.isReady) {
+                log.warn {
+                    "A prewarm of ${prewarm.label} was never closed, so it held them until the scene was torn " +
+                        "down. Close it once what it prepared has spawned."
+                }
+            }
+            prewarm.dispose()
+        }
+    }
+
+    private fun pollTextures(prewarm: ScenePrewarm) {
+        val names = prewarm.pendingTextures.iterator()
+        while (names.hasNext() && prewarm.isPending) {
+            val name = names.next()
+            val failure = if (library.isTextureRegistered(name)) {
+                null
+            } else {
+                when (val load = library.prewarmTexture(name)) {
+                    SceneTextureLoad.Loading -> continue
+                    is SceneTextureLoad.Loaded -> null
+                    is SceneTextureLoad.Failed -> load.cause
+                    null -> IllegalStateException("No scene texture named '$name' is registered or could be resolved by installed resolvers.")
+                }
+            }
+            names.remove()
+            prewarm.settle(name, failure)
+        }
+    }
+
+    /**
+     * Whether [key]'s mesh has to be loaded by its resolver before it can be built, such as a glTF model
+     * not preloaded yet; if so, [prewarm] waits for that load, which costs the frame nothing.
+     */
+    private fun startedLoading(prewarm: ScenePrewarm, key: SceneRenderableKey): Boolean {
+        val load = if (library.hasCustomRenderer(key)) null else library.loadMesh(key.mesh, prewarm.scope)
+        if (load != null) prewarm.loadingModels += key to load
+        return load != null
+    }
+
+    /**
+     * Polls the models [prewarm] waits for: a renderable whose model has loaded goes back to be built
+     * first, and one whose model failed to load settles as failed.
+     */
+    private fun pollModels(prewarm: ScenePrewarm) {
+        // A copy: settling calls the progress callback, which may close the prewarm and its loads.
+        for (entry in prewarm.loadingModels.toList()) {
+            if (!prewarm.isPending) return
+            val (key, load) = entry
+            if (!load.poll()) continue
+            prewarm.loadingModels.remove(entry)
+            load.close()
+            val failure = load.failure
+            if (failure == null) {
+                prewarm.pendingRenderables.addFirst(key)
+            } else {
+                val label = "${key.mesh} + ${key.material}"
+                log.error(failure) { "Can't prewarm $label: its model failed to load (${failure.message})." }
+                prewarm.settle(label, failure)
+            }
+        }
+    }
+
+    /**
+     * Builds [key]'s mesh, material and levels, holding each for [prewarm], and returns the bytes of mesh
+     * it newly uploaded: none for one already built or retained, which costs the frame nothing.
+     */
+    // TooGenericExceptionCaught: a factory or resolver reports a mesh it can't build in its own exception type.
+    @Suppress("TooGenericExceptionCaught")
+    private fun build(prewarm: ScenePrewarm, key: SceneRenderableKey): Long {
+        val label = "${key.mesh} + ${key.material}"
+        if (library.hasCustomRenderer(key)) {
+            prewarm.settle(label, null)
+            return 0
+        }
+        var uploaded = 0L
+        try {
+            uploaded += hold(prewarm, key.mesh)
+            library.requireMaterial(prewarm.runtime, key.material)
+            prewarm.heldMaterials += key.material
+            library.levelsOf(key.mesh)?.meshes?.forEach { level -> uploaded += hold(prewarm, level) }
+            prewarm.settle(label, null)
+        } catch (failure: Exception) {
+            log.error(failure) { "Can't prewarm $label: ${failure.message}. It builds when it is first drawn instead." }
+            prewarm.settle(label, failure)
+        }
+        return uploaded
+    }
+
+    private fun hold(prewarm: ScenePrewarm, mesh: String): Long {
+        val fresh = library.meshHolderCount(mesh) == 0 && !library.isMeshRetained(mesh)
+        val built = library.requireMesh(prewarm.runtime, mesh)
+        prewarm.heldMeshes += mesh
+        return if (fresh) built.sizeBytes else 0
+    }
+}
+
+private val log = Logger("scene-prewarm")

@@ -99,6 +99,13 @@ Each failure reaches the handler once, with where it failed (`AppErrorSource`), 
 Call `retry` on the frame thread. It returns at once, and a second failure reaches the handler as a
 new error.
 
+Work that should stop with the scene, such as waiting on a server's reply for something the scene
+spawns, goes in the session's `runtime.session.coroutineScope` instead. It is a child of the
+`AppCoroutineScope` when one is registered, so its failures reach the same handler, and it is cancelled
+when the scene's session is disposed. It runs off the frame thread, on `sessionDispatcher` (default
+`Dispatchers.Default`): send results to a system through a channel rather than changing the world from
+the coroutine.
+
 A system that throws is reported once and then **skipped for the rest of the scene**: the frame
 carries on with the other systems, the renderer and the UI, and a system that fails every frame does
 not call the handler every frame. Its scene's next switch builds the system afresh. Guarding costs one
