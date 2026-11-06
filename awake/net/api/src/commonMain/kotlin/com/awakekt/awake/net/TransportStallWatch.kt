@@ -31,19 +31,19 @@ class TransportStallWatch(
     val detector: TransportStallDetector = TransportStallDetector(),
     /** Monotonic seconds on the socket's thread. */
     private val clockSeconds: () -> Double = monotonicSeconds(),
-) : AutoCloseable {
+) : StallWatch {
     private val mutableState = MutableStateFlow(TransportStallState.Clear)
     private val tick: () -> Unit = ::onTick
 
     /** The transport's stalls as of the last check or packet; [TransportStallState.Clear] while it moves. */
-    val state: StateFlow<TransportStallState> = mutableState.asStateFlow()
+    override val state: StateFlow<TransportStallState> = mutableState.asStateFlow()
 
     /** Whether [close] ran, or the transport disconnected, so no further checks are scheduled. */
-    var isClosed: Boolean = false
+    override var isClosed: Boolean = false
         private set
 
     /** See [TransportStallDetector.expectInbound]. */
-    var expectInbound: Boolean
+    override var expectInbound: Boolean
         get() = detector.expectInbound
         set(value) {
             detector.expectInbound = value
@@ -51,7 +51,7 @@ class TransportStallWatch(
         }
 
     /** See [TransportStallDetector.onEnded]. */
-    var onEnded: ((direction: StallDirection, seconds: Double) -> Unit)?
+    override var onEnded: ((direction: StallDirection, seconds: Double) -> Unit)?
         get() = detector.onEnded
         set(value) {
             detector.onEnded = value
@@ -63,7 +63,7 @@ class TransportStallWatch(
     }
 
     /** A packet arrived now; call it from the transport's [DirectTransport.listen] callback. */
-    fun received() {
+    override fun received() {
         if (isClosed) return
         detector.received(clockSeconds())
         mutableState.value = detector.state
@@ -105,7 +105,7 @@ fun DirectTransport.watchStalls(
     detector = TransportStallDetector(upstreamAfterSeconds, downstreamAfterSeconds),
 )
 
-private fun monotonicSeconds(): () -> Double {
+internal fun monotonicSeconds(): () -> Double {
     val start = TimeSource.Monotonic.markNow()
     return { start.elapsedNow().toDouble(DurationUnit.SECONDS) }
 }
