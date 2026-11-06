@@ -6,6 +6,7 @@
 package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
+import com.awakekt.awake.core.io.InMemoryFileSystem
 import com.awakekt.awake.core.io.Sha256
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -14,6 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Encrypted bundles read back with the key, by range or whole, and nothing readable is stored. */
@@ -147,5 +149,180 @@ class EncryptedBundleTest {
         assertTrue(json.contains("\"keyId\":\"${EncryptedProject.KEY_ID}\"") && json.contains(ProjectBundleEncryption.SCHEME), json)
         assertFalse(json.contains(project.key.hex()))
         assertFalse(BundleEncryptionKey(EncryptedProject.KEY_ID, project.key).toString().contains(project.key.hex()))
+    }
+
+    @Test
+    fun perBundleKeyIdsAskOnlyForTouchedBundlesAndRefuseUnauthorizedOnesWithoutBreakingCommon() = runTest {
+        val commonKey = ByteArray(32) { (it * 3 + 1).toByte() }
+        val expansionKey = ByteArray(32) { (it * 7 + 9).toByte() }
+        val expansionPaths = setOf("scenes/pier.scene.json", "assets/models/buoy.glb")
+        val bundles = LinkedHashMap<String, WrittenContentBundle>()
+        val writer = ContentBundleWriter(
+            grouping = { path -> if (path in expansionPaths) "expansion-a" else "common" },
+            encryption = BundleEncryptionKey("common-2026", commonKey),
+            groupEncryption = { group -> if (group == "expansion-a") BundleEncryptionKey("expansion-a", expansionKey) else null },
+        )
+        val index = writer.write(looseIndexOf(BundledProject.SAMPLE_FILES), { BundledProject.SAMPLE_FILES.getValue(it.path) }) {
+            bundles[it.url] = it
+        }
+
+        assertEquals(ProjectBundleEncryption(keyId = "common-2026"), index.encryption)
+        assertEquals(listOf(null, "expansion-a"), index.bundles.map { it.keyId })
+
+        val entitled = mutableSetOf("common-2026")
+        val asked = mutableListOf<String>()
+        val keys = BundleKeyProvider { keyId ->
+            asked += keyId
+            check(keyId in entitled) { "not entitled to $keyId" }
+            if (keyId == "common-2026") commonKey else expansionKey
+        }
+        val source = IndexedAssetSource(index, { url -> bundles.getValue(url).bytes }, keys = keys)
+
+        assertContentEquals(BundledProject.SAMPLE_FILES.getValue(scene), source.read(AssetPath(scene)).getOrThrow())
+        assertContentEquals(BundledProject.SAMPLE_FILES.getValue(crate), source.read(AssetPath(crate)).getOrThrow())
+        assertEquals(listOf("common-2026"), asked, "untouched expansion bundle never asks for its key")
+
+        val denied = source.read(AssetPath("scenes/pier.scene.json")).exceptionOrNull()
+        assertEquals("not entitled to expansion-a", denied?.message)
+        assertEquals(listOf("common-2026", "expansion-a"), asked)
+
+        // Common content keeps working without asking again.
+        assertContentEquals(
+            BundledProject.SAMPLE_FILES.getValue("assets/sounds/bell.ogg"),
+            source.read(AssetPath("assets/sounds/bell.ogg")).getOrThrow(),
+        )
+        assertEquals(listOf("common-2026", "expansion-a"), asked)
+
+        // Granting the expansion key lets the next read open it cleanly.
+        entitled += "expansion-a"
+        expansionPaths.forEach { path ->
+            assertContentEquals(BundledProject.SAMPLE_FILES.getValue(path), source.read(AssetPath(path)).getOrThrow(), path)
+        }
+        assertEquals(listOf("common-2026", "expansion-a", "expansion-a"), asked)
+    }
+
+    @Test
+    fun perBundleKeyIdsWorkOnRangeReads() = runTest {
+        val (files, bundles, index) = multiKeySharedFixture()
+        val sharedBytes = files.getValue("assets/textures/shared-common.bin")
+
+        val rangeAsked = mutableListOf<String>()
+        val rangeSource = IndexedAssetSource(
+            index = index,
+            fetch = { error("whole fetch unused: $it") },
+            rangeFetch = { url, offset, length -> bundles.getValue(url).bytes.copyOfRange(offset.toInt(), (offset + length).toInt()) },
+            keys = { keyId ->
+                rangeAsked += keyId
+                if (keyId == "common-2026") COMMON_KEY else EXPANSION_KEY
+            },
+        )
+
+        assertContentEquals(sharedBytes, rangeSource.read(AssetPath("assets/textures/shared-common.bin")).getOrThrow())
+        assertEquals(listOf("common-2026"), rangeAsked)
+        assertContentEquals(sharedBytes, rangeSource.read(AssetPath("assets/textures/shared-expansion.bin")).getOrThrow())
+        assertEquals(listOf("common-2026", "expansion-a"), rangeAsked)
+    }
+
+    @Test
+    fun perBundleKeyIdsWorkWithCachePrefetchAndRetainOnly() = runTest {
+        val (files, bundles, index) = multiKeySharedFixture()
+        val sharedBytes = files.getValue("assets/textures/shared-common.bin")
+        val commonShared = index.files.single { it.path == "assets/textures/shared-common.bin" }
+        val expansionShared = index.files.single { it.path == "assets/textures/shared-expansion.bin" }
+        assertEquals(commonShared.sha256, expansionShared.sha256)
+        assertNotEquals(index.cacheKeyOf(commonShared), index.cacheKeyOf(expansionShared))
+
+        val cache = FileSystemContentCache(InMemoryFileSystem())
+        val staleHash = "f".repeat(64)
+        cache.put(staleHash, byteArrayOf(1, 2, 3))
+        val prefetchAsked = mutableListOf<String>()
+        val cachedSource = IndexedAssetSource(
+            index = index,
+            fetch = { url -> bundles.getValue(url).bytes },
+            cache = cache,
+            keys = { keyId ->
+                prefetchAsked += keyId
+                if (keyId == "common-2026") COMMON_KEY else EXPANSION_KEY
+            },
+        )
+
+        cachedSource.prefetch(listOf("scenes/main.scene.json", "assets/textures/shared-common.bin"))
+        assertEquals(listOf("common-2026"), prefetchAsked)
+
+        cachedSource.prefetch(files.keys.toList())
+        assertEquals(listOf("common-2026", "expansion-a"), prefetchAsked)
+        assertEquals(1, cache.retainOnly(index))
+        assertNull(cache.get(staleHash))
+        assertFalse(cache.get(index.cacheKeyOf(commonShared))!!.contentEquals(cache.get(index.cacheKeyOf(expansionShared))!!))
+
+        val offlineAsked = mutableListOf<String>()
+        val offline = IndexedAssetSource(
+            index = index,
+            fetch = { error("offline: $it") },
+            cache = cache,
+            keys = { keyId ->
+                offlineAsked += keyId
+                check(keyId == "common-2026") { "expansion locked" }
+                COMMON_KEY
+            },
+        )
+        assertContentEquals(sharedBytes, offline.read(AssetPath("assets/textures/shared-common.bin")).getOrThrow())
+        assertEquals("expansion locked", offline.read(AssetPath("assets/textures/shared-expansion.bin")).exceptionOrNull()?.message)
+        assertEquals(listOf("common-2026", "expansion-a"), offlineAsked)
+    }
+
+    private suspend fun multiKeySharedFixture(): Triple<Map<String, ByteArray>, Map<String, WrittenContentBundle>, ProjectIndex> {
+        val sharedBytes = ByteArray(96) { (it + 17).toByte() }
+        val files = linkedMapOf(
+            "awake.project.json" to "{\"formatVersion\":1,\"id\":\"com.example.harbor-town\"}".encodeToByteArray(),
+            "scenes/main.scene.json" to "{\"version\":1,\"name\":\"harbor\"}".encodeToByteArray(),
+            "assets/textures/shared-common.bin" to sharedBytes.copyOf(),
+            "scenes/expansion.scene.json" to "{\"version\":1,\"name\":\"north-island\"}".encodeToByteArray(),
+            "assets/textures/shared-expansion.bin" to sharedBytes.copyOf(),
+        )
+        val expansionPaths = setOf("scenes/expansion.scene.json", "assets/textures/shared-expansion.bin")
+        val bundles = LinkedHashMap<String, WrittenContentBundle>()
+        val writer = ContentBundleWriter(
+            grouping = { path -> if (path in expansionPaths) "expansion-a" else "common" },
+            encryption = BundleEncryptionKey("common-2026", COMMON_KEY),
+            groupEncryption = { group -> if (group == "expansion-a") BundleEncryptionKey("expansion-a", EXPANSION_KEY) else null },
+        )
+        val index = writer.write(looseIndexOf(files), { files.getValue(it.path) }) { bundles[it.url] = it }
+        return Triple(files, bundles, index)
+    }
+
+    @Test
+    fun writerRejectsPartialGroupEncryptionAndConflictingKeysForOneId() = runTest {
+        val keyA = ByteArray(32) { (it + 1).toByte() }
+        val keyB = ByteArray(32) { (it + 2).toByte() }
+        val loose = looseIndexOf(BundledProject.SAMPLE_FILES)
+
+        val partial = assertFailsWith<IllegalArgumentException> {
+            ContentBundleWriter(
+                groupEncryption = { group -> if (group == "scenes") BundleEncryptionKey("expansion-a", keyA) else null },
+            ).write(loose, { BundledProject.SAMPLE_FILES.getValue(it.path) }) { }
+        }
+        assertTrue(partial.message.orEmpty().contains("Every bundle group in an encrypted index needs a BundleEncryptionKey"), "$partial")
+
+        val conflicting = assertFailsWith<IllegalArgumentException> {
+            ContentBundleWriter(
+                encryption = BundleEncryptionKey("same-id", keyA),
+                groupEncryption = { group -> if (group == "scenes") BundleEncryptionKey("same-id", keyB) else null },
+            ).write(loose, { BundledProject.SAMPLE_FILES.getValue(it.path) }) { }
+        }
+        assertTrue(conflicting.message.orEmpty().contains("same-id"), "$conflicting")
+
+        val allViaGroupSelector = ContentBundleWriter(
+            groupEncryption = { group ->
+                if (group == "scenes") BundleEncryptionKey("expansion-a", keyB) else BundleEncryptionKey("common-2026", keyA)
+            },
+        ).write(loose, { BundledProject.SAMPLE_FILES.getValue(it.path) }) { }
+        assertEquals("common-2026", allViaGroupSelector.encryption?.keyId)
+        assertEquals(listOf(null, null, "expansion-a"), allViaGroupSelector.bundles.map { it.keyId })
+    }
+
+    private companion object {
+        val COMMON_KEY = ByteArray(32) { (it * 5 + 2).toByte() }
+        val EXPANSION_KEY = ByteArray(32) { (it * 11 + 4).toByte() }
     }
 }

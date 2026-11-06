@@ -65,6 +65,29 @@ Make a key once per project or entitlement tier, for example with `openssl rand 
 keep it in your secret store. Rotating a key re-seals every bundle and changes every URL, so don't
 rotate it per session. To revoke a player, stop answering them at your key or index endpoint.
 
+When one published index spans shared assets and gated regions or expansions, give gated bundle groups
+their own keys while keeping shared bundles on the default key:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:group-keys"
+```
+
+With the CLI or `generateContentBundles`, override a group's key by group name:
+
+```bash
+awake bundle build/project.index.json --output build/published \
+  --key-id common-2026 --key-file ~/.secrets/common.key \
+  --group-key-file scenes=north-island-2026:~/.secrets/north-island.key
+```
+
+```kotlin title="build.gradle.kts"
+projectContent {
+    bundleKeyId.set("common-2026")
+    bundleKeyEnvironmentVariable.set("AWAKE_COMMON_KEY")
+    bundleGroupKey("scenes", keyId = "north-island-2026", environmentVariable = "AWAKE_NORTH_ISLAND_KEY")
+}
+```
+
 With a [public sign-in set](protected-content.md), only the full set is sealed:
 `generatePublicContentBundles` never takes the key, because the sign-in scene loads before the player
 has it. Open the sealed set with your `BundleKeyProvider` after sign-in and attach it to the
@@ -73,8 +96,9 @@ has it. Open the sealed set with your `BundleKeyProvider` after sign-in and atta
 ## Online: fetch the key after sign-in
 
 Pass a `BundleKeyProvider` to `IndexedAssetSource` or `IndexedAssetSource.open`. The engine asks it
-once per source for the index's key id. If the request fails, the read fails, and the next read
-asks again.
+once per distinct `keyId` per source, only when a bundle sealed under that `keyId` is read or
+prefetched, so a player in a shared zone never asks for an expansion's key until entering it. If the
+request fails, the read fails, and the next read asks again.
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:online"
@@ -132,8 +156,9 @@ nonce are the 44 bytes of `HKDF-SHA256(key, salt = keyId, info = "awake-awkb-v2"
 engine that reads only version 1 refuses a version 2 bundle with a version error.
 
 **The index.** An encrypted index is `formatVersion` 4. It adds
-`"encryption": { "keyId": "…", "scheme": "aes-256-gcm-hkdf-sha256" }`, and every entry is a bundle
-member. An engine that reads only versions 2 and 3 refuses it.
+`"encryption": { "keyId": "…", "scheme": "aes-256-gcm-hkdf-sha256" }` as the default key id, each
+bundle in `bundles` may set `"keyId"` to override it for that bundle's members, and every entry is a
+bundle member. An engine that reads only versions 2 and 3 refuses it.
 
 ## See also
 

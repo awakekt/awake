@@ -28,7 +28,7 @@ internal fun projectIndexIssueDetails(index: ProjectIndex): List<ProjectContentI
         if (ids.scheme != ProjectPathIds.SCHEME) add(indexInvalid("pathIds.scheme must be ${ProjectPathIds.SCHEME}"))
         if (ids.salt.isBlank()) add(indexInvalid("pathIds.salt must not be blank"))
     }
-    val bundles = bundleIssues(index.bundles, this)
+    val bundles = bundleIssues(index.bundles, encrypted, this)
     val keys = mutableSetOf<String>()
     index.files.forEachIndexed { position, entry ->
         addAll(entryKeyIssues(position, entry, index.pathIds != null, bundled))
@@ -42,7 +42,11 @@ internal fun projectIndexIssueDetails(index: ProjectIndex): List<ProjectContentI
 }
 
 /** Each bundle's own rules, added to [issues]; answers the bundles by SHA-256. */
-private fun bundleIssues(bundles: List<ProjectIndexBundle>, issues: MutableList<ProjectContentIssue>): Map<String, ProjectIndexBundle> {
+private fun bundleIssues(
+    bundles: List<ProjectIndexBundle>,
+    encrypted: Boolean,
+    issues: MutableList<ProjectContentIssue>,
+): Map<String, ProjectIndexBundle> {
     val bySha = mutableMapOf<String, ProjectIndexBundle>()
     bundles.forEachIndexed { position, bundle ->
         if (!isSha256Digest(bundle.sha256)) issues += indexInvalid("bundles[$position].sha256 must be a lowercase SHA-256 digest")
@@ -50,6 +54,10 @@ private fun bundleIssues(bundles: List<ProjectIndexBundle>, issues: MutableList<
             issues += indexInvalid("bundles[$position].sizeBytes must be at least ${ContentBundleFormat.HEADER_SIZE}")
         }
         if (bundle.url.isBlank()) issues += indexInvalid("bundles[$position].url must not be blank")
+        if (bundle.keyId != null) {
+            if (!encrypted) issues += indexInvalid("bundles[$position].keyId needs formatVersion ${ProjectIndex.ENCRYPTED_FORMAT_VERSION}")
+            if (bundle.keyId.isBlank()) issues += indexInvalid("bundles[$position].keyId must not be blank")
+        }
         if (bySha.put(bundle.sha256, bundle) != null) issues += indexInvalid("bundles[$position] is listed twice: ${bundle.sha256}")
     }
     return bySha

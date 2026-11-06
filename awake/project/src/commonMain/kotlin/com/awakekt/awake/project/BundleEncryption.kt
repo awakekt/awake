@@ -13,11 +13,13 @@ import kotlinx.serialization.Serializable
 
 /**
  * Answers the master key that opens an encrypted [ProjectIndex]'s bundles, by its
- * [ProjectBundleEncryption.keyId]. The app owns where the key comes from: its own authenticated
- * endpoint after sign-in, a store on the device after a first online sign-in, or, for a fully offline
- * build, a key shipped in the client, which is deterrence only. Core never stores what it answers.
+ * [ProjectBundleEncryption.keyId] or a bundle's [ProjectIndexBundle.keyId]. The app owns where the
+ * key comes from: its own authenticated endpoint after sign-in, a store on the device after a first
+ * online sign-in, or, for a fully offline build, a key shipped in the client, which is deterrence
+ * only. Core never stores what it answers.
  *
- * [IndexedAssetSource] asks once per source; a failure is not remembered, so the next read asks again.
+ * [IndexedAssetSource] asks once per key id per source, when a bundle under that key id is read; a
+ * failure is not remembered, so the next read asks again.
  */
 fun interface BundleKeyProvider {
     /**
