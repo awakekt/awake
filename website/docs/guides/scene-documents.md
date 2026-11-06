@@ -125,6 +125,13 @@ down, stops it, and `await` then throws `CancellationException`. A ready prewarm
 held its assets for the whole scene, so teardown logs a warning naming them. Expand prefab links first
 (`withPrefabs`): `assetReferences` lists a link it can't follow in `prefabLinks`.
 
+A glTF model the scene's resolver hasn't loaded is read and decoded off the frame thread in the
+session's `coroutineScope`, then built like the rest. Prewarms and a project `spawn` of the same model
+share one load, and closing every one of them, or tearing the scene down, cancels it. In a played
+project, a node whose models a prewarm loaded draws them on the frame it spawns; a model that fails to
+load is listed in `failed`. A resolver of your own joins in by overriding `SceneAssetResolver.loadMesh`
+for a mesh it has to load before it can build it.
+
 ## Save a world
 
 `fromWorld` walks the entities that have a `Transform`, follows their parent links to rebuild the
