@@ -2966,8 +2966,10 @@ and runs a system that pulses every beacon:</p>
   under a <code>SceneContentKey</code> the capability declares. It runs once per load, before the physics world
   exists. Throw <code>IllegalArgumentException</code> for a scene the capability cannot run; the load is refused
   with the scene's path.</li>
-<li><strong><code>plan</code></strong> adds the systems a scene uses, with <code>plan.fixed</code> for the fixed step and <code>plan.frame</code> for
-  each rendered frame. <code>scene.uses(type)</code> says whether any node has a component. Each system needs a
+<li><strong><code>plan</code></strong> adds the systems a scene uses, with <code>plan.fixed</code> for the fixed step, <code>plan.preAnimation</code>
+  for pose and snapshot updates run each rendered frame before world matrices are propagated for
+  animation and cameras, and <code>plan.frame</code> for each rendered frame after that. <code>scene.uses(type)</code> says
+  whether any node has a component. Each system needs a
   name of its own. A system that holds something to give back, such as GPU content, implements
   <code>AutoCloseable</code> and is closed when the scene stops.
   A system that must account for every fixed step reads <code>services.fixedStep</code>: the steps each frame

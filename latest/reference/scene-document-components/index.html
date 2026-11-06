@@ -7408,17 +7408,19 @@ number for alpha.</p>
 </tbody>
 </table>
 <h2 id="locomotion_animation"><code>locomotion_animation</code></h2>
-<p>Plays a skinned model's clip for how its entity moves: idle, walking, running and jumping. <code>SceneLocomotionAnimation</code>.</p>
-<p>The scene component maps every field below to <code>core:animation</code>'s <code>LocomotionConfig</code>.
+<p>Plays a skinned model's clip for how its entity moves: idle, walking, running, jumping, and optional 3D free motion. <code>SceneLocomotionAnimation</code>.</p>
+<p>The scene component maps every field below to <code>core:animation</code>'s <code>LocomotionConfig</code> and <code>FreeLocomotionConfig</code>.
 <code>LocomotionPlayer</code> owns the scene-independent movement measurement, clip phases and playback rate;
-<code>LocomotionAnimationSystem</code> supplies world position and ground contact. Ground-speed smoothing
-uses <code>damp</code> with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
+<code>LocomotionAnimationSystem</code> supplies world position, ground contact, and free-motion state. Ground-speed and 3D-speed smoothing
+use <code>damp</code> with a 0.1-second time constant. Thresholds, fade times and reference speeds must be
 finite and satisfy the ranges below; scene validation rejects invalid settings before loading.</p>
 <p>Speeds are measured from the entity's world position, so it animates however the entity is moved,
 and a model on a child node animates with it. Clip names are the model's own animations; a clip
 left out, or one the model lacks, keeps whatever already plays. With a <code>character_controller</code> on the
-entity or above it, the jump clips follow its ground contact. Otherwise a jump ends when the fall
-stops, so <code>airborneAbove</code> must exceed the vertical speed of running up the steepest walkable slope.</p>
+entity or above it, the jump clips follow its ground contact, and <code>CharacterMotionMode.Free</code> switches
+playback to <code>free</code> (or reuses <code>idle</code>, <code>walk</code> and <code>run</code> against 3D speed) without firing <code>takeOff</code> or
+<code>land</code>. Otherwise a jump ends when the fall stops, so <code>airborneAbove</code> must exceed the vertical speed
+of running up the steepest walkable slope.</p>
 <table>
 <thead>
 <tr>
@@ -7506,6 +7508,91 @@ stops, so <code>airborneAbove</code> must exceed the vertical speed of running u
 <td>number</td>
 <td>none</td>
 <td>Ground speed the run cycle was authored for; set it to scale playback so the stride matches travel. Greater than 0.</td>
+</tr>
+<tr>
+<td><code>free</code></td>
+<td>object</td>
+<td>none</td>
+<td>Optional 3D free-motion clips and speed thresholds (<code>SceneFreeLocomotionAnimation</code>), described below; none reuses <code>idle</code>, <code>walk</code> and <code>run</code> against 3D travel speed while in free motion.</td>
+</tr>
+</tbody>
+</table>
+<p><code>free</code> is a <code>SceneFreeLocomotionAnimation</code> object used while <code>GroundContact.freeMotion</code> is <code>true</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>idle</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip while hovering or stationary in 3D space.</td>
+</tr>
+<tr>
+<td><code>move</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip above <code>moveAbove</code> 3D travel speed when neither <code>fast</code>, <code>ascend</code> nor <code>descend</code> applies.</td>
+</tr>
+<tr>
+<td><code>fast</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip above <code>fastAbove</code> 3D travel speed.</td>
+</tr>
+<tr>
+<td><code>ascend</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip while climbing faster than <code>verticalAbove</code> and at least as fast vertically as horizontally.</td>
+</tr>
+<tr>
+<td><code>descend</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip while descending faster than <code>verticalAbove</code> downward and at least as fast vertically as horizontally.</td>
+</tr>
+<tr>
+<td><code>moveAbove</code></td>
+<td>number</td>
+<td><code>0.1</code></td>
+<td>3D travel speed that starts <code>move</code>. Not negative.</td>
+</tr>
+<tr>
+<td><code>fastAbove</code></td>
+<td>number</td>
+<td><code>4</code></td>
+<td>3D travel speed that starts <code>fast</code>; at least <code>moveAbove</code>. Not negative.</td>
+</tr>
+<tr>
+<td><code>verticalAbove</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Vertical speed magnitude above which <code>ascend</code> or <code>descend</code> can apply. Greater than 0.</td>
+</tr>
+<tr>
+<td><code>crossFade</code></td>
+<td>number</td>
+<td>none</td>
+<td>Seconds each clip change blends over while in free motion; none uses <code>locomotion_animation.crossFade</code>. Not negative.</td>
+</tr>
+<tr>
+<td><code>moveReferenceSpeed</code></td>
+<td>number</td>
+<td>none</td>
+<td>3D speed the <code>move</code> cycle was authored for; set it to scale playback to 3D travel. Greater than 0.</td>
+</tr>
+<tr>
+<td><code>fastReferenceSpeed</code></td>
+<td>number</td>
+<td>none</td>
+<td>3D speed the <code>fast</code> cycle was authored for; set it to scale playback to 3D travel. Greater than 0.</td>
 </tr>
 </tbody>
 </table>
