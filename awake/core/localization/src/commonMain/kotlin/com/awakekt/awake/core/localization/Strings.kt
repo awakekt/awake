@@ -7,13 +7,11 @@ package com.awakekt.awake.core.localization
 
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.text.unicode.CodePoints
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
 
 /**
@@ -46,31 +44,29 @@ import kotlin.concurrent.Volatile
  *
  * @property defaultLocale The locale every lookup falls back to.
  */
-// TooManyFunctions: the lookups, the source changes, and the few private steps that let a source be
-// removed without a coroutine (queue, apply under the lock, publish from loaded tables) belong together.
-@Suppress("TooManyFunctions")
 class Strings internal constructor(
     source: StringTableSource,
     val defaultLocale: LocaleId,
-    private val pluralRules: (LocaleId) -> PluralRule,
-    private val ordinalRules: (LocaleId) -> PluralRule,
+    internal val pluralRules: (LocaleId) -> PluralRule,
+    internal val ordinalRules: (LocaleId) -> PluralRule,
     initialLocale: LocaleId,
 ) {
-    private val switchLock = Mutex()
+    // Internal state, changed under [switchLock] by the steps in StringsSourceChanges.kt.
+    internal val switchLock = Mutex()
 
     /** Sources [removeSourceSoon] was asked to take out, applied by whoever holds [switchLock] next. */
-    private val removals = Channel<StringTableSource>(Channel.UNLIMITED)
+    internal val removals = Channel<StringTableSource>(Channel.UNLIMITED)
 
     /** Every source, the one that wins first. Replaced whole, under [switchLock]. */
-    private var sources: List<Source> = listOf(Source(source, StringLayer.Game))
+    internal var sources: List<Source> = listOf(Source(source, StringLayer.Game))
 
     /** The locale whose missing table was last logged, so a reload of the same locale says it once. */
-    private var warnedMissing: LocaleId? = null
+    internal var warnedMissing: LocaleId? = null
 
     @Volatile
-    private var chain: Chain = Chain(initialLocale, emptyList())
+    internal var chain: Chain = Chain(initialLocale, emptyList())
 
-    private val localeState = MutableStateFlow(initialLocale)
+    internal val localeState = MutableStateFlow(initialLocale)
 
     /**
      * The active locale. It changes once the new locale's tables are loaded, so UI that reads text
@@ -143,93 +139,6 @@ class Strings internal constructor(
     fun removeSourceSoon(source: StringTableSource) {
         removals.trySend(source)
         applyRemovalsIfFree()
-    }
-
-    /** Runs [change] under [switchLock], with the removals asked for so far applied first and any asked for meanwhile after. */
-    private suspend fun <T> changing(change: suspend () -> T): T {
-        val result = switchLock.withLock {
-            applyRemovals()
-            change()
-        }
-        applyRemovalsIfFree()
-        return result
-    }
-
-    /**
-     * Applies the pending removals while nothing else holds [switchLock]. Whoever holds it calls this
-     * once it lets go, after a removal is queued, so none is left behind.
-     */
-    // isEmpty is read only to decide whether to take the lock again; a stale answer costs one more try.
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun applyRemovalsIfFree() {
-        while (!removals.isEmpty && switchLock.tryLock()) {
-            try {
-                applyRemovals()
-            } finally {
-                switchLock.unlock()
-            }
-        }
-    }
-
-    /** Takes out every source queued by [removeSourceSoon] and republishes the active locale. Runs under [switchLock]. */
-    private fun applyRemovals() {
-        var removed = false
-        while (true) {
-            val source = removals.tryReceive().getOrNull() ?: break
-            if (drop(source)) removed = true
-        }
-        if (removed) publish(localeState.value)
-    }
-
-    private fun drop(source: StringTableSource): Boolean {
-        val kept = sources.filter { it.source !== source }
-        val removed = kept.size != sources.size
-        sources = kept
-        return removed
-    }
-
-    /** Loads [locale]'s chain from every source and publishes it. Runs under [switchLock]. */
-    private suspend fun switchTo(locale: LocaleId) {
-        for (tag in wantedFor(locale)) sources.forEach { it.tableFor(tag) }
-        publish(locale)
-    }
-
-    private fun wantedFor(locale: LocaleId): List<LocaleId> = (locale.fallbackChain + defaultLocale.fallbackChain).distinct()
-
-    /**
-     * Publishes [locale]'s chain from the tables the sources have loaded, which [switchTo] reads first;
-     * the active locale's are loaded already. Runs under [switchLock].
-     */
-    private fun publish(locale: LocaleId) {
-        val wanted = wantedFor(locale)
-        val tables = wanted.mapNotNull { tag ->
-            // Every source's table for exactly this locale, merged key by key with the winning source's last.
-            val found = sources.mapNotNull { it.loaded[tag] }
-            when (found.size) {
-                0 -> null
-                1 -> Table(tag, found.single(), pluralRules(tag), ordinalRules(tag))
-                else -> {
-                    val merged = HashMap<String, String>(found.sumOf { it.size } * 2)
-                    for (i in found.indices.reversed()) merged.putAll(found[i])
-                    Table(tag, merged, pluralRules(tag), ordinalRules(tag))
-                }
-            }
-        }
-        // Defaults a plugin or Core ships say nothing about whether the game itself is translated.
-        val gameLocales = wanted.filter { tag -> sources.any { it.layer == StringLayer.Game && it.loaded[tag] != null } }
-        // Said once per locale switched to, not again when a source is added or removed.
-        if (locale.fallbackChain.none { it in gameLocales } && warnedMissing != locale) {
-            log.warn { "No string table for $locale; showing ${gameLocales.firstOrNull() ?: "keys"} instead." }
-            warnedMissing = locale
-        } else if (locale != warnedMissing) {
-            warnedMissing = null
-        }
-        if (tables.isEmpty()) log.error { "No string table for $locale or the default locale $defaultLocale; text shows as keys." }
-        // Only the tables in use stay in memory; switching back reads the file again.
-        val inUse = wanted.toSet()
-        sources.forEach { it.loaded.keys.retainAll(inUse) }
-        chain = Chain(locale, tables)
-        localeState.value = locale
     }
 
     /**
@@ -319,7 +228,7 @@ class Strings internal constructor(
     }
 
     /** One layer's tables, with those loaded so far that the chain still uses; null marks a locale with none. */
-    private class Source(val source: StringTableSource, val layer: StringLayer) {
+    internal class Source(val source: StringTableSource, val layer: StringLayer) {
         val loaded = HashMap<LocaleId, Map<String, String>?>()
 
         suspend fun tableFor(locale: LocaleId): Map<String, String>? {
@@ -338,7 +247,7 @@ class Strings internal constructor(
     }
 
     /** One locale's tables, swapped in whole by [setLocale] and [addSource]. Each logs a problem once while it is active. */
-    private class Chain(val locale: LocaleId, val tables: List<Table>) {
+    internal class Chain(val locale: LocaleId, val tables: List<Table>) {
         private val reported = HashSet<String>()
 
         inline fun report(id: String, message: () -> String) {
@@ -361,7 +270,7 @@ class Strings internal constructor(
         }
     }
 
-    private class Table(val locale: LocaleId, val text: Map<String, String>, val plurals: PluralRule, val ordinals: PluralRule) {
+    internal class Table(val locale: LocaleId, val text: Map<String, String>, val plurals: PluralRule, val ordinals: PluralRule) {
         val numbers: NumberFormat = NumberFormat.forLocale(locale)
         private val parsed = HashMap<String, MessageFormat>()
         val errors = HashMap<String, String>()
