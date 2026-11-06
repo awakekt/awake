@@ -11,7 +11,13 @@ import kotlin.reflect.KClass
 @PublishedApi
 @Suppress("TooManyFunctions") // Deliberate façade: methods delegate policy to focused registries.
 internal class ComponentRegistry {
-    private val types = ComponentTypeCatalog()
+    /**
+     * The world's frame thread, checked before a new type is registered, as every other structural
+     * change is. A property, not a constructor parameter, so the published constructor stays as it was.
+     */
+    internal var frameThread: FrameThreadGuard? = null
+
+    private val types = ComponentTypeCatalog { frameThread?.check(REGISTER_TYPE) }
     private val pools = ComponentPoolRegistry()
     private val storage = ComponentStorageRegistry()
 
@@ -81,3 +87,6 @@ internal class ComponentRegistry {
         }
     }
 }
+
+/** What a type registered off the frame thread is reported as. */
+private const val REGISTER_TYPE = "World.add of a new component type"

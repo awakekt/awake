@@ -7,5 +7,5 @@ package com.awakekt.awake.ecs
 
 internal actual fun currentThreadIdentity(): Any = Thread.currentThread()
 
-// An Android debug app turns the checks on itself: the runtime has no cheap way to tell a debug build.
+// Off until the Android window host turns it on in a debuggable app: without a Context, this can't tell.
 internal actual fun frameThreadChecksByDefault(): Boolean = false
