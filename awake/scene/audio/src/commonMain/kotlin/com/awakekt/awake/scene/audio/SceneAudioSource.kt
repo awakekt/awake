@@ -157,6 +157,8 @@ suspend fun loadAudioClip(path: String, assets: AssetSource): AudioClip {
  * a spawn, so a clip is decoded once. [preloaded] clips, such as [loadAudioClips] read when the scene
  * loaded, are kept for as long as it lives. Close it when the scene stops.
  *
+ * @param assets Where the clips are read from.
+ * @param preloaded Clips already decoded, kept for as long as the loads live.
  * @param context Where a clip decodes when the one asking names no scope; [Dispatchers.Default] by default.
  */
 fun audioClipLoads(

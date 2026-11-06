@@ -32,9 +32,9 @@ import com.awakekt.awake.scene.core.transform.Transform
  * first, or else once [loads] has decoded it. Emitters share one quad and one material per
  * sprite, created through [renderer] and destroyed by [close]. Run it alongside [ParticleSystem].
  *
- * @param loads The scene's particle images, as [particleImageLoads] makes them, shared with a prewarm:
- *   an image no map has starts decoding the first frame an emitter shows it, and one decoded ahead of
- *   a spawn draws on the emitter's first frame. Null draws only what the maps hold.
+ * [loads] are the scene's particle images, as [particleImageLoads] makes them, shared with a prewarm:
+ * an image no map has starts decoding the first frame an emitter shows it, and one decoded ahead of a
+ * spawn draws on the emitter's first frame. Null draws only what the maps hold.
  */
 class ParticleContentSystem(
     private val renderer: Renderer,

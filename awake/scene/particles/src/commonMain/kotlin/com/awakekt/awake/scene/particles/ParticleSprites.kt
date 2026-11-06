@@ -77,6 +77,8 @@ suspend fun loadParticleImage(path: String, assets: AssetSource): GpuImageSource
  * [loadParticleImages] read when the scene loaded, are kept for as long as it lives. Close it when the
  * scene stops.
  *
+ * @param assets Where the images are read from.
+ * @param preloaded Images already decoded, kept for as long as the loads live.
  * @param context Where an image decodes when the one asking names no scope; [Dispatchers.Default] by default.
  */
 fun particleImageLoads(

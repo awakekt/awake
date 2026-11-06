@@ -158,10 +158,8 @@ class AudioSystem private constructor(
 
     /** The decoded clip at [path], asking [loads] to decode it when it has not yet. */
     private fun decoded(path: String): AudioClip? {
-        clips[path]?.let { return it }
-        if (loads == null || path == SceneAudioSource.UNASSIGNED) return null
-        val load = loads.request(path)
-        return if (load is AssetLoad.Loaded) load.value else null
+        val load = if (path in clips || path == SceneAudioSource.UNASSIGNED) null else loads?.request(path)
+        return if (load is AssetLoad.Loaded) load.value else clips[path]
     }
 
     private fun drainCueQueues(world: World, listener: AudioListenerContext) {
