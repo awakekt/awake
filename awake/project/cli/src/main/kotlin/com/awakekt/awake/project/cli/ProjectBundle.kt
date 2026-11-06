@@ -53,11 +53,13 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
             }
             val salt = arguments.value("salt")
             if (arguments.flag("opaque-ids") && salt.isNullOrBlank()) throw UsageException("--opaque-ids needs --salt <text>, such as the project's id")
+            val groupKeys = groupEncryption(arguments, workingDir)
             return ContentBundleWriter(
                 grouping = grouping,
                 targetBundleBytes = arguments.int("target-mb", DEFAULT_TARGET_MB, TARGET_MBS) * MEBIBYTE,
                 pathIds = if (arguments.flag("opaque-ids")) ProjectPathIds(salt!!) else null,
                 encryption = encryption(arguments, workingDir),
+                groupEncryption = groupKeys::get,
             )
         }
 
@@ -76,6 +78,32 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
             return runCatching {
                 if (file != null) BundleKeyFiles.read(keyId, workingDir.resolve(file)) else BundleKeyFiles.fromEnvironment(keyId, variable!!)
             }.getOrElse { throw CommandFailure(it.message.orEmpty(), it) }
+        }
+
+        /** Per-group keys from `--group-key-file <group>=<id>:<path>` and `--group-key-env <group>=<id>:<variable>`. */
+        private fun groupEncryption(arguments: CliArguments, workingDir: File): Map<String, BundleEncryptionKey> {
+            val byGroup = LinkedHashMap<String, BundleEncryptionKey>()
+            fun add(option: String, spec: String, load: (keyId: String, source: String) -> BundleEncryptionKey) {
+                val parts = spec.split('=', limit = 2)
+                val keyAndSource = parts.getOrNull(1)?.split(':', limit = 2).orEmpty()
+                val group = parts.first()
+                val keyId = keyAndSource.getOrNull(0).orEmpty()
+                val source = keyAndSource.getOrNull(1).orEmpty()
+                val misuse = when {
+                    keyAndSource.size < 2 || keyId.isBlank() || source.isBlank() -> "--$option takes <group>=<id>:<source>, not $spec"
+                    group in byGroup -> "bundle group '$group' is given a key twice"
+                    else -> null
+                }
+                if (misuse != null) throw UsageException(misuse)
+                byGroup[group] = runCatching { load(keyId, source) }.getOrElse { throw CommandFailure(it.message.orEmpty(), it) }
+            }
+            arguments.values("group-key-file").forEach { spec ->
+                add("group-key-file", spec) { keyId, file -> BundleKeyFiles.read(keyId, workingDir.resolve(file)) }
+            }
+            arguments.values("group-key-env").forEach { spec ->
+                add("group-key-env", spec) { keyId, variable -> BundleKeyFiles.fromEnvironment(keyId, variable) }
+            }
+            return byGroup
         }
 
         private const val DEFAULT_TARGET_MB = 16

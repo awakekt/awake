@@ -30,8 +30,11 @@ import com.awakekt.awake.core.io.Sha256
  * @param pathIds With a value, the index and the bundles carry opaque ids instead of readable paths.
  * @param bundleUrlPrefix The folder bundle URLs start with, relative to the index like a loose file's URL.
  * @param encryption With a key, each distinct member is sealed under it ([ContentBundleFormat.encodeEncrypted])
- * and the index is [ProjectIndex.ENCRYPTED_FORMAT_VERSION], naming the key's id but never the key. The
- * same files and key still give byte-identical bundles.
+ * by default and the index is [ProjectIndex.ENCRYPTED_FORMAT_VERSION], naming the key's id as
+ * [ProjectBundleEncryption.keyId] but never the key. The same files and key still give byte-identical bundles.
+ * @param groupEncryption Optional per-group key override: when it answers a [BundleEncryptionKey] for a
+ * group, that group's bundles are sealed under it and carry [ProjectIndexBundle.keyId] when it differs
+ * from the index's default key id; when it answers null, the group falls back to [encryption].
  */
 class ContentBundleWriter(
     private val grouping: ContentBundleGrouping = ContentBundleGrouping.byFolder(),
@@ -39,6 +42,7 @@ class ContentBundleWriter(
     private val pathIds: ProjectPathIds? = null,
     private val bundleUrlPrefix: String = DEFAULT_BUNDLE_URL_PREFIX,
     private val encryption: BundleEncryptionKey? = null,
+    private val groupEncryption: (group: String) -> BundleEncryptionKey? = { null },
 ) {
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -46,7 +50,16 @@ class ContentBundleWriter(
         targetBundleBytes: Long = DEFAULT_TARGET_BUNDLE_BYTES,
         pathIds: ProjectPathIds? = null,
         bundleUrlPrefix: String = DEFAULT_BUNDLE_URL_PREFIX,
-    ) : this(grouping, targetBundleBytes, pathIds, bundleUrlPrefix, null)
+    ) : this(grouping, targetBundleBytes, pathIds, bundleUrlPrefix, null, { null })
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        grouping: ContentBundleGrouping = ContentBundleGrouping.byFolder(),
+        targetBundleBytes: Long = DEFAULT_TARGET_BUNDLE_BYTES,
+        pathIds: ProjectPathIds? = null,
+        bundleUrlPrefix: String = DEFAULT_BUNDLE_URL_PREFIX,
+        encryption: BundleEncryptionKey? = null,
+    ) : this(grouping, targetBundleBytes, pathIds, bundleUrlPrefix, encryption, { null })
 
     init {
         require(targetBundleBytes > 0) { "targetBundleBytes must be positive: $targetBundleBytes" }
@@ -65,8 +78,9 @@ class ContentBundleWriter(
      * @param read Answers a file's bytes, such as from the project folder by [ProjectIndexEntry.path].
      * @param emit Stores one written bundle, such as at its [WrittenContentBundle.url] next to the index.
      * @return A [ProjectIndex.BUNDLED_FORMAT_VERSION] index listing every file of [index] as a bundle
-     * member, or with [encryption], a [ProjectIndex.ENCRYPTED_FORMAT_VERSION] one.
-     * @throws IllegalArgumentException for an invalid or already bundled [index].
+     * member, or when bundles are sealed, a [ProjectIndex.ENCRYPTED_FORMAT_VERSION] one.
+     * @throws IllegalArgumentException for an invalid or already bundled [index], or when some bundle
+     * groups have an encryption key and others do not.
      * @throws IllegalStateException for a file whose bytes don't match its entry, naming its path.
      */
     suspend fun write(
@@ -82,16 +96,22 @@ class ContentBundleWriter(
         val keys = index.files.associate { it.path to (pathIds?.idOf(it.path) ?: it.path) }
         keys.values.groupBy { it }.values.firstOrNull { it.size > 1 }?.let { throw IllegalArgumentException("Two paths share the opaque id ${it.first()}; choose another salt") }
 
+        val (defaultKeyId, chunks) = resolveGroups(index.files)
         val bundles = mutableListOf<ProjectIndexBundle>()
         val files = mutableListOf<ProjectIndexEntry>()
-        plan(index.files).forEach { chunk ->
+        chunks.forEach { (chunk, bundleKey) ->
             val members = chunk.map { entry -> ContentBundleMember(keys.getValue(entry.path), checkedBytes(entry, read(entry))) }
-            val bytes = encryption?.let { ContentBundleFormat.encodeEncrypted(members, it) } ?: ContentBundleFormat.encode(members)
+            val bytes = bundleKey?.let { ContentBundleFormat.encodeEncrypted(members, it) } ?: ContentBundleFormat.encode(members)
             val sha256 = Sha256.digestHex(bytes)
             val url = "${bundleUrlPrefix.trimEnd('/')}/$sha256.${ContentBundleFormat.FILE_EXTENSION}".removePrefix("/")
             val offsets = ContentBundleFormat.readTableOfContents(bytes).associate { it.key to it.offset }
             emit(WrittenContentBundle(sha256, url, bytes, chunk.map { it.path }))
-            bundles += ProjectIndexBundle(sha256 = sha256, sizeBytes = bytes.size.toLong(), url = url)
+            bundles += ProjectIndexBundle(
+                sha256 = sha256,
+                sizeBytes = bytes.size.toLong(),
+                url = url,
+                keyId = bundleKey?.keyId?.takeIf { it != defaultKeyId },
+            )
             chunk.forEach { entry ->
                 val key = keys.getValue(entry.path)
                 files += ProjectIndexEntry(
@@ -105,12 +125,12 @@ class ContentBundleWriter(
             }
         }
         return ProjectIndex(
-            formatVersion = if (encryption == null) ProjectIndex.BUNDLED_FORMAT_VERSION else ProjectIndex.ENCRYPTED_FORMAT_VERSION,
+            formatVersion = if (defaultKeyId == null) ProjectIndex.BUNDLED_FORMAT_VERSION else ProjectIndex.ENCRYPTED_FORMAT_VERSION,
             rootPath = index.rootPath,
             files = files.sortedBy { it.key },
             bundles = bundles,
             pathIds = pathIds,
-            encryption = encryption?.let { ProjectBundleEncryption(keyId = it.keyId) },
+            encryption = defaultKeyId?.let { ProjectBundleEncryption(keyId = it) },
         )
     }
 
@@ -123,6 +143,16 @@ class ContentBundleWriter(
             .groupBy { grouping.groupOf(it.path) }
             .entries.sortedBy { it.key }
             .flatMap { (_, group) -> chunkGroup(group) }
+
+    private fun resolveGroups(entries: List<ProjectIndexEntry>): Pair<String?, List<PlannedChunk>> {
+        val groups = entries.sortedBy { it.path }
+            .groupBy { grouping.groupOf(it.path) }
+            .entries.sortedBy { it.key }
+            .map { (name, group) -> GroupPlan(name, group, groupEncryption(name) ?: encryption) }
+        val defaultKeyId = validateBundleKeys(encryption, groups)
+        val chunks = groups.flatMap { group -> chunkGroup(group.entries).map { PlannedChunk(it, group.key) } }
+        return defaultKeyId to chunks
+    }
 
     private fun chunkGroup(group: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> = buildList {
         val run = mutableListOf<ProjectIndexEntry>()
@@ -224,6 +254,28 @@ class ContentBundleWriter(
         /** Local-maxima byte radius (`target / 4`): keeps natural segments above `target / 4` and below `target`. */
         private const val CDC_WINDOW_DIVISOR: Int = 4
     }
+}
+
+private data class PlannedChunk(val entries: List<ProjectIndexEntry>, val key: BundleEncryptionKey?)
+
+private class GroupPlan(val name: String, val entries: List<ProjectIndexEntry>, val key: BundleEncryptionKey?)
+
+private fun validateBundleKeys(defaultKey: BundleEncryptionKey?, groups: List<GroupPlan>): String? {
+    val anyEncrypted = defaultKey != null || groups.any { it.key != null }
+    if (!anyEncrypted) return null
+    groups.firstOrNull { it.key == null }?.let { missing ->
+        throw IllegalArgumentException(
+            "Every bundle group in an encrypted index needs a BundleEncryptionKey; group \"${missing.name}\" has none",
+        )
+    }
+    val byKeyId = mutableMapOf<String, ByteArray>()
+    (listOfNotNull(defaultKey) + groups.mapNotNull { it.key }).forEach { key ->
+        val previous = byKeyId.put(key.keyId, key.bytes)
+        require(previous == null || previous.contentEquals(key.bytes)) {
+            "Bundle key id \"${key.keyId}\" is given with two different keys; give each key its own keyId"
+        }
+    }
+    return defaultKey?.keyId ?: groups.first().key!!.keyId
 }
 
 private const val BYTE_MASK: Int = 0xff

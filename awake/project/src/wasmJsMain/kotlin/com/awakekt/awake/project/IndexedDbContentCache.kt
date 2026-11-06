@@ -91,7 +91,7 @@ class IndexedDbContentCache internal constructor(
 // Mirrors awake:core:host's Resource.kt: indexing a typed array crosses the JS/Wasm boundary once
 // per element, so both directions move 32-bit words, crossing once per four bytes. Duplicated
 // rather than shared across modules -- see that file's note on why this isn't the full fix.
-private fun ArrayBuffer.copyToByteArray(): ByteArray {
+internal fun ArrayBuffer.copyToByteArray(): ByteArray {
     val length = byteLength
     val wordCount = length / 4
     val words = Int32Array(this, 0, wordCount)
@@ -114,7 +114,7 @@ private fun ArrayBuffer.copyToByteArray(): ByteArray {
     return bytes
 }
 
-private fun ByteArray.toArrayBuffer(): ArrayBuffer {
+internal fun ByteArray.toArrayBuffer(): ArrayBuffer {
     val buffer = ArrayBuffer(size)
     val wordCount = size / 4
     val words = Int32Array(buffer, 0, wordCount)
