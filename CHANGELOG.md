@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-11-06
+
+### Added
+
+- **A project game can pose far skinned models less often (#1372).** `runProject` builds the scene's `AnimationSystem` itself, so a game had no way to pass the distance update rate (`AnimationUpdateRate`) it takes. A game's own scene capability now puts one under `CoreSceneContent.AnimationUpdateRate` from its `load`, for example `AnimationUpdateRate.byDistance(near, far, farInterval)`, and the animation system uses it. With none, every model is posed every frame, as before.
+- **A third-person camera can keep out of the ground and the terrain (#1374).** A `camera_rig` that sets `collision` (`CameraRig.collision` in code) keeps its eye `groundMargin` above the terrain, sampled around the eye the size of the near plane, and pulls the eye in front of the ground where it rises between the pivot and the eye. Bodies on the physics layers listed in `obstacleLayers` pull it in too, through a swept sphere of `radius`; none do by default. The eye pulls in at once and eases back out over `easeOutSeconds`. A played project answers the ground from its `terrain` and `paged_terrain` heights and the obstacle layers from its physics world. The maths is `CameraCollisionSolver` in the new `awake:core:camera` module, usable without a scene. Off by default: a rig without `collision` moves exactly as before.
+- **What stands between a third-person camera and its target can fade out of the way (#1377).** A `camera_rig` that sets `occluderFade` (`CameraRig.occluderFade` in code) has a played project with a physics world cast rays each frame from the eye to the target's feet, chest and head; every static body hit, other than terrain, eases down to `opacity` over `fadeSeconds` and back once it stops blocking. The fade is drawn by a new per-entity `DitherFade`: on an opaque mesh the shader discards a share of its pixels in a fixed screen-space pattern, on Vulkan and WebGPU alike, so the mesh needs no depth sorting and keeps its shadow; opacity 1 draws exactly as before. The easing is `OccluderFader` in `awake:core:camera`, and `GpuDrawRequest.fadeOpacity` carries a draw's fade. Off by default.
+
 ## [0.39.0] - 2026-11-06
 
 ### Added
