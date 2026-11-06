@@ -5,13 +5,16 @@
  */
 package com.awakekt.awake.net
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class TransportStallWatchTest {
@@ -129,6 +132,15 @@ class TransportStallWatchTest {
         socket.run(1.0)
         assertTrue(socket.timers.isEmpty())
         assertEquals(last, watch.state.value)
+    }
+
+    @Test
+    fun aDirectTransportGetsTheWatchOnItsOwnThread() {
+        val watch = (socket as Transport).watchStalls(CoroutineScope(EmptyCoroutineContext), clockSeconds = { socket.now })
+        assertIs<TransportStallWatch>(watch)
+        socket.sendNow(ByteArray(520))
+        socket.run(1.5)
+        assertTrue(watch.state.value.upstream, "a direct transport is watched upstream too")
     }
 
     @Test
