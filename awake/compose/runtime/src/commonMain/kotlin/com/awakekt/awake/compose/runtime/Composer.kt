@@ -81,8 +81,8 @@ class Composer internal constructor(
             content()
             pendingKey = enclosingKey
             // Whatever this pass stopped declaring is gone; anything left is stale.
-            applier.truncateFrom(Slot.Children, cursor(Slot.Children))
-            applier.truncateFrom(Slot.Layers, cursor(Slot.Layers))
+            dropFrom(Slot.Children, cursor(Slot.Children))
+            dropFrom(Slot.Layers, cursor(Slot.Layers))
             closeSlots()
             popDepth()
             applier.up()
@@ -184,18 +184,38 @@ class Composer internal constructor(
         // A value of another type is another call's: the calls before this one changed. Recompute
         // rather than hand it over and fail with a ClassCastException at the caller.
         if (slot.key != key1 || slot.key2 != key2 || !isT(slot.value)) {
+            val previous = slot.value
             slot.key = key1
             slot.key2 = key2
             slot.value = calculate()
+            if (previous !== slot.value) forgetValue(previous)
         }
         @Suppress("UNCHECKED_CAST")
         return slot.value as T
     }
 
     internal fun finishRoot() {
-        applier.truncateFrom(Slot.Children, cursor(Slot.Children))
-        applier.truncateFrom(Slot.Layers, cursor(Slot.Layers))
+        dropFrom(Slot.Children, cursor(Slot.Children))
+        dropFrom(Slot.Layers, cursor(Slot.Layers))
         slotsOf(slotOwners[0])?.trimTo(slotCursors[0])
+    }
+
+    /** Drops every node and remembered value, telling each [RememberObserver] it was forgotten. */
+    internal fun disposeRoot() {
+        beginRoot()
+        finishRoot()
+    }
+
+    /**
+     * Truncates the current node's children in [slot] from [from], after telling what they and their
+     * descendants remember that it was forgotten. The children go even if a value throws.
+     */
+    private fun dropFrom(slot: Slot, from: Int) {
+        try {
+            applier.forgetChildrenFrom(slot, from)
+        } finally {
+            applier.truncateFrom(slot, from)
+        }
     }
 
     /** Prepares this retained composer for its next root pass. */
@@ -322,5 +342,14 @@ class Composition(
         content(composer)
         composer.finishRoot()
         return composer
+    }
+
+    /**
+     * Drops the whole retained tree: every node goes, and every remembered [RememberObserver] is told
+     * it was forgotten. Call it when the host stops composing this tree. A later [reconcile] starts
+     * from an empty tree.
+     */
+    fun dispose() {
+        composer.disposeRoot()
     }
 }
