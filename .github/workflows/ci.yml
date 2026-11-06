@@ -292,6 +292,12 @@ jobs:
       - name: ECS runtime and allocation tests
         run: ./gradlew :awake:ecs:desktopTest
 
+      # The render contract (render scale, quality policy, uniform layout and writers), the app
+      # platform (GraphicsEngine lifecycle, per-frame render quality) and the app DSL: pure JVM
+      # suites with no GPU. Until this step CI compiled them but never ran them (#1324).
+      - name: Render contract, app platform and app DSL tests
+        run: ./gradlew :awake:engine:render:contract:desktopTest :awake:engine:platform:desktopTest :awake:engine:bootstrap:desktopTest
+
       # The particle library and its scene wrapper, the scene's rendering, the render pass logic, and
       # the shaders they draw with: pure JVM suites with no GPU. `ParticleExposureTest` keeps the scene
       # file in step with the library, and until this step it ran only on a contributor's machine
