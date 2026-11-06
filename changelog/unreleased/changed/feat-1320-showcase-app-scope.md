@@ -1,1 +1,0 @@
-- **The compose showcase runs its stores under the app's coroutine scope (#1320).** It registers an `AppCoroutineScope`, provides it to its UI, and its State & DI page remembers its stores with `rememberStore(appScope)` / `rememberReducerStore(appScope, …)`, so their failures reach the app's error handling and disposing the app cancels them.
