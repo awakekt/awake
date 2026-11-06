@@ -27,7 +27,8 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * The prewarm holds what it built in the library, as a drawn entity does, so neither the retained-mesh
  * budget nor another holder's release destroys it before the spawn: [close] lets go once the tree is
  * spawned, or is no longer wanted. Closing before it is ready stops it. The session's teardown stops
- * every prewarm and destroys what they held, as it destroys every asset.
+ * every prewarm and destroys what they held, as it destroys every asset; a ready prewarm that was never
+ * closed is logged then as a warning naming its assets, since it kept them for the whole scene.
  *
  * Audio clips, and glTF models the resolver has not preloaded, are not prepared here yet (#1316); a
  * model that can't be built yet fails its renderable, which [failed] names.
@@ -54,6 +55,11 @@ class ScenePrewarm internal constructor(
     private val done = CompletableDeferred<Unit>(scope.coroutineContext[Job])
     private val givenUp = AtomicBoolean(false)
     private var state = State.Pending
+
+    /** What it prepares, for a log line: its first few assets by name, and how many more. */
+    internal val label: String = (references.renderables.map { "${it.mesh} + ${it.material}" } + references.textures).let { names ->
+        names.take(LABEL_NAMES).joinToString().ifEmpty { "nothing" } + if (names.size > LABEL_NAMES) " and ${names.size - LABEL_NAMES} more" else ""
+    }
 
     /** How many renderables and textures it prepares. */
     val total: Int = references.renderables.size + references.textures.size
@@ -122,6 +128,10 @@ class ScenePrewarm internal constructor(
     }
 
     private enum class State { Pending, Ready, Closed, Disposed }
+
+    private companion object {
+        const val LABEL_NAMES = 3
+    }
 }
 
 /**

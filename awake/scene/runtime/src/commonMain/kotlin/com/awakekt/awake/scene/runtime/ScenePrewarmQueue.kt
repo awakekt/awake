@@ -41,11 +41,23 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
         }
     }
 
-    /** Stops every prewarm without releasing: the library is destroying what they held. */
+    /**
+     * Stops every prewarm without releasing: the library is destroying what they held. A ready one that
+     * was never closed is a leak, since it held its assets for the rest of the scene, so it is logged; one
+     * still loading is not, as a scene switched while it loaded stops it on purpose.
+     */
     fun dispose() {
         val all = open.toList()
         open.clear()
-        all.forEach(ScenePrewarm::dispose)
+        all.forEach { prewarm ->
+            if (prewarm.isReady) {
+                log.warn {
+                    "A prewarm of ${prewarm.label} was never closed, so it held them until the scene was torn " +
+                        "down. Close it once what it prepared has spawned."
+                }
+            }
+            prewarm.dispose()
+        }
     }
 
     private fun pollTextures(prewarm: ScenePrewarm) {

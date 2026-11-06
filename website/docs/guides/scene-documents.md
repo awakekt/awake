@@ -121,7 +121,8 @@ prewarm holds those assets so nothing frees them in the meantime; close it after
 `SceneAssetLibrary.prewarmFrameBudgetBytes` caps the new mesh uploaded per frame, so prewarming
 while the game plays doesn't stall a frame. An asset that can't be built is listed in `failed`, and
 is built when it is first drawn instead. Closing a prewarm before it is ready, or tearing the scene
-down, stops it, and `await` then throws `CancellationException`. Expand prefab links first
+down, stops it, and `await` then throws `CancellationException`. A ready prewarm still open at teardown
+held its assets for the whole scene, so teardown logs a warning naming them. Expand prefab links first
 (`withPrefabs`): `assetReferences` lists a link it can't follow in `prefabLinks`.
 
 ## Save a world
