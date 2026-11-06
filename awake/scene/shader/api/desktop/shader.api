@@ -82,6 +82,7 @@ public final class com/awakekt/awake/scene/shader/ShaderEffectSource {
 }
 
 public final class com/awakekt/awake/scene/shader/ShaderEffectSystem : com/awakekt/awake/ecs/System, java/lang/AutoCloseable {
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;)V
 	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;Lkotlinx/coroutines/CoroutineScope;)V
 	public fun close ()V
 	public final fun getAssets ()Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;

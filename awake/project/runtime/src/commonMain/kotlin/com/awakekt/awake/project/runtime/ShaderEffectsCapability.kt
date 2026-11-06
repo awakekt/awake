@@ -31,7 +31,7 @@ internal object ShaderEffectsCapability : SceneCapability {
                 it.renderer as? ContentFeatureHost,
                 it.content[CoreSceneContent.ShaderEffects] ?: ShaderEffectAssets.Empty,
                 // The system parents its attaches under a job of its own, which its close cancels.
-                checkNotNull(it.coroutineScope) { "shader_effect attaches in the background; its host passes a scope with withCoroutineScope" },
+                it.ownerScope("shader_effect"),
             )
         }
     }

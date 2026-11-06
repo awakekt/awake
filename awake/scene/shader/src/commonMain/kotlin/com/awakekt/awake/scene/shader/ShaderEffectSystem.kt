@@ -61,6 +61,15 @@ class ShaderEffectSystem(
     private val scope: CoroutineScope,
 ) : System,
     AutoCloseable {
+    /**
+     * A system whose attaches run in a scope of its own, as before the scoped constructor: that scope is
+     * unowned, so disposing the scene does not stop it and its failures reach no app error handler.
+     * Compatibility path for released API; use the constructor that takes the scene session's scope.
+     */
+    @Deprecated("Kept for binary compatibility; pass the scene session's scope", level = DeprecationLevel.HIDDEN)
+    constructor(host: ContentFeatureHost?, assets: ShaderEffectAssets) :
+        this(host, assets, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
+
     /** The documents and images effects draw from. Setting a new one re-attaches what changed in it. */
     var assets: ShaderEffectAssets = assets
         set(value) {
