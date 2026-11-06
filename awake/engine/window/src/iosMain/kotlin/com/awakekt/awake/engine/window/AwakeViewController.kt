@@ -12,13 +12,15 @@ import platform.darwin.dispatch_get_main_queue
 
 /**
  * The view controller that hosts a game's [AwakeMetalView], and owns what UIKit asks a controller
- * about: whether the status bar and the home indicator show. `makeVulkanGameViewController` returns
- * one. Pass it to [iosHostActions] to have [HostActions.fullscreen].
+ * about: whether the status bar shows. `makeVulkanGameViewController` returns one. Pass it to
+ * [iosHostActions] to have [HostActions.fullscreen].
  *
  * iOS has no app fullscreen. Its nearest is hiding the system chrome, so [fullscreen] hides the
- * status bar and lets the home indicator fade after a moment, through `prefersStatusBarHidden` and
- * `prefersHomeIndicatorAutoHidden`. The safe area still holds the notch and the rounded corners:
- * the view keeps reporting it as `DisplayInsets`.
+ * status bar through `prefersStatusBarHidden`. The safe area still holds the notch and the rounded
+ * corners: the view keeps reporting it as `DisplayInsets`.
+ *
+ * The home indicator stays. UIKit declares `prefersHomeIndicatorAutoHidden` in a category of
+ * `UIViewController`, which Kotlin/Native does not let a Kotlin subclass override.
  *
  * A host app that shows the game inside its own controller passes that controller to
  * [iosHostActions] instead, and [HostActions.fullscreen] is null, since only this class answers
@@ -35,13 +37,10 @@ class AwakeViewController : UIViewController(nibName = null, bundle = null) {
 
     override fun prefersStatusBarHidden(): Boolean = chromeHidden
 
-    override fun prefersHomeIndicatorAutoHidden(): Boolean = chromeHidden
-
-    /** Hides or shows the status bar and home indicator, and tells UIKit to ask again. Main thread only. */
+    /** Hides or shows the status bar, and tells UIKit to ask again. Main thread only. */
     internal fun applyChromeHidden(hidden: Boolean) {
         chromeHidden = hidden
         setNeedsStatusBarAppearanceUpdate()
-        setNeedsUpdateOfHomeIndicatorAutoHidden()
     }
 
     internal val isChromeHidden: Boolean

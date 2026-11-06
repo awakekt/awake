@@ -6,8 +6,8 @@
 package com.awakekt.awake.engine.window
 
 /**
- * A phone's or tablet's system chrome: the status and navigation bars on Android, the status bar and
- * home indicator on iOS. Fullscreen there hides them. [SystemBarsFullscreen] is the one [Fullscreen]
+ * A phone's or tablet's system chrome: the status and navigation bars on Android, the status bar on
+ * iOS. Fullscreen there hides them. [SystemBarsFullscreen] is the one [Fullscreen]
  * over both, and this seam keeps it testable on every target without a device.
  */
 internal interface SystemBars {

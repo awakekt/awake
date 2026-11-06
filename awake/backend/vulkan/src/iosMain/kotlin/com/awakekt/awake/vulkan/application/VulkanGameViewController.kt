@@ -15,7 +15,7 @@ import platform.UIKit.UIViewController
 /**
  * Wraps a [VulkanEngine] in a UIKit view controller, passing the view's safe area on to it. The
  * controller is an [AwakeViewController], so `iosHostActions(controller)` gives the game
- * `HostActions.fullscreen`, which hides the status bar and home indicator.
+ * `HostActions.fullscreen`, which hides the status bar.
  */
 fun makeVulkanGameViewController(
     application: VulkanEngine,
