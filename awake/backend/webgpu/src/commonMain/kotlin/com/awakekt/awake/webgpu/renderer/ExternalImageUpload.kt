@@ -32,9 +32,10 @@ internal expect fun GPUQueue.canCopyExternalImage(image: Any?): Boolean
 /**
  * Copies [image] into level 0 of [texture], flipped so its bottom row is the texture's first, as
  * [com.awakekt.awake.render.texture.TextureAsset.data] is laid out, keeping straight alpha. Call it
- * only after [canCopyExternalImage] said yes.
+ * only after [canCopyExternalImage] said yes. Answers false when the browser refused the copy, so the
+ * caller can upload the image's CPU pixels instead: a refused copy must not end the frame it runs in.
  */
-internal expect fun GPUQueue.copyExternalImage(image: Any, texture: GPUTexture, width: Int, height: Int)
+internal expect fun GPUQueue.copyExternalImage(image: Any, texture: GPUTexture, width: Int, height: Int): Boolean
 
 /**
  * The WebGPU [GpuImageUpload]: an `RGBA8Unorm` texture filled by `copyExternalImageToTexture`, its
@@ -60,25 +61,32 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
     ): RenderMaterial? {
         val external = image.externalImage
         if (external == null || !device.queue.canCopyExternalImage(external)) return null
+        // The base first: if the browser refuses it, nothing else was uploaded, and the caller reads the pixels.
+        val base = upload(external, image.width, image.height, filtering) ?: return null
         val maps = pbrImages?.maps?.map { it?.let(::uploadMap) } ?: List(PBR_MAPS) { null }
-        return renderer.createTexturedMaterial(upload(external, image.width, image.height, filtering), uniformFloatCount, maps)
+        return renderer.createTexturedMaterial(base, uniformFloatCount, maps)
     }
 
     // A map is copied when it can be and uploaded from its CPU pixels when not, linear like every map.
     private fun uploadMap(map: GpuImageSource): Texture {
         val external = map.externalImage
-        return if (external != null && device.queue.canCopyExternalImage(external)) {
+        val copied = if (external != null && device.queue.canCopyExternalImage(external)) {
             upload(external, map.width, map.height, TextureFiltering.Linear)
         } else {
-            renderer.uploadTexture(map.toTextureAsset())
+            null
         }
+        return copied ?: renderer.uploadTexture(map.toTextureAsset())
     }
 
-    /** The texture [createMaterial] binds: [image] copied, and its mips drawn when [filtering] is linear. */
-    internal fun upload(image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture {
+    /**
+     * The texture [createMaterial] binds: [image] copied, and its mips drawn when [filtering] is linear.
+     * Null when the browser refused the copy.
+     */
+    internal fun upload(image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture? {
         val mipmaps = mipmaps ?: GpuMipmaps(device).also { mipmaps = it }
+        val texture = renderer.graphicsDevice.copyExternalImage(mipmaps, image, width, height, filtering) ?: return null
         copies++
-        return renderer.textureResources.register(renderer.graphicsDevice.copyExternalImage(mipmaps, image, width, height, filtering))
+        return renderer.textureResources.register(texture)
     }
 
     override fun close() {
@@ -94,9 +102,10 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
 /**
  * A texture filled from [image] on the GPU: an `RGBA8Unorm` 2D texture, `copyExternalImageToTexture`
  * into level 0, then [TextureFiltering.Linear]'s mips drawn by [mipmaps]. The caller owns it. Call it only
- * after [canCopyExternalImage] said yes for [image].
+ * after [canCopyExternalImage] said yes for [image]. Null, with the texture released, when the browser
+ * refused the copy: the caller uploads the image's CPU pixels instead.
  */
-internal fun GraphicsDevice.copyExternalImage(mipmaps: GpuMipmaps, image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture {
+internal fun GraphicsDevice.copyExternalImage(mipmaps: GpuMipmaps, image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture? {
     val device = wgpuContext.device
     val levels = if (filtering == TextureFiltering.Linear) mipLevelCount(width, height) else 1
     val texture = device.createTexture(
@@ -110,7 +119,10 @@ internal fun GraphicsDevice.copyExternalImage(mipmaps: GpuMipmaps, image: Any, w
             mipLevelCount = levels.toUInt(),
         ),
     )
-    device.queue.copyExternalImage(image, texture, width, height)
+    if (!device.queue.copyExternalImage(image, texture, width, height)) {
+        texture.close()
+        return null
+    }
     mipmaps.generate(texture, levels)
     return Texture.fromFilled(this, Texture.FilledTexture(texture, width, height, mipLevelCount = levels), filtering)
 }

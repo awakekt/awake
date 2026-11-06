@@ -11,5 +11,5 @@ import io.ygdrasil.webgpu.GPUTexture
 // wgpu-native has no platform image to copy: every image reaches the GPU through readRgba8.
 internal actual fun GPUQueue.canCopyExternalImage(image: Any?): Boolean = false
 
-internal actual fun GPUQueue.copyExternalImage(image: Any, texture: GPUTexture, width: Int, height: Int): Unit =
+internal actual fun GPUQueue.copyExternalImage(image: Any, texture: GPUTexture, width: Int, height: Int): Boolean =
     error("wgpu-native cannot copy an external image.")
