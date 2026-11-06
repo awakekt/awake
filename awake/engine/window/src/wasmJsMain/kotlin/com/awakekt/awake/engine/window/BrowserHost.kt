@@ -22,7 +22,8 @@ fun browserLaunchParameters(): LaunchParameters = LaunchParameters.fromQuery(win
  * `noopener,noreferrer`, so the opened page gets no handle to the game. It returns true once the
  * call is made; the browser cannot say whether a popup blocker stopped it, and blockers allow a tab
  * only from a user gesture, so call it from an input handler. [HostActions.pageReload] reloads the
- * page and is present here only.
+ * page and is present here only. [HostActions.fullscreen] is [browserFullscreen], null where the
+ * page may not go fullscreen.
  */
 fun browserHostActions(): HostActions = CheckedHostActions(
     open = { url ->
@@ -30,6 +31,7 @@ fun browserHostActions(): HostActions = CheckedHostActions(
         true
     },
     pageReload = PageReload { window.location.reload() },
+    fullscreen = browserFullscreen(),
 )
 
 /**

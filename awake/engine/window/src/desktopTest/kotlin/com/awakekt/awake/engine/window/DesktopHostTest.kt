@@ -39,6 +39,11 @@ class DesktopHostTest {
     }
 
     @Test
+    fun aDesktopOffersNoFullscreen() {
+        assertNull(desktopHostActions().fullscreen)
+    }
+
+    @Test
     fun withoutABrowserOpenUrlIsFalseNotAnException() {
         assertFalse(browseWith(null, "https://example.test"))
     }
