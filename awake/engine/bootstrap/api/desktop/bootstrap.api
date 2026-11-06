@@ -64,6 +64,20 @@ public abstract class com/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl {
 public abstract interface annotation class com/awakekt/awake/engine/bootstrap/dsl/AwakeAppDsl : java/lang/annotation/Annotation {
 }
 
+public final class com/awakekt/awake/engine/bootstrap/dsl/RenderQualityDsl {
+	public final fun getBudgets ()Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
+	public final fun getInitial ()Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public final fun getPersistence ()Lcom/awakekt/awake/engine/platform/quality/RenderQualityPersistence;
+	public final fun setBudgets (Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;)V
+	public final fun setInitial (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
+	public final fun setPersistence (Lcom/awakekt/awake/engine/platform/quality/RenderQualityPersistence;)V
+}
+
+public final class com/awakekt/awake/engine/bootstrap/dsl/RenderQualityDslKt {
+	public static final fun renderQuality (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/quality/RenderQualitySettings;
+	public static synthetic fun renderQuality$default (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/engine/platform/quality/RenderQualitySettings;
+}
+
 public final class com/awakekt/awake/engine/bootstrap/dsl/WindowBackendDsl {
 	public final fun default ()V
 	public final fun openGl ()V
