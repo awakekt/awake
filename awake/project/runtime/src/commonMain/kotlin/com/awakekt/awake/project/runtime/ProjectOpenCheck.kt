@@ -23,6 +23,7 @@ import com.awakekt.awake.scene.document.SceneSerializers
 import com.awakekt.awake.scene.document.SceneValidator
 import com.awakekt.awake.scene.document.withPrefabs
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 
 /**
@@ -163,10 +164,13 @@ private class ProjectOpenCheck(
             World().also { project.scene.instantiate(it, registry) }
         } ?: return
         attempt(ProjectOpenIssueKind.SceneSystems, path) {
-            project.sceneSystems({ GameplayInput(idle.currentSnapshot, InputOwnership()) }).use { systems ->
-                systems.fixed.forEach { it.update(world, STEP) }
-                systems.preAnimation.forEach { it.update(world, STEP) }
-                systems.frame.forEach { it.update(world, STEP) }
+            // The check's own scope: what the systems start in the background stops when they close, before it returns.
+            coroutineScope {
+                project.sceneSystems({ GameplayInput(idle.currentSnapshot, InputOwnership()) }, coroutineScope = this).use { systems ->
+                    systems.fixed.forEach { it.update(world, STEP) }
+                    systems.preAnimation.forEach { it.update(world, STEP) }
+                    systems.frame.forEach { it.update(world, STEP) }
+                }
             }
         }
     }

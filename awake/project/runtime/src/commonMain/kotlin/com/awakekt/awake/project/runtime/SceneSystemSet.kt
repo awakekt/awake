@@ -64,9 +64,10 @@ class SceneHostServices private constructor(
     /**
      * The scope the scene's systems run their background work in, such as reading terrain cells or
      * resolving surfaces: a child of the scene session's scope, so it stops when the session is
-     * disposed. `runProject` gives the session's own. Null where the host gave none: a host whose scene
-     * reads anything in the background adds its own with [withCoroutineScope], and [backgroundScope]
-     * throws without one. Each system makes its own child of it and cancels that when it closes.
+     * disposed. `runProject` gives the session's own. Null where the host gave none; a host whose scene
+     * reads anything in the background adds its own with [withCoroutineScope]. Without one, those
+     * systems fall back to a scope nobody owns, and a warning is logged once. Each system makes its
+     * own child of it and cancels that when it closes.
      */
     val coroutineScope: CoroutineScope? = null,
 ) {
@@ -133,12 +134,15 @@ class SceneHostServices private constructor(
 
     /**
      * A child of [coroutineScope] for one system's background work, which the system cancels when it
-     * closes. Throws when the host gave no scope; see [withCoroutineScope].
+     * closes. When the host gave no scope, a child of a scope nobody owns, kept for hosts built before
+     * [withCoroutineScope]; a warning names [what] once.
      *
-     * @param what The system asking, for the message.
+     * @param what The system asking, for the warning.
      */
-    fun backgroundScope(what: String): CoroutineScope =
-        checkNotNull(coroutineScope) { "$what reads in the background; its host passes a scope with withCoroutineScope" }.childScope()
+    fun backgroundScope(what: String): CoroutineScope = ownerScope(what).childScope()
+
+    /** [coroutineScope], or for a host that gave none, the unowned compatibility scope. */
+    internal fun ownerScope(what: String): CoroutineScope = coroutineScope ?: HostlessSceneScope.forHostWithoutScope(what)
 
     /** Makes services for a host with no renderer. */
     companion object {

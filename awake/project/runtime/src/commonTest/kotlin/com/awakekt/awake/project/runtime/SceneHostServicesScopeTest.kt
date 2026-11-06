@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -44,11 +43,17 @@ class SceneHostServicesScopeTest {
         assertFalse(scope.coroutineContext[Job]!!.isActive)
     }
 
+    /** A host built before withCoroutineScope still runs; its systems' work goes to the compatibility scope. */
     @Test
-    fun aHostThatGaveNoScopeIsToldHowToGiveOne() {
-        val failure = assertFailsWith<IllegalStateException> { services.backgroundScope("paged_terrain") }
+    fun aHostThatGaveNoScopeFallsBackAndEachSystemStillStopsOnlyItsOwn() {
+        val first = services.backgroundScope("paged_terrain")
+        val second = services.backgroundScope("terrain")
 
-        assertTrue("withCoroutineScope" in failure.message.orEmpty())
+        first.cancel()
+
+        assertFalse(first.coroutineContext[Job]!!.isActive)
+        assertTrue(second.coroutineContext[Job]!!.isActive, "one system closing leaves the others' work running")
+        second.cancel()
     }
 
     @Test
