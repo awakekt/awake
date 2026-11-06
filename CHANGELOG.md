@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-11-06
+
+### Added
+
+- **Fullscreen on iOS (#1359).** The new `AwakeViewController` hosts the game's `AwakeMetalView` and answers UIKit's `prefersStatusBarHidden`. Its `fullscreen` hides the status bar, and the safe area still reports the notch and the rounded corners. The home indicator stays, because UIKit declares `prefersHomeIndicatorAutoHidden` in a `UIViewController` category that Kotlin/Native doesn't let a subclass override. `makeVulkanGameViewController` now returns one, with its `UIViewController` signature unchanged, and `iosHostActions(controller)` fills `HostActions.fullscreen` with it. Given a host app's own controller, or through `iosHostActions()` with no controller, `fullscreen` stays null. The fullscreen bookkeeping is now shared with Android in common code, so its tests run on every target. CI's iOS job now also runs `:awake:engine:window:iosSimulatorArm64Test`. This changes the Vulkan backend, so it ships with the next Vulkan tag.
+
+### Fixed
+
+- **WebGPU classifies its device, so a phone browser gets the mobile render and effect budgets (#1365).** `GraphicsDevice.deviceClass` was never set on WebGPU, so `Renderer.deviceClass` stayed `Unknown`: a phone with a device pixel ratio of 3 drew `RenderQuality.Auto` about 1080 pixels tall instead of the mobile budget's 900, and `effectQuality` defaulted to `Unknown`'s `Medium`. `GraphicsDevice.create` now classifies the adapter before a renderer reads it, from `GPUAdapter.info` (vendor, architecture, and `isFallbackAdapter`) and the page's mobile hint (a coarse pointer, or `navigator.userAgentData.mobile`): a phone or tablet is `Mobile`, NVIDIA and AMD are `Discrete`, Intel and Apple are `Integrated`, a fallback adapter or a CPU rasterizer is `Software` as on Vulkan, and a browser that reports nothing stays `Unknown`. An app that passed its own touch `RenderQualityBudgets` to work around this can drop them.
+- **The web page keeps receiving a worker's messages while a key is held on a slow frame (#1367).** `runBrowserCanvas` used to do each frame's work inside the `requestAnimationFrame` callback. Once a frame took longer than the gap between two key repeats (about 33 ms), a held key starved the socket worker's messages to the page, so a ping reading climbed about a second per second and no server messages arrived. Each animation frame now asks for the next one first and runs the frame as a `MessageChannel` task (`PostedFrameLoop`), which takes its turn with the worker's messages. A frame still waiting when the next animation frame comes isn't posted twice, and the frame rate still follows the display. A wheel's modifiers (a pinch's Ctrl) are now released once the frame that read the wheel has run, since animation-frame callbacks run before the frame.
+- **A browser that refuses an external image copy no longer stops the web app (#1369).** `copyExternalImageToTexture` can throw when the browser can't read the source bitmap, and the exception used to escape into the frame, ending the browser frame loop. The copy now answers false when refused, logging once a page, and the texture loads through the CPU upload instead, as it does in a browser without the API.
+
 ## [0.38.0] - 2026-11-06
 
 ### Added
