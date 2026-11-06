@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.jvm.JvmOverloads
 
 /**
  * Manages the lifecycle and [CoroutineScope] of a state container across platforms.
@@ -40,6 +41,8 @@ class DefaultStoreScope private constructor(
      *
      * @param dispatcher Coroutine dispatcher used for store background execution.
      */
+    // JvmOverloads keeps the no-argument JVM constructor this had as the primary constructor.
+    @JvmOverloads
     constructor(
         dispatcher: CoroutineDispatcher = Dispatchers.Default,
     ) : this(CoroutineScope(SupervisorJob() + dispatcher))
