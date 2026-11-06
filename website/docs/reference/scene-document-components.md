@@ -177,17 +177,19 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
 | `collision` | object | none | `ThirdPerson` camera collision; see below. Without it the eye goes wherever the rig puts it. |
 
-`collision` keeps a third-person eye above the ground and in front of static obstacles. A played
-project answers the ground from its `terrain` and `paged_terrain` heights, and the obstacles from its
-physics world's static bodies; with no physics world, only the ground is kept.
+`collision` keeps a third-person eye above the ground and in front of the terrain. Props, trees
+and buildings don't pull it in unless their physics layer is listed in `obstacleLayers`. A played
+project answers the ground from its `terrain` and `paged_terrain` heights, and the obstacle layers
+from its physics world.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `ground` | boolean | `true` | Keep the eye `groundMargin` above the ground, sampled around it the size of the near plane. |
-| `obstacles` | boolean | `true` | Sweep a sphere from the pivot to the eye and stop the eye short of the first static body. |
+| `terrain` | boolean | `true` | Pull the eye in front of the ground where it rises between the pivot and the eye. |
 | `groundMargin` | number | `0.3` | Least height of the eye above the ground. At least 0. |
-| `radius` | number | `0.2` | Radius of the swept sphere. At least 0. |
-| `easeOutSeconds` | number | `0.25` | Half-life of the ease back out once an obstacle clears. Pulling in is immediate. At least 0. |
+| `radius` | number | `0.2` | Clearance kept between the line from the pivot to the eye and what blocks it. At least 0. |
+| `easeOutSeconds` | number | `0.25` | Half-life of the ease back out once the way clears. Pulling in is immediate. At least 0. |
+| `obstacleLayers` | list of integers | `[]` | Physics layers whose bodies also pull the eye in, through a swept sphere. Not negative. |
 
 ## `canvas_controls`
 

@@ -8,11 +8,13 @@ package com.awakekt.awake.core.camera
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.damp
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.sqrt
 
 /**
  * Places one follow camera's eye where [CameraCollision] allows it: no farther from the pivot than
- * the first obstacle along the way, and no lower than the ground under it plus its margin.
+ * where the terrain, or a body on one of its obstacle layers, first blocks the way, and no lower than
+ * the ground under it plus its margin.
  *
  * It keeps the distance it placed the eye at, so it is one solver per camera: an obstacle pulls the
  * eye in at once, and once it clears the eye eases back out over [CameraCollision.easeOutSeconds]
@@ -53,23 +55,57 @@ class CameraCollisionSolver {
         direction.set(desiredEye).sub(pivot)
         val desired = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z)
         if (desired > EPSILON) direction.scale(1f / desired) else direction.set(0f, 0f, 0f)
-        val allowed = if (settings.obstacles && obstruction != null && desired > EPSILON) {
-            unblocked(pivot, desiredEye, desired, settings.radius, obstruction)
-        } else {
-            desired
+        var fraction = 1f
+        if (desired > EPSILON && settings.terrain && ground != null) {
+            fraction = terrainFraction(pivot, desiredEye, settings.radius, ground)
         }
+        if (desired > EPSILON && obstruction != null) {
+            fraction = min(fraction, obstacleFraction(pivot, desiredEye, settings, obstruction))
+        }
+        val allowed = if (fraction >= 1f) desired else (fraction * desired - SKIN).coerceAtLeast(0f)
         distance = eased(allowed, settings.easeOutSeconds, delta)
         out.set(direction).scale(distance).add(pivot)
         if (settings.ground && ground != null) lift(out, settings.groundMargin, ground, footprint)
         return out
     }
 
-    /** How far the eye can be from the pivot before the swept sphere touches something. */
-    private fun unblocked(pivot: Vec3f, desiredEye: Vec3f, desired: Float, radius: Float, obstruction: CameraObstruction): Float {
-        val fraction = obstruction.clearFraction(pivot, desiredEye, radius)
-        // A NaN answer is treated as clear rather than collapsing the camera onto its pivot.
-        if (fraction.isNaN() || fraction >= 1f) return desired
-        return (fraction.coerceAtLeast(0f) * desired - SKIN).coerceAtLeast(0f)
+    /**
+     * How far along the line from [pivot] to [eye] it first passes within [clearance] above the
+     * ground: stepped in [TERRAIN_STEPS], then narrowed by halving [REFINE_STEPS] times.
+     */
+    private fun terrainFraction(pivot: Vec3f, eye: Vec3f, clearance: Float, ground: CameraGround): Float {
+        var blocked = -1
+        var step = 1
+        while (blocked < 0 && step <= TERRAIN_STEPS) {
+            if (underground(pivot, eye, step.toFloat() / TERRAIN_STEPS, clearance, ground)) blocked = step
+            step++
+        }
+        if (blocked < 0) return 1f
+        var clear = (blocked - 1).toFloat() / TERRAIN_STEPS
+        var hit = blocked.toFloat() / TERRAIN_STEPS
+        repeat(REFINE_STEPS) {
+            val middle = (clear + hit) * HALF
+            if (underground(pivot, eye, middle, clearance, ground)) hit = middle else clear = middle
+        }
+        return clear
+    }
+
+    /** Whether the point [t] of the way from [pivot] to [eye] is less than [clearance] above the ground. */
+    private fun underground(pivot: Vec3f, eye: Vec3f, t: Float, clearance: Float, ground: CameraGround): Boolean {
+        val height = ground.heightAt(pivot.x + (eye.x - pivot.x) * t, pivot.z + (eye.z - pivot.z) * t)
+        return !height.isNaN() && pivot.y + (eye.y - pivot.y) * t < height + clearance
+    }
+
+    /** The nearest of the sweeps against each of the [settings]' obstacle layers. */
+    private fun obstacleFraction(pivot: Vec3f, eye: Vec3f, settings: CameraCollision, obstruction: CameraObstruction): Float {
+        var nearest = 1f
+        val layers = settings.obstacleLayers
+        for (index in layers.indices) {
+            val fraction = obstruction.clearFraction(pivot, eye, settings.radius, layers[index])
+            // A NaN answer is treated as clear rather than collapsing the camera onto its pivot.
+            if (!fraction.isNaN()) nearest = min(nearest, fraction.coerceAtLeast(0f))
+        }
+        return nearest
     }
 
     /** In at once, out over the half-life: a wall never shows, and a cleared one doesn't snap. */
@@ -99,6 +135,12 @@ class CameraCollisionSolver {
 
     private companion object {
         const val EPSILON = 1e-5f
+        const val HALF = 0.5f
+
+        // Sixteen steps find a rise a sixteenth of the follow distance wide; eight halvings place it
+        // to within 1/4096 of the way.
+        const val TERRAIN_STEPS = 16
+        const val REFINE_STEPS = 8
 
         // Kept between the swept sphere's contact and the eye, so float error never leaves it touching.
         const val SKIN = 0.01f

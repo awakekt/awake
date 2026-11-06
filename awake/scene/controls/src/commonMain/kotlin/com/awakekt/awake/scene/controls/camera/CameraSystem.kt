@@ -35,10 +35,11 @@ class CameraSystem(
     /** The ground and obstacles a rig's [CameraRig.collision] keeps its eye out of. */
     private val collisionProbes: CameraCollisionProbes = CameraCollisionProbes.None,
 ) : System {
+    // Keeps the three-argument form, and its default-argument entry point, that consumers compiled against.
     constructor(
         inputProvider: () -> GameplayInput,
         viewportBounds: () -> Rectangle?,
-        gesturePolicy: CameraGesturePolicy,
+        gesturePolicy: CameraGesturePolicy = CameraGesturePolicy.Default,
     ) : this(inputProvider, viewportBounds, gesturePolicy, CameraCollisionProbes.None)
     constructor(inputProvider: () -> GameplayInput) : this(inputProvider, { null }, CameraGesturePolicy.Default)
     constructor(inputProvider: () -> GameplayInput, viewportBounds: () -> Rectangle?) : this(

@@ -33,7 +33,7 @@ import kotlin.reflect.KClass
  * @property yaw Initial yaw rotation angle in radians.
  * @property offset Aim or pivot offset in world units.
  * @property flySpeed Translation speed in units per second when in free-fly mode.
- * @property collision Keeps a third-person eye above the ground and in front of obstacles; `null`,
+ * @property collision Keeps a third-person eye above the ground and in front of the terrain; `null`,
  *   the default, leaves it free.
  */
 @Serializable
@@ -50,6 +50,34 @@ data class SceneCameraRig(
     @PropertyRange(min = 0.0, exclusiveMin = true) val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
     val collision: SceneCameraCollision? = null,
 ) : SceneComponent {
+    /** [SceneCameraRig] as it was before `collision`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mode: CameraMode = CameraMode.ThirdPerson,
+        target: String? = null,
+        distance: Float = CameraRig.DEFAULT_DISTANCE,
+        minDistance: Float = CameraRig.DEFAULT_MIN_DISTANCE,
+        maxDistance: Float = CameraRig.DEFAULT_MAX_DISTANCE,
+        pitch: Float = 0f,
+        yaw: Float = 0f,
+        offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
+        flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
+    ) : this(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, null)
+
+    /** [copy] as it was before `collision`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mode: CameraMode = this.mode,
+        target: String? = this.target,
+        distance: Float = this.distance,
+        minDistance: Float = this.minDistance,
+        maxDistance: Float = this.maxDistance,
+        pitch: Float = this.pitch,
+        yaw: Float = this.yaw,
+        offset: SceneVec3 = this.offset,
+        flySpeed: Float = this.flySpeed,
+    ): SceneCameraRig = copy(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, collision)
+
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (minDistance < 0f || minDistance > maxDistance) {
             add(SceneValidationIssue(path, "camera_rig.minDistance must be between 0 and maxDistance"))

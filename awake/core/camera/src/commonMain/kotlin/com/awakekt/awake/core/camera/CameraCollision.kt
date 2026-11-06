@@ -8,30 +8,40 @@ package com.awakekt.awake.core.camera
 import com.awakekt.awake.core.math.Vec3f
 
 /**
- * How a follow camera keeps its eye out of the world: above the ground, and in front of whatever
- * stands between it and the point it orbits. [CameraCollisionSolver] applies it.
+ * How a follow camera keeps its eye out of the world: above the ground, and in front of the terrain
+ * or the obstacles that stand between it and the point it orbits. [CameraCollisionSolver] applies it.
+ *
+ * By default only the terrain pulls the eye in. Props, trees and buildings usually shouldn't: a game
+ * fades those instead. A game that wants some of them to pull the eye in names their physics layers
+ * in [obstacleLayers].
  *
  * The defaults are neutral starting points, not a game's feel; a game authors its own values.
  *
  * @property ground Whether the eye is kept [groundMargin] above the ground under it.
- * @property obstacles Whether the eye is pulled in front of an obstacle between the pivot and it.
+ * @property terrain Whether the eye is pulled in front of the ground when the ground rises between
+ *   the pivot and the eye, as over a hill behind the player.
  * @property groundMargin Least height of the eye above the ground, in world units.
- * @property radius Radius of the sphere swept from the pivot to the eye, in world units. It keeps
- *   the near plane off a wall the eye stops in front of.
- * @property easeOutSeconds Half-life of the ease back out once an obstacle clears, in seconds: the
- *   eye covers half of what remains of the way back every [easeOutSeconds]. Zero or less returns at
- *   once. Pulling in is always immediate, so the view never shows the inside of a wall.
+ * @property radius Clearance kept between the line from the pivot to the eye and what blocks it, in
+ *   world units: the radius of the sphere swept against [obstacleLayers], and how far above the
+ *   ground the line must pass for the terrain not to block it.
+ * @property easeOutSeconds Half-life of the ease back out once the way clears, in seconds: the eye
+ *   covers half of what remains of the way back every [easeOutSeconds]. Zero or less returns at once.
+ *   Pulling in is always immediate, so the view never shows the inside of the terrain or a wall.
+ * @property obstacleLayers Physics layers whose bodies also pull the eye in, swept through the
+ *   host's [CameraObstruction]. Empty, the default, sweeps none.
  */
 data class CameraCollision(
     val ground: Boolean = true,
-    val obstacles: Boolean = true,
+    val terrain: Boolean = true,
     val groundMargin: Float = DEFAULT_GROUND_MARGIN,
     val radius: Float = DEFAULT_RADIUS,
     val easeOutSeconds: Float = DEFAULT_EASE_OUT_SECONDS,
+    val obstacleLayers: List<Int> = emptyList(),
 ) {
     init {
         require(groundMargin >= 0f) { "groundMargin must not be negative: $groundMargin" }
         require(radius >= 0f) { "radius must not be negative: $radius" }
+        require(obstacleLayers.all { it >= 0 }) { "obstacleLayers must not be negative: $obstacleLayers" }
     }
 
     /** Neutral defaults for [CameraCollision]. */
@@ -59,13 +69,13 @@ fun interface CameraGround {
 }
 
 /**
- * What stands between a camera's pivot and its eye.
+ * What stands between a camera's pivot and its eye, on one physics layer.
  */
 fun interface CameraObstruction {
     /**
-     * How far a sphere of [radius] moves from [from] towards [to] before it touches something, as a
-     * fraction of the way: `1` when nothing is in the way, `0` when it is blocked where it starts.
-     * Neither vector may be kept or changed.
+     * How far a sphere of [radius] moves from [from] towards [to] before it touches a body on
+     * [layer], as a fraction of the way: `1` when nothing is in the way, `0` when it is blocked where
+     * it starts. Neither vector may be kept or changed.
      */
-    fun clearFraction(from: Vec3f, to: Vec3f, radius: Float): Float
+    fun clearFraction(from: Vec3f, to: Vec3f, radius: Float, layer: Int): Float
 }

@@ -39,9 +39,9 @@ class CameraCollisionTest {
 
     /** Probes whose wall across z, at [wallZ], the test moves; null for no wall. */
     private class Probes(var wallZ: Float? = null, override val ground: CameraGround? = null) : CameraCollisionProbes {
-        override val obstruction = CameraObstruction { from, to, radius ->
+        override val obstruction = CameraObstruction { from, to, radius, layer ->
             val wall = wallZ
-            val reach = if (wall == null) 1f else (wall - radius - from.z) / (to.z - from.z)
+            val reach = if (wall == null || layer != WALL_LAYER) 1f else (wall - radius - from.z) / (to.z - from.z)
             if (reach in 0f..1f) reach else 1f
         }
     }
@@ -73,7 +73,7 @@ class CameraCollisionTest {
     @Test
     fun anEyeUnderASlopeIsLifted() {
         val world = World()
-        val camera = rig(world, CameraCollision(obstacles = false, groundMargin = 0.5f))
+        val camera = rig(world, CameraCollision(terrain = false, groundMargin = 0.5f))
         // The ground climbs toward the eye: 2.5 high under it at z = 5, above the 1.5 it wants.
         val slope = CameraGround { _, z -> z * 0.5f }
 
@@ -83,19 +83,35 @@ class CameraCollisionTest {
     }
 
     @Test
-    fun aWallBetweenTheTargetAndTheEyePullsItIn() {
+    fun aRidgeBetweenTheTargetAndTheEyePullsItIn() {
         val world = World()
-        val camera = rig(world, CameraCollision(ground = false, radius = 0.2f))
+        val camera = rig(world, CameraCollision(ground = false))
+        // A ridge 3 high from z = 2 to z = 3, across the line at head height 1.5.
+        val ridge = CameraGround { _, z -> if (z in 2f..3f) 3f else 0f }
+
+        system(Probes(ground = ridge)).update(world, 1f / 60f)
+
+        assertTrue(camera.lens.eye.z < 2f, "the eye is in front of the ridge at z = 2, was ${camera.lens.eye.z}")
+    }
+
+    @Test
+    fun aWallBetweenTheTargetAndTheEyePullsItInOnlyOnANamedLayer() {
+        val world = World()
+        val camera = rig(world, CameraCollision(ground = false, radius = 0.2f, obstacleLayers = listOf(WALL_LAYER)))
+        val left = World()
+        val leftCamera = rig(left, CameraCollision(ground = false))
 
         system(Probes(wallZ = 2f)).update(world, 1f / 60f)
+        system(Probes(wallZ = 2f)).update(left, 1f / 60f)
 
         assertTrue(camera.lens.eye.z < 1.8f, "the eye is in front of the wall at z = 2, was ${camera.lens.eye.z}")
+        assertEquals(5f, leftCamera.lens.eye.z, 1e-4f, "a wall on no named layer is left for fading")
     }
 
     @Test
     fun theEaseOutReturnsTheEyeToTheDesiredDistance() {
         val world = World()
-        val camera = rig(world, CameraCollision(ground = false, easeOutSeconds = 0.2f))
+        val camera = rig(world, CameraCollision(ground = false, easeOutSeconds = 0.2f, obstacleLayers = listOf(WALL_LAYER)))
         val probes = Probes(wallZ = 2f)
         val system = system(probes)
         system.update(world, 1f / 60f)
@@ -135,10 +151,10 @@ class CameraCollisionTest {
 
         var rig: CameraRig? = null
         world.queryEach(CameraRig::class) { _, found -> rig = found }
-        assertEquals(CameraCollision(groundMargin = 0.5f, radius = 0.25f, easeOutSeconds = 0.5f), rig!!.collision)
+        assertEquals(CameraCollision(groundMargin = 0.5f, radius = 0.25f, easeOutSeconds = 0.5f, obstacleLayers = listOf(2)), rig!!.collision)
         val exported = SceneLoader.fromWorld(world, name = "x", componentRegistry = registry)
             .nodes.flatMap { it.components }.filterIsInstance<SceneCameraRig>().single()
-        assertEquals(SceneCameraCollision(groundMargin = 0.5f, radius = 0.25f, easeOutSeconds = 0.5f), exported.collision)
+        assertEquals(SceneCameraCollision(groundMargin = 0.5f, radius = 0.25f, easeOutSeconds = 0.5f, obstacleLayers = listOf(2)), exported.collision)
         assertNull(SceneCameraRig().collision, "collision is off unless a scene asks for it")
     }
 
@@ -149,12 +165,13 @@ class CameraCollisionTest {
     }
 
     private companion object {
+        const val WALL_LAYER = 2
         const val SCENE = """
 { "version": 1, "name": "x", "nodes": [
   { "name": "Camera", "components": [
     { "component": "camera", "primary": true },
     { "component": "camera_rig", "mode": "ThirdPerson",
-      "collision": { "groundMargin": 0.5, "radius": 0.25, "easeOutSeconds": 0.5 } }
+      "collision": { "groundMargin": 0.5, "radius": 0.25, "easeOutSeconds": 0.5, "obstacleLayers": [2] } }
   ] }
 ] }
 """

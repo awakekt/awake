@@ -126,13 +126,15 @@ until the rig asks for `collision`:
 
 - `ground` (on by default) keeps the eye `groundMargin` above the terrain, sampled around the eye
   the size of the near plane so the view's edge stays out of a slope too.
-- `obstacles` (on by default) sweeps a sphere of `radius` from the pivot to the eye and stops the eye
-  just short of the first static body it touches. The eye pulls in at once and eases back out with
-  a half-life of `easeOutSeconds`, so it neither clips nor jitters.
+- `terrain` (on by default) pulls the eye in front of the ground where it rises between the pivot
+  and the eye, as over a hill behind the player. The line keeps `radius` above the ground.
+- `obstacleLayers` (empty by default) names physics layers whose bodies also pull the eye in: a
+  sphere of `radius` is swept from the pivot to the eye against each. Props and buildings usually
+  stay off this list.
 
-A played project answers both from the scene: the ground from its `terrain` and `paged_terrain`
-heights, the obstacles from its physics world's static bodies. Only static bodies stop the camera, so
-the player's own character never does. A host that runs its own systems passes
+The eye pulls in at once and eases back out with a half-life of `easeOutSeconds`, so it neither
+clips nor jitters. A played project answers the ground from its `terrain` and `paged_terrain`
+heights, and the obstacle layers from its physics world. A host that runs its own systems passes
 `CameraSystem(..., collisionProbes = ...)`; the maths is `CameraCollisionSolver` in
 `awake:core:camera`, usable without a scene. In code, set `CameraRig.collision = CameraCollision(...)`.
 
