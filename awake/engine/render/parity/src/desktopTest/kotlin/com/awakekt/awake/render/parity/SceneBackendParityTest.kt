@@ -475,6 +475,42 @@ class SceneBackendParityTest {
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
+    /**
+     * A dither-faded caster lets the ground show through about the share it fades by, keeps its
+     * shadow and the rest of the frame as they were, and at opacity 1 renders exactly as before.
+     */
+    @Test
+    fun aDitherFadedCasterShowsTheGroundThroughAndKeepsItsShadow() {
+        val failures = BACKEND_ORDER.flatMap { backend ->
+            val renderer = session(backend).renderer
+            val before = renderer.renderShadowScene()
+            val opaque = renderer.renderFadedCasterScene(fadeOpacity = 1f).also { write(backend, it, "dither-fade-opaque") }
+            val faded = renderer.renderFadedCasterScene(fadeOpacity = 0.35f).also { write(backend, it, "dither-fade-faded") }
+            val caster = (0 until SCENE_SIZE * SCENE_SIZE).filter { opaque.isCasterRed(it) }.toHashSet()
+            val through = caster.count { !faded.isCasterRed(it) }
+            val elsewhere = (0 until SCENE_SIZE * SCENE_SIZE).count { it !in caster && !opaque.samePixel(faded, it) }
+            listOfNotNull(
+                "$backend: opacity 1 differs from the unfaded scene".takeIf { !before.contentEquals(opaque) },
+                "$backend: the caster covers no pixels".takeIf { caster.isEmpty() },
+                "$backend: the ground shows through $through of ${caster.size} caster pixels, not about 62%"
+                    .takeIf { caster.isNotEmpty() && through.toDouble() / caster.size !in FADED_SHARE },
+                "$backend: $elsewhere pixels off the caster changed, its shadow among them"
+                    .takeIf { elsewhere > caster.size / EDGE_SHARE_DIVISOR },
+            )
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    private fun ByteArray.isCasterRed(pixel: Int): Boolean {
+        val r = this[pixel * 4].toInt() and 0xFF
+        val g = this[pixel * 4 + 1].toInt() and 0xFF
+        val b = this[pixel * 4 + 2].toInt() and 0xFF
+        return r > CASTER_RED_MIN && g < CASTER_OTHER_MAX && b < CASTER_OTHER_MAX
+    }
+
+    private fun ByteArray.samePixel(other: ByteArray, pixel: Int): Boolean =
+        (0..3).all { this[pixel * 4 + it] == other[pixel * 4 + it] }
+
     /** An additive quad brightens the ground under it, lit or not; an alpha-blended one covers it. */
     @Test
     fun anAdditiveQuadAddsToTheGroundInsteadOfCoveringIt() {
@@ -788,6 +824,14 @@ class SceneBackendParityTest {
         /** How far below the lit level a pixel must fall to count as shadowed. */
         const val SHADOW_MARGIN = 10
         const val CARD_TO_GROUND = 60
+
+        /** 10 of every 16 pixels in the dither tile are discarded at opacity 0.35. */
+        val FADED_SHARE = 0.5..0.75
+        const val CASTER_RED_MIN = 80
+        const val CASTER_OTHER_MAX = 60
+
+        /** Pixels off the caster may change only along its anti-aliased edge: a few per cent of its area. */
+        const val EDGE_SHARE_DIVISOR = 5
 
         const val MIN_CLEAR_HALF_PIXELS = 20
 

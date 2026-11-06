@@ -89,6 +89,10 @@ internal object ControlsCapability : SceneCapability {
                 CameraSystem(inputProvider = services.input, viewportBounds = { null }, collisionProbes = probes)
             }
         }
+        // Fades what a rig's occluderFade finds between its eye and its target, from the physics world's rays.
+        if (plan.hasPhysics && scene.nodes.any { it.fadesOccluders() }) {
+            plan.frame("occluder-fade") { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
+        }
     }
 }
 
@@ -184,6 +188,10 @@ internal fun SceneNode.hasMeshCollider(): Boolean =
 
 internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
+
+/** Whether [this] node, or one under it, has a camera rig that fades its occluders. */
+private fun SceneNode.fadesOccluders(): Boolean =
+    components.any { it is SceneCameraRig && it.occluderFade != null } || children.any { it.fadesOccluders() }
 
 internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
 

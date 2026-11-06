@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.camera.CameraCollision
 import com.awakekt.awake.core.camera.CameraGround
 import com.awakekt.awake.core.camera.CameraObstruction
+import com.awakekt.awake.core.camera.OccluderFade
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
@@ -23,6 +24,7 @@ import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.controls.camera.SceneCameraCollision
 import com.awakekt.awake.scene.controls.camera.SceneCameraRig
+import com.awakekt.awake.scene.controls.camera.SceneOccluderFade
 import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
@@ -155,6 +157,9 @@ class CameraCollisionTest {
         val exported = SceneLoader.fromWorld(world, name = "x", componentRegistry = registry)
             .nodes.flatMap { it.components }.filterIsInstance<SceneCameraRig>().single()
         assertEquals(SceneCameraCollision(groundMargin = 0.5f, radius = 0.25f, easeOutSeconds = 0.5f, obstacleLayers = listOf(2)), exported.collision)
+        assertEquals(OccluderFade(opacity = 0.5f, fadeSeconds = 0.25f), rig!!.occluderFade)
+        assertEquals(SceneOccluderFade(opacity = 0.5f, fadeSeconds = 0.25f), exported.occluderFade)
+        assertNull(SceneCameraRig().occluderFade, "nothing fades unless a scene asks")
         assertNull(SceneCameraRig().collision, "collision is off unless a scene asks for it")
     }
 
@@ -171,7 +176,8 @@ class CameraCollisionTest {
   { "name": "Camera", "components": [
     { "component": "camera", "primary": true },
     { "component": "camera_rig", "mode": "ThirdPerson",
-      "collision": { "groundMargin": 0.5, "radius": 0.25, "easeOutSeconds": 0.5, "obstacleLayers": [2] } }
+      "collision": { "groundMargin": 0.5, "radius": 0.25, "easeOutSeconds": 0.5, "obstacleLayers": [2] },
+      "occluderFade": { "opacity": 0.5, "fadeSeconds": 0.25 } }
   ] }
 ] }
 """
