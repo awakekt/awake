@@ -389,9 +389,13 @@ On 2026-11-06 every `detekt-baseline.xml` was regenerated again for the move to 
 (`2.0.0-alpha.6`, the first release built on Kotlin 2.4). detekt 2 writes a finding's ID with
 `:` where 1.23 wrote `$`, and it renamed rules and their thresholds (`threshold` became
 `allowed*`, `UnusedPrivateMember` became `UnusedPrivateFunction`, `MayBeConst` became
-`MayBeConstant`), so no 1.23 entry still matched. The regenerated files hold fewer findings. Five are new, from
-detekt 2's stricter rules: `LargeClass` on `RendererHeadlessCascadedShadowTest` (backend:vulkan), and
-`OutdatedDocumentation` on `ShadcnCalendar` (2), `ShadcnCarousel` and `ShadcnChart` (ui:shadcn).
+`MayBeConstant`), so no 1.23 entry still matched. The regenerated files hold fewer findings. Five were new, from
+detekt 2's stricter rules, and were fixed in source rather than baselined:
+- `LargeClass` on `RendererHeadlessCascadedShadowTest` (backend:vulkan): its constants and pure
+  helpers moved to file level.
+- `OutdatedDocumentation` on `ShadcnCalendar` (2), `ShadcnCarousel` and `ShadcnChart` (ui:shadcn):
+  detekt 2 wants `@property` for constructor properties, parameters in declaration order, and every
+  parameter documented. The same files' other four entries were fixed with them.
 
 Type-resolved rules run separately, in each module's `detektMainDesktop` task, with only the rules
 `config/detekt/detekt-type-resolved.yml` turns on. Their findings sit in
