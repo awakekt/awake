@@ -10,7 +10,9 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.sceneLightUniforms
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformLayout
 import kotlin.test.Test
@@ -34,7 +36,7 @@ class DitherFadePackingTest {
             materialUniformFloatCount = layout.total,
             viewProjection = Mat4(),
             cameraEye = Vec3f(0f, 0f, 5f),
-            lightPayload = FloatArray(0),
+            lightPayload = sceneLightUniforms(DEFAULT_SCENE_LIGHT, Vec3f.ZERO).packed,
             cameraForward = Vec3f(0f, 0f, -1f),
         )
 
