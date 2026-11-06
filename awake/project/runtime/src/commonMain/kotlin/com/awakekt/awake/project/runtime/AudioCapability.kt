@@ -34,7 +34,11 @@ internal object AudioCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneAudioSource::class)) return
         plan.frame("audio-listener") { CameraListenerSystem() }
-        plan.frame("audio") { AudioSystem(it.audio ?: NoOpAudioPlayer(), it.content[CoreSceneContent.AudioClips].orEmpty()) }
+        plan.frame("audio") {
+            val player = it.audio ?: NoOpAudioPlayer()
+            it.content[CoreSceneContent.AudioClipLoads]?.let { loads -> AudioSystem(player, loads) }
+                ?: AudioSystem(player, it.content[CoreSceneContent.AudioClips].orEmpty())
+        }
     }
 }
 
