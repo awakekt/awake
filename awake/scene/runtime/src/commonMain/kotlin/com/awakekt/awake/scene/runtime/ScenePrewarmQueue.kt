@@ -41,10 +41,12 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
             if (prewarm.isGivenUp) prewarm.close()
             if (!prewarm.isPending) continue
             pollTextures(prewarm)
+            pollModels(prewarm)
             prewarm.audioClips.poll(prewarm, prewarm.scope)
             prewarm.particleImages.poll(prewarm, prewarm.scope)
             while (prewarm.isPending && prewarm.pendingRenderables.isNotEmpty() && spent < frameBudgetBytes) {
-                spent += build(prewarm, prewarm.pendingRenderables.removeFirst())
+                val key = prewarm.pendingRenderables.removeFirst()
+                if (!startedLoading(prewarm, key)) spent += build(prewarm, key)
             }
             prewarm.finishIfDone()
         }
@@ -85,6 +87,39 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
             }
             names.remove()
             prewarm.settle(name, failure)
+        }
+    }
+
+    /**
+     * Whether [key]'s mesh has to be loaded by its resolver before it can be built, such as a glTF model
+     * not preloaded yet; if so, [prewarm] waits for that load, which costs the frame nothing.
+     */
+    private fun startedLoading(prewarm: ScenePrewarm, key: SceneRenderableKey): Boolean {
+        val load = if (library.hasCustomRenderer(key)) null else library.loadMesh(key.mesh, prewarm.scope)
+        if (load != null) prewarm.loadingModels += key to load
+        return load != null
+    }
+
+    /**
+     * Polls the models [prewarm] waits for: a renderable whose model has loaded goes back to be built
+     * first, and one whose model failed to load settles as failed.
+     */
+    private fun pollModels(prewarm: ScenePrewarm) {
+        // A copy: settling calls the progress callback, which may close the prewarm and its loads.
+        for (entry in prewarm.loadingModels.toList()) {
+            if (!prewarm.isPending) return
+            val (key, load) = entry
+            if (!load.poll()) continue
+            prewarm.loadingModels.remove(entry)
+            load.close()
+            val failure = load.failure
+            if (failure == null) {
+                prewarm.pendingRenderables.addFirst(key)
+            } else {
+                val label = "${key.mesh} + ${key.material}"
+                log.error(failure) { "Can't prewarm $label: its model failed to load (${failure.message})." }
+                prewarm.settle(label, failure)
+            }
         }
     }
 

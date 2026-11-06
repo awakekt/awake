@@ -37,8 +37,10 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * until [close], so it stays decoded until the spawn. A scene that registered no such loads, or a clip
  * that is not a 16-bit PCM WAV file, settles it as failed, which [failed] names.
  *
- * glTF models the resolver has not preloaded are not prepared here yet (#1316); a model that can't be
- * built yet fails its renderable, which [failed] names.
+ * A mesh its resolver has to load first, such as a glTF model the resolver has not preloaded, is loaded
+ * off the frame thread in the session's scope ([SceneAssetResolver.loadMesh]), sharing a load already
+ * under way for the same file with other prewarms and spawns, then built like the rest. A model that
+ * fails to load fails its renderables, which [failed] names.
  *
  * It lives in the session's `SceneSession.coroutineScope`: a child of the app's `AppCoroutineScope`
  * when one is registered. A coroutine cancelled while it waits in [await], such as a loading screen that closes,
@@ -56,6 +58,9 @@ class ScenePrewarm internal constructor(
 ) : AutoCloseable {
     internal val pendingRenderables = ArrayDeque(references.renderables)
     internal val pendingTextures: MutableSet<String> = references.textures.toMutableSet()
+
+    /** Renderables whose model a resolver loads first, with that load; each is built once it has loaded. */
+    internal val loadingModels = mutableListOf<Pair<SceneRenderableKey, SceneMeshLoad>>()
     internal val heldMeshes = mutableListOf<String>()
     internal val heldMaterials = mutableListOf<String>()
     internal val audioClips = ScenePrewarmLoads(library.audioClips, references.audioClips, "audio clip")
@@ -112,8 +117,7 @@ class ScenePrewarm internal constructor(
         heldMaterials.forEach(library::releaseMaterial)
         heldMeshes.clear()
         heldMaterials.clear()
-        audioClips.release()
-        particleImages.release()
+        stopLoads()
         done.cancel(CancellationException("The prewarm was closed before it was ready."))
     }
 
@@ -123,10 +127,18 @@ class ScenePrewarm internal constructor(
         state = State.Disposed
         heldMeshes.clear()
         heldMaterials.clear()
-        // The loads outlive the library, so their holds are let go, which stops what still decodes.
+        stopLoads()
+        done.cancel(CancellationException("The scene was torn down before the prewarm was ready."))
+    }
+
+    // Stops waiting for the models still loading, and lets go of the clips and images: a load nothing
+    // else waits for is cancelled. The clip and image loads outlive the library, so teardown releases too.
+    private fun stopLoads() {
+        val loads = loadingModels.toList()
+        loadingModels.clear()
+        loads.forEach { (_, load) -> load.close() }
         audioClips.release()
         particleImages.release()
-        done.cancel(CancellationException("The scene was torn down before the prewarm was ready."))
     }
 
     internal fun settle(name: String, failure: Throwable?) {
@@ -135,9 +147,13 @@ class ScenePrewarm internal constructor(
         onProgress(settled, total)
     }
 
+    // Whether any renderable, texture, clip or image is still waiting to be built, loaded or polled.
+    private val hasWork: Boolean
+        get() = pendingRenderables.isNotEmpty() || pendingTextures.isNotEmpty() || loadingModels.isNotEmpty() ||
+            !audioClips.isDone || !particleImages.isDone
+
     internal fun finishIfDone() {
-        if (state != State.Pending || pendingRenderables.isNotEmpty() || pendingTextures.isNotEmpty()) return
-        if (!audioClips.isDone || !particleImages.isDone) return
+        if (state != State.Pending || hasWork) return
         state = State.Ready
         done.complete(Unit)
     }
