@@ -139,6 +139,7 @@ class ScenePrewarm internal constructor(
  * after this works on it. On the frame thread.
  *
  * @param runtime The runtime whose renderer builds the meshes and materials.
+ * @param references The assets to get ready, such as `node.assetReferences()`.
  * @param onProgress Called on the frame thread each time one more asset is built, loaded or failed.
  */
 fun SceneAssetLibrary.prewarm(
