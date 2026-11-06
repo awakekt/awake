@@ -26,6 +26,7 @@ fun desktopLaunchParameters(arguments: Array<String>): LaunchParameters =
  * default browser, and returns false, never throwing, when there is no display (a headless JVM, a
  * server, CI), the platform has no browse support, or the call fails. It can block briefly while the
  * browser is started. [HostActions.pageReload] is null: a desktop app has no page to reload.
+ * [HostActions.fullscreen] is null: the GLFW window has no fullscreen switch yet.
  *
  * AWT shares the process with the GLFW window. macOS runs GLFW on the first thread
  * (`-XstartOnFirstThread`), which AWT also wants, so test `openUrl` on a macOS build before relying on it.
