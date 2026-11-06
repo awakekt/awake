@@ -26,6 +26,7 @@ public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {
 
 public final class com/awakekt/awake/project/runtime/CoreSceneContent {
 	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/CoreSceneContent;
+	public final fun getAnimationUpdateRate ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 	public final fun getAudioClipLoads ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 	public final fun getAudioClips ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
 	public final fun getCanvasFonts ()Lcom/awakekt/awake/project/runtime/SceneContentKey;

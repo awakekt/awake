@@ -35,6 +35,7 @@ import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
+import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
@@ -147,14 +148,22 @@ internal object PhysicsCapability : SceneCapability {
     }
 }
 
-/** Skinned glTF animation, which every scene runs: a model's clips need no component of their own. */
+/**
+ * Skinned glTF animation, which every scene runs: a model's clips need no component of their own. A
+ * game that put an [AnimationUpdateRate] under [CoreSceneContent.AnimationUpdateRate] has far models
+ * posed less often; otherwise every model is posed every frame.
+ */
 internal object SkinnedAnimationCapability : SceneCapability {
     override val id = "com.awakekt.awake.skinned-animation"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        plan.frame("animation") { AnimationSystem() }
+        plan.frame("animation") { services -> AnimationSystem(services.animationUpdateRate()) }
     }
 }
+
+/** The rate a game put under [CoreSceneContent.AnimationUpdateRate], else every frame. */
+internal fun SceneHostServices.animationUpdateRate(): AnimationUpdateRate =
+    content[CoreSceneContent.AnimationUpdateRate] ?: AnimationUpdateRate.EveryFrame
 
 /** A `terrain` collider, or a `paged_terrain` whose nearby cells collide. */
 private fun SceneDocument.hasTerrainColliders(): Boolean =
