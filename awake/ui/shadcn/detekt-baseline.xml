@@ -43,14 +43,6 @@
     <ID>MatchingDeclarationName:ShadcnCommand.kt:ShadcnCommandItem</ID>
     <ID>MatchingDeclarationName:ShadcnSelect.kt:ShadcnSelectItem</ID>
     <ID>MatchingDeclarationName:ShadcnSidebarShell.kt:SidebarState</ID>
-    <ID>OutdatedDocumentation:ShadcnCalendar.kt:ShadcnCalendarDate</ID>
-    <ID>OutdatedDocumentation:ShadcnCalendar.kt:ShadcnDateRange</ID>
-    <ID>OutdatedDocumentation:ShadcnCalendar.kt:context(_: Composer) fun ShadcnCalendar</ID>
-    <ID>OutdatedDocumentation:ShadcnCalendar.kt:context(_: Composer) fun ShadcnDatePicker</ID>
-    <ID>OutdatedDocumentation:ShadcnCarousel.kt:context(_: Composer) fun &lt;T> ShadcnCarousel</ID>
-    <ID>OutdatedDocumentation:ShadcnChart.kt:ShadcnChartSeries</ID>
-    <ID>OutdatedDocumentation:ShadcnChart.kt:ShadcnPieSlice</ID>
-    <ID>OutdatedDocumentation:ShadcnChart.kt:context(_: Composer) fun ShadcnLineChart</ID>
     <ID>OutdatedDocumentation:ShadcnCommand.kt:ShadcnCommandItem</ID>
     <ID>ReturnCount:ShadcnDropdownMenu.kt:private fun List&lt;ShadcnMenuEntry>.nextEnabledIndex: Int?</ID>
     <ID>ReturnCount:ShadcnDropdownMenu.kt:private fun handleMenuKey: Boolean</ID>
