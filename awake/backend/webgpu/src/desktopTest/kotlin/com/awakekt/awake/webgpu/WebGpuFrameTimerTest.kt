@@ -33,15 +33,15 @@ class WebGpuFrameTimerTest {
     fun optionalTimingReportsCompletedRenderPassesWithoutUncapturedErrors() = runBlocking {
         val errors = mutableListOf<String>()
         val original = glfwContextRenderer(width = 16, height = 16, title = "awake-gpu-timer", onUncapturedError = { errors += it.message })
-        assertNull(GpuFrameTimer.createOrNull(original.wgpuContext.device), "an unrequested optional feature must keep timing disabled")
+        assertNull(GpuFrameTimer.createOrNull(original.wgpuContext.device, this), "an unrequested optional feature must keep timing disabled")
         val context = original.wgpuContext.withGpuTiming { errors += it.message }
         val device = context.device
         if (GPUFeatureName.TimestampQuery !in context.adapter.features) {
-            assertNull(GpuFrameTimer.createOrNull(device))
+            assertNull(GpuFrameTimer.createOrNull(device, this))
             context.close()
             return@runBlocking
         }
-        val timer = assertNotNull(GpuFrameTimer.createOrNull(device))
+        val timer = assertNotNull(GpuFrameTimer.createOrNull(device, this))
         val texture = device.createTexture(
             TextureDescriptor(size = Extent3D(16u, 16u), format = GPUTextureFormat.RGBA8Unorm, usage = GPUTextureUsage.RenderAttachment),
         )

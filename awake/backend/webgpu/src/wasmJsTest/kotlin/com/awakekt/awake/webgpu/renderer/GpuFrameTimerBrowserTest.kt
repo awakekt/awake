@@ -37,11 +37,11 @@ class GpuFrameTimerBrowserTest {
         val device = context.device
         assertEquals(GPUFeatureName.TimestampQuery in context.adapter.features, GPUFeatureName.TimestampQuery in device.features)
         if (GPUFeatureName.TimestampQuery !in device.features) {
-            assertNull(GpuFrameTimer.createOrNull(device))
+            assertNull(GpuFrameTimer.createOrNull(device, backgroundScope))
             context.close()
             return@runTest
         }
-        val timer = assertNotNull(GpuFrameTimer.createOrNull(device))
+        val timer = assertNotNull(GpuFrameTimer.createOrNull(device, backgroundScope))
         val texture = device.createTexture(
             TextureDescriptor(size = Extent3D(16u, 16u), format = GPUTextureFormat.RGBA8Unorm, usage = GPUTextureUsage.RenderAttachment),
         )

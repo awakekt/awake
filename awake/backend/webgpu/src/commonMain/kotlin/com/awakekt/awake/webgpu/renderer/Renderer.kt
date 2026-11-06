@@ -59,6 +59,7 @@ import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
 import com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline
+import kotlinx.coroutines.CoroutineScope
 import com.awakekt.awake.core.color.Color as AwakeColor
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
@@ -106,6 +107,8 @@ class Renderer internal constructor(
      * draws, a layer per mask layer, recorded only on frames something is masked. */
     internal val maskPass: DepthPrePassFeature? = null,
     internal val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = emptyList(),
+    /** The engine's scope, where GPU timestamps are read back; null, as for a headless renderer, times nothing. */
+    backgroundScope: CoroutineScope? = null,
 ) : RenderRenderer,
     GpuDrawPreparationSource,
     ContentFeatureHost {
@@ -177,7 +180,7 @@ class Renderer internal constructor(
 
     /** The latest main-pass colour, valid until the host returns this surface texture. */
     internal var presentedColor: PresentedColor? = null
-    internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device)
+    internal val gpuFrameTimer = backgroundScope?.let { GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device, it) }
 
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
