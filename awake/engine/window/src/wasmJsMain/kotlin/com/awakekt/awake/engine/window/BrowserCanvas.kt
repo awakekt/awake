@@ -282,12 +282,8 @@ fun runBrowserCanvas(
             initBackend(canvas, initialSize.first, initialSize.second)
 
             var lastFrameTime = window.performance.now()
-            var frameLoopStopped = false
-            fun frame(time: Double) {
-                if (frameLoopStopped || isStopped()) {
-                    frameLoopStopped = true
-                    return
-                }
+            fun frame(time: Double): Boolean {
+                if (isStopped()) return false
                 // The first frame's timestamp can come before lastFrameTime's performance.now().
                 val deltaSeconds = clampFrameDelta((time - lastFrameTime) / 1000.0).toFloat()
                 lastFrameTime = time
@@ -300,15 +296,21 @@ fun runBrowserCanvas(
                     // An image the app asks for wins over the shape, as on the desktop host.
                     canvasCursor.showFrame(cursor, cursorImage)
                 } catch (error: Throwable) {
-                    frameLoopStopped = true
                     reportBrowserFrameFailure(
                         "Browser frame failed: ${error.message ?: error::class.simpleName}",
                     )
-                    return
+                    return false
                 }
-                window.requestAnimationFrame(::frame)
+                return true
             }
-            window.requestAnimationFrame(::frame)
+            // The work runs as a posted task, not inside the frame callback, so a worker's messages (a socket's pongs
+            // and snapshots) still get their turn while a key is held on a slow frame (TaskFrameLoop).
+            val taskPort = createTaskPort()
+            TaskFrameLoop(
+                requestFrame = { callback -> window.requestAnimationFrame(callback) },
+                postTask = { work -> postTask(taskPort, work) },
+                runFrame = ::frame,
+            ).start()
         } catch (cancelled: CancellationException) {
             // The app was disposed while the backend started: not a start-up failure.
             throw cancelled
@@ -338,6 +340,24 @@ fun runBrowserCanvas(
 /** Keeps startup failures visible in browser console instead of leaving a black canvas. */
 @JsFun("(message) => console.error(message)")
 private external fun reportBrowserStartupFailure(message: String)
+
+/**
+ * A `MessageChannel` whose receiving port runs the work posted with [postTask], one task per message, in order. A
+ * message task waits behind the tasks already queued, such as a worker's messages, rather than running ahead of them.
+ */
+@JsFun(
+    """() => {
+        const channel = new MessageChannel();
+        const queue = [];
+        channel.port1.onmessage = () => { const work = queue.shift(); if (work) work(); };
+        return { post: (work) => { queue.push(work); channel.port2.postMessage(null); } };
+    }""",
+)
+private external fun createTaskPort(): JsAny
+
+/** Runs [work] as a task of its own on [port] ([createTaskPort]). */
+@JsFun("(port, work) => port.post(work)")
+private external fun postTask(port: JsAny, work: () -> Unit)
 
 /** Keeps frame failures visible in browser console instead of leaving a black canvas. */
 @JsFun("(message) => console.error(message)")
