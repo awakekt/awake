@@ -39,7 +39,7 @@ class DesktopHostTest {
     }
 
     @Test
-    fun aDesktopOffersNoFullscreen() {
+    fun aDesktopWithoutItsWindowOffersNoFullscreen() {
         assertNull(desktopHostActions().fullscreen)
     }
 

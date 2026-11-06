@@ -26,12 +26,23 @@ fun desktopLaunchParameters(arguments: Array<String>): LaunchParameters =
  * default browser, and returns false, never throwing, when there is no display (a headless JVM, a
  * server, CI), the platform has no browse support, or the call fails. It can block briefly while the
  * browser is started. [HostActions.pageReload] is null: a desktop app has no page to reload.
- * [HostActions.fullscreen] is null: the GLFW window has no fullscreen switch yet.
+ * [HostActions.fullscreen] is null here, with no window to put on a monitor; pass the window to the
+ * other [desktopHostActions] to have it.
  *
  * AWT shares the process with the GLFW window. macOS runs GLFW on the first thread
  * (`-XstartOnFirstThread`), which AWT also wants, so test `openUrl` on a macOS build before relying on it.
  */
-fun desktopHostActions(): HostActions = CheckedHostActions(open = { url -> browseWith(awtBrowser(), url) })
+fun desktopHostActions(): HostActions = CheckedHostActions(open = ::browseDefault)
+
+/**
+ * The [desktopHostActions] of a game with a GLFW [window], the handle `runDesktopWindow` passes to its
+ * `onCreate`: the same [HostActions.openUrl], and [HostActions.fullscreen] is [glfwFullscreen] of
+ * [window]. Use it from the frame loop's thread, as every GLFW window call must be.
+ */
+fun desktopHostActions(window: Long): HostActions =
+    CheckedHostActions(open = ::browseDefault, fullscreen = glfwFullscreen(window))
+
+private fun browseDefault(url: String): Boolean = browseWith(awtBrowser(), url)
 
 /** Opens a URI in the default browser. */
 internal fun interface UrlBrowser {

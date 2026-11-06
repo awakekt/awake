@@ -1,5 +1,6 @@
 public final class com/awakekt/awake/engine/window/DesktopHostKt {
 	public static final fun desktopHostActions ()Lcom/awakekt/awake/engine/window/HostActions;
+	public static final fun desktopHostActions (J)Lcom/awakekt/awake/engine/window/HostActions;
 	public static final fun desktopLaunchEnvironment ()Lcom/awakekt/awake/engine/window/LaunchEnvironment;
 	public static final fun desktopLaunchParameters ([Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
 }
@@ -46,6 +47,10 @@ public final class com/awakekt/awake/engine/window/Fullscreen$DefaultImpls {
 	public static fun toggle (Lcom/awakekt/awake/engine/window/Fullscreen;)Z
 }
 
+public final class com/awakekt/awake/engine/window/GlfwFullscreenKt {
+	public static final fun glfwFullscreen (J)Lcom/awakekt/awake/engine/window/Fullscreen;
+}
+
 public final class com/awakekt/awake/engine/window/GlfwGamepadKt {
 	public static final fun pollGlfwGamepad (Lcom/awakekt/awake/core/input/Input;Z)V
 	public static synthetic fun pollGlfwGamepad$default (Lcom/awakekt/awake/core/input/Input;ZILjava/lang/Object;)V
@@ -79,16 +84,20 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwGetKey (JI)I
 	public final fun glfwGetMouseButton (JI)I
 	public final fun glfwGetWindowAttrib (JI)I
+	public final fun glfwGetWindowBounds (J)[I
 	public final fun glfwGetWindowDpi (J)F
 	public final fun glfwGetWindowHeight (J)I
 	public final fun glfwGetWindowWidth (J)I
 	public final fun glfwInit ()Z
+	public final fun glfwIsWindowFullscreen (J)Z
 	public final fun glfwPollEvents ()V
 	public final fun glfwSetCharCallback (J)V
 	public final fun glfwSetClipboardString (JLjava/lang/String;)V
 	public final fun glfwSetCursorImage (JI[BIIII)V
 	public final fun glfwSetCursorShape (JI)V
 	public final fun glfwSetScrollCallback (J)V
+	public final fun glfwSetWindowFullscreen (J)Z
+	public final fun glfwSetWindowWindowed (JIIII)V
 	public final fun glfwTerminate ()V
 	public final fun glfwWindowHint (II)V
 	public final fun glfwWindowShouldClose (J)Z

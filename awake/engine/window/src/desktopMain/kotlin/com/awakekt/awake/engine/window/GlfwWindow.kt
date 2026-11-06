@@ -137,4 +137,22 @@ object GlfwWindow {
      * display may.
      */
     external fun glfwGetWindowDpi(window: Long): Float
+
+    /** Whether [window] is on a monitor (fullscreen) rather than windowed. */
+    external fun glfwIsWindowFullscreen(window: Long): Boolean
+
+    /**
+     * [window]'s windowed position and size in screen coordinates, as `[x, y, width, height]`.
+     * Wayland has no window position, so x and y read 0 there.
+     */
+    external fun glfwGetWindowBounds(window: Long): IntArray
+
+    /**
+     * Puts [window] on the monitor under its centre at that monitor's current video mode: borderless
+     * fullscreen, with no mode switch. False when there is no monitor or video mode to use.
+     */
+    external fun glfwSetWindowFullscreen(window: Long): Boolean
+
+    /** Takes [window] off its monitor, back to a window at [x], [y] sized [width] by [height]. */
+    external fun glfwSetWindowWindowed(window: Long, x: Int, y: Int, width: Int, height: Int)
 }
