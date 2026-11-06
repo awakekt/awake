@@ -41,6 +41,7 @@ class DesktopHostTest {
     @Test
     fun aDesktopWithoutItsWindowOffersNoFullscreen() {
         assertNull(desktopHostActions().fullscreen)
+        assertNull(desktopHostActions().windowFrame)
     }
 
     @Test

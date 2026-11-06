@@ -155,4 +155,10 @@ object GlfwWindow {
 
     /** Takes [window] off its monitor, back to a window at [x], [y] sized [width] by [height]. */
     external fun glfwSetWindowWindowed(window: Long, x: Int, y: Int, width: Int, height: Int)
+
+    /** Shows or hides [window]'s OS title bar and border. Read it back with `glfwGetWindowAttrib`. */
+    external fun glfwSetWindowDecorated(window: Long, decorated: Boolean)
+
+    /** Moves [window]'s content area to [x], [y] in screen coordinates; a no-op on Wayland. */
+    external fun glfwSetWindowPos(window: Long, x: Int, y: Int)
 }

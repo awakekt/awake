@@ -30,10 +30,22 @@ public final class com/awakekt/awake/engine/window/DesktopRunLimits$Companion {
 }
 
 public final class com/awakekt/awake/engine/window/DesktopWindowKt {
+	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
 	public static final synthetic fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
 	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/engine/window/DesktopWindowOptions {
+	public fun <init> ()V
+	public final fun getDecoration ()Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public final fun setDecoration (Lcom/awakekt/awake/engine/window/WindowDecoration;)V
+}
+
+public final class com/awakekt/awake/engine/window/DesktopWindowOptionsKt {
+	public static final fun desktopWindowOptions (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/window/DesktopWindowOptions;
 }
 
 public abstract interface class com/awakekt/awake/engine/window/Fullscreen {
@@ -96,7 +108,9 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwSetCursorImage (JI[BIIII)V
 	public final fun glfwSetCursorShape (JI)V
 	public final fun glfwSetScrollCallback (J)V
+	public final fun glfwSetWindowDecorated (JZ)V
 	public final fun glfwSetWindowFullscreen (J)Z
+	public final fun glfwSetWindowPos (JII)V
 	public final fun glfwSetWindowWindowed (JIIII)V
 	public final fun glfwTerminate ()V
 	public final fun glfwWindowHint (II)V
@@ -137,11 +151,13 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
 public abstract interface class com/awakekt/awake/engine/window/HostActions {
 	public fun getFullscreen ()Lcom/awakekt/awake/engine/window/Fullscreen;
 	public abstract fun getPageReload ()Lcom/awakekt/awake/engine/window/PageReload;
+	public fun getWindowFrame ()Lcom/awakekt/awake/engine/window/WindowFrame;
 	public abstract fun openUrl (Ljava/lang/String;)Z
 }
 
 public final class com/awakekt/awake/engine/window/HostActions$DefaultImpls {
 	public static fun getFullscreen (Lcom/awakekt/awake/engine/window/HostActions;)Lcom/awakekt/awake/engine/window/Fullscreen;
+	public static fun getWindowFrame (Lcom/awakekt/awake/engine/window/HostActions;)Lcom/awakekt/awake/engine/window/WindowFrame;
 }
 
 public final class com/awakekt/awake/engine/window/LaunchEnvironment {
@@ -202,5 +218,28 @@ public final class com/awakekt/awake/engine/window/PrimaryInput : java/lang/Enum
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/PrimaryInput;
 	public static fun values ()[Lcom/awakekt/awake/engine/window/PrimaryInput;
+}
+
+public final class com/awakekt/awake/engine/window/WindowDecoration : java/lang/Enum {
+	public static final field None Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public static final field System Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public static fun values ()[Lcom/awakekt/awake/engine/window/WindowDecoration;
+}
+
+public final class com/awakekt/awake/engine/window/WindowDecorationKt {
+	public static final fun glfwWindowDrag (J)Lcom/awakekt/awake/engine/window/WindowDrag;
+	public static final fun setWindowDecoration (JLcom/awakekt/awake/engine/window/WindowDecoration;)V
+	public static final fun windowDecoration (J)Lcom/awakekt/awake/engine/window/WindowDecoration;
+}
+
+public final class com/awakekt/awake/engine/window/WindowDrag {
+	public final fun update (Z)V
+}
+
+public abstract interface class com/awakekt/awake/engine/window/WindowFrame {
+	public abstract fun getDecoration ()Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public abstract fun setDecoration (Lcom/awakekt/awake/engine/window/WindowDecoration;)V
 }
 

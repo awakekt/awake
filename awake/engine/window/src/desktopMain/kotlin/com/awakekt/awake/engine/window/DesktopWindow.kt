@@ -13,6 +13,8 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 
 private const val GLFW_CLIENT_API = 0x00022001
 private const val GLFW_NO_API = 0
+private const val GLFW_TRUE = 1
+private const val GLFW_FALSE = 0
 
 /**
  * Opens a desktop window for [game] and runs its frame loop until the window is closed, or for
@@ -49,10 +51,35 @@ fun runDesktopWindow(
     cursorImage: (() -> CursorImage?)? = null,
     frames: Int? = null,
     onDpi: (dpi: Float) -> Unit = {},
+) = runDesktopWindow(
+    game, DesktopWindowOptions(), onCreate, onFrame, onDispose, pollInput, beforeFrame, afterLoop, cursor,
+    cursorImage, frames, onDpi,
+)
+
+/**
+ * [runDesktopWindow] opened with [options], such as frameless with
+ * `desktopWindowOptions { decoration = WindowDecoration.None }`. Every other parameter is the same.
+ */
+@Suppress("LongParameterList")
+fun runDesktopWindow(
+    game: AwakeAppLifecycle,
+    options: DesktopWindowOptions,
+    onCreate: (window: Long) -> Unit,
+    onFrame: (deltaSeconds: Float) -> Unit,
+    onDispose: () -> Unit,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
+    frames: Int? = null,
+    onDpi: (dpi: Float) -> Unit = {},
 ) {
     require(frames == null || frames > 0) { "A run lasts at least one frame; was $frames." }
     check(GlfwWindow.glfwInit()) { "glfwInit failed" }
     GlfwWindow.glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
+    val decorated = if (options.decoration == WindowDecoration.System) GLFW_TRUE else GLFW_FALSE
+    GlfwWindow.glfwWindowHint(GLFW_DECORATED, decorated)
     val window = GlfwWindow.glfwCreateWindow(
         game.windowConfig.width,
         game.windowConfig.height,
