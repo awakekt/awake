@@ -35,10 +35,9 @@ internal class ProjectScene(
     val models: GltfAssetResolver,
     val physics: PhysicsWorld?,
     val content: SceneContent,
-    files: AssetSource,
 ) : AutoCloseable {
     /** The models spawned nodes draw that the scene didn't load, loaded as they are spawned. */
-    val spawnedModels = SpawnedModels(models, files)
+    val spawnedModels = SpawnedModels(models)
 
     // The nodes spawned into the scene, despawned when a switch leaves it. Read and written on the frame thread.
     private val spawned = mutableListOf<SpawnedNode>()
@@ -190,7 +189,7 @@ internal suspend fun loadProjectScene(
     } else {
         null
     }
-    return ProjectScene(path, scene, models, physics, content, files)
+    return ProjectScene(path, scene, models, physics, content)
 }
 
 private fun SceneNode.meshNames(): List<String> =
