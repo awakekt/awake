@@ -39,7 +39,9 @@ class ScenePrewarmTest : PrewarmFixture() {
         prewarm.close()
         // --8<-- [end:spawn]
         assertEquals(listOf(1, 2, 3), progress)
-        spawned.entities.forEach { assertNotNull(runtime.world.get<MeshRenderer>(it), "drawn on its first frame") }
+        // The boat and its mast draw meshes; the flag draws a sprite, which has no MeshRenderer.
+        val (boat, mast) = spawned.entities
+        listOf(boat, mast).forEach { assertNotNull(runtime.world.get<MeshRenderer>(it), "drawn on its first frame") }
         assertEquals(emptyList(), spawned.unattachedRenderables)
         assertSame(built.getValue("hull").single(), runtime.world.get<MeshRenderer>(spawned.root)?.mesh, "shared, not rebuilt")
         assertNotNull(library.textureImage("sprites/flag.png"), "the texture is loaded before it is first drawn")
