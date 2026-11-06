@@ -48,7 +48,7 @@ class ScenePrewarmAudioTest : PrewarmFixture() {
 
     // --8<-- [start:audio]
     // One set of clips for the scene: its AudioSystem plays them, and a prewarm decodes into them.
-    private val clips = audioClipLoads(files, context = dispatcher).also { library.audioClips = it }
+    private val clips = audioClipLoads(files, game.session.coroutineScope).also { library.audioClips = it }
     private val audio = AudioSystem(player, clips)
     // --8<-- [end:audio]
 

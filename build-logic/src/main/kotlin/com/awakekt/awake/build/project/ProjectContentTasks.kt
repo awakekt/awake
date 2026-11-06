@@ -33,6 +33,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
@@ -87,6 +88,27 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     val bundleKeyId: Property<String> = objects.property(String::class.java)
     val bundleKeyFile: RegularFileProperty = objects.fileProperty()
     val bundleKeyEnvironmentVariable: Property<String> = objects.property(String::class.java)
+
+    /** Per-group key ids overriding [bundleKeyId], keyed by bundle group name. */
+    val bundleGroupKeyIds: MapProperty<String, String> = objects.mapProperty(String::class.java, String::class.java)
+
+    /** Per-group key files outside the repository, keyed by bundle group name. */
+    val bundleGroupKeyFiles: MapProperty<String, File> = objects.mapProperty(String::class.java, File::class.java)
+
+    /** Per-group environment variable names holding 64-hex-digit keys, keyed by bundle group name. */
+    val bundleGroupKeyEnvironmentVariables: MapProperty<String, String> = objects.mapProperty(String::class.java, String::class.java)
+
+    /** Seals bundle group [group] under [keyId], read from [keyFile] outside the repository. */
+    fun bundleGroupKey(group: String, keyId: String, keyFile: File) {
+        bundleGroupKeyIds.put(group, keyId)
+        bundleGroupKeyFiles.put(group, keyFile)
+    }
+
+    /** Seals bundle group [group] under [keyId], read from the environment variable [environmentVariable]. */
+    fun bundleGroupKey(group: String, keyId: String, environmentVariable: String) {
+        bundleGroupKeyIds.put(group, keyId)
+        bundleGroupKeyEnvironmentVariables.put(group, environmentVariable)
+    }
 
     /**
      * Whether `generateContentBundles` deletes `.awkb` files under [bundlesOutputDirectory] that the new
@@ -530,6 +552,18 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
     @get:Input
     abstract val keyEnvironmentVariable: Property<String>
 
+    /** Per-group key ids overriding [keyId], keyed by bundle group name. */
+    @get:Input
+    abstract val groupKeyIds: MapProperty<String, String>
+
+    /** Per-group key files; read by the worker, never stored by Gradle. [keyFingerprint] tracks their contents. */
+    @get:Internal
+    abstract val groupKeyFiles: MapProperty<String, File>
+
+    /** Per-group environment variable names holding keys; read by the worker, never stored by Gradle. */
+    @get:Input
+    abstract val groupKeyEnvironmentVariables: MapProperty<String, String>
+
     /** A labelled SHA-256 of the key ([BundleKeyFingerprintSource]), so a new key reruns the task without Gradle keeping the key. */
     @get:Optional
     @get:Input
@@ -552,6 +586,17 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
         if (!keyId.isPresent && (keyFile.isPresent || keyEnvironmentVariable.isPresent)) {
             throw GradleException("projectContent.bundleKeyFile and bundleKeyEnvironmentVariable need bundleKeyId")
         }
+        val groupIds = groupKeyIds.getOrElse(emptyMap())
+        val groupFiles = groupKeyFiles.getOrElse(emptyMap())
+        val groupVars = groupKeyEnvironmentVariables.getOrElse(emptyMap())
+        (groupFiles.keys + groupVars.keys - groupIds.keys).firstOrNull()?.let { group ->
+            throw GradleException("projectContent group '$group' key source needs a keyId in bundleGroupKeyIds")
+        }
+        groupIds.keys.forEach { group ->
+            if (groupFiles.containsKey(group) == groupVars.containsKey(group)) {
+                throw GradleException("projectContent group '$group' keyId needs exactly one of a key file and an environment variable")
+            }
+        }
         val queue = workerExecutor.classLoaderIsolation {
             classpath.from(workerClasspath)
         }
@@ -569,6 +614,9 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
             keyId.set(this@GenerateContentBundlesTask.keyId)
             keyFile.set(this@GenerateContentBundlesTask.keyFile)
             keyEnvironmentVariable.set(this@GenerateContentBundlesTask.keyEnvironmentVariable)
+            groupKeyIds.set(this@GenerateContentBundlesTask.groupKeyIds)
+            groupKeyFiles.set(this@GenerateContentBundlesTask.groupKeyFiles)
+            groupKeyEnvironmentVariables.set(this@GenerateContentBundlesTask.groupKeyEnvironmentVariables)
         }
         queue.await()
     }
@@ -588,30 +636,55 @@ interface GenerateContentBundlesParameters : WorkParameters {
     val keyId: Property<String>
     val keyFile: RegularFileProperty
     val keyEnvironmentVariable: Property<String>
+    val groupKeyIds: MapProperty<String, String>
+    val groupKeyFiles: MapProperty<String, File>
+    val groupKeyEnvironmentVariables: MapProperty<String, String>
 }
 
 abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBundlesParameters> {
     override fun execute() {
         val loader = Thread.currentThread().contextClassLoader ?: javaClass.classLoader
-        // A contract with com.awakekt.awake:project of the plugin's own version; an overridden
-        // projectContent.engineVersion from another release may not have it.
-        val method = try {
-            Class.forName(WORKER_CLASS, true, loader).getMethod(
-                "run",
+        val groupIds = parameters.groupKeyIds.getOrElse(emptyMap())
+        val parameterTypes: Array<Class<*>> = if (groupIds.isEmpty()) {
+            arrayOf(
                 File::class.java,
                 File::class.java,
                 File::class.java,
                 String::class.java,
-                Int::class.javaPrimitiveType,
-                Long::class.javaPrimitiveType,
-                Boolean::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType!!,
+                Long::class.javaPrimitiveType!!,
+                Boolean::class.javaPrimitiveType!!,
                 String::class.java,
                 String::class.java,
-                Boolean::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType!!,
                 String::class.java,
                 File::class.java,
                 String::class.java,
             )
+        } else {
+            arrayOf(
+                File::class.java,
+                File::class.java,
+                File::class.java,
+                String::class.java,
+                Int::class.javaPrimitiveType!!,
+                Long::class.javaPrimitiveType!!,
+                Boolean::class.javaPrimitiveType!!,
+                String::class.java,
+                String::class.java,
+                Boolean::class.javaPrimitiveType!!,
+                String::class.java,
+                File::class.java,
+                String::class.java,
+                Map::class.java,
+                Map::class.java,
+                Map::class.java,
+            )
+        }
+        // A contract with com.awakekt.awake:project of the plugin's own version; an overridden
+        // projectContent.engineVersion from another release may not have it.
+        val method = try {
+            Class.forName(WORKER_CLASS, true, loader).getMethod("run", *parameterTypes)
         } catch (failure: ReflectiveOperationException) {
             throw GradleException(
                 "generateContentBundles needs com.awakekt.awake:project of the same release as the " +
@@ -620,9 +693,8 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
                 failure,
             )
         }
-        val stats = try {
-            method.invoke(
-                null,
+        val args: Array<Any?> = if (groupIds.isEmpty()) {
+            arrayOf(
                 parameters.indexFile.get().asFile,
                 parameters.projectDirectory.get().asFile,
                 parameters.outputDirectory.get().asFile,
@@ -636,7 +708,29 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
                 parameters.keyId.orNull,
                 parameters.keyFile.orNull?.asFile,
                 parameters.keyEnvironmentVariable.orNull,
-            ) as LongArray
+            )
+        } else {
+            arrayOf(
+                parameters.indexFile.get().asFile,
+                parameters.projectDirectory.get().asFile,
+                parameters.outputDirectory.get().asFile,
+                parameters.grouping.get(),
+                parameters.folderDepth.get(),
+                parameters.targetBundleBytes.get(),
+                parameters.opaqueIds.get(),
+                parameters.pathSalt.orNull,
+                parameters.bundleUrlPrefix.get(),
+                parameters.pruneStaleBundles.get(),
+                parameters.keyId.orNull,
+                parameters.keyFile.orNull?.asFile,
+                parameters.keyEnvironmentVariable.orNull,
+                groupIds,
+                parameters.groupKeyFiles.getOrElse(emptyMap()),
+                parameters.groupKeyEnvironmentVariables.getOrElse(emptyMap()),
+            )
+        }
+        val stats = try {
+            method.invoke(null, *args) as LongArray
         } catch (failure: InvocationTargetException) {
             val cause = failure.targetException ?: failure
             throw GradleException(cause.message ?: "Content bundle generation failed", cause)

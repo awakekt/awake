@@ -91,21 +91,22 @@ class ProjectAiTest {
      */
     @Test
     fun aChaserWithACharacterControllerStopsAtAWallATransformPlacedChaserWalksThrough() = runTest {
-        val game = play(WALL_SCENE, physics = true)
-        val hound = game.world.named("Hound")
-        val ghost = game.world.named("Ghost")
-        var houndFurthest = Float.MIN_VALUE
-        var ghostFurthest = Float.MIN_VALUE
+        play(WALL_SCENE, physics = true).use { game ->
+            val hound = game.world.named("Hound")
+            val ghost = game.world.named("Ghost")
+            var houndFurthest = Float.MIN_VALUE
+            var ghostFurthest = Float.MIN_VALUE
 
-        repeat(WALL_FRAMES) {
-            game.frame()
-            houndFurthest = maxOf(houndFurthest, game.world.get<Transform>(hound)!!.position.z)
-            ghostFurthest = maxOf(ghostFurthest, game.world.get<Transform>(ghost)!!.position.z)
+            repeat(WALL_FRAMES) {
+                game.frame()
+                houndFurthest = maxOf(houndFurthest, game.world.get<Transform>(hound)!!.position.z)
+                ghostFurthest = maxOf(ghostFurthest, game.world.get<Transform>(ghost)!!.position.z)
+            }
+
+            assertTrue(ghostFurthest > WALL_FAR_SIDE, "the transform-placed chaser walks through the wall; it reached z = $ghostFurthest")
+            assertTrue(houndFurthest > HOUND_START_Z + 2f, "the controlled chaser must really be steered; it reached z = $houndFurthest")
+            assertTrue(houndFurthest < WALL_NEAR_SIDE, "the wall stops the controlled chaser; it reached z = $houndFurthest")
         }
-
-        assertTrue(ghostFurthest > WALL_FAR_SIDE, "the transform-placed chaser walks through the wall; it reached z = $ghostFurthest")
-        assertTrue(houndFurthest > HOUND_START_Z + 2f, "the controlled chaser must really be steered; it reached z = $houndFurthest")
-        assertTrue(houndFurthest < WALL_NEAR_SIDE, "the wall stops the controlled chaser; it reached z = $houndFurthest")
     }
 
     /**
@@ -114,20 +115,21 @@ class ProjectAiTest {
      */
     @Test
     fun aControlledChaserWhoseTargetIsGoneStopsAtTheEndOfItsRoute() = runTest {
-        val game = play(OPEN_FIELD_SCENE, physics = true)
-        val hound = game.world.named("Hound")
-        repeat(TARGET_GONE_AFTER) { game.frame() }
-        val startedFrom = game.world.get<Transform>(hound)!!.position.z
-        game.world.destroy(game.world.named("Bait"))
+        play(OPEN_FIELD_SCENE, physics = true).use { game ->
+            val hound = game.world.named("Hound")
+            repeat(TARGET_GONE_AFTER) { game.frame() }
+            val startedFrom = game.world.get<Transform>(hound)!!.position.z
+            game.world.destroy(game.world.named("Bait"))
 
-        repeat(SETTLE_FRAMES) { game.frame() }
-        val settled = game.world.get<Transform>(hound)!!.position.copy()
-        repeat(REST_FRAMES) { game.frame() }
-        val after = game.world.get<Transform>(hound)!!.position
+            repeat(SETTLE_FRAMES) { game.frame() }
+            val settled = game.world.get<Transform>(hound)!!.position.copy()
+            repeat(REST_FRAMES) { game.frame() }
+            val after = game.world.get<Transform>(hound)!!.position
 
-        assertTrue(startedFrom < BAIT_Z - 2f, "the target must go while the chaser is still on its way; it was at z = $startedFrom")
-        assertTrue(planar(settled.x, settled.z, after.x, after.z) < AT_REST, "the chaser must stop; it moved from $settled to $after")
-        assertTrue(after.z < BAIT_Z + 1f, "it stops where its route ended, not past it; it is at z = ${after.z}")
+            assertTrue(startedFrom < BAIT_Z - 2f, "the target must go while the chaser is still on its way; it was at z = $startedFrom")
+            assertTrue(planar(settled.x, settled.z, after.x, after.z) < AT_REST, "the chaser must stop; it moved from $settled to $after")
+            assertTrue(after.z < BAIT_Z + 1f, "it stops where its route ended, not past it; it is at z = ${after.z}")
+        }
     }
 
     @Test
@@ -217,9 +219,16 @@ class ProjectAiTest {
 
     // --- harness
 
-    private class Game(val runtime: SceneAppLifecycleRuntime, private val update: () -> Unit) {
+    // Closing it stops the app, then closes the project, which destroys its physics world: a wasmJs
+    // page's Jolt heap is fixed, so a world left alive fails the Jolt tests that run after it.
+    private class Game(
+        val runtime: SceneAppLifecycleRuntime,
+        private val update: () -> Unit,
+        private val stop: () -> Unit,
+    ) : AutoCloseable {
         val world: World get() = runtime.world
         fun frame() = update()
+        override fun close() = stop()
     }
 
     private suspend fun play(scene: String, physics: Boolean = false): Game {
@@ -227,7 +236,11 @@ class ProjectAiTest {
         val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
-        return Game(runtime) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frame() }
+        val stop = {
+            game.dispose()
+            project.close()
+        }
+        return Game(runtime, { game.update(DELTA, WIDTH, HEIGHT) }, stop).also { it.frame() }
     }
 
     private fun systemsFor(scene: String): SceneSystemSet {

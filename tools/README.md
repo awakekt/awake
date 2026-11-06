@@ -398,6 +398,7 @@ detekt 2's stricter rules, and were fixed in source rather than baselined:
   parameter documented. The same files' other four entries were fixed with them.
 
 Type-resolved rules run separately, in each module's `detektMainDesktop` task, with only the rules
-`config/detekt/detekt-type-resolved.yml` turns on. Their findings sit in
-`detekt-baseline-mainDesktop.xml`, written by `./gradlew detektBaselineMainDesktop`. Each entry there
-is a real defect waiting to be fixed (#1321), not structural debt.
+`config/detekt/detekt-type-resolved.yml` turns on. No module has findings, so none has a
+`detekt-baseline-mainDesktop.xml`. `./gradlew detektBaselineMainDesktop` writes one, but an entry there
+would be a real defect waiting to be fixed, not structural debt: fix the finding instead, or suppress
+it with a comment where the code means it.

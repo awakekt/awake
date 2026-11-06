@@ -169,12 +169,13 @@ internal fun startWebGpuGame(
     // engine's own construction is covered too.
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
     val application = applicationFactory()
+    if (renderScale != null) application.renderScaleOverride = renderScale
     var wgpuContext: WGPUContext? = null
     var runtimeFailure: String? = null
 
     runBrowserCanvas(
         canvas = canvas.unsafeCast<org.w3c.dom.HTMLCanvasElement>(),
-        lifecycle = renderScale?.let { RenderScaledLifecycle(application, it) } ?: application,
+        lifecycle = application,
         onResize = { _, _ ->
             wgpuContext?.let(::configureSurface)
         },

@@ -23,7 +23,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
@@ -46,17 +45,31 @@ import kotlinx.coroutines.launch
  *   since this system first saw it, carried across a re-attach.
  *
  * Attaches start from [update] on the frame thread and may resume anywhere; results are applied on the
- * next [update]. [close] it when the scene is disposed: systems have no dispose hook of their own.
+ * next [update]. They run as children of [scope], under a job of this system's own, so cancelling
+ * [scope], as disposing the scene session does, stops them, and [close] stops only this system's.
+ * [close] it when the scene is disposed: systems have no dispose hook of their own.
  *
  * @param host What content features attach to. Null, as with a renderer that draws nothing, runs the
  * system without drawing.
  * @param assets The scene's documents and images, from [loadShaderEffects].
+ * @param scope Where attaches run, such as the scene session's `coroutineScope`: its owner's, never one
+ * made for this system.
  */
 class ShaderEffectSystem(
     private val host: ContentFeatureHost?,
     assets: ShaderEffectAssets,
+    private val scope: CoroutineScope,
 ) : System,
     AutoCloseable {
+    /**
+     * A system whose attaches run in a scope of its own, as before the scoped constructor: that scope is
+     * unowned, so disposing the scene does not stop it and its failures reach no app error handler.
+     * Compatibility path for released API; use the constructor that takes the scene session's scope.
+     */
+    @Deprecated("Kept for binary compatibility; pass the scene session's scope", level = DeprecationLevel.HIDDEN)
+    constructor(host: ContentFeatureHost?, assets: ShaderEffectAssets) :
+        this(host, assets, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined))
+
     /** The documents and images effects draw from. Setting a new one re-attaches what changed in it. */
     var assets: ShaderEffectAssets = assets
         set(value) {
@@ -65,7 +78,11 @@ class ShaderEffectSystem(
         }
 
     private val log = Logger("scene-shader")
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+
+    // Every attach's parent, under [scope]'s job: one failing stops none of the others, and [close]
+    // cancels it alone. Attaches run unconfined, so one starts on the frame thread and finishes
+    // wherever the host resumes it; the result reaches the frame through [attached].
+    private val attaching = SupervisorJob(scope.coroutineContext[Job])
     private var assetsChanged = false
     private var warnedNoHost = false
 
@@ -108,7 +125,7 @@ class ShaderEffectSystem(
             val pending = attached.tryReceive().getOrNull() ?: break
             pending.shown.feature.detach()
         }
-        scope.cancel()
+        attaching.cancel()
     }
 
     /**
@@ -176,7 +193,7 @@ class ShaderEffectSystem(
         val images = assets.imagesOf(settings)
         val inputs = compiled.newInputs()
         val generation = entry.generation
-        entry.job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+        entry.job = scope.launch(attaching + Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
             try {
                 val source = compiled.contentFeature(inputs, textures, images, name = "shader-effect '${settings.shader}'")
                 val feature = attachTo.attachContentFeature(source)

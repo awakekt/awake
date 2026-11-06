@@ -77,11 +77,12 @@ object ContentBundleFormat {
     suspend fun encodeEncrypted(members: List<ContentBundleMember>, key: BundleEncryptionKey): ByteArray {
         val sorted = sortedMembers(members)
         val digests = sorted.map { Sha256.digest(it.bytes) }
-        val cipher = BundleCipher(key.bytes, key.keyId)
         val sealed = HashMap<String, ByteArray>()
-        val stored = sorted.mapIndexed { position, member ->
-            val sha256 = digests[position].toHex()
-            sealed[sha256] ?: cipher.seal(member.bytes, sha256).also { sealed[sha256] = it }
+        val stored = BundleCipher(key.bytes, key.keyId).use { cipher ->
+            sorted.mapIndexed { position, member ->
+                val sha256 = digests[position].toHex()
+                sealed[sha256] ?: cipher.seal(member.bytes, sha256).also { sealed[sha256] = it }
+            }
         }
         return assemble(sorted, digests, stored, ENCRYPTED_VERSION, FLAG_MEMBERS_ENCRYPTED)
     }

@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.engine.compose
 
+import com.awakekt.awake.compose.runtime.RememberObserver
+import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.render.testing.NoopRenderer
@@ -28,6 +30,20 @@ class ComposeAppModuleTest {
         assertNotNull(lifecycle.service(ComposeAppRuntime::class))
         assertEquals(1, renderer.uiDraws)
         assertEquals(1, renderer.presents)
+    }
+
+    @Test
+    fun disposingTheAppForgetsWhatItsUiRemembered() = runTest {
+        var forgotten = 0
+        val builder = AppSpecBuilder()
+        composeAppModule(content = { remember<RememberObserver> { RememberObserver { forgotten++ } } }).install(builder)
+        val lifecycle = builder.build().createLifecycle()
+        lifecycle.ready(RecordingRenderer())
+        lifecycle.update(1f / 60f, 320f, 240f)
+
+        lifecycle.dispose()
+
+        assertEquals(1, forgotten)
     }
 
     @Test

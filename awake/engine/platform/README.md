@@ -44,6 +44,11 @@ scene-specific state here: the composed application root installs those optional
 - `AwakeAppLifecycle` is one running application session with window configuration and services.
 - `GraphicsEngine` owns backend setup, per-frame handoff, idle-before-dispose ordering, and
   backend teardown.
+- `RenderQualitySettings` is one app's opt-in graphics quality preset (`app { renderQuality { } }`
+  in bootstrap). When registered, `GraphicsEngine` resolves it with `RenderQualityPolicy` against
+  the renderer's physical output size and sets `renderScale` and `effectQuality` before every frame.
+  A host's `GraphicsEngine.renderScaleOverride` wins over its scale. Persistence is the app's
+  `RenderQualityPersistence` callback; Core stores nothing.
 - `AppModule` is a reusable feature installer; it does not own window configuration.
 
 Most consumers use the authoring DSL from

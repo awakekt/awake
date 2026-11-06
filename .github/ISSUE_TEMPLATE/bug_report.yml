@@ -16,6 +16,8 @@ body:
           required: true
         - label: I verified that the issue persists on the latest commit or release.
           required: true
+        - label: This names no consumer game, its repository, or its characters, places, items or file formats. A consumer is "a private consumer pack", and nothing here links to a consumer's repository, issue or PR.
+          required: true
   - type: dropdown
     id: subsystem
     attributes:

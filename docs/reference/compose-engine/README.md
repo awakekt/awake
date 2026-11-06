@@ -180,7 +180,11 @@ next frame reads it. The engine never awaits anything.
 Compose needs `LaunchedEffect` because its recomposition is event-driven and a Compose app idles at
 0 fps between taps: something has to wake it. This engine reconciles every frame behind a live 3D
 scene, so "start work when this enters composition, cancel when it leaves" is `remember { }` plus
-the caller's own scope, and disposal is the node's `onAttach`/`onDetach`.
+the caller's own scope. A modifier node's disposal is its `onAttach`/`onDetach`. A remembered value
+that owns something (a store, a scope, a subscription) implements `RememberObserver`, whose
+`onForgotten()` runs once when the composition drops it: its key changed, its call stopped being
+made, its node left the tree, or its `Composition` was disposed. A pass that keeps every value calls
+nothing.
 
 **Revisit trigger:** if Stage 2 lands subtree-level recomposition, the engine stops running every
 frame for every subtree, and an effect API becomes worth its cost again. Re-open the decision then,

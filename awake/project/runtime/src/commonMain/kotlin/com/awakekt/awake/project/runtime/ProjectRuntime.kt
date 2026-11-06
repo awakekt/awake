@@ -32,6 +32,7 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.AssetSourceTextureResolver
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.PI
@@ -290,27 +291,52 @@ suspend fun loadProject(
  * `hasRenderer = false` too, so it decodes no images. With [audio], the scene's `audio_source`s play through it;
  * without, they run silently. With [fixedStep], the loop the host runs the fixed systems in, they read the
  * steps it ran and the time it dropped from [SceneHostServices.fixedStep], as they do under `runProject`.
- * [SceneSystemSet.close] them when the scene stops.
+ * The systems that read in the background, such as a streamed terrain's cells, read in children of
+ * [coroutineScope], as [SceneHostServices.withCoroutineScope] describes: pass the host's scene scope,
+ * or another it cancels when the scene goes. [SceneSystemSet.close] them when the scene stops.
  */
 fun LoadedProject.sceneSystems(
     input: () -> GameplayInput,
     renderer: Renderer? = null,
     audio: AudioPlayer? = null,
     fixedStep: FixedStepReport? = null,
+    coroutineScope: CoroutineScope,
+): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope)
+
+private fun LoadedProject.sceneSystemsIn(
+    input: () -> GameplayInput,
+    renderer: Renderer?,
+    audio: AudioPlayer?,
+    fixedStep: FixedStepReport?,
+    coroutineScope: CoroutineScope?,
 ): SceneSystemSet {
     val drawn = if (renderer == null) {
         SceneHostServices.headless(input, physics, content)
     } else {
         SceneHostServices(input, renderer, physics, content)
     }
-    val stepped = fixedStep?.let(drawn::withFixedStep) ?: drawn
+    val scoped = coroutineScope?.let(drawn::withCoroutineScope) ?: drawn
+    val stepped = fixedStep?.let(scoped::withFixedStep) ?: scoped
     return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities)
 }
+
+/**
+ * [sceneSystems] without a scope, as it was before `coroutineScope`: the systems that read in the
+ * background run in a scope nobody owns, so nothing stops them with the scene and their failures
+ * reach no error handler.
+ */
+@Deprecated("Pass the scene's scope as coroutineScope, so its background work stops with the scene")
+fun LoadedProject.sceneSystems(
+    input: () -> GameplayInput,
+    renderer: Renderer? = null,
+    audio: AudioPlayer? = null,
+    fixedStep: FixedStepReport? = null,
+): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope = null)
 
 /** [sceneSystems] as it was before `fixedStep`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null, audio: AudioPlayer? = null): SceneSystemSet =
-    sceneSystems(input, renderer, audio, fixedStep = null)
+    sceneSystemsIn(input, renderer, audio, fixedStep = null, coroutineScope = null)
 
 /**
  * Moves this project to its scene at [path], relative to the project root, such as

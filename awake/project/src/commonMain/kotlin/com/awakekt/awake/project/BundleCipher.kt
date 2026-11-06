@@ -13,15 +13,30 @@ import dev.whyoleg.cryptography.DelicateCryptographyApi
 import dev.whyoleg.cryptography.algorithms.AES
 import dev.whyoleg.cryptography.algorithms.HKDF
 import dev.whyoleg.cryptography.algorithms.SHA256
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
 
+/** Platform key backing inside a [BundleKeyHandle]: software bytes or a non-extractable WebCrypto `CryptoKey`. */
+internal interface PlatformBundleKey : AutoCloseable {
+    /**
+     * [sealed] opened, once its tag proves it is the member whose plaintext SHA-256 is [sha256] under
+     * this key; otherwise fails with [BundleAuthenticationException] naming [label].
+     */
+    suspend fun open(sealed: ByteArray, sha256: String, label: String): ByteArray
+
+    override fun close()
+}
+
 /**
- * Seals and opens bundle members under one master key, as [ProjectBundleEncryption] describes,
- * through the platform's own provider. Every member gets its own key and nonce, derived from its
- * plaintext SHA-256, so the same member and key always seal to the same bytes.
+ * Software-backed [PlatformBundleKey] holding its own copy of the 32-byte master key, zeroed on [close].
  */
-internal class BundleCipher(master: ByteArray, private val keyId: String) {
-    private val master = master.copyOf()
+internal class SoftwareBundleKey(master: ByteArray, private val keyId: String) : PlatformBundleKey {
+    private val master: ByteArray = master.copyOf()
+
+    @Volatile
+    private var closed: Boolean = false
+
+    private var scrambleKey: AES.GCM.Key? = null
 
     init {
         require(master.size == BundleEncryptionKey.KEY_BYTES) {
@@ -29,9 +44,17 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
         }
     }
 
+    internal fun masterCopyForTest(): ByteArray = master.copyOf()
+
+    internal fun copyActiveMasterBytes(): ByteArray {
+        check(!closed) { "BundleKeyHandle($keyId) is closed" }
+        return master.copyOf()
+    }
+
     /** [plaintext], whose SHA-256 is [sha256], sealed: [ProjectBundleEncryption.TAG_BYTES] longer. */
     @OptIn(DelicateCryptographyApi::class)
     suspend fun seal(plaintext: ByteArray, sha256: String): ByteArray {
+        check(!closed) { "BundleKeyHandle($keyId) is closed" }
         // The key and nonce are this plaintext's alone only if sha256 is truly its hash: checked, so no
         // caller can seal two plaintexts under one nonce.
         require(Sha256.digestHex(plaintext) == sha256) { "seal needs the plaintext's own SHA-256" }
@@ -54,14 +77,9 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
         throwaway.cipher().encrypt(ByteArray(0))
     }
 
-    private var scrambleKey: AES.GCM.Key? = null
-
-    /**
-     * [sealed] opened, once its tag proves it is the member whose plaintext SHA-256 is [sha256] under
-     * this key; otherwise fails with [BundleAuthenticationException] naming [label].
-     */
     @OptIn(DelicateCryptographyApi::class)
-    suspend fun open(sealed: ByteArray, sha256: String, label: String): ByteArray {
+    override suspend fun open(sealed: ByteArray, sha256: String, label: String): ByteArray {
+        check(!closed) { "BundleKeyHandle($keyId) is closed" }
         val (key, nonce) = derive(sha256)
         // The key is this member's alone, so a tag that checks proves the plaintext too.
         return try {
@@ -80,20 +98,59 @@ internal class BundleCipher(master: ByteArray, private val keyId: String) {
         val okm = provider.get(HKDF)
             .secretDerivation(SHA256, (AES_KEY_BYTES + NONCE_BYTES).bytes, keyId.encodeToByteArray(), INFO_PREFIX + sha256.encodeToByteArray())
             .deriveSecretToByteArray(master)
-        val key = provider.get(AES.GCM).keyDecoder().decodeFromByteArray(AES.Key.Format.RAW, okm.copyOfRange(0, AES_KEY_BYTES))
-        val nonce = okm.copyOfRange(AES_KEY_BYTES, okm.size)
-        // The derived bytes are imported into the provider's key; this copy isn't needed any more.
-        okm.fill(0)
-        return key to nonce
+        val rawKey = okm.copyOfRange(0, AES_KEY_BYTES)
+        return try {
+            val key = provider.get(AES.GCM).keyDecoder().decodeFromByteArray(AES.Key.Format.RAW, rawKey)
+            val nonce = okm.copyOfRange(AES_KEY_BYTES, okm.size)
+            key to nonce
+        } finally {
+            // The derived bytes are imported into the provider's key; neither intermediate copy stays live.
+            rawKey.fill(0)
+            okm.fill(0)
+        }
     }
 
-    override fun toString(): String = "BundleCipher(keyId=$keyId)"
+    override fun close() {
+        closed = true
+        master.fill(0)
+        scrambleKey = null
+    }
 
     private companion object {
         const val AES_KEY_BYTES = 32
         const val NONCE_BYTES = 12
         val INFO_PREFIX = "awake-awkb-v2".encodeToByteArray() + byteArrayOf(0)
     }
+}
+
+/**
+ * Seals and opens bundle members under one master key ([BundleKeyHandle]), as
+ * [ProjectBundleEncryption] describes, through the platform's own provider. Every member gets its own
+ * key and nonce, derived from its plaintext SHA-256, so the same member and key always seal to the
+ * same bytes.
+ */
+internal class BundleCipher(private val handle: BundleKeyHandle) : AutoCloseable {
+    constructor(master: ByteArray, keyId: String) : this(BundleKeyHandle.fromRawBytes(keyId, master))
+
+    /** [plaintext], whose SHA-256 is [sha256], sealed: [ProjectBundleEncryption.TAG_BYTES] longer. */
+    suspend fun seal(plaintext: ByteArray, sha256: String): ByteArray {
+        val software = handle.activePlatformKey() as? SoftwareBundleKey
+            ?: error("Non-extractable bundle key ${handle.keyId} is for opening bundles, not sealing")
+        return software.seal(plaintext, sha256)
+    }
+
+    /**
+     * [sealed] opened, once its tag proves it is the member whose plaintext SHA-256 is [sha256] under
+     * this key; otherwise fails with [BundleAuthenticationException] naming [label].
+     */
+    suspend fun open(sealed: ByteArray, sha256: String, label: String): ByteArray =
+        handle.activePlatformKey().open(sealed, sha256, label)
+
+    override fun close() {
+        handle.close()
+    }
+
+    override fun toString(): String = "BundleCipher(keyId=${handle.keyId})"
 }
 
 /** A sealed member that didn't authenticate under the key: the wrong key, or damaged bytes. */

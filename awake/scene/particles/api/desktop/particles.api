@@ -31,8 +31,8 @@ public final class com/awakekt/awake/scene/particles/ParticleSpritesKt {
 	public static final fun loadParticleImage (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun loadParticleImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun loadParticleSprites (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun particleImageLoads (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/Map;Lkotlin/coroutines/CoroutineContext;)Lcom/awakekt/awake/core/io/AssetLoads;
-	public static synthetic fun particleImageLoads$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/Map;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoads;
+	public static final fun particleImageLoads (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lkotlin/coroutines/CoroutineContext;)Lcom/awakekt/awake/core/io/AssetLoads;
+	public static synthetic fun particleImageLoads$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoads;
 }
 
 public final class com/awakekt/awake/scene/particles/ParticlesSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {

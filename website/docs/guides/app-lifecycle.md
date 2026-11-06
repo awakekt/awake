@@ -124,6 +124,23 @@ scope.launchStep(AppErrorSource.ProjectLoad, errors, subject = "world", onDone =
 }
 ```
 
+### Stores under the app's scope
+
+The app's Compose host gives its UI the registered `AppCoroutineScope` as `LocalAppCoroutineScope`, in
+a `composeAppModule` and in a scene's `content { }` alike. Remember a store under it, and the store's
+uncaught failures reach the handler as `Coroutine` errors while disposing the app cancels its work:
+
+```kotlin title="Kotlin"
+context(_: Composer)
+fun Hud() {
+    val store = rememberStore(LocalAppCoroutineScope.current) { HudState() }
+}
+```
+
+The store keeps its own lifetime: it is closed, cancelling only its own coroutines, when its node
+leaves the tree. Reading `LocalAppCoroutineScope` in an app that registered no scope fails with a
+message saying how to register one.
+
 ## Coroutine scopes
 
 Every long-lived coroutine scope in Awake has an owner that cancels it:
@@ -155,7 +172,8 @@ predate the rule are listed in `config/coroutine-scopes-baseline.txt`, which onl
 `GlobalCoroutineUsage` runs with `./gradlew detekt`. `SuspendFunSwallowedCancellation`, which needs
 type resolution, runs with `./gradlew detektMainDesktop` and checks rule 4. It reports a suspend call
 inside `runCatching`, and a `try` around one whose `catch` can see a `CancellationException` without
-rethrowing it. The cases that predate it are in each module's `detekt-baseline-mainDesktop.xml`.
+rethrowing it. It has no baseline: every case is fixed, or carries a commented `@Suppress` where
+catching the cancellation is intended, such as a timeout the work raised itself.
 
 A debug build also checks rule 3. The scene session records its frame thread when it initializes, and
 `World`'s structural changes, including the first `add` of a component type, which registers it,

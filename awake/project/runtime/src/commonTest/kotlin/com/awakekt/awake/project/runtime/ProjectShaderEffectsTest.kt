@@ -18,6 +18,8 @@ import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.shader.ShaderEffectSystem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,11 +29,14 @@ import kotlin.test.assertTrue
 class ProjectShaderEffectsTest {
     private val input = Input()
 
+    // The scene session's scope in a game; the attaches run unconfined, so they need no dispatcher here.
+    private val scope = CoroutineScope(SupervisorJob())
+
     private fun services(renderer: Renderer, content: SceneContent = SceneContent.Empty) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = renderer,
         content = content,
-    )
+    ).withCoroutineScope(scope)
 
     @Test
     fun aSceneWithAShaderEffectGetsItsSystemAndOneWithoutDoesNot() {

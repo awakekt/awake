@@ -18,8 +18,9 @@ import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Reads and decodes every image [document]'s `particle_emitter`s name, by path, for a
@@ -78,14 +79,18 @@ suspend fun loadParticleImage(path: String, assets: AssetSource): GpuImageSource
  * scene stops.
  *
  * @param assets Where the images are read from.
+ * @param scope The scene's scope, such as its session's: an image asked for without a scope of its own
+ *   decodes in it, so ending the scene stops it.
  * @param preloaded Images already decoded, kept for as long as the loads live.
- * @param context Where an image decodes when the one asking names no scope; [Dispatchers.Default] by default.
+ * @param context Added to an image's load when the one asking names no scope, such as the dispatcher it
+ *   decodes on; [scope]'s own unless given.
  */
 fun particleImageLoads(
     assets: AssetSource,
+    scope: CoroutineScope,
     preloaded: Map<String, GpuImageSource> = emptyMap(),
-    context: CoroutineContext = Dispatchers.Default,
-): AssetLoads<GpuImageSource> = AssetLoads(context) { path -> loadParticleImage(path, assets) }.apply {
+    context: CoroutineContext = EmptyCoroutineContext,
+): AssetLoads<GpuImageSource> = AssetLoads(scope, context) { path -> loadParticleImage(path, assets) }.apply {
     preloaded.forEach { (path, value) -> put(path, value) }
 }
 

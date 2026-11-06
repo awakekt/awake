@@ -32,8 +32,10 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
+import com.awakekt.awake.engine.compose.ProvideAppCoroutineScope
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.engine.platform.error.AppErrorHandler
 import com.awakekt.awake.engine.platform.error.AppErrorSource
 import com.awakekt.awake.engine.platform.error.reportError
@@ -41,6 +43,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
@@ -118,9 +121,13 @@ class SceneAppLifecycleRuntime internal constructor(
     val sceneManager: SceneManager
         get() = session.sceneManager
 
+    // Kept apart from the property, and declared before it, so dispose can tell whether the host
+    // was ever made.
+    private val uiHostHolder = lazy(::ComposeHost)
+
     /** Compatibility-only host for the legacy `content {}` DSL. New applications install an
      * app-level Compose module instead. */
-    val uiHost: ComposeHost by lazy(::ComposeHost)
+    val uiHost: ComposeHost by uiHostHolder
     private val graphicsLayers = GraphicsLayerCompositor()
 
     /** Default font used for UI and debug text rendering. */
@@ -358,6 +365,8 @@ class SceneAppLifecycleRuntime internal constructor(
      * Reading this frame's input goes through [AppFrame.input] instead. Resolved once, not per
      * frame -- [services] is only set in [initialize], hence `lazy`. */
     private val input: Input by lazy { services.requireService(Input::class) }
+    private val renderQuality: RenderQualitySettings? by lazy { services.service(RenderQualitySettings::class) }
+    private val appScope: AppCoroutineScope? by lazy { services.service(AppCoroutineScope::class) }
 
     /** Called at install time (see [SceneAppSpec.installInto]). */
     fun initialize(services: AppServiceLookup) {
@@ -565,6 +574,7 @@ class SceneAppLifecycleRuntime internal constructor(
             CompositionLocalProvider(
                 LocalWorld provides world,
                 LocalRenderer provides renderer,
+                LocalRenderQuality provides renderQuality,
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
@@ -585,7 +595,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         slotContent = canvasSlotContent,
                     )
                 }
-                if (content != null) content()
+                if (content != null) ProvideAppCoroutineScope(appScope, content)
             }
         }
         return SceneFrame(
@@ -679,6 +689,8 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 
     override fun dispose() {
+        // The legacy UI first, while the renderer is still alive; a host never made is not made now.
+        if (uiHostHolder.isInitialized()) uiHost.dispose()
         if (::renderer.isInitialized) {
             viewStore?.dispose()
             spriteBatch.destroy()

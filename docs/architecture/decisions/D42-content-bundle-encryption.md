@@ -1,7 +1,8 @@
 # D42: content bundle encryption
 
-Status: accepted (2026-10-30). Promotes the content bundle encryption design note and implements
-layers 1 to 3 of [#1149](https://github.com/awakekt/awake/issues/1149).
+Status: accepted (2026-10-30; updated for [#1325](https://github.com/awakekt/awake/issues/1325) and
+[#1326](https://github.com/awakekt/awake/issues/1326)). Promotes the content bundle encryption
+design note and implements layers 1 to 3 of [#1149](https://github.com/awakekt/awake/issues/1149).
 
 ## Threat boundary
 
@@ -13,8 +14,9 @@ where the key comes from:
 
 | Key delivery | What it is |
 |---|---|
-| From the game's own authenticated endpoint after sign-in | Protection: content on a public CDN is ciphertext to anyone not signed in. |
-| Kept on the device after a first online sign-in | Protection at rest, as strong as the platform store the app keeps it in. |
+| Session-wrapped from the game's authenticated endpoint (`BundleKeyProvider.wrapped`) | Strongest online delivery: wrapped with RSA-OAEP-SHA256 per session; in WebCrypto the unwrapped `HKDF` `CryptoKey` stays `extractable = false` and never enters `WebAssembly.Memory`. |
+| Raw bytes from the game's authenticated endpoint (`BundleKeyProvider { … }`) | Protection: content on a public CDN is ciphertext to anyone not signed in. |
+| Kept on the device after a first online sign-in (`BundleKeyStore`) | Protection at rest, as strong as the store (`IndexedDbBundleKeyStore` structured-clones non-extractable `CryptoKey`s in browsers; native apps supply Keystore/Keychain stores). |
 | Shipped inside the client (fully offline builds) | **Deterrence only.** Anyone who unpacks the client can recover the key. |
 
 ## Decision
@@ -39,30 +41,44 @@ where the key comes from:
    and its SHA-256 is the plaintext's, which derives the member's key. A version 1 reader refuses a
    version 2 bundle with its existing version error.
 4. **Project index format version 4.** An encrypted index sets
-   `encryption = { "scheme": "aes-256-gcm-hkdf-sha256", "keyId": "<id>" }` and never carries the key.
-   Every entry is a bundle member; `sizeBytes` and `sha256` stay the plaintext's, and the stored
-   bytes run `sizeBytes + 16` from `offset`. An engine that reads only versions 2 and 3 refuses it.
-5. **Core takes the key, the app owns the policy.** `BundleKeyProvider` is a `suspend (keyId) ->
-   ByteArray` that `IndexedAssetSource` and `IndexedAssetSource.open` take. It is asked once per
-   source for the index's key id; a failure is not remembered, so the next read asks again. An
-   encrypted index without a provider fails when the source is built. How the key is fetched,
-   stored, rotated or revoked is the app's; Core names no endpoint and holds no account.
-   `:awake:project` stays headless.
+   `encryption = { "scheme": "aes-256-gcm-hkdf-sha256", "keyId": "<id>" }` as its default key id and
+   never carries a key; an individual `ProjectIndexBundle` may set `keyId` to seal a bundle group
+   under another key (such as an expansion or gated region) in the same index (#1325). Every entry is
+   a bundle member; `sizeBytes` and `sha256` stay the plaintext's, and the stored bytes run
+   `sizeBytes + 16` from `offset`. An engine that reads only versions 2 and 3 refuses it.
+5. **Core takes the key or an opaque handle; the app owns the policy.** `BundleKeyProvider` keeps
+   `suspend fun key(keyId): ByteArray` as its SAM method for raw-byte callers and adds default
+   `suspend fun keyHandle(keyId): BundleKeyHandle`, which `IndexedAssetSource` calls once per distinct
+   key id per source when a bundle sealed under that key id is read or prefetched; a failure is not
+   remembered, so the next read asks again. `BundleSessionKeyExchange` generates an ephemeral
+   RSA-2048-OAEP-SHA256 keypair, exports X.509 `SubjectPublicKeyInfo` DER (`publicKeySpki`) for the
+   server's `BundleEncryptionKey.wrapFor(publicKeySpki)` (`SHA-256`, `MGF1-SHA256`, empty OAEP label
+   for Apple `SecRsaOaep` compatibility), and unwraps the ciphertext into a `BundleKeyHandle`
+   (`BundleKeyProvider.wrapped`). On `wasmJs`, both the ephemeral RSA private key and the unwrapped
+   `HKDF` `CryptoKey` are created with `extractable = false`, and member HKDF derivation, AES-GCM key
+   import, decryption, and intermediate buffer zeroing run inside SubtleCrypto so neither the master
+   key nor per-member AES keys enter `WebAssembly.Memory`. On JVM, Android (Conscrypt JCA, since
+   `AndroidKeyStore` RSA hardcodes OAEP MGF1 to SHA-1 prior to API 35), and iOS (`SecRsaOaep`),
+   software key copies are zeroed when `BundleKeyHandle.close()` runs or when a wrong key is forgotten.
+   How keys are fetched, stored, rotated or revoked stays the app's; `:awake:project` stays headless.
 6. **The cache holds ciphertext (option B).** `ContentCache` gets each member's stored bytes, under
-   a key derived from the key id and the plaintext SHA-256 (`ProjectIndex.cacheKeyOf`), and every
-   hit is opened, which authenticates it, before a parser sees it. Nothing readable sits at rest, in
-   IndexedDB or on disk. A hit that fails to open isn't returned: the read fetches the member, and
-   the cached copy is replaced only once a fetched copy opens, so offline it stays. The cost is a
-   decrypt per read and no sharing of cached bytes with loose or plaintext releases of the same file.
-7. **No key store in Core (considered, deferred).** One contract covers every key source because the
-   app decides what the provider does: fetch from its own server after sign-in (the priority path),
-   return a key it saved earlier, or return a key embedded in the client. A Core store backed by
-   platform secure storage (an Android Keystore-wrapped key, the iOS Keychain, the desktop OS
-   credential store, a non-extractable WebCrypto `CryptoKey` in IndexedDB) was considered and
-   deferred: each target needs its own platform API, and the right lifetime and revocation rule is
-   the product's. It is tracked on #1149.
+   a key derived from its bundle's effective key id (`ProjectIndex.keyIdOf`) and the plaintext SHA-256
+   (`ProjectIndex.cacheKeyOf`), and every hit is opened, which authenticates it, before a parser sees
+   it. Nothing readable sits at rest, in IndexedDB or on disk. A hit that fails to open isn't
+   returned: the read fetches the member, and the cached copy is replaced only once a fetched copy
+   opens, so offline it stays. The cost is a decrypt per read and no sharing of cached bytes with
+   loose or plaintext releases of the same file.
+7. **Pluggable `BundleKeyStore`, browser IndexedDB `CryptoKey` default only.** `BundleKeyStore`
+   (`get`, `put`, `delete`) lets `BundleKeyProvider.wrapped(store)` persist unwrapped handles across
+   visits, and `MemberSeal.forget()` deletes a stored entry whose key failed authentication on a
+   valid bundle. `platformBundleKeyStore(namespace)` returns `IndexedDbBundleKeyStore` on `wasmJs`,
+   where HTML structured clone stores non-extractable WebCrypto `CryptoKey` objects in IndexedDB while
+   preserving `extractable = false`, and returns `null` on desktop, Android, and iOS so Core never
+   writes raw software key files to disk by default (native apps that want offline persistence supply
+   a `BundleKeyStore` backed by `AndroidKeyStore`, Keychain, or an OS credential store).
 8. **Keys scope to a project or an entitlement tier, not a session.** Rotating a key re-encrypts
-   every bundle and changes every URL. Revoke a session at the key or index endpoint instead.
+   every bundle and changes every URL. Wrap the key per session with `BundleEncryptionKey.wrapFor`,
+   and revoke a session at the key or index endpoint instead.
 
 ## Limits accepted
 
@@ -75,15 +91,16 @@ where the key comes from:
 
 ## Writer side
 
-`ContentBundleWriter`, `awake bundle` and `generateContentBundles` take an optional
-`BundleEncryptionKey(keyId, bytes)`. The CLI and the Gradle task read the key from a file or an
-environment variable, never from a build script or the repository.
+`ContentBundleWriter`, `awake bundle` and `generateContentBundles` take an optional default
+`BundleEncryptionKey(keyId, bytes)` and optional per-group overrides (`groupEncryption`,
+`--group-key-file` / `--group-key-env`, `bundleGroupKey`). The CLI and the Gradle task read keys from
+files or environment variables, never from a build script or the repository.
 
 ## Left out
 
 | Left out | Where |
 |---|---|
-| Platform-backed offline key store | #1149, Follow-ups |
+| Native hardware-backed `BundleKeyStore` implementations (`AndroidKeyStore`, iOS Keychain, OS credential store) | App-owned via `BundleKeyStore`; #1149 Follow-ups |
 | Cooked engine formats (KTX2/Basis, engine mesh layout) | #1149, layer 4 |
 | Obfuscation guidance, watermarking | #1149, layers 5 and 6 |
 | Encrypting loose (unbundled) files | Not planned: an encrypted index is bundled. |

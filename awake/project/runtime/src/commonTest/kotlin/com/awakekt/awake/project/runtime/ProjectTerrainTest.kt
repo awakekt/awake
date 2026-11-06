@@ -13,6 +13,7 @@ import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.kit.terrainlayers.TERRAIN_LAYERS_PROVIDER
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
@@ -22,6 +23,7 @@ import com.awakekt.awake.terrain.TerrainSurface
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
@@ -33,11 +35,12 @@ import kotlin.test.fail
 class ProjectTerrainTest {
     private val input = Input()
 
-    private fun services(renderer: HostRenderer, content: SceneContent) = SceneHostServices(
+    // Surfaces resolve off the test thread, as in a session, in a scope the test owns.
+    private fun TestScope.services(renderer: HostRenderer, content: SceneContent) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = renderer,
         content = content,
-    )
+    ).withCoroutineScope(backgroundScope.childScope(Dispatchers.Default))
 
     @Test
     fun aPlainTerrainDrawsAndIsDetachedWhenTheSceneCloses() = runTest {

@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.worldstream
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.scene.core.transform.Transform
@@ -21,7 +22,6 @@ import com.awakekt.awake.world.WorldCellCoord
 import com.awakekt.awake.world.WorldPartitionConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 /**
@@ -36,8 +36,9 @@ import kotlinx.coroutines.cancel
  * @property materialName Material key used when [material] is not supplied (defaults to "lit-shadow").
  * @property cullMode Backface culling mode for spawned terrain cell meshes.
  * @property physicsStreamer Optional physics collider streamer (e.g. from [heightFieldCellStreamer]).
- * @property loadScope Optional coroutine scope for asynchronous cell generation. If null, a managed
- * scope on [Dispatchers.Default] is used and cancelled upon [dispose].
+ * @property loadScope Optional coroutine scope for asynchronous cell generation, owned by the caller.
+ * Cells generate in a child of it, in its own dispatcher, or, when it is null, in a child of the
+ * scene session's scope on [Dispatchers.Default]. [dispose] cancels that child, never [loadScope].
  * @property geometryFor Asynchronous cell geometry generator executed off the frame thread.
  */
 class WorldstreamTerrainDriver(
@@ -78,9 +79,9 @@ class WorldstreamTerrainDriver(
             streamer
         }
 
-        val effectiveScope = loadScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default).also {
-            internalScope = it
-        }
+        // A child of an owner's scope: disposing the session stops the generation even if this driver is never disposed.
+        val effectiveScope = loadScope?.childScope() ?: runtime.session.coroutineScope.childScope(Dispatchers.Default)
+        internalScope = effectiveScope
 
         partitionSystem = WorldPartitionSystem(
             config = config,

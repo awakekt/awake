@@ -17,6 +17,7 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
@@ -29,6 +30,7 @@ import com.awakekt.awake.terrain.TerrainPageIndex
 import com.awakekt.awake.terrain.TerrainPageIndexCodec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
@@ -92,7 +94,10 @@ class ProjectStreamedTerrainTest {
         val project = loadProject(files(scene(collider = true))) { createJoltPhysicsWorld() }
         try {
             val physics = assertNotNull(project.physics)
-            val systems = project.sceneSystems(input = { GameplayInput(input.currentSnapshot, InputOwnership()) })
+            val systems = project.sceneSystems(
+                input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
+                coroutineScope = backgroundScope.childScope(Dispatchers.Default),
+            )
             val world = World().also { SceneLoader.instantiate(project.scene, it) }
             camera(world, x = 2f)
 
@@ -118,12 +123,13 @@ class ProjectStreamedTerrainTest {
         assertFailsWith<IllegalArgumentException> { loadProject(files(twice)) }
     }
 
-    private fun services(renderer: NoopRenderer, project: LoadedProject) = SceneHostServices(
+    // Cells read off the test thread, as a session reads them, in a scope the test owns.
+    private fun TestScope.services(renderer: NoopRenderer, project: LoadedProject) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = renderer,
         physics = project.physics,
         content = project.content,
-    )
+    ).withCoroutineScope(backgroundScope.childScope(Dispatchers.Default))
 
     private fun camera(world: World, x: Float): Camera {
         val camera = Camera(lens = Lens(eye = Vec3f(x, 10f, 2f), center = Vec3f(x, 0f, 2.5f), fovYRadians = 1f, near = 0.1f, far = 200f))

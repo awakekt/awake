@@ -10,6 +10,7 @@ import com.awakekt.awake.core.host.FixedStepReport
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.controls.GameplayInput
@@ -17,6 +18,7 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import com.awakekt.awake.scene.runtime.SpawnedNode
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * What a scene's systems need from the host and cannot read from the scene itself. A host that draws
@@ -59,6 +61,15 @@ class SceneHostServices private constructor(
      * steps it dropped, so the player walks as long as the server does.
      */
     val fixedStep: FixedStepReport? = null,
+    /**
+     * The scope the scene's systems run their background work in, such as reading terrain cells or
+     * resolving surfaces: a child of the scene session's scope, so it stops when the session is
+     * disposed. `runProject` gives the session's own. Null where the host gave none; a host whose scene
+     * reads anything in the background adds its own with [withCoroutineScope]. Without one, those
+     * systems fall back to a scope nobody owns, and a warning is logged once. Each system makes its
+     * own child of it and cancels that when it closes.
+     */
+    val coroutineScope: CoroutineScope? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -91,19 +102,19 @@ class SceneHostServices private constructor(
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
     fun withAudio(audio: AudioPlayer): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
 
     /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
     fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
 
     /** These services, with [sceneSwitchStatus] reporting what the [sceneSwitch] is doing, as `runProject` does. */
     fun withSceneSwitchStatus(sceneSwitchStatus: SceneSwitchStatus): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
 
     /**
      * These services, with [fixedStep] reporting the fixed-step loop the host steps the systems in, as
@@ -111,7 +122,27 @@ class SceneHostServices private constructor(
      * from its own [com.awakekt.awake.core.host.FixedTimestepLoop] passes that loop.
      */
     fun withFixedStep(fixedStep: FixedStepReport): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
+
+    /**
+     * These services, with the scene's systems running their background work in children of [scope],
+     * as `runProject` does with the scene session's scope. A host that runs the systems itself passes
+     * its session's scope, or another it cancels when the scene goes away.
+     */
+    fun withCoroutineScope(scope: CoroutineScope): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope)
+
+    /**
+     * A child of [coroutineScope] for one system's background work, which the system cancels when it
+     * closes. When the host gave no scope, a child of a scope nobody owns, kept for hosts built before
+     * [withCoroutineScope]; a warning names [what] once.
+     *
+     * @param what The system asking, for the warning.
+     */
+    fun backgroundScope(what: String): CoroutineScope = ownerScope(what).childScope()
+
+    /** [coroutineScope], or for a host that gave none, the unowned compatibility scope. */
+    internal fun ownerScope(what: String): CoroutineScope = coroutineScope ?: HostlessSceneScope.forHostWithoutScope(what)
 
     /** Makes services for a host with no renderer. */
     companion object {

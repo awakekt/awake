@@ -9,6 +9,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected final fun getAspectRatio ()F
 	protected final fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
 	public fun getInput ()Lcom/awakekt/awake/core/input/Input;
+	public final fun getRenderScaleOverride ()Lkotlin/jvm/functions/Function0;
 	protected final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
 	public final fun getServices ()Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;
 	public final fun getStartupError ()Ljava/lang/Throwable;
@@ -25,6 +26,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	public final fun resume ()V
 	public final fun setDensity (F)V
 	public final fun setDpi (F)V
+	public final fun setRenderScaleOverride (Lkotlin/jvm/functions/Function0;)V
 	public final fun setSafeArea (Lcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;)V
 	public final fun setSystemGestureInsets (Lcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;)V
 	public final fun update (F)V
@@ -354,5 +356,21 @@ public final class com/awakekt/awake/engine/platform/lifecycle/DisplayInsets {
 
 public final class com/awakekt/awake/engine/platform/lifecycle/DisplayInsets$Companion {
 	public final fun getNone ()Lcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;
+}
+
+public abstract interface class com/awakekt/awake/engine/platform/quality/RenderQualityPersistence {
+	public abstract fun load ()Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public abstract fun save (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
+}
+
+public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettings {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/engine/platform/quality/RenderQualityPersistence;Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;Lcom/awakekt/awake/render/renderer/RenderQuality;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/engine/platform/quality/RenderQualityPersistence;Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;Lcom/awakekt/awake/render/renderer/RenderQuality;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun applyTo (Lcom/awakekt/awake/render/renderer/Renderer;Z)V
+	public static synthetic fun applyTo$default (Lcom/awakekt/awake/engine/platform/quality/RenderQualitySettings;Lcom/awakekt/awake/render/renderer/Renderer;ZILjava/lang/Object;)V
+	public final fun getBudgets ()Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
+	public final fun getQuality ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun select (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
 }
 

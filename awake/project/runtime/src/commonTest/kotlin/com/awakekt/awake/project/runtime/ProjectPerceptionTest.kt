@@ -30,13 +30,14 @@ import kotlin.test.assertEquals
 class ProjectPerceptionTest {
     @Test
     fun aGuardSeesTheThiefInTheOpenAndNotTheOneBehindTheWall() = runTest {
-        val game = play(physics = true)
-        repeat(3) { game.frame() }
-        val guard = game.world.named("Guard")
-        val seen = game.world.get<Perceiver>(guard)!!.memory.entities.filter { it.inSight }.map { it.entity }
-        assertEquals(listOf(game.world.named("Open Thief")), seen)
-        assertEquals(true, game.world.get<BehaviorTreeComponent>(guard)!!.blackboard.get<Boolean>("alarm"))
-        assertEquals(game.world.named("Open Thief"), game.world.get<BehaviorTreeComponent>(guard)!!.blackboard.get<Entity>("perception.target"))
+        play(physics = true).use { game ->
+            repeat(3) { game.frame() }
+            val guard = game.world.named("Guard")
+            val seen = game.world.get<Perceiver>(guard)!!.memory.entities.filter { it.inSight }.map { it.entity }
+            assertEquals(listOf(game.world.named("Open Thief")), seen)
+            assertEquals(true, game.world.get<BehaviorTreeComponent>(guard)!!.blackboard.get<Boolean>("alarm"))
+            assertEquals(game.world.named("Open Thief"), game.world.get<BehaviorTreeComponent>(guard)!!.blackboard.get<Entity>("perception.target"))
+        }
     }
 
     @Test
@@ -47,9 +48,16 @@ class ProjectPerceptionTest {
         assertEquals(listOf(game.world.named("Open Thief")), seen)
     }
 
-    private class Game(val runtime: SceneAppLifecycleRuntime, private val update: () -> Unit) {
+    // Closing it stops the app, then closes the project, which destroys its physics world: a wasmJs
+    // page's Jolt heap is fixed, so a world left alive fails the Jolt tests that run after it.
+    private class Game(
+        val runtime: SceneAppLifecycleRuntime,
+        private val update: () -> Unit,
+        private val stop: () -> Unit,
+    ) : AutoCloseable {
         val world: World get() = runtime.world
         fun frame() = update()
+        override fun close() = stop()
     }
 
     private suspend fun play(physics: Boolean): Game {
@@ -57,7 +65,11 @@ class ProjectPerceptionTest {
         val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
-        return Game(runtime) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frame() }
+        val stop = {
+            game.dispose()
+            project.close()
+        }
+        return Game(runtime, { game.update(DELTA, WIDTH, HEIGHT) }, stop).also { it.frame() }
     }
 
     private class TestRenderer :

@@ -1777,6 +1777,46 @@ public final class com/awakekt/awake/render/renderer/RenderFrameStats {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/RenderQuality : java/lang/Enum {
+	public static final field Auto Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public static final field Balanced Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public static final field High Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public static final field Performance Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/RenderQuality;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/RenderQuality;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderQualityBudgets {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/RenderQualityBudgets$Companion;
+	public fun <init> ()V
+	public fun <init> (IILjava/util/Map;)V
+	public synthetic fun <init> (IILjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (IILjava/util/Map;)Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;IILjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoShortEdge ()Ljava/util/Map;
+	public final fun getBalancedShortEdge ()I
+	public final fun getPerformanceShortEdge ()I
+	public fun hashCode ()I
+	public final fun shortEdge (Lcom/awakekt/awake/render/renderer/RenderQuality;Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;)Ljava/lang/Integer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderQualityBudgets$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderQualityPolicy {
+	public static final field INSTANCE Lcom/awakekt/awake/render/renderer/RenderQualityPolicy;
+	public final fun effectQuality (Lcom/awakekt/awake/render/renderer/RenderQuality;Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public final fun renderScale (Lcom/awakekt/awake/render/renderer/RenderQuality;IILcom/awakekt/awake/render/pipeline/GpuDeviceClass;Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;)F
+	public static synthetic fun renderScale$default (Lcom/awakekt/awake/render/renderer/RenderQualityPolicy;Lcom/awakekt/awake/render/renderer/RenderQuality;IILcom/awakekt/awake/render/pipeline/GpuDeviceClass;Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;ILjava/lang/Object;)F
+}
+
 public final class com/awakekt/awake/render/renderer/RenderScale {
 	public static final field FULL F
 	public static final field INSTANCE Lcom/awakekt/awake/render/renderer/RenderScale;

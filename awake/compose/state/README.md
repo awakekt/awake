@@ -8,6 +8,9 @@ Bridge between **`:awake:core:state`** and **`:awake:compose:runtime`**. Integra
 
 - **`rememberStore(key = null) { initialState }`**: Creates and memoizes a lightweight `Store<S>` across composition passes.
 - **`rememberReducerStore(key = null, initialState = { ... }) { state, intent -> ... }`**: Creates and memoizes a `ReducerStore<S, I, E>` with pure reducer transitions.
+- **`rememberStore(parent, key = null) { initialState }`** / **`rememberReducerStore(parent, ...)`**: The same, with the store running as a child of `parent`, normally the app's `AppCoroutineScope`.
+
+Every remembered store is closed when the composition forgets it: its `key` (or `parent`) changed, the call stopped being made, or its node left the tree.
 - **`LocalStore`**: `CompositionLocal<Store<*>?>` ambient store holder.
 - **`ProvideStore(store) { ... }`**: Provides a store to descendant composables.
 - **`useStore<S>()`**: Resolves the ambient store managing state of type `S`.
@@ -68,3 +71,17 @@ fun CounterWidget() {
     }
 }
 ```
+
+### C. Stores under the app's coroutine scope
+
+Pass the app's scope as the parent, and the store's uncaught failures reach the app's `AppErrorHandler`, while disposing the app cancels its work. In an Awake app, the app's Compose host provides its registered `AppCoroutineScope` as `LocalAppCoroutineScope` (`:awake:engine:compose`):
+
+```kotlin
+context(_: Composer)
+fun Hud() {
+    val store = rememberStore(LocalAppCoroutineScope.current) { HudState() }
+    // ...
+}
+```
+
+The store keeps its own lifetime: it is closed, cancelling only its own coroutines, when the HUD node leaves the tree.

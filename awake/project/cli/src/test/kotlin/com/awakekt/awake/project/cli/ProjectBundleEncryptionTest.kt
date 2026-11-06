@@ -67,6 +67,70 @@ class ProjectBundleEncryptionTest {
         assertContains(missing.err, "doesn't exist")
     }
 
+    @Test
+    fun perGroupKeyFileSealsThatGroupUnderItsOwnKeyId() {
+        project()
+        val islandKey = ByteArray(32) { (it * 11 + 5).toByte() }
+        root.resolve("secrets/common.key").apply { parentFile.mkdirs() }.writeBytes(key)
+        root.resolve("secrets/island.key").writeBytes(islandKey)
+
+        val run = awake(
+            "bundle",
+            "build/project.index.json",
+            "--output",
+            "build/published",
+            "--project",
+            ".",
+            "--key-id",
+            "common-2026",
+            "--key-file",
+            "secrets/common.key",
+            "--group-key-file",
+            "scenes=north-island-2026:secrets/island.key",
+        )
+
+        assertEquals(0, run.code, run.all)
+        val index = Json.decodeFromString(ProjectIndex.serializer(), output.resolve("project.index.json").readText())
+        assertEquals("common-2026", index.encryption?.keyId)
+        assertEquals(setOf(null, "north-island-2026"), index.bundles.map { it.keyId }.toSet())
+
+        val asked = mutableListOf<String>()
+        val source = IndexedAssetSource(
+            index,
+            { url -> output.resolve(url).readBytes() },
+            keys = BundleKeyProvider { keyId ->
+                asked += keyId
+                if (keyId == "common-2026") key else islandKey
+            },
+        )
+        assertContentEquals(
+            FILES.getValue("assets/textures/wood.txt").encodeToByteArray(),
+            runBlocking { source.read(AssetPath("assets/textures/wood.txt")).getOrThrow() },
+        )
+        assertEquals(listOf("common-2026"), asked)
+        assertContentEquals(
+            FILES.getValue("scenes/harbor.scene.json").encodeToByteArray(),
+            runBlocking { source.read(AssetPath("scenes/harbor.scene.json")).getOrThrow() },
+        )
+        assertEquals(listOf("common-2026", "north-island-2026"), asked)
+
+        val badSpec = awake(
+            "bundle",
+            "build/project.index.json",
+            "--output",
+            "build/published",
+            "--project",
+            ".",
+            "--key-id",
+            "common-2026",
+            "--key-file",
+            "secrets/common.key",
+            "--group-key-file",
+            "scenes-without-equals",
+        )
+        assertEquals(2, badSpec.code, badSpec.all)
+    }
+
     private fun project() {
         FILES.forEach { (path, text) -> root.resolve(path).apply { parentFile.mkdirs() }.writeText(text) }
         val index = ProjectIndex(

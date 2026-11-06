@@ -412,6 +412,21 @@ public final synthetic class com/awakekt/awake/net/PacketZeroNullNetId$Impl : co
 	public fun <init> ()V
 }
 
+public final class com/awakekt/awake/net/PolledStallWatch : com/awakekt/awake/net/StallWatch {
+	public fun <init> (Lkotlinx/coroutines/CoroutineScope;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineScope;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getCheckMillis ()I
+	public final fun getDetector ()Lcom/awakekt/awake/net/TransportStallDetector;
+	public fun getExpectInbound ()Z
+	public fun getOnEnded ()Lkotlin/jvm/functions/Function2;
+	public fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun isClosed ()Z
+	public fun received ()V
+	public fun setExpectInbound (Z)V
+	public fun setOnEnded (Lkotlin/jvm/functions/Function2;)V
+}
+
 public final class com/awakekt/awake/net/SessionCloseReason : java/lang/Enum {
 	public static final field OutboundOverflow Lcom/awakekt/awake/net/SessionCloseReason;
 	public static final field PeerClosed Lcom/awakekt/awake/net/SessionCloseReason;
@@ -476,6 +491,29 @@ public final class com/awakekt/awake/net/SplitPacketInbox : java/lang/AutoClosea
 public final class com/awakekt/awake/net/SplitPacketInbox$Companion {
 }
 
+public final class com/awakekt/awake/net/StallDirection : java/lang/Enum {
+	public static final field Downstream Lcom/awakekt/awake/net/StallDirection;
+	public static final field Upstream Lcom/awakekt/awake/net/StallDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/StallDirection;
+	public static fun values ()[Lcom/awakekt/awake/net/StallDirection;
+}
+
+public abstract interface class com/awakekt/awake/net/StallWatch : java/lang/AutoCloseable {
+	public abstract fun getExpectInbound ()Z
+	public abstract fun getOnEnded ()Lkotlin/jvm/functions/Function2;
+	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun isClosed ()Z
+	public abstract fun received ()V
+	public abstract fun setExpectInbound (Z)V
+	public abstract fun setOnEnded (Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/awakekt/awake/net/StallWatchKt {
+	public static final fun watchStalls (Lcom/awakekt/awake/net/Transport;Lkotlinx/coroutines/CoroutineScope;IDDLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/net/StallWatch;
+	public static synthetic fun watchStalls$default (Lcom/awakekt/awake/net/Transport;Lkotlinx/coroutines/CoroutineScope;IDDLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/net/StallWatch;
+}
+
 public abstract interface class com/awakekt/awake/net/Transport {
 	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
@@ -528,6 +566,77 @@ public abstract interface class com/awakekt/awake/net/TransportSession {
 public final class com/awakekt/awake/net/TransportSession$DefaultImpls {
 	public static fun getCloseReason (Lcom/awakekt/awake/net/TransportSession;)Lcom/awakekt/awake/net/SessionCloseReason;
 	public static fun getPrincipal (Lcom/awakekt/awake/net/TransportSession;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/TransportStallDetector {
+	public static final field Companion Lcom/awakekt/awake/net/TransportStallDetector$Companion;
+	public static final field DOWNSTREAM_AFTER_SECONDS D
+	public static final field UPSTREAM_AFTER_SECONDS D
+	public fun <init> ()V
+	public fun <init> (DDLkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (DDLkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDownstreamAfterSeconds ()D
+	public final fun getExpectInbound ()Z
+	public final fun getOnEnded ()Lkotlin/jvm/functions/Function2;
+	public final fun getState ()Lcom/awakekt/awake/net/TransportStallState;
+	public final fun getUpstreamAfterSeconds ()D
+	public final fun received (D)V
+	public final fun reset ()V
+	public final fun sample (Ljava/lang/Long;D)Lcom/awakekt/awake/net/TransportStallState;
+	public final fun setExpectInbound (Z)V
+	public final fun setOnEnded (Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/awakekt/awake/net/TransportStallDetector$Companion {
+}
+
+public final class com/awakekt/awake/net/TransportStallState {
+	public static final field Companion Lcom/awakekt/awake/net/TransportStallState$Companion;
+	public fun <init> ()V
+	public fun <init> (DD)V
+	public synthetic fun <init> (DDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun copy (DD)Lcom/awakekt/awake/net/TransportStallState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/TransportStallState;DDILjava/lang/Object;)Lcom/awakekt/awake/net/TransportStallState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDownstream ()Z
+	public final fun getDownstreamSeconds ()D
+	public final fun getSeconds ()D
+	public final fun getStalled ()Z
+	public final fun getUpstream ()Z
+	public final fun getUpstreamSeconds ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/TransportStallState$Companion {
+	public final fun getClear ()Lcom/awakekt/awake/net/TransportStallState;
+}
+
+public final class com/awakekt/awake/net/TransportStallWatch : com/awakekt/awake/net/StallWatch {
+	public static final field Companion Lcom/awakekt/awake/net/TransportStallWatch$Companion;
+	public static final field DEFAULT_CHECK_MILLIS I
+	public fun <init> (Lcom/awakekt/awake/net/DirectTransport;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/net/DirectTransport;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getCheckMillis ()I
+	public final fun getDetector ()Lcom/awakekt/awake/net/TransportStallDetector;
+	public fun getExpectInbound ()Z
+	public fun getOnEnded ()Lkotlin/jvm/functions/Function2;
+	public fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun isClosed ()Z
+	public fun received ()V
+	public fun setExpectInbound (Z)V
+	public fun setOnEnded (Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/awakekt/awake/net/TransportStallWatch$Companion {
+}
+
+public final class com/awakekt/awake/net/TransportStallWatchKt {
+	public static final fun watchStalls (Lcom/awakekt/awake/net/DirectTransport;IDD)Lcom/awakekt/awake/net/TransportStallWatch;
+	public static synthetic fun watchStalls$default (Lcom/awakekt/awake/net/DirectTransport;IDDILjava/lang/Object;)Lcom/awakekt/awake/net/TransportStallWatch;
 }
 
 public abstract interface class com/awakekt/awake/net/ViolationSink {

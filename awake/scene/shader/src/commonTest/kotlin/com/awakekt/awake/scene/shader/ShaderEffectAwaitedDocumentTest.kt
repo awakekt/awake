@@ -14,6 +14,8 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -33,6 +35,7 @@ class ShaderEffectAwaitedDocumentTest {
     private val sink = LogSink { records += it }
     private val world = World()
     private val host = RecordingHost()
+    private val scope = CoroutineScope(SupervisorJob())
 
     @BeforeTest
     fun listen() {
@@ -49,7 +52,7 @@ class ShaderEffectAwaitedDocumentTest {
 
     @Test
     fun aDocumentNotLoadedYetIsReportedOnceAsNotDrawnYetAndDrawsWhenItArrives() {
-        val system = ShaderEffectSystem(host, ShaderEffectAssets.Empty)
+        val system = ShaderEffectSystem(host, ShaderEffectAssets.Empty, scope)
         world.create().also { world.add(it, ShaderEffectSource(SceneShaderEffect("sky.shader.json"))) }
 
         repeat(3) { system.update(world, STEP) }
@@ -71,7 +74,7 @@ class ShaderEffectAwaitedDocumentTest {
 
     @Test
     fun aDocumentThatFailedToLoadIsReportedAsFailed() {
-        val system = ShaderEffectSystem(host, ShaderEffectAssets(failed = setOf("sky.shader.json")))
+        val system = ShaderEffectSystem(host, ShaderEffectAssets(failed = setOf("sky.shader.json")), scope)
         world.create().also { world.add(it, ShaderEffectSource(SceneShaderEffect("sky.shader.json"))) }
 
         repeat(2) { system.update(world, STEP) }
