@@ -85,12 +85,24 @@ class HostActionsTest {
     }
 
     @Test
+    fun theWindowFrameIsACapabilityThatIsAbsentUnlessGiven() {
+        assertNull(CheckedHostActions(open = { true }).windowFrame)
+        val frame = object : WindowFrame {
+            override var decoration = WindowDecoration.System
+        }
+        val host: HostActions = CheckedHostActions(open = { true }, windowFrame = frame)
+        assertNotNull(host.windowFrame).decoration = WindowDecoration.None
+        assertEquals(WindowDecoration.None, frame.decoration)
+    }
+
+    @Test
     fun aHostThatDoesNotOverrideFullscreenHasNone() {
         val host = object : HostActions {
             override fun openUrl(url: String) = false
             override val pageReload: PageReload? = null
         }
         assertNull(host.fullscreen)
+        assertNull(host.windowFrame)
     }
 
     @Test

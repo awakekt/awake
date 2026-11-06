@@ -151,11 +151,13 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
 public abstract interface class com/awakekt/awake/engine/window/HostActions {
 	public fun getFullscreen ()Lcom/awakekt/awake/engine/window/Fullscreen;
 	public abstract fun getPageReload ()Lcom/awakekt/awake/engine/window/PageReload;
+	public fun getWindowFrame ()Lcom/awakekt/awake/engine/window/WindowFrame;
 	public abstract fun openUrl (Ljava/lang/String;)Z
 }
 
 public final class com/awakekt/awake/engine/window/HostActions$DefaultImpls {
 	public static fun getFullscreen (Lcom/awakekt/awake/engine/window/HostActions;)Lcom/awakekt/awake/engine/window/Fullscreen;
+	public static fun getWindowFrame (Lcom/awakekt/awake/engine/window/HostActions;)Lcom/awakekt/awake/engine/window/WindowFrame;
 }
 
 public final class com/awakekt/awake/engine/window/LaunchEnvironment {
@@ -234,5 +236,10 @@ public final class com/awakekt/awake/engine/window/WindowDecorationKt {
 
 public final class com/awakekt/awake/engine/window/WindowDrag {
 	public final fun update (Z)V
+}
+
+public abstract interface class com/awakekt/awake/engine/window/WindowFrame {
+	public abstract fun getDecoration ()Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public abstract fun setDecoration (Lcom/awakekt/awake/engine/window/WindowDecoration;)V
 }
 

@@ -10,22 +10,6 @@ import kotlin.math.roundToInt
 /** `GLFW_DECORATED`, the window attribute and creation hint for the OS title bar and border. */
 internal const val GLFW_DECORATED = 0x00020005
 
-/**
- * Whether a desktop window has the OS title bar and border. Choose it when the window opens, with
- * [DesktopWindowOptions.decoration], or change it later with [setWindowDecoration].
- */
-enum class WindowDecoration {
-    /** The OS title bar and border: the player moves, resizes and closes the window with them. */
-    System,
-
-    /**
-     * No title bar or border (undecorated, or frameless). The OS gives the player no way to move the
-     * window, so a game that wants it movable draws its own drag area and drives a [WindowDrag];
-     * resizing from the edges is not offered.
-     */
-    None,
-}
-
 /** [window]'s [WindowDecoration] now. Call on the frame loop's thread, as every GLFW window call. */
 fun windowDecoration(window: Long): WindowDecoration {
     require(window != 0L) { "windowDecoration needs a created window, not a null handle." }
@@ -41,6 +25,13 @@ fun windowDecoration(window: Long): WindowDecoration {
 fun setWindowDecoration(window: Long, decoration: WindowDecoration) {
     require(window != 0L) { "setWindowDecoration needs a created window, not a null handle." }
     GlfwWindow.glfwSetWindowDecorated(window, decoration == WindowDecoration.System)
+}
+
+/** [WindowFrame] over the GLFW [window], for [desktopHostActions] with a window. */
+internal class GlfwWindowFrame(private val window: Long) : WindowFrame {
+    override var decoration: WindowDecoration
+        get() = windowDecoration(window)
+        set(value) = setWindowDecoration(window, value)
 }
 
 /**
