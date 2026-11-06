@@ -136,7 +136,8 @@ A prewarm also decodes the node's `audio_source` clips, off the frame and withou
 reads the images its 3D `particle_emitter`s show. These don't go through the library's textures: they
 go into the scene's own clips and particle images, the same ones its `AudioSystem` and
 `ParticleContentSystem` use, which the host gives the library as `SceneAssetLibrary.audioClips` and
-`SceneAssetLibrary.particleImages`:
+`SceneAssetLibrary.particleImages`. `runProject` does that for each scene it plays, and closes them
+when the scene stops; a host that runs the scene's systems itself does it like this:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmAudioTest.kt:audio"
