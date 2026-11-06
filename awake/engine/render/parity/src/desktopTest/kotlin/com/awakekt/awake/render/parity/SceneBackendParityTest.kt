@@ -789,7 +789,6 @@ class SceneBackendParityTest {
         const val SHADOW_MARGIN = 10
         const val CARD_TO_GROUND = 60
 
-
         const val MIN_CLEAR_HALF_PIXELS = 20
 
         /** A metal loses its diffuse light; anything under a tenth is the factor being ignored. */

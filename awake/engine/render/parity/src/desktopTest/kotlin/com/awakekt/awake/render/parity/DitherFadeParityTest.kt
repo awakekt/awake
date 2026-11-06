@@ -74,6 +74,7 @@ class DitherFadeParityTest {
         }
 
         const val REPORT_DIR = "build/reports/render-parity"
+
         /** 10 of every 16 pixels in the dither tile are discarded at opacity 0.35. */
         val FADED_SHARE = 0.5..0.75
         const val CASTER_RED_MIN = 80
