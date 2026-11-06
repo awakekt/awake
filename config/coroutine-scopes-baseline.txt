@@ -7,6 +7,8 @@
 # Never add a line; run the work in a child of an owner instead (website/docs/guides/app-lifecycle.md,
 # "Coroutine scopes").
 awake/backend/webgpu/src/commonMain/kotlin/com/awakekt/awake/webgpu/renderer/GpuFrameTimer.kt 1
+# Arrived with #1331 in the base branch, after this check was written: AssetLoads' own fallback scope,
+# used when request() names none. Tracked on #1321; it goes when every caller passes an owned scope.
 awake/engine/platform/src/commonMain/kotlin/com/awakekt/awake/engine/platform/GraphicsEngine.kt 1
 awake/engine/window/src/wasmJsMain/kotlin/com/awakekt/awake/engine/window/BrowserCanvas.kt 1
 # Compatibility path for released API, remove with the deprecated overload.

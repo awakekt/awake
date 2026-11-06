@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.particles
 import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.image.toRgba8Bytes
+import com.awakekt.awake.core.io.AssetLoads
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
@@ -17,6 +18,9 @@ import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Reads and decodes every image [document]'s `particle_emitter`s name, by path, for a
@@ -53,7 +57,7 @@ suspend fun loadParticleImages(document: SceneDocument, assets: AssetSource): Ma
     return buildMap {
         for (path in paths) {
             try {
-                put(path, decodeImage(assets.read(AssetPath(path)).getOrThrow()).asGpuImageSource())
+                put(path, loadParticleImage(path, assets))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
@@ -61,6 +65,33 @@ suspend fun loadParticleImages(document: SceneDocument, assets: AssetSource): Ma
             }
         }
     }
+}
+
+/** Reads and decodes the one image at [path], as [loadParticleImages] does for each; throws when it can't. */
+suspend fun loadParticleImage(path: String, assets: AssetSource): GpuImageSource =
+    decodeImage(assets.read(AssetPath(path)).getOrThrow()).asGpuImageSource()
+
+/**
+ * The images a scene's `particle_emitter`s show, decoded by [loadParticleImage] from [assets] as they are
+ * first asked for, and shared: give the same one to the scene's [ParticleContentSystem] and to whatever
+ * prepares textures ahead of a spawn, so an image is read once. [preloaded] images, such as
+ * [loadParticleImages] read when the scene loaded, are kept for as long as it lives. Close it when the
+ * scene stops.
+ *
+ * @param assets Where the images are read from.
+ * @param scope The scene's scope, such as its session's: an image asked for without a scope of its own
+ *   decodes in it, so ending the scene stops it.
+ * @param preloaded Images already decoded, kept for as long as the loads live.
+ * @param context Added to an image's load when the one asking names no scope, such as the dispatcher it
+ *   decodes on; [scope]'s own unless given.
+ */
+fun particleImageLoads(
+    assets: AssetSource,
+    scope: CoroutineScope,
+    preloaded: Map<String, GpuImageSource> = emptyMap(),
+    context: CoroutineContext = EmptyCoroutineContext,
+): AssetLoads<GpuImageSource> = AssetLoads(scope, context) { path -> loadParticleImage(path, assets) }.apply {
+    preloaded.forEach { (path, value) -> put(path, value) }
 }
 
 private fun SceneNode.particleTextures(): List<String> =

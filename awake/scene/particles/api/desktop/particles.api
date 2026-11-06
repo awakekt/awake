@@ -1,6 +1,8 @@
 public final class com/awakekt/awake/scene/particles/ParticleContentSystem : com/awakekt/awake/ecs/System, java/lang/AutoCloseable {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/io/AssetLoads;)V
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/Map;)V
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/Map;Ljava/util/Map;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/Map;Ljava/util/Map;Lcom/awakekt/awake/core/io/AssetLoads;)V
 	public fun close ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
@@ -26,8 +28,11 @@ public final class com/awakekt/awake/scene/particles/ParticleEmitterSource {
 }
 
 public final class com/awakekt/awake/scene/particles/ParticleSpritesKt {
+	public static final fun loadParticleImage (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun loadParticleImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun loadParticleSprites (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun particleImageLoads (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lkotlin/coroutines/CoroutineContext;)Lcom/awakekt/awake/core/io/AssetLoads;
+	public static synthetic fun particleImageLoads$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetLoads;
 }
 
 public final class com/awakekt/awake/scene/particles/ParticlesSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {

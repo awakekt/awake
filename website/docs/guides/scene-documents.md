@@ -132,6 +132,25 @@ project, a node whose models a prewarm loaded draws them on the frame it spawns;
 load is listed in `failed`. A resolver of your own joins in by overriding `SceneAssetResolver.loadMesh`
 for a mesh it has to load before it can build it.
 
+A prewarm also decodes the node's `audio_source` clips, off the frame and without playing them, and
+reads the images its 3D `particle_emitter`s show. These don't go through the library's textures: they
+go into the scene's own clips and particle images, the same ones its `AudioSystem` and
+`ParticleContentSystem` use, which the host gives the library as `SceneAssetLibrary.audioClips` and
+`SceneAssetLibrary.particleImages`. `runProject` does that for each scene it plays, and closes them
+when the scene stops; a host that runs the scene's systems itself does it like this:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/ScenePrewarmAudioTest.kt:audio"
+```
+
+Each clip and image decodes once, whether the prewarm or the system asks first, and the prewarm holds
+it until it is closed, so the spawn's first frame plays the clip and draws the emitter. Closing the
+prewarm, or tearing the scene down, cancels a decode nothing else waits for. A clip that isn't a 16-bit
+PCM WAV file, an image that can't be read, or a scene that gave the library no clips or particle images
+is listed in `failed`, by path. `particleImageLoads(files, session.coroutineScope)` makes the particle
+images as `audioClipLoads(files, session.coroutineScope)` makes the clips: a decode nobody gave a scope
+of its own runs in the scene session's, so disposing the session stops it.
+
 ## Save a world
 
 `fromWorld` walks the entities that have a `Transform`, follows their parent links to rebuild the
