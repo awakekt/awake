@@ -11,10 +11,7 @@ awake/engine/platform/src/commonMain/kotlin/com/awakekt/awake/engine/platform/Gr
 awake/engine/window/src/wasmJsMain/kotlin/com/awakekt/awake/engine/window/BrowserCanvas.kt 1
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/ProjectScene.kt 1
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/ProjectSceneRunner.kt 1
-awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/ProjectSpawn.kt 1
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/StreamedTerrainCapability.kt 2
 awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/TerrainCapability.kt 1
-awake/scene/runtime/src/commonMain/kotlin/com/awakekt/awake/scene/runtime/AssetSourceTextureResolver.kt 1
-awake/scene/runtime/src/commonMain/kotlin/com/awakekt/awake/scene/runtime/SceneRouterSpec.kt 1
 awake/scene/shader/src/commonMain/kotlin/com/awakekt/awake/scene/shader/ShaderEffectSystem.kt 1
 awake/scene/worldstream/src/commonMain/kotlin/com/awakekt/awake/scene/worldstream/WorldstreamTerrainDriver.kt 1

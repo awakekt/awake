@@ -11,14 +11,13 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.appChildScope
 import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppInstaller
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.render.renderer.Renderer
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
@@ -220,8 +219,9 @@ class SceneRouterRuntime internal constructor(
     private var currentRuntime: SceneAppLifecycleRuntime? = null
     private var renderer: Renderer? = null
 
-    // Deferred routes load here, off the frame thread, and hand what they loaded back through [finished].
-    private val loads = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Deferred routes load here, off the frame thread, and hand what they loaded back through [finished]. The
+    // router outlives each scene session, so its loads are a child of the app's scope rather than a session's.
+    private val loads = services.appChildScope(Dispatchers.Default)
     private val finished = Channel<FinishedLoad>(Channel.UNLIMITED)
 
     // Whether the active route is a deferred one showing its loading scene.

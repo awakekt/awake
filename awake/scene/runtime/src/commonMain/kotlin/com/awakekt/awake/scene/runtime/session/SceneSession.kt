@@ -9,6 +9,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.error.AppCoroutineScope
+import com.awakekt.awake.engine.platform.error.appChildScope
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.binding.renderableRequests
@@ -20,10 +21,7 @@ import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.runPrewarms
 import com.awakekt.awake.scene.runtime.schedule.SceneSchedule
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * The ECS state and schedule for one active scene.
@@ -74,10 +72,15 @@ class SceneSession internal constructor(
     private var becameReady = false
 
     internal fun initialize(services: AppServiceLookup) {
-        world = World()
-        val app = services.service(AppCoroutineScope::class)?.coroutineContext
-        scope = CoroutineScope((app ?: EmptyCoroutineContext) + SupervisorJob(app?.get(Job)) + spec.sessionDispatcher)
-        assetLibrary = spec.assetLibraryFactory?.invoke()
+        // The thread a debug build expects every frame-thread-only call on: the world's structural
+        // changes and the asset library's builds. Off unless frame thread checks are on.
+        world = World().apply { frameThread.bind() }
+        val sessionScope = services.appChildScope(spec.sessionDispatcher)
+        scope = sessionScope
+        assetLibrary = spec.assetLibraryFactory?.invoke()?.also { library ->
+            library.frameThread.bind()
+            library.attach(sessionScope)
+        }
     }
 
     internal suspend fun ready(runtime: SceneAppLifecycleRuntime) {

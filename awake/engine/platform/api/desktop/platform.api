@@ -229,6 +229,10 @@ public final class com/awakekt/awake/engine/platform/error/AppCoroutineScope : j
 }
 
 public final class com/awakekt/awake/engine/platform/error/AppCoroutineScopeKt {
+	public static final fun appChildScope (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static synthetic fun appChildScope$default (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun childScope (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static synthetic fun childScope$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineScope;
 	public static final fun launchStep (Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Lcom/awakekt/awake/engine/platform/error/AppErrorHandler;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
 	public static synthetic fun launchStep$default (Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Lcom/awakekt/awake/engine/platform/error/AppErrorHandler;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 }

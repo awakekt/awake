@@ -21,7 +21,6 @@ import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderFeatureContext3D
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import com.awakekt.awake.scene.scene2d.Sprite
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -128,7 +127,7 @@ class AssetSourceTextureForgetTest {
         textures.close()
     }
 
-    private fun TestScope.resolver() = AssetSourceTextureResolver(files, StandardTestDispatcher(testScheduler))
+    private fun TestScope.resolver() = AssetSourceTextureResolver(files, this)
 
     private val TextureAsset.size: Pair<Int, Int> get() = width to height
 

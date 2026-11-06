@@ -18,6 +18,7 @@ import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.texture.mipLevelCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.test.Test
@@ -62,9 +63,11 @@ class TextureLoadersBrowserTest {
 
     @Test
     fun aSceneSpriteSheetIsCopiedOnTheGpu() = runTest(timeout = 2.minutes) {
+        // Outside a scene session, the resolver loads under the scope it is given.
+        val loads = backgroundScope + Dispatchers.Default
         withRenderer { renderer, upload ->
             val sheet = encodedImage("image/png", 64, 32, translucent = true)
-            val resolver = AssetSourceTextureResolver(AssetSource { Result.success(sheet) })
+            val resolver = AssetSourceTextureResolver(AssetSource { Result.success(sheet) }, loads)
             val source = loaded(resolver, "sprites/sheet.png")
             val draw = listOf(SpriteDrawInput(texture = "sprites/sheet.png", model = Mat4()))
 

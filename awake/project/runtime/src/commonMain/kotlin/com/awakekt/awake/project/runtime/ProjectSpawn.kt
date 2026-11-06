@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneNode
@@ -18,8 +19,6 @@ import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.spawn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -44,7 +43,7 @@ fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): Spa
     val models = project.spawnedModels
     val spawned = spawn(node, SceneComponentRegistry()) { request -> !models.mustLoad(request) }
     startSkinnedAnimations(project.models, spawned.entities.toSet())
-    models.load(spawned)
+    models.load(spawned, session.coroutineScope)
     project.playing.track(spawned, world)
     return spawned
 }
@@ -53,13 +52,15 @@ fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): Spa
  * The glTF models of spawned nodes that a project's scene didn't load. Each loads once, off the frame
  * thread, into a resolver of its own that nothing else reads; [attachLoaded] adopts it into the
  * project's resolver on the frame thread, where meshes resolve, and attaches the renderers that waited
- * for it. [close] stops what is still loading.
+ * for it. Loads run in a child of the scene session's scope, so disposing the session stops them, and
+ * [close], when a switch leaves the project scene, stops what is still loading.
  */
 internal class SpawnedModels(
     private val models: GltfAssetResolver,
     private val files: AssetSource,
 ) : AutoCloseable {
-    private val loads = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // A child of the session scope the first load runs under; null until something loads.
+    private var loads: CoroutineScope? = null
     private val finished = Channel<FinishedLoad>(Channel.UNLIMITED)
 
     // Read and written on the frame thread only.
@@ -73,13 +74,17 @@ internal class SpawnedModels(
         return models.canResolveMesh(mesh) && !models.isPreloaded(models.modelPath(mesh))
     }
 
-    /** Waits for the models [spawned] has no renderer for, starting each load not already under way. */
-    fun load(spawned: SpawnedNode) {
+    /**
+     * Waits for the models [spawned] has no renderer for, starting each load not already under way in a
+     * child of [sessionScope], the scene session's scope.
+     */
+    fun load(spawned: SpawnedNode, sessionScope: CoroutineScope) {
         val paths = spawned.unattachedRenderables.map(::modelOf).toSet()
         if (closed || paths.isEmpty()) return
         waiting += spawned
+        val scope = loads ?: sessionScope.childScope().also { loads = it }
         paths.filter(loading::add).forEach { path ->
-            loads.launch { finished.trySend(FinishedLoad(path, read(path))) }
+            scope.launch { finished.trySend(FinishedLoad(path, read(path))) }
         }
     }
 
@@ -108,7 +113,7 @@ internal class SpawnedModels(
     override fun close() {
         if (closed) return
         closed = true
-        loads.cancel()
+        loads?.cancel()
         finished.close()
         loading.clear()
         waiting.clear()

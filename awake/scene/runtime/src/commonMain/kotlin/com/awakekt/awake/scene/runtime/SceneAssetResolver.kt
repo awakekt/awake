@@ -8,11 +8,14 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Pluggable resolver for dynamic GPU assets. Allows plugins (e.g. glTF, terrain, a custom model format)
  * to resolve asset names on demand without hardcoding asset names or paths in the scene fixture.
  */
+// TooManyFunctions: each is an optional capability with a default, which a resolver overrides only if it has it.
+@Suppress("TooManyFunctions")
 interface SceneAssetResolver {
     /**
      * Determines whether this resolver can construct a [Mesh] for the given asset [name].
@@ -21,6 +24,16 @@ interface SceneAssetResolver {
      * @return `true` if this resolver can handle the mesh asset, `false` otherwise.
      */
     fun canResolveMesh(name: String): Boolean = false
+
+    /**
+     * Called once when the scene session using this resolver starts, before its first frame, with the
+     * session's coroutine scope. A resolver that loads off the frame thread runs that work in a child of
+     * [sessionScope], so the session's disposal stops it and its failures reach the app's error handler,
+     * and hands results back to the frame thread rather than building anything from there.
+     *
+     * @param sessionScope The session's `SceneSession.coroutineScope`.
+     */
+    fun attach(sessionScope: CoroutineScope) {}
 
     /**
      * Creates and uploads the requested [Mesh] to the GPU.

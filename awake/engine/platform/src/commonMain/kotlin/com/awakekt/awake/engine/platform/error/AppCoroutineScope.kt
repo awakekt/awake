@@ -15,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A coroutine scope for the app's own background work, whose uncaught failures go to the app's
@@ -61,6 +62,37 @@ class AppCoroutineScope(
         throw failure
     }
 }
+
+/**
+ * A child of this scope for work that should stop before it does, such as one loader's reads: it keeps
+ * this scope's context, so its failures reach the same exception handler, and runs on a [SupervisorJob]
+ * under this scope's job, so cancelling this scope cancels it, while cancelling it, or one of its
+ * children failing, leaves this scope and its other children running.
+ *
+ * This is how code that is not a lifetime owner gets a scope of its own: Awake's build allows a scope to
+ * be constructed only by an owner (`./gradlew verifyCoroutineScopes`).
+ *
+ * @param context Added to the child's context, such as the dispatcher it runs on. It holds no [Job],
+ *   which would cut the child off from this scope.
+ */
+fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext): CoroutineScope {
+    require(context[Job] == null) { "A child scope's context holds no Job: it gets one under its parent's." }
+    return CoroutineScope(coroutineContext + SupervisorJob(coroutineContext[Job]) + context)
+}
+
+/**
+ * A [childScope] of the app's [AppCoroutineScope] in [context], so the app's error handler sees its
+ * failures and disposing the app stops it. In an app that registers no [AppCoroutineScope], such as a
+ * test, it is a [SupervisorJob] scope of its own that only its holder cancels.
+ *
+ * @param context Added to the scope's context, such as the dispatcher it runs on. It holds no [Job].
+ */
+fun AppServiceLookup.appChildScope(context: CoroutineContext = EmptyCoroutineContext): CoroutineScope =
+    service(AppCoroutineScope::class)?.childScope(context)
+        ?: run {
+            require(context[Job] == null) { "A child scope's context holds no Job: it gets one under its parent's." }
+            CoroutineScope(SupervisorJob() + context)
+        }
 
 /**
  * Launches [step] in this scope as an app step that can be run again, for work the app starts

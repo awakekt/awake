@@ -282,6 +282,18 @@ public final class com/awakekt/awake/ecs/FamilyValueColumn {
 	public final fun tagForIteration ()Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/ecs/FrameThreadGuard {
+	public static final field Companion Lcom/awakekt/awake/ecs/FrameThreadGuard$Companion;
+	public fun <init> ()V
+	public final fun bind ()V
+	public final fun check (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/ecs/FrameThreadGuard$Companion {
+	public final fun getEnabled ()Z
+	public final fun setEnabled (Z)V
+}
+
 public abstract interface class com/awakekt/awake/ecs/InterpolatedSystem : com/awakekt/awake/ecs/System {
 	public abstract fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
 }
@@ -335,6 +347,7 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun get-smMvhPQ (JLkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun getComponents ()Lcom/awakekt/awake/ecs/ComponentRegistry;
 	public final fun getEntities ()Lcom/awakekt/awake/ecs/EntityArena;
+	public final fun getFrameThread ()Lcom/awakekt/awake/ecs/FrameThreadGuard;
 	public final fun getGeneration ()I
 	public final fun getInternal-5b6kAPM (JI)Ljava/lang/Object;
 	public final fun has-5b6kAPM (JI)Z

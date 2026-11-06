@@ -73,6 +73,9 @@ public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : 
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun attach (Lkotlinx/coroutines/CoroutineScope;)V
 	public fun canResolveMaterial (Ljava/lang/String;)Z
 	public fun canResolveMesh (Ljava/lang/String;)Z
 	public fun close ()V
@@ -295,6 +298,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetReferencesKt {
 }
 
 public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolver {
+	public fun attach (Lkotlinx/coroutines/CoroutineScope;)V
 	public fun canResolveMaterial (Ljava/lang/String;)Z
 	public fun canResolveMesh (Ljava/lang/String;)Z
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
@@ -308,6 +312,7 @@ public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolv
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImpls {
+	public static fun attach (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Lkotlinx/coroutines/CoroutineScope;)V
 	public static fun canResolveMaterial (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Z
 	public static fun canResolveMesh (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Z
 	public static fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
