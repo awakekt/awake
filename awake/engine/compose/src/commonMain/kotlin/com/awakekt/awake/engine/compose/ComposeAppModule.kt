@@ -16,7 +16,9 @@ import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.engine.platform.core.AppModule
+import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
+import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.render.renderer.Renderer
 
@@ -45,11 +47,18 @@ fun composeAppModule(
  * Runtime state holder managing the Compose UI host, input dispatch, and frame rendering.
  */
 class ComposeAppRuntime internal constructor(
-    private val content: ComposeAppContent,
+    content: ComposeAppContent,
     private val font: UiFont,
     private val input: Input,
     private val presentWithoutScene: Boolean,
+    services: AppServiceLookup,
 ) {
+    // Looked up when first composed, so the app may register its scope after installing this module.
+    private val appScope: AppCoroutineScope? by lazy { services.service(AppCoroutineScope::class) }
+
+    // Wrapped once, not per frame.
+    private val content: ComposeAppContent = { ProvideAppCoroutineScope(appScope, content) }
+
     /** The core retained Compose UI host instance. */
     val host = ComposeHost()
     private val graphicsLayers = GraphicsLayerCompositor()
@@ -140,7 +149,7 @@ private class ComposeAppModule(
         check(into.service(ComposeAppRuntime::class) == null) {
             "An application may install only one Compose app module."
         }
-        val runtime = ComposeAppRuntime(content, font, into.input, presentWithoutScene)
+        val runtime = ComposeAppRuntime(content, font, into.input, presentWithoutScene, into.serviceLookup())
         into.service(ComposeAppRuntime::class, runtime)
         into.service(ComposeHost::class, runtime.host)
         into.ready(runtime::ready)

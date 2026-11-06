@@ -32,8 +32,10 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
+import com.awakekt.awake.engine.compose.ProvideAppCoroutineScope
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.engine.platform.error.AppErrorHandler
 import com.awakekt.awake.engine.platform.error.AppErrorSource
 import com.awakekt.awake.engine.platform.error.reportError
@@ -364,6 +366,7 @@ class SceneAppLifecycleRuntime internal constructor(
      * frame -- [services] is only set in [initialize], hence `lazy`. */
     private val input: Input by lazy { services.requireService(Input::class) }
     private val renderQuality: RenderQualitySettings? by lazy { services.service(RenderQualitySettings::class) }
+    private val appScope: AppCoroutineScope? by lazy { services.service(AppCoroutineScope::class) }
 
     /** Called at install time (see [SceneAppSpec.installInto]). */
     fun initialize(services: AppServiceLookup) {
@@ -592,7 +595,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         slotContent = canvasSlotContent,
                     )
                 }
-                if (content != null) content()
+                if (content != null) ProvideAppCoroutineScope(appScope, content)
             }
         }
         return SceneFrame(
