@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>SuspendFunSwallowedCancellation:RuntimeContentFeatures.kt:ContentFeatureAttacher$catch (failure: Throwable) { // Nothing has recorded with them yet, so no frame can be reading them. gpu.registry.remove(feature.spec)?.let(gpu::destroyPipeline) uploads.forEach(ContentUpload::release) throw failure }</ID>
+    <ID>SuspendFunSwallowedCancellation:ShaderSetLoading.kt:catch (e: Exception) { throw IllegalStateException("Failed to build pipeline '$name': ${e.message}", e) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

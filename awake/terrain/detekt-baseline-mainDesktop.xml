@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>SuspendFunSwallowedCancellation:TerrainPageStreamer.kt:TerrainPageStreamer$catch (cancelled: CancellationException) { // Only this job's own cancellation ends it silently; a reader's timeout is a failure, // or its loading entry would hold a read slot forever. ensureActive() Result.failure(cancelled) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

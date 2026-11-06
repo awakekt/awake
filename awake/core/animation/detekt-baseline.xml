@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ReturnCount:AnimationCrossfade.kt$AnimationCrossfade$fun advance(delta: Float, skin: Skin): FloatArray</ID>
-    <ID>ReturnCount:AnimationPose.kt$AnimationPose$private fun sampleChannel(sampler: AnimationSampler, timeSeconds: Float): FloatArray</ID>
+    <ID>ReturnCount:AnimationCrossfade.kt:AnimationCrossfade$fun advance: FloatArray</ID>
   </CurrentIssues>
 </SmellBaseline>

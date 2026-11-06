@@ -152,9 +152,10 @@ hold for everything else:
 The build checks them. `./gradlew awakeVerify` runs `verifyCoroutineScopes`, which fails on a
 `CoroutineScope(...)` or `MainScope()` built outside an owner and on any `GlobalScope`. The sites that
 predate the rule are listed in `config/coroutine-scopes-baseline.txt`, which only shrinks. Detekt's
-`GlobalCoroutineUsage` runs with `./gradlew detekt`. `SuspendFunSwallowedCancellation` is on too, but
-it needs type resolution, which the detekt release in use cannot do against Kotlin 2.4 classes, so
-rule 4 is a review rule until detekt is upgraded.
+`GlobalCoroutineUsage` runs with `./gradlew detekt`. `SuspendFunSwallowedCancellation`, which needs
+type resolution, runs with `./gradlew detektMainDesktop` and checks rule 4. It reports a suspend call
+inside `runCatching`, and a `try` around one whose `catch` can see a `CancellationException` without
+rethrowing it. The cases that predate it are in each module's `detekt-baseline-mainDesktop.xml`.
 
 A debug build also checks rule 3. The scene session records its frame thread when it initializes, and
 `World`'s structural changes, `SceneAssetLibrary.requireMesh` and `requireMaterial`, and

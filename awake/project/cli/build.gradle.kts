@@ -33,8 +33,8 @@ kotlin {
 }
 
 // detekt's compiler frontend tops out at JVM target 22; the target only affects its own analysis.
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach { jvmTarget = "22" }
-tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach { jvmTarget = "22" }
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach { jvmTarget.set("22") }
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach { jvmTarget.set("22") }
 
 dependencies {
     // Core's scene components, registered as a played project registers them, so a scene's components

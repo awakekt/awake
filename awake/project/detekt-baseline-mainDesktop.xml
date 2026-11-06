@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>SuspendFunSwallowedCancellation:BundleCipher.kt:BundleCipher$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:BundleMembers.kt:BundleMembers$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:FileSystemContentCache.kt:FileSystemContentCache$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:IndexedAssetSource.kt:IndexedAssetSource$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:TokenAuthorizedFetch.kt:TokenAuthorizedFetch$runCatching</ID>
+  </CurrentIssues>
+</SmellBaseline>

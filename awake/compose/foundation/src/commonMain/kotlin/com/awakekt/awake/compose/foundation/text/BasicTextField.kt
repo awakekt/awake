@@ -61,7 +61,7 @@ private const val DOUBLE_CLICK_SLOP_PX = 8
  * Deliberately not `const`: a constant is inlined into every caller's bytecode, so a later change
  * to the mask would never reach code compiled against this release.
  */
-@Suppress("MayBeConst")
+@Suppress("MayBeConstant")
 val PasswordMask: Char = '\u2022'
 
 /** How long a just-typed character stays readable in a masked field: Compose's own 1.5 s. */

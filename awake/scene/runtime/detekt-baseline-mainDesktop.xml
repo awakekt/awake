@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>SuspendFunSwallowedCancellation:ScenePrewarm.kt:ScenePrewarm$catch (cancelled: CancellationException) { // The prewarm itself ended, or the caller stopped waiting: only the latter gives it up. if (!done.isCompleted) givenUp.store(true) throw cancelled }</ID>
+    <ID>SuspendFunSwallowedCancellation:SceneRouterSpec.kt:catch (failure: Exception) { currentCoroutineContext().ensureActive() Result.failure(failure) }</ID>
+  </CurrentIssues>
+</SmellBaseline>
