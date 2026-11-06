@@ -22,6 +22,7 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.state.rememberReducerStore
 import com.awakekt.awake.compose.state.rememberStore
@@ -32,6 +33,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.di.container
 import com.awakekt.awake.core.di.module
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.sample.composeshowcase.ui.LocalShowcaseAppScope
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcasePage
 
@@ -63,6 +65,7 @@ internal val StateDiPage = ShowcasePage(
     notes = listOf(
         "rememberStore: Lightweight mutable store with atomic updates (Zustand / StateHolder equivalent).",
         "rememberReducerStore: Pure Reducer transition store enforcing Unidirectional Data Flow (MVI / Redux equivalent).",
+        "Both stores run under the app's AppCoroutineScope, and are closed when this page leaves the tree.",
         "ProvideContainer & rememberResolve: Ambient dependency injection down the Compose hierarchy.",
     ),
     demo = {
@@ -101,7 +104,7 @@ internal val StateDiPage = ShowcasePage(
 
 context(composer: Composer)
 private fun DemoCounterSection() {
-    val counterStore = rememberStore("demo_counter") { CounterState() }
+    val counterStore = rememberStore(LocalShowcaseAppScope.current, "demo_counter") { CounterState() }
     val state = counterStore.value
 
     Row(
@@ -132,6 +135,7 @@ private fun DemoCounterSection() {
 context(composer: Composer)
 private fun DemoTasksSection() {
     val taskStore = rememberReducerStore<TaskState, TaskIntent, Nothing>(
+        parent = LocalShowcaseAppScope.current,
         key = "demo_tasks",
         initialState = { TaskState() },
     ) { state, intent ->
