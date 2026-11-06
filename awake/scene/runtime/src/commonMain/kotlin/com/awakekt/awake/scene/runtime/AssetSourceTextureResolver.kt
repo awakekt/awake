@@ -8,27 +8,31 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.asGpuImageSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Loads the textures a scene's `sprite`s and `tilemap`s name from [files], such as a project's, so a
  * scene draws them without registering each one when it is built. A texture name is a path in [files],
  * as a `particle_emitter`'s is.
  *
- * Install it with the scene's assets (`assets { resolver(AssetSourceTextureResolver(files)) }`). The
- * first time a frame draws something with a texture it hasn't seen, it starts reading and decoding the
- * file in [context], off the frame, and answers [SceneTextureLoad.Loading]: the sprite or tilemap is not
+ * Install it with the scene's assets (`assets { resolver(AssetSourceTextureResolver(files)) }`). Its
+ * loads run in a child of the scene's `SceneSession.coroutineScope`, which the session [attach]es before
+ * its first frame, so disposing the scene stops them; used outside a scene session, it is given the
+ * scope its loads run under instead. The first time a frame draws something with a texture it hasn't
+ * seen, it starts reading and decoding the file in [context], off the frame, and answers
+ * [SceneTextureLoad.Loading]: the sprite or tilemap is not
  * drawn yet. A later frame finds it loaded, and the frame uploads it and draws it from then on. A file
  * that can't be read or decoded answers [SceneTextureLoad.Failed], and what uses it is not drawn. Each
  * is read once until it is forgotten; a texture registered by name with `texture(name) { ... }` is used
@@ -45,19 +49,33 @@ import kotlin.coroutines.CoroutineContext
  * decoded when it answers null.
  *
  * @param files Where the textures are read from.
- * @param context Where files are read and decoded; [Dispatchers.Default] by default.
+ * @param context Where files are read and decoded, added to the session's scope; [Dispatchers.Default]
+ *   by default. It holds no `Job`.
  * @param cooked Loads a texture another way before its file is decoded, or answers null to decode it.
  */
 class AssetSourceTextureResolver(
     private val files: AssetSource,
-    context: CoroutineContext,
+    private val context: CoroutineContext,
     private val cooked: (suspend (name: String) -> GpuImageSource?)?,
 ) : SceneAssetResolver,
     AutoCloseable {
     /** Reads each texture from [files] in [context] and decodes it, with no [cooked] loader. */
     constructor(files: AssetSource, context: CoroutineContext = Dispatchers.Default) : this(files, context, null)
 
-    private val loads = CoroutineScope(SupervisorJob() + context)
+    /**
+     * Reads each texture from [files] in a child of [scope], on its dispatcher, for a resolver used
+     * outside a scene session: cancelling [scope] stops its loads as [close] does.
+     */
+    constructor(
+        files: AssetSource,
+        scope: CoroutineScope,
+        cooked: (suspend (name: String) -> GpuImageSource?)? = null,
+    ) : this(files, EmptyCoroutineContext, cooked) {
+        loads = scope.childScope()
+    }
+
+    // A child of the scope the session attached, or the one given; null until then.
+    private var loads: CoroutineScope? = null
     private val finished = Channel<Finished>(Channel.UNLIMITED)
 
     // Read and written on the frame thread only; loads hand their results over through [finished].
@@ -67,11 +85,26 @@ class AssetSourceTextureResolver(
     private val loading = HashMap<String, Job>()
     private var closed = false
 
+    /** Runs this resolver's loads in a child of the scene session's [sessionScope], in [context]. */
+    override fun attach(sessionScope: CoroutineScope) {
+        if (closed) return
+        // Loads begun under a scope it was given are dropped, so each texture is asked for again under this one.
+        loads?.let { previous ->
+            forgetTextures()
+            previous.cancel()
+        }
+        loads = sessionScope.childScope(context)
+    }
+
     override fun texture(name: String): SceneTextureLoad {
         receiveFinished()
         if (name !in textures && !closed) {
+            val scope = checkNotNull(loads) {
+                "AssetSourceTextureResolver loads in its scene session's scope: install it with the scene's assets, " +
+                    "or give it the scope its loads run under."
+            }
             textures[name] = SceneTextureLoad.Loading
-            loading[name] = loads.launch {
+            loading[name] = scope.launch {
                 val result = read(name)
                 finished.trySend(Finished(name, coroutineContext.job, result))
             }
@@ -98,7 +131,7 @@ class AssetSourceTextureResolver(
     override fun close() {
         if (closed) return
         closed = true
-        loads.cancel()
+        loads?.cancel()
         finished.close()
     }
 

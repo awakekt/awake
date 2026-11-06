@@ -5,10 +5,10 @@
  */
 package com.awakekt.awake.project
 
+import com.awakekt.awake.core.io.suspendRunCatching
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
@@ -200,8 +200,7 @@ class TokenAuthorizedFetch(
 
     /** Called with [lock] held. */
     private suspend fun refresh(): Result<ReadToken> {
-        val outcome = runCatching { tokenProvider() }
-        outcome.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        val outcome = suspendRunCatching { tokenProvider() }
         lastFailure = outcome.exceptionOrNull()
         outcome.getOrNull()?.let { token ->
             val lifetime = token.expiresIn.coerceAtLeast(Duration.ZERO)
@@ -218,9 +217,8 @@ class TokenAuthorizedFetch(
             is ReadTokenPlacement.QueryParameter ->
                 ContentRequest(withQueryParameter(url, placement.name, token.value), headers)
         }
-        val outcome = runCatching { transport.send(request) }
+        val outcome = suspendRunCatching { transport.send(request) }
         val failure = outcome.exceptionOrNull() ?: return outcome.getOrThrow()
-        if (failure is CancellationException) throw failure
         throw transportFailure(url, token, failure)
     }
 

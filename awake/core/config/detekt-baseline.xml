@@ -2,12 +2,12 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:EnvSource.kt$DotEnvParser$(value.startsWith('"') &amp;&amp; value.endsWith('"') &amp;&amp; value.length >= 2) || (value.startsWith('\'') &amp;&amp; value.endsWith('\'') &amp;&amp; value.length >= 2)</ID>
-    <ID>MatchingDeclarationName:PlatformEnvSource.kt$AndroidSystemEnvSource : EnvSource</ID>
-    <ID>MatchingDeclarationName:PlatformEnvSource.kt$IosSystemEnvSource : EnvSource</ID>
-    <ID>ReturnCount:PlatformEnvSource.kt$AndroidSystemEnvSource$override fun get(key: String): String?</ID>
-    <ID>ReturnCount:PlatformEnvSource.kt$DesktopSystemEnvSource$override fun get(key: String): String?</ID>
-    <ID>ReturnCount:PlatformEnvSource.kt$DesktopSystemPropertyEnvSource$override fun get(key: String): String?</ID>
-    <ID>ReturnCount:PlatformEnvSource.kt$IosSystemEnvSource$override fun get(key: String): String?</ID>
+    <ID>ComplexCondition:EnvSource.kt:DotEnvParser$(value.startsWith('"') &amp;&amp; value.endsWith('"') &amp;&amp; value.length >= 2) || (value.startsWith('\'') &amp;&amp; value.endsWith('\'') &amp;&amp; value.length >= 2)</ID>
+    <ID>MatchingDeclarationName:PlatformEnvSource.kt:AndroidSystemEnvSource : EnvSource</ID>
+    <ID>MatchingDeclarationName:PlatformEnvSource.kt:IosSystemEnvSource : EnvSource</ID>
+    <ID>ReturnCount:PlatformEnvSource.kt:AndroidSystemEnvSource$override fun get: String?</ID>
+    <ID>ReturnCount:PlatformEnvSource.kt:DesktopSystemEnvSource$override fun get: String?</ID>
+    <ID>ReturnCount:PlatformEnvSource.kt:DesktopSystemPropertyEnvSource$override fun get: String?</ID>
+    <ID>ReturnCount:PlatformEnvSource.kt:IosSystemEnvSource$override fun get: String?</ID>
   </CurrentIssues>
 </SmellBaseline>

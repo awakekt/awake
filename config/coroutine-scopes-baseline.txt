@@ -1,0 +1,12 @@
+# Coroutine scopes built outside an approved owner, waiting to be moved under one (#1321).
+#
+# `./gradlew verifyCoroutineScopes` (part of `awakeVerify`) reads this file. Each line is
+# `<repository-relative path> <count>`: the number of `CoroutineScope(...)` / `MainScope()`
+# constructions that file may still hold. The list only shrinks. A new site fails the check, and so
+# does a line that allows more sites than its file has left: lower it, or delete it once none remain.
+# Never add a line; run the work in a child of an owner instead (website/docs/guides/app-lifecycle.md,
+# "Coroutine scopes").
+# Compatibility path for released API, remove with the deprecated overload.
+awake/project/runtime/src/commonMain/kotlin/com/awakekt/awake/project/runtime/HostlessSceneScope.kt 1
+# Compatibility path for released API, remove with the deprecated overload.
+awake/scene/shader/src/commonMain/kotlin/com/awakekt/awake/scene/shader/ShaderEffectSystem.kt 1

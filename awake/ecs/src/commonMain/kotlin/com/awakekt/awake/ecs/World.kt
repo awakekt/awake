@@ -17,9 +17,16 @@ import kotlin.reflect.KClass
  * `ecs-dev` agent docs).
  */
 class World {
+    /**
+     * The frame thread this world's structural changes must happen on, checked in debug builds once
+     * the scene runtime binds it; see [FrameThreadGuard]. Registering a component type, as the first
+     * [add] of a type does, is checked too, before anything is registered.
+     */
+    val frameThread = FrameThreadGuard()
+
     @PublishedApi internal val entities = EntityArena()
 
-    @PublishedApi internal val components = ComponentRegistry()
+    @PublishedApi internal val components = ComponentRegistry().also { it.frameThread = frameThread }
     private val collector = QueryCollector(entities, components)
     private val familyRegistry = FamilyRegistry(this, collector)
     private val queryCache = QueryCache { types -> collector.collect(types) }
@@ -30,6 +37,7 @@ class World {
      * @return a stable [Entity] handle.
      */
     fun create(): Entity {
+        frameThread.check("World.create")
         val entity = entities.create()
         queryCache.markEmptyQueriesDirty()
         return entity
@@ -48,6 +56,7 @@ class World {
      * @return true if the entity was alive and successfully destroyed.
      */
     fun destroy(entity: Entity): Boolean {
+        frameThread.check("World.destroy")
         if (!entities.isAlive(entity)) {
             return false
         }
@@ -99,8 +108,10 @@ class World {
      * @return the new component instance.
      */
     fun <T : Any> add(entity: Entity, type: KClass<T>): T {
+        // The type first, so a new type is registered, and checked, before its pool is made.
+        val typeId = components.typeId(type)
         val instance = components.pool(type).obtain() as T
-        add(entity, type, instance)
+        addInternal(entity, typeId, components.store(typeId, type), instance)
         return instance
     }
 
@@ -135,6 +146,7 @@ class World {
         store: ComponentStore<T>,
         component: T,
     ): T? {
+        frameThread.check("World.add")
         requireAlive(entity)
         val previous = store.add(entity, component)
         if (previous == null) {
@@ -201,6 +213,7 @@ class World {
      */
     @PublishedApi
     internal fun <T : Any> removeInternal(entity: Entity, typeId: ComponentTypeId): T? {
+        frameThread.check("World.remove")
         if (!entities.isAlive(entity)) {
             return null
         }
@@ -381,6 +394,7 @@ class World {
      * Destroys all entities and clears all component storage. Increments [generation].
      */
     fun clear() {
+        frameThread.check("World.clear")
         generation++
         entities.clear()
         components.clear()

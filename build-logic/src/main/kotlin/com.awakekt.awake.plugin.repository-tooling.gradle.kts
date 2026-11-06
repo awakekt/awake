@@ -5,6 +5,7 @@
  */
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
+import com.awakekt.awake.build.tasks.VerifyCoroutineScopesTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
 import com.awakekt.awake.build.tasks.VerifyKeepRulesTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
@@ -44,6 +45,33 @@ val verifyHeadlessRuntime = tasks.register<VerifyHeadlessRuntimeTask>("verifyHea
     forbiddenModuleNamePrefixes.set(listOf(":awake:project:transport-"))
 }
 
+val verifyCoroutineScopes = tasks.register<VerifyCoroutineScopesTask>("verifyCoroutineScopes") {
+    group = "awake verification"
+    description = "Reject a coroutine scope constructed outside an approved owner, and any GlobalScope use."
+    rootPath.set(layout.projectDirectory.asFile.absolutePath)
+    mainSources.from(
+        fileTree(layout.projectDirectory.dir("awake")) {
+            include("**/src/*Main/**/*.kt", "**/src/main/**/*.kt")
+            exclude("**/build/**")
+        },
+    )
+    // The lifetimes everything else runs under: the app, one scene session, one store, the game server host.
+    approvedOwners.set(
+        listOf(
+            "awake/engine/platform/src/commonMain/kotlin/com/awakekt/awake/engine/platform/error/AppCoroutineScope.kt",
+            "awake/scene/runtime/src/commonMain/kotlin/com/awakekt/awake/scene/runtime/session/SceneSession.kt",
+            "awake/core/state/src/commonMain/kotlin/com/awakekt/awake/core/state/StoreScope.kt",
+            "awake/core/state/src/commonMain/kotlin/com/awakekt/awake/core/state/Store.kt",
+            "awake/core/state/src/commonMain/kotlin/com/awakekt/awake/core/state/ReducerStore.kt",
+            "awake/net/server-ktor/src/commonMain/kotlin/com/awakekt/awake/net/server/host/ServerHost.kt",
+            "awake/net/server-ktor/src/commonMain/kotlin/com/awakekt/awake/net/server/save/SaveScheduler.kt",
+            "awake/net/server-ktor/src/desktopMain/kotlin/com/awakekt/awake/net/server/ktor/GameTransport.kt",
+            "awake/net/server-ktor/src/desktopMain/kotlin/com/awakekt/awake/net/server/ktor/GameServerHostPlugin.kt",
+        ),
+    )
+    baseline.set(layout.projectDirectory.file("config/coroutine-scopes-baseline.txt"))
+}
+
 val verifyKeepRules = tasks.register<VerifyKeepRulesTask>("verifyKeepRules") {
     group = "awake verification"
     description = "Reject a class Awake's native code finds by name that no consumer keep rule keeps."
@@ -72,7 +100,7 @@ gradle.projectsEvaluated {
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
-    dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime, verifyKeepRules)
+    dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
 }
 

@@ -1,0 +1,43 @@
+# Laid over detekt.yml by each module's `detektMainDesktop` task (and `detektBaselineMainDesktop`),
+# which detekt 2 runs with type resolution against the desktop main compilation; that compilation
+# includes commonMain. It keeps only the type-resolved rules Awake has opted into, so this run
+# reports nothing the plain `detekt` task already covers. Turn another type-resolved rule on here,
+# then regenerate the `detekt-baseline-mainDesktop.xml` baselines with `detektBaselineMainDesktop`.
+comments:
+  active: false
+complexity:
+  active: false
+empty-blocks:
+  active: false
+exceptions:
+  active: false
+naming:
+  active: false
+performance:
+  active: false
+potential-bugs:
+  active: false
+style:
+  active: false
+
+coroutines:
+  active: true
+  CoroutineLaunchedInTestWithoutRunTest:
+    active: false
+  GlobalCoroutineUsage:
+    active: false
+  InjectDispatcher:
+    active: false
+  RedundantSuspendModifier:
+    active: false
+  SleepInsteadOfDelay:
+    active: false
+  SuspendFunInFinallySection:
+    active: false
+  # Rule 4 of "Coroutine scopes" (website/docs/guides/app-lifecycle.md): cancellation is never swallowed.
+  SuspendFunSwallowedCancellation:
+    active: true
+  SuspendFunWithCoroutineScopeReceiver:
+    active: false
+  SuspendFunWithFlowReturnType:
+    active: false

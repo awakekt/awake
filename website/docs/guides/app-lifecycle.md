@@ -141,6 +141,49 @@ The store keeps its own lifetime: it is closed, cancelling only its own coroutin
 leaves the tree. Reading `LocalAppCoroutineScope` in an app that registered no scope fails with a
 message saying how to register one.
 
+## Coroutine scopes
+
+Every long-lived coroutine scope in Awake has an owner that cancels it:
+
+```
+AppCoroutineScope (engine:platform; the app; failures go to AppErrorHandler)
+├── SceneSession.coroutineScope (scene:runtime; one scene session; cancelled when it is disposed)
+└── store scopes (core:state; one store)
+```
+
+The approved owners are `AppCoroutineScope`, `SceneSession`, `core:state`'s store scopes
+(`DefaultStoreScope`, `MutableStore`, the `reducerStore` factories), and the game server host in
+`net:server-ktor` (`ServerHost`, `SaveScheduler`, `GameTransport`, `GameServerHostPlugin`). Four rules
+hold for everything else:
+
+1. **Only an owner builds a long-lived scope.** Anything else runs its work in a child of one:
+   `scope.childScope(dispatcher)` under a scope it was given, `runtime.session.coroutineScope` for work
+   that ends with the scene, or `services.appChildScope(dispatcher)` for work that outlives one scene,
+   as the scene router's deferred loads do. A scene asset resolver that loads off the frame gets the
+   session's scope from `SceneAssetResolver.attach` before the first frame.
+2. **No `GlobalScope`.**
+3. **Background coroutines never write to the `World`, the renderer or the `SceneAssetLibrary`.** They
+   send results through a `Channel` that a system drains on the frame thread.
+4. **Cancellation is never swallowed.** A `catch` that can see a `CancellationException` rethrows it.
+
+The build checks them. `./gradlew awakeVerify` runs `verifyCoroutineScopes`, which fails on a
+`CoroutineScope(...)` or `MainScope()` built outside an owner and on any `GlobalScope`. The sites that
+predate the rule are listed in `config/coroutine-scopes-baseline.txt`, which only shrinks. Detekt's
+`GlobalCoroutineUsage` runs with `./gradlew detekt`. `SuspendFunSwallowedCancellation`, which needs
+type resolution, runs with `./gradlew detektMainDesktop` and checks rule 4. It reports a suspend call
+inside `runCatching`, and a `try` around one whose `catch` can see a `CancellationException` without
+rethrowing it. It has no baseline: every case is fixed, or carries a commented `@Suppress` where
+catching the cancellation is intended, such as a timeout the work raised itself.
+
+A debug build also checks rule 3. The scene session records its frame thread when it initializes, and
+`World`'s structural changes, including the first `add` of a component type, which registers it,
+`SceneAssetLibrary.requireMesh` and `requireMaterial`, and `ScenePrewarm.close` then throw on any
+other thread. The checks are on when `FrameThreadGuard.enabled` is: on the JVM when assertions are on
+(`-ea`, as in Gradle's tests) or the `awake.frameThreadChecks` system property is `true`, in a debug
+Kotlin/Native binary, and on Android in a debuggable app, where `AwakeSurfaceView` turns it on from
+`ApplicationInfo.FLAG_DEBUGGABLE`. On wasmJs, which has one thread, they never fire. With the flag
+off, each check is one field read.
+
 ## Properties
 
 `window { }`:

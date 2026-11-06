@@ -11,7 +11,7 @@ import com.awakekt.awake.scene.particles.particleImageLoads
 import com.awakekt.awake.scene.runtime.SceneAssetLibrary
 import com.awakekt.awake.scene.runtime.audioClips
 import com.awakekt.awake.scene.runtime.particleImages
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * The audio clips and particle images one played scene decodes from the project's [files]: shared by its
@@ -24,11 +24,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param files Where the clips and images are read from.
  * @param scene What the scene read when it loaded, which the loads start with.
- * @param context Where a clip or image the scene didn't read decodes: the session's.
+ * @param scope Where a clip or image the scene didn't read decodes: the scene session's scope, so
+ *   disposing the session stops it.
  */
-internal class PlayedSceneLoads(files: AssetSource, scene: SceneContent, context: CoroutineContext) : AutoCloseable {
-    private val audio = audioClipLoads(files, scene[CoreSceneContent.AudioClips].orEmpty(), context)
-    private val particles = particleImageLoads(files, scene[CoreSceneContent.ParticleImages].orEmpty(), context)
+internal class PlayedSceneLoads(files: AssetSource, scene: SceneContent, scope: CoroutineScope) : AutoCloseable {
+    private val audio = audioClipLoads(files, scope, scene[CoreSceneContent.AudioClips].orEmpty())
+    private val particles = particleImageLoads(files, scope, scene[CoreSceneContent.ParticleImages].orEmpty())
     private var library: SceneAssetLibrary? = null
 
     /** The loads, as the systems read them from [SceneHostServices.content]. */

@@ -199,6 +199,12 @@ jobs:
       - name: Every desktop test source set compiles
         run: ./gradlew compileTestKotlinDesktop
 
+      # detekt's type-resolved rules, such as SuspendFunSwallowedCancellation, which the plain
+      # `detekt` above skips. After the compile step, so it reuses the desktop classes it resolves
+      # against. Only the rules config/detekt/detekt-type-resolved.yml turns on run here.
+      - name: Detekt type-resolved rules (all modules, baselined)
+        run: ./gradlew detektMainDesktop
+
       # This deterministic geometry-cost ratchet protects the CPU-side UI upload workload; it is
       # not a real-device FPS measurement.
       # Keep it as an explicit PR check so the test cannot silently regress to compile-only.

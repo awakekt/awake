@@ -25,6 +25,16 @@ interface SceneAssetResolver {
     fun canResolveMesh(name: String): Boolean = false
 
     /**
+     * Called once when the scene session using this resolver starts, before its first frame, with the
+     * session's coroutine scope. A resolver that loads off the frame thread runs that work in a child of
+     * [sessionScope], so the session's disposal stops it and its failures reach the app's error handler,
+     * and hands results back to the frame thread rather than building anything from there.
+     *
+     * @param sessionScope The session's `SceneSession.coroutineScope`.
+     */
+    fun attach(sessionScope: CoroutineScope) {}
+
+    /**
      * Creates and uploads the requested [Mesh] to the GPU.
      *
      * @param runtime The active [SceneAppLifecycleRuntime] providing engine services and device access.

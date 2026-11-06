@@ -126,7 +126,10 @@ class TerrainPageStreamer(
         }
     }
 
-    @Suppress("TooGenericExceptionCaught") // Asset providers define their own I/O failures; report them at the worker boundary.
+    // TooGenericExceptionCaught: asset providers define their own I/O failures; report them at the worker boundary.
+    // SuspendFunSwallowedCancellation: ensureActive rethrows this job's own cancellation; a reader's timeout
+    // must become a failure, or its loading entry would hold a read slot forever.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     private fun launchMissing(demand: List<TerrainPageCoord>) {
         val resident = terrain.residentCoords
         val available = minOf(maxConcurrentReads - pendingReads, terrain.capacity - resident.size - loading.size)

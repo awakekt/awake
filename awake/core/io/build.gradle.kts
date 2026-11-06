@@ -20,7 +20,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // AssetLoads takes the CoroutineScope a load runs in.
+            // api: AssetLoads takes the CoroutineScope a load runs in, and suspendRunCatching is a public
+            // inline function whose body calls into kotlinx.coroutines.
             api(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }

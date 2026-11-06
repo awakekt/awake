@@ -9,7 +9,6 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.asGpuImageSource
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -100,7 +99,7 @@ class AssetSourceTextureResolverTest {
         assertFailsWith<CharacterCodingException>("the file is not valid UTF-8 text, so reading it as text would change it") {
             Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes))
         }
-        val textures = AssetSourceTextureResolver(AssetSource { Result.success(bytes) }, StandardTestDispatcher(testScheduler))
+        val textures = AssetSourceTextureResolver(AssetSource { Result.success(bytes) }, this)
 
         textures.texture("binary.png")
         advanceUntilIdle()
@@ -115,7 +114,7 @@ class AssetSourceTextureResolverTest {
     @Test
     fun aCookedLoaderIsTriedFirstAndTheFileDecodedWhenItAnswersNull() = runTest {
         val cooked = TextureAsset(ByteArray(4 * 4 * 4), 4, 4).asGpuImageSource()
-        val textures = AssetSourceTextureResolver(files, StandardTestDispatcher(testScheduler)) { name -> cooked.takeIf { name == "cooked.png" } }
+        val textures = AssetSourceTextureResolver(files, this) { name -> cooked.takeIf { name == "cooked.png" } }
         arrived.complete(Unit)
 
         textures.texture("cooked.png")
@@ -128,7 +127,7 @@ class AssetSourceTextureResolverTest {
         textures.close()
     }
 
-    private fun TestScope.resolver() = AssetSourceTextureResolver(files, StandardTestDispatcher(testScheduler))
+    private fun TestScope.resolver() = AssetSourceTextureResolver(files, this)
 
     private companion object {
         val PNG: ByteArray = ByteArrayOutputStream().also {

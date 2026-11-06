@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ReturnCount:AndroidInputBridge.kt$fun MotionEvent.syncAwakePointerInput(input: Input): Boolean</ID>
-    <ID>TooManyFunctions:Input.kt$Input</ID>
+    <ID>TooManyFunctions:Input.kt:Input</ID>
   </CurrentIssues>
 </SmellBaseline>

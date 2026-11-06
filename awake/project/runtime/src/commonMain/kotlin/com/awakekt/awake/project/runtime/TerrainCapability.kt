@@ -16,8 +16,6 @@ import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.terrain.TerrainContentSystem
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 /**
@@ -38,23 +36,27 @@ internal object TerrainCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneTerrain::class) || !plan.hasRenderer) return
         plan.frame("terrain") { services ->
-            TerrainDrawingSystem(services.renderer as? ContentFeatureHost, services.content[CoreSceneContent.TerrainSurfaces].orEmpty())
+            val host = services.renderer as? ContentFeatureHost
+            // A renderer that can't take content features draws nothing, so it reads nothing either.
+            val scope = host?.let { services.backgroundScope("terrain") }
+            TerrainDrawingSystem(host, scope, services.content[CoreSceneContent.TerrainSurfaces].orEmpty())
         }
     }
 }
 
 /**
- * [TerrainContentSystem] through [host], with a scope of its own for resolving surfaces. [close]
- * detaches every terrain it drew and cancels what is still resolving. A renderer that cannot attach
- * content features, such as a test renderer, draws nothing.
+ * [TerrainContentSystem] through [host], resolving surfaces in [scope], a child of the scene session's
+ * scope that this system holds alone. [close] detaches every terrain it drew and cancels what is still
+ * resolving. A renderer that cannot attach content features, such as a test renderer, draws nothing
+ * and is given no scope.
  */
 internal class TerrainDrawingSystem(
     host: ContentFeatureHost?,
+    private val scope: CoroutineScope?,
     providers: Map<String, TerrainSurfaceProvider>,
 ) : System,
     AutoCloseable {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val terrains = host?.let { TerrainContentSystem(it, scope, providers) }
+    private val terrains = host?.let { TerrainContentSystem(it, checkNotNull(scope) { "A terrain that draws resolves in a scope" }, providers) }
 
     override fun update(world: World, delta: Float) {
         terrains?.update(world, delta)
@@ -62,6 +64,6 @@ internal class TerrainDrawingSystem(
 
     override fun close() {
         terrains?.detachAll()
-        scope.cancel()
+        scope?.cancel()
     }
 }

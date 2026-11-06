@@ -33,7 +33,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -66,7 +66,7 @@ internal object StreamedTerrainCapability : SceneCapability {
             val physics = if (config.collider && services.physics != null) plan.physicsSystem(services) else null
             // A headless host, such as a game server, still streams cells and their collision; it only draws nothing.
             val host = if (services.hasRenderer) services.renderer as? ContentFeatureHost else null
-            StreamedTerrainSystem(assets, host, physics)
+            StreamedTerrainSystem(assets, host, physics, services.backgroundScope("paged_terrain"))
         }
     }
 }
@@ -123,25 +123,26 @@ internal suspend fun loadStreamedTerrain(config: ScenePagedTerrain, files: Asset
  * Streams [assets]' cells around the primary camera, draws them through [host], and keeps static
  * collision near the camera through [physics], the scene's own physics step, when that is given.
  *
- * Cells read off the frame thread; the drawing attaches from [update] and appears on a later frame.
- * [close] stops reading and detaches the drawing. Collision entities stay with the world, whose
+ * Cells read off the frame thread in [scope], a child of the scene session's scope that this system
+ * holds alone; the drawing attaches from [update] and appears on a later frame. [close] stops reading,
+ * cancelling [scope], and detaches the drawing. Collision entities stay with the world, whose
  * physics world frees their bodies.
  */
 internal class StreamedTerrainSystem(
     private val assets: StreamedTerrainAssets,
     private val host: ContentFeatureHost?,
     physics: PhysicsSystem?,
+    private val scope: CoroutineScope,
 ) : System,
     AutoCloseable {
     private val log = Logger("streamed-terrain")
-    private val reads = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val attaching = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    private var attaching: Job? = null
     private val attached = Channel<AttachedContentFeature>(capacity = 1)
     private var feature: AttachedContentFeature? = null
     private var attachStarted = false
     private var closed = false
     private val eye = Vec3f(0f, 0f, 0f)
-    private val streamer = assets.config.streamer(assets.terrain, reads, assets.read) { coord, error ->
+    private val streamer = assets.config.streamer(assets.terrain, scope, assets.read) { coord, error ->
         log.error(error) { "paged_terrain ${assets.config.index}: cell (${coord.x}, ${coord.z}) failed to load and uses the coarse fallback" }
     }
     private val streaming = PagedTerrainSystem(streamer, { eye }, physics, assets.config.collisionRadius)
@@ -161,7 +162,7 @@ internal class StreamedTerrainSystem(
     override fun close() {
         if (closed) return
         closed = true
-        attaching.cancel()
+        attaching?.cancel()
         attached.close()
         while (true) {
             val pending = attached.tryReceive().getOrNull() ?: break
@@ -170,14 +171,15 @@ internal class StreamedTerrainSystem(
         feature?.detach()
         feature = null
         streamer.close()
-        reads.cancel()
+        scope.cancel()
     }
 
     // TooGenericExceptionCaught: a terrain that fails to attach must not stop the frame.
     @Suppress("TooGenericExceptionCaught")
     private fun startAttach(host: ContentFeatureHost) {
         attachStarted = true
-        attaching.launch(start = CoroutineStart.UNDISPATCHED) {
+        // Unconfined, so an attach that completes at once lands in the channel before the next update reads it.
+        attaching = scope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
             try {
                 val attachedFeature = host.attachContentFeature(assets.content)
                 // A system closed while this attached has closed the channel: detach straight away.

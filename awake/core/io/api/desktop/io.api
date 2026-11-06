@@ -31,8 +31,8 @@ public final class com/awakekt/awake/core/io/AssetLoad$Loading : com/awakekt/awa
 }
 
 public final class com/awakekt/awake/core/io/AssetLoads : java/lang/AutoCloseable {
-	public fun <init> (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
-	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close ()V
 	public final fun forget (Ljava/lang/String;)V
 	public final fun getLoaded ()Ljava/util/Map;
@@ -427,6 +427,10 @@ public final class com/awakekt/awake/core/io/Sha256$Stream {
 	public final fun finish ()[B
 	public final fun finishHex ()Ljava/lang/String;
 	public final fun update ([B)V
+}
+
+public final class com/awakekt/awake/core/io/SuspendRunCatchingKt {
+	public static final fun suspendRunCatching (Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/core/io/WriteMode : java/lang/Enum {

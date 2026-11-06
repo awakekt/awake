@@ -6,6 +6,7 @@
 package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.Sha256
+import com.awakekt.awake.core.io.suspendRunCatching
 import dev.whyoleg.cryptography.BinarySize.Companion.bytes
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.DelicateCryptographyApi
@@ -62,9 +63,10 @@ internal class SoftwareBundleKey(master: ByteArray, private val keyId: String) :
         // whose key and nonce match the last one its pooled Cipher ran. One throwaway encryption under
         // a random key after each seal leaves the pooled Cipher on other values, and a refusal that a
         // concurrent seal still causes is retried once.
-        val sealed = runCatching { key.cipher().encryptWithIv(nonce, plaintext) }
-            .recoverCatching { if (it is CancellationException) throw it else scramble().let { key.cipher().encryptWithIv(nonce, plaintext) } }
-            .getOrThrow()
+        val sealed = suspendRunCatching { key.cipher().encryptWithIv(nonce, plaintext) }.getOrElse {
+            scramble()
+            key.cipher().encryptWithIv(nonce, plaintext)
+        }
         scramble()
         return sealed
     }

@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>MatchingDeclarationName:PixelBaseline.kt$PixelDiffResult</ID>
+    <ID>MatchingDeclarationName:PixelBaseline.kt:PixelDiffResult</ID>
   </CurrentIssues>
 </SmellBaseline>

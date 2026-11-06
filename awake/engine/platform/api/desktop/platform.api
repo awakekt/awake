@@ -7,9 +7,11 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected final fun drawDebugLines (Ljava/util/List;)V
 	protected final fun getAppLifecycle ()Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
 	protected final fun getAspectRatio ()F
+	protected final fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
 	public fun getInput ()Lcom/awakekt/awake/core/input/Input;
 	public final fun getRenderScaleOverride ()Lkotlin/jvm/functions/Function0;
 	protected final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
+	public final fun getServices ()Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;
 	public final fun getStartupError ()Ljava/lang/Throwable;
 	public fun getWindowConfig ()Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public final fun isReady ()Z
@@ -64,6 +66,7 @@ public abstract interface class com/awakekt/awake/engine/platform/WindowLifecycl
 	public static synthetic fun create$default (Lcom/awakekt/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
 	public abstract fun dispose ()V
 	public abstract fun getInput ()Lcom/awakekt/awake/core/input/Input;
+	public fun getServices ()Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;
 	public fun getWindowConfig ()Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public abstract fun pause ()V
 	public fun releaseSurface ()V
@@ -79,6 +82,7 @@ public abstract interface class com/awakekt/awake/engine/platform/WindowLifecycl
 
 public final class com/awakekt/awake/engine/platform/WindowLifecycle$DefaultImpls {
 	public static synthetic fun create$default (Lcom/awakekt/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
+	public static fun getServices (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;
 	public static fun getWindowConfig (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public static fun releaseSurface (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)V
 	public static fun restoreSurface (Lcom/awakekt/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;)V
@@ -231,6 +235,10 @@ public final class com/awakekt/awake/engine/platform/error/AppCoroutineScope : j
 }
 
 public final class com/awakekt/awake/engine/platform/error/AppCoroutineScopeKt {
+	public static final fun appChildScope (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static synthetic fun appChildScope$default (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun childScope (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static synthetic fun childScope$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineScope;
 	public static final fun launchStep (Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Lcom/awakekt/awake/engine/platform/error/AppErrorHandler;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
 	public static synthetic fun launchStep$default (Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/engine/platform/error/AppErrorSource;Lcom/awakekt/awake/engine/platform/error/AppErrorHandler;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 }

@@ -13,6 +13,7 @@ import com.awakekt.awake.core.animation.Skeleton
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.resolve
+import com.awakekt.awake.core.io.suspendRunCatching
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
@@ -46,7 +47,7 @@ import com.awakekt.awake.core.math.Vec3f
 object GltfParser {
     /** Loads a glTF asset and its relative `.bin`/image sidecars through Core [AssetSource]. */
     suspend fun load(path: AssetPath, source: AssetSource, limits: GltfLimits = GltfLimits.Default): Result<GltfMesh> =
-        runCatching {
+        suspendRunCatching {
             val json = source.read(path).getOrThrow().decodeToString()
             val external = loadExternalResources(json, path, source, limits).getOrThrow()
             parse(json, external, limits)
@@ -62,7 +63,7 @@ object GltfParser {
         assetPath: AssetPath,
         source: AssetSource,
         limits: GltfLimits = GltfLimits.Default,
-    ): Result<Map<String, ByteArray>> = runCatching {
+    ): Result<Map<String, ByteArray>> = suspendRunCatching {
         externalUris(json, limits).associateWith { uri ->
             source.read(assetPath.resolve(percentDecoded(uri))).getOrThrow()
         }

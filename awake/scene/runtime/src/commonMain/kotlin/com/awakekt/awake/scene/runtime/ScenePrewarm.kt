@@ -101,15 +101,15 @@ class ScenePrewarm internal constructor(
     suspend fun await() {
         try {
             done.await()
-        } catch (cancelled: CancellationException) {
-            // The prewarm itself ended, or the caller stopped waiting: only the latter gives it up.
+        } finally {
+            // Still pending only when the caller stopped waiting, rather than the prewarm ending: that gives it up.
             if (!done.isCompleted) givenUp.store(true)
-            throw cancelled
         }
     }
 
     /** Lets go of what it holds, and stops it if it is not ready yet. Closing twice is harmless. */
     override fun close() {
+        library.frameThread.check("ScenePrewarm.close")
         if (state == State.Closed || state == State.Disposed) return
         state = State.Closed
         library.prewarms.remove(this)

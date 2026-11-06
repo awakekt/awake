@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.FrameThreadGuard
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
@@ -115,6 +116,9 @@ class SceneAssetLibrary(
 
     // The open prewarms; see [prewarm].
     internal val prewarms = ScenePrewarmQueue(this)
+
+    // Bound by the scene session on its frame thread; checks builds there in debug builds.
+    internal val frameThread = FrameThreadGuard()
 
     /**
      * Supplies decoded image data registered under [name]; the sprite render batch caches and owns its
@@ -261,6 +265,9 @@ class SceneAssetLibrary(
     /** Whether [key] draws through a renderer factory of its own, so it holds nothing to prewarm. */
     internal fun hasCustomRenderer(key: SceneRenderableKey): Boolean = key in rendererFactories
 
+    /** Gives each resolver the session's scope, where it runs what it loads off the frame. */
+    internal fun attach(sessionScope: CoroutineScope) = dynamicResolvers.forEach { it.attach(sessionScope) }
+
     /** Has [uploads] let go of what it made from a texture each time [forgetTexture] or [forgetTextures] forgets it. */
     internal fun addTextureUploads(uploads: SceneTextureUploads) {
         textureUploads += uploads
@@ -268,6 +275,7 @@ class SceneAssetLibrary(
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMesh]. */
     fun requireMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh {
+        frameThread.check("SceneAssetLibrary.requireMesh")
         // Revived before building: a retained mesh is the whole point of retaining it.
         val mesh = retainedMeshes.remove(name)?.also { revived ->
             retainedBytes -= revived.sizeBytes
@@ -293,6 +301,7 @@ class SceneAssetLibrary(
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMaterial]. */
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material {
+        frameThread.check("SceneAssetLibrary.requireMaterial")
         val material = materials.getOrPut(name) {
             val factory = materialFactories[name]
             if (factory != null) return@getOrPut runtime.factory()
