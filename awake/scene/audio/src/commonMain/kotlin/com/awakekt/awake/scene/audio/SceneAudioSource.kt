@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.audio
 
 import com.awakekt.awake.core.audio.AudioClip
 import com.awakekt.awake.core.audio.WavDecoder
+import com.awakekt.awake.core.io.AssetLoads
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
@@ -22,8 +23,10 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 
 /**
@@ -121,16 +124,46 @@ suspend fun loadAudioClips(document: SceneDocument, assets: AssetSource): Map<St
         for ((node, source) in sources.distinctBy { (_, source) -> source.clip }) {
             val path = source.clip
             try {
-                val clip = WavDecoder.decode(path, path, assets.read(AssetPath(path)).getOrThrow())
-                if (clip == null) log.error { "Node '$node': audio clip '$path' isn't a 16-bit PCM WAV file, so it doesn't play." } else put(path, clip)
+                put(path, loadAudioClip(path, assets))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                log.error { "Node '$node': audio clip '$path' could not be read: ${failure.message}; it doesn't play." }
+                log.error { "Node '$node': ${failure.message}; it doesn't play." }
             }
         }
     }
 }
+
+/**
+ * Reads and decodes the one clip at the project path [path], as [loadAudioClips] does for each it finds.
+ * Throws when it can't be read or isn't a 16-bit PCM WAV file, saying which.
+ */
+// TooGenericExceptionCaught: a source reports a file it can't read in its own exception type.
+@Suppress("TooGenericExceptionCaught")
+suspend fun loadAudioClip(path: String, assets: AssetSource): AudioClip {
+    val bytes = try {
+        assets.read(AssetPath(path)).getOrThrow()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        throw IllegalStateException("audio clip '$path' could not be read: ${failure.message}", failure)
+    }
+    return requireNotNull(WavDecoder.decode(path, path, bytes)) { "audio clip '$path' isn't a 16-bit PCM WAV file" }
+}
+
+/**
+ * The clips a scene's sources play, decoded by [loadAudioClip] from [assets] as they are first asked
+ * for, and shared: give the same one to the scene's [AudioSystem] and to whatever prepares clips ahead of
+ * a spawn, so a clip is decoded once. [preloaded] clips, such as [loadAudioClips] read when the scene
+ * loaded, are kept for as long as it lives. Close it when the scene stops.
+ *
+ * @param context Where a clip decodes when the one asking names no scope; [Dispatchers.Default] by default.
+ */
+fun audioClipLoads(
+    assets: AssetSource,
+    preloaded: Map<String, AudioClip> = emptyMap(),
+    context: CoroutineContext = Dispatchers.Default,
+): AssetLoads<AudioClip> = AssetLoads(context) { path -> loadAudioClip(path, assets) }.apply { preloaded.forEach(::put) }
 
 private fun SceneNode.audioSources(parent: String): List<Pair<String, SceneAudioSource>> {
     val path = if (parent.isEmpty()) name ?: "(unnamed)" else "$parent/${name ?: "(unnamed)"}"

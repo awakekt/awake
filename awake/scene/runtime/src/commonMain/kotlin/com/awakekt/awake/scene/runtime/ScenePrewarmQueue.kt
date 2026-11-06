@@ -5,7 +5,10 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.audio.AudioClip
+import com.awakekt.awake.core.io.AssetLoads
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.render.texture.GpuImageSource
 
 /**
  * The open [ScenePrewarm]s of one [SceneAssetLibrary], worked on oldest first, a frame at a time, on the
@@ -16,6 +19,10 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
 
     /** Bytes of new mesh one [step] may upload; one mesh is uploaded whatever its size. */
     var frameBudgetBytes: Long = Long.MAX_VALUE
+
+    /** The scene's clips and particle images; see [SceneAssetLibrary.audioClips]. */
+    var audioClips: AssetLoads<AudioClip>? = null
+    var particleImages: AssetLoads<GpuImageSource>? = null
 
     fun add(prewarm: ScenePrewarm) {
         open += prewarm
@@ -34,6 +41,8 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
             if (prewarm.isGivenUp) prewarm.close()
             if (!prewarm.isPending) continue
             pollTextures(prewarm)
+            prewarm.audioClips.poll(prewarm, prewarm.scope)
+            prewarm.particleImages.poll(prewarm, prewarm.scope)
             while (prewarm.isPending && prewarm.pendingRenderables.isNotEmpty() && spent < frameBudgetBytes) {
                 spent += build(prewarm, prewarm.pendingRenderables.removeFirst())
             }
