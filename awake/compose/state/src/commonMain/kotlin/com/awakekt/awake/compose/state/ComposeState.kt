@@ -12,7 +12,6 @@ import com.awakekt.awake.compose.runtime.CompositionLocal
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
-import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.core.state.Reducer
 import com.awakekt.awake.core.state.ReducerStore
 import com.awakekt.awake.core.state.Store
@@ -47,7 +46,9 @@ context(composer: Composer)
 /**
  * Creates and remembers a lightweight [Store] initialized with [initialState].
  *
- * The store is retained across composition frames as long as [key] does not change.
+ * The store is retained across composition frames as long as [key] does not change, and closed when
+ * the composition forgets it: [key] changed, the call stopped being made, or its node left the tree.
+ * To run it under the app's coroutine scope, use the overload that takes a parent.
  *
  * @param S The state type stored in the container.
  * @param key Optional key that triggers recreation of the store when modified.
@@ -57,11 +58,12 @@ context(composer: Composer)
 fun <S> rememberStore(
     key: Any? = null,
     initialState: () -> S,
-): Store<S> = remember(key) { store(initialState()) }
+): Store<S> = rememberClosing(key, null) { store(initialState()) }
 
 context(composer: Composer)
 /**
- * Creates and remembers a [ReducerStore] with the given [initialState] and [reducer].
+ * Creates and remembers a [ReducerStore] with the given [initialState] and [reducer], closed when
+ * the composition forgets it, as [rememberStore].
  *
  * @param S The state type.
  * @param I The intent/action type.
@@ -75,11 +77,12 @@ fun <S, I, E> rememberReducerStore(
     key: Any? = null,
     initialState: () -> S,
     reducer: Reducer<S, I, E>,
-): ReducerStore<S, I, E> = remember(key) { reducerStore(initialState(), reducer = reducer) }
+): ReducerStore<S, I, E> = rememberClosing(key, null) { reducerStore(initialState(), reducer = reducer) }
 
 context(composer: Composer)
 /**
- * Creates and remembers a [ReducerStore] using a lambda reducer.
+ * Creates and remembers a [ReducerStore] using a lambda reducer, closed when the composition forgets
+ * it, as [rememberStore].
  *
  * @param S The state type.
  * @param I The intent/action type.
@@ -93,7 +96,7 @@ fun <S, I, E> rememberReducerStore(
     key: Any? = null,
     initialState: () -> S,
     reducer: (state: S, intent: I) -> Pair<S, E?>,
-): ReducerStore<S, I, E> = remember(key) {
+): ReducerStore<S, I, E> = rememberClosing(key, null) {
     reducerStore(initialState(), reducer = Reducer(reducer))
 }
 

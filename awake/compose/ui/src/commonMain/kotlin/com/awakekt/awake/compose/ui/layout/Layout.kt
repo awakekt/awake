@@ -175,4 +175,9 @@ class LayoutComposition(root: LayoutNode) {
      * returns the [Composer] it ran with.
      */
     fun compose(content: context(Composer) () -> Unit): Composer = composition.reconcile(content)
+
+    /** Drops the composed tree, telling what it remembers that it was forgotten. See [Composition.dispose]. */
+    fun dispose() {
+        composition.dispose()
+    }
 }

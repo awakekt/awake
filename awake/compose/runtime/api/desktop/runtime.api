@@ -32,6 +32,7 @@ public final class com/awakekt/awake/compose/runtime/ComposerKt {
 public final class com/awakekt/awake/compose/runtime/Composition {
 	public fun <init> (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun dispose ()V
 	public final fun reconcile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
 }
 
@@ -75,6 +76,10 @@ public abstract interface class com/awakekt/awake/compose/runtime/RememberHolder
 
 public final class com/awakekt/awake/compose/runtime/RememberKt {
 	public static final fun rememberGroup (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/compose/runtime/RememberObserver {
+	public abstract fun onForgotten ()V
 }
 
 public final class com/awakekt/awake/compose/runtime/Slot : java/lang/Enum {

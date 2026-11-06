@@ -187,7 +187,8 @@ open class DefaultReducerStore<S, in I, out E>(
  * @param I The intent type.
  * @param E The effect type.
  * @param initialState The initial state value.
- * @param scope Coroutine scope governing background flow emissions.
+ * @param scope Coroutine scope governing background flow emissions, owned and cancelled by the
+ *   store; pass [childStoreScope] of the app's scope to run the store under it.
  * @param reducer The pure state transition reducer.
  * @return An initialized [ReducerStore] instance.
  */
@@ -204,7 +205,8 @@ fun <S, I, E> reducerStore(
  * @param I The intent type.
  * @param E The effect type.
  * @param initialState The initial state value.
- * @param scope Coroutine scope governing background flow emissions.
+ * @param scope Coroutine scope governing background flow emissions, owned and cancelled by the
+ *   store; pass [childStoreScope] of the app's scope to run the store under it.
  * @param reducer Lambda taking state and intent, returning the updated state and optional effect.
  * @return An initialized [ReducerStore] instance.
  */

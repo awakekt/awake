@@ -63,7 +63,8 @@ interface Store<S> : StoreScope {
  *
  * @param S The type of state managed by this store.
  * @param initialState The initial value of the state.
- * @property coroutineScope The active coroutine scope bound to this store.
+ * @property coroutineScope The active coroutine scope bound to this store and cancelled by [close];
+ *   pass [childStoreScope] of the app's scope to run the store under it.
  */
 open class MutableStore<S>(
     initialState: S,
@@ -98,7 +99,8 @@ open class MutableStore<S>(
  *
  * @param S The state type.
  * @param initialState The initial value for the store.
- * @param scope Coroutine scope governing state sharing and background jobs.
+ * @param scope Coroutine scope governing state sharing and background jobs, owned and cancelled by
+ *   the store; pass [childStoreScope] of the app's scope to run the store under it.
  * @return A newly instantiated [Store] managing [initialState].
  */
 fun <S> store(
