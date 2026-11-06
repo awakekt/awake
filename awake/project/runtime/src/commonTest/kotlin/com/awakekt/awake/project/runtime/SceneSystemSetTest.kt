@@ -175,12 +175,15 @@ class SceneSystemSetTest {
 
     @Test
     fun aPhysicsSceneWithAWorldGetsPhysicsAndCharactersOnTheFixedStep() = runTest {
-        val systems = systemsFor(PHYSICS_SCENE, createJoltPhysicsWorld())
+        val physics = createJoltPhysicsWorld()
+        val systems = systemsFor(PHYSICS_SCENE, physics)
 
         assertTrue(systems.fixed.has(PhysicsSystem::class))
         assertTrue(systems.fixed.has(CharacterControllerSystem::class))
         assertTrue(!systems.frame.has(MatrixRelativeMovementSystem::class), "the character controller moves it")
         assertTrue(systems.frame.has(PlayerInputSystem::class))
+        systems.close()
+        physics.destroy()
     }
 
     @Test
@@ -302,6 +305,7 @@ class SceneSystemSetTest {
         assertEquals(1f, standingAt, GROUND_TOLERANCE, "the character must stand on the authored floor")
         assertTrue(position.z < z - 1f, "W must walk the character; z $z -> ${position.z}")
         systems.close()
+        physics.destroy()
     }
 
     @Test

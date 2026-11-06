@@ -49,6 +49,8 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(project(":awake:engine:render:testing"))
+            implementation(libs.kotlinx.coroutines.test)
         }
 
         val appMain = create("appMain") {

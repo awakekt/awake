@@ -67,4 +67,41 @@ class BundleKeyFilesTest {
         assertFailsWith<IllegalArgumentException> { bundleKey("k", null, null) }
         assertEquals("k", bundleKey("k", file, null).keyId)
     }
+
+    @Test
+    fun binaryCompatibilityConstructorsAndCopyBridgesRemainCallable() {
+        val bundleCtor = ProjectIndexBundle::class.java.getConstructor(
+            String::class.java,
+            Long::class.javaPrimitiveType,
+            String::class.java,
+        )
+        val bundle = bundleCtor.newInstance("a".repeat(64), 128L, "bundles/a.awkb")
+        assertEquals(null, bundle.keyId)
+
+        val copyMethod = ProjectIndexBundle::class.java.getMethod(
+            "copy",
+            String::class.java,
+            Long::class.javaPrimitiveType,
+            String::class.java,
+        )
+        val keyed = bundle.copy(keyId = "north-island-2026")
+        val copied = copyMethod.invoke(keyed, "b".repeat(64), 256L, "bundles/b.awkb") as ProjectIndexBundle
+        assertEquals("north-island-2026", copied.keyId)
+        assertEquals(256L, copied.sizeBytes)
+
+        val writer4 = ContentBundleWriter::class.java.getConstructor(
+            ContentBundleGrouping::class.java,
+            Long::class.javaPrimitiveType,
+            ProjectPathIds::class.java,
+            String::class.java,
+        ).newInstance(ContentBundleGrouping.byFolder(), 1024L, null, "bundles")
+        val writer5 = ContentBundleWriter::class.java.getConstructor(
+            ContentBundleGrouping::class.java,
+            Long::class.javaPrimitiveType,
+            ProjectPathIds::class.java,
+            String::class.java,
+            BundleEncryptionKey::class.java,
+        ).newInstance(ContentBundleGrouping.byFolder(), 1024L, null, "bundles", BundleEncryptionKey("k", key))
+        assertTrue(writer4 != writer5)
+    }
 }

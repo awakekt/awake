@@ -221,6 +221,7 @@ class AwakeCli(
             |  --opaque-ids --salt <text>  Index and bundles carry salted ids instead of paths.
             |  --prune          Delete .awkb files under the bundle output that the new index doesn't list.
             |  --key-id <id> --key-file <path>|--key-env <variable>  Seal bundle members with the key in a file or variable.
+            |  --group-key-file <group>=<id>:<path> | --group-key-env <group>=<id>:<variable>  Override a bundle group's key.
             |
             |Exits 0 on success, 1 when it finds errors or refuses an edit, and 2 for a wrong command line.
             |

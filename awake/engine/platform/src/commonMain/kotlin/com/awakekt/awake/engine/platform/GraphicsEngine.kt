@@ -13,6 +13,7 @@ import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
@@ -60,6 +61,17 @@ abstract class GraphicsEngine(
         private set
 
     private var surfaceReleased = false
+
+    /**
+     * A host's explicit [Renderer.renderScale], read before every frame, or `null` to leave the scale
+     * to the app's [RenderQualitySettings]. It wins over that setting's scale; the setting still
+     * picks the effect quality. A browser launcher given a `renderScale` provider sets this.
+     */
+    @Volatile
+    var renderScaleOverride: (() -> Float)? = null
+
+    // Looked up once the app is ready: services are fixed when the app is built.
+    private var renderQuality: RenderQualitySettings? = null
 
     /** Populated by [createBackendResources] -- `protected` (not `private`) so each
      * backend's [destroyBackend] override can still reach it for teardown. */
@@ -118,6 +130,7 @@ abstract class GraphicsEngine(
 
     final override fun update(delta: Float) {
         if (!isReady) return
+        applyRenderQuality()
         val (width, height) = viewportSize()
         appLifecycle.update(
             AppFrame(
@@ -205,11 +218,19 @@ abstract class GraphicsEngine(
         renderer.drawDebugLines(lines)
     }
 
+    /** Sets this frame's render scale and effect quality from the host override and the app's setting. */
+    private fun applyRenderQuality() {
+        val override = renderScaleOverride
+        if (override != null) renderer.renderScale = override()
+        renderQuality?.applyTo(renderer, applyScale = override == null)
+    }
+
     private suspend fun setupCommon(window: Any) {
         val backend = createBackendResources(window)
         renderer = backend.renderer
         viewportSize = backend.viewportSize
         density = backend.density
+        renderQuality = appLifecycle.service(RenderQualitySettings::class)
 
         appLifecycle.ready(renderer)
 

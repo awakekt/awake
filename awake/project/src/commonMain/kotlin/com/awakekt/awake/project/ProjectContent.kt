@@ -102,17 +102,18 @@ data class ProjectContentSpec(
  * [formatVersion] 2 lists loose files only, each at its own `url`. [formatVersion] 3, which
  * [ContentBundleWriter] writes, adds [bundles]: an entry may then name a bundle and its offset in it
  * instead of a `url`, and with [pathIds] set, entries carry opaque ids instead of readable paths.
- * [formatVersion] 4 is a bundled index whose members are sealed, as [encryption] names; every entry
+ * [formatVersion] 4 is a bundled index whose members are sealed, as [encryption] names (with
+ * optional per-bundle [ProjectIndexBundle.keyId] overrides); every entry
  * is then a bundle member, and its sealed bytes run [ProjectIndexEntry.sizeBytes] plus
  * [ProjectBundleEncryption.TAG_BYTES] from its offset. An engine that predates a version refuses it
  * rather than misreading it.
  *
- * @property formatVersion Transport index format version: [LOOSE_FORMAT_VERSION] or [BUNDLED_FORMAT_VERSION].
+ * @property formatVersion Transport index format version: [LOOSE_FORMAT_VERSION], [BUNDLED_FORMAT_VERSION] or [ENCRYPTED_FORMAT_VERSION].
  * @property rootPath Base URI mount path for indexed files.
  * @property files List of indexed file entries.
  * @property bundles The content bundles that [files] entries point into; empty in a loose index.
  * @property pathIds How each entry's opaque id is derived from its path, or null when entries carry paths.
- * @property encryption How bundle members are sealed and which key opens them; null when they aren't.
+ * @property encryption How bundle members are sealed and which default key opens them; null when they aren't.
  */
 @Serializable
 data class ProjectIndex(
@@ -123,6 +124,8 @@ data class ProjectIndex(
     val pathIds: ProjectPathIds? = null,
     val encryption: ProjectBundleEncryption? = null,
 ) {
+    private val bundlesBySha: Map<String, ProjectIndexBundle> by lazy { bundles.associateBy { it.sha256 } }
+
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
         formatVersion: Int = LOOSE_FORMAT_VERSION,
@@ -143,11 +146,24 @@ data class ProjectIndex(
     ): ProjectIndex = ProjectIndex(formatVersion, rootPath, files, bundles, pathIds, encryption)
 
     /**
+     * The key id [bundle] is sealed under: its own [ProjectIndexBundle.keyId] when it names one,
+     * otherwise [encryption]'s default, or null when this index is not encrypted.
+     */
+    fun keyIdOf(bundle: ProjectIndexBundle): String? = encryption?.let { bundle.keyId ?: it.keyId }
+
+    /**
+     * The key id [entry]'s bundle is sealed under: its bundle's [ProjectIndexBundle.keyId] when it
+     * names one, otherwise [encryption]'s default, or null when this index is not encrypted.
+     */
+    fun keyIdOf(entry: ProjectIndexEntry): String? =
+        encryption?.let { entry.bundle?.let(bundlesBySha::get)?.keyId ?: it.keyId }
+
+    /**
      * What [ContentCache] keeps [entry]'s bytes under: its SHA-256, or, in an encrypted index, a
-     * SHA-256 of the key id and that, since the cache then holds the sealed bytes, which differ per key.
+     * SHA-256 of [keyIdOf] and that, since the cache then holds the sealed bytes, which differ per key.
      */
     fun cacheKeyOf(entry: ProjectIndexEntry): String =
-        encryption?.let { Sha256.digestHex("awake-awkb-v2-cache\n${it.keyId}\n${entry.sha256}") } ?: entry.sha256
+        keyIdOf(entry)?.let { Sha256.digestHex("awake-awkb-v2-cache\n$it\n${entry.sha256}") } ?: entry.sha256
 
     /** How many bytes [entry] takes where it is stored: sealed, in an encrypted index. */
     fun storedSizeOf(entry: ProjectIndexEntry): Long =
@@ -202,13 +218,31 @@ data class ProjectIndexEntry(
  * @property sha256 Lowercase hex-encoded SHA-256 digest of the whole bundle, which entries name it by.
  * @property sizeBytes Size of the whole bundle in bytes.
  * @property url Resolvable URL from which the bundle can be fetched.
+ * @property keyId Which master key opens this bundle's members in an encrypted index, overriding
+ * [ProjectBundleEncryption.keyId]; null when the index is not encrypted or uses its default key.
  */
 @Serializable
 data class ProjectIndexBundle(
     val sha256: String,
     val sizeBytes: Long,
     val url: String,
-)
+    val keyId: String? = null,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        sha256: String,
+        sizeBytes: Long,
+        url: String,
+    ) : this(sha256, sizeBytes, url, null)
+
+    /** The copy that predates [keyId], kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        sha256: String = this.sha256,
+        sizeBytes: Long = this.sizeBytes,
+        url: String = this.url,
+    ): ProjectIndexBundle = ProjectIndexBundle(sha256, sizeBytes, url, keyId)
+}
 
 /**
  * How a [ProjectIndex] with opaque ids derives each entry's id from its path, so the published index

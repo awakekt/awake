@@ -21,6 +21,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:compose:runtime"))
             api(project(":awake:core:state"))
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

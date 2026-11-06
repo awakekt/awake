@@ -101,3 +101,19 @@ Every store implements `StoreScope` (`AutoCloseable`):
 - **Desktop (JVM / GLFW / Vulkan)**: Bound to the session or window. Call `store.close()` when a workspace or dialog is closed to cancel background jobs.
 - **Mobile (Android / iOS)**: Bound to the Activity/Screen lifecycle or Android `ViewModel.viewModelScope`. Calling `store.close()` releases all observers.
 - **Web (WasmJs)**: Operates within the browser's cooperative single-threaded event loop on `Dispatchers.Default`.
+
+### Running stores under the app's scope
+
+By default every store owns a standalone scope. To make a store a child of the app's coroutine
+scope (in Awake, the registered `AppCoroutineScope`), give it a child scope:
+
+```kotlin
+val hud = store(HudState(), scope = appScope.childStoreScope())
+val editor = reducerStore(EditorState(), scope = appScope.childStoreScope(), reducer = editorReducer)
+```
+
+- An uncaught failure in a store coroutine reaches the parent's `CoroutineExceptionHandler`, which is the app's `AppErrorHandler` for an `AppCoroutineScope`.
+- Cancelling or closing the parent cancels every store created from it.
+- `store.close()` cancels only that store; its siblings and the parent keep running.
+
+Never pass the parent scope itself as a store's `scope`: the store's `close()` would cancel it.

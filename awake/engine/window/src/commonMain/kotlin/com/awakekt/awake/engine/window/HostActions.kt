@@ -7,13 +7,14 @@ package com.awakekt.awake.engine.window
 
 /**
  * Things a game asks its host to do, apart from drawing: open a link, and on the web reload the
- * page. A platform's factory (`browserHostActions()`, `desktopHostActions()`,
+ * page or go fullscreen. A platform's factory (`browserHostActions()`, `desktopHostActions()`,
  * `androidHostActions(context)`, `iosHostActions()`) builds one; register it with
  * `service(HostActions::class, …)` so game code looks it up like any other service.
  *
  * Only [openUrl] exists everywhere. What the other actions mean differs by platform, so each is an
  * optional capability that is `null` where it has no meaning, and a game checks for it rather than
- * calling something that silently does nothing. Today that is [pageReload], present on the web only.
+ * calling something that silently does nothing. Today those are [pageReload] and [fullscreen],
+ * present on the web only.
  */
 interface HostActions {
     /**
@@ -37,6 +38,15 @@ interface HostActions {
      * Android and iOS this is null and a game must not assume it can restart itself.
      */
     val pageReload: PageReload?
+
+    /**
+     * Fullscreen for the game's view, or null where the host can't offer it: a desktop, Android or
+     * iOS host today, and a page whose browser or embedding (an `<iframe>` without
+     * `allow="fullscreen"`, Safari on iPhone) does not allow it. A game hides or disables its
+     * fullscreen control when this is null. See [Fullscreen].
+     */
+    val fullscreen: Fullscreen?
+        get() = null
 }
 
 /** Reloads the web page the game runs in. See [HostActions.pageReload]. */
@@ -70,6 +80,7 @@ internal fun isOpenableUrl(url: String): Boolean {
 internal class CheckedHostActions(
     private val open: (String) -> Boolean,
     override val pageReload: PageReload? = null,
+    override val fullscreen: Fullscreen? = null,
 ) : HostActions {
     override fun openUrl(url: String): Boolean = isOpenableUrl(url) && open(url)
 }

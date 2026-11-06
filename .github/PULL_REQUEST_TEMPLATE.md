@@ -43,6 +43,7 @@ Rendered by the Render Evidence workflow.
 - [ ] This branch was created from the latest `origin/main`.
 - [ ] The PR contains only changes required for this issue.
 - [ ] No unrelated generated files, framework artifacts, secrets, or credentials are included.
+- [ ] The title, body, branch and commits name no consumer game, its repository, or its content (a consumer is "a private consumer pack"), and nothing links to a consumer's repository, issue or PR.
 - [ ] Public API or documentation changes are covered.
 - [ ] The changelog was updated for user-visible sample or product changes.
 

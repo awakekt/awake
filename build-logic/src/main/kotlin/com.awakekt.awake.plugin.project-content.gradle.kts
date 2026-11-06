@@ -135,6 +135,9 @@ fun GenerateContentBundlesTask.bundleLike(projectContent: ProjectContentExtensio
     pathSalt.set(projectContent.bundlePathSalt)
     bundleUrlPrefix.set(projectContent.bundleUrlPrefix)
     pruneStaleBundles.set(projectContent.pruneStaleBundles)
+    groupKeyIds.set(emptyMap())
+    groupKeyFiles.set(emptyMap())
+    groupKeyEnvironmentVariables.set(emptyMap())
     workerClasspath.from(awakeProjectContentWorker)
     mustRunAfter(generateAssetsLock)
 }
@@ -161,10 +164,15 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     keyId.set(projectContent.bundleKeyId)
     keyFile.set(projectContent.bundleKeyFile)
     keyEnvironmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
+    groupKeyIds.set(projectContent.bundleGroupKeyIds)
+    groupKeyFiles.set(projectContent.bundleGroupKeyFiles)
+    groupKeyEnvironmentVariables.set(projectContent.bundleGroupKeyEnvironmentVariables)
     keyFingerprint.set(
         providers.of(BundleKeyFingerprintSource::class.java) {
             parameters.keyFile.set(projectContent.bundleKeyFile)
             parameters.environmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
+            parameters.groupKeyFiles.set(projectContent.bundleGroupKeyFiles)
+            parameters.groupEnvironmentVariables.set(projectContent.bundleGroupKeyEnvironmentVariables)
         },
     )
     dependsOn(generatePublicContentBundles)

@@ -124,6 +124,23 @@ scope.launchStep(AppErrorSource.ProjectLoad, errors, subject = "world", onDone =
 }
 ```
 
+### Stores under the app's scope
+
+The app's Compose host gives its UI the registered `AppCoroutineScope` as `LocalAppCoroutineScope`, in
+a `composeAppModule` and in a scene's `content { }` alike. Remember a store under it, and the store's
+uncaught failures reach the handler as `Coroutine` errors while disposing the app cancels its work:
+
+```kotlin title="Kotlin"
+context(_: Composer)
+fun Hud() {
+    val store = rememberStore(LocalAppCoroutineScope.current) { HudState() }
+}
+```
+
+The store keeps its own lifetime: it is closed, cancelling only its own coroutines, when its node
+leaves the tree. Reading `LocalAppCoroutineScope` in an app that registered no scope fails with a
+message saying how to register one.
+
 ## Coroutine scopes
 
 Every long-lived coroutine scope in Awake has an owner that cancels it:

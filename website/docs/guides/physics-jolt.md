@@ -47,7 +47,10 @@ asynchronously; on the other targets it returns at once. Call it from a coroutin
 
 Each target has its own `JoltPhysicsWorld` class behind the shared `PhysicsWorld` interface, so game
 code never names a binding. The world owns native memory that the garbage collector does not reclaim:
-call `destroy()` when you are done, after which every handle from it is dead.
+call `destroy()` when you are done, after which every handle from it is dead. On the Web that memory
+is a heap of fixed size (128 MiB) and each world reserves room for 65,536 bodies when it is made, so a
+page that keeps a few finished worlds alive runs out and every later Jolt call fails: destroy each
+world, and `close()` each played project, as soon as you are done with it.
 
 !!! tip "Step with a fixed delta"
     Physics integrates, so a variable `deltaTime` makes the same scene behave differently on

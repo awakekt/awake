@@ -76,4 +76,50 @@ class HostActionsTest {
         assertNotNull(with.pageReload).reload()
         assertEquals(1, reloads)
     }
+
+    @Test
+    fun fullscreenIsACapabilityThatIsAbsentUnlessGiven() {
+        assertNull(CheckedHostActions(open = { true }).fullscreen)
+        val screen = FakeFullscreen()
+        assertEquals(screen, CheckedHostActions(open = { true }, fullscreen = screen).fullscreen)
+    }
+
+    @Test
+    fun aHostThatDoesNotOverrideFullscreenHasNone() {
+        val host = object : HostActions {
+            override fun openUrl(url: String) = false
+            override val pageReload: PageReload? = null
+        }
+        assertNull(host.fullscreen)
+    }
+
+    @Test
+    fun toggleEntersWhenWindowedAndExitsWhenFullscreen() {
+        val screen = FakeFullscreen()
+        assertTrue(screen.toggle())
+        assertTrue(screen.isActive)
+        assertTrue(screen.toggle())
+        assertFalse(screen.isActive)
+    }
+
+    @Test
+    fun toggleReportsARefusedEnter() {
+        val screen = FakeFullscreen(allowed = false)
+        assertFalse(screen.toggle())
+        assertFalse(screen.isActive)
+    }
+
+    private class FakeFullscreen(private val allowed: Boolean = true) : Fullscreen {
+        override var isActive = false
+            private set
+
+        override fun enter(): Boolean {
+            if (allowed) isActive = true
+            return allowed
+        }
+
+        override fun exit() {
+            isActive = false
+        }
+    }
 }

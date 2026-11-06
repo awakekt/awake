@@ -35,6 +35,17 @@ public final class com/awakekt/awake/engine/window/DesktopWindowKt {
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
+public abstract interface class com/awakekt/awake/engine/window/Fullscreen {
+	public abstract fun enter ()Z
+	public abstract fun exit ()V
+	public abstract fun isActive ()Z
+	public fun toggle ()Z
+}
+
+public final class com/awakekt/awake/engine/window/Fullscreen$DefaultImpls {
+	public static fun toggle (Lcom/awakekt/awake/engine/window/Fullscreen;)Z
+}
+
 public final class com/awakekt/awake/engine/window/GlfwGamepadKt {
 	public static final fun pollGlfwGamepad (Lcom/awakekt/awake/core/input/Input;Z)V
 	public static synthetic fun pollGlfwGamepad$default (Lcom/awakekt/awake/core/input/Input;ZILjava/lang/Object;)V
@@ -115,8 +126,13 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
 }
 
 public abstract interface class com/awakekt/awake/engine/window/HostActions {
+	public fun getFullscreen ()Lcom/awakekt/awake/engine/window/Fullscreen;
 	public abstract fun getPageReload ()Lcom/awakekt/awake/engine/window/PageReload;
 	public abstract fun openUrl (Ljava/lang/String;)Z
+}
+
+public final class com/awakekt/awake/engine/window/HostActions$DefaultImpls {
+	public static fun getFullscreen (Lcom/awakekt/awake/engine/window/HostActions;)Lcom/awakekt/awake/engine/window/Fullscreen;
 }
 
 public final class com/awakekt/awake/engine/window/LaunchEnvironment {

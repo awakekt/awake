@@ -131,7 +131,10 @@ internal fun claimSlot(slots: MutableList<Any?>, index: Int): RememberedSlot? {
     return null
 }
 
-/** Drops slots this pass stopped declaring, the way [Applier.truncateFrom] drops children. */
+/**
+ * Drops slots this pass stopped declaring, the way [Applier.truncateFrom] drops children, telling
+ * each value it was forgotten, last first.
+ */
 internal fun MutableList<Any?>.trimTo(count: Int) {
-    while (size > count) removeAt(lastIndex)
+    while (size > count) forgetSlot(removeAt(lastIndex))
 }
