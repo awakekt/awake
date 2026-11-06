@@ -8,16 +8,19 @@
 package com.awakekt.awake.vulkan.application
 
 import com.awakekt.awake.engine.window.AwakeMetalView
+import com.awakekt.awake.engine.window.AwakeViewController
 import platform.UIKit.UIScreen
 import platform.UIKit.UIViewController
 
 /**
- * Wraps a [VulkanEngine] in a plain UIKit view controller, passing the view's safe area on to it.
+ * Wraps a [VulkanEngine] in a UIKit view controller, passing the view's safe area on to it. The
+ * controller is an [AwakeViewController], so `iosHostActions(controller)` gives the game
+ * `HostActions.fullscreen`, which hides the status bar and home indicator.
  */
 fun makeVulkanGameViewController(
     application: VulkanEngine,
 ): UIViewController {
-    val controller = UIViewController()
+    val controller = AwakeViewController()
     controller.view = AwakeMetalView(
         frame = UIScreen.mainScreen.bounds,
         input = application.input,

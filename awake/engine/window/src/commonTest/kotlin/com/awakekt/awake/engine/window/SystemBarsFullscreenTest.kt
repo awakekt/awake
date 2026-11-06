@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/** Android's immersive [Fullscreen] over fake system bars, so it runs without a device. */
+/** The mobile [Fullscreen] (Android's immersive mode, iOS's hidden status bar) over fake system bars. */
 internal class SystemBarsFullscreenTest {
     @Test
     fun enterHidesTheBarsAndExitShowsThem() {

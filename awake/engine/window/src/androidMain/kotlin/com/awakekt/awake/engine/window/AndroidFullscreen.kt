@@ -22,33 +22,6 @@ import android.view.WindowInsetsController
  */
 fun androidFullscreen(activity: Activity): Fullscreen = SystemBarsFullscreen(ActivitySystemBars(activity))
 
-/** The system-bar calls [SystemBarsFullscreen] makes, behind a seam so a host test needs no device. */
-internal interface SystemBars {
-    /** Whether the status and navigation bars are hidden now. */
-    val hidden: Boolean
-
-    /** Hides the bars, on the UI thread. */
-    fun hide()
-
-    /** Shows the bars again, on the UI thread. */
-    fun show()
-}
-
-/** [Fullscreen] as the system bars hidden. [enter] reports the request handed over, as on the web. */
-internal class SystemBarsFullscreen(private val bars: SystemBars) : Fullscreen {
-    override val isActive: Boolean
-        get() = bars.hidden
-
-    override fun enter(): Boolean {
-        if (!isActive) bars.hide()
-        return true
-    }
-
-    override fun exit() {
-        if (isActive) bars.show()
-    }
-}
-
 /** [SystemBars] over the [activity]'s window, through the platform `WindowInsetsController` (API 30+). */
 private class ActivitySystemBars(private val activity: Activity) : SystemBars {
     override val hidden: Boolean
