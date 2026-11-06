@@ -28,7 +28,7 @@ internal class BundleMembers(
     private val fetch: suspend (url: String) -> ByteArray,
     private val cache: ContentCache?,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)?,
-    private val seal: MemberSeal?,
+    private val seals: MemberSeals?,
 ) {
     private val bundles = index.bundles.associateBy { it.sha256 }
     private val membersOf = index.files.filter { it.bundle != null }.groupBy { it.bundle!! }
@@ -45,7 +45,7 @@ internal class BundleMembers(
         return takeStaged(entry)
             ?: range?.let {
                 val stored = it(bundle.url, entry.offset!!, index.storedSizeOf(entry))
-                opened(entry, label, stored).also { cache?.put(index.cacheKeyOf(entry), stored) }
+                opened(bundle, entry, label, stored).also { cache?.put(index.cacheKeyOf(entry), stored) }
             }
             ?: load(bundle.sha256).getValue(entry.sha256).also {
                 // This read takes its member; the staged copy is for reads still to come.
@@ -86,21 +86,22 @@ internal class BundleMembers(
     }
 
     /** [stored], [entry]'s bytes as fetched, checked and, in an encrypted index, opened; otherwise fails naming [label]. */
-    private suspend fun opened(entry: ProjectIndexEntry, label: String, stored: ByteArray): ByteArray =
-        seal?.open(entry, stored, label) ?: checked(entry, label, stored)
+    private suspend fun opened(bundle: ProjectIndexBundle, entry: ProjectIndexEntry, label: String, stored: ByteArray): ByteArray =
+        seals?.of(bundle)?.open(entry, stored, label) ?: checked(entry, label, stored)
 
     /** The bundle's members by SHA-256, each as stored and as read. */
     private suspend fun fetchChecked(bundle: ProjectIndexBundle): Map<String, Member> {
         val bytes = fetch(bundle.url)
         val members = membersOf.getValue(bundle.sha256)
         val whole = bytes.size.toLong() == bundle.sizeBytes && Sha256.digestHex(bytes) == bundle.sha256
+        val seal = seals?.of(bundle)
         val trusted = when {
-            seal != null -> openSealed(bytes, members, whole)
+            seal != null -> openSealed(seal, bytes, members, whole)
             whole -> sliceTrustedMembers(bytes, members)?.mapValues { (_, slice) -> Member(slice, slice) }
             else -> null
         }
         if (trusted != null) return trusted
-        val damaged = if (seal != null) unopened(bytes, members) else damagedMembers(bytes, members)
+        val damaged = if (seal != null) unopened(seal, bytes, members) else damagedMembers(bytes, members)
         val what = if (damaged.isEmpty()) "its header or table of contents" else "damaged members: ${damaged.joinToString(", ")}"
         error(
             "${bundle.url} doesn't match the project index (expected ${bundle.sizeBytes} bytes with SHA-256 ${bundle.sha256}): $what",
@@ -113,9 +114,9 @@ internal class BundleMembers(
      * no hashing. A member of a matching bundle that doesn't open can only be under the wrong key: that
      * fails as an authentication failure, and the key is dropped so the next read asks for it again.
      */
-    private suspend fun openSealed(bytes: ByteArray, members: List<ProjectIndexEntry>, whole: Boolean): Map<String, Member>? {
+    private suspend fun openSealed(seal: MemberSeal, bytes: ByteArray, members: List<ProjectIndexEntry>, whole: Boolean): Map<String, Member>? {
         // The key first, so a refused key fails as itself rather than as damaged members.
-        val seal = seal!!.also { it.cipher() }
+        seal.cipher()
         val toc = readTocByKey(bytes)
         val matches = whole && toc != null && members.all { matchesTocAndBounds(it, toc[it.key], bytes.size, index.storedSizeOf(it)) }
         if (!matches) return null
@@ -133,9 +134,9 @@ internal class BundleMembers(
     }
 
     /** The keys of [members] whose sealed bytes don't open, for the message of a bundle that fails. */
-    private suspend fun unopened(bytes: ByteArray, members: List<ProjectIndexEntry>): List<String> = members.mapNotNull { member ->
+    private suspend fun unopened(seal: MemberSeal, bytes: ByteArray, members: List<ProjectIndexEntry>): List<String> = members.mapNotNull { member ->
         val stored = sliceOf(bytes, member, index.storedSizeOf(member))
-        if (stored != null && openOrNull(seal!!, member, stored) != null) null else member.key
+        if (stored != null && openOrNull(seal, member, stored) != null) null else member.key
     }
 
     private suspend fun openOrNull(seal: MemberSeal, member: ProjectIndexEntry, stored: ByteArray): ByteArray? = try {
@@ -153,7 +154,7 @@ internal class BundleMembers(
             // names its bytes. A sealed member is checked by its tag on every read instead.
             membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }.forEach { member ->
                 val bytes = stored.getValue(member.sha256).stored
-                cache.put(index.cacheKeyOf(member), if (seal != null) bytes else checked(member, "${member.key} in ${bundle.url}", bytes))
+                cache.put(index.cacheKeyOf(member), if (seals != null) bytes else checked(member, "${member.key} in ${bundle.url}", bytes))
             }
             return
         }
@@ -184,25 +185,45 @@ internal class BundleMembers(
 }
 
 /**
- * Opens an encrypted index's members, with the master key its [BundleKeyProvider] answers, asked
- * once and kept until the source is dropped, or until a bundle that matches the index byte for byte
- * fails to open under it, which only the wrong key does; a failed ask is not kept either, so the next
- * read asks again.
+ * One [MemberSeal] per distinct key id in [index], so reading a bundle asks [keys] only for its own
+ * key id and leaves untouched bundles' keys unrequested.
  */
-internal class MemberSeal(private val encryption: ProjectBundleEncryption, private val keys: BundleKeyProvider) {
+internal class MemberSeals(private val index: ProjectIndex, keys: BundleKeyProvider) {
+    private val byKeyId: Map<String, MemberSeal> = buildSet {
+        add(checkNotNull(index.encryption).keyId)
+        index.bundles.mapNotNullTo(this) { it.keyId }
+    }.associateWith { MemberSeal(it, keys) }
+
+    /** The seal for [bundle]'s effective key id. */
+    fun of(bundle: ProjectIndexBundle): MemberSeal = byKeyId.getValue(checkNotNull(index.keyIdOf(bundle)))
+
+    /** The seal for [entry]'s bundle's effective key id. */
+    fun of(entry: ProjectIndexEntry): MemberSeal = byKeyId.getValue(checkNotNull(index.keyIdOf(entry)))
+}
+
+/**
+ * Opens members sealed under [keyId], with the master key [keys] answers, asked once and kept until
+ * the source is dropped, or until a bundle that matches the index byte for byte fails to open under
+ * it, which only the wrong key does; a failed ask is not kept either, so the next read asks again.
+ */
+internal class MemberSeal(private val keyId: String, private val keys: BundleKeyProvider) {
     private val lock = Mutex()
     private var cipher: BundleCipher? = null
 
     /** [stored], [entry]'s sealed bytes, opened; fails naming [label] when they don't authenticate. */
     suspend fun open(entry: ProjectIndexEntry, stored: ByteArray, label: String): ByteArray = cipher().open(stored, entry.sha256, label)
 
-    /** The cipher, asking for the key the first time; a failure to get it is the provider's own. */
+    /** The cipher, asking for the key handle the first time; a failure to get it is the provider's own. */
     suspend fun cipher(): BundleCipher =
-        lock.withLock { cipher ?: BundleCipher(keys.key(encryption.keyId), encryption.keyId).also { cipher = it } }
+        lock.withLock { cipher ?: BundleCipher(keys.keyHandle(keyId)).also { cipher = it } }
 
-    /** Drops the key, which a matching bundle has just proved wrong, so the next read asks again. */
+    /** Drops and closes the key handle, which a matching bundle has just proved wrong, so the next read asks again. */
     suspend fun forget() {
-        lock.withLock { cipher = null }
+        lock.withLock {
+            cipher?.close()
+            cipher = null
+            (keys as? WrappedBundleKeyProvider)?.forgetStored(keyId)
+        }
     }
 }
 

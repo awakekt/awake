@@ -233,6 +233,7 @@ public final class com/awakekt/awake/project/BundleEncryptionKey {
 	public fun <init> (Ljava/lang/String;[B)V
 	public final fun getKeyId ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
+	public final fun wrapFor ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/BundleEncryptionKey$Companion {
@@ -245,8 +246,54 @@ public final class com/awakekt/awake/project/BundleKeyFiles {
 	public final fun read (Ljava/lang/String;Ljava/io/File;)Lcom/awakekt/awake/project/BundleEncryptionKey;
 }
 
+public final class com/awakekt/awake/project/BundleKeyHandle : java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/project/BundleKeyHandle$Companion;
+	public fun close ()V
+	public final fun getKeyId ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/BundleKeyHandle$Companion {
+	public final fun fromRawBytes (Ljava/lang/String;[B)Lcom/awakekt/awake/project/BundleKeyHandle;
+}
+
 public abstract interface class com/awakekt/awake/project/BundleKeyProvider {
+	public static final field Companion Lcom/awakekt/awake/project/BundleKeyProvider$Companion;
 	public abstract fun key (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun keyHandle (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/BundleKeyProvider$Companion {
+	public final fun wrapped (Lcom/awakekt/awake/project/BundleKeyStore;Lkotlin/jvm/functions/Function3;)Lcom/awakekt/awake/project/BundleKeyProvider;
+	public final fun wrapped (Lkotlin/jvm/functions/Function3;)Lcom/awakekt/awake/project/BundleKeyProvider;
+}
+
+public final class com/awakekt/awake/project/BundleKeyProvider$DefaultImpls {
+	public static fun keyHandle (Lcom/awakekt/awake/project/BundleKeyProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/project/BundleKeyStore {
+	public abstract fun delete (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun put (Lcom/awakekt/awake/project/BundleKeyHandle;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/BundleKeyStoreKt {
+	public static final fun platformBundleKeyStore (Ljava/lang/String;)Lcom/awakekt/awake/project/BundleKeyStore;
+}
+
+public final class com/awakekt/awake/project/BundleSessionKeyExchange : java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/project/BundleSessionKeyExchange$Companion;
+	public static final field DEFAULT_MODULUS_BITS I
+	public static final field MIN_MODULUS_BITS I
+	public fun close ()V
+	public final fun getPublicKeySpki ()[B
+	public fun toString ()Ljava/lang/String;
+	public final fun unwrap (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/BundleSessionKeyExchange$Companion {
+	public final fun generate (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/ContentBundleDirectoryReport {
@@ -336,8 +383,10 @@ public final class com/awakekt/awake/project/ContentBundleWriter {
 	public fun <init> ()V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;Lcom/awakekt/awake/project/BundleEncryptionKey;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;Lcom/awakekt/awake/project/BundleEncryptionKey;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;Lcom/awakekt/awake/project/BundleEncryptionKey;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;Lcom/awakekt/awake/project/BundleEncryptionKey;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentBundleGrouping;JLcom/awakekt/awake/project/ProjectPathIds;Ljava/lang/String;Lcom/awakekt/awake/project/BundleEncryptionKey;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun write (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -607,6 +656,8 @@ public final class com/awakekt/awake/project/ProjectIndex {
 	public final fun getPathIds ()Lcom/awakekt/awake/project/ProjectPathIds;
 	public final fun getRootPath ()Ljava/lang/String;
 	public fun hashCode ()I
+	public final fun keyIdOf (Lcom/awakekt/awake/project/ProjectIndexBundle;)Ljava/lang/String;
+	public final fun keyIdOf (Lcom/awakekt/awake/project/ProjectIndexEntry;)Ljava/lang/String;
 	public final fun storedSizeOf (Lcom/awakekt/awake/project/ProjectIndexEntry;)J
 	public fun toString ()Ljava/lang/String;
 }
@@ -628,13 +679,19 @@ public final class com/awakekt/awake/project/ProjectIndex$Companion {
 
 public final class com/awakekt/awake/project/ProjectIndexBundle {
 	public static final field Companion Lcom/awakekt/awake/project/ProjectIndexBundle$Companion;
-	public fun <init> (Ljava/lang/String;JLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;)V
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()J
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;JLjava/lang/String;)Lcom/awakekt/awake/project/ProjectIndexBundle;
+	public final fun component4 ()Ljava/lang/String;
+	public final synthetic fun copy (Ljava/lang/String;JLjava/lang/String;)Lcom/awakekt/awake/project/ProjectIndexBundle;
+	public final fun copy (Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/project/ProjectIndexBundle;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ProjectIndexBundle;Ljava/lang/String;JLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/ProjectIndexBundle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ProjectIndexBundle;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/ProjectIndexBundle;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKeyId ()Ljava/lang/String;
 	public final fun getSha256 ()Ljava/lang/String;
 	public final fun getSizeBytes ()J
 	public final fun getUrl ()Ljava/lang/String;

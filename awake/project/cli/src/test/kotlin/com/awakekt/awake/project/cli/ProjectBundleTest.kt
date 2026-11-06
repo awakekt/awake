@@ -163,6 +163,57 @@ class ProjectBundleTest {
     }
 
     @Test
+    fun perGroupKeysWriteByteIdenticalOutputAndRerunFromConfigurationCacheWithoutStoringKeys() {
+        FILES.forEach { (path, text) -> root.resolve(path).apply { parentFile.mkdirs() }.writeText(text) }
+        writeGradleContentSettings()
+        val commonKey = ByteArray(32) { (it * 3 + 2).toByte() }
+        val groupKey = ByteArray(32) { (it * 5 + 9).toByte() }
+        val groupKeyFile = root.resolve("secrets/island.key").apply { parentFile.mkdirs() }
+        root.resolve("secrets/common.key").writeBytes(commonKey)
+        groupKeyFile.writeBytes(groupKey)
+        writeGradleContentBuild(
+            """
+            projectContent {
+                bundleKeyId.set("common-2026")
+                bundleKeyFile.set(layout.projectDirectory.file("secrets/common.key"))
+                bundleGroupKey("scenes", keyId = "north-island-2026", keyFile = layout.projectDirectory.file("secrets/island.key").asFile)
+            }
+            """.trimIndent(),
+        )
+        GradleRunner.create().withProjectDir(root).withArguments("generateProjectIndex").build()
+        val cached = listOf("generateContentBundles", "--configuration-cache", "-x", "generateProjectIndex", "-x", "generatePublicContentBundles")
+
+        val first = GradleRunner.create().withProjectDir(root).withArguments(cached).build()
+        val cliMultiSealed = awake(
+            "bundle",
+            "build/project.index.json",
+            "--output",
+            "build/cli-multi-sealed",
+            "--project",
+            ".",
+            "--key-id",
+            "common-2026",
+            "--key-file",
+            "secrets/common.key",
+            "--group-key-file",
+            "scenes=north-island-2026:secrets/island.key",
+        )
+        assertEquals(0, cliMultiSealed.code, cliMultiSealed.all)
+        assertSameTree(root.resolve("build/cli-multi-sealed"), output)
+
+        val again = GradleRunner.create().withProjectDir(root).withArguments(cached).build()
+        groupKeyFile.writeBytes(ByteArray(32) { (it * 5 + 10).toByte() })
+        val rekeyed = GradleRunner.create().withProjectDir(root).withArguments(cached).build()
+
+        assertEquals(TaskOutcome.SUCCESS, first.task(":generateContentBundles")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, again.task(":generateContentBundles")?.outcome, again.output)
+        assertEquals(TaskOutcome.SUCCESS, rekeyed.task(":generateContentBundles")?.outcome, rekeyed.output)
+        root.resolve(".gradle").walkTopDown().filter(File::isFile).map(File::readBytes).forEach { bytes ->
+            assertFalse(bytes.containsRun(commonKey) || bytes.containsRun(groupKey), "Gradle's own state holds a key")
+        }
+    }
+
+    @Test
     fun aNewBundleKeyRerunsGenerateContentBundlesFromTheConfigurationCacheWhichNeverHoldsTheKey() {
         FILES.forEach { (path, text) -> root.resolve(path).apply { parentFile.mkdirs() }.writeText(text) }
         writeGradleContentSettings()

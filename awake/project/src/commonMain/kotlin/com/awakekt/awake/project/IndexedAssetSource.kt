@@ -63,13 +63,13 @@ interface ContentCache {
  * instead of the whole bundle, while [prefetch] still downloads whole bundles. In an index with
  * [ProjectIndex.pathIds], a path is looked up by its opaque id.
  *
- * An encrypted index ([ProjectIndex.ENCRYPTED_FORMAT_VERSION]) needs [keys], which is asked once for
- * the index's key id. Each member is authenticated and opened as it is read; a wrong key or a damaged
+ * An encrypted index ([ProjectIndex.ENCRYPTED_FORMAT_VERSION]) needs [keys], which is asked once per
+ * key id as a bundle sealed under it is read. Each member is authenticated and opened as it is read; a wrong key or a damaged
  * byte fails the read. [cache] then holds the sealed bytes, never the plaintext, under
  * [ProjectIndex.cacheKeyOf], and every hit is opened again. A hit that doesn't open isn't returned:
  * the read fetches the member, and the cached copy is replaced only once the fetched one opens. The
- * key is kept for this source's life, so dropping the source, as detaching it from a
- * [LayeredAssetSource] on sign-out does, drops the key.
+ * keys are kept for this source's life, so dropping the source, as detaching it from a
+ * [LayeredAssetSource] on sign-out does, drops them.
  *
  * [fetch] is the host's: it resolves a relative `url` against wherever the index came from, sends any
  * sign-in, retries and resumes, so Core carries no HTTP library. For content that needs a short-lived
@@ -97,7 +97,7 @@ class IndexedAssetSource(
     keys: BundleKeyProvider? = null,
 ) : PrefetchableAssetSource {
     private val entries: Map<String, ProjectIndexEntry>
-    private val seal: MemberSeal?
+    private val seals: MemberSeals?
     private val members: BundleMembers
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -115,8 +115,8 @@ class IndexedAssetSource(
             "The project index is encrypted with key ${index.encryption?.keyId}; pass a BundleKeyProvider"
         }
         entries = index.files.associateBy { it.key }
-        seal = index.encryption?.let { MemberSeal(it, keys!!) }
-        members = BundleMembers(index, fetch, cache, rangeFetch, seal)
+        seals = index.encryption?.let { MemberSeals(index, keys!!) }
+        members = BundleMembers(index, fetch, cache, rangeFetch, seals)
     }
 
     /**
@@ -203,10 +203,11 @@ class IndexedAssetSource(
     /** [entry]'s bytes from [cache]: as stored, of the right size, and, when sealed, opened. */
     private suspend fun cached(entry: ProjectIndexEntry): ByteArray? {
         val stored = storedInCache(entry)
-        val seal = seal
-        return if (stored == null || seal == null) {
+        val seals = seals
+        return if (stored == null || seals == null) {
             stored
         } else {
+            val seal = seals.of(entry)
             // The key first, outside the catch: a provider that can't answer fails the read as itself.
             seal.cipher()
             try {

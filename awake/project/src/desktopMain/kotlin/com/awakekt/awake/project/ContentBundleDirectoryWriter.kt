@@ -129,6 +129,44 @@ internal object ContentBundleGradleWorker {
         keyId: String?,
         keyFile: File?,
         keyEnvironmentVariable: String?,
+    ): LongArray = run(
+        indexFile = indexFile,
+        projectRoot = projectRoot,
+        outputDirectory = outputDirectory,
+        grouping = grouping,
+        folderDepth = folderDepth,
+        targetBundleBytes = targetBundleBytes,
+        opaqueIds = opaqueIds,
+        pathSalt = pathSalt,
+        bundleUrlPrefix = bundleUrlPrefix,
+        pruneStaleBundles = pruneStaleBundles,
+        keyId = keyId,
+        keyFile = keyFile,
+        keyEnvironmentVariable = keyEnvironmentVariable,
+        groupKeyIds = emptyMap(),
+        groupKeyFiles = emptyMap(),
+        groupKeyEnvironmentVariables = emptyMap(),
+    )
+
+    @JvmStatic
+    @Suppress("LongParameterList")
+    fun run(
+        indexFile: File,
+        projectRoot: File,
+        outputDirectory: File,
+        grouping: String,
+        folderDepth: Int,
+        targetBundleBytes: Long,
+        opaqueIds: Boolean,
+        pathSalt: String?,
+        bundleUrlPrefix: String,
+        pruneStaleBundles: Boolean,
+        keyId: String?,
+        keyFile: File?,
+        keyEnvironmentVariable: String?,
+        groupKeyIds: Map<String, String>,
+        groupKeyFiles: Map<String, File>,
+        groupKeyEnvironmentVariables: Map<String, String>,
     ): LongArray {
         val resolvedGrouping = when (grouping) {
             "folder" -> ContentBundleGrouping.byFolder(folderDepth)
@@ -141,12 +179,16 @@ internal object ContentBundleGradleWorker {
         } else {
             null
         }
+        val groupKeys = groupKeyIds.mapValues { (group, groupKeyId) ->
+            bundleKey(groupKeyId, groupKeyFiles[group], groupKeyEnvironmentVariables[group])
+        }
         val writer = ContentBundleWriter(
             grouping = resolvedGrouping,
             targetBundleBytes = targetBundleBytes,
             pathIds = pathIds,
             bundleUrlPrefix = bundleUrlPrefix,
             encryption = keyId?.let { bundleKey(it, keyFile, keyEnvironmentVariable) },
+            groupEncryption = groupKeys::get,
         )
         val report = ContentBundleDirectoryWriter.write(indexFile, projectRoot, outputDirectory, writer, pruneStaleBundles)
         return longArrayOf(report.bundles.toLong(), report.files.toLong(), report.bytes, report.written.toLong())

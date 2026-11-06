@@ -12,17 +12,20 @@ package com.awakekt.awake.project.cli
 internal class CliArguments private constructor(
     val words: List<String>,
     private val flags: Set<String>,
-    private val values: Map<String, String>,
+    private val values: Map<String, List<String>>,
 ) {
     /** Whether the flag `--[name]` was given. */
     fun flag(name: String): Boolean = name in flags
 
     /** The value given to `--[name]`, or null. */
-    fun value(name: String): String? = values[name]
+    fun value(name: String): String? = values[name]?.lastOrNull()
+
+    /** Every value given to `--[name]`, in command-line order. */
+    fun values(name: String): List<String> = values[name].orEmpty()
 
     /** The whole number given to `--[name]`, or [default] when there's none; a usage error outside [range]. */
     fun int(name: String, default: Int, range: IntRange): Int {
-        val given = values[name] ?: return default
+        val given = value(name) ?: return default
         return given.toIntOrNull()?.takeIf { it in range } ?: throw UsageException("--$name takes a whole number from ${range.first} to ${range.last}")
     }
 
@@ -31,13 +34,17 @@ internal class CliArguments private constructor(
 
     companion object {
         private val FLAGS = setOf("json", "dry-run", "help", "opaque-ids", "prune")
-        private val VALUED = setOf("project", "parent", "output", "width", "height", "frames", "backend", "view", "camera", "code", "group", "depth", "target-mb", "salt", "key-id", "key-file", "key-env")
+        private val VALUED = setOf(
+            "project", "parent", "output", "width", "height", "frames", "backend", "view", "camera",
+            "code", "group", "depth", "target-mb", "salt", "key-id", "key-file", "key-env",
+            "group-key-file", "group-key-env",
+        )
 
         /** Splits [args] into words and options, refusing an option it doesn't know. */
         fun parse(args: List<String>): CliArguments {
             val words = ArrayList<String>()
             val flags = HashSet<String>()
-            val values = HashMap<String, String>()
+            val values = HashMap<String, MutableList<String>>()
             var index = 0
             while (index < args.size) {
                 val arg = args[index++]
@@ -45,7 +52,7 @@ internal class CliArguments private constructor(
                 when {
                     !arg.startsWith("--") -> words += arg
                     name in FLAGS -> flags += name
-                    name in VALUED -> values[name] = args.getOrNull(index++) ?: throw UsageException("--$name needs a value")
+                    name in VALUED -> values.getOrPut(name, ::ArrayList) += args.getOrNull(index++) ?: throw UsageException("--$name needs a value")
                     else -> throw UsageException("unknown option $arg")
                 }
             }

@@ -50,6 +50,7 @@ import kotlin.time.TimeSource
  * have to know the order these run in. Getting that order wrong is silent: paint before place and
  * every primitive lands at the previous frame's position.
  */
+@Suppress("TooManyFunctions") // One frame pipeline (input, compose, layout, paint) plus its clipboard and disposal.
 class ComposeHost(
     density: Float = 1f,
     private val fontScale: Float = 1f,
@@ -177,6 +178,20 @@ class ComposeHost(
                 clipboardText = clipboardText,
             ),
         )
+    }
+
+    /**
+     * Drops the composed tree: every node goes, and every remembered
+     * [com.awakekt.awake.compose.runtime.RememberObserver] is told it was forgotten, so a store or
+     * scope the UI remembered is released. Call it when the host stops being drawn, before the
+     * renderer it drew with goes away.
+     *
+     * Disposing twice is harmless. A [frame] after this composes from an empty tree, as the first
+     * frame did.
+     */
+    fun dispose() {
+        composition.dispose()
+        placedOnce = false
     }
 
     /**

@@ -20,7 +20,8 @@ class RenderQualityPolicyTest {
 
     @Test
     fun a1080pDesktopAtDpr1StaysAtFullScale() {
-        for (device in GpuDeviceClass.entries.filter { it != GpuDeviceClass.Software }) {
+        // The desktop classes: Auto's budget on each is at least 1080, so it never scales a 1080p surface.
+        for (device in listOf(GpuDeviceClass.Discrete, GpuDeviceClass.Integrated, GpuDeviceClass.Unknown)) {
             assertEquals(1f, RenderQualityPolicy.renderScale(RenderQuality.Auto, 1920, 1080, device), "$device")
         }
         assertEquals(1f, RenderQualityPolicy.renderScale(RenderQuality.High, 1920, 1080, GpuDeviceClass.Discrete))

@@ -5,10 +5,15 @@
  */
 package com.awakekt.awake.project
 
+import com.awakekt.awake.core.io.Sha256
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Encrypted bundles are format 2 and their indexes format 4, which older engines refuse. */
@@ -92,5 +97,65 @@ class EncryptedBundleFormatTest {
         assertFailsWith<IllegalArgumentException> { BundleEncryptionKey("k", ByteArray(16)) }
         assertFailsWith<IllegalArgumentException> { BundleEncryptionKey(" ", ByteArray(32)) }
         assertEquals("BundleEncryptionKey(keyId=k, bytes=<redacted>)", BundleEncryptionKey("k", ByteArray(32)).toString())
+    }
+
+    @Test
+    fun legacyVersion4IndexWithoutBundleKeyIdDecodesAndHashesIdentically() = runTest {
+        val project = EncryptedProject.write()
+        val encoded = Json.encodeToString(ProjectIndex.serializer(), project.index)
+        // Only the top-level encryption object carries "keyId" when every bundle uses the default key.
+        assertEquals(2, encoded.split("\"keyId\"").size, encoded)
+
+        val decoded = Json.decodeFromString(ProjectIndex.serializer(), encoded)
+
+        assertEquals(project.index, decoded)
+        decoded.bundles.forEach { bundle ->
+            assertNull(bundle.keyId)
+            assertEquals(EncryptedProject.KEY_ID, decoded.keyIdOf(bundle))
+        }
+        decoded.files.forEach { entry ->
+            assertEquals(EncryptedProject.KEY_ID, decoded.keyIdOf(entry))
+            assertEquals(
+                Sha256.digestHex("awake-awkb-v2-cache\n${EncryptedProject.KEY_ID}\n${entry.sha256}"),
+                decoded.cacheKeyOf(entry),
+            )
+        }
+    }
+
+    @Test
+    fun bundleKeyIdOverridesDefaultKeyIdForValidationAndCacheKeys() = runTest {
+        val index = EncryptedProject.write().index
+        val firstBundle = index.bundles.first()
+        val overridden = index.copy(
+            bundles = listOf(firstBundle.copy(keyId = "north-island-2026")) + index.bundles.drop(1),
+        )
+
+        assertEquals(emptyList(), ProjectContentValidator.indexIssues(overridden))
+        assertEquals("north-island-2026", overridden.keyIdOf(overridden.bundles.first()))
+        assertEquals(EncryptedProject.KEY_ID, overridden.keyIdOf(overridden.bundles.last()))
+        val inOverridden = overridden.files.first { it.bundle == firstBundle.sha256 }
+        val inDefault = overridden.files.first { it.bundle != firstBundle.sha256 }
+        assertEquals(
+            Sha256.digestHex("awake-awkb-v2-cache\nnorth-island-2026\n${inOverridden.sha256}"),
+            overridden.cacheKeyOf(inOverridden),
+        )
+        assertNotEquals(index.cacheKeyOf(inOverridden), overridden.cacheKeyOf(inOverridden))
+        assertEquals(index.cacheKeyOf(inDefault), overridden.cacheKeyOf(inDefault))
+
+        val unencrypted = BundledProject().index
+        val onVersion3 = ProjectContentValidator.indexIssues(
+            unencrypted.copy(bundles = listOf(unencrypted.bundles.first().copy(keyId = "north-island-2026")) + unencrypted.bundles.drop(1)),
+        )
+        val onVersion2 = ProjectContentValidator.indexIssues(
+            ProjectIndex(bundles = listOf(firstBundle.copy(keyId = "north-island-2026"))),
+        )
+        val blankOnVersion4 = ProjectContentValidator.indexIssues(
+            index.copy(bundles = listOf(firstBundle.copy(keyId = " ")) + index.bundles.drop(1)),
+        )
+
+        assertTrue(onVersion3.any { it.contains("bundles[0].keyId needs formatVersion 4") }, "$onVersion3")
+        assertTrue(onVersion2.any { it.contains("bundles[0].keyId needs formatVersion 4") }, "$onVersion2")
+        assertTrue(blankOnVersion4.any { it.contains("bundles[0].keyId must not be blank") }, "$blankOnVersion4")
+        assertFalse(unencrypted.keyIdOf(unencrypted.bundles.first()) != null)
     }
 }
