@@ -75,9 +75,15 @@ private fun extraTexts(extra: Any): List<String> = when (extra) {
  * Host actions for Android. [HostActions.openUrl] starts an `ACTION_VIEW` intent for the URL with the
  * browsable category and returns false when no app handles it. It adds `FLAG_ACTIVITY_NEW_TASK`
  * when [context] is not an `Activity`. [HostActions.pageReload] is null: an app has no page to reload.
+ * [HostActions.fullscreen] is [androidFullscreen] of [context] when it is an `Activity`, and null for
+ * the application context, which has no window to make immersive. [HostActions.windowFrame] is null:
+ * an Android window has no title bar to turn off.
  * Pass an `Activity` or the application context; the actions hold on to it.
  */
-fun androidHostActions(context: Context): HostActions = CheckedHostActions(open = { url -> startView(context, url) })
+fun androidHostActions(context: Context): HostActions = CheckedHostActions(
+    open = { url -> startView(context, url) },
+    fullscreen = (context as? Activity)?.let(::androidFullscreen),
+)
 
 private fun startView(context: Context, url: String): Boolean {
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)
