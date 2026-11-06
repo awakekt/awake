@@ -34,7 +34,6 @@ import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
-import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.engine.platform.error.AppErrorHandler
 import com.awakekt.awake.engine.platform.error.AppErrorSource
 import com.awakekt.awake.engine.platform.error.reportError
@@ -42,6 +41,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
