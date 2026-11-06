@@ -10,7 +10,7 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BoxShape
-import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
@@ -59,6 +59,6 @@ class SceneCameraCollisionProbesTest {
     }
 
     private companion object {
-        val WORLD = CollisionLayer.World.index
+        val WORLD = CollisionLayers.World.index
     }
 }
