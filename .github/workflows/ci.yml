@@ -621,6 +621,8 @@ jobs:
       # Signature checks through Apple's Security framework and archive inflation through zlib.
       - name: Plugin archive iOS simulator tests
         run: ./gradlew :awake:plugin-archive:iosSimulatorArm64Test
+      - name: Window iOS simulator tests
+        run: ./gradlew :awake:engine:window:iosSimulatorArm64Test
 
       - name: Upload iOS physics test reports
         if: always()

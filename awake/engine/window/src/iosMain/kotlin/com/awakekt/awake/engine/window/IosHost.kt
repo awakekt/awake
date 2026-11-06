@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.window
 
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
+import platform.UIKit.UIViewController
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
@@ -28,9 +29,22 @@ fun iosLaunchParameters(launchUrl: String? = null): LaunchParameters =
  * Host actions for iOS. [HostActions.openUrl] asks `UIApplication` to open the URL, on the main
  * queue, and returns true once the request is made: iOS reports success later and this does not
  * wait for it. It returns false for a string `NSURL` cannot parse. [HostActions.pageReload] is
- * null: an app has no page to reload.
+ * null: an app has no page to reload. [HostActions.fullscreen] is null here, with no view controller
+ * to ask; pass the game's controller to the other [iosHostActions] to have it.
  */
 fun iosHostActions(): HostActions = CheckedHostActions(open = ::openOnMainQueue)
+
+/**
+ * The [iosHostActions] of a game shown by [controller]: the same [HostActions.openUrl], and
+ * [HostActions.fullscreen] is [AwakeViewController.fullscreen] when [controller] is the
+ * [AwakeViewController] that `makeVulkanGameViewController` returns. A controller of the host app's
+ * own gives null, since only an [AwakeViewController] tells UIKit to hide the status bar. An iOS
+ * window has no title bar, so [HostActions.windowFrame] is null.
+ */
+fun iosHostActions(controller: UIViewController): HostActions = CheckedHostActions(
+    open = ::openOnMainQueue,
+    fullscreen = (controller as? AwakeViewController)?.fullscreen,
+)
 
 private fun openOnMainQueue(url: String): Boolean {
     val target = NSURL.URLWithString(url) ?: return false
