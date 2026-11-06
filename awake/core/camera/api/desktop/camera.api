@@ -29,6 +29,11 @@ public final class com/awakekt/awake/core/camera/CameraCollision$Companion {
 }
 
 public final class com/awakekt/awake/core/camera/CameraCollisionSolver {
+	public static final field EPSILON F
+	public static final field HALF F
+	public static final field REFINE_STEPS I
+	public static final field SKIN F
+	public static final field TERRAIN_STEPS I
 	public fun <init> ()V
 	public final fun getDistance ()F
 	public final fun reset ()V
