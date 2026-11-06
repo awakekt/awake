@@ -108,9 +108,17 @@ runs:
           # Shared Kotlin, Gradle, native, and workflow changes can affect every target.
           if [[ "$path" =~ ^(awake/core/|awake/ecs/|awake/scene/|awake/engine/|awake/compose/|awake/ui/|samples/|gradle/|build-logic/|\.github/workflows/|\.github/actions/) ]] || \
             [[ "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; then
-            ios=true
             vulkan=true
             web=true
+          fi
+
+          # The iOS job builds only what it names, so a sample it doesn't build, or a workflow or
+          # action it doesn't use, can't change its result. A sample's own build.gradle.kts falls
+          # under its sample directory here too.
+          if [[ "$path" =~ ^(awake/core/|awake/ecs/|awake/scene/|awake/engine/|awake/compose/|awake/ui/|samples/engine-showcase/|gradle/|build-logic/|\.github/workflows/ci\.yml$|\.github/actions/(ios-native|cache-naga|detect-platform-impact)/) ]] || \
+            { [[ ! "$path" =~ ^samples/ ]] && \
+              [[ "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; }; then
+            ios=true
           fi
 
           if [[ "$path" =~ ^(awake/backend/jolt/|awake/scene/physics/|awake/asset/shader-compiler/|awake/backend/vulkan/bindings/ios-native/) ]]; then
