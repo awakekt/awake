@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.window
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.hardware.input.InputManager
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -25,6 +26,7 @@ import com.awakekt.awake.core.input.syncAwakeGamepadInput
 import com.awakekt.awake.core.input.syncAwakeKeyInput
 import com.awakekt.awake.core.input.syncAwakePointerInput
 import com.awakekt.awake.core.input.syncAwakeTextShortcut
+import com.awakekt.awake.ecs.FrameThreadGuard
 import com.awakekt.awake.engine.platform.WindowLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 
@@ -33,6 +35,10 @@ import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
  * controller and IME events feed its input. It reports the display's density and real dots per inch, and what
  * the system bars and a display cutout cover of it as the safe area. The backend creates its swapchain from the `Surface` it receives;
  * nothing here knows about a GPU API.
+ *
+ * In a debuggable app (`ApplicationInfo.FLAG_DEBUGGABLE`, which a debug build sets) it turns
+ * [FrameThreadGuard.enabled] on as it is created, before the scene binds its frame thread. An app
+ * that wants the checks off there sets the flag back after creating the view.
  */
 @Suppress("TooManyFunctions") // One override per WindowLifecycle / SurfaceHolder callback.
 class AwakeSurfaceView(
@@ -62,6 +68,9 @@ class AwakeSurfaceView(
     }
 
     init {
+        // A debuggable app, as a debug build is, checks frame-thread-only state from the scene's first
+        // frame; a release app leaves the checks off and pays one field read per check.
+        if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) FrameThreadGuard.enabled = true
         holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true
