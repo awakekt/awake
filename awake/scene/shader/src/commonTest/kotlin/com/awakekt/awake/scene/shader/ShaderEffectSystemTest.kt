@@ -30,6 +30,7 @@ class ShaderEffectSystemTest {
     )
     private val world = World()
     private val host = RecordingHost()
+
     // The scene session's scope in a game; the attaches run unconfined, so they need no dispatcher here.
     private val scope = CoroutineScope(SupervisorJob())
     private val system = ShaderEffectSystem(host, assets, scope)
