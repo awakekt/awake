@@ -46,6 +46,9 @@ import kotlin.concurrent.Volatile
  *
  * @property defaultLocale The locale every lookup falls back to.
  */
+// TooManyFunctions: the lookups, the source changes, and the few private steps that let a source be
+// removed without a coroutine (queue, apply under the lock, publish from loaded tables) belong together.
+@Suppress("TooManyFunctions")
 class Strings internal constructor(
     source: StringTableSource,
     val defaultLocale: LocaleId,
