@@ -8,6 +8,8 @@ package com.awakekt.awake.scene.audio
 import com.awakekt.awake.core.audio.AudioClip
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.audio.PositionalAudioMath
+import com.awakekt.awake.core.io.AssetLoad
+import com.awakekt.awake.core.io.AssetLoads
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
@@ -21,14 +23,28 @@ import kotlin.math.sqrt
  * Scans entities for [AudioSource] components, computes 3D spatial attenuation and panning
  * relative to the active [AudioListener] entity, and updates playback.
  *
- * @param audioPlayer The underlying player used to trigger and manage audio playback.
- * @param clips Decoded clips by project path, as [loadAudioClips] reads them. A source whose clip holds
- * no samples, as [AudioSourceBinding] attaches it, plays the clip named here once it's in the map.
+ * A source whose clip holds no samples, as [AudioSourceBinding] attaches it, plays the decoded clip of
+ * that name once there is one: from a map read ahead, or from [AssetLoads] the system shares with a
+ * prewarm, which decodes a clip it doesn't have yet the first time a source asks for it.
  */
-class AudioSystem(
+class AudioSystem private constructor(
     private val audioPlayer: AudioPlayer,
-    private val clips: Map<String, AudioClip> = emptyMap(),
+    private val clips: Map<String, AudioClip>,
+    private val loads: AssetLoads<AudioClip>?,
 ) : System {
+    /**
+     * @param audioPlayer The underlying player used to trigger and manage audio playback.
+     * @param clips Decoded clips by project path, as [loadAudioClips] reads them.
+     */
+    constructor(audioPlayer: AudioPlayer, clips: Map<String, AudioClip> = emptyMap()) : this(audioPlayer, clips, null)
+
+    /**
+     * @param audioPlayer The underlying player used to trigger and manage audio playback.
+     * @param loads The scene's clips, as [audioClipLoads] makes them: one a source names that isn't
+     *   decoded yet starts decoding then, and a clip decoded ahead of a spawn plays on its first frame.
+     */
+    constructor(audioPlayer: AudioPlayer, loads: AssetLoads<AudioClip>) : this(audioPlayer, loads.loaded, loads)
+
     /** Sources found holding a placeholder this frame; a field, so swapping allocates nothing once they're done. */
     private val waiting = ArrayList<Pair<Entity, AudioSource>>()
 
@@ -47,7 +63,9 @@ class AudioSystem(
         } ?: Vec3f.RIGHT
 
         val listener = AudioListenerContext(pos = listenerPos, right = listenerRight)
-        if (clips.isNotEmpty()) {
+        // Hands over the clips that finished decoding since the last frame, before any source looks.
+        loads?.loaded
+        if (loads != null || clips.isNotEmpty()) {
             swapInClips(world)
             drainCueQueues(world, listener)
         }
@@ -128,7 +146,7 @@ class AudioSystem(
     /** Gives each source still holding a placeholder clip the decoded one, before any of them plays. */
     private fun swapInClips(world: World) {
         world.family<AudioSource>().forEach { entity, source ->
-            if (source.clip.pcmBytes.isEmpty() && source.clip.id in clips) waiting += entity to source
+            if (source.clip.pcmBytes.isEmpty() && decoded(source.clip.id) != null) waiting += entity to source
         }
         // After the walk: replacing a component while walking its family would move under the walk.
         for (index in waiting.indices) {
@@ -136,6 +154,12 @@ class AudioSystem(
             world.add(entity, source.copy(clip = clips.getValue(source.clip.id)))
         }
         waiting.clear()
+    }
+
+    /** The decoded clip at [path], asking [loads] to decode it when it has not yet. */
+    private fun decoded(path: String): AudioClip? {
+        val load = if (path in clips || path == SceneAudioSource.UNASSIGNED) null else loads?.request(path)
+        return if (load is AssetLoad.Loaded) load.value else clips[path]
     }
 
     private fun drainCueQueues(world: World, listener: AudioListenerContext) {
