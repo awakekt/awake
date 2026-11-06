@@ -83,5 +83,5 @@ fun interface ResourceReader {
 class FunctionResourceReader(
     private val loader: suspend (String) -> ByteArray,
 ) : ResourceReader {
-    override suspend fun read(path: String): Result<ByteArray> = runCatching { loader(path) }
+    override suspend fun read(path: String): Result<ByteArray> = suspendRunCatching { loader(path) }
 }

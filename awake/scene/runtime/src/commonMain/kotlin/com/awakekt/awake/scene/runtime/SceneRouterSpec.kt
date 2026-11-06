@@ -535,7 +535,9 @@ class SceneRouterRuntime internal constructor(
 
 /** Runs [route]'s load, answering what it threw as a failure, unless the load was cancelled. */
 // TooGenericExceptionCaught: whatever a game's loader throws must leave the route failed, not the frame loop.
-@Suppress("TooGenericExceptionCaught")
+// SuspendFunSwallowedCancellation: ensureActive rethrows when this load is cancelled; a cancellation the
+// loader raised itself, such as its own withTimeout, must fail the route, or it would show its loading scene forever.
+@Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
 private suspend fun loadCatching(route: DeferredSceneRoute): Result<LoadedSceneRoute> = try {
     Result.success(route.load())
 } catch (failure: Exception) {

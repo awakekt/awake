@@ -73,6 +73,7 @@ import com.awakekt.awake.vulkan.surfaceFramebufferExtent
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
 import com.awakekt.awake.vulkan.windowLogicalExtent
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Reusable Vulkan app bootstrap (see docs/reference/decision-log.md, D16/D19/D21 -- those
@@ -539,9 +540,13 @@ open class VulkanEngine(
     // built before the failure escapes -- narrowing it to Exception would leave GPU handles
     // leaked on exactly the failures (OutOfMemoryError, a JNI-thrown Throwable) it exists to
     // catch. Same shape as buildPipelineTable's own suppression in render:contract.
-    @Suppress("TooGenericExceptionCaught")
+    // CyclomaticComplexMethod: two over the limit for the rethrown cancellation and the rollback in
+    // finally, which a cancelled start-up needs as much as a failed one.
+    @Suppress("TooGenericExceptionCaught", "CyclomaticComplexMethod")
     override suspend fun createBackendResources(window: Any): BackendResources {
         var createdRenderer: Renderer? = null
+        var built = false
+        var failure: Throwable? = null
         var depthPrePass: DepthPrePassFeature? = null
         var sceneDepthPass: DepthPrePassFeature? = null
         var maskPass: DepthPrePassFeature? = null
@@ -662,14 +667,17 @@ open class VulkanEngine(
                         1f
                     }
                 },
-            )
-        } catch (failure: Throwable) {
-            runCatching {
-                rollbackBackendCreation(createdRenderer, renderFeatures, depthPrePass, sceneDepthPass, maskPass)
-            }.onFailure { cleanupFailure ->
-                failure.addSuppressed(cleanupFailure)
+            ).also { built = true }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (thrown: Throwable) {
+            failure = thrown
+            throw thrown
+        } finally {
+            // Whatever failed or cancelled construction part way, release what it already built.
+            if (!built) {
+                rollbackQuietly(failure) { rollbackBackendCreation(createdRenderer, renderFeatures, depthPrePass, sceneDepthPass, maskPass) }
             }
-            throw failure
         }
     }
 
@@ -749,6 +757,18 @@ open class VulkanEngine(
 
     /** `GraphicsEngine` only calls [destroyBackend] after setup reaches `isReady`, so a failed
      * setup must release its own prefix of allocated Vulkan objects. */
+
+    /** Runs [rollback], keeping what it throws as suppressed on [failure], so construction's own failure is what escapes. */
+    // TooGenericExceptionCaught: a rollback that fails must not replace the failure it is cleaning up after.
+    @Suppress("TooGenericExceptionCaught")
+    private inline fun rollbackQuietly(failure: Throwable?, rollback: () -> Unit) {
+        try {
+            rollback()
+        } catch (cleanupFailure: Throwable) {
+            failure?.addSuppressed(cleanupFailure)
+        }
+    }
+
     private fun rollbackBackendCreation(
         createdRenderer: Renderer?,
         renderFeatures: List<RenderFeature<VulkanRenderFrameContext>>,

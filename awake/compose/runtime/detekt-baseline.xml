@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>TooManyFunctions:Composer.kt$Composer</ID>
+    <ID>TooManyFunctions:Composer.kt:Composer</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>LongParameterList:AppSpec.kt$AppSpec$( val windowConfig: WindowConfig, private val onReady: List&lt;suspend (Renderer) -> Unit>, private val onTick: List&lt;(frame: AppFrame) -> Unit>, private val onResize: List&lt;(width: Float, height: Float) -> Unit>, private val onPause: List&lt;() -> Unit>, private val onResume: List&lt;() -> Unit>, private val onDispose: List&lt;() -> Unit>, private val services: Map&lt;KClass&lt;*>, Any>, )</ID>
-    <ID>TooManyFunctions:AppSpecBuilder.kt$AppSpecBuilder</ID>
+    <ID>TooManyFunctions:AppSpecBuilder.kt:AppSpecBuilder</ID>
   </CurrentIssues>
 </SmellBaseline>

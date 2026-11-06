@@ -14,6 +14,7 @@ import com.awakekt.awake.render.pipeline.ShaderProgram
 import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.pipeline.entryPoint
 import com.awakekt.awake.render.renderer.UniformLayout
+import kotlin.coroutines.cancellation.CancellationException
 
 /** [stage]'s source, whatever variant it is -- shared by both backends' bootstrap classes so
  * neither hand-duplicates this lookup + error message. */
@@ -77,6 +78,8 @@ fun ShaderStages.program(): ShaderProgram = ShaderProgram(
 suspend fun <T> withPipelineLoadContext(name: String, block: suspend () -> T): T =
     try {
         block()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (e: Exception) {
         throw IllegalStateException("Failed to build pipeline '$name': ${e.message}", e)
     }

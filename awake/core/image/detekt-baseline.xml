@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>MatchingDeclarationName:Bitmap.kt$AppleBitmap : Bitmap</ID>
-    <ID>UnusedPrivateProperty:Bitmap.kt$val bytesPerRow = CGImageGetBytesPerRow(cgImage)</ID>
+    <ID>MatchingDeclarationName:Bitmap.kt:AppleBitmap : Bitmap</ID>
   </CurrentIssues>
 </SmellBaseline>

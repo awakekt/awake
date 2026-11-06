@@ -54,6 +54,8 @@ internal class BundleMembers(
     }
 
     /** The bundle [sha256]'s checked members by SHA-256, fetched once however many reads ask at the same time. */
+    // TooGenericExceptionCaught: whatever fails the fetch fails the reads waiting on it too, then propagates.
+    @Suppress("TooGenericExceptionCaught")
     suspend fun load(sha256: String): Map<String, ByteArray> {
         while (true) {
             var leader = false
@@ -70,16 +72,19 @@ internal class BundleMembers(
             }
             try {
                 val bundle = bundles.getValue(sha256)
-                val outcome = runCatching {
-                    val stored = fetchChecked(bundle)
-                    stored.mapValues { it.value.read }.also { keep(bundle, it, stored) }
+                val stored = fetchChecked(bundle)
+                return stored.mapValues { it.value.read }.also {
+                    keep(bundle, it, stored)
+                    pending.complete(it)
                 }
-                outcome.fold(
-                    onSuccess = { pending.complete(it) },
-                    onFailure = { pending.completeExceptionally(if (it is CancellationException) LeaderCancelled() else it) },
-                )
-                return outcome.getOrThrow()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Throwable) {
+                pending.completeExceptionally(failure)
+                throw failure
             } finally {
+                // Still pending only when this read was cancelled, not the bundle: the reads waiting fetch it afresh.
+                if (!pending.isCompleted) pending.completeExceptionally(LeaderCancelled())
                 withContext(NonCancellable) { lock.withLock { inFlight.remove(sha256) } }
             }
         }

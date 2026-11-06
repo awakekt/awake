@@ -2,7 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>TooManyFunctions:AppDsl.kt$AppSpecDsl</ID>
-    <ID>UnusedParameter:AppDiDslTest.kt$AppDiDslTest$result: String</ID>
+    <ID>TooManyFunctions:AppDsl.kt:AppSpecDsl</ID>
+    <ID>UnusedParameter:AppDiDslTest.kt:AppDiDslTest$result: String</ID>
   </CurrentIssues>
 </SmellBaseline>

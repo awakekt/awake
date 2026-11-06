@@ -124,7 +124,7 @@ class InMemoryFileSystem(
     override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> {
         val snapshot = Snapshot(files.mapValues { it.value.copyOf() }, directories.toSet(), modified.toMap())
         val working = TransactionState(snapshot.files.toMutableMap(), snapshot.directories.toMutableSet(), snapshot.modified.toMutableMap())
-        val result = runCatching { working.block() }
+        val result = suspendRunCatching { working.block() }
         if (result.isFailure) return Result.failure(result.exceptionOrNull()!!)
         val value = result.getOrThrow()
         val changes = diff(snapshot, working)

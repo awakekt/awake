@@ -34,9 +34,9 @@ import kotlin.math.sin
 /**
  * Data series for bar, line, and area charts.
  *
- * @param name Series label name (e.g. "Desktop", "Mobile").
- * @param color Series theme color.
- * @param values Y-axis numerical values per category.
+ * @property name Series label name (e.g. "Desktop", "Mobile").
+ * @property color Series theme color.
+ * @property values Y-axis numerical values per category.
  */
 data class ShadcnChartSeries(
     val name: String,
@@ -47,9 +47,9 @@ data class ShadcnChartSeries(
 /**
  * Data slice for pie and donut charts.
  *
- * @param label Slice label (e.g. "Chrome", "Safari").
- * @param value Slice numerical value.
- * @param color Slice theme color.
+ * @property label Slice label (e.g. "Chrome", "Safari").
+ * @property value Slice numerical value.
+ * @property color Slice theme color.
  */
 data class ShadcnPieSlice(
     val label: String,
@@ -187,6 +187,7 @@ fun ShadcnBarChart(
  * @param modifier Custom layout modifier.
  * @param height Chart canvas height (`200.dp` by default).
  * @param showAreaFill Whether to draw a semi-transparent gradient fill beneath the line.
+ * @param showDots Whether to draw a dot on each data point (on by default).
  *
  * Keywords: line chart, area chart, trend chart, curve chart.
  */

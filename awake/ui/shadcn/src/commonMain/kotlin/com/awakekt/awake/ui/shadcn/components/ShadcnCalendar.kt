@@ -30,9 +30,9 @@ import com.awakekt.awake.tailwind.Tw
  * Stored as pure civil integers (`year`, `month`, `day`), making it **100% immune**
  * to timezone shifts, Daylight Saving Time (DST) transitions, and wall-clock drift.
  *
- * @param year Year number (e.g. 2026).
- * @param month Month number (1..12, 1 = January).
- * @param day Day of month number (1..31).
+ * @property year Year number (e.g. 2026).
+ * @property month Month number (1..12, 1 = January).
+ * @property day Day of month number (1..31).
  */
 data class ShadcnCalendarDate(
     val year: Int,
@@ -102,8 +102,8 @@ data class ShadcnCalendarDate(
 /**
  * Type-safe date range selection representation for [ShadcnCalendar].
  *
- * @param start Start date of the range.
- * @param end End date of the range.
+ * @property start Start date of the range.
+ * @property end End date of the range.
  */
 data class ShadcnDateRange(
     val start: ShadcnCalendarDate? = null,
@@ -126,9 +126,9 @@ private val WeekdayHeaders = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
  *
  * @param selectedDate Currently selected [ShadcnCalendarDate].
  * @param onDateSelected Callback triggered when a date is selected.
+ * @param modifier Custom layout modifier applied to the calendar container.
  * @param initialMonth Month index (1..12, default 10 = October).
  * @param initialYear Initial display year (default 2026).
- * @param modifier Custom layout modifier applied to the calendar container.
  *
  * Keywords: calendar, date picker, month grid, date selector, scheduling.
  */
@@ -272,8 +272,8 @@ fun ShadcnCalendar(
  *
  * @param selectedDate Currently selected [ShadcnCalendarDate].
  * @param onDateSelected Callback triggered when selecting a date.
- * @param placeholder Input trigger text when no date is selected.
  * @param modifier Custom layout modifier.
+ * @param placeholder Input trigger text when no date is selected.
  *
  * Keywords: date picker, date input, calendar popover.
  */

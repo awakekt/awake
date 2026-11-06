@@ -2,13 +2,13 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ObjectPropertyNaming:Tw.kt$Tw.Radius$public val `2xl`: Dp = 12f.dp</ID>
-    <ID>ObjectPropertyNaming:Tw.kt$Tw.Radius$public val `3xl`: Dp = 16f.dp</ID>
-    <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `2xl`: Sp = 24f.sp</ID>
-    <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `3xl`: Sp = 30f.sp</ID>
-    <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `4xl`: Sp = 36f.sp</ID>
-    <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `5xl`: Sp = 48f.sp</ID>
-    <ID>TooManyFunctions:TwModifiers.kt$com.awakekt.awake.tailwind.TwModifiers.kt</ID>
-    <ID>UnusedParameter:TwModifiers.kt$radius: Dp = Tw.Radius.md</ID>
+    <ID>ObjectPropertyNaming:Tw.kt:Tw.Radius$public val `2xl`: Dp = 12f.dp</ID>
+    <ID>ObjectPropertyNaming:Tw.kt:Tw.Radius$public val `3xl`: Dp = 16f.dp</ID>
+    <ID>ObjectPropertyNaming:Tw.kt:Tw.Text$public val `2xl`: Sp = 24f.sp</ID>
+    <ID>ObjectPropertyNaming:Tw.kt:Tw.Text$public val `3xl`: Sp = 30f.sp</ID>
+    <ID>ObjectPropertyNaming:Tw.kt:Tw.Text$public val `4xl`: Sp = 36f.sp</ID>
+    <ID>ObjectPropertyNaming:Tw.kt:Tw.Text$public val `5xl`: Sp = 48f.sp</ID>
+    <ID>TooManyFunctions:TwModifiers.kt:com.awakekt.awake.tailwind.TwModifiers.kt</ID>
+    <ID>UnusedParameter:TwModifiers.kt:radius: Dp = Tw.Radius.md</ID>
   </CurrentIssues>
 </SmellBaseline>

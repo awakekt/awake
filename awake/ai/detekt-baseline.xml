@@ -2,9 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ReturnCount:RepeaterNode.kt$RepeaterNode$override fun tick(context: AiContext): BehaviorStatus</ID>
-    <ID>ReturnCount:SelectorNode.kt$SelectorNode$override fun tick(context: AiContext): BehaviorStatus</ID>
-    <ID>ReturnCount:SequenceNode.kt$SequenceNode$override fun tick(context: AiContext): BehaviorStatus</ID>
-    <ID>TooManyFunctions:BehaviorTreeDsl.kt$BehaviorTreeBuilder</ID>
+    <ID>ReturnCount:RepeaterNode.kt:RepeaterNode$override fun tick: BehaviorStatus</ID>
+    <ID>ReturnCount:SelectorNode.kt:SelectorNode$override fun tick: BehaviorStatus</ID>
+    <ID>ReturnCount:SequenceNode.kt:SequenceNode$override fun tick: BehaviorStatus</ID>
+    <ID>TooManyFunctions:BehaviorTreeDsl.kt:BehaviorTreeBuilder</ID>
   </CurrentIssues>
 </SmellBaseline>

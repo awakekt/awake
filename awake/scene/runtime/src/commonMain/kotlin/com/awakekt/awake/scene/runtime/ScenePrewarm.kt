@@ -101,10 +101,9 @@ class ScenePrewarm internal constructor(
     suspend fun await() {
         try {
             done.await()
-        } catch (cancelled: CancellationException) {
-            // The prewarm itself ended, or the caller stopped waiting: only the latter gives it up.
+        } finally {
+            // Still pending only when the caller stopped waiting, rather than the prewarm ending: that gives it up.
             if (!done.isCompleted) givenUp.store(true)
-            throw cancelled
         }
     }
 

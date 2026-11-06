@@ -11,9 +11,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Coordinates asynchronous, batched persistence off the main tick thread, maintaining transactional consistency
@@ -73,7 +76,9 @@ class SaveScheduler<T : Savable>(
         queue.trySend(SaveRequest(items.toList(), then))
     }
 
-    @Suppress("TooGenericExceptionCaught")
+    // SuspendFunSwallowedCancellation: a cancellation the writer raised itself, such as its own timeout, is a
+    // failed write and the loop goes on; the scheduler closing mid-write settles the batch, then ends the loop.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     private suspend fun process(request: SaveRequest<T>) {
         val batch = LinkedHashMap<String, T>()
 
@@ -116,6 +121,7 @@ class SaveScheduler<T : Savable>(
         }
 
         request.callback(success)
+        if (failureCause is CancellationException) currentCoroutineContext().ensureActive()
     }
 
     /**

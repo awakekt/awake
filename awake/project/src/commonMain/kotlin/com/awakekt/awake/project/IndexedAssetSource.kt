@@ -6,11 +6,11 @@
 package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
+import com.awakekt.awake.core.io.suspendRunCatching
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * How many of [IndexedAssetSource.prefetch]'s files are fetched and verified at once. Its KDoc
@@ -131,10 +131,10 @@ class IndexedAssetSource(
     /** [prefetch], for the [PrefetchableAssetSource] contract, which keeps this class's own method as released. */
     override suspend fun prefetchWithProgress(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) = prefetch(paths, onProgress)
 
-    override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
+    override suspend fun read(path: AssetPath): Result<ByteArray> = suspendRunCatching {
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
         readChecked(entry, path.value.removePrefix("/"))
-    }.onFailure { if (it is CancellationException) throw it }
+    }
 
     /** Whether [index] lists [path]: looked up, with nothing fetched. */
     override suspend fun exists(path: AssetPath): Boolean = entryFor(path.value) != null

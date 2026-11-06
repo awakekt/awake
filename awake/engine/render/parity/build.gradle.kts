@@ -23,8 +23,8 @@ kotlin {
 
     // detekt's compiler frontend tops out at JVM target 22 and this module's toolchain is 25. The
     // target only affects detekt's own analysis, not the bytecode produced here.
-    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach { jvmTarget = "22" }
-    tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach { jvmTarget = "22" }
+    tasks.withType<dev.detekt.gradle.Detekt>().configureEach { jvmTarget.set("22") }
+    tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach { jvmTarget.set("22") }
 
     sourceSets {
         val desktopMain by getting {

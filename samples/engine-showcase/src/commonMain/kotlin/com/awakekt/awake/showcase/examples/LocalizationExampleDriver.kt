@@ -7,6 +7,7 @@ package com.awakekt.awake.showcase.examples
 
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.suspendRunCatching
 import com.awakekt.awake.core.localization.LocaleId
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
@@ -41,7 +42,7 @@ internal object LocalizationExampleDriver {
 
     suspend fun preload() {
         if (strings != null) return
-        val resources = AssetSource { path -> runCatching { readResourceBytes(path.value) } }
+        val resources = AssetSource { path -> suspendRunCatching { readResourceBytes(path.value) } }
         strings = Strings.load(StringTableSource.assets(resources, directory = "assets/examples/strings"), locale = English)
     }
 
