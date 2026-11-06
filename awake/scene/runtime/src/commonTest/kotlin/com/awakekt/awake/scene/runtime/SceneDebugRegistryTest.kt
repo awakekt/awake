@@ -46,9 +46,10 @@ class SceneDebugRegistryTest {
 
     private class Frame(val renderer: LineRecorder, val runtime: SceneAppLifecycleRuntime)
 
-    private fun frameWith(registry: DebugRegistry?): LineRecorder = playFrame(registry).renderer
+    private suspend fun frameWith(registry: DebugRegistry?): LineRecorder = playFrame(registry).renderer
 
-    private fun playFrame(registry: DebugRegistry?): Frame {
+    // Suspending, not a runTest of its own: on wasmJs and JS runTest returns before its body has run.
+    private suspend fun playFrame(registry: DebugRegistry?): Frame {
         val renderer = LineRecorder()
         val input = Input()
         val runtime = SceneAppLifecycleRuntime(
@@ -75,7 +76,7 @@ class SceneDebugRegistryTest {
                 }
             },
         )
-        runTest { runtime.ready(renderer) }
+        runtime.ready(renderer)
         runtime.update(AppFrame(1f / 60f, 800f, 600f, input.snapshot(), density = 1f))
         return Frame(renderer, runtime)
     }
@@ -95,7 +96,7 @@ class SceneDebugRegistryTest {
     }
 
     @Test
-    fun aRegisteredRegistrysSourcesDrawThroughTheDefaultSystems() {
+    fun aRegisteredRegistrysSourcesDrawThroughTheDefaultSystems() = runTest {
         val registry = DebugRegistry(setOf("cells")).also { it.register(OneLine()) }
 
         val renderer = frameWith(registry)
@@ -106,7 +107,7 @@ class SceneDebugRegistryTest {
     }
 
     @Test
-    fun aRegisteredRegistrysSourcesShowTheirRowsInAPanelOnTheCanvas() {
+    fun aRegisteredRegistrysSourcesShowTheirRowsInAPanelOnTheCanvas() = runTest {
         val registry = DebugRegistry(setOf("cells")).also { it.register(Reading()) }
 
         val runtime = playFrame(registry).runtime
@@ -118,7 +119,7 @@ class SceneDebugRegistryTest {
     }
 
     @Test
-    fun withNoSourceOnOrNoRegistryThereIsNoPanel() {
+    fun withNoSourceOnOrNoRegistryThereIsNoPanel() = runTest {
         val off = DebugRegistry(emptySet()).also { it.register(Reading()) }
 
         assertEquals(emptyMap(), panelTexts(playFrame(off).runtime), "a registry whose source is off")
@@ -126,7 +127,7 @@ class SceneDebugRegistryTest {
     }
 
     @Test
-    fun withNoRegistryTheDefaultSystemsDrawNoLines() {
+    fun withNoRegistryTheDefaultSystemsDrawNoLines() = runTest {
         assertEquals(0, frameWith(null).lineCalls.size)
     }
 }

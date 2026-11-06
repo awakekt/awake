@@ -698,6 +698,13 @@ jobs:
       - name: Physics backend verification (wasmJs)
         run: ./gradlew :awake:backend:jolt:wasmJsTest :awake:scene:physics:wasmJsTest
 
+      # Scene asset prewarm (#1316) on wasmJs: the same commonTest suites as desktop, including a glTF
+      # model decoded in the session's scope and adopted on the frame thread, where wasm has one
+      # thread and Dispatchers.Default is the browser's event loop. Every test shares one page and so
+      # one fixed-size Jolt heap: a test that leaves a physics world alive fails the ones after it.
+      - name: Scene prewarm verification (wasmJs)
+        run: ./gradlew --continue :awake:scene:runtime:wasmJsTest :awake:project:runtime:wasmJsTest
+
   # The WebGPU release pin is built only from a commit tagged v<release>, and on the tag run its
   # Consumer gate builds it before the release can publish. Without this job a tag would be the
   # first run of that build, its strictly constraints and its metadata check, on Linux at least. A
