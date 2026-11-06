@@ -97,10 +97,9 @@ object RenderQualityPolicy {
         deviceClass: GpuDeviceClass,
         budgets: RenderQualityBudgets = RenderQualityBudgets.Default,
     ): Float {
-        val budget = budgets.shortEdge(quality, deviceClass) ?: return RenderScale.FULL
+        val budget = budgets.shortEdge(quality, deviceClass)
         val shortEdge = minOf(outputWidth, outputHeight)
-        if (shortEdge <= 0 || shortEdge <= budget) return RenderScale.FULL
-        return RenderScale.coerce(budget.toFloat() / shortEdge)
+        return if (budget == null || shortEdge <= budget) RenderScale.FULL else RenderScale.coerce(budget.toFloat() / shortEdge)
     }
 
     /**
