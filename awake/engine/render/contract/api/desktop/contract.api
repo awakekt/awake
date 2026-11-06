@@ -253,6 +253,7 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
 	public final fun getExemptFromCoverings ()Z
 	public final fun getExtraUniformFloats ()[F
+	public final fun getFadeOpacity ()F
 	public final fun getInstanceColors ()Ljava/util/List;
 	public final fun getInstanceFrames ()Ljava/util/List;
 	public final fun getInstanceJointPalettes ()Ljava/util/List;
@@ -280,6 +281,7 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun setCullMode (Lcom/awakekt/awake/render/pipeline/CullMode;)V
 	public final fun setExemptFromCoverings (Z)V
 	public final fun setExtraUniformFloats ([F)V
+	public final fun setFadeOpacity (F)V
 	public final fun setInstanceColors (Ljava/util/List;)V
 	public final fun setInstanceFrames (Ljava/util/List;)V
 	public final fun setInstanceJointPalettes (Ljava/util/List;)V

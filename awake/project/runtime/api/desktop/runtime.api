@@ -54,6 +54,15 @@ public final class com/awakekt/awake/project/runtime/PhysicsCanvasOcclusion : co
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/project/runtime/PhysicsOccluderFading : com/awakekt/awake/ecs/System {
+	public static final field MAX_DEPTH I
+	public static final field MAX_HITS_PER_RAY I
+	public static final field STEP_PAST F
+	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/PhysicsSystem;)V
+	public final fun getOccluders ()I
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public final class com/awakekt/awake/project/runtime/ProjectComponentsKt {
 	public static final fun registerProjectComponents (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public static synthetic fun registerProjectComponents$default (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;

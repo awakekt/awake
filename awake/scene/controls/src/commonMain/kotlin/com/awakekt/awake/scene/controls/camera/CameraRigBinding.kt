@@ -35,6 +35,8 @@ import kotlin.reflect.KClass
  * @property flySpeed Translation speed in units per second when in free-fly mode.
  * @property collision Keeps a third-person eye above the ground and in front of the terrain; `null`,
  *   the default, leaves it free.
+ * @property occluderFade Fades what stands between a third-person eye and its target; `null`, the
+ *   default, fades nothing.
  */
 @Serializable
 @SerialName("camera_rig")
@@ -49,6 +51,7 @@ data class SceneCameraRig(
     val offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
     @PropertyRange(min = 0.0, exclusiveMin = true) val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
     val collision: SceneCameraCollision? = null,
+    val occluderFade: SceneOccluderFade? = null,
 ) : SceneComponent {
     /** [SceneCameraRig] as it was before `collision`: hidden, and kept so a consumer compiled against it still links. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -87,6 +90,7 @@ data class SceneCameraRig(
         }
         if (flySpeed <= 0f) add(SceneValidationIssue(path, "camera_rig.flySpeed must be greater than 0"))
         collision?.let { addAll(it.validate(path)) }
+        occluderFade?.let { addAll(it.validate(path)) }
     }
 }
 
@@ -115,6 +119,7 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
             offsetPosition.set(component.offset.x, component.offset.y, component.offset.z)
             flySpeed = component.flySpeed
             collision = component.collision?.toCameraCollision()
+            occluderFade = component.occluderFade?.toOccluderFade()
             // The mode's reset would replace the authored angles and distance.
             needsReset = false
         }
@@ -137,5 +142,6 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
         offset = component.offsetPosition.let { SceneVec3(it.x, it.y, it.z) },
         flySpeed = component.flySpeed,
         collision = component.collision?.toScene(),
+        occluderFade = component.occluderFade?.toScene(),
     )
 }

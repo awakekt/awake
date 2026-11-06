@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls.camera
 
 import com.awakekt.awake.core.camera.CameraCollision
+import com.awakekt.awake.core.camera.OccluderFade
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.Serializable
@@ -58,3 +59,28 @@ internal fun CameraCollision.toScene(): SceneCameraCollision = SceneCameraCollis
     easeOutSeconds = easeOutSeconds,
     obstacleLayers = obstacleLayers,
 )
+
+/**
+ * A third-person `camera_rig`'s occluder fading, as authored in a scene: `camera_rig.occluderFade`.
+ * Mapped field for field onto [OccluderFade]; see it for what each one does.
+ *
+ * @property opacity Opacity an occluder fades to, from 0 to 1.
+ * @property fadeSeconds Half-life of the fade, both ways, in seconds.
+ */
+@Serializable
+data class SceneOccluderFade(
+    @PropertyRange(min = 0.0, max = 1.0) val opacity: Float = OccluderFade.DEFAULT_OPACITY,
+    @PropertyRange(min = 0.0) val fadeSeconds: Float = OccluderFade.DEFAULT_FADE_SECONDS,
+) {
+    /** What is wrong with these values, reported under [path]. */
+    fun validate(path: String): List<SceneValidationIssue> = buildList {
+        if (opacity !in 0f..1f) add(SceneValidationIssue(path, "camera_rig.occluderFade.opacity must be within 0..1"))
+        if (fadeSeconds < 0f) add(SceneValidationIssue(path, "camera_rig.occluderFade.fadeSeconds must not be negative"))
+    }
+}
+
+/** The capability's setting for this authored fade. */
+internal fun SceneOccluderFade.toOccluderFade(): OccluderFade = OccluderFade(opacity = opacity, fadeSeconds = fadeSeconds)
+
+/** The authored form of [OccluderFade]. */
+internal fun OccluderFade.toScene(): SceneOccluderFade = SceneOccluderFade(opacity = opacity, fadeSeconds = fadeSeconds)

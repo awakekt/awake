@@ -138,6 +138,22 @@ heights, and the obstacle layers from its physics world. A host that runs its ow
 `CameraSystem(..., collisionProbes = ...)`; the maths is `CameraCollisionSolver` in
 `awake:core:camera`, usable without a scene. In code, set `CameraRig.collision = CameraCollision(...)`.
 
+#### Fading what blocks the view
+
+Props, trees and buildings don't pull the camera in. Fade them instead with `occluderFade`:
+
+```json
+{ "component": "camera_rig", "mode": "ThirdPerson", "target": "Player",
+  "collision": {}, "occluderFade": { "opacity": 0.35, "fadeSeconds": 0.2 } }
+```
+
+Each frame a played project with a physics world casts rays from the eye to the target's feet, chest
+and head against static bodies. Every body hit, other than terrain, eases down to `opacity` with a
+half-life of `fadeSeconds`, and back once it stops blocking. Its meshes, and those under its node,
+take a `DitherFade`: the shader discards a share of their pixels in a fixed screen pattern, so they
+stay in the opaque pass, need no sorting and keep their shadow. Code can set `DitherFade` on any mesh
+entity itself; the easing is `OccluderFader` in `awake:core:camera`.
+
 ### `movement_control`
 
 | Property | Type | Default | What it does |

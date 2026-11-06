@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls.camera
 
 import com.awakekt.awake.core.camera.CameraCollision
+import com.awakekt.awake.core.camera.OccluderFade
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
@@ -66,6 +67,12 @@ class CameraRig : Poolable {
      */
     var collision: CameraCollision? = null
 
+    /**
+     * Fades what stands between a [CameraMode.ThirdPerson] eye and its target, as a played project
+     * finds it with physics rays; `null`, the default, fades nothing.
+     */
+    var occluderFade: OccluderFade? = null
+
     /** The eased distance and free eye [collision] works from; started afresh when the mode changes. */
     internal val collisionState = CameraRigCollisionState()
 
@@ -81,6 +88,7 @@ class CameraRig : Poolable {
         offsetPosition.set(0f, DEFAULT_EYE_HEIGHT, 0f)
         flySpeed = DEFAULT_FLY_SPEED
         collision = null
+        occluderFade = null
         collisionState.reset()
     }
 

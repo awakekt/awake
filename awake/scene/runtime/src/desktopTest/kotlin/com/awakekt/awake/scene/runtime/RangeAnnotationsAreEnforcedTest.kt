@@ -126,7 +126,7 @@ class RangeAnnotationsAreEnforcedTest {
         },
         "perceiver" to { base -> JsonObject(base + ("faction" to JsonPrimitive("watch"))) },
         "locomotion_animation" to { base -> JsonObject(base + ("free" to JsonObject(emptyMap()))) },
-        "camera_rig" to { base -> JsonObject(base + ("collision" to JsonObject(emptyMap()))) },
+        "camera_rig" to { base -> JsonObject(base + ("collision" to JsonObject(emptyMap())) + ("occluderFade" to JsonObject(emptyMap()))) },
     )
 
     /** A style with every object that holds a ranged number, so each can be set out of range. */
@@ -207,6 +207,8 @@ class RangeAnnotationsAreEnforcedTest {
             "camera_rig.collision.groundMargin",
             "camera_rig.collision.radius",
             "camera_rig.collision.easeOutSeconds",
+            "camera_rig.occluderFade.opacity",
+            "camera_rig.occluderFade.fadeSeconds",
             "movement_control.speed",
             "movement_control.runSpeed",
             "movement_control.turnSpeed",
