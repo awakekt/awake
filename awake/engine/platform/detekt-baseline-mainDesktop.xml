@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>SuspendFunSwallowedCancellation:GraphicsEngine.kt:GraphicsEngine$catch (t: Throwable) { startupError = t logger.error(t) { "Failed to initialize graphics engine" } // After the log and startupError, so a handler that looks at either sees them. The backend // is half built, so the engine's own start-up has no retry. appLifecycle.reportError(AppErrorSource.Bootstrap, t, subject = "graphics engine") }</ID>
-  </CurrentIssues>
-</SmellBaseline>

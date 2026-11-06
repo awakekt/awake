@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>SuspendFunSwallowedCancellation:SaveScheduler.kt:SaveScheduler$catch (t: Throwable) { failureCause = t success = false }</ID>
-  </CurrentIssues>
-</SmellBaseline>

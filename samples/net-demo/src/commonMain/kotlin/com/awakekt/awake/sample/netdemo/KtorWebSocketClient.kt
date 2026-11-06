@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 /** Hard bound applied before any decode, so a hostile packet cannot make the decoder allocate. */
 const val MAX_PACKET_BYTES: Int = 1400
@@ -56,9 +57,12 @@ class KtorWebSocketClient(
 
     override val state: StateFlow<ConnectionState> = connectionState.asStateFlow()
 
+    // TooGenericExceptionCaught: whatever the connect throws is shown as the failure, then rethrown.
+    @Suppress("TooGenericExceptionCaught")
     suspend fun connect() {
         connectionState.value = ConnectionState.Connecting
-        val session = runCatching {
+        var connected = false
+        val session = try {
             client.webSocketSession {
                 url {
                     protocol = if (secure) URLProtocol.WSS else URLProtocol.WS
@@ -66,12 +70,16 @@ class KtorWebSocketClient(
                     port = this@KtorWebSocketClient.port
                     path(this@KtorWebSocketClient.path)
                 }
-            }
+            }.also { connected = true }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            connectionState.value = ConnectionState.Failed(failure.message ?: "connect failed")
+            throw failure
+        } finally {
+            // A connect cancelled part way leaves the client disconnected, not still connecting.
+            if (!connected && connectionState.value == ConnectionState.Connecting) connectionState.value = ConnectionState.Disconnected
         }
-            .getOrElse {
-                connectionState.value = ConnectionState.Failed(it.message ?: "connect failed")
-                throw it
-            }
         socket = session
         connectionState.value = ConnectionState.Connected(SessionId(0))
         scope.launch {

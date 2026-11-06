@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>SuspendFunSwallowedCancellation:VulkanEngine.kt:VulkanEngine$catch (failure: Throwable) { runCatching { rollbackBackendCreation(createdRenderer, renderFeatures, depthPrePass, sceneDepthPass, maskPass) }.onFailure { cleanupFailure -> failure.addSuppressed(cleanupFailure) } throw failure }</ID>
-  </CurrentIssues>
-</SmellBaseline>
