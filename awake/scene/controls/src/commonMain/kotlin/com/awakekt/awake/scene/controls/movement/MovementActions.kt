@@ -47,6 +47,12 @@ object MovementActions {
  *
  * [PlayerInputSystem] calls it once it has read the keys. A system that adds another source to the
  * actions afterwards, such as on-screen controls, calls it again.
+ *
+ * It runs every frame, so it overwrites whatever else wrote a player's `moveX` and `moveZ`. A game
+ * that takes over a player's motion, such as a flight model driving a free-moving character from the
+ * player's input, sets the control's [MovementControl.driver] to [MovementDriver.Agent] while it does:
+ * this leaves the control alone, and the game reads the actions itself and writes the world velocity.
+ * Setting it back to [MovementDriver.Player] hands the control back.
  */
 fun World.steerPlayers(actions: InputActions) {
     val moveX = actions.axisX(MovementActions.MOVE)

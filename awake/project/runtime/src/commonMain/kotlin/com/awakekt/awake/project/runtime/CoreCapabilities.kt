@@ -153,7 +153,7 @@ internal object PhysicsCapability : SceneCapability {
         if (scene.uses(SceneCharacterController::class)) {
             // Before the character step builds each controller: a sensor sees a character only by a body of its own.
             if (scene.nodes.any { it.hasSensor() }) plan.fixed("character-sensor-bodies") { CharacterSensorBodies() }
-            plan.fixed("character") { CharacterControllerSystem(requireNotNull(it.physics)) }
+            plan.fixed(SceneSystemPlan.CHARACTER_CONTROLLER) { CharacterControllerSystem(requireNotNull(it.physics)) }
         }
     }
 }
