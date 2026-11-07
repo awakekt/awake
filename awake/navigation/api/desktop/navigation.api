@@ -243,3 +243,194 @@ public final class com/awakekt/awake/navigation/grid/TileField : com/awakekt/awa
 	public fun isWalkable (II)Z
 }
 
+public final class com/awakekt/awake/navigation/walkable/NavAgent {
+	public static final field Companion Lcom/awakekt/awake/navigation/walkable/NavAgent$Companion;
+	public static final field DEFAULT_HEIGHT F
+	public static final field DEFAULT_RADIUS F
+	public static final field DEFAULT_SLOPE_DEGREES F
+	public static final field DEFAULT_STEP_HEIGHT F
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHeight ()F
+	public final fun getMaxSlopeDegrees ()F
+	public final fun getRadius ()F
+	public final fun getStepHeight ()F
+	public final fun requiredClearance (F)I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavAgent$Companion {
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavAreas {
+	public static final field Companion Lcom/awakekt/awake/navigation/walkable/NavAreas$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/navigation/walkable/NavWater;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/navigation/walkable/NavWater;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getNoWalk ()Ljava/util/List;
+	public final fun getObstacles ()Ljava/util/List;
+	public final fun getWater ()Lcom/awakekt/awake/navigation/walkable/NavWater;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavAreas$Companion {
+	public final fun getNONE ()Lcom/awakekt/awake/navigation/walkable/NavAreas;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavClearance {
+	public static final field INSTANCE Lcom/awakekt/awake/navigation/walkable/NavClearance;
+	public static final field MAX I
+	public static final field UNITS_PER_SAMPLE I
+}
+
+public abstract class com/awakekt/awake/navigation/walkable/NavFootprint {
+	public abstract fun contains (FF)Z
+	public abstract fun getMaxX ()F
+	public abstract fun getMaxZ ()F
+	public abstract fun getMinX ()F
+	public abstract fun getMinZ ()F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavFootprint$Circle : com/awakekt/awake/navigation/walkable/NavFootprint {
+	public fun <init> (FFF)V
+	public fun contains (FF)Z
+	public final fun getCenterX ()F
+	public final fun getCenterZ ()F
+	public fun getMaxX ()F
+	public fun getMaxZ ()F
+	public fun getMinX ()F
+	public fun getMinZ ()F
+	public final fun getRadius ()F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavFootprint$Rect : com/awakekt/awake/navigation/walkable/NavFootprint {
+	public fun <init> (FFFF)V
+	public fun contains (FF)Z
+	public fun getMaxX ()F
+	public fun getMaxZ ()F
+	public fun getMinX ()F
+	public fun getMinZ ()F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavObstacle {
+	public fun <init> (Lcom/awakekt/awake/navigation/walkable/NavFootprint;FF)V
+	public final fun blocks (FLcom/awakekt/awake/navigation/walkable/NavAgent;)Z
+	public final fun getFootprint ()Lcom/awakekt/awake/navigation/walkable/NavFootprint;
+	public final fun getMaxY ()F
+	public final fun getMinY ()F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavPath {
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun get (ILcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSize ()I
+	public final fun getStatus ()Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public final fun isEmpty ()Z
+	public final fun toList ()Ljava/util/List;
+	public final fun x (I)F
+	public final fun y (I)F
+	public final fun z (I)F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavPathQuery {
+	public static final field Companion Lcom/awakekt/awake/navigation/walkable/NavPathQuery$Companion;
+	public static final field DEFAULT_MAX_EXPANDED_NODES I
+	public static final field DEFAULT_SNAP_SAMPLES I
+	public fun <init> (Lcom/awakekt/awake/navigation/walkable/NavSurface;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;II)V
+	public synthetic fun <init> (Lcom/awakekt/awake/navigation/walkable/NavSurface;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun findPath (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/navigation/walkable/NavAgent;Lcom/awakekt/awake/navigation/walkable/NavPath;)Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public final fun getLastExpandedNodes ()I
+	public final fun getMaxExpandedNodes ()I
+	public final fun getSnapSamples ()I
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavPathQuery$Companion {
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavPathStatus : java/lang/Enum {
+	public static final field Complete Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public static final field NoPath Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public static final field None Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public static final field Partial Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+	public static fun values ()[Lcom/awakekt/awake/navigation/walkable/NavPathStatus;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavRegion {
+	public fun <init> (FFIIF)V
+	public final fun getDepth ()I
+	public final fun getOriginX ()F
+	public final fun getOriginZ ()F
+	public final fun getSampleSize ()F
+	public final fun getWidth ()I
+}
+
+public abstract interface class com/awakekt/awake/navigation/walkable/NavSurface {
+	public abstract fun clearance (II)I
+	public abstract fun getOriginX ()F
+	public abstract fun getOriginZ ()F
+	public abstract fun getSampleSize ()F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavSurfaceBakeKt {
+	public static final fun bakeNavSurface (Lcom/awakekt/awake/navigation/walkable/NavRegion;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;Lcom/awakekt/awake/navigation/walkable/NavAgent;Lcom/awakekt/awake/navigation/walkable/NavAreas;F)Lcom/awakekt/awake/navigation/walkable/NavSurfaceTile;
+	public static synthetic fun bakeNavSurface$default (Lcom/awakekt/awake/navigation/walkable/NavRegion;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;Lcom/awakekt/awake/navigation/walkable/NavAgent;Lcom/awakekt/awake/navigation/walkable/NavAreas;FILjava/lang/Object;)Lcom/awakekt/awake/navigation/walkable/NavSurfaceTile;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavSurfaceCodec {
+	public static final field INSTANCE Lcom/awakekt/awake/navigation/walkable/NavSurfaceCodec;
+	public static final field VERSION I
+	public final fun decode ([B)Lcom/awakekt/awake/navigation/walkable/NavSurfaceTile;
+	public final fun encode (Lcom/awakekt/awake/navigation/walkable/NavSurfaceTile;)[B
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavSurfaceKt {
+	public static final fun toNavSurface (Lcom/awakekt/awake/navigation/grid/NavGridTile;)Lcom/awakekt/awake/navigation/walkable/NavSurfaceTile;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavSurfaceMesh : com/awakekt/awake/navigation/NavMesh {
+	public fun <init> (Lcom/awakekt/awake/navigation/walkable/NavSurface;Lcom/awakekt/awake/navigation/walkable/NavAgent;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/navigation/walkable/NavSurface;Lcom/awakekt/awake/navigation/walkable/NavAgent;Lcom/awakekt/awake/navigation/grid/NavGroundHeight;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun findPath (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavSurfaceTile : com/awakekt/awake/navigation/walkable/NavSurface {
+	public fun <init> (IIFFF[B)V
+	public fun clearance (II)I
+	public final fun copyClearance ()[B
+	public final fun getDepth ()I
+	public fun getOriginX ()F
+	public fun getOriginZ ()F
+	public fun getSampleSize ()F
+	public final fun getWalkableCount ()I
+	public final fun getWidth ()I
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavTiledSurface : com/awakekt/awake/navigation/walkable/NavSurface {
+	public fun <init> (IIIFFF)V
+	public synthetic fun <init> (IIIFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun clearance (II)I
+	public fun getOriginX ()F
+	public fun getOriginZ ()F
+	public fun getSampleSize ()F
+	public final fun getTileSamples ()I
+	public final fun getTilesX ()I
+	public final fun getTilesZ ()I
+	public final fun put (IILcom/awakekt/awake/navigation/walkable/NavSurfaceTile;)V
+	public final fun regionOf (II)Lcom/awakekt/awake/navigation/walkable/NavRegion;
+	public final fun remove (II)V
+	public final fun tileAt (II)Lcom/awakekt/awake/navigation/walkable/NavSurfaceTile;
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavWater {
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun blocks (F)Z
+	public final fun getMaxDepth ()F
+	public final fun getSurfaceY ()F
+}
+
