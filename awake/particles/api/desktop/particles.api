@@ -162,6 +162,7 @@ public final class com/awakekt/awake/particles/ParticleEmitter2D {
 	public final fun getSize ()F
 	public final fun getSortOrder ()I
 	public final fun getSortingLayer ()Ljava/lang/String;
+	public final fun getSpace ()Lcom/awakekt/awake/particles/ParticleSpace;
 	public final fun getSpawnRate ()F
 	public final fun getSpawnShape ()Lcom/awakekt/awake/core/particles/ParticleSpawnShape;
 	public final fun getSpeed ()F
@@ -201,6 +202,7 @@ public final class com/awakekt/awake/particles/ParticleEmitter2D {
 	public final fun setSize (F)V
 	public final fun setSortOrder (I)V
 	public final fun setSortingLayer (Ljava/lang/String;)V
+	public final fun setSpace (Lcom/awakekt/awake/particles/ParticleSpace;)V
 	public final fun setSpawnRate (F)V
 	public final fun setSpawnShape (Lcom/awakekt/awake/core/particles/ParticleSpawnShape;)V
 	public final fun setSpeed (F)V
