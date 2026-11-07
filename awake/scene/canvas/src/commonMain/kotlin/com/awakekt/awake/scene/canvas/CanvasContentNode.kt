@@ -45,6 +45,9 @@ class CanvasContentNode internal constructor(
     /** Whether a child was inserted before another or moved this pass, so the children's places need writing. */
     internal var reordered = false
 
+    /** Whether this pass's content declared `compose { }`. */
+    internal var composes = false
+
     /** Entities under this node the applier did not declare, such as a placed prefab's, destroyed with it. */
     internal var owned: List<Entity> = emptyList()
 }

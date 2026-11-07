@@ -40,9 +40,9 @@ class CanvasEntityApplier(val world: World, root: Entity) : Applier {
     private val stack = ArrayList<CanvasContentNode>()
     private var current = this.root
 
-    /** How many canvas components and sibling places this applier has written or removed. */
+    /** How many canvas components, sibling places and element Compose contents this applier has written or removed. */
     var writes: Long = 0L
-        private set
+        internal set
 
     /** How many entities this applier has made for a declaration. */
     var created: Long = 0L

@@ -140,6 +140,13 @@ class CanvasElement : CanvasElementWidgetFields() {
     /** See [CanvasPointerState.heldSeconds]. */
     val heldSeconds: Float get() = pointer.heldSeconds
 
+    /**
+     * Compose UI the element draws in its box, under the elements inside it; null for none. Set by
+     * code, such as declarative canvas content's `compose { }`. It is not one of the element's
+     * components: it is never saved, and setting it changes no [componentsVersion].
+     */
+    var composeContent: CanvasComposeContent? = null
+
     /** Default dimensions and styling metrics for canvas elements. */
     companion object {
         /** Default edge inset offset in dp. */

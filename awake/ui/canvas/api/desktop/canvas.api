@@ -477,6 +477,12 @@ public final synthetic class com/awakekt/awake/ui/canvas/CanvasCluster$$serializ
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasComposeContent {
+	public fun <init> (Lcom/awakekt/awake/compose/runtime/ProvidedLocals;Lkotlin/jvm/functions/Function2;)V
+	public final fun getContent ()Lkotlin/jvm/functions/Function2;
+	public final fun getLocals ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasControlAdjust {
 	public fun <init> ()V
 	public fun <init> (FFFF)V
@@ -736,6 +742,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement : com/awakekt/awake
 	public final fun getAimX ()F
 	public final fun getAimY ()F
 	public final fun getAiming ()Z
+	public final fun getComposeContent ()Lcom/awakekt/awake/ui/canvas/CanvasComposeContent;
 	public final fun getDragging ()Z
 	public final fun getDropped ()Lcom/awakekt/awake/ui/canvas/CanvasElement;
 	public final fun getDroppedOutside ()Lcom/awakekt/awake/core/math2d/Vec2;
@@ -750,6 +757,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement : com/awakekt/awake
 	public final fun getStickY ()F
 	public final fun isHeld ()Z
 	public final fun isHovered ()Z
+	public final fun setComposeContent (Lcom/awakekt/awake/ui/canvas/CanvasComposeContent;)V
 	public final fun setFocused (Z)V
 }
 
