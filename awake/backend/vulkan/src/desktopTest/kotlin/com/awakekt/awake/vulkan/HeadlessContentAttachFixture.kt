@@ -48,6 +48,8 @@ internal fun Renderer.bindShadowDepth(target: DepthTarget) {
 internal class HeadlessContentAttachFixture private constructor(
     val renderer: Renderer,
     val attacher: ContentFeatureAttacher<RenderPipeline>,
+    /** Where attached features' pipelines are registered, to check when one is released. */
+    val registry: PipelineRegistry<RenderPipeline>,
     private val device: GraphicsDevice,
     private val cleanup: () -> Unit,
 ) {
@@ -135,7 +137,7 @@ internal class HeadlessContentAttachFixture private constructor(
             ) { vertex, _ -> compileWgsl(vertex) }
             if (presentable) swapchainManager.createSyncObjects()
             val headless = headlessCleanup(graphicsDevice, transferContext, sceneRenderPass, material.descriptorSetLayout, primary)
-            return HeadlessContentAttachFixture(renderer, attacher, graphicsDevice) {
+            return HeadlessContentAttachFixture(renderer, attacher, registry, graphicsDevice) {
                 registry.destroyAll { it.destroy() }
                 attacher.releaseAll()
                 shadowPlaceholder.destroy()

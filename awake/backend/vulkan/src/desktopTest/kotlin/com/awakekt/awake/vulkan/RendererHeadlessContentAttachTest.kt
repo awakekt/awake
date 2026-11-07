@@ -39,7 +39,8 @@ import org.junit.AfterClass
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -86,17 +87,30 @@ class RendererHeadlessContentAttachTest {
         }
     }
 
+    /**
+     * Two terrains of one shader set draw through one pipeline, with their own heightmaps: the
+     * second, twice as tall, covers more than the first alone. The pipeline goes with the last.
+     * Before awakekt/awake#1461 the second attach threw.
+     */
     @Test
-    fun aSecondTerrainWithTheSameSpecIsRejected() {
-        val attacher = shared().attacher
-        val terrain = runBlocking { attacher.attachContentFeature(terrainSource()) }
-        try {
-            assertFailsWith<IllegalArgumentException> {
-                runBlocking { attacher.attachContentFeature(terrainSource()) }
-            }
-        } finally {
-            terrain.detach()
-        }
+    fun terrainsOfOneShaderSetShareOnePipelineUntilTheLastDetaches() {
+        val fixture = shared()
+        val low = runBlocking { fixture.attacher.attachContentFeature(terrainSource()) }
+        val alone = render().covered
+        val high = runBlocking { fixture.attacher.attachContentFeature(terrainContentFeature(PackShaderSets.Terrain, dome(2f), CONFIG)) }
+        val both = render().covered
+        val spec = fixture.registry.specs.single()
+
+        low.detach()
+        val afterFirst = fixture.registry[spec]
+        val highAlone = render().covered
+        high.detach()
+
+        assertTrue(both > alone, "The taller second terrain added nothing: $both pixels against $alone.")
+        assertNotNull(afterFirst, "The pipeline went while a terrain still drew through it.")
+        assertTrue(highAlone > MIN_COVERED, "The remaining terrain covered only $highAlone pixels.")
+        assertNull(fixture.registry[spec], "The pipeline outlived the last terrain drawing through it.")
+        assertEquals(0, render().covered)
     }
 
     /**
@@ -161,7 +175,7 @@ class RendererHeadlessContentAttachTest {
         const val OTHER_MAX = 40
 
         /** A radial dome, so the terrain covers a region a camera above it can see. */
-        fun dome() = Heightmap(
+        fun dome(heightFactor: Float = 1f) = Heightmap(
             samples = FloatArray(SAMPLES * SAMPLES) { index ->
                 val x = (index % SAMPLES - SAMPLES / 2f) / (SAMPLES / 2f)
                 val z = (index / SAMPLES - SAMPLES / 2f) / (SAMPLES / 2f)
@@ -169,7 +183,7 @@ class RendererHeadlessContentAttachTest {
             },
             width = SAMPLES,
             depth = SAMPLES,
-            scale = Vec3f(1f, HEIGHT_SCALE, 1f),
+            scale = Vec3f(1f, HEIGHT_SCALE * heightFactor, 1f),
         )
 
         fun terrainSource(): ContentFeatureSource = terrainContentFeature(PackShaderSets.Terrain, dome(), CONFIG)

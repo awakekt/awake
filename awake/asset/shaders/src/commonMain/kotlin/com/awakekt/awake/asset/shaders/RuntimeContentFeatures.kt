@@ -8,17 +8,15 @@ package com.awakekt.awake.asset.shaders
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.command.UniformBlockOwner
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
-import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
-import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
-import com.awakekt.awake.render.pipeline.PipelineRequest
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.texture.TextureUploadRecorder
 
@@ -31,9 +29,10 @@ import com.awakekt.awake.render.texture.TextureUploadRecorder
  * terrain?.detach()
  * ```
  *
- * Two limits, both rejected at attach: a feature that samples scene depth (its set layout is
- * fixed when the engine starts), and a second feature with the pipeline spec of one already
- * registered (the two would share one pipeline and one texture group).
+ * Features with the same pipeline spec, several terrains with one shader set say, share one
+ * pipeline; each keeps its own uniforms, textures, geometry and draw. One limit is rejected at
+ * attach: a feature that samples scene depth or the mask, whose set layouts are fixed when the
+ * engine starts.
  */
 interface ContentFeatureHost {
     /** Builds [source] against the running engine; it draws from the next frame. */
@@ -102,6 +101,25 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
 
     /** Returns once no submitted frame can still read a resource about to be freed. */
     fun awaitIdle()
+
+    /**
+     * Uploads [feature] into a uniform block and texture group of its own, laid out as
+     * [pipeline]'s group 0, so several features can draw through [pipeline] with their own
+     * uniforms and textures. Releasing the returned upload frees the group.
+     *
+     * @return null when this backend binds only the pipeline's own group, in which case a second
+     * feature with the same spec is refused.
+     */
+    fun uploadGroup(pipeline: P, feature: ContentFeature): ContentGroupUpload? = null
+
+    /**
+     * A depth pipeline built from [depth] over [pipeline]'s group 0, for every feature drawing
+     * through [pipeline] to cast through. The default builds one per caster through [addDepthCaster].
+     *
+     * @return null when this engine renders no depth pass.
+     */
+    suspend fun createDepthCaster(pipeline: P, depth: PipelineSpec): ContentDepthCaster? =
+        PerCasterDepthPipelines(this, pipeline, depth)
 }
 
 /**
@@ -120,13 +138,30 @@ suspend fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
             "allocated a block for its pipeline."
     }
     val upload = upload(pipeline, feature).also { uploads += it }
-    val gate = ContentFeaturePassGate(feature.build(handle(pipeline), block, upload.geometry), upload)
+    return gateContentFeature(feature, handle(pipeline), block, upload, uploads) { depth, gate ->
+        addDepthCaster(pipeline, depth, gate)
+    }
+}
+
+/**
+ * [feature] built over [block] and [upload], behind the pass gate, and cast into the depth pass
+ * through [cast] when it declares a [ContentFeature.depth] pipeline. The cast's upload joins [uploads].
+ */
+internal suspend fun gateContentFeature(
+    feature: ContentFeature,
+    pipeline: PipelineHandle,
+    block: UniformBlock,
+    upload: ContentUpload,
+    uploads: MutableList<ContentUpload>,
+    cast: suspend (PipelineSpec, ContentDepthSource) -> ContentUpload?,
+): RenderFeature<RenderFrameContext> {
+    val gate = ContentFeaturePassGate(feature.build(pipeline, block, upload.geometry), upload)
     feature.depth?.let { depth ->
         require(gate.feature is ContentDepthSource) {
             "Content feature '${feature.name}' declares a depth pipeline, but the feature it builds " +
                 "is not a ContentDepthSource, so the depth pass would have nothing to draw."
         }
-        addDepthCaster(pipeline, depth, gate)?.let { uploads += it }
+        cast(depth, gate)?.let { uploads += it }
     }
     return gate
 }
@@ -186,73 +221,5 @@ class AttachedContentSlot : RenderFeature<RenderFrameContext> {
     override fun destroy() {
         features.forEach { it.destroy() }
         features.clear()
-    }
-}
-
-/**
- * [ContentFeatureHost] over one engine's [gpu]. The engine records [beforeGeometry] and
- * [afterGeometry] in its scene pass and calls [releaseAll] after destroying its pipelines.
- */
-class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeatureGpu<P>) : ContentFeatureHost {
-    val beforeGeometry = AttachedContentSlot()
-    val afterGeometry = AttachedContentSlot()
-    private val attached = mutableListOf<Attachment>()
-
-    override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature {
-        val feature = source.resolve(gpu.backend)
-        require(!feature.samplesSceneDepth && !feature.samplesMask) {
-            "Content feature '${feature.name}' samples scene depth or the mask, whose set layouts are " +
-                "fixed when the engine starts. Declare it in the RenderPlan instead."
-        }
-        require(gpu.registry[feature.spec] == null) {
-            "Content feature '${feature.name}' has the pipeline spec of one already registered; " +
-                "the two would share one pipeline and one texture group."
-        }
-        gpu.registry.register(listOf(PipelineRequest(PipelineKey.Content(feature.name), feature.spec)))
-        val uploads = mutableListOf<ContentUpload>()
-        var builtWhole = false
-        val built = try {
-            gpu.buildContentFeature(feature, uploads).also {
-                require(it.pass == RenderPassSlot.Scene) {
-                    "Content feature '${feature.name}' records in ${it.pass}; attached features " +
-                        "record in the scene pass."
-                }
-                builtWhole = true
-            }
-        } finally {
-            // Whatever failed or cancelled the build mid-way, release what it allocated. Nothing has
-            // recorded with them yet, so no frame can be reading them.
-            if (!builtWhole) {
-                gpu.registry.remove(feature.spec)?.let(gpu::destroyPipeline)
-                uploads.forEach(ContentUpload::release)
-            }
-        }
-        val slot = if (feature.paint == ContentPaint.BeforeGeometry) beforeGeometry else afterGeometry
-        slot.add(built)
-        return Attachment(feature, built, slot, uploads).also { attached += it }
-    }
-
-    /** Frees every still-attached feature's uploads. For engine teardown, after the renderer
-     * destroyed its features and the registry its pipelines. */
-    fun releaseAll() {
-        attached.forEach { it.uploads.forEach(ContentUpload::release) }
-        attached.clear()
-    }
-
-    private inner class Attachment(
-        val feature: ContentFeature,
-        val built: RenderFeature<RenderFrameContext>,
-        val slot: AttachedContentSlot,
-        val uploads: List<ContentUpload>,
-    ) : AttachedContentFeature {
-        override fun detach() {
-            if (!attached.remove(this)) return
-            slot.remove(built)
-            // Earlier frames may still be reading the pipeline and textures freed below.
-            gpu.awaitIdle()
-            built.destroy()
-            gpu.registry.remove(feature.spec)?.let(gpu::destroyPipeline)
-            uploads.forEach(ContentUpload::release)
-        }
     }
 }

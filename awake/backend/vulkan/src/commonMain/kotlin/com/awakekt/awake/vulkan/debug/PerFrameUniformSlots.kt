@@ -5,8 +5,11 @@
  */
 package com.awakekt.awake.vulkan.debug
 
+import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.renderer.UniformLayout
+import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -153,6 +156,13 @@ internal class PerFrameUniformSlots(
 
     fun write(frameIndex: Int, floats: FloatArray) {
         VulkanBuffers.writeBufferMemoryFloats(device, this[frameIndex].bufferMemory, 0, floats)
+    }
+
+    /** These slots as a [UniformBlock] laid out by [layout]: one slot per frame index. */
+    fun uniformBlock(layout: UniformLayout): UniformBlock = object : UniformBlock {
+        override fun binding(frameIndex: Int) = this@PerFrameUniformSlots[frameIndex]
+        override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) =
+            this@PerFrameUniformSlots.write(frameIndex, UniformWriter(layout).apply(fill).build())
     }
 
     /**

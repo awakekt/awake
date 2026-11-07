@@ -97,12 +97,14 @@ class ContentFeatureAttacherTest {
         assertTrue(gpu.registry.specs.isEmpty())
     }
 
+    /** Without a group of its own a second feature would overwrite the first one's textures. */
     @Test
-    fun aSecondFeatureWithTheSameSpecIsRejected() = runTest {
+    fun aSecondFeatureWithTheSameSpecIsRejectedWhereTheBackendHasNoGroups() = runTest {
         attacher.attachContentFeature(source("sky"))
 
         assertFailsWith<IllegalArgumentException> { attacher.attachContentFeature(source("sky")) }
         assertEquals(listOf("upload sky"), events)
+        assertEquals(1, gpu.registry.specs.size)
     }
 
     /** Nothing has recorded with a half-built feature, so its pipeline and uploads go straight away. */
@@ -166,13 +168,13 @@ class ContentFeatureAttacherTest {
         ) { _, _, _ -> build() }
     }
 
-    private class CastingFeature(name: String, events: MutableList<String>) :
+    internal class CastingFeature(name: String, events: MutableList<String>) :
         RenderFeature<RenderFrameContext> by RecordingFeature(name, events),
         ContentDepthSource {
         override fun depthDraw(frameIndex: Int, environment: GpuEnvironmentState): PreparedDraw = DRAW
     }
 
-    private class RecordingFeature(val name: String, val events: MutableList<String>) : RenderFeature<RenderFrameContext> {
+    internal class RecordingFeature(val name: String, val events: MutableList<String>) : RenderFeature<RenderFrameContext> {
         override val pass = RenderPassSlot.Scene
 
         override fun recordCommands(context: RenderFrameContext) {
@@ -184,7 +186,7 @@ class ContentFeatureAttacherTest {
         }
     }
 
-    private class FakePipeline : UniformBlockOwner {
+    internal class FakePipeline : UniformBlockOwner {
         override val uniformBlock: UniformBlock = object : UniformBlock {
             override fun binding(frameIndex: Int): MaterialBinding = error("not recorded in these tests")
 
@@ -192,7 +194,7 @@ class ContentFeatureAttacherTest {
         }
     }
 
-    private class RecordingGpu(val events: MutableList<String>) : ContentFeatureGpu<FakePipeline> {
+    internal class RecordingGpu(val events: MutableList<String>) : ContentFeatureGpu<FakePipeline> {
         override val backend = RenderBackend.Vulkan
         override val registry = PipelineRegistry(PipelineFactory { _, _ -> FakePipeline() })
         val depthSources = mutableListOf<ContentDepthSource>()
@@ -221,7 +223,7 @@ class ContentFeatureAttacherTest {
         }
     }
 
-    private companion object {
+    internal companion object {
         val DRAW = object : PreparedDraw {
             override val pipeline = object : PipelineHandle {}
             override val materialBinding = object : MaterialBinding {}
