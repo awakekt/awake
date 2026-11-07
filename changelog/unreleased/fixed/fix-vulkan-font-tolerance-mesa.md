@@ -1,1 +1,0 @@
-- The two-font Vulkan pixel test allows a four-level channel difference, so a newer Mesa software renderer (Ubuntu 26.04 CI images) no longer fails it on one glyph-edge pixel.
