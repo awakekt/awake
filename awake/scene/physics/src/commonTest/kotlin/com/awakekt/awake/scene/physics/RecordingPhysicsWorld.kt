@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.BodyTransform
+import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.Buoyancy
 import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.CollisionLayers
@@ -85,6 +86,15 @@ internal class RecordingPhysicsWorld : PhysicsWorld {
         action(it.handle, scratchPosition.set(it.position), scratchRotation.set(it.rotation))
     }
 
+    /** [forEachBodyTransform] without boxing a handle or allocating an iterator, as the real backends do. */
+    override fun visitBodyTransforms(visitor: BodyTransformVisitor) {
+        val transforms = scriptedTransforms
+        for (index in transforms.indices) {
+            val transform = transforms[index]
+            visitor.visit(transform.handle.id, scratchPosition.set(transform.position), scratchRotation.set(transform.rotation))
+        }
+    }
+
     override fun setLinearVelocity(handle: BodyHandle, velocity: Vec3f) = Unit
     override fun setAngularVelocity(handle: BodyHandle, velocity: Vec3f) = Unit
     override fun getLinearVelocity(handle: BodyHandle): Vec3f = Vec3f(0f, 0f, 0f)
@@ -142,7 +152,8 @@ internal class RecordingPhysicsWorld : PhysicsWorld {
     val pendingContacts = mutableListOf<ContactEvent>()
 
     override fun drainContacts(action: (ContactEvent) -> Unit) {
-        pendingContacts.forEach(action)
+        // By index: an iterator here would be the allocation probes' only garbage, and it isn't the engine's.
+        for (index in pendingContacts.indices) action(pendingContacts[index])
         pendingContacts.clear()
     }
     override fun destroy() = Unit

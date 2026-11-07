@@ -41,7 +41,9 @@ context(_: Composer)
  * @param modifier Layout modifier applied to the overlay container.
  * @param showTouchControls Whether touch-only elements should be displayed.
  * @param images The decoded images elements name, by path, as [loadCanvasImages] reads them. An
- *   element whose image is missing draws without it.
+ *   element whose image is missing draws without it. It is looked up only for elements that show,
+ *   each frame they draw, so a map that gains images later, such as `AssetImages.asMap()`, draws
+ *   each one once it arrives and is asked only for the images of elements that show.
  * @param scale Multiplies every element's size, offset, text and image pixels: 2 draws 1x art at
  *   twice its size. Edges land on whole pixels at any scale, so pixel art stays crisp. A scale that
  *   is not above 0 draws at 1.

@@ -8,6 +8,7 @@ package com.awakekt.awake.ecs.benchmark
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.Buoyancy
 import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.CollisionLayers
@@ -56,10 +57,14 @@ class AwakeBodiesPhysicsWorld : PhysicsWorld {
 
     override fun step(deltaTime: Float) = Unit
 
-    override fun forEachBodyTransform(action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit) {
+    override fun forEachBodyTransform(action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit) =
+        visitBodyTransforms { id, position, rotation -> action(BodyHandle(id), position, rotation) }
+
+    // As every Awake backend does since #1428: the handle goes out as its raw id, so nothing is boxed per body.
+    override fun visitBodyTransforms(visitor: BodyTransformVisitor) {
         for (index in 0 until count) {
             scratchPosition.set(index.toFloat(), 1f, 0f)
-            action(BodyHandle(handles[index]), scratchPosition, scratchRotation)
+            visitor.visit(handles[index], scratchPosition, scratchRotation)
         }
     }
 

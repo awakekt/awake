@@ -18,6 +18,7 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BallSocketConstraint
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.Buoyancy
 import com.awakekt.awake.physics.CapsuleShape
@@ -1055,7 +1056,9 @@ class JoltPhysicsWorld(
      */
     override fun forEachBodyTransform(
         action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit,
-    ) = memScoped {
+    ) = visitBodyTransforms { id, position, rotation -> action(BodyHandle(id), position, rotation) }
+
+    override fun visitBodyTransforms(visitor: BodyTransformVisitor) = memScoped {
         val position = alloc<JPC_RVec3>()
         val rotation = alloc<JPC_Quat>()
         trackedBodyIds.forEach { id ->
@@ -1065,7 +1068,7 @@ class JoltPhysicsWorld(
             scratchOutRotation.y = rotation.y
             scratchOutRotation.z = rotation.z
             scratchOutRotation.w = rotation.w
-            action(BodyHandle(id.toLong()), scratchOutPosition, scratchOutRotation)
+            visitor.visit(id.toLong(), scratchOutPosition, scratchOutRotation)
         }
     }
 
