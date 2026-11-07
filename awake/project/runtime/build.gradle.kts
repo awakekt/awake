@@ -66,6 +66,14 @@ kotlin {
     }
 }
 
+// SceneInstanceCostTest prints what a scene instance costs against loading the project again (#1435);
+// this copies that one line into the build log, which shows test events but not test output.
+tasks.withType<Test>().configureEach {
+    addTestOutputListener { _, output ->
+        if (output.message.startsWith("scene instance cost")) logger.lifecycle(output.message.trim())
+    }
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Project Runtime")
