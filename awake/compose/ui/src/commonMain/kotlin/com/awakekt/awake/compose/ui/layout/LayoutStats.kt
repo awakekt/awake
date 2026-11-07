@@ -9,9 +9,9 @@ package com.awakekt.awake.compose.ui.layout
  * Frame counters, off by default and free when off.
  *
  * [intrinsicQueries] exists because an intrinsic costs an extra tree walk and Compose never says
- * when you paid for one. `awake-ui-performance` Rule 4's whole lesson is that an expensive path
- * which is silent when unarmed is the one that ships wrong -- `cacheKey` was exactly that. Same
- * zero-cost-when-disabled contract `UiMeasureTrialStats` already has.
+ * when you paid for one. `awake-ui-performance` Rule 2 is about exactly this: intrinsics are the
+ * extra walk, and they are silent, so the counter is how a caller sees what they cost. Turning it
+ * on is opt-in, and while it is off the record call is a single branch.
  */
 object LayoutStats {
     /** Whether counting is on. While it is `false`, [recordIntrinsicQuery] does nothing. */

@@ -15,8 +15,8 @@ package com.awakekt.awake.compose.runtime
  * call in between -- theme, density, text style.
  *
  * Scoped to composition rather than attached to nodes: a provider is a window in the pass, and a
- * read resolves against whatever is open. `ui-core`'s equivalent is a push/pop pair on `UiContext`,
- * which leaks its value if the content between them throws; [CompositionLocalProvider] cannot.
+ * read resolves against whatever is open. The removed `ui-core`'s equivalent was a push/pop pair on
+ * `UiContext`, which leaked its value if the content between them threw; [CompositionLocalProvider] cannot.
  *
  * Note for Stage 2: once a subtree can recompose on its own, provided values have to live on the
  * node instead, because that subtree's pass will not start at the root. Nothing here assumes

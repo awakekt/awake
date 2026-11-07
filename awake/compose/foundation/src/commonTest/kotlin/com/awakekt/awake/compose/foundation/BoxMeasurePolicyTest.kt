@@ -23,8 +23,8 @@ class BoxMeasurePolicyTest {
 
     @Test
     fun theBoxShrinkWrapsToItsLargestChild() {
-        // Compose's default. ui-core's box() defaults to FillMax, which mirror-map records as a
-        // divergence and which this engine deliberately does not carry forward.
+        // Compose's default. The removed ui-core's box() defaulted to FillMax, a divergence this
+        // engine deliberately did not carry forward.
         val small = child(20, 10)
         val large = child(50, 30)
         val boxNode = box(small, large)
