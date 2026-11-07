@@ -36,13 +36,16 @@ class AnimationSystem(
             }
             // Far models pose less often when a rate is set; the clock still advances so a held pose
             // resumes on time. The cull/draw gating above is untouched: a drawn model is still posed.
+            // This frame's delta counts toward the hold before testing it, so an interval shorter than
+            // a frame poses every frame, and the overshoot carries into the next hold so the pose rate
+            // averages 1 / interval instead of rounding each hold up a whole frame (#1423).
             val interval = updateRate.intervalFor(skinnedPose.cameraDistance)
+            skinnedPose.nextPoseIn -= delta
             if (interval > 0f && skinnedPose.nextPoseIn > 0f) {
-                skinnedPose.nextPoseIn -= delta
                 animator.player.advance(delta)
                 return@forEach
             }
-            skinnedPose.nextPoseIn = interval
+            skinnedPose.nextPoseIn = (skinnedPose.nextPoseIn + interval).coerceAtLeast(0f)
             val pose = animator.player.update(delta)
             val palette = skinnedPose.jointPalette
             // In place when the palette fits: a new one per model per frame is garbage that lives a frame.
