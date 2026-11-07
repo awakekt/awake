@@ -57,12 +57,19 @@ class ParticleContentSystem(
     private val materials = HashMap<String, Material>()
     private val waiting = ArrayList<Entity>()
 
+    // Resolved once: a `KClass` made at the call site can allocate on the JVM, and this runs every frame
+    // of every scene that can draw particles, whether or not it has an emitter yet.
+    private val sourceType = ParticleEmitterSource::class
+    private val emitterType = ParticleEmitter::class
+
     override fun update(world: World, delta: Float) {
         waiting.clear()
-        world.queryEach(ParticleEmitterSource::class) { entity, _ ->
-            if (!world.has(entity, ParticleEmitter::class)) waiting += entity
+        world.queryEach(sourceType) { entity, _ ->
+            if (!world.has(entity, emitterType)) waiting += entity
         }
-        for (entity in waiting) {
+        // By index: a for-in loop makes an iterator each frame, even over an empty list.
+        for (i in waiting.indices) {
+            val entity = waiting[i]
             val settings = world.get<ParticleEmitterSource>(entity)?.settings ?: continue
             materialFor(settings.texture)?.let { world.add(entity, emitter(world, entity, settings, it)) }
         }

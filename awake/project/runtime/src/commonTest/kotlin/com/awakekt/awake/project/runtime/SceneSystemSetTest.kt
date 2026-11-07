@@ -81,8 +81,10 @@ class SceneSystemSetTest {
         val systems = systemsFor(PLAIN_SCENE)
 
         assertEquals(emptyList(), systems.fixed)
-        assertEquals(3, systems.frame.size)
+        // A scene with a renderer also plans the particle systems, for emitters spawned into it later.
+        assertEquals(5, systems.frame.size)
         assertTrue(systems.frame.has(AnimationSystem::class))
+        assertTrue(systems.frame.has(ParticleSystem::class))
         val world = World()
         systems.frame.forEach { it.update(world, DELTA) }
         assertEquals(0, world.family<InputActions>().size)

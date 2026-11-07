@@ -61,9 +61,11 @@ internal object ParticlesCapability : SceneCapability {
         if (scene.uses(SceneParticleEmitter::class)) content[CoreSceneContent.ParticleImages] = loadParticleImages(scene, files)
     }
 
+    // Planned whenever something can draw them, not only for a document that has an emitter: a scene can
+    // spawn prefabs with emitters at runtime, and with nothing to emit both systems' frames are an empty query.
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(PARTICLES_2D_SYSTEM) { Particle2DSystem(Transform2DPlacement()) }
-        if (!scene.uses(SceneParticleEmitter::class) || !plan.hasRenderer) return
+        if (!plan.hasRenderer) return
         plan.frame("particle-content") {
             val sprites = it.content[CoreSceneContent.ParticleSprites].orEmpty()
             // The shared loads already hold the scene's own images, so the map isn't given beside them.
