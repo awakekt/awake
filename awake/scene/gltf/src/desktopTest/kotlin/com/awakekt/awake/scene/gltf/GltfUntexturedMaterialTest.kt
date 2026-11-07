@@ -85,7 +85,9 @@ class GltfUntexturedMaterialTest {
     }
 
     /** A renderer a scene can be readied with: its render system asks the renderer for a draw preparer. */
-    private class SceneRenderer : NoopRenderer(), GpuDrawPreparationSource {
+    private class SceneRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
         override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
 
