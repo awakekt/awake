@@ -34,6 +34,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             // The provider is exercised through a scene terrain and TerrainContentSystem.
             implementation(project(":awake:scene:scene3d"))
+            // Entering a paged terrain through its scene binding, ScenePagedTerrain and PagedTerrainSystem.
+            implementation(project(":awake:scene:worldstream"))
         }
     }
 }

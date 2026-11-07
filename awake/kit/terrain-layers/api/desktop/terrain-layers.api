@@ -93,6 +93,18 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayer$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayerPages {
+	public fun <init> (Lcom/awakekt/awake/terrain/TerrainPageIndex;Ljava/util/Map;)V
+	public final fun getFiles ()Ljava/util/Map;
+	public final fun getIndex ()Lcom/awakekt/awake/terrain/TerrainPageIndex;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayerPaging {
+	public static final field INSTANCE Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPaging;
+	public final fun page (Lcom/awakekt/awake/terrain/TerrainPageIndex;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;ILjava/lang/String;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPages;
+	public static synthetic fun page$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPaging;Lcom/awakekt/awake/terrain/TerrainPageIndex;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;ILjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPages;
+}
+
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayerPalette {
 	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette$Companion;
 	public static final field FORMAT_VERSION I
