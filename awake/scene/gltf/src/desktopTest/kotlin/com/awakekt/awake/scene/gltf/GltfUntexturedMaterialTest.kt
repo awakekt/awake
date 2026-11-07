@@ -9,6 +9,8 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
@@ -38,7 +40,7 @@ class GltfUntexturedMaterialTest {
     fun anUntexturedMaterialResolvesByItsGltfMaterialNameAndSpawns() = runTest {
         val gltf = GltfAssetResolver().apply { preload(PATH, untexturedGlb()) }
         val game = app { scene("effects") { assets { resolver(gltf) } } }
-        game.ready(NoopRenderer())
+        game.ready(SceneRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
 
         val spawned = runtime.spawn(SceneNode(name = "Effect", components = listOf(SceneMeshRenderer(mesh = PATH, material = "gltf-material:$PATH"))))
@@ -80,6 +82,11 @@ class GltfUntexturedMaterialTest {
 
         assertNull(resolver.createMaterial(NoopRenderer(), "gltf-material:$PATH"))
         assertNotNull(adopter.createMaterial(NoopRenderer(), "gltf-material:$PATH"), "an adopting resolver keeps what it took")
+    }
+
+    /** A renderer a scene can be readied with: its render system asks the renderer for a draw preparer. */
+    private class SceneRenderer : NoopRenderer(), GpuDrawPreparationSource {
+        override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
 
     private companion object {
