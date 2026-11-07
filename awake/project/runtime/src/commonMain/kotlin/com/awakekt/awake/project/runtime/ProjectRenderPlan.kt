@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.asset.shaderpack.skyboxContentFeature
 import com.awakekt.awake.asset.shaderpack.spriteScenePipeline
+import com.awakekt.awake.asset.shaderpack.trailScenePipeline
 import com.awakekt.awake.asset.shaderpack.worldTextScenePipeline
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
@@ -97,5 +98,7 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
         spriteScenePipeline(buildAdditive = true),
         // A scene's world_text: distance-field glyphs, sharp at any distance and angle.
         worldTextScenePipeline(),
+        // Trails: strips of point pairs whose vertices and colours change every frame.
+        trailScenePipeline(),
     ),
 )

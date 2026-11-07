@@ -20,6 +20,8 @@ import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.TrailFields
+import com.awakekt.awake.render.passes.uniforms.TrailUniformLayout
 import com.awakekt.awake.render.passes.uniforms.WorldTextFields
 import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
 import com.awakekt.awake.render.passes.uniforms.blendsAdditively
@@ -112,6 +114,11 @@ fun RenderDrawCommand.uniformFloats(
             .put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field)
             .build()
 
+        DrawUniformPlan.Trail -> UniformWriter(TrailUniformLayout)
+            .put(mvp.data, UniformFields.Mvp)
+            .put(extraUniformFloats, TrailFields.Tint)
+            .build()
+
         DrawUniformPlan.Skinned ->
             skinnedUniforms(mvp, model, extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), exposure, lightPayload, cameraEye, debugView, cameraForward)
 
@@ -147,7 +154,7 @@ private fun fadeLayout(plan: DrawUniformPlan): UniformLayout? = when (plan) {
     DrawUniformPlan.LitShadow -> MaterialUniformLayouts.LitShadow
     DrawUniformPlan.TexturedPbr -> MaterialUniformLayouts.PbrTextured
     DrawUniformPlan.Skinned -> SkinnedUniformLayout
-    DrawUniformPlan.Sprite, DrawUniformPlan.WorldText, DrawUniformPlan.Lit -> null
+    DrawUniformPlan.Sprite, DrawUniformPlan.WorldText, DrawUniformPlan.Trail, DrawUniformPlan.Lit -> null
 }
 
 /**

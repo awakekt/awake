@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 108 | Existing root `v*` tags and the shared Core release train |
+| Core | 109 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -184,5 +184,6 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.ui:canvas` | `:awake:ui:canvas` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:compose:ui`; `api` → `:awake:core:math2d`; `api` → `:awake:core:math`; `api` → `:awake:core:text`; `api` → `:awake:core:schema`; `api` → `:awake:core:localization`; `implementation` → `:awake:compose:foundation`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging` |
 | `com.awakekt.awake.ui:node-graph-canvas` | `:awake:ui:node-graph-canvas` | `core` | `api` → `:awake:node-graph`; `api` → `:awake:compose:foundation`; `implementation` → `:awake:core:color` |
 | `com.awakekt.awake.ui:shadcn` | `:awake:ui:shadcn` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:tailwind`; `api` → `:awake:compose:foundation` |
+| `com.awakekt.awake:trail` | `:awake:trail` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:geometry`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes` |
 | `com.awakekt.awake:world` | `:awake:world` | `core` | `api` → `:awake:ecs`; `api` → `:awake:core:diagnostics` |
 | `com.awakekt.awake:worldtext` | `:awake:worldtext` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:text`; `api` → `:awake:core:geometry`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes` |

@@ -25,18 +25,20 @@ import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
-import com.awakekt.awake.vulkan.mesh.Mesh
+import com.awakekt.awake.vulkan.mesh.sceneBuffers
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
+import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import kotlin.collections.getOrNull
 import kotlin.math.ceil
 import kotlin.text.get
 import com.awakekt.awake.render.material.Material as RenderMaterial
+import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 /** Generic Vulkan draw preparation and typed feature-facing frame helpers. Whole-frame packet
@@ -107,7 +109,8 @@ internal fun VulkanRenderer.prepareGpuDraw(
     exposure: Float = 1f,
     edgePipeline: RenderPipeline? = null,
 ): PreparedDrawCall? {
-    val mesh = cmd.mesh as Mesh
+    val mesh = cmd.mesh as RenderMesh
+    val buffers = mesh.sceneBuffers(frameIndex)
     val material = cmd.material as Material
     val instanceModels = cmd.instanceModels
     if (instanceModels != null) {
@@ -150,6 +153,9 @@ internal fun VulkanRenderer.prepareGpuDraw(
         }
         return PreparedDrawCall(
             mesh = mesh,
+            vertexBuffer = buffers.vertexBinding,
+            indexBuffer = buffers.indexBinding,
+            elementCount = buffers.indexCount,
             isTransparent = isTransparent,
             pipeline = instancedPipeline,
             material = material,
@@ -185,6 +191,9 @@ internal fun VulkanRenderer.prepareGpuDraw(
     val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
     return PreparedDrawCall(
         mesh = mesh,
+        vertexBuffer = buffers.vertexBinding,
+        indexBuffer = buffers.indexBinding,
+        elementCount = buffers.indexCount,
         isTransparent = isTransparent,
         pipeline = pipeline,
         material = material,
@@ -233,7 +242,12 @@ internal fun VulkanRenderer.waitForCurrentFrameResourceSlot() {
  * allocates nothing.
  */
 internal data class PreparedDrawCall(
-    val mesh: Mesh,
+    val mesh: RenderMesh,
+    /** The mesh's vertex buffer this frame: a dynamic mesh's is its frame slot's. */
+    override val vertexBuffer: VulkanBufferBinding,
+    override val indexBuffer: VulkanBufferBinding,
+    /** How many indices a draw submits: a dynamic mesh's drawn count, else every index. */
+    override val elementCount: Int,
     val isTransparent: Boolean,
     override val pipeline: RenderPipeline,
     val material: Material,
@@ -266,10 +280,6 @@ internal data class PreparedDrawCall(
     /** Mesh identity -- clusters draws sharing a mesh so consecutive calls reuse its vertex and
      * index buffer bindings. */
     override val batchKey: Int get() = mesh.hashCode()
-
-    override val vertexBuffer get() = mesh.vertexBinding
-    override val indexBuffer get() = mesh.indexBinding
-    override val elementCount get() = mesh.indexCount
 
     /** [instanceCount] is 0 for a non-instanced draw; the port's count is the real one Vulkan
      * issues, which is 1 there. */

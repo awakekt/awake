@@ -169,5 +169,17 @@ data class VertexFormat(val attributes: List<VertexAttribute>) {
                 VertexAttribute(VertexSemantic.Color, GpuDataShape.Vec4, location = 2),
             ),
         )
+
+        /** Position vec3 @ 0, color vec4 @ 12, uv vec2 @ 28, stride 36 -- a strip whose vertices carry
+         * their own straight-alpha colour and a texture coordinate, rewritten every frame, such as a
+         * trail. The same attributes as [PositionUvColor] in another order, so it is a format of its
+         * own: the pipeline that draws it is never the one distance-field text selects. */
+        val PositionRgbaUv = VertexFormat(
+            listOf(
+                VertexAttribute(VertexSemantic.Position, GpuDataShape.Vec3, location = 0),
+                VertexAttribute(VertexSemantic.Color, GpuDataShape.Vec4, location = 1),
+                VertexAttribute(VertexSemantic.Uv, GpuDataShape.Vec2, location = 2),
+            ),
+        )
     }
 }

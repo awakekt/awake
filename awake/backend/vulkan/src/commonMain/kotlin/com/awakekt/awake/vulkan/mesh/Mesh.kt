@@ -100,6 +100,13 @@ private constructor(
      */
     val indexBinding: VulkanBufferBinding
 
+    /** This mesh's buffers as a scene draw binds them: always all of its indices. */
+    internal val sceneBuffers: SceneMeshBuffers = object : SceneMeshBuffers {
+        override val vertexBinding get() = this@Mesh.vertexBinding
+        override val indexBinding get() = this@Mesh.indexBinding
+        override val indexCount get() = this@Mesh.indexCount
+    }
+
     init {
         if (sharedFrom != null) {
             vertexOwner = sharedFrom.vertexOwner.also { it.meshes++ }

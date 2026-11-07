@@ -63,6 +63,7 @@ import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
 import com.awakekt.awake.vulkan.mesh.Mesh
+import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.models.VkClearColorValue
 import com.awakekt.awake.vulkan.models.VkClearDepthStencilValue
@@ -180,8 +181,12 @@ class Renderer internal constructor(
     override fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = when (kind) {
         ShaderReplacement -> shaderReplacement as T?
         GpuCompressedTextures -> compressedTextures as T
+        GpuDynamicMeshes -> dynamicMeshes as T
         else -> null
     }
+
+    /** Meshes rewritten in place, one vertex buffer per frame in flight. */
+    private val dynamicMeshes = VulkanDynamicMeshes(this)
 
     /** Block-compressed textures, in the families this device enabled. */
     private val compressedTextures = VulkanCompressedTextures(this)
