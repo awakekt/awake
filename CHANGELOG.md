@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-11-06
+
+### Added
+
+- **A project game can pose far skinned models less often (#1372).** `runProject` builds the scene's `AnimationSystem` itself, so a game had no way to pass the distance update rate (`AnimationUpdateRate`) it takes. A game's own scene capability now puts one under `CoreSceneContent.AnimationUpdateRate` from its `load`, for example `AnimationUpdateRate.byDistance(near, far, farInterval)`, and the animation system uses it. With none, every model is posed every frame, as before.
+- **A third-person camera can keep out of the ground and the terrain (#1374).** A `camera_rig` that sets `collision` (`CameraRig.collision` in code) keeps its eye `groundMargin` above the terrain, sampled around the eye the size of the near plane, and pulls the eye in front of the ground where it rises between the pivot and the eye. Bodies on the physics layers listed in `obstacleLayers` pull it in too, through a swept sphere of `radius`; none do by default. The eye pulls in at once and eases back out over `easeOutSeconds`. A played project answers the ground from its `terrain` and `paged_terrain` heights and the obstacle layers from its physics world. The maths is `CameraCollisionSolver` in the new `awake:core:camera` module, usable without a scene. Off by default: a rig without `collision` moves exactly as before.
+- **What stands between a third-person camera and its target can fade out of the way (#1377).** A `camera_rig` that sets `occluderFade` (`CameraRig.occluderFade` in code) has a played project with a physics world cast rays each frame from the eye to the target's feet, chest and head; every static body hit, other than terrain, eases down to `opacity` over `fadeSeconds` and back once it stops blocking. The fade is drawn by a new per-entity `DitherFade`: on an opaque mesh the shader discards a share of its pixels in a fixed screen-space pattern, on Vulkan and WebGPU alike, so the mesh needs no depth sorting and keeps its shadow; opacity 1 draws exactly as before. The easing is `OccluderFader` in `awake:core:camera`, and `GpuDrawRequest.fadeOpacity` carries a draw's fade. Off by default.
+
+### Fixed
+
+- **Two spawned models that finish loading on the same frame no longer stop the web frame loop (#1382).** `SpawnedModels.attachLoaded` removed each finished load from its map while it walked a copied list of that map's entries, and an entry reads through to its map: on Kotlin/Wasm and Native, reading one after the map changed throws `ConcurrentModificationException` ("The backing map has been modified after this entry was obtained"). The second load to finish on a frame threw, and the browser frame loop stopped. It walks a snapshot of path and load pairs now. The JVM's map doesn't check, so desktop never showed it.
+- **A hidden skinned model is no longer posed every frame (#1384).** `AnimationSystem` skips posing a model the renderer culled and drew nowhere, but `SceneDrawCollector` returned early for a `MeshRenderer` with `visible = false` (and a `ModularCharacter` that isn't visible) before marking its `SkinnedPose`, so a hidden model counted as one no renderer had looked at and was posed every frame. A hidden mesh now marks its pose culled, as an off-screen one does: its clip keeps time, and it is posed again once it is drawn. A model drawn as parts shares one pose, so a part another view draws still poses it. With 1,244 hidden models out of 1,375 animated ones, on the web (Chromium, software WebGPU), `AnimationSystem.update` fell from 23% of the frame's samples to under 2%, and the frame from 88–93 ms to 52–58 ms.
+
 ## [0.39.0] - 2026-11-06
 
 ### Added
