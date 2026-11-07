@@ -81,6 +81,20 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
      */
     fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, create)
 
+    /**
+     * Adds a system run on every fixed step, named [name], just before the system named [before] in the
+     * same step, such as [CHARACTER_CONTROLLER]. A game's flight or vehicle model planned this way sets a
+     * character's `MovementControl` velocity and `CharacterController.steppedYaw` for the step that uses
+     * them, rather than the one after. When nothing named [before] is planned, as in a scene with no
+     * character, it runs last, as [fixed] without it would. Systems added before the same one run in the
+     * order they were added.
+     */
+    fun fixed(name: String, before: String, create: (SceneHostServices) -> System) {
+        val at = specs.indexOfFirst { it.name == before && it.phase == SceneSystemPhase.Fixed }
+        add(name, SceneSystemPhase.Fixed, create)
+        if (at >= 0) specs.add(at, specs.removeAt(specs.lastIndex))
+    }
+
     /** Adds a system run once per rendered frame, named [name] in the scene's schedule. */
     fun frame(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, create)
 
@@ -94,6 +108,15 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
     private fun add(name: String, phase: SceneSystemPhase, create: (SceneHostServices) -> System) {
         require(specs.none { it.name == name }) { "Two systems are named '$name'; each system in a scene needs its own name" }
         specs += SceneSystemSpec(name, phase, create)
+    }
+
+    /** The names of Core's systems a game plans its own around. */
+    companion object {
+        /**
+         * Core's character controller step, which moves every `character_controller` by its intent. A fixed
+         * system planned `before` it writes the velocity and facing that same step applies.
+         */
+        const val CHARACTER_CONTROLLER: String = "character"
     }
 }
 

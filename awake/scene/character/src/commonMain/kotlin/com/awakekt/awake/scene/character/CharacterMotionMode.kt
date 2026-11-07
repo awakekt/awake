@@ -20,6 +20,12 @@ enum class CharacterMotionMode {
      * snapping, no steps or slope limit, and the body is never turned: the caller owns yaw and
      * pitch, and the capsule stays upright. The same capsule still collides with walls, floors,
      * ceilings and terrain, and [CharacterController.lastContact] says what it met.
+     *
+     * A game that computes the velocity each step, such as a flight model, plans its system with
+     * `SceneSystemPlan.fixed(name, before = SceneSystemPlan.CHARACTER_CONTROLLER)` so the step it writes
+     * is the step that moves the character. For a player's character it switches the
+     * `MovementControl.driver` to `MovementDriver.Agent` while it drives, so player input doesn't
+     * overwrite the velocity.
      */
     Free,
 }
