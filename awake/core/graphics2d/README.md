@@ -46,7 +46,7 @@ density twice. Do not "simplify" `UiStroke.width` to `Float` without reading tha
 their 2D path. `render:passes` dropped three `api` edges — `ui:graphics`, `ui:text`, `ui:ui-core`
 — which were transitive, so everything downstream of it lost them too.
 
-`ui:graphics` is down to four files: `UiImageVector`, `PopupContracts`, `UiEasing`, `UiIcon`.
+`ui:graphics` was later removed with the rest of the immediate-mode UI modules.
 
 What remains is outside the 2D path and is real: `render:contract` uses `UiFont` in one file,
 `backend:vulkan` uses `UiContext`/`LocalTheme`/`UiCursor` in five, `backend:webgpu` uses `UiFont`

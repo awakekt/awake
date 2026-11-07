@@ -43,8 +43,8 @@ import kotlin.time.TimeSource
  * ```
  *
  * **Input runs before reconcile, not after.** It is resolved against geometry that already exists,
- * which is what removes the one-frame lag immediate mode has -- `ui-core` hit-tests against bounds
- * it is still computing as it goes.
+ * which is what removes the one-frame lag immediate mode has -- the removed `ui-core` hit-tested against
+ * bounds it was still computing as it went.
  *
  * The host owns the pointer edge detection, the focus owner and the painter, so a caller does not
  * have to know the order these run in. Getting that order wrong is silent: paint before place and

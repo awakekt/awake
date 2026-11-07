@@ -24,9 +24,7 @@ kotlin {
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:input"))
             // Depends on the specific scene leaf modules it actually uses, not the
-            // `:awake:scene` facade. `TransformSystem` lives in `:awake:scene:scene-core`,
-            // `PlayerControlSystem` lives in this module directly (it needs `ui-core`'s
-            // `UiInputOwnership`, which `:awake:scene:controls` deliberately stays free of).
+            // `:awake:scene` facade. `TransformSystem` lives in `:awake:scene:scene-core`.
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:scene3d"))
             api(project(":awake:scene:controls"))

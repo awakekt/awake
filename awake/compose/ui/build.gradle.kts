@@ -25,8 +25,7 @@ kotlin {
             api(project(":awake:core:color"))
             api(project(":awake:core:input"))
             api(project(":awake:compose:runtime"))
-            // Primitive layers only -- none carries a :awake:ui:ui-core dependency in commonMain,
-            // so nothing here reaches the immediate-mode engine this module replaces.
+            // Primitive layers only: nothing here reaches a UI engine above this module.
             api(project(":awake:core:text"))
             // Platform image decoders for decodeImageBitmap.
             implementation(project(":awake:core:image"))
@@ -35,8 +34,8 @@ kotlin {
             implementation(kotlin("test"))
             // Test-only, and deliberately not in commonMain: `padding`, `size` and `background` are
             // foundation's, as in Compose, but the chain, paint and pointer tests that live here
-            // need something concrete to build a tree out of. The same shape `:awake:ui:graphics`
-            // uses with `ui-core`. Keeping the tests here also keeps this module's coverage its own.
+            // need something concrete to build a tree out of. Keeping the tests here also keeps
+            // this module's coverage its own.
             implementation(project(":awake:compose:foundation"))
         }
     }

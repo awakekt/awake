@@ -11,8 +11,8 @@ import com.awakekt.awake.compose.ui.unit.dp
 /**
  * How a Row's or Column's children are distributed along its main axis.
  *
- * [Top]/[Start] pack with **zero** gap, matching Compose. `ui-core` defaults to an unrequested 8dp
- * `spacedBy`, which `docs/reference/mirror-map.md` records as a divergence -- not carried forward.
+ * [Top]/[Start] pack with **zero** gap, matching Compose. The removed `ui-core` defaulted to an
+ * unrequested 8dp `spacedBy`, a divergence from Compose this engine did not carry forward.
  *
  * Two numbers rather than Compose's `arrange(total, sizes, out)`: a fixed gap plus what to do with
  * the leftover covers every arrangement here, and it keeps the measure policy's placement a single

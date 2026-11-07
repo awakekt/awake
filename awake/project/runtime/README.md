@@ -14,7 +14,8 @@ app { scene("game") { runProject(project) } }
 world only when the scene has `physics_body` or `character_controller` components. The host picks the
 physics backend, and the project owns the world: `close()` it once the scene has stopped, since a
 physics world's native memory outlives garbage collection. A project is played once; its bodies stay
-in its world, so load it again to play the scene again.
+in its world, so load it again to play the scene again, or make independent copies of its scene with
+`newSceneInstance` (see below).
 
 A node's `tag` component becomes its entity's `Tags`, which gameplay finds with `world.withTag` and
 `world.hasTag` (see `awake:ecs`). A manifest may list the project's tags in `tags`, which editors
@@ -33,7 +34,7 @@ Core's capabilities decide what runs, each for the components it owns:
 | `paged_terrain` | On the fixed step, before physics: its cells streamed around the primary camera from the page index `loadProject` read, drawn as one clipmap (with terrain layers when the index names a palette), and static collision cells near the camera when it is a `collider` and the host gives a physics world. A scene streams one |
 | `terrain` | With a renderer, `TerrainContentSystem` draws it: with the surface its `surface` names, from the providers under `CoreSceneContent.TerrainSurfaces` (a project's content holds the layered-terrain kit's, `awake.terrain.layers`), or with the built-in terrain shading. Closing the scene's systems detaches it |
 | `physics_body`, `character_controller`, a `terrain` collider | On the fixed step, with a physics world: the terrain collider, `MeshColliderSystem` for `mesh` and `convex_hull` shapes, `PhysicsSystem` and `CharacterControllerSystem` |
-| `patrol`, `chase`, `flee` with a `navigation` component | The behaviours and `PathRequestSystem`, which answers their routes over the scene's grid. Each behaviour arrives with its `PathRequest`; a project with a behaviour and no `navigation` is refused at load. An agent with a `movement_control` whose `driver` is `Agent` is steered through it at the behaviour's speed, so with a `character_controller` walls stop it and it climbs slopes and steps; any other agent moves by its transform. An agent with a `character_controller` and no `Agent` control is refused at load |
+| `patrol`, `chase`, `flee` with a `navigation` component | The behaviours and `PathRequestSystem`, which answers their routes over the scene's grid, baked once as the project loads and shared by every system set planned from it. Each behaviour arrives with its `PathRequest`; a project with a behaviour and no `navigation` is refused at load. An agent with a `movement_control` whose `driver` is `Agent` is steered through it at the behaviour's speed, so with a `character_controller` walls stop it and it climbs slopes and steps; any other agent moves by its transform. An agent with a `character_controller` and no `Agent` control is refused at load |
 | `spinControl`, `locomotion_animation`, `keyframe_animation`, `texture_clips` | Spinning, locomotion clips, looping keyframe tracks and sprite-sheet clips |
 | `particle_emitter` | `ParticleContentSystem` and `ParticleSystem`, with the sprites `loadProject` read |
 | `day_cycle` | `DayCycleSystem`: the sun's path and the blended sky, light and fog |
@@ -260,6 +261,15 @@ decoded: a sheet of 2048 by 1856 pixels takes 15 MB of memory and a decode, whic
 on a picture nothing draws. Such a project, if it is played by `runProject` after
 all, draws its canvas without those images.
 
+Animation keeps time on such a host and poses nothing. Every skinned clip, clip switch, crossfade and
+finished clip advances exactly as in a drawn game, so game code that reads `AnimationPlayer.isFinished`
+or `activeClipId` for its timing sees the same frame, but no bone is posed and a `SkinnedPose`'s joint
+palette is left as it was. Two kinds of model are posed all the same: the target of an enabled socket
+attachment, and one the game tags `PosedWithoutRenderer` because it reads a bone itself, such as a hit
+volume that follows a hand. A `keyframe_animation` still moves its node, which colliders and sockets
+follow, and only its alpha track is skipped. A host that registers its own systems gets the same with
+`AnimationSystem(updateRate, hasRenderer = false)` and `KeyframeAnimationSystem(hasRenderer = false)`.
+
 The runtime brings no display and no HTTP stack with it. `awake:project` and `awake:project:runtime`
 reach no GPU backend, no window module and no content transport module (`:awake:backend:*`,
 `:awake:engine:window`, `:awake:project:transport-*`): the host picks the backends a project draws and
@@ -267,6 +277,37 @@ simulates with and passes them in, as it passes the physics world, and builds th
 its `ContentTransport` (the ready-made `transport-ktor` and `transport-browser` modules are opt-in).
 `awakeVerify` runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming
 the chain.
+
+## Many independent copies of one scene
+
+A server that runs many short-lived copies of one map, such as an instanced area per party, a practice
+room or a match, loads the project once and makes an instance per copy:
+
+```kotlin
+val project = loadProject(files, hasRenderer = false, physicsWorld = ::createJoltPhysicsWorld)
+// per party:
+val instance = project.newSceneInstance()
+val systems = instance.sceneSystems(input, coroutineScope = partyScope)
+// each tick: systems.fixed.forEach { it.update(instance.world, step) }
+// when the party leaves:
+instance.close()
+```
+
+Each `SceneInstance` has a `World` of its own with the scene's entities in it, the systems
+`sceneSystems` plans for it, and, when the scene has bodies or characters, a physics world of its own
+from the project's `physicsWorld` factory, so a body moved in one stays where it is in every other.
+What the project loaded is shared and only read: the scene document, the component registry and
+capabilities, the glTF models, and the scene's content (collision meshes, the baked navigation grid,
+AI definitions). Making one reads no file.
+
+- `close()` closes the systems it built, destroys its entities and then its physics world. The project,
+  its other instances and the shared data are untouched.
+- An instance plays the scene the project played when it was made: a later `switchTo` or the project's
+  `close()` leaves it playing. A closed project makes no more.
+- Step each instance on one thread at a time. Different instances may step on different threads, since
+  nothing they share is written once the project has loaded.
+
+`SceneInstanceCostTest` prints what a copy costs against loading the project again.
 
 ## Loading more than one project
 

@@ -80,8 +80,8 @@ context(composer: Composer)
 /**
  * Stacks children on top of each other, sized to the largest.
  *
- * Shrink-wraps to content, matching Compose. `ui-core`'s `box()` fills instead, which
- * `mirror-map.md` records as a divergence and this engine does not carry forward.
+ * Shrink-wraps to content, matching Compose. The removed `ui-core`'s `box()` filled instead,
+ * a divergence from Compose this engine did not carry forward.
  */
 fun Box(
     modifier: Modifier = Modifier,

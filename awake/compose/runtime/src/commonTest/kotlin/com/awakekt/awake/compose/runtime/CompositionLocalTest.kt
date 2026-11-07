@@ -104,7 +104,7 @@ class CompositionLocalTest {
 
     @Test
     fun aThrowInsideAProviderStillClosesTheWindow() {
-        // The failure a hand-written push/pop pair has: ui-core's pushLocal/popLocal leaks its
+        // The failure a hand-written push/pop pair has: the removed ui-core's pushLocal/popLocal leaked its
         // value if the content between them throws.
         var after = ""
         compose {

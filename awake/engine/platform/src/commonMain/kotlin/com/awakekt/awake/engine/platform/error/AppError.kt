@@ -33,6 +33,14 @@ enum class AppErrorSource {
      * the UI build draws nothing until it succeeds again.
      */
     System,
+
+    /**
+     * The GPU device was lost (subject `graphics device`): the GPU process crashed, the driver reset, or
+     * the system reclaimed the device under memory pressure. The engine plays no frame from then on and
+     * does not recreate the device, so there is no retry: the app restarts the engine, or a web page
+     * reloads. A backend's own exception in [AppError.cause] carries its reason and message.
+     */
+    GraphicsDevice,
 }
 
 /**
@@ -44,6 +52,7 @@ enum class AppErrorSource {
  * returns at once; the step runs on, and a second failure reaches the handler as a new [AppError].
  * Call it on the frame thread, where the handler is called for the sources that have a frame.
  * - [AppErrorSource.ProjectLoad]: loads the project again.
+ * - [AppErrorSource.GraphicsDevice]: null; a lost device is not recreated.
  * - [AppErrorSource.SceneSwitch]: asks for the scene again.
  * - [AppErrorSource.Bootstrap], [AppErrorSource.Coroutine] and [AppErrorSource.System]: null, except
  *   for a step the app launched with [launchStep], which runs again. The engine's own start-up cannot

@@ -222,7 +222,7 @@ private class FillNode :
     ): MeasureResult {
         // Compose's rule: filling an unbounded axis is a no-op. Without it the child would adopt
         // whatever sentinel stands in for "no bound" as a real size -- the bug class `ui-core`'s
-        // UNBOUNDED_MAIN_AXIS produced and FillMaxUnboundedParentTest guards.
+        // UNBOUNDED_MAIN_AXIS produced.
         val targetWidth = widthFraction?.takeIf { constraints.hasBoundedWidth }
             ?.let { constraints.constrainWidth((constraints.maxWidth * it).roundToInt()) }
         val targetHeight = heightFraction?.takeIf { constraints.hasBoundedHeight }

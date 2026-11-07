@@ -2,7 +2,7 @@
 
 Audits `awake/backend/vulkan`'s `Renderer.kt` against `awake/backend/webgpu`'s `Renderer.kt`
 for correctness and cross-backend consistency, using the same direct-source-read discipline
-as `docs/reference/mirror-map.md` (that doc audits `ui-core`'s DSL against Jetpack Compose --
+as `docs/reference/mirror-map.md` (that doc audits the Compose-shaped UI API against Jetpack Compose --
 a different concern; this doc is scoped to the two render backends' own behavior and is
 intentionally kept separate from it, per explicit instruction). Every row below is backed by
 a direct read of:
@@ -13,8 +13,8 @@ a direct read of:
 - `awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/ui/UiTextureRenderPipeline.kt`
 - `awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/material/Material.kt`
 - `awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/material/Material.kt`
-- `awake/engine/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/UiDrawPrimitive.kt`
-- `awake/engine/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layout/Rectangle.kt`
+- `awake/core/graphics2d/src/commonMain/kotlin/com/awakekt/awake/core/graphics2d/DrawCommand.kt` (`UiDrawPrimitive`)
+- `awake/core/math2d/src/commonMain/kotlin/com/awakekt/awake/core/math2d/Rectangle.kt`
 
 not memory of either graphics API or of this codebase from an earlier session.
 
@@ -55,7 +55,7 @@ crash or leak -- flagging per this audit's scope, not fixing.
 
 Confirmed genuinely behavior-neutral:
 
-- `Rectangle` (`ui-core/layout/Rectangle.kt`) is `data class Rectangle(val x: Float, val y: Float, val width: Float, val height: Float)` -- same 4-field shape every `ClipRun.rect`/`RoundedRectangle.toPath(...)` call site in both `Renderer.kt` files already reads (`.x`, `.y`, `.width`, `.height` in the scissor-rect and rounded-quad-path construction code), unchanged before/after.
+- `Rectangle` (`core/math2d/Rectangle.kt`) is `data class Rectangle(val x: Float, val y: Float, val width: Float, val height: Float)` -- same 4-field shape every `ClipRun.rect`/`RoundedRectangle.toPath(...)` call site in both `Renderer.kt` files already reads (`.x`, `.y`, `.width`, `.height` in the scissor-rect and rounded-quad-path construction code), unchanged before/after.
 - `grep -rn "UiSlot"` across the whole repo (excluding `build/`) turns up zero remaining real type references anywhere, including both `Renderer.kt` files -- the 4 remaining hits (`AbsoluteScope.kt`, `UiAnchor.kt`, `UiAnchor.kt` x2 inside a commented-out block, `GameUiRuntime.kt`) are all stale comments/doc strings, not live code, confirming the type merge is complete and this isn't a case of two parallel types now silently diverging.
 - Both files' `import` lists show no other changed lines in this commit -- the diff is exactly the 3 hunks above, nothing else moved.
 
@@ -63,7 +63,7 @@ Verdict: **genuinely a mechanical rename**, safe as characterized in the task pr
 
 ## Cross-backend `UiDrawPrimitive` handling
 
-`UiDrawPrimitive` (`ui-core/UiDrawPrimitive.kt`) is a `sealed class` with 10 concrete
+`UiDrawPrimitive` (`core/graphics2d/DrawCommand.kt`) was a `sealed class` with 10 concrete
 subtypes: `Quad`, `GradientQuad`, `RoundedQuad`, `Glyph`, `FilledPath`, `StrokedPath`,
 `Texture`, `ClipPathPush`, `ClipPush`, `ClipPop`. Both `Renderer.drawUi()`'s `when (first)`
 blocks are non-`else` exhaustive `when`s over this sealed class (Kotlin's compiler enforces

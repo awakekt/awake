@@ -45,9 +45,8 @@ kotlin {
             // and Bitmap/readResourceBytes -- see docs/mvp-plan.md's Decision Log, D11, for
             // the awake-core split this module boundary comes from.
             implementation(project(":awake:core:math"))
-            // Glyph metrics for the UI pass. `ui:text`, not `ui-core`: the backend needs
-            // `UiFont` and nothing else from the UI stack, and depending on the engine being
-            // retired for one type is what kept `ui-core` alive here.
+            // Glyph metrics for the UI pass: the backend needs `UiFont` and nothing else from
+            // the UI stack, so it depends on the text module rather than on any UI engine.
             implementation(project(":awake:core:text"))
             // Module restructuring slice 1 (see docs/mvp-plan.md): Mesh/Material/Renderer's
             // expect declarations now implement the narrow backend-neutral interfaces this

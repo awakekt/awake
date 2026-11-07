@@ -8,6 +8,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected final fun getAppLifecycle ()Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
 	protected final fun getAspectRatio ()F
 	protected final fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun getDeviceLoss ()Ljava/lang/Throwable;
 	public fun getInput ()Lcom/awakekt/awake/core/input/Input;
 	public final fun getRenderScaleOverride ()Lkotlin/jvm/functions/Function0;
 	protected final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
@@ -19,6 +20,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	public final fun readPresentedPixels (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun releaseBackendSurface ()V
 	public final fun releaseSurface ()V
+	protected final fun reportDeviceLost (Ljava/lang/Throwable;)Z
 	public final fun resize (IIII)V
 	protected fun resizeBackend ()V
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
@@ -265,6 +267,7 @@ public final class com/awakekt/awake/engine/platform/error/AppErrorKt {
 public final class com/awakekt/awake/engine/platform/error/AppErrorSource : java/lang/Enum {
 	public static final field Bootstrap Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
 	public static final field Coroutine Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
+	public static final field GraphicsDevice Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
 	public static final field ProjectLoad Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
 	public static final field SceneSwitch Lcom/awakekt/awake/engine/platform/error/AppErrorSource;
 	public static final field System Lcom/awakekt/awake/engine/platform/error/AppErrorSource;

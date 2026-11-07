@@ -21,7 +21,7 @@ import com.awakekt.awake.core.input.TextEditAction
  * What the host knows at the start of a frame.
  *
  * Pointer state is **level**, not events: `pointerDown` is "the button is down right now", the shape
- * every windowing toolkit reports and the shape `ui-core`'s `UiInputState` already uses. [ComposeHost]
+ * every windowing toolkit reports and the shape the removed `ui-core`'s `UiInputState` used. [ComposeHost]
  * turns it into press/release/move, so a host never has to remember the previous frame itself.
  */
 data class FrameInput(
@@ -204,8 +204,8 @@ data class PlatformEffects(
      * The pointer shape the hovered content asked for.
      *
      * A request: the desktop entry point applies it, and a host that ignores it leaves every
-     * hover-driven cursor -- resize handles, text fields -- as the default arrow. `ui-core` reached
-     * the same conclusion and carries the same field.
+     * hover-driven cursor -- resize handles, text fields -- as the default arrow. The removed `ui-core`
+     * reached the same conclusion and carried the same field.
      */
     val cursor: PointerCursor = PointerCursor.Default,
     /**
@@ -250,9 +250,8 @@ data class PlatformEffects(
 /**
  * One frame's worth of output.
  *
- * [primitives] is the same `UiDrawPrimitive` list `ui-core` produces, deliberately: a render backend
- * consumes either engine unchanged, and one scene can be run through both and diffed element by
- * element. That diff is Stage 1's exit gate.
+ * [primitives] is the backend-neutral `UiDrawPrimitive` list from `:awake:core:graphics2d`, so a
+ * render backend consumes it without knowing anything about the UI engine that produced it.
  *
  * @property primitives The frame's draw primitives, in paint order.
  * @property graphicsLayers The offscreen paint passes requested by `Modifier.graphicsLayer`, kept apart

@@ -215,6 +215,33 @@ class AppErrorRoutingTest {
         assertEquals("no handler", failure.message)
     }
 
+    @Test
+    fun aLostDeviceReachesTheHandlerOnceAndNoFramePlaysAfterIt() {
+        val frames = mutableListOf<Float>()
+        val app = AppSpecBuilder().apply {
+            service(AppErrorHandler::class, handler)
+            render { frames += it.delta }
+        }.build().createLifecycle()
+        val engine = TestEngine(app)
+        engine.create("surface")
+        engine.update(1f)
+        val lost = IllegalStateException("device lost (unknown): GPU process exited")
+
+        assertTrue(engine.loseDevice(lost))
+        assertFalse(engine.loseDevice(IllegalStateException("lost again")), "a repeat is not recorded")
+        engine.update(2f)
+        engine.resize(0, 0, 4, 4)
+
+        val error = received.single()
+        assertEquals(AppErrorSource.GraphicsDevice, error.source)
+        assertSame(lost, error.cause)
+        assertEquals("graphics device", error.subject)
+        assertNull(error.retry, "a lost device is not recreated")
+        assertSame(lost, engine.deviceLoss)
+        assertEquals(listOf(1f), frames, "no frame plays on a lost device")
+        engine.dispose()
+    }
+
     private fun CoroutineScope.launchNoStep(block: suspend () -> Unit): Job = launch { block() }
 
     private class TestEngine(
@@ -227,6 +254,8 @@ class AppErrorRoutingTest {
         }
 
         override fun destroyBackend() = Unit
+
+        fun loseDevice(cause: Throwable): Boolean = reportDeviceLost(cause)
     }
 
     private object NoopRenderer : Renderer {
