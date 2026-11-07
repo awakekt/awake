@@ -294,10 +294,12 @@ layer):
 }
 ```
 
-Leave `texture` empty (`""`) for solid-tinted quads with no image file. Set `localSpace = true` to keep
-already-spawned particles attached to a moving node's `Transform` instead of trailing behind in world
-space, or `inheritOrientation = true` on a world-space emitter so the node's Z rotation turns `shape`
-and `directionDegrees`. All fields are listed under
+Leave `texture` empty (`""`) for solid-tinted quads with no image file. Set `space` to `Local`, as on a
+3D emitter, to keep already-spawned particles attached to a moving node's `Transform` instead of
+trailing behind in world space, or `inheritOrientation = true` on a world-space emitter so the node's Z
+rotation turns `shape` and `directionDegrees`. A 2D local emitter's `gravity` is in the node's own axes.
+The older `localSpace` boolean still loads, `true` reading as `Local`, and is written back as `space`;
+in Kotlin, `ParticleEmitter2D.localSpace` is deprecated in favour of `space`. All fields are listed under
 [`particle_emitter_2d`](../reference/scene-document-components.md#particle_emitter_2d).
 
 For frequent one-shot 2D bursts (hit sparks, pickups, footsteps) without spawning or destroying ECS

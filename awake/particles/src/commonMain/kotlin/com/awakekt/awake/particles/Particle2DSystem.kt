@@ -18,10 +18,10 @@ private const val INITIAL_SPENT_CAPACITY_2D: Int = 8
  * state. In a scene it runs after the transform pass and before rendering.
  *
  * It knows nothing of where an entity is: [placement] tells it, as it tells the 3D
- * [ParticleSystem]. A world-space emitter (`localSpace == false`) spawns at its entity's placed
+ * [ParticleSystem]. A [ParticleSpace.World] emitter spawns at its entity's placed
  * `(x, y)`, so already-live particles trail behind a moving entity, and with
  * [ParticleEmitter2D.inheritOrientation] its spawns turn by the entity's rotation about `Z`. A
- * local-space emitter, or one whose entity has no placement, simulates around `(0, 0)`. A
+ * [ParticleSpace.Local] emitter, or one whose entity has no placement, simulates around `(0, 0)`. A
  * [BurstEmitter2DPool] burst spawns where it was fired. `awake:scene:scene2d` supplies the
  * placement for the scene's `Transform`.
  *
@@ -65,7 +65,7 @@ class Particle2DSystem(
         if (emitter.pinned) {
             sim.setOrigin(emitter.pinnedX, emitter.pinnedY, 0f)
             sim.inheritOrientation = false
-        } else if (emitter.localSpace || !placement.position(world, entity, placed)) {
+        } else if (emitter.space == ParticleSpace.Local || !placement.position(world, entity, placed)) {
             sim.setOrigin(0f, 0f, 0f)
             sim.inheritOrientation = false
         } else {
