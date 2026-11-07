@@ -33,6 +33,14 @@ Layered worlds also name a shared palette, coarse controls, optional coarse ligh
 per-cell control dimensions/slot count. Entries name raw heights, `.terrainctl` and optional
 `.terrainlight` files. Existing control/lightmap formats are unchanged.
 
+A layered terrain authored as one whole-footprint `.terrainctl` and `.terrainlight`, as a terrain
+`surface` reads them, is paged onto the same cells as its heights by `TerrainLayerPaging.page` in
+`kit:terrain-layers` ([#1451](https://github.com/awakekt/awake/issues/1451)). It cuts each indexed
+cell's share into its own files, centre-samples small coarse maps for cells not yet resident, and
+returns the index naming them, so entering the terrain reads the coarse maps plus the control and
+light of the cells in reach, never the whole maps. The scene side is unchanged: `paged_terrain`
+names the index, and `PagedTerrainSystem` streams the cells.
+
 Raw heights are unsigned 16-bit little endian with exact byte counts. Coarse knots must be an
 isotropic nested subset of fine knots spanning the same footprint. Publication rejects resident
 shared-edge disagreement before changing the model. Layered reads validate palette indices,
