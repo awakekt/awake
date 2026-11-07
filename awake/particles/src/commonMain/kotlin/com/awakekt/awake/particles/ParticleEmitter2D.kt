@@ -163,10 +163,27 @@ class ParticleEmitter2D(
     /** Draws quads with additive blending on `spriteScenePipeline(buildAdditive = true)`. */
     var additive: Boolean = false
 
-    /** Keeps live particles attached to the entity: they simulate around `(0, 0)` and draw under its world matrix, instead of trailing in world space. */
-    var localSpace: Boolean = false
+    /**
+     * Where live particles are kept, as for a 3D emitter's [ParticleMotion.space]. [ParticleSpace.World],
+     * the default, leaves each where it spawned, so particles trail behind a moving entity.
+     * [ParticleSpace.Local] keeps them attached to the entity: they simulate around `(0, 0)` and draw
+     * under its world matrix, so they move, turn and scale with it. Unlike a 3D local emitter's
+     * acceleration, [gravityX] and [gravityY] are then in the entity's own axes.
+     */
+    var space: ParticleSpace = ParticleSpace.World
 
-    /** Rotates [spawnShape] and launch velocity by the entity's Z rotation when [localSpace] is `false`. */
+    /** Whether [space] is [ParticleSpace.Local]: what this emitter had before it took a [ParticleSpace]. */
+    @Deprecated(
+        "Use space, which takes the ParticleSpace a 3D emitter takes",
+        ReplaceWith("space == ParticleSpace.Local", "com.awakekt.awake.particles.ParticleSpace"),
+    )
+    var localSpace: Boolean
+        get() = space == ParticleSpace.Local
+        set(value) {
+            space = if (value) ParticleSpace.Local else ParticleSpace.World
+        }
+
+    /** Rotates [spawnShape] and launch velocity by the entity's Z rotation when [space] is [ParticleSpace.World]. */
     var inheritOrientation: Boolean = false
 
     /** Sorting layer name, ordered alongside sprites and tilemaps. */
@@ -191,7 +208,7 @@ class ParticleEmitter2D(
     /**
      * Optional listener told where each aged-out particle dies, right before its slot is cleared.
      * [ParticleDeathListener.onDeath] receives the particle's `(x, y)` in world units (local to the
-     * entity when [localSpace]) and `z = 0`. A `fun interface`, so a death allocates nothing.
+     * entity in [ParticleSpace.Local]) and `z = 0`. A `fun interface`, so a death allocates nothing.
      */
     var onParticleDeath: ParticleDeathListener? = null
 
@@ -201,7 +218,7 @@ class ParticleEmitter2D(
     /**
      * Set by [BurstEmitter2DPool] on a slot it fires: the slot's entity has no placement, so
      * [Particle2DSystem] spawns at `(pinnedX, pinnedY)` and [appendSpriteDraws] draws at `pinnedZ`,
-     * both in world space whatever [localSpace] says.
+     * both in world space whatever [space] says.
      */
     internal var pinned: Boolean = false
     internal var pinnedX: Float = 0f
@@ -277,7 +294,7 @@ class ParticleEmitter2D(
         turbulenceFrequency = 1f
         spin = null
         additive = false
-        localSpace = false
+        space = ParticleSpace.World
         inheritOrientation = false
         sortingLayer = DEFAULT_PARTICLE_SORTING_LAYER_2D
         sortOrder = 0
@@ -322,7 +339,7 @@ class ParticleEmitter2D(
         turbulenceFrequency = template.turbulenceFrequency
         spin = template.spin
         additive = template.additive
-        localSpace = template.localSpace
+        space = template.space
         inheritOrientation = template.inheritOrientation
         sortingLayer = template.sortingLayer
         sortOrder = template.sortOrder

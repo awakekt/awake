@@ -96,6 +96,14 @@ data class GpuDrawRequest(
     var exemptFromCoverings: Boolean = false,
 ) {
     /**
+     * How much of an opaque draw shows, from `0` to `1`: below `1` its shader discards the rest of
+     * its pixels in a fixed screen-space dither, so it reads as see-through while it stays in the
+     * opaque pass, needs no depth sorting and casts its shadow as before. `1`, the default, draws it
+     * exactly as without it. [set] puts it back to `1`; a producer sets it after.
+     */
+    var fadeOpacity: Float = 1f
+
+    /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
      * [model] and [vertexAnimation] have no default: `Mat4()` and `Vec3f.ZERO` each build a new
      * object on every read, so a default would allocate per call.
@@ -147,6 +155,7 @@ data class GpuDrawRequest(
         this.sortLayer = sortLayer
         this.castsShadows = castsShadows
         this.exemptFromCoverings = exemptFromCoverings
+        this.fadeOpacity = 1f
         return this
     }
 

@@ -140,7 +140,7 @@ private fun sampleRectEdgeOffset(
 }
 
 private fun writeOffsetPosition(sim: ParticleSimulation, slot: Int, ox: Float, oy: Float, oz: Float) {
-    if (sim.inheritOrientation) {
+    if (sim.inheritOrientation || sim.orientSpawnShape) {
         val m = sim.orientation.axes
         sim.posX[slot] = sim.originX + (m[0] * ox + m[BASIS_Y_COL] * oy + m[BASIS_Z_COL] * oz)
         sim.posY[slot] = sim.originY + (m[1] * ox + m[BASIS_Y_COL + 1] * oy + m[BASIS_Z_COL + 1] * oz)
@@ -252,38 +252,6 @@ private fun writeConeVelocity(
     sim.velX[slot] = (ax * cosTheta + rx * sinCosPhi + ux * sinSinPhi) * speed
     sim.velY[slot] = (ay * cosTheta + ry * sinCosPhi + uy * sinSinPhi) * speed
     sim.velZ[slot] = (az * cosTheta + rz * sinCosPhi + uz * sinSinPhi) * speed
-}
-
-private fun applyRadialPush(sim: ParticleSimulation, slot: Int) {
-    if (sim.plane == ParticlePlane.XY) {
-        var awayX = sim.posX[slot] - sim.originX
-        var awayY = sim.posY[slot] - sim.originY
-        val away = sqrt(awayX * awayX + awayY * awayY)
-        if (away > 0f) {
-            awayX /= away
-            awayY /= away
-        } else {
-            val angle = sim.random.nextFloat() * FULL_TURN_RADIANS
-            awayX = cos(angle)
-            awayY = sin(angle)
-        }
-        sim.velX[slot] += awayX * sim.radialSpeed
-        sim.velY[slot] += awayY * sim.radialSpeed
-        return
-    }
-    var awayX = sim.posX[slot] - sim.originX
-    var awayZ = sim.posZ[slot] - sim.originZ
-    val away = sqrt(awayX * awayX + awayZ * awayZ)
-    if (away > 0f) {
-        awayX /= away
-        awayZ /= away
-    } else {
-        val angle = sim.random.nextFloat() * FULL_TURN_RADIANS
-        awayX = cos(angle)
-        awayZ = sin(angle)
-    }
-    sim.velX[slot] += awayX * sim.radialSpeed
-    sim.velZ[slot] += awayZ * sim.radialSpeed
 }
 
 private fun jitter(random: Random, magnitude: Float): Float =

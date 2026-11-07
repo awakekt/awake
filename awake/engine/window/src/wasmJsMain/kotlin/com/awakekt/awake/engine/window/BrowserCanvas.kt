@@ -79,6 +79,18 @@ private val DOM_MOUSE_BUTTONS = mapOf(
  * pixels: each point is measured from the canvas's box, whichever element the event reached.
  */
 fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas()) {
+    bindWindowPointerInput(input, canvas) { release -> window.requestAnimationFrame { release() } }
+}
+
+/**
+ * [bindWindowPointerInput], with the modifiers a wheel arrived with held until [afterFrame] runs its
+ * action: once the frame that reads that wheel has run ([PostedFrameLoop.afterNextFrame]).
+ */
+internal fun bindWindowPointerInput(
+    input: Input,
+    canvas: HTMLCanvasElement,
+    afterFrame: (release: () -> Unit) -> Unit,
+) {
     fun scaledPointer(event: MouseEvent): Pair<Float, Float> =
         canvas.box().bufferPoint(event.clientX.toDouble(), event.clientY.toDouble(), canvas.width, canvas.height)
 
@@ -122,7 +134,7 @@ fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas(
     // Without this the browser's own context menu covers the app's.
     window.addEventListener("contextmenu") { event -> event.preventDefault() }
     bindWindowTouchInput(input, canvas)
-    val wheelModifiers = WheelModifiers(input) { release -> window.requestAnimationFrame { release() } }
+    val wheelModifiers = WheelModifiers(input, afterFrame)
     // Non-passive: a browser treats a wheel listener on the window as passive unless told otherwise,
     // and ignores preventDefault in a passive one.
     addNonPassiveListener("wheel") { event ->
@@ -247,7 +259,15 @@ fun runBrowserCanvas(
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
     val input = lifecycle.input
 
-    bindWindowPointerInput(input, canvas)
+    // The frame runs as an ordinary task, so a worker's messages aren't held behind input and frames.
+    var runFrame: (timeMillis: Double) -> Boolean = { true }
+    val poster = MessageChannelPoster()
+    val frameLoop = PostedFrameLoop(
+        requestFrame = { callback -> window.requestAnimationFrame { time -> callback(time) } },
+        post = poster::post,
+        frame = { time -> runFrame(time) },
+    )
+    bindWindowPointerInput(input, canvas, frameLoop::afterNextFrame)
     bindWindowKeyboardInput(input)
     val textInput = DomTextInputBridge(input)
     val canvasCursor = CanvasCursor { css -> canvas.style.cursor = css }
@@ -282,16 +302,12 @@ fun runBrowserCanvas(
             initBackend(canvas, initialSize.first, initialSize.second)
 
             var lastFrameTime = window.performance.now()
-            var frameLoopStopped = false
-            fun frame(time: Double) {
-                if (frameLoopStopped || isStopped()) {
-                    frameLoopStopped = true
-                    return
-                }
+            fun frame(time: Double): Boolean {
+                if (isStopped()) return false
                 // The first frame's timestamp can come before lastFrameTime's performance.now().
                 val deltaSeconds = clampFrameDelta((time - lastFrameTime) / 1000.0).toFloat()
                 lastFrameTime = time
-                try {
+                return try {
                     // A changed cap, or a device ratio that moved without a resize event.
                     if (currentCanvasPixelRatio(maxPixelRatio()) != pixelRatio) resizeCanvas()
                     pollBrowserGamepad(input)
@@ -299,16 +315,16 @@ fun runBrowserCanvas(
                     textInput.sync()
                     // An image the app asks for wins over the shape, as on the desktop host.
                     canvasCursor.showFrame(cursor, cursorImage)
+                    true
                 } catch (error: Throwable) {
-                    frameLoopStopped = true
                     reportBrowserFrameFailure(
                         "Browser frame failed: ${error.message ?: error::class.simpleName}",
                     )
-                    return
+                    false
                 }
-                window.requestAnimationFrame(::frame)
             }
-            window.requestAnimationFrame(::frame)
+            runFrame = ::frame
+            frameLoop.start()
         } catch (cancelled: CancellationException) {
             // The app was disposed while the backend started: not a start-up failure.
             throw cancelled

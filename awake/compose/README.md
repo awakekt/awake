@@ -30,6 +30,7 @@ The core composition and reconciliation engine.
 - **`Composer` & Applier**: Retained node hierarchy construction, positional slot identity, and reconciled tree mutations.
 - **`remember`**: Value caching across frames keyed on identity or explicit state parameters.
 - **`CompositionLocal`**: Ambient dependency propagation down the composition tree (`LocalDensity`, `LocalLayoutDirection`, `LocalViewportSize`).
+- **Read tracking**: a `Composition` pass records the `State` objects it reads. Writing a different value to a `mutableStateOf` it read, or a `PolledState` it read now returning a different value, makes `Composition.isInvalid` true, so a host that composes only on change knows when to. Invalidation covers the whole composition; there is no per-scope restart. `ComposeHost` still composes every frame and ignores it.
 
 ### 2. `:awake:compose:ui`
 The retained node layout, modifier, drawing, and input infrastructure.
@@ -80,8 +81,9 @@ fun UserProfile(username: String, avatarUrl: String) {
 
 ### 2. State Across Frames
 ```kotlin
-// A plain class with plain vars. There is no observable state and no skipping: the whole tree
-// composes every frame, so a value only has to survive one -- which is what `remember` does.
+// A plain class with plain vars. `ComposeHost` has no skipping: the whole tree composes every
+// frame, so a value only has to survive one -- which is what `remember` does. Use
+// `mutableStateOf` when a host that composes only on change must see the write.
 private class CounterState { var count = 0 }
 
 context(Composer)

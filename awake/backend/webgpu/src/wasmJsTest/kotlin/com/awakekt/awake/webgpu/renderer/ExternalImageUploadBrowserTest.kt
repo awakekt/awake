@@ -86,7 +86,9 @@ class ExternalImageUploadBrowserTest {
     private suspend fun compare(name: String, file: ByteArray, filtering: TextureFiltering) = withRenderer { renderer ->
         decodeBrowserImage(file).use { image ->
             val cpu = renderer.uploadTexture(TextureAsset(image.toBitmap().toRgba8Bytes(), image.width, image.height, filtering = filtering))
-            val gpu = (renderer.capability(GpuImageUpload) as ExternalImageUpload).upload(image, image.width, image.height, filtering)
+            val gpu = checkNotNull((renderer.capability(GpuImageUpload) as ExternalImageUpload).upload(image, image.width, image.height, filtering)) {
+                "$name: the browser refused the copy"
+            }
             val levels = if (filtering == TextureFiltering.Linear) mipLevelCount(image.width, image.height) else 1
             for (level in 0 until levels) {
                 val want = renderer.readLevel(cpu, level)

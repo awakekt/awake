@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.ecs.ComponentStore
+import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Family1
 import com.awakekt.awake.ecs.World
@@ -56,11 +58,11 @@ internal class CanvasNodeNames(private val world: World) {
 
 /**
  * [canvasItems] for one world, kept from frame to frame: the elements are sorted into hierarchy order
- * again only on a frame where that order could have changed. Each frame walks the path above every
- * element and checks it against the last sort's: the elements in the same order, each with the same
- * nodes above it, and each of those nodes' [Transform] where the world stored it then. When all of it
- * holds, the sort would come out as it did, so the items are made in that order from the elements
- * and parents they have now; when any of it doesn't, they are sorted afresh.
+ * again only on a frame where that order could have changed. Each frame checks the elements are in
+ * the same order, then checks each node on their paths once, however many elements sit below it: its
+ * [Transform] where the world stored it at the last sort, and the same parent. Unchanged parents make
+ * every element's path the same, so the sort would come out as it did, and the items are made in that
+ * order from the elements and parents they have now; when anything differs, they are sorted afresh.
  *
  * Storage moves a node when one stored after it is removed, so a node despawned elsewhere can, rarely,
  * cost a sort; nodes added only ever append.
@@ -73,8 +75,14 @@ internal class CanvasItemOrder(private val world: World) {
     private var pathStarts = IntArray(1)
     private var pathNodes = LongArray(0)
 
-    /** Where the world stored each path node's [Transform] at the last sort, or -1 for a node with none. */
-    private var stored = IntArray(0)
+    /**
+     * Each node on any path, once: where the world stored its [Transform] at the last sort (-1 for none),
+     * and its parent then. A node shared by many elements' paths is checked once a frame, not once each.
+     */
+    private var nodeEntities = LongArray(0)
+    private var nodeSlots = IntArray(0)
+    private var nodeParents = LongArray(0)
+    private var nodeHasParent = BooleanArray(0)
 
     /** The items' collected positions, in the order the last sort left them. */
     private var sorted = IntArray(0)
@@ -82,8 +90,23 @@ internal class CanvasItemOrder(private val world: World) {
     private var count = -1
     private var elements = arrayOfNulls<CanvasElement>(0)
 
+    // Type ids resolved once per world generation and stores taken once per [items]: `world.get` hashes
+    // its type's key on every call, and the walk below makes one per path node of every element, every frame.
+    private var typesGeneration = -1
+    private var transformType: ComponentTypeId? = null
+    private var elementType: ComponentTypeId? = null
+    private var scalerType: ComponentTypeId? = null
+    private var transformStore: ComponentStore<Transform>? = null
+    private var elementStore: ComponentStore<CanvasElement>? = null
+    private var scalerStore: ComponentStore<CanvasScaler>? = null
+    private var siblingType: ComponentTypeId? = null
+
+    /** The [CanvasSiblingIndex] store's revision at the last sort: a content block moved a node when it differs. */
+    private var siblingRevision = -1
+
     /** This frame's items, in hierarchy order. */
     fun items(): List<CanvasItem> {
+        takeStores()
         if (!unchanged()) sort()
         val items = ArrayList<CanvasItem>(count)
         for (position in 0 until count) {
@@ -93,46 +116,58 @@ internal class CanvasItemOrder(private val world: World) {
         return items
     }
 
-    /** Whether the elements, the paths above them and where their nodes are stored are as the last sort found them. */
+    private fun takeStores() {
+        if (typesGeneration != world.generation) {
+            transformType = world.typeId(Transform::class)
+            elementType = world.typeId(CanvasElement::class)
+            scalerType = world.typeId(CanvasScaler::class)
+            siblingType = world.typeId(CanvasSiblingIndex::class)
+            typesGeneration = world.generation
+        }
+        transformStore = world.componentStore(checkNotNull(transformType))
+        elementStore = world.componentStore(checkNotNull(elementType))
+        scalerStore = world.componentStore(checkNotNull(scalerType))
+    }
+
+    /** [node]'s component in this store, as `world.get` finds it: none for a node that is no longer alive. */
+    private fun <T : Any> ComponentStore<T>?.of(node: Entity): T? = if (this != null && world.isAlive(node)) get(node) else null
+
+    /** Whether the elements, and every node on their paths and where it is stored, are as the last sort found them. */
     private fun unchanged(): Boolean {
         val family = world.family<CanvasElement>()
-        if (family.size != count) return false
+        if (family.size != count || siblingRevision() != siblingRevision) return false
         if (elements.size < count) elements = arrayOfNulls(count)
-        val transforms = world.family<Transform>()
         var index = 0
         var same = true
         family.forEach { entity, element ->
             if (!same) return@forEach
             elements[index] = element
-            same = entity.packed == entities[index] && samePath(index, entity, transforms)
+            same = entity.packed == entities[index]
             index++
         }
-        return same
+        return same && nodesUnchanged()
     }
 
-    private fun samePath(index: Int, entity: Entity, transforms: Family1<Transform>): Boolean {
-        val start = pathStarts[index]
-        val end = pathStarts[index + 1]
-        var node: Entity? = entity
-        var at = start
-        while (at < end && isPathNode(node, at, transforms)) {
-            node = node?.let { world.get<Transform>(it)?.parent }
-            at++
-        }
-        // Where the last sort's path ended, the walk ends too: at a root, or where a parent link loops back.
-        val next = node
-        return at == end && (next == null || (start until end).any { pathNodes[it] == next.packed })
+    private fun nodesUnchanged(): Boolean {
+        val transforms = world.family<Transform>()
+        for (at in nodeEntities.indices) if (!nodeUnchanged(at, transforms)) return false
+        return true
     }
 
-    /** Whether [node] is the last sort's path node [at], with its [Transform] stored where it was then, or still none. */
-    private fun isPathNode(node: Entity?, at: Int, transforms: Family1<Transform>): Boolean {
-        if (node == null || node.packed != pathNodes[at]) return false
-        val transform = world.get<Transform>(node)
-        val slot = stored[at]
-        return if (slot < 0) transform == null else transform != null && slot < transforms.size && transforms.componentAt(slot) === transform
+    /** Whether node [at] has its [Transform] stored where it was at the last sort, or still none, and the same parent. */
+    private fun nodeUnchanged(at: Int, transforms: Family1<Transform>): Boolean {
+        val transform = transformStore.of(Entity(nodeEntities[at]))
+        val slot = nodeSlots[at]
+        if (slot < 0) return transform == null
+        val stored = transform != null && slot < transforms.size && transforms.componentAt(slot) === transform
+        val parent = transform?.parent
+        return stored && nodeHasParent[at] == (parent != null) && (parent == null || parent.packed == nodeParents[at])
     }
+
+    private fun siblingRevision(): Int = world.componentStore<CanvasSiblingIndex>(checkNotNull(siblingType))?.revision ?: 0
 
     private fun sort() {
+        siblingRevision = siblingRevision()
         val placed = ArrayList<PlacedItem>()
         world.family<CanvasElement>().forEach { entity, element ->
             val path = world.hierarchyPath(entity)
@@ -153,26 +188,43 @@ internal class CanvasItemOrder(private val world: World) {
         pathStarts = IntArray(count + 1)
         val nodes = placed.sumOf { it.path.size }
         pathNodes = LongArray(nodes)
-        stored = IntArray(nodes)
         var at = 0
         placed.forEachIndexed { index, item ->
             pathStarts[index] = at
             // The entity first, then up to the root, as each frame walks it.
             for (step in item.path.indices.reversed()) {
                 pathNodes[at] = item.path[step].packed
-                stored[at] = wanted.getValue(item.path[step])
                 at++
             }
         }
         pathStarts[count] = at
+        rememberNodes(wanted)
         val order = world.sortPlaced(placed, siblingOrder = null)
         sorted = IntArray(count) { collected.getValue(order[it]) }
+    }
+
+    /** Records each path node in [wanted], with where its [Transform] is stored, and its parent. */
+    private fun rememberNodes(wanted: Map<Entity, Int>) {
+        val size = wanted.size
+        nodeEntities = LongArray(size)
+        nodeSlots = IntArray(size)
+        nodeParents = LongArray(size)
+        nodeHasParent = BooleanArray(size)
+        var at = 0
+        wanted.forEach { (node, slot) ->
+            val parent = if (slot >= 0) transformStore.of(node)?.parent else null
+            nodeEntities[at] = node.packed
+            nodeSlots[at] = slot
+            nodeHasParent[at] = parent != null
+            nodeParents[at] = parent?.packed ?: 0L
+            at++
+        }
     }
 
     /** The element of the nearest node above item [index]'s entity that has one, as [canvasParent] finds it. */
     private fun canvasParent(index: Int): CanvasElement? {
         for (at in pathStarts[index] + 1 until pathStarts[index + 1]) {
-            world.get<CanvasElement>(Entity(pathNodes[at]))?.let { return it }
+            elementStore.of(Entity(pathNodes[at]))?.let { return it }
         }
         return null
     }
@@ -182,8 +234,8 @@ internal class CanvasItemOrder(private val world: World) {
         val start = pathStarts[index]
         for (at in start until pathStarts[index + 1]) {
             val node = Entity(pathNodes[at])
-            if (at > start && world.has<CanvasElement>(node)) break
-            world.get<CanvasScaler>(node)?.takeIf { it.scope == CanvasScaleScope.Subtree }?.let { return it }
+            if (at > start && elementStore.of(node) != null) break
+            scalerStore.of(node)?.takeIf { it.scope == CanvasScaleScope.Subtree }?.let { return it }
         }
         return null
     }

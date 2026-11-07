@@ -68,8 +68,10 @@ class GraphicsDevice {
     var presentQueue: Long = 0
 
     /**
-     * Hardware classification of the active adapter. Defaults to [GpuDeviceClass.Unknown] on WebGPU
-     * when adapter info is not exposed synchronously.
+     * Hardware classification of the active adapter, set by [create] from the adapter's info and the
+     * host's mobile hint (see [classifyWebGpuDevice]), before a renderer reads it for its effect
+     * quality and render-quality budgets. [GpuDeviceClass.Unknown] until then, and after it when the
+     * browser reports nothing.
      */
     var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
 
@@ -114,6 +116,7 @@ class GraphicsDevice {
         // Before anything reads the format: every pipeline and target is built with it.
         wgpuContext = context.withDisplayEncodedColorFormat()
         device = WebGpuHandles.register(wgpuContext.device)
+        deviceClass = classifyWebGpuDevice(wgpuContext.adapter.report(), hostMobileHint())
     }
 
     /**

@@ -48,6 +48,8 @@ kotlin {
                 implementation(project(":awake:core:text"))
                 // Text placed in a scene, drawn from the distance field on both backends.
                 implementation(project(":awake:worldtext"))
+                // Particle emitters stepped and drawn as a played scene does; a capability with no scene module.
+                implementation(project(":awake:particles"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

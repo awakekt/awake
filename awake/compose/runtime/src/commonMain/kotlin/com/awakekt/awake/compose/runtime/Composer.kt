@@ -314,42 +314,14 @@ fun reconcile(
     applier: Applier,
     root: Any?,
     content: context(Composer) () -> Unit,
-): Composer = Composition(applier, root).reconcile(content)
+): Composer {
+    val composition = Composition(applier, root)
+    val composer = composition.reconcile(content)
+    // Nothing keeps a one-shot composition, so the states it read must not keep it either.
+    composition.forgetReads()
+    return composer
+}
 
 /** As [reconcile], for a root that never remembers anything itself. */
 fun reconcile(applier: Applier, content: context(Composer) () -> Unit): Composer =
     reconcile(applier, null, content)
-
-/**
- * Retains `remember` slots and node identity across root passes.
- *
- * The free [reconcile] function stays one-shot, for tests and small callers that build a tree once.
- * A host that composes every frame owns a Composition and calls this method each time.
- */
-class Composition(
-    applier: Applier,
-    root: Any? = null,
-    parentLocals: ProvidedLocals? = null,
-) {
-    private val composer = Composer(applier, root, parentLocals)
-
-    /**
-     * Runs one root pass of [content] against the retained tree: reuses what matches, creates what is
-     * new, drops what this pass no longer declares, and returns the composer it ran with.
-     */
-    fun reconcile(content: context(Composer) () -> Unit): Composer {
-        composer.beginRoot()
-        content(composer)
-        composer.finishRoot()
-        return composer
-    }
-
-    /**
-     * Drops the whole retained tree: every node goes, and every remembered [RememberObserver] is told
-     * it was forgotten. Call it when the host stops composing this tree. A later [reconcile] starts
-     * from an empty tree.
-     */
-    fun dispose() {
-        composer.disposeRoot()
-    }
-}

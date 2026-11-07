@@ -17,7 +17,7 @@ import com.awakekt.awake.render.passes.sprites.SpriteDrawInput
  *
  * Where a particle is drawn:
  * - a world-space emitter's particle is at its simulated `(x, y)`, at depth [depth];
- * - a [ParticleEmitter2D.localSpace] emitter's particle is at its simulated `(x, y)` under [parent],
+ * - a [ParticleSpace.Local] emitter's particle is at its simulated `(x, y)` under [parent],
  *   its entity's world matrix, or at depth [depth] when [parent] is null;
  * - a [BurstEmitter2DPool] burst is at its simulated `(x, y)` at the depth it was fired at, and
  *   ignores [parent] and [depth].
@@ -36,7 +36,7 @@ fun ParticleEmitter2D.appendSpriteDraws(
 ) {
     val sim = simulation
     if (!enabled || sim.liveParticleCount == 0) return
-    val underParent = !pinned && localSpace && parent != null
+    val underParent = !pinned && space == ParticleSpace.Local && parent != null
     val z = if (pinned) pinnedZ else depth
     for (slot in 0 until maxParticles) {
         if (!sim.isAlive(slot)) continue

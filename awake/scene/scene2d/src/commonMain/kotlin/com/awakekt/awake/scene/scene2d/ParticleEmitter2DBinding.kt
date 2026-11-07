@@ -14,6 +14,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.particles.BurstEmitter2DPool
 import com.awakekt.awake.particles.ParticleEmitter2D
+import com.awakekt.awake.particles.ParticleSpace
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -80,7 +81,7 @@ fun ParticleEmitter2D.applySceneSettings(settings: SceneParticleEmitter2D) {
         ParticleSpinRange(it.minDegreesPerSecond, it.maxDegreesPerSecond, it.randomStartAngle)
     }
     additive = settings.additive
-    localSpace = settings.localSpace
+    space = settings.particleSpace()
     inheritOrientation = settings.inheritOrientation
     sortingLayer = settings.sortingLayer
     sortOrder = settings.sortOrder
@@ -123,7 +124,7 @@ fun ParticleEmitter2D.toScene(): SceneParticleEmitter2D = SceneParticleEmitter2D
         SceneParticleSpin2D(it.minDegreesPerSecond, it.maxDegreesPerSecond, it.randomStartAngle)
     },
     additive = additive,
-    localSpace = localSpace,
+    space = space,
     inheritOrientation = inheritOrientation,
     sortingLayer = sortingLayer,
     sortOrder = sortOrder,
@@ -132,6 +133,10 @@ fun ParticleEmitter2D.toScene(): SceneParticleEmitter2D = SceneParticleEmitter2D
         SceneParticleBurstCycle2D(it.cycleSeconds, it.activeSeconds, it.burstInterval, it.burstSize)
     },
 )
+
+/** [SceneParticleEmitter2D.space], or [ParticleSpace.Local] for a scene file written with the old `localSpace: true`. */
+@Suppress("DEPRECATION")
+internal fun SceneParticleEmitter2D.particleSpace(): ParticleSpace = if (localSpace) ParticleSpace.Local else space
 
 internal fun SceneParticleShape2D.toSpawnShape(): ParticleSpawnShape = when (kind) {
     ParticleEmissionShape2D.Point -> ParticleSpawnShape.Point

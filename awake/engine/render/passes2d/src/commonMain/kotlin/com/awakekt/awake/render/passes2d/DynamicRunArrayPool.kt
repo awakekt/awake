@@ -97,6 +97,9 @@ class DynamicRunArrayPool {
     }
 
     private val generations = arrayOf(Generation(), Generation())
+
+    /** Spots pooled spans that have stopped changing, so they are stored rather than pooled forever. */
+    internal val stableSpans = StableSpanTracker()
     private var current = 0
     private var spanIndex = 0
     private var spansEverSeen = 0
@@ -116,6 +119,7 @@ class DynamicRunArrayPool {
         current = current xor 1
         generations[current].reset()
         spanIndex = 0
+        stableSpans.beginFrame()
     }
 
     /**

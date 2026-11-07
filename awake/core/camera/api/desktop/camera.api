@@ -1,0 +1,85 @@
+public final class com/awakekt/awake/core/camera/CameraCollision {
+	public static final field Companion Lcom/awakekt/awake/core/camera/CameraCollision$Companion;
+	public static final field DEFAULT_EASE_OUT_SECONDS F
+	public static final field DEFAULT_GROUND_MARGIN F
+	public static final field DEFAULT_RADIUS F
+	public fun <init> ()V
+	public fun <init> (ZZFFFLjava/util/List;)V
+	public synthetic fun <init> (ZZFFFLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Ljava/util/List;
+	public final fun copy (ZZFFFLjava/util/List;)Lcom/awakekt/awake/core/camera/CameraCollision;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/camera/CameraCollision;ZZFFFLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/camera/CameraCollision;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEaseOutSeconds ()F
+	public final fun getGround ()Z
+	public final fun getGroundMargin ()F
+	public final fun getObstacleLayers ()Ljava/util/List;
+	public final fun getRadius ()F
+	public final fun getTerrain ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/camera/CameraCollision$Companion {
+}
+
+public final class com/awakekt/awake/core/camera/CameraCollisionSolver {
+	public static final field EPSILON F
+	public static final field HALF F
+	public static final field REFINE_STEPS I
+	public static final field SKIN F
+	public static final field TERRAIN_STEPS I
+	public fun <init> ()V
+	public final fun getDistance ()F
+	public final fun reset ()V
+	public final fun solve (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/camera/CameraCollision;Lcom/awakekt/awake/core/camera/CameraGround;Lcom/awakekt/awake/core/camera/CameraObstruction;FFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public abstract interface class com/awakekt/awake/core/camera/CameraGround {
+	public abstract fun heightAt (FF)F
+}
+
+public abstract interface class com/awakekt/awake/core/camera/CameraObstruction {
+	public abstract fun clearFraction (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FI)F
+}
+
+public final class com/awakekt/awake/core/camera/OccluderFade {
+	public static final field Companion Lcom/awakekt/awake/core/camera/OccluderFade$Companion;
+	public static final field DEFAULT_FADE_SECONDS F
+	public static final field DEFAULT_OPACITY F
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/core/camera/OccluderFade;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/camera/OccluderFade;FFILjava/lang/Object;)Lcom/awakekt/awake/core/camera/OccluderFade;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFadeSeconds ()F
+	public final fun getOpacity ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/camera/OccluderFade$Companion {
+}
+
+public final class com/awakekt/awake/core/camera/OccluderFader {
+	public static final field SETTLED F
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun blocking (Ljava/lang/Object;)V
+	public final fun clear ()V
+	public final fun entries ()Ljava/util/Set;
+	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
+	public final fun getSize ()I
+	public final fun opacityOf (Ljava/lang/Object;)F
+	public final fun step (Lcom/awakekt/awake/core/camera/OccluderFade;F)V
+}
+

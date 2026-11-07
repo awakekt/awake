@@ -6,10 +6,13 @@
 package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.particles.ParticleSpace
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec2
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -180,13 +183,19 @@ data class SceneParticleBurstCycle2D(
  * @property turbulenceFrequency Spatial frequency of the turbulence field. Not negative.
  * @property spin Optional per-particle angular velocity range in degrees per second.
  * @property additive Draws with additive blending on `spriteScenePipeline(buildAdditive = true)`.
- * @property localSpace Keeps live particles attached to the node's `Transform` instead of trailing in world space.
- * @property inheritOrientation Rotates [shape] and launch direction by the node's Z rotation when [localSpace] is `false`.
+ * @property localSpace Deprecated: write [space] instead. `true` still reads as [ParticleSpace.Local], whatever
+ * [space] says, so a scene file written before [space] plays as it did; it is not written back out.
+ * @property inheritOrientation Rotates [shape] and launch direction by the node's Z rotation in [ParticleSpace.World].
  * @property sortingLayer Project sorting layer name, ordered alongside `sprite` and `tilemap`.
  * @property sortOrder Paint order within [sortingLayer]; higher values draw over lower ones.
  * @property burstCount Optional lifetime spawn cap; destroys the node once all spawned particles expire. Above 0.
  * @property burstCycle Optional repeating pulsed schedule replacing continuous [spawnRate].
+ * @property space Where live particles are kept, as for a 3D `particle_emitter`'s `space`, and written as
+ * the [ParticleSpace] constant names. [ParticleSpace.World], the default, leaves each where it spawned, so
+ * particles trail behind a moving node. [ParticleSpace.Local] keeps them attached to the node's
+ * `Transform`, so they move, turn and scale with it; [gravity] is then in the node's own axes.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @SerialName("particle_emitter_2d")
 data class SceneParticleEmitter2D(
@@ -219,13 +228,109 @@ data class SceneParticleEmitter2D(
     @PropertyRange(min = 0.0) val turbulenceFrequency: Float = 1f,
     val spin: SceneParticleSpin2D? = null,
     val additive: Boolean = false,
+    @Deprecated("Use space, which takes ParticleSpace.World or ParticleSpace.Local")
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     val localSpace: Boolean = false,
     val inheritOrientation: Boolean = false,
     val sortingLayer: String = SortingLayers.DEFAULT,
     val sortOrder: Int = 0,
     @PropertyRange(min = 0.0, exclusiveMin = true) val burstCount: Int? = null,
     val burstCycle: SceneParticleBurstCycle2D? = null,
+    val space: ParticleSpace = ParticleSpace.World,
 ) : SceneComponent {
+    /** [SceneParticleEmitter2D] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        texture: String = "",
+        columns: Int = 1,
+        rows: Int = 1,
+        frameCount: Int = 1,
+        frameRate: Float = DEFAULT_FRAME_RATE_2D,
+        enabled: Boolean = true,
+        maxParticles: Int = DEFAULT_MAX_PARTICLES_2D,
+        spawnRate: Float = DEFAULT_SPAWN_RATE_2D,
+        lifetime: Float = DEFAULT_LIFETIME_2D,
+        maxLifetime: Float? = null,
+        size: Float = DEFAULT_SIZE_2D,
+        endSize: Float? = null,
+        startAlpha: Float = 1f,
+        alphaCurve: SceneParticleAlphaCurve2D? = null,
+        tint: SceneColor = SceneColor(),
+        endTint: SceneColor? = null,
+        shape: SceneParticleShape2D = SceneParticleShape2D(),
+        speed: Float = 1f,
+        maxSpeed: Float? = null,
+        directionDegrees: Float = DEFAULT_DIRECTION_DEGREES_2D,
+        spreadDegrees: Float = FULL_CIRCLE_DEGREES_2D,
+        radialSpeed: Float = 0f,
+        convergeToOrigin: Boolean = false,
+        gravity: SceneVec2 = SceneVec2(0f, 0f),
+        drag: Float = 0f,
+        turbulence: Float = 0f,
+        turbulenceFrequency: Float = 1f,
+        spin: SceneParticleSpin2D? = null,
+        additive: Boolean = false,
+        localSpace: Boolean = false,
+        inheritOrientation: Boolean = false,
+        sortingLayer: String = SortingLayers.DEFAULT,
+        sortOrder: Int = 0,
+        burstCount: Int? = null,
+        burstCycle: SceneParticleBurstCycle2D? = null,
+    ) : this(
+        texture, columns, rows, frameCount, frameRate, enabled, maxParticles, spawnRate, lifetime,
+        maxLifetime, size, endSize, startAlpha, alphaCurve, tint, endTint, shape, speed, maxSpeed,
+        directionDegrees, spreadDegrees, radialSpeed, convergeToOrigin, gravity, drag, turbulence,
+        turbulenceFrequency, spin, additive, localSpace, inheritOrientation, sortingLayer, sortOrder,
+        burstCount, burstCycle, ParticleSpace.World,
+    )
+
+    /** [copy] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Suppress("DEPRECATION")
+    fun copy(
+        texture: String = this.texture,
+        columns: Int = this.columns,
+        rows: Int = this.rows,
+        frameCount: Int = this.frameCount,
+        frameRate: Float = this.frameRate,
+        enabled: Boolean = this.enabled,
+        maxParticles: Int = this.maxParticles,
+        spawnRate: Float = this.spawnRate,
+        lifetime: Float = this.lifetime,
+        maxLifetime: Float? = this.maxLifetime,
+        size: Float = this.size,
+        endSize: Float? = this.endSize,
+        startAlpha: Float = this.startAlpha,
+        alphaCurve: SceneParticleAlphaCurve2D? = this.alphaCurve,
+        tint: SceneColor = this.tint,
+        endTint: SceneColor? = this.endTint,
+        shape: SceneParticleShape2D = this.shape,
+        speed: Float = this.speed,
+        maxSpeed: Float? = this.maxSpeed,
+        directionDegrees: Float = this.directionDegrees,
+        spreadDegrees: Float = this.spreadDegrees,
+        radialSpeed: Float = this.radialSpeed,
+        convergeToOrigin: Boolean = this.convergeToOrigin,
+        gravity: SceneVec2 = this.gravity,
+        drag: Float = this.drag,
+        turbulence: Float = this.turbulence,
+        turbulenceFrequency: Float = this.turbulenceFrequency,
+        spin: SceneParticleSpin2D? = this.spin,
+        additive: Boolean = this.additive,
+        localSpace: Boolean = this.localSpace,
+        inheritOrientation: Boolean = this.inheritOrientation,
+        sortingLayer: String = this.sortingLayer,
+        sortOrder: Int = this.sortOrder,
+        burstCount: Int? = this.burstCount,
+        burstCycle: SceneParticleBurstCycle2D? = this.burstCycle,
+    ): SceneParticleEmitter2D = SceneParticleEmitter2D(
+        texture, columns, rows, frameCount, frameRate, enabled, maxParticles, spawnRate, lifetime,
+        maxLifetime, size, endSize, startAlpha, alphaCurve, tint, endTint, shape, speed, maxSpeed,
+        directionDegrees, spreadDegrees, radialSpeed, convergeToOrigin, gravity, drag, turbulence,
+        turbulenceFrequency, spin, additive, localSpace, inheritOrientation, sortingLayer, sortOrder,
+        burstCount, burstCycle, space,
+    )
+
     /** Total cells in the sheet (`0` when [columns] or [rows] is invalid). */
     val cellCount: Int
         get() = if (columns >= 1 && rows >= 1 && columns.toLong() * rows <= Int.MAX_VALUE) columns * rows else 0

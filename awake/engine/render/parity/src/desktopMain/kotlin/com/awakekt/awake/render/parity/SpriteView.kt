@@ -173,10 +173,10 @@ private const val FACING_SPRITE_X = 1f
 private const val SPRITE_SIZE = 1f
 private const val SPRITE_EYE_DISTANCE = 4f
 
-private val RedSprite = TextureAsset(data = ByteArray(2 * 2 * 4) { if (it % 4 == 0 || it % 4 == 3) -1 else 0 }, width = 2, height = 2)
+internal val RedSprite = TextureAsset(data = ByteArray(2 * 2 * 4) { if (it % 4 == 0 || it % 4 == 3) -1 else 0 }, width = 2, height = 2)
 
 /** The unit quad the scene's particle content draws: position and UV in the XY plane. */
-private val SpriteQuad = MeshGeometry(
+internal val SpriteQuad = MeshGeometry(
     floatArrayOf(
         -0.5f, -0.5f, 0f, 0f, 1f,
         0.5f, -0.5f, 0f, 1f, 1f,

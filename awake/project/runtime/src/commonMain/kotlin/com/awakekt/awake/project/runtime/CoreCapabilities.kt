@@ -35,6 +35,7 @@ import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
+import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
@@ -79,9 +80,21 @@ internal object ControlsCapability : SceneCapability {
         }
         // Runtime HUDs need the same ordering as authored ones: begin/read actions before adding
         // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
-        plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
+        // A headless host (a game server) draws no canvas and takes no touches, so it plans none: walking
+        // its canvas elements every frame cost a server about 5% of its tick for nothing.
+        if (plan.hasRenderer) plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
-        if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
+        if (scene.uses(SceneCameraRig::class)) {
+            plan.frame("camera") { services ->
+                // Asked only for a rig with collision on, so a scene without it behaves as before.
+                val probes = SceneCameraCollisionProbes(services.physics, services.content[StreamedTerrainCapability.Terrain]?.terrain?.heights)
+                CameraSystem(inputProvider = services.input, viewportBounds = { null }, collisionProbes = probes)
+            }
+        }
+        // Fades what a rig's occluderFade finds between its eye and its target, from the physics world's rays.
+        if (plan.hasPhysics && scene.nodes.any { it.fadesOccluders() }) {
+            plan.frame("occluder-fade") { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
+        }
     }
 }
 
@@ -142,19 +155,27 @@ internal object PhysicsCapability : SceneCapability {
         if (scene.uses(SceneCharacterController::class)) {
             // Before the character step builds each controller: a sensor sees a character only by a body of its own.
             if (scene.nodes.any { it.hasSensor() }) plan.fixed("character-sensor-bodies") { CharacterSensorBodies() }
-            plan.fixed("character") { CharacterControllerSystem(requireNotNull(it.physics)) }
+            plan.fixed(SceneSystemPlan.CHARACTER_CONTROLLER) { CharacterControllerSystem(requireNotNull(it.physics)) }
         }
     }
 }
 
-/** Skinned glTF animation, which every scene runs: a model's clips need no component of their own. */
+/**
+ * Skinned glTF animation, which every scene runs: a model's clips need no component of their own. A
+ * game that put an [AnimationUpdateRate] under [CoreSceneContent.AnimationUpdateRate] has far models
+ * posed less often; otherwise every model is posed every frame.
+ */
 internal object SkinnedAnimationCapability : SceneCapability {
     override val id = "com.awakekt.awake.skinned-animation"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        plan.frame("animation") { AnimationSystem() }
+        plan.frame("animation") { services -> AnimationSystem(services.animationUpdateRate()) }
     }
 }
+
+/** The rate a game put under [CoreSceneContent.AnimationUpdateRate], else every frame. */
+internal fun SceneHostServices.animationUpdateRate(): AnimationUpdateRate =
+    content[CoreSceneContent.AnimationUpdateRate] ?: AnimationUpdateRate.EveryFrame
 
 /** A `terrain` collider, or a `paged_terrain` whose nearby cells collide. */
 private fun SceneDocument.hasTerrainColliders(): Boolean =
@@ -169,6 +190,10 @@ internal fun SceneNode.hasMeshCollider(): Boolean =
 
 internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
+
+/** Whether [this] node, or one under it, has a camera rig that fades its occluders. */
+private fun SceneNode.fadesOccluders(): Boolean =
+    components.any { it is SceneCameraRig && it.occluderFade != null } || children.any { it.fadesOccluders() }
 
 internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
 

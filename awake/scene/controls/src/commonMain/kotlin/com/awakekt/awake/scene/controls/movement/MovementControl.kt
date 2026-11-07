@@ -24,7 +24,9 @@ enum class MovementDriver {
 
     /**
      * Code such as AI, a network or a script; the intent is a world-space direction, and player input
-     * leaves it alone.
+     * leaves it alone. A game that drives a player's character itself, such as a flight model reading
+     * the player's actions, switches the control to this while it does, so [steerPlayers] doesn't
+     * overwrite what it writes.
      */
     Agent,
 }

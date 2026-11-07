@@ -13,6 +13,9 @@ import kotlin.test.assertSame
 private val localLabel = compositionLocalOf { "default" }
 private val localCount = compositionLocalOf { 0 }
 
+context(composer: Composer)
+private fun localsSnapshot(): ProvidedLocals = composer.localsSnapshot
+
 class CompositionLocalTest {
 
     private fun compose(content: context(Composer) () -> Unit) {
@@ -53,6 +56,22 @@ class CompositionLocalTest {
         }
 
         assertEquals(listOf("outer", "inner", "outer"), seen, "the window closes on exit")
+    }
+
+    @Test
+    fun aSnapshotCarriesItsLocalsIntoAnotherComposition() {
+        var snapshot: ProvidedLocals? = null
+        compose { CompositionLocalProvider(localLabel, "outer") { snapshot = localsSnapshot() } }
+        val seen = mutableListOf<Any>()
+
+        compose {
+            CompositionLocalProvider(localCount, 3) {
+                CompositionLocalProvider(checkNotNull(snapshot)) { seen += localLabel.current; seen += localCount.current }
+            }
+            seen += localLabel.current
+        }
+
+        assertEquals(listOf<Any>("outer", 3, "default"), seen, "over the ones open there, and closed after")
     }
 
     @Test

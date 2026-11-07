@@ -22,7 +22,7 @@ import com.awakekt.awake.core.math2d.Rectangle
  * safe.
  */
 class RetainedDrawRunCache(
-    private val capacity: Int = DEFAULT_CAPACITY,
+    internal val capacity: Int = DEFAULT_CAPACITY,
 ) {
     private data class Entry(
         val hash: Int,
@@ -46,6 +46,11 @@ class RetainedDrawRunCache(
 
     private val entries = ArrayList<Entry>(capacity)
 
+    /** The hash of the span the last [find] missed, so a miss can be recognised next frame without
+     * hashing it again; see [StableSpanTracker]. */
+    internal var lastMissHash: Int = 0
+        private set
+
     /** Returns a retained span and promotes it to most-recently-used, or `null` on a miss. */
     fun find(
         primitives: List<DrawCommand>,
@@ -64,6 +69,7 @@ class RetainedDrawRunCache(
             }
             index -= 1
         }
+        lastMissHash = hash
         return null
     }
 

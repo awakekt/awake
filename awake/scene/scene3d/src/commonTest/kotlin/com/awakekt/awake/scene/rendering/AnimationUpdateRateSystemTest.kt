@@ -23,6 +23,7 @@ import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -81,6 +82,44 @@ class AnimationUpdateRateSystemTest {
         assertTrue(afterFirstPose > 0f, "the first drawn frame still poses")
         assertEquals(afterFirstPose, pose.jointPalette[12], "pose held while throttled")
     }
+
+    @Test
+    fun anIntervalShorterThanAFramePosesEveryFrame() {
+        // #1423: a 1.4 ms hold, just past `near`, held every other frame at 60 fps.
+        assertEquals(60, recomputes(fixed(0.0014f), distance = 100f, frames = 60))
+    }
+
+    @Test
+    fun overOneSecondThePoseCountMatchesOneOverTheInterval() {
+        // #1423 measured 20, 12 and 7.5 poses per second for these holds at 60 fps.
+        for (interval in floatArrayOf(0.0286f, 0.0571f, 0.1f)) {
+            val poses = recomputes(fixed(interval), distance = 100f, frames = 60)
+            val expected = 1f / interval
+            assertTrue(abs(poses - expected) <= 1f, "a $interval s hold posed $poses times in 1 s, expected ~$expected")
+        }
+    }
+
+    @Test
+    fun theClipClockStaysOnTimeWhileHeld() {
+        val interval = 0.1f
+        val (world, entity) = scene()
+        val system = AnimationSystem(fixed(interval))
+        val pose = requireNotNull(world.get<SkinnedPose>(entity))
+        val player = requireNotNull(world.get<Animator>(entity)).player
+        var maxLag = 0f
+        repeat(60) {
+            drawn(pose, distance = 100f)
+            system.update(world, delta)
+            // The clip slides one unit per second, so the shown translation is the clock it was posed at.
+            maxLag = maxOf(maxLag, player.time - pose.jointPalette[12])
+        }
+
+        assertEquals(60 * delta, player.time, 1e-4f, "the clock advances one delta per frame while held")
+        assertTrue(maxLag < interval, "a held pose lagged the clock by $maxLag s, more than its $interval s hold")
+    }
+
+    /** A rate holding every model's pose for [interval] seconds, whatever its distance. */
+    private fun fixed(interval: Float) = AnimationUpdateRate { interval }
 
     /** Recomputes over [frames] drawn frames at [distance]: a monotonic clip makes each pose a new palette value. */
     private fun recomputes(rate: AnimationUpdateRate, distance: Float, frames: Int): Int {

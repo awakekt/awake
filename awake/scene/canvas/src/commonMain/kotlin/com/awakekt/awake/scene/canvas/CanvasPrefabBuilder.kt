@@ -358,15 +358,23 @@ class CanvasElementScope internal constructor(
     /** Adds a Stepper child. */
     fun stepper(name: String, id: String = "", block: CanvasElementScope.() -> Unit = {}) = element(name, CanvasElementKind.Stepper, id, block)
 
-    internal fun build(): SceneNode {
+    internal fun build(): SceneNode = SceneNode(name = name, components = canvasParts() + components, children = children.toList())
+
+    /**
+     * The canvas components these settings save as, the same set an older canvas_element reads as,
+     * noting in [problems] a setting this element's kind does not use: what [build] saves, and what
+     * declarative canvas content writes to an entity.
+     */
+    internal fun canvasParts(): List<SceneComponent> {
         val element = toSceneComponent()
         problems += element.unsavedFieldIssues(path)
         if (view != null && kind != CanvasElementKind.View) problems += SceneValidationIssue(path, "view does nothing on a ${kind.name}, so it is not saved")
-        // Saved as the components it is: the same set an older canvas_element reads as.
-        val parts = element.toCanvasComponents().map { if (it is SceneCanvasView) it.copy(settings = view) else it }
+        return element.toCanvasComponents().map { if (it is SceneCanvasView) it.copy(settings = view) else it }
             .withMoveHandle(moveHandle, moveStrip.value)
-        return SceneNode(name = name, components = parts + components, children = children.toList())
     }
+
+    /** Whether the block added a child element or another component: what declarative content declares elsewhere. */
+    internal val hasStructure: Boolean get() = children.isNotEmpty() || components.isNotEmpty()
 
     private fun toSceneComponent(): SceneCanvasElement = SceneCanvasElement(
         kind = kind,

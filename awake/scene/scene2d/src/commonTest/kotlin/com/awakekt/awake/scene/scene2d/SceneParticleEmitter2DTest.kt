@@ -15,6 +15,7 @@ import com.awakekt.awake.particles.BurstEmitter2DPool
 import com.awakekt.awake.particles.DEFAULT_PARTICLE_SORTING_LAYER_2D
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.particles.ParticleEmitter2D
+import com.awakekt.awake.particles.ParticleSpace
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.transform.Transform
@@ -69,7 +70,6 @@ class SceneParticleEmitter2DTest {
         turbulenceFrequency = 2.5f,
         spin = SceneParticleSpin2D(minDegreesPerSecond = -90f, maxDegreesPerSecond = 90f, randomStartAngle = true),
         additive = true,
-        localSpace = true,
         inheritOrientation = true,
         sortingLayer = "Foreground",
         sortOrder = 7,
@@ -80,6 +80,7 @@ class SceneParticleEmitter2DTest {
             burstInterval = 0.25f,
             burstSize = 8,
         ),
+        space = ParticleSpace.Local,
     )
 
     private fun problems(emitter: SceneParticleEmitter2D): List<String> =
@@ -179,7 +180,7 @@ class SceneParticleEmitter2DTest {
             spawnRate = 0f
             speed = 0f
             lifetime = 5f
-            localSpace = false
+            space = ParticleSpace.World
         }
         world.add(worldEntity, worldTransform)
         world.add(worldEntity, worldEmitter)
@@ -190,7 +191,7 @@ class SceneParticleEmitter2DTest {
             spawnRate = 0f
             speed = 0f
             lifetime = 5f
-            localSpace = true
+            space = ParticleSpace.Local
         }
         world.add(localEntity, localTransform)
         world.add(localEntity, localEmitter)
@@ -421,7 +422,7 @@ class SceneParticleEmitter2DTest {
             burstCount = 3,
             sortingLayer = "Foreground",
             sortOrder = 7,
-            localSpace = true,
+            space = ParticleSpace.Local,
         ).toBurstTemplate()
         assertEquals(0, template.maxParticles)
 

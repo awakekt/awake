@@ -54,6 +54,8 @@ kotlin {
             // The compose engine's locals, so the runtime can provide `World`/`Renderer`/stats to
             // an overlay instead of the overlay taking them as parameters.
             api(project(":awake:compose:runtime"))
+            // LocalAssetSource and the per-scene AssetImages the runtime provides to the scene's UI.
+            api(project(":awake:compose:assets"))
             implementation(libs.kotlinx.serialization.json)
         }
 

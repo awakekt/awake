@@ -53,7 +53,7 @@ class ExternalImageUploadBrowserBenchmark {
                 val keep = run >= WARM_UP
                 decodeBrowserImage(png).use { image ->
                     cpu += timed(keep, renderer) { cpuUpload(renderer, image) }
-                    gpu += timed(keep, renderer) { upload.upload(image, image.width, image.height, TextureFiltering.Linear) }
+                    gpu += timed(keep, renderer) { checkNotNull(upload.upload(image, image.width, image.height, TextureFiltering.Linear)) }
                 }
             }
         } finally {
