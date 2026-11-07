@@ -17,16 +17,9 @@ import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
 /**
  * The shadcn theme, reachable from a `:compose:foundation` recipe.
  *
- * The first piece of Stage 3's port, and a prerequisite for all of it: every recipe reads the theme,
- * so until it arrives through a `CompositionLocal` no recipe can shed its `ui-core` import and
- * `port_progress.py` cannot move off zero.
- *
- * **Deliberately alongside, not replacing.** `awake.ui.designsystem.LocalShadcnTheme` is a `UiLocal`
- * and stays until `ui-core` goes; the two coexist while recipes move one at a time, which is the
- * whole reason the engine was built beside `ui-core` rather than inside it. The values are the same
- * [ShadcnThemeValues] either way -- this is a second door to one room, not a second room.
- *
- * The different package is what lets both keep the name they should have.
+ * Every recipe reads the theme through this `CompositionLocal`. It was the first piece of the port
+ * off the removed immediate-mode UI layer, because no recipe could move before the theme did.
+ * The values are [ShadcnThemeValues]; [LocalShadcnTheme] is only how a recipe reaches them.
  */
 val LocalShadcnTheme: CompositionLocal<ShadcnThemeValues?> = compositionLocalOf { null }
 
@@ -66,8 +59,7 @@ val shadcnTheme: ShadcnThemeValues get() = requireNotNull(LocalShadcnTheme.curre
  *
  * `provideShadcnTheme`, not `ShadcnTheme`: the latter is already the default-theme object in the
  * parent package, and a function and an object sharing a name across two packages is ambiguous at
- * exactly the call sites that use both. `ui-core`'s own `provideTheme`/`Provide` naming is the
- * precedent.
+ * exactly the call sites that use both.
  */
 context(_: Composer)
 fun provideShadcnTheme(

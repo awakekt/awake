@@ -18,6 +18,8 @@ kotlin {
 
 dependencies {
     implementation(project(":awake:core:math"))
+    // Skeletons, clips and players for HeadlessAnimationBenchmarks.
+    implementation(project(":awake:core:animation"))
     // SpatialGrid, the thing SpatialCullingBenchmarks measures against a per-entity scan.
     implementation(project(":awake:core:spatial"))
     implementation(project(":awake:scene:scene3d"))

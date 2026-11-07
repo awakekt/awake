@@ -10,6 +10,9 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.componentType
+import com.awakekt.awake.ecs.family
+import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -325,8 +328,8 @@ object LocomotionAnimationBinding : SceneComponentBinding<LocomotionAnimation, S
 class LocomotionAnimationSystem : System {
     override fun update(world: World, delta: Float) {
         if (!delta.isFinitePositive()) return
-        world.queryEach(TRANSFORM, LOCOMOTION) { entity, transform, locomotion ->
-            val animator = world.get<Animator>(entity) ?: return@queryEach
+        world.family(TRANSFORM, LOCOMOTION).forEach { entity, transform, locomotion ->
+            val animator = world.get(entity, ANIMATOR) ?: return@forEach
             val placed = transform.worldMatrix
             val contact = world.groundContactOf(entity)
             locomotion.runtime.update(
@@ -341,20 +344,24 @@ class LocomotionAnimationSystem : System {
         }
     }
 
+    // Resolved once for the process, not per entity per frame (#1442): a handle reads each world's
+    // type id from an array, and stays valid across World.clear and in every world (#1429).
     private companion object {
-        val TRANSFORM = Transform::class
-        val LOCOMOTION = LocomotionAnimation::class
+        val TRANSFORM = componentType<Transform>()
+        val LOCOMOTION = componentType<LocomotionAnimation>()
+        val ANIMATOR = componentType<Animator>()
+        val GROUND_CONTACT = componentType<GroundContact>()
     }
-}
 
-/** The [GroundContact] on [entity] or the nearest node above it, or null when none has one. */
-private fun World.groundContactOf(entity: Entity): GroundContact? {
-    var node: Entity? = entity
-    while (node != null) {
-        get<GroundContact>(node)?.let { return it }
-        node = get<Transform>(node)?.parent
+    /** The [GroundContact] on [entity] or the nearest node above it, or null when none has one. */
+    private fun World.groundContactOf(entity: Entity): GroundContact? {
+        var node: Entity? = entity
+        while (node != null) {
+            get(node, GROUND_CONTACT)?.let { return it }
+            node = get(node, TRANSFORM)?.parent
+        }
+        return null
     }
-    return null
 }
 
 private const val DEFAULT_WALK_ABOVE = 0.1f

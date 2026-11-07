@@ -160,7 +160,7 @@ fun interface LayerPositionProvider {
  * Builds or updates [root]'s subtree from [content], reusing every node that still matches.
  *
  * Call once per frame. Nodes survive across calls -- that is the whole point of a retained tree, and
- * what `ui-core` cannot do because it has no tree to keep.
+ * what the removed `ui-core` could not do because it had no tree to keep.
  */
 fun composeInto(root: LayoutNode, content: context(Composer) () -> Unit) {
     reconcile(LayoutNodeApplier(root), root, content)

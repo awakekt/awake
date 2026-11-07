@@ -47,7 +47,9 @@ internal object MotionCapability : SceneCapability {
             plan.frame("spin") { SpinSystem() }
         }
         if (scene.uses(SceneLocomotionAnimation::class)) plan.frame("locomotion") { LocomotionAnimationSystem() }
-        if (scene.uses(SceneKeyframeAnimation::class)) plan.frame("keyframes") { KeyframeAnimationSystem() }
+        // A headless plan still moves keyframed nodes, which colliders and sockets follow; only alpha is skipped.
+        val hasRenderer = plan.hasRenderer
+        if (scene.uses(SceneKeyframeAnimation::class)) plan.frame("keyframes") { KeyframeAnimationSystem(hasRenderer) }
         if (scene.uses(SceneTextureClips::class)) plan.frame("texture-clips") { TextureClipSystem() }
         if (scene.uses(SceneSpriteClips::class)) plan.frame(SPRITE_CLIPS_SYSTEM) { SpriteClipSystem() }
     }

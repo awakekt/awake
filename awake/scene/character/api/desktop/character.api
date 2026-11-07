@@ -3,6 +3,7 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public final fun getBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
 	public final fun getConfig ()Lcom/awakekt/awake/scene/physics/character/CharacterConfig;
 	public final fun getFreeCollidesWithMoving ()Z
+	public final fun getFreeFacesIntent ()Z
 	public final fun getFreeHalfHeight ()Ljava/lang/Float;
 	public final fun getFreeMaxY ()F
 	public final fun getFreeMinY ()F
@@ -11,11 +12,13 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public final fun getLastContact ()Lcom/awakekt/awake/physics/character/CharacterContact;
 	public final fun getMotionMode ()Lcom/awakekt/awake/scene/character/CharacterMotionMode;
 	public final fun getStaticLayer-YxGriTw ()Lcom/awakekt/awake/physics/CollisionLayer;
+	public final fun getSteppedPitch ()F
 	public final fun getSteppedYaw ()F
 	public final fun groundHeightBelow (F)Ljava/lang/Float;
 	public final fun isFreeShape ()Z
 	public final fun isGrounded ()Z
 	public final fun setFreeCollidesWithMoving (Z)V
+	public final fun setFreeFacesIntent (Z)V
 	public final fun setFreeHalfHeight (Ljava/lang/Float;)V
 	public final fun setFreeMaxY (F)V
 	public final fun setFreeMinY (F)V
@@ -23,6 +26,7 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public final fun setJumpSpeed (F)V
 	public final fun setMotionMode (Lcom/awakekt/awake/scene/character/CharacterMotionMode;)V
 	public final fun setStaticLayer-TDYnX-U (Lcom/awakekt/awake/physics/CollisionLayer;)V
+	public final fun setSteppedPitch (F)V
 	public final fun setSteppedYaw (F)V
 	public final fun teleport (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;)V
 }

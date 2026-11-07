@@ -26,7 +26,6 @@ import com.awakekt.awake.scene.physics.character.CharacterConfig
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.math.PI
 import kotlin.reflect.KClass
 
 /**
@@ -165,15 +164,7 @@ class CharacterController(
     fun groundHeightBelow(maxDistance: Float): Float? = controller?.groundHeightBelow(maxDistance)
 
     // The last two stepped poses, which CharacterControllerSystem blends between rendered frames.
-    private val previousPosition = Vec3f()
-    private val currentPosition = Vec3f()
-    private var previousYaw = 0f
-    private var currentYaw = 0f
-    private var blendedYaw = Float.NaN
-    private var stepped = false
-
-    // The yaw game code asked for through steppedYaw, applied at the start of the next step; NaN when none.
-    private var facingYaw = Float.NaN
+    private val pose = SteppedPose()
 
     /**
      * The yaw, in radians about +Y with 0 facing +Z, its last step left it facing: the stepped value the
@@ -188,11 +179,37 @@ class CharacterController(
      * starts from it. Must be finite. Run-time state, not saved with the scene.
      */
     var steppedYaw: Float
-        get() = if (facingYaw.isNaN()) currentYaw else facingYaw
+        get() = pose.yaw
         set(value) {
             require(value.isFinite()) { "steppedYaw must be finite: $value" }
-            facingYaw = value
+            pose.yaw = value
         }
+
+    /**
+     * The pitch, in radians about +X (`Transform.rotation.x`), its last step left it at, or the pitch it
+     * was asked for until the next step: [steppedYaw]'s counterpart for a character game code pitches, such
+     * as a flyer climbing and diving. 0 until game code first sets it.
+     *
+     * Nothing writes a character's pitch until game code sets this. From then on [CharacterControllerSystem]
+     * applies it at the start of the next step, records it each step and blends it between frames the
+     * short way, so a walking character that was never pitched keeps whatever pitch its transform has.
+     * Must be finite. Run-time state, not saved with the scene.
+     */
+    var steppedPitch: Float
+        get() = pose.pitch
+        set(value) {
+            require(value.isFinite()) { "steppedPitch must be finite: $value" }
+            pose.pitch = value
+        }
+
+    /**
+     * Whether a [CharacterMotionMode.Free] character turns toward its intent's horizontal direction
+     * (`moveX`, `moveZ`) by [com.awakekt.awake.scene.controls.movement.MovementControl.turnSpeed], as a
+     * walking one does, so a free mover faces where it goes without game code. False by default: free
+     * motion turns only by [steppedYaw]. A [steppedYaw] set for the same step is where the turn starts.
+     * Run-time state, not saved with the scene.
+     */
+    var freeFacesIntent: Boolean = false
 
     /** Whether it stood on walkable ground after its last move. Never while [motionMode] is free. */
     val isGrounded: Boolean
@@ -222,62 +239,20 @@ class CharacterController(
         transform.position.set(position)
         verticalVelocity = 0f
         // No blend from where it was: a respawn shows at once.
-        previousPosition.set(position)
-        currentPosition.set(position)
-        previousYaw = currentYaw
+        pose.jumpTo(position)
     }
 
     /**
-     * Puts back the yaw a frame's blend left in [transform], unless something else has turned it since,
-     * then faces it the [steppedYaw] game code asked for, if any.
+     * Puts back the yaw and pitch a frame's blend left in [transform], unless something else has turned it
+     * since, then faces it the [steppedYaw] and [steppedPitch] game code asked for, if any.
      */
-    internal fun restoreSteppedYaw(transform: Transform) {
-        if (stepped && transform.rotation.y == blendedYaw) transform.rotation.y = currentYaw
-        if (!facingYaw.isNaN()) {
-            transform.rotation.y = facingYaw
-            facingYaw = Float.NaN
-        }
-    }
+    internal fun restoreSteppedYaw(transform: Transform) = pose.restore(transform)
 
     /** Keeps the pose a step left in [transform] as the newest of the two the frames blend between. */
-    internal fun record(transform: Transform) {
-        if (stepped) {
-            previousPosition.set(currentPosition)
-            previousYaw = currentYaw
-        } else {
-            previousPosition.set(transform.position)
-            previousYaw = transform.rotation.y
-        }
-        currentPosition.set(transform.position)
-        currentYaw = transform.rotation.y
-        stepped = true
-    }
+    internal fun record(transform: Transform) = pose.record(transform)
 
-    /**
-     * Shows the pose [alpha] of the way between steps, the yaw turning the short way.
-     * Invalid blend fractions leave the pose alone; non-finite stepped yaw leaves rendered yaw
-     * alone while position still blends. Finite yaw is reduced by whole turns before blending.
-     */
-    internal fun blendInto(transform: Transform, alpha: Float) {
-        val validBlend = stepped && alpha.isFinite() && alpha in 0f..1f
-        if (!validBlend) return
-        transform.position.set(
-            previousPosition.x + (currentPosition.x - previousPosition.x) * alpha,
-            previousPosition.y + (currentPosition.y - previousPosition.y) * alpha,
-            previousPosition.z + (currentPosition.z - previousPosition.z) * alpha,
-        )
-        if (!currentYaw.isFinite() || !previousYaw.isFinite()) {
-            blendedYaw = Float.NaN
-            return
-        }
-        val previous = previousYaw.toDouble() % TWO_PI
-        val current = currentYaw.toDouble() % TWO_PI
-        var turn = (current - previous) % TWO_PI
-        if (turn > PI) turn -= TWO_PI
-        if (turn < -PI) turn += TWO_PI
-        blendedYaw = (previous + turn * alpha).toFloat()
-        transform.rotation.y = blendedYaw
-    }
+    /** Shows the pose [alpha] of the way between steps; see [SteppedPose.blendInto]. */
+    internal fun blendInto(transform: Transform, alpha: Float) = pose.blendInto(transform, alpha)
 }
 
 /** Bi-directional binding connecting [CharacterController] with its serializable [SceneCharacterController] schema. */
@@ -324,5 +299,3 @@ private const val DEFAULT_RADIUS = 0.5f
 private const val DEFAULT_HALF_HEIGHT = 0.5f
 private const val DEFAULT_GRAVITY = -9.81f
 private val DEFAULTS = CharacterConfig(CapsuleShape(DEFAULT_HALF_HEIGHT, DEFAULT_RADIUS))
-
-private const val TWO_PI = 2 * PI

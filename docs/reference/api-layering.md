@@ -124,7 +124,7 @@ Likely future shape:
   (with its CameraMode enum: FirstPerson, ThirdPerson, Cinematic, TopDown), the
   ActiveCamera tag, MovementControl, and the CameraSystem, CameraInputSystem,
   MatrixRelativeMovementSystem and PlayerInputSystem systems. This module stays UI-free:
-  input reaches it as hardware snapshots mapped to intent components, never via ui-core.
+  input reaches it as hardware snapshots mapped to intent components, never via a UI module.
 
 :awake:scene:runtime
   SceneGameRuntime scheduling and game-loop integration. Currently owns SceneGameRuntime,
