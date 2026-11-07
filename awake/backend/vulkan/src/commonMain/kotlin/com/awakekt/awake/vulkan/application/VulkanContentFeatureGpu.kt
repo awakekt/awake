@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.vulkan.application
 
+import com.awakekt.awake.asset.shaders.ContentDepthCaster
 import com.awakekt.awake.asset.shaders.ContentFeatureGpu
+import com.awakekt.awake.asset.shaders.ContentGroupUpload
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.render.command.PipelineHandle
@@ -14,6 +16,7 @@ import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.toTextureAsset
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -44,8 +47,31 @@ internal class VulkanContentFeatureGpu(
 
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline
 
-    override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
-        fun create(asset: com.awakekt.awake.render.texture.TextureAsset): Texture =
+    override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload =
+        uploadInto(pipeline.contentFrameSlotCount, feature) { index, frame -> pipeline.writeContentTextureSlot(index, frame, feature.samplerTextures) }
+
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload {
+        val layout = checkNotNull(feature.spec.uniforms) { "Content feature '${feature.name}' declares no uniforms." }
+        val slots = pipeline.newContentGroup()
+        var uploaded: ContentUpload? = null
+        try {
+            uploaded = uploadInto(slots.size, feature) { index, frame -> slots.writeTextures(frame, index, feature.samplerTextures) }
+        } finally {
+            if (uploaded == null) slots.destroy()
+        }
+        val upload = checkNotNull(uploaded)
+        return ContentGroupUpload(
+            slots.uniformBlock(layout),
+            ContentUpload(upload.geometry, upload.prepare) {
+                upload.release()
+                slots.destroy()
+            },
+        )
+    }
+
+    /** [feature]'s textures, one copy per frame slot of the mutable ones, written by [writeSlot]; and its geometry. */
+    private fun uploadInto(slotCount: Int, feature: ContentFeature, writeSlot: (Int, Map<Int, Texture>) -> Unit): ContentUpload {
+        fun create(asset: TextureAsset): Texture =
             Texture(
                 graphicsDevice,
                 transferContext::runOneTimeCommands,
@@ -62,7 +88,7 @@ internal class VulkanContentFeatureGpu(
         // After the registry compiled the pipeline, because the layout comes from a spec and the
         // pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
         val mutable = feature.textureUpdates?.bindings.orEmpty()
-        val frames = List(pipeline.contentFrameSlotCount) { index ->
+        val frames = List(slotCount) { index ->
             if (index == 0) {
                 textures
             } else {
@@ -71,7 +97,7 @@ internal class VulkanContentFeatureGpu(
                 }
             }
         }
-        frames.forEachIndexed { index, frame -> pipeline.writeContentTextureSlot(index, frame, feature.samplerTextures) }
+        frames.forEachIndexed(writeSlot)
         val mesh = feature.geometry?.let { source ->
             Mesh(
                 graphicsDevice,
@@ -95,30 +121,41 @@ internal class VulkanContentFeatureGpu(
     }
 
     override suspend fun addDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload? {
+        val caster = createDepthCaster(pipeline, depth) ?: return null
+        val cast = checkNotNull(caster.cast(source))
+        return ContentUpload(null) {
+            cast.release()
+            caster.destroy()
+        }
+    }
+
+    override suspend fun createDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec): ContentDepthCaster? {
         val pass = depthPass ?: return null
         val target = pass.depthTarget
-        // Set 0 is the content pipeline's own layout, so its descriptor sets bind here unchanged.
+        // Set 0 is the content pipeline's own layout, so the descriptor sets of every group made
+        // from it (newContentGroup) bind here unchanged.
         val setLayout = checkNotNull(pipeline.uniformSetLayout) { "A content pipeline owns its uniform group." }
-        val caster = DepthPrePassFeature.ContentCaster(
-            DepthOnlyPipeline(
-                graphicsDevice,
-                target.renderPass,
-                setLayout,
-                loadShaders(depth),
-                depth.vertexFormat,
-                target.size,
-                depth.vertexEntryPoint,
-                depth.fragmentEntryPoint,
-                cascadeCount = target.layers,
-                framesInFlight = framesInFlight,
-                frontFace = depth.frontFace,
-            ),
-            source,
+        val depthPipeline = DepthOnlyPipeline(
+            graphicsDevice,
+            target.renderPass,
+            setLayout,
+            loadShaders(depth),
+            depth.vertexFormat,
+            target.size,
+            depth.vertexEntryPoint,
+            depth.fragmentEntryPoint,
+            cascadeCount = target.layers,
+            framesInFlight = framesInFlight,
+            frontFace = depth.frontFace,
         )
-        pass.contentCasters += caster
-        return ContentUpload(null) {
-            pass.contentCasters -= caster
-            caster.pipeline.destroy()
+        return object : ContentDepthCaster {
+            override suspend fun cast(source: ContentDepthSource): ContentUpload {
+                val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
+                pass.contentCasters += caster
+                return ContentUpload(null) { pass.contentCasters -= caster }
+            }
+
+            override fun destroy() = depthPipeline.destroy()
         }
     }
 

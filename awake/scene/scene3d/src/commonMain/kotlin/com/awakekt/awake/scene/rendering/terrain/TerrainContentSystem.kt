@@ -10,9 +10,11 @@ import com.awakekt.awake.asset.shaders.AttachedContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.terrain.TerrainSurface
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
 import com.awakekt.awake.terrain.TerrainSurfaceReference
@@ -31,9 +33,13 @@ import kotlinx.coroutines.launch
  * one, or when its provider is not installed, the terrain draws with [baseShaders] and the scene
  * keeps the reference unchanged.
  *
- * Providers resolve in [scope], which may resume anywhere. Attaching creates a pipeline and
- * uploads textures, so it starts from [update] on the frame thread instead. A host accepts one
- * terrain per shader set; a second is logged and not drawn.
+ * Each terrain lies at its entity's `Transform` translation, read every [update]: the heightmap's
+ * centre goes there, as the terrain's collider does. Rotation and scale are not applied; a
+ * heightmap's own scale sizes it.
+ *
+ * Providers resolve in [scope], which may resume anywhere. Attaching uploads textures, and the
+ * first terrain of a shader set builds its pipeline, so it starts from [update] on the frame
+ * thread instead. Any number of terrains draw at once; those sharing a shader set share a pipeline.
  *
  * With [surfacedOnly], a terrain without a reference is left alone, so another renderer (an
  * editor's mutable preview, say) can draw it.
@@ -67,6 +73,7 @@ class TerrainContentSystem(
 
     override fun update(world: World, delta: Float) {
         releaseRemoved(world)
+        place(world)
         applyAttached()
         applyResolved()
         frameWorld = world
@@ -98,6 +105,20 @@ class TerrainContentSystem(
         }
     }
 
+    /** Where each tracked terrain lies now; written in place, so the frame allocates nothing. */
+    private fun place(world: World) {
+        for (index in tracked.indices) {
+            val entry = tracked[index]
+            val transform = world.get<Transform>(entry.entity) ?: continue
+            if (transform.parent == null) {
+                entry.origin.set(transform.position)
+            } else {
+                val placed = transform.worldMatrix
+                entry.origin.set(placed.m03, placed.m13, placed.m23)
+            }
+        }
+    }
+
     /** A result for an entity that has since gone, or changed its terrain, is freed straight away. */
     private fun applyAttached() {
         while (true) {
@@ -119,6 +140,7 @@ class TerrainContentSystem(
     @Suppress("TooGenericExceptionCaught")
     private fun track(entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
         val entry = Tracked(entity, terrain).also { tracked += it }
+        frameWorld?.let { place(it) }
         val provider = reference?.let { providers[it.provider] }
         if (reference == null || provider == null) {
             if (reference != null) {
@@ -149,7 +171,7 @@ class TerrainContentSystem(
         entry.job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 val feature = host.attachContentFeature(
-                    terrainContentFeature(surface.shaders, entry.terrain, surface.textures),
+                    terrainContentFeature(surface.shaders, entry.terrain, surface.textures) { entry.origin },
                 )
                 attached.trySend(Attached(entry.entity, entry.terrain, feature))
             } catch (cancelled: CancellationException) {
@@ -166,6 +188,8 @@ class TerrainContentSystem(
     }
 
     private class Tracked(val entity: Entity, val terrain: TerrainComponent) {
+        /** The entity's translation, as of the last [update]; the drawn terrain reads it every frame. */
+        val origin = Vec3f(0f, 0f, 0f)
         var job: Job? = null
         var feature: AttachedContentFeature? = null
 

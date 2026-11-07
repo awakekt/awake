@@ -167,7 +167,11 @@ class RenderPipeline(
      * Missing resources are an authoring error and fail here instead of creating an incomplete
      * bind group that only reports the problem asynchronously during command encoding.
      */
-    private fun contentBindGroupEntries(buffer: GPUBuffer): List<BindGroupEntry> {
+    internal fun contentBindGroupEntries(
+        buffer: GPUBuffer,
+        contentTextures: Map<Int, Texture> = this.contentTextures,
+        contentSamplerTextures: Map<Int, Int> = this.contentSamplerTextures,
+    ): List<BindGroupEntry> {
         val declared = materialBindings ?: return listOf(
             BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
         )

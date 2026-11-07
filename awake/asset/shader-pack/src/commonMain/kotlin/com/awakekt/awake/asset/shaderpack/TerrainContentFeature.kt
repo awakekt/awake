@@ -64,6 +64,9 @@ private const val VERTEX_BINDING = 0
  * @param isVisible Read every frame. A lambda rather than a flag so an ECS component can own the
  * answer without this module depending on the scene layer -- see `:awake:scene:scene3d`'s own
  * `terrainContentFeature` overload, which passes a `TerrainComponent`'s.
+ * @param origin Where the heightmap's centre lies in the world, read every frame like [isVisible],
+ * so terrains drawn together can lie side by side. The rings follow the camera across the terrain
+ * from there.
  */
 fun terrainContentFeature(
     shaders: ShaderSet,
@@ -71,6 +74,7 @@ fun terrainContentFeature(
     config: TerrainClipmapConfig = TerrainClipmapConfig(),
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     isVisible: () -> Boolean = { true },
+    origin: () -> Vec3f = { AT_ORIGIN },
 ): ContentFeatureSource {
     require(config.ringCount <= MAX_CLIPMAP_RINGS) {
         "A clipmap of ${config.ringCount} rings exceeds the $MAX_CLIPMAP_RINGS slots " +
@@ -109,10 +113,24 @@ fun terrainContentFeature(
                 heightBias = encoded.bias,
                 sampling = encoded.sampling,
                 isVisible = isVisible,
+                origin = origin,
             )
         }
     }
 }
+
+/** The signature before [terrainContentFeature] took an origin; kept for compiled callers. */
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    heightmap: Heightmap,
+    config: TerrainClipmapConfig = TerrainClipmapConfig(),
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    isVisible: () -> Boolean = { true },
+): ContentFeatureSource = terrainContentFeature(shaders, heightmap, config, surfaceTextures, isVisible, origin = { AT_ORIGIN })
+
+/** Never written: a terrain with no placement of its own reads it. */
+private val AT_ORIGIN = Vec3f(0f, 0f, 0f)
 
 /** Binding 1 of the terrain group -- see `AslTerrainShader`. */
 private const val HEIGHTMAP_BINDING = 1
@@ -198,9 +216,28 @@ class TerrainRenderFeature(
     /** Consulted per frame; see [terrainContentFeature]. */
     private val isVisible: () -> Boolean = { true },
     private val pagedTerrain: com.awakekt.awake.terrain.PagedTerrain? = null,
+    /** Where the heightmap's centre lies in the world, read every frame; see [terrainContentFeature]. */
+    private val origin: () -> Vec3f = { AT_ORIGIN },
 ) : RenderFeature<RenderFrameContext>,
     ContentDepthSource {
+    /** The constructor before [origin]; kept for compiled callers. */
+    @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        pipeline: PipelineHandle,
+        uniforms: UniformBlock,
+        geometry: ContentGeometry,
+        tracker: TerrainClipmapTracker,
+        heightScale: Float,
+        heightBias: Float,
+        sampling: FloatArray,
+        isVisible: () -> Boolean = { true },
+        pagedTerrain: com.awakekt.awake.terrain.PagedTerrain? = null,
+    ) : this(pipeline, uniforms, geometry, tracker, heightScale, heightBias, sampling, isVisible, pagedTerrain, { AT_ORIGIN })
+
     override val pass = RenderPassSlot.Scene
+
+    /** The camera in the terrain's own frame, where the rings are laid out; reused every frame. */
+    private val focus = Vec3f(0f, 0f, 0f)
 
     /** The ring mesh in one frame's uniform slot; reused, so the depth pass allocates nothing. */
     private val ringDraw = object : PreparedDraw {
@@ -237,7 +274,10 @@ class TerrainRenderFeature(
         val phasePeriod = tracker.config.baseSpacing * (1 shl tracker.config.ringCount)
         val phaseX = terrain?.let { (it.originX % phasePeriod).toFloat() } ?: 0f
         val phaseZ = terrain?.let { (it.originZ % phasePeriod).toFloat() } ?: 0f
-        tracker.update(Vec3f(context.cameraEye.x + phaseX, context.cameraEye.y, context.cameraEye.z + phaseZ))
+        val placed = origin()
+        val eye = context.cameraEye
+        focus.set(eye.x + phaseX - placed.x, eye.y - placed.y, eye.z + phaseZ - placed.z)
+        tracker.update(focus)
         tracker.ringStates.forEachIndexed { index, ring ->
             TerrainUniformLayout.RingParams.writeVec4Element(
                 destination = ringParams,
@@ -284,6 +324,7 @@ class TerrainRenderFeature(
             }
             putDebugView(context.environment.debugView, forward ?: NO_FORWARD)
             put(UniformFields.Exposure, context.environment.exposure, 0f, 0f, 0f)
+            put(TerrainUniformLayout.TerrainOrigin, placed, 0f)
             if (terrain != null) {
                 val layout = terrain.layout
                 put(PagedTerrainUniformLayout.PageGrid, (layout.minX - terrain.originX).toFloat(), (layout.minZ - terrain.originZ).toFloat(), layout.cellSize, layout.intervals.toFloat())

@@ -105,6 +105,13 @@ object TerrainUniformLayout {
     val RingParams = UniformField("ringParams", GpuDataShape.Vec4, MAX_CLIPMAP_RINGS)
 
     /**
+     * `xyz` = where the heightmap's centre lies in the world: the terrain's own placement, so
+     * several terrains can lie side by side. The rings and the heightmap are laid out around the
+     * origin and moved there last, so [RingParams] and [TerrainSampling] stay terrain-local.
+     */
+    val TerrainOrigin = UniformField("terrainOrigin", GpuDataShape.Vec4)
+
+    /**
      * Ends with the cascade fields `lit_shadow` reads, under the same names and packing, so one
      * writer fills both. The camera forward's `w` is the active cascade count; 0 means no shadow
      * pass, and a surface samples nothing. Then the debug view and exposure, as every scene shader has them.
@@ -121,6 +128,7 @@ object TerrainUniformLayout {
         UniformFields.CameraForward,
         UniformFields.DebugView,
         UniformFields.Exposure,
+        TerrainOrigin,
     )
 }
 
@@ -130,6 +138,8 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
 /**
  * What [terrainClipmapVertexStage] hands a fragment stage.
  *
+ * @param exportedWorldNormal The normal varying, or null in the depth form; read through [worldNormal].
+ * @param exportedWorldPosition The position varying, or null when not exported; read through [worldPosition].
  * @property sunDirection `xyz` toward the light, `w` the ambient term.
  * @property terrainParams [TerrainUniformLayout.TerrainParams]; `z` is the base grey.
  * @property terrainSampling [TerrainUniformLayout.TerrainSampling]; `xy` is the heightmap's world
@@ -140,6 +150,7 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * @property ringCell World `x`, `z` and ring level, for [terrainClipmapDiscardUnderFinerRing].
  * @property ringParams The block's [TerrainUniformLayout.RingParams].
  * @property pages Optional page-table helpers for streamed surfaces.
+ * @property terrainOrigin The block's [TerrainUniformLayout.TerrainOrigin]: where this terrain lies.
  */
 @Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
@@ -154,6 +165,7 @@ class TerrainClipmapOutputs internal constructor(
     internal val ringCell: AslExpr,
     internal val ringParams: AslArrayHandle,
     val pages: TerrainPageSampling? = null,
+    val terrainOrigin: AslExpr,
 ) {
     /** Heightmap normal, interpolated; normalise before use. */
     val worldNormal: AslExpr
@@ -169,6 +181,14 @@ class TerrainClipmapOutputs internal constructor(
         get() = exportedWorldPosition ?: throw AslDefinitionException(
             "worldPosition was not exported; call terrainClipmapVertexStage(exportWorldPosition = true).",
         )
+
+    /**
+     * [worldPosition] relative to the terrain's own placement, [terrainOrigin]: where on the
+     * heightmap's footprint a fragment lies, for a surface's per-terrain maps (a control map, a
+     * lightmap). Texture repeats that must line up across adjoining terrains read [worldPosition].
+     */
+    val localPosition: AslExpr
+        get() = vec3(worldPosition.x - terrainOrigin.x, worldPosition.y - terrainOrigin.y, worldPosition.z - terrainOrigin.z)
 }
 
 /**
@@ -218,6 +238,7 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
     val terrainParams = handles.value("terrainParams")
     val terrainSampling = handles.value("terrainSampling")
     val ringParams = handles.array("ringParams")
+    val origin = handles.value("terrainOrigin")
 
     val heightmap by texture2d(group = group, binding = 1)
     val heightmapSampler by sampler(group = group, binding = 2)
@@ -261,7 +282,8 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
         }
 
         val height = let("height", pageHeight?.invoke(vec2(ground.x, ground.z)) ?: decodeHeight(textureSampleLevel(heightmap, heightmapSampler, ground.uv, 0f.lit)))
-        val displaced = let("displaced", vec3(ground.x, height * terrainParams.x + terrainParams.w, ground.z))
+        // Laid out around the origin, then moved to where this terrain lies.
+        val displaced = let("displaced", vec3(ground.x + origin.x, height * terrainParams.x + terrainParams.w + origin.y, ground.z + origin.z))
 
         out.position set placement * vec4(displaced, 1f.lit)
         worldNormal?.let {
@@ -298,6 +320,7 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
         ringCell,
         ringParams,
         pages,
+        origin,
     )
 }
 
