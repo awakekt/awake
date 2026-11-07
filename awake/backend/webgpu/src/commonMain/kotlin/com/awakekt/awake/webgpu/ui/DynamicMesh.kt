@@ -7,8 +7,6 @@ package com.awakekt.awake.webgpu.ui
 
 import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -39,6 +37,13 @@ class DynamicMesh(
      * arrays, which lets us skip the upload without scanning every element in Wasm. */
     private var lastUploadedVertices: FloatArray? = null
     private var lastUploadedIndices: IntArray? = null
+
+    /** Host memory the uploads go through, kept between them; see [MeshUploadStaging]. */
+    private val staging = MeshUploadStaging()
+
+    /** GPU writes so far, vertices and indices together counting one. A retained run adds none. */
+    internal var uploadCount: Int = 0
+        private set
 
     /** Reallocations so far. Steady state is zero; see the Vulkan DynamicMesh for why. */
     var growthCount: Int = 0
@@ -95,14 +100,13 @@ class DynamicMesh(
             return
         }
 
-        // One-copy linear-memory staging, the same path textures, meshes and instance buffers
-        // take (see [fastArrayBufferOf]): the floats are stored into wasm linear memory and JS
-        // copies them out in a single call, where `setFloats`/`setInts` crossed into JS once per
-        // value. Desktop stages the bytes in one bulk copy. The retained-run skip above means a
-        // stable run allocates no staging buffer at all.
+        // Written from kept host memory (see [MeshUploadStaging]): on the web straight from a view
+        // of wasm linear memory, with no `ArrayBuffer` sliced out per array; on the JVM through a
+        // native buffer grown once. The retained-run skip above means a stable run writes nothing.
         val queue = graphicsDevice.wgpuContext.device.queue
-        queue.writeBufferData(vertexBuffer, bufferOffset = 0uL, fastArrayBufferOf(vertices))
-        queue.writeBufferData(indexBuffer, bufferOffset = 0uL, fastArrayBufferOf(indices))
+        queue.writeMeshFloats(vertexBuffer, vertices, staging)
+        queue.writeMeshInts(indexBuffer, indices, staging)
+        uploadCount += 1
         lastUploadedVertices = vertices
         lastUploadedIndices = indices
     }
