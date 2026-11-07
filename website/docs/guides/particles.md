@@ -66,7 +66,8 @@ fade. Ground glows, ripples and magic circles spread this way:
 ```
 
 Rotating the node tilts the plane the quads lie in, with the texture's top along the node's -Z;
-motion, `spawnRadius` and `radialSpeed` stay in world space. Lift the node a little above the ground so the quads do
+motion, `spawnRadius` and `radialSpeed` stay in world space. Set `orientSpawnRing` to tilt the
+`spawnRadius` ring into that plane too. Lift the node a little above the ground so the quads do
 not fight it for depth. In Kotlin, set `ParticleVisual(facing = ParticleFacing.Flat)`; the plane
 comes from the `Transform` of the entity carrying the `ParticleEmitter`, or is the world's ground
 plane when that entity has none.
@@ -98,7 +99,9 @@ bounce on the floor:
 
 `acceleration` is in world space, so gravity stays down however the node is turned; set
 `inheritOrientation` to turn the spawn ring and `velocity` with the node instead, so an emitter aimed
-along a direction fires that way. `ground` takes a flat floor at `groundY` and any number of
+along a direction fires that way. Set `orientSpawnRing` to turn the spawn ring alone, so it lies in the
+plane a `Flat` emitter's sprites lie in and tilts with them while `velocity` stays in world space: a
+circle on a sloped wall whose sparks still rise straight up. `ground` takes a flat floor at `groundY` and any number of
 `colliders`, boxes with a `min` and `max` corner whose top faces particles land on. `turbulence` and
 `turbulenceFrequency` add a flow-field wobble, and `convergeToOrigin` sends particles toward the node
 for a charge-up.
@@ -124,7 +127,7 @@ aura on a character's hand, a glow on a weapon or a halo on a projectile.
 ```
 
 In local space `velocity`, the spawn ring, sizes and speeds are in the node's own axes and units, so
-`inheritOrientation` has nothing to add. `acceleration` still pulls in world space, so gravity stays
+`inheritOrientation` and `orientSpawnRing` have nothing to add. `acceleration` still pulls in world space, so gravity stays
 down however the node turns, and camera-facing sprites still face the camera. A local emitter takes
 no `ground`, because its particles do not keep to the world. From code it is
 `ParticleMotion(space = ParticleSpace.Local)`; `forEachLiveParticle` and `onParticleDeath` still
@@ -217,6 +220,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `radialSpeed` | `0` | Adds this speed horizontally away from `origin`, through the spawn point on the `spawnRadius` ring (any direction when the radius is 0). Ignored with `convergeToOrigin`. |
 | `acceleration` | `(0, 0, 0)` | A constant world-space acceleration in units per second squared, added to every live particle's velocity each step. `(0, -9.8, 0)` is gravity. A settled particle ignores it. |
 | `inheritOrientation` | `false` | Turns the spawn ring and `baseVelocity` (so also a cone's axis and the jitter axes) by the emitter entity's `Transform` rotation, so an emitter turned to face a direction fires that way. Scale is ignored. `acceleration`, `radialSpeed` and `convergeToOrigin` stay in world axes. |
+| `orientSpawnRing` | `false` | Turns the spawn ring alone by the emitter entity's rotation, so it lies in the plane its `Flat` quads lie in, while `baseVelocity` and every other vector stay in world axes. Adds nothing beside `inheritOrientation` or in `ParticleSpace.Local`. |
 | `space` | `ParticleSpace.World` | `World` keeps each particle where it spawned. `Local` keeps particles relative to the emitter entity's frame (its `EmitterPlacement` position and matrix, scale included) and draws them through it every frame. See [Particles that move with the node](#particles-that-move-with-the-node). |
 
 `ParticleVisual`:

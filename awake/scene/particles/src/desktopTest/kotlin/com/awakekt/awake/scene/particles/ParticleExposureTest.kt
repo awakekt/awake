@@ -45,6 +45,7 @@ class ParticleExposureTest {
             "acceleration" to "acceleration",
             "inheritOrientation" to "inheritOrientation",
             "space" to "space",
+            "orientSpawnRing" to "orientSpawnRing",
         ),
         ParticleVisual::class to mapOf(
             "startColor" to "color",
