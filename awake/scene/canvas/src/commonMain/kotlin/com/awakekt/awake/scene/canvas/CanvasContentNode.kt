@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.runtime.Slot
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasWidget
 import kotlin.reflect.KClass
@@ -44,6 +45,15 @@ class CanvasContentNode internal constructor(
 
     /** Whether a child was inserted before another or moved this pass, so the children's places need writing. */
     internal var reordered = false
+
+    /** Whether this pass's content declared `compose { }`. */
+    internal var composes = false
+
+    /** The prefab placed on this node, or null when it is an element. */
+    internal var placed: ScenePrefab? = null
+
+    /** The parts resolved against [placed], when its declaration binds them. */
+    internal var bound: Any? = null
 
     /** Entities under this node the applier did not declare, such as a placed prefab's, destroyed with it. */
     internal var owned: List<Entity> = emptyList()

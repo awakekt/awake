@@ -58,6 +58,7 @@ import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.SceneComponentBinding
+import com.awakekt.awake.scene.canvas.CanvasContentSystem
 import com.awakekt.awake.scene.canvas.CanvasProjector
 import com.awakekt.awake.scene.canvas.CanvasViews
 import com.awakekt.awake.scene.canvas.DebugPanelSystem
@@ -959,6 +960,8 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     }
     return listOf(
         SpriteClipSystem(isRealtimeProvider),
+        // Ahead of TransformSystem, so canvas content a state change made is placed this frame.
+        CanvasContentSystem(),
         TransformSystem(),
         // After TransformSystem resolves world matrices and before RenderSystem3D collects sprite quads.
         Particle2DSystem(Transform2DPlacement(), isRealtimeProvider),
