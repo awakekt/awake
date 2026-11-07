@@ -452,6 +452,38 @@ When a project is played with `awake:project:runtime`, `loadProject` reads every
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
 images yourself: `SceneCanvas(world, images = loadCanvasImages(scene, files))`.
 
+### Images in Compose UI
+
+A window drawn with Compose, rather than with canvas elements, asks for its art by path with
+`rememberAssetImage` from `awake:compose:assets`. It is null until the image has loaded, then the
+decoded image, so draw nothing, or a placeholder, until then:
+
+```kotlin title="A Compose window with its own frame art"
+context(_: Composer)
+fun InventoryWindow() {
+    val frame = rememberAssetImage("ui/window-frame.png")
+    Box(Modifier.size(240.dp, 160.dp)) {
+        if (frame != null) Image(frame, contentDescription = null, modifier = Modifier.fillMaxSize())
+        // The window's contents.
+    }
+}
+```
+
+- **No setup in a played project.** `awake:project:runtime` provides the project's files to the
+  scene's UI as `LocalAssetSource`, and a per-scene image cache as `LocalAssetImages`.
+- **Read once, off the frame.** The first ask reads and decodes the file in the scene's coroutine
+  scope; every later ask is a lookup that allocates nothing, on the desktop and the web alike.
+- **Shared with the canvas.** The cache starts with the images the scene's canvas elements name, so a
+  path both name is decoded once, and Compose draws the same image the canvas does.
+- **Freed on a scene switch.** What the last scene's UI asked for is dropped when the next scene
+  starts. A path the next scene asks for is read again.
+- **A missing path never throws.** It stays null and is logged once. `LocalAssetImages.current
+  ?.failure(path)` says why, for a window that shows a fallback.
+
+An app that runs its own Compose host provides both itself, and owns their lifetime:
+`ProvideAssets(files, AssetImages(files, scope)) { ... }`. Call `reset(images)` on the cache when its
+scene changes, passing the canvas images it should start from.
+
 ## Use a font
 
 A `Text`, `TextField` or `Button` draws its words in Roboto unless its `font` names another. A value

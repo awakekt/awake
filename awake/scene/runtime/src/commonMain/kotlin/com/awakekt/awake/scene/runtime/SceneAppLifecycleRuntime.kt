@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.compose.assets.AssetImages
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
@@ -21,6 +22,7 @@ import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
+import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.Logger
@@ -207,8 +209,37 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Host input information updated before the scene's systems, surviving scene switches. */
     val hostInputState = HostInputState()
 
-    /** The decoded images the scene's canvas elements name, by path; an element whose image is missing draws without it. */
+    /**
+     * The decoded images the scene's canvas elements name, by path; an element whose image is missing
+     * draws without it. Setting it also starts [assetImages] again from these images, freeing what
+     * the scene's UI asked for before: a played project sets it on each scene switch.
+     */
     var canvasImages: Map<String, ImageBitmap> = emptyMap()
+        set(value) {
+            field = value
+            uiAssets.seed = value
+        }
+
+    private val uiAssets = SceneUiAssets()
+
+    /**
+     * The project's files, which the runtime provides to the scene's UI as `LocalAssetSource` and
+     * reads [assetImages] from: a played project's files. Null provides neither.
+     */
+    var assetSource: AssetSource?
+        get() = uiAssets.source
+        set(value) {
+            uiAssets.source = value
+        }
+
+    /**
+     * The images the scene's UI asks for by path, through `rememberAssetImage`, decoded once in the
+     * session's coroutine scope and provided to the UI as `LocalAssetImages`. It starts from
+     * [canvasImages], so a path the canvas names is not decoded twice, and is started again when they
+     * are set. Null until the first frame that draws UI with an [assetSource]. A host that draws
+     * `SceneCanvas` itself provides it with `ProvideAssets`.
+     */
+    val assetImages: AssetImages? get() = uiAssets.images
 
     /** The loaded font files the scene's canvas elements name, by path; an element whose file is missing draws in the default font. */
     var canvasFonts: Map<String, UiFont> = emptyMap()
@@ -570,6 +601,8 @@ class SceneAppLifecycleRuntime internal constructor(
         val frame = uiHost.frame(
             snapshot.toFrameInput(viewportWidth.roundToInt(), viewportHeight.roundToInt(), delta),
         ) {
+            // Once, on the first frame with a source: the session scope exists from then on.
+            if (uiAssets.needsImages) uiAssets.prepare(session.coroutineScope)
             // Provided, not threaded: content reads what it needs instead of every composable
             // beneath it carrying the same services down.
             CompositionLocalProvider(
@@ -577,6 +610,9 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalRenderer provides renderer,
                 LocalRenderQuality provides renderQuality,
                 LocalFrameStats provides frameStats(),
+                // Built once per source and per cache, not per frame.
+                uiAssets.sourceLocal,
+                uiAssets.imagesLocal,
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
                 if (hasCanvas) {
