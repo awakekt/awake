@@ -81,7 +81,7 @@ fun Renderer.renderParticleEmitterScene(space: ParticleSpace, size: Int): ByteAr
     }
 }
 
-/** Writes the world-space and the local-space emitter, [size] square, through [write]. */
+/** Writes the world-space and the local-space emitter and the tilted spawn ring, [size] square, through [write]. */
 fun writeParticleEmitterEvidence(renderer: Renderer, size: Int, write: (String, String, Int, ByteArray) -> Unit) {
     write(
         "scene-particles-world-space",
@@ -94,6 +94,12 @@ fun writeParticleEmitterEvidence(renderer: Renderer, size: Int, write: (String, 
         "The same emitter in local space: its sprites ride with it and stand in one column on the right",
         size,
         renderer.renderParticleEmitterScene(ParticleSpace.Local, size),
+    )
+    write(
+        "scene-particles-tilted-ring",
+        "A flat emitter turned to face the camera with orientSpawnRing: its spawn ring stands up as a circle",
+        size,
+        renderer.renderTiltedSpawnRingScene(size),
     )
 }
 
