@@ -1068,6 +1068,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="camera_rig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#camera-collision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Camera collision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fading-what-blocks-the-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fading what blocks the view
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3001,6 +3029,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="camera_rig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#camera-collision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Camera collision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fading-what-blocks-the-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fading what blocks the view
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3354,6 +3410,12 @@ forward.</p>
 <td><code>10</code></td>
 <td>Units per second for <code>FreeFly</code>. Greater than 0.</td>
 </tr>
+<tr>
+<td><code>collision</code></td>
+<td>object</td>
+<td>none</td>
+<td>Keeps a <code>ThirdPerson</code> eye out of the ground and walls; see <a href="#camera-collision">Camera collision</a>.</td>
+</tr>
 </tbody>
 </table>
 <p>In the scene DSL these are <code>CameraRig</code> fields; <code>target</code> is <code>targetEntity</code> and <code>offset</code> is
@@ -3394,6 +3456,37 @@ forward.</p>
 </tr>
 </tbody>
 </table>
+<h4 id="camera-collision">Camera collision</h4>
+<p>A third-person eye goes wherever its pitch and distance put it, through a slope or a wall included,
+until the rig asks for <code>collision</code>:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera_rig"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ThirdPerson"</span><span class="p">,</span><span class="w"> </span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Player"</span><span class="p">,</span><span class="w"> </span><span class="nt">"distance"</span><span class="p">:</span><span class="w"> </span><span class="mf">6.0</span><span class="p">,</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">"collision"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"groundMargin"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="nt">"radius"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span><span class="w"> </span><span class="nt">"easeOutSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<ul>
+<li><code>ground</code> (on by default) keeps the eye <code>groundMargin</code> above the terrain, sampled around the eye
+  the size of the near plane so the view's edge stays out of a slope too.</li>
+<li><code>terrain</code> (on by default) pulls the eye in front of the ground where it rises between the pivot
+  and the eye, as over a hill behind the player. The line keeps <code>radius</code> above the ground.</li>
+<li><code>obstacleLayers</code> (empty by default) names physics layers whose bodies also pull the eye in: a
+  sphere of <code>radius</code> is swept from the pivot to the eye against each. Props and buildings usually
+  stay off this list.</li>
+</ul>
+<p>The eye pulls in at once and eases back out with a half-life of <code>easeOutSeconds</code>, so it neither
+clips nor jitters. A played project answers the ground from its <code>terrain</code> and <code>paged_terrain</code>
+heights, and the obstacle layers from its physics world. A host that runs its own systems passes
+<code>CameraSystem(..., collisionProbes = ...)</code>; the maths is <code>CameraCollisionSolver</code> in
+<code>awake:core:camera</code>, usable without a scene. In code, set <code>CameraRig.collision = CameraCollision(...)</code>.</p>
+<h4 id="fading-what-blocks-the-view">Fading what blocks the view</h4>
+<p>Props, trees and buildings don't pull the camera in. Fade them instead with <code>occluderFade</code>:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera_rig"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ThirdPerson"</span><span class="p">,</span><span class="w"> </span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Player"</span><span class="p">,</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">"collision"</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nt">"occluderFade"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"opacity"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="nt">"fadeSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p>Each frame a played project with a physics world casts rays from the eye to the target's feet, chest
+and head against static bodies. Every body hit, other than terrain, eases down to <code>opacity</code> with a
+half-life of <code>fadeSeconds</code>, and back once it stops blocking. Its meshes, and those under its node,
+take a <code>DitherFade</code>: the shader discards a share of their pixels in a fixed screen pattern, so they
+stay in the opaque pass, need no sorting and keep their shadow. Code can set <code>DitherFade</code> on any mesh
+entity itself; the easing is <code>OccluderFader</code> in <code>awake:core:camera</code>.</p>
 <h3 id="movement_control"><code>movement_control</code></h3>
 <table>
 <thead>
