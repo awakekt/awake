@@ -69,6 +69,7 @@ fun main(args: Array<String>) {
         writeShaderEffectEvidence(renderer, ::write)
         writePostProcessingEvidence(renderer, ::write)
         writeFxaaOnlyEvidence(renderer, ::write)
+        write("scene-terrains-adjoining", "Three adjoining terrains of one shader set, each its own tint, each casting west", EVIDENCE_SIZE, renderer.renderAdjoiningTerrainsScene(size = EVIDENCE_SIZE))
         write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             write(

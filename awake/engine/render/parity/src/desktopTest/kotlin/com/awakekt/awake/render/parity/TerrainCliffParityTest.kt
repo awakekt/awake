@@ -5,30 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
-import com.awakekt.awake.asset.shaderdsl.dot
-import com.awakekt.awake.asset.shaderdsl.lit
-import com.awakekt.awake.asset.shaderdsl.max
-import com.awakekt.awake.asset.shaderdsl.minus
-import com.awakekt.awake.asset.shaderdsl.normalize
-import com.awakekt.awake.asset.shaderdsl.plus
-import com.awakekt.awake.asset.shaderdsl.sampler
-import com.awakekt.awake.asset.shaderdsl.shader
-import com.awakekt.awake.asset.shaderdsl.texture2d
-import com.awakekt.awake.asset.shaderdsl.textureSample
-import com.awakekt.awake.asset.shaderdsl.times
-import com.awakekt.awake.asset.shaderdsl.vec2
-import com.awakekt.awake.asset.shaderdsl.vec4
-import com.awakekt.awake.asset.shaderdsl.w
-import com.awakekt.awake.asset.shaderdsl.xyz
-import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
-import com.awakekt.awake.asset.shaderpack.debugViewColor
-import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
-import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
-import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
-import com.awakekt.awake.asset.shaders.aslShaderSet
-import com.awakekt.awake.render.pipeline.BindingLayout
-import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -49,8 +26,8 @@ class TerrainCliffParityTest {
     fun theTerrainCastsTheSameShadowOnBothBackends() {
         val cast = BACKEND_ORDER.associateWith { backend ->
             openHeadlessScene(backend).use { session ->
-                val shadowed = session.renderer.renderTerrainCliffScene(shaders = TintedSurface, surfaceTextures = TINT)
-                val unshadowed = session.renderer.renderTerrainCliffScene(cascades = false, shaders = TintedSurface, surfaceTextures = TINT)
+                val shadowed = session.renderer.renderTerrainCliffScene(shaders = TintedTerrainSurface, surfaceTextures = TINT)
+                val unshadowed = session.renderer.renderTerrainCliffScene(cascades = false, shaders = TintedTerrainSurface, surfaceTextures = TINT)
                 shadowed.shadedPixels() - unshadowed.shadedPixels()
             }
         }
@@ -76,27 +53,6 @@ class TerrainCliffParityTest {
     }
 
     private companion object {
-        /** A surface on the clipmap stage with a texture of its own, lit and shadowed like the base one. */
-        val TintedSurface = aslShaderSet { clipSpace ->
-            shader("terrain_tinted_probe") {
-                val terrain = terrainClipmapVertexStage()
-                val shadows = terrainShadowSampling(terrain, clipSpace)
-                val group = BindingLayout.Standard.slot(BindingSemantic.Material)
-                val tint by texture2d(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING)
-                val tintSampler by sampler(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING + 1)
-                fragment {
-                    terrainClipmapDiscardUnderFinerRing(terrain)
-                    val normal = let("normal", normalize(terrain.worldNormal))
-                    val nDotL = let("nDotL", max(dot(normal, normalize(terrain.sunDirection.xyz)), 0f.lit))
-                    val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
-                    val ambient = let("ambient", terrain.sunDirection.w)
-                    val albedo = let("albedo", textureSample(tint, tintSampler, vec2(0.5f.lit, 0.5f.lit)).xyz)
-                    val surface = DebugSurface(normal, terrain.worldPosition, albedo, shadow, shadows.shadowCascade(terrain.worldPosition))
-                    val lit = vec4(albedo * (ambient + (1f.lit - ambient) * nDotL * shadow), 1f.lit)
-                    colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, lit))
-                }
-            }
-        }
         val TINT = mapOf(TERRAIN_SURFACE_FIRST_BINDING to TextureAsset(ByteArray(2 * 2 * 4) { -1 }, 2, 2))
 
         /** Vulkan first, for the loader reason [UiBackendParityTest] documents. */

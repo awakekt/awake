@@ -148,7 +148,9 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
 
     fragment {
         terrainClipmapDiscardUnderFinerRing(terrain)
-        val merged = mergeControlTaps(slots, terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler, terrain.pages, fallbackIndices, fallbackWeights)
+        // The control map and the lightmap cover this terrain's own footprint, wherever it lies.
+        val local = let("localPosition", terrain.localPosition)
+        val merged = mergeControlTaps(slots, local, terrain.terrainSampling, controlIndices, controlWeights, layerSampler, terrain.pages, fallbackIndices, fallbackWeights)
         // Anchor palette repeats to the fixed index footprint, so floating-origin shifts preserve UVs.
         val surfacePosition = terrain.pages?.let { pages -> vec4(terrain.worldPosition.x - pages.grid.x, terrain.worldPosition.y, terrain.worldPosition.z - pages.grid.y, 1f.lit).xyz } ?: terrain.worldPosition
         val albedo = blendLayers(merged, surfacePosition, albedoLayers, layerParams, layerSampler)
@@ -164,9 +166,9 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
         val baked = let(
             "baked",
             if (pages != null && fallbackLightmap != null) {
-                samplePagedLight(pages, lightmap, fallbackLightmap, vec2(position.x - pages.grid.x, position.z - pages.grid.y))
+                samplePagedLight(pages, lightmap, fallbackLightmap, vec2(local.x - pages.grid.x, local.z - pages.grid.y))
             } else {
-                textureSampleLevel(lightmap, layerSampler, vec2(position.x / sampling.x + 0.5f.lit, position.z / sampling.y + 0.5f.lit), 0f.lit)
+                textureSampleLevel(lightmap, layerSampler, vec2(local.x / sampling.x + 0.5f.lit, local.z / sampling.y + 0.5f.lit), 0f.lit)
             },
         )
         // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.

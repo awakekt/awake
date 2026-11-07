@@ -152,16 +152,29 @@ class RenderPipeline(
      */
     var graphicsPipeline: LongArray = longArrayOf()
 
+    private val uniforms = uniforms
+    private val framesInFlight = framesInFlight
+    private val materialBindings = materialBindings
+
     // Built before the pipeline, because its descriptor set layout IS this pipeline's set 0.
-    private val uniformSlots: PerFrameUniformSlots? = uniforms?.let {
-        PerFrameUniformSlots(
-            graphicsDevice,
-            it.total * Float.SIZE_BYTES,
-            VkShaderStageFlagBits.VERTEX.value or VkShaderStageFlagBits.FRAGMENT.value,
-            framesInFlight,
-            materialBindings,
-        )
-    }
+    private val uniformSlots: PerFrameUniformSlots? = uniforms?.let { newUniformSlots(it) }
+
+    private fun newUniformSlots(layout: UniformLayout) = PerFrameUniformSlots(
+        graphicsDevice,
+        layout.total * Float.SIZE_BYTES,
+        VkShaderStageFlagBits.VERTEX.value or VkShaderStageFlagBits.FRAGMENT.value,
+        framesInFlight,
+        materialBindings,
+    )
+
+    /**
+     * A uniform group of its own for one more content feature drawing through this pipeline: the
+     * same declaration, so its set layout is defined identically to set 0's and its sets bind here.
+     * The caller destroys it.
+     */
+    internal fun newContentGroup(): PerFrameUniformSlots = newUniformSlots(
+        checkNotNull(uniforms) { "This pipeline owns no uniform group to give a content feature a copy of." },
+    )
 
     /** The set-0 layout of this pipeline's own uniform group, or null when it reads a per-draw
      * material's. A pipeline built over it binds this pipeline's descriptor sets unchanged. */
@@ -191,14 +204,7 @@ class RenderPipeline(
 
     internal val contentFrameSlotCount: Int get() = checkNotNull(uniformSlots).size
 
-    override val uniformBlock: UniformBlock? = uniformSlots?.let { slots ->
-        val layout = requireNotNull(uniforms)
-        object : UniformBlock {
-            override fun binding(frameIndex: Int) = slots[frameIndex]
-            override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) =
-                slots.write(frameIndex, UniformWriter(layout).apply(fill).build())
-        }
-    }
+    override val uniformBlock: UniformBlock? = uniformSlots?.uniformBlock(requireNotNull(uniforms))
 
     // destroy() is zero-handle-tolerant, so calling it on a partial-construction failure is
     // safe and avoids a leak. renderPass isn't touched -- it's caller-owned.

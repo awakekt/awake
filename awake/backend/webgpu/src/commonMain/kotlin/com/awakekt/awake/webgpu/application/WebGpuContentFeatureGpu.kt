@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.webgpu.application
 
+import com.awakekt.awake.asset.shaders.ContentDepthCaster
 import com.awakekt.awake.asset.shaders.ContentFeatureGpu
+import com.awakekt.awake.asset.shaders.ContentGroupUpload
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.resolveBytes
@@ -24,6 +26,7 @@ import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
+import com.awakekt.awake.webgpu.pipeline.WebGpuContentGroup
 import com.awakekt.awake.webgpu.renderer.canCopyExternalImage
 import com.awakekt.awake.webgpu.renderer.copyExternalImage
 import com.awakekt.awake.webgpu.texture.GpuMipmaps
@@ -43,12 +46,40 @@ internal class WebGpuContentFeatureGpu(
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline.handle
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
-        val textures = feature.textures.mapValues { (_, asset) ->
-            Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
-        } + feature.images.mapValues { (_, image) -> uploadImage(image) }
+        val textures = uploadTextures(feature)
         // Before anything binds the group: a GPUBindGroup is immutable once built, so unlike
         // Vulkan these have to arrive ahead of the first bind, not after.
         pipeline.writeContentTextures(textures, feature.samplerTextures)
+        return uploadGeometry(feature, textures)
+    }
+
+    override fun uploadGroup(pipeline: RenderPipeline, feature: ContentFeature): ContentGroupUpload {
+        val layout = checkNotNull(feature.spec.uniforms) { "Content feature '${feature.name}' declares no uniforms." }
+        val textures = uploadTextures(feature)
+        var built: WebGpuContentGroup? = null
+        try {
+            built = WebGpuContentGroup(graphicsDevice, pipeline, layout, textures, feature.samplerTextures)
+        } finally {
+            if (built == null) textures.values.forEach(Texture::destroy)
+        }
+        val group = checkNotNull(built)
+        val upload = uploadGeometry(feature, textures)
+        return ContentGroupUpload(
+            group,
+            ContentUpload(upload.geometry, upload.prepare) {
+                group.destroy()
+                upload.release()
+            },
+        )
+    }
+
+    private fun uploadTextures(feature: ContentFeature): Map<Int, Texture> =
+        feature.textures.mapValues { (_, asset) ->
+            Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
+        } + feature.images.mapValues { (_, image) -> uploadImage(image) }
+
+    /** [feature]'s geometry, and what frees it with [textures]. */
+    private fun uploadGeometry(feature: ContentFeature, textures: Map<Int, Texture>): ContentUpload {
         val mesh = feature.geometry?.let { source ->
             Mesh(graphicsDevice, {}, source.vertices, source.indices, source.format)
         }
@@ -88,10 +119,20 @@ internal class WebGpuContentFeatureGpu(
     }
 
     override suspend fun addDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload? {
+        val caster = createDepthCaster(pipeline, depth) ?: return null
+        val cast = checkNotNull(caster.cast(source))
+        return ContentUpload(null) {
+            cast.release()
+            caster.destroy()
+        }
+    }
+
+    override suspend fun createDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec): ContentDepthCaster? {
         val pass = depthPass ?: return null
         val shaderCode = depth.vertexShader.resolveBytes()
-        // The content pipeline's own group-0 layout, so its bind group binds unchanged. The depth
-        // pipeline's layout keeps it; this reference ends once that is built.
+        // The content pipeline's own group-0 layout, so the bind group of every feature drawing
+        // through it binds unchanged. The depth pipeline's layout keeps it; this reference ends
+        // once that is built.
         val depthPipeline = pipeline.groupZeroLayout.use { groupZero ->
             DepthOnlyPipeline(
                 graphicsDevice = graphicsDevice,
@@ -106,11 +147,14 @@ internal class WebGpuContentFeatureGpu(
                 groupZeroLayout = groupZero,
             )
         }
-        val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
-        pass.contentCasters += caster
-        return ContentUpload(null) {
-            pass.contentCasters -= caster
-            caster.pipeline.destroy()
+        return object : ContentDepthCaster {
+            override suspend fun cast(source: ContentDepthSource): ContentUpload {
+                val caster = DepthPrePassFeature.ContentCaster(depthPipeline, source)
+                pass.contentCasters += caster
+                return ContentUpload(null) { pass.contentCasters -= caster }
+            }
+
+            override fun destroy() = depthPipeline.destroy()
         }
     }
 

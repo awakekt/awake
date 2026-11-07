@@ -2356,8 +2356,10 @@ public final class com/awakekt/awake/scene/rendering/terrain/TerrainComponent {
 }
 
 public final class com/awakekt/awake/scene/rendering/terrain/TerrainComponentFeatureKt {
-	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final synthetic fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
 public final class com/awakekt/awake/scene/rendering/terrain/TerrainContentSystem : com/awakekt/awake/ecs/System {
