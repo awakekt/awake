@@ -201,6 +201,12 @@ internal class UniformSlot(
     val buffer: GPUBuffer,
     val binding: WebGpuBindGroupHandle?,
 ) {
+    /**
+     * The block [buffer] holds, as last staged through [UniformUploads.stageChanged], or null
+     * before the first. A draw whose block is unchanged is not uploaded again (#1452).
+     */
+    internal var resident: FloatArray? = null
+
     /** Closes the bind group, then the buffer it names. */
     fun close() {
         binding?.bindGroup?.close()

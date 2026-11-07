@@ -11,6 +11,7 @@ import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
+import com.awakekt.awake.webgpu.renderer.sameBitsAs
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
@@ -23,7 +24,7 @@ import io.ygdrasil.webgpu.GPUBufferUsage
  * thinner for the same reason this backend's `ui.DynamicMesh` is thinner than Vulkan's --
  * `queue.writeBuffer` is already safe to call every frame with no mapping ceremony.
  *
- * Rewritten wholesale every frame -- unlike this module's `Mesh`, which sizes itself to the exact
+ * Rewritten wholesale every frame its models changed -- unlike this module's `Mesh`, which sizes itself to the exact
  * array it was constructed with and never updates. Grows to the largest set it has held, in powers
  * of two, rather than starting at [maxInstances]: a frame of batched props has one of these per
  * instanced draw, mostly small.
@@ -38,6 +39,9 @@ class InstanceBuffer(
     private var buffer: GPUBuffer = createBuffer(capacity)
 
     // Reused across frames so a steady instance count allocates nothing per frame.
+
+    /** What [buffer] holds, as [update] last wrote it, or null when it holds nothing yet. */
+    private var resident: FloatArray? = null
 
     /** Packs [models] into this buffer. `Mat4.data` is already column-major, which is the order
      * `instanced.wgsl`'s 4 `vec4` attributes reassemble into a `mat4x4` -- a straight copy, no
@@ -67,8 +71,12 @@ class InstanceBuffer(
             buffer.close()
             buffer = createBuffer(capacity)
             binding = WebGpuBufferHandle(buffer)
+            resident = null
         }
+        // Copies of a static prop hold still frame after frame: the buffer already has them (#1452).
+        if (resident?.sameBitsAs(floats) == true) return
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        resident = resident?.takeIf { it.size == floats.size }?.let { floats.copyInto(it) } ?: floats.copyOf()
     }
 
     /**

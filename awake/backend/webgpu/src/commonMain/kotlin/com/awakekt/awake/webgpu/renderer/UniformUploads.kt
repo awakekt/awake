@@ -43,6 +43,22 @@ internal class UniformUploads {
         starts[buffers.size] = end
     }
 
+    /**
+     * Stages [block] for [slot]'s buffer unless the buffer already holds exactly these bits, and
+     * returns whether it staged. A static draw packs the same block frame after frame while the
+     * camera and light hold, and every upload is a call from wasm into JS on the web.
+     *
+     * Only for a buffer nothing but this stage writes: [UniformSlot.resident] is what it last
+     * staged, not a readback.
+     */
+    fun stageChanged(slot: UniformSlot, block: FloatArray): Boolean {
+        val resident = slot.resident
+        if (resident != null && resident.sameBitsAs(block)) return false
+        stage(slot.buffer, block)
+        slot.resident = if (resident != null && resident.size == block.size) block.copyInto(resident) else block.copyOf()
+        return true
+    }
+
     /** Writes every staged block to its buffer and empties the stage. */
     fun flush(queue: GPUQueue) {
         if (buffers.isEmpty()) return
@@ -56,6 +72,13 @@ internal class UniformUploads {
         const val INITIAL_FLOATS = INITIAL_BLOCKS * 64
     }
 }
+
+/**
+ * Whether [other] holds exactly these floats, bit for bit: `==` on floats calls `-0` and `0` the
+ * same, and a NaN unequal to itself.
+ */
+internal fun FloatArray.sameBitsAs(other: FloatArray): Boolean =
+    size == other.size && indices.all { this[it].toRawBits() == other[it].toRawBits() }
 
 /** Writes the draws staged so far. Called before anything records them, and before a new batch restages slots. */
 internal fun Renderer.flushUniformUploads() = uniformUploads.flush(graphicsDevice.wgpuContext.device.queue)
