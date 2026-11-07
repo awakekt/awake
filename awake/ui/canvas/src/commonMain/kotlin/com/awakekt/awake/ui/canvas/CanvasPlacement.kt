@@ -35,10 +35,11 @@ import kotlin.math.roundToInt
 /**
  * [element] against its anchor in this box, inside [safeArea] unless it reaches under it, and moved,
  * scaled and faded as the player's [CanvasPlayerLayout] says. A scaled control lays out at a denser
- * dp, so it grows from its anchor and takes touches across all of its new size.
+ * dp, so it grows from its anchor and takes touches across all of its new size. An element [onCanvas],
+ * a root, keeps its own size where it reaches past the canvas; a child is laid out in its parent.
  */
 context(_: Composer)
-internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree: CanvasTree, safeArea: CanvasInsets) {
+internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree: CanvasTree, safeArea: CanvasInsets, onCanvas: Boolean) {
     val inside = if (element.safeArea) safeArea else CanvasInsets.None
     val view = Modifier.size(element.width.dp, element.height.dp).testTag(tag)
     val adjust = tree.controls.playerLayout.adjustOf(element)
@@ -49,7 +50,7 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
             .align(element.anchor.alignment)
             .then(AnchoredSubpixelElement(element.anchor, element.offsetX, element.offsetY, inside))
             .anchorInset(element.anchor, element.offsetX, element.offsetY, inside)
-            .ownSize(element.anchor)
+            .ownSize(element.anchor, onCanvas)
         Box(placed) {
             CanvasElementView(element, view, tree, tree.childrenOf(element))
         }
@@ -62,7 +63,7 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
         .align(element.anchor.alignment)
         .then(AnchoredSubpixelElement(element.anchor, x, y, inside))
         .anchorInset(element.anchor, x, y, inside)
-        .ownSize(element.anchor)
+        .ownSize(element.anchor, onCanvas)
     if (adjust.opacity < 1f) placed = placed.alpha(adjust.opacity)
     Box(placed) {
         val density = LocalDensity.current
@@ -73,14 +74,19 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
 }
 
 /**
- * Measures the element at its own size, aligned to [anchor], even where its offset reaches past the
- * canvas: the inset leaves less space there, and a window moved partly off is clipped, never squashed.
+ * Measures an element [onCanvas] at its own size, aligned to [anchor], even where its offset reaches
+ * past the canvas: the inset leaves less space there, and a window moved partly off is clipped, never
+ * squashed. A child is left to its parent's space, as before.
  */
-private fun Modifier.ownSize(anchor: CanvasAnchor): Modifier = wrapContentSize(
-    horizontalAlignment = when (anchor.column) { 0 -> Alignment.Start; 1 -> Alignment.CenterHorizontally; else -> Alignment.End },
-    verticalAlignment = when (anchor.row) { 0 -> Alignment.Top; 1 -> Alignment.CenterVertically; else -> Alignment.Bottom },
-    unbounded = true,
-)
+private fun Modifier.ownSize(anchor: CanvasAnchor, onCanvas: Boolean): Modifier = if (!onCanvas) {
+    this
+} else {
+    wrapContentSize(
+        horizontalAlignment = when (anchor.column) { 0 -> Alignment.Start; 1 -> Alignment.CenterHorizontally; else -> Alignment.End },
+        verticalAlignment = when (anchor.row) { 0 -> Alignment.Top; 1 -> Alignment.CenterVertically; else -> Alignment.Bottom },
+        unbounded = true,
+    )
+}
 
 private class AnchoredSubpixelElement(
     private val anchor: CanvasAnchor,

@@ -117,8 +117,14 @@ class CanvasMoveHandleTest {
     fun aWindowMovedPartlyOffTheCanvasKeepsItsSize() {
         val (window, _) = window()
         val pastEdges = listOf(
-            -1000 to 110, 2000 to 110, 150 to -1000, 150 to 2000,
-            -1000 to -1000, 2000 to -1000, -1000 to 2000, 2000 to 2000,
+            -1000 to 110,
+            2000 to 110,
+            150 to -1000,
+            150 to 2000,
+            -1000 to -1000,
+            2000 to -1000,
+            -1000 to 2000,
+            2000 to 2000,
         )
 
         for ((x, y) in pastEdges) {
@@ -131,6 +137,18 @@ class CanvasMoveHandleTest {
             val bounds = window.screenBounds!!
             assertEquals(200f to 150f, bounds.width to bounds.height, "dragged towards ($x, $y), it is only clipped")
         }
+    }
+
+    @Test
+    fun aChildReachingPastItsWindowIsStillLaidOutInIt() {
+        val (window, _) = window()
+        val overhang = element(CanvasElementKind.Panel, window) { offsetX = 180f; offsetY = 40f; width = 40f; height = 40f }
+
+        frame(0, 0)
+        frame(0, 0)
+
+        assertEquals(window.screenBounds!!.x + 180f, overhang.screenBounds?.x)
+        assertEquals(20f, overhang.screenBounds?.width, "only an element on the canvas keeps its own size past an edge")
     }
 
     @Test

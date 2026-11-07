@@ -281,12 +281,12 @@ private fun BoxScope.Elements(
             else -> key(element) {
                 val scaler = item.scaler
                 if (scaler == null) {
-                    AnchoredElement(element, tag, tree, safeArea)
+                    AnchoredElement(element, tag, tree, safeArea, onCanvas = owner == null)
                 } else {
                     val itemScale = tree.box.scaleOf(scaler)
                     val itemSafeArea = if (owner == null) tree.box.safeArea.scaledBy(1f / itemScale) else CanvasInsets.None
                     CompositionLocalProvider(LocalDensity provides tree.box.hostDensity * itemScale) {
-                        AnchoredElement(element, tag, tree, itemSafeArea)
+                        AnchoredElement(element, tag, tree, itemSafeArea, onCanvas = owner == null)
                     }
                 }
             }
