@@ -22,3 +22,9 @@ internal actual fun <T : Any> createComponentInstance(type: KClass<T>): T {
 internal actual inline fun <reified T : Any> componentTypeKey(): Any = T::class.java
 
 internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.java
+
+// `java.lang.ClassValue` arrived in Android API 34 and this library supports 33, so Android keeps the
+// shared map and a reified `World.get` keeps the world's own map, as before.
+internal actual fun componentTypeIndexOf(key: Any): Int = SharedComponentTypeIndex.indexOf(key)
+
+internal actual val componentTypeIndexIsCheap: Boolean = false

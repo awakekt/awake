@@ -21,3 +21,7 @@ internal actual fun <T : Any> createComponentInstance(type: KClass<T>): T {
 internal actual inline fun <reified T : Any> componentTypeKey(): Any = T::class
 
 internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type
+
+internal actual fun componentTypeIndexOf(key: Any): Int = SharedComponentTypeIndex.indexOf(key)
+
+internal actual val componentTypeIndexIsCheap: Boolean = false
