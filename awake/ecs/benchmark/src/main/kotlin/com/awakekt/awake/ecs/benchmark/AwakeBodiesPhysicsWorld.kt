@@ -25,6 +25,7 @@ import com.awakekt.awake.physics.ShapeCastHit
  * reused position and rotation as the real backends do. It isolates what `PhysicsSystem` itself costs
  * per step from what a solver costs: the worst case for the system, a region where nothing settles.
  */
+@Suppress("TooManyFunctions") // One per PhysicsWorld member; the count is the interface's.
 class AwakeBodiesPhysicsWorld : PhysicsWorld {
     override val layers: CollisionLayers = CollisionLayers.Default
     private var handles = LongArray(INITIAL_CAPACITY)
