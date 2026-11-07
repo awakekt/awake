@@ -7,12 +7,12 @@ package com.awakekt.awake.scene.physics
 
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.ContactEvent
-import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.PhysicsBody
@@ -26,8 +26,8 @@ import com.awakekt.awake.scene.physics.PhysicsBody
  * Body creation is lazy and one-shot per entity: [PhysicsBody.handle] starts `null` (it's
  * constructed before any [PhysicsWorld] exists, e.g. straight out of `SceneLoader`), so the
  * first [update] that sees a `null` handle creates the backing body from that entity's
- * paired [Transform] and stores the returned [BodyHandle] both on the component and in
- * `handleToEntity` (needed because [PhysicsWorld.syncTransforms] hands back handles, not
+ * paired [Transform] and stores the returned [BodyHandle] both on the component and in its own
+ * body records (needed because [PhysicsWorld.syncTransforms] hands back handles, not
  * entities, and this system is the only place able to bridge that back to ECS state).
  *
  * [PhysicsWorld.step]/[PhysicsWorld.syncTransforms] are each called exactly once per
@@ -43,29 +43,44 @@ import com.awakekt.awake.scene.physics.PhysicsBody
 class PhysicsSystem(
     private val physicsWorld: PhysicsWorld,
 ) : InterpolatedSystem {
-    // LinkedHashMap and LinkedHashSet, not the hash forms: teardown iterates these, and
-    // destruction order decides which body ids Jolt hands back out next, which feeds its
-    // island ordering and so the simulation. Insertion order replays; hash order does not.
-    private val handleToEntity = LinkedHashMap<BodyHandle, Entity>()
-
     /**
-     * The motion type each live body was actually built with.
+     * Every body this system built, with the motion type it was actually built with and its last two
+     * simulated poses, for [interpolate].
      *
-     * `PhysicsBody.motionType` is what the scene *asks* for and an inspector can change it; this is
-     * what the simulation is currently running. Without the second value there is nothing to
-     * compare against, and an edit would leave the component saying `STATIC` while a dynamic body
-     * kept falling.
+     * The motion type is kept because `PhysicsBody.motionType` is what the scene *asks* for and an
+     * inspector can change it; without the built value there is nothing to compare against, and an
+     * edit would leave the component saying `STATIC` while a dynamic body kept falling. Poses are
+     * retained rather than read fresh because [PhysicsWorld.forEachBodyTransform] reports only what a
+     * backend has awake, so a settled body would otherwise have no pose at all.
+     *
+     * Found per step by entity slot and by handle id, never by hashing a boxed handle (#1428).
      */
-    private val builtMotionType = LinkedHashMap<BodyHandle, MotionType>()
+    private val bodies = PhysicsBodyRecords()
 
-    /**
-     * The last two simulated poses per body, for [interpolate].
-     *
-     * Retained rather than read fresh, and that is not an optimisation: [PhysicsWorld.forEachBodyTransform]
-     * reports only what a backend has awake, so a settled body is simply not visited. Without a
-     * record here it would have no pose at all rather than the one it came to rest in.
-     */
-    private val poses = LinkedHashMap<BodyHandle, BodyPose>()
+    // Resolved once per world generation, so the per-body readback does not find `Transform` by class.
+    private var transformWorld: World? = null
+    private var transformGeneration = -1
+    private var transformTypeId = ComponentTypeId(0)
+    private var steppingWorld: World? = null
+
+    // Built once, so a step allocates no visitor.
+    private val readBack: (BodyHandle, Vec3f, Quat) -> Unit = { handle, position, rotation ->
+        val record = bodies.forHandle(handle)
+        if (record != null) {
+            val transform = steppingWorld?.get<Transform>(record.entity, transformTypeId)
+            if (transform != null) {
+                transform.position.x = position.x
+                transform.position.y = position.y
+                transform.position.z = position.z
+                // The simulation's quaternion becomes the Euler angles `Transform` stores. This is
+                // the one place in the engine that conversion happens, and it writes in place
+                // because it runs per body per frame.
+                rotation.toEuler(transform.rotation)
+            }
+            val pose = record.pose
+            if (pose == null) record.pose = BodyPose(position, rotation) else pose.record(position, rotation)
+        }
+    }
 
     private val stepContacts = ArrayList<PhysicsContact>()
     private var drainingWorld: World? = null
@@ -97,7 +112,7 @@ class PhysicsSystem(
      * May name an entity destroyed since; check `World.isAlive` before acting on it. [contacts]
      * already resolves to live entities only.
      */
-    fun entityFor(handle: BodyHandle): Entity? = handleToEntity[handle]
+    fun entityFor(handle: BodyHandle): Entity? = bodies.forHandle(handle)?.entity
 
     /**
      * Destroys [entity]'s body, if this system built one, and forgets it.
@@ -109,26 +124,30 @@ class PhysicsSystem(
         val body = world.get<PhysicsBody>(entity) ?: return
         val handle = body.handle ?: return
         physicsWorld.destroyBody(handle)
-        handleToEntity.remove(handle)
-        builtMotionType.remove(handle)
-        poses.remove(handle)
+        bodies.remove(handle)
         body.handle = null
     }
 
     private fun liveEntity(handle: BodyHandle): Entity? =
-        handleToEntity[handle]?.takeIf { drainingWorld?.isAlive(it) == true }
+        bodies.forHandle(handle)?.entity?.takeIf { drainingWorld?.isAlive(it) == true }
+
+    private fun resolveTransformType(world: World) {
+        if (transformWorld === world && transformGeneration == world.generation) return
+        transformTypeId = world.typeId(Transform::class)
+        transformWorld = world
+        transformGeneration = world.generation
+    }
 
     override fun update(world: World, delta: Float) {
+        resolveTransformType(world)
         val family = world.family<Transform, PhysicsBody>()
         family.forEach { entity, transform, physicsBody ->
             val live = physicsBody.handle
             // A rebuild rather than a mutation: the backend port has no setMotionType, and adding
             // one to four backends to serve an editor field is the larger change.
-            if (live != null && builtMotionType[live] != physicsBody.motionType) {
+            if (live != null && bodies.built(entity, live)?.motionType != physicsBody.motionType) {
                 physicsWorld.destroyBody(live)
-                handleToEntity.remove(live)
-                builtMotionType.remove(live)
-                poses.remove(live)
+                bodies.remove(live)
                 physicsBody.handle = null
             }
             if (physicsBody.handle == null) {
@@ -142,8 +161,7 @@ class PhysicsSystem(
                     physicsBody.degreesOfFreedom,
                 )
                 physicsBody.handle = handle
-                handleToEntity[handle] = entity
-                builtMotionType[handle] = physicsBody.motionType
+                bodies.add(entity, handle, physicsBody.motionType)
             }
         }
 
@@ -151,20 +169,9 @@ class PhysicsSystem(
 
         // The visitor form, not the list one: this runs every fixed step, and the list allocates
         // a vector and a quaternion per body to hand back values that are copied out immediately.
-        physicsWorld.forEachBodyTransform { handle, position, rotation ->
-            val entity = handleToEntity[handle]
-            val transform = entity?.let { world.get<Transform>(it) }
-            if (transform != null) {
-                transform.position.x = position.x
-                transform.position.y = position.y
-                transform.position.z = position.z
-                // The simulation's quaternion becomes the Euler angles `Transform` stores. This is
-                // the one place in the engine that conversion happens, and it writes in place
-                // because it runs per body per frame.
-                rotation.toEuler(transform.rotation)
-            }
-            poses.getOrPut(handle) { BodyPose(position, rotation) }.record(position, rotation)
-        }
+        steppingWorld = world
+        physicsWorld.forEachBodyTransform(readBack)
+        steppingWorld = null
 
         stepContacts.clear()
         drainingWorld = world
@@ -180,47 +187,11 @@ class PhysicsSystem(
      * it did before this existed.
      */
     override fun interpolate(world: World, alpha: Float) {
-        poses.forEach { (handle, pose) ->
-            val entity = handleToEntity[handle] ?: return@forEach
-            val transform = world.get<Transform>(entity) ?: return@forEach
+        resolveTransformType(world)
+        bodies.forEach { record ->
+            val pose = record.pose ?: return@forEach
+            val transform = world.get<Transform>(record.entity, transformTypeId) ?: return@forEach
             pose.blendInto(transform, alpha)
-        }
-    }
-
-    /**
-     * One body's previous and current simulated pose.
-     *
-     * Rotation is kept as a quaternion even though `Transform` stores Euler angles, because the
-     * blend has to happen before the conversion: Euler angles cannot be interpolated. Halfway
-     * between 350 and 10 degrees is 180 -- a body spinning past the wrap point would snap right
-     * round rather than continue, once per revolution.
-     */
-    private class BodyPose(position: Vec3f, rotation: Quat) {
-        private val previousPosition = Vec3f(position.x, position.y, position.z)
-        private val previousRotation = Quat(rotation.x, rotation.y, rotation.z, rotation.w)
-        private val currentPosition = Vec3f(position.x, position.y, position.z)
-        private val currentRotation = Quat(rotation.x, rotation.y, rotation.z, rotation.w)
-
-        /**
-         * Every value is copied, never held.
-         *
-         * The pose handed to this is scratch that the next body overwrites, so assigning the
-         * reference would leave every body sharing whichever one was visited last -- and rolling
-         * previous from current would make the two halves the same object, so there would be
-         * nothing left to interpolate between.
-         */
-        fun record(position: Vec3f, rotation: Quat) {
-            previousPosition.set(currentPosition)
-            previousRotation.set(currentRotation)
-            currentPosition.set(position)
-            currentRotation.set(rotation)
-        }
-
-        fun blendInto(transform: Transform, alpha: Float) {
-            transform.position.x = previousPosition.x + (currentPosition.x - previousPosition.x) * alpha
-            transform.position.y = previousPosition.y + (currentPosition.y - previousPosition.y) * alpha
-            transform.position.z = previousPosition.z + (currentPosition.z - previousPosition.z) * alpha
-            Quat.nlerp(previousRotation, currentRotation, alpha).toEuler(transform.rotation)
         }
     }
 }
