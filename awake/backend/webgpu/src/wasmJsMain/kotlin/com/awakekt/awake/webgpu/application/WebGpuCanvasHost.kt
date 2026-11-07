@@ -192,7 +192,7 @@ internal fun startWebGpuGame(
                 canvas,
                 width,
                 height,
-                GPUUncapturedErrorCallback { error ->
+                onError = GPUUncapturedErrorCallback { error ->
                     if (runtimeFailure == null) {
                         val message = "WebGPU uncaptured error: ${error.message}"
                         runtimeFailure = message

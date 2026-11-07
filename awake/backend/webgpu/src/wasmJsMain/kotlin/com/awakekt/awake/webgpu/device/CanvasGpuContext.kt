@@ -25,17 +25,18 @@ import web.navigator.navigator
  * @param canvas The canvas element the surface is created on.
  * @param width The canvas's backing-buffer width, in pixels.
  * @param height The canvas's backing-buffer height, in pixels.
- * @param onError Called for each uncaptured device error, or null for none.
  * @param onDeviceLost Called once when the device's `lost` promise resolves, with the
  * `GPUDeviceLostInfo` reason and message. wgpu4k does not expose `lost`, so it is read from the
  * browser's own device.
+ * @param onError Called for each uncaptured device error, or null for none. Last, so a trailing
+ * lambda is still the error callback.
  */
 internal suspend fun createCanvasGpuContext(
     canvas: HTMLCanvasElement,
     width: Int,
     height: Int,
-    onError: GPUUncapturedErrorCallback? = null,
     onDeviceLost: ((reason: String, message: String) -> Unit)? = null,
+    onError: GPUUncapturedErrorCallback? = null,
 ): WGPUContext {
     canvas.width = width
     canvas.height = height
