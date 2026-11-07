@@ -26,6 +26,7 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
+import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
@@ -63,7 +64,6 @@ import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
 import com.awakekt.awake.vulkan.mesh.Mesh
-import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.models.VkClearColorValue
 import com.awakekt.awake.vulkan.models.VkClearDepthStencilValue

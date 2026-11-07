@@ -36,7 +36,8 @@ internal class VulkanDynamicMesh(
     indices: IntArray,
     framesInFlight: Int,
     private val scratch: PowerOfTwoFloats,
-) : DynamicMesh, SceneMeshBuffers {
+) : DynamicMesh,
+    SceneMeshBuffers {
     private val device get() = graphicsDevice.device
     private val stride = format.strideFloats
     private val bufferFloats = PowerOfTwoFloats.ceil(vertexCapacity * stride)

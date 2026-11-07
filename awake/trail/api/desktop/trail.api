@@ -1,0 +1,73 @@
+public final class com/awakekt/awake/trail/SmoothingScratch {
+	public fun <init> ()V
+}
+
+public final class com/awakekt/awake/trail/TrailBatch : java/lang/AutoCloseable {
+	public static final field INDICES_PER_SEGMENT I
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun close ()V
+	public final fun collect (Lcom/awakekt/awake/trail/TrailRenderer;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;Ljava/util/List;)Z
+	public final fun getCanDraw ()Z
+	public final fun getUploadCount ()J
+	public final fun release (Lcom/awakekt/awake/trail/TrailRenderer;)V
+	public final fun releaseUnseen ()V
+}
+
+public final class com/awakekt/awake/trail/TrailBlend : java/lang/Enum {
+	public static final field Additive Lcom/awakekt/awake/trail/TrailBlend;
+	public static final field Alpha Lcom/awakekt/awake/trail/TrailBlend;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/trail/TrailBlend;
+	public static fun values ()[Lcom/awakekt/awake/trail/TrailBlend;
+}
+
+public final class com/awakekt/awake/trail/TrailRenderer {
+	public fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/core/color/Color;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBlend ()Lcom/awakekt/awake/trail/TrailBlend;
+	public final fun getCapacity ()I
+	public final fun getStrip ()Lcom/awakekt/awake/trail/TrailStrip;
+	public final fun getTexture ()Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun getTint ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getVisible ()I
+	public final fun set (ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setBlend (Lcom/awakekt/awake/trail/TrailBlend;)V
+	public final fun setColors (ILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setTexture (Lcom/awakekt/awake/render/texture/TextureAsset;)V
+	public final fun setTint (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setVisible (I)V
+}
+
+public final class com/awakekt/awake/trail/TrailSmoothingKt {
+	public static final fun catmullRom (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public static final fun setSmoothed (Lcom/awakekt/awake/trail/TrailStrip;Ljava/util/List;Ljava/util/List;ILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/trail/SmoothingScratch;)I
+	public static synthetic fun setSmoothed$default (Lcom/awakekt/awake/trail/TrailStrip;Ljava/util/List;Ljava/util/List;ILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/trail/SmoothingScratch;ILjava/lang/Object;)I
+	public static final fun smoothedPairCount (II)I
+}
+
+public final class com/awakekt/awake/trail/TrailStrip {
+	public static final field Companion Lcom/awakekt/awake/trail/TrailStrip$Companion;
+	public static final field VERTICES_PER_PAIR I
+	public fun <init> (I)V
+	public final fun getCapacity ()I
+	public final fun getChangedEnd ()I
+	public final fun getFirstChanged ()I
+	public final fun getHasChanges ()Z
+	public final fun getVertices ()[F
+	public final fun getVisible ()I
+	public final fun markAllChanged ()V
+	public final fun markUploaded ()V
+	public final fun set (ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;F)V
+	public static synthetic fun set$default (Lcom/awakekt/awake/trail/TrailStrip;ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V
+	public final fun setColor (IFFFF)V
+	public final fun setColors (ILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setPoints (ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun setVisible (I)V
+	public final fun visibleBounds (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Z
+}
+
+public final class com/awakekt/awake/trail/TrailStrip$Companion {
+	public final fun getFLOATS_PER_PAIR ()I
+	public final fun getFORMAT ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+}
+

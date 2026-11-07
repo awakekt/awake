@@ -56,13 +56,21 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
      */
     fun collect(trail: TrailRenderer, placement: Mat4, frustum: List<Plane>, out: MutableList<RenderDrawCommand>): Boolean {
         val dynamicMeshes = meshes ?: return false
-        val upload = uploads[trail] ?: Upload(dynamicMeshes.createMesh(trail.strip)).also {
+        val upload = uploadChanges(trail, dynamicMeshes)
+        val visible = culling.isVisible(trail.strip, placement, frustum)
+        if (visible) emit(trail, upload, placement, out)
+        return visible
+    }
+
+    /** [trail]'s upload, created the first time it is seen, with the pairs changed since brought up to date. */
+    private fun uploadChanges(trail: TrailRenderer, dynamicMeshes: GpuDynamicMeshes): Upload {
+        val strip = trail.strip
+        val upload = uploads[trail] ?: Upload(dynamicMeshes.createMesh(strip)).also {
             uploads[trail] = it
             uploaded += trail
-            trail.strip.markAllChanged()
+            strip.markAllChanged()
         }
         upload.frame = frame
-        val strip = trail.strip
         if (strip.hasChanges) {
             val first = strip.firstChanged
             val count = strip.changedEnd - first
@@ -70,8 +78,11 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
             strip.markUploaded()
             uploadCount++
         }
-        if (!culling.isVisible(strip, placement, frustum)) return false
-        upload.mesh.drawIndexCount = (strip.visible - 1) * INDICES_PER_SEGMENT
+        return upload
+    }
+
+    private fun emit(trail: TrailRenderer, upload: Upload, placement: Mat4, out: MutableList<RenderDrawCommand>) {
+        upload.mesh.drawIndexCount = (trail.strip.visible - 1) * INDICES_PER_SEGMENT
         upload.model.set(placement)
         val tint = trail.tint
         upload.tint[0] = tint.r
@@ -82,7 +93,6 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
         draw.material = materialFor(trail.texture)
         draw.additive = trail.blend == TrailBlend.Additive
         out.add(draw)
-        return true
     }
 
     /** Frees [trail]'s GPU buffer; drawing it again creates and fills a new one. */

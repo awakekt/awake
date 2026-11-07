@@ -25,8 +25,8 @@ import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
-import com.awakekt.awake.vulkan.mesh.sceneBuffers
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
+import com.awakekt.awake.vulkan.mesh.sceneBuffers
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D

@@ -931,6 +931,32 @@ public abstract interface class com/awakekt/awake/render/material/Material : com
 	public abstract fun updateUniformBuffer ([F)V
 }
 
+public abstract interface class com/awakekt/awake/render/mesh/DynamicMesh : com/awakekt/awake/render/mesh/Mesh {
+	public abstract fun getDrawIndexCount ()I
+	public abstract fun getIndexCapacity ()I
+	public abstract fun getVertexCapacity ()I
+	public abstract fun setDrawIndexCount (I)V
+	public abstract fun writeVertices ([FII)V
+}
+
+public final class com/awakekt/awake/render/mesh/DynamicMesh$DefaultImpls {
+	public static fun getBounds (Lcom/awakekt/awake/render/mesh/DynamicMesh;)Lcom/awakekt/awake/core/math/Aabb;
+	public static fun getLocalBounds (Lcom/awakekt/awake/render/mesh/DynamicMesh;)Lcom/awakekt/awake/core/math/Aabb;
+}
+
+public final class com/awakekt/awake/render/mesh/DynamicMeshKt {
+	public static final fun requireDynamicMeshShape (I[I)V
+	public static final fun requireVertexRange (Lcom/awakekt/awake/render/mesh/DynamicMesh;[FII)V
+}
+
+public abstract interface class com/awakekt/awake/render/mesh/GpuDynamicMeshes : com/awakekt/awake/render/pipeline/GpuCapability {
+	public static final field Companion Lcom/awakekt/awake/render/mesh/GpuDynamicMeshes$Companion;
+	public abstract fun createDynamicMesh (Lcom/awakekt/awake/core/geometry/VertexFormat;I[I)Lcom/awakekt/awake/render/mesh/DynamicMesh;
+}
+
+public final class com/awakekt/awake/render/mesh/GpuDynamicMeshes$Companion : com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
 public abstract interface class com/awakekt/awake/render/mesh/GpuMesh {
 	public fun getBounds ()Lcom/awakekt/awake/core/math/Aabb;
 	public abstract fun getFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;

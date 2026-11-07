@@ -24,7 +24,10 @@ internal class TrailCulling {
      */
     fun isVisible(strip: TrailStrip, placement: Mat4, planes: List<Plane>): Boolean {
         if (!strip.visibleBounds(localMin, localMax)) return false
-        if (planes.isEmpty()) return true
+        return planes.isEmpty() || placedBoxIntersects(placement, planes)
+    }
+
+    private fun placedBoxIntersects(placement: Mat4, planes: List<Plane>): Boolean {
         val m = placement.data
         // A box carried by a matrix: the centre moves with it, and the half-size along each world
         // axis is the sum of the absolute matrix terms times the local half-sizes (Arvo's method).

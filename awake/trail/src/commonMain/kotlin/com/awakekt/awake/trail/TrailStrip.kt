@@ -64,15 +64,15 @@ class TrailStrip(val capacity: Int) {
         setPoints(index, a, b)
         setColors(index, colorA, colorB)
         val base = pairBase(index)
-        writeUv(base, u, 0f)
-        writeUv(base + STRIDE, u, 1f)
+        vertices.writeUv(base, u, 0f)
+        vertices.writeUv(base + STRIDE, u, 1f)
     }
 
     /** Moves pair [index]'s points to [a] and [b], keeping their colours. */
     fun setPoints(index: Int, a: Vec3f, b: Vec3f) {
         val base = pairBase(index)
-        writePosition(base, a)
-        writePosition(base + STRIDE, b)
+        vertices.writePosition(base, a)
+        vertices.writePosition(base + STRIDE, b)
         revision++
         touch(index)
     }
@@ -80,16 +80,16 @@ class TrailStrip(val capacity: Int) {
     /** Sets pair [index]'s colours, keeping its points: how a trail fades. */
     fun setColors(index: Int, colorA: Color, colorB: Color) {
         val base = pairBase(index)
-        writeColor(base, colorA.r, colorA.g, colorA.b, colorA.a)
-        writeColor(base + STRIDE, colorB.r, colorB.g, colorB.b, colorB.a)
+        vertices.writeColor(base, colorA.r, colorA.g, colorA.b, colorA.a)
+        vertices.writeColor(base + STRIDE, colorB.r, colorB.g, colorB.b, colorB.a)
         touch(index)
     }
 
     /** Sets both of pair [index]'s colours to one straight-alpha colour, without a [Color] to build. */
     fun setColor(index: Int, r: Float, g: Float, b: Float, a: Float) {
         val base = pairBase(index)
-        writeColor(base, r, g, b, a)
-        writeColor(base + STRIDE, r, g, b, a)
+        vertices.writeColor(base, r, g, b, a)
+        vertices.writeColor(base + STRIDE, r, g, b, a)
         touch(index)
     }
 
@@ -157,24 +157,6 @@ class TrailStrip(val capacity: Int) {
         if (index + 1 > changedEnd) changedEnd = index + 1
     }
 
-    private fun writePosition(vertex: Int, point: Vec3f) {
-        vertices[vertex + POSITION] = point.x
-        vertices[vertex + POSITION + 1] = point.y
-        vertices[vertex + POSITION + 2] = point.z
-    }
-
-    private fun writeColor(vertex: Int, r: Float, g: Float, b: Float, a: Float) {
-        vertices[vertex + COLOR] = r
-        vertices[vertex + COLOR + 1] = g
-        vertices[vertex + COLOR + 2] = b
-        vertices[vertex + COLOR + 3] = a
-    }
-
-    private fun writeUv(vertex: Int, u: Float, v: Float) {
-        vertices[vertex + UV] = u
-        vertices[vertex + UV + 1] = v
-    }
-
     /** The layout every strip's [vertices] are in, derived from [VertexFormat.PositionRgbaUv]. */
     companion object {
         /** The vertex layout a strip is drawn in. */
@@ -183,12 +165,30 @@ class TrailStrip(val capacity: Int) {
         /** Vertices a pair: `a`, then `b`. */
         const val VERTICES_PER_PAIR: Int = 2
 
-        private val STRIDE = FORMAT.strideFloats
-        private val POSITION = FORMAT.floatOffsetOf(VertexSemantic.Position)
-        private val COLOR = FORMAT.floatOffsetOf(VertexSemantic.Color)
-        private val UV = FORMAT.floatOffsetOf(VertexSemantic.Uv)
+        internal val STRIDE = FORMAT.strideFloats
+        internal val POSITION = FORMAT.floatOffsetOf(VertexSemantic.Position)
+        internal val COLOR = FORMAT.floatOffsetOf(VertexSemantic.Color)
+        internal val UV = FORMAT.floatOffsetOf(VertexSemantic.Uv)
 
         /** Floats a pair occupies in [vertices]. */
         val FLOATS_PER_PAIR: Int = STRIDE * VERTICES_PER_PAIR
     }
+}
+
+private fun FloatArray.writePosition(vertex: Int, point: Vec3f) {
+    this[vertex + TrailStrip.POSITION] = point.x
+    this[vertex + TrailStrip.POSITION + 1] = point.y
+    this[vertex + TrailStrip.POSITION + 2] = point.z
+}
+
+private fun FloatArray.writeColor(vertex: Int, r: Float, g: Float, b: Float, a: Float) {
+    this[vertex + TrailStrip.COLOR] = r
+    this[vertex + TrailStrip.COLOR + 1] = g
+    this[vertex + TrailStrip.COLOR + 2] = b
+    this[vertex + TrailStrip.COLOR + 3] = a
+}
+
+private fun FloatArray.writeUv(vertex: Int, u: Float, v: Float) {
+    this[vertex + TrailStrip.UV] = u
+    this[vertex + TrailStrip.UV + 1] = v
 }

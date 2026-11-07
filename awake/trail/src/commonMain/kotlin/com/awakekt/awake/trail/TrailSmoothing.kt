@@ -54,10 +54,6 @@ fun TrailStrip.setSmoothed(keysA: List<Vec3f>, keysB: List<Vec3f>, steps: Int, c
     val pairs = smoothedPairCount(keysA.size, steps)
     require(pairs <= capacity) { "$pairs smoothed pairs do not fit in the trail's $capacity." }
     if (keysA.isEmpty()) return 0
-    if (keysA.size == 1) {
-        set(0, keysA[0], keysB[0], colorA, colorB)
-        return 1
-    }
     val last = keysA.size - 1
     var pair = 0
     for (key in 0 until last) {
