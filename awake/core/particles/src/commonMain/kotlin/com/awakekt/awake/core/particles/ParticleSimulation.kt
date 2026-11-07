@@ -186,6 +186,14 @@ class ParticleSimulation(
      */
     var orientSpawnShape: Boolean = false
 
+    /**
+     * Whether [radialSpeed] pushes outward in the turned spawn shape's own plane (the plane of
+     * [orientation]'s X and Z axes) rather than horizontally, when [inheritOrientation] or
+     * [orientSpawnShape] turns that shape: an outward ripple across a sloped surface. Adds nothing
+     * while neither turns it, or in a 2D simulation.
+     */
+    var radialInSpawnPlane: Boolean = false
+
     /** Constant acceleration X component in units per second squared. */
     var accelX: Float = 0f
 

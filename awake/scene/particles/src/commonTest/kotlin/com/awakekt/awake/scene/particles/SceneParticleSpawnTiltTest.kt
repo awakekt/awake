@@ -51,6 +51,16 @@ class SceneParticleSpawnTiltTest {
     }
 
     @Test
+    fun radialInRingPlaneRoundTripsAndIsOffWhenLeftOut() {
+        val decoded = decode("""{"component": "particle_emitter", "texture": "circle.png", "spawnRadius": 2, "orientSpawnRing": true, "radialInRingPlane": true}""")
+        val encoded = SceneLoader.encode(SceneDocument(nodes = listOf(SceneNode("fx", components = listOf(decoded)))))
+
+        assertEquals(circle.copy(radialInRingPlane = true), SceneLoader.decode(encoded).nodes.single().components.single())
+        assertFalse(circle.radialInRingPlane)
+        assertTrue(circle.copy(radialInRingPlane = true).toMotion().radialInRingPlane, "mapped to the capability")
+    }
+
+    @Test
     fun anAuthoredTiltedRingLiesInItsTurnedNodesPlane() {
         val world = World()
         val node = world.create()

@@ -101,7 +101,9 @@ bounce on the floor:
 `inheritOrientation` to turn the spawn ring and `velocity` with the node instead, so an emitter aimed
 along a direction fires that way. Set `orientSpawnRing` to turn the spawn ring alone, so it lies in the
 plane a `Flat` emitter's sprites lie in and tilts with them while `velocity` stays in world space: a
-circle on a sloped wall whose sparks still rise straight up. `ground` takes a flat floor at `groundY` and any number of
+circle on a sloped wall whose sparks still rise straight up. `radialSpeed` still pushes horizontally; set
+`radialInRingPlane` to push outward in the turned ring's own plane instead, for a ripple that spreads
+across a sloped surface. `ground` takes a flat floor at `groundY` and any number of
 `colliders`, boxes with a `min` and `max` corner whose top faces particles land on. `turbulence` and
 `turbulenceFrequency` add a flow-field wobble, and `convergeToOrigin` sends particles toward the node
 for a charge-up.
@@ -221,6 +223,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `acceleration` | `(0, 0, 0)` | A constant world-space acceleration in units per second squared, added to every live particle's velocity each step. `(0, -9.8, 0)` is gravity. A settled particle ignores it. |
 | `inheritOrientation` | `false` | Turns the spawn ring and `baseVelocity` (so also a cone's axis and the jitter axes) by the emitter entity's `Transform` rotation, so an emitter turned to face a direction fires that way. Scale is ignored. `acceleration`, `radialSpeed` and `convergeToOrigin` stay in world axes. |
 | `orientSpawnRing` | `false` | Turns the spawn ring alone by the emitter entity's rotation, so it lies in the plane its `Flat` quads lie in, while `baseVelocity` and every other vector stay in world axes. Adds nothing beside `inheritOrientation` or in `ParticleSpace.Local`. |
+| `radialInRingPlane` | `false` | Pushes `radialSpeed` outward in the turned spawn ring's own plane instead of horizontally, whenever `orientSpawnRing` or `inheritOrientation` turns the ring: an outward ripple across a sloped surface. Adds nothing while the ring is not turned, or in `ParticleSpace.Local`. |
 | `space` | `ParticleSpace.World` | `World` keeps each particle where it spawned. `Local` keeps particles relative to the emitter entity's frame (its `EmitterPlacement` position and matrix, scale included) and draws them through it every frame. See [Particles that move with the node](#particles-that-move-with-the-node). |
 
 `ParticleVisual`:

@@ -254,37 +254,5 @@ private fun writeConeVelocity(
     sim.velZ[slot] = (az * cosTheta + rz * sinCosPhi + uz * sinSinPhi) * speed
 }
 
-private fun applyRadialPush(sim: ParticleSimulation, slot: Int) {
-    if (sim.plane == ParticlePlane.XY) {
-        var awayX = sim.posX[slot] - sim.originX
-        var awayY = sim.posY[slot] - sim.originY
-        val away = sqrt(awayX * awayX + awayY * awayY)
-        if (away > 0f) {
-            awayX /= away
-            awayY /= away
-        } else {
-            val angle = sim.random.nextFloat() * FULL_TURN_RADIANS
-            awayX = cos(angle)
-            awayY = sin(angle)
-        }
-        sim.velX[slot] += awayX * sim.radialSpeed
-        sim.velY[slot] += awayY * sim.radialSpeed
-        return
-    }
-    var awayX = sim.posX[slot] - sim.originX
-    var awayZ = sim.posZ[slot] - sim.originZ
-    val away = sqrt(awayX * awayX + awayZ * awayZ)
-    if (away > 0f) {
-        awayX /= away
-        awayZ /= away
-    } else {
-        val angle = sim.random.nextFloat() * FULL_TURN_RADIANS
-        awayX = cos(angle)
-        awayZ = sin(angle)
-    }
-    sim.velX[slot] += awayX * sim.radialSpeed
-    sim.velZ[slot] += awayZ * sim.radialSpeed
-}
-
-private fun jitter(random: Random, magnitude: Float): Float =
+internal fun jitter(random: Random, magnitude: Float): Float =
     (random.nextFloat() * TWO_SIDED_SCALE - 1f) * magnitude

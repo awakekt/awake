@@ -55,6 +55,11 @@ import com.awakekt.awake.core.math.Vec3f
  * sparks still rise straight up. Scale is ignored. It adds nothing beside [inheritOrientation], which
  * already turns the ring, or in [ParticleSpace.Local], where the ring already lies in the entity's axes.
  *
+ * [radialInRingPlane] `true` makes [radialSpeed] push outward in the turned spawn ring's own plane
+ * instead of horizontally, whenever [orientSpawnRing] or [inheritOrientation] turns the ring: an
+ * outward ripple across a sloped surface. With the ring unturned, its plane is horizontal, so it adds
+ * nothing; in [ParticleSpace.Local] the push is already in the ring's plane of the entity's axes.
+ *
  * [space] is where spawned particles are kept: in the world where they were emitted
  * ([ParticleSpace.World], the default), or relative to the emitter entity so they move, turn and scale
  * with it ([ParticleSpace.Local]). See [ParticleSpace] for how each vector here reads in local space.
@@ -72,6 +77,7 @@ data class ParticleMotion(
     val inheritOrientation: Boolean = false,
     val space: ParticleSpace = ParticleSpace.World,
     val orientSpawnRing: Boolean = false,
+    val radialInRingPlane: Boolean = false,
 ) {
     /** [ParticleMotion] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -88,7 +94,7 @@ data class ParticleMotion(
         inheritOrientation: Boolean = false,
     ) : this(
         baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
-        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, ParticleSpace.World, false,
+        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, ParticleSpace.World, false, false,
     )
 
     /** [ParticleMotion] as it was before [orientSpawnRing]: hidden, kept so a consumer compiled against it still links. */
@@ -107,7 +113,7 @@ data class ParticleMotion(
         space: ParticleSpace = ParticleSpace.World,
     ) : this(
         baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
-        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space, false,
+        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space, false, false,
     )
 
     /** [copy] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
@@ -126,6 +132,7 @@ data class ParticleMotion(
     ): ParticleMotion = ParticleMotion(
         baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
         turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space, orientSpawnRing,
+        radialInRingPlane,
     )
 
     /** [copy] as it was before [orientSpawnRing]: hidden, kept so a consumer compiled against it still links. */
@@ -145,5 +152,47 @@ data class ParticleMotion(
     ): ParticleMotion = ParticleMotion(
         baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
         turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space, orientSpawnRing,
+        radialInRingPlane,
+    )
+
+    /** [ParticleMotion] as it was before [radialInRingPlane]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        baseVelocity: Vec3f = Vec3f(0f, 1f, 0f),
+        velocityJitter: Float = 0f,
+        coneHalfAngleDegrees: Float? = null,
+        spawnRadius: Float = 0f,
+        convergeToOrigin: Boolean = false,
+        turbulence: Float = 0f,
+        turbulenceFrequency: Float = 1f,
+        radialSpeed: Float = 0f,
+        acceleration: Vec3f = Vec3f(0f, 0f, 0f),
+        inheritOrientation: Boolean = false,
+        space: ParticleSpace = ParticleSpace.World,
+        orientSpawnRing: Boolean = false,
+    ) : this(
+        baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
+        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space, orientSpawnRing, false,
+    )
+
+    /** [copy] as it was before [radialInRingPlane]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        baseVelocity: Vec3f = this.baseVelocity,
+        velocityJitter: Float = this.velocityJitter,
+        coneHalfAngleDegrees: Float? = this.coneHalfAngleDegrees,
+        spawnRadius: Float = this.spawnRadius,
+        convergeToOrigin: Boolean = this.convergeToOrigin,
+        turbulence: Float = this.turbulence,
+        turbulenceFrequency: Float = this.turbulenceFrequency,
+        radialSpeed: Float = this.radialSpeed,
+        acceleration: Vec3f = this.acceleration,
+        inheritOrientation: Boolean = this.inheritOrientation,
+        space: ParticleSpace = this.space,
+        orientSpawnRing: Boolean = this.orientSpawnRing,
+    ): ParticleMotion = ParticleMotion(
+        baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
+        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space, orientSpawnRing,
+        radialInRingPlane,
     )
 }

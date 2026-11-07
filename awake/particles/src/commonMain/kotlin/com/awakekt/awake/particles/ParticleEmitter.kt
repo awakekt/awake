@@ -468,6 +468,7 @@ class ParticleEmitter(
         sim.radialSpeed = m.radialSpeed
         sim.inheritOrientation = m.inheritOrientation && m.space == ParticleSpace.World
         sim.orientSpawnShape = m.orientSpawnRing && m.space == ParticleSpace.World
+        sim.radialInSpawnPlane = m.radialInRingPlane
         syncSpace(sim, m)
         sim.drag = 0f
         sim.turbulence = m.turbulence
