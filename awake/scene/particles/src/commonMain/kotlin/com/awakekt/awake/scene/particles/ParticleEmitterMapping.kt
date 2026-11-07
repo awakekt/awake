@@ -35,6 +35,7 @@ internal fun SceneParticleEmitter.toMotion(): ParticleMotion = ParticleMotion(
     inheritOrientation = inheritOrientation,
     space = space,
     orientSpawnRing = orientSpawnRing,
+    radialInRingPlane = radialInRingPlane,
 )
 
 /** The look options of [this] scene file as a live [ParticleVisual]. */

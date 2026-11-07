@@ -67,6 +67,30 @@ class ParticleSpawnRingTiltTest {
         plain.positions.zip(tilted.positions).forEach { (a, b) -> assertVec(a, b, "the same spawn points") }
     }
 
+    @Test
+    fun aTiltedRingsRadialSpeedStaysHorizontalByDefault() {
+        val spawned = spawnRing(ParticleMotion(baseVelocity = ZERO, spawnRadius = RADIUS, radialSpeed = 3f, orientSpawnRing = true))
+
+        spawned.velocities.forEach { assertEquals(0f, it.y, TOLERANCE, "pushed horizontally, as before") }
+    }
+
+    @Test
+    fun radialInRingPlanePushesOutwardAcrossTheTiltedRing() {
+        val motion = ParticleMotion(
+            baseVelocity = ZERO,
+            spawnRadius = RADIUS,
+            radialSpeed = 3f,
+            orientSpawnRing = true,
+            radialInRingPlane = true,
+        )
+        val spawned = spawnRing(motion)
+
+        spawned.positions.zip(spawned.velocities).forEach { (p, v) ->
+            assertEquals(0f, v.x, TOLERANCE, "in the ring's YZ plane")
+            assertVec(Vec3f(p.x * 1.5f, p.y * 1.5f, p.z * 1.5f), v, "outward through the spawn point")
+        }
+    }
+
     private class Spawned(val positions: List<Vec3f>, val velocities: List<Vec3f>)
 
     // One short step of an emitter on an entity turned a quarter about Z; the same seed each run.
@@ -133,6 +157,7 @@ class ParticleSpawnRingTiltTest {
 }
 
 private val UP = Vec3f(0f, 1f, 0f)
+private val ZERO = Vec3f(0f, 0f, 0f)
 private const val RADIUS = 2f
 private const val COUNT = 16
 private const val STEP = 0.001f

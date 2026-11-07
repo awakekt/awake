@@ -918,6 +918,7 @@ it; see [Particles](../guides/particles.md).
 | `spin` | spin | none | A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (`stretchWithVelocity`) points along its motion and ignores it. Described below. |
 | `space` | `World` · `Local` | `World` | `World` leaves each particle where it was emitted however the node moves next. `Local` keeps particles relative to the node and draws them through its current transform, so they move, turn and scale with it: an aura on a moving bone. `velocity` and the spawn ring are then in the node's axes and `inheritOrientation` adds nothing; `acceleration` still pulls in world space; camera-facing sprites still face the camera. A `Local` emitter cannot have a `ground`. |
 | `orientSpawnRing` | boolean | `false` | The node's rotation tilts the spawn ring alone, so it lies in the plane a `Flat` emitter's sprites lie in, while `velocity`, `acceleration` and `radialSpeed` stay in world space. Adds nothing beside `inheritOrientation` or with `space` `Local`. |
+| `radialInRingPlane` | boolean | `false` | `radialSpeed` pushes outward in the turned spawn ring's own plane instead of horizontally, when `orientSpawnRing` or `inheritOrientation` turns the ring: an outward ripple across a sloped surface. Adds nothing while the ring is not turned, or with `space` `Local`. |
 
 `alphaCurve` is an object with the fractions of a particle's life at which it reaches full opacity and
 starts to fade out, both within 0 to 1 with `fadeInEnd` not after `fadeOutStart`:
