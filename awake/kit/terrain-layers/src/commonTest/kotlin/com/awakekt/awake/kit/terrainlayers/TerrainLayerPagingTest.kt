@@ -36,13 +36,15 @@ class TerrainLayerPagingTest {
 
     /** Every texel of cell `n` blends layer `n % 2` alone; its light's red channel is `10 * (n + 1)`. */
     private val control = TerrainControlMap(
-        CELLS * TEXELS, TEXELS,
+        CELLS * TEXELS,
+        TEXELS,
         ByteArray(CELLS * TEXELS * TEXELS * SLOTS) { ((it / SLOTS % (CELLS * TEXELS)) / TEXELS % 2).toByte() },
         ByteArray(CELLS * TEXELS * TEXELS * SLOTS) { if (it % SLOTS == 0) 255.toByte() else 0 },
         SLOTS,
     )
     private val lightmap = TerrainLightmap(
-        CELLS * TEXELS, TEXELS,
+        CELLS * TEXELS,
+        TEXELS,
         ByteArray(CELLS * TEXELS * TEXELS * 4) { if (it % 4 == 0) (10 * ((it / 4 % (CELLS * TEXELS)) / TEXELS + 1)).toByte() else 0 },
     )
 
