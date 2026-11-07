@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Two spawned models that finish loading on the same frame no longer stop the web frame loop (#1382).** `SpawnedModels.attachLoaded` removed each finished load from its map while it walked a copied list of that map's entries, and an entry reads through to its map: on Kotlin/Wasm and Native, reading one after the map changed throws `ConcurrentModificationException` ("The backing map has been modified after this entry was obtained"). The second load to finish on a frame threw, and the browser frame loop stopped. It walks a snapshot of path and load pairs now. The JVM's map doesn't check, so desktop never showed it.
+- **A hidden skinned model is no longer posed every frame (#1384).** `AnimationSystem` skips posing a model the renderer culled and drew nowhere, but `SceneDrawCollector` returned early for a `MeshRenderer` with `visible = false` (and a `ModularCharacter` that isn't visible) before marking its `SkinnedPose`, so a hidden model counted as one no renderer had looked at and was posed every frame. A hidden mesh now marks its pose culled, as an off-screen one does: its clip keeps time, and it is posed again once it is drawn. A model drawn as parts shares one pose, so a part another view draws still poses it. With 1,244 hidden models out of 1,375 animated ones, on the web (Chromium, software WebGPU), `AnimationSystem.update` fell from 23% of the frame's samples to under 2%, and the frame from 88–93 ms to 52–58 ms.
 
 ## [0.39.0] - 2026-11-06
 
