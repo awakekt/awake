@@ -34,12 +34,33 @@ interface MutableState<T> : State<T> {
 }
 
 /**
- * Default implementation of [MutableState].
+ * Default implementation of [MutableState], read-tracked.
+ *
+ * A [Composition] pass that reads [value] is recorded as its reader, and a write of a value not equal
+ * to the current one invalidates every composition whose latest pass read it (see
+ * [Composition.isInvalid]). A write of an equal value is ignored. Read and write it on the thread
+ * that composes; a value another thread updates belongs in a [PolledState] instead.
  */
 class SnapshotMutableState<T>(
-    override var value: T,
+    value: T,
 ) : MutableState<T> {
-    override fun toString(): String = "MutableState(value=$value)"
+    private var current: T = value
+    private var readers: StateReaders? = null
+
+    override var value: T
+        get() {
+            val observer = ReadTracking.current
+            if (observer != null) (readers ?: StateReaders().also { readers = it }).record(observer)
+            return current
+        }
+        set(value) {
+            if (current != value) {
+                current = value
+                readers?.invalidate()
+            }
+        }
+
+    override fun toString(): String = "MutableState(value=$current)"
 }
 
 /**

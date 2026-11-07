@@ -1,3 +1,8 @@
+public final class com/awakekt/awake/compose/state/CollectAsStateKt {
+	public static final fun collectAsState (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/state/Store;)Lcom/awakekt/awake/compose/runtime/State;
+	public static final fun collectAsState (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlinx/coroutines/flow/StateFlow;)Lcom/awakekt/awake/compose/runtime/State;
+}
+
 public final class com/awakekt/awake/compose/state/ComposeStateKt {
 	public static final fun ProvideStore (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/state/Store;Lkotlin/jvm/functions/Function1;)V
 	public static final fun getLocalStore ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;

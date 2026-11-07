@@ -14,6 +14,7 @@ Every remembered store is closed when the composition forgets it: its `key` (or 
 - **`LocalStore`**: `CompositionLocal<Store<*>?>` ambient store holder.
 - **`ProvideStore(store) { ... }`**: Provides a store to descendant composables.
 - **`useStore<S>()`**: Resolves the ambient store managing state of type `S`.
+- **`flow.collectAsState()`** / **`store.collectAsState()`**: A `StateFlow`'s (or a store's) current value as a read-tracked `State`. Nothing collects the flow: a composition that read the value is invalid (`Composition.isInvalid`) once the flow holds a different one. The state is remembered per flow, so steady-state calls allocate nothing.
 
 ---
 
