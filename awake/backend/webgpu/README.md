@@ -20,6 +20,24 @@ constructor takes nullable injected pipelines for optional content
 always-available draw primitives. Full convention:
 [docs/reference/render-extensibility.md](../../../docs/reference/render-extensibility.md).
 
+## Device loss
+
+When the browser reports the `GPUDevice` lost (a GPU process crash, a driver reset, memory
+pressure), the canvas host stops drawing and reports it once: to the app's `AppErrorHandler` as
+`AppErrorSource.GraphicsDevice`, whose cause is a `WebGpuDeviceLostException`, and to
+`WebGpuEngine.onDeviceLost` with the reason and the browser's message. Set the callback in the
+factory passed to `launchWebGpuGame`:
+
+```kotlin
+launchWebGpuGame(canvas) {
+    WebGpuEngine(game, plan).apply { onDeviceLost = { loss -> crashReports.record(loss) } }
+}
+```
+
+The engine does not recreate the device: every pipeline, buffer and texture it built belonged to
+the lost one. Reload the page, or dispose the engine and launch a new one. The loss that the
+engine's own teardown causes is not reported.
+
 ## Production-plan verification
 
 `WebGpuProductionPlanTest` compiles the engine showcase's existing render-plan declaration as
