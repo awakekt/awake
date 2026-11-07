@@ -1,1 +1,0 @@
-- A headless host, such as a game server, no longer plans `RuntimeCanvasActionsSystem`: it draws no canvas and takes no touches, and walking its canvas elements every frame cost a server about 5% of its tick (#1428).
