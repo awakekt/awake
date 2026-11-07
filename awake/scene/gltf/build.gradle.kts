@@ -46,3 +46,8 @@ mavenPublishing {
         description.set("Resolves .gltf and .glb model paths in scenes to meshes and materials")
     }
 }
+
+// TEMPORARY: full test failures in CI while diagnosing #1409's spawn test; removed with the fix.
+tasks.withType<Test>().configureEach {
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
