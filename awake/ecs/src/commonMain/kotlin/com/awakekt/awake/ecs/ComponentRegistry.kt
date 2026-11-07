@@ -58,6 +58,9 @@ internal class ComponentRegistry {
 
     fun typeIdForKeyOrNull(key: Any): ComponentTypeId? = types.typeIdForKeyOrNull(key)
 
+    /** The ID [type] has in this world, or `null` before anything registered it; reads an array. */
+    internal fun typeIdOrNull(type: ComponentType<*>): ComponentTypeId? = types.typeIdAtIndexOrNull(type.index)
+
     fun storageKind(type: KClass<out Any>): ComponentStorageKind {
         val typeId = types.typeIdOrNull(type) ?: return ComponentStorageKind.Unregistered
         return storage.storageKind(typeId)
