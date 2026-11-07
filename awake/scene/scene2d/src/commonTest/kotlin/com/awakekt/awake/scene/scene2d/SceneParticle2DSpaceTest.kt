@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.particles.ParticleEmitter2D
 import com.awakekt.awake.particles.ParticleSpace
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
@@ -20,6 +21,10 @@ import kotlin.test.assertTrue
  * file written with the old `localSpace` still plays as it did.
  */
 class SceneParticle2DSpaceTest {
+    init {
+        SceneComponentRegistry.registerGlobal(ParticleEmitter2DBinding)
+    }
+
     private fun decode(component: String) = SceneLoader.decode("""{"version": 1, "nodes": [{"components": [$component]}]}""")
         .nodes.single().components.single() as SceneParticleEmitter2D
 
