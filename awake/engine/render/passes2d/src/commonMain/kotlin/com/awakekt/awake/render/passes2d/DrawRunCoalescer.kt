@@ -696,11 +696,11 @@ object DrawRunCoalescer {
         }
     }
 
-    /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font and pipeline. */
     /** Whether a cacheable miss goes through [pool]: not on first sight, nor once it has settled. */
     private fun pooledMiss(pool: DynamicRunArrayPool, retained: RetainedDrawRunCache): Boolean =
         !pool.firstSightSpan() && !pool.stableSpans.shouldPromote(retained.lastMissHash, retained.capacity)
 
+    /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font and pipeline. */
     private fun continuesSpan(first: DrawCommand, next: DrawCommand): Boolean =
         next::class == first::class && (
             first !is DrawCommand.Glyph ||
