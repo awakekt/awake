@@ -12,6 +12,7 @@ import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.window.DesktopRunLimits
+import com.awakekt.awake.engine.window.DesktopWindowOptions
 import com.awakekt.awake.engine.window.pollGlfwInput
 import com.awakekt.awake.engine.window.runDesktopWindow
 import java.io.File
@@ -22,6 +23,9 @@ import java.io.File
  * This is the dependency-only entry point: consumers provide the app lifecycle and the render
  * plan, while Awake owns construction of [VulkanEngine] and the GLFW frame loop. The factory
  * overload below remains available when an app needs a custom [VulkanEngine] subclass.
+ *
+ * The UI density follows the OS display scale (125% is 1.25) unless [windowOptions] opts out with
+ * `desktopWindowOptions { displayScale = DesktopDisplayScale.Unscaled }`.
  */
 fun runVulkanDesktopGame(
     game: AwakeAppLifecycle,
@@ -31,20 +35,17 @@ fun runVulkanDesktopGame(
     afterLoop: () -> Unit = {},
     cursor: (() -> PointerCursor)? = null,
     cursorImage: (() -> CursorImage?)? = null,
+    windowOptions: DesktopWindowOptions = DesktopWindowOptions(),
 ) {
     runVulkanDesktopGame(
         game = game,
-        applicationFactory = { lifecycle ->
-            VulkanEngine(
-                appLifecycle = lifecycle,
-                plan = plan,
-            )
-        },
+        application = VulkanEngine(appLifecycle = game, plan = plan),
         pollInput = pollInput,
         beforeFrame = beforeFrame,
         afterLoop = afterLoop,
         cursor = cursor,
         cursorImage = cursorImage,
+        windowOptions = windowOptions,
     )
 }
 
@@ -94,6 +95,8 @@ fun runVulkanDesktopGame(
  * @param cursorImage A custom cursor image to show this frame, overriding [cursor] while non-null;
  * pair with `pointerCursorImageOf(game)`. A capture run skips it, as it skips [cursor].
  * @param limits How many frames to play, and whether to capture the last; see [DesktopRunLimits].
+ * @param windowOptions How the window opens; its `displayScale` sets the UI density, the OS display
+ * scale by default. A capture run has no window and keeps the engine's own density.
  * @throws IllegalStateException If [game] asks for a window backend other than Vulkan or the
  * default, or a limited run's engine never starts.
  */
@@ -111,6 +114,7 @@ fun runVulkanDesktopGame(
     cursor: (() -> PointerCursor)? = null,
     cursorImage: (() -> CursorImage?)? = null,
     limits: DesktopRunLimits = DesktopRunLimits.fromSystemProperties(),
+    windowOptions: DesktopWindowOptions = DesktopWindowOptions(),
 ) {
     check(
         game.windowConfig.backend == AppWindowBackend.VULKAN ||
@@ -127,6 +131,7 @@ fun runVulkanDesktopGame(
     var started = false
     runDesktopWindow(
         game = game,
+        options = windowOptions,
         onCreate = application::create,
         onFrame = application::update,
         onDispose = application::dispose,
@@ -140,10 +145,37 @@ fun runVulkanDesktopGame(
         cursorImage = cursorImage,
         frames = limits.frames,
         onDpi = application::setDpi,
+        onDensity = application::setDensity,
     )
     // A limited run is a check: frames played by an engine that never started prove nothing.
     if (limits.frames != null) check(started) { notStarted(application) }
 }
+
+/** [runVulkanDesktopGame] as it was before `windowOptions`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    plan: RenderPlan,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
+) = runVulkanDesktopGame(game, plan, pollInput, beforeFrame, afterLoop, cursor, cursorImage, DesktopWindowOptions())
+
+/** [runVulkanDesktopGame] as it was before `windowOptions`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runVulkanDesktopGame(
+    game: AwakeAppLifecycle,
+    application: VulkanEngine,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
+    limits: DesktopRunLimits = DesktopRunLimits.fromSystemProperties(),
+) = runVulkanDesktopGame(game, application, pollInput, beforeFrame, afterLoop, cursor, cursorImage, limits, DesktopWindowOptions())
 
 /** [runVulkanDesktopGame] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
