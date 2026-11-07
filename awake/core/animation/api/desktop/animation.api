@@ -52,6 +52,7 @@ public final class com/awakekt/awake/core/animation/AnimationPlayback : java/lan
 
 public final class com/awakekt/awake/core/animation/AnimationPlayer {
 	public fun <init> (Lcom/awakekt/awake/core/animation/AnimationLibrary;)V
+	public final fun addClips (Ljava/util/Map;)V
 	public final fun advance (F)V
 	public final fun crossFadeTo (Ljava/lang/String;FLcom/awakekt/awake/core/animation/AnimationPlayback;)V
 	public static synthetic fun crossFadeTo$default (Lcom/awakekt/awake/core/animation/AnimationPlayer;Ljava/lang/String;FLcom/awakekt/awake/core/animation/AnimationPlayback;ILjava/lang/Object;)V
@@ -59,6 +60,7 @@ public final class com/awakekt/awake/core/animation/AnimationPlayer {
 	public final fun getClipEntries ()Ljava/util/Map;
 	public final fun getClips ()Ljava/util/List;
 	public final fun getCurrentClip ()Lcom/awakekt/awake/core/animation/AnimationClip;
+	public final fun getPlayback ()Lcom/awakekt/awake/core/animation/AnimationPlayback;
 	public final fun getSkeleton ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun getSpeed ()F
 	public final fun getTime ()F
@@ -75,6 +77,10 @@ public final class com/awakekt/awake/core/animation/AnimationPlayer {
 
 public final class com/awakekt/awake/core/animation/AnimationPlayerKt {
 	public static final fun crossedTimelineMarker (FFFZF)Z
+}
+
+public final class com/awakekt/awake/core/animation/AnimationRetargetKt {
+	public static final fun retarget (Lcom/awakekt/awake/core/animation/AnimationClip;Lcom/awakekt/awake/core/animation/Skeleton;Lcom/awakekt/awake/core/animation/Skeleton;)Lcom/awakekt/awake/core/animation/AnimationClip;
 }
 
 public final class com/awakekt/awake/core/animation/AnimationPose {

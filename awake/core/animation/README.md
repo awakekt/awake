@@ -14,6 +14,10 @@ implementation(project(":awake:core:animation"))
 - `Skin` — vertex joint weights and indices mapping geometry to skeleton joints.
 - `AnimationClip` — time-sampled translation, rotation (quaternion), and scale keyframe tracks.
 - `AnimationPose` — sampled joint transforms at a specific playback time.
+- `AnimationPlayer` — per-instance playback over an `AnimationLibrary`. `addClips` adds clips to a
+  running player (a streamed clip, say) and keeps the playhead, the crossfade in progress and the
+  `playback` mode, so the new clip plays next without a pop. `AnimationClip.retarget(from, to)`
+  rebinds a clip authored on another skeleton by joint name first.
 - `AnimationCrossfade` — linear and spherical (SLERP) interpolation blending two poses over a transition duration.
 - `FrameClip` and `FrameClipPlayer` — named frame runs on simulation time, with loops, one-shots,
   switching, restart, and speed/pause. Shared by sprite and textured-mesh scene bindings.
