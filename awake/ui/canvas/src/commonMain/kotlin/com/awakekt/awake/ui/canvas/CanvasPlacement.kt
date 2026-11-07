@@ -10,10 +10,12 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxScope
 import com.awakekt.awake.compose.foundation.layout.size
+import com.awakekt.awake.compose.foundation.layout.wrapContentSize
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
+import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.draw.alpha
@@ -47,6 +49,7 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
             .align(element.anchor.alignment)
             .then(AnchoredSubpixelElement(element.anchor, element.offsetX, element.offsetY, inside))
             .anchorInset(element.anchor, element.offsetX, element.offsetY, inside)
+            .ownSize(element.anchor)
         Box(placed) {
             CanvasElementView(element, view, tree, tree.childrenOf(element))
         }
@@ -59,6 +62,7 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
         .align(element.anchor.alignment)
         .then(AnchoredSubpixelElement(element.anchor, x, y, inside))
         .anchorInset(element.anchor, x, y, inside)
+        .ownSize(element.anchor)
     if (adjust.opacity < 1f) placed = placed.alpha(adjust.opacity)
     Box(placed) {
         val density = LocalDensity.current
@@ -67,6 +71,16 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
         }
     }
 }
+
+/**
+ * Measures the element at its own size, aligned to [anchor], even where its offset reaches past the
+ * canvas: the inset leaves less space there, and a window moved partly off is clipped, never squashed.
+ */
+private fun Modifier.ownSize(anchor: CanvasAnchor): Modifier = wrapContentSize(
+    horizontalAlignment = when (anchor.column) { 0 -> Alignment.Start; 1 -> Alignment.CenterHorizontally; else -> Alignment.End },
+    verticalAlignment = when (anchor.row) { 0 -> Alignment.Top; 1 -> Alignment.CenterVertically; else -> Alignment.Bottom },
+    unbounded = true,
+)
 
 private class AnchoredSubpixelElement(
     private val anchor: CanvasAnchor,
