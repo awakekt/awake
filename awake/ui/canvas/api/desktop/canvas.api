@@ -2005,6 +2005,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasScaleMode : java/lang/Enum 
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasScaleMode$Companion;
 	public static final field ConstantPhysicalSize Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;
 	public static final field ConstantPixelSize Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;
+	public static final field DensityStep Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;
 	public static final field ScaleWithScreenSize Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/canvas/CanvasScaleMode;

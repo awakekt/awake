@@ -903,7 +903,11 @@ screen, following its width, its height or a blend of the two by `match`. `Const
 a unit `pixelsPerUnit` of the screen's pixels, for pixel art at any density, and
 `ConstantPhysicalSize` keeps it 1 / `referenceDpi` of an inch, at the screen's real dots per inch
 where the platform reports them: on Android and on a desktop monitor that reports its size. A
-browser and iOS report none, so there a unit is a dp. `minScale` and `maxScale` hold the result, and
+browser and iOS report none, so there a unit is a dp. `DensityStep` draws a unit as the largest
+whole number of `pixelsPerUnit`-pixel steps that still leaves the screen's short side
+`referenceHeight` units: on a 1080 pixel high screen against `720` that is one pixel per unit, on a
+2160 one three, and a phone held either way gets the same scale. A touch HUD, read from closer,
+usually sets `referenceHeight` to `360`. `minScale` and `maxScale` hold the result, and
 `playerScale`, which a settings menu sets, multiplies it after them.
 
 A screen rarely gives a round scale: a 1017 dp tall window against the default 720 reference gives

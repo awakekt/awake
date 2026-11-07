@@ -562,11 +562,11 @@ Every `canvas_element` size, offset, font and image in its scope is multiplied b
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `mode` | `ScaleWithScreenSize` · `ConstantPixelSize` · `ConstantPhysicalSize` | `ScaleWithScreenSize` | Which rule works the scale out. `ScaleWithScreenSize` grows and shrinks the canvas with the screen; `ConstantPixelSize` keeps a unit a fixed number of the screen's pixels; `ConstantPhysicalSize` keeps a unit a fixed fraction of an inch. |
+| `mode` | `ScaleWithScreenSize` · `ConstantPixelSize` · `ConstantPhysicalSize` · `DensityStep` | `ScaleWithScreenSize` | Which rule works the scale out. `ScaleWithScreenSize` grows and shrinks the canvas with the screen; `ConstantPixelSize` keeps a unit a fixed number of the screen's pixels; `ConstantPhysicalSize` keeps a unit a fixed fraction of an inch; `DensityStep` draws as many whole steps of screen pixels per unit as still leave the short side `referenceHeight` units. |
 | `referenceWidth` | number | `1280` | With `ScaleWithScreenSize`, the width the canvas is designed at, in units: on a screen this many dp wide, matching by width, a unit is a dp. Above 0. |
-| `referenceHeight` | number | `720` | With `ScaleWithScreenSize`, the height the canvas is designed at, in units. Above 0. |
+| `referenceHeight` | number | `720` | With `ScaleWithScreenSize`, the height the canvas is designed at, in units. With `DensityStep`, the fewest units the screen's short side keeps: `720` for a desktop HUD, `360` for a touch one. Above 0. |
 | `match` | number | `0.5` | With `ScaleWithScreenSize`, what the scale follows: `0` the screen's width, `1` its height, and between them a blend taken on a log scale. From 0 to 1. |
-| `pixelsPerUnit` | number | `1` | With `ConstantPixelSize`, how many of the screen's pixels one unit covers: `1` for pixel-exact art. Above 0. |
+| `pixelsPerUnit` | number | `1` | With `ConstantPixelSize`, how many of the screen's pixels one unit covers: `1` for pixel-exact art. With `DensityStep`, the step the pixels per unit move in: `1` for whole pixels, `0.5` for halves. Above 0. |
 | `referenceDpi` | number | `160` | With `ConstantPhysicalSize`, the dots per inch the canvas is designed at: a unit is 1 / `referenceDpi` of an inch. `160` makes a unit a dp. Above 0. |
 | `minScale` | number | `0` | The smallest scale the rule may give; `0` for no limit. Not negative, and not above a set `maxScale`. |
 | `maxScale` | number | `0` | The largest scale the rule may give; `0` for no limit. Not negative. |

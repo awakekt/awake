@@ -24,14 +24,15 @@ import kotlinx.serialization.Serializable
  * only the node it sits on and the nodes beneath it draw at that scale, while the rest of the canvas
  * keeps its own.
  *
- * @property mode Which rule works the scale out: `ScaleWithScreenSize`, `ConstantPixelSize` or
- * `ConstantPhysicalSize`.
+ * @property mode Which rule works the scale out: `ScaleWithScreenSize`, `ConstantPixelSize`,
+ * `ConstantPhysicalSize` or `DensityStep`.
  * @property referenceWidth With `ScaleWithScreenSize`, the width the canvas is designed at, in units.
  * @property referenceHeight With `ScaleWithScreenSize`, the height the canvas is designed at, in
- * units.
+ * units; with `DensityStep`, the fewest units the short side keeps.
  * @property match With `ScaleWithScreenSize`, what the scale follows: 0 the screen's width, 1 its
  * height, and a log-scale blend between.
- * @property pixelsPerUnit With `ConstantPixelSize`, how many of the screen's pixels one unit covers.
+ * @property pixelsPerUnit With `ConstantPixelSize`, how many of the screen's pixels one unit covers;
+ * with `DensityStep`, the step the screen's pixels per unit move in.
  * @property referenceDpi With `ConstantPhysicalSize`, the dots per inch the canvas is designed at.
  * @property minScale The smallest scale the rule may give; 0 for no limit.
  * @property maxScale The largest scale the rule may give; 0 for no limit.

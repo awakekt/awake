@@ -165,7 +165,9 @@ twice the size, with every edge on a whole pixel.
 `CanvasOverlay(items, scaler = CanvasScaler(…))` works the scale out from the canvas's box each
 frame instead, measured before anything in it is composed: `ScaleWithScreenSize` from a reference
 size and a `match` between following the width and the height, `ConstantPixelSize` from pixels per
-unit, or `ConstantPhysicalSize` from the dots per inch the canvas is designed at. `minScale` and
+unit, `ConstantPhysicalSize` from the dots per inch the canvas is designed at, or `DensityStep`, the
+largest whole step of `pixelsPerUnit` screen pixels per unit that still leaves the short side at
+least `referenceHeight` units (720 suits a desktop HUD, 360 a touch one). `minScale` and
 `maxScale` hold the result, and `playerScale` multiplies it after them. `CanvasScaler.scaleFor(width,
 height, density)` is the whole rule, for a host that wants the number itself. It is serializable;
 `awake:scene:canvas` saves it with a scene as `canvas_scaler`.
