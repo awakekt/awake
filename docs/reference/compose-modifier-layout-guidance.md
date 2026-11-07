@@ -33,6 +33,7 @@ mistakes a Compose-literate reader still makes here.
 | `FlowRow`/`FlowColumn`, `FlexBox` | [`Flow.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/layout/Flow.kt), [`FlexBox.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/layout/FlexBox.kt) |
 | `verticalScroll`, `horizontalScroll`, `ScrollState` | [`Scroll.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/Scroll.kt), [`ScrollState.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/ScrollState.kt) |
 | `clickable`, `combinedClickable` | [`Clickable.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/Clickable.kt) |
+| `doubleClickable`, `DoubleClickTracker` | [`DoubleClick.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/gestures/DoubleClick.kt), [`DoubleClickTracker.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/gestures/DoubleClickTracker.kt) |
 | `background`, `border` | [`Background.kt`](../../awake/compose/foundation/src/commonMain/kotlin/com/awakekt/awake/compose/foundation/Background.kt) |
 | `testTag`, `semantics` | [`SemanticsProperties.kt`](../../awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/semantics/SemanticsProperties.kt) |
 

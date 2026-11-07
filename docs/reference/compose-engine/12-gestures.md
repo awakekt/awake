@@ -124,6 +124,9 @@ why the editor's outliner could not express an additive click before this existe
   `LongPress` event after 500 ms; `combinedClickable` consumes it without storing state in a
   rebuilt modifier link.
 - **Enter/Exit.** Implemented from the frame loop's hover-path diff.
+- **Double click.** `gestures.doubleClickable` times two clicks on `LocalFrameClock` with a
+  `DoubleClickTracker` kept on its retained node; the tracker itself is plain state any surface can
+  feed its own clicks.
 
 ## Watch
 
