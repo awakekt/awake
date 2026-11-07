@@ -8,6 +8,7 @@ public final class com/awakekt/awake/compose/assets/AssetImage : com/awakekt/awa
 public final class com/awakekt/awake/compose/assets/AssetImages {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun asMap ()Ljava/util/Map;
 	public final fun failure (Ljava/lang/String;)Ljava/lang/Throwable;
 	public final fun get (Ljava/lang/String;)Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;
 	public final fun getSize ()I

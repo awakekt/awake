@@ -45,6 +45,12 @@ internal class SceneUiAssets {
     var imagesLocal: ProvidedValue<AssetImages?> = NO_IMAGES
         private set
 
+    /**
+     * What the scene canvas draws its images from: the cache, which reads a path the first time an
+     * element asks for it, or [seed] alone while there is none.
+     */
+    val canvasImages: Map<String, ImageBitmap> get() = images?.asMap() ?: seed
+
     /** Whether a frame must [prepare] the cache: there is a [source] and no cache for it yet. */
     val needsImages: Boolean get() = images == null && source != null
 

@@ -46,6 +46,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:compose:ui-testing"))
             implementation(project(":awake:compose:foundation"))
+            // A canvas given AssetImages' map reads a lazy image when its element first shows.
+            implementation(project(":awake:compose:assets"))
         }
     }
 }
