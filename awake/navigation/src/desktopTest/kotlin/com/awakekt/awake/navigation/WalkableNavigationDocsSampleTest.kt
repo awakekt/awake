@@ -11,9 +11,11 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.navigation.grid.NavGroundHeight
 import com.awakekt.awake.navigation.walkable.NavAgent
 import com.awakekt.awake.navigation.walkable.NavAreas
+import com.awakekt.awake.navigation.walkable.NavFollowStatus
 import com.awakekt.awake.navigation.walkable.NavFootprint
 import com.awakekt.awake.navigation.walkable.NavObstacle
 import com.awakekt.awake.navigation.walkable.NavPath
+import com.awakekt.awake.navigation.walkable.NavPathFollower
 import com.awakekt.awake.navigation.walkable.NavPathQuery
 import com.awakekt.awake.navigation.walkable.NavPathStatus
 import com.awakekt.awake.navigation.walkable.NavRegion
@@ -88,5 +90,26 @@ class WalkableNavigationDocsSampleTest {
         NavPathQuery(world, ground).findPath(Vec3f(2f, 0f, 2f), Vec3f(60f, 0f, 60f), agent, path)
         assertEquals(NavPathStatus.Complete, path.status)
         assertEquals(2, path.size, "open ground is one straight leg")
+    }
+
+    @Test
+    fun anAgentFollowsItsRoute() {
+        val agent = NavAgent()
+        val ground = NavGroundHeight(heightmap::heightAtWorld)
+        val house = NavObstacle(NavFootprint.Rect(20f, 20f, 30f, 32f), minY = 0f, maxY = 6f)
+        val query = NavPathQuery(bakeNavSurface(NavRegion(0f, 0f, 129, 129, 0.5f), ground, agent, NavAreas(listOf(house))), ground)
+        val position = Vec3f(10f, 0f, 26f)
+        val direction = Vec3f()
+        var frames = 0
+        // --8<-- [start:follow]
+        val follower = NavPathFollower(agent)
+        follower.moveTo(Vec3f(40f, 0f, 26f))
+        // Each frame: ask which way to walk, then move the agent however the game moves it.
+        while (follower.update(query, position, delta = 1f / 60f, direction) && frames++ < 3_000) {
+            position.x += direction.x * 4f / 60f
+            position.z += direction.z * 4f / 60f
+        }
+        // --8<-- [end:follow]
+        assertEquals(NavFollowStatus.Arrived, follower.status)
     }
 }

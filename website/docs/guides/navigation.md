@@ -59,6 +59,21 @@ A search expands at most `maxExpandedNodes` samples. The budget counts nodes, no
 time budget would make a route depend on the machine, and a server and its clients must agree. A
 route across a kilometre of town at 1 m expands about 120,000 samples in about 50 ms on a desktop JVM.
 
+## Follow a route
+
+`NavPathFollower` walks one agent along routes from a query. It plans when given a destination,
+steers toward each corner, and re-plans every `repathInterval` and whenever the agent makes less than
+`stuckDistance` of progress in `stuckSeconds`, so an agent pushed off its route or held by something
+the surface does not know about finds its way again from where it is:
+
+```kotlin title="Kotlin"
+--8<-- "awake/navigation/src/desktopTest/kotlin/com/awakekt/awake/navigation/WalkableNavigationDocsSampleTest.kt:follow"
+```
+
+The follower only gives a direction; whatever moves the agent, a character controller, a transform or
+a network, does the moving. It keeps its route in its own `NavPath` and borrows the query, so
+following and re-planning allocate nothing per frame.
+
 ## Large regions and caching
 
 Bake a large region as a lattice of tiles, and cache each tile's bytes:
@@ -86,6 +101,7 @@ bytes it does not recognise rather than decoding them into a different surface.
 | `NavPathQuery(surface, ground, maxExpandedNodes, snapSamples)` | | `FLAT`, `200000`, `8` | The reusable query; `ground` gives waypoint heights. |
 | `NavPathQuery.findPath(from, to, agent, out)` | `NavPathStatus` | | Writes the route into `out`. |
 | `NavSurfaceMesh(surface, agent)` | `NavMesh` | | The surface for `PathRequestSystem` and the AI behaviours. |
+| `NavPathFollower(agent)` | | | Plans, steers and re-plans one agent; `arriveDistance` `0.25`, `waypointRadius` `0.35`, `repathInterval` `2`, `stuckSeconds` `0.75`, `stuckDistance` `0.1`. |
 
 ## Find a path on a slope grid
 

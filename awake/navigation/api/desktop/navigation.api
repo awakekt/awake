@@ -283,6 +283,16 @@ public final class com/awakekt/awake/navigation/walkable/NavClearance {
 	public static final field UNITS_PER_SAMPLE I
 }
 
+public final class com/awakekt/awake/navigation/walkable/NavFollowStatus : java/lang/Enum {
+	public static final field Arrived Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+	public static final field Idle Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+	public static final field Moving Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+	public static final field Unreachable Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+	public static fun values ()[Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+}
+
 public abstract class com/awakekt/awake/navigation/walkable/NavFootprint {
 	public abstract fun contains (FF)Z
 	public abstract fun getMaxX ()F
@@ -333,6 +343,41 @@ public final class com/awakekt/awake/navigation/walkable/NavPath {
 	public final fun x (I)F
 	public final fun y (I)F
 	public final fun z (I)F
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavPathFollower {
+	public static final field Companion Lcom/awakekt/awake/navigation/walkable/NavPathFollower$Companion;
+	public static final field DEFAULT_ARRIVE_DISTANCE F
+	public static final field DEFAULT_REPATH_INTERVAL F
+	public static final field DEFAULT_STUCK_DISTANCE F
+	public static final field DEFAULT_STUCK_SECONDS F
+	public static final field DEFAULT_WAYPOINT_RADIUS F
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/navigation/walkable/NavAgent;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/navigation/walkable/NavAgent;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAgent ()Lcom/awakekt/awake/navigation/walkable/NavAgent;
+	public final fun getArriveDistance ()F
+	public final fun getDestination ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getPath ()Lcom/awakekt/awake/navigation/walkable/NavPath;
+	public final fun getPlans ()I
+	public final fun getRepathInterval ()F
+	public final fun getStatus ()Lcom/awakekt/awake/navigation/walkable/NavFollowStatus;
+	public final fun getStuckDistance ()F
+	public final fun getStuckSeconds ()F
+	public final fun getWaypoint ()I
+	public final fun getWaypointRadius ()F
+	public final fun moveTo (Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun setAgent (Lcom/awakekt/awake/navigation/walkable/NavAgent;)V
+	public final fun setArriveDistance (F)V
+	public final fun setRepathInterval (F)V
+	public final fun setStuckDistance (F)V
+	public final fun setStuckSeconds (F)V
+	public final fun setWaypointRadius (F)V
+	public final fun stop ()V
+	public final fun update (Lcom/awakekt/awake/navigation/walkable/NavPathQuery;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Vec3f;)Z
+}
+
+public final class com/awakekt/awake/navigation/walkable/NavPathFollower$Companion {
 }
 
 public final class com/awakekt/awake/navigation/walkable/NavPathQuery {
