@@ -29,6 +29,9 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
  * between its last two stepped poses, so a following camera and its walk move on every frame. Don't also run `MatrixRelativeMovementSystem`
  * on these entities: it moves them straight through walls.
  *
+ * A walking character turns toward its intent by [MovementControl.turnSpeed]; a free one turns only when
+ * game code sets [CharacterController.steppedYaw], which is recorded and blended between steps the same way.
+ *
  * @param physicsWorld The physics simulation world in which the character controller operates.
  * @param defaultSpeed Default horizontal locomotion speed in units per second when intent does not specify one.
  */
