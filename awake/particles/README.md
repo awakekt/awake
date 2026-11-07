@@ -38,8 +38,9 @@ that let a scene document place a 3D or a 2D emitter; this is the capability the
 
 ## Where an entity is
 
-An emitter can follow an entity (`ParticleDynamics.followEntity`) and can turn its spawns by the
-entity's rotation (`ParticleMotion.inheritOrientation`). This module does not know what places an
+An emitter can follow an entity (`ParticleDynamics.followEntity`), can turn its spawns by the
+entity's rotation (`ParticleMotion.inheritOrientation`), and can keep its particles in the entity's
+frame so they move, turn and scale with it (`ParticleMotion.space = ParticleSpace.Local`). This module does not know what places an
 entity, so `ParticleSystem`, `ParticleDrawBuilder` and `Particle2DSystem` ask an `EmitterPlacement`.
 An app supplies the one it has; `awake:scene:particles` supplies one for the scene's `Transform`, and
 `awake:scene:scene2d` supplies `Transform2DPlacement` for 2D nodes. Pass

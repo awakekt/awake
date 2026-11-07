@@ -879,7 +879,8 @@ node. `SceneParticleEmitter`.
 
 Sizes, speeds and `spawnRadius` are world units; the node's scale does not apply, and its rotation
 only tilts a `Flat` emitter's plane and, with `inheritOrientation`, turns the spawn ring and
-`velocity`. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
+`velocity`. A `Local` space emitter is the exception: its particles live in the node's own axes and
+units, so they move, turn and scale with it. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
 its tint moves from `color` to `endColor` and its size from `scale` to `endScale`. `runProject` runs
 it; see [Particles](../guides/particles.md).
 
@@ -915,6 +916,7 @@ it; see [Particles](../guides/particles.md).
 | `burstCount` | number | none | Particles to spawn in the emitter's whole life. When they have all died **the node carrying the emitter is removed from the world**, so put a one-shot emitter on a node of its own. Above 0. |
 | `ground` | ground | none | Where falling particles land. None lets them fall and fade. Described below. |
 | `spin` | spin | none | A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (`stretchWithVelocity`) points along its motion and ignores it. Described below. |
+| `space` | `World` · `Local` | `World` | `World` leaves each particle where it was emitted however the node moves next. `Local` keeps particles relative to the node and draws them through its current transform, so they move, turn and scale with it: an aura on a moving bone. `velocity` and the spawn ring are then in the node's axes and `inheritOrientation` adds nothing; `acceleration` still pulls in world space; camera-facing sprites still face the camera. A `Local` emitter cannot have a `ground`. |
 
 `alphaCurve` is an object with the fractions of a particle's life at which it reaches full opacity and
 starts to fade out, both within 0 to 1 with `fadeInEnd` not after `fadeOutStart`:
