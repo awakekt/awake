@@ -160,7 +160,8 @@ internal class PlacedItem(val item: CanvasItem, val path: List<Entity>) {
 }
 
 /**
- * Siblings in the order the world stores their [Transform]s; a node with none after those with one,
+ * Siblings in the order declarative content declared them, when both have a [CanvasSiblingIndex];
+ * otherwise in the order the world stores their [Transform]s, a node with none after those with one,
  * by the order its [CanvasElement] was collected in, then by id. The whole order is total, so a sort
  * by it is well defined.
  *
@@ -184,6 +185,11 @@ private class StoredOrder(private val world: World, private val placed: List<Pla
     }
 
     override fun compare(a: Entity, b: Entity): Int {
+        val declared = world.compareSiblingIndex(a, b)
+        return if (declared != 0) declared else compareStored(a, b)
+    }
+
+    private fun compareStored(a: Entity, b: Entity): Int {
         val byStorage = (stored[a] ?: Int.MAX_VALUE).compareTo(stored[b] ?: Int.MAX_VALUE)
         if (byStorage != 0) return byStorage
         val byCollection = (collected[a] ?: Int.MAX_VALUE).compareTo(collected[b] ?: Int.MAX_VALUE)

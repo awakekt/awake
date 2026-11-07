@@ -179,6 +179,13 @@ class ParticleSimulation(
     /** Whether [orientation] rotates local spawn offsets and launch velocities. */
     var inheritOrientation: Boolean = false
 
+    /**
+     * Whether [orientation] rotates local spawn offsets alone, leaving launch velocities in the
+     * simulation's own axes: a tilted spawn ring whose particles still launch along unturned
+     * vectors. [inheritOrientation] already turns the offsets, so this adds nothing beside it.
+     */
+    var orientSpawnShape: Boolean = false
+
     /** Constant acceleration X component in units per second squared. */
     var accelX: Float = 0f
 

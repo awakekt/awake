@@ -23,10 +23,10 @@ enum class ParticleSpace {
      * [EmitterPlacement.position] and the axes of its [EmitterPlacement.orientation], scale included.
      *
      * [ParticleMotion.baseVelocity], the spawn ring and every other spawn vector are in the entity's axes,
-     * so [ParticleMotion.inheritOrientation] has nothing left to add. [ParticleMotion.acceleration] stays a
-     * world-space acceleration, so gravity still pulls down however the entity is turned. A
-     * [ParticleGround] does not apply: its planes and boxes are in the world, which local particles do not
-     * keep to. Camera-facing quads still face the camera.
+     * so [ParticleMotion.inheritOrientation] and [ParticleMotion.orientSpawnRing] have nothing left to
+     * add. [ParticleMotion.acceleration] stays a world-space acceleration, so gravity still pulls down
+     * however the entity is turned. A [ParticleGround] does not apply: its planes and boxes are in the
+     * world, which local particles do not keep to. Camera-facing quads still face the camera.
      */
     Local,
 }

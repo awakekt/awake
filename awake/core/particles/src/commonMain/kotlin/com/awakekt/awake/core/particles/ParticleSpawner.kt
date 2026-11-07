@@ -140,7 +140,7 @@ private fun sampleRectEdgeOffset(
 }
 
 private fun writeOffsetPosition(sim: ParticleSimulation, slot: Int, ox: Float, oy: Float, oz: Float) {
-    if (sim.inheritOrientation) {
+    if (sim.inheritOrientation || sim.orientSpawnShape) {
         val m = sim.orientation.axes
         sim.posX[slot] = sim.originX + (m[0] * ox + m[BASIS_Y_COL] * oy + m[BASIS_Z_COL] * oz)
         sim.posY[slot] = sim.originY + (m[1] * ox + m[BASIS_Y_COL + 1] * oy + m[BASIS_Z_COL + 1] * oz)
