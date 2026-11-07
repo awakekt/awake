@@ -998,7 +998,7 @@ frame sheets. See [Particles](../guides/particles.md#2d-particles-scene2d).
 | `spin` | spin | none | Per-particle angular velocity range (`minDegreesPerSecond`, `maxDegreesPerSecond`, `randomStartAngle`). |
 | `additive` | boolean | `false` | Draws with additive blending on `spriteScenePipeline(buildAdditive = true)`. |
 | `space` | `World` · `Local` | `World` | `World` leaves each live particle where it spawned, trailing behind a moving node. `Local` keeps them attached to the node's `Transform`, so they move, turn and scale with it; `gravity` is then in the node's axes. The same names as `particle_emitter`'s `space`. |
-| `localSpace` | boolean | `false` | Deprecated: write `space`. `true` still reads as `space` `Local`, and the field is not written back out. |
+| `localSpace` | boolean | none | Deprecated: write `space`. Left out, it reads as `false`; `true` still reads as `space` `Local`. The field is not written back out. |
 | `inheritOrientation` | boolean | `false` | Rotates `shape` and launch direction by the node's Z rotation when `space` is `World`. |
 | `sortingLayer` | string | `"Default"` | Project sorting layer name, ordered alongside `sprite` and `tilemap`. Not blank. |
 | `sortOrder` | integer | `0` | Paint order within `sortingLayer`; higher values draw over lower ones. |
