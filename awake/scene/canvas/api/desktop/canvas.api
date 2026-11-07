@@ -113,6 +113,11 @@ public final class com/awakekt/awake/scene/canvas/CanvasClusterBinding : com/awa
 	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasCluster;)Lcom/awakekt/awake/scene/canvas/SceneCanvasCluster;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasContentNode : com/awakekt/awake/compose/runtime/RememberHolder {
+	public final fun getEntity-LaMO_uA ()J
+	public fun getRememberSlots ()Ljava/util/List;
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasControlsBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasControlsBinding;
 	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
@@ -302,6 +307,26 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementSyncKt {
 	public static final fun removeCanvasElement-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)V
 	public static final fun syncCanvasElement-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)V
 	public static final fun syncCanvasElements (Lcom/awakekt/awake/ecs/World;)V
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasEntityApplier : com/awakekt/awake/compose/runtime/Applier {
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun childCount (Lcom/awakekt/awake/compose/runtime/Slot;)I
+	public fun createAt (Lcom/awakekt/awake/compose/runtime/Slot;ILjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun down (Lcom/awakekt/awake/compose/runtime/Slot;I)V
+	public final fun finishPass ()V
+	public final fun getCreated ()J
+	public final fun getDestroyed ()J
+	public final fun getRoot ()Lcom/awakekt/awake/scene/canvas/CanvasContentNode;
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public final fun getWrites ()J
+	public fun keyAt (Lcom/awakekt/awake/compose/runtime/Slot;I)Ljava/lang/Object;
+	public fun moveTo (Lcom/awakekt/awake/compose/runtime/Slot;II)V
+	public fun nodeAt (Lcom/awakekt/awake/compose/runtime/Slot;I)Ljava/lang/Object;
+	public fun truncateFrom (Lcom/awakekt/awake/compose/runtime/Slot;I)V
+	public fun typeAt (Lcom/awakekt/awake/compose/runtime/Slot;I)Ljava/lang/Object;
+	public fun up ()V
+	public final fun write (Lcom/awakekt/awake/scene/canvas/CanvasContentNode;Ljava/util/List;)V
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasFollowArrowBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
