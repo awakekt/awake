@@ -49,7 +49,8 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * It owns the playing scene's physics world, whose native memory nothing else frees: [close] it once
  * the scene that plays it has stopped. A switch closes the scene it leaves, the entry scene included.
  * A project is played once, because the bodies it creates stay in its world; to play it again, load
- * the project again.
+ * the project again. To run several independent copies of its scene at once, as a server does, make
+ * each with [newSceneInstance], which shares what the project loaded.
  *
  * @property manifest Validated project manifest describing entry points and asset directories.
  * @param entry The entry scene, as it loaded.

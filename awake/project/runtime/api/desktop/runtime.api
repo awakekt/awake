@@ -223,6 +223,20 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices$Companion
 	public static synthetic fun headless$default (Lcom/awakekt/awake/project/runtime/SceneHostServices$Companion;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 }
 
+public final class com/awakekt/awake/project/runtime/SceneInstance : java/lang/AutoCloseable {
+	public fun close ()V
+	public final fun getHasPhysics ()Z
+	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public final fun isClosed ()Z
+	public final fun sceneSystems (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/host/FixedStepReport;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+	public static synthetic fun sceneSystems$default (Lcom/awakekt/awake/project/runtime/SceneInstance;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/host/FixedStepReport;Lkotlinx/coroutines/CoroutineScope;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneInstanceKt {
+	public static final fun newSceneInstance (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public abstract interface class com/awakekt/awake/project/runtime/SceneSwitch {
 	public abstract fun request (Ljava/lang/String;)V
 }
