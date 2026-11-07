@@ -124,7 +124,7 @@ class Particle2DTest {
         val template = ParticleEmitter2D(maxParticles = 0).apply {
             speed = 0f
             lifetime = 0.25f
-            localSpace = true
+            space = ParticleSpace.Local
             sortOrder = 3
         }
 
@@ -172,7 +172,7 @@ class Particle2DTest {
         val local = ParticleEmitter2D(maxParticles = 1, random = Random(0)).apply {
             spawnRate = 0f
             speed = 0f
-            localSpace = true
+            space = ParticleSpace.Local
         }
         val trailing = ParticleEmitter2D(maxParticles = 1, random = Random(0)).apply {
             spawnRate = 0f

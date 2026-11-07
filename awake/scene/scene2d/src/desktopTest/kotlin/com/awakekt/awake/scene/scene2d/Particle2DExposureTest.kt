@@ -51,13 +51,16 @@ class Particle2DExposureTest {
         "turbulenceFrequency" to "turbulenceFrequency",
         "spin" to "spin",
         "additive" to "additive",
-        "localSpace" to "localSpace",
+        "space" to "space",
         "inheritOrientation" to "inheritOrientation",
         "sortingLayer" to "sortingLayer",
         "sortOrder" to "sortOrder",
         "burstCount" to "burstCount",
         "burstSchedule" to "burstCycle",
     )
+
+    /** Scene file fields kept so older files still load, each with the runtime option it still sets. */
+    private val deprecatedSceneFields: Map<String, String> = mapOf("localSpace" to "space")
 
     private val codeOnly: Map<String, String> = mapOf(
         "dynamicSpawnRate" to "a per-frame function, so it cannot be data",
@@ -101,8 +104,9 @@ class Particle2DExposureTest {
 
     @Test
     fun everyMappedOptionNamesARealSceneFieldAndEverySceneFieldSetsSomething() {
-        val targets = setFromSceneFile.values.toSet()
+        val targets = setFromSceneFile.values.toSet() + deprecatedSceneFields.keys
         assertEquals(emptySet(), targets - sceneFileFields, "mapped to SceneParticleEmitter2D fields that do not exist")
+        assertEquals(emptySet(), deprecatedSceneFields.values.toSet() - setFromSceneFile.keys, "deprecated fields set unmapped options")
         assertEquals(emptySet(), sceneFileFields - targets, "SceneParticleEmitter2D fields that set no runtime option")
     }
 
