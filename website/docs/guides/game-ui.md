@@ -1181,6 +1181,120 @@ data class FrameTheme(
 )
 ```
 
+## Declarative canvas content
+
+A prefab plus typed handles is declarative only when it is built. After that, code keeps the canvas
+in step with the game by hand, and the prefab's structure is fixed. `canvasContent` makes canvas
+UI a function of state instead: `if`, `forEach` and `key` add, remove and reorder elements as the
+state changes. The elements are still canvas entities, laid out, followed, bound and drawn by the
+canvas as any other.
+
+It runs on AwakeKt Compose's own runtime, so there is no second UI framework. `key`, `remember` and
+`CompositionLocal`s work as they do in Compose.
+
+### Declare a HUD from state
+
+The reference sample is the showcase's Compose unit frame, ported to canvas elements. The state is
+plain data:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasUnitFrameSample.kt:unit-frame-state"
+```
+
+A widget is a function with parameters, made of element functions: `panel`, `text`, `image`, `bar`,
+`button`, and `element(kind, …)` for any other kind. Each one takes the same settings as
+`canvasPrefab`'s builder, `CanvasElementScope`, so there is one settings model. A leaf's block is
+its settings, and a panel's settings go in `settings = { … }` while its block declares its children:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasUnitFrameSample.kt:unit-frame"
+```
+
+`canvasContent` builds the HUD under a root entity, as a function of a `StateFlow` or a `Store`:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasUnitFrameSample.kt:party-hud"
+```
+
+- **When it runs.** `CanvasContentSystem`, one of the scene runtime's infrastructure systems, runs
+  the block again on a frame where its state holds a new value, and on no other frame. A host that
+  runs its own systems adds `CanvasContentSystem()` ahead of `TransformSystem`. For state that is not
+  a flow or a store, `canvasContent(world, root) { … }` returns a `CanvasContent` whose
+  `recompose()` the host calls when the state changes.
+- **What it writes.** A pass writes only the canvas components whose settings changed. Declaring
+  what the last pass declared writes nothing.
+- **Keys.** Wrap each item of a list in `key(item.id)`. A keyed item that moves keeps its entities
+  and draws in its new place, and one that goes is destroyed with everything under it.
+- **Order.** Elements draw in the order the block declares them. Content declared under a node draws
+  over what the scene already had there. The declared order is runtime state and is never saved.
+- **Disposing.** `dispose()` destroys what the block made and leaves its root.
+
+Read-tracked recomposition, where a block reads a `State` and reruns when it changes
+(`collectAsState`), is planned in [#1395](https://github.com/awakekt/awake/issues/1395).
+
+### Place a prefab
+
+Prefabs stay the format an editor opens and saves. A block places one where its state says, and
+binds the placed copy through its `CanvasParts` declaration:
+
+```kotlin title="Kotlin"
+key(member.id) {
+    prefab(unitFramePrefab, parts = { UnitFrameParts() }) {
+        name.text = member.name
+        health.value = member.health
+    }
+}
+```
+
+The copy is made once per place or `key` and destroyed with it. Its parts are resolved once per copy,
+and the block writes the overrides through them on each pass. `prefab(unitFramePrefab)` places a copy
+with nothing to bind.
+
+### Compose inside an element
+
+`compose { }` in an element's content draws ordinary Compose UI in that element's box:
+
+```kotlin title="Kotlin"
+canvasContent(world, root = hudRoot, state = partyState) { party ->
+    panel(id = "party", settings = { size(240.dp, 120.dp) }) {
+        compose { PartyFrames(party) }
+    }
+}
+```
+
+The canvas composes it where it draws the element: in the element's place in canvas order, under
+the elements inside it, with its alpha and its follow position. Compose layout applies inside the
+box only, and the canvas places the element itself. The pointer reaches the UI through the canvas's
+own hit testing, so an element drawn over it takes a tap first.
+
+The block and the UI behave as one composition in practice:
+- the block's state, and what it remembers, reach the UI as a closure;
+- the `CompositionLocal`s provided around `compose { }` are provided to the UI too, over the canvas's;
+- a `remember` inside the UI lives as long as the element.
+
+Control slots' `slotContent` map stays for prefabs authored in an editor. Code uses `compose { }`.
+
+### What it costs
+
+The sample's tests (`CanvasUnitFrameSampleTest`) measure the party HUD on the applier's counters:
+
+| Change | Entity writes | Entities made or destroyed |
+|---|---|---|
+| 60 frames with no new state | 0 | 0 |
+| One member's HP | 2 (the bar's fill and its label) | 0 |
+| 200 keyed frames reversed | 200 (each frame's sibling place, no component) | 0 |
+
+### Canvas content, a prefab, or Compose
+
+- **Canvas content:** in-game UI whose structure follows game state, such as party frames, buff rows
+  or a quest tracker. It is still canvas: it follows world entities, sorts with the scene and binds
+  to components.
+- **A canvas prefab:** UI an editor authors, themes or overrides, or a game changes without Kotlin.
+  Canvas content can place it and bind it.
+- **AwakeKt Compose:** menus, tools and screens around the game. Inside a canvas element, use
+  `compose { }` for a part a canvas element can't draw, such as a scrolling list or a text field
+  with Compose behaviour.
+
 ## Particles on a canvas
 
 Attach `canvas_particles` (`CanvasParticles` in Kotlin) alongside `canvas_rect` to emit particles in
