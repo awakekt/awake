@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Pathfinding over terrain: bake which ground an agent can stand on, then ask for routes around walls and up gentle slopes.">
+        <meta name="description" content="Pathfinding over terrain and around buildings: bake where an agent can stand, then ask for routes around walls, up gentle slopes and over kerbs, the same on the web, the JVM and Native.">
       
       
       
@@ -66,12 +66,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="AwakeKt Docs">
   <meta property="og:title" content="Navigation - AwakeKt Docs">
-  <meta property="og:description" content="Pathfinding over terrain: bake which ground an agent can stand on, then ask for routes around walls and up gentle slopes.">
+  <meta property="og:description" content="Pathfinding over terrain and around buildings: bake where an agent can stand, then ask for routes around walls, up gentle slopes and over kerbs, the same on the web, the JVM and Native.">
   <meta property="og:url" content="https://docs.awakekt.com/latest/guides/navigation/">
   <meta property="og:image" content="https://awakekt.com/brand/awake-mark.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Navigation - AwakeKt Docs">
-  <meta name="twitter:description" content="Pathfinding over terrain: bake which ground an agent can stand on, then ask for routes around walls and up gentle slopes.">
+  <meta name="twitter:description" content="Pathfinding over terrain and around buildings: bake where an agent can stand, then ask for routes around walls, up gentle slopes and over kerbs, the same on the web, the JVM and Native.">
   <meta name="twitter:image" content="https://awakekt.com/brand/awake-mark.png">
   <link rel="alternate" type="text/markdown" href="https://awakekt.com/llms.txt" title="llms.txt">
 
@@ -1704,10 +1704,76 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#bake-a-walkable-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bake a walkable surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#find-a-path" class="md-nav__link">
     <span class="md-ellipsis">
       
         Find a path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-a-route" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow a route
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#walk-an-agent-in-a-scene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Walk an agent in a scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#large-regions-and-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Large regions and caching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#walkable-surface-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Walkable surface reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-a-path-on-a-slope-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find a path on a slope grid
       
     </span>
   </a>
@@ -1748,10 +1814,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#how-the-grid-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How it works
+        How the grid works
       
     </span>
   </a>
@@ -2898,10 +2964,76 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#bake-a-walkable-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bake a walkable surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#find-a-path" class="md-nav__link">
     <span class="md-ellipsis">
       
         Find a path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-a-route" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow a route
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#walk-an-agent-in-a-scene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Walk an agent in a scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#large-regions-and-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Large regions and caching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#walkable-surface-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Walkable surface reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-a-path-on-a-slope-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find a path on a slope grid
       
     </span>
   </a>
@@ -2942,10 +3074,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#how-the-grid-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How it works
+        How the grid works
       
     </span>
   </a>
@@ -2995,37 +3127,248 @@
 
 
 <h1 id="navigation">Navigation</h1>
-<p class="awake-lede">Pathfinding over terrain: bake which ground an agent can stand on, then ask for routes around walls and up gentle slopes.</p>
+<p class="awake-lede">Pathfinding over terrain and around buildings: bake where an agent can stand, then ask for routes around walls, up gentle slopes and over kerbs, the same on the web, the JVM and Native.</p>
 
 <div class="awake-badges">
 <p><span class="awake-badge">module: <code>awake:navigation</code></span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span></p>
 </div>
-<p><code>com.awakekt.awake:navigation</code> bakes a walkability grid from a <a href="../terrain/">terrain</a> heightmap and
-searches it with A*. Navigation is code-only: there is no scene document component for it. The
-<a href="../ai/">AI</a> behaviours use it to walk.</p>
+<p><code>com.awakekt.awake:navigation</code> bakes where an agent can stand from <a href="../terrain/">terrain</a> heights and
+static colliders, and searches it with A*. It is common Kotlin with no platform code, so a browser
+client and an authoritative JVM server bake the same bytes and find the same route. The <a href="../ai/">AI</a>
+behaviours use it to walk.</p>
+<p>There are two ways in. A <strong>walkable surface</strong> reads terrain, obstacles, water and no-walk areas, and
+answers for any agent radius, with the nearest reachable point when a target cannot be reached. A
+<strong>walkability grid</strong> reads terrain slope alone and backs the streamed and hierarchical grids below.
+Start with the surface.</p>
+<h2 id="bake-a-walkable-surface">Bake a walkable surface</h2>
+<p>Describe the agent, list what is in the way, and bake a region:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavAgent</span><span class="p">(</span><span class="n">radius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.4f</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1.8f</span><span class="p">,</span><span class="w"> </span><span class="n">stepHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.3f</span><span class="p">,</span><span class="w"> </span><span class="n">maxSlopeDegrees</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">40f</span><span class="p">)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">areas</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavAreas</span><span class="p">(</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="n">obstacles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">listOf</span><span class="p">(</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="c1">// A house: its world bounds, from the ground to the roof.</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span><span class="n">NavObstacle</span><span class="p">(</span><span class="n">NavFootprint</span><span class="p">.</span><span class="na">Rect</span><span class="p">(</span><span class="m">20f</span><span class="p">,</span><span class="w"> </span><span class="m">20f</span><span class="p">,</span><span class="w"> </span><span class="m">30f</span><span class="p">,</span><span class="w"> </span><span class="m">32f</span><span class="p">),</span><span class="w"> </span><span class="n">minY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="n">maxY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">6f</span><span class="p">),</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="c1">// A well: an upright cylinder.</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">        </span><span class="n">NavObstacle</span><span class="p">(</span><span class="n">NavFootprint</span><span class="p">.</span><span class="na">Circle</span><span class="p">(</span><span class="m">40f</span><span class="p">,</span><span class="w"> </span><span class="m">12f</span><span class="p">,</span><span class="w"> </span><span class="m">1.2f</span><span class="p">),</span><span class="w"> </span><span class="n">minY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="n">maxY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1f</span><span class="p">),</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="p">),</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="n">noWalk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">listOf</span><span class="p">(</span><span class="n">NavFootprint</span><span class="p">.</span><span class="na">Rect</span><span class="p">(</span><span class="m">50f</span><span class="p">,</span><span class="w"> </span><span class="m">50f</span><span class="p">,</span><span class="w"> </span><span class="m">60f</span><span class="p">,</span><span class="w"> </span><span class="m">60f</span><span class="p">)),</span><span class="w"> </span><span class="c1">// a fenced field</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="n">water</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavWater</span><span class="p">(</span><span class="n">surfaceY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="m">1f</span><span class="p">,</span><span class="w"> </span><span class="n">maxDepth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.5f</span><span class="p">),</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="kd">val</span><span class="w"> </span><span class="nv">ground</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavGroundHeight</span><span class="p">(</span><span class="n">heightmap</span><span class="o">::</span><span class="n">heightAtWorld</span><span class="p">)</span><span class="w"> </span><span class="c1">// NaN off the map reads as blocked</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="kd">val</span><span class="w"> </span><span class="nv">surface</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bakeNavSurface</span><span class="p">(</span><span class="n">NavRegion</span><span class="p">(</span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">129</span><span class="p">,</span><span class="w"> </span><span class="m">129</span><span class="p">,</span><span class="w"> </span><span class="m">0.5f</span><span class="p">),</span><span class="w"> </span><span class="n">ground</span><span class="p">,</span><span class="w"> </span><span class="n">agent</span><span class="p">,</span><span class="w"> </span><span class="n">areas</span><span class="p">)</span>
+</span></code></pre></div>
+<p>A sample is blocked when the ground has no height there, when the terrain to any neighbour is
+steeper than <code>maxSlopeDegrees</code>, when the water is deeper than <code>maxDepth</code>, when a no-walk outline
+touches it, or when an obstacle touches it and is too high to step over (<code>stepHeight</code>) and too low
+to walk under (<code>height</code>). Obstacles are tested against the ground under each sample, so a crate on a
+hill is as tall as the crate. Cells are tested rather than centres, so a wall thinner than a sample
+still blocks.</p>
+<p>The bake stores each sample's distance to the nearest blocked one, not a bit. That is what lets the
+radius wait for the query: one surface serves a narrow and a wide agent of the same height class.</p>
 <h2 id="find-a-path">Find a path</h2>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavPathQuery</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span><span class="w"> </span><span class="n">ground</span><span class="p">)</span><span class="w"> </span><span class="c1">// keep one per thread and reuse it</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavPath</span><span class="p">()</span><span class="w"> </span><span class="c1">// the agent owns its path and reuses it too</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">when</span><span class="w"> </span><span class="p">(</span><span class="n">query</span><span class="p">.</span><span class="na">findPath</span><span class="p">(</span><span class="n">Vec3f</span><span class="p">(</span><span class="m">10f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">26f</span><span class="p">),</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">40f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">26f</span><span class="p">),</span><span class="w"> </span><span class="n">agent</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">NavPathStatus</span><span class="p">.</span><span class="na">Complete</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">Unit</span><span class="w"> </span><span class="c1">// path ends at the target</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">NavPathStatus</span><span class="p">.</span><span class="na">Partial</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">Unit</span><span class="w"> </span><span class="c1">// path ends at the reachable point nearest the target</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="n">NavPathStatus</span><span class="p">.</span><span class="na">NoPath</span><span class="p">,</span><span class="w"> </span><span class="n">NavPathStatus</span><span class="p">.</span><span class="na">None</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">Unit</span><span class="w"> </span><span class="c1">// nowhere to stand at the start</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">}</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="kd">val</span><span class="w"> </span><span class="nv">next</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">())</span><span class="w"> </span><span class="c1">// read waypoints without allocating</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>What the path holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Complete</code></td>
+<td>From the start to exactly the target, through the corners that matter.</td>
+</tr>
+<tr>
+<td><code>Partial</code></td>
+<td>To the reachable point nearest the target: the target is walled in, across water, inside a building, or past the node budget.</td>
+</tr>
+<tr>
+<td><code>NoPath</code></td>
+<td>Nothing: the start has nowhere to stand within <code>snapSamples</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>An endpoint inside an obstacle first moves to the nearest standable sample, so an agent pushed into a
+wall still finds its way out, and a target inside a building is reached at its wall.</p>
+<div class="admonition tip">
+<p class="admonition-title">Reuse the query and the path</p>
+<p><code>NavPathQuery</code> keeps its search state between queries and <code>NavPath</code> keeps its waypoints in one
+float array, so a warm query allocates nothing. Keep one query per thread; a server answering many
+agents keeps one per worker.</p>
+</div>
+<p>A search expands at most <code>maxExpandedNodes</code> samples. The budget counts nodes, not milliseconds: a
+time budget would make a route depend on the machine, and a server and its clients must agree. A
+route across a kilometre of town at 1 m expands about 120,000 samples in about 50 ms on a desktop JVM.</p>
+<h2 id="follow-a-route">Follow a route</h2>
+<p><code>NavPathFollower</code> walks one agent along routes from a query. It plans when given a destination,
+steers toward each corner, and re-plans every <code>repathInterval</code> and whenever the agent makes less than
+<code>stuckDistance</code> of progress in <code>stuckSeconds</code>, so an agent pushed off its route or held by something
+the surface does not know about finds its way again from where it is:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">follower</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavPathFollower</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">follower</span><span class="p">.</span><span class="na">moveTo</span><span class="p">(</span><span class="n">Vec3f</span><span class="p">(</span><span class="m">40f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">26f</span><span class="p">))</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1">// Each frame: ask which way to walk, then move the agent however the game moves it.</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">follower</span><span class="p">.</span><span class="na">update</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">delta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">60f</span><span class="p">,</span><span class="w"> </span><span class="n">direction</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">frames</span><span class="o">++</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="m">3</span><span class="n">_000</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="n">position</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">direction</span><span class="p">.</span><span class="na">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">4f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">60f</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="n">position</span><span class="p">.</span><span class="na">z</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">direction</span><span class="p">.</span><span class="na">z</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="m">4f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">60f</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The follower only gives a direction; whatever moves the agent, a character controller, a transform or
+a network, does the moving. It keeps its route in its own <code>NavPath</code> and borrows the query, so
+following and re-planning allocate nothing per frame.</p>
+<h2 id="walk-an-agent-in-a-scene">Walk an agent in a scene</h2>
+<p>A <code>navigation_agent</code> component walks its node to a destination over the scene's <code>navigation</code> grid,
+with nothing wired by the host: <code>runProject</code> runs <code>NavigationAgentSystem</code> for it. With a
+<code>movement_control</code> whose driver is <code>Agent</code>, the agent walks through the control, so a
+<code>character_controller</code> carries it over slopes and steps and walls stop it; without one it moves by
+its transform. Here one agent of each kind walks through the gap in a wall:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="w">        </span><span class="cm">/** A 12 by 12 yard. A wall across z = 5 from x = 0 to 8 leaves a gap at x = 9 to 11. */</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">YARD_SCENE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"""</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s">{ "version": 1, "name": "yard", "nodes": [</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s">  { "name": "Map", "components": [ { "component": "navigation", "cellSize": 1.0, "rows": [</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s">    "............", "............", "............", "............", "............",</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s">    "#########...",</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s">    "............", "............", "............", "............", "............", "............" ] } ] },</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s">  { "name": "Walker", "transform": { "position": { "x": 1.0, "y": 0.0, "z": 1.0 } }, "components": [</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s">    { "component": "navigation_agent", "radius": 0.3, "speed": 4.0, "destinationX": 1.0, "destinationZ": 10.0 } ] },</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s">  { "name": "Steered", "transform": { "position": { "x": 4.0, "y": 0.0, "z": 1.0 } }, "components": [</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s">    { "component": "movement_control", "driver": "Agent" },</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s">    { "component": "navigation_agent", "radius": 0.3, "speed": 4.0, "destinationX": 4.0, "destinationZ": 10.0 } ] }</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s">] }</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="s">"""</span>
+</span></code></pre></div>
+<p><code>destinationX</code> and <code>destinationZ</code> give it somewhere to go as the scene starts. Code sends it elsewhere,
+such as from a click-to-move handler, with <code>world.get&lt;NavigationAgent&gt;(entity)?.moveTo(target)</code>, and
+stops it with <code>stop()</code>. The fields are on the
+<a href="../../reference/scene-document-components/#navigation_agent">scene document components</a> reference.
+A scene with a <code>navigation_agent</code> and no <code>navigation</code> does not load.</p>
+<p>Outside a played project, add <code>NavigationAgentSystem(grid.surface)</code> to the world yourself, where <code>grid</code>
+is the scene's <code>NavigationGrid</code> or any <code>NavSurface</code>. It runs one query for every agent on the frame
+thread, and allocates nothing per frame.</p>
+<h2 id="large-regions-and-caching">Large regions and caching</h2>
+<p>Bake a large region as a lattice of tiles, and cache each tile's bytes:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">world</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavTiledSurface</span><span class="p">(</span><span class="n">tilesX</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span><span class="p">,</span><span class="w"> </span><span class="n">tilesZ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span><span class="p">,</span><span class="w"> </span><span class="n">tileSamples</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">32</span><span class="p">,</span><span class="w"> </span><span class="n">sampleSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.5f</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">tileZ</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="n">until</span><span class="w"> </span><span class="m">4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">tileX</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="n">until</span><span class="w"> </span><span class="m">4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">        </span><span class="kd">val</span><span class="w"> </span><span class="nv">tile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bakeNavSurface</span><span class="p">(</span><span class="n">world</span><span class="p">.</span><span class="na">regionOf</span><span class="p">(</span><span class="n">tileX</span><span class="p">,</span><span class="w"> </span><span class="n">tileZ</span><span class="p">),</span><span class="w"> </span><span class="n">ground</span><span class="p">,</span><span class="w"> </span><span class="n">agent</span><span class="p">,</span><span class="w"> </span><span class="n">maxAgentRadius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1f</span><span class="p">)</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">        </span><span class="kd">val</span><span class="w"> </span><span class="nv">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavSurfaceCodec</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span><span class="w"> </span><span class="c1">// cache these; decode instead of re-baking</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="n">world</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">tileX</span><span class="p">,</span><span class="w"> </span><span class="n">tileZ</span><span class="p">,</span><span class="w"> </span><span class="n">NavSurfaceCodec</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span><span class="n">bytes</span><span class="p">))</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Each tile is baked looking <code>maxAgentRadius</code> past its border, so tiles baked separately, or on
+different machines, join without a seam. A tile not yet put reads as blocked, and a route stops at
+the edge of what is loaded. <code>NavSurfaceCodec</code> writes a versioned little-endian layout and rejects
+bytes it does not recognise rather than decoding them into a different surface.</p>
+<h2 id="walkable-surface-reference">Walkable surface reference</h2>
+<table>
+<thead>
+<tr>
+<th>Call or property</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NavAgent(radius, height, stepHeight, maxSlopeDegrees)</code></td>
+<td></td>
+<td><code>0.4</code>, <code>1.8</code>, <code>0.3</code>, <code>45</code></td>
+<td>The body routed. Height, step and slope are baked; the radius is read by the query.</td>
+</tr>
+<tr>
+<td><code>NavObstacle(footprint, minY, maxY)</code></td>
+<td></td>
+<td></td>
+<td>A static collider: a <code>NavFootprint.Rect</code> or <code>Circle</code> spanning <code>minY..maxY</code>.</td>
+</tr>
+<tr>
+<td><code>NavAreas(obstacles, noWalk, water)</code></td>
+<td></td>
+<td>none</td>
+<td>Everything besides terrain that blocks.</td>
+</tr>
+<tr>
+<td><code>NavWater(surfaceY, maxDepth)</code></td>
+<td></td>
+<td>depth <code>0</code></td>
+<td>Water deeper than <code>maxDepth</code> is blocked.</td>
+</tr>
+<tr>
+<td><code>bakeNavSurface(region, ground, agent, areas, maxAgentRadius)</code></td>
+<td><code>NavSurfaceTile</code></td>
+<td><code>agent.radius</code></td>
+<td>Bakes one region; <code>ground</code> returns <code>NaN</code> where there is none.</td>
+</tr>
+<tr>
+<td><code>NavGridTile.toNavSurface()</code></td>
+<td><code>NavSurfaceTile</code></td>
+<td></td>
+<td>A slope-baked grid tile as a surface, without re-baking.</td>
+</tr>
+<tr>
+<td><code>NavTiledSurface(tilesX, tilesZ, tileSamples, sampleSize, originX, originZ)</code></td>
+<td><code>NavSurface</code></td>
+<td>origin <code>0</code></td>
+<td>A lattice of tiles searched as one surface.</td>
+</tr>
+<tr>
+<td><code>NavPathQuery(surface, ground, maxExpandedNodes, snapSamples)</code></td>
+<td></td>
+<td><code>FLAT</code>, <code>200000</code>, <code>8</code></td>
+<td>The reusable query; <code>ground</code> gives waypoint heights.</td>
+</tr>
+<tr>
+<td><code>NavPathQuery.findPath(from, to, agent, out)</code></td>
+<td><code>NavPathStatus</code></td>
+<td></td>
+<td>Writes the route into <code>out</code>.</td>
+</tr>
+<tr>
+<td><code>NavSurfaceMesh(surface, agent)</code></td>
+<td><code>NavMesh</code></td>
+<td></td>
+<td>The surface for <code>PathRequestSystem</code> and the AI behaviours.</td>
+</tr>
+<tr>
+<td><code>NavPathFollower(agent)</code></td>
+<td></td>
+<td></td>
+<td>Plans, steers and re-plans one agent; <code>arriveDistance</code> <code>0.25</code>, <code>waypointRadius</code> <code>0.35</code>, <code>repathInterval</code> <code>2</code>, <code>stuckSeconds</code> <code>0.75</code>, <code>stuckDistance</code> <code>0.1</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="find-a-path-on-a-slope-grid">Find a path on a slope grid</h2>
 <p>Bake a grid from a <code>Heightmap</code>, search it, then smooth the result:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">tile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">bakeNavGrid</span><span class="p">(</span><span class="n">cellSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1f</span><span class="p">,</span><span class="w"> </span><span class="n">maxSlopeDegrees</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">45f</span><span class="p">)</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tile</span><span class="p">.</span><span class="na">findPath</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="o">-</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">),</span><span class="w"> </span><span class="n">goal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">))</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tile</span><span class="p">.</span><span class="na">smoothPath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="c1">// drops waypoints the ones around them can see past</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">tile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">bakeNavGrid</span><span class="p">(</span><span class="n">cellSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1f</span><span class="p">,</span><span class="w"> </span><span class="n">maxSlopeDegrees</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">45f</span><span class="p">)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tile</span><span class="p">.</span><span class="na">findPath</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="o">-</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">),</span><span class="w"> </span><span class="n">goal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">))</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tile</span><span class="p">.</span><span class="na">smoothPath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="c1">// drops waypoints the ones around them can see past</span>
 </span></code></pre></div>
 <p>A sample is walkable when the ground rises no more than <code>maxSlopeDegrees</code> to each of its four
 neighbours, <code>cellSize</code> metres away. <code>findPath</code> returns an empty list when no route exists, including
 when either end is off the grid.</p>
 <h2 id="ask-from-an-entity">Ask from an entity</h2>
 <p>Inside the ECS, an entity asks through a <code>PathRequest</code> component and <code>PathRequestSystem</code> answers it:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">navMesh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavGrid</span><span class="p">(</span><span class="n">heightmap</span><span class="p">.</span><span class="na">bakeNavGrid</span><span class="p">())</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">paths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PathRequestSystem</span><span class="p">(</span><span class="n">navMesh</span><span class="p">)</span><span class="w"> </span><span class="c1">// pass a CoroutineScope to search off the frame thread</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kd">val</span><span class="w"> </span><span class="nv">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PathRequest</span><span class="p">()</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span><span class="w"> </span><span class="n">request</span><span class="p">)</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">request</span><span class="p">.</span><span class="na">requestPath</span><span class="p">(</span><span class="n">from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="o">-</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">),</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">))</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">paths</span><span class="p">.</span><span class="na">update</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="m">1f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">30f</span><span class="p">)</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="na">status</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">PathStatus</span><span class="p">.</span><span class="na">Ready</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">"walk </span><span class="si">${</span><span class="n">request</span><span class="p">.</span><span class="na">waypoints</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">navMesh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavGrid</span><span class="p">(</span><span class="n">heightmap</span><span class="p">.</span><span class="na">bakeNavGrid</span><span class="p">())</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">paths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PathRequestSystem</span><span class="p">(</span><span class="n">navMesh</span><span class="p">)</span><span class="w"> </span><span class="c1">// pass a CoroutineScope to search off the frame thread</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kd">val</span><span class="w"> </span><span class="nv">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PathRequest</span><span class="p">()</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span><span class="w"> </span><span class="n">request</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">request</span><span class="p">.</span><span class="na">requestPath</span><span class="p">(</span><span class="n">from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="o">-</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">),</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">5f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="m">5f</span><span class="p">))</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">paths</span><span class="p">.</span><span class="na">update</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="m">1f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">30f</span><span class="p">)</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="na">status</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">PathStatus</span><span class="p">.</span><span class="na">Ready</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">"walk </span><span class="si">${</span><span class="n">request</span><span class="p">.</span><span class="na">waypoints</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">}</span>
 </span></code></pre></div>
 <p><code>PathRequest.status</code> moves <code>Idle</code> → <code>Pending</code> → <code>Ready</code> or <code>Unreachable</code>. <code>cancel()</code> returns it to
 <code>Idle</code> and drops any answer. The system answers only pending requests, so a route stays put until its
@@ -3103,14 +3446,14 @@ owner asks again.</p>
 </tbody>
 </table>
 <p>Wire <code>NavGridCellStreamer</code> into a <code>WorldPartitionSystem</code>; see <a href="../large-worlds/">Large worlds</a>.</p>
-<h2 id="how-it-works">How it works</h2>
+<h2 id="how-the-grid-works">How the grid works</h2>
 <p>A <code>NavGridTile</code> stores one bit per sample: walkable or not. It records only terrain shape, so waypoints
 carry X and Z and leave Y at zero; read the height from <code>Heightmap.heightAtWorld</code> if you need it.
 Tiles are immutable once baked, which is what lets a search read one off the frame thread.</p>
 <div class="admonition warning">
-<p class="admonition-title">Only slope blocks a path</p>
-<p>The bake reads terrain height and nothing else. Buildings, props and other agents are not in
-the grid.</p>
+<p class="admonition-title">Only slope blocks a grid path</p>
+<p><code>bakeNavGrid</code> reads terrain height and nothing else. For buildings, props, water and agent
+width, bake a walkable surface instead. Moving agents are neither's job: that is local avoidance.</p>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Keep searches off the frame</p>
@@ -3122,8 +3465,8 @@ search does not stall the frame, and repath on an interval rather than every fra
 route if you pass <code>routes</code>. <code>NavDebugSource</code> draws the same lines through the debug registry, turned
 on with <code>--debug=nav</code>, and counts walkable and blocked samples on the debug panel; see
 <a href="../debug-tools/#the-navigation-source">Debug tools</a>.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">navGridDebugLines</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span><span class="w"> </span><span class="n">surfaceAt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">heightAtWorld</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="p">})</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1">// Hand `lines` to the renderer's debug-line pass with any other debug lines you draw.</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">navGridDebugLines</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span><span class="w"> </span><span class="n">surfaceAt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">heightAtWorld</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="p">})</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1">// Hand `lines` to the renderer's debug-line pass with any other debug lines you draw.</span>
 </span></code></pre></div>
 <h2 id="see-also">See also</h2>
 <ul>

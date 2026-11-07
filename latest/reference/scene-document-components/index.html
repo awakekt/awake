@@ -3073,6 +3073,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#navigation_agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        navigation_agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#particle_emitter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4272,6 +4283,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#navigation_agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        navigation_agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#particle_emitter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4942,6 +4964,13 @@ registers it.</p>
 <td><a href="../../guides/ai/">AI</a></td>
 </tr>
 <tr>
+<td><a href="#navigation_agent"><code>navigation_agent</code></a></td>
+<td><code>NavigationAgent</code></td>
+<td><code>com.awakekt.awake.scene:navigation</code></td>
+<td><code>registerAiBehaviors()</code></td>
+<td><a href="../../guides/navigation/">Navigation</a></td>
+</tr>
+<tr>
 <td><a href="#particle_emitter"><code>particle_emitter</code></a></td>
 <td><code>ParticleEmitterSource</code></td>
 <td><code>com.awakekt.awake.scene:particles</code></td>
@@ -5142,7 +5171,7 @@ registers it.</p>
 <tr>
 <td><code>SceneComponentRegistry.registerAiBehaviors()</code></td>
 <td><code>com.awakekt.awake.scene:ai</code></td>
-<td><code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>behavior_tree</code>, <code>state_machine</code>, <code>factions</code>, <code>perceivable</code>, <code>perceiver</code></td>
+<td><code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>navigation_agent</code>, <code>behavior_tree</code>, <code>state_machine</code>, <code>factions</code>, <code>perceivable</code>, <code>perceiver</code></td>
 </tr>
 <tr>
 <td><code>SceneComponentRegistry.registerBlueprints()</code></td>
@@ -5157,7 +5186,7 @@ registers it.</p>
 <tr>
 <td><code>loadProject(...)</code></td>
 <td><code>com.awakekt.awake.project:runtime</code></td>
-<td>The defaults, plus <code>movement_control</code>, <code>camera_rig</code>, <code>input_actions</code>, <code>physics_body</code>, <code>character_controller</code>, <code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>audio_source</code>, and the components of the <a href="../../guides/scene-capabilities/">capabilities</a> passed to it</td>
+<td>The defaults, plus <code>movement_control</code>, <code>camera_rig</code>, <code>input_actions</code>, <code>physics_body</code>, <code>character_controller</code>, <code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>navigation_agent</code>, <code>audio_source</code>, and the components of the <a href="../../guides/scene-capabilities/">capabilities</a> passed to it</td>
 </tr>
 </tbody>
 </table>
@@ -7820,6 +7849,78 @@ by the host; put it on any node, and only the first in a scene is used.</p>
 <td>number</td>
 <td><code>0</code></td>
 <td>World z of the centre of cell (0, 0).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="navigation_agent"><code>navigation_agent</code></h2>
+<p>Walks its node to a destination around the cells the scene's <code>navigation</code> blocks, re-planning when it
+is pushed off its route or stops making progress. <code>SceneNavigationAgent</code>. With a <code>movement_control</code>
+whose driver is <code>Agent</code> it walks through the control, so a <code>character_controller</code> carries it; without
+one it moves by its transform. Code sends it somewhere with <code>NavigationAgent.moveTo</code>. A scene with a
+<code>navigation_agent</code> and no <code>navigation</code> does not load. See <a href="../../guides/navigation/">Navigation</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>radius</code></td>
+<td>number</td>
+<td><code>0.4</code></td>
+<td>Metres from its centre to its side; gaps narrower than twice this are closed to it. Not negative.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td><code>3</code></td>
+<td>Metres per second. Above 0.</td>
+</tr>
+<tr>
+<td><code>arriveDistance</code></td>
+<td>number</td>
+<td><code>0.25</code></td>
+<td>Metres from the destination that count as arriving. Above 0.</td>
+</tr>
+<tr>
+<td><code>waypointRadius</code></td>
+<td>number</td>
+<td><code>0.35</code></td>
+<td>Metres from a corner that count as reaching it. Above 0.</td>
+</tr>
+<tr>
+<td><code>repathInterval</code></td>
+<td>number</td>
+<td><code>2</code></td>
+<td>Seconds between re-plans while walking; 0 re-plans only when stuck. Not negative.</td>
+</tr>
+<tr>
+<td><code>stuckSeconds</code></td>
+<td>number</td>
+<td><code>0.75</code></td>
+<td>Seconds without progress before it re-plans. Above 0.</td>
+</tr>
+<tr>
+<td><code>stuckDistance</code></td>
+<td>number</td>
+<td><code>0.1</code></td>
+<td>Metres it must move in <code>stuckSeconds</code> to count as progress. Not negative.</td>
+</tr>
+<tr>
+<td><code>destinationX</code></td>
+<td>number</td>
+<td>none</td>
+<td>World x it heads for when the scene starts. Given with <code>destinationZ</code>.</td>
+</tr>
+<tr>
+<td><code>destinationZ</code></td>
+<td>number</td>
+<td>none</td>
+<td>World z it heads for when the scene starts. Given with <code>destinationX</code>.</td>
 </tr>
 </tbody>
 </table>

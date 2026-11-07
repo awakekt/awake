@@ -5242,6 +5242,12 @@ their length, and the centre stretches both ways.</p>
 <td><code>false</code></td>
 <td>Leave the centre out, so a frame shows what is behind it.</td>
 </tr>
+<tr>
+<td><code>lazy</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Read the image the first time an element drawing it shows, not when the scene opens. Until it has decoded, the element draws without it.</td>
+</tr>
 </tbody>
 </table>
 <p>A <code>Bar</code>'s fill image is laid out at the bar's full width and cut at its <code>value</code>, so the fill's
@@ -5256,6 +5262,11 @@ element whose image did not load, or whose region does not fit in it, draws with
 <p>When a project is played with <code>awake:project:runtime</code>, <code>loadProject</code> reads every image the scene's
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
 images yourself: <code>SceneCanvas(world, images = loadCanvasImages(scene, files))</code>.</p>
+<p>An image only a window closed at entry draws, such as an item-icon atlas or a portrait sheet, need
+not cost the first load: mark it <code>"lazy": true</code>. <code>loadCanvasImages</code> leaves out a path every element
+names lazily, and the played project's runtime reads it the first time an element drawing it shows.
+A host of its own gives the canvas <code>AssetImages.asMap()</code> from <code>awake:compose:assets</code>, seeded with
+<code>loadCanvasImages</code>' result, for the same.</p>
 <h3 id="images-in-compose-ui">Images in Compose UI</h3>
 <p>A window drawn with Compose, rather than with canvas elements, asks for its art by path with
 <code>rememberAssetImage</code> from <code>awake:compose:assets</code>. It is null until the image has loaded, then the
