@@ -19,7 +19,6 @@ import com.awakekt.awake.asset.shaders.narrowedTo
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
@@ -127,7 +126,7 @@ open class WebGpuEngine(
         try {
             onDeviceLost?.invoke(loss)
         } catch (failure: Exception) {
-            deviceLossLog.error(failure) { "The host's onDeviceLost callback failed: ${failure.message}" }
+            println("Awake/WebGPU: the host's onDeviceLost callback failed: ${failure.message}")
         }
         return true
     }
@@ -357,8 +356,6 @@ open class WebGpuEngine(
         const val DEFAULT_FRAGMENT_SHADER_ENTRY_POINT = "fragmentMain"
     }
 }
-
-private val deviceLossLog = Logger("WebGpuEngine")
 
 internal fun ShaderStages.entryPoint(stage: ShaderProgramStage): String =
     this[stage]?.entryPoint

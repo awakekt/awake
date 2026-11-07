@@ -22,6 +22,10 @@ import web.navigator.navigator
 /**
  * Canvas bootstrap with optional timing and the browser's preferred presentation format.
  *
+ * @param canvas The canvas element the surface is created on.
+ * @param width The canvas's backing-buffer width, in pixels.
+ * @param height The canvas's backing-buffer height, in pixels.
+ * @param onError Called for each uncaptured device error, or null for none.
  * @param onDeviceLost Called once when the device's `lost` promise resolves, with the
  * `GPUDeviceLostInfo` reason and message. wgpu4k does not expose `lost`, so it is read from the
  * browser's own device.
