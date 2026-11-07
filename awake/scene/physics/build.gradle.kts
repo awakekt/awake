@@ -30,6 +30,8 @@ kotlin {
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
             implementation(libs.kotlinx.serialization.json)
+            // MutableLongObjectMap: PhysicsSystem finds a body by its handle id each step without boxing it.
+            implementation(libs.androidx.collection)
             api(project(":awake:scene:world"))
             api(project(":awake:physics:api"))
             // Skeleton and AnimationPose, for RagdollSkeleton -- the seam that lets a ragdoll drive
