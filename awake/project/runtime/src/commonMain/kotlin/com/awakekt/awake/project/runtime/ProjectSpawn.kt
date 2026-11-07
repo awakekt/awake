@@ -79,7 +79,9 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
     fun attachLoaded(runtime: SceneAppLifecycleRuntime) {
         // Only while something loads, so a frame with nothing to adopt polls nothing.
         if (closed || loading.isEmpty()) return
-        for ((path, load) in loading.entries.toList()) {
+        // Pairs, not entries: an entry reads through to the map, and on Kotlin/Wasm and Native reading one after
+        // `loading -= path` has changed the map throws ConcurrentModificationException.
+        for ((path, load) in loading.toList()) {
             if (!load.poll()) continue
             loading -= path
             load.close()
