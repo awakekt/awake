@@ -21,6 +21,7 @@ import com.awakekt.awake.ai.perception.PerceptionSystem
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.navigation.PathRequestSystem
+import com.awakekt.awake.navigation.grid.NavGrid
 import com.awakekt.awake.navigation.grid.TileField
 import com.awakekt.awake.scene.ai.AgentIntentResetSystem
 import com.awakekt.awake.scene.ai.AiSceneComponents
@@ -77,6 +78,9 @@ internal object AiCapability : SceneCapability {
         require(!scene.hasRouteBehaviours() || scene.navigation() != null) {
             "the scene has patrol, chase or flee behaviours but no navigation component to route them over"
         }
+        // Baked once here and shared by every system set planned from this content, so each instance
+        // of the scene routes over the same immutable grid instead of baking its own.
+        scene.navigation()?.let { content[AiNavigation] = it.toGrid() }
         val held = scene.nodes.flatMap { it.agentsHeldInPlace() }
         require(held.isEmpty()) {
             "${held.joinToString()}: a patrol, chase or flee agent with a character_controller needs a " +
@@ -93,7 +97,7 @@ internal object AiCapability : SceneCapability {
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        val navigation = scene.navigation()
+        val navigation = scene.navigation()?.also(::requireValid)
         val behaviours = if (navigation == null) emptyList() else ROUTE_BEHAVIOURS.filter { scene.uses(it.type) }
         val definitions = scene.uses(SceneBehaviorTree::class) || scene.uses(SceneStateMachine::class)
         val perceives = scene.uses(ScenePerceiver::class)
@@ -106,10 +110,7 @@ internal object AiCapability : SceneCapability {
             plan.frame("ai-machines") { AiStateMachineSystem() }
         }
         behaviours.forEach { behaviour -> plan.frame(behaviour.name) { behaviour.create() } }
-        if (navigation != null) {
-            val grid = navigation.toGrid()
-            plan.frame("path-requests") { PathRequestSystem(grid) }
-        }
+        if (navigation != null) plan.frame("path-requests") { PathRequestSystem(navigation.grid(it)) }
     }
 }
 
@@ -117,16 +118,26 @@ internal object AiCapability : SceneCapability {
 private fun planPerception(scene: SceneDocument, navigation: SceneNavigation?, plan: SceneSystemPlan) {
     val factions = scene.nodes.flatMap { it.withDescendants() }.flatMap { it.components }
         .filterIsInstance<SceneFactions>().firstOrNull()?.toTable() ?: FactionTable()
-    val grid = navigation?.toGrid()
     plan.frame("ai-perception") { services ->
         val physics = services.physics
         val sight = when {
             physics != null -> PhysicsLineOfSight(physics, bodyOf = { world, entity -> world.get<PhysicsBody>(entity)?.handle })
-            grid != null -> NavFieldLineOfSight(TileField(grid.tile))
+            navigation != null -> NavFieldLineOfSight(TileField(navigation.grid(services).tile))
             else -> LineOfSight.Clear
         }
         PerceptionSystem(TransformPerceptionSpace, factions, sight, maxSightUpdates = MAX_SIGHT_UPDATES)
     }
+}
+
+/**
+ * The grid the scene's content baked at load, or, for a host that plans the scene without loading its
+ * content, one baked now from the document.
+ */
+private fun SceneNavigation.grid(services: SceneHostServices): NavGrid = services.content[AiNavigation] ?: toGrid()
+
+/** Throws the first problem [SceneNavigation.validate] finds, when the scene is planned rather than when a system is made. */
+private fun requireValid(navigation: SceneNavigation) {
+    navigation.validate("navigation").firstOrNull()?.let { throw IllegalArgumentException(it.message) }
 }
 
 /** The most perceivers that look in one frame of a played scene; the rest look on the next. */
@@ -134,6 +145,9 @@ private const val MAX_SIGHT_UPDATES = 128
 
 /** The compiled behaviour tree and state machine definitions a scene's entities name. */
 internal val AiDefinitions: SceneContentKey<AiDefinitionLibrary> = SceneContentKey("AI definitions")
+
+/** The scene's navigation grid, baked once at load; immutable, so every system set of the scene shares it. */
+internal val AiNavigation: SceneContentKey<NavGrid> = SceneContentKey("navigation grid")
 
 private fun SceneNode.withDescendants(): List<SceneNode> = listOf(this) + children.flatMap { it.withDescendants() }
 
