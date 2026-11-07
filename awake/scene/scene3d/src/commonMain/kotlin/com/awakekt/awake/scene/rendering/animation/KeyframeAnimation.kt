@@ -11,6 +11,9 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.componentType
+import com.awakekt.awake.ecs.family
+import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -123,21 +126,28 @@ class KeyframeAnimationSystem(private val hasRenderer: Boolean) : System {
     constructor() : this(hasRenderer = true)
 
     override fun update(world: World, delta: Float) {
-        world.queryEach(Transform::class, KeyframeAnimation::class) { entity, transform, animation ->
+        world.family(TRANSFORM, KEYFRAMES).forEach { entity, transform, animation ->
             val tracks = animation.tracks
-            if (tracks.duration <= 0f) return@queryEach
+            if (tracks.duration <= 0f) return@forEach
             val time = (animation.time + delta).mod(tracks.duration)
             animation.time = time
             animation.positionKey = tracks.position.sampleInto(time, transform.position, animation.positionKey)
             animation.rotationKey = tracks.rotation.sampleInto(time, transform.rotation, animation.rotationKey)
             animation.scaleKey = tracks.scale.sampleInto(time, transform.scale, animation.scaleKey)
-            if (!hasRenderer || tracks.alpha.isEmpty()) return@queryEach
-            val material = world.get<PbrMaterial>(entity) ?: return@queryEach
+            if (!hasRenderer || tracks.alpha.isEmpty()) return@forEach
+            val material = world.get(entity, MATERIAL) ?: return@forEach
             val next = keyAfter(tracks.alpha.size, time, animation.alphaKey) { tracks.alpha[it].time }
             animation.alphaKey = next
             val alpha = tracks.alpha.sample(time, next)
             if (material.baseColorFactor.a != alpha) material.baseColorFactor = material.baseColorFactor.copy(a = alpha)
         }
+    }
+
+    // An inline family walk with handles resolved once: queryEach's capturing lambda was a frame's only allocation.
+    private companion object {
+        val TRANSFORM = componentType<Transform>()
+        val KEYFRAMES = componentType<KeyframeAnimation>()
+        val MATERIAL = componentType<PbrMaterial>()
     }
 }
 
