@@ -30,3 +30,7 @@ internal class WasmTypeKey(private val type: KClass<*>) {
 
     override fun hashCode(): Int = type.simpleName.hashCode()
 }
+
+internal actual fun componentTypeIndexOf(key: Any): Int = SharedComponentTypeIndex.indexOf(key)
+
+internal actual val componentTypeIndexIsCheap: Boolean = false

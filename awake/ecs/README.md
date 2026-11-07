@@ -136,13 +136,21 @@ A tag is letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`
 every frame for a large crowd should keep what it found. `Tags` is unrelated to `EcsTag` above, a
 storage hint for a component with no data.
 
-Each of these has three overloads. Pick by call frequency:
+Each of these has four overloads. Pick by call frequency:
 
-| Overload                         | Use for               | Cost it avoids                          |
-|----------------------------------|-----------------------|-----------------------------------------|
-| `world.add<Position>(entity, c)` | one-off calls         | —                                       |
-| `world.add(entity, type, c)`     | loops, `type` hoisted | re-deriving the reified type token      |
-| `world.add(entity, typeId, c)`   | hot loops             | the above, plus the `KClass` map lookup |
+| Overload                           | Use for                    | Cost it avoids                                   |
+|------------------------------------|----------------------------|--------------------------------------------------|
+| `world.add<Position>(entity, c)`   | one-off calls              | —                                                |
+| `world.add(entity, type, c)`       | loops, `type` hoisted      | re-deriving the reified type token               |
+| `world.add(entity, handle, c)`     | hot paths, any world       | the class lookup: the handle reads an array slot |
+| `world.add(entity, typeId, c)`     | hot loops, one world       | the above; resolve again after `World.clear`     |
+
+A `ComponentType<T>` handle (`componentType<Position>()`) carries its class's process-wide index,
+so `get`, `has`, `add`, `remove` and `family` with a handle read the world's id from an array
+instead of finding the class. It is valid in every world and across `World.clear`, so it can live
+in a top-level `val`. On the JVM the reified forms use the same index, held by the class in a
+`ClassValue`; on Android (below API 34), Kotlin/Native and Kotlin/Wasm they still look the class
+up in the world's map, and only a handle skips it.
 
 ```kotlin
 // Hot loop: hoist the ComponentTypeId once, outside the loop
