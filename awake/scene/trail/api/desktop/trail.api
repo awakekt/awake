@@ -1,0 +1,63 @@
+public final class com/awakekt/awake/scene/trail/SceneTrailRenderer : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/trail/SceneTrailRenderer$Companion;
+	public fun <init> ()V
+	public fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/trail/TrailBlend;
+	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun copy (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ILjava/lang/Object;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getBlend ()Lcom/awakekt/awake/trail/TrailBlend;
+	public final fun getCapacity ()I
+	public final fun getTint ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/trail/SceneTrailRenderer$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/trail/SceneTrailRenderer$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/trail/SceneTrailRenderer$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/trail/TrailBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/trail/TrailBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/trail/SceneTrailRenderer;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/trail/TrailRenderer;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/trail/TrailRenderFeature : com/awakekt/awake/scene/rendering/RenderFeature3D, java/lang/AutoCloseable {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun close ()V
+	public fun collect (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;)Lcom/awakekt/awake/scene/rendering/RenderContribution;
+}
+
+public final class com/awakekt/awake/scene/trail/TrailSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/trail/TrailSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+

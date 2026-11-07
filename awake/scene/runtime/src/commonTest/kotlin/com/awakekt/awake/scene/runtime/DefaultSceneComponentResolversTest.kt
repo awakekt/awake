@@ -24,6 +24,8 @@ class DefaultSceneComponentResolversTest {
         "TilemapBinding", "SpriteClipsBinding", "ParticleEmitter2DBinding", "ShaderEffectBinding",
         // Text placed in the scene (#1062).
         "WorldTextBinding",
+        // A strip of point pairs rewritten every frame (#1465).
+        "TrailBinding",
     ) + setOf(
         // One for each component a canvas element is made of (#1088).
         "CanvasRectBinding", "CanvasTextBinding", "CanvasAppearanceBinding", "CanvasLayoutBinding", "CanvasClusterBinding",
