@@ -181,12 +181,10 @@ class World {
      */
     @PublishedApi
     @Suppress("UNCHECKED_CAST")
-    internal fun <T : Any> getInternal(entity: Entity, typeId: ComponentTypeId): T? {
-        if (!entities.isAlive(entity)) {
-            return null
-        }
-        return components.storeOrNull<T>(typeId)?.get(entity)
-    }
+    internal fun <T : Any> getInternal(entity: Entity, typeId: ComponentTypeId): T? =
+        // No separate EntityArena.isAlive: a store matches the whole handle, id and generation, and
+        // destroy empties the entity from every store, so only a live entity's component is found (#1428).
+        components.storeOrNull<T>(typeId)?.get(entity)
 
     /**
      * Removes the component of type [T] from the entity and recycles it.
@@ -452,6 +450,9 @@ class World {
 
     /**
      * Returns the raw [ComponentStore] for the specified [type].
+     *
+     * A component added straight to the store skips the entity's signature, families and queries,
+     * and [destroy] does not remove it; remove it through the store before destroying the entity.
      */
     // No cast actually happens on this line -- components.store(typeId, type) already
     // returns ComponentStore<T> via its own generic signature. Kept here only because

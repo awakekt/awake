@@ -113,7 +113,7 @@ data object LookupMarker
 private val LOOKUP_POSITION: ComponentType<LookupPosition> = componentType()
 private val LOOKUP_MARKER: ComponentType<LookupMarker> = componentType()
 
-private class Filler<T : Any>(val type: KClass<T>, val instance: () -> T) {
+private class LookupFiller<T : Any>(val type: KClass<T>, val instance: () -> T) {
     fun addTo(world: World, entity: Entity) {
         world.add(entity, type, instance())
     }
@@ -131,7 +131,7 @@ private class F8
 private class F9
 
 private val FILLER_TYPES = listOf(
-    Filler(F0::class, ::F0), Filler(F1::class, ::F1), Filler(F2::class, ::F2), Filler(F3::class, ::F3),
-    Filler(F4::class, ::F4), Filler(F5::class, ::F5), Filler(F6::class, ::F6), Filler(F7::class, ::F7),
-    Filler(F8::class, ::F8), Filler(F9::class, ::F9),
+    LookupFiller(F0::class, ::F0), LookupFiller(F1::class, ::F1), LookupFiller(F2::class, ::F2), LookupFiller(F3::class, ::F3),
+    LookupFiller(F4::class, ::F4), LookupFiller(F5::class, ::F5), LookupFiller(F6::class, ::F6), LookupFiller(F7::class, ::F7),
+    LookupFiller(F8::class, ::F8), LookupFiller(F9::class, ::F9),
 )
