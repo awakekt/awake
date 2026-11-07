@@ -145,6 +145,8 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun findEntity-XHcgaUg (Ljava/lang/String;)Lcom/awakekt/awake/ecs/Entity;
 	public final fun findOrCreateEntity-bssdaRw (Ljava/lang/String;)J
 	public final fun findTransform (Ljava/lang/String;)Lcom/awakekt/awake/scene/core/transform/Transform;
+	public final fun getAssetImages ()Lcom/awakekt/awake/compose/assets/AssetImages;
+	public final fun getAssetSource ()Lcom/awakekt/awake/core/io/AssetSource;
 	public final fun getAverageFrameTimeMs ()F
 	public final fun getCanvasBindings ()Ljava/util/List;
 	public final fun getCanvasDpi ()Ljava/lang/Float;
@@ -198,6 +200,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public fun resize (FF)V
 	public fun resume ()V
 	public final fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun setAssetSource (Lcom/awakekt/awake/core/io/AssetSource;)V
 	public final fun setCanvasBindings (Ljava/util/List;)V
 	public final fun setCanvasDpi (Ljava/lang/Float;)V
 	public final fun setCanvasFonts (Ljava/util/Map;)V
