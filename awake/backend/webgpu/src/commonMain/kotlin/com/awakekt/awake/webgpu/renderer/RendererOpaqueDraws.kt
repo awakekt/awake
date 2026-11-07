@@ -214,20 +214,24 @@ private fun Renderer.prepareInstancedGpuDraw(
     // skinned draws share one buffer, so theirs is always packed.
     val inputKind = INSTANCED_INPUTS + kind.ordinal
     val packs = drawSlot == null || !drawSlot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind)
-    val uniformFloats = if (!packs) null else cmd.instancedUniformFloats(
-        kind = kind,
-        viewProjection = viewProjection,
-        lightPayload = lightUniforms,
-        cameraEye = cameraEye,
-        cameraForward = cameraForward,
-        shadowCascades = shadowCascades,
-        fogColor = fogColor,
-        fogDensity = fogDensity,
-        debugView = debugView,
-        exposure = exposure,
-        materialUniformFloatCount = materialUniformFloatCount,
-        alphaToCoverageEnabled = coverage,
-    )
+    val uniformFloats = if (!packs) {
+        null
+    } else {
+        cmd.instancedUniformFloats(
+            kind = kind,
+            viewProjection = viewProjection,
+            lightPayload = lightUniforms,
+            cameraEye = cameraEye,
+            cameraForward = cameraForward,
+            shadowCascades = shadowCascades,
+            fogColor = fogColor,
+            fogDensity = fogDensity,
+            debugView = debugView,
+            exposure = exposure,
+            materialUniformFloatCount = materialUniformFloatCount,
+            alphaToCoverageEnabled = coverage,
+        )
+    }
     fun stageFor(slot: UniformSlot) {
         uniformFloats ?: return
         uniformUploads.packedBlocks += 1
