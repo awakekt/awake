@@ -79,10 +79,6 @@ public final class com/awakekt/awake/core/animation/AnimationPlayerKt {
 	public static final fun crossedTimelineMarker (FFFZF)Z
 }
 
-public final class com/awakekt/awake/core/animation/AnimationRetargetKt {
-	public static final fun retarget (Lcom/awakekt/awake/core/animation/AnimationClip;Lcom/awakekt/awake/core/animation/Skeleton;Lcom/awakekt/awake/core/animation/Skeleton;)Lcom/awakekt/awake/core/animation/AnimationClip;
-}
-
 public final class com/awakekt/awake/core/animation/AnimationPose {
 	public fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;)V
 	public final fun blend (Lcom/awakekt/awake/core/animation/AnimationPose;F)V
@@ -103,6 +99,10 @@ public final class com/awakekt/awake/core/animation/AnimationProperty : java/lan
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/animation/AnimationProperty;
 	public static fun values ()[Lcom/awakekt/awake/core/animation/AnimationProperty;
+}
+
+public final class com/awakekt/awake/core/animation/AnimationRetargetKt {
+	public static final fun retarget (Lcom/awakekt/awake/core/animation/AnimationClip;Lcom/awakekt/awake/core/animation/Skeleton;Lcom/awakekt/awake/core/animation/Skeleton;)Lcom/awakekt/awake/core/animation/AnimationClip;
 }
 
 public final class com/awakekt/awake/core/animation/AnimationSampler {
