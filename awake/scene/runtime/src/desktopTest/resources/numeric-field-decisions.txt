@@ -50,6 +50,8 @@ free flee.safeRadius | Relational: must be greater than panicRadius, enforced by
 free flee.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
 free navigation.originX | Any origin coordinate in world units is valid.
 free navigation.originZ | Any origin coordinate in world units is valid.
+free navigation_agent.destinationX | Any destination coordinate in world units is valid.
+free navigation_agent.destinationZ | Any destination coordinate in world units is valid.
 free patrol.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
 free patrol.stops[].x | Any stop coordinate is valid.
 free patrol.stops[].y | Any stop coordinate is valid.
