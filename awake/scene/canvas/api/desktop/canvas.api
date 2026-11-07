@@ -149,6 +149,11 @@ public final class com/awakekt/awake/scene/canvas/CanvasContentNode : com/awakek
 	public fun getRememberSlots ()Ljava/util/List;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasContentPrefabsKt {
+	public static final fun prefab (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/scene/document/ScenePrefab;)V
+	public static final fun prefab (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/scene/document/ScenePrefab;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasContentSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
