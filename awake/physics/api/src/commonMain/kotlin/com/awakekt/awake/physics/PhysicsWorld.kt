@@ -181,6 +181,19 @@ interface PhysicsWorld {
     fun forEachBodyTransform(action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit)
 
     /**
+     * [forEachBodyTransform] for a caller that must allocate nothing per body: the same bodies, the
+     * same scratch pose, with the handle as its raw id (see [BodyTransformVisitor]).
+     *
+     * Every Awake backend implements this directly. The default, for a backend written before it
+     * existed, goes through [forEachBodyTransform] and so still boxes each handle there.
+     *
+     * @param visitor Called once per visited body.
+     */
+    fun visitBodyTransforms(visitor: BodyTransformVisitor) {
+        forEachBodyTransform { handle, position, rotation -> visitor.visit(handle.id, position, rotation) }
+    }
+
+    /**
      * Moves every body by [offset], so the simulation follows a scene that has been rebased.
      *
      * `FloatingOriginSystem` translates the world under the observer to keep float precision

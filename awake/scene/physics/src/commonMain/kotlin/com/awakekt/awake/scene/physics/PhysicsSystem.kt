@@ -12,6 +12,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.ContactEvent
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
@@ -63,9 +64,9 @@ class PhysicsSystem(
     private var transformTypeId = ComponentTypeId(0)
     private var steppingWorld: World? = null
 
-    // Built once, so a step allocates no visitor.
-    private val readBack: (BodyHandle, Vec3f, Quat) -> Unit = { handle, position, rotation ->
-        val record = bodies.forHandle(handle)
+    // Built once, so a step allocates no visitor; a BodyTransformVisitor, so no handle is boxed per body (#1428).
+    private val readBack = BodyTransformVisitor { handleId, position, rotation ->
+        val record = bodies.forHandle(BodyHandle(handleId))
         if (record != null) {
             val transform = steppingWorld?.get<Transform>(record.entity, transformTypeId)
             if (transform != null) {
@@ -170,7 +171,7 @@ class PhysicsSystem(
         // The visitor form, not the list one: this runs every fixed step, and the list allocates
         // a vector and a quaternion per body to hand back values that are copied out immediately.
         steppingWorld = world
-        physicsWorld.forEachBodyTransform(readBack)
+        physicsWorld.visitBodyTransforms(readBack)
         steppingWorld = null
 
         stepContacts.clear()
