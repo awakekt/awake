@@ -119,6 +119,10 @@ public final class com/awakekt/awake/scene/canvas/CanvasContent {
 	public final fun recompose ()V
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasContentComposeKt {
+	public static final fun compose (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function2;)V
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasContentElementsKt {
 	public static final fun bar (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun bar$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
@@ -143,6 +147,11 @@ public final class com/awakekt/awake/scene/canvas/CanvasContentKt {
 public final class com/awakekt/awake/scene/canvas/CanvasContentNode : com/awakekt/awake/compose/runtime/RememberHolder {
 	public final fun getEntity-LaMO_uA ()J
 	public fun getRememberSlots ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasContentPrefabsKt {
+	public static final fun prefab (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/scene/document/ScenePrefab;)V
+	public static final fun prefab (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/scene/document/ScenePrefab;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasContentSystem : com/awakekt/awake/ecs/System {

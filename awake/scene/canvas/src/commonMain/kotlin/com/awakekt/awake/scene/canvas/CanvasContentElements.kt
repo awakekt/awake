@@ -26,7 +26,7 @@ context(_: Composer)
  * @param id The element's [CanvasElementScope.elementId]; empty for none.
  * @param settings Sets the element up, as a prefab builder's block does. It adds no children:
  * [content] declares them.
- * @param content The elements inside this one, or null for none.
+ * @param content The elements inside this one, and the Compose UI [compose] draws in it, or null for none.
  * @throws SceneValidationException when [settings] sets something [kind] does not use, or adds a
  * child or another component.
  */
@@ -40,7 +40,17 @@ fun element(
     )? = null,
 ) {
     val parts = canvasPartsOf(kind, id, settings)
-    node(kind, update = { node -> contentNode(node).applier.write(contentNode(node), parts) }, content = content)
+    var self: CanvasContentNode? = null
+    node(
+        kind,
+        update = { node ->
+            val written = contentNode(node)
+            written.applier.write(written, parts)
+            self = written
+        },
+        // Always entered, so content that stops declaring `compose { }` takes it off the element.
+        content = { composeInside(checkNotNull(self), content) },
+    )
 }
 
 context(_: Composer)
