@@ -113,9 +113,41 @@ public final class com/awakekt/awake/scene/canvas/CanvasClusterBinding : com/awa
 	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasCluster;)Lcom/awakekt/awake/scene/canvas/SceneCanvasCluster;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasContent {
+	public final fun dispose ()V
+	public final fun getApplier ()Lcom/awakekt/awake/scene/canvas/CanvasEntityApplier;
+	public final fun recompose ()V
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasContentElementsKt {
+	public static final fun bar (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun bar$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun button (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun button$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun element (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/canvas/CanvasElementKind;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun element$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/canvas/CanvasElementKind;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun image (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun image$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun panel (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun panel$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun text (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun text$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasContentKt {
+	public static final fun canvasContent-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/state/Store;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/scene/canvas/CanvasContent;
+	public static final fun canvasContent-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/scene/canvas/CanvasContent;
+	public static final fun canvasContent-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/canvas/CanvasContent;
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasContentNode : com/awakekt/awake/compose/runtime/RememberHolder {
 	public final fun getEntity-LaMO_uA ()J
 	public fun getRememberSlots ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasContentSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasControlsBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
