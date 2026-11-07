@@ -25,6 +25,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /** A played project's UI asks for images by path through the runtime's per-scene [AssetImages]. */
 class SceneAssetImagesTest {
@@ -45,6 +47,9 @@ class SceneAssetImagesTest {
     @Test
     fun anImageTheUiAskedForIsFreedOnASceneSwitch() = runTest {
         val project = loadProject(files(mutableListOf()))
+        // The level loads as it is asked for, so the switch waits on no background load, only on the
+        // next frame's safe point.
+        project.sceneLoads = Dispatchers.Unconfined
         val game = play(project)
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         val images = assertNotNull(runtime.assetImages)
@@ -81,13 +86,19 @@ class SceneAssetImagesTest {
         return game
     }
 
+    /**
+     * Runs frames until [done], for work that finishes off the frame thread, such as an image decoding
+     * on the session's dispatcher. Bounded by real time rather than a count of short waits, so a busy
+     * machine that decodes slowly still gets there; a load that never finishes still fails.
+     */
     private suspend fun AwakeAppLifecycle.until(what: String, done: () -> Boolean) {
-        repeat(ATTEMPTS) {
+        val deadline = TimeSource.Monotonic.markNow() + WAIT_LIMIT
+        while (deadline.hasNotPassedNow()) {
             update(FRAME, WIDTH, HEIGHT)
             if (done()) return
             withContext(Dispatchers.Default) { delay(WAIT_MILLIS) }
         }
-        fail("Timed out waiting until $what")
+        fail("Timed out after $WAIT_LIMIT waiting until $what")
     }
 
     private fun files(reads: MutableList<String>) = AssetSource { path ->
@@ -105,7 +116,9 @@ class SceneAssetImagesTest {
 
     private companion object {
         const val LEVEL = "scenes/level.scene.json"
-        const val ATTEMPTS = 200
+
+        /** Far past what a load takes on a loaded CI machine, and well inside runTest's own timeout. */
+        val WAIT_LIMIT = 20.seconds
         const val WAIT_MILLIS = 10L
         const val MANIFEST =
             """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
