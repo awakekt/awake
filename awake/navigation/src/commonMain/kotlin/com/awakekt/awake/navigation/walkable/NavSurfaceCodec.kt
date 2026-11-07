@@ -45,23 +45,22 @@ object NavSurfaceCodec {
      * @throws IllegalArgumentException When the bytes are not an encoded tile of a known version.
      */
     fun decode(bytes: ByteArray): NavSurfaceTile {
+        // Checked before reading rather than caught after: once the header fits and the sample count
+        // matches what follows it, every read below is in bounds.
+        require(bytes.size >= HEADER_BYTES) { "Navigation surface is truncated: ${bytes.size} bytes, header needs $HEADER_BYTES." }
         val reader = BinaryReader(bytes)
-        try {
-            require(reader.readIntLe() == MAGIC) { "Not a navigation surface: the magic does not match." }
-            val version = reader.readIntLe()
-            require(version == VERSION) { "Navigation surface version $version is not supported; expected $VERSION." }
-            val width = reader.readIntLe()
-            val depth = reader.readIntLe()
-            require(width > 0 && depth > 0 && width.toLong() * depth == (bytes.size - HEADER_BYTES).toLong()) {
-                "Navigation surface is $width x $depth but holds ${bytes.size - HEADER_BYTES} samples."
-            }
-            val sampleSize = reader.readFloatLe()
-            val originX = reader.readFloatLe()
-            val originZ = reader.readFloatLe()
-            return NavSurfaceTile(width, depth, sampleSize, originX, originZ, reader.readBytes(width * depth))
-        } catch (truncated: IndexOutOfBoundsException) {
-            throw IllegalArgumentException("Navigation surface is truncated.", truncated)
+        require(reader.readIntLe() == MAGIC) { "Not a navigation surface: the magic does not match." }
+        val version = reader.readIntLe()
+        require(version == VERSION) { "Navigation surface version $version is not supported; expected $VERSION." }
+        val width = reader.readIntLe()
+        val depth = reader.readIntLe()
+        require(width > 0 && depth > 0 && width.toLong() * depth == (bytes.size - HEADER_BYTES).toLong()) {
+            "Navigation surface is $width x $depth but holds ${bytes.size - HEADER_BYTES} samples."
         }
+        val sampleSize = reader.readFloatLe()
+        val originX = reader.readFloatLe()
+        val originZ = reader.readFloatLe()
+        return NavSurfaceTile(width, depth, sampleSize, originX, originZ, reader.readBytes(width * depth))
     }
 
     private fun writeIntLe(out: ByteArray, offset: Int, value: Int): Int {

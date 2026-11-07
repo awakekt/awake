@@ -95,6 +95,7 @@ class NavPathQueryBudgetTest {
         const val MEASURED_QUERIES = 15
         const val MEASURED_WINDOWS = 15
         const val MICROS_PER_MILLI = 1000.0
+
         /**
          * About 50 ms on a developer machine for ~120,000 expansions around 256 buildings; the gate
          * leaves room for a slower CI runner without letting a per-node regression through.
