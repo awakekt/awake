@@ -13,8 +13,9 @@ platform target (Android, desktop, iOS).
 implementation(project(":awake:backend:vulkan"))
 ```
 Pulls in `:awake:backend:vulkan:bindings` transitively (`api(...)`). Also
-depends on `:awake:core` and `:awake:ui:ui-core`, and exposes `:awake:engine:render:contract`
-as `api` so downstream code can use `Renderer` against the shared interface.
+depends on the `:awake:core:*` leaf modules and `:awake:engine:render:passes2d` for the UI pass,
+and exposes `:awake:engine:render:contract` as `api` so downstream code can use `Renderer`
+against the shared interface. It depends on no UI engine module.
 
 ### Standalone Maven Dependency (`vulkan-kmp`)
 If you only need raw Vulkan API bindings without engine dependencies:
@@ -66,8 +67,8 @@ errors including leaked child objects.
 `Renderer` (`renderer/Renderer.kt` + its extension-split siblings `RendererDraw3D.kt`/
 `RendererDrawUi.kt`/`RendererSwapchain*.kt`/`RendererVertexWriters.kt`) is the single
 per-frame orchestrator — it dispatches both 3D scene draws and UI draws through one
-swapchain/command-buffer, which is why some of those files import `awake:ui:ui-core`
-even though most of this module never does.
+swapchain/command-buffer. The UI draws arrive as backend-neutral primitives from
+`:awake:engine:render:passes2d`, so no file here imports a UI engine module.
 
 ## What's generated vs hand-authored inside `vulkan:bindings` (2026-08-18 finding)
 

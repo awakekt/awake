@@ -146,7 +146,7 @@ interface DrawScope {
      *
      * A CPU-side field multiply on each primitive's colour, which is what the render backends
      * already expect -- see `UiPrimitiveTransform`'s note that alpha, unlike scale, needs no GPU
-     * work. Nesting composes, which `ui-core`'s transform stack documented that it does not.
+     * work. Nesting composes, which the removed `ui-core`'s transform stack documented that it did not.
      *
      * **Not a layer.** Two overlapping children under one dim darken where they overlap, because
      * each is dimmed on its own rather than the pair being composited and then dimmed. Real layer
@@ -163,8 +163,8 @@ interface DrawScope {
      * primitive kinds carry the field -- a gradient, a path or a shadow inside a scaled subtree
      * would silently not scale. Doing it here covers all nine.
      *
-     * **Nesting composes multiplicatively**, which is the divergence `ui-core`'s own transform stack
-     * documents that it does not have.
+     * **Nesting composes multiplicatively**, which is the divergence the removed `ui-core`'s transform
+     * stack documented that it did not have.
      */
     fun withScale(scaleX: Float, scaleY: Float, block: () -> Unit)
 

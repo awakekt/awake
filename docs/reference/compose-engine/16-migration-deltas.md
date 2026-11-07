@@ -1,9 +1,9 @@
 # 16 — What visibly changes when a screen moves
 
-Stage 3 moves ~180 call sites from `ui-core` to this engine. Five things will look different on
-arrival. All five are `ui-core` defaults this engine reverted to Compose's, so the shift is expected
-and the same on every screen — but a reviewer who does not know the list will read each one as a new
-bug.
+Stage 3 moved ~180 call sites from the now-removed `ui-core` to this engine. Five things looked
+different on arrival. All five were `ui-core` defaults this engine reverted to Compose's, so the shift
+was expected and the same on every screen. The list stays because a screenshot or layout diff from
+before the move still shows them, and each one reads as a new bug to a reviewer who does not know it.
 
 Every row was found by the [cross-engine differ](../../../awake/ui/testing/src/commonTest/kotlin/com/awakekt/awake/testing/crossengine/CrossEngineDiffTest.kt),
 which is where the executable version lives.

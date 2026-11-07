@@ -73,7 +73,7 @@ fun Modifier.clip(shape: Shape): Modifier =
  * scale. Doing it here covers all nine and composes exactly.
  *
  * **Nesting composes**, which is the divergence `ui-core` documented and this engine closes: its
- * transform stack states outright that nested scale blocks do not compose multiplicatively.
+ * transform stack stated outright that nested scale blocks did not compose multiplicatively.
  *
  * Not a layer: this scales what each child draws, so it does not resample a composited image.
  * Scaled text is a stretched atlas rather than re-shaped glyphs, and loses pixel snapping.

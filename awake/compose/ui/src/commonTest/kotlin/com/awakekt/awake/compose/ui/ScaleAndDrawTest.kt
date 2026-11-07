@@ -80,8 +80,9 @@ class ScaleTest {
 
     @Test
     fun nestingComposesMultiplicatively() {
-        // The divergence `ui-core` documents about its own transform stack: nested scale blocks do
-        // NOT compose there. Here 2x inside 2x is 4x, and this test is why that claim is checkable.
+        // The divergence the removed `ui-core` documented about its transform stack: nested scale
+        // blocks did NOT compose there. Here 2x inside 2x is 4x, and this test is why that claim is
+        // checkable.
         val quad = quads(
             painted {
                 node(Modifier.scale(2f)) {

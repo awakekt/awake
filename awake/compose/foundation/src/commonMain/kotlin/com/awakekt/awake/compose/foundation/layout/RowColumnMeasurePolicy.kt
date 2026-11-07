@@ -159,7 +159,7 @@ internal fun Measurable.rowColumnParentData(): RowColumnParentData? = parentData
  * Stacks children along one axis, giving weighted children the space the rest did not take.
  *
  * Row and Column share this rather than each owning a transposed copy. `ui-core` split exactly this
- * logic per container and its own `Layout.kt` records the result: "A rule written once per container
+ * logic per container and its own `Layout.kt` recorded the result: "A rule written once per container
  * is a rule that drifts -- the row/column split of exactly this logic is what hid a weighted child
  * collapsing to its content height."
  *
@@ -308,7 +308,7 @@ internal class RowColumnMeasurePolicy(
      *
      * Weight under an unbounded main axis is a no-op, matching Compose: there is no leftover space
      * to take a share of, so the child keeps its own content size rather than collapsing to a zero
-     * share. `ui-core`'s FillMaxUnboundedParentTest guards the same rule from the fillMax side.
+     * share. The removed `ui-core`'s FillMaxUnboundedParentTest guarded the same rule from the fillMax side.
      */
     private fun measureWeighted(
         measurables: List<Measurable>,

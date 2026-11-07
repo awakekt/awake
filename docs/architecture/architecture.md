@@ -110,16 +110,14 @@ flowchart TD
     ecs --> sceneRuntime
     sceneCore --> sceneRuntime
     sceneRendering --> sceneRuntime
+    composeFoundation --> sceneRuntime
     renderContract --> sceneRuntime
     platform --> sceneRuntime
-    uiCore --> sceneRuntime
-    uiHeadless --> sceneRuntime
     sceneCore --> sceneAuthoring
     sceneRendering --> sceneAuthoring
     sceneControls --> sceneAuthoring
     sceneRuntime --> sceneAuthoring
     platformAuthoring --> sceneAuthoring
-    uiCore --> sceneAuthoring
     core --> scene
     ecs --> scene
     renderContract --> scene
@@ -131,34 +129,15 @@ flowchart TD
     sceneRuntime --> scene
     sceneAuthoring --> scene
 
-    core --> uiGraphics
-    core --> uiText
-    uiGraphics --> uiText
-    core --> uiCore
-    uiGraphics --> uiCore
-    uiText --> uiCore
-    core --> uiAnimation
-    uiCore --> uiAnimation
-    uiGraphics --> uiHeroicons
-    uiCore --> uiHeroicons
-    core --> uiHeadless
-    uiGraphics --> uiHeadless
-    uiText --> uiHeadless
-    uiCore --> uiHeadless
-    uiAnimation --> uiHeadless
-    uiHeroicons --> uiHeadless
     core --> uiTailwind
-    uiGraphics --> uiTailwind
-    uiHeadless --> uiTailwind
+    composeFoundation --> uiTailwind
     composeFoundation --> uiMaterial3
     composeFoundation --> uiShadcn
-    uiHeroicons --> uiShadcn
     uiTailwind --> uiShadcn
 
     core --> vkBindings
     vkAndroidNative --> vkBindings
     core --> vulkan
-    uiCore --> vulkan
     renderContract --> vulkan
     renderPasses --> vulkan
     renderPasses2d --> vulkan
@@ -166,7 +145,6 @@ flowchart TD
     shaders --> vulkan
     vkBindings --> vulkan
     core --> webgpu
-    uiCore --> webgpu
     renderContract --> webgpu
     renderPasses --> webgpu
     renderPasses2d --> webgpu
@@ -183,8 +161,6 @@ flowchart TD
     platformAuthoring --> samples
     scene --> samples
     sceneAuthoring --> samples
-    uiCore --> samples
-    uiHeroicons --> samples
     uiMaterial3 --> samples
     uiShadcn --> samples
     vulkan --> samples
@@ -229,17 +205,15 @@ flowchart TD
 | `:awake:backend:webgpu`                         | WebGPU renderer on wgpu4k (`WebGpuEngine`); wasmJs is its only target                                                                                                                                                                                                              | not published |
 | `:awake:physics:api`                            | Backend-agnostic physics contracts: `PhysicsWorld`, `BodyHandle`, `BodyTransform`, `PhysicsShape`, `MotionType`, `RaycastHit`                                                                                                                                                      | not published |
 | `:awake:backend:jolt`                           | Jolt Physics binding (JNI on desktop/Android via `jolt-jni`, JoltC cinterop on iOS) implementing `awake:physics:api`                                                                                                                                                               | not published |
-| `:awake:ui:graphics`                            | Runtime-free contract values: `Rectangle`, dimensions/units, and color/shape contracts (the "ui-api" role; no separate `ui-api` module exists)                                                                                                                                     | not published |
 | `:awake:core:text`                              | Font and text contracts: `UiFont`/`BitmapFont`/`MsdfFont`/`PackedUiFont`, `GlyphAtlasSource`, `TextStyle`, `FontWeight`                                                                                                                                                            | not published |
 | `:awake:compose:runtime`                        | Retained composition and invalidation lifecycle                                                                                                                                                                                                                                    | not published |
 | `:awake:compose:ui`                             | Compose-shaped layout, drawing, modifiers, text, and UI runtime contracts                                                                                                                                                                                                          | not published |
 | `:awake:compose:foundation`                     | Foundation-shaped layout and neutral controls                                                                                                                                                                                                                                      | not published |
-| `:awake:ui:animation`                           | UI tween/transition primitives: `UiAnimation`, `UiTransition`, `UiAnimatedVisibility`, `UiPopup`                                                                                                                                                                                   | not published |
 | `:awake:tailwind`                               | Tailwind token scales (`Tw`, `OklchColor`, `TwLayout`, `TwInsets`, `TwModifiers`) consumed by the design system                                                                                                                                                                    | not published |
 | `:awake:ui:shadcn`                              | Branded themes, named variants, and `shadcn*` recipes built on Compose Foundation                                                                                                                                                                                                  | not published |
 | `:awake:compose:ui-testing`                     | Frame composition, semantics, rasterization, and UI verification helpers                                                                                                                                                                                                           | not published |
-| `:awake:tailwind-generator`                     | Standalone JVM CLI generating the `ui:tailwind` token sources                                                                                                                                                                                                                      | not published |
-| `:awake:ui:font-atlas-generator`                | Standalone JVM CLI generating packed font atlases for `ui:text`                                                                                                                                                                                                                    | not published |
+| `:awake:tailwind-generator`                     | Standalone JVM CLI generating the `:awake:tailwind` token sources                                                                                                                                                                                                                      | not published |
+| `:awake:ui:font-atlas-generator`                | Standalone JVM CLI generating packed font atlases for `:awake:core:text`                                                                                                                                                                                                                    | not published |
 | `:awake:ui:benchmark`                           | Standalone JVM kotlinx-benchmark harness for UI layout/draw hot paths                                                                                                                                                                                                              | not published |
 | `:samples:ui-showcase`                          | Component gallery sample exercising the design system across Vulkan and WebGPU targets                                                                                                                                                                                             | sample-only   |
 | `:samples:server`                               | Standalone JVM Ktor WebSocket debug-control channel for driving a desktop sample deterministically; no engine dependencies                                                                                                                                                         | sample-only   |
