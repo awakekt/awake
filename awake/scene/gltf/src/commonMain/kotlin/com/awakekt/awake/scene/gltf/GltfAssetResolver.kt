@@ -224,16 +224,14 @@ class GltfAssetResolver(
             if (base == path || base.startsWith("$PRIMITIVE_MESH_PREFIX$path#")) loadedStaticMeshes.getOrPut(key) { geometry }
         }
         lodLevels.adopt(path, from.lodLevels)
-        from.loadedMaterials.forEach { (key, material) ->
-            if (key == path || key.startsWith("$path#")) loadedMaterials.getOrPut(key) { material }
-        }
-        from.untexturedMaterials.forEach { (key, parameters) ->
-            if (key == path || key.startsWith("$path#")) untexturedMaterials.getOrPut(key) { parameters }
-        }
-        from.skinnedPartTextures.forEach { (key, texture) ->
-            if (key.startsWith("$path#")) skinnedPartTextures.getOrPut(key) { texture }
-        }
+        loadedMaterials.adoptModel(from.loadedMaterials, path)
+        untexturedMaterials.adoptModel(from.untexturedMaterials, path)
+        skinnedPartTextures.adoptModel(from.skinnedPartTextures, path)
     }
+
+    /** Takes [from]'s entries for the model at [path], its own and its parts', keeping any this map already holds. */
+    private fun <T> MutableMap<String, T>.adoptModel(from: Map<String, T>, path: String) =
+        from.forEach { (key, value) -> if (key == path || key.startsWith("$path#")) getOrPut(key) { value } }
 
     /**
      * Starts loading the model file at [path] off the frame thread, in [scope], or joins the load of it
