@@ -102,7 +102,12 @@ internal class SceneDrawCollector(
         val fadeStore = world.componentStore<DitherFade>(resolution.fadeType)
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
-            if (!meshRenderer.visible) return@forEach
+            if (!meshRenderer.visible) {
+                // Hidden is drawn nowhere, as culled is: its model keeps its clock but isn't posed. Without
+                // this a hidden skinned model counted as one no renderer looked at, posed every frame.
+                poseStore?.get(entity)?.culled = true
+                return@forEach
+            }
             // Culling first, before this entity's uniforms are gathered: that work is wasted on
             // something about to be discarded, and this is the one ordering the loop can get wrong
             // for free.
@@ -218,7 +223,10 @@ internal class SceneDrawCollector(
         // Modular character loop: all equipped visible slots on an entity are drawn using the
         // entity's transform and shared SkinnedPose joint palette without requiring dummy child entities.
         resolution.modularFamily.forEach { entity, transform, modularCharacter ->
-            if (!modularCharacter.isVisible) return@forEach
+            if (!modularCharacter.isVisible) {
+                poseStore?.get(entity)?.culled = true
+                return@forEach
+            }
             val bounds = boundsStore?.get(entity)
             val casts = modularCharacter.castsShadows
             val verdict = if (bounds == null) {
