@@ -33,14 +33,20 @@ class ParticleSystem(private val placement: EmitterPlacement) : System {
     private val emitterType = ParticleEmitter::class
     private val spentEntities = ArrayList<Entity>()
     private val sharedOrientation = ParticleOrientationBasis()
+    private val sharedFrame = EmitterFrame()
     private val deathPosition = Vec3f(0f, 0f, 0f)
     private var activeWorld: World? = null
     private var activeEmitter: ParticleEmitter? = null
     private val forwardDeath = ParticleDeathListener { x, y, z ->
-        deathPosition.set(x, y, z)
         val currentWorld = activeWorld
         val currentEmitter = activeEmitter
         if (currentWorld != null && currentEmitter != null) {
+            // A local pool's slots are relative to the entity, and the hook is given a world position.
+            if (currentEmitter.motion.space == ParticleSpace.Local) {
+                currentEmitter.frame.toWorld(x, y, z, deathPosition)
+            } else {
+                deathPosition.set(x, y, z)
+            }
             currentEmitter.lifecycle.onParticleDeath?.invoke(currentWorld, deathPosition)
         }
     }
@@ -77,7 +83,8 @@ class ParticleSystem(private val placement: EmitterPlacement) : System {
         delta: Float,
         isTopLevel: Boolean = true,
     ) {
-        if (isTopLevel) sharedOrientation.setFromMatrix(placement.orientation(world, entity))
+        if (isTopLevel) loadPlacement(world, entity, emitter)
+        if (emitter.motion.space == ParticleSpace.Local) emitter.frame.copyFrom(sharedFrame)
         emitter.syncToSimulation()
         emitter.simulation.orientation.copyFrom(sharedOrientation)
         val sim = emitter.simulation
@@ -113,6 +120,14 @@ class ParticleSystem(private val placement: EmitterPlacement) : System {
             simulate(world, entity, child, delta, isTopLevel = false)
         }
         if (isTopLevel && emitter.simulation.isComplete) spentEntities += entity
+    }
+
+    // The entity's rotation for an emitter that inherits it, and its whole frame for a local one; the
+    // frame is loaded only when the emitter or one of its children keeps its particles locally.
+    private fun loadPlacement(world: World, entity: Entity, emitter: ParticleEmitter) {
+        sharedOrientation.setFromMatrix(placement.orientation(world, entity))
+        sharedFrame.setIdentity()
+        if (emitter.keepsAnyLocal()) sharedFrame.load(placement, world, entity)
     }
 
     /** Re-anchors [ParticleEmitter.origin] to [ParticleEmitter.dynamics]' `followEntity`'s

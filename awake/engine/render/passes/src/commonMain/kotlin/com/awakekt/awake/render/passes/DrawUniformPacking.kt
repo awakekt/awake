@@ -36,6 +36,7 @@ import com.awakekt.awake.render.renderer.SkinnedFields
 import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.UniformFields
+import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 
 /**
@@ -79,13 +80,12 @@ fun RenderDrawCommand.uniformFloats(
     alphaToCoverageEnabled: Boolean = false,
 ): FloatArray {
     val mvp = model * viewProjection
-    return when (
-        drawUniformPlan(
-            format = mesh.format,
-            materialUniformFloatCount = materialUniformFloatCount,
-            hasShadowCascades = shadowCascades != null,
-        )
-    ) {
+    val plan = drawUniformPlan(
+        format = mesh.format,
+        materialUniformFloatCount = materialUniformFloatCount,
+        hasShadowCascades = shadowCascades != null,
+    )
+    val packed = when (plan) {
         DrawUniformPlan.LitShadow -> gpuLitShadowUniforms(
             transform = model,
             extraUniformFloats = extraUniformFloats,
@@ -139,6 +139,27 @@ fun RenderDrawCommand.uniformFloats(
             usePbrFactors = materialUniformFloatCount >= com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.Lit.total,
         )
     }
+    return withFade(packed, fadeLayout(plan))
+}
+
+/** The block a [plan]'s shader reads its dither fade from, or `null` for one that has none. */
+private fun fadeLayout(plan: DrawUniformPlan): UniformLayout? = when (plan) {
+    DrawUniformPlan.LitShadow -> MaterialUniformLayouts.LitShadow
+    DrawUniformPlan.TexturedPbr -> MaterialUniformLayouts.PbrTextured
+    DrawUniformPlan.Skinned -> SkinnedUniformLayout
+    DrawUniformPlan.Sprite, DrawUniformPlan.WorldText, DrawUniformPlan.Lit -> null
+}
+
+/**
+ * Writes this draw's dither fade, `1 - fadeOpacity`, into [layout]'s `Exposure.y`, which the scene
+ * shaders discard by. An unfaded draw leaves it at the `0` every packer writes, so it packs exactly
+ * as before.
+ */
+private fun RenderDrawCommand.withFade(packed: FloatArray, layout: UniformLayout?): FloatArray {
+    if (layout != null && fadeOpacity < 1f && packed.size >= layout.total) {
+        packed[layout.offsetOf(UniformFields.Exposure) + 1] = 1f - fadeOpacity.coerceIn(0f, 1f)
+    }
+    return packed
 }
 
 /** Packs the common MVP/light block used by plain and skinned instanced variants. */
@@ -189,7 +210,7 @@ fun RenderDrawCommand.instancedUniformFloats(
         val plan = drawUniformPlan(mesh.format, materialUniformFloatCount, hasShadowCascades = shadowCascades != null)
         if (kind == InstancedDrawKind.Plain && plan == DrawUniformPlan.TexturedPbr) {
             // Each instance carries its own model, so the block's is identity and its mvp the view-projection.
-            texturedUniforms(
+            val packed = texturedUniforms(
                 mvp = viewProjection,
                 model = Mat4(),
                 lightPayload = lightPayload,
@@ -205,8 +226,9 @@ fun RenderDrawCommand.instancedUniformFloats(
                 exposure = exposure,
                 additive = blendsAdditively,
             )
+            withFade(packed, MaterialUniformLayouts.PbrTextured)
         } else if (shadowCascades != null || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) {
-            gpuLitShadowUniforms(
+            val packed = gpuLitShadowUniforms(
                 transform = Mat4(),
                 extraUniformFloats = extraUniformFloats,
                 vertexAnimation = vertexAnimation,
@@ -221,8 +243,9 @@ fun RenderDrawCommand.instancedUniformFloats(
                 debugView = debugView,
                 exposure = exposure,
             )
+            withFade(packed, MaterialUniformLayouts.LitShadow)
         } else {
-            UniformWriter(InstancedUniformLayout)
+            val packed = UniformWriter(InstancedUniformLayout)
                 .put(viewProjection.data, UniformFields.Mvp)
                 .put(
                     directionalLightFloats(lightPayload),
@@ -231,6 +254,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 )
                 .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
                 .build()
+            withFade(packed, InstancedUniformLayout)
         }
     }
 }

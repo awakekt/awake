@@ -14,6 +14,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.canvas.loadCanvasFonts
 import com.awakekt.awake.scene.canvas.loadCanvasImages
 import com.awakekt.awake.scene.physics.CollisionMeshSource
+import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
 
@@ -46,6 +47,14 @@ object CoreSceneContent {
      * them: what Core's own load fills, so a browser uploads them without a readback (awakekt/awake#1184).
      */
     val ParticleImages: SceneContentKey<Map<String, GpuImageSource>> = SceneContentKey("particle images")
+
+    /**
+     * How often a drawn skinned model's pose is recomputed by its distance from the camera, as
+     * [com.awakekt.awake.scene.rendering.animation.AnimationSystem] reads it. Core loads none, so every
+     * model is posed every frame; a game opts in from its own capability's load, for example with
+     * [AnimationUpdateRate.byDistance], since the distances are the game's to tune.
+     */
+    val AnimationUpdateRate: SceneContentKey<AnimationUpdateRate> = SceneContentKey("animation update rate")
 
     /** The images the scene's canvas elements name, by path, as [loadCanvasImages] reads them. */
     val CanvasImages: SceneContentKey<Map<String, ImageBitmap>> = SceneContentKey("canvas images")

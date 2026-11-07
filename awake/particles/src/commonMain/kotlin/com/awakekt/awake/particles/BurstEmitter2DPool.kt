@@ -19,7 +19,7 @@ private const val DEFAULT_BURST_SLOT_PARTICLES_2D: Int = 64
  * Calling [prepare] (or the first [spawn]) creates [maxSlots] disabled entities in the target
  * [World], each holding only a pre-allocated [ParticleEmitter2D] of capacity [slotMaxParticles]. Each
  * [spawn] activates a free resident slot in place, pins it at its world `(x, y, z)` (so the slot
- * needs no placement, and [Particle2DSystem] and [appendSpriteDraws] ignore its `localSpace`), emits
+ * needs no placement, and [Particle2DSystem] and [appendSpriteDraws] ignore its `space`), emits
  * the burst, and arms automatic recycling (`enabled = false`) once the burst's particles finish
  * aging out in [Particle2DSystem].
  *

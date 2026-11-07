@@ -19,6 +19,7 @@ free camera_rig.offset.y | Any coordinate offset is valid.
 free camera_rig.offset.z | Any coordinate offset is valid.
 free camera_rig.pitch | Any pitch angle in radians is valid.
 free camera_rig.yaw | Any yaw angle in radians is valid.
+free camera_rig.collision.obstacleLayers* | Physics layer indices: validate() rejects a negative one, and which exist is the host's physics world's.
 free character_controller.gravity | Any gravity acceleration is valid, including zero or negative (inversion).
 free character_controller.slopeLimit | Any slope limit angle in radians is valid.
 free chase.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.

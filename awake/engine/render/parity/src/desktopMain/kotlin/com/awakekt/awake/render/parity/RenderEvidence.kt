@@ -63,6 +63,7 @@ fun main(args: Array<String>) {
             renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE),
         )
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
+        writeParticleEmitterEvidence(renderer, EVIDENCE_SIZE, ::write)
         writeSkinnedEvidence(renderer, ::write)
         writeWorldTextEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)

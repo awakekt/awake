@@ -26,6 +26,7 @@ class SceneSystemPlanBinaryCompatibilityTest {
         assertEquals(
             setOf(
                 "fixed(Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
+                "fixed(Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
                 "frame(Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
                 "getHasPhysics()Z",
                 "getHasRenderer()Z",

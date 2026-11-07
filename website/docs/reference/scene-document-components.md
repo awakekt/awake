@@ -175,6 +175,32 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `yaw` | number | `0` | Yaw in radians. |
 | `offset` | vector | `{x: 0, y: 1.8, z: 0}` | Aim point relative to the target, or the pivot when there is none. |
 | `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
+| `collision` | object | none | `ThirdPerson` camera collision; see below. Without it the eye goes wherever the rig puts it. |
+| `occluderFade` | object | none | Fades what stands between a `ThirdPerson` eye and its target; see below. Without it nothing fades. |
+
+`collision` keeps a third-person eye above the ground and in front of the terrain. Props, trees
+and buildings don't pull it in unless their physics layer is listed in `obstacleLayers`. A played
+project answers the ground from its `terrain` and `paged_terrain` heights, and the obstacle layers
+from its physics world.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `ground` | boolean | `true` | Keep the eye `groundMargin` above the ground, sampled around it the size of the near plane. |
+| `terrain` | boolean | `true` | Pull the eye in front of the ground where it rises between the pivot and the eye. |
+| `groundMargin` | number | `0.3` | Least height of the eye above the ground. At least 0. |
+| `radius` | number | `0.2` | Clearance kept between the line from the pivot to the eye and what blocks it. At least 0. |
+| `easeOutSeconds` | number | `0.25` | Half-life of the ease back out once the way clears. Pulling in is immediate. At least 0. |
+| `obstacleLayers` | list of integers | `[]` | Physics layers whose bodies also pull the eye in, through a swept sphere. Not negative. |
+
+`occluderFade` fades the static bodies between a third-person eye and its target: each frame a
+played project with a physics world casts rays from the eye to the target's feet, chest and head,
+and every body hit other than terrain fades. Its meshes take a dither fade: the shader discards a
+share of their pixels in a fixed pattern, so they stay opaque, need no sorting and keep their shadow.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `opacity` | number | `0.35` | Opacity an occluder fades to, 0 to 1. |
+| `fadeSeconds` | number | `0.2` | Half-life of the fade, both ways. At least 0. |
 
 ## `canvas_controls`
 
@@ -852,8 +878,9 @@ Spawns sprites at its node's world position, turned to the camera or lying flat,
 node. `SceneParticleEmitter`.
 
 Sizes, speeds and `spawnRadius` are world units; the node's scale does not apply, and its rotation
-only tilts a `Flat` emitter's plane and, with `inheritOrientation`, turns the spawn ring and
-`velocity`. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
+only tilts a `Flat` emitter's plane, turns the spawn ring with `orientSpawnRing` and, with
+`inheritOrientation`, turns the spawn ring and `velocity`. A `Local` space emitter is the exception: its particles live in the node's own axes and
+units, so they move, turn and scale with it. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
 its tint moves from `color` to `endColor` and its size from `scale` to `endScale`. `runProject` runs
 it; see [Particles](../guides/particles.md).
 
@@ -889,6 +916,9 @@ it; see [Particles](../guides/particles.md).
 | `burstCount` | number | none | Particles to spawn in the emitter's whole life. When they have all died **the node carrying the emitter is removed from the world**, so put a one-shot emitter on a node of its own. Above 0. |
 | `ground` | ground | none | Where falling particles land. None lets them fall and fade. Described below. |
 | `spin` | spin | none | A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (`stretchWithVelocity`) points along its motion and ignores it. Described below. |
+| `space` | `World` · `Local` | `World` | `World` leaves each particle where it was emitted however the node moves next. `Local` keeps particles relative to the node and draws them through its current transform, so they move, turn and scale with it: an aura on a moving bone. `velocity` and the spawn ring are then in the node's axes and `inheritOrientation` adds nothing; `acceleration` still pulls in world space; camera-facing sprites still face the camera. A `Local` emitter cannot have a `ground`. |
+| `orientSpawnRing` | boolean | `false` | The node's rotation tilts the spawn ring alone, so it lies in the plane a `Flat` emitter's sprites lie in, while `velocity`, `acceleration` and `radialSpeed` stay in world space. Adds nothing beside `inheritOrientation` or with `space` `Local`. |
+| `radialInRingPlane` | boolean | `false` | `radialSpeed` pushes outward in the turned spawn ring's own plane instead of horizontally, when `orientSpawnRing` or `inheritOrientation` turns the ring: an outward ripple across a sloped surface. Adds nothing while the ring is not turned, or with `space` `Local`. |
 
 `alphaCurve` is an object with the fractions of a particle's life at which it reaches full opacity and
 starts to fade out, both within 0 to 1 with `fadeInEnd` not after `fadeOutStart`:
@@ -969,8 +999,9 @@ frame sheets. See [Particles](../guides/particles.md#2d-particles-scene2d).
 | `turbulenceFrequency` | number | `1` | Spatial frequency of the turbulence flow field. Not negative. |
 | `spin` | spin | none | Per-particle angular velocity range (`minDegreesPerSecond`, `maxDegreesPerSecond`, `randomStartAngle`). |
 | `additive` | boolean | `false` | Draws with additive blending on `spriteScenePipeline(buildAdditive = true)`. |
-| `localSpace` | boolean | `false` | Keeps live particles attached to the node's `Transform` instead of trailing in world space. |
-| `inheritOrientation` | boolean | `false` | Rotates `shape` and launch direction by the node's Z rotation when `localSpace` is `false`. |
+| `space` | `World` · `Local` | `World` | `World` leaves each live particle where it spawned, trailing behind a moving node. `Local` keeps them attached to the node's `Transform`, so they move, turn and scale with it; `gravity` is then in the node's axes. The same names as `particle_emitter`'s `space`. |
+| `localSpace` | boolean | none | Deprecated: write `space`. Left out, it reads as `false`; `true` still reads as `space` `Local`. The field is not written back out. |
+| `inheritOrientation` | boolean | `false` | Rotates `shape` and launch direction by the node's Z rotation when `space` is `World`. |
 | `sortingLayer` | string | `"Default"` | Project sorting layer name, ordered alongside `sprite` and `tilemap`. Not blank. |
 | `sortOrder` | integer | `0` | Paint order within `sortingLayer`; higher values draw over lower ones. |
 | `burstCount` | integer | none | Lifetime spawn cap; destroys a non-pooled node once all spawned particles expire. Above 0. |

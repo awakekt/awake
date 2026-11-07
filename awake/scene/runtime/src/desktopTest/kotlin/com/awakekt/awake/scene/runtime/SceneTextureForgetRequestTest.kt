@@ -39,8 +39,10 @@ class SceneTextureForgetRequestTest {
                 }
             }
         }
+        // A running scene has drawn its textures before a watcher asks; a texture nothing drew is not forgotten.
+        frame()
         start.countDown()
-        var frames = 0
+        var frames = 1
         while (workers.any { it.isAlive }) {
             frame()
             frames++

@@ -319,13 +319,20 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         }
         // What else joined the scene: a fallback camera, what its systems made, what the host added.
         step { before.forEach { if (world.isAlive(it)) world.destroy(it) } }
+        // Frees the images its UI asked for by path, with its canvas's.
+        step { runtime.canvasImages = emptyMap() }
         step { leaving.close() }
         return failed
     }
 
-    /** What every scene does once its entities are in: its canvas images, fonts and strings, its camera and its skinned clips. */
+    /**
+     * What every scene does once its entities are in: its canvas images, which its UI's images by path
+     * start from, fonts and strings, its camera and its skinned clips.
+     */
     private fun begin() {
         playLoads?.register(runtime.requireAssetLibrary())
+        // Before the canvas images, which start the scene's own image cache over these files.
+        runtime.assetSource = project.files
         runtime.canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
         runtime.canvasFonts = project.content[CoreSceneContent.CanvasFonts].orEmpty()
         runtime.canvasStrings = project.strings

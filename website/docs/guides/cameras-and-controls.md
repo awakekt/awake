@@ -101,6 +101,7 @@ forward.
 | `pitch`, `yaw` | radians | `0` | Starting angles. Negative pitch looks down. |
 | `offset` | vector | `(0, 1.8, 0)` | Added to the target's position to get the pivot, or the pivot itself with no target. |
 | `flySpeed` | number | `10` | Units per second for `FreeFly`. Greater than 0. |
+| `collision` | object | none | Keeps a `ThirdPerson` eye out of the ground and walls; see [Camera collision](#camera-collision). |
 
 In the scene DSL these are `CameraRig` fields; `target` is `targetEntity` and `offset` is
 `offsetPosition`.
@@ -112,6 +113,46 @@ In the scene DSL these are `CameraRig` fields; `target` is `targetEntity` and `o
 | `FreeFly` | no | W A S D move along the view, Q and E down and up, Shift is faster; dragging looks around. A host rebinds the keys with `CameraGesturePolicy(flyActions = ...)`, named as in `CameraFlyActions`. |
 | `Cinematic` | yes | Looks at the target from a fixed spot; no input. |
 | `TopDown` | no | Looks down at 60 degrees from `distance`; dragging turns yaw, scrolling zooms. |
+
+#### Camera collision
+
+A third-person eye goes wherever its pitch and distance put it, through a slope or a wall included,
+until the rig asks for `collision`:
+
+```json
+{ "component": "camera_rig", "mode": "ThirdPerson", "target": "Player", "distance": 6.0,
+  "collision": { "groundMargin": 0.4, "radius": 0.25, "easeOutSeconds": 0.3 } }
+```
+
+- `ground` (on by default) keeps the eye `groundMargin` above the terrain, sampled around the eye
+  the size of the near plane so the view's edge stays out of a slope too.
+- `terrain` (on by default) pulls the eye in front of the ground where it rises between the pivot
+  and the eye, as over a hill behind the player. The line keeps `radius` above the ground.
+- `obstacleLayers` (empty by default) names physics layers whose bodies also pull the eye in: a
+  sphere of `radius` is swept from the pivot to the eye against each. Props and buildings usually
+  stay off this list.
+
+The eye pulls in at once and eases back out with a half-life of `easeOutSeconds`, so it neither
+clips nor jitters. A played project answers the ground from its `terrain` and `paged_terrain`
+heights, and the obstacle layers from its physics world. A host that runs its own systems passes
+`CameraSystem(..., collisionProbes = ...)`; the maths is `CameraCollisionSolver` in
+`awake:core:camera`, usable without a scene. In code, set `CameraRig.collision = CameraCollision(...)`.
+
+#### Fading what blocks the view
+
+Props, trees and buildings don't pull the camera in. Fade them instead with `occluderFade`:
+
+```json
+{ "component": "camera_rig", "mode": "ThirdPerson", "target": "Player",
+  "collision": {}, "occluderFade": { "opacity": 0.35, "fadeSeconds": 0.2 } }
+```
+
+Each frame a played project with a physics world casts rays from the eye to the target's feet, chest
+and head against static bodies. Every body hit, other than terrain, eases down to `opacity` with a
+half-life of `fadeSeconds`, and back once it stops blocking. Its meshes, and those under its node,
+take a `DitherFade`: the shader discards a share of their pixels in a fixed screen pattern, so they
+stay in the opaque pass, need no sorting and keep their shadow. Code can set `DitherFade` on any mesh
+entity itself; the easing is `OccluderFader` in `awake:core:camera`.
 
 ### `movement_control`
 

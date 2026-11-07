@@ -124,6 +124,7 @@ public final class com/awakekt/awake/core/particles/ParticleSimulation {
 	public final fun getMaxSpeed ()F
 	public final fun getMinLifetime ()F
 	public final fun getMinSpeed ()F
+	public final fun getOrientSpawnShape ()Z
 	public final fun getOrientation ()Lcom/awakekt/awake/core/particles/ParticleOrientationBasis;
 	public final fun getOriginX ()F
 	public final fun getOriginY ()F
@@ -132,6 +133,7 @@ public final class com/awakekt/awake/core/particles/ParticleSimulation {
 	public final fun getPosX ()[F
 	public final fun getPosY ()[F
 	public final fun getPosZ ()[F
+	public final fun getRadialInSpawnPlane ()Z
 	public final fun getRadialSpeed ()F
 	public final fun getRandom ()Lkotlin/random/Random;
 	public final fun getRotation ()[F
@@ -176,12 +178,14 @@ public final class com/awakekt/awake/core/particles/ParticleSimulation {
 	public final fun setMaxSpeed (F)V
 	public final fun setMinLifetime (F)V
 	public final fun setMinSpeed (F)V
+	public final fun setOrientSpawnShape (Z)V
 	public final fun setOrigin (FFF)V
 	public static synthetic fun setOrigin$default (Lcom/awakekt/awake/core/particles/ParticleSimulation;FFFILjava/lang/Object;)V
 	public final fun setOriginX (F)V
 	public final fun setOriginY (F)V
 	public final fun setOriginZ (F)V
 	public final fun setPlane (Lcom/awakekt/awake/core/particles/ParticlePlane;)V
+	public final fun setRadialInSpawnPlane (Z)V
 	public final fun setRadialSpeed (F)V
 	public final fun setRandom (Lkotlin/random/Random;)V
 	public final fun setSpawnRate (F)V

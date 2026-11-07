@@ -36,6 +36,9 @@ kotlin {
             api(project(":awake:core:diagnostics"))
             api(project(":awake:core:text"))
             api(project(":awake:core:localization"))
+            // canvasContent takes a Store's or a StateFlow's state.
+            api(project(":awake:core:state"))
+            api(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

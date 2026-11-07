@@ -87,6 +87,24 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
         }
     }
 
+    /**
+     * Opens every value [from] holds open, over the ones open here, and closes them all together.
+     *
+     * It exists to re-provide a [snapshot] across compositions: content declared in one composition
+     * and composed in another, such as Compose UI declared in canvas content and composed where the
+     * canvas draws, still reads the locals that were open where it was declared. Values here that
+     * [from] does not provide stay readable; those it does provide are shadowed while [content] runs.
+     */
+    fun provideAll(from: ProvidedLocals, content: () -> Unit) {
+        val count = from.entries.size
+        entries.addAll(from.entries)
+        try {
+            content()
+        } finally {
+            repeat(count) { entries.removeAt(entries.lastIndex) }
+        }
+    }
+
     /** The innermost value provided for [local], or its default when nothing provides one. */
     fun <T> read(local: CompositionLocal<T>): T {
         var i = entries.size - 2
@@ -148,4 +166,20 @@ fun CompositionLocalProvider(
     content: context(Composer) () -> Unit,
 ) {
     composer.locals.provideAll(values) { content(composer) }
+}
+
+context(composer: Composer)
+/**
+ * Runs [content] with every value [locals] holds open provided over the ones open here.
+ *
+ * For content that one composition declares and another composes: take
+ * [Composer.localsSnapshot] where the content is declared, and provide it here where it is
+ * composed, so the content reads the locals of the place it was written, over this composition's
+ * own. Within one composition, the [ProvidedValue] overloads are the ones to use.
+ */
+fun CompositionLocalProvider(
+    locals: ProvidedLocals,
+    content: context(Composer) () -> Unit,
+) {
+    composer.locals.provideAll(locals) { content(composer) }
 }

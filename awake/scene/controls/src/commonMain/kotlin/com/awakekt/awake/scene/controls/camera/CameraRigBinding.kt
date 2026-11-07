@@ -33,6 +33,10 @@ import kotlin.reflect.KClass
  * @property yaw Initial yaw rotation angle in radians.
  * @property offset Aim or pivot offset in world units.
  * @property flySpeed Translation speed in units per second when in free-fly mode.
+ * @property collision Keeps a third-person eye above the ground and in front of the terrain; `null`,
+ *   the default, leaves it free.
+ * @property occluderFade Fades what stands between a third-person eye and its target; `null`, the
+ *   default, fades nothing.
  */
 @Serializable
 @SerialName("camera_rig")
@@ -46,7 +50,37 @@ data class SceneCameraRig(
     val yaw: Float = 0f,
     val offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
     @PropertyRange(min = 0.0, exclusiveMin = true) val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
+    val collision: SceneCameraCollision? = null,
+    val occluderFade: SceneOccluderFade? = null,
 ) : SceneComponent {
+    /** [SceneCameraRig] as it was before `collision`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mode: CameraMode = CameraMode.ThirdPerson,
+        target: String? = null,
+        distance: Float = CameraRig.DEFAULT_DISTANCE,
+        minDistance: Float = CameraRig.DEFAULT_MIN_DISTANCE,
+        maxDistance: Float = CameraRig.DEFAULT_MAX_DISTANCE,
+        pitch: Float = 0f,
+        yaw: Float = 0f,
+        offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
+        flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
+    ) : this(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, null)
+
+    /** [copy] as it was before `collision`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mode: CameraMode = this.mode,
+        target: String? = this.target,
+        distance: Float = this.distance,
+        minDistance: Float = this.minDistance,
+        maxDistance: Float = this.maxDistance,
+        pitch: Float = this.pitch,
+        yaw: Float = this.yaw,
+        offset: SceneVec3 = this.offset,
+        flySpeed: Float = this.flySpeed,
+    ): SceneCameraRig = copy(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, collision)
+
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (minDistance < 0f || minDistance > maxDistance) {
             add(SceneValidationIssue(path, "camera_rig.minDistance must be between 0 and maxDistance"))
@@ -55,6 +89,8 @@ data class SceneCameraRig(
             add(SceneValidationIssue(path, "camera_rig.distance must be between minDistance and maxDistance"))
         }
         if (flySpeed <= 0f) add(SceneValidationIssue(path, "camera_rig.flySpeed must be greater than 0"))
+        collision?.let { addAll(it.validate(path)) }
+        occluderFade?.let { addAll(it.validate(path)) }
     }
 }
 
@@ -82,6 +118,8 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
             yaw = component.yaw
             offsetPosition.set(component.offset.x, component.offset.y, component.offset.z)
             flySpeed = component.flySpeed
+            collision = component.collision?.toCameraCollision()
+            occluderFade = component.occluderFade?.toOccluderFade()
             // The mode's reset would replace the authored angles and distance.
             needsReset = false
         }
@@ -103,5 +141,7 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
         yaw = component.yaw,
         offset = component.offsetPosition.let { SceneVec3(it.x, it.y, it.z) },
         flySpeed = component.flySpeed,
+        collision = component.collision?.toScene(),
+        occluderFade = component.occluderFade?.toScene(),
     )
 }

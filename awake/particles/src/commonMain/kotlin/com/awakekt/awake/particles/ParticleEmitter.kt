@@ -23,61 +23,6 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import kotlin.random.Random
 
-/**
- * How particles move once spawned -- everything about direction/spread/turbulence lives here,
- * grouped separately from [ParticleVisual]/[ParticleGround]/[ParticleLifecycle]/
- * [ParticleDynamics] because these are independent, freely-COMBINABLE dimensions (unlike
- * `RenderPipeline`'s `PipelineVariant`, these aren't a closed set of named shapes -- a real
- * effect wants turbulence AND a cone burst AND ground-stop together, so a sealed preset would
- * either explode combinatorially or block real combos; small grouped value classes fix the
- * param-count bloat without that trade-off).
- *
- * Every particle spawns [spawnRadius] units from [ParticleEmitter.origin], on a random point
- * around a flat horizontal ring (`0f`, the default, spawns exactly at `origin`, unchanged from
- * before this field existed).
- *
- * Velocity resolution, in priority order:
- * 1. [convergeToOrigin] `true`: direction points from the spawn point back toward `origin`, at
- *    [baseVelocity]'s own speed -- combined with [spawnRadius] > 0, this is a "charging circle"
- *    (particles appear on a ring and converge inward), the classic cast/channel-spell VFX.
- * 2. [coneHalfAngleDegrees] set (and [baseVelocity] non-zero): direction randomized within that
- *    half-angle around [baseVelocity]'s own direction, at [baseVelocity]'s own speed -- a
- *    cone/fan burst. [velocityJitter] is ignored in this mode.
- * 3. Otherwise: [baseVelocity] plus independent per-axis [velocityJitter] -- a soft cloud.
- *
- * [radialSpeed] then adds that speed horizontally away from `origin`, through the spawn point on
- * the [spawnRadius] ring, or in a random horizontal direction when [spawnRadius] is `0f`: a ring of
- * dust blown outward. It is ignored with [convergeToOrigin].
- *
- * [turbulence] adds a smooth flow-field offset to velocity every frame, scaled by this strength
- * and sampled at [turbulenceFrequency]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
- * field, not true Perlin/simplex/curl noise.
- *
- * [acceleration] is a constant world-space acceleration, in units per second squared, added to
- * every live particle's velocity each step: `Vec3f(0f, -9.8f, 0f)` is gravity. The zero default
- * is a no-op. A settled particle (see [ParticleGround]) no longer moves, so it ignores it.
- *
- * [inheritOrientation] `true` turns the spawn ring and [baseVelocity] (so also a cone's axis and
- * [velocityJitter]'s axes) by the rotation of the emitter entity, as [EmitterPlacement.orientation]
- * reports it, so an emitter turned to face a direction fires that way. Scale is ignored.
- * [acceleration], [radialSpeed] and [convergeToOrigin] stay world-space, because gravity and "away
- * from or toward the origin" mean the same thing however the emitter is turned. `false` (default)
- * keeps every vector in world axes, and an emitter entity the placement has no orientation for has
- * no rotation to inherit.
- */
-data class ParticleMotion(
-    val baseVelocity: Vec3f = Vec3f(0f, 1f, 0f),
-    val velocityJitter: Float = 0f,
-    val coneHalfAngleDegrees: Float? = null,
-    val spawnRadius: Float = 0f,
-    val convergeToOrigin: Boolean = false,
-    val turbulence: Float = 0f,
-    val turbulenceFrequency: Float = 1f,
-    val radialSpeed: Float = 0f,
-    val acceleration: Vec3f = Vec3f(0f, 0f, 0f),
-    val inheritOrientation: Boolean = false,
-)
-
 /** How a particle looks over its life. [startColor]/[endColor] linearly interpolate per
  * particle over its own age (constant color when equal, the default). [frameCount] treats the
  * material's texture as a horizontal sprite strip of that many equal-width frames, cycling at
@@ -378,6 +323,15 @@ class ParticleEmitter(
     private val scratchPosition: Vec3f = Vec3f(0f, 0f, 0f)
     private val scratchVelocity: Vec3f = Vec3f(0f, 0f, 0f)
 
+    /**
+     * The entity frame a [ParticleSpace.Local] emitter's pool is relative to, as of the last
+     * [ParticleSystem] step or [ParticleDrawBuilder] draw; the world's own frame until then.
+     */
+    internal val frame: EmitterFrame = EmitterFrame()
+
+    private val isLocal: Boolean
+        get() = motion.space == ParticleSpace.Local
+
     /** How many of this emitter's particles are alive. */
     val liveParticleCount: Int
         get() = simulation.liveParticleCount
@@ -393,15 +347,22 @@ class ParticleEmitter(
         get() = simulation.spawnedTotal
 
     /**
-     * Calls [action] with the position and velocity of each live particle, in no particular order.
-     * The vectors are scratch copies reused across slots: copy what you keep, and writing through
-     * them does not move the particle.
+     * Calls [action] with the world position and velocity of each live particle, in no particular order;
+     * a [ParticleSpace.Local] particle is mapped through its entity's latest frame. The vectors are
+     * scratch copies reused across slots: copy what you keep, and writing through them does not move
+     * the particle.
      */
     fun forEachLiveParticle(action: (position: Vec3f, velocity: Vec3f) -> Unit) {
+        val sim = simulation
         for (slot in 0 until maxParticles) {
-            if (simulation.isAlive(slot)) {
-                scratchPosition.set(simulation.posX[slot], simulation.posY[slot], simulation.posZ[slot])
-                scratchVelocity.set(simulation.velX[slot], simulation.velY[slot], simulation.velZ[slot])
+            if (sim.isAlive(slot)) {
+                if (isLocal) {
+                    frame.toWorld(sim.posX[slot], sim.posY[slot], sim.posZ[slot], scratchPosition)
+                    frame.toWorld(sim.velX[slot], sim.velY[slot], sim.velZ[slot], scratchVelocity, point = false)
+                } else {
+                    scratchPosition.set(sim.posX[slot], sim.posY[slot], sim.posZ[slot])
+                    scratchVelocity.set(sim.velX[slot], sim.velY[slot], sim.velZ[slot])
+                }
                 action(scratchPosition, scratchVelocity)
             }
         }
@@ -412,11 +373,17 @@ class ParticleEmitter(
      * and emits nothing when every one of [maxParticles] is alive. It lives for [lifetime] seconds
      * with this emitter's [startAlpha] and [scale], and [ParticleSystem] moves and ages it like any
      * other. A hand-emitted particle does not count toward [ParticleLifecycle.burstCount] or the
-     * spawn schedule.
+     * spawn schedule. Both are in the world; a [ParticleSpace.Local] emitter keeps the particle
+     * relative to its entity's latest frame from then on.
      */
     fun spawn(position: Vec3f, velocity: Vec3f = Vec3f(0f, 0f, 0f)): Boolean {
         syncToSimulation()
-        return simulation.spawn(position.x, position.y, position.z, velocity.x, velocity.y, velocity.z)
+        if (!isLocal) return simulation.spawn(position.x, position.y, position.z, velocity.x, velocity.y, velocity.z)
+        frame.toLocal(position.x, position.y, position.z, scratchPosition)
+        frame.toLocal(velocity.x, velocity.y, velocity.z, scratchVelocity, point = false)
+        val p = scratchPosition
+        val v = scratchVelocity
+        return simulation.spawn(p.x, p.y, p.z, v.x, v.y, v.z)
     }
 
     /**
@@ -499,10 +466,10 @@ class ParticleEmitter(
         sim.coneHalfAngleDegrees = cone ?: 0f
         sim.convergeToOrigin = m.convergeToOrigin
         sim.radialSpeed = m.radialSpeed
-        sim.inheritOrientation = m.inheritOrientation
-        sim.accelX = m.acceleration.x
-        sim.accelY = m.acceleration.y
-        sim.accelZ = m.acceleration.z
+        sim.inheritOrientation = m.inheritOrientation && m.space == ParticleSpace.World
+        sim.orientSpawnShape = m.orientSpawnRing && m.space == ParticleSpace.World
+        sim.radialInSpawnPlane = m.radialInRingPlane
+        syncSpace(sim, m)
         sim.drag = 0f
         sim.turbulence = m.turbulence
         sim.turbulenceFrequency = m.turbulenceFrequency
@@ -522,7 +489,7 @@ class ParticleEmitter(
             sim.spin.set(sp.minDegreesPerSecond, sp.maxDegreesPerSecond, sp.randomStartAngle)
         }
 
-        syncGround(sim)
+        if (m.space == ParticleSpace.Local) sim.ground.clear() else syncGround(sim)
 
         val lc = lifecycle
         // A negative burstCount spawns nothing, as it did before the shared simulation.
@@ -533,6 +500,24 @@ class ParticleEmitter(
         } else {
             sim.burstSchedule.set(bc.cycleSeconds, bc.activeSeconds, bc.burstInterval, bc.burstSize)
         }
+    }
+
+    // A local pool spawns at the origin as seen from its entity's frame, and feels the world's
+    // acceleration turned into that frame, so gravity still pulls down however the entity is turned.
+    private fun syncSpace(sim: ParticleSimulation, m: ParticleMotion) {
+        if (m.space == ParticleSpace.World) {
+            sim.accelX = m.acceleration.x
+            sim.accelY = m.acceleration.y
+            sim.accelZ = m.acceleration.z
+            return
+        }
+        val local = scratchPosition
+        frame.toLocal(origin.x, origin.y, origin.z, local)
+        sim.setOrigin(local.x, local.y, local.z)
+        frame.toLocal(m.acceleration.x, m.acceleration.y, m.acceleration.z, local, point = false)
+        sim.accelX = local.x
+        sim.accelY = local.y
+        sim.accelZ = local.z
     }
 
     private fun syncGround(sim: ParticleSimulation) {

@@ -99,9 +99,15 @@ internal class SceneDrawCollector(
         val pbrStore = world.componentStore<PbrMaterial>(resolution.pbrType)
         val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)
         val outlineStore = world.componentStore<Outlined>(resolution.outlineType)
+        val fadeStore = world.componentStore<DitherFade>(resolution.fadeType)
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
-            if (!meshRenderer.visible) return@forEach
+            if (!meshRenderer.visible) {
+                // Hidden is drawn nowhere, as culled is: its model keeps its clock but isn't posed. Without
+                // this a hidden skinned model counted as one no renderer looked at, posed every frame.
+                poseStore?.get(entity)?.culled = true
+                return@forEach
+            }
             // Culling first, before this entity's uniforms are gathered: that work is wasted on
             // something about to be discarded, and this is the one ordering the loop can get wrong
             // for free.
@@ -178,6 +184,7 @@ internal class SceneDrawCollector(
                 // Unlit colour reaches the target as stored, so no covering such as fog paints over it.
                 exemptFromCoverings = pbr?.unlit == true,
             )
+            fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
             if (verdict != CullVerdict.ShadowOnly || shadowMesh == null) drawCalls.add(command)
             if (shadowMesh != null) drawCalls.add(beforeCommands.shadowTwin(command, shadowMesh))
         }
@@ -216,7 +223,10 @@ internal class SceneDrawCollector(
         // Modular character loop: all equipped visible slots on an entity are drawn using the
         // entity's transform and shared SkinnedPose joint palette without requiring dummy child entities.
         resolution.modularFamily.forEach { entity, transform, modularCharacter ->
-            if (!modularCharacter.isVisible) return@forEach
+            if (!modularCharacter.isVisible) {
+                poseStore?.get(entity)?.culled = true
+                return@forEach
+            }
             val bounds = boundsStore?.get(entity)
             val casts = modularCharacter.castsShadows
             val verdict = if (bounds == null) {
@@ -245,20 +255,20 @@ internal class SceneDrawCollector(
             for (slotIndex in 0 until modularCharacter.slotCount) {
                 val slot = modularCharacter.slotAt(slotIndex)
                 if (!slot.isVisible) continue
-                drawCalls.add(
-                    beforeCommands.obtainCommand(
-                        mesh = slot.mesh,
-                        material = slot.material,
-                        model = transform.worldMatrix,
-                        extraUniformFloats = extras,
-                        timeSeconds = elapsedTimeSeconds,
-                        shadowsOnly = verdict == CullVerdict.ShadowOnly,
-                        worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
-                        maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
-                        castsShadows = casts,
-                        exemptFromCoverings = pose != null && pbr?.unlit == true,
-                    ),
+                val command = beforeCommands.obtainCommand(
+                    mesh = slot.mesh,
+                    material = slot.material,
+                    model = transform.worldMatrix,
+                    extraUniformFloats = extras,
+                    timeSeconds = elapsedTimeSeconds,
+                    shadowsOnly = verdict == CullVerdict.ShadowOnly,
+                    worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
+                    maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
+                    castsShadows = casts,
+                    exemptFromCoverings = pose != null && pbr?.unlit == true,
                 )
+                fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
+                drawCalls.add(command)
             }
         }
         return drawCalls
@@ -333,6 +343,7 @@ internal class SceneDrawCollector(
         val pbrType = world.typeId(PbrMaterial::class)
         val animationType = world.typeId(TextureAnimation::class)
         val outlineType = world.typeId(Outlined::class)
+        val fadeType = world.typeId(DitherFade::class)
 
         val meshFamily = world.family<Transform, MeshRenderer>()
         val instancedFamily = world.family<InstancedMeshRenderer>()

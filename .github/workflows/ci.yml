@@ -293,6 +293,10 @@ jobs:
       - name: Localization tests
         run: ./gradlew :awake:core:localization:desktopTest :awake:compose:localization:desktopTest
 
+      # Images a Compose UI asks for by asset path: loading, the cache, a reset and a missing file.
+      - name: Compose asset image tests
+        run: ./gradlew :awake:compose:assets:desktopTest
+
       # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
       # cannot catch per-frame allocations or stale wrappers after World.clear().
       - name: ECS runtime and allocation tests
@@ -333,6 +337,7 @@ jobs:
           :awake:scene:binding:desktopTest
           :awake:scene:scene-core:desktopTest
           :awake:scene:controls:desktopTest
+          :awake:core:camera:desktopTest
           :awake:scene:audio:desktopTest
           :awake:scene:character:desktopTest
           :awake:scene:navigation:desktopTest

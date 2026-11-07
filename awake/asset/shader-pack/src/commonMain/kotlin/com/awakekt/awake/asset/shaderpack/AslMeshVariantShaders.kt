@@ -146,14 +146,16 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val rgb = if (instanceTints != null) color.xyz else color
             val lit = rgb * shade
             // Colours here are display-referred, lit as stored; the transform decodes them first.
-            if (tint != null && glow != null) {
+            val output = if (tint != null && glow != null) {
                 val stored = let("stored", rgb * tint.xyz)
                 val litShaded = displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x)
                 val shaded = vec4(select(litShaded, displayTransform.unlit(stored), pbrFactors!!.w gt UNLIT_THRESHOLD.lit), tint.w)
-                colorOutput(skinnedDebugColor(debug!!, debugVaryings!!, n, stored, displayTransform, exposure, shaded))
+                skinnedDebugColor(debug!!, debugVaryings!!, n, stored, displayTransform, exposure, shaded)
             } else {
-                colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), if (instanceTints != null) color.w else 1f.lit))
+                vec4(displayTransform.displayReferred(lit, exposure.x), if (instanceTints != null) color.w else 1f.lit)
             }
+            ditherFade(exposure.y)
+            colorOutput(output)
         }
     }
 
@@ -235,6 +237,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         )
         val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, stored, displayTransform, exposure, shaded))
         val coverage = materialCoverage(alpha, pbrFactors.z, debugColor.w)
+        ditherFade(exposure.y)
         colorOutput(vec4(debugColor.xyz, coverage))
     }
 }

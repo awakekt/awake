@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 109: 106 in Core, 3 in the Vulkan family. |
+| Published modules | 111: 108 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -33,6 +33,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.core:math` | `awake-core-math` | Vectors, matrices, quaternions, rays, frustums, bounded volumes and camera lenses. |
 | `com.awakekt.awake.core:spatial` | `awake-core-spatial` | Uniform column spatial grid for AABB, sphere, frustum and bounded-volume queries. |
 | `com.awakekt.awake.core:lod` | `awake-core-lod` | Level-of-detail selection: screen coverage or distance with hysteresis, per-entity policy and a global bias. |
+| `com.awakekt.awake.core:camera` | `awake-core-camera` | Camera collision: keeps a follow camera's eye above the ground and in front of obstacles. |
 | `com.awakekt.awake.core:particles` | `awake-core-particles` | Structure-of-arrays particle simulation: spawn shapes, curves, burst schedules, `emit(count)` and ground bounce. |
 | `com.awakekt.awake.core:pool` | `awake-core-pool` | Frame-scoped object pools that reuse instances without allocating. |
 | `com.awakekt.awake.core:math2d` | `awake-core-math2d` | Screen-space 2D primitives: `Vec2`, `Rectangle`, `Size2D`, `Dp`. |
@@ -168,6 +169,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.compose:foundation` | `awake-compose-foundation` | Compose Foundation: `Row`, `Column`, `Box`, scrolling and layout modifiers. |
 | `com.awakekt.awake.compose:state` | `awake-compose-state` | State management integration for AwakeKt Compose. |
 | `com.awakekt.awake.compose:di` | `awake-compose-di` | Dependency injection bridge for AwakeKt Compose. |
+| `com.awakekt.awake.compose:assets` | `awake-compose-assets` | `LocalAssetSource`, `rememberAssetImage` and a per-scene image cache for AwakeKt Compose. |
 | `com.awakekt.awake.compose:localization` | `awake-compose-localization` | `LocalStrings`, `stringResource` and input labels for AwakeKt Compose. |
 | `com.awakekt.awake.compose:ui-testing` | `awake-compose-ui-testing` | Test helpers for AwakeKt Compose: semantics queries and a headless rasterizer. |
 | `com.awakekt.awake:tailwind` | `awake-tailwind` | Tailwind-style design tokens and modifiers for Compose Foundation. |

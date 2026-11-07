@@ -172,6 +172,28 @@ class CharacterController(
     private var blendedYaw = Float.NaN
     private var stepped = false
 
+    // The yaw game code asked for through steppedYaw, applied at the start of the next step; NaN when none.
+    private var facingYaw = Float.NaN
+
+    /**
+     * The yaw, in radians about +Y with 0 facing +Z, its last step left it facing: the stepped value the
+     * frames blend toward, not the blended `Transform.rotation.y` a frame shows. Once set, the yaw it was
+     * asked to face until the next step faces it. 0 before its first step.
+     *
+     * Setting it faces the character that way on its next step: [CharacterControllerSystem] turns its
+     * transform at the start of that step, records the yaw and blends to it between frames like a walking
+     * turn. This is how game code faces a [CharacterMotionMode.Free] character, which nothing else turns:
+     * a flight model sets it each step from a fixed system planned before the controller, so the step that
+     * runs next is the one that uses it. While [CharacterMotionMode.Grounded], the turn toward the intent
+     * starts from it. Must be finite. Run-time state, not saved with the scene.
+     */
+    var steppedYaw: Float
+        get() = if (facingYaw.isNaN()) currentYaw else facingYaw
+        set(value) {
+            require(value.isFinite()) { "steppedYaw must be finite: $value" }
+            facingYaw = value
+        }
+
     /** Whether it stood on walkable ground after its last move. Never while [motionMode] is free. */
     val isGrounded: Boolean
         get() = motionMode == CharacterMotionMode.Grounded && controller?.isGrounded ?: false
@@ -205,9 +227,16 @@ class CharacterController(
         previousYaw = currentYaw
     }
 
-    /** Puts back the yaw a frame's blend left in [transform], unless something else has turned it since. */
+    /**
+     * Puts back the yaw a frame's blend left in [transform], unless something else has turned it since,
+     * then faces it the [steppedYaw] game code asked for, if any.
+     */
     internal fun restoreSteppedYaw(transform: Transform) {
         if (stepped && transform.rotation.y == blendedYaw) transform.rotation.y = currentYaw
+        if (!facingYaw.isNaN()) {
+            transform.rotation.y = facingYaw
+            facingYaw = Float.NaN
+        }
     }
 
     /** Keeps the pose a step left in [transform] as the newest of the two the frames blend between. */

@@ -452,6 +452,38 @@ When a project is played with `awake:project:runtime`, `loadProject` reads every
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
 images yourself: `SceneCanvas(world, images = loadCanvasImages(scene, files))`.
 
+### Images in Compose UI
+
+A window drawn with Compose, rather than with canvas elements, asks for its art by path with
+`rememberAssetImage` from `awake:compose:assets`. It is null until the image has loaded, then the
+decoded image, so draw nothing, or a placeholder, until then:
+
+```kotlin title="A Compose window with its own frame art"
+context(_: Composer)
+fun InventoryWindow() {
+    val frame = rememberAssetImage("ui/window-frame.png")
+    Box(Modifier.size(240.dp, 160.dp)) {
+        if (frame != null) Image(frame, contentDescription = null, modifier = Modifier.fillMaxSize())
+        // The window's contents.
+    }
+}
+```
+
+- **No setup in a played project.** `awake:project:runtime` provides the project's files to the
+  scene's UI as `LocalAssetSource`, and a per-scene image cache as `LocalAssetImages`.
+- **Read once, off the frame.** The first ask reads and decodes the file in the scene's coroutine
+  scope; every later ask is a lookup that allocates nothing, on the desktop and the web alike.
+- **Shared with the canvas.** The cache starts with the images the scene's canvas elements name, so a
+  path both name is decoded once, and Compose draws the same image the canvas does.
+- **Freed on a scene switch.** What the last scene's UI asked for is dropped when the next scene
+  starts. A path the next scene asks for is read again.
+- **A missing path never throws.** It stays null and is logged once. `LocalAssetImages.current
+  ?.failure(path)` says why, for a window that shows a fallback.
+
+An app that runs its own Compose host provides both itself, and owns their lifetime:
+`ProvideAssets(files, AssetImages(files, scope)) { ... }`. Call `reset(images)` on the cache when its
+scene changes, passing the canvas images it should start from.
+
 ## Use a font
 
 A `Text`, `TextField` or `Button` draws its words in Roboto unless its `font` names another. A value
@@ -1180,6 +1212,120 @@ data class FrameTheme(
     @Serializable(with = ColorHexSerializer::class) val accent: Color = Color.White,
 )
 ```
+
+## Declarative canvas content
+
+A prefab plus typed handles is declarative only when it is built. After that, code keeps the canvas
+in step with the game by hand, and the prefab's structure is fixed. `canvasContent` makes canvas
+UI a function of state instead: `if`, `forEach` and `key` add, remove and reorder elements as the
+state changes. The elements are still canvas entities, laid out, followed, bound and drawn by the
+canvas as any other.
+
+It runs on AwakeKt Compose's own runtime, so there is no second UI framework. `key`, `remember` and
+`CompositionLocal`s work as they do in Compose.
+
+### Declare a HUD from state
+
+The reference sample is the showcase's Compose unit frame, ported to canvas elements. The state is
+plain data:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasUnitFrameSample.kt:unit-frame-state"
+```
+
+A widget is a function with parameters, made of element functions: `panel`, `text`, `image`, `bar`,
+`button`, and `element(kind, …)` for any other kind. Each one takes the same settings as
+`canvasPrefab`'s builder, `CanvasElementScope`, so there is one settings model. A leaf's block is
+its settings, and a panel's settings go in `settings = { … }` while its block declares its children:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasUnitFrameSample.kt:unit-frame"
+```
+
+`canvasContent` builds the HUD under a root entity, as a function of a `StateFlow` or a `Store`:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasUnitFrameSample.kt:party-hud"
+```
+
+- **When it runs.** `CanvasContentSystem`, one of the scene runtime's infrastructure systems, runs
+  the block again on a frame where state its last pass read has changed, and on no other frame. A
+  host that runs its own systems adds `CanvasContentSystem()` ahead of `TransformSystem`.
+- **What it follows.** Reads are tracked: the `StateFlow` or `Store` it was made from, any
+  `mutableStateOf` the block reads, and any flow it reads through `collectAsState()`
+  (`:awake:compose:state`). `canvasContent(world, root) { … }` takes no state and follows only what
+  the block reads. State it reads any other way, such as a plain `var`, is not seen: call
+  `recompose()` on the returned `CanvasContent` when that changes.
+- **What it writes.** A pass writes only the canvas components whose settings changed. Declaring
+  what the last pass declared writes nothing.
+- **Keys.** Wrap each item of a list in `key(item.id)`. A keyed item that moves keeps its entities
+  and draws in its new place, and one that goes is destroyed with everything under it.
+- **Order.** Elements draw in the order the block declares them. Content declared under a node draws
+  over what the scene already had there. The declared order is runtime state and is never saved.
+- **Disposing.** `dispose()` destroys what the block made and leaves its root.
+
+### Place a prefab
+
+Prefabs stay the format an editor opens and saves. A block places one where its state says, and
+binds the placed copy through its `CanvasParts` declaration:
+
+```kotlin title="Kotlin"
+key(member.id) {
+    prefab(unitFramePrefab, parts = { UnitFrameParts() }) {
+        name.text = member.name
+        health.value = member.health
+    }
+}
+```
+
+The copy is made once per place or `key` and destroyed with it. Its parts are resolved once per copy,
+and the block writes the overrides through them on each pass. `prefab(unitFramePrefab)` places a copy
+with nothing to bind.
+
+### Compose inside an element
+
+`compose { }` in an element's content draws ordinary Compose UI in that element's box:
+
+```kotlin title="Kotlin"
+canvasContent(world, root = hudRoot, state = partyState) { party ->
+    panel(id = "party", settings = { size(240.dp, 120.dp) }) {
+        compose { PartyFrames(party) }
+    }
+}
+```
+
+The canvas composes it where it draws the element: in the element's place in canvas order, under
+the elements inside it, with its alpha and its follow position. Compose layout applies inside the
+box only, and the canvas places the element itself. The pointer reaches the UI through the canvas's
+own hit testing, so an element drawn over it takes a tap first.
+
+The block and the UI behave as one composition in practice:
+- the block's state, and what it remembers, reach the UI as a closure;
+- the `CompositionLocal`s provided around `compose { }` are provided to the UI too, over the canvas's;
+- a `remember` inside the UI lives as long as the element.
+
+Control slots' `slotContent` map stays for prefabs authored in an editor. Code uses `compose { }`.
+
+### What it costs
+
+The sample's tests (`CanvasUnitFrameSampleTest`) measure the party HUD on the applier's counters:
+
+| Change | Entity writes | Entities made or destroyed |
+|---|---|---|
+| 60 frames with no new state | 0 | 0 |
+| One member's HP | 2 (the bar's fill and its label) | 0 |
+| 200 keyed frames reversed | 200 (each frame's sibling place, no component) | 0 |
+
+### Canvas content, a prefab, or Compose
+
+- **Canvas content:** in-game UI whose structure follows game state, such as party frames, buff rows
+  or a quest tracker. It is still canvas: it follows world entities, sorts with the scene and binds
+  to components.
+- **A canvas prefab:** UI an editor authors, themes or overrides, or a game changes without Kotlin.
+  Canvas content can place it and bind it.
+- **AwakeKt Compose:** menus, tools and screens around the game. Inside a canvas element, use
+  `compose { }` for a part a canvas element can't draw, such as a scrolling list or a text field
+  with Compose behaviour.
 
 ## Particles on a canvas
 

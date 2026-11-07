@@ -34,6 +34,8 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:render:testing"))
+            // The public app and scene DSL, to spawn a model as a game does.
+            implementation(project(":awake:scene:authoring"))
         }
     }
 }

@@ -522,6 +522,7 @@ private fun litShadow(
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
         val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure!!.x), worldPos), 1f.lit)
         val debugColor = debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded)
+        ditherFade(u.exposure!!.y)
         colorOutput(if (skinned) vec4(debugColor.xyz, color.w) else debugColor)
     }
 }

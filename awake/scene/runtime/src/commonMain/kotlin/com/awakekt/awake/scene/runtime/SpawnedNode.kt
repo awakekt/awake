@@ -11,9 +11,7 @@ import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneNodeInstance
 import com.awakekt.awake.scene.binding.destroy
-import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
-import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 
@@ -89,7 +87,10 @@ class SpawnedNode internal constructor(
  * a player arriving over the network, a monster a server spawns, a drop, a projectile.
  *
  * Place it with the node's own `transform`, or move its [SpawnedNode.root] after. A model the scene's
- * asset library can't resolve fails here, naming it. [SpawnedNode.despawn] takes the node out.
+ * asset library can't resolve fails here, naming it, and leaves the world as it found it: the node's
+ * entities are destroyed and what its renderers already held is released before the failure reaches
+ * the caller. A node that fails as it is instantiated, such as a component binding that throws, leaves
+ * no entity behind either. [SpawnedNode.despawn] takes the node out.
  */
 fun SceneAppLifecycleRuntime.spawn(
     node: SceneNode,
@@ -130,8 +131,17 @@ fun SceneAppLifecycleRuntime.spawn(
     componentRegistry: SceneComponentRegistry,
     attachNow: (SceneRenderableRequest) -> Boolean,
 ): SpawnedNode {
-    val scene = SceneDocument(nodes = listOf(node)).instantiate(world = world, componentRegistry = componentRegistry)
+    val scene = instantiateOrDiscard(node, world, componentRegistry)
     val (now, later) = scene.renderableRequests.partition(attachNow)
-    now.forEach { request -> world.attachRenderable(request, spec.renderableFactory(this, request)) }
-    return SpawnedNode(this, scene, later)
+    val spawned = SpawnedNode(this, scene, later)
+    // A renderer that fails to resolve takes the whole node out again, so no half-made node is left
+    // behind with nothing to despawn it (#1410); the failure still reaches the caller.
+    var attached = false
+    try {
+        now.forEach { request -> world.attachRenderable(request, spec.renderableFactory(this, request)) }
+        attached = true
+    } finally {
+        if (!attached) spawned.despawn()
+    }
+    return spawned
 }

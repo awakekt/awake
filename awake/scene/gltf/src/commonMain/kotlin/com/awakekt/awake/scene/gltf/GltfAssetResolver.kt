@@ -13,6 +13,7 @@ import com.awakekt.awake.asset.gltf.LoadedSkinnedScene
 import com.awakekt.awake.asset.gltf.bindRigidNode
 import com.awakekt.awake.asset.gltf.firstSkinnedAsset
 import com.awakekt.awake.asset.gltf.restTransform
+import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.asset.shaderpack.TexturedUniformLayout
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
@@ -66,6 +67,9 @@ class GltfAssetResolver(
     private val loadedScenes = mutableMapOf<String, LoadedSkinnedScene>()
     private val loadedStaticMeshes = mutableMapOf<String, MeshGeometry>()
     private val loadedMaterials = mutableMapOf<String, LoadedGltfMaterial>()
+
+    /** The factors of each static material with no base colour image, by the key `gltf-material:` names it with. */
+    private val untexturedMaterials = mutableMapOf<String, GltfMaterialParameters>()
     private val skinnedPartTextures = mutableMapOf<String, GpuImageSource>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
@@ -191,6 +195,7 @@ class GltfAssetResolver(
         lodLevels.forget(path)
         levelBases.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
+        untexturedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
@@ -219,13 +224,14 @@ class GltfAssetResolver(
             if (base == path || base.startsWith("$PRIMITIVE_MESH_PREFIX$path#")) loadedStaticMeshes.getOrPut(key) { geometry }
         }
         lodLevels.adopt(path, from.lodLevels)
-        from.loadedMaterials.forEach { (key, material) ->
-            if (key == path || key.startsWith("$path#")) loadedMaterials.getOrPut(key) { material }
-        }
-        from.skinnedPartTextures.forEach { (key, texture) ->
-            if (key.startsWith("$path#")) skinnedPartTextures.getOrPut(key) { texture }
-        }
+        loadedMaterials.adoptModel(from.loadedMaterials, path)
+        untexturedMaterials.adoptModel(from.untexturedMaterials, path)
+        skinnedPartTextures.adoptModel(from.skinnedPartTextures, path)
     }
+
+    /** Takes [from]'s entries for the model at [path], its own and its parts', keeping any this map already holds. */
+    private fun <T> MutableMap<String, T>.adoptModel(from: Map<String, T>, path: String) =
+        from.forEach { (key, value) -> if (key == path || key.startsWith("$path#")) getOrPut(key) { value } }
 
     /**
      * Starts loading the model file at [path] off the frame thread, in [scope], or joins the load of it
@@ -281,7 +287,7 @@ class GltfAssetResolver(
         primitives.forEachIndexed { index, primitive ->
             val materialKey = if (primitives.size == 1) path else "$path#$index"
             val material = primitive.toLoadedMaterial(::decodeTexture)
-            material?.let { loadedMaterials[materialKey] = it }
+            registerMaterial(materialKey, material, primitive)
             val meshKey = if (primitives.size == 1) path else "$PRIMITIVE_MESH_PREFIX$path#$index"
             loadedStaticMeshes[meshKey] = listOf(primitive).toStaticGeometry(textured = material != null)
             slots += GltfMaterialSlot(
@@ -292,6 +298,14 @@ class GltfAssetResolver(
         }
         loadedMaterialSlots[path] = slots
         preloadLevels(path, bytes, slots)
+    }
+
+    /**
+     * Keeps [material] under [key], or, for a primitive with no base colour image, its factors alone, so
+     * `gltf-material:<key>` resolves either way: glTF allows a material with no textures (#1409).
+     */
+    private fun registerMaterial(key: String, material: LoadedGltfMaterial?, primitive: LoadedPrimitive) {
+        if (material != null) loadedMaterials[key] = material else untexturedMaterials[key] = primitive.toMaterialParameters()
     }
 
     /** The model's `MSFT_lod` levels, for each mesh its slots name and for the whole model, when it has any. */
@@ -322,7 +336,7 @@ class GltfAssetResolver(
                 // Drawn and textured as a static model's primitive is, so it takes the same slot.
                 is GltfPart.Static -> {
                     val material = part.primitive.toLoadedMaterial(::decodeTexture)
-                    material?.let { loadedMaterials[key] = it }
+                    registerMaterial(key, material, part.primitive)
                     GltfMaterialSlot(
                         mesh = "$PRIMITIVE_MESH_PREFIX$key",
                         material = material?.let { "gltf-material:$key" } ?: "lit-shadow",
@@ -449,6 +463,10 @@ class GltfAssetResolver(
      * runtime's renderer. Its textures go through `createImageMaterial`, so a browser's WebGPU copies them
      * on the GPU (awakekt/awake#1184) and every other renderer uploads their CPU pixels.
      *
+     * A static material with no base colour image resolves to the plain lit material its untextured
+     * geometry draws with; its base colour is in that geometry's vertex colours, and [materialDefaults]
+     * gives its other factors.
+     *
      * An image that fails as its material is made, such as a Basis Universal one whose transcode fails
      * there (#1261), fails that material alone: it draws plain white under the model's own factors, as a
      * model whose images fail to load draws untextured, and the model's other materials keep theirs.
@@ -463,6 +481,8 @@ class GltfAssetResolver(
             renderer.imageMaterialOrPlain(name, TexturedUniformLayout.total) {
                 createImageMaterial(loaded.texture, uniformFloatCount = TexturedUniformLayout.total, pbrImages = loaded.pbrImages)
             }
+        } ?: name.removePrefix("gltf-material:").takeIf { it in untexturedMaterials }?.let {
+            renderer.createMaterial(LitShadowUniformLayout)
         }
         else -> null
     }
@@ -487,7 +507,7 @@ class GltfAssetResolver(
     /** A glTF material's own factors and alpha mode, one shared instance per material. */
     override fun materialDefaults(name: String): PbrMaterial? {
         val path = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:")
-        val parameters = path?.let { loadedMaterials[it]?.parameters } ?: return null
+        val parameters = path?.let { loadedMaterials[it]?.parameters ?: untexturedMaterials[it] } ?: return null
         return materialDefaults.getOrPut(path) { parameters.toPbrMaterial() }
     }
 
