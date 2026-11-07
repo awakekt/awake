@@ -8,6 +8,8 @@ package com.awakekt.awake.scene.navigation
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.grid.NavGrid
+import com.awakekt.awake.navigation.walkable.NavSurfaceTile
+import com.awakekt.awake.navigation.walkable.toNavSurface
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -23,6 +25,9 @@ class NavigationGrid(
 ) {
     /** The grid agents route over, built once from [source]. */
     val grid: NavGrid = source.toGrid()
+
+    /** The grid's clearance surface, which [NavigationAgentSystem] walks agents of any radius over. Built on first use. */
+    val surface: NavSurfaceTile by lazy { grid.tile.toNavSurface() }
 }
 
 /** Binds [NavigationGrid] to [SceneNavigation]. */

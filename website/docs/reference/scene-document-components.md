@@ -58,6 +58,7 @@ registers it.
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
 | [`navigation`](#navigation) | `NavigationGrid` | `com.awakekt.awake.scene:navigation` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
+| [`navigation_agent`](#navigation_agent) | `NavigationAgent` | `com.awakekt.awake.scene:navigation` | `registerAiBehaviors()` | [Navigation](../guides/navigation.md) |
 | [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:particles` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
 | [`particle_emitter_2d`](#particle_emitter_2d) | `ParticleEmitter2D` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md#2d-particles-scene2d) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
@@ -91,10 +92,10 @@ registers it.
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
-| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation`, `behavior_tree`, `state_machine`, `factions`, `perceivable`, `perceiver` |
+| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `behavior_tree`, `state_machine`, `factions`, `perceivable`, `perceiver` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
 | `SceneComponentRegistry.registerAudio()` | `com.awakekt.awake.scene:audio` | `audio_source` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
@@ -845,6 +846,26 @@ by the host; put it on any node, and only the first in a scene is used.
 | `cellSize` | number | `1` | World size of one cell. Above 0. |
 | `originX` | number | `0` | World x of the centre of cell (0, 0). |
 | `originZ` | number | `0` | World z of the centre of cell (0, 0). |
+
+## `navigation_agent`
+
+Walks its node to a destination around the cells the scene's `navigation` blocks, re-planning when it
+is pushed off its route or stops making progress. `SceneNavigationAgent`. With a `movement_control`
+whose driver is `Agent` it walks through the control, so a `character_controller` carries it; without
+one it moves by its transform. Code sends it somewhere with `NavigationAgent.moveTo`. A scene with a
+`navigation_agent` and no `navigation` does not load. See [Navigation](../guides/navigation.md).
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `radius` | number | `0.4` | Metres from its centre to its side; gaps narrower than twice this are closed to it. Not negative. |
+| `speed` | number | `3` | Metres per second. Above 0. |
+| `arriveDistance` | number | `0.25` | Metres from the destination that count as arriving. Above 0. |
+| `waypointRadius` | number | `0.35` | Metres from a corner that count as reaching it. Above 0. |
+| `repathInterval` | number | `2` | Seconds between re-plans while walking; 0 re-plans only when stuck. Not negative. |
+| `stuckSeconds` | number | `0.75` | Seconds without progress before it re-plans. Above 0. |
+| `stuckDistance` | number | `0.1` | Metres it must move in `stuckSeconds` to count as progress. Not negative. |
+| `destinationX` | number | none | World x it heads for when the scene starts. Given with `destinationZ`. |
+| `destinationZ` | number | none | World z it heads for when the scene starts. Given with `destinationX`. |
 
 ## `particle_emitter`
 

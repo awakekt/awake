@@ -25,6 +25,10 @@ kotlin {
             api(project(":awake:ecs"))
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
+            // NavigationAgentSystem steers an agent through its MovementControl and reads its Transform.
+            api(project(":awake:scene:controls"))
+            api(project(":awake:scene:scene-core"))
+            implementation(project(":awake:core:math"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -39,6 +43,6 @@ awakeSceneComponents {
 mavenPublishing {
     pom {
         name.set("Awake Scene Navigation")
-        description.set("The navigation scene component: the walkable grid a scene document carries, and its binding")
+        description.set("The navigation scene components: the walkable grid a scene document carries, agents that walk it, and their bindings")
     }
 }
