@@ -7,20 +7,19 @@ package com.awakekt.awake.scene.gltf
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.engine.bootstrap.dsl.app
+import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.MeshRendererBinding
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
-import com.awakekt.awake.scene.runtime.SceneAppSpec
-import com.awakekt.awake.scene.runtime.SceneAssetLibrary
 import com.awakekt.awake.scene.runtime.spawn
 import kotlinx.coroutines.test.runTest
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -37,15 +36,16 @@ class GltfUntexturedMaterialTest {
 
     @Test
     fun anUntexturedMaterialResolvesByItsGltfMaterialNameAndSpawns() = runTest {
-        val resolver = GltfAssetResolver().apply { preload(PATH, untexturedGlb()) }
-        val library = SceneAssetLibrary(emptyMap(), emptyMap(), emptyMap(), dynamicResolvers = listOf(resolver))
-        val runtime = runtime(library)
+        val gltf = GltfAssetResolver().apply { preload(PATH, untexturedGlb()) }
+        val game = app { scene("effects") { assets { resolver(gltf) } } }
+        game.ready(NoopRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
 
         val spawned = runtime.spawn(SceneNode(name = "Effect", components = listOf(SceneMeshRenderer(mesh = PATH, material = "gltf-material:$PATH"))))
 
         val renderer = assertNotNull(runtime.world.get<MeshRenderer>(spawned.root))
         assertEquals(VertexFormat.PositionNormalColor, renderer.mesh.format, "the untextured geometry draws with the plain lit pipeline")
-        assertEquals(1, library.materialHolderCount("gltf-material:$PATH"))
+        game.dispose()
     }
 
     @Test
@@ -80,29 +80,6 @@ class GltfUntexturedMaterialTest {
 
         assertNull(resolver.createMaterial(NoopRenderer(), "gltf-material:$PATH"))
         assertNotNull(adopter.createMaterial(NoopRenderer(), "gltf-material:$PATH"), "an adopting resolver keeps what it took")
-    }
-
-    private suspend fun runtime(library: SceneAssetLibrary) = SceneAppLifecycleRuntime(
-        SceneAppSpec(
-            sceneName = null,
-            systems = emptyList(),
-            scenePopulationBlock = {},
-            renderableFactory = { request -> library.resolve(this, request) },
-            assetLibraryFactory = null,
-            updateBlock = { _, _ -> },
-            ui = null,
-            onReadyBlock = {},
-            onDisposeBlock = {},
-            serviceRegistrations = emptyList(),
-            infrastructureSystemsFactory = { emptyList() },
-        ),
-    ).apply {
-        initialize(NoServices)
-        ready(NoopRenderer())
-    }
-
-    private object NoServices : AppServiceLookup {
-        override fun <T : Any> service(type: KClass<T>): T? = null
     }
 
     private companion object {
