@@ -10,9 +10,10 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 
 /**
- * Recomposes each block of declarative canvas content made from a state, [canvasContent] with a
- * `StateFlow` or a `Store`, on a frame where that state holds a new value; on a frame where none
- * does, it compares one reference per block and writes nothing.
+ * Recomposes each block of declarative canvas content, [canvasContent], on a frame where tracked
+ * state its last pass read has changed: a `StateFlow` or `Store` it was made from, a
+ * `mutableStateOf` it read, or a flow it read through `collectAsState()`. On a frame where none
+ * has, it checks each block's reads and writes nothing.
  *
  * It runs the blocks on the frame, as every other system does, so content never changes the world
  * from another thread. Run it before the systems that read the canvas, such as `TransformSystem`;
@@ -24,7 +25,7 @@ class CanvasContentSystem : System {
     }
 }
 
-/** The state-driven content blocks declared under one root; runtime only, never saved. */
+/** The content blocks declared under one root; runtime only, never saved. */
 internal class CanvasContents {
     private val blocks = ArrayList<CanvasContent>()
 
