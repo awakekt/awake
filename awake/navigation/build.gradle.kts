@@ -20,6 +20,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:core:color"))
+            // BinaryReader, for NavSurfaceCodec: a baked surface is cached as bytes.
+            implementation(project(":awake:core:io"))
             // The ECS types PathRequest and PathRequestSystem use.
             api(project(":awake:ecs"))
             // WorldCellCoord and AsyncWorldCellStreamListener: a streamed grid is keyed by cell,
