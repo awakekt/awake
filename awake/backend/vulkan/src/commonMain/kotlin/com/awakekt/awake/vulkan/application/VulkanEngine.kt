@@ -656,9 +656,11 @@ open class VulkanEngine(
                 renderer = renderer,
                 viewportSize = { swapchainManager.extent.width.toFloat() to swapchainManager.extent.height.toFloat() },
                 // Physical framebuffer pixels over logical window points -- the real display
-                // scale (1x/2x/3x) on a platform that draws the distinction (desktop today; see
-                // windowLogicalExtent's per-platform doc comments). Falls back to unscaled
-                // wherever a platform reports no logical size at all, and with no window.
+                // scale (1x/2x/3x) on a platform that draws the distinction (macOS Retina, Wayland;
+                // see windowLogicalExtent's per-platform doc comments). Falls back to unscaled
+                // wherever a platform reports no logical size at all, and with no window. The
+                // desktop host replaces it with the OS content scale through setDensity, which
+                // also covers Windows and X11, where the window is in pixels and this ratio is 1.
                 density = {
                     val logical = if (headless == null) windowLogicalExtent(window) else null
                     if (logical != null && logical.width > 0) {

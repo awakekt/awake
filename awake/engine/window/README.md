@@ -29,7 +29,9 @@ themselves drive only editing (Backspace, Delete, Enter, the arrows, Home and En
 and X (Cmd on macOS). Ctrl with Alt is AltGr on Windows, so it types its character rather than
 taking a shortcut.
 
-Each reports its display to the lifecycle: the density, the safe area in dp (Android's system
+Each reports its display to the lifecycle: the density (on desktop the OS display scale, from GLFW's
+window content scale and followed through its content scale callback as the window moves between
+monitors; `DesktopWindowOptions.displayScale = DesktopDisplayScale.Unscaled` keeps it at 1), the safe area in dp (Android's system
 bars and display cutout, iOS's view safe area, the browser's `env(safe-area-inset-*)`; a desktop
 window has none), and the real dots per inch where the platform can tell (Android's display
 metrics, and on desktop the monitor the window is on, from its video mode and the physical size it

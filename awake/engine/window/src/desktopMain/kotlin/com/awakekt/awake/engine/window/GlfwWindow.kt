@@ -138,6 +138,22 @@ object GlfwWindow {
      */
     external fun glfwGetWindowDpi(window: Long): Float
 
+    /**
+     * [window]'s content scale: the OS display scale of the monitor it is on, such as 1.25 at
+     * Windows' 125% or 2 on a Retina panel. 0 when GLFW cannot tell.
+     */
+    external fun glfwGetWindowContentScale(window: Long): Float
+
+    /**
+     * Starts noting when [window]'s content scale changes, for [glfwConsumeContentScaleChanged]:
+     * Windows' `WM_DPICHANGED`, or a move to a monitor with another scale. Call once after
+     * [glfwCreateWindow].
+     */
+    external fun glfwSetContentScaleCallback(window: Long)
+
+    /** Whether [window]'s content scale changed since the last call, then cleared. */
+    external fun glfwConsumeContentScaleChanged(window: Long): Boolean
+
     /** Whether [window] is on a monitor (fullscreen) rather than windowed. */
     external fun glfwIsWindowFullscreen(window: Long): Boolean
 

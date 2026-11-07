@@ -20,6 +20,13 @@ package com.awakekt.awake.engine.window
 class DesktopWindowOptions {
     /** Whether the window opens with the OS title bar and border. Change it later with [setWindowDecoration]. */
     var decoration: WindowDecoration = WindowDecoration.System
+
+    /**
+     * Where the UI density comes from: the OS display scale by default, followed as the window moves
+     * between monitors, or [DesktopDisplayScale.Unscaled] for one framebuffer pixel per dp. Reported
+     * through [runDesktopWindow]'s `onDensity`.
+     */
+    var displayScale: DesktopDisplayScale = DesktopDisplayScale.System
 }
 
 /** A [DesktopWindowOptions] with [configure] applied to the defaults. */

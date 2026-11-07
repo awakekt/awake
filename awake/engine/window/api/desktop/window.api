@@ -1,3 +1,11 @@
+public final class com/awakekt/awake/engine/window/DesktopDisplayScale : java/lang/Enum {
+	public static final field System Lcom/awakekt/awake/engine/window/DesktopDisplayScale;
+	public static final field Unscaled Lcom/awakekt/awake/engine/window/DesktopDisplayScale;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/DesktopDisplayScale;
+	public static fun values ()[Lcom/awakekt/awake/engine/window/DesktopDisplayScale;
+}
+
 public final class com/awakekt/awake/engine/window/DesktopHostKt {
 	public static final fun desktopHostActions ()Lcom/awakekt/awake/engine/window/HostActions;
 	public static final fun desktopHostActions (J)Lcom/awakekt/awake/engine/window/HostActions;
@@ -30,10 +38,12 @@ public final class com/awakekt/awake/engine/window/DesktopRunLimits$Companion {
 }
 
 public final class com/awakekt/awake/engine/window/DesktopWindowKt {
-	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public static final synthetic fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public static final synthetic fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
 	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/engine/window/DesktopWindowOptions;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
@@ -41,7 +51,9 @@ public final class com/awakekt/awake/engine/window/DesktopWindowKt {
 public final class com/awakekt/awake/engine/window/DesktopWindowOptions {
 	public fun <init> ()V
 	public final fun getDecoration ()Lcom/awakekt/awake/engine/window/WindowDecoration;
+	public final fun getDisplayScale ()Lcom/awakekt/awake/engine/window/DesktopDisplayScale;
 	public final fun setDecoration (Lcom/awakekt/awake/engine/window/WindowDecoration;)V
+	public final fun setDisplayScale (Lcom/awakekt/awake/engine/window/DesktopDisplayScale;)V
 }
 
 public final class com/awakekt/awake/engine/window/DesktopWindowOptionsKt {
@@ -81,6 +93,7 @@ public final class com/awakekt/awake/engine/window/GlfwTextInputBridgeKt {
 
 public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public static final field INSTANCE Lcom/awakekt/awake/engine/window/GlfwWindow;
+	public final fun glfwConsumeContentScaleChanged (J)Z
 	public final fun glfwConsumePinchScale (J)D
 	public final fun glfwConsumeScrollDeltaX (J)D
 	public final fun glfwConsumeScrollDeltaY (J)D
@@ -97,6 +110,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwGetMouseButton (JI)I
 	public final fun glfwGetWindowAttrib (JI)I
 	public final fun glfwGetWindowBounds (J)[I
+	public final fun glfwGetWindowContentScale (J)F
 	public final fun glfwGetWindowDpi (J)F
 	public final fun glfwGetWindowHeight (J)I
 	public final fun glfwGetWindowWidth (J)I
@@ -105,6 +119,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwPollEvents ()V
 	public final fun glfwSetCharCallback (J)V
 	public final fun glfwSetClipboardString (JLjava/lang/String;)V
+	public final fun glfwSetContentScaleCallback (J)V
 	public final fun glfwSetCursorImage (JI[BIIII)V
 	public final fun glfwSetCursorShape (JI)V
 	public final fun glfwSetScrollCallback (J)V

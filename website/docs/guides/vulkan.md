@@ -33,8 +33,41 @@ All three also take:
 | `afterLoop` | nothing | Runs once when the window closes, before the engine is disposed. |
 | `cursor` | `null` | Returns the pointer shape to show each frame. `null` leaves the cursor alone. |
 
+The `plan` and `application` overloads also take `windowOptions`, a `DesktopWindowOptions` from
+`awake:engine:window`, for how the window opens.
+
 The app's window must ask for the `vulkan()` or `default()` backend; any other choice fails before the
 window opens.
+
+## Follow the display scale
+
+On desktop the UI density, framebuffer pixels per dp, follows the OS display scale of the monitor the
+window is on, as a browser's `devicePixelRatio` does on the web, so the two builds lay the UI out alike.
+
+| Display | Density |
+| --- | --- |
+| Windows at 100%, 125%, 150% | 1, 1.25, 1.5 |
+| macOS, a Retina panel | 2 |
+| Linux X11, `Xft.dpi: 120` or `144` | 1.25 or 1.5 |
+| Linux Wayland | the framebuffer's scale |
+
+The density changes while the app runs when the window moves to a monitor with another scale, or when
+the user changes the scale (Windows' `WM_DPICHANGED`); the next frame lays out at the new density. Text
+stays sharp at a fractional density: its em rounds to whole physical pixels and each line snaps to the
+pixel grid, so 12 sp at 125% is 15 pixels drawn 1:1. The window keeps the size `WindowConfig` asks for in
+pixels; only the UI inside it scales.
+
+To draw the UI at native pixels instead, one framebuffer pixel per dp on every display:
+
+```kotlin
+runVulkanDesktopGame(
+    game,
+    plan,
+    windowOptions = desktopWindowOptions { displayScale = DesktopDisplayScale.Unscaled },
+)
+```
+
+A capture run (`-Dawake.capture`) has no window and keeps density 1.
 
 ## Show the UI's pointer
 

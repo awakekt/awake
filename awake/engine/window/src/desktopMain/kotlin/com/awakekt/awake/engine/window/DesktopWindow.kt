@@ -59,6 +59,10 @@ fun runDesktopWindow(
 /**
  * [runDesktopWindow] opened with [options], such as frameless with
  * `desktopWindowOptions { decoration = WindowDecoration.None }`. Every other parameter is the same.
+ *
+ * [onDensity] hears the UI density, framebuffer pixels per dp, that [options]' `displayScale` asks
+ * for: after [onCreate], and again whenever the OS display scale changes, as when the window moves to
+ * a monitor with another scale. Pass it to the engine's `setDensity`.
  */
 @Suppress("LongParameterList")
 fun runDesktopWindow(
@@ -74,6 +78,7 @@ fun runDesktopWindow(
     cursorImage: (() -> CursorImage?)? = null,
     frames: Int? = null,
     onDpi: (dpi: Float) -> Unit = {},
+    onDensity: (density: Float) -> Unit = {},
 ) {
     require(frames == null || frames > 0) { "A run lasts at least one frame; was $frames." }
     check(GlfwWindow.glfwInit()) { "glfwInit failed" }
@@ -94,7 +99,9 @@ fun runDesktopWindow(
         try {
             onCreate(window)
             val dpi = MonitorDpi(window, onDpi)
-            runFrames(window, game, onFrame, pollInput, beforeFrame = { dpi.check(); beforeFrame() }, cursor, cursorImage, frames)
+            val density = DisplayDensity(options.displayScale, glfwDisplayScaleReader(window), onDensity)
+            val checkDisplay = { dpi.check(); density.check() }
+            runFrames(window, game, onFrame, pollInput, beforeFrame = { checkDisplay(); beforeFrame() }, cursor, cursorImage, frames)
         } finally {
             afterLoop()
             onDispose()
@@ -104,6 +111,27 @@ fun runDesktopWindow(
         GlfwWindow.glfwTerminate()
     }
 }
+
+/** The options [runDesktopWindow] as it was before `onDensity`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Suppress("LongParameterList")
+fun runDesktopWindow(
+    game: AwakeAppLifecycle,
+    options: DesktopWindowOptions,
+    onCreate: (window: Long) -> Unit,
+    onFrame: (deltaSeconds: Float) -> Unit,
+    onDispose: () -> Unit,
+    pollInput: (window: Long, input: Input) -> Unit = ::pollGlfwInput,
+    beforeFrame: () -> Unit = {},
+    afterLoop: () -> Unit = {},
+    cursor: (() -> PointerCursor)? = null,
+    cursorImage: (() -> CursorImage?)? = null,
+    frames: Int? = null,
+    onDpi: (dpi: Float) -> Unit = {},
+) = runDesktopWindow(
+    game, options, onCreate, onFrame, onDispose, pollInput, beforeFrame, afterLoop, cursor, cursorImage, frames,
+    onDpi, onDensity = {},
+)
 
 /** [runDesktopWindow] as it was before `cursorImage`: hidden, and kept so a consumer compiled against it still links. */
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -163,37 +191,5 @@ private fun runFrames(
         // A custom image, when the app asks for one this frame, wins over the system shape.
         val image = cursorImage?.invoke()
         if (image != null) applyCustomCursor(window, image) else cursor?.let { applyUiCursor(window, it()) }
-    }
-}
-
-/**
- * Reports the dots per inch of the monitor [window] is on to [onDpi] when it changes: at once, then
- * every [CHECK_EVERY] frames, as a window dragged to another monitor needs. A window library built
- * before it could tell reports nothing.
- */
-private class MonitorDpi(private val window: Long, private val onDpi: (Float) -> Unit) {
-    private var frames = 0
-    private var reported = Float.NaN
-
-    init {
-        check(force = true)
-    }
-
-    fun check(force: Boolean = false) {
-        if (!force && ++frames % CHECK_EVERY != 0) return
-        val dpi = try {
-            GlfwWindow.glfwGetWindowDpi(window)
-        } catch (_: UnsatisfiedLinkError) {
-            0f
-        }
-        if (dpi != reported) {
-            reported = dpi
-            onDpi(dpi)
-        }
-    }
-
-    private companion object {
-        /** About a second at 60 frames a second: soon enough after a drag, and a negligible cost. */
-        const val CHECK_EVERY = 60
     }
 }

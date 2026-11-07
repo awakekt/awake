@@ -21,7 +21,8 @@ add_library(awake-window SHARED
         ../src/main/cpp/GlfwWindow_native.cpp
         ../src/main/cpp/GlfwGamepad_jni.cpp
         ../src/main/cpp/GlfwFullscreen_jni.cpp
-        ../src/main/cpp/GlfwWindowFrame_jni.cpp)
+        ../src/main/cpp/GlfwWindowFrame_jni.cpp
+        ../src/main/cpp/GlfwContentScale_jni.cpp)
 
 target_include_directories(awake-window PRIVATE
         ${JNI_INCLUDE_DIRS}
