@@ -18,10 +18,13 @@ import kotlin.test.assertTrue
  *
  * Two bands measure it. Sprites above and below the middle, more than [OFF_AXIS] world units from
  * y = 0, exist only if the ring is tilted; the centre square, well inside [RING_RADIUS], holds none
- * of a ring's sprites. Negative control, measured on lavapipe at 128 px on both backends: with
- * `ParticleEmitter` never setting the simulation's `orientSpawnShape`, the ring stays horizontal and is
- * seen edge on, so the off-axis bands hold NEGATIVE_CONTROL_OFF_AXIS red pixels and the centre
- * NEGATIVE_CONTROL_CENTRE, and the tilt assertions fail.
+ * of a ring's sprites. Measured on lavapipe at 128 px, identical on both backends: the tilted ring
+ * leaves 1213 red pixels off-axis and none in the centre (1803 in all).
+ *
+ * Negative control, measured the same way: with the simulation's `orientSpawnShape` left unset (the
+ * scene drawn with `orientSpawnRing = false`, which is what `ParticleEmitter` passes it), the ring stays
+ * horizontal and is seen edge on as a band across the middle, so the off-axis bands hold 0 red pixels
+ * and the centre 304 (672 in all), and both assertions fail.
  */
 class ParticleSpawnRingParityTest {
     @Test
@@ -36,24 +39,6 @@ class ParticleSpawnRingParityTest {
             )
         }
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
-    }
-
-    // TEMPORARY measurement probe, removed before review: prints the counts for the tilted ring and
-    // for the negative control (orientSpawnRing off, i.e. the simulation never gets orientSpawnShape).
-    @Test
-    fun measurementProbe() {
-        val lines = BACKEND_ORDER.map { backend ->
-            val renderer = session(backend).renderer
-            val counts = listOf(true, false).joinToString(" | ") { tilted ->
-                val frame = renderer.renderTiltedSpawnRingScene(SCENE_SIZE, orientSpawnRing = tilted)
-                val offAxis = frame.redWhere { _, y -> abs(y) > OFF_AXIS }
-                val centre = frame.redWhere { x, y -> abs(x) < CENTRE && abs(y) < CENTRE }
-                val all = frame.redWhere { _, _ -> true }
-                "tilted=$tilted offAxis=$offAxis centre=$centre allRed=$all"
-            }
-            "PROBE $backend: $counts"
-        }
-        kotlin.test.fail(lines.joinToString("\n"))
     }
 
     // Counts red pixels whose centre, in world units (y up), satisfies [where].
