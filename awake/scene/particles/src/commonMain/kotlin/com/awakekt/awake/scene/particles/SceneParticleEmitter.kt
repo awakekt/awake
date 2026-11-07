@@ -121,6 +121,86 @@ data class SceneParticleEmitter(
     val spin: SceneParticleSpin? = null,
     val space: ParticleSpace = ParticleSpace.World,
 ) : SceneComponent {
+    /** [SceneParticleEmitter] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        texture: String,
+        maxParticles: Int = 64,
+        spawnRate: Float = 10f,
+        lifetime: Float = 1f,
+        startAlpha: Float = 1f,
+        scale: Float = 0.2f,
+        endScale: Float? = null,
+        velocity: SceneVec3 = SceneVec3(0f, 1f, 0f),
+        velocityJitter: Float = 0f,
+        coneHalfAngleDegrees: Float? = null,
+        spawnRadius: Float = 0f,
+        radialSpeed: Float = 0f,
+        color: SceneColor = SceneColor(),
+        endColor: SceneColor? = null,
+        frameCount: Int = 1,
+        frameRate: Float = 8f,
+        additive: Boolean = false,
+        facing: ParticleFacing = ParticleFacing.Camera,
+        acceleration: SceneVec3 = SceneVec3(0f, 0f, 0f),
+        inheritOrientation: Boolean = false,
+        alphaCurve: SceneParticleAlphaCurve? = null,
+        burstCycle: SceneParticleBurstCycle? = null,
+        turbulence: Float = 0f,
+        turbulenceFrequency: Float = 1f,
+        convergeToOrigin: Boolean = false,
+        stretchWithVelocity: Boolean = false,
+        stretchFactor: Float = 0.05f,
+        burstCount: Int? = null,
+        ground: SceneParticleGround? = null,
+        spin: SceneParticleSpin? = null,
+    ) : this(
+        texture, maxParticles, spawnRate, lifetime, startAlpha, scale, endScale, velocity, velocityJitter,
+        coneHalfAngleDegrees, spawnRadius, radialSpeed, color, endColor, frameCount, frameRate, additive,
+        facing, acceleration, inheritOrientation, alphaCurve, burstCycle, turbulence, turbulenceFrequency,
+        convergeToOrigin, stretchWithVelocity, stretchFactor, burstCount, ground, spin, ParticleSpace.World,
+    )
+
+    /** [copy] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        texture: String = this.texture,
+        maxParticles: Int = this.maxParticles,
+        spawnRate: Float = this.spawnRate,
+        lifetime: Float = this.lifetime,
+        startAlpha: Float = this.startAlpha,
+        scale: Float = this.scale,
+        endScale: Float? = this.endScale,
+        velocity: SceneVec3 = this.velocity,
+        velocityJitter: Float = this.velocityJitter,
+        coneHalfAngleDegrees: Float? = this.coneHalfAngleDegrees,
+        spawnRadius: Float = this.spawnRadius,
+        radialSpeed: Float = this.radialSpeed,
+        color: SceneColor = this.color,
+        endColor: SceneColor? = this.endColor,
+        frameCount: Int = this.frameCount,
+        frameRate: Float = this.frameRate,
+        additive: Boolean = this.additive,
+        facing: ParticleFacing = this.facing,
+        acceleration: SceneVec3 = this.acceleration,
+        inheritOrientation: Boolean = this.inheritOrientation,
+        alphaCurve: SceneParticleAlphaCurve? = this.alphaCurve,
+        burstCycle: SceneParticleBurstCycle? = this.burstCycle,
+        turbulence: Float = this.turbulence,
+        turbulenceFrequency: Float = this.turbulenceFrequency,
+        convergeToOrigin: Boolean = this.convergeToOrigin,
+        stretchWithVelocity: Boolean = this.stretchWithVelocity,
+        stretchFactor: Float = this.stretchFactor,
+        burstCount: Int? = this.burstCount,
+        ground: SceneParticleGround? = this.ground,
+        spin: SceneParticleSpin? = this.spin,
+    ): SceneParticleEmitter = SceneParticleEmitter(
+        texture, maxParticles, spawnRate, lifetime, startAlpha, scale, endScale, velocity, velocityJitter,
+        coneHalfAngleDegrees, spawnRadius, radialSpeed, color, endColor, frameCount, frameRate, additive,
+        facing, acceleration, inheritOrientation, alphaCurve, burstCycle, turbulence, turbulenceFrequency,
+        convergeToOrigin, stretchWithVelocity, stretchFactor, burstCount, ground, spin, space,
+    )
+
     override fun validate(path: String): List<SceneValidationIssue> =
         (basicProblems() + motionProblems() + shapeProblems()).map { SceneValidationIssue(path, "particle_emitter.$it") }
 

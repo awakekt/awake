@@ -81,7 +81,43 @@ data class ParticleMotion(
     val acceleration: Vec3f = Vec3f(0f, 0f, 0f),
     val inheritOrientation: Boolean = false,
     val space: ParticleSpace = ParticleSpace.World,
-)
+) {
+    /** [ParticleMotion] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        baseVelocity: Vec3f = Vec3f(0f, 1f, 0f),
+        velocityJitter: Float = 0f,
+        coneHalfAngleDegrees: Float? = null,
+        spawnRadius: Float = 0f,
+        convergeToOrigin: Boolean = false,
+        turbulence: Float = 0f,
+        turbulenceFrequency: Float = 1f,
+        radialSpeed: Float = 0f,
+        acceleration: Vec3f = Vec3f(0f, 0f, 0f),
+        inheritOrientation: Boolean = false,
+    ) : this(
+        baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
+        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, ParticleSpace.World,
+    )
+
+    /** [copy] as it was before [space]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        baseVelocity: Vec3f = this.baseVelocity,
+        velocityJitter: Float = this.velocityJitter,
+        coneHalfAngleDegrees: Float? = this.coneHalfAngleDegrees,
+        spawnRadius: Float = this.spawnRadius,
+        convergeToOrigin: Boolean = this.convergeToOrigin,
+        turbulence: Float = this.turbulence,
+        turbulenceFrequency: Float = this.turbulenceFrequency,
+        radialSpeed: Float = this.radialSpeed,
+        acceleration: Vec3f = this.acceleration,
+        inheritOrientation: Boolean = this.inheritOrientation,
+    ): ParticleMotion = ParticleMotion(
+        baseVelocity, velocityJitter, coneHalfAngleDegrees, spawnRadius, convergeToOrigin, turbulence,
+        turbulenceFrequency, radialSpeed, acceleration, inheritOrientation, space,
+    )
+}
 
 /** How a particle looks over its life. [startColor]/[endColor] linearly interpolate per
  * particle over its own age (constant color when equal, the default). [frameCount] treats the
