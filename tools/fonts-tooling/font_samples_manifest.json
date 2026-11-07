@@ -1,6 +1,6 @@
 {
   "_comment": "Single source of truth for the font-fidelity harness. Consumed by tools/fonts-tooling/capture_font_reference.py (renders each sample in Chromium with the real Roboto TTF) and by FontFidelityTest (renders the same sample through Awake's atlas pipeline and compares). Add a row here rather than editing either side. 'id' names the PNG; 'text' is rendered verbatim; 'sizePx' is the font size in CSS pixels, matched by the Kotlin side's glyph size.",
-  "fontFile": "awake/engine/ui/ui-core/src/commonMain/resources/fonts/Roboto-Regular.ttf",
+  "fontFile": "awake/ui/font-atlas-generator/fonts/Roboto-Regular.ttf",
   "canvas": { "width": 640, "height": 96, "originX": 16, "baselineY": 64 },
   "samples": [
     {

@@ -34,7 +34,7 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * shadcn's `Field` family: the anatomy a labelled control is assembled from.
  *
  * Ten parts, matching upstream's ten exports. **Not** the seven `shadcnFieldTextField`-style
- * composites the `ui-core` recipes carry: those have no counterpart upstream and existed because a
+ * composites the removed `ui-core` recipes carried: those have no counterpart upstream and existed because a
  * polled `Boolean` made `field { label; control; error }` awkward to write by hand. The controls
  * take callbacks now, so the composite saves one line and costs an eight-parameter wrapper per
  * control -- and each wrapper is a second place for a control's own API to drift.

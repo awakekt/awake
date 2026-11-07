@@ -16,7 +16,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
 /**
  * Pixels per density-independent unit, and the user's text-size preference.
  *
- * `ui-core` reads these from `UiDensity`'s global mutable state; here they are provided, so a
+ * The removed `ui-core` read these from `UiDensity`'s global mutable state; here they are provided, so a
  * subtree can be measured at a different density -- which is what a preview or a snapshot test at
  * 2x needs, and what a global cannot express.
  */

@@ -28,8 +28,9 @@ enum class IntrinsicSize {
  * Sizes this node to what its content asks for, rather than to a number.
  *
  * The primitive a dropdown needs: a menu should be as wide as its widest item, and nobody can write
- * that width down. `ui-core` has no equivalent, which is why `DropdownMenuIntrinsicWidthTest` exists
- * and why the button-group audit named this as a missing primitive rather than a modifier bug.
+ * that width down. The removed `ui-core` had no equivalent, which is why
+ * `DropdownMenuIntrinsicWidthTest` exists and why the button-group audit named this as a missing
+ * primitive rather than a modifier bug.
  *
  * Costs an extra walk of the subtree -- the query runs before the real measure. [LayoutStats]
  * counts them.

@@ -57,7 +57,7 @@ class ReconcilerTest {
     @Test
     fun asecondPassReusesTheSameNodes() {
         // The whole point of a retained tree: node state survives, so anything hung off a node --
-        // animation phase, scroll offset -- is not reset every frame the way ui-core resets it.
+        // animation phase, scroll offset -- is not reset every frame the way the removed ui-core reset it.
         val root = root()
         composeInto(root) {
             box()
@@ -125,7 +125,7 @@ class ReconcilerTest {
     @Test
     fun keyedChildrenSurviveAReorder() {
         // Without keys the node at index 0 stays the node at index 0, so state follows the slot
-        // rather than the item -- the failure mirror-map documents for ui-core's id-keyed hooks.
+        // rather than the item -- the failure the removed ui-core's id-keyed hooks had.
         val root = root()
         composeInto(root) {
             for (id in listOf("a", "b", "c")) key(id) { box() }

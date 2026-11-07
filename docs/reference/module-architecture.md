@@ -34,7 +34,8 @@ awake:ecs
 awake:render      contract, passes, vulkan, webgpu
 awake:physics     api, jolt
 awake:scene       scene-core, rendering, controls, runtime, authoring
-awake:ui          graphics, text, ui-core, headless, designsystem, animation, heroicons, ...
+awake:compose     runtime, ui, foundation, ui-testing, state, ...
+awake:ui          shadcn, material3, canvas, node-graph-canvas, ...
 awake:asset       gltf, shaders, shader-pack, mesh-optimizer
 awake:app         platform, bootstrap, runtime
 awake:editor      scene, physics
@@ -128,26 +129,24 @@ graph TD
         vulkan[vulkan]
         webgpu[webgpu]
     end
-    uicore["ui:ui-core"]
-    uitext["ui:text"]
+    ctext["core:text<br/>UiFont, glyph metrics"]
 
     cmath ==>|api| cmath2d
     cgeom ==>|api| cmath
     cdraw2d ==>|api| cmath2d
     cdraw2d ==>|api| ccolor
     contract ==>|api| cgeom
-    contract ==>|api| uicore
+    contract ==>|api| ctext
     passes ==>|api| contract
     passes2d ==>|api| passes
     passes2d ==>|api| cdraw2d
     vulkan ==>|api| passes2d
     webgpu ==>|api| passes2d
-    contract -.->|impl| uitext
 
     classDef clean fill:#14532d,stroke:#22c55e,color:#fff
     classDef problem fill:#7f1d1d,stroke:#ef4444,color:#fff
     class cgeom,cdraw2d,cmath2d,passes2d clean
-    class contract problem
+    class contract clean
 ```
 
 What the picture shows now:
@@ -155,9 +154,9 @@ What the picture shows now:
 - **The 2D path is UI-free.** `passes2d` and `passes` reach no `ui:*` module; the vocabulary they
   consume lives in `core:graphics2d`, which both UI engines also produce into. That was the point
   of #7.
-- **`render:contract` (red) is the last choke point.** Its `api` edge to `ui-core` is down to one
-  file's worth of need (`UiFont`, plus `LineSegment`), but it is still `api`, so everything
-  downstream inherits it. This is the remaining work.
+- **`render:contract` is UI-free too.** Its last UI edge, to the removed immediate-mode UI layer,
+  was one file's worth of need (`UiFont`); `UiFont` now lives in `core:text`, so the contract
+  reaches no `ui:*` or `compose:*` module.
 - **`core:` is seven leaves**, six with zero dependencies. `core:math` depends on `core:math2d`
   and not the reverse, because projections return a `Vec2`.
 
@@ -215,7 +214,7 @@ core:geometry     MeshGeometry, VertexFormat, VertexAttribute, GpuDataShape, Ver
                   MeshSimplifier, NormalizedInt                              (zero deps)
 
 render:contract   Renderer, Mesh, Material, LineSegment, generic GPU packets and uniform layouts
-                  -> core:geometry, -> ui-core
+                  -> core:geometry, -> core:text
 render:passes     GpuSceneFrame, DrawCall, SceneLight, EnvironmentUniforms, scene compilation
                   -> render:contract
 ```
@@ -442,8 +441,8 @@ non-host thing in `core:host`.
 
 The stated reason was avoiding a clash with `ui:graphics`. That reason was wrong: **`ui:graphics`
 declares no `ui.graphics` package at all** (it owns `ui`, `ui.api`, `ui.api.layout`). The package
-`awake.ui.graphics` is owned by `ui:ui-core` (5 files) and `ui:animation` (3 files) -- two modules
-that are not the one named for it. There was no clash to avoid. `image` is right because
+`awake.ui.graphics` was owned by `ui:ui-core` (5 files) and `ui:animation` (3 files) -- two modules
+that were not the one named for it, and both since removed. There was no clash to avoid. `image` is right because
 `Bitmap`/`BitmapRgba8` are raster imagery, which is narrower and truer than "graphics".
 
 ### A module was claiming another module's package
@@ -591,7 +590,7 @@ The name follows the sibling that already existed -- `render:passes` split into 
 in the same pass, so `graphics2d` reads against `graphics` the way `passes2d` reads against
 `passes`.
 
-`canvas` was rejected: `ui-core` has `Canvas.kt`/`CanvasScope` and `compose:ui` has `DrawScope`,
+`canvas` was rejected: the removed `ui-core` had `Canvas.kt`/`CanvasScope` and `compose:ui` has `DrawScope`,
 which are the surface you call draw methods *on* -- the opposite end of the pipe from the commands
 it emits. Godot uses `canvas` for this subsystem, but a module named `canvas` containing no
 `Canvas` invites the same wrong guess this item is about.
@@ -620,14 +619,13 @@ UI edge this item expected to leave behind never materialised. `render:passes2d`
 edges: `ui:graphics`, `ui:text`, `ui:ui-core`. Those were transitive, so everything downstream of
 `render:passes` lost them too.
 
-`ui:graphics` is down to four files: `UiImageVector`, `PopupContracts`, `UiEasing`, `UiIcon`.
-
-What remains is outside the 2D path and is real: `render:contract` uses `UiFont` in one file,
-`backend:vulkan` uses `UiContext`/`LocalTheme`/`UiCursor` in five, `backend:webgpu` uses `UiFont`
-in four.
+At the time, `ui:graphics` was down to four files and `render:contract` and both backends still
+used a handful of UI types (`UiFont`, `UiContext`, `UiCursor`). The immediate-mode UI modules
+(`ui-core`, `ui:graphics`, `ui:headless`, `ui:animation`) have since been removed: `UiFont` lives in
+`core:text`, the pointer cursor in `core:input`, and no render module depends on a UI module.
 
 `UiBounds` did not move to `draw2d`, as an early draft proposed. It is the layout rect, used in 16
-files across `ui-core`; putting it in a render module would force every layout module to depend on
+files across the then-current `ui-core`; putting it in a render module would force every layout module to depend on
 render to hold a rectangle. It went to `core:math2d` and was renamed `Rectangle` -- see #8.
 
 ### Do not merge 2D and 3D

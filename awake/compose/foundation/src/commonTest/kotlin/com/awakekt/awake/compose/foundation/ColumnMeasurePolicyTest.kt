@@ -124,8 +124,8 @@ class ColumnMeasurePolicyTest {
 
     @Test
     fun everyChildIsMeasuredExactlyOnce() {
-        // The contract the engine exists for. ui-core re-runs a content lambda to learn a size,
-        // which is what multiplies with nesting -- 7,696 trial passes on one showcase page.
+        // The contract the engine exists for. The removed ui-core re-ran a content lambda to learn a
+        // size, which is what multiplied with nesting -- 7,696 trial passes on one showcase page.
         val plain = FixedSize(10, 10)
         val weighted = FixedSize(10, 10)
         val col = LayoutNode(ColumnMeasurePolicy()).also {

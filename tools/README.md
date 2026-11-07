@@ -325,47 +325,24 @@ row together before expanding the command's supported combinations.
 review. They are a convenience for eyeballing, not a verification gate — see
 `docs/reference/ui-validation.md` for what actually counts as proof.
 
-## Does any of this need replacing for `awake:compose`?
+## Where the engine meets these tools
 
-**No. One adapter, roughly one file.** The split is clean because of where the engine boundary
-falls, and it is worth stating precisely so nobody plans a second pipeline.
+The reference half never touches Awake: the pinned checkout, the token table, the vendored `.tsx`,
+the reference app, the captured PNGs and geometry JSON, and the font/icon controls are all produced
+by Chromium from upstream sources. `awake:compose` is compared *against* them and does not
+participate in producing them.
 
-**Engine-agnostic — every one of these works unchanged.** The whole reference half never touches
-Awake: the pinned checkout, the token table, the vendored `.tsx`, the reference app, the captured
-PNGs and geometry JSON, and the font/icon controls are all produced by Chromium from upstream
-sources. `ui-core` and `awake:compose` are compared *against* them; neither participates in
-producing them.
-
-**Engine-coupled — exactly one contract.** The Awake side of every comparison is two artifacts
-written by `AwakeUiPreviewWriter` (`awake:ui:testing`): a preview PNG, and a sibling JSON whose
-shape is all the tools actually depend on:
+The Awake side of every comparison is two artifacts written by `ShadcnComposeParityPreviewTest`
+(`samples/ui-showcase`, desktop tests): a preview PNG, and a sibling JSON whose shape is all the
+tools depend on:
 
 ```json
 { "width": 800, "height": 600,
   "semantics": [ { "id": "parity-button", "bounds": { "x": 0, "y": 0, "w": 40, "h": 40 } } ] }
 ```
 
-A flat list, `id`, and `bounds{x,y,w,h}`. Both engines can produce it, but not identically:
-
-| | `ui-core` | `awake:compose` |
-|---|---|---|
-| Type | `UiSemanticNode(bounds: Rectangle, id: String?)` | `SemanticsNode(config, x, y, width, height, children)` |
-| Identity | `id: String?` | `config[TestTag]` |
-| Bounds | one `Rectangle` | four `Int`s |
-| Shape | flat, **emit-ordered** | **tree**, spatially ordered from the placed tree |
-
-So the adapter flattens the tree, maps `testTag → id` and `x/y/width/height → bounds`, and every
-tool above keeps working with no change. That is already the plan's
-`09-testing-harness.md` deliverable — "the `ui-testing` adapter" — not new work discovered here.
-
-**One behavioural difference to expect, and it is an improvement.** `ui-core` orders semantics by
-emit order, so its JSON reshuffles when an unrelated widget moves; compose derives order from the
-placed tree. Any tool that reads nodes *by id* — which is all of them — is unaffected. A tool that
-ever reads by index would break, and none should be written that way.
-
-**What genuinely is engine-coupled and will need editing:** `generate_ui_status.py`, whose probes
-hard-code `awake/ui/ui-core/src`, `awake/ui/headless/src` and `awake/ui/shadcn/src`. It reports
-on the module layout, so it follows the modules. That is a path list, not a redesign.
+A flat list, `id`, and `bounds{x,y,w,h}`. The writer flattens the compose semantics tree and maps
+each node's `testTag` to `id`. Order follows the placed tree, so read nodes *by id*, never by index.
 
 ## Other
 

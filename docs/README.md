@@ -30,7 +30,7 @@
 | **Reference** | [`API Layering`](reference/api-layering.md) | `Active` | Awake separates public API into three layers: **core**, **helpers**, and **sugar**. This |
 | **Reference** | [`Backend commonisation: where the duplication actually is`](reference/backend-commonisation.md) | `Active` | Vulkan and WebGPU are hand-authored side by side. This is the measurement of how much, where, |
 | **Reference** | [`AwakeKt brand system`](reference/brand-system.md) | `Active` | **Status:** Stable. This is the canonical visual-identity record for the AwakeKt and Awake names |
-| **Reference** | [`Jetpack Compose Guidance: Animation`](reference/compose-animation-guidance.md) | `Active` | A sibling doc rather than a section of `compose-modifier-layout-guidance.md` because animation |
+| **Reference** | [`Jetpack Compose Guidance: Animation`](reference/compose-animation-guidance.md) | `Active` | The current `:awake:compose:foundation` animation API: `animateFloat`, looping phases, shimmer, and the frame clock. |
 | **Reference** | [`01 — Layout`](reference/compose-engine/01-layout.md) | `Active` | Supersedes the layout half of `docs/reference/compose-modifier-layout-guidance.md`. |
 | **Reference** | [`02 — Modifier`](reference/compose-engine/02-modifier.md) | `Active` | Supersedes the modifier half of `docs/reference/compose-modifier-layout-guidance.md`. |
 | **Reference** | [`03 — CompositionLocal`](reference/compose-engine/03-composition-locals.md) | `Active` | **Stage 1 blocker.** Two of these reach *measurement*, so text cannot be measured without them. |
@@ -46,9 +46,9 @@
 | **Reference** | [`13 — Semantics`](reference/compose-engine/13-semantics.md) | `Active` | `UiFrameOutput.semantics` keeps its shape, so `ui-testing` and the parity tooling keep working. What |
 | **Reference** | [`14 — Density, resize, layout direction`](reference/compose-engine/14-density-resize.md) | `Active` | `Dp` and `Sp` are the real types declared in `:awake:core:math2d` |
 | **Reference** | [`15 — Parity matrix against Compose`](reference/compose-engine/15-compose-parity.md) | `Active` | What this engine mimics, what it leaves out, and where it genuinely improves. **Every "Compose does" |
-| **Reference** | [`16 — What visibly changes when a screen moves`](reference/compose-engine/16-migration-deltas.md) | `Active` | Stage 3 moves ~180 call sites from `ui-core` to this engine. Five things will look different on |
+| **Reference** | [`16 — What visibly changes when a screen moves`](reference/compose-engine/16-migration-deltas.md) | `Active` | Stage 3 moved ~180 call sites from the removed `ui-core` to this engine. Five things looked different on |
 | **Reference** | [`17 — Modifier parity`](reference/compose-engine/17-modifier-parity.md) | `Active` | **Goal: every stable Compose `Modifier` extension, or a recorded reason it does not apply here.** |
-| **Reference** | [`Jetpack Compose Guidance: Modifier & Layout`](reference/compose-modifier-layout-guidance.md) | `Active` | This guide is retained for detailed modifier examples. The numbered Compose Engine guides are |
+| **Reference** | [`Jetpack Compose Guidance: Modifier & Layout`](reference/compose-modifier-layout-guidance.md) | `Active` | Pointer from modifier and layout topics to the numbered Compose Engine guides and the current sources. |
 | **Reference** | [`Decision Log`](reference/decision-log.md) | `Active` | Historical "why we chose X" rationale for Awake's engine architecture, extracted from |
 | **Reference** | [`Developer Docs`](reference/developer-docs.md) | `Active` | Awake now has two documentation lanes, because one format is not enough for an engine: |
 | **Reference** | [`AwakeKt docs style guide`](reference/docs-style-guide.md) | `Active` | How pages under `website/docs/` are written. The first page on this template is |
@@ -65,7 +65,7 @@
 | **Reference** | [`Library API Boundaries`](reference/library-api-boundaries.md) | `Active` | This document is the canonical rule for how Awake splits public library surface from DSL |
 | **Reference** | [`Locomotion and warps`](reference/locomotion-and-warps.md) | `Active` | Any system deriving motion from a per-frame world-position delta must reject warps (respawn, leash, ... |
 | **Reference** | [`Maven coordinates and publication dependency graph`](reference/maven-coordinates.md) | `Active` | This page is the current Maven publication inventory. **It is maintained by hand:** a pull request |
-| **Reference** | [`Mirror Map: Awake UI DSL vs. Jetpack Compose`](reference/mirror-map.md) | `Active` | Awake's retained UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks, |
+| **Reference** | [`Mirror Map: Awake Compose Engine vs. Jetpack Compose`](reference/mirror-map.md) | `Active` | Quick Faithful/Diverges status table for `awake:compose` modifiers, layouts, state and animation. |
 | **Reference** | [`Module Architecture`](reference/module-architecture.md) | `Active` | How Awake's 44 modules are grouped, why, and how to decide where a new one goes. |
 | **Reference** | [`Engine Performance Matrix & Scorecard`](reference/performance-matrix.md) | `Active` | High-level dashboard of Awake's performance baselines, micro-benchmark suites, algorithmic complexity guarantees, and co... |
 | **Reference** | [`Publishing Awake libraries`](reference/releasing.md) | `Active` | Awake publishes Kotlin Multiplatform modules to Maven Central. The current publication set and |

@@ -38,8 +38,8 @@ class ComposeHostTest {
 
     @Test
     fun theContentLambdaRunsExactlyOncePerFrame() {
-        // The claim the engine exists for. `ui-core` re-executes a container's content as a trial
-        // pass, 7,696 times per frame on the Checkout Form.
+        // The claim the engine exists for. The removed `ui-core` re-executed a container's content as
+        // a trial pass, 7,696 times per frame on the Checkout Form.
         val host = ComposeHost()
         var runs = 0
         val content: context(Composer)
