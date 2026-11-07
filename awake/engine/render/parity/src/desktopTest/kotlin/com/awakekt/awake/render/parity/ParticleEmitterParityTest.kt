@@ -16,9 +16,10 @@ import kotlin.test.assertTrue
  * across the frame and a local-space one keeps every sprite in a column above where it ended.
  *
  * The left of the frame is the measure: its columns hold the trail's first sprites and never the local
- * column, which stands at x = [EMITTER_END_X]. Measured on lavapipe at 128 px: world-space has
- * NEGATIVE_CONTROL_LEFT red pixels there and local-space 0; drawing the local emitter as world-space
- * (its frame ignored) puts the same trail there, so the local assertion fails with that count.
+ * column, which stands at x = [EMITTER_END_X]. Negative control, measured on lavapipe at 128 px on both
+ * backends: with `ParticleDrawBuilder` drawing a local emitter through the identity frame instead of its
+ * entity's, the column stands at the origin, so the local emitter leaves 432 red pixels on the left and
+ * none at the right edge, and both local assertions fail.
  */
 class ParticleEmitterParityTest {
     @Test
