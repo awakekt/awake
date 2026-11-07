@@ -80,7 +80,9 @@ internal object ControlsCapability : SceneCapability {
         }
         // Runtime HUDs need the same ordering as authored ones: begin/read actions before adding
         // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
-        plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
+        // A headless host (a game server) draws no canvas and takes no touches, so it plans none: walking
+        // its canvas elements every frame cost a server about 5% of its tick for nothing.
+        if (plan.hasRenderer) plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
         if (scene.uses(SceneCameraRig::class)) {
             plan.frame("camera") { services ->
