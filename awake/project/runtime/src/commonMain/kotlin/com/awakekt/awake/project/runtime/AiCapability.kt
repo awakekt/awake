@@ -43,8 +43,8 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.navigation.NavigationAgentSystem
 import com.awakekt.awake.scene.navigation.NavigationSceneComponents
-import com.awakekt.awake.scene.navigation.SceneNavigationAgent
 import com.awakekt.awake.scene.navigation.SceneNavigation
+import com.awakekt.awake.scene.navigation.SceneNavigationAgent
 import com.awakekt.awake.scene.physics.PhysicsBody
 import kotlin.reflect.KClass
 
