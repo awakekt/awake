@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.Composition
+import com.awakekt.awake.compose.runtime.PolledState
 import com.awakekt.awake.core.state.Store
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -42,7 +43,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 fun <S> canvasContent(world: World, root: Entity, state: StateFlow<S>, content: context(Composer) (S) -> Unit): CanvasContent {
     val source = CanvasStateSource(state)
-    return CanvasContent(world, root, source) { content(source.read()) }.also { it.recompose() }
+    return canvasContent(world, root) { content(source.value) }
 }
 
 /** [canvasContent] for a [Store]: the block is a function of its [Store.state]. */
@@ -50,16 +51,29 @@ fun <S> canvasContent(world: World, root: Entity, store: Store<S>, content: cont
     canvasContent(world, root, store.state, content)
 
 /**
- * Declares canvas content under [root] that recomposes only when its host calls
- * [CanvasContent.recompose]: for state that is not a [StateFlow] or a [Store]. Builds it now.
+ * Declares canvas content under [root] that recomposes when the state its last pass read changes.
+ * Builds it now.
+ *
+ * Reads are tracked: a [CanvasContentSystem] recomposes the block on a frame after a
+ * `mutableStateOf` it read was written with a different value, or a `StateFlow` it read through
+ * `collectAsState()` holds a new one. State it reads any other way, such as a plain `var`, is not
+ * seen: its host calls [CanvasContent.recompose] when that changes.
+ *
+ * ```kotlin
+ * val selected = mutableStateOf("ana")
+ * canvasContent(world, root = hudRoot) {
+ *     text(id = "target") { text = selected.value }
+ * }
+ * selected.value = "bo" // the next frame recomposes it
+ * ```
  *
  * @param world The world the elements are made in.
  * @param root The entity they go under; disposing the content leaves it.
- * @param content The content, reading whatever state its host keeps.
- * @return The content, to recompose when its state changes, and dispose.
+ * @param content The content, reading tracked state or whatever state its host keeps.
+ * @return The content, to dispose when it is no longer shown.
  */
 fun canvasContent(world: World, root: Entity, content: context(Composer) () -> Unit): CanvasContent =
-    CanvasContent(world, root, null, content).also { it.recompose() }
+    CanvasContent(world, root, content).also { it.recompose() }
 
 /**
  * A block of declarative canvas content, made by [canvasContent]: its entities, and the
@@ -68,7 +82,6 @@ fun canvasContent(world: World, root: Entity, content: context(Composer) () -> U
 class CanvasContent internal constructor(
     private val world: World,
     root: Entity,
-    private val source: CanvasStateSource<*>?,
     private val content: context(Composer)
     () -> Unit,
 ) {
@@ -78,42 +91,35 @@ class CanvasContent internal constructor(
     private val composition = Composition(applier, applier.root)
 
     init {
-        if (source != null) world.canvasContents(root).add(this)
+        world.canvasContents(root).add(this)
     }
 
     /**
      * Runs the block again: makes what it newly declares, moves what it moved, destroys what it
-     * stopped declaring and writes the settings that changed. Content made from a state runs on its
-     * own when the state changes; calling this with nothing changed writes nothing.
+     * stopped declaring and writes the settings that changed. Content runs on its own when tracked
+     * state it read changes; call this for a change it cannot see. Calling it with nothing changed
+     * writes nothing.
      */
     fun recompose() {
         composition.reconcile(content)
         applier.finishPass()
     }
 
-    /** Recomposes when the state holds a value the last pass did not read; returns whether it did. */
+    /** Recomposes when tracked state the last pass read has changed; returns whether it did. */
     internal fun refresh(): Boolean {
-        val changed = source?.changed() == true
+        val changed = composition.isInvalid
         if (changed) recompose()
         return changed
     }
 
     /** Destroys every entity the content made, leaving the root, and forgets what it remembered. */
     fun dispose() {
-        if (source != null) world.get<CanvasContents>(applier.root.entity)?.remove(this)
+        world.get<CanvasContents>(applier.root.entity)?.remove(this)
         composition.dispose()
     }
 }
 
-/** A [StateFlow] and the value the last pass read from it. */
-internal class CanvasStateSource<S>(private val state: StateFlow<S>) {
-    private var last: Any? = NONE
-
-    /** The state's value, noted as read. */
-    fun read(): S = state.value.also { last = it }
-
-    /** Whether the state holds a value other than the one last read. */
-    fun changed(): Boolean = state.value !== last
-
-    private object NONE
+/** A [StateFlow] read as tracked state: a pass that read it is invalid once it holds a new value. */
+internal class CanvasStateSource<S>(private val state: StateFlow<S>) : PolledState<S>() {
+    override fun read(): S = state.value
 }

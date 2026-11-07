@@ -1217,10 +1217,13 @@ its settings, and a panel's settings go in `settings = { … }` while its block 
 ```
 
 - **When it runs.** `CanvasContentSystem`, one of the scene runtime's infrastructure systems, runs
-  the block again on a frame where its state holds a new value, and on no other frame. A host that
-  runs its own systems adds `CanvasContentSystem()` ahead of `TransformSystem`. For state that is not
-  a flow or a store, `canvasContent(world, root) { … }` returns a `CanvasContent` whose
-  `recompose()` the host calls when the state changes.
+  the block again on a frame where state its last pass read has changed, and on no other frame. A
+  host that runs its own systems adds `CanvasContentSystem()` ahead of `TransformSystem`.
+- **What it follows.** Reads are tracked: the `StateFlow` or `Store` it was made from, any
+  `mutableStateOf` the block reads, and any flow it reads through `collectAsState()`
+  (`:awake:compose:state`). `canvasContent(world, root) { … }` takes no state and follows only what
+  the block reads. State it reads any other way, such as a plain `var`, is not seen: call
+  `recompose()` on the returned `CanvasContent` when that changes.
 - **What it writes.** A pass writes only the canvas components whose settings changed. Declaring
   what the last pass declared writes nothing.
 - **Keys.** Wrap each item of a list in `key(item.id)`. A keyed item that moves keeps its entities
@@ -1228,9 +1231,6 @@ its settings, and a panel's settings go in `settings = { … }` while its block 
 - **Order.** Elements draw in the order the block declares them. Content declared under a node draws
   over what the scene already had there. The declared order is runtime state and is never saved.
 - **Disposing.** `dispose()` destroys what the block made and leaves its root.
-
-Read-tracked recomposition, where a block reads a `State` and reruns when it changes
-(`collectAsState`), is planned in [#1395](https://github.com/awakekt/awake/issues/1395).
 
 ### Place a prefab
 
