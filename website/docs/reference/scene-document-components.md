@@ -81,6 +81,7 @@ registers it.
 | [`texture_clips`](#texture_clips) | `TextureClips` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`tilemap`](#tilemap) | `Tilemap` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`tone_mapping`](#tone_mapping) | `ToneMapping` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
+| [`trail_renderer`](#trail_renderer) | `TrailRenderer` | `com.awakekt.awake.scene:trail` | `DefaultSceneComponentResolvers.install()` | [Trails](../guides/trails.md) |
 | [`world_text`](#world_text) | `WorldText` | `com.awakekt.awake.scene:worldtext` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#text-in-the-world) |
 
 ## Registration
@@ -88,7 +89,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_particles`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_particles`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `trail_renderer`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -1396,6 +1397,19 @@ How bright the lit scene is shown. At most one per node; the first found applies
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `exposure` | number | `1` | Multiplies the lit scene before tone mapping. 2 is one stop brighter. Finite and above 0. |
+
+## `trail_renderer`
+
+A trail drawn at its node: a swing's ribbon, a projectile's streak, a tyre mark. A strip of point
+pairs drawn unlit in the transparent pass, through the node's world matrix, from one GPU buffer
+sized once at `capacity`. The document says how it is drawn; a game's systems write its pairs, how
+many show and their colours every frame. `SceneTrailRenderer`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `capacity` | integer | `64` | The most point pairs it holds, 2 to 65536. |
+| `blend` | `Additive` · `Alpha` | `Additive` | `Additive` adds to what is behind it; `Alpha` covers it by its alpha. |
+| `tint` | color | white | Multiplied into every vertex's own colour. |
 
 ## `world_text`
 

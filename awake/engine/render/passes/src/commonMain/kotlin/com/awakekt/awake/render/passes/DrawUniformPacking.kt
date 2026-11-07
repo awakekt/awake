@@ -20,6 +20,8 @@ import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.TrailFields
+import com.awakekt.awake.render.passes.uniforms.TrailUniformLayout
 import com.awakekt.awake.render.passes.uniforms.WorldTextFields
 import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
 import com.awakekt.awake.render.passes.uniforms.blendsAdditively
@@ -102,15 +104,7 @@ fun RenderDrawCommand.uniformFloats(
             exposure = exposure,
         )
 
-        DrawUniformPlan.Sprite -> UniformWriter(SpriteUniformLayout)
-            .put(mvp.data, UniformFields.Mvp)
-            .put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint)
-            .build()
-
-        DrawUniformPlan.WorldText -> UniformWriter(WorldTextUniformLayout)
-            .put(mvp.data, UniformFields.Mvp)
-            .put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field)
-            .build()
+        DrawUniformPlan.Sprite, DrawUniformPlan.WorldText, DrawUniformPlan.Trail -> unlitUniforms(plan, mvp, extraUniformFloats)
 
         DrawUniformPlan.Skinned ->
             skinnedUniforms(mvp, model, extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), exposure, lightPayload, cameraEye, debugView, cameraForward)
@@ -142,12 +136,21 @@ fun RenderDrawCommand.uniformFloats(
     return withFade(packed, fadeLayout(plan))
 }
 
+/** An unlit [plan]'s block: the camera matrix, then the draw's own lanes in the order its layout declares them. */
+private fun unlitUniforms(plan: DrawUniformPlan, mvp: Mat4, extraUniformFloats: FloatArray): FloatArray = when (plan) {
+    DrawUniformPlan.Sprite -> UniformWriter(SpriteUniformLayout).put(mvp.data, UniformFields.Mvp)
+        .put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint)
+    DrawUniformPlan.WorldText -> UniformWriter(WorldTextUniformLayout).put(mvp.data, UniformFields.Mvp)
+        .put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field)
+    else -> UniformWriter(TrailUniformLayout).put(mvp.data, UniformFields.Mvp).put(extraUniformFloats, TrailFields.Tint)
+}.build()
+
 /** The block a [plan]'s shader reads its dither fade from, or `null` for one that has none. */
 private fun fadeLayout(plan: DrawUniformPlan): UniformLayout? = when (plan) {
     DrawUniformPlan.LitShadow -> MaterialUniformLayouts.LitShadow
     DrawUniformPlan.TexturedPbr -> MaterialUniformLayouts.PbrTextured
     DrawUniformPlan.Skinned -> SkinnedUniformLayout
-    DrawUniformPlan.Sprite, DrawUniformPlan.WorldText, DrawUniformPlan.Lit -> null
+    DrawUniformPlan.Sprite, DrawUniformPlan.WorldText, DrawUniformPlan.Trail, DrawUniformPlan.Lit -> null
 }
 
 /**

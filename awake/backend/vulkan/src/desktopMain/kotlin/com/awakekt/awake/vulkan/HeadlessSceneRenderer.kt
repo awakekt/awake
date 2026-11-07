@@ -107,6 +107,20 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         fragmentEntryPoint = "fragmentMain",
         variant = PipelineVariant.AlphaBlended,
     )
+    // Trails: alpha blended as their fill, and the additive twin a glowing trail resolves to.
+    val (trailPipeline, additiveTrailPipeline) = listOf(PipelineVariant.AlphaBlended, PipelineVariant.AdditiveBlended).map { variant ->
+        RenderPipeline(
+            graphicsDevice,
+            swapchainManager,
+            sceneRenderPass,
+            descriptorSetLayout,
+            runBlocking { spirvPair(PackShaderSets.Trail) },
+            VertexFormat.PositionRgbaUv,
+            vertexEntryPoint = "vertexMain",
+            fragmentEntryPoint = "fragmentMain",
+            variant = variant,
+        )
+    }
     val texturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -355,11 +369,15 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 VertexFormat.PositionNormalColorUv to texturedPipeline,
                 VertexFormat.PositionUv to atlasPipeline,
                 VertexFormat.PositionUvColor to distanceFieldPipeline,
+                VertexFormat.PositionRgbaUv to trailPipeline,
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
-            additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
+            additiveByFormat = mapOf(
+                VertexFormat.PositionNormalColorUv to additiveTexturedPipeline,
+                VertexFormat.PositionRgbaUv to additiveTrailPipeline,
+            ),
             backCulledByFormat = mapOf(
                 VertexFormat.PositionNormalColor to backCulledScenePipeline,
                 VertexFormat.PositionNormalColorUv to backCulledTexturedPipeline,
@@ -390,6 +408,8 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             texturedPipeline.destroy()
             atlasPipeline.destroy()
             distanceFieldPipeline.destroy()
+            trailPipeline.destroy()
+            additiveTrailPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             backCulledTexturedPipeline.destroy()

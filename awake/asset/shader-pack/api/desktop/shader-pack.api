@@ -97,6 +97,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
 	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslTrailShaderKt {
+	public static final fun getTrailShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslWorldTextShaderKt {
 	public static final fun getWorldTextShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -215,6 +219,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTrail ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getWorldText ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
@@ -332,6 +337,7 @@ public final class com/awakekt/awake/asset/shaderpack/SpriteScenePipelineKt {
 	public static final fun spriteScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 	public static final fun spriteScenePipeline (Z)Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 	public static synthetic fun spriteScenePipeline$default (ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ScenePipeline;
+	public static final fun trailScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 	public static final fun worldTextScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 }
 

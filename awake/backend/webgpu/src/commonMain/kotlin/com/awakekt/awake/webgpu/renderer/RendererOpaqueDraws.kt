@@ -27,6 +27,9 @@ import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
+import com.awakekt.awake.webgpu.mesh.sceneElementCount
+import com.awakekt.awake.webgpu.mesh.sceneIndexBinding
+import com.awakekt.awake.webgpu.mesh.sceneVertexBinding
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
@@ -54,13 +57,14 @@ internal fun Renderer.prepareGpuDraw(
     edgePipeline: RenderPipeline? = null,
     frameVersion: Int = NO_FRAME_VERSION,
 ): WebGpuPreparedDraw? {
-    val mesh = cmd.mesh as Mesh
+    val mesh = cmd.mesh
     val material = cmd.material as Material
     val instanceModels = cmd.instanceModels
     if (instanceModels != null) {
         return prepareInstancedGpuDraw(
             cmd = cmd,
-            mesh = mesh,
+            // Only a built mesh is instanced; a dynamic one is always drawn once.
+            mesh = mesh as Mesh,
             material = material,
             instanceModels = instanceModels,
             instanceIndex = instancedIndex,
@@ -108,9 +112,9 @@ internal fun Renderer.prepareGpuDraw(
             )
             else -> slot.binding ?: EmptyWebGpuMaterialBinding
         },
-        vertexBuffer = mesh.vertexBinding,
-        indexBuffer = if (lines) mesh.lineIndexBinding else mesh.indexBinding,
-        elementCount = if (lines) mesh.lineIndexCount else mesh.indexCount,
+        vertexBuffer = mesh.sceneVertexBinding(),
+        indexBuffer = mesh.sceneIndexBinding(lines),
+        elementCount = mesh.sceneElementCount(lines),
         uniformBuffer = slot?.buffer,
         vertexFormat = mesh.format,
         transparent = isTransparent,

@@ -29,6 +29,9 @@ object PackShaderSets {
     /** Distance-field text placed in a scene, with its edge width from screen-space derivatives. */
     val WorldText = aslShaderSet(WorldTextShader)
 
+    /** A trail: an unlit strip of point pairs in its vertices' own colours, optionally textured. */
+    val Trail = aslShaderSet(TrailShader)
+
     /** Standard lit mesh shader set with directional light and cascaded shadow maps. */
     val LitShadow = aslShaderSet(::litShadowShader)
 

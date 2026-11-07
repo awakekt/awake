@@ -516,6 +516,7 @@ public final class com/awakekt/awake/render/passes/uniforms/DrawUniformPlan : ja
 	public static final field Skinned Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field Sprite Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field TexturedPbr Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
+	public static final field Trail Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field WorldText Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
@@ -831,6 +832,16 @@ public final class com/awakekt/awake/render/passes/uniforms/TexturedBlend : java
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
 	public static fun values ()[Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/TrailFields {
+	public static final field INSTANCE Lcom/awakekt/awake/render/passes/uniforms/TrailFields;
+	public final fun getTint ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/TrailFieldsKt {
+	public static final fun getTrailExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun getTrailUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/WorldTextFields {

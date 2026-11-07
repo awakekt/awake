@@ -26,6 +26,7 @@ attaches any ECS component, so "—" in the scene DSL column means there is no d
 | `ParticleEmitterSource` | `scene:particles` | `particle_emitter` | — | [Particles](../guides/particles.md) |
 | `ParticleEmitter2D` | `particles` | `particle_emitter_2d` | — | [Particles](../guides/particles.md#2d-particles-scene2d) |
 | `WorldText` | `scene:worldtext` | `world_text` | — | [Game UI](../guides/game-ui.md#text-in-the-world) |
+| `TrailRenderer` | `scene:trail` | `trail_renderer` | — | [Trails](../guides/trails.md) |
 | `Sprite` | `scene:scene2d` | `sprite` | — | [Scene document components](scene-document-components.md#sprite) |
 | `SpriteClips` | `scene:scene2d` | `sprite_clips` | — | [Scene document components](scene-document-components.md#sprite_clips) |
 | `TerrainComponent` | `scene:scene3d` | `terrain` | — | [Terrain](../guides/terrain.md) |

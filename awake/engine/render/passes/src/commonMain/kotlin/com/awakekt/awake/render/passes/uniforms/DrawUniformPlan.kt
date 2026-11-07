@@ -33,6 +33,9 @@ enum class DrawUniformPlan {
 
     /** Unlit distance-field glyph quads of text placed in a scene, with a tint and the field's spread. */
     WorldText,
+
+    /** An unlit strip of point pairs in its vertices' own colours, with a tint: a trail. */
+    Trail,
 }
 
 /**
@@ -47,6 +50,8 @@ fun drawUniformPlan(
     format == VertexFormat.PositionUv && materialUniformFloatCount == SpriteUniformLayout.total -> DrawUniformPlan.Sprite
 
     format == VertexFormat.PositionUvColor && materialUniformFloatCount == WorldTextUniformLayout.total -> DrawUniformPlan.WorldText
+
+    format == VertexFormat.PositionRgbaUv && materialUniformFloatCount == TrailUniformLayout.total -> DrawUniformPlan.Trail
 
     // Exact, and first: the textured block is larger than lit_shadow's, so "at least" cannot tell them apart.
     format == VertexFormat.PositionNormalColorUv &&

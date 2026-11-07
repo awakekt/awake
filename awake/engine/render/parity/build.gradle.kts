@@ -50,6 +50,8 @@ kotlin {
                 implementation(project(":awake:worldtext"))
                 // Particle emitters stepped and drawn as a played scene does; a capability with no scene module.
                 implementation(project(":awake:particles"))
+                // Trails rewritten in place every frame; a capability with no scene module.
+                implementation(project(":awake:trail"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

@@ -26,6 +26,7 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
+import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
@@ -180,8 +181,12 @@ class Renderer internal constructor(
     override fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = when (kind) {
         ShaderReplacement -> shaderReplacement as T?
         GpuCompressedTextures -> compressedTextures as T
+        GpuDynamicMeshes -> dynamicMeshes as T
         else -> null
     }
+
+    /** Meshes rewritten in place, one vertex buffer per frame in flight. */
+    private val dynamicMeshes = VulkanDynamicMeshes(this)
 
     /** Block-compressed textures, in the families this device enabled. */
     private val compressedTextures = VulkanCompressedTextures(this)
