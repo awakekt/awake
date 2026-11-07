@@ -84,8 +84,8 @@ interface DrawModifierNode {
 /**
  * A link told where its node ended up, once placement has resolved it.
  *
- * Replaces reading a container's returned rect, which is what `ui-core` offers and what 46 call
- * sites do today. A returned rect *is* the immediate-mode model -- it can only exist because the
+ * Replaces reading a container's returned rect, which is what the removed `ui-core` offered and what 46
+ * call sites did. A returned rect *is* the immediate-mode model -- it can only exist because the
  * container already knows its geometry mid-build -- so the retained engine reports afterwards
  * instead.
  */

@@ -54,8 +54,8 @@ class CompositionLocalsTest {
 
     @Test
     fun aProvidedDensityAppliesOnlyToItsSubtree() {
-        // ui-core reads density from a global, so it cannot express this at all -- which is what a
-        // preview or a 2x snapshot test needs.
+        // The removed ui-core read density from a global, so it could not express this at all --
+        // which is what a preview or a 2x snapshot test needs.
         val root = LayoutNode(stackPolicy)
         composeInto(root) {
             sized(10)

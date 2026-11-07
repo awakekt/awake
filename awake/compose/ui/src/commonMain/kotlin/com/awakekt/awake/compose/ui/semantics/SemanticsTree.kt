@@ -47,7 +47,7 @@ class SemanticsNode(
  * Builds the accessibility tree from the **placed** layout tree.
  *
  * Order is spatial and stable because it follows the tree, not the order things happened to be
- * emitted -- which is what `ui-core`'s `recordSemantic` does, and why its output shifts when an
+ * emitted -- which is what the removed `ui-core`'s `recordSemantic` did, and why its output shifted when an
  * unrelated widget moves. A screen reader and a test both want the former.
  *
  * Run after layout: bounds come from resolved positions, so this cannot run mid-measure.

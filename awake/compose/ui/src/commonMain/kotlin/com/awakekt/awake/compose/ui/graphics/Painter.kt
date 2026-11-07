@@ -30,8 +30,8 @@ data class PaintOutput(
  * final, so nothing here can influence layout. That separation is why a layer can be measured
  * against the viewport and still paint in the right order.
  *
- * Output is the flat `List<UiDrawPrimitive>` `ui-core` already produces, so a render backend
- * consumes either engine unchanged -- and one scene can be run through both and diffed.
+ * Output is the flat, backend-neutral `List<UiDrawPrimitive>` from `:awake:core:graphics2d`, so a
+ * render backend consumes it without depending on this module.
  */
 class Painter {
     private val scope = PaintScope()

@@ -99,7 +99,7 @@ private fun Modifier.paint(resolved: ResolvedStyle, shape: Shape): Modifier {
 private fun Modifier.styleSemantics(resolved: ResolvedStyle): Modifier = semantics {
     // Published, not inferable. A placed child's bounds say where the content landed, not where
     // the box allows it to go, so nothing downstream can reconstruct the content box from the
-    // tree. `ui-core` retains the same value on its semantic node for the same reason.
+    // tree. The removed `ui-core` retained the same value on its node for the same reason.
     this[SemanticsProperties.ContentPadding] =
         resolved.contentPaddingHorizontal.value to resolved.contentPaddingVertical.value
     this[SemanticsProperties.BorderWidth] = resolved.borderWidth.value

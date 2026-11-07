@@ -23,7 +23,7 @@ import com.awakekt.awake.core.input.Key
  * there is *structural* -- one degree of freedom cannot drift -- so its whole update is a single
  * `coerceIn`. That is strictly better where it applies, and it does not apply here: this group is
  * N panels, each with its own stored fraction, because Studio's shape is sidebar/viewport/inspector
- * and `ResizablePanelDragConservationTest` pins three-panel behaviour. With N fractions conservation
+ * and `ShadcnResizableMathTest` pins three-panel behaviour. With N fractions conservation
  * has to be arithmetic, which is what [shadcnMoveSplit] is for.
  *
  * Its keyboard support had no counterpart here at all and is taken as-is -- see

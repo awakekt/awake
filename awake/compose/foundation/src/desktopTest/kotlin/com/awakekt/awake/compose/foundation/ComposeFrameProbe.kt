@@ -27,18 +27,18 @@ import kotlin.test.assertTrue
 import kotlin.time.TimeSource
 
 /**
- * Bytes and milliseconds per frame for the retained engine, on the same scene `ui-core`'s
- * `UiFrameAllocationProbe` uses: 20 rows of 3 cells, 36px tall, 120px wide.
+ * Bytes and milliseconds per frame for the retained engine, on the same scene the removed
+ * `ui-core`'s `UiFrameAllocationProbe` used: 20 rows of 3 cells, 36px tall, 120px wide.
  *
  * The scene is copied deliberately. `awake-ui-performance` Rule 5's first trap is that the scene
  * shape decides what you can see -- a fixed-size scene runs ~2 trial passes per surface in the old
  * engine where a weighted one runs ~7 -- so a number measured on a different shape cannot be set
  * against the old engine's at all.
  *
- * **What this is not.** `ui-core`'s figure covers its whole frame including style resolution through
- * `surface()`; this covers reconcile, layout and paint of `Box` + `background`. Comparable in shape,
- * not yet in work done. The honest cross-engine number needs `09-testing-harness`'s differ running
- * one scene through both.
+ * **What this is not.** The removed `ui-core`'s figure covered its whole frame including style
+ * resolution through `surface()`; this covers reconcile, layout and paint of `Box` + `background`.
+ * The two were comparable in shape, not in work done, and with `ui-core` gone no cross-engine run
+ * is possible any more.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent, so there is still no
  * allocation measurement off the JVM.
