@@ -64,6 +64,10 @@ import kotlin.random.Random
  * from or toward the origin" mean the same thing however the emitter is turned. `false` (default)
  * keeps every vector in world axes, and an emitter entity the placement has no orientation for has
  * no rotation to inherit.
+ *
+ * [space] is where spawned particles are kept: in the world where they were emitted
+ * ([ParticleSpace.World], the default), or relative to the emitter entity so they move, turn and scale
+ * with it ([ParticleSpace.Local]). See [ParticleSpace] for how each vector here reads in local space.
  */
 data class ParticleMotion(
     val baseVelocity: Vec3f = Vec3f(0f, 1f, 0f),
@@ -76,6 +80,7 @@ data class ParticleMotion(
     val radialSpeed: Float = 0f,
     val acceleration: Vec3f = Vec3f(0f, 0f, 0f),
     val inheritOrientation: Boolean = false,
+    val space: ParticleSpace = ParticleSpace.World,
 )
 
 /** How a particle looks over its life. [startColor]/[endColor] linearly interpolate per
@@ -378,6 +383,15 @@ class ParticleEmitter(
     private val scratchPosition: Vec3f = Vec3f(0f, 0f, 0f)
     private val scratchVelocity: Vec3f = Vec3f(0f, 0f, 0f)
 
+    /**
+     * The entity frame a [ParticleSpace.Local] emitter's pool is relative to, as of the last
+     * [ParticleSystem] step or [ParticleDrawBuilder] draw; the world's own frame until then.
+     */
+    internal val frame: EmitterFrame = EmitterFrame()
+
+    private val isLocal: Boolean
+        get() = motion.space == ParticleSpace.Local
+
     /** How many of this emitter's particles are alive. */
     val liveParticleCount: Int
         get() = simulation.liveParticleCount
@@ -393,15 +407,22 @@ class ParticleEmitter(
         get() = simulation.spawnedTotal
 
     /**
-     * Calls [action] with the position and velocity of each live particle, in no particular order.
-     * The vectors are scratch copies reused across slots: copy what you keep, and writing through
-     * them does not move the particle.
+     * Calls [action] with the world position and velocity of each live particle, in no particular order;
+     * a [ParticleSpace.Local] particle is mapped through its entity's latest frame. The vectors are
+     * scratch copies reused across slots: copy what you keep, and writing through them does not move
+     * the particle.
      */
     fun forEachLiveParticle(action: (position: Vec3f, velocity: Vec3f) -> Unit) {
+        val sim = simulation
         for (slot in 0 until maxParticles) {
-            if (simulation.isAlive(slot)) {
-                scratchPosition.set(simulation.posX[slot], simulation.posY[slot], simulation.posZ[slot])
-                scratchVelocity.set(simulation.velX[slot], simulation.velY[slot], simulation.velZ[slot])
+            if (sim.isAlive(slot)) {
+                if (isLocal) {
+                    frame.toWorld(sim.posX[slot], sim.posY[slot], sim.posZ[slot], scratchPosition)
+                    frame.toWorld(sim.velX[slot], sim.velY[slot], sim.velZ[slot], scratchVelocity, point = false)
+                } else {
+                    scratchPosition.set(sim.posX[slot], sim.posY[slot], sim.posZ[slot])
+                    scratchVelocity.set(sim.velX[slot], sim.velY[slot], sim.velZ[slot])
+                }
                 action(scratchPosition, scratchVelocity)
             }
         }
@@ -412,11 +433,17 @@ class ParticleEmitter(
      * and emits nothing when every one of [maxParticles] is alive. It lives for [lifetime] seconds
      * with this emitter's [startAlpha] and [scale], and [ParticleSystem] moves and ages it like any
      * other. A hand-emitted particle does not count toward [ParticleLifecycle.burstCount] or the
-     * spawn schedule.
+     * spawn schedule. Both are in the world; a [ParticleSpace.Local] emitter keeps the particle
+     * relative to its entity's latest frame from then on.
      */
     fun spawn(position: Vec3f, velocity: Vec3f = Vec3f(0f, 0f, 0f)): Boolean {
         syncToSimulation()
-        return simulation.spawn(position.x, position.y, position.z, velocity.x, velocity.y, velocity.z)
+        if (!isLocal) return simulation.spawn(position.x, position.y, position.z, velocity.x, velocity.y, velocity.z)
+        frame.toLocal(position.x, position.y, position.z, scratchPosition)
+        frame.toLocal(velocity.x, velocity.y, velocity.z, scratchVelocity, point = false)
+        val p = scratchPosition
+        val v = scratchVelocity
+        return simulation.spawn(p.x, p.y, p.z, v.x, v.y, v.z)
     }
 
     /**
@@ -499,10 +526,8 @@ class ParticleEmitter(
         sim.coneHalfAngleDegrees = cone ?: 0f
         sim.convergeToOrigin = m.convergeToOrigin
         sim.radialSpeed = m.radialSpeed
-        sim.inheritOrientation = m.inheritOrientation
-        sim.accelX = m.acceleration.x
-        sim.accelY = m.acceleration.y
-        sim.accelZ = m.acceleration.z
+        sim.inheritOrientation = m.inheritOrientation && m.space == ParticleSpace.World
+        syncSpace(sim, m)
         sim.drag = 0f
         sim.turbulence = m.turbulence
         sim.turbulenceFrequency = m.turbulenceFrequency
@@ -522,7 +547,7 @@ class ParticleEmitter(
             sim.spin.set(sp.minDegreesPerSecond, sp.maxDegreesPerSecond, sp.randomStartAngle)
         }
 
-        syncGround(sim)
+        if (m.space == ParticleSpace.Local) sim.ground.clear() else syncGround(sim)
 
         val lc = lifecycle
         // A negative burstCount spawns nothing, as it did before the shared simulation.
@@ -533,6 +558,24 @@ class ParticleEmitter(
         } else {
             sim.burstSchedule.set(bc.cycleSeconds, bc.activeSeconds, bc.burstInterval, bc.burstSize)
         }
+    }
+
+    // A local pool spawns at the origin as seen from its entity's frame, and feels the world's
+    // acceleration turned into that frame, so gravity still pulls down however the entity is turned.
+    private fun syncSpace(sim: ParticleSimulation, m: ParticleMotion) {
+        if (m.space == ParticleSpace.World) {
+            sim.accelX = m.acceleration.x
+            sim.accelY = m.acceleration.y
+            sim.accelZ = m.acceleration.z
+            return
+        }
+        val local = scratchPosition
+        frame.toLocal(origin.x, origin.y, origin.z, local)
+        sim.setOrigin(local.x, local.y, local.z)
+        frame.toLocal(m.acceleration.x, m.acceleration.y, m.acceleration.z, local, point = false)
+        sim.accelX = local.x
+        sim.accelY = local.y
+        sim.accelZ = local.z
     }
 
     private fun syncGround(sim: ParticleSimulation) {

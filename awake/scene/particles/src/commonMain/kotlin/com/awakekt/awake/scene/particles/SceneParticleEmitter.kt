@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.particles
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.particles.ParticleEmitter
 import com.awakekt.awake.particles.ParticleFacing
+import com.awakekt.awake.particles.ParticleSpace
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -22,9 +23,9 @@ import kotlinx.serialization.Serializable
 
 /**
  * Sprites spawned at the node's world position: a [ParticleEmitter] authored as data. Sizes, speeds
- * and [spawnRadius] are world units; the node's scale does not apply. The values [facing] takes in a
- * scene file are the names of the [ParticleFacing] constants, so those names are part of the file
- * format.
+ * and [spawnRadius] are world units; the node's scale does not apply, unless [space] is
+ * [ParticleSpace.Local]. The values [facing] and [space] take in a scene file are the names of the
+ * [ParticleFacing] and [ParticleSpace] constants, so those names are part of the file format.
  *
  * @property texture A project image file the particles show.
  * @property maxParticles The pool size; spawning pauses while every slot is live. Above 0.
@@ -79,6 +80,11 @@ import kotlinx.serialization.Serializable
  * @property spin A random spin for each particle, turning its sprite in its own plane as it lives. Left
  * out, particles do not turn. A stretched particle ([stretchWithVelocity]) points along its motion and
  * ignores it.
+ * @property space Where particles are kept once spawned. [ParticleSpace.World], the default, leaves each
+ * where it was emitted however the node moves next. [ParticleSpace.Local] keeps them relative to the
+ * node, so they move, turn and scale with it: [velocity], [spawnRadius], sizes and speeds are then in the
+ * node's own axes and units, and [inheritOrientation] adds nothing. [acceleration] still pulls in world
+ * space. A local emitter has no [ground], since its particles do not keep to the world.
  */
 @Serializable
 @SerialName("particle_emitter")
@@ -113,6 +119,7 @@ data class SceneParticleEmitter(
     @PropertyRange(min = 0.0, exclusiveMin = true) val burstCount: Int? = null,
     val ground: SceneParticleGround? = null,
     val spin: SceneParticleSpin? = null,
+    val space: ParticleSpace = ParticleSpace.World,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> =
         (basicProblems() + motionProblems() + shapeProblems()).map { SceneValidationIssue(path, "particle_emitter.$it") }
@@ -136,6 +143,7 @@ data class SceneParticleEmitter(
         if (!(turbulenceFrequency >= 0f && turbulenceFrequency.isFinite())) add("turbulenceFrequency must be finite and not negative")
         if (!(stretchFactor >= 0f && stretchFactor.isFinite())) add("stretchFactor must be finite and not negative")
         if (burstCount != null && burstCount <= 0) add("burstCount must be greater than 0")
+        if (space == ParticleSpace.Local && ground != null) add("ground does not apply to a Local space emitter")
     }
 
     private fun shapeProblems(): List<String> =

@@ -12,8 +12,9 @@ import com.awakekt.awake.ecs.World
 
 /**
  * Where an emitter's entity is in the world: what [ParticleSystem] needs to make an emitter follow an
- * entity ([ParticleDynamics.followEntity]) and to turn a spawn by the entity's rotation
- * ([ParticleMotion.inheritOrientation]).
+ * entity ([ParticleDynamics.followEntity]), to turn a spawn by the entity's rotation
+ * ([ParticleMotion.inheritOrientation]), and what both it and [ParticleDrawBuilder] map a
+ * [ParticleSpace.Local] emitter's particles through, every frame.
  *
  * The particle library does not know what places an entity. That may be a scene graph's transform, a
  * physics body, or a position a game keeps in a component of its own; an app supplies the one it has.
@@ -28,8 +29,9 @@ interface EmitterPlacement {
     fun position(world: World, entity: Entity, into: Vec3f): Boolean
 
     /**
-     * [entity]'s world matrix, whose upper 3 x 3 holds its axes (any scale in them is ignored), or null
-     * when it has none.
+     * [entity]'s world matrix, whose upper 3 x 3 holds its axes, or null when it has none. Turning a spawn
+     * ignores any scale in the axes; a [ParticleSpace.Local] emitter's particles are scaled by it, and
+     * placed at [position] rather than at the matrix's own translation when the two differ.
      */
     fun orientation(world: World, entity: Entity): Mat4?
 

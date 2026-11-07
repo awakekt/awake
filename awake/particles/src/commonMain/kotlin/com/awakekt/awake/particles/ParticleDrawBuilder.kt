@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Plane
 import com.awakekt.awake.core.math.Vec3
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.ecs.World
@@ -33,6 +34,14 @@ class ParticleDrawBuilder {
     private val planeBasis = FloatArray(PLANE_BASIS_FLOATS)
     private val cameraBasis = FloatArray(PLANE_BASIS_FLOATS)
 
+    /** The current emitter entity's frame, loaded only when one of its emitters is [ParticleSpace.Local]. */
+    private val entityFrame = EmitterFrame()
+
+    /** What a [ParticleSpace.World] pool is drawn through: mapping through it leaves every value exact. */
+    private val worldFrame = EmitterFrame()
+    private val placedPosition = Vec3f(0f, 0f, 0f)
+    private val placedStretch = Vec3f(0f, 0f, 0f)
+
     /**
      * Appends one draw packet to [destination] for every emitter in [world] that has live particles in
      * the view [lens] defines, [aspect] wide per unit of height; the emitters' children are drawn too.
@@ -40,7 +49,8 @@ class ParticleDrawBuilder {
      *
      * A [ParticleFacing.Flat] emitter draws along the plane of its entity's [placement] orientation
      * (its +X is the quads' right and its -Z their up, so a flat quad faces its +Y), or along the
-     * world's ground when [placement] has none.
+     * world's ground when [placement] has none. A [ParticleSpace.Local] emitter's particles are drawn
+     * through its entity's frame as [placement] reports it now, so they move, turn and scale with it.
      */
     fun appendWorldDrawCalls(
         destination: MutableList<RenderDrawCommand>,
@@ -65,6 +75,7 @@ class ParticleDrawBuilder {
         val frustumPlanes = Frustum.planes(lens, aspect)
         family.forEach { entity, emitter ->
             writePlaneBasis(placement.orientation(world, entity))
+            if (emitter.keepsAnyLocal()) entityFrame.load(placement, world, entity) else entityFrame.setIdentity()
             appendDrawCalls(destination, emitter, cameraBasis, frustumPlanes, lens.eye)
         }
     }
@@ -83,22 +94,23 @@ class ParticleDrawBuilder {
         frustumPlanes: List<Plane>,
         eye: Vec3,
     ) {
+        val frame = if (emitter.motion.space == ParticleSpace.Local) emitter.frame.apply { copyFrom(entityFrame) } else worldFrame
         emitter.syncToSimulation()
         val sim = emitter.simulation
+        val sizeScale = frame.sizeScale
+        val placed = placedPosition
         val depthOrder = emitter.depthOrder
         val visibleIndices = depthOrder.indices
         val visibleDistances = depthOrder.distances
         var visibleCount = 0
         for (slot in 0 until sim.maxParticles) {
             if (sim.isAlive(slot)) {
-                val px = sim.posX[slot]
-                val py = sim.posY[slot]
-                val pz = sim.posZ[slot]
-                val radius = sim.scaleAt(slot)
-                if (isSphereInFrustum(frustumPlanes, px, py, pz, radius)) {
-                    val dx = px - eye.x
-                    val dy = py - eye.y
-                    val dz = pz - eye.z
+                frame.toWorld(sim.posX[slot], sim.posY[slot], sim.posZ[slot], placed)
+                val radius = sim.scaleAt(slot) * sizeScale
+                if (isSphereInFrustum(frustumPlanes, placed.x, placed.y, placed.z, radius)) {
+                    val dx = placed.x - eye.x
+                    val dy = placed.y - eye.y
+                    val dz = placed.z - eye.z
                     visibleIndices[visibleCount] = slot
                     visibleDistances[visibleCount] = dx * dx + dy * dy + dz * dz
                     visibleCount += 1
@@ -118,14 +130,17 @@ class ParticleDrawBuilder {
             val slot = visibleIndices[index]
             while (emitter.modelPool.size <= index) emitter.modelPool += Mat4()
             while (emitter.colorPool.size <= index) emitter.colorPool += Vec4()
+            frame.toWorld(sim.posX[slot], sim.posY[slot], sim.posZ[slot], placed)
+            val streak = placedStretch
+            frame.toWorld(sim.velX[slot] * stretch, sim.velY[slot] * stretch, sim.velZ[slot] * stretch, streak, point = false)
             val model = emitter.modelPool[index].setParticleInstance(
-                sim.posX[slot],
-                sim.posY[slot],
-                sim.posZ[slot],
-                sim.scaleAt(slot),
-                sim.velX[slot] * stretch,
-                sim.velY[slot] * stretch,
-                sim.velZ[slot] * stretch,
+                placed.x,
+                placed.y,
+                placed.z,
+                sim.scaleAt(slot) * sizeScale,
+                streak.x,
+                streak.y,
+                streak.z,
                 rotation = if (visual.stretchWithVelocity) 0f else sim.rotation[slot],
             )
             instanceModels += model

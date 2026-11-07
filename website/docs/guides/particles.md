@@ -103,6 +103,33 @@ along a direction fires that way. `ground` takes a flat floor at `groundY` and a
 `turbulenceFrequency` add a flow-field wobble, and `convergeToOrigin` sends particles toward the node
 for a charge-up.
 
+### Particles that move with the node
+
+By default each particle stays where it was emitted, so an emitter on a moving node leaves a trail.
+Set `space` to `Local` to keep particles relative to the node instead: they are drawn through the
+node's current transform every frame, so they move, turn and scale with it. That is the shape of an
+aura on a character's hand, a glow on a weapon or a halo on a projectile.
+
+```json title="Scene document"
+{
+  "component": "particle_emitter",
+  "texture": "assets/fx/glow.png",
+  "space": "Local",
+  "spawnRate": 30,
+  "lifetime": 0.8,
+  "spawnRadius": 0.2,
+  "velocity": {"x": 0, "y": 0.5, "z": 0},
+  "additive": true
+}
+```
+
+In local space `velocity`, the spawn ring, sizes and speeds are in the node's own axes and units, so
+`inheritOrientation` has nothing to add. `acceleration` still pulls in world space, so gravity stays
+down however the node turns, and camera-facing sprites still face the camera. A local emitter takes
+no `ground`, because its particles do not keep to the world. From code it is
+`ParticleMotion(space = ParticleSpace.Local)`; `forEachLiveParticle` and `onParticleDeath` still
+report world positions.
+
 A pulsing emitter spawns on a schedule, in place of `spawnRate`:
 
 ```json title="Scene document"
@@ -190,6 +217,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `radialSpeed` | `0` | Adds this speed horizontally away from `origin`, through the spawn point on the `spawnRadius` ring (any direction when the radius is 0). Ignored with `convergeToOrigin`. |
 | `acceleration` | `(0, 0, 0)` | A constant world-space acceleration in units per second squared, added to every live particle's velocity each step. `(0, -9.8, 0)` is gravity. A settled particle ignores it. |
 | `inheritOrientation` | `false` | Turns the spawn ring and `baseVelocity` (so also a cone's axis and the jitter axes) by the emitter entity's `Transform` rotation, so an emitter turned to face a direction fires that way. Scale is ignored. `acceleration`, `radialSpeed` and `convergeToOrigin` stay in world axes. |
+| `space` | `ParticleSpace.World` | `World` keeps each particle where it spawned. `Local` keeps particles relative to the emitter entity's frame (its `EmitterPlacement` position and matrix, scale included) and draws them through it every frame. See [Particles that move with the node](#particles-that-move-with-the-node). |
 
 `ParticleVisual`:
 
