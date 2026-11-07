@@ -21,13 +21,13 @@ import com.awakekt.awake.scene.rendering.RenderSystem3D
  * A model the renderer culled last frame, and drew nowhere, only advances its clock: its pose is
  * computed again once it is drawn. One drawn after being culled shows its old pose for one frame,
  * which the renderer's culling margin keeps off screen. A model no renderer has looked at, as in a
- * headless world, is posed every frame unless [hasRenderer] is false.
+ * headless world, is posed every frame unless `hasRenderer` is false.
  *
  * [updateRate] opts a consuming app into posing far models less often (see [AnimationUpdateRate]);
  * the default, [AnimationUpdateRate.EveryFrame], poses every drawn model every frame as before. A
  * held model still advances its clock, so it resumes on time when it is posed again.
  *
- * With [hasRenderer] false, for a host that draws nothing such as a game server, every clock, clip
+ * With `hasRenderer` false, for a host that draws nothing such as a game server, every clock, clip
  * switch, crossfade and finished clip advances exactly as it does on a host that draws, so
  * [AnimationPlayer.isFinished] and [AnimationPlayer.activeClipId] read the same frame for frame, but
  * no bone is posed and [SkinnedPose.jointPalette] is left as it was. Two kinds of model are still
@@ -37,7 +37,6 @@ import com.awakekt.awake.scene.rendering.RenderSystem3D
  * A model posed again after a stretch unposed crossfades from its last posed frame.
  *
  * @param updateRate How often a drawn model far from the camera is posed.
- * @param hasRenderer Whether anything draws the poses; false skips posing all but the models above.
  */
 class AnimationSystem(
     private val updateRate: AnimationUpdateRate = AnimationUpdateRate.EveryFrame,
@@ -45,7 +44,12 @@ class AnimationSystem(
     // A secondary constructor, so the released `()` and `(AnimationUpdateRate)` constructors stay as they were.
     private var hasRenderer = true
 
-    /** A system for a host that does or doesn't draw; see [hasRenderer] in the class docs. */
+    /**
+     * A system for a host that does or doesn't draw.
+     *
+     * @param updateRate How often a drawn model far from the camera is posed.
+     * @param hasRenderer Whether anything draws the poses; false skips posing all but the models the class docs name.
+     */
     constructor(
         updateRate: AnimationUpdateRate = AnimationUpdateRate.EveryFrame,
         hasRenderer: Boolean,
