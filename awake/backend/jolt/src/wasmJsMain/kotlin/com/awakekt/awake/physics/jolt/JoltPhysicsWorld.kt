@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BallSocketConstraint
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.Buoyancy
 import com.awakekt.awake.physics.CapsuleShape
@@ -1068,7 +1069,7 @@ private const val VALUES_PER_CONTACT = 3
  * One crossing for the whole set. Reading them a body at a time would put a JS boundary hop
  * between each, which is the cost this readback exists to stop scaling with the population.
  */
-// Called from JoltPhysicsWorld.forEachBodyTransform() below; detekt cannot trace @JsFun calls.
+// Called from JoltPhysicsWorld.visitBodyTransforms() below; detekt cannot trace @JsFun calls.
 @Suppress("unused")
 @JsFun(
     """
@@ -1624,7 +1625,9 @@ class JoltPhysicsWorld private constructor(
 
     override fun forEachBodyTransform(
         action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit,
-    ) {
+    ) = visitBodyTransforms { id, position, rotation -> action(BodyHandle(id), position, rotation) }
+
+    override fun visitBodyTransforms(visitor: BodyTransformVisitor) {
         // One crossing for the whole active set rather than one per body: on this backend every
         // call is a JS boundary hop, and the body count is exactly what must not scale it.
         val active = joltActiveBodyTransforms(world)
@@ -1640,11 +1643,7 @@ class JoltPhysicsWorld private constructor(
             scratchOutRotation.y = jsArrayGet(active, base + 6).toFloat()
             scratchOutRotation.z = jsArrayGet(active, base + 7).toFloat()
             scratchOutRotation.w = jsArrayGet(active, base + 4).toFloat()
-            action(
-                BodyHandle(jsArrayGet(active, base).toLong()),
-                scratchOutPosition,
-                scratchOutRotation,
-            )
+            visitor.visit(jsArrayGet(active, base).toLong(), scratchOutPosition, scratchOutRotation)
         }
     }
 

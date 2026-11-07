@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BallSocketConstraint
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.BodyTransformVisitor
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.Buoyancy
 import com.awakekt.awake.physics.CapsuleShape
@@ -490,7 +491,9 @@ class JoltPhysicsWorld(
 
     override fun forEachBodyTransform(
         action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit,
-    ) {
+    ) = visitBodyTransforms { id, position, rotation -> action(BodyHandle(id), position, rotation) }
+
+    override fun visitBodyTransforms(visitor: BodyTransformVisitor) {
         // Only the bodies Jolt considers awake. A sleeping crate has not moved, so reading it back
         // is a JNI crossing that returns the pose the caller already has -- and a scene spends far
         // more of its life settled than in motion.
@@ -507,7 +510,7 @@ class JoltPhysicsWorld(
             scratchOutRotation.y = scratchRotation.y
             scratchOutRotation.z = scratchRotation.z
             scratchOutRotation.w = scratchRotation.w
-            action(BodyHandle(id.toLong()), scratchOutPosition, scratchOutRotation)
+            visitor.visit(id.toLong(), scratchOutPosition, scratchOutRotation)
         }
     }
 

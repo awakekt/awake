@@ -55,6 +55,10 @@ public final class com/awakekt/awake/physics/BodyTransform {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class com/awakekt/awake/physics/BodyTransformVisitor {
+	public abstract fun visit (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;)V
+}
+
 public final class com/awakekt/awake/physics/BoxShape : com/awakekt/awake/physics/PhysicsShape {
 	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -369,6 +373,7 @@ public abstract interface class com/awakekt/awake/physics/PhysicsWorld {
 	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
 	public abstract fun shiftOrigin (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public abstract fun step (F)V
+	public fun visitBodyTransforms (Lcom/awakekt/awake/physics/BodyTransformVisitor;)V
 }
 
 public final class com/awakekt/awake/physics/PhysicsWorld$DefaultImpls {
@@ -380,6 +385,7 @@ public final class com/awakekt/awake/physics/PhysicsWorld$DefaultImpls {
 	public static fun raycast-KJBOitM (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/physics/RaycastHit;
 	public static synthetic fun raycast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/RaycastHit;
 	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
+	public static fun visitBodyTransforms (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/BodyTransformVisitor;)V
 }
 
 public final class com/awakekt/awake/physics/PhysicsWorldKt {
