@@ -36,7 +36,7 @@ import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** A model the renderer culled keeps its clock but is not posed until it is drawn again. */
+/** A model the renderer culled, or that is hidden, keeps its clock but is not posed until it is drawn again. */
 class UnseenPoseTest {
     private val culling = SceneCullingCompiler(ClipSpace.WebGpu)
     private val collector = SceneDrawCollector(culling)
@@ -58,6 +58,25 @@ class UnseenPoseTest {
         AnimationSystem().update(world, delta = 0.5f)
 
         assertEquals(1f, pose(world, model).jointPalette[12], "posed at the clock it kept")
+    }
+
+    @Test
+    fun aHiddenModelIsNotPosedButItsClipPlaysOn() {
+        val world = World()
+        val (model, player) = model(world)
+        world.add(model, requireNotNull(world.get<MeshRenderer>(model)).copy(visible = false))
+        collect(world, lookingAt)
+
+        AnimationSystem().update(world, delta = 0.5f)
+
+        assertEquals(0f, pose(world, model).jointPalette[12], "a hidden model is not posed, though in view")
+        assertEquals(0.5f, player.time)
+
+        world.add(model, requireNotNull(world.get<MeshRenderer>(model)).copy(visible = true))
+        collect(world, lookingAt)
+        AnimationSystem().update(world, delta = 0.5f)
+
+        assertEquals(1f, pose(world, model).jointPalette[12], "posed at the clock it kept once shown")
     }
 
     @Test
