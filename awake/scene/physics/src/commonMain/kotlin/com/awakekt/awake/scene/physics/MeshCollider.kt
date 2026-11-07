@@ -157,10 +157,6 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
             ),
         )
     }
-
-    private companion object {
-        const val INITIAL_BATCH = 16
-    }
 }
 
 /**
@@ -181,6 +177,9 @@ private fun MeshShape.scaledBy(scale: Vec3f): MeshShape {
     val wound = if (mirrored) IntArray(indices.size) { index -> indices[index + MIRROR_SWAP[index % 3]] } else indices
     return MeshShape(scaled, wound)
 }
+
+/** First size of [MeshColliderSystem]'s reused batch; it grows to the largest batch seen. */
+private const val INITIAL_BATCH = 16
 
 /** Swaps each triangle's second and third corner. */
 private val MIRROR_SWAP = intArrayOf(0, 1, -1)
