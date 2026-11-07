@@ -114,6 +114,26 @@ class CanvasMoveHandleTest {
     }
 
     @Test
+    fun aWindowMovedPartlyOffTheCanvasKeepsItsSize() {
+        val (window, _) = window()
+        val pastEdges = listOf(
+            -1000 to 110, 2000 to 110, 150 to -1000, 150 to 2000,
+            -1000 to -1000, 2000 to -1000, -1000 to 2000, 2000 to 2000,
+        )
+
+        for ((x, y) in pastEdges) {
+            window.offsetX = 100f
+            window.offsetY = 100f
+            frame(0, 0)
+            drag(150, 110, x to y)
+            frame(0, 0)
+
+            val bounds = window.screenBounds!!
+            assertEquals(200f to 150f, bounds.width to bounds.height, "dragged towards ($x, $y), it is only clipped")
+        }
+    }
+
+    @Test
     fun aShrunkenCanvasPullsAWindowBackOn() {
         val (window, _) = window(x = 700f, y = 500f)
         frame(0, 0)
