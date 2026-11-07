@@ -62,8 +62,8 @@ internal fun Renderer.prepareGpuDraw(
     if (instanceModels != null) {
         return prepareInstancedGpuDraw(
             cmd = cmd,
-            // A dynamic mesh is drawn once, never as instances.
-            mesh = mesh as? Mesh ?: return null,
+            // Only a built mesh is instanced; a dynamic one is always drawn once.
+            mesh = mesh as Mesh,
             material = material,
             instanceModels = instanceModels,
             instanceIndex = instancedIndex,

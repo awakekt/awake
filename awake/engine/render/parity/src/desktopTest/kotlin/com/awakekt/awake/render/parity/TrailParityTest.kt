@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.trail.TrailBlend
+import com.awakekt.awake.trail.TrailRenderer
 import java.io.File
 import kotlin.math.abs
 import kotlin.test.Test
@@ -63,28 +64,37 @@ class TrailParityTest {
         val blended = frame(listOf(alpha, alphaAgain)).also { save(backend, "blended", it) }
         expect(failures, backend, "two opaque alpha-blended ribbons over each other", red(blended, CENTRE, CENTRE), 128, ADD_TOLERANCE)
 
-        // Reveal: a quarter of the ribbon, then three quarters, from the left.
-        first.visible = PAIRS / 4
-        val quarter = frame(listOf(first)).also { save(backend, "quarter", it) }
-        first.visible = PAIRS * 3 / 4
-        val threeQuarters = frame(listOf(first)).also { save(backend, "three-quarters", it) }
+        val (quarter, threeQuarters) = reveal(first, backend, failures)
+        val faded = fade(first, backend, failures)
+        return listOf(single, added, blended, quarter, threeQuarters, faded)
+    }
+
+    /** Reveals a quarter of [trail], then three quarters, from the left, and checks more is lit. */
+    private fun TrailView.reveal(trail: TrailRenderer, backend: HeadlessUiBackend, failures: MutableList<String>): Pair<ByteArray, ByteArray> {
+        trail.visible = PAIRS / 4
+        val quarter = frame(listOf(trail)).also { save(backend, "quarter", it) }
+        trail.visible = PAIRS * 3 / 4
+        val threeQuarters = frame(listOf(trail)).also { save(backend, "three-quarters", it) }
         val litQuarter = litColumns(quarter)
         val litThreeQuarters = litColumns(threeQuarters)
         if (litThreeQuarters < litQuarter * 2) failures += "$backend: revealing 3/4 lit $litThreeQuarters columns against $litQuarter at 1/4"
         expect(failures, backend, "past the last visible pair", red(quarter, RIGHT, CENTRE), 0, ADD_TOLERANCE)
+        return quarter to threeQuarters
+    }
 
-        // Fade: newest pair full red, back to black at the first; only the colours change.
-        first.visible = PAIRS
+    /** Fades [trail] from its newest pair back to black and checks it reads darkest at the tail. */
+    private fun TrailView.fade(trail: TrailRenderer, backend: HeadlessUiBackend, failures: MutableList<String>): ByteArray {
+        trail.visible = PAIRS
         val newest = PAIRS - 1
-        for (pair in 0..newest) first.strip.setColor(pair, pair.toFloat() / newest, 0f, 0f, 1f)
-        val faded = frame(listOf(first)).also { save(backend, "faded", it) }
+        for (pair in 0..newest) trail.strip.setColor(pair, pair.toFloat() / newest, 0f, 0f, 1f)
+        val faded = frame(listOf(trail)).also { save(backend, "faded", it) }
         val tail = red(faded, LEFT, CENTRE)
         val middle = red(faded, CENTRE, CENTRE)
         val head = red(faded, RIGHT, CENTRE)
         println("Trail $backend fade: tail $tail, middle $middle, head $head")
         if (!(tail < middle && middle < head)) failures += "$backend: the fade is not darkest at the tail and brightest at the head: $tail, $middle, $head"
         expect(failures, backend, "the fade's middle", middle, 128, FADE_TOLERANCE)
-        return listOf(single, added, blended, quarter, threeQuarters, faded)
+        return faded
     }
 
     private fun expect(failures: MutableList<String>, backend: HeadlessUiBackend, what: String, actual: Int, expected: Int, tolerance: Int) {
