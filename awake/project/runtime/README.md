@@ -14,7 +14,8 @@ app { scene("game") { runProject(project) } }
 world only when the scene has `physics_body` or `character_controller` components. The host picks the
 physics backend, and the project owns the world: `close()` it once the scene has stopped, since a
 physics world's native memory outlives garbage collection. A project is played once; its bodies stay
-in its world, so load it again to play the scene again.
+in its world, so load it again to play the scene again, or make independent copies of its scene with
+`newSceneInstance` (see below).
 
 A node's `tag` component becomes its entity's `Tags`, which gameplay finds with `world.withTag` and
 `world.hasTag` (see `awake:ecs`). A manifest may list the project's tags in `tags`, which editors
@@ -267,6 +268,37 @@ simulates with and passes them in, as it passes the physics world, and builds th
 its `ContentTransport` (the ready-made `transport-ktor` and `transport-browser` modules are opt-in).
 `awakeVerify` runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming
 the chain.
+
+## Many independent copies of one scene
+
+A server that runs many short-lived copies of one map, such as an instanced area per party, a practice
+room or a match, loads the project once and makes an instance per copy:
+
+```kotlin
+val project = loadProject(files, hasRenderer = false, physicsWorld = ::createJoltPhysicsWorld)
+// per party:
+val instance = project.newSceneInstance()
+val systems = instance.sceneSystems(input, coroutineScope = partyScope)
+// each tick: systems.fixed.forEach { it.update(instance.world, step) }
+// when the party leaves:
+instance.close()
+```
+
+Each `SceneInstance` has a `World` of its own with the scene's entities in it, the systems
+`sceneSystems` plans for it, and, when the scene has bodies or characters, a physics world of its own
+from the project's `physicsWorld` factory, so a body moved in one stays where it is in every other.
+What the project loaded is shared and only read: the scene document, the component registry and
+capabilities, the glTF models, and the scene's content (collision meshes, the baked navigation grid,
+AI definitions). Making one reads no file.
+
+- `close()` closes the systems it built, destroys its entities and then its physics world. The project,
+  its other instances and the shared data are untouched.
+- An instance plays the scene the project played when it was made: a later `switchTo` or the project's
+  `close()` leaves it playing. A closed project makes no more.
+- Step each instance on one thread at a time. Different instances may step on different threads, since
+  nothing they share is written once the project has loaded.
+
+`SceneInstanceCostTest` prints what a copy costs against loading the project again.
 
 ## Loading more than one project
 
