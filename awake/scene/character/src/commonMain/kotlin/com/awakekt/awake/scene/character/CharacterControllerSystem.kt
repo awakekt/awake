@@ -30,7 +30,9 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
  * on these entities: it moves them straight through walls.
  *
  * A walking character turns toward its intent by [MovementControl.turnSpeed]; a free one turns only when
- * game code sets [CharacterController.steppedYaw], which is recorded and blended between steps the same way.
+ * game code sets [CharacterController.steppedYaw], which is recorded and blended between steps the same way,
+ * or toward its intent's horizontal direction when [CharacterController.freeFacesIntent] is on. Pitch is
+ * written only for a character game code pitches through [CharacterController.steppedPitch].
  *
  * @param physicsWorld The physics simulation world in which the character controller operates.
  * @param defaultSpeed Default horizontal locomotion speed in units per second when intent does not specify one.
@@ -79,7 +81,10 @@ class CharacterControllerSystem(
                 contact.freeMotion = isFree
                 contact.grounded = !isFree && character.isGrounded && character.verticalVelocity <= 0f
             }
-            if (character.motionMode == CharacterMotionMode.Grounded) intent?.turnToward(transform, moveX, moveZ, delta)
+            when {
+                character.motionMode == CharacterMotionMode.Grounded -> intent?.turnToward(transform, moveX, moveZ, delta)
+                character.freeFacesIntent && intent != null -> intent.turnToward(transform, intent.moveX, intent.moveZ, delta)
+            }
             character.record(transform)
         }
         releaseGone(world)
