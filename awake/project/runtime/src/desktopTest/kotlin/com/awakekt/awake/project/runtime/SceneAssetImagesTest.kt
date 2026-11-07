@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.Collections
 import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,7 +47,9 @@ class SceneAssetImagesTest {
 
     @Test
     fun anImageTheUiAskedForIsFreedOnASceneSwitch() = runTest {
-        val project = loadProject(files(mutableListOf()))
+        // Read from the loader's thread as well as the test's.
+        val reads = Collections.synchronizedList(mutableListOf<String>())
+        val project = loadProject(files(reads))
         // The level loads as it is asked for, so the switch waits on no background load, only on the
         // next frame's safe point.
         project.sceneLoads = Dispatchers.Unconfined
@@ -62,7 +65,10 @@ class SceneAssetImagesTest {
         assertSame(images, runtime.assetImages, "one cache for the runtime, started again")
         assertEquals(1, images.size, "only the level's canvas image is left")
         assertSame(runtime.canvasImages.getValue("ui/level.png"), images["ui/level.png"])
-        assertNull(images["ui/icon.png"], "the menu's icon was freed, and is loaded again when asked for")
+        // Asking again reads the file again; whether it has decoded by the next line is the loader's race.
+        images["ui/icon.png"]
+        game.until("the icon is read again") { reads.count { it == "ui/icon.png" } == 2 }
+        assertEquals(2, reads.count { it == "ui/icon.png" }, "the menu's icon was freed, and is loaded again when asked for")
         project.close()
     }
 
