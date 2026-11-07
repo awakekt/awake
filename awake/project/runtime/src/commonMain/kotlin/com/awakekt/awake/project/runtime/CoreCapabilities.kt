@@ -163,13 +163,16 @@ internal object PhysicsCapability : SceneCapability {
 /**
  * Skinned glTF animation, which every scene runs: a model's clips need no component of their own. A
  * game that put an [AnimationUpdateRate] under [CoreSceneContent.AnimationUpdateRate] has far models
- * posed less often; otherwise every model is posed every frame.
+ * posed less often; otherwise every model is posed every frame. A headless plan (`hasRenderer` false)
+ * advances every clip, crossfade and finished clip the same but poses no bone, except a socket's target
+ * or a model marked `PosedWithoutRenderer` (#1442).
  */
 internal object SkinnedAnimationCapability : SceneCapability {
     override val id = "com.awakekt.awake.skinned-animation"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        plan.frame("animation") { services -> AnimationSystem(services.animationUpdateRate()) }
+        val hasRenderer = plan.hasRenderer
+        plan.frame("animation") { services -> AnimationSystem(services.animationUpdateRate(), hasRenderer) }
     }
 }
 

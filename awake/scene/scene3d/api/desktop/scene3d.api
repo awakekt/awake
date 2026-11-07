@@ -75,6 +75,8 @@ public final class com/awakekt/awake/scene/rendering/animation/AnimationSystem :
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/rendering/animation/AnimationUpdateRate;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -143,6 +145,7 @@ public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimation
 
 public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimationSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
+	public fun <init> (Z)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -205,6 +208,13 @@ public final class com/awakekt/awake/scene/rendering/animation/ModularCharacterC
 public final class com/awakekt/awake/scene/rendering/animation/ModularSkeletalSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/PosedWithoutRenderer : com/awakekt/awake/ecs/EcsTag {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/PosedWithoutRenderer;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/rendering/animation/SceneFloatKey {
