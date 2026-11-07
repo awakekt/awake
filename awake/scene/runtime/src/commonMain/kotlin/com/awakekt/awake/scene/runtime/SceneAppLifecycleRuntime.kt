@@ -212,7 +212,9 @@ class SceneAppLifecycleRuntime internal constructor(
     /**
      * The decoded images the scene's canvas elements name, by path; an element whose image is missing
      * draws without it. Setting it also starts [assetImages] again from these images, freeing what
-     * the scene's UI asked for before: a played project sets it on each scene switch.
+     * the scene's UI asked for before: a played project sets it on each scene switch. With an
+     * [assetSource], the canvas looks its images up through [assetImages], so an image left out of
+     * these, such as a `lazy` one, is read the first time an element drawing it shows.
      */
     var canvasImages: Map<String, ImageBitmap> = emptyMap()
         set(value) {
@@ -619,7 +621,9 @@ class SceneAppLifecycleRuntime internal constructor(
                     SceneCanvas(
                         world,
                         showTouchControls = showTouchControls,
-                        images = canvasImages,
+                        // Through the scene's image cache when there is one, so a lazy image loads
+                        // the first time an element drawing it shows.
+                        images = uiAssets.canvasImages,
                         scale = canvasScale,
                         projector = canvasProjector(),
                         bindings = canvasBindings ?: globalBindings,

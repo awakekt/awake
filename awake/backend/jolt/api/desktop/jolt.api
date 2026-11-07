@@ -27,6 +27,7 @@ public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorld : com/awakekt
 	public fun shapeCast-KJBOitM (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/physics/ShapeCastHit;
 	public fun shiftOrigin (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public fun step (F)V
+	public fun visitBodyTransforms (Lcom/awakekt/awake/physics/BodyTransformVisitor;)V
 }
 
 public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorldFactoryKt {

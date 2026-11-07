@@ -799,6 +799,11 @@ jobs:
       - name: Scene prewarm verification (wasmJs)
         run: ./gradlew --continue :awake:scene:runtime:wasmJsTest :awake:project:runtime:wasmJsTest
 
+      # A lazy canvas image (#1448) on wasmJs: a hidden window's image is not fetched until the
+      # window shows, then read once in the browser's event loop and drawn.
+      - name: Lazy canvas image verification (wasmJs)
+        run: ./gradlew :awake:compose:assets:wasmJsBrowserTest --tests "*AssetImageMap*" :awake:scene:canvas:wasmJsBrowserTest --tests "*LazyCanvasImage*"
+
   # The WebGPU release pin is built only from a commit tagged v<release>, and on the tag run its
   # Consumer gate builds it before the release can publish. Without this job a tag would be the
   # first run of that build, its strictly constraints and its metadata check, on Linux at least. A

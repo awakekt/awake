@@ -73,6 +73,21 @@ class AssetImages(
     fun failure(path: String): Throwable? = entries[path]?.failure
 
     /**
+     * This cache as a map by path, for a UI that takes its pictures as one: a lookup is [get], which
+     * starts a path's load the first time it is asked for and returns null until it has decoded, so
+     * a scene canvas given it reads an element's image the first time the element shows. Only what
+     * has loaded is listed. The same map every call, which follows every [reset].
+     */
+    fun asMap(): Map<String, ImageBitmap> = map
+
+    private val map = AssetImageMap(this)
+
+    /** The images decoded so far, by path. */
+    internal fun loaded(): Map<String, ImageBitmap> = buildMap {
+        for ((path, entry) in this@AssetImages.entries) entry.image?.let { put(path, it) }
+    }
+
+    /**
      * Forgets every image, cancels every load still running, and starts again from [seed]: images
      * already decoded, by path, such as those `loadCanvasImages` read for the scene's canvas. A
      * played project's UI host calls it on each scene switch, so what the last scene asked for is

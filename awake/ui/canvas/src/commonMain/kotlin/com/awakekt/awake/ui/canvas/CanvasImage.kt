@@ -24,6 +24,11 @@ import kotlinx.serialization.Serializable
  * out when [hollow], so a frame shows what is behind it. With no slices the whole region stretches,
  * and slicing only the left and right makes a three-part strip. Colour is multiplied by [tint],
  * `#RRGGBB` or `#RRGGBBAA`, and a [pixelated] image keeps its pixels sharp when it is scaled.
+ *
+ * A [lazy] image is read and decoded the first time an element drawing it shows, not when the scene
+ * opens: for a picture only a window closed at entry uses, such as an icon atlas. Until it has
+ * decoded, the element draws without it. A path some other element names without [lazy] still loads
+ * with the scene.
  */
 @Serializable
 data class CanvasImage(
@@ -42,7 +47,54 @@ data class CanvasImage(
     val pixelated: Boolean = false,
     @PropertyRange(min = 0.0, exclusiveMin = true) val pixelsPerDp: Float = 1f,
     val hollow: Boolean = false,
+    val lazy: Boolean = false,
 ) {
+    /** [CanvasImage] as it was before [lazy]: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        path: String,
+        regionX: Int = 0,
+        regionY: Int = 0,
+        regionWidth: Int = 0,
+        regionHeight: Int = 0,
+        sliceLeft: Int = 0,
+        sliceTop: Int = 0,
+        sliceRight: Int = 0,
+        sliceBottom: Int = 0,
+        repeatEdges: Boolean = false,
+        repeatCenter: Boolean = false,
+        tint: String = "#FFFFFF",
+        pixelated: Boolean = false,
+        pixelsPerDp: Float = 1f,
+        hollow: Boolean = false,
+    ) : this(
+        path, regionX, regionY, regionWidth, regionHeight, sliceLeft, sliceTop, sliceRight, sliceBottom,
+        repeatEdges, repeatCenter, tint, pixelated, pixelsPerDp, hollow, false,
+    )
+
+    /** [copy] as it was before [lazy], which keeps this one's [lazy]: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        path: String = this.path,
+        regionX: Int = this.regionX,
+        regionY: Int = this.regionY,
+        regionWidth: Int = this.regionWidth,
+        regionHeight: Int = this.regionHeight,
+        sliceLeft: Int = this.sliceLeft,
+        sliceTop: Int = this.sliceTop,
+        sliceRight: Int = this.sliceRight,
+        sliceBottom: Int = this.sliceBottom,
+        repeatEdges: Boolean = this.repeatEdges,
+        repeatCenter: Boolean = this.repeatCenter,
+        tint: String = this.tint,
+        pixelated: Boolean = this.pixelated,
+        pixelsPerDp: Float = this.pixelsPerDp,
+        hollow: Boolean = this.hollow,
+    ): CanvasImage = CanvasImage(
+        path, regionX, regionY, regionWidth, regionHeight, sliceLeft, sliceTop, sliceRight, sliceBottom,
+        repeatEdges, repeatCenter, tint, pixelated, pixelsPerDp, hollow, lazy,
+    )
+
     /** What is wrong with this image, as messages naming the field; empty when nothing is. */
     internal fun problems(): List<String> = buildList {
         if (path.isBlank()) add("path must name an image")

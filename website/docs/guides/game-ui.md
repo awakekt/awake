@@ -437,6 +437,7 @@ their length, and the centre stretches both ways.
 | `pixelated` | boolean | `false` | Keep the pixels sharp when the image is scaled, for pixel art. |
 | `pixelsPerDp` | number | `1` | The image's pixels per dp. Art drawn at twice the size for high-density screens takes `2`, so its corners and tiles stay the same size on screen. |
 | `hollow` | boolean | `false` | Leave the centre out, so a frame shows what is behind it. |
+| `lazy` | boolean | `false` | Read the image the first time an element drawing it shows, not when the scene opens. Until it has decoded, the element draws without it. |
 
 A `Bar`'s fill image is laid out at the bar's full width and cut at its `value`, so the fill's
 pattern stays where it is as the value changes and its right end cap shows only at 100%. Set
@@ -451,6 +452,12 @@ element whose image did not load, or whose region does not fit in it, draws with
 When a project is played with `awake:project:runtime`, `loadProject` reads every image the scene's
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
 images yourself: `SceneCanvas(world, images = loadCanvasImages(scene, files))`.
+
+An image only a window closed at entry draws, such as an item-icon atlas or a portrait sheet, need
+not cost the first load: mark it `"lazy": true`. `loadCanvasImages` leaves out a path every element
+names lazily, and the played project's runtime reads it the first time an element drawing it shows.
+A host of its own gives the canvas `AssetImages.asMap()` from `awake:compose:assets`, seeded with
+`loadCanvasImages`' result, for the same.
 
 ### Images in Compose UI
 
