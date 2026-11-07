@@ -54,8 +54,13 @@ class LazyCanvasImageTest {
         val lazy = SceneCanvasElement(style = CanvasStyle(image = CanvasImage(ICONS, lazy = true)))
         val eager = SceneCanvasElement(style = CanvasStyle(fillImage = CanvasImage(ICONS)))
         val document = SceneDocument(nodes = listOf(SceneNode("bag", components = listOf(lazy)), SceneNode("bar", components = listOf(eager))))
+        // Only the reads count: a read that fails leaves the platform's decoder out of it.
+        val unreadable = AssetSource { path ->
+            reads += path.value
+            Result.failure(NoSuchElementException(path.value))
+        }
 
-        loadCanvasImages(document, files)
+        loadCanvasImages(document, unreadable)
 
         assertEquals(listOf(ICONS), reads)
     }
