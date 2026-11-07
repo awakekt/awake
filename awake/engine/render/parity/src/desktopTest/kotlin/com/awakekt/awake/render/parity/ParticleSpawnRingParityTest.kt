@@ -38,6 +38,24 @@ class ParticleSpawnRingParityTest {
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
+    // TEMPORARY measurement probe, removed before review: prints the counts for the tilted ring and
+    // for the negative control (orientSpawnRing off, i.e. the simulation never gets orientSpawnShape).
+    @Test
+    fun measurementProbe() {
+        val lines = BACKEND_ORDER.map { backend ->
+            val renderer = session(backend).renderer
+            val counts = listOf(true, false).joinToString(" | ") { tilted ->
+                val frame = renderer.renderTiltedSpawnRingScene(SCENE_SIZE, orientSpawnRing = tilted)
+                val offAxis = frame.redWhere { _, y -> abs(y) > OFF_AXIS }
+                val centre = frame.redWhere { x, y -> abs(x) < CENTRE && abs(y) < CENTRE }
+                val all = frame.redWhere { _, _ -> true }
+                "tilted=$tilted offAxis=$offAxis centre=$centre allRed=$all"
+            }
+            "PROBE $backend: $counts"
+        }
+        kotlin.test.fail(lines.joinToString("\n"))
+    }
+
     // Counts red pixels whose centre, in world units (y up), satisfies [where].
     private fun ByteArray.redWhere(where: (Float, Float) -> Boolean): Int = (0 until SCENE_SIZE * SCENE_SIZE).count { pixel ->
         val x = ((pixel % SCENE_SIZE) + 0.5f) / SCENE_SIZE * 2f - 1f
