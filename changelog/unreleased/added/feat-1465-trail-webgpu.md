@@ -1,0 +1,1 @@
+- **Trails draw on WebGPU (#1465).** `GpuDynamicMeshes` on WebGPU writes a trail's changed range on the queue, through kept host memory, so a trail draws alike on Vulkan and WebGPU; a cross-backend pixel test checks additive and alpha blending, the visible count growing and colours fading.

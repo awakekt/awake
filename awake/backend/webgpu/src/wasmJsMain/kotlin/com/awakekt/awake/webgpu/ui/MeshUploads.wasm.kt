@@ -21,12 +21,18 @@ import kotlin.wasm.unsafe.withScopedMemoryAllocator
  * Stores the floats into scoped linear memory and writes the GPU buffer from a view of it: no
  * `ArrayBuffer` is made, where `fastArrayBufferOf` sliced a new one out per array per upload.
  */
-internal actual fun GPUQueue.writeMeshFloats(buffer: GPUBuffer, data: FloatArray, staging: MeshUploadStaging) {
-    if (data.isEmpty()) return
+internal actual fun GPUQueue.writeMeshFloatRange(buffer: GPUBuffer, data: FloatArray, first: Int, count: Int, staging: MeshUploadStaging) {
+    if (count == 0) return
     withScopedMemoryAllocator { allocator ->
-        val base = allocator.allocate(data.size * Float.SIZE_BYTES)
-        for (i in data.indices) (base + i * Float.SIZE_BYTES).storeInt(data[i].toRawBits())
-        writeFromLinearMemory((this as Queue).handler, (buffer as Buffer).handler, base.address.toInt(), data.size * Float.SIZE_BYTES)
+        val base = allocator.allocate(count * Float.SIZE_BYTES)
+        for (i in 0 until count) (base + i * Float.SIZE_BYTES).storeInt(data[first + i].toRawBits())
+        writeFromLinearMemoryAt(
+            (this as Queue).handler,
+            (buffer as Buffer).handler,
+            first * Float.SIZE_BYTES,
+            base.address.toInt(),
+            count * Float.SIZE_BYTES,
+        )
     }
 }
 
@@ -42,6 +48,10 @@ internal actual fun GPUQueue.writeMeshInts(buffer: GPUBuffer, data: IntArray, st
 
 /** Read after the allocation, which may have grown the memory and replaced its buffer. `wasmExports`
  * is the generated glue's own module binding, which it keeps in scope for `js()` code. */
+@Suppress("UnusedParameter") // Read by the JS body.
+private fun writeFromLinearMemoryAt(queue: WGPUQueue, buffer: WGPUBuffer, bufferOffset: Int, byteOffset: Int, byteSize: Int): Unit =
+    js("queue.writeBuffer(buffer, bufferOffset, wasmExports.memory.buffer, byteOffset, byteSize)")
+
 @Suppress("UnusedParameter") // Read by the JS body.
 private fun writeFromLinearMemory(queue: WGPUQueue, buffer: WGPUBuffer, byteOffset: Int, byteSize: Int): Unit =
     js("queue.writeBuffer(buffer, 0, wasmExports.memory.buffer, byteOffset, byteSize)")

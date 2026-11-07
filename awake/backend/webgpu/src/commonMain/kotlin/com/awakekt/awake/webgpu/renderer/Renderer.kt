@@ -166,8 +166,12 @@ class Renderer internal constructor(
         com.awakekt.awake.render.pipeline.ShaderReplacement -> shaderReplacement as T?
         com.awakekt.awake.render.pipeline.GpuImageUpload -> imageUpload as T
         com.awakekt.awake.render.pipeline.GpuCompressedTextures -> compressedTextures as T
+        com.awakekt.awake.render.mesh.GpuDynamicMeshes -> dynamicMeshes as T
         else -> null
     }
+
+    /** Meshes rewritten in place on the queue; see [WebGpuDynamicMeshes]. */
+    private val dynamicMeshes by lazy { WebGpuDynamicMeshes(this) }
 
     /** Fills textures from browser images on the GPU; see [ExternalImageUpload]. */
     private val imageUpload by lazy { ExternalImageUpload(this) }

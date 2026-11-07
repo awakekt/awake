@@ -12,11 +12,11 @@ import io.ygdrasil.webgpu.JvmArrayBuffer
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
 
-internal actual fun GPUQueue.writeMeshFloats(buffer: GPUBuffer, data: FloatArray, staging: MeshUploadStaging) {
-    val bytes = data.size.toLong() * Float.SIZE_BYTES
+internal actual fun GPUQueue.writeMeshFloatRange(buffer: GPUBuffer, data: FloatArray, first: Int, count: Int, staging: MeshUploadStaging) {
+    val bytes = count.toLong() * Float.SIZE_BYTES
     val host = staging.hostFor(bytes)
-    MemorySegment.copy(data, 0, (host as JvmArrayBuffer).buffer, ValueLayout.JAVA_FLOAT_UNALIGNED, 0L, data.size)
-    writeBuffer(buffer, 0uL, host, 0uL, bytes.toULong())
+    MemorySegment.copy(data, first, (host as JvmArrayBuffer).buffer, ValueLayout.JAVA_FLOAT_UNALIGNED, 0L, count)
+    writeBuffer(buffer, first.toULong() * Float.SIZE_BYTES.toULong(), host, 0uL, bytes.toULong())
 }
 
 internal actual fun GPUQueue.writeMeshInts(buffer: GPUBuffer, data: IntArray, staging: MeshUploadStaging) {
