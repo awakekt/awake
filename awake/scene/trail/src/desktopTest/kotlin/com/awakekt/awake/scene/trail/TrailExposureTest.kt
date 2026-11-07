@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.trail
 
 import com.awakekt.awake.trail.TrailRenderer
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.descriptors.elementNames
 import java.lang.reflect.Modifier
 import kotlin.test.Test
 import kotlin.test.assertEquals
