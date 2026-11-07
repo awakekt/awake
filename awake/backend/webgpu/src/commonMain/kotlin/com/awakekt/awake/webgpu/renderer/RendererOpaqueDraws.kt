@@ -52,6 +52,7 @@ internal fun Renderer.prepareGpuDraw(
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
     edgePipeline: RenderPipeline? = null,
+    frameVersion: Int = NO_FRAME_VERSION,
 ): WebGpuPreparedDraw? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -73,6 +74,7 @@ internal fun Renderer.prepareGpuDraw(
             debugView = debugView,
             exposure = exposure,
             isTransparent = isTransparent,
+            frameVersion = frameVersion,
         )
     }
     val resolved = edgePipeline ?: pipelines.resolve(
@@ -87,20 +89,12 @@ internal fun Renderer.prepareGpuDraw(
     // it draws the mesh's line indices, since its triangle indices would join the wrong corners.
     val lines = resolved?.topology == GPUPrimitiveTopology.LineList
     val slot = bufferPools.uniformSlotForDraw(pipeline, singleIndex)
-    val uniformFloats = cmd.uniformFloats(
-        materialUniformFloatCount = material.uniformFloatCount,
-        viewProjection = viewProjection,
-        cameraEye = cameraEye,
-        cameraForward = cameraForward,
-        lightPayload = lightUniforms,
-        shadowCascades = shadowCascades,
-        fogColor = fogColor,
-        fogDensity = fogDensity,
-        debugView = debugView,
-        exposure = exposure,
-        alphaToCoverageEnabled = (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled,
-    )
-    slot?.let { uniformUploads.stageChanged(it, uniformFloats) }
+    slot?.let {
+        stageDrawBlock(
+            it, cmd, material.uniformFloatCount, (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled, frameVersion,
+            viewProjection, cameraEye, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
+        )
+    }
     return WebGpuPreparedDraw(
         pipeline = pipeline,
         materialBinding = when {
@@ -137,6 +131,43 @@ internal fun Renderer.prepareGpuDraw(
 
 private object EmptyWebGpuMaterialBinding : MaterialBinding
 
+/** Packs and stages [cmd]'s block into [slot], unless the slot already holds it, packed from the same inputs. */
+@Suppress("LongParameterList") // prepareGpuDraw's, passed through.
+private fun Renderer.stageDrawBlock(
+    slot: UniformSlot,
+    cmd: GpuDrawRequest,
+    materialUniformFloatCount: Int,
+    coverage: Boolean,
+    frameVersion: Int,
+    viewProjection: Mat4,
+    cameraEye: Vec3f,
+    cameraForward: Vec3f,
+    lightUniforms: FloatArray,
+    shadowCascades: GpuShadowCascadeData?,
+    fogColor: Color,
+    fogDensity: Float,
+    debugView: GpuDebugView,
+    exposure: Float,
+) {
+    if (slot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage)) return
+    val uniformFloats = cmd.uniformFloats(
+        materialUniformFloatCount = materialUniformFloatCount,
+        viewProjection = viewProjection,
+        cameraEye = cameraEye,
+        cameraForward = cameraForward,
+        lightPayload = lightUniforms,
+        shadowCascades = shadowCascades,
+        fogColor = fogColor,
+        fogDensity = fogDensity,
+        debugView = debugView,
+        exposure = exposure,
+        alphaToCoverageEnabled = coverage,
+    )
+    uniformUploads.packedBlocks += 1
+    uniformUploads.stageChanged(slot, uniformFloats)
+    slot.inputs.record(cmd, frameVersion, materialUniformFloatCount, coverage)
+}
+
 private fun Renderer.prepareInstancedGpuDraw(
     cmd: GpuDrawRequest,
     mesh: Mesh,
@@ -153,6 +184,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
     isTransparent: Boolean,
+    frameVersion: Int,
 ): WebGpuPreparedDraw? {
     if (instanceModels.isEmpty()) return null
     val kind = cmd.instancedDrawKind() ?: return null
@@ -169,27 +201,43 @@ private fun Renderer.prepareInstancedGpuDraw(
             ?.takeIf { pipeline.hasBindingGroup(pipeline.bindingLayout.slot(BindingSemantic.ShadowDepth)) }
             ?.let { bufferPools.shadowBindingFor(pipeline, it) }
     }
-    val uniformFloats = cmd.instancedUniformFloats(
-        kind = kind,
-        viewProjection = viewProjection,
-        lightPayload = lightUniforms,
-        cameraEye = cameraEye,
-        cameraForward = cameraForward,
-        shadowCascades = shadowCascades,
-        fogColor = fogColor,
-        fogDensity = fogDensity,
-        debugView = debugView,
-        exposure = exposure,
-        materialUniformFloatCount = maxOf(
-            material.uniformFloatCount,
-            (pipeline.uniformByteSize(0, 0) / Float.SIZE_BYTES).toInt(),
-        ),
-        alphaToCoverageEnabled = resolved.multisample.alphaToCoverageEnabled,
+    val materialUniformFloatCount = maxOf(
+        material.uniformFloatCount,
+        (pipeline.uniformByteSize(0, 0) / Float.SIZE_BYTES).toInt(),
     )
+    val coverage = resolved.multisample.alphaToCoverageEnabled
     // Its own slot per instanced draw, as an ordinary draw has: one buffer shared by every
     // instanced draw of a pipeline, or by every particle draw of a material, would hold only the
     // last draw's uniforms by submission.
     val drawSlot = if (kind != InstancedDrawKind.Skinned) bufferPools.uniformSlotForDraw(pipeline, instanceIndex) else null
+    // A slot already holding this draw's block, packed from the same inputs, needs no block; the
+    // skinned draws share one buffer, so theirs is always packed.
+    val inputKind = INSTANCED_INPUTS + kind.ordinal
+    val packs = drawSlot == null || !drawSlot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind)
+    val uniformFloats = if (!packs) {
+        null
+    } else {
+        cmd.instancedUniformFloats(
+            kind = kind,
+            viewProjection = viewProjection,
+            lightPayload = lightUniforms,
+            cameraEye = cameraEye,
+            cameraForward = cameraForward,
+            shadowCascades = shadowCascades,
+            fogColor = fogColor,
+            fogDensity = fogDensity,
+            debugView = debugView,
+            exposure = exposure,
+            materialUniformFloatCount = materialUniformFloatCount,
+            alphaToCoverageEnabled = coverage,
+        )
+    }
+    fun stageFor(slot: UniformSlot) {
+        uniformFloats ?: return
+        uniformUploads.packedBlocks += 1
+        uniformUploads.stageChanged(slot, uniformFloats)
+        slot.inputs.record(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind)
+    }
     val skinnedUniformResources = if (kind == InstancedDrawKind.Skinned && pipeline.hasBindingGroup(0)) {
         bufferPools.skinnedInstancedUniformResources(pipeline)
     } else {
@@ -199,7 +247,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     when (kind) {
         InstancedDrawKind.Particle -> {
             val slot = drawSlot?.takeIf { material.hasTexture } ?: return null
-            uniformUploads.stageChanged(slot, uniformFloats)
+            stageFor(slot)
             materialBinding = WebGpuBindGroupHandle(
                 material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings),
             )
@@ -209,7 +257,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Skinned -> {
             val resources = skinnedUniformResources ?: return null
-            uniformUploads.stage(resources.buffer, uniformFloats)
+            uniformUploads.stage(resources.buffer, checkNotNull(uniformFloats))
             materialBinding = resources.binding
             jointPaletteBinding = cmd.instanceJointPalettes?.let { palettes ->
                 skinnedInstanceBufferForRun(instanceIndex).run {
@@ -222,7 +270,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Plain -> {
             val slot = drawSlot ?: return null
-            uniformUploads.stageChanged(slot, uniformFloats)
+            stageFor(slot)
             materialBinding = if (material.hasTexture) {
                 WebGpuBindGroupHandle(
                     material.bindGroupFor(
@@ -280,6 +328,12 @@ private fun Renderer.prepareInstancedGpuDraw(
         vertexFormat = mesh.format,
     )
 }
+
+/** No frame: a draw prepared with it is always packed. */
+internal const val NO_FRAME_VERSION = -2
+
+/** Instanced draws are told apart from ordinary ones in a slot's inputs, kind by kind, from here. */
+private const val INSTANCED_INPUTS = 1
 
 /** The primary pipeline and wireframe selection for a packet recording pass. */
 internal class PrimaryPipelineBinding(

@@ -41,7 +41,9 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  *
  * Negative controls, measured: with the frame's clock written into every block regardless of
  * animation, the still frame staged 3 blocks, not 0. With [UniformUploads.stageChanged] skipping
- * every block whatever it holds, the moved prop's frame read back the first frame's pixels.
+ * every block whatever it holds, the moved prop's frame read back the first frame's pixels. With
+ * `DrawUniformInputs.matches` answering yes for any slot it has seen, the moved prop again kept its
+ * old pixels, and the moved camera packed 0 draws, not 3.
  */
 class WebGpuStaticUniformReuseTest {
 
@@ -51,7 +53,9 @@ class WebGpuStaticUniformReuseTest {
         val still = scene.frame(timeSeconds = 2f)
 
         assertEquals(DRAWS, first.staged, "the first frame uploads every draw's block")
-        assertEquals(0, still.staged, "nothing moved, so nothing is uploaded")
+        assertEquals(DRAWS, first.packed, "having packed each")
+        assertEquals(0, still.packed, "nothing moved, so nothing is packed")
+        assertEquals(0, still.staged, "or uploaded")
         assertContentEquals(first.pixels, still.pixels, "and the frame draws the same")
     }
 
@@ -61,7 +65,17 @@ class WebGpuStaticUniformReuseTest {
         val moved = scene.frame(timeSeconds = 2f, propX = 1.5f)
 
         assertFalse(first.pixels.contentEquals(moved.pixels), "the prop is drawn where it moved to")
-        assertEquals(1, moved.staged, "and only the prop that moved is uploaded")
+        assertEquals(1, moved.packed, "and only the prop that moved is packed")
+        assertEquals(1, moved.staged, "and uploaded")
+    }
+
+    @Test
+    fun aMovedCameraPacksEveryDrawAgain() = withScene { scene ->
+        val first = scene.frame(timeSeconds = 1f)
+        val turned = scene.frame(timeSeconds = 2f, eyeX = 1f)
+
+        assertFalse(first.pixels.contentEquals(turned.pixels), "the scene is drawn from where the camera moved to")
+        assertEquals(DRAWS, turned.packed, "every block carries the camera, so every draw is packed")
     }
 
     @Test
@@ -69,14 +83,15 @@ class WebGpuStaticUniformReuseTest {
         scene.frame(timeSeconds = 1f, wave = WAVE)
         val next = scene.frame(timeSeconds = 2f, wave = WAVE)
 
-        assertEquals(1, next.staged, "a waving prop's clock moves it, so its block changes")
+        assertEquals(1, next.packed, "a waving prop's clock moves it, so it is packed")
+        assertEquals(1, next.staged, "and its block changes")
     }
 
     private fun withScene(block: (Scene) -> Unit) = webGpuHeadlessScene().use { session ->
         Scene(session.renderer).use(block)
     }
 
-    private class Frame(val staged: Int, val pixels: ByteArray)
+    private class Frame(val packed: Int, val staged: Int, val pixels: ByteArray)
 
     private class Scene(val renderer: RenderRenderer) : AutoCloseable {
         private val target = renderer.createRenderTarget(SIZE, SIZE)
@@ -89,13 +104,15 @@ class WebGpuStaticUniformReuseTest {
             uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
             pbrTextures = PbrTextureSet(),
         )
-        private val lens = Lens(eye = Vec3f(0f, 9f, 7f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
         private val sun = SceneLight(direction = Vec3f(0.3f, 1f, 0.2f), color = Vec3f(1f, 1f, 1f))
-        private val light = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, renderer.clipSpace))
         private val pbr = pbrMaterialFloats(metallic = 0f, roughness = 1f, baseColorFactor = Color.White, emissiveFactor = Color.Transparent)
 
-        /** Plans and draws the scene at [timeSeconds], with the lit prop at [propX] waving by [wave]. */
-        fun frame(timeSeconds: Float, propX: Float = 0f, wave: Vec3f = STILL): Frame {
+        /** Plans and draws the scene at [timeSeconds] from [eyeX], with the lit prop at [propX] waving by [wave]. */
+        fun frame(timeSeconds: Float, propX: Float = 0f, wave: Vec3f = STILL, eyeX: Float = 0f): Frame {
+            // Built afresh every frame, as the scene compiler builds them, with the same values while nothing moves.
+            val lens = Lens(eye = Vec3f(eyeX, 9f, 7f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
+            val light = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, renderer.clipSpace))
+            val packedBefore = (renderer as WebGpuRenderer).uniformUploads.packedBlocks
             val draws = listOf(
                 draw(ground, lit, Mat4(), timeSeconds),
                 draw(prop, lit, translation(propX, PROP_HEIGHT, 0f), timeSeconds, wave),
@@ -109,9 +126,11 @@ class WebGpuStaticUniformReuseTest {
                 aspect = 1f,
                 drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
             )
-            val staged = (renderer as WebGpuRenderer).uniformUploads.buffers.size
+            val uploads = (renderer as WebGpuRenderer).uniformUploads
+            val packed = (uploads.packedBlocks - packedBefore).toInt()
+            val staged = uploads.buffers.size
             renderer.renderToTexture(target, pass)
-            return Frame(staged, runBlocking { renderer.readPixels(target) }.data)
+            return Frame(packed, staged, runBlocking { renderer.readPixels(target) }.data)
         }
 
         @Suppress("LongParameterList")

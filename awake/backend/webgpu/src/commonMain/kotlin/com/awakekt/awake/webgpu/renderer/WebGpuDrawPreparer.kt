@@ -12,6 +12,7 @@ import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.toGpuResolvedDraw
+import com.awakekt.awake.render.passes.FrameUniformInputs
 import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
@@ -33,6 +34,10 @@ internal class WebGpuDrawPreparer(
      * from 0 rather than after every visible draw. */
     private var edgeRuns = 0
 
+    /** The frame's share of the uniform blocks, so a draw whose block would come out the same is not packed again. */
+    private val frameInputs = FrameUniformInputs()
+    private var frameVersion = NO_FRAME_VERSION
+
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelines
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
@@ -45,7 +50,7 @@ internal class WebGpuDrawPreparer(
         sourceIndex: Int,
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw? {
-        if (sourceIndex == 0) startBatch()
+        if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         val primary = PrimaryPipelineBinding(
             renderer.renderPipeline.handle,
@@ -67,6 +72,7 @@ internal class WebGpuDrawPreparer(
             debugView = context.environment.debugView,
             exposure = context.environment.exposure,
             edgePipeline = edgePipeline,
+            frameVersion = frameVersion,
         ) ?: return null
         val resolved = draw.toGpuResolvedDraw()
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
@@ -109,11 +115,23 @@ internal class WebGpuDrawPreparer(
         )
     }
 
-    private fun startBatch() {
+    private fun startBatch(context: GpuDrawPreparationContext) {
         // A batch prepared and never drawn has its writes land now, so the stage holds one batch at most.
         renderer.flushUniformUploads()
         instancedRuns = 0
         edgeRuns = 0
+        val environment = context.environment
+        frameVersion = frameInputs.update(
+            viewProjection = context.viewProjection,
+            cameraEye = context.cameraEye,
+            cameraForward = context.cameraForward,
+            lightPayload = context.passUniforms,
+            shadowCascades = context.cascades(),
+            fogColor = environment.fogColor,
+            fogDensity = environment.fogDensity,
+            debugView = environment.debugView,
+            exposure = environment.exposure,
+        )
     }
 
     /** These shadow cascades, or the bare shadow matrices as cascades without splits. */
