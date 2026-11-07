@@ -83,13 +83,18 @@ class SceneInstanceCostTest {
         elapsed
     }
 
-    /** The heap [COPIES] live copies hold, over what was in use before they were made. */
+    /**
+     * The heap [COPIES] live copies hold, over what is in use once they are closed. A reading taken before
+     * they are made would still count memory an earlier phase's closed copies haven't released, and could
+     * come out larger than the live one. The list is emptied before the second reading, so the closed
+     * copies aren't still reachable from this function's frame.
+     */
     private suspend fun retained(copy: suspend () -> AutoCloseable): Long {
-        val before = usedHeap()
-        val copies = List(COPIES) { copy() }
-        val after = usedHeap()
+        val copies = MutableList(COPIES) { copy() }
+        val live = usedHeap()
         copies.forEach(AutoCloseable::close)
-        return after - before
+        copies.clear()
+        return live - usedHeap()
     }
 
     private fun usedHeap(): Long {
