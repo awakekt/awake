@@ -74,7 +74,7 @@ class SceneAssetImagesTest {
         project.close()
     }
 
-    private fun play(project: LoadedProject): AwakeAppLifecycle {
+    private suspend fun play(project: LoadedProject): AwakeAppLifecycle {
         val game = app { scene("play") { runProject(project) } }
         game.ready(DocsRenderer())
         game.update(FRAME, WIDTH, HEIGHT)

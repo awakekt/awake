@@ -44,6 +44,10 @@ class ComposeAssetsTest {
     /** One frame: Awake Compose composes the whole tree each one. */
     private fun frame(content: context(Composer) () -> Unit) = reconcile(TestApplier(), root, content)
 
+    /** One frame of a UI that shows [path] through [images], handing what it shows to [shown]. */
+    private fun frameShowing(images: AssetImages, path: String, shown: (ImageBitmap?) -> Unit) =
+        frame { ProvideAssets(source, images) { shown(rememberAssetImage(path)) } }
+
     private val source = AssetSource { path ->
         if (path.value == "ui/frame.png") Result.success(byteArrayOf(1, 2, 3, 4)) else Result.failure(NoSuchElementException(path.value))
     }
@@ -52,12 +56,11 @@ class ComposeAssetsTest {
     fun theUiShowsTheImageOnAFrameAfterItLoads() = runTest {
         val images = AssetImages(source, backgroundScope) { bytes -> ImageBitmap(1, 1, bytes) }
         var shown: ImageBitmap? = null
-        val ui: context(Composer) () -> Unit = { ProvideAssets(source, images) { shown = rememberAssetImage("ui/frame.png") } }
 
-        frame(ui)
+        frameShowing(images, "ui/frame.png") { shown = it }
         assertNull(shown)
         runCurrent()
-        frame(ui)
+        frameShowing(images, "ui/frame.png") { shown = it }
 
         assertSame(images["ui/frame.png"], shown)
         assertEquals(0x01020304, shown?.pixel(0, 0))
@@ -84,16 +87,14 @@ class ComposeAssetsTest {
     fun aMissingPathShowsNothingAndTheFrameGoesOn() = runTest {
         val images = AssetImages(source, backgroundScope) { bytes -> ImageBitmap(1, 1, bytes) }
         var frames = 0
-        val ui: context(Composer) () -> Unit = {
-            ProvideAssets(source, images) {
-                assertNull(rememberAssetImage("ui/missing.png"))
-                frames++
-            }
+        val showNothing: (ImageBitmap?) -> Unit = { shown ->
+            assertNull(shown)
+            frames++
         }
 
-        frame(ui)
+        frameShowing(images, "ui/missing.png", showNothing)
         runCurrent()
-        frame(ui)
+        frameShowing(images, "ui/missing.png", showNothing)
 
         assertEquals(2, frames)
     }
