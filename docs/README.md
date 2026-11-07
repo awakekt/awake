@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-10-06` | **Total Tracked Docs**: `81`
+**Last Self-Healed**: `2026-10-06` | **Total Tracked Docs**: `82`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -62,6 +62,7 @@
 | **Reference** | [`Physics glossary`](reference/glossary/physics.md) | `Active` | Terms used by Awake's portable collision API and its Jolt backend. These describe collision, |
 | **Reference** | [`UI Testing Dictionary`](reference/glossary/ui-testing.md) | `Active` | Plain-English meanings for terms used in Awake UI code and tests. This page is for people who |
 | **Reference** | [`KMP Architecture Stance`](reference/kmp-architecture-stance.md) | `Active` | Awake is a Kotlin Multiplatform project that deliberately skips most of what people mean by |
+| **Reference** | [`Build codegen plugins: string keys and version stamp`](reference/build-codegen-plugins.md) | `Active` | Two public build-logic plugins that generate typed string keys and a version stamp for any Kotlin Multiplatform project. |
 | **Reference** | [`Library API Boundaries`](reference/library-api-boundaries.md) | `Active` | This document is the canonical rule for how Awake splits public library surface from DSL |
 | **Reference** | [`Locomotion and warps`](reference/locomotion-and-warps.md) | `Active` | Any system deriving motion from a per-frame world-position delta must reject warps (respawn, leash, ... |
 | **Reference** | [`Maven coordinates and publication dependency graph`](reference/maven-coordinates.md) | `Active` | This page is the current Maven publication inventory. **It is maintained by hand:** a pull request |
