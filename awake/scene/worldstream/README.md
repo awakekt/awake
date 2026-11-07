@@ -23,5 +23,10 @@ observer, render host and physics system are code-only dependencies, which `awak
 streamed-terrain capability supplies for a project scene played through `loadProject`. See the
 [integration example](../../../docs/plans/streamed-terrain.md).
 
+A layered index pages its control map and lightmap on the same cells as its heights, so a cell's
+layer and light data is read with its heights. To page whole maps for it, use
+`TerrainLayerPaging.page` in `awake:kit:terrain-layers`; the paging lives in that kit, and this
+module only streams the cells the index names.
+
 `scene:world` stays content-agnostic: it streams coordinates, and this module is one answer to what
 a coordinate holds. Nav tiles have their own streamer in `awake:navigation`.

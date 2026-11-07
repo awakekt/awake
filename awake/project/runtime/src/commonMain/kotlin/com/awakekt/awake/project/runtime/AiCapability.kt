@@ -23,6 +23,8 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.navigation.PathRequestSystem
 import com.awakekt.awake.navigation.grid.NavGrid
 import com.awakekt.awake.navigation.grid.TileField
+import com.awakekt.awake.navigation.walkable.NavSurfaceTile
+import com.awakekt.awake.navigation.walkable.toNavSurface
 import com.awakekt.awake.scene.ai.AgentIntentResetSystem
 import com.awakekt.awake.scene.ai.AiSceneComponents
 import com.awakekt.awake.scene.ai.MovementAgentPlacement
@@ -41,8 +43,10 @@ import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.navigation.NavigationAgentSystem
 import com.awakekt.awake.scene.navigation.NavigationSceneComponents
 import com.awakekt.awake.scene.navigation.SceneNavigation
+import com.awakekt.awake.scene.navigation.SceneNavigationAgent
 import com.awakekt.awake.scene.physics.PhysicsBody
 import kotlin.reflect.KClass
 
@@ -66,9 +70,12 @@ import kotlin.reflect.KClass
  * behaviours, then the path system: a behaviour asks for a route, and the answer is there for the next
  * frame's step.
  *
- * A project does not load when a scene has the behaviours and no navigation, because nothing could
- * answer them, or an agent with a character controller and no `Agent` movement control, which the
- * controller would hold in place.
+ * A scene with a `navigation_agent` walks it over the `navigation` grid with [NavigationAgentSystem],
+ * steering through its `Agent` movement control when it has one.
+ *
+ * A project does not load when a scene has the behaviours or a `navigation_agent` and no navigation,
+ * because nothing could answer them, or an agent with a character controller and no `Agent` movement
+ * control, which the controller would hold in place.
  */
 internal object AiCapability : SceneCapability {
     override val id = "com.awakekt.awake.ai"
@@ -78,12 +85,19 @@ internal object AiCapability : SceneCapability {
         require(!scene.hasRouteBehaviours() || scene.navigation() != null) {
             "the scene has patrol, chase or flee behaviours but no navigation component to route them over"
         }
+        require(!scene.uses(SceneNavigationAgent::class) || scene.navigation() != null) {
+            "the scene has a navigation_agent but no navigation component for it to walk"
+        }
         // Baked once here and shared by every system set planned from this content, so each instance
         // of the scene routes over the same immutable grid instead of baking its own.
-        scene.navigation()?.let { content[AiNavigation] = it.toGrid() }
+        scene.navigation()?.let { navigation ->
+            val grid = navigation.toGrid()
+            content[AiNavigation] = grid
+            if (scene.uses(SceneNavigationAgent::class)) content[AiNavigationSurface] = grid.tile.toNavSurface()
+        }
         val held = scene.nodes.flatMap { it.agentsHeldInPlace() }
         require(held.isEmpty()) {
-            "${held.joinToString()}: a patrol, chase or flee agent with a character_controller needs a " +
+            "${held.joinToString()}: a patrol, chase, flee or navigation_agent agent with a character_controller needs a " +
                 "movement_control with \"driver\": \"Agent\" to steer through, or the controller holds it in place"
         }
         val components = scene.nodes.flatMap { it.withDescendants() }.flatMap { it.components }
@@ -98,6 +112,9 @@ internal object AiCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val navigation = scene.navigation()?.also(::requireValid)
+        if (navigation != null && scene.uses(SceneNavigationAgent::class)) {
+            plan.frame("navigation-agents") { NavigationAgentSystem(navigation.surface(it)) }
+        }
         val behaviours = if (navigation == null) emptyList() else ROUTE_BEHAVIOURS.filter { scene.uses(it.type) }
         val definitions = scene.uses(SceneBehaviorTree::class) || scene.uses(SceneStateMachine::class)
         val perceives = scene.uses(ScenePerceiver::class)
@@ -135,6 +152,10 @@ private fun planPerception(scene: SceneDocument, navigation: SceneNavigation?, p
  */
 private fun SceneNavigation.grid(services: SceneHostServices): NavGrid = services.content[AiNavigation] ?: toGrid()
 
+/** The clearance surface agents walk, baked at load like [grid], or now from the document. */
+private fun SceneNavigation.surface(services: SceneHostServices): NavSurfaceTile =
+    services.content[AiNavigationSurface] ?: grid(services).tile.toNavSurface()
+
 /** Throws the first problem [SceneNavigation.validate] finds, when the scene is planned rather than when a system is made. */
 private fun requireValid(navigation: SceneNavigation) {
     navigation.validate("navigation").firstOrNull()?.let { throw IllegalArgumentException(it.message) }
@@ -149,6 +170,9 @@ internal val AiDefinitions: SceneContentKey<AiDefinitionLibrary> = SceneContentK
 /** The scene's navigation grid, baked once at load; immutable, so every system set of the scene shares it. */
 internal val AiNavigation: SceneContentKey<NavGrid> = SceneContentKey("navigation grid")
 
+/** The grid's clearance surface, baked once at load for a scene with a `navigation_agent`. */
+internal val AiNavigationSurface: SceneContentKey<NavSurfaceTile> = SceneContentKey("navigation surface")
+
 private fun SceneNode.withDescendants(): List<SceneNode> = listOf(this) + children.flatMap { it.withDescendants() }
 
 /** A behaviour that asks for routes: its component and the system that runs it. */
@@ -161,9 +185,9 @@ private val ROUTE_BEHAVIOURS = listOf(
     RouteBehaviour(SceneFlee::class, "ai-flee") { FleeAiSystem(MovementAgentPlacement) },
 )
 
-/** The names of this node and its descendants that have a route behaviour and a character controller but no `Agent` movement control. */
+/** The names of this node and its descendants that have a route behaviour or a `navigation_agent` and a character controller but no `Agent` movement control. */
 private fun SceneNode.agentsHeldInPlace(): List<String> {
-    val behaves = components.any { component -> ROUTE_BEHAVIOURS.any { it.type.isInstance(component) } }
+    val behaves = components.any { component -> component is SceneNavigationAgent || ROUTE_BEHAVIOURS.any { it.type.isInstance(component) } }
     val controlled = components.any { it is SceneCharacterController }
     val steerable = components.any { it is SceneMovementControl && it.driver == MovementDriver.Agent }
     val own = if (behaves && controlled && !steerable) listOf(name ?: "an unnamed node") else emptyList()

@@ -74,6 +74,28 @@ The follower only gives a direction; whatever moves the agent, a character contr
 a network, does the moving. It keeps its route in its own `NavPath` and borrows the query, so
 following and re-planning allocate nothing per frame.
 
+## Walk an agent in a scene
+
+A `navigation_agent` component walks its node to a destination over the scene's `navigation` grid,
+with nothing wired by the host: `runProject` runs `NavigationAgentSystem` for it. With a
+`movement_control` whose driver is `Agent`, the agent walks through the control, so a
+`character_controller` carries it over slopes and steps and walls stop it; without one it moves by
+its transform. Here one agent of each kind walks through the gap in a wall:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/runtime/src/commonTest/kotlin/com/awakekt/awake/project/runtime/ProjectNavigationAgentTest.kt:scene"
+```
+
+`destinationX` and `destinationZ` give it somewhere to go as the scene starts. Code sends it elsewhere,
+such as from a click-to-move handler, with `world.get<NavigationAgent>(entity)?.moveTo(target)`, and
+stops it with `stop()`. The fields are on the
+[scene document components](../reference/scene-document-components.md#navigation_agent) reference.
+A scene with a `navigation_agent` and no `navigation` does not load.
+
+Outside a played project, add `NavigationAgentSystem(grid.surface)` to the world yourself, where `grid`
+is the scene's `NavigationGrid` or any `NavSurface`. It runs one query for every agent on the frame
+thread, and allocates nothing per frame.
+
 ## Large regions and caching
 
 Bake a large region as a lattice of tiles, and cache each tile's bytes:

@@ -46,7 +46,7 @@ enum class AnimationPlayback {
  * @param library Animation library providing the shared skeleton and animation clips.
  */
 class AnimationPlayer(
-    private val library: AnimationLibrary,
+    private var library: AnimationLibrary,
 ) {
     /** The immutable skeleton shared by this player's animation poses. */
     val skeleton: Skeleton get() = library.skeleton
@@ -59,7 +59,10 @@ class AnimationPlayer(
     private var blendElapsedSeconds = 0f
     private var blendDurationSeconds = 0f
     private var elapsedSeconds = 0f
-    private var playback = AnimationPlayback.Loop
+
+    /** How the active clip repeats: the mode the last [play] or [crossFadeTo] gave it. */
+    var playback: AnimationPlayback = AnimationPlayback.Loop
+        private set
 
     /** Playback rate multiplier where 1.0 represents standard real-time playback. */
     var speed: Float = 1f
@@ -94,6 +97,25 @@ class AnimationPlayer(
 
     /** Map of clip names to animation clips available in the underlying library. */
     val clipEntries: Map<String, AnimationClip> get() = library.clips
+
+    /**
+     * Adds [clips] to this player's library while it plays. The playhead, a crossfade in progress
+     * and the [playback] mode carry on unchanged, so an added clip can be played or faded to on
+     * the next frame without a pop. Every clip must target bones of [skeleton]; a clip under an
+     * id the library already holds must equal the held one, since replacing a playing clip would
+     * jump its pose. Retarget a clip authored on another rig with [retarget] first.
+     *
+     * @param clips Clips to add, keyed by clip id.
+     */
+    fun addClips(clips: Map<String, AnimationClip>) {
+        if (clips.isEmpty()) return
+        val existing = library.clips
+        clips.forEach { (id, clip) ->
+            val held = existing[id]
+            require(held == null || held == clip) { "Animation clip '$id' is already in this player's library." }
+        }
+        library = AnimationLibrary(library.skeleton, existing + clips)
+    }
 
     /** Pauses animation playback while maintaining the current playback position. */
     fun pause() {
