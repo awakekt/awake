@@ -114,6 +114,15 @@ public final class com/awakekt/awake/render/passes/DirectionalShadowBoxKt {
 	public static final fun directionalShadowTexelDepthScale (I)F
 }
 
+public final class com/awakekt/awake/render/passes/DrawUniformInputs {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun matches (Lcom/awakekt/awake/render/command/GpuDrawRequest;IIZI)Z
+	public static synthetic fun matches$default (Lcom/awakekt/awake/render/passes/DrawUniformInputs;Lcom/awakekt/awake/render/command/GpuDrawRequest;IIZIILjava/lang/Object;)Z
+	public final fun record (Lcom/awakekt/awake/render/command/GpuDrawRequest;IIZI)V
+	public static synthetic fun record$default (Lcom/awakekt/awake/render/passes/DrawUniformInputs;Lcom/awakekt/awake/render/command/GpuDrawRequest;IIZIILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/render/passes/DrawUniformPackingKt {
 	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FI)[F
 	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZ)[F
@@ -123,6 +132,12 @@ public final class com/awakekt/awake/render/passes/DrawUniformPackingKt {
 	public static final fun uniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZ)[F
 	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)[F
 	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;FZILjava/lang/Object;)[F
+}
+
+public final class com/awakekt/awake/render/passes/FrameUniformInputs {
+	public fun <init> ()V
+	public final fun getVersion ()I
+	public final fun update (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/render/command/GpuDebugView;F)I
 }
 
 public final class com/awakekt/awake/render/passes/GpuResourcePool {

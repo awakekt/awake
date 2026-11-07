@@ -29,6 +29,12 @@ internal class UniformUploads {
         private set
     internal val buffers = ArrayList<GPUBuffer>(INITIAL_BLOCKS)
 
+    /**
+     * Per-draw blocks packed so far, staged or not: a draw whose slot already holds its block, packed
+     * from the same inputs, is not packed again and does not count. For tests and probes.
+     */
+    internal var packedBlocks = 0L
+
     /** Native bytes the JVM copies [floats] into before writing; the web writes from linear memory instead. */
     internal var hostBytes: ArrayBuffer? = null
 

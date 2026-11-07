@@ -207,6 +207,9 @@ internal class UniformSlot(
      */
     internal var resident: FloatArray? = null
 
+    /** What [resident] was packed from, so a draw packed from the same is not packed again (#1452). */
+    internal val inputs = com.awakekt.awake.render.passes.DrawUniformInputs()
+
     /** Closes the bind group, then the buffer it names. */
     fun close() {
         binding?.bindGroup?.close()
