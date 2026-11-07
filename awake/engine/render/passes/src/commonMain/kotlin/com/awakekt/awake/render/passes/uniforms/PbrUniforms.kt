@@ -213,7 +213,7 @@ enum class TexturedBlend(val code: Int) {
  * The third float in the metallic/roughness vec4 is the draw's alpha cutoff, which masked depth
  * shaders read, and the fourth is the draw's [TexturedBlend] code: a draw blended additively adds
  * unlit unless its material asked to stay lit. The draw's time goes in the texture scroll's `z`,
- * which the animation reads.
+ * which the animation reads, when the animation moves; a still texture gets 0 there.
  *
  * @return Exactly [PBR_TEXTURED_MATERIAL_FLOATS] floats.
  */
@@ -263,7 +263,9 @@ private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, addi
     )
     layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, blend.code.toFloat())
     val scroll = layout.readVec4(output, UniformFields.TextureScroll)
-    layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, timeSeconds, scroll.w)
+    val frames = layout.readVec4(output, UniformFields.TextureFrames)
+    val clock = textureAnimationClock(frames.x, frames.y, frames.z, scroll.x, scroll.y, timeSeconds)
+    layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, clock, scroll.w)
     return output
 }
 
@@ -483,7 +485,7 @@ fun litShadowUniforms(
     .put(cascades.matrixFloats(), UniformFields.CascadeViewProjections)
     .put(cascades.depthScaleFloats(), UniformFields.CascadeDepthScales)
     .put(drawCall.model.data, UniformFields.Model)
-    .put(UniformFields.VertexAnimation, drawCall.vertexAnimation, drawCall.timeSeconds)
+    .put(UniformFields.VertexAnimation, drawCall.vertexAnimation, vertexAnimationClock(drawCall.vertexAnimation, drawCall.timeSeconds))
     .put(cameraPositionFloats(frame.cameraEye), UniformFields.CameraPosition)
     .put(UniformFields.CameraForward, frame.cameraForward, cascades.count.toFloat())
     .put(pbrMaterialFloats(drawCall), UniformFields.Material)

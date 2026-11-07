@@ -100,7 +100,7 @@ internal fun Renderer.prepareGpuDraw(
         exposure = exposure,
         alphaToCoverageEnabled = (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled,
     )
-    slot?.let { uniformUploads.stage(it.buffer, uniformFloats) }
+    slot?.let { uniformUploads.stageChanged(it, uniformFloats) }
     return WebGpuPreparedDraw(
         pipeline = pipeline,
         materialBinding = when {
@@ -199,7 +199,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     when (kind) {
         InstancedDrawKind.Particle -> {
             val slot = drawSlot?.takeIf { material.hasTexture } ?: return null
-            uniformUploads.stage(slot.buffer, uniformFloats)
+            uniformUploads.stageChanged(slot, uniformFloats)
             materialBinding = WebGpuBindGroupHandle(
                 material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings),
             )
@@ -222,7 +222,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Plain -> {
             val slot = drawSlot ?: return null
-            uniformUploads.stage(slot.buffer, uniformFloats)
+            uniformUploads.stageChanged(slot, uniformFloats)
             materialBinding = if (material.hasTexture) {
                 WebGpuBindGroupHandle(
                     material.bindGroupFor(

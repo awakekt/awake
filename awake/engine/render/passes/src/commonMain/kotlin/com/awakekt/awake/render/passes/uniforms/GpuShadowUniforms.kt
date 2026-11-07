@@ -70,7 +70,7 @@ fun gpuLitShadowUniforms(
     out[ANIMATION_AT] = vertexAnimation.x
     out[ANIMATION_AT + 1] = vertexAnimation.y
     out[ANIMATION_AT + 2] = vertexAnimation.z
-    out[ANIMATION_AT + VEC4_W] = timeSeconds
+    out[ANIMATION_AT + VEC4_W] = vertexAnimationClock(vertexAnimation, timeSeconds)
     pbrMaterialFloats(extraUniformFloats).copyInto(out, MATERIAL_AT, 0, UniformFields.Material.floats)
     return out
 }
@@ -116,7 +116,7 @@ internal fun packLitShadowBlock(
         .put(cascades.matrixFloats(), UniformFields.CascadeViewProjections)
         .put(cascades.depthScaleFloats(), UniformFields.CascadeDepthScales)
         .put(transform.data, UniformFields.Model)
-        .put(UniformFields.VertexAnimation, vertexAnimation, timeSeconds)
+        .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
         .put(cameraPositionFloats(cameraEye), UniformFields.CameraPosition)
         .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
         .put(material, UniformFields.Material)
