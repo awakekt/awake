@@ -21,9 +21,14 @@ internal class SparseEntitySet {
 
     val entities: List<Entity> get() = entitiesView
 
+    /**
+     * The dense index of exactly [entity], id and generation, or [EntityIndexMap.ABSENT]. Matching the
+     * whole handle means a stale handle whose id was recycled finds nothing, so a hit also proves the
+     * entity alive for any entity [World] manages: [World.destroy] removes it from every store (#1428).
+     */
     fun indexOf(entity: Entity): Int {
         val index = sparse.get(entity.id)
-        return if (index >= 0 && index < count) index else EntityIndexMap.ABSENT
+        return if (index >= 0 && index < count && denseEntities[index] == entity.packed) index else EntityIndexMap.ABSENT
     }
 
     /** Adds an entity already proven absent by [indexOf]. */
