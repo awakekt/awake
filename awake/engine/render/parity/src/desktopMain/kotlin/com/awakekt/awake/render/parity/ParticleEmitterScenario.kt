@@ -81,6 +81,22 @@ fun Renderer.renderParticleEmitterScene(space: ParticleSpace, size: Int): ByteAr
     }
 }
 
+/** Writes the world-space and the local-space emitter, [size] square, through [write]. */
+fun writeParticleEmitterEvidence(renderer: Renderer, size: Int, write: (String, String, Int, ByteArray) -> Unit) {
+    write(
+        "scene-particles-world-space",
+        "A world-space emitter sliding left to right: each sprite stays where it was emitted, a rising trail",
+        size,
+        renderer.renderParticleEmitterScene(ParticleSpace.World, size),
+    )
+    write(
+        "scene-particles-local-space",
+        "The same emitter in local space: its sprites ride with it and stand in one column on the right",
+        size,
+        renderer.renderParticleEmitterScene(ParticleSpace.Local, size),
+    )
+}
+
 /** Where the scenario's emitter starts, in world units: the left of the frame. */
 const val EMITTER_START_X: Float = -1.5f
 

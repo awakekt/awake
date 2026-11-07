@@ -9,7 +9,6 @@ import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.particles.ParticleSpace
 import com.awakekt.awake.render.effects.BloomEffect
 import com.awakekt.awake.render.effects.FxaaEffect
 import com.awakekt.awake.render.effects.PostProcessingStack
@@ -64,18 +63,7 @@ fun main(args: Array<String>) {
             renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE),
         )
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
-        write(
-            "scene-particles-world-space",
-            "A world-space emitter sliding left to right: each sprite stays where it was emitted, a rising trail",
-            EVIDENCE_SIZE,
-            renderer.renderParticleEmitterScene(ParticleSpace.World, EVIDENCE_SIZE),
-        )
-        write(
-            "scene-particles-local-space",
-            "The same emitter in local space: its sprites ride with it and stand in one column on the right",
-            EVIDENCE_SIZE,
-            renderer.renderParticleEmitterScene(ParticleSpace.Local, EVIDENCE_SIZE),
-        )
+        writeParticleEmitterEvidence(renderer, EVIDENCE_SIZE, ::write)
         writeSkinnedEvidence(renderer, ::write)
         writeWorldTextEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)
