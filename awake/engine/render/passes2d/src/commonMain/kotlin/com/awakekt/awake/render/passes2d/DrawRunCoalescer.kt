@@ -260,6 +260,7 @@ object DrawRunCoalescer {
                 first !is DrawCommand.ClipPop &&
                 first !is DrawCommand.BackdropBlur
             if (cacheable) {
+                pool?.stableSpans?.countCacheableSpan()
                 retained.find(slice, maxQuadsPerRun, activePathClips, safeInteriorRect)?.let { cached ->
                     runs.addAll(cached)
                     continue
@@ -269,8 +270,10 @@ object DrawRunCoalescer {
             // A cacheable span that just missed is routed through the pool only on its later
             // misses: its first sight is built fresh and stored, so a static span can hit and skip
             // from the next frame. A pooled span is never stored -- its buffers are overwritten
-            // next frame, which would corrupt a cache entry holding them.
-            val spanPool = if (cacheable && pool != null && !pool.firstSightSpan()) pool else null
+            // next frame, which would corrupt a cache entry holding them. A pooled span whose
+            // content repeats from last frame has settled and is built fresh and stored again
+            // (#1408), so a span that changed once does not miss forever.
+            val spanPool = if (cacheable && pool != null && pooledMiss(pool, retained)) pool else null
 
             // Each branch below casts `slice` (a List<DrawCommand>) to the concrete subtype
             // confirmed by the `is` check that opens the branch.  The inner while-loop above
@@ -694,6 +697,10 @@ object DrawRunCoalescer {
     }
 
     /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font and pipeline. */
+    /** Whether a cacheable miss goes through [pool]: not on first sight, nor once it has settled. */
+    private fun pooledMiss(pool: DynamicRunArrayPool, retained: RetainedDrawRunCache): Boolean =
+        !pool.firstSightSpan() && !pool.stableSpans.shouldPromote(retained.lastMissHash, retained.capacity)
+
     private fun continuesSpan(first: DrawCommand, next: DrawCommand): Boolean =
         next::class == first::class && (
             first !is DrawCommand.Glyph ||
