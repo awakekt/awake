@@ -84,6 +84,7 @@ nav:
           - glTF models: guides/gltf.md
           - Animation: guides/animation.md
           - Particles: guides/particles.md
+          - Trails: guides/trails.md
           - Render plans and shaders: guides/shaders.md
           - Shader compilation: guides/shader-compilation.md
           - Vulkan backend: guides/vulkan.md
