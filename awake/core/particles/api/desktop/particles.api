@@ -133,6 +133,7 @@ public final class com/awakekt/awake/core/particles/ParticleSimulation {
 	public final fun getPosX ()[F
 	public final fun getPosY ()[F
 	public final fun getPosZ ()[F
+	public final fun getRadialInSpawnPlane ()Z
 	public final fun getRadialSpeed ()F
 	public final fun getRandom ()Lkotlin/random/Random;
 	public final fun getRotation ()[F
@@ -184,6 +185,7 @@ public final class com/awakekt/awake/core/particles/ParticleSimulation {
 	public final fun setOriginY (F)V
 	public final fun setOriginZ (F)V
 	public final fun setPlane (Lcom/awakekt/awake/core/particles/ParticlePlane;)V
+	public final fun setRadialInSpawnPlane (Z)V
 	public final fun setRadialSpeed (F)V
 	public final fun setRandom (Lkotlin/random/Random;)V
 	public final fun setSpawnRate (F)V

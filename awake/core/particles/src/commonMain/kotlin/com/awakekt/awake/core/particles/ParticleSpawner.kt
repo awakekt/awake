@@ -254,5 +254,5 @@ private fun writeConeVelocity(
     sim.velZ[slot] = (az * cosTheta + rz * sinCosPhi + uz * sinSinPhi) * speed
 }
 
-internal fun jitter(random: Random, magnitude: Float): Float =
+private fun jitter(random: Random, magnitude: Float): Float =
     (random.nextFloat() * TWO_SIDED_SCALE - 1f) * magnitude
