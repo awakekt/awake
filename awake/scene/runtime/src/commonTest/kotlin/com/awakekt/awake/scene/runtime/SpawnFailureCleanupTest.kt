@@ -6,16 +6,22 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.binding.SceneComponentResolver
+import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.SceneCustomComponent
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.mesh.MeshRendererBinding
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
+import kotlinx.serialization.json.JsonNull
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -75,6 +81,24 @@ class SpawnFailureCleanupTest {
         assertEquals(0, library.materialHolderCount(LIT))
     }
 
+    /** A node that fails as it is instantiated, before any renderer resolves, leaves nothing behind either. */
+    @Test
+    fun aSpawnWhoseComponentFailsToBindLeavesNoEntityBehind() {
+        val world = runtime.world
+        val named = world.query(Name::class).toSet()
+        val alive = world.aliveCount()
+        val broken = PREFAB_COPY.copy(
+            children = listOf(SceneNode(name = "Arrow", components = listOf(SceneCustomComponent(EXPLODES, JsonNull)))),
+        )
+
+        val failure = assertFailsWith<IllegalStateException> { runtime.spawn(broken, SceneComponentRegistry(resolvers = listOf(Explodes))) }
+
+        assertEquals(EXPLODES, failure.message, "the binding's own failure reaches the caller")
+        assertEquals(named, world.query(Name::class).toSet(), "neither the root nor the child that failed remains")
+        assertEquals(alive, world.aliveCount(), "the entity count is unchanged")
+        assertEquals(0, library.meshHolderCount(CUBE), "nothing was resolved for it")
+    }
+
     /** The positive control: the same tree with every material resolvable spawns whole, and despawns clean. */
     @Test
     fun theSameTreeWithEveryAssetResolvableSpawns() {
@@ -102,6 +126,13 @@ class SpawnFailureCleanupTest {
         override fun destroy() = Unit
     }
 
+    /** A component binding that fails as its node is instantiated. */
+    private object Explodes : SceneComponentResolver {
+        override fun canResolve(component: SceneComponent) = component is SceneCustomComponent && component.type == EXPLODES
+
+        override fun attach(world: World, entity: Entity, component: SceneComponent, context: SceneResolutionContext) = error(EXPLODES)
+    }
+
     private object NoServices : AppServiceLookup {
         override fun <T : Any> service(type: KClass<T>): T? = null
     }
@@ -111,6 +142,7 @@ class SpawnFailureCleanupTest {
         const val LIT = "lit"
         const val MISSING = "gltf-material:assets/effects/effect-mesh.glb"
         const val ID_SCAN = 1024
+        const val EXPLODES = "explodes"
 
         fun renderer(material: String) = SceneMeshRenderer(mesh = CUBE, material = material)
 
