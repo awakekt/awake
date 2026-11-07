@@ -9,7 +9,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.io.AssetSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,7 +44,7 @@ class AssetImagesTest {
 
         assertNull(images["ui/frame.png"], "nothing is decoded on the frame that asks")
         assertTrue(images.state("ui/frame.png").isLoading)
-        advanceUntilIdle()
+        runCurrent()
 
         val frame = assertNotNull(images["ui/frame.png"])
         assertEquals(0x01020304, frame.pixel(0, 0))
@@ -56,7 +56,7 @@ class AssetImagesTest {
         val images = cache()
         images["ui/frame.png"]
         images["ui/frame.png"]
-        advanceUntilIdle()
+        runCurrent()
 
         val first = images["ui/frame.png"]
         repeat(10) { assertSame(first, images["ui/frame.png"]) }
@@ -68,14 +68,14 @@ class AssetImagesTest {
     fun aResetFreesEveryImageAndTheNextAskLoadsAgain() = runTest {
         val images = cache()
         images["ui/frame.png"]
-        advanceUntilIdle()
+        runCurrent()
         val before = images["ui/frame.png"]
 
         images.reset()
 
         assertEquals(0, images.size)
         assertNull(images["ui/frame.png"])
-        advanceUntilIdle()
+        runCurrent()
         assertNotSame(before, images["ui/frame.png"])
         assertEquals(2, decodes)
     }
@@ -86,7 +86,7 @@ class AssetImagesTest {
         val leaving = images.state("ui/frame.png")
 
         images.reset()
-        advanceUntilIdle()
+        runCurrent()
 
         assertNull(leaving.value, "the cancelled load wrote nothing")
         assertEquals(0, images.size)
@@ -98,7 +98,7 @@ class AssetImagesTest {
         val images = cache()
 
         repeat(3) { assertNull(images["ui/missing.png"]) }
-        advanceUntilIdle()
+        runCurrent()
         repeat(3) { assertNull(images["ui/missing.png"]) }
 
         assertIs<NoSuchElementException>(images.failure("ui/missing.png"))
@@ -111,7 +111,7 @@ class AssetImagesTest {
         val images = AssetImages(source, backgroundScope) { error("not an image") }
 
         images["ui/frame.png"]
-        advanceUntilIdle()
+        runCurrent()
 
         assertNull(images["ui/frame.png"])
         assertIs<IllegalStateException>(images.failure("ui/frame.png"))
@@ -125,7 +125,7 @@ class AssetImagesTest {
         images.reset(mapOf("ui/frame.png" to canvasFrame))
 
         assertSame(canvasFrame, images["ui/frame.png"], "returned on the first ask, with no load")
-        advanceUntilIdle()
+        runCurrent()
         assertSame(canvasFrame, images["ui/frame.png"])
         assertEquals(emptyList(), reads)
         assertEquals(0, decodes)

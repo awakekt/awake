@@ -1,0 +1,26 @@
+public final class com/awakekt/awake/compose/assets/AssetImage : com/awakekt/awake/compose/runtime/PolledState {
+	public final fun getFailure ()Ljava/lang/Throwable;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun isLoading ()Z
+	public synthetic fun read ()Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/compose/assets/AssetImages {
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun failure (Ljava/lang/String;)Ljava/lang/Throwable;
+	public final fun get (Ljava/lang/String;)Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;
+	public final fun getSize ()I
+	public final fun reset (Ljava/util/Map;)V
+	public static synthetic fun reset$default (Lcom/awakekt/awake/compose/assets/AssetImages;Ljava/util/Map;ILjava/lang/Object;)V
+	public final fun state (Ljava/lang/String;)Lcom/awakekt/awake/compose/assets/AssetImage;
+}
+
+public final class com/awakekt/awake/compose/assets/ComposeAssetsKt {
+	public static final fun ProvideAssets (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/compose/assets/AssetImages;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ProvideAssets$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/compose/assets/AssetImages;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun getLocalAssetImages ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun getLocalAssetSource ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun rememberAssetImage (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;)Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;
+}
+

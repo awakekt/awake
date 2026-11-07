@@ -13,7 +13,7 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.reconcile
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.io.AssetSource
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -56,7 +56,7 @@ class ComposeAssetsTest {
 
         frame(ui)
         assertNull(shown)
-        advanceUntilIdle()
+        runCurrent()
         frame(ui)
 
         assertSame(images["ui/frame.png"], shown)
@@ -92,7 +92,7 @@ class ComposeAssetsTest {
         }
 
         frame(ui)
-        advanceUntilIdle()
+        runCurrent()
         frame(ui)
 
         assertEquals(2, frames)
