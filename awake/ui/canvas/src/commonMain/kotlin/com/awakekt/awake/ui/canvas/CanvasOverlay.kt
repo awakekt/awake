@@ -213,6 +213,8 @@ internal class CanvasOrigin {
 /** [children] inside [element]: each anchored by hand, laid out in rows or columns by its layout, or fanned out by its cluster. */
 context(_: Composer)
 internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem>, tree: CanvasTree) {
+    // Under the elements inside it, as the element's own picture is.
+    ComposeContent(element)
     if (element.particles?.placement == CanvasParticlePlacement.OverContent) {
         ParticlesOverContent(element, tree)
     }

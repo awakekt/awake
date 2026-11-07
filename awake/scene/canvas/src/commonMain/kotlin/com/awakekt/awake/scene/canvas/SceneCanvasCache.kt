@@ -99,6 +99,10 @@ internal class CanvasItemOrder(private val world: World) {
     private var transformStore: ComponentStore<Transform>? = null
     private var elementStore: ComponentStore<CanvasElement>? = null
     private var scalerStore: ComponentStore<CanvasScaler>? = null
+    private var siblingType: ComponentTypeId? = null
+
+    /** The [CanvasSiblingIndex] store's revision at the last sort: a content block moved a node when it differs. */
+    private var siblingRevision = -1
 
     /** This frame's items, in hierarchy order. */
     fun items(): List<CanvasItem> {
@@ -117,6 +121,7 @@ internal class CanvasItemOrder(private val world: World) {
             transformType = world.typeId(Transform::class)
             elementType = world.typeId(CanvasElement::class)
             scalerType = world.typeId(CanvasScaler::class)
+            siblingType = world.typeId(CanvasSiblingIndex::class)
             typesGeneration = world.generation
         }
         transformStore = world.componentStore(checkNotNull(transformType))
@@ -130,7 +135,7 @@ internal class CanvasItemOrder(private val world: World) {
     /** Whether the elements, and every node on their paths and where it is stored, are as the last sort found them. */
     private fun unchanged(): Boolean {
         val family = world.family<CanvasElement>()
-        if (family.size != count) return false
+        if (family.size != count || siblingRevision() != siblingRevision) return false
         if (elements.size < count) elements = arrayOfNulls(count)
         var index = 0
         var same = true
@@ -159,7 +164,10 @@ internal class CanvasItemOrder(private val world: World) {
         return stored && nodeHasParent[at] == (parent != null) && (parent == null || parent.packed == nodeParents[at])
     }
 
+    private fun siblingRevision(): Int = world.componentStore<CanvasSiblingIndex>(checkNotNull(siblingType))?.revision ?: 0
+
     private fun sort() {
+        siblingRevision = siblingRevision()
         val placed = ArrayList<PlacedItem>()
         world.family<CanvasElement>().forEach { entity, element ->
             val path = world.hierarchyPath(entity)

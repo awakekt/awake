@@ -43,6 +43,7 @@ public final class com/awakekt/awake/compose/runtime/CompositionLocal {
 
 public final class com/awakekt/awake/compose/runtime/CompositionLocalKt {
 	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;Lkotlin/jvm/functions/Function1;)V
 	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;[Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function1;)V
 	public static final fun compositionLocalOf (Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/runtime/CompositionLocal;
 	public static final fun getCurrent (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
@@ -70,6 +71,7 @@ public abstract class com/awakekt/awake/compose/runtime/PolledState : com/awakek
 public final class com/awakekt/awake/compose/runtime/ProvidedLocals {
 	public fun <init> ()V
 	public final fun provide (Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)V
+	public final fun provideAll (Lcom/awakekt/awake/compose/runtime/ProvidedLocals;Lkotlin/jvm/functions/Function0;)V
 	public final fun provideAll ([Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function0;)V
 	public final fun read (Lcom/awakekt/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
 	public final fun snapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;

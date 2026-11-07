@@ -52,6 +52,7 @@ class CanvasElementExposureTest {
         "aimLock" to "a hook into the game's own targets, which only code can answer",
         "previewState" to "an editor's preview of one state, never saved with the scene",
         "number" to "a Stepper's number right now, saved as its stepper.value, set by the player, game code or bind.value",
+        "composeContent" to "Compose UI declared by code in canvas content's compose { }, a lambda, which data cannot hold",
     )
 
     /**
