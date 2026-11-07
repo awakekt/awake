@@ -26,6 +26,8 @@ val publicPluginIds = setOf(
     "com.awakekt.awake.plugin.release-cut",
     "com.awakekt.awake.plugin.basis-transcoder",
     "com.awakekt.awake.plugin.socket-worker",
+    "com.awakekt.awake.plugin.string-keys",
+    "com.awakekt.awake.plugin.version-stamp",
 )
 
 repositories {
@@ -53,6 +55,7 @@ dependencies {
     implementation(libs.dokka.gradle.plugin)
     implementation(libs.ksp.gradle.plugin)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinpoet)
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.37.0")
     testImplementation(gradleTestKit())
     testImplementation(kotlin("test"))
