@@ -7827,8 +7827,9 @@ by the host; put it on any node, and only the first in a scene is used.</p>
 <p>Spawns sprites at its node's world position, turned to the camera or lying flat, and follows the
 node. <code>SceneParticleEmitter</code>.</p>
 <p>Sizes, speeds and <code>spawnRadius</code> are world units; the node's scale does not apply, and its rotation
-only tilts a <code>Flat</code> emitter's plane and, with <code>inheritOrientation</code>, turns the spawn ring and
-<code>velocity</code>. Each particle fades from <code>startAlpha</code> to 0 over its <code>lifetime</code> (or by <code>alphaCurve</code>), while
+only tilts a <code>Flat</code> emitter's plane, turns the spawn ring with <code>orientSpawnRing</code> and, with
+<code>inheritOrientation</code>, turns the spawn ring and <code>velocity</code>. A <code>Local</code> space emitter is the exception: its particles live in the node's own axes and
+units, so they move, turn and scale with it. Each particle fades from <code>startAlpha</code> to 0 over its <code>lifetime</code> (or by <code>alphaCurve</code>), while
 its tint moves from <code>color</code> to <code>endColor</code> and its size from <code>scale</code> to <code>endScale</code>. <code>runProject</code> runs
 it; see <a href="../../guides/particles/">Particles</a>.</p>
 <table>
@@ -8020,6 +8021,24 @@ it; see <a href="../../guides/particles/">Particles</a>.</p>
 <td>spin</td>
 <td>none</td>
 <td>A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (<code>stretchWithVelocity</code>) points along its motion and ignores it. Described below.</td>
+</tr>
+<tr>
+<td><code>space</code></td>
+<td><code>World</code> · <code>Local</code></td>
+<td><code>World</code></td>
+<td><code>World</code> leaves each particle where it was emitted however the node moves next. <code>Local</code> keeps particles relative to the node and draws them through its current transform, so they move, turn and scale with it: an aura on a moving bone. <code>velocity</code> and the spawn ring are then in the node's axes and <code>inheritOrientation</code> adds nothing; <code>acceleration</code> still pulls in world space; camera-facing sprites still face the camera. A <code>Local</code> emitter cannot have a <code>ground</code>.</td>
+</tr>
+<tr>
+<td><code>orientSpawnRing</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>The node's rotation tilts the spawn ring alone, so it lies in the plane a <code>Flat</code> emitter's sprites lie in, while <code>velocity</code>, <code>acceleration</code> and <code>radialSpeed</code> stay in world space. Adds nothing beside <code>inheritOrientation</code> or with <code>space</code> <code>Local</code>.</td>
+</tr>
+<tr>
+<td><code>radialInRingPlane</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td><code>radialSpeed</code> pushes outward in the turned spawn ring's own plane instead of horizontally, when <code>orientSpawnRing</code> or <code>inheritOrientation</code> turns the ring: an outward ripple across a sloped surface. Adds nothing while the ring is not turned, or with <code>space</code> <code>Local</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -8350,16 +8369,22 @@ frame sheets. See <a href="../../guides/particles/#2d-particles-scene2d">Particl
 <td>Draws with additive blending on <code>spriteScenePipeline(buildAdditive = true)</code>.</td>
 </tr>
 <tr>
+<td><code>space</code></td>
+<td><code>World</code> · <code>Local</code></td>
+<td><code>World</code></td>
+<td><code>World</code> leaves each live particle where it spawned, trailing behind a moving node. <code>Local</code> keeps them attached to the node's <code>Transform</code>, so they move, turn and scale with it; <code>gravity</code> is then in the node's axes. The same names as <code>particle_emitter</code>'s <code>space</code>.</td>
+</tr>
+<tr>
 <td><code>localSpace</code></td>
 <td>boolean</td>
-<td><code>false</code></td>
-<td>Keeps live particles attached to the node's <code>Transform</code> instead of trailing in world space.</td>
+<td>none</td>
+<td>Deprecated: write <code>space</code>. Left out, it reads as <code>false</code>; <code>true</code> still reads as <code>space</code> <code>Local</code>. The field is not written back out.</td>
 </tr>
 <tr>
 <td><code>inheritOrientation</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
-<td>Rotates <code>shape</code> and launch direction by the node's Z rotation when <code>localSpace</code> is <code>false</code>.</td>
+<td>Rotates <code>shape</code> and launch direction by the node's Z rotation when <code>space</code> is <code>World</code>.</td>
 </tr>
 <tr>
 <td><code>sortingLayer</code></td>
