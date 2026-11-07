@@ -113,6 +113,7 @@ class ProjectNavigationAgentTest {
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
 
         // --8<-- [start:scene]
+
         /** A 12 by 12 yard. A wall across z = 5 from x = 0 to 8 leaves a gap at x = 9 to 11. */
         const val YARD_SCENE = """
 { "version": 1, "name": "yard", "nodes": [
