@@ -41,10 +41,17 @@ import com.awakekt.awake.scene.rendering.RenderSystem3D
  */
 class AnimationSystem(
     private val updateRate: AnimationUpdateRate = AnimationUpdateRate.EveryFrame,
-    private val hasRenderer: Boolean,
 ) : System {
-    /** A system for a host that draws, posing as [updateRate] says. */
-    constructor(updateRate: AnimationUpdateRate = AnimationUpdateRate.EveryFrame) : this(updateRate, hasRenderer = true)
+    // A secondary constructor, so the released `()` and `(AnimationUpdateRate)` constructors stay as they were.
+    private var hasRenderer = true
+
+    /** A system for a host that does or doesn't draw; see [hasRenderer] in the class docs. */
+    constructor(
+        updateRate: AnimationUpdateRate = AnimationUpdateRate.EveryFrame,
+        hasRenderer: Boolean,
+    ) : this(updateRate) {
+        this.hasRenderer = hasRenderer
+    }
 
     override fun update(world: World, delta: Float) {
         if (!hasRenderer) {
