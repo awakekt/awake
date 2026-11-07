@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.ecs.ComponentStore
+import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Family1
 import com.awakekt.awake.ecs.World
@@ -82,8 +84,19 @@ internal class CanvasItemOrder(private val world: World) {
     private var count = -1
     private var elements = arrayOfNulls<CanvasElement>(0)
 
+    // Type ids resolved once per world generation and stores taken once per [items]: `world.get` hashes
+    // its type's key on every call, and the walk below makes one per path node of every element, every frame.
+    private var typesGeneration = -1
+    private var transformType: ComponentTypeId? = null
+    private var elementType: ComponentTypeId? = null
+    private var scalerType: ComponentTypeId? = null
+    private var transformStore: ComponentStore<Transform>? = null
+    private var elementStore: ComponentStore<CanvasElement>? = null
+    private var scalerStore: ComponentStore<CanvasScaler>? = null
+
     /** This frame's items, in hierarchy order. */
     fun items(): List<CanvasItem> {
+        takeStores()
         if (!unchanged()) sort()
         val items = ArrayList<CanvasItem>(count)
         for (position in 0 until count) {
@@ -92,6 +105,21 @@ internal class CanvasItemOrder(private val world: World) {
         }
         return items
     }
+
+    private fun takeStores() {
+        if (typesGeneration != world.generation) {
+            transformType = world.typeId(Transform::class)
+            elementType = world.typeId(CanvasElement::class)
+            scalerType = world.typeId(CanvasScaler::class)
+            typesGeneration = world.generation
+        }
+        transformStore = world.componentStore(checkNotNull(transformType))
+        elementStore = world.componentStore(checkNotNull(elementType))
+        scalerStore = world.componentStore(checkNotNull(scalerType))
+    }
+
+    /** [node]'s component in this store, as `world.get` finds it: none for a node that is no longer alive. */
+    private fun <T : Any> ComponentStore<T>?.of(node: Entity): T? = if (this != null && world.isAlive(node)) get(node) else null
 
     /** Whether the elements, the paths above them and where their nodes are stored are as the last sort found them. */
     private fun unchanged(): Boolean {
@@ -116,7 +144,7 @@ internal class CanvasItemOrder(private val world: World) {
         var node: Entity? = entity
         var at = start
         while (at < end && isPathNode(node, at, transforms)) {
-            node = node?.let { world.get<Transform>(it)?.parent }
+            node = node?.let { transformStore.of(it)?.parent }
             at++
         }
         // Where the last sort's path ended, the walk ends too: at a root, or where a parent link loops back.
@@ -127,7 +155,7 @@ internal class CanvasItemOrder(private val world: World) {
     /** Whether [node] is the last sort's path node [at], with its [Transform] stored where it was then, or still none. */
     private fun isPathNode(node: Entity?, at: Int, transforms: Family1<Transform>): Boolean {
         if (node == null || node.packed != pathNodes[at]) return false
-        val transform = world.get<Transform>(node)
+        val transform = transformStore.of(node)
         val slot = stored[at]
         return if (slot < 0) transform == null else transform != null && slot < transforms.size && transforms.componentAt(slot) === transform
     }
@@ -172,7 +200,7 @@ internal class CanvasItemOrder(private val world: World) {
     /** The element of the nearest node above item [index]'s entity that has one, as [canvasParent] finds it. */
     private fun canvasParent(index: Int): CanvasElement? {
         for (at in pathStarts[index] + 1 until pathStarts[index + 1]) {
-            world.get<CanvasElement>(Entity(pathNodes[at]))?.let { return it }
+            elementStore.of(Entity(pathNodes[at]))?.let { return it }
         }
         return null
     }
@@ -182,8 +210,8 @@ internal class CanvasItemOrder(private val world: World) {
         val start = pathStarts[index]
         for (at in start until pathStarts[index + 1]) {
             val node = Entity(pathNodes[at])
-            if (at > start && world.has<CanvasElement>(node)) break
-            world.get<CanvasScaler>(node)?.takeIf { it.scope == CanvasScaleScope.Subtree }?.let { return it }
+            if (at > start && elementStore.of(node) != null) break
+            scalerStore.of(node)?.takeIf { it.scope == CanvasScaleScope.Subtree }?.let { return it }
         }
         return null
     }
