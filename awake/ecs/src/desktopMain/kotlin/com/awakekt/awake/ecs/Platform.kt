@@ -24,3 +24,18 @@ internal actual fun <T : Any> createComponentInstance(type: KClass<T>): T {
 internal actual inline fun <reified T : Any> componentTypeKey(): Any = T::class.java
 
 internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.java
+
+internal actual fun componentTypeIndexOf(key: Any): Int = ComponentTypeIndexValue.get(key as Class<*>)
+
+internal actual val componentTypeIndexIsCheap: Boolean = true
+
+/**
+ * Each component class's index, held by the class itself. A `ClassValue` read does not hash the
+ * class: it probes the class's own small table at a slot fixed for this `ClassValue`. The keys
+ * [componentTypeKey] and [componentTypeKeyOf] give here are always the `Class`.
+ */
+private object ComponentTypeIndexValue : ClassValue<Int>() {
+    private val next = java.util.concurrent.atomic.AtomicInteger()
+
+    override fun computeValue(type: Class<*>): Int = next.getAndIncrement()
+}

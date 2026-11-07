@@ -15,6 +15,7 @@ kotlinx-atomicfu = "0.27.0"
 kotlinx-browser = "0.5.0"
 napier = "2.7.1"
 androidx-core-ktx = "1.15.0"
+androidx-collection = "1.7.0"
 leakcanary = "2.14"
 # vanniktech-publish is applied directly in awake-core/build.gradle.kts.
 vanniktech-publish = "0.37.0"
@@ -97,6 +98,8 @@ wgpu4k-toolkit = { module = "io.ygdrasil:wgpu4k-toolkit", version.ref = "wgpu4k"
 webgpu-ktypes-descriptors = { module = "io.ygdrasil:webgpu-ktypes-descriptors", version.ref = "webgpu-ktypes" }
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
+# Primitive-keyed maps (no boxing) for per-step lookups; Kotlin Multiplatform on every Awake target.
+androidx-collection = { module = "androidx.collection:collection", version.ref = "androidx-collection" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 fleks = { module = "io.github.quillraven.fleks:Fleks", version.ref = "fleks" }
 artemis-odb = { module = "net.onedaybeard.artemis:artemis-odb", version.ref = "artemis-odb" }
