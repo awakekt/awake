@@ -18,8 +18,8 @@ import com.awakekt.awake.compose.ui.unit.IntSize
 /**
  * Stacks children on top of each other, sized to the largest.
  *
- * Shrink-wraps to content, matching Compose. `ui-core`'s `box()` defaults to `FillMax`, which
- * `docs/reference/mirror-map.md` records as a divergence -- not carried forward.
+ * Shrink-wraps to content, matching Compose. The removed `ui-core`'s `box()` defaulted to
+ * `FillMax`, a divergence from Compose this engine did not carry forward.
  */
 class BoxMeasurePolicy(
     private val alignment: Alignment = Alignment.TopStart,

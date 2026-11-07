@@ -19,8 +19,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * The compose-side door onto the same theme the `UiLocal` one serves, which is what lets a recipe
- * shed its `ui-core` import one file at a time.
+ * The `CompositionLocal` every shadcn recipe reads its theme through.
  */
 class ShadcnComposeThemeTest {
 

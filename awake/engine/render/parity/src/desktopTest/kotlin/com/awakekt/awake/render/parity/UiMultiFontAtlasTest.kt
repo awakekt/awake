@@ -40,7 +40,7 @@ import kotlin.test.fail
  * Breaking the renderer instead -- binding only the first font a frame draws -- fails the frame's
  * own check and its baseline by the same 1,487 / 1,485 px.
  *
- * Both frames are also pinned to committed PNGs per backend, zero differing pixels at a two-level
+ * Both frames are also pinned to committed PNGs per backend, zero differing pixels at a four-level
  * channel tolerance on Vulkan and [WEBGPU_EDGE_TOLERANCE] on WebGPU, whose Metal and Vulkan paths
  * shade glyph edges a few levels apart. Re-record with `-DAWAKE_RECORD_SNAPSHOTS=true`, and only after
  * stating what should change and why.
@@ -205,7 +205,12 @@ class UiMultiFontAtlasTest {
 
     private companion object {
         const val OPAQUE = 255
-        const val CHANNEL_TOLERANCE = 2
+
+        /**
+         * Lavapipe's glyph edges move a level or two between Mesa releases (26.0.8 on Ubuntu 26.04 shades
+         * one edge pixel 3 levels off the 24.04 baseline), far below the 549 and 1,485 px a real fault fails.
+         */
+        const val CHANNEL_TOLERANCE = 4
 
         /**
          * WebGPU's baseline tolerance. wgpu shades glyph edge texels up to 20 levels apart on Metal

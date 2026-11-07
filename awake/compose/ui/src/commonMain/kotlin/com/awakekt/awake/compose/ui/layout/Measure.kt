@@ -12,8 +12,8 @@ import kotlin.math.roundToInt
 /**
  * Something that can be measured exactly once per layout pass.
  *
- * "Exactly once" is the contract the whole engine exists for -- `ui-core` learns a size by
- * re-running a content lambda, which is what multiplies with nesting. A second [measure] call on
+ * "Exactly once" is the contract the whole engine exists for -- the removed `ui-core` learned a
+ * size by re-running a content lambda, which is what multiplied with nesting. A second [measure] call on
  * the same pass is a bug, not a slow path.
  */
 interface IntrinsicMeasurable {
@@ -152,7 +152,7 @@ fun interface MeasurePolicy {
      *
      * The defaults answer as a Box would -- the largest child wins on both axes. A layout whose
      * geometry differs **must** override them, and Row and Column do. A wrong-but-plausible default
-     * is the failure `awake-ui-performance` Rule 4 keeps describing, so [LayoutStats] counts every
+     * is the silent cost `awake-ui-performance` Rule 2 describes, so [LayoutStats] counts every
      * query: an intrinsic asked of a policy that never overrode these surfaces as a number rather
      * than as a subtly wrong width nobody attributes.
      */

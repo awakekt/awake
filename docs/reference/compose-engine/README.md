@@ -8,6 +8,13 @@ answers to different constraints.
 What that means concretely, and what it costs, is in [`15-compose-parity.md`](15-compose-parity.md) —
 capability by capability, checked against the Compose 1.11.1 jars rather than recalled.
 
+> **`ui-core` is gone.** Stage 3 is done: the immediate-mode modules (`:awake:ui:ui-core`,
+> `ui-headless`, `ui:graphics`, `ui:animation`) were deleted, and `awake:compose` is the only UI
+> engine. Every comparison with `ui-core` in these numbered docs is the design record of that
+> migration, not a description of a module you can still depend on. Their citations of
+> `mirror-map.md` rows (such as `mirror-map.md:148`) point at its `ui-core`-era version, which is
+> in git history before v0.42.0; the current page audits `awake:compose` instead.
+
 ## What it is for
 
 A UI layer inside a frame loop. Nothing in Compose's world redraws behind a live 3D scene, and that
@@ -204,7 +211,7 @@ this engine has *less*; `11-refinements.md` is the review gate that keeps the li
 | **`Infinity` is a reserved bit pattern, not a magic max** | `Int.MAX_VALUE` doubles as a real value and a sentinel | `theLargestRealDimensionIsNotMistakenForInfinity` pins the boundary where a real size and the sentinel would collide |
 | **`@Composable` with no compiler plugin** | Requires a Kotlin-version-locked plugin, imposed on every consumer of a published artifact | Kotlin context parameters. Verified on 2.4.10 across all five targets: no flag, nesting works, outside-composition is a compile error |
 | **Read-only `children`** | `LayoutNode` children are mutable to their holder | A caller could restructure the tree between measure and place, leaving placement running against sizes that no longer exist. Surfaced by `kmp-audit` |
-| **`LayoutStats.intrinsicQueries`** | Compose never says when an intrinsic cost you an extra subtree walk | `awake-ui-performance` Rule 4: a path that is silent when unarmed is the one that ships wrong. Off by default, zero cost disarmed |
+| **`LayoutStats.intrinsicQueries`** | Compose never says when an intrinsic cost you an extra subtree walk | `awake-ui-performance` Rule 2: intrinsics are the extra walk, and they are silent. Off by default, zero cost disarmed |
 | **Allocation ratcheted in the suite** | No equivalent gate | 38,076 B/frame, stable to the byte. It caught a `Color` allocated per quad that the frame total read as noise |
 | **Allocation-free measure** | `layout()` allocates a `MeasureResult` per call | Each node and chain link owns a reused result and scope. Driven by the 16 KB/frame ship gate — `ConstraintsAllocationProbe` measures the `Constraints` half at 0 B against Float's 32 B/op. Tradeoff: the result object is mutable, so it must not be retained past a pass |
 
@@ -256,9 +263,8 @@ Top-level peer of `:awake:ui`, not nested under it: `:runtime` is not UI-specifi
 reconciler diff any tree, as `androidx.compose.runtime` is UI-agnostic), and this engine *replaces*
 `ui-core` rather than extending it.
 
-`:ui` depends on `:runtime` plus `:awake:ui:graphics` and `:awake:core:text` — primitive layers that
-carry no `ui-core` dependency in `commonMain`. **Nothing depends on `:awake:ui:ui-core`, in either
-direction.**
+`:ui` depends on `:runtime` plus primitive `:awake:core:*` layers (`core:text`, `core:graphics2d`,
+`core:math2d`, `core:input`, `core:color`); it reaches no UI engine above it.
 
 `Dp` and `Sp` are reused from `:awake:ui:graphics`'s `ui.api` package rather than redefined here —
 one `Dp` in the tree, not two. They belong in a dedicated `unit` package, as Compose has it; that
@@ -301,13 +307,13 @@ End state:
 whenever — it only makes an existing contract's home honest, and every consumer above it keeps
 working.
 
-The authoring half must wait. Six modules still depend on `:awake:ui:graphics` today:
+The authoring half had to wait. At the time, six modules depended on `:awake:ui:graphics`:
 `:awake:ui:ui-core`, `:awake:ui:headless`, `:awake:heroicons`, `:awake:tailwind`,
-`:awake:core:text`, and `:awake:engine:render:passes`. Moving it early would make `ui-core` depend on
-the `:awake:compose` tree while it is still the shipping engine, which inverts the direction this
+`:awake:core:text`, and `:awake:engine:render:passes`. Moving it early would have made `ui-core` depend
+on the `:awake:compose` tree while it was still the shipping engine, inverting the direction this
 split exists to keep clean.
 
-The move belongs in **Stage 3**, after `ui-headless` and `ui-shadcn` are ported and `ui-core`
+The move belonged in **Stage 3**, after `ui-headless` and `ui-shadcn` are ported and `ui-core`
 is deleted, bundled with the `com.awakekt.awake.*` namespace rename so the ~242 `Dp`/`Sp` imports
 and these package moves are one pass rather than three.
 
@@ -343,7 +349,7 @@ Nothing is blocked in the meantime: `:awake:compose:ui` already declares
 - **Stage 2** — explicit retained scopes, composer invalidation, and read-tracking state.
   **In progress:** the runtime and attribution are landed; select and measure one real Studio
   subtree before adopting a scope. Compiler-generated skipping remains out of scope.
-- **Stage 3** — `ui-shadcn` depends on `:foundation` instead of `ui-headless`; `ui-core` and
+- **Stage 3 (done)** — `ui-shadcn` depends on `:foundation` instead of `ui-headless`; `ui-core` and
   `ui-headless` are deleted together. **No shadcn code moves into `:awake:compose:*`** — the recipes
   stay in `ui-shadcn` and change only what they import; `:foundation` stays unstyled and knows
   nothing about tokens or a theme. `ui-headless` is not ported: measured, its controls hold no
