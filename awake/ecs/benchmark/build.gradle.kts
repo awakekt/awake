@@ -40,6 +40,9 @@ dependencies {
     implementation(project(":awake:scene:scene-core"))
     // MeshRenderer, the render component the transform + mesh query benchmarks iterate.
     implementation(project(":awake:scene:scene3d"))
+    // PhysicsSystem and MeshColliderSystem, timed against a backend that simulates nothing (#1428).
+    implementation(project(":awake:scene:physics"))
+    implementation(project(":awake:physics:api"))
     implementation(project(":awake:backend:vulkan"))
     implementation(libs.fleks)
     implementation(libs.artemis.odb)

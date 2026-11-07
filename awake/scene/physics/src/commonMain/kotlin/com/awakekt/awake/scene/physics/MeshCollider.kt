@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.physics
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.CollisionLayer
@@ -73,54 +75,91 @@ fun interface CollisionMeshSource {
  * the body by the same `Transform`'s position and rotation. Built once per entity: a later scale change
  * does not reach it.
  *
+ * Only colliders still waiting for a body are visited (#1428). Each kind is a maintained family of
+ * `Transform` and the collider that excludes [PhysicsBody], so an entity joins it when it gains a
+ * collider and leaves it when its body is added. A step with nothing to build reads two sizes.
+ *
  * Throws when [meshes] has no triangles for a collider, naming the model and the node.
  */
 class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
-    override fun update(world: World, delta: Float) {
-        world.queryEach(Transform::class, MeshCollider::class) { entity, transform, collider ->
-            if (world.has<PhysicsBody>(entity)) return@queryEach
-            val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
-            val shape = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
-                "No collision mesh loaded for ${collider.mesh} on node $node"
-            }
-            val scale = transform.scale
-            require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
-                "Node $node has a zero scale, which flattens its collision mesh ${collider.mesh}"
-            }
-            world.add(
-                entity,
-                PhysicsBody(shape.scaledBy(scale), MotionType.STATIC, collider.layer, degreesOfFreedom = collider.degreesOfFreedom),
-            )
-        }
+    private var familiesWorld: World? = null
+    private var familiesGeneration = -1
+    private lateinit var pendingMeshes: Family
+    private lateinit var pendingHulls: Family
 
-        world.queryEach(Transform::class, ConvexHullCollider::class) { entity, transform, collider ->
-            if (world.has<PhysicsBody>(entity)) return@queryEach
-            val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
-            val mesh = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
-                "No collision mesh loaded for ${collider.mesh} on node $node"
-            }
-            val scale = transform.scale
-            require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
-                "Node $node has a zero scale, which flattens its collision hull ${collider.mesh}"
-            }
-            val scaledPoints = FloatArray(mesh.vertices.size) { index ->
-                mesh.vertices[index] * when (index % 3) {
-                    0 -> scale.x
-                    1 -> scale.y
-                    else -> scale.z
-                }
-            }
-            world.add(
-                entity,
-                PhysicsBody(
-                    shape = com.awakekt.awake.physics.ConvexHullShape(scaledPoints),
-                    motionType = collider.motion,
-                    layer = collider.layer,
-                    sensor = collider.sensor,
-                    degreesOfFreedom = collider.degreesOfFreedom,
-                ),
-            )
+    // Reused: adding a body takes the entity out of the family being read, so the batch is copied first.
+    private var batch = LongArray(INITIAL_BATCH)
+
+    override fun update(world: World, delta: Float) {
+        resolveFamilies(world)
+        if (pendingMeshes.size > 0) drain(pendingMeshes) { entity -> buildMesh(world, entity) }
+        if (pendingHulls.size > 0) drain(pendingHulls) { entity -> buildHull(world, entity) }
+    }
+
+    private fun resolveFamilies(world: World) {
+        if (familiesWorld === world && familiesGeneration == world.generation) return
+        pendingMeshes = world.family { all(Transform::class, MeshCollider::class).exclude(PhysicsBody::class) }
+        pendingHulls = world.family { all(Transform::class, ConvexHullCollider::class).exclude(PhysicsBody::class) }
+        familiesWorld = world
+        familiesGeneration = world.generation
+    }
+
+    private inline fun drain(family: Family, build: (Entity) -> Unit) {
+        if (batch.size < family.size) batch = LongArray(family.size)
+        var count = 0
+        family.forEach { entity -> batch[count++] = entity.packed }
+        for (index in 0 until count) build(Entity(batch[index]))
+    }
+
+    private fun buildMesh(world: World, entity: Entity) {
+        val transform = world.get<Transform>(entity) ?: return
+        val collider = world.get<MeshCollider>(entity) ?: return
+        val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
+        val shape = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
+            "No collision mesh loaded for ${collider.mesh} on node $node"
         }
+        val scale = transform.scale
+        require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
+            "Node $node has a zero scale, which flattens its collision mesh ${collider.mesh}"
+        }
+        world.add(
+            entity,
+            PhysicsBody(shape.scaledBy(scale), MotionType.STATIC, collider.layer, degreesOfFreedom = collider.degreesOfFreedom),
+        )
+    }
+
+    private fun buildHull(world: World, entity: Entity) {
+        val transform = world.get<Transform>(entity) ?: return
+        val collider = world.get<ConvexHullCollider>(entity) ?: return
+        val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
+        val mesh = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
+            "No collision mesh loaded for ${collider.mesh} on node $node"
+        }
+        val scale = transform.scale
+        require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
+            "Node $node has a zero scale, which flattens its collision hull ${collider.mesh}"
+        }
+        val scaledPoints = FloatArray(mesh.vertices.size) { index ->
+            mesh.vertices[index] * when (index % 3) {
+                0 -> scale.x
+                1 -> scale.y
+                else -> scale.z
+            }
+        }
+        world.add(
+            entity,
+            PhysicsBody(
+                shape = com.awakekt.awake.physics.ConvexHullShape(scaledPoints),
+                motionType = collider.motion,
+                layer = collider.layer,
+                sensor = collider.sensor,
+                degreesOfFreedom = collider.degreesOfFreedom,
+            ),
+        )
+    }
+
+    private companion object {
+        const val INITIAL_BATCH = 16
     }
 }
 
