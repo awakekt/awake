@@ -109,7 +109,7 @@ public final class com/awakekt/awake/ecs/ComponentTypeKt {
 	public static final fun get-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ecs/ComponentType;)Ljava/lang/Object;
 	public static final fun has-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ecs/ComponentType;)Z
 	public static final fun remove-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ecs/ComponentType;)Ljava/lang/Object;
-	public static final fun typeId-BVX5XLw (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;)I
+	public static final fun typeId (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;)I
 }
 
 public abstract interface class com/awakekt/awake/ecs/EcsTag {
