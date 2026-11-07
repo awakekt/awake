@@ -49,6 +49,15 @@ abstract class GraphicsEngine(
     final override val services: AppServiceLookup get() = appLifecycle
 
     /**
+     * What the backend reported when its GPU device was lost, or null while it has its device. Once
+     * set it stays set: [update] plays no frame, so nothing more is submitted to the lost device, and
+     * the engine does not recreate it. See [reportDeviceLost].
+     */
+    @Volatile
+    var deviceLoss: Throwable? = null
+        private set
+
+    /**
      * Whether the backend is up and the app ready, so [update] plays frames. [create] starts the
      * backend without waiting for it, as the original `VulkanApplication`/`WebGpuApplication` did,
      * and [update] is a no-op until it finishes. It stays false when it fails; see [startupError].
@@ -150,7 +159,7 @@ abstract class GraphicsEngine(
     }
 
     final override fun update(delta: Float) {
-        if (!isReady) return
+        if (!isReady || deviceLoss != null) return
         applyRenderQuality()
         val (width, height) = viewportSize()
         appLifecycle.update(
@@ -176,7 +185,7 @@ abstract class GraphicsEngine(
     }
 
     final override fun resize(x: Int, y: Int, width: Int, height: Int) {
-        if (isReady && !surfaceReleased) resizeBackend()
+        if (isReady && !surfaceReleased && deviceLoss == null) resizeBackend()
         appLifecycle.resize(width.toFloat(), height.toFloat())
     }
 
@@ -217,7 +226,8 @@ abstract class GraphicsEngine(
         // Before game.dispose(), not just before destroyBackend(): a game frees its own
         // meshes/materials in dispose(), and the last frame's command buffers can still be
         // pending on them at that point.
-        if (isReady) renderer.waitIdle()
+        // A lost device completes no more work, so there is nothing to wait for.
+        if (isReady && deviceLoss == null) renderer.waitIdle()
         engineScope?.cancel()
         engineScope = null
         appLifecycle.dispose()
@@ -232,6 +242,22 @@ abstract class GraphicsEngine(
     suspend fun readPresentedPixels(): TextureAsset {
         check(isReady) { "The engine hasn't started, so it has drawn no frame." }
         return renderer.readPresentedPixels()
+    }
+
+    /**
+     * Records that the backend's GPU device was lost, once: the first call keeps [cause] as
+     * [deviceLoss], logs it and hands it to the app's `AppErrorHandler` as
+     * [AppErrorSource.GraphicsDevice]; later calls do nothing. From then on [update] plays no frame.
+     *
+     * @param cause The backend's description of the loss, its reason and message.
+     * @return Whether this call recorded the loss; false when it had already been recorded.
+     */
+    protected fun reportDeviceLost(cause: Throwable): Boolean {
+        if (deviceLoss != null) return false
+        deviceLoss = cause
+        logger.error(cause) { "The GPU device was lost; the engine plays no more frames: ${cause.message}" }
+        appLifecycle.reportError(AppErrorSource.GraphicsDevice, cause, subject = "graphics device")
+        return true
     }
 
     /** Draws world-space debug lines (e.g. a frustum wireframe) this frame -- see

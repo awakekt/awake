@@ -91,7 +91,9 @@ fun launchWebGpuGame(
  *
  * Fails fast, before any engine setup, when the browser exposes no WebGPU. Installs a warning-level
  * log sink if none is present so startup failures are not silent. After an asynchronous device
- * failure the host stops drawing instead of repeating the error every frame.
+ * failure the host stops drawing instead of repeating the error every frame. When the device is
+ * lost, the host stops drawing and reports it once through [WebGpuEngine.onDeviceLost] and the
+ * app's `AppErrorHandler`; the device is not recreated, so the page reloads to draw again.
  *
  * @param canvas The canvas element to render into and to size the surface from.
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
@@ -179,9 +181,9 @@ internal fun startWebGpuGame(
         onResize = { _, _ ->
             wgpuContext?.let(::configureSurface)
         },
-        // A device that failed asynchronously stays failed: stop drawing instead of repeating
-        // the failure every frame.
-        isStopped = { runtimeFailure != null },
+        // A device that failed asynchronously stays failed, and a lost one is not recreated:
+        // stop drawing instead of repeating the failure every frame.
+        isStopped = { runtimeFailure != null || application.deviceLoss != null },
         cursor = cursor,
         cursorImage = cursorImage,
         maxPixelRatio = maxPixelRatio,
@@ -195,6 +197,12 @@ internal fun startWebGpuGame(
                         val message = "WebGPU uncaptured error: ${error.message}"
                         runtimeFailure = message
                         reportWebGpuRuntimeFailure(message)
+                    }
+                },
+                onDeviceLost = { reason, message ->
+                    val loss = WebGpuDeviceLost(WebGpuDeviceLostReason.of(reason), message)
+                    if (application.deviceLost(loss)) {
+                        reportWebGpuRuntimeFailure("WebGPU device lost ($reason): $message")
                     }
                 },
             )

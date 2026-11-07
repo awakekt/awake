@@ -19,6 +19,7 @@ import com.awakekt.awake.asset.shaders.narrowedTo
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
@@ -98,6 +99,38 @@ open class WebGpuEngine(
     internal var contentGpu: WebGpuContentFeatureGpu? = null
         private set
     private lateinit var lineRenderPipeline: LineRenderPipeline
+
+    /**
+     * Called once when the browser reports this engine's device lost, after the loss has gone to the
+     * app's `AppErrorHandler` and before the next animation frame, which the host no longer draws.
+     * Set it before `launchWebGpuGame` creates the device, in the factory that builds the engine.
+     *
+     * The engine does not recreate the device: every pipeline, buffer and texture it built belonged to
+     * the lost one. To draw again, reload the page, or dispose this engine and launch a new one. A
+     * device the engine destroys itself, on dispose, is not reported.
+     */
+    var onDeviceLost: ((WebGpuDeviceLost) -> Unit)? = null
+
+    /** Set as teardown starts, so the loss that destroying the device resolves is not reported. */
+    private var tearingDown = false
+
+    /**
+     * Reports [loss] once: to the app's `AppErrorHandler` as a [WebGpuDeviceLostException], then to
+     * [onDeviceLost]. The engine plays no frame afterwards, so the renderer submits nothing more.
+     *
+     * @return Whether [loss] was reported; false for a repeat, or for the loss teardown causes.
+     */
+    // TooGenericExceptionCaught: a host callback that throws must not take the browser's promise job down.
+    @Suppress("TooGenericExceptionCaught")
+    internal fun deviceLost(loss: WebGpuDeviceLost): Boolean {
+        if (tearingDown || !reportDeviceLost(WebGpuDeviceLostException(loss))) return false
+        try {
+            onDeviceLost?.invoke(loss)
+        } catch (failure: Exception) {
+            deviceLossLog.error(failure) { "The host's onDeviceLost callback failed: ${failure.message}" }
+        }
+        return true
+    }
 
     override suspend fun createBackendResources(window: Any): BackendResources {
         graphicsDevice = GraphicsDevice()
@@ -305,6 +338,7 @@ open class WebGpuEngine(
     }
 
     override fun destroyBackend() {
+        tearingDown = true
         renderer.destroy()
         swapchainManager.destroy()
         // Through the registry, not the table: the table can name one pipeline under several
@@ -323,6 +357,8 @@ open class WebGpuEngine(
         const val DEFAULT_FRAGMENT_SHADER_ENTRY_POINT = "fragmentMain"
     }
 }
+
+private val deviceLossLog = Logger("WebGpuEngine")
 
 internal fun ShaderStages.entryPoint(stage: ShaderProgramStage): String =
     this[stage]?.entryPoint
