@@ -16,7 +16,7 @@ import io.ygdrasil.webgpu.GPUQueue
  * wasm linear memory into a new `ArrayBuffer` for every array of every changed run, every frame.
  * `queue.writeBuffer` copies its source before it returns, so nothing needs a buffer of its own:
  * the web writes straight from linear memory, as `UniformUploads` does, and the JVM copies into
- * [hostBytes], grown when an array does not fit and kept.
+ * `hostBytes`, grown when an array does not fit and kept.
  */
 internal class MeshUploadStaging {
     /** Native bytes the JVM stages through; unused on the web, which writes from linear memory. */
