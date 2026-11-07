@@ -260,6 +260,15 @@ decoded: a sheet of 2048 by 1856 pixels takes 15 MB of memory and a decode, whic
 on a picture nothing draws. Such a project, if it is played by `runProject` after
 all, draws its canvas without those images.
 
+Animation keeps time on such a host and poses nothing. Every skinned clip, clip switch, crossfade and
+finished clip advances exactly as in a drawn game, so game code that reads `AnimationPlayer.isFinished`
+or `activeClipId` for its timing sees the same frame, but no bone is posed and a `SkinnedPose`'s joint
+palette is left as it was. Two kinds of model are posed all the same: the target of an enabled socket
+attachment, and one the game tags `PosedWithoutRenderer` because it reads a bone itself, such as a hit
+volume that follows a hand. A `keyframe_animation` still moves its node, which colliders and sockets
+follow, and only its alpha track is skipped. A host that registers its own systems gets the same with
+`AnimationSystem(updateRate, hasRenderer = false)` and `KeyframeAnimationSystem(hasRenderer = false)`.
+
 The runtime brings no display and no HTTP stack with it. `awake:project` and `awake:project:runtime`
 reach no GPU backend, no window module and no content transport module (`:awake:backend:*`,
 `:awake:engine:window`, `:awake:project:transport-*`): the host picks the backends a project draws and

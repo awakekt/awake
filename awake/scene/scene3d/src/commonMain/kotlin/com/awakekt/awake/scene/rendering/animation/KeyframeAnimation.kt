@@ -103,8 +103,18 @@ object KeyframeAnimationBinding : SceneComponentBinding<KeyframeAnimation, Scene
 /**
  * Advances each [KeyframeAnimation] and writes its tracks to the entity's [Transform] and
  * [PbrMaterial]. Runs before the transform system, which picks up the moved transform.
+ *
+ * With [hasRenderer] false, for a host that draws nothing, the position, rotation and scale tracks
+ * still write the [Transform] every frame, since a headless host reads it (a collider, a trigger, a
+ * socket or the network follows the moved node); only the [alpha][SceneKeyframeAnimation.alpha]
+ * track, which nothing but a renderer reads, is skipped.
+ *
+ * @param hasRenderer Whether anything draws the entities; false skips the alpha track.
  */
-class KeyframeAnimationSystem : System {
+class KeyframeAnimationSystem(private val hasRenderer: Boolean) : System {
+    /** A system for a host that draws, writing every track. */
+    constructor() : this(hasRenderer = true)
+
     override fun update(world: World, delta: Float) {
         world.queryEach(Transform::class, KeyframeAnimation::class) { entity, transform, animation ->
             val tracks = animation.tracks
@@ -114,7 +124,7 @@ class KeyframeAnimationSystem : System {
             tracks.position.sampleInto(time, transform.position)
             tracks.rotation.sampleInto(time, transform.rotation)
             tracks.scale.sampleInto(time, transform.scale)
-            if (tracks.alpha.isEmpty()) return@queryEach
+            if (!hasRenderer || tracks.alpha.isEmpty()) return@queryEach
             val material = world.get<PbrMaterial>(entity) ?: return@queryEach
             val alpha = tracks.alpha.sample(time)
             if (material.baseColorFactor.a != alpha) material.baseColorFactor = material.baseColorFactor.copy(a = alpha)

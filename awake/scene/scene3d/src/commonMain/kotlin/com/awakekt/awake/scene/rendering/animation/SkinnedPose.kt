@@ -13,6 +13,10 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 /**
  * Optional add-on for a [MeshRenderer] entity whose mesh uses a GPU-skinned vertex format.
  * [RenderSystem3D] reads [jointPalette] into that entity's `RenderDrawCommand.extraUniformFloats` every frame.
+ *
+ * On a host with no renderer, an [AnimationSystem] built with `hasRenderer = false` leaves [jointPalette]
+ * as it was, so [getJointPosition] and [getJointMatrix] read a stale pose there unless the model carries
+ * [PosedWithoutRenderer] or is a socket's target.
  */
 data class SkinnedPose(
     var jointPalette: FloatArray,
@@ -35,6 +39,12 @@ data class SkinnedPose(
      * between poses. 0 recomputes on the next update; unused when the rate poses every frame.
      */
     internal var nextPoseIn = 0f
+
+    /**
+     * Whether an enabled [SocketAttachmentComponent] follows this pose this frame, so an
+     * [AnimationSystem] with no renderer poses it anyway. Set and cleared by that system each frame.
+     */
+    internal var boneRead = false
 
     /**
      * Extracts the translation component of the joint at [jointIndex] from the palette.
