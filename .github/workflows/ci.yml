@@ -583,10 +583,26 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Setup Gradle (with cache)
+      # This job keeps its own Gradle User Home cache. The basic provider restores only an exact
+      # hash of every build file, so any PR touching a build.gradle.kts started from an empty
+      # home: 21 of 46 iOS jobs measured on #1362, a first Gradle start of ~4.6 min instead of
+      # ~45 s, and ~17 min jobs instead of ~10. The restore-keys prefix falls back to the newest
+      # entry instead; Gradle re-resolves whatever changed. Saved from pushes to main only, as
+      # ~/.konan is below.
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-disabled: true
+
+      - name: Restore Gradle User Home
+        id: gradle-home-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-home-ios-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/*.versions.toml') }}
+          restore-keys: gradle-home-ios-v1-${{ runner.os }}-${{ runner.arch }}-
 
       # Kotlin/Native keeps its compiler, LLVM and its compiled caches of the standard and
       # platform libraries under ~/.konan. A fresh runner downloads the first and rebuilds the
@@ -666,6 +682,25 @@ jobs:
         with:
           path: ~/.konan
           key: ${{ steps.konan-cache.outputs.cache-primary-key }}
+
+      # A daemon still running holds locks on, and can still write to, ~/.gradle/caches.
+      - name: Stop the Gradle daemon
+        if: >-
+          steps.gradle-home-cache.outputs.cache-hit != 'true' &&
+          github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: ./gradlew --stop
+
+      - name: Save Gradle User Home
+        if: >-
+          steps.gradle-home-cache.outputs.cache-hit != 'true' &&
+          github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ steps.gradle-home-cache.outputs.cache-primary-key }}
 
       - name: Upload iOS physics test reports
         if: always()
