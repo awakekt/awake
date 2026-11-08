@@ -1,3 +1,39 @@
+public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline {
+	public static final field CATCH_UP_RATE D
+	public static final field Companion Lcom/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline$Companion;
+	public static final field DEFAULT_INITIAL_INTERVAL_SECONDS D
+	public static final field DEFAULT_MAX_DELAY_SECONDS D
+	public static final field DEFAULT_MIN_DELAY_SECONDS D
+	public static final field GROW_RATE D
+	public static final field JITTER_WINDOW_SECONDS D
+	public static final field MAX_SLEW_RATE D
+	public static final field PAUSE_REBASE_SECONDS D
+	public static final field REBASE_SECONDS D
+	public static final field SHRINK_RATE D
+	public static final field SLEW_SECONDS D
+	public fun <init> ()V
+	public fun <init> (DDD)V
+	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advance (D)V
+	public final fun advance (F)V
+	public final fun getDelaySeconds ()D
+	public final fun getInitialIntervalSeconds ()D
+	public final fun getIntervalSeconds ()D
+	public final fun getJitterSeconds ()D
+	public final fun getMaxDelaySeconds ()D
+	public final fun getMinDelaySeconds ()D
+	public final fun getNewestServerSeconds ()D
+	public final fun getReady ()Z
+	public final fun hold (DD)V
+	public final fun observe (DD)V
+	public final fun playbackTime (D)D
+	public final fun reset ()V
+	public final fun serverTime (D)D
+}
+
+public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline$Companion {
+}
+
 public abstract interface class com/awakekt/awake/net/prediction/Correction {
 	public fun getCorrects ()Z
 }
