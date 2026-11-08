@@ -11,23 +11,6 @@ import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.ln
 
-/** How a [CanvasScaler] works out a canvas's scale. */
-@Serializable
-enum class CanvasScaleMode {
-    /** One unit is [CanvasScaler.pixelsPerUnit] of the screen's pixels, at any screen size: pixel art. */
-    ConstantPixelSize,
-
-    /**
-     * The canvas is laid out at [CanvasScaler.referenceWidth] by [CanvasScaler.referenceHeight] units
-     * and grows or shrinks with the screen, by its width, its height or a blend, as [CanvasScaler.match]
-     * says: a HUD that takes the same share of any screen.
-     */
-    ScaleWithScreenSize,
-
-    /** One unit is 1 / [CanvasScaler.referenceDpi] of an inch on the screen, at any pixel density. */
-    ConstantPhysicalSize,
-}
-
 /**
  * Rounds the scale a [CanvasScaler] works out to a step, so a canvas drawn from pixel art lands on a
  * whole number of screen pixels per art pixel.
@@ -91,12 +74,13 @@ enum class CanvasScaleScope {
  * @property referenceWidth With [CanvasScaleMode.ScaleWithScreenSize], the width the canvas is
  *   designed at, in units: a screen this many dp wide draws a unit as one dp, matching by width.
  * @property referenceHeight With [CanvasScaleMode.ScaleWithScreenSize], the height the canvas is
- *   designed at, in units.
+ *   designed at, in units; with [CanvasScaleMode.DensityStep], the fewest units the short side keeps.
  * @property match With [CanvasScaleMode.ScaleWithScreenSize], what the scale follows: 0 the screen's
  *   width, 1 its height, and between them a blend, taken on a log scale so that 0.5 is as much
  *   wider as it is shorter. A landscape HUD usually matches height, a portrait one width.
  * @property pixelsPerUnit With [CanvasScaleMode.ConstantPixelSize], how many of the screen's pixels
- *   one unit covers: 1 for pixel-exact art, 2 to draw it twice the size.
+ *   one unit covers: 1 for pixel-exact art, 2 to draw it twice the size. With
+ *   [CanvasScaleMode.DensityStep], the step the screen's pixels per unit move in.
  * @property referenceDpi With [CanvasScaleMode.ConstantPhysicalSize], the dots per inch the canvas is
  *   designed at: one unit is 1 / [referenceDpi] of an inch. 160, the default, makes a unit a dp on a
  *   screen whose host reports its density truly.
@@ -106,7 +90,8 @@ enum class CanvasScaleScope {
  *   player can always make the UI larger or smaller: a game's settings menu sets it.
  * @property snap Rounds the scale [mode] gives to a step, before the limits hold it and the player
  *   multiplies it; [CanvasScaleSnap.None], the default, draws at the scale as the rule gives it. See
- *   [CanvasScaleSnap] for what it keeps crisp and what it costs.
+ *   [CanvasScaleSnap] for what it keeps crisp and what it costs. [CanvasScaleMode.DensityStep] steps
+ *   on its own and ignores it.
  * @property scope Whether the scaler applies to the whole [CanvasScaleScope.Canvas], the default, or
  *   only to the [CanvasScaleScope.Subtree] of the node it sits on.
  */
@@ -175,8 +160,11 @@ data class CanvasScaler(
             CanvasScaleMode.ConstantPixelSize -> pixelsPerUnit / pixels
             CanvasScaleMode.ScaleWithScreenSize -> screenScale(width, height)
             CanvasScaleMode.ConstantPhysicalSize -> dpi / (referenceDpi * pixels)
+            CanvasScaleMode.DensityStep -> densityStepPixelsPerUnit(width, height, pixels, referenceHeight, pixelsPerUnit) / pixels
         }
-        var scale = snap.round(if (raw > 0f && raw.isFinite()) raw else 1f)
+        val valid = if (raw > 0f && raw.isFinite()) raw else 1f
+        // A density step is already a step, of device pixels rather than of the scale.
+        var scale = if (mode == CanvasScaleMode.DensityStep) valid else snap.round(valid)
         if (minScale > 0f) scale = scale.coerceAtLeast(minScale)
         if (maxScale > 0f) scale = scale.coerceAtMost(maxScale)
         val player = if (playerScale > 0f && playerScale.isFinite()) playerScale else 1f
