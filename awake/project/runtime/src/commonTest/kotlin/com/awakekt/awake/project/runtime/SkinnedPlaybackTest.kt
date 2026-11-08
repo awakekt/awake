@@ -28,6 +28,7 @@ import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.spawn
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -305,6 +306,97 @@ class SkinnedPlaybackTest {
         assertEquals(1, reads.of(HELD))
     }
 
+    /**
+     * When a character is assembled from separate glTF files under one parent and a small 1-clip
+     * accessory finishes streaming before the multi-clip body, the body's clips are merged into the
+     * shared [Animator] once it arrives instead of being dropped because [SkinnedPose] already exists.
+     */
+    @Test
+    fun aMultiPartSpawnMergesClipsWhenASmallPartLoadsBeforeTheBody() = runTest {
+        val bodyGate = CompletableDeferred<Unit>()
+        val files = mapOf(
+            "awake.project.json" to MANIFEST,
+            "scenes/main.scene.json" to SCENE,
+            MODEL to skinnedTriangleGltf(),
+            ACCESSORY_PART to skinnedTriangleGltf(clipNames = listOf("idle")),
+            BODY_PART to skinnedTriangleGltf(clipNames = listOf("idle", "march")),
+        )
+        val project = loadProject(
+            AssetSource { path ->
+                if (path.value == BODY_PART) bodyGate.await()
+                runCatching { files.getValue(path.value).encodeToByteArray() }
+            },
+        )
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        val spawned = runtime.spawn(project, SceneLoader.decode(MULTIPART_REMOTE).nodes.single())
+        val accessory = runtime.world.entityNamed("Accessory")
+        val body = runtime.world.entityNamed("Body")
+
+        game.updateUntil { runtime.world.get<MeshRenderer>(accessory) != null }
+        assertNull(runtime.world.get<MeshRenderer>(body), "the larger body file is still streaming")
+        val earlyAnimator = assertNotNull(runtime.world.get<Animator>(spawned.root))
+        assertEquals(setOf("idle"), earlyAnimator.player.clipEntries.keys)
+
+        bodyGate.complete(Unit)
+        game.updateUntil { runtime.world.get<MeshRenderer>(body) != null }
+
+        val animator = assertNotNull(runtime.world.get<Animator>(spawned.root))
+        assertEquals(setOf("idle", "march"), animator.player.clipEntries.keys, "the body's clips merge into the shared animator")
+        assertSame(
+            assertNotNull(runtime.world.get<SkinnedPose>(accessory)),
+            assertNotNull(runtime.world.get<SkinnedPose>(body)),
+            "both parts still share one SkinnedPose",
+        )
+        animator.player.play("march")
+        assertEquals("march", animator.player.activeClipId)
+    }
+
+    /**
+     * When a clip-less armour part finishes loading before the animated body part under the same
+     * parent, the parent still receives an [Animator] once the body arrives.
+     */
+    @Test
+    fun aMultiPartSpawnStartsAnimatingWhenAClipLessPartLoadsBeforeTheBody() = runTest {
+        val bodyGate = CompletableDeferred<Unit>()
+        val files = mapOf(
+            "awake.project.json" to MANIFEST,
+            "scenes/main.scene.json" to SCENE,
+            MODEL to skinnedTriangleGltf(),
+            ACCESSORY_PART to skinnedTriangleGltf(clips = false),
+            BODY_PART to skinnedTriangleGltf(clipNames = listOf("idle", "march")),
+        )
+        val project = loadProject(
+            AssetSource { path ->
+                if (path.value == BODY_PART) bodyGate.await()
+                runCatching { files.getValue(path.value).encodeToByteArray() }
+            },
+        )
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        val spawned = runtime.spawn(project, SceneLoader.decode(MULTIPART_REMOTE).nodes.single())
+        val accessory = runtime.world.entityNamed("Accessory")
+        val body = runtime.world.entityNamed("Body")
+
+        game.updateUntil { runtime.world.get<MeshRenderer>(accessory) != null }
+        assertNull(runtime.world.get<Animator>(spawned.root), "a clip-less part starts in rest pose with no animator")
+        val sharedPose = assertNotNull(runtime.world.get<SkinnedPose>(spawned.root))
+
+        bodyGate.complete(Unit)
+        game.updateUntil { runtime.world.get<MeshRenderer>(body) != null }
+
+        val animator = assertNotNull(runtime.world.get<Animator>(spawned.root), "the body's arrival attaches the animator")
+        assertEquals(setOf("idle", "march"), animator.player.clipEntries.keys)
+        assertSame(sharedPose, runtime.world.get<SkinnedPose>(accessory))
+        assertSame(sharedPose, runtime.world.get<SkinnedPose>(body))
+    }
+
     private object SpawnOnce : SceneCapability {
         override val id = "com.example.harbor-town.spawn-once"
 
@@ -394,7 +486,12 @@ class SkinnedPlaybackTest {
      * node at the scene root 3 m along x. Without [clips], the file has no animation: a part posed by
      * another skeleton, as a piece of armour is.
      */
-    private fun skinnedTriangleGltf(parts: Int = 1, crate: Boolean = false, clips: Boolean = true): String {
+    private fun skinnedTriangleGltf(
+        parts: Int = 1,
+        crate: Boolean = false,
+        clips: Boolean = true,
+        clipNames: List<String>? = null,
+    ): String {
         val positions = floats(0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f)
         val joints = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)
         val weights = floats(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f)
@@ -407,6 +504,16 @@ class SkinnedPlaybackTest {
         val buffer = chunks.reduce(ByteArray::plus)
         val offsets = chunks.runningFold(0) { offset, chunk -> offset + chunk.size }
         fun view(index: Int) = """{"buffer":0,"byteOffset":${offsets[index]},"byteLength":${chunks[index].size}}"""
+        val animations = when {
+            clipNames != null ->
+                """"animations": [${
+                    clipNames.joinToString(",") { name ->
+                        """{"name": "$name", "channels": [{"sampler": 0, "target": {"node": 1, "path": "rotation"}}], "samplers": [{"input": 5, "output": 6, "interpolation": "LINEAR"}]}"""
+                    }
+                }],"""
+            clips -> ANIMATIONS
+            else -> ""
+        }
         return """
         {
           "asset": {"version": "2.0"},
@@ -432,7 +539,7 @@ class SkinnedPlaybackTest {
             ${if (crate) """,{"name": "Crate", "mesh": 1, "translation": [3, 0, 0]}""" else ""}
           ],
           "skins": [{"inverseBindMatrices": 4, "joints": [0, 1]}],
-          ${if (clips) ANIMATIONS else ""}
+          $animations
           "scenes": [{"nodes": [0, ${(2 until 2 + parts + if (crate) 1 else 0).joinToString(",")}]}],
           "scene": 0
         }
@@ -462,6 +569,8 @@ class SkinnedPlaybackTest {
 
         /** A model the scene never places, as an item picked up at runtime is. */
         const val HELD = "models/lantern.gltf"
+        const val ACCESSORY_PART = "models/accessory.gltf"
+        const val BODY_PART = "models/character-body.gltf"
         const val MISSING = "models/missing.gltf"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
         const val SCENE = """
@@ -488,6 +597,14 @@ class SkinnedPlaybackTest {
   { "name": "Arm", "children": [
     { "name": "Upper", "components": [ { "component": "meshRenderer", "mesh": "gltf-primitive:$MODEL#0", "material": "skinned-material" } ] },
     { "name": "Lower", "components": [ { "component": "meshRenderer", "mesh": "gltf-primitive:$MODEL#1", "material": "skinned-material" } ] }
+  ] }
+] }
+"""
+        const val MULTIPART_REMOTE = """
+{ "version": 1, "nodes": [
+  { "name": "Character", "children": [
+    { "name": "Accessory", "components": [ { "component": "meshRenderer", "mesh": "gltf-primitive:$ACCESSORY_PART#0", "material": "skinned-material" } ] },
+    { "name": "Body", "components": [ { "component": "meshRenderer", "mesh": "gltf-primitive:$BODY_PART#0", "material": "skinned-material" } ] }
   ] }
 ] }
 """
