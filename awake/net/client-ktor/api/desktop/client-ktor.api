@@ -1,0 +1,12 @@
+public final class com/awakekt/awake/net/ktor/KtorWebSocketTransportKt {
+	public static final field DEFAULT_INBOUND_PACKETS I
+	public static final field DEFAULT_PING_INTERVAL_MILLIS J
+	public static final field OUTGOING_FRAMES I
+	public static final fun boundOutgoingFrames (Lio/ktor/client/plugins/websocket/WebSockets$Config;I)V
+	public static synthetic fun boundOutgoingFrames$default (Lio/ktor/client/plugins/websocket/WebSockets$Config;IILjava/lang/Object;)V
+	public static final fun connectWebSocket (Ljava/lang/String;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun connectWebSocket (Ljava/lang/String;Lio/ktor/client/HttpClient;ZILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun connectWebSocket$default (Ljava/lang/String;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun connectWebSocket$default (Ljava/lang/String;Lio/ktor/client/HttpClient;ZILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
