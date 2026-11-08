@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.gltf.toAnimationLibrary
 import com.awakekt.awake.core.animation.AnimationPlayer
 import com.awakekt.awake.core.animation.AnimationPose
 import com.awakekt.awake.core.animation.Skin
+import com.awakekt.awake.core.animation.retarget
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
@@ -41,9 +42,34 @@ internal fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetRe
         val scene = models.getLoadedScene(path)
         val skin = scene?.firstSkinnedAsset()?.skin ?: continue
         val owner = if (mesh == path) entity else world.get<Transform>(entity)?.parent ?: entity
-        val pose = world.get<SkinnedPose>(owner) ?: world.startPose(owner, scene, skin)
+        val pose = world.ensurePose(owner, scene, skin)
         if (owner != entity) world.add(entity, pose)
     }
+}
+
+/**
+ * Ensures [owner] has a [SkinnedPose], starting one when absent and merging any clips from [scene]
+ * that a later-resolving sibling part brings after an accessory or clip-less armour part arrived first.
+ */
+private fun World.ensurePose(owner: Entity, scene: LoadedSkinnedScene, skin: Skin): SkinnedPose {
+    val existing = get<SkinnedPose>(owner) ?: return startPose(owner, scene, skin)
+    if (scene.clips.isNotEmpty()) {
+        val library = scene.toAnimationLibrary()
+        val animator = get<Animator>(owner)
+        if (animator == null) {
+            val player = AnimationPlayer(library)
+            library.clips.keys.firstOrNull()?.let { player.play(it) }
+            add(owner, Animator(player, skin))
+            existing.jointPalette = player.update(0f).jointPalette(skin)
+        } else {
+            val player = animator.player
+            val missing = library.clips
+                .filterKeys { it !in player.clipEntries }
+                .mapValues { (_, clip) -> clip.retarget(library.skeleton, player.skeleton) }
+            if (missing.isNotEmpty()) player.addClips(missing)
+        }
+    }
+    return existing
 }
 
 /** Gives [owner] [scene]'s first clip on a loop, or, when the model has no clips, its rest pose and no animator. */
