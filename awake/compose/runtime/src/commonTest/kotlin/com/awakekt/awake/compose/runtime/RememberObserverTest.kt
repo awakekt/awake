@@ -139,6 +139,33 @@ class RememberObserverTest {
     }
 
     @Test
+    fun aReusedNodeDeclaredWithoutContentForgetsItsDescendantsThenItsOwnSlots() {
+        var withContent = true
+        val content: context(Composer)
+        () -> Unit = {
+            if (withContent) {
+                node(
+                    ObservedBox,
+                    content = {
+                        remember<Tracked> { Tracked("box") }
+                        node(ObservedLeaf, content = { remember<Tracked> { Tracked("leaf") } })
+                        node(ObservedPopup, Slot.Layers, content = { remember<Tracked> { Tracked("popup") } })
+                    },
+                )
+            } else {
+                node(ObservedBox)
+            }
+        }
+
+        pass(content)
+        withContent = false
+        pass(content)
+
+        assertEquals(listOf("leaf", "popup", "box"), forgotten)
+        assertTrue(root.children.single().rememberSlots.isEmpty())
+    }
+
+    @Test
     fun disposingACompositionForgetsEverything() {
         val composition = Composition(FakeApplier(root), root)
         composition.reconcile {

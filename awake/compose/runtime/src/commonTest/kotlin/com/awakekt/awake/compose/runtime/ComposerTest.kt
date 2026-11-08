@@ -79,6 +79,30 @@ class ComposerTest {
     }
 
     @Test
+    fun aReusedNodeDeclaredWithoutContentDropsItsPreviousChildrenAndLayers() {
+        val root = FakeNode("root", null)
+        compose(root) {
+            node("box") {
+                node("child")
+                node("overlay", slot = Slot.Layers)
+            }
+        }
+        val box = root.children.single()
+        assertEquals(1, box.children.size)
+        assertEquals(1, box.layers.size)
+
+        compose(root) {
+            node("box")
+            node("box") { node("fresh") }
+        }
+
+        assertSame(box, root.children[0])
+        assertEquals(0, box.children.size, "a childless declaration at a reused slot must clear stale children")
+        assertEquals(0, box.layers.size, "a childless declaration at a reused slot must clear stale layers")
+        assertEquals(listOf("fresh"), root.children[1].children.map { it.type })
+    }
+
+    @Test
     fun keysSurviveAReorder() {
         val root = FakeNode("root", null)
         compose(root) { for (id in listOf("a", "b", "c")) key(id) { node("item") } }

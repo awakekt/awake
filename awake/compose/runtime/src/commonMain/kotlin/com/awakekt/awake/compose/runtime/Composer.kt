@@ -86,6 +86,15 @@ class Composer internal constructor(
             closeSlots()
             popDepth()
             applier.up()
+        } else if (existing >= 0) {
+            applier.down(slot, index)
+            try {
+                dropFrom(Slot.Children, 0)
+                dropFrom(Slot.Layers, 0)
+            } finally {
+                applier.up()
+            }
+            slotsOf(instance)?.trimTo(0)
         }
         advance(slot)
     }
