@@ -142,6 +142,27 @@ public final class com/awakekt/awake/compose/foundation/animation/TrailingValueK
 	public static synthetic fun animateTrailing$default (Lcom/awakekt/awake/compose/runtime/Composer;FFFILjava/lang/Object;)F
 }
 
+public final class com/awakekt/awake/compose/foundation/gestures/DoubleClickKt {
+	public static final fun doubleClickable (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;FILkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun doubleClickable$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;FILkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
+public final class com/awakekt/awake/compose/foundation/gestures/DoubleClickTracker {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/gestures/DoubleClickTracker$Companion;
+	public static final field DEFAULT_MAX_INTERVAL_SECONDS F
+	public static final field DEFAULT_SLOP_PX I
+	public fun <init> ()V
+	public fun <init> (FI)V
+	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getMaxIntervalSeconds ()F
+	public final fun getSlopPx ()I
+	public final fun onClick (FII)Z
+	public final fun reset ()V
+}
+
+public final class com/awakekt/awake/compose/foundation/gestures/DoubleClickTracker$Companion {
+}
+
 public final class com/awakekt/awake/compose/foundation/gestures/DraggableKt {
 	public static final fun dragAfterThreshold (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun dragAfterThreshold$default (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;

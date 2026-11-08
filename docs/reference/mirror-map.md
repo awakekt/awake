@@ -65,7 +65,7 @@ Full inventory: [`17-modifier-parity.md`](compose-engine/17-modifier-parity.md).
 | `zIndex` | `Modifier.zIndex(Float)` | Faithful | Same-parent paint order and hit-test priority |
 | `verticalScroll(state)`, `horizontalScroll(state)` | Same names, `ScrollState`; `enabled` flag | Faithful (subset) | Content measures on an unbounded main axis and the node clips. No `reverseScrolling` or `flingBehavior`. One `ScrollElement` per call, parameterised by `Orientation` |
 | `clickable(interactionSource, onClick)` | Same | Faithful | Consumes on the `Main` pass, so an ancestor scroller gets first refusal |
-| `combinedClickable` | `combinedClickable(onClick, onLongClick)` | Faithful (subset) | No double-click parameter |
+| `combinedClickable` | `combinedClickable(onClick, onLongClick)` | Faithful (subset) | No double-click parameter: a double click is `gestures.doubleClickable(onClick) { }`, which fires the first click at once rather than delaying it, and `DoubleClickTracker` is the same rule for a surface that makes its own clicks |
 | `testTag`, `semantics`, `clearAndSetSemantics` | Same | Faithful | `testTag` is a `SemanticsProperties.TestTag` entry. See [`13-semantics.md`](compose-engine/13-semantics.md) |
 | `Modifier.styleable` | `:awake:compose:foundation` `style` package | Faithful | Resolved when the chain is assembled, not by a node that layout must understand. See [`04-styling-theme.md`](compose-engine/04-styling-theme.md) |
 | `Brush.horizontalGradient` / `verticalGradient` | Same factories | Diverges (subset) | Evenly spaced, full-bounds colours only: no custom stops, tile modes or gradient shadows. `linearGradient(topLeft, ...)` and `horizontal`/`vertical` two-colour factories cover the corner case |
