@@ -1,0 +1,1 @@
+- Add `CrashRecorder`, `CrashStorage`, `InMemoryCrashStorage`, `CrashSession`, `CrashSessionMeta`, `CrashBreadcrumb`, and `RecordedError` in `awake:core:diagnostics` for fault-tolerant black-box crash detection across abrupt client exits.
