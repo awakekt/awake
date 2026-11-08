@@ -5,9 +5,10 @@
 ## Modules
 
 ```text
-net:api          Transport, DirectTransport, DeliveryChannel, TransportKeepAlive, StallWatch,
-                 TransportStallWatch, PolledStallWatch, TransportStallDetector, SplitPacketInbox,
-                 InboundQueue, ReadEnd, InputBudget, TickLag, PingLimit, PingStats, PingMeter,
+net:api          Transport, DirectTransport, AbortableTransport, DirectOutbox, DeliveryChannel,
+                 TransportKeepAlive, StallWatch, TransportStallWatch, PolledStallWatch,
+                 TransportStallDetector, SplitPacketInbox, InboundQueue, ReadEnd, InputBudget,
+                 TickLag, PingLimit, PingStats, PingMeter,
                  SessionId, NetId, PacketWriter, PacketReader, PacketFormat, PacketOpcodeRegistry,
                  MessageRouter, ClientNetFeature, ClientNetFeatures, NetViolation, ViolationSink,
                  ViolationWindow
@@ -16,12 +17,21 @@ net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing, ping kee
 net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
                  WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page,
                  with shared Web Lock & unthrottled worker timer scheduling
+net:client-ktor  connectWebSocket, WebSockets.Config.boundOutgoingFrames: bounded-outbox
+                 AbortableTransport over a Ktor HttpClient (close-safe pre-kick delivery &
+                 non-throwing post-close send drop)
 net:prediction   PredictionHistory, reconcile -> Correction (None, Blend, Shift, Snap, Wait),
                  ReconcileRules, PredictedEntity, SnapshotTimeline: client-side prediction,
                  reconciliation, and pause-safe snapshot playback timing
 ```
 
-`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor`, `:awake:net:client-browser` and `:awake:net:prediction`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor`, `:awake:net:client-ktor`, `:awake:net:client-browser` and `:awake:net:prediction`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+
+## Ktor client (`:awake:net:client-ktor`) & `DirectOutbox` (`:awake:net:api`)
+
+`connectWebSocket(url)` (or `connectWebSocket(url, client, closeClient)`) in `:awake:net:client-ktor` opens a binary WebSocket `AbortableTransport` over Ktor without forcing a Ktor dependency onto `:awake:net:api`. `WebSockets.Config.boundOutgoingFrames()` bounds Ktor's outgoing frame queue (`OUTGOING_FRAMES = 1` by default) so socket congestion surfaces directly to callers instead of piling up silently; inbound frames are drained on the `HttpClient` scope so pre-close server frames (such as kick reasons) always reach `incoming()` before close, and post-close sends drop cleanly without throwing.
+
+For `DirectTransport` sockets (such as `:awake:net:client-browser`), `DirectOutbox<M>` in `:awake:net:api` passes discrete packets (`sendNow`) straight through in FIFO order while folding replaceable state updates (`submit`) into a single waiting slot (`merge`, `folded`, `waiting`) whenever `bufferedBytes > limit` (`512 B` default), retrying every `retryMillis` (`8 ms` default).
 
 ## Browser client (`:awake:net:client-browser`)
 
