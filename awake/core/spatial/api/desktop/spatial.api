@@ -1,3 +1,34 @@
+public final class com/awakekt/awake/core/spatial/PointGrid2D {
+	public static final field DEFAULT_CAPACITY I
+	public static final field FIBONACCI J
+	public static final field MIN_TABLE I
+	public fun <init> (FI)V
+	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (IFF)V
+	public final fun anyNear (FFFLkotlin/jvm/functions/Function1;)Z
+	public final fun cellOf (F)I
+	public final fun clear ()V
+	public final fun forEachNear (FFFLkotlin/jvm/functions/Function1;)V
+	public final fun getCellSize ()F
+	public final fun getEntryIds ()[I
+	public final fun getEntryNext ()[I
+	public final fun getEntryX ()[F
+	public final fun getEntryZ ()[F
+	public final fun getInverseCellSize ()F
+	public final fun getSize ()I
+	public final fun headOf (J)I
+	public final fun setEntryIds ([I)V
+	public final fun setEntryNext ([I)V
+	public final fun setEntryX ([F)V
+	public final fun setEntryZ ([F)V
+	public final fun within (IFFF)Z
+}
+
+public final class com/awakekt/awake/core/spatial/PointGrid2DKt {
+	public static final fun anyNearScan (Lcom/awakekt/awake/core/spatial/PointGrid2D;FFFLkotlin/jvm/functions/Function1;)Z
+	public static final fun cellKey (II)J
+}
+
 public final class com/awakekt/awake/core/spatial/SpatialGrid {
 	public static final field INITIAL_COLUMN_CAPACITY I
 	public static final field INITIAL_STAMP_CAPACITY I

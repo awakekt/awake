@@ -1,6 +1,6 @@
 # Awake Core Spatial
 
-Uniform 2D-column spatial index for 3D worlds in [Awake](../../../README.md) — depends only on
+Uniform 2D-column spatial indexes for 3D worlds in [Awake](../../../README.md) — depends only on
 `awake:core:math`, with no ECS, scene, or renderer dependency. Compiles for every target the
 engine ships (desktop, Android, iOS, and wasmJs).
 
@@ -41,6 +41,29 @@ allocate nothing:
 - `queryVolume(volume, out)` — ids admitted by any `BoundedVolume` (for instance,
   `ShadowCasterVolume` in `awake:engine:render:passes`), clipping an unbounded volume against the
   extent of indexed content before walking columns.
+
+## `PointGrid2D`
+
+`PointGrid2D` indexes integer ids at points on a plane (usually world X and Z) for the
+gameplay-tick pattern: `clear()`, `add(id, x, z)` every unit, then many radius questions.
+`forEachNear(x, z, radius) { id -> }` visits every point within `radius`, boundary included;
+`anyNear(x, z, radius) { id -> Boolean }` stops at the first match.
+
+```kotlin
+import com.awakekt.awake.core.spatial.PointGrid2D
+
+val grid = PointGrid2D(cellSize = 8f)
+grid.clear()
+for (unit in units) grid.add(unit.id, unit.x, unit.z)
+grid.forEachNear(x = 0f, z = 0f, radius = 8f) { id -> separate(id) }
+val crowded = grid.anyNear(x = 0f, z = 0f, radius = 1f) { id -> id != self }
+```
+
+Cells live in an open-addressed `LongArray` table with Fibonacci hashing, entries in flat
+primitive arrays, `clear()` is a generation bump and both queries are `inline`, so a warm grid
+allocates nothing per tick. Size the cell near the typical query radius. Use `SpatialGrid` for
+things with extent, or for an index kept across ticks with moves and removals;
+`PointGridBenchmarks` in `awake:scene:scene3d:benchmark` measures the two on the same tick.
 
 For ECS scene integration, see `SpatialIndex` and `SpatialIndexSystem` in
 [`awake:scene:scene3d`](../../scene/scene3d/README.md).

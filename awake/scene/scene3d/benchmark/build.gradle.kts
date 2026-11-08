@@ -20,7 +20,8 @@ dependencies {
     implementation(project(":awake:core:math"))
     // Skeletons, clips and players for HeadlessAnimationBenchmarks.
     implementation(project(":awake:core:animation"))
-    // SpatialGrid, the thing SpatialCullingBenchmarks measures against a per-entity scan.
+    // SpatialGrid, the thing SpatialCullingBenchmarks measures against a per-entity scan, and
+    // PointGrid2D, which PointGridBenchmarks measures against it.
     implementation(project(":awake:core:spatial"))
     implementation(project(":awake:scene:scene3d"))
     implementation(libs.kotlinx.benchmark.runtime)

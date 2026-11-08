@@ -31,6 +31,6 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake Core Spatial")
-        description.set("Uniform column spatial grid for AABB, sphere, frustum, and bounded-volume queries")
+        description.set("Uniform column spatial grid for AABB, sphere, frustum, and bounded-volume queries, and an allocation-free point grid")
     }
 }
