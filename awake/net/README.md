@@ -11,7 +11,8 @@ net:api          Transport, DirectTransport, DeliveryChannel, TransportKeepAlive
                  MessageRouter, ClientNetFeature, ClientNetFeatures, NetViolation, ViolationSink,
                  ViolationWindow
 net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing, ping keepalive & backpressure),
-                 GameServerHost (fixed-rate tick loop, MessageRouter, GameFeature, SaveScheduler)
+                 GameServerHost (fixed-rate catch-up TickSchedule, TickClock/ManualTickClock, TickHealth,
+                 MessageRouter, GameFeature, SaveScheduler)
 net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
                  WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page,
                  with shared Web Lock & unthrottled worker timer scheduling

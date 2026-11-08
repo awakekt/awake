@@ -1,0 +1,1 @@
+- Add `TickSchedule`, `TickClock` (`Machine` and `ManualTickClock`), and `TickHealth` in `awake:net:server-ktor` and wire bounded catch-up scheduling and consecutive-failure health diagnostics into `ServerHost`.
