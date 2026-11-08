@@ -1,3 +1,7 @@
+public abstract interface class com/awakekt/awake/net/AbortableTransport : com/awakekt/awake/net/Transport {
+	public abstract fun abort ()V
+}
+
 public abstract interface class com/awakekt/awake/net/ClientNetFeature {
 	public fun flushOutbound (Ljava/lang/Object;)V
 	public abstract fun getId ()Ljava/lang/String;
@@ -114,6 +118,25 @@ public final class com/awakekt/awake/net/DeliveryChannel : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/DeliveryChannel;
 	public static fun values ()[Lcom/awakekt/awake/net/DeliveryChannel;
+}
+
+public final class com/awakekt/awake/net/DirectOutbox {
+	public static final field BUFFERED_LIMIT J
+	public static final field Companion Lcom/awakekt/awake/net/DirectOutbox$Companion;
+	public static final field RETRY_MILLIS I
+	public fun <init> (Lcom/awakekt/awake/net/DirectTransport;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;JI)V
+	public synthetic fun <init> (Lcom/awakekt/awake/net/DirectTransport;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;JIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun flush ()V
+	public final fun getFolded ()J
+	public final fun getLimit ()J
+	public final fun getRetryMillis ()I
+	public final fun getWaiting ()I
+	public final fun sendNow ([B)V
+	public final fun submit (Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/net/DirectOutbox$Companion {
 }
 
 public abstract interface class com/awakekt/awake/net/DirectTransport : com/awakekt/awake/net/Transport {
@@ -454,6 +477,53 @@ public final class com/awakekt/awake/net/PingLimit {
 }
 
 public final class com/awakekt/awake/net/PingLimit$Companion {
+}
+
+public final class com/awakekt/awake/net/PingMeter {
+	public static final field Companion Lcom/awakekt/awake/net/PingMeter$Companion;
+	public static final field DEFAULT_KEPT I
+	public static final field DEFAULT_SMOOTHING D
+	public static final field DEFAULT_STALE_SECONDS D
+	public fun <init> ()V
+	public fun <init> (DID)V
+	public synthetic fun <init> (DIDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getKept ()I
+	public final fun getLastMs ()D
+	public final fun getSamples ()I
+	public final fun getSmoothedMs ()D
+	public final fun getSmoothing ()D
+	public final fun getStaleSeconds ()D
+	public final fun readingMs (D)D
+	public final fun receive (JD)Z
+	public final fun reset ()V
+	public final fun send (D)J
+}
+
+public final class com/awakekt/awake/net/PingMeter$Companion {
+}
+
+public final class com/awakekt/awake/net/PingStats {
+	public static final field Companion Lcom/awakekt/awake/net/PingStats$Companion;
+	public static final field DEFAULT_COARSE_MILLIS I
+	public static final field DEFAULT_FINE_LIMIT_MILLIS I
+	public static final field DEFAULT_FINE_MILLIS I
+	public static final field DEFAULT_MAX_MILLIS I
+	public fun <init> ()V
+	public fun <init> (IIII)V
+	public synthetic fun <init> (IIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (I)Z
+	public final fun getCoarseMillis ()I
+	public final fun getCount ()I
+	public final fun getFineLimitMillis ()I
+	public final fun getFineMillis ()I
+	public final fun getLastMs ()I
+	public final fun getMaxMillis ()I
+	public final fun jitterMs ()I
+	public final fun percentile (D)I
+	public final fun reset ()V
+}
+
+public final class com/awakekt/awake/net/PingStats$Companion {
 }
 
 public final class com/awakekt/awake/net/PolledStallWatch : com/awakekt/awake/net/StallWatch {
