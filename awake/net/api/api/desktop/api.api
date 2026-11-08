@@ -456,6 +456,53 @@ public final class com/awakekt/awake/net/PingLimit {
 public final class com/awakekt/awake/net/PingLimit$Companion {
 }
 
+public final class com/awakekt/awake/net/PingMeter {
+	public static final field Companion Lcom/awakekt/awake/net/PingMeter$Companion;
+	public static final field DEFAULT_KEPT I
+	public static final field DEFAULT_SMOOTHING D
+	public static final field DEFAULT_STALE_SECONDS D
+	public fun <init> ()V
+	public fun <init> (DID)V
+	public synthetic fun <init> (DIDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getKept ()I
+	public final fun getLastMs ()D
+	public final fun getSamples ()I
+	public final fun getSmoothedMs ()D
+	public final fun getSmoothing ()D
+	public final fun getStaleSeconds ()D
+	public final fun readingMs (D)D
+	public final fun receive (JD)Z
+	public final fun reset ()V
+	public final fun send (D)J
+}
+
+public final class com/awakekt/awake/net/PingMeter$Companion {
+}
+
+public final class com/awakekt/awake/net/PingStats {
+	public static final field Companion Lcom/awakekt/awake/net/PingStats$Companion;
+	public static final field DEFAULT_COARSE_MILLIS I
+	public static final field DEFAULT_FINE_LIMIT_MILLIS I
+	public static final field DEFAULT_FINE_MILLIS I
+	public static final field DEFAULT_MAX_MILLIS I
+	public fun <init> ()V
+	public fun <init> (IIII)V
+	public synthetic fun <init> (IIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (I)Z
+	public final fun getCoarseMillis ()I
+	public final fun getCount ()I
+	public final fun getFineLimitMillis ()I
+	public final fun getFineMillis ()I
+	public final fun getLastMs ()I
+	public final fun getMaxMillis ()I
+	public final fun jitterMs ()I
+	public final fun percentile (D)I
+	public final fun reset ()V
+}
+
+public final class com/awakekt/awake/net/PingStats$Companion {
+}
+
 public final class com/awakekt/awake/net/PolledStallWatch : com/awakekt/awake/net/StallWatch {
 	public fun <init> (Lkotlinx/coroutines/CoroutineScope;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineScope;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

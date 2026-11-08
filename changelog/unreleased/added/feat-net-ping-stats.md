@@ -1,0 +1,1 @@
+- Added `PingStats` (thread-safe fine/coarse RTT histogram and RFC 3550 jitter estimator) and `PingMeter` (zero-allocation client ping/pong nonce ring with stall-aware latency reading) to `awake:net:api`.

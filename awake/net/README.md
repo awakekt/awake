@@ -7,7 +7,7 @@
 ```text
 net:api          Transport, DirectTransport, DeliveryChannel, TransportKeepAlive, StallWatch,
                  TransportStallWatch, PolledStallWatch, TransportStallDetector, SplitPacketInbox,
-                 InboundQueue, ReadEnd, InputBudget, TickLag, PingLimit,
+                 InboundQueue, ReadEnd, InputBudget, TickLag, PingLimit, PingStats, PingMeter,
                  SessionId, NetId, PacketWriter, PacketReader, PacketFormat, PacketOpcodeRegistry,
                  MessageRouter, ClientNetFeature, ClientNetFeatures, NetViolation, ViolationSink,
                  ViolationWindow
@@ -56,6 +56,7 @@ Idle sessions and multi-minute background-tab or window-focus pauses require coo
 - **Pause-aware snapshot timeline (`:awake:net:prediction`)**: `SnapshotTimeline` smooths `clientTime - serverTime` clock offsets (`gain`) behind `bufferSeconds` during normal play, and immediately rebases both `offset` and `playbackTime` once drift exceeds `maxBehindSeconds` so clamped frame deltas on resume do not leave remote entity interpolation minutes behind server time.
 - **Decaying violation counters & server WebSocket pings (`:awake:net:api`, `:awake:net:server-ktor`)**: `ViolationWindow` (`decayTicks`, `record`, `countAt`) decays isolated post-pause burst counts over clean simulation ticks while sustained floods still cross enforcement thresholds. On the server, `GameTransportConfig` configures WebSocket `pingPeriod` and `timeout` (`Duration.ZERO` or `Duration.INFINITE` to disable), coexists with pre-installed Ktor `WebSockets`, and closes unresponsive peers cleanly with `SessionCloseReason.PeerClosed`.
 - **Inbound packet/byte bounds & server-time input/ping budgets (`:awake:net:api`)**: `InboundQueue` enforces dual packet-count and byte-count caps between a connection's async reader (`ReceiveChannel.readEach` / `TransportSession.readEach` -> `ReadEnd`) and its consumer, permanently latching `overflowed` on flood or `DROP_OLDEST` inbox loss (`ReadEnd.InboxFull`). `InputBudget` and `TickLag` rate-limit client inputs and per-tick discrete requests in monotonic server time (`perSecond`, `burst`, `stallSeconds` sequence-verified gap credit, and `longestNanos` stall scaling) so neither network bunching nor late server ticks kick steady clients. `PingLimit` caps sustained ping replies (`perSecond`, `burst`) while answering post-stall bursts in full.
+- **Session RTT histograms & client ping metering (`:awake:net:api`)**: `PingStats` accumulates per-session RTT samples into zero-allocation fine/coarse buckets (`5 ms` below `1 s`, `250 ms` up to `10 s` by default) for instant `percentile(fraction)` queries and RFC 3550 `1/16` EWMA `jitterMs()` reporting across threads. `PingMeter` pairs outbound client ping nonces (`send(nowSeconds)`) with inbound pongs (`receive(nonce, nowSeconds)`) in a fixed ring, smoothing RTT (`smoothedMs`) while escalating `readingMs(nowSeconds)` immediately when any remembered ping waits past `staleSeconds`.
 
 ---
 
