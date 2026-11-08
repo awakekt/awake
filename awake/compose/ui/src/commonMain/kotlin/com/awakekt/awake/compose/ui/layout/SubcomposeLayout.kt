@@ -164,6 +164,7 @@ fun SubcomposeLayout(
         type = SubcomposeLayoutNodeType,
         update = { node ->
             node as LayoutNode
+            node.subcomposedChildren = true
             node.density = density
             node.fontScale = fontScale
             node.layoutDirection = layoutDirection

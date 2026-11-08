@@ -27,7 +27,8 @@ class LayoutNodeApplier(root: LayoutNode) : Applier {
     private fun slotOf(slot: Slot): NodeChildren =
         if (slot == Slot.Children) current.children else current.layers
 
-    override fun childCount(slot: Slot): Int = slotOf(slot).size
+    override fun childCount(slot: Slot): Int =
+        if (slot == Slot.Children && current.subcomposedChildren) 0 else slotOf(slot).size
 
     override fun typeAt(slot: Slot, index: Int): Any? = slotOf(slot)[index].nodeType
 
@@ -50,6 +51,7 @@ class LayoutNodeApplier(root: LayoutNode) : Applier {
     }
 
     override fun truncateFrom(slot: Slot, index: Int) {
+        if (slot == Slot.Children && current.subcomposedChildren) return
         slotOf(slot).truncateFrom(index)
     }
 

@@ -53,6 +53,14 @@ class LayoutNode(
     /** Children this node's [measurePolicy] lays out. */
     val children: NodeChildren = NodeChildren(this)
 
+    /**
+     * True when [children] is projected from a [com.awakekt.awake.compose.ui.layout.SubcomposeLayoutState]
+     * during measurement rather than reconciled by the enclosing [LayoutNodeApplier]: the
+     * subcompositions own those children's lifecycle and `remember` slots, so the outer applier
+     * neither counts nor disposes them.
+     */
+    internal var subcomposedChildren: Boolean = false
+
     /** Backing storage for `remember` slots declared in this node's content. */
     private val _rememberSlots: MutableList<Any?> = ArrayList()
 
@@ -516,7 +524,7 @@ class LayoutNode(
     )
 
     internal fun dispose() {
-        children.clear()
+        if (subcomposedChildren) children.clearWithoutDispose() else children.clear()
         layers.clear()
         for (entry in retainedModifierNodes) entry?.node?.detach()
         retainedModifierNodes.clear()
