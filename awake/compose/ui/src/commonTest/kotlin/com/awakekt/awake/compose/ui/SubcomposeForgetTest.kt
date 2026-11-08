@@ -38,7 +38,9 @@ class SubcomposeForgetTest {
             val placeables = slots.flatMap { id ->
                 subcompose(id) {
                     remember<Tracked> { Tracked(id) }
-                    Layout(ForgetChildType, measurePolicy = MeasurePolicy { _, _ -> layout(10, 10) {} })
+                    Layout(ForgetChildType, measurePolicy = MeasurePolicy { _, _ -> layout(10, 10) {} }) {
+                        remember<Tracked> { Tracked("$id-child") }
+                    }
                 }.map { it.measure(constraints) }
             }
             layout(100, 100) { placeables.forEach { it.placeAt(0, 0) } }
@@ -59,7 +61,7 @@ class SubcomposeForgetTest {
         slots = listOf("b")
         host.frame(frame, content)
 
-        assertEquals(listOf("a"), forgotten)
+        assertEquals(listOf("a-child", "a"), forgotten)
     }
 
     @Test
@@ -73,6 +75,6 @@ class SubcomposeForgetTest {
         show = false
         host.frame(frame, content)
 
-        assertEquals(listOf("a", "b"), forgotten.sorted())
+        assertEquals(listOf("a", "a-child", "b", "b-child"), forgotten.sorted())
     }
 }

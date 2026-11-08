@@ -6,8 +6,10 @@
 package com.awakekt.awake.compose.foundation
 
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
+import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
@@ -95,6 +97,34 @@ class ComposeHostTest {
         val output = host.frame(at(0, 0)) { Spacer(Modifier.size(10.dp).testTag("probe")) }
 
         assertEquals(1, output.semantics.size)
+    }
+
+    @Test
+    fun insertingAChildlessBoxBeforeAPopulatedBoxClearsTheReusedSlotsChildren() {
+        val host = ComposeHost()
+        var scrim = false
+        val content: context(Composer)
+        () -> Unit = {
+            if (scrim) {
+                Box(Modifier.fillMaxSize())
+            }
+            Box(Modifier.testTag("toolbar")) {
+                Spacer(Modifier.size(24.dp).background(red).testTag("item"))
+            }
+        }
+
+        val closed = host.frame(at(0, 0), content)
+        assertEquals(1, closed.primitives.filterIsInstance<UiDrawPrimitive.Quad>().size)
+
+        scrim = true
+        val opened = host.frame(at(0, 0), content)
+        assertEquals(
+            1,
+            opened.primitives.filterIsInstance<UiDrawPrimitive.Quad>().size,
+            "the childless scrim Box reusing slot 0 must not keep the previous frame's toolbar children",
+        )
+        assertEquals(0, host.root.children[0].children.size)
+        assertEquals(1, host.root.children[1].children.size)
     }
 }
 
