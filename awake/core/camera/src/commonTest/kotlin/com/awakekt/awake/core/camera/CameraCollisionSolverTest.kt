@@ -5,9 +5,13 @@
  */
 package com.awakekt.awake.core.camera
 
+import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.inverse
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class CameraCollisionSolverTest {
@@ -100,6 +104,27 @@ class CameraCollisionSolverTest {
         val eye = CameraCollisionSolver().solve(pivot, desiredEye, CameraCollision(), null, null, 0.5f, 0.016f, out)
 
         assertEquals(desiredEye, eye)
+    }
+
+    @Test
+    fun aPivotUnderGroundKeepsAnInvertibleLookAt() {
+        val overhang = CameraGround { _, _ -> 20f }
+        val settings = CameraCollision(groundMargin = 0.25f, radius = 0.2f)
+        val eye = CameraCollisionSolver().solve(pivot, Vec3f(0f, 4f, 6f), settings, overhang, null, 0.2f, 0.016f, out)
+
+        assertEquals(20.25f, eye.y, 1e-4f, "the eye is lifted above the ground")
+        assertTrue(eye.z > pivot.z, "horizontal direction is preserved instead of placing the eye straight above the pivot: $eye")
+        val lens = Lens.perspective(eye = eye, center = pivot)
+        assertNotNull(lens.viewProjectionMatrix(aspect = 16f / 9f, clipSpace = ClipSpace.Vulkan).inverse(), "lifted view-projection stays invertible")
+    }
+
+    @Test
+    fun aWallAtThePivotDoesNotCollapseTheEyeOntoTheTarget() {
+        val eye = CameraCollisionSolver().solve(pivot, desiredEye, walls.copy(radius = 0.2f), null, wallAt(0.2f), 0f, 0.016f, out)
+
+        assertTrue(eye.z > pivot.z, "the eye stays off the pivot so forward is non-zero: $eye")
+        val lens = Lens.perspective(eye = eye, center = pivot)
+        assertNotNull(lens.viewProjectionMatrix(aspect = 16f / 9f, clipSpace = ClipSpace.Vulkan).inverse(), "blocked view-projection stays invertible")
     }
 
     private companion object {

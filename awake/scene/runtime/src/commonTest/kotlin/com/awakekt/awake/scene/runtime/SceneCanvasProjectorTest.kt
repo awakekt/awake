@@ -119,6 +119,18 @@ class SceneCanvasProjectorTest {
         assertNull(projector.bounds(world.create().also { world.add(it, Transform()) }))
     }
 
+    @Test
+    fun aCameraLookingAlongUpProjectsNothing() {
+        val degenerate = CameraViewport().also {
+            it.update(Camera(Lens.perspective(eye = Vec3f(0f, 10f, 0f), center = Vec3f(0f, 0f, 0f))), 800f, 600f)
+        }
+        val vertical = SceneCanvasProjector(world, ClipSpace.Vulkan) { degenerate }
+
+        assertNull(vertical.project(3f, 0f, -2f), "singular look-at must not collapse points onto the view centre")
+        assertNull(vertical.projectFollow(3f, 0f, -2f), "in-front followers also bail out on a singular look-at")
+        assertNull(vertical.projectFollow(3f, 20f, -2f), "behind followers bail out on a singular look-at")
+    }
+
     /** A unit cube at x [at], under [parent]. */
     private fun mesh(entity: com.awakekt.awake.ecs.Entity, parent: com.awakekt.awake.ecs.Entity?, at: Float) {
         world.add(entity, Transform(position = Vec3f(at, 0f, 0f), parent = parent).apply { worldMatrix = Mat4().translate(at, 0f, 0f) })

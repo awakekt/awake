@@ -109,13 +109,7 @@ class TerrainContentSystem(
     private fun place(world: World) {
         for (index in tracked.indices) {
             val entry = tracked[index]
-            val transform = world.get<Transform>(entry.entity) ?: continue
-            if (transform.parent == null) {
-                entry.origin.set(transform.position)
-            } else {
-                val placed = transform.worldMatrix
-                entry.origin.set(placed.m03, placed.m13, placed.m23)
-            }
+            terrainOrigin(world, entry.entity, entry.origin)
         }
     }
 
@@ -203,3 +197,51 @@ class TerrainContentSystem(
 
     private class Attached(val entity: Entity, val terrain: TerrainComponent, val feature: AttachedContentFeature)
 }
+
+/**
+ * Writes into [out] the translation [entity]'s terrain lies at in [world], or `(0, 0, 0)` without a
+ * [Transform]. A child whose [Transform.worldMatrix] `TransformSystem` has built reads that matrix's
+ * translation; before it has run, or in a world that runs none, it sums local positions up the parent
+ * chain, since terrains apply neither rotation nor scale.
+ */
+internal fun terrainOrigin(world: World, entity: Entity, out: Vec3f): Vec3f {
+    val transform = world.get<Transform>(entity)
+    return when {
+        transform == null -> out.set(0f, 0f, 0f)
+        transform.parent == null -> out.set(transform.position)
+        transform.worldVersion > 0 -> {
+            val placed = transform.worldMatrix
+            out.set(placed.m03, placed.m13, placed.m23)
+        }
+        else -> sumParentPositions(world, transform, out)
+    }
+}
+
+private fun sumParentPositions(world: World, start: Transform, out: Vec3f): Vec3f {
+    var x = start.position.x
+    var y = start.position.y
+    var z = start.position.z
+    var parent = start.parent
+    var depth = 0
+    while (parent != null && depth < MAX_TERRAIN_PARENT_DEPTH) {
+        val above = world.get<Transform>(parent)
+        if (above == null) {
+            parent = null
+        } else if (above.parent != null && above.worldVersion > 0) {
+            val placed = above.worldMatrix
+            x += placed.m03
+            y += placed.m13
+            z += placed.m23
+            parent = null
+        } else {
+            x += above.position.x
+            y += above.position.y
+            z += above.position.z
+            parent = above.parent
+            depth++
+        }
+    }
+    return out.set(x, y, z)
+}
+
+private const val MAX_TERRAIN_PARENT_DEPTH = 64
