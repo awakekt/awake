@@ -1,0 +1,1 @@
+- Add `AdaptiveSnapshotTimeline` to `:awake:net:prediction` for zero-allocation rolling-minimum clock-skew tracking, median snapshot interval learning, 95th-percentile jitter measurement, adaptive interpolation delay, stall holding, and pause rebasing.
