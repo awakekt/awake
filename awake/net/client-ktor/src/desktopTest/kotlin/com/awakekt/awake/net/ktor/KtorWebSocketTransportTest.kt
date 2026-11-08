@@ -14,7 +14,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -52,7 +51,7 @@ class KtorWebSocketTransportTest {
     @Test
     fun packetSentImmediatelyBeforeServerCloseArrivesBeforeChannelCloses(): Unit = runBlocking {
         val server = startLoopbackServer()
-        val serving = launch(Dispatchers.Default) {
+        val serving = launch {
             for (session in server.sessions()) {
                 launch {
                     session.send(DeliveryChannel.Reliable, KICK_PACKET)
@@ -82,7 +81,7 @@ class KtorWebSocketTransportTest {
     @Test
     fun burstLargerThanInboundCapacitySuspendsWithoutDroppingPackets(): Unit = runBlocking {
         val server = startLoopbackServer()
-        val serving = launch(Dispatchers.Default) {
+        val serving = launch {
             for (session in server.sessions()) {
                 launch {
                     repeat(BURST_COUNT) { i ->
@@ -115,7 +114,7 @@ class KtorWebSocketTransportTest {
     @Test
     fun sendsAfterServerClosesAreDroppedCleanlyAndAbortDisconnectsImmediately(): Unit = runBlocking {
         val server = startLoopbackServer()
-        val serving = launch(Dispatchers.Default) {
+        val serving = launch {
             for (session in server.sessions()) {
                 launch { session.close() }
             }

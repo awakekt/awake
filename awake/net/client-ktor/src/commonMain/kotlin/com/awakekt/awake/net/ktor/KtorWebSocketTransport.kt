@@ -140,13 +140,15 @@ private class KtorSocketTransport(
 
     override val state: StateFlow<ConnectionState> = connection
 
+    // SuspendFunSwallowedCancellation: ensureActive rethrows when the caller's coroutine is cancelled; a
+    // cancelled WebSocket session throws its own CancellationException while the caller remains active.
+    @Suppress("SuspendFunSwallowedCancellation")
     override suspend fun send(channel: DeliveryChannel, packet: ByteArray) {
         try {
             socket.send(Frame.Binary(fin = true, data = packet))
         } catch (_: ClosedSendChannelException) {
             connection.value = ConnectionState.Disconnected
         } catch (_: CancellationException) {
-            // Re-throw if the caller's own coroutine was cancelled; otherwise the socket closed while waiting.
             currentCoroutineContext().ensureActive()
             connection.value = ConnectionState.Disconnected
         }
@@ -162,11 +164,19 @@ private class KtorSocketTransport(
         connection.value = ConnectionState.Disconnected
     }
 
+    // TooGenericExceptionCaught: closing an already-broken WebSocket may throw I/O or channel exceptions.
+    // SuspendFunSwallowedCancellation: ensureActive rethrows when the caller's coroutine is cancelled.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     override suspend fun close() {
-        runCatching { socket.close() }
-        if (closeClient) {
-            client.close()
+        try {
+            socket.close()
+        } catch (failure: Exception) {
+            if (failure is CancellationException) currentCoroutineContext().ensureActive()
+        } finally {
+            if (closeClient) {
+                client.close()
+            }
+            connection.value = ConnectionState.Disconnected
         }
-        connection.value = ConnectionState.Disconnected
     }
 }
