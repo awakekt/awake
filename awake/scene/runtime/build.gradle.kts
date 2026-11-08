@@ -23,6 +23,7 @@ kotlin {
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             api(project(":awake:core:host"))
+            api(project(":awake:core:diagnostics"))
             implementation(project(":awake:core:input"))
             api(project(":awake:core:logging"))
             // AssetSourceTextureResolver reads sprite and tilemap textures from a project's files.
