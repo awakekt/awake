@@ -6,6 +6,7 @@
 
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -22,6 +23,8 @@ kotlin {
             // Vec3f and Color appear in DebugLines' own public signature.
             api(project(":awake:core:math"))
             api(project(":awake:core:color"))
+            // StatsSummary carries @Serializable descriptors in its public signature.
+            api(libs.kotlinx.serialization.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

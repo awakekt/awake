@@ -333,6 +333,12 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 	public static fun texture (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
 }
 
+public final class com/awakekt/awake/scene/runtime/SceneFrameBreakdownKt {
+	public static final fun forScene (Lcom/awakekt/awake/core/diagnostics/FrameBreakdown$Companion;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;I)Lcom/awakekt/awake/core/diagnostics/FrameBreakdown;
+	public static synthetic fun forScene$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdown$Companion;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;IILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdown;
+	public static final fun toBreakdownSample (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+}
+
 public final class com/awakekt/awake/scene/runtime/SceneFrameStats {
 	public fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;)V
 	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

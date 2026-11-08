@@ -16,6 +16,15 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
   `String` between readings, and says which slots changed (`consumeChanged`), so a host writes only those.
   It draws nothing, so the overlay's logic is tested without a canvas.
 - **`DebugFlags`**: the ids to turn on, from `?debug=a,b` on the web or `--debug=a,b` on desktop.
+- **`StatsSeries` / `StatsSummary`**: a fixed-capacity ring of timestamped `Double` readings that
+  summarizes any trailing window into `avg`, `p50`, `p95` and `max` without per-sample allocations,
+  optionally mapping readings on read (such as frame milliseconds to FPS).
+- **`FrameBreakdown`**: rolling frame-time and resource attribution across simulation (`simMs`),
+  render extraction (`renderSystemsMs`), total scene update (`simRenderMs`), UI phases (`uiBuildMs`,
+  `uiStageMs`, `uiWaitMs`), host/GPU wait outside measured phases (`outsideMs`), GPU timing and draw
+  counts (`gpuMs`, `drawCalls`, `instances`, `triangles`), drawable megapixels (`surfaceMpx`), and
+  heap usage/growth (`heapMb`, `allocKbPerFrame`, `gcPerMinute`). `FrameBreakdown.forScene(...)` in
+  `awake:scene:runtime` binds an active `SceneAppLifecycleRuntime` and optional `Renderer`.
 
 ```kotlin
 val registry = DebugRegistry(DebugFlags.fromArgs(args))

@@ -73,3 +73,145 @@ public final class com/awakekt/awake/core/diagnostics/DebugSource$DefaultImpls {
 	public static fun lines (Lcom/awakekt/awake/core/diagnostics/DebugSource;Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
 }
 
+public final class com/awakekt/awake/core/diagnostics/FrameBreakdown {
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/FrameBreakdown$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public static final field DEFAULT_WINDOW_SECONDS D
+	public static final field KEY_ALLOC_KB_PER_FRAME Ljava/lang/String;
+	public static final field KEY_DRAW_CALLS Ljava/lang/String;
+	public static final field KEY_GC_PER_MINUTE Ljava/lang/String;
+	public static final field KEY_GPU_MS Ljava/lang/String;
+	public static final field KEY_HEAP_MB Ljava/lang/String;
+	public static final field KEY_INSTANCES Ljava/lang/String;
+	public static final field KEY_OUTSIDE_MS Ljava/lang/String;
+	public static final field KEY_RENDER_SYSTEMS_MS Ljava/lang/String;
+	public static final field KEY_SIM_MS Ljava/lang/String;
+	public static final field KEY_SIM_RENDER_MS Ljava/lang/String;
+	public static final field KEY_SURFACE_MPX Ljava/lang/String;
+	public static final field KEY_TRIANGLES Ljava/lang/String;
+	public static final field KEY_UI_BUILD_MS Ljava/lang/String;
+	public static final field KEY_UI_STAGE_MS Ljava/lang/String;
+	public static final field KEY_UI_WAIT_MS Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;I)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun frame (DD)V
+	public final fun getCapacity ()I
+	public final fun summaries (DD)Ljava/util/Map;
+	public static synthetic fun summaries$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdown;DDILjava/lang/Object;)Ljava/util/Map;
+}
+
+public final class com/awakekt/awake/core/diagnostics/FrameBreakdown$Companion {
+}
+
+public final class com/awakekt/awake/core/diagnostics/FrameBreakdownSample {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
+	public final fun component2 ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
+	public final fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPhases ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
+	public final fun getRender ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/diagnostics/FramePhaseSample {
+	public fun <init> ()V
+	public fun <init> (FFFFFF)V
+	public synthetic fun <init> (FFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (FFFFFF)Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;FFFFFFILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRenderSystemsMs ()F
+	public final fun getSimMs ()F
+	public final fun getSimRenderMs ()F
+	public final fun getUiBuildMs ()F
+	public final fun getUiStageMs ()F
+	public final fun getUiWaitMs ()F
+	public fun hashCode ()I
+	public final fun isMeasured ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/diagnostics/FrameRenderSample {
+	public fun <init> (IIJLjava/lang/Float;)V
+	public synthetic fun <init> (IIJLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun copy (IIJLjava/lang/Float;)Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;IIJLjava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDrawCalls ()I
+	public final fun getGpuTimeMs ()Ljava/lang/Float;
+	public final fun getInstances ()I
+	public final fun getTriangles ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/diagnostics/StatsSeries {
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/StatsSeries$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public static final field DEFAULT_ROUND_STEP D
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (DD)V
+	public final fun clear ()V
+	public final fun getCapacity ()I
+	public final fun getSize ()I
+	public final fun summary (DD)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+	public final fun summary (DDLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+	public static synthetic fun summary$default (Lcom/awakekt/awake/core/diagnostics/StatsSeries;DDILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+	public static synthetic fun summary$default (Lcom/awakekt/awake/core/diagnostics/StatsSeries;DDLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+}
+
+public final class com/awakekt/awake/core/diagnostics/StatsSeries$Companion {
+}
+
+public final class com/awakekt/awake/core/diagnostics/StatsSummary {
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/StatsSummary$Companion;
+	public fun <init> (DDDD)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun component4 ()D
+	public final fun copy (DDDD)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/StatsSummary;DDDDILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvg ()D
+	public final fun getMax ()D
+	public final fun getP50 ()D
+	public final fun getP95 ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/diagnostics/StatsSummary$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/diagnostics/StatsSummary$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/diagnostics/StatsSummary;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/diagnostics/StatsSummary;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/diagnostics/StatsSummary$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

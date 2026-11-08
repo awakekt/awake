@@ -1,0 +1,1 @@
+- Add `StatsSummary`, `StatsSeries`, and `FrameBreakdown` in `awake:core:diagnostics` plus `FrameBreakdown.forScene` in `awake:scene:runtime` for rolling `p50`/`p95` metric windows and per-phase frame attribution.
