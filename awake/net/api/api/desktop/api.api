@@ -132,6 +132,35 @@ public abstract interface class com/awakekt/awake/net/InboundDropMetrics {
 	public abstract fun getDroppedInbound ()J
 }
 
+public final class com/awakekt/awake/net/InboundQueue {
+	public fun <init> (IJ)V
+	public final fun cutOff ()V
+	public final fun getByteCapacity ()J
+	public final fun getBytes ()J
+	public final fun getCapacity ()I
+	public final fun getOverflowed ()Z
+	public final fun getSize ()I
+	public final fun offer (I)Z
+	public final fun taken (I)V
+}
+
+public final class com/awakekt/awake/net/InboundQueueKt {
+	public static final fun readEach (Lcom/awakekt/awake/net/TransportSession;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun readEach (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/net/InputBudget {
+	public static final field NANOS_PER_SECOND D
+	public fun <init> (DDD)V
+	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBurst ()D
+	public final fun getPerSecond ()D
+	public final fun getStallSeconds ()D
+	public final fun resetSeq ()V
+	public final fun take (JJJ)Z
+	public static synthetic fun take$default (Lcom/awakekt/awake/net/InputBudget;JJJILjava/lang/Object;)Z
+}
+
 public final class com/awakekt/awake/net/MessageRouter {
 	public static final field Companion Lcom/awakekt/awake/net/MessageRouter$Companion;
 	public final fun getHandledTypes ()Ljava/util/Set;
@@ -412,6 +441,21 @@ public final synthetic class com/awakekt/awake/net/PacketZeroNullNetId$Impl : co
 	public fun <init> ()V
 }
 
+public final class com/awakekt/awake/net/PingLimit {
+	public static final field Companion Lcom/awakekt/awake/net/PingLimit$Companion;
+	public static final field DEFAULT_BURST D
+	public static final field DEFAULT_PER_SECOND D
+	public fun <init> (Lkotlin/jvm/functions/Function0;DD)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;DDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun allow ()Z
+	public final fun allow (J)Z
+	public final fun getBurst ()D
+	public final fun getPerSecond ()D
+}
+
+public final class com/awakekt/awake/net/PingLimit$Companion {
+}
+
 public final class com/awakekt/awake/net/PolledStallWatch : com/awakekt/awake/net/StallWatch {
 	public fun <init> (Lkotlinx/coroutines/CoroutineScope;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineScope;ILcom/awakekt/awake/net/TransportStallDetector;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -425,6 +469,15 @@ public final class com/awakekt/awake/net/PolledStallWatch : com/awakekt/awake/ne
 	public fun received ()V
 	public fun setExpectInbound (Z)V
 	public fun setOnEnded (Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/awakekt/awake/net/ReadEnd : java/lang/Enum {
+	public static final field Closed Lcom/awakekt/awake/net/ReadEnd;
+	public static final field InboxFull Lcom/awakekt/awake/net/ReadEnd;
+	public static final field Refused Lcom/awakekt/awake/net/ReadEnd;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/ReadEnd;
+	public static fun values ()[Lcom/awakekt/awake/net/ReadEnd;
 }
 
 public final class com/awakekt/awake/net/SessionCloseReason : java/lang/Enum {
@@ -512,6 +565,17 @@ public abstract interface class com/awakekt/awake/net/StallWatch : java/lang/Aut
 public final class com/awakekt/awake/net/StallWatchKt {
 	public static final fun watchStalls (Lcom/awakekt/awake/net/Transport;Lkotlinx/coroutines/CoroutineScope;IDDLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/net/StallWatch;
 	public static synthetic fun watchStalls$default (Lcom/awakekt/awake/net/Transport;Lkotlinx/coroutines/CoroutineScope;IDDLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/net/StallWatch;
+}
+
+public final class com/awakekt/awake/net/TickLag {
+	public static final field MAX_TICKS_PER_SECOND I
+	public fun <init> (II)V
+	public final fun allowance (I)I
+	public final fun getLagNanos ()J
+	public final fun getLongestNanos ()J
+	public final fun getTicksPerSecond ()I
+	public final fun getWindow ()I
+	public final fun ticked (J)V
 }
 
 public abstract interface class com/awakekt/awake/net/Transport {
