@@ -25,6 +25,11 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
   counts (`gpuMs`, `drawCalls`, `instances`, `triangles`), drawable megapixels (`surfaceMpx`), and
   heap usage/growth (`heapMb`, `allocKbPerFrame`, `gcPerMinute`). `FrameBreakdown.forScene(...)` in
   `awake:scene:runtime` binds an active `SceneAppLifecycleRuntime` and optional `Renderer`.
+- **`CrashRecorder` / `CrashStorage`**: a fault-tolerant black-box session recorder for clients
+  whose process or browser tab can die without running shutdown hooks. Keeps a bounded ring of
+  `CrashBreadcrumb` samples and truncated `RecordedError` entries in `CrashStorage` (such as
+  `localStorage` on the web or `InMemoryCrashStorage` in tests) and promotes an un-ended prior
+  session to `pending()` on the next `begin(...)` until `markSent()`.
 
 ```kotlin
 val registry = DebugRegistry(DebugFlags.fromArgs(args))
