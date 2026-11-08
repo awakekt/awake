@@ -65,27 +65,17 @@ class ServerHost<P : HostPlayer, M : Any>(
     val onTickError: ((tick: Long, error: Exception) -> Unit)? = null,
 ) : AutoCloseable {
 
-    /**
-     * Binary-compatible constructor preserving the eight-parameter signature from earlier releases.
-     *
-     * @param world The ECS [World] instance for this game host.
-     * @param codec Serializer and deserializer for raw transport packets.
-     * @param authenticator Pluggable credential verification for new connections.
-     * @param prePlayHandler Optional pre-play handler before active play begins.
-     * @param features Container of installed game features.
-     * @param saveScheduler Optional save coordinator for batched persistence.
-     * @param config Host tuning configuration.
-     * @param tickDispatcher Dispatcher on which the simulation tick executes.
-     */
+    /** [ServerHost] before [tickClock] and [onTickError]: hidden for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
         world: World,
         codec: MessageCodec<M>,
         authenticator: Authenticator<P, M>,
-        prePlayHandler: PrePlayHandler<P, M>?,
-        features: Features<P, M>,
-        saveScheduler: SaveScheduler<*>?,
-        config: ServerHostConfig,
-        tickDispatcher: CoroutineDispatcher,
+        prePlayHandler: PrePlayHandler<P, M>? = null,
+        features: Features<P, M> = Features(),
+        saveScheduler: SaveScheduler<*>? = null,
+        config: ServerHostConfig = ServerHostConfig(),
+        tickDispatcher: CoroutineDispatcher = Dispatchers.Default,
     ) : this(
         world = world,
         codec = codec,

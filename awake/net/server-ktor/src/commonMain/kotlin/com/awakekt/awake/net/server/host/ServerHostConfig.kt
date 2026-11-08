@@ -33,19 +33,13 @@ data class ServerHostConfig(
     val maxBacklogTicks: Int = DEFAULT_MAX_BACKLOG_TICKS,
     val failuresBeforeUnhealthy: Int = TickHealth.DEFAULT_FAILURES_BEFORE_UNHEALTHY,
 ) {
-    /**
-     * Binary-compatible constructor preserving the four-parameter signature from earlier releases.
-     *
-     * @param ticksPerSecond Authoritative simulation tick frequency.
-     * @param inboxCapacity Maximum inbound command queue capacity.
-     * @param maxInputsPerTick Maximum inputs processed from a single player per tick.
-     * @param stalledNanos Duration without tick completion before reporting unhealthy.
-     */
+    /** [ServerHostConfig] before [maxBacklogTicks] and [failuresBeforeUnhealthy]: hidden for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
-        ticksPerSecond: Int,
-        inboxCapacity: Int,
-        maxInputsPerTick: Int,
-        stalledNanos: Long,
+        ticksPerSecond: Int = DEFAULT_TICKS_PER_SECOND,
+        inboxCapacity: Int = DEFAULT_INBOX_CAPACITY,
+        maxInputsPerTick: Int = DEFAULT_MAX_INPUTS_PER_TICK,
+        stalledNanos: Long = DEFAULT_STALLED_NANOS,
     ) : this(
         ticksPerSecond = ticksPerSecond,
         inboxCapacity = inboxCapacity,
@@ -75,6 +69,22 @@ data class ServerHostConfig(
             "failuresBeforeUnhealthy must be >= 1, was $failuresBeforeUnhealthy."
         }
     }
+
+    /** [copy] before [maxBacklogTicks] and [failuresBeforeUnhealthy]: hidden for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        ticksPerSecond: Int = this.ticksPerSecond,
+        inboxCapacity: Int = this.inboxCapacity,
+        maxInputsPerTick: Int = this.maxInputsPerTick,
+        stalledNanos: Long = this.stalledNanos,
+    ): ServerHostConfig = copy(
+        ticksPerSecond = ticksPerSecond,
+        inboxCapacity = inboxCapacity,
+        maxInputsPerTick = maxInputsPerTick,
+        stalledNanos = stalledNanos,
+        maxBacklogTicks = this.maxBacklogTicks,
+        failuresBeforeUnhealthy = this.failuresBeforeUnhealthy,
+    )
 
     /** Default tuning constants for [ServerHostConfig]. */
     companion object {
