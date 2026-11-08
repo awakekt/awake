@@ -11,8 +11,10 @@ import com.awakekt.awake.core.camera.CameraGround
 import com.awakekt.awake.core.camera.CameraObstruction
 import com.awakekt.awake.core.camera.OccluderFade
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
@@ -32,6 +34,7 @@ import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -94,6 +97,18 @@ class CameraCollisionTest {
         system(Probes(ground = ridge)).update(world, 1f / 60f)
 
         assertTrue(camera.lens.eye.z < 2f, "the eye is in front of the ridge at z = 2, was ${camera.lens.eye.z}")
+    }
+
+    @Test
+    fun aTargetBelowTheGroundStillLeavesAnInvertibleCamera() {
+        val world = World()
+        val camera = rig(world, CameraCollision(groundMargin = 0.25f, radius = 0.2f))
+
+        system(Probes(ground = { _, _ -> 20f })).update(world, 1f / 60f)
+
+        assertEquals(20.25f, camera.lens.eye.y, 1e-4f)
+        assertTrue(camera.lens.eye.z > camera.lens.center.z, "eye keeps its horizontal offset from center: ${camera.lens.eye}")
+        assertNotNull(camera.lens.viewProjectionMatrix(aspect = 16f / 9f, clipSpace = ClipSpace.Vulkan).inverse(), "view-projection stays invertible")
     }
 
     @Test

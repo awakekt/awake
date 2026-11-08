@@ -7,6 +7,7 @@ package com.awakekt.awake.core.camera
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.damp
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -62,10 +63,11 @@ class CameraCollisionSolver {
         if (desired > EPSILON && obstruction != null) {
             fraction = min(fraction, obstacleFraction(pivot, desiredEye, settings, obstruction))
         }
-        val allowed = if (fraction >= 1f) desired else (fraction * desired - SKIN).coerceAtLeast(0f)
+        val floor = min(MIN_DISTANCE, desired)
+        val allowed = if (fraction >= 1f) desired else (fraction * desired - SKIN).coerceAtLeast(floor)
         distance = eased(allowed, settings.easeOutSeconds, delta)
         out.set(direction).scale(distance).add(pivot)
-        if (settings.ground && ground != null) lift(out, settings.groundMargin, ground, footprint)
+        if (settings.ground && ground != null) lift(pivot, out, settings.groundMargin, ground, footprint)
         return out
     }
 
@@ -116,14 +118,39 @@ class CameraCollisionSolver {
     }
 
     /** Raises [eye] to [margin] above the highest ground under it and around it. */
-    private fun lift(eye: Vec3f, margin: Float, ground: CameraGround, footprint: Float) {
+    private fun lift(pivot: Vec3f, eye: Vec3f, margin: Float, ground: CameraGround, footprint: Float) {
         val reach = footprint.coerceAtLeast(0f)
         var highest = ground.heightAt(eye.x, eye.z)
         highest = higher(highest, ground.heightAt(eye.x + reach, eye.z))
         highest = higher(highest, ground.heightAt(eye.x - reach, eye.z))
         highest = higher(highest, ground.heightAt(eye.x, eye.z + reach))
         highest = higher(highest, ground.heightAt(eye.x, eye.z - reach))
-        if (!highest.isNaN() && eye.y < highest + margin) eye.y = highest + margin
+        if (!highest.isNaN() && eye.y < highest + margin) {
+            eye.y = highest + margin
+            keepOffVertical(pivot, eye)
+        }
+    }
+
+    /**
+     * Keeps [eye] off the vertical line through [pivot], where `center - eye` would run along world
+     * up `(0, 1, 0)` and make `Mat4.setLookAt` singular when a rise both pulls the eye in to the
+     * pivot and lifts it above.
+     */
+    private fun keepOffVertical(pivot: Vec3f, eye: Vec3f) {
+        val dx = eye.x - pivot.x
+        val dz = eye.z - pivot.z
+        val horizontal = sqrt(dx * dx + dz * dz)
+        val needed = max(MIN_DISTANCE, abs(eye.y - pivot.y) * MIN_HORIZONTAL_SLOPE)
+        if (horizontal >= needed) return
+        val dirHorizontal = sqrt(direction.x * direction.x + direction.z * direction.z)
+        if (dirHorizontal > EPSILON) {
+            val scale = needed / dirHorizontal
+            eye.x = pivot.x + direction.x * scale
+            eye.z = pivot.z + direction.z * scale
+        } else {
+            eye.x = pivot.x
+            eye.z = pivot.z + needed
+        }
     }
 
     /** The higher of two heights, either of which may be NaN for no ground. */
@@ -146,3 +173,8 @@ class CameraCollisionSolver {
         const val SKIN = 0.01f
     }
 }
+
+// Minimum offset kept from the pivot, and horizontal ratio kept when lifted above it, so
+// `center - eye` never collapses to zero or runs parallel to world up `(0, 1, 0)`.
+private const val MIN_DISTANCE = 0.05f
+private const val MIN_HORIZONTAL_SLOPE = 1e-3f

@@ -24,9 +24,12 @@ class TerrainClipmapSystem : System {
     /** Active map of clipmap ring trackers keyed by terrain component. */
     val trackersByTerrain = HashMap<TerrainComponent, TerrainClipmapTracker>()
 
+    private val origin = Vec3f()
+    private val focus = Vec3f()
+
     override fun update(world: World, delta: Float) {
         var cameraPos: Vec3f? = null
-        world.queryEach(Camera::class) { _, camera ->
+        world.queryEach<Camera> { _, camera ->
             if (camera.isPrimary || cameraPos == null) {
                 cameraPos = camera.lens.eye
             }
@@ -34,14 +37,16 @@ class TerrainClipmapSystem : System {
 
         val activeCamPos = cameraPos ?: return
 
-        world.queryEach(TerrainComponent::class) { _, terrain ->
+        world.queryEach<TerrainComponent> { entity, terrain ->
             if (!terrain.isVisible) return@queryEach
 
             val tracker = trackersByTerrain.getOrPut(terrain) {
                 TerrainClipmapTracker(terrain.clipmapConfig, terrain.heightmap)
             }
 
-            tracker.update(activeCamPos)
+            terrainOrigin(world, entity, origin)
+            focus.set(activeCamPos.x - origin.x, activeCamPos.y - origin.y, activeCamPos.z - origin.z)
+            tracker.update(focus)
         }
     }
 

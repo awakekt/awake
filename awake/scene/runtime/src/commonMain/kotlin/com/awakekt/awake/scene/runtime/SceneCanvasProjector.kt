@@ -28,7 +28,8 @@ internal class SceneCanvasProjector(
     private val clipSpace: ClipSpace,
     private val viewport: () -> CameraViewport?,
 ) : CanvasProjector {
-    override fun project(x: Float, y: Float, z: Float): Vec2? = viewport()?.projectToSurface(Vec3f(x, y, z), clipSpace)
+    override fun project(x: Float, y: Float, z: Float): Vec2? =
+        usableViewport()?.projectToSurface(Vec3f(x, y, z), clipSpace)
 
     /**
      * In front of the near plane, where [project] puts the point, through the backend's clip space,
@@ -54,18 +55,19 @@ internal class SceneCanvasProjector(
         forwardX /= forwardLength
         forwardY /= forwardLength
         forwardZ /= forwardLength
-        val depth = toX * forwardX + toY * forwardY + toZ * forwardZ
-        if (depth > lens.near) {
-            val point = view.projectToSurface(Vec3f(x, y, z), clipSpace) ?: return null
-            return CanvasProjection(point.x, point.y, depth, distance, behind = false)
-        }
-        // Right is forward x up, and the view's own up is right x forward.
+        // Right is forward x up: checked before projecting in front too, because a singular look-at
+        // matrix zeros clip x and y and would otherwise pile every follower onto the view's centre.
         val up = lens.up
         var rightX = forwardY * up.z - forwardZ * up.y
         var rightY = forwardZ * up.x - forwardX * up.z
         var rightZ = forwardX * up.y - forwardY * up.x
         val rightLength = sqrt(rightX * rightX + rightY * rightY + rightZ * rightZ)
         if (rightLength < DEGENERATE) return null
+        val depth = toX * forwardX + toY * forwardY + toZ * forwardZ
+        if (depth > lens.near) {
+            val point = view.projectToSurface(Vec3f(x, y, z), clipSpace) ?: return null
+            return CanvasProjection(point.x, point.y, depth, distance, behind = false)
+        }
         rightX /= rightLength
         rightY /= rightLength
         rightZ /= rightLength
@@ -76,6 +78,23 @@ internal class SceneCanvasProjector(
         // The screen's y runs down, the view's up runs up.
         val down = -(toX * viewUpX + toY * viewUpY + toZ * viewUpZ)
         return offView(view, across, down, depth, distance)
+    }
+
+    /** [viewport] when its lens has a non-degenerate forward and right basis, else `null`. */
+    private fun usableViewport(): CameraViewport? {
+        val view = viewport() ?: return null
+        val lens = view.lens
+        val forwardX = lens.center.x - lens.eye.x
+        val forwardY = lens.center.y - lens.eye.y
+        val forwardZ = lens.center.z - lens.eye.z
+        val forwardLengthSq = forwardX * forwardX + forwardY * forwardY + forwardZ * forwardZ
+        val up = lens.up
+        val rightX = forwardY * up.z - forwardZ * up.y
+        val rightY = forwardZ * up.x - forwardX * up.z
+        val rightZ = forwardX * up.y - forwardY * up.x
+        val rightLengthSq = rightX * rightX + rightY * rightY + rightZ * rightZ
+        val degenerate = forwardLengthSq < DEGENERATE * DEGENERATE || rightLengthSq < forwardLengthSq * DEGENERATE * DEGENERATE
+        return if (degenerate) null else view
     }
 
     /** Far off [view] in the screen direction ([across], [down]) from its centre; straight behind is taken as below. */

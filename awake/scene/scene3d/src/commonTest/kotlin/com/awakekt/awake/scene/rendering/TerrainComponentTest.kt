@@ -12,6 +12,7 @@ import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.terrain.TerrainClipmapSystem
 import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
@@ -79,5 +80,30 @@ class TerrainComponentTest {
         // ...and for level 1 (corners on 4 m steps).
         assertEquals(128.0f, rings[1].snappedCenter.x, 0.1f)
         assertEquals(256.0f, rings[1].snappedCenter.z, 0.1f)
+    }
+
+    @Test
+    fun clipmapSystemTracksCameraInOffsetTerrainsFrame() {
+        val world = World()
+        val system = TerrainClipmapSystem()
+
+        val camEntity = world.create()
+        world.add(camEntity, Camera(lens = Lens.perspective(eye = Vec3f(1128.5f, 50.0f, -743.8f)), isPrimary = true))
+
+        val parent = world.create()
+        world.add(parent, Transform(position = Vec3f(1000f, 0f, -1000f)))
+        val terrainEntity = world.create()
+        val terrain = TerrainComponent(
+            heightmap = Heightmap(FloatArray(300 * 300), 300, 300, Vec3f.ONE, GridOrigin.Corner),
+            clipmapConfig = TerrainClipmapConfig(ringCount = 4, ringResolution = 32, baseSpacing = 1.0f),
+        )
+        world.add(terrainEntity, Transform(parent = parent))
+        world.add(terrainEntity, terrain)
+
+        system.update(world, delta = 0.016f)
+
+        val rings = assertNotNull(system.trackerFor(terrain)).ringStates
+        assertEquals(128.0f, rings[0].snappedCenter.x, 0.1f)
+        assertEquals(256.0f, rings[0].snappedCenter.z, 0.1f)
     }
 }
