@@ -5,8 +5,10 @@
 ## Modules
 
 ```text
-net:api          Transport, DirectTransport, DeliveryChannel, TransportKeepAlive, StallWatch,
-                 TransportStallWatch, PolledStallWatch, TransportStallDetector, SplitPacketInbox,
+net:api          Transport, DirectTransport, AbortableTransport, DirectOutbox, DeliveryChannel,
+                 TransportKeepAlive, StallWatch, TransportStallWatch, PolledStallWatch,
+                 TransportStallDetector, SplitPacketInbox, InboundQueue, ReadEnd, InputBudget,
+                 TickLag, PingLimit, PingStats, PingMeter,
                  SessionId, NetId, PacketWriter, PacketReader, PacketFormat, PacketOpcodeRegistry,
                  MessageRouter, ClientNetFeature, ClientNetFeatures, NetViolation, ViolationSink,
                  ViolationWindow
@@ -16,12 +18,21 @@ net:server-ktor  Ktor server plugins: GameTransport (WebSocket framing, ping kee
 net:client-browser  connectBrowserSocket (wasmJs): a DirectTransport over the browser's own
                  WebSocket, run in a dedicated Web Worker (socket-worker.js) or on the page,
                  with shared Web Lock & unthrottled worker timer scheduling
+net:client-ktor  connectWebSocket, WebSockets.Config.boundOutgoingFrames: bounded-outbox
+                 AbortableTransport over a Ktor HttpClient (close-safe pre-kick delivery &
+                 non-throwing post-close send drop)
 net:prediction   PredictionHistory, reconcile -> Correction (None, Blend, Shift, Snap, Wait),
                  ReconcileRules, PredictedEntity, SnapshotTimeline, AdaptiveSnapshotTimeline:
                  client-side prediction, reconciliation, and adaptive/pause-safe playback timing
 ```
 
-`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor`, `:awake:net:client-browser` and `:awake:net:prediction`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+`:awake:net` is a pure container directory (`:awake:net:api`, `:awake:net:server-ktor`, `:awake:net:client-ktor`, `:awake:net:client-browser` and `:awake:net:prediction`), matching `:awake:physics:api`. It depends on no ECS, scene, or rendering modules.
+
+## Ktor client (`:awake:net:client-ktor`) & `DirectOutbox` (`:awake:net:api`)
+
+`connectWebSocket(url)` (or `connectWebSocket(url, client, closeClient)`) in `:awake:net:client-ktor` opens a binary WebSocket `AbortableTransport` over Ktor without forcing a Ktor dependency onto `:awake:net:api`. `WebSockets.Config.boundOutgoingFrames()` bounds Ktor's outgoing frame queue (`OUTGOING_FRAMES = 1` by default) so socket congestion surfaces directly to callers instead of piling up silently; inbound frames are drained on the `HttpClient` scope so pre-close server frames (such as kick reasons) always reach `incoming()` before close, and post-close sends drop cleanly without throwing.
+
+For `DirectTransport` sockets (such as `:awake:net:client-browser`), `DirectOutbox<M>` in `:awake:net:api` passes discrete packets (`sendNow`) straight through in FIFO order while folding replaceable state updates (`submit`) into a single waiting slot (`merge`, `folded`, `waiting`) whenever `bufferedBytes > limit` (`512 B` default), retrying every `retryMillis` (`8 ms` default).
 
 ## Browser client (`:awake:net:client-browser`)
 
@@ -55,6 +66,8 @@ Idle sessions and multi-minute background-tab or window-focus pauses require coo
   For any `Transport`, `Transport.watchStalls(scope)` returns the `StallWatch` that fits it, so a client doesn't branch on the transport's kind. A `DirectTransport` gets `TransportStallWatch` on its own thread. Any other transport, such as the Ktor WebSocket client on the JVM and Android, gets `PolledStallWatch`: a coroutine on `scope` that checks downstream only, because such a socket can't say how many bytes it holds unsent.
 - **Pause-aware & adaptive snapshot timelines (`:awake:net:prediction`)**: `SnapshotTimeline` smooths `clientTime - serverTime` clock offsets (`gain`) behind `bufferSeconds` during normal play, and immediately rebases both `offset` and `playbackTime` once drift exceeds `maxBehindSeconds` so clamped frame deltas on resume do not leave remote entity interpolation minutes behind server time. `AdaptiveSnapshotTimeline` tracks a rolling minimum arrival offset, learns the median snapshot interval, measures 95th-percentile arrival lateness, adapts playback delay within `minDelaySeconds..maxDelaySeconds`, holds playback at an extrapolation cap across stalls (`hold`), and rebases immediately across long client pauses.
 - **Decaying violation counters & server WebSocket pings (`:awake:net:api`, `:awake:net:server-ktor`)**: `ViolationWindow` (`decayTicks`, `record`, `countAt`) decays isolated post-pause burst counts over clean simulation ticks while sustained floods still cross enforcement thresholds. On the server, `GameTransportConfig` configures WebSocket `pingPeriod` and `timeout` (`Duration.ZERO` or `Duration.INFINITE` to disable), coexists with pre-installed Ktor `WebSockets`, and closes unresponsive peers cleanly with `SessionCloseReason.PeerClosed`.
+- **Inbound packet/byte bounds & server-time input/ping budgets (`:awake:net:api`)**: `InboundQueue` enforces dual packet-count and byte-count caps between a connection's async reader (`ReceiveChannel.readEach` / `TransportSession.readEach` -> `ReadEnd`) and its consumer, permanently latching `overflowed` on flood or `DROP_OLDEST` inbox loss (`ReadEnd.InboxFull`). `InputBudget` and `TickLag` rate-limit client inputs and per-tick discrete requests in monotonic server time (`perSecond`, `burst`, `stallSeconds` sequence-verified gap credit, and `longestNanos` stall scaling) so neither network bunching nor late server ticks kick steady clients. `PingLimit` caps sustained ping replies (`perSecond`, `burst`) while answering post-stall bursts in full.
+- **Session RTT histograms & client ping metering (`:awake:net:api`)**: `PingStats` accumulates per-session RTT samples into zero-allocation fine/coarse buckets (`5 ms` below `1 s`, `250 ms` up to `10 s` by default) for instant `percentile(fraction)` queries and RFC 3550 `1/16` EWMA `jitterMs()` reporting across threads. `PingMeter` pairs outbound client ping nonces (`send(nowSeconds)`) with inbound pongs (`receive(nonce, nowSeconds)`) in a fixed ring, smoothing RTT (`smoothedMs`) while escalating `readingMs(nowSeconds)` immediately when any remembered ping waits past `staleSeconds`.
 
 ---
 

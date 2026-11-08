@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 113: 110 in Core, 3 in the Vulkan family. |
+| Published modules | 114: 111 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -148,6 +148,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.net:api` | `awake-net-api` | The transport facade: connections, delivery channels and packet buffers, with no transport. |
 | `com.awakekt.awake.net:server-ktor` | `awake-net-server-ktor` | Ktor WebSocket transport plugin and authoritative game-server host with feature API. |
 | `com.awakekt.awake.net:client-browser` | `awake-net-client-browser` | A client transport over the browser's own `WebSocket`, run in a dedicated Web Worker or on the page, with arrival lag and `bufferedAmount`. |
+| `com.awakekt.awake.net:client-ktor` | `awake-net-client-ktor` | Bounded-outbox WebSocket client transport over your Ktor `HttpClient`, with close-safe pre-kick delivery. |
 | `com.awakekt.awake.net:prediction` | `awake-net-prediction` | Client-side prediction and reconciliation: an input pose history and a pure decision of what a server snapshot corrects. |
 
 ### Projects and editor
