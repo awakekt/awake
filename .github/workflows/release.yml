@@ -13,7 +13,7 @@ on:
       channel:
         description: 'Release channel'
         required: true
-        default: dev
+        default: stable
         type: choice
         options: [dev, alpha, beta, rc, stable]
       bump:
@@ -40,7 +40,7 @@ jobs:
   release:
     uses: ./.github/workflows/release-reusable.yml
     with:
-      channel: ${{ inputs.channel || 'dev' }}
+      channel: ${{ inputs.channel || 'stable' }}
       bump: ${{ inputs.bump || 'none' }}
       dry-run: ${{ inputs.dry-run == true }}
     secrets:

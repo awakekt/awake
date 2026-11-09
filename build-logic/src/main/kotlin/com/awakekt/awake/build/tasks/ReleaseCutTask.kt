@@ -86,28 +86,52 @@ abstract class ReleaseCutTask : DefaultTask() {
 }
 
 /**
- * The version the next cut on [channel] takes, counting on from the newest tag on that channel, or
- * from the newest tag of any channel when this is the channel's first cut.
+ * The version the next cut on [channel] takes, counting on from the newest tag on that channel when
+ * it belongs to the current unreleased base version, or from the newest tag overall otherwise.
  *
  * @param latestTag The newest tag matching a glob, or "" when none does.
  */
 internal fun nextReleaseVersion(channel: String, bump: String?, latestTag: (pattern: String) -> String): String {
-    val latest = latestTag("v[0-9]*-$channel.*").ifBlank { latestTag("v[0-9]*") }
-    val parsed = parseTag(latest)
+    val overall = parseTagOrNull(latestTag("v[0-9]*"))
+    val onChannel = if (channel == "stable") null else parseTagOrNull(latestTag("v[0-9]*-$channel.*"))
+    val newest = listOfNotNull(overall, onChannel).maxOrNull()
+    val parsed = when {
+        newest == null -> Tag(0, 1, 0, "dev", 0)
+        onChannel != null && onChannel.base == newest.base && newest.channel != "stable" -> onChannel
+        else -> newest
+    }
     val base = bumpBase(parsed.base, bump)
     val sequence = if (bump != null || channel != parsed.channel) 1 else parsed.sequence + 1
-    return if (channel == "stable") base else "$base-$channel.$sequence"
+    val candidateVersion = if (channel == "stable") base else "$base-$channel.$sequence"
+    if (newest != null) {
+        val candidate = checkNotNull(parseTagOrNull(candidateVersion))
+        require(candidate > newest) {
+            "Next release $candidateVersion is not newer than ${newest.version}; " +
+                "pass -Prelease.bump=patch, minor, or major."
+        }
+    }
+    return candidateVersion
 }
 
 /**
  * The newest tag in [dir] matching [pattern], or "" when none does.
  *
  * Every tag, not just those reachable from HEAD: a squash-merged release commit leaves its tag off
- * main, and `git describe` would then re-cut an existing version. A failed `git` fails the cut
- * rather than reading as "no tags", which would silently restart the channel at `.1`.
+ * main, and `git describe` would then re-cut an existing version. SemVer release tags are ordered
+ * with stable ahead of pre-releases (`v0.38.0` ahead of `v0.38.0-rc.4`, where git's `v:refname`
+ * sorts `-rc` after the bare version). A failed `git` fails the cut rather than reading as "no
+ * tags", which would silently restart the channel at `.1`.
  */
-internal fun latestTag(dir: File, pattern: String): String =
-    runGit(dir, "tag", "--list", pattern, "--sort=-v:refname").lineSequence().firstOrNull().orEmpty()
+internal fun latestTag(dir: File, pattern: String): String {
+    val lines = runGit(dir, "tag", "--list", pattern, "--sort=-v:refname")
+        .lineSequence()
+        .filter(String::isNotBlank)
+        .toList()
+    return lines.mapNotNull { tag -> parseTagOrNull(tag)?.let { tag to it } }
+        .maxByOrNull { it.second }
+        ?.first
+        ?: lines.firstOrNull().orEmpty()
+}
 
 /** Fails when [tag] already exists: a published version must never be cut twice. */
 internal fun requireNewTag(dir: File, tag: String) {
@@ -142,12 +166,40 @@ private val GIT_LOCAL_ENV_VARS = setOf(
     "GIT_COMMON_DIR",
 )
 
-private data class Tag(val base: String, val channel: String, val sequence: Int)
+private val CHANNEL_ORDER = listOf("dev", "alpha", "beta", "rc", "stable")
+private val RELEASE_TAG_REGEX = Regex("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([A-Za-z]+)\\.(\\d+))?$")
 
-private fun parseTag(tag: String): Tag {
-    val match = Regex("^v?(\\d+\\.\\d+\\.\\d+)(?:-([A-Za-z]+)\\.(\\d+))?$").matchEntire(tag)
-    return if (match == null) Tag("0.1.0", "dev", 0) else Tag(
-        match.groupValues[1], match.groupValues[2].ifBlank { "stable" }, match.groupValues[3].ifBlank { "0" }.toInt(),
+private data class Tag(
+    val major: Int,
+    val minor: Int,
+    val patch: Int,
+    val channel: String,
+    val sequence: Int,
+) : Comparable<Tag> {
+    val base: String get() = "$major.$minor.$patch"
+    val version: String get() = if (channel == "stable") base else "$base-$channel.$sequence"
+
+    override fun compareTo(other: Tag): Int = compareValuesBy(
+        this,
+        other,
+        Tag::major,
+        Tag::minor,
+        Tag::patch,
+        { CHANNEL_ORDER.indexOf(it.channel) },
+        Tag::sequence,
+    )
+}
+
+private fun parseTagOrNull(tag: String): Tag? {
+    val match = RELEASE_TAG_REGEX.matchEntire(tag) ?: return null
+    val channel = match.groupValues[4].ifBlank { "stable" }
+    if (channel !in CHANNEL_ORDER) return null
+    return Tag(
+        major = match.groupValues[1].toInt(),
+        minor = match.groupValues[2].toInt(),
+        patch = match.groupValues[3].toInt(),
+        channel = channel,
+        sequence = match.groupValues[5].ifBlank { "0" }.toInt(),
     )
 }
 
