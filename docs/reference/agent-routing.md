@@ -14,7 +14,7 @@ are in the public [Core agent catalog](https://github.com/awakekt/awake-agent-sk
 | Documentation, entrypoint, and public catalog consistency | `awake-docs-maintainer` |
 
 For a web or shadcn source, begin with the installed public
-[`awake-web-to-compose`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-web-to-compose)
+[`awake-web-to-compose`](https://github.com/awakekt/awake-game-agent-skills/tree/main/skills/awake-web-to-compose)
 guidance. Add the public Tailwind, shadcn, or UI-audit skill only when the source actually uses
 that technology.
 

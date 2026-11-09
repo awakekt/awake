@@ -1,7 +1,7 @@
 # Contributing to Awake Engine
 
-Awake Engine is an early-alpha Kotlin Multiplatform project. Contributions are welcome, but
-changes should preserve the shared runtime boundary and keep the supported targets buildable.
+Awake Engine is a Kotlin Multiplatform 2D and 3D engine. Contributions are welcome; changes
+should preserve the shared runtime boundary and keep the supported targets buildable.
 
 ## Before you start
 
