@@ -57,4 +57,54 @@ class ReleaseCutTaskTest {
         requireNewTag(dir, "v0.1.0-alpha.9")
         assertEquals("0.1.0-alpha.9", nextReleaseVersion("alpha", bump = null) { latestTag(dir, it) })
     }
+
+    @Test
+    fun olderChannelTagsNeverPullACutBackBehindANewerRelease() {
+        runGit(dir, "init", "--quiet")
+        runGit(
+            dir, "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false",
+            "commit", "--allow-empty", "--quiet", "-m", "base",
+        )
+        for (tag in listOf("v0.1.0-dev.12", "v0.1.0-alpha.18", "v0.38.0-rc.4", "v0.38.0", "v0.42.0", "vulkan-v0.1.49")) {
+            runGit(dir, "-c", "tag.gpgsign=false", "tag", tag)
+        }
+
+        assertEquals("v0.42.0", latestTag(dir, "v[0-9]*"))
+        assertEquals("0.43.0", nextReleaseVersion("stable", bump = "minor") { latestTag(dir, it) })
+        assertEquals("0.43.0-dev.1", nextReleaseVersion("dev", bump = "minor") { latestTag(dir, it) })
+        assertEquals("0.43.0-rc.1", nextReleaseVersion("rc", bump = "minor") { latestTag(dir, it) })
+    }
+
+    @Test
+    fun aStableTagSortsAheadOfItsOwnReleaseCandidates() {
+        runGit(dir, "init", "--quiet")
+        runGit(
+            dir, "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false",
+            "commit", "--allow-empty", "--quiet", "-m", "base",
+        )
+        for (tag in listOf("v0.38.0-rc.1", "v0.38.0-rc.4", "v0.38.0")) {
+            runGit(dir, "-c", "tag.gpgsign=false", "tag", tag)
+        }
+
+        assertEquals("v0.38.0", latestTag(dir, "v[0-9]*"))
+        assertEquals("0.38.1", nextReleaseVersion("stable", bump = "patch") { latestTag(dir, it) })
+    }
+
+    @Test
+    fun cuttingAtOrBehindTheNewestReleaseRequiresABump() {
+        val afterStable = assertFailsWith<IllegalArgumentException> {
+            nextReleaseVersion("rc", bump = null) { if (it == "v[0-9]*") "v0.42.0" else "" }
+        }
+        assertContains(afterStable.message.orEmpty(), "pass -Prelease.bump")
+
+        val repeatStable = assertFailsWith<IllegalArgumentException> {
+            nextReleaseVersion("stable", bump = null) { "v0.42.0" }
+        }
+        assertContains(repeatStable.message.orEmpty(), "pass -Prelease.bump")
+
+        val lowerChannel = assertFailsWith<IllegalArgumentException> {
+            nextReleaseVersion("beta", bump = null) { if (it == "v[0-9]*") "v0.43.0-rc.1" else "" }
+        }
+        assertContains(lowerChannel.message.orEmpty(), "pass -Prelease.bump")
+    }
 }
