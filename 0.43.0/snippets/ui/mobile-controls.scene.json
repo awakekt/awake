@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "name": "mobile-controls",
+  "nodes": [
+    {
+      "name": "Camera",
+      "transform": { "position": { "x": 0.0, "y": 4.0, "z": 8.0 } },
+      "components": [
+        { "component": "camera", "primary": true },
+        {
+          "component": "camera_rig",
+          "mode": "ThirdPerson",
+          "target": "Player",
+          "distance": 8.0,
+          "pitch": -0.3,
+          "offset": { "x": 0.0, "y": 1.5, "z": 0.0 }
+        }
+      ]
+    },
+    {
+      "name": "Sun",
+      "components": [ { "component": "light", "type": "Directional" } ]
+    },
+    {
+      "name": "Floor",
+      "transform": { "position": { "x": 0.0, "y": -0.1, "z": 0.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "ground", "material": "lit-shadow" },
+        { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 20.0, "y": 0.1, "z": 20.0 } } }
+      ]
+    },
+    {
+      "name": "Player",
+      "transform": { "position": { "x": 0.0, "y": 1.0, "z": 0.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "movement_control", "speed": 6.0 },
+        { "component": "character_controller", "jumpSpeed": 5.0 }
+      ]
+    },
+    {
+      "name": "Controls",
+      "components": [
+        {
+          "component": "input_actions",
+          "actions": [
+            { "type": "button", "name": "skill1" },
+            { "type": "button", "name": "skill2" },
+            { "type": "axis", "name": "aim" }
+          ]
+        },
+        { "component": "canvas_scaler", "referenceWidth": 1280.0, "referenceHeight": 720.0 },
+        {
+          "component": "canvas_controls",
+          "touchVisibility": "Auto",
+          "theme": { "preset": "MinimalFlat", "colors": { "accent": "#FFB347" } }
+        }
+      ]
+    },
+    {
+      "name": "Look",
+      "components": [
+        {
+          "component": "canvas_element",
+          "kind": "LookArea",
+          "anchor": "TopRight",
+          "offsetX": 0.0,
+          "offsetY": 0.0,
+          "width": 640.0,
+          "height": 720.0,
+          "touchOnly": true,
+          "controlId": "look",
+          "look": { "sensitivity": 1.0 }
+        }
+      ]
+    },
+    {
+      "name": "Stick",
+      "components": [
+        {
+          "component": "canvas_element",
+          "kind": "Joystick",
+          "anchor": "BottomLeft",
+          "offsetX": 0.0,
+          "offsetY": 0.0,
+          "width": 480.0,
+          "height": 400.0,
+          "action": "move",
+          "touchOnly": true,
+          "controlId": "move",
+          "joystick": {
+            "mode": "Floating",
+            "radius": 70.0,
+            "restX": 0.35,
+            "restY": 0.6,
+            "deadZone": 0.1,
+            "sprintThreshold": 0.9,
+            "sprintAction": "run",
+            "idleAlpha": 0.5,
+            "idleDelay": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Actions",
+      "components": [
+        {
+          "component": "canvas_element",
+          "kind": "Panel",
+          "anchor": "BottomRight",
+          "offsetX": 24.0,
+          "offsetY": 24.0,
+          "width": 300.0,
+          "height": 300.0,
+          "order": 1,
+          "touchOnly": true,
+          "cluster": { "pivotX": 0.72, "pivotY": 0.72, "radius": 130.0, "startAngle": 180.0, "spacing": 45.0 }
+        }
+      ],
+      "children": [
+        {
+          "name": "Jump",
+          "components": [
+            {
+              "component": "canvas_element",
+              "kind": "Button",
+              "width": 110.0,
+              "height": 110.0,
+              "text": "Jump",
+              "action": "jump",
+              "touchOnly": true,
+              "controlId": "jump",
+              "button": { "trigger": "Down" }
+            }
+          ]
+        },
+        {
+          "name": "Skill 1",
+          "components": [
+            {
+              "component": "canvas_element",
+              "kind": "Button",
+              "width": 80.0,
+              "height": 80.0,
+              "text": "1",
+              "action": "skill1",
+              "touchOnly": true,
+              "controlId": "skill1",
+              "button": { "cooldownSeconds": 3.0 }
+            }
+          ]
+        },
+        {
+          "name": "Skill 2",
+          "components": [
+            {
+              "component": "canvas_element",
+              "kind": "Button",
+              "width": 80.0,
+              "height": 80.0,
+              "text": "2",
+              "action": "skill2",
+              "touchOnly": true,
+              "controlId": "skill2",
+              "button": {
+                "cooldownSeconds": 6.0,
+                "aim": {
+                  "mode": "Ground",
+                  "radius": 140.0,
+                  "aimAction": "aim",
+                  "cancel": { "anchor": "TopCenter", "offsetY": 24.0, "width": 96.0, "height": 96.0 }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

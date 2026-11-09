@@ -1104,6 +1104,8 @@
       
         
       
+        
+      
     
     
     
@@ -1332,6 +1334,34 @@
     
   
     Particles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trails
   
 
     
@@ -3377,6 +3407,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trail_renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trail_renderer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#world_text" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4587,6 +4628,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trail_renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trail_renderer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#world_text" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5125,6 +5177,13 @@ registers it.</p>
 <td><a href="../../guides/lights-and-shadows/">Lights and shadows</a></td>
 </tr>
 <tr>
+<td><a href="#trail_renderer"><code>trail_renderer</code></a></td>
+<td><code>TrailRenderer</code></td>
+<td><code>com.awakekt.awake.scene:trail</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/trails/">Trails</a></td>
+</tr>
+<tr>
 <td><a href="#world_text"><code>world_text</code></a></td>
 <td><code>WorldText</code></td>
 <td><code>com.awakekt.awake.scene:worldtext</code></td>
@@ -5151,7 +5210,7 @@ registers it.</p>
 <tr>
 <td><code>DefaultSceneComponentResolvers.install()</code></td>
 <td><code>com.awakekt.awake.scene:runtime</code></td>
-<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_appearance</code>, <code>canvas_bar</code>, <code>canvas_bind</code>, <code>canvas_button</code>, <code>canvas_cluster</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow</code>, <code>canvas_follow_arrow</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_image</code>, <code>canvas_input</code>, <code>canvas_joystick</code>, <code>canvas_layout</code>, <code>canvas_look_area</code>, <code>canvas_particles</code>, <code>canvas_rect</code>, <code>canvas_scaler</code>, <code>canvas_stepper</code>, <code>canvas_sweep</code>, <code>canvas_text</code>, <code>canvas_text_field</code>, <code>canvas_tooltip</code>, <code>canvas_view</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>particle_emitter_2d</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>sprite</code>, <code>sprite_clips</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>texture_animation</code>, <code>texture_clips</code>, <code>tilemap</code>, <code>tone_mapping</code>, <code>world_text</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
+<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_appearance</code>, <code>canvas_bar</code>, <code>canvas_bind</code>, <code>canvas_button</code>, <code>canvas_cluster</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow</code>, <code>canvas_follow_arrow</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_image</code>, <code>canvas_input</code>, <code>canvas_joystick</code>, <code>canvas_layout</code>, <code>canvas_look_area</code>, <code>canvas_particles</code>, <code>canvas_rect</code>, <code>canvas_scaler</code>, <code>canvas_stepper</code>, <code>canvas_sweep</code>, <code>canvas_text</code>, <code>canvas_text_field</code>, <code>canvas_tooltip</code>, <code>canvas_view</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>particle_emitter_2d</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>sprite</code>, <code>sprite_clips</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>texture_animation</code>, <code>texture_clips</code>, <code>tilemap</code>, <code>tone_mapping</code>, <code>trail_renderer</code>, <code>world_text</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
 </tr>
 <tr>
 <td><code>SceneComponentRegistry.registerControls()</code></td>
@@ -6901,9 +6960,9 @@ Every <code>canvas_element</code> size, offset, font and image in its scope is m
 <tbody>
 <tr>
 <td><code>mode</code></td>
-<td><code>ScaleWithScreenSize</code> · <code>ConstantPixelSize</code> · <code>ConstantPhysicalSize</code></td>
+<td><code>ScaleWithScreenSize</code> · <code>ConstantPixelSize</code> · <code>ConstantPhysicalSize</code> · <code>DensityStep</code></td>
 <td><code>ScaleWithScreenSize</code></td>
-<td>Which rule works the scale out. <code>ScaleWithScreenSize</code> grows and shrinks the canvas with the screen; <code>ConstantPixelSize</code> keeps a unit a fixed number of the screen's pixels; <code>ConstantPhysicalSize</code> keeps a unit a fixed fraction of an inch.</td>
+<td>Which rule works the scale out. <code>ScaleWithScreenSize</code> grows and shrinks the canvas with the screen; <code>ConstantPixelSize</code> keeps a unit a fixed number of the screen's pixels; <code>ConstantPhysicalSize</code> keeps a unit a fixed fraction of an inch; <code>DensityStep</code> draws as many whole steps of screen pixels per unit as still leave the short side <code>referenceHeight</code> units.</td>
 </tr>
 <tr>
 <td><code>referenceWidth</code></td>
@@ -6915,7 +6974,7 @@ Every <code>canvas_element</code> size, offset, font and image in its scope is m
 <td><code>referenceHeight</code></td>
 <td>number</td>
 <td><code>720</code></td>
-<td>With <code>ScaleWithScreenSize</code>, the height the canvas is designed at, in units. Above 0.</td>
+<td>With <code>ScaleWithScreenSize</code>, the height the canvas is designed at, in units. With <code>DensityStep</code>, the fewest units the screen's short side keeps: <code>720</code> for a desktop HUD, <code>360</code> for a touch one. Above 0.</td>
 </tr>
 <tr>
 <td><code>match</code></td>
@@ -6927,7 +6986,7 @@ Every <code>canvas_element</code> size, offset, font and image in its scope is m
 <td><code>pixelsPerUnit</code></td>
 <td>number</td>
 <td><code>1</code></td>
-<td>With <code>ConstantPixelSize</code>, how many of the screen's pixels one unit covers: <code>1</code> for pixel-exact art. Above 0.</td>
+<td>With <code>ConstantPixelSize</code>, how many of the screen's pixels one unit covers: <code>1</code> for pixel-exact art. With <code>DensityStep</code>, the step the pixels per unit move in: <code>1</code> for whole pixels, <code>0.5</code> for halves. Above 0.</td>
 </tr>
 <tr>
 <td><code>referenceDpi</code></td>
@@ -9638,6 +9697,41 @@ now showing, so an entity should not also carry a <code>texture_animation</code>
 <td>number</td>
 <td><code>1</code></td>
 <td>Multiplies the lit scene before tone mapping. 2 is one stop brighter. Finite and above 0.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="trail_renderer"><code>trail_renderer</code></h2>
+<p>A trail drawn at its node: a swing's ribbon, a projectile's streak, a tyre mark. A strip of point
+pairs drawn unlit in the transparent pass, through the node's world matrix, from one GPU buffer
+sized once at <code>capacity</code>. The document says how it is drawn; a game's systems write its pairs, how
+many show and their colours every frame. <code>SceneTrailRenderer</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>capacity</code></td>
+<td>integer</td>
+<td><code>64</code></td>
+<td>The most point pairs it holds, 2 to 65536.</td>
+</tr>
+<tr>
+<td><code>blend</code></td>
+<td><code>Additive</code> · <code>Alpha</code></td>
+<td><code>Additive</code></td>
+<td><code>Additive</code> adds to what is behind it; <code>Alpha</code> covers it by its alpha.</td>
+</tr>
+<tr>
+<td><code>tint</code></td>
+<td>color</td>
+<td>white</td>
+<td>Multiplied into every vertex's own colour.</td>
 </tr>
 </tbody>
 </table>

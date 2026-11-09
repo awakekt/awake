@@ -1114,6 +1114,8 @@
       
         
       
+        
+      
     
     
     
@@ -1345,6 +1347,34 @@
     
   
     Particles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trails
   
 
     
@@ -5757,7 +5787,11 @@ screen, following its width, its height or a blend of the two by <code>match</co
 a unit <code>pixelsPerUnit</code> of the screen's pixels, for pixel art at any density, and
 <code>ConstantPhysicalSize</code> keeps it 1 / <code>referenceDpi</code> of an inch, at the screen's real dots per inch
 where the platform reports them: on Android and on a desktop monitor that reports its size. A
-browser and iOS report none, so there a unit is a dp. <code>minScale</code> and <code>maxScale</code> hold the result, and
+browser and iOS report none, so there a unit is a dp. <code>DensityStep</code> draws a unit as the largest
+whole number of <code>pixelsPerUnit</code>-pixel steps that still leaves the screen's short side
+<code>referenceHeight</code> units: on a 1080 pixel high screen against <code>720</code> that is one pixel per unit, on a
+2160 one three, and a phone held either way gets the same scale. A touch HUD, read from closer,
+usually sets <code>referenceHeight</code> to <code>360</code>. <code>minScale</code> and <code>maxScale</code> hold the result, and
 <code>playerScale</code>, which a settings menu sets, multiplies it after them.</p>
 <p>A screen rarely gives a round scale: a 1017 dp tall window against the default 720 reference gives
 1.4125. Text does not need one. Each text element's size is rounded to whole device pixels after the
