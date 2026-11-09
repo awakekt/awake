@@ -8,6 +8,6 @@ The public bundle provides only technical `awake-*` roles and skills. Studio Pro
 commercial operations, Studio/editor workflows, and creative personas belong to the private
 `awakekt/awake-studio-agent-skills` overlay under the `studio-*` namespace.
 
-The public Awake lockfile must never include a `maintained-studio` source. See
-[AI Collaboration](ai-collaboration.md) for installation, update, and product-tooling boundary
+The public Awake `.claude/settings.json` must never register `awake-studio-agent-skills`. See
+[AI Collaboration](ai-collaboration.md) for plugin registration and product-tooling boundary
 rules.

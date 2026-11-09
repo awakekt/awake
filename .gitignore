@@ -7,16 +7,9 @@ __pycache__/
 local.properties
 /.idea
 .claude/*
-# Shared Claude Code settings (the session-start skill sync); everything else here is local.
+# Shared Claude Code plugin marketplace settings; everything else here is local.
 !.claude/settings.json
-# Agent bundles are reproducible deployments, never Awake source. The only tracked file beneath
-# .agents is the immutable source declaration consumed by awake-agent-skills.
-.agents/vendor/
-.agents/skills/
-.agents/commands/
-.agents/agents/
-!.agents/
-!.agents/skills.lock.toml
+.agents/
 .artifacts/
 .codex/
 .gemini/

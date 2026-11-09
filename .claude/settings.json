@@ -1,16 +1,18 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/sync-agent-skills.sh\"",
-            "timeout": 180
-          }
-        ]
-      }
-    ]
+  "extraKnownMarketplaces": {
+    "awake-agent-skills": {
+      "source": { "source": "github", "repo": "awakekt/awake-agent-skills" }
+    },
+    "awake-game-agent-skills": {
+      "source": { "source": "github", "repo": "awakekt/awake-game-agent-skills" }
+    },
+    "kmp-agent-skills": {
+      "source": { "source": "github", "repo": "ronjunevaldoz/kmp-agent-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "awake-agent-skills@awake-agent-skills": true,
+    "awake-game-agent-skills@awake-game-agent-skills": true,
+    "kmp-agent-skills@kmp-agent-skills": true
   }
 }

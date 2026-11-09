@@ -27,7 +27,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
         check("agent runtime boundary") { agentRuntimeFailures() }.also(failures::addAll)
         check("maintained Python ownership") { pythonOwnershipFailures() }.also(failures::addAll)
         check("source headers and provenance") { sourceMetadataFailures() }.also(failures::addAll)
-        check("agent lock schema") { agentLockFailures() }.also(failures::addAll)
+        check("agent plugin settings") { agentPluginSettingsFailures() }.also(failures::addAll)
         check("detekt baselines") { detektBaselineFailures() }.also(failures::addAll)
         check("publication closure") { publicationClosureFailures() }.also(failures::addAll)
         check("publication inventory tables") { inventoryFailures() }.also(failures::addAll)
@@ -239,7 +239,6 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
                             name.endsWith(".yml") || name.endsWith(".yaml")
                     }
                 }.toList().flatMap { path ->
-                    if (relative(path) in AGENT_TOOLING) return@flatMap emptyList()
                     Files.readAllLines(path).mapIndexedNotNull { index, line ->
                         if (line.contains(".agents/")) "${relative(path)}:${index + 1}: product tooling references .agents" else null
                     }
@@ -290,38 +289,16 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
         return failures
     }
 
-    private fun agentLockFailures(): List<String> {
-        val lock = root.resolve(".agents/skills.lock.toml")
-        if (!Files.isRegularFile(lock)) return emptyList()
-        val text = Files.readString(lock)
+    private fun agentPluginSettingsFailures(): List<String> {
+        val settings = root.resolve(".claude/settings.json")
+        if (!Files.isRegularFile(settings)) return listOf(".claude/settings.json is missing")
+        val text = Files.readString(settings)
         val failures = mutableListOf<String>()
-        if (!Regex("(?m)^version\\s*=\\s*1\\s*$").containsMatchIn(text)) {
-            failures += ".agents/skills.lock.toml: version = 1 is required"
+        if ("extraKnownMarketplaces" !in text) {
+            failures += ".claude/settings.json: extraKnownMarketplaces is required"
         }
-        val sources = text.split("[[source]]").drop(1)
-        if (sources.isEmpty()) failures += ".agents/skills.lock.toml: at least one source is required"
-        sources.forEachIndexed { index, source ->
-            val prefix = ".agents/skills.lock.toml source #${index + 1}"
-            val required = listOf("id", "kind", "source", "tag", "commit", "archive_sha256", "license", "skill_root", "skills", "skills_target")
-            required.filterNot { Regex("(?m)^$it\\s*=").containsMatchIn(source) }
-                .forEach { failures += "$prefix: missing $it" }
-            val kind = Regex("(?m)^kind\\s*=\\s*[\"']([^\"']+)[\"']").find(source)?.groupValues?.get(1)
-            if (kind !in setOf("vendor", "maintained-core")) {
-                failures += "$prefix: public lockfile allows only vendor or maintained-core sources"
-            }
-            val target = Regex("(?m)^skills_target\\s*=\\s*[\"']([^\"']+)[\"']").find(source)?.groupValues?.get(1)
-            if (target != ".agents/skills") failures += "$prefix: invalid skill deployment target"
-            val commit = Regex("(?m)^commit\\s*=\\s*[\"']([^\"']+)[\"']").find(source)?.groupValues?.get(1)
-            if (commit == null || !commit.matches(Regex("[0-9a-fA-F]{40}"))) {
-                failures += "$prefix: source commit must be a full SHA"
-            }
-            val digest = Regex("(?m)^archive_sha256\\s*=\\s*[\"']([^\"']+)[\"']").find(source)?.groupValues?.get(1)
-            if (digest == null || !digest.matches(Regex("[0-9a-fA-F]{64}"))) {
-                failures += "$prefix: archive_sha256 must be a SHA-256 digest"
-            }
-            if (Regex("(?m)^commands\\s*=").containsMatchIn(source) &&
-                !Regex("(?m)^commands_target\\s*=\\s*[\"']\\.agents/commands[\"']").containsMatchIn(source)
-            ) failures += "$prefix: invalid command deployment target"
+        if ("studio-agent-skills" in text) {
+            failures += ".claude/settings.json: public Awake must not register studio-agent-skills"
         }
         return failures
     }
@@ -466,16 +443,6 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
 
     companion object {
         private val PLATFORM_IMPORTS = listOf("import platform.", "import kotlinx.cinterop")
-        /**
-         * Tooling that maintains the agent runtime itself, so it names `.agents/` by necessity.
-         * Nothing in the product build or CI depends on it.
-         */
-        private val AGENT_TOOLING = setOf(
-            "hooks/block-edit-vendored-skills.sh",
-            "hooks/sync-agent-skills.sh",
-            ".github/workflows/agent-skills-lock.yml",
-        )
-
         private val PRO_BOUNDARY_TOKENS = listOf(
             "awake-pro", "com.awakekt.awake.pro.", "com.awakekt.awake.studio.", "awake-pro-core-io",
         )

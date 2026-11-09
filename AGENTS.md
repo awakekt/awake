@@ -50,36 +50,38 @@ A played project needs no display: `awake:project` and `awake:project:runtime` r
 or window module, because the host passes its backends in, and a system that draws checks
 `hasRenderer`. `./gradlew verifyHeadlessRuntime` enforces the dependency half.
 
-## Agent skill bundles
+## Engine and Kotlin Multiplatform skills (plugins)
 
-Awake architecture lives in `docs/*`; agent execution guidance is installed from immutable sources,
-not tracked in this repository. Run the public bundle installer when the current environment has
-not yet deployed `.agents/skills`:
+Awake architecture lives in `docs/*`; agent execution guidance comes from three public plugin bundles
+registered in `.claude/settings.json` (`awake-agent-skills`, `awake-game-agent-skills`, and
+`kmp-agent-skills`), so Claude Code offers to install them when this repository opens. Studio
+repositories add the private `awake-studio-agent-skills` plugin under `studio-*` names; public Awake
+must not register or consume that overlay.
+
+| Work | Skill |
+|---|---|
+| Routing Awake Core maintenance to the right skill or persona | `awake` |
+| Render features, pipelines, materials, and `Renderer` contracts | `awake-render-pipeline`, `awake-render-headless-verification` |
+| Vulkan and WebGPU backends | `awake-render-vulkan`, `awake-render-webgpu` |
+| Physics contracts and Jolt native bridge (`awake:physics:api`, `awake:backend:jolt`) | `awake-physics-jolt` |
+| Awake UI layers, shadcn component authoring, icons, parity, and frame cost | `awake-ui-authoring`, `awake-shadcn-recipe-authoring`, `awake-shadcn-parity-workflow`, `awake-ui-icons`, `awake-ui-performance`, `awake-ui-verification` |
+| ECS, scenes, capabilities, app lifecycle, and retained Compose-shaped UI | `awake-ecs-authoring`, `awake-ecs-scene-runtime`, `awake-app-composition`, `awake-compose-authoring`, `awake-state-management`, `awake-core-math` |
+| Portable capabilities, editor contracts, framework boundaries, provenance, and milestones | `awake-platform-capability-design`, `awake-core-editor`, `awake-framework-boundary`, `awake-copyright-provenance`, `awake-milestone-workflow` |
+| KMP module boundaries, coroutines/Flow, `expect`/`actual`, JNI, publishing, and CI | `kmp-clean-architecture`, `kmp-coroutines-flow-patterns`, `kmp-expect-actual`, `kmp-jni-pro`, `kmp-library-publishing`, `kmp-ci-github-actions` |
+
+To install them without the prompt:
 
 ```bash
-git clone https://github.com/awakekt/awake-agent-skills .agents/vendor/awake-agent-skills-bootstrap
-python3 .agents/vendor/awake-agent-skills-bootstrap/scripts/install_consumer.py --project .
+claude plugin marketplace add awakekt/awake-agent-skills
+claude plugin install awake-agent-skills@awake-agent-skills
 ```
 
-It needs Python 3.11 or newer; on Windows, where `python3` is often the Microsoft Store placeholder,
-run it with `py -3`.
+Do the same for `awakekt/awake-game-agent-skills` and `ronjunevaldoz/kmp-agent-skills`. New or changed
+skills belong in their owning skills repository (`docs/skill-authoring.md` in `awake-agent-skills`),
+never copied into this repository.
 
-`.agents/skills.lock.toml` pins, by tag, commit and archive digest: the Core maintainer bundle
-[awake-agent-skills](https://github.com/awakekt/awake-agent-skills), the game-authoring bundle
-[awake-game-agent-skills](https://github.com/awakekt/awake-game-agent-skills) (both Apache-2.0,
-`awake-*`), and unmodified `kmp-*` vendor skills. Never edit deployed copies. Studio repositories
-add a private `maintained-studio` source using `studio-*` names; public Awake must not consume
-that overlay. The awake-agent-skills README maps every Awake repository and which bundles each
-pins; new or changed skills follow its `docs/skill-authoring.md`.
-
-Keeping them current is automatic once the repository hooks are on
-(`git config core.hooksPath .githooks`): `hooks/sync-agent-skills.sh` reinstalls when a pull or branch
-switch moves the lockfile, and Claude Code runs it at session start (`.claude/settings.json`). It
-syncs the main checkout, whose skills the app's worktrees under `.claude/worktrees/` read. The weekly
-**Agent skills lock** workflow opens a PR moving every pin to its newest release.
-
-Before touching `Renderer.kt`, a render-contract type, or a backend renderer, activate the pinned
-`awake-render-pipeline` guidance and read `docs/reference/render-hardware-interface.md`.
+Before touching `Renderer.kt`, a render-contract type, or a backend renderer, load
+`awake-render-pipeline` and read `docs/reference/render-hardware-interface.md`.
 
 **Pull Request & Release Invariants**:
 1. Every PR must be created with `--milestone "<milestone>"` (e.g. `gh pr create --milestone "v0.1.0-beta.1"`). Never create a PR without an assigned milestone.

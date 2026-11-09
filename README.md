@@ -12,8 +12,6 @@ Awake gives Kotlin applications a small, composable runtime for scenes, renderin
 retained UI. Author your application in Kotlin, keep platform code at the edge, and share the same
 game or tool code across desktop, mobile, and the web.
 
-> Awake is early alpha software. APIs and published artifacts can change between releases.
-
 ## Why Awake
 
 - **Kotlin Multiplatform** — share application and scene code across supported targets.
@@ -48,14 +46,17 @@ commands.
 
 ## Install
 
-Awake artifacts are published to Maven Central. Core modules share one version (latest
-`0.16.0`); the Vulkan backend has its own release train (latest `0.1.33`, built against Core
-`0.16.0`). Add only the modules your application uses to `gradle/libs.versions.toml`:
+Awake artifacts are published to Maven Central. Core modules share one release version, while the
+Vulkan backend has its own release train aligned to Core through `com.awakekt.awake:bom`; check
+[GitHub Releases](https://github.com/awakekt/awake/releases) for the newest versions. Before `1.0`,
+published JVM signatures remain binary-compatible across stable releases so existing consumers and
+backend releases continue to link when moving to a newer Core. Add only the modules your application
+uses to `gradle/libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "0.16.0"
-awake-vulkan = "0.1.33"
+awake = "0.43.0"
+awake-vulkan = "0.1.49"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
@@ -104,8 +105,9 @@ val game = app {
 }
 ```
 
-The [getting started guide](website/docs/getting-started.md) shows the desktop host and render-plan
-setup. The [engine showcase](samples/engine-showcase/README.md) is the complete working example.
+The [getting started guide](website/docs/get-started/installation.md) shows the desktop host and
+render-plan setup. The [engine showcase](samples/engine-showcase/README.md) is the complete working
+example.
 
 ## Choose the pieces you need
 
@@ -134,9 +136,8 @@ Awake is designed for Kotlin Multiplatform projects targeting:
 - WebAssembly/browser
 
 Desktop uses Vulkan (MoltenVK on macOS and iOS), Android uses Vulkan, and the browser uses
-WebGPU. Backend and platform availability is still expanding during the alpha releases. Use the examples
-and [release notes](https://github.com/awakekt/awake/releases) as the compatibility reference for
-the version you are using.
+WebGPU. Use the examples and [release notes](https://github.com/awakekt/awake/releases) as the
+compatibility reference for the version you are using.
 
 ## Application security
 
@@ -163,7 +164,7 @@ application dependencies.
 ## Documentation
 
 - [Online documentation](https://docs.awakekt.com/) and [live samples](https://demo.awakekt.com/)
-- [Getting started](website/docs/getting-started.md)
+- [Getting started](website/docs/get-started/installation.md)
 - [Documentation index](docs/README.md)
 - [Module guide](awake/README.md)
 - [Release process](docs/release-process.md)

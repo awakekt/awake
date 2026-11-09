@@ -38,7 +38,7 @@ Awake keeps project guidance in three layers:
 
 1. `docs/*` for canonical project truth
 2. agent entrypoints for startup hints
-3. the pinned `awake-agent-skills` release for execution guidance
+3. the public `awake-agent-skills`, `awake-game-agent-skills`, and `kmp-agent-skills` plugins for execution guidance
 
 Use them like this:
 
@@ -54,21 +54,17 @@ Use them like this:
     - canonical UI correctness gate for previews, semantic checks, truncation/content-fit rules,
       and animation/state proof requirements
 - `docs/reference/ai-collaboration.md`
-    - the cross-agent contract for product docs/tooling and independently pinned skill bundles
+    - the cross-agent contract for product docs/tooling and independently registered skill plugins
 - `docs/reference/agent-catalog.md`
     - the boundary and link to the public technical catalog; Studio roles are private overlays
 - `docs/reference/agent-starter-pack.md`
     - the reusable downstream starter shape for multi-agent repo setup
 - `docs/reference/agent-routing.md`
     - public technical routing and the boundary to Studio-only work
-- `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/AGENTS.md`
-    - thin startup files that point assistants at the canonical docs
-- installed `awake-agent-skills` agent personas
-    - immutable, task-specific guidance deployed from the reviewed public lock pin
-- installed `awake-agent-skills` commands
-    - immutable operational commands deployed from the reviewed public lock pin
-- installed `awake-agent-skills` templates
-    - reusable templates maintained by the public skills repository
+- `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/settings.json`
+    - thin startup files and plugin marketplace declarations that point assistants at the canonical docs and public skill bundles
+- `awake-agent-skills` and `awake-game-agent-skills` plugins
+    - task-specific skills, personas, commands, and templates maintained in the public skills repositories
 
 Rule of thumb:
 
