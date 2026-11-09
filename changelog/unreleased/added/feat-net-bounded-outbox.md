@@ -1,1 +1,0 @@
-- Added `AbortableTransport` and `DirectOutbox` to `awake:net:api`, and added module `awake:net:client-ktor` (`connectWebSocket`, `WebSockets.Config.boundOutgoingFrames`) for bounded-outbox client WebSocket transports with close-safe pre-kick delivery.
