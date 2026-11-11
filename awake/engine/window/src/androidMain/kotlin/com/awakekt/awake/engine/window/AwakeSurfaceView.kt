@@ -8,6 +8,7 @@ package com.awakekt.awake.engine.window
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.hardware.input.InputManager
+import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
@@ -19,6 +20,7 @@ import com.awakekt.awake.core.host.AndroidFrameLoop
 import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.core.input.AndroidSoftKeyboardBridge
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.input.awakeClipboardText
 import com.awakekt.awake.core.input.createAwakeInputConnection
 import com.awakekt.awake.core.input.releaseGamepadButtons
@@ -169,8 +171,23 @@ class AwakeSurfaceView(
     // A controller's d-pad is its d-pad buttons and the arrow keys both, so `or` passes it to each bridge.
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
         event.syncAwakeTextShortcut(input) { context.awakeClipboardText() } ||
+            handleTextKey(event) ||
             event.syncAwakeGamepadInput(down = true, input) or event.syncAwakeKeyInput(down = true, input) ||
             super.onKeyDown(keyCode, event)
+
+    private fun handleTextKey(event: KeyEvent): Boolean {
+        if (!input.textInputFocused || event.isFromSource(InputDevice.SOURCE_GAMEPAD)) return false
+        if (event.isCtrlPressed || event.isMetaPressed) return false
+        val edit = TextEditKeys[event.keyCode]
+        if (edit != null) {
+            input.pushEditAction(edit)
+            return true
+        }
+        val character = event.unicodeChar
+        if (!Character.isValidCodePoint(character) || Character.isISOControl(character)) return false
+        input.pushTypedText(String(Character.toChars(character)))
+        return true
+    }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
         event.syncAwakeGamepadInput(down = false, input) or event.syncAwakeKeyInput(down = false, input) ||
@@ -189,3 +206,16 @@ class AwakeSurfaceView(
 
     override fun surfaceRedrawNeeded(holder: SurfaceHolder) = Unit
 }
+
+private val TextEditKeys = mapOf(
+    KeyEvent.KEYCODE_DEL to TextEditAction.Backspace,
+    KeyEvent.KEYCODE_FORWARD_DEL to TextEditAction.Delete,
+    KeyEvent.KEYCODE_ENTER to TextEditAction.Enter,
+    KeyEvent.KEYCODE_NUMPAD_ENTER to TextEditAction.Enter,
+    KeyEvent.KEYCODE_DPAD_LEFT to TextEditAction.ArrowLeft,
+    KeyEvent.KEYCODE_DPAD_RIGHT to TextEditAction.ArrowRight,
+    KeyEvent.KEYCODE_DPAD_UP to TextEditAction.ArrowUp,
+    KeyEvent.KEYCODE_DPAD_DOWN to TextEditAction.ArrowDown,
+    KeyEvent.KEYCODE_MOVE_HOME to TextEditAction.Home,
+    KeyEvent.KEYCODE_MOVE_END to TextEditAction.End,
+)
