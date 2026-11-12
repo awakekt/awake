@@ -101,6 +101,8 @@ abstract class GraphicsEngine(
 
     @Volatile private var hostSystemGestureInsets: DisplayInsets = DisplayInsets.None
 
+    @Volatile private var hostIme: DisplayInsets = DisplayInsets.None
+
     @Volatile private var hostDpi: Float = 0f
 
     /** The current swapchain's width/height aspect ratio -- for a subclass computing a
@@ -172,6 +174,7 @@ abstract class GraphicsEngine(
                 safeArea = hostSafeArea,
                 dpi = hostDpi,
                 systemGestureInsets = hostSystemGestureInsets,
+                ime = hostIme,
             ),
         )
     }
@@ -216,6 +219,10 @@ abstract class GraphicsEngine(
 
     final override fun setSystemGestureInsets(insets: DisplayInsets) {
         hostSystemGestureInsets = insets.clamped()
+    }
+
+    final override fun setImeInsets(insets: DisplayInsets) {
+        hostIme = insets.clamped()
     }
 
     final override fun setDpi(dpi: Float) {

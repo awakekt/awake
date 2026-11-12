@@ -1,0 +1,1 @@
+- Compose: `Modifier.imePadding()`, `safeDrawingPadding()` and `systemBarsPadding()` keep content clear of the on-screen keyboard and the system bars. `AppFrame.ime` carries the keyboard's inset, and the Android host reports it. (#1495)

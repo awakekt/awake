@@ -29,6 +29,10 @@ import com.awakekt.awake.core.input.InputSnapshot
  *   platform can tell; 0 where it cannot, for a reader to fall back on 160 per dp.
  * @property systemGestureInsets Edges where the OS handles system gestures, in dp, independently
  *   of [safeArea]. Layouts can choose to avoid these edges too. None where the host reports none.
+ * @property ime What the on-screen keyboard covers of the window's edges, in dp: its height on
+ *   the bottom edge while it is shown. [DisplayInsets.None] where it is hidden, or the host
+ *   (a desktop window) has no on-screen keyboard or cannot tell. Separate from [safeArea], which
+ *   stays put as the keyboard comes and goes.
  */
 data class AppFrame(
     val delta: Float,
@@ -39,4 +43,17 @@ data class AppFrame(
     val safeArea: DisplayInsets = DisplayInsets.None,
     val dpi: Float = 0f,
     val systemGestureInsets: DisplayInsets = DisplayInsets.None,
-)
+    val ime: DisplayInsets = DisplayInsets.None,
+) {
+    /** The frame as it was before [ime]: kept so a caller built against that constructor still links. */
+    constructor(
+        delta: Float,
+        viewportWidth: Float,
+        viewportHeight: Float,
+        input: InputSnapshot,
+        density: Float,
+        safeArea: DisplayInsets,
+        dpi: Float,
+        systemGestureInsets: DisplayInsets,
+    ) : this(delta, viewportWidth, viewportHeight, input, density, safeArea, dpi, systemGestureInsets, DisplayInsets.None)
+}

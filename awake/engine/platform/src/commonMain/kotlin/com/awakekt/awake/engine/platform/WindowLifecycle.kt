@@ -97,6 +97,15 @@ interface WindowLifecycle {
      */
     fun setSafeArea(insets: DisplayInsets) = Unit
 
+    /**
+     * Sets what the on-screen keyboard covers, in dp: its height on the bottom edge while shown,
+     * [DisplayInsets.None] when hidden. Each frame after carries it as
+     * [com.awakekt.awake.engine.platform.lifecycle.AppFrame.ime]. A host without one never calls it.
+     *
+     * @param insets The covered edges, in dp from each.
+     */
+    fun setImeInsets(insets: DisplayInsets) = Unit
+
     /** Reports the system-gesture edges separately from the visual safe area, in dp. */
     fun setSystemGestureInsets(insets: DisplayInsets) = Unit
 
