@@ -79,6 +79,12 @@ class ComposeHost(
             root.layoutDirection = value
         }
 
+    /**
+     * What covers the window's edges, which composition sees through [LocalWindowInsets] on the
+     * next frame. A host sets it when the platform reports a change, not every frame.
+     */
+    var windowInsets: WindowInsets = WindowInsets.None
+
     /** The root layout node. It fills the viewport, and the composed content becomes its children. */
     val root: LayoutNode = LayoutNode(RootMeasurePolicy, density, fontScale, layoutDirection)
     private val composition = LayoutComposition(root)
@@ -236,6 +242,7 @@ class ComposeHost(
                 LocalFontScale provides fontScale,
                 LocalFrameClock provides frameClock,
                 LocalViewportSize provides ViewportSize(input.viewportWidth, input.viewportHeight),
+                LocalWindowInsets provides windowInsets,
                 LocalPointerModifiers provides input.pointerModifiers,
                 com.awakekt.awake.compose.ui.unit.LocalLayoutDirection provides layoutDirection,
                 content = content,

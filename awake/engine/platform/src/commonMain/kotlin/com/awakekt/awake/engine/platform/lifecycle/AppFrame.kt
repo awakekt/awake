@@ -29,6 +29,10 @@ import com.awakekt.awake.core.input.InputSnapshot
  *   platform can tell; 0 where it cannot, for a reader to fall back on 160 per dp.
  * @property systemGestureInsets Edges where the OS handles system gestures, in dp, independently
  *   of [safeArea]. Layouts can choose to avoid these edges too. None where the host reports none.
+ * @property ime What the on-screen keyboard covers of the window's edges, in dp: its height on
+ *   the bottom edge while it is shown. [DisplayInsets.None] where it is hidden, or the host
+ *   (a desktop window) has no on-screen keyboard or cannot tell. Separate from [safeArea], which
+ *   stays put as the keyboard comes and goes.
  */
 data class AppFrame(
     val delta: Float,
@@ -39,4 +43,31 @@ data class AppFrame(
     val safeArea: DisplayInsets = DisplayInsets.None,
     val dpi: Float = 0f,
     val systemGestureInsets: DisplayInsets = DisplayInsets.None,
-)
+    val ime: DisplayInsets = DisplayInsets.None,
+) {
+    /** The constructor as released before [ime], kept for callers compiled against it. */
+    @Deprecated("Use the constructor that takes ime.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        delta: Float,
+        viewportWidth: Float,
+        viewportHeight: Float,
+        input: InputSnapshot,
+        density: Float = 1f,
+        safeArea: DisplayInsets = DisplayInsets.None,
+        dpi: Float = 0f,
+        systemGestureInsets: DisplayInsets = DisplayInsets.None,
+    ) : this(delta, viewportWidth, viewportHeight, input, density, safeArea, dpi, systemGestureInsets, DisplayInsets.None)
+
+    /** `copy` as released before [ime]; the copy keeps this frame's [ime]. */
+    @Deprecated("Use the copy that takes ime.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        delta: Float = this.delta,
+        viewportWidth: Float = this.viewportWidth,
+        viewportHeight: Float = this.viewportHeight,
+        input: InputSnapshot = this.input,
+        density: Float = this.density,
+        safeArea: DisplayInsets = this.safeArea,
+        dpi: Float = this.dpi,
+        systemGestureInsets: DisplayInsets = this.systemGestureInsets,
+    ): AppFrame = copy(delta, viewportWidth, viewportHeight, input, density, safeArea, dpi, systemGestureInsets, ime)
+}

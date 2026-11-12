@@ -123,6 +123,25 @@ class GraphicsEngineSurfaceTest {
         assertEquals(DisplayInsets(top = 24f), frames[2].safeArea)
     }
 
+    @Test
+    fun theKeyboardInsetReachesFramesApartFromTheSafeArea() {
+        val frames = mutableListOf<AppFrame>()
+        val app = AppSpecBuilder().apply { render { frames += it } }.build().createLifecycle()
+        val engine = RecordingEngine(app, mutableListOf())
+        engine.create("surface")
+        engine.update(0f)
+        engine.setSafeArea(DisplayInsets(top = 24f))
+        engine.setImeInsets(DisplayInsets(bottom = 300f, left = -2f))
+        engine.update(0f)
+        engine.setImeInsets(DisplayInsets.None)
+        engine.update(0f)
+
+        assertEquals(DisplayInsets.None, frames[0].ime, "a host without a keyboard reports none")
+        assertEquals(DisplayInsets(bottom = 300f), frames[1].ime, "a negative side is held at 0")
+        assertEquals(DisplayInsets(top = 24f), frames[1].safeArea, "the safe area is untouched by the keyboard")
+        assertEquals(DisplayInsets.None, frames[2].ime, "hidden again")
+    }
+
     private class RecordingEngine(
         app: com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle,
         private val events: MutableList<String>,

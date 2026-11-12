@@ -604,6 +604,12 @@ public final class com/awakekt/awake/compose/foundation/layout/SpacerKt {
 	public static synthetic fun Spacer$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/compose/foundation/layout/WindowInsetsPaddingKt {
+	public static final fun imePadding (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun safeDrawingPadding (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun systemBarsPadding (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
 public final class com/awakekt/awake/compose/foundation/lazy/LazyColumnKt {
 	public static final fun LazyColumn (Lcom/awakekt/awake/compose/runtime/Composer;ILcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;)V
 	public static synthetic fun LazyColumn$default (Lcom/awakekt/awake/compose/runtime/Composer;ILcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V

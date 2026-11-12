@@ -7,8 +7,10 @@ package com.awakekt.awake.engine.compose
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.platform.ComposeHost
+import com.awakekt.awake.compose.ui.platform.EdgeInsets
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.platform.InputOwnership
+import com.awakekt.awake.compose.ui.platform.WindowInsets
 import com.awakekt.awake.compose.ui.platform.toFrameInput
 import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.Input
@@ -20,6 +22,7 @@ import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.error.AppCoroutineScope
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
+import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.renderer.Renderer
 
 /** Composable function signature for top-level application UI content. */
@@ -101,8 +104,22 @@ class ComposeAppRuntime internal constructor(
         this.renderer = renderer
     }
 
+    private var insetsSafeArea = DisplayInsets.None
+    private var insetsIme = DisplayInsets.None
+
+    // Rebuilt only when the platform reports a change, so a steady frame allocates nothing here.
+    private fun updateInsets(frame: AppFrame) {
+        if (frame.safeArea == insetsSafeArea && frame.ime == insetsIme) return
+        insetsSafeArea = frame.safeArea
+        insetsIme = frame.ime
+        host.windowInsets = WindowInsets(frame.safeArea.toEdges(), frame.ime.toEdges())
+    }
+
+    private fun DisplayInsets.toEdges() = EdgeInsets(left, top, right, bottom)
+
     internal fun render(frame: AppFrame) {
         host.density = frame.density
+        updateInsets(frame)
         val output = host.frame(
             frame.input.toFrameInput(
                 viewportWidth = frame.viewportWidth.toInt(),

@@ -135,6 +135,25 @@ fun OverlappingLayers() {
 }
 ```
 
+### 5. Keyboard and Safe-Area Insets
+The host reports what covers the window's edges (`AppFrame.safeArea`, and `AppFrame.ime` for the
+on-screen keyboard); `ComposeAppModule` turns it into `ComposeHost.windowInsets`, which content
+reads as `LocalWindowInsets`. Three modifiers, named as in Jetpack Compose, turn it into padding:
+```kotlin
+context(Composer)
+fun ChatScreen() {
+    // Lifts the whole column clear of the keyboard; bars and cutouts stay clear too.
+    Column(Modifier.fillMaxSize().safeDrawingPadding()) { /* messages, input */ }
+}
+```
+- `safeDrawingPadding()`: system bars, cutouts and keyboard (the larger per side). The usual choice.
+- `systemBarsPadding()`: bars, cutouts and rounded corners only.
+- `imePadding()`: the keyboard only. Use it or `safeDrawingPadding()`, not stacked with
+  `systemBarsPadding()`: the keyboard's height already includes the bar behind it.
+
+Insets are dp, so they scale with density. A host with no on-screen keyboard (desktop) reports none
+and the modifiers add no node. Padding does not scroll a focused field into view.
+
 ---
 
 ## Detailed Specifications
