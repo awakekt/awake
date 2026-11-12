@@ -29,6 +29,12 @@ interface GameFeature<P, M : Any> {
     /** Invoked once per server tick on the server tick thread with [delta] seconds elapsed. */
     fun onTick(delta: Float) = Unit
 
+    /**
+     * Invoked once per server tick on the server tick thread, after every feature's [onTick] and before
+     * the host's snapshots for that tick are built or sent: the place to settle state a snapshot reads.
+     */
+    fun beforeSnapshot() = Unit
+
     /** Invoked when generating own-state diffs or synchronization messages for [player]. */
     fun ownState(player: P) = Unit
 
@@ -48,9 +54,10 @@ fun interface FeatureTickListener {
  */
 class FeatureScope<P, M : Any>(val id: String) {
     private val handlers = HashMap<KClass<out M>, (P, M) -> Unit>()
-    private var joinHandler: ((P) -> Unit)? = null
-    private var leaveHandler: ((P) -> Unit)? = null
+    private val joinHandlers = ArrayList<(P) -> Unit>()
+    private val leaveHandlers = ArrayList<(P) -> Unit>()
     private var tickHandler: FeatureTickListener? = null
+    private var beforeSnapshotHandler: (() -> Unit)? = null
     private var ownStateHandler: ((P) -> Unit)? = null
 
     /**
@@ -75,19 +82,24 @@ class FeatureScope<P, M : Any>(val id: String) {
         handlers[messageClass] = { player, message -> handler(player, message as T) }
     }
 
-    /** Sets the hook invoked when a player joins. */
+    /** Adds a hook invoked when a player joins; hooks run in registration order. */
     fun onJoin(action: (player: P) -> Unit) {
-        joinHandler = action
+        joinHandlers.add(action)
     }
 
-    /** Sets the hook invoked when a player leaves. */
+    /** Adds a hook invoked when a player leaves; hooks run in registration order. */
     fun onLeave(action: (player: P) -> Unit) {
-        leaveHandler = action
+        leaveHandlers.add(action)
     }
 
     /** Sets the hook invoked once per server tick. */
     fun onTick(action: FeatureTickListener) {
         tickHandler = action
+    }
+
+    /** Sets the hook invoked each tick after every feature's tick hook and before snapshots are built. */
+    fun beforeSnapshot(action: () -> Unit) {
+        beforeSnapshotHandler = action
     }
 
     /** Sets the hook invoked to generate own-state updates for a player. */
@@ -98,17 +110,19 @@ class FeatureScope<P, M : Any>(val id: String) {
     /** Builds the configured [GameFeature]. */
     fun build(): GameFeature<P, M> {
         val builtRouter = MessageRouter.from(handlers)
-        val j = joinHandler
-        val l = leaveHandler
+        val j = joinHandlers.toList()
+        val l = leaveHandlers.toList()
         val t = tickHandler
+        val b = beforeSnapshotHandler
         val o = ownStateHandler
         val featureId = id
 
         return object : GameFeature<P, M> {
             override val id: String = featureId
-            override fun onJoin(player: P) { j?.invoke(player) }
-            override fun onLeave(player: P) { l?.invoke(player) }
+            override fun onJoin(player: P) { for (i in j.indices) j[i](player) }
+            override fun onLeave(player: P) { for (i in l.indices) l[i](player) }
             override fun onTick(delta: Float) { t?.onTick(delta) }
+            override fun beforeSnapshot() { b?.invoke() }
             override fun ownState(player: P) { o?.invoke(player) }
             override fun router(): MessageRouter<P, M> = builtRouter
         }

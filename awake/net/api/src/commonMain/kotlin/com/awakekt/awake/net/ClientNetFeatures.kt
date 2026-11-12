@@ -11,9 +11,9 @@ import kotlin.reflect.KClass
  * Aggregates installed [ClientNetFeature] instances and manages their inbound O(1) message routing,
  * outbound request flushing, and connection lifecycle dispatch.
  *
- * All steady-state loops ([flushOutbound], [onConnected], [onDisconnected]) iterate directly over flat
- * arrays in registration order without allocating iterators, and [route] dispatches through a single
- * combined [MessageRouter].
+ * All steady-state loops ([flushOutbound], [onConnected], [onDisconnected], [onEntityDisappear], [onReset])
+ * iterate directly over flat arrays in registration order without allocating iterators, and [route]
+ * dispatches through a single combined [MessageRouter].
  */
 class ClientNetFeatures<C, M : Any>(
     installedFeatures: List<ClientNetFeature<C, M>> = emptyList(),
@@ -22,6 +22,8 @@ class ClientNetFeatures<C, M : Any>(
     private val connectedArray: Array<ClientNetFeature<C, M>>
     private val disconnectedArray: Array<ClientNetFeature<C, M>>
     private val flushArray: Array<ClientNetFeature<C, M>>
+    private val entityDisappearArray: Array<ClientNetFeature<C, M>>
+    private val resetArray: Array<ClientNetFeature<C, M>>
 
     /** Immutable set of IDs of all installed features, in registration order. */
     val featureIds: Set<String>
@@ -36,6 +38,8 @@ class ClientNetFeatures<C, M : Any>(
         val connected = ArrayList<ClientNetFeature<C, M>>(installedFeatures.size)
         val disconnected = ArrayList<ClientNetFeature<C, M>>(installedFeatures.size)
         val flush = ArrayList<ClientNetFeature<C, M>>(installedFeatures.size)
+        val entityDisappear = ArrayList<ClientNetFeature<C, M>>(installedFeatures.size)
+        val reset = ArrayList<ClientNetFeature<C, M>>(installedFeatures.size)
 
         for (feature in installedFeatures) {
             require(feature.id.isNotBlank()) { "Client net feature ID must not be blank." }
@@ -62,6 +66,12 @@ class ClientNetFeatures<C, M : Any>(
             if (feature !is BuiltClientNetFeature || feature.hasFlushOutboundHandler) {
                 flush.add(feature)
             }
+            if (feature !is BuiltClientNetFeature || feature.hasEntityDisappearHandler) {
+                entityDisappear.add(feature)
+            }
+            if (feature !is BuiltClientNetFeature || feature.hasResetHandler) {
+                reset.add(feature)
+            }
         }
 
         featureIds = ids.toSet()
@@ -73,6 +83,8 @@ class ClientNetFeatures<C, M : Any>(
         connectedArray = Array(connected.size) { connected[it] }
         disconnectedArray = Array(disconnected.size) { disconnected[it] }
         flushArray = Array(flush.size) { flush[it] }
+        entityDisappearArray = Array(entityDisappear.size) { entityDisappear[it] }
+        resetArray = Array(reset.size) { reset[it] }
     }
 
     /** Number of installed features. */
@@ -141,6 +153,28 @@ class ClientNetFeatures<C, M : Any>(
         val count = array.size
         while (i < count) {
             array[i].onDisconnected(context)
+            i++
+        }
+    }
+
+    /** Invokes [ClientNetFeature.onEntityDisappear] for [entity] on all installed features, in order. */
+    fun onEntityDisappear(context: C, entity: NetId) {
+        val array = entityDisappearArray
+        var i = 0
+        val count = array.size
+        while (i < count) {
+            array[i].onEntityDisappear(context, entity)
+            i++
+        }
+    }
+
+    /** Invokes [ClientNetFeature.onReset] on all installed features in registration order. */
+    fun onReset(context: C) {
+        val array = resetArray
+        var i = 0
+        val count = array.size
+        while (i < count) {
+            array[i].onReset(context)
             i++
         }
     }

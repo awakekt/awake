@@ -59,6 +59,24 @@ class Features<P, M : Any>(installedFeatures: List<GameFeature<P, M>> = emptyLis
         return Features(merged)
     }
 
+    /**
+     * Returns the first installed feature that is an instance of [type], or `null` when none is.
+     *
+     * A feature built with [gameFeature] has no type of its own; look up features written as classes.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : GameFeature<P, M>> featureOf(type: KClass<T>): T? {
+        val array = featureArray
+        for (i in array.indices) {
+            val feature = array[i]
+            if (type.isInstance(feature)) return feature as T
+        }
+        return null
+    }
+
+    /** Returns the first installed feature of type [T], or `null` when none is. */
+    inline fun <reified T : GameFeature<P, M>> featureOf(): T? = featureOf(T::class)
+
     /** Whether any installed feature handles [message]. */
     fun handles(message: M): Boolean = routers.containsKey(message::class)
 
@@ -102,6 +120,20 @@ class Features<P, M : Any>(installedFeatures: List<GameFeature<P, M>> = emptyLis
         val size = array.size
         while (i < size) {
             array[i].onTick(delta)
+            i++
+        }
+    }
+
+    /**
+     * Dispatches [GameFeature.beforeSnapshot] to all installed features in registration order. The host
+     * calls it each tick after [ticked]; call it yourself only when you step features without a host.
+     */
+    fun beforeSnapshot() {
+        val array = featureArray
+        var i = 0
+        val size = array.size
+        while (i < size) {
+            array[i].beforeSnapshot()
             i++
         }
     }

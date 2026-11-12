@@ -317,6 +317,7 @@ class ServerHost<P : HostPlayer, M : Any>(
         try {
             drainCommands()
             features.ticked(delta)
+            features.beforeSnapshot()
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
