@@ -3307,6 +3307,13 @@ is built when it is first drawn instead. Closing a prewarm before it is ready, o
 down, stops it, and <code>await</code> then throws <code>CancellationException</code>. A ready prewarm still open at teardown
 held its assets for the whole scene, so teardown logs a warning naming them. Expand prefab links first
 (<code>withPrefabs</code>): <code>assetReferences</code> lists a link it can't follow in <code>prefabLinks</code>.</p>
+<p>Systems in a project played by <code>runProject</code> can call <code>services.prewarm(node)</code> during a frame-thread
+update. Close the hold when the system no longer needs it or when the system closes.
+Check <code>services.canPrewarm</code> when the same system also runs in headless hosts. To hold the
+assets of multiple prefabs together, combine their references with
+<code>firstPrefab.assetReferences() + secondPrefab.assetReferences()</code> and pass the result to
+<code>services.prewarm(references)</code>. Hosts that run their own systems can install callbacks with
+<code>withPrewarmer</code>. Check <code>services.canPrewarmAssets</code> for batch support.</p>
 <p>A glTF model the scene's resolver hasn't loaded is read and decoded off the frame thread in the
 session's <code>coroutineScope</code>, then built like the rest. Prewarms and a project <code>spawn</code> of the same model
 share one load, and closing every one of them, or tearing the scene down, cancels it. In a played
