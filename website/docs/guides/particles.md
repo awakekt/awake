@@ -72,6 +72,16 @@ not fight it for depth. In Kotlin, set `ParticleVisual(facing = ParticleFacing.F
 comes from the `Transform` of the entity carrying the `ParticleEmitter`, or is the world's ground
 plane when that entity has none.
 
+## Stand particles upright in the emitter's frame
+
+`facing: "Upright"` stands each quad in the plane of its node's own X and Y axes, facing along the
+node's Z, with the texture's top toward the node's +Y. Its spawn ring (with `orientSpawnRing`,
+`inheritOrientation` or `space` `Local`) lies in the node's XZ plane, so the sprites stand
+perpendicular to the ring, and a node turned by pitch or roll tilts the ring, the motion and the
+sprites together. Effects authored for a legacy format whose fixed sprites stand on a tilted ring
+read this way. In Kotlin, set `ParticleVisual(facing = ParticleFacing.Upright)`; without a
+`Transform` on the entity, the quads stand in the world's XY plane.
+
 ## Gravity, fading, bouncing and streaks from a scene document
 
 These options are fields of `particle_emitter` too, with the same names and defaults as the Kotlin
@@ -100,7 +110,8 @@ bounce on the floor:
 `acceleration` is in world space, so gravity stays down however the node is turned; set
 `inheritOrientation` to turn the spawn ring and `velocity` with the node instead, so an emitter aimed
 along a direction fires that way. Set `orientSpawnRing` to turn the spawn ring alone, so it lies in the
-plane a `Flat` emitter's sprites lie in and tilts with them while `velocity` stays in world space: a
+plane a `Flat` emitter's sprites lie in (an `Upright` emitter's sprites stand perpendicular to it)
+and tilts with them while `velocity` stays in world space: a
 circle on a sloped wall whose sparks still rise straight up. `radialSpeed` still pushes horizontally; set
 `radialInRingPlane` to push outward in the turned ring's own plane instead, for a ripple that spreads
 across a sloped surface. `ground` takes a flat floor at `groundY` and any number of
@@ -222,7 +233,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `radialSpeed` | `0` | Adds this speed horizontally away from `origin`, through the spawn point on the `spawnRadius` ring (any direction when the radius is 0). Ignored with `convergeToOrigin`. |
 | `acceleration` | `(0, 0, 0)` | A constant world-space acceleration in units per second squared, added to every live particle's velocity each step. `(0, -9.8, 0)` is gravity. A settled particle ignores it. |
 | `inheritOrientation` | `false` | Turns the spawn ring and `baseVelocity` (so also a cone's axis and the jitter axes) by the emitter entity's `Transform` rotation, so an emitter turned to face a direction fires that way. Scale is ignored. `acceleration`, `radialSpeed` and `convergeToOrigin` stay in world axes. |
-| `orientSpawnRing` | `false` | Turns the spawn ring alone by the emitter entity's rotation, so it lies in the plane its `Flat` quads lie in, while `baseVelocity` and every other vector stay in world axes. Adds nothing beside `inheritOrientation` or in `ParticleSpace.Local`. |
+| `orientSpawnRing` | `false` | Turns the spawn ring alone by the emitter entity's rotation, so it lies in the plane its `Flat` quads lie in and its `Upright` quads stand perpendicular to, while `baseVelocity` and every other vector stay in world axes. Adds nothing beside `inheritOrientation` or in `ParticleSpace.Local`. |
 | `radialInRingPlane` | `false` | Pushes `radialSpeed` outward in the turned spawn ring's own plane instead of horizontally, whenever `orientSpawnRing` or `inheritOrientation` turns the ring: an outward ripple across a sloped surface. Adds nothing while the ring is not turned, or in `ParticleSpace.Local`. |
 | `space` | `ParticleSpace.World` | `World` keeps each particle where it spawned. `Local` keeps particles relative to the emitter entity's frame (its `EmitterPlacement` position and matrix, scale included) and draws them through it every frame. See [Particles that move with the node](#particles-that-move-with-the-node). |
 
@@ -238,7 +249,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `stretchFactor` | `0.05` | World units of stretch per unit of speed. |
 | `endScale` | none | Quad size at death, reached linearly from `scale`. None keeps `scale`. |
 | `additive` | `false` | Adds each particle's colour to what is behind it, for glows and sparks. Needs the particle pipeline built with `buildAdditive = true`; without it the particles blend. |
-| `facing` | `Camera` | `ParticleFacing.Flat` lays each quad in the emitter entity's horizontal plane instead of turning it to the camera. |
+| `facing` | `Camera` | `ParticleFacing.Flat` lays each quad in the emitter entity's horizontal plane instead of turning it to the camera; `ParticleFacing.Upright` stands it in the entity's XY plane, texture top toward its +Y. |
 | `alphaCurve` | none | A `ParticleAlphaCurve(fadeInEnd, fadeOutStart)`: opacity fades in until `fadeInEnd`, holds `startAlpha` until `fadeOutStart`, then fades out, both as fractions of the lifetime. None is the plain linear fade from `startAlpha` to 0. |
 | `spin` | none | A `ParticleSpin(minDegreesPerSecond, maxDegreesPerSecond, randomStartAngle)`: each particle draws its own turn rate between the two when it spawns and turns its quad in its own plane at it, counter-clockwise as seen for a positive rate. `randomStartAngle` also starts each at a random angle. A stretched particle points along its motion and ignores it, and a particle that has landed stops turning. None never turns a particle. |
 

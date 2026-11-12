@@ -228,6 +228,7 @@ public final class com/awakekt/awake/particles/ParticleEmitterKt {
 public final class com/awakekt/awake/particles/ParticleFacing : java/lang/Enum {
 	public static final field Camera Lcom/awakekt/awake/particles/ParticleFacing;
 	public static final field Flat Lcom/awakekt/awake/particles/ParticleFacing;
+	public static final field Upright Lcom/awakekt/awake/particles/ParticleFacing;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/particles/ParticleFacing;
 	public static fun values ()[Lcom/awakekt/awake/particles/ParticleFacing;

@@ -101,6 +101,12 @@ fun writeParticleEmitterEvidence(renderer: Renderer, size: Int, write: (String, 
         size,
         renderer.renderTiltedSpawnRingScene(size),
     )
+    write(
+        "scene-particles-upright-ring",
+        "An upright emitter rolled a quarter: its spawn ring stands edge on, its sprites stand facing the camera",
+        size,
+        renderer.renderUprightSpawnRingScene(size, rolled = true),
+    )
 }
 
 /** Where the scenario's emitter starts, in world units: the left of the frame. */
