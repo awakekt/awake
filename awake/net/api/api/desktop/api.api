@@ -2,11 +2,17 @@ public abstract interface class com/awakekt/awake/net/AbortableTransport : com/a
 	public abstract fun abort ()V
 }
 
+public abstract interface class com/awakekt/awake/net/ClientEntityDisappearListener {
+	public abstract fun onEntityDisappear-3Mx35h0 (Ljava/lang/Object;J)V
+}
+
 public abstract interface class com/awakekt/awake/net/ClientNetFeature {
 	public fun flushOutbound (Ljava/lang/Object;)V
 	public abstract fun getId ()Ljava/lang/String;
 	public fun onConnected (Ljava/lang/Object;)V
 	public fun onDisconnected (Ljava/lang/Object;)V
+	public fun onEntityDisappear-3Mx35h0 (Ljava/lang/Object;J)V
+	public fun onReset (Ljava/lang/Object;)V
 	public abstract fun router ()Lcom/awakekt/awake/net/MessageRouter;
 }
 
@@ -14,6 +20,8 @@ public final class com/awakekt/awake/net/ClientNetFeature$DefaultImpls {
 	public static fun flushOutbound (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
 	public static fun onConnected (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
 	public static fun onDisconnected (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
+	public static fun onEntityDisappear-3Mx35h0 (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;J)V
+	public static fun onReset (Lcom/awakekt/awake/net/ClientNetFeature;Ljava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/net/ClientNetFeatureKt {
@@ -28,6 +36,8 @@ public final class com/awakekt/awake/net/ClientNetFeatureScope {
 	public final fun on (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
 	public final fun onConnected (Lkotlin/jvm/functions/Function1;)V
 	public final fun onDisconnected (Lkotlin/jvm/functions/Function1;)V
+	public final fun onEntityDisappear (Lcom/awakekt/awake/net/ClientEntityDisappearListener;)V
+	public final fun onReset (Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class com/awakekt/awake/net/ClientNetFeatures {
@@ -45,6 +55,8 @@ public final class com/awakekt/awake/net/ClientNetFeatures {
 	public final fun install ([Lcom/awakekt/awake/net/ClientNetFeature;)Lcom/awakekt/awake/net/ClientNetFeatures;
 	public final fun onConnected (Ljava/lang/Object;)V
 	public final fun onDisconnected (Ljava/lang/Object;)V
+	public final fun onEntityDisappear-3Mx35h0 (Ljava/lang/Object;J)V
+	public final fun onReset (Ljava/lang/Object;)V
 	public final fun route (Ljava/lang/Object;Ljava/lang/Object;)Z
 }
 
