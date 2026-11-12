@@ -1,0 +1,1 @@
+- The browser host reports the on-screen keyboard's inset from `visualViewport` and the iOS host from its keyboard frame notifications, so `imePadding()` and `safeDrawingPadding()` follow the keyboard there too. (#1495)

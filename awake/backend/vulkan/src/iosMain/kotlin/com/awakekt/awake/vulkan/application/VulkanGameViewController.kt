@@ -30,6 +30,7 @@ fun makeVulkanGameViewController(
         onPause = { application.pause() },
         onResume = { application.resume() },
         onSafeArea = { insets -> application.setSafeArea(insets) },
+        onKeyboard = { insets -> application.setImeInsets(insets) },
     )
     return controller
 }

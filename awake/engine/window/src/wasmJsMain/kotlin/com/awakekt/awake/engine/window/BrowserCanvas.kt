@@ -301,6 +301,7 @@ fun runBrowserCanvas(
             )
             initBackend(canvas, initialSize.first, initialSize.second)
 
+            val imeInset = BrowserImeInset(canvas, lifecycle::setImeInsets)
             var lastFrameTime = window.performance.now()
             fun frame(time: Double): Boolean {
                 if (isStopped()) return false
@@ -311,6 +312,7 @@ fun runBrowserCanvas(
                     // A changed cap, or a device ratio that moved without a resize event.
                     if (currentCanvasPixelRatio(maxPixelRatio()) != pixelRatio) resizeCanvas()
                     pollBrowserGamepad(input)
+                    imeInset.sync()
                     lifecycle.update(deltaSeconds)
                     textInput.sync()
                     // An image the app asks for wins over the shape, as on the desktop host.
