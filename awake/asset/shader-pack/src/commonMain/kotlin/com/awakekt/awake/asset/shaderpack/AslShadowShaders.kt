@@ -128,7 +128,7 @@ private fun maskedTexturedDepth(instanced: Boolean): AslShaderDefinition =
             group = BindingLayout.Standard.slot(BindingSemantic.Material),
             binding = 0,
         )
-        val handles = u.fieldsFrom(com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.PbrTextured)
+        val handles = u.fieldsFrom(com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.PbrTexturedDraw)
         val model = handles.value("model")
         val pbrFactors = handles.value("pbrFactors")
         val baseColorFactor = handles.value("baseColorFactor")
@@ -263,7 +263,7 @@ private fun litShadow(
         val animatedNormal = normalize(vec3(-dX, 1f.lit, -dZ))
         val finalNormal = select(localNormal, animatedNormal, u.vertexAnimation.x gt 0f.lit)
         val model = if (instanced) instanceModelMatrix(startLocation = if (skinned) 5 else 3) else u.model
-        out.position set (u.mvp * if (instanced) model * vec4(animatedPosition, 1f.lit) else vec4(animatedPosition, 1f.lit))
+        out.position set (u.viewProjection * (model * vec4(animatedPosition, 1f.lit)))
         color set instanceTintedColor(ins.input(VertexSemantic.Color), instanceTints, instance)
         normal set (model * vec4(finalNormal, 0f.lit)).xyz
         worldPos set (model * vec4(animatedPosition, 1f.lit)).xyz

@@ -21,6 +21,7 @@ import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
+import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 
 /** Prepares one generic draw through WebGPU's existing resource preparation code. */
 internal class WebGpuDrawPreparer(
@@ -38,6 +39,9 @@ internal class WebGpuDrawPreparer(
     private val frameInputs = FrameUniformInputs()
     private var frameVersion = NO_FRAME_VERSION
 
+    /** Whether this batch's wireframe-overlay edges have their frame block staged yet. */
+    private var edgeFrameStaged = false
+
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelines
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
@@ -52,6 +56,7 @@ internal class WebGpuDrawPreparer(
     ): GpuResolvedDraw? {
         if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
+        if (edgePipeline != null) stageEdgeFrame(context)
         val primary = PrimaryPipelineBinding(
             renderer.renderPipeline.handle,
             renderer.wireframe && renderer.wireframeRenderPipeline != null,
@@ -99,7 +104,7 @@ internal class WebGpuDrawPreparer(
                 depthFeature.materialBinding(depthPipeline, sourceMaterial, it)
             }
         } else {
-            draw.uniformBuffer?.let { depthFeature.materialBinding(depthPipeline, it) }
+            draw.uniformBuffer?.let { depthFeature.materialBinding(depthPipeline, it, draw.packsWholeBlock()) }
         }
         val depthPalette = if (depthKey.kind == DepthCasterKind.SkinnedInstanced) {
             draw.jointPaletteGpuBuffer?.let { depthFeature.paletteBinding(depthPipeline, it) }
@@ -115,12 +120,26 @@ internal class WebGpuDrawPreparer(
         )
     }
 
+    /** The batch's edges are a pass of their own: their view-projection and debug code, staged once. */
+    private fun stageEdgeFrame(context: GpuDrawPreparationContext) {
+        if (edgeFrameStaged) return
+        renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, context, context.cascades(), edges = true)
+        edgeFrameStaged = true
+    }
+
+    /** A draw whose single block starts with its MVP, which reads the identity frame block in a camera-depth pass. */
+    private fun WebGpuPreparedDraw.packsWholeBlock(): Boolean = (pipeline as? WebGpuPipelineHandle)?.splitDrawBlockFloats == 0
+
     private fun startBatch(context: GpuDrawPreparationContext) {
         // A batch prepared and never drawn has its writes land now, so the stage holds one batch at most.
         renderer.flushUniformUploads()
         instancedRuns = 0
         edgeRuns = 0
+        edgeFrameStaged = false
         val environment = context.environment
+        // Before any draw of the batch: the block its lit draws read beside their own.
+        renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, context, context.cascades())
+        renderer.graphicsDevice.frameUniforms.stageIdentity(renderer.uniformUploads)
         frameVersion = frameInputs.update(
             viewProjection = context.viewProjection,
             cameraEye = context.cameraEye,

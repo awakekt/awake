@@ -11,12 +11,17 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.passes.SHADOW_DEPTH_BIAS_CONSTANT
 import com.awakekt.awake.render.passes.SHADOW_DEPTH_BIAS_SLOPE
 import com.awakekt.awake.render.passes.uniforms.CascadePassUniformLayout
+import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.FrontFace
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.pipeline.ResourceBinding
+import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.pipeline.ShaderStage
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.writeBufferData
@@ -50,7 +55,7 @@ import io.ygdrasil.webgpu.VertexState
  * renders and from which viewpoint are the caller's business.
  */
 class DepthOnlyPipeline(
-    graphicsDevice: GraphicsDevice,
+    private val graphicsDevice: GraphicsDevice,
     shaderCode: ByteArray,
     /**
      * The vertex layout this pipeline reads. A caster is drawn through it only when its mesh format
@@ -69,7 +74,7 @@ class DepthOnlyPipeline(
      */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** ABI declared by the selected depth shader, carried from the shared shader set. */
-    private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
+    bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
     bindingsMetadataAvailable: Boolean = false,
     /** Another pipeline's group-0 layout to use as this one's, so that pipeline's bind group
@@ -81,6 +86,16 @@ class DepthOnlyPipeline(
      */
     shadowBias: Boolean = true,
 ) {
+    /**
+     * What this pipeline binds, group by group. A scene caster's material group always holds the
+     * frame block's binding, read or not: one material group per draw serves the shadow, the
+     * scene-depth and the mask pass, so their layouts have to be the same, and only a pass that
+     * draws from the camera reads the frame's view-projection. A content caster keeps the group
+     * its feature gave it.
+     */
+    private val groups: Map<Int, GroupBindings> =
+        if (groupZeroLayout == null) bindingsByGroup.withFrameBlockInMaterialGroup() else bindingsByGroup
+
     /** The colorless `Depth32Float` render pipeline built from the caller's shader. */
     val pipeline: GPURenderPipeline
 
@@ -96,7 +111,7 @@ class DepthOnlyPipeline(
     /** Whether this pipeline's shader declares the pass-scoped cascade block. `scene_depth`
      * renders once from the camera and declares none -- and asking wgpu for the layout of a group
      * a shader never declared aborts the process rather than returning an error. */
-    val hasCascadeBlock: Boolean = cascadeCount > 0 && SHADOW_CASCADE_PASS_GROUP in bindingsByGroup
+    val hasCascadeBlock: Boolean = cascadeCount > 0 && SHADOW_CASCADE_PASS_GROUP in groups
 
     /** One uniform buffer per declared cascade, written per frame. A count without a matching
      * metadata group is treated as a construction mismatch and does not allocate unreachable
@@ -130,16 +145,29 @@ class DepthOnlyPipeline(
 
     /** Rebinds a prepared draw's uniform buffer against this depth pipeline's own explicit layout.
      * WebGPU bind groups are pipeline-specific even when both groups contain one uniform buffer. */
-    fun materialBinding(buffer: GPUBuffer): MaterialBinding? {
+    fun materialBinding(buffer: GPUBuffer): MaterialBinding? = materialBinding(buffer, wholeBlock = false)
+
+    /**
+     * As above. [wholeBlock] says [buffer] holds a single block that starts with the draw's MVP
+     * rather than its model, so a pass that reads the frame's view-projection binds the identity
+     * frame block for it. A buffer is one or the other for as long as it lives.
+     */
+    internal fun materialBinding(buffer: GPUBuffer, wholeBlock: Boolean): MaterialBinding? {
         if (!handle.hasBindingGroup(0)) return null
         return materialBindGroups.getOrPut(buffer) {
+            val frame = graphicsDevice.frameUniforms
             WebGpuBindGroupHandle(
                 device.createBindGroupReleasingLayout(
                     BindGroupDescriptor(
                         layout = pipeline.getBindGroupLayout(0u),
-                        entries = listOf(
-                            BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
-                        ),
+                        entries = (groups[0]?.entries?.map { it.binding } ?: listOf(0)).map { binding ->
+                            val source = when {
+                                binding != FRAME_UNIFORM_BINDING -> buffer
+                                wholeBlock -> frame.identityBuffer
+                                else -> frame.buffer()
+                            }
+                            BindGroupEntry(binding = binding.toUInt(), resource = BufferBinding(buffer = source))
+                        },
                     ),
                 ),
             )
@@ -155,7 +183,7 @@ class DepthOnlyPipeline(
         if (!handle.hasBindingGroup(0)) return null
         // This shader's own group 0, which may use fewer of the material's textures than a scene
         // pipeline declares; a group with more entries than its layout is invalid.
-        val declared = bindingsByGroup[0] ?: GroupBindings.StandardMaterial
+        val declared = groups[0] ?: GroupBindings.StandardMaterial
         return WebGpuBindGroupHandle(material.bindGroupFor(pipeline, uniformBuffer, declared))
     }
 
@@ -253,7 +281,7 @@ class DepthOnlyPipeline(
             }
         }
 
-        val layout = device.createAwakePipelineLayout(bindingsByGroup, groupZeroLayout)
+        val layout = device.createAwakePipelineLayout(groups, groupZeroLayout)
         // The pipeline holds what it needs of the module and layout; their own handles end here.
         pipeline = try {
             device.createRenderPipeline(
@@ -301,8 +329,8 @@ class DepthOnlyPipeline(
         }
         handle = WebGpuPipelineHandle(
             pipeline,
-            hasGroupZeroBindings = !bindingsMetadataAvailable || 0 in bindingsByGroup,
-            bindingsByGroup = bindingsByGroup,
+            hasGroupZeroBindings = !bindingsMetadataAvailable || 0 in groups,
+            bindingsByGroup = groups,
         )
     }
 
@@ -316,4 +344,16 @@ class DepthOnlyPipeline(
         cascadeBuffers.forEach { it.close() }
         pipeline.close()
     }
+}
+
+/** [this] with the frame block's binding in group 0, where group 0 exists and lacks it. */
+private fun Map<Int, GroupBindings>.withFrameBlockInMaterialGroup(): Map<Int, GroupBindings> {
+    val material = this[0]?.takeIf { it.at(FRAME_UNIFORM_BINDING) == null } ?: return this
+    val frame = ResourceBinding(
+        binding = FRAME_UNIFORM_BINDING,
+        kind = ResourceKind.UniformBuffer,
+        stages = setOf(ShaderStage.Vertex),
+        minBindingSize = (MaterialUniformLayouts.Frame.total * Float.SIZE_BYTES).toLong(),
+    )
+    return this + (0 to GroupBindings(material.entries + frame))
 }

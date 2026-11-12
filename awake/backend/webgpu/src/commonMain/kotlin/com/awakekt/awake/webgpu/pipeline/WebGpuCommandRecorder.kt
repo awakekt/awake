@@ -99,7 +99,19 @@ class WebGpuPipelineHandle(
      */
     val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     override val drawsTriangles: Boolean = true,
-) : PipelineHandle
+) : PipelineHandle {
+    /**
+     * Floats of the draw's own block when this pipeline's shader also reads the frame block, at
+     * [com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING]; 0 when its one block carries
+     * everything. Read per draw, so resolved once.
+     */
+    internal val splitDrawBlockFloats: Int =
+        if (uniformByteSize(0, com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING) > 0L) {
+            (uniformByteSize(0, 0) / Float.SIZE_BYTES).toInt()
+        } else {
+            0
+        }
+}
 
 /**
  * What a textured material binds in group 0: the pipeline's declared material bindings, else its

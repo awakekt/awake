@@ -19,8 +19,9 @@ class GroupBindingsTest {
     fun standardMaterialMatchesTheLayoutBothBackendsHardcode() {
         val bindings = GroupBindings.StandardMaterial
 
-        assertEquals(listOf(0, 1, 2, 5, 6, 7, 8), bindings.entries.map { it.binding })
+        assertEquals(listOf(0, 1, 2, 5, 6, 7, 8, FRAME_UNIFORM_BINDING), bindings.entries.map { it.binding })
         assertEquals(ResourceKind.UniformBuffer, bindings.at(0)?.kind)
+        assertEquals(ResourceKind.UniformBuffer, bindings.at(FRAME_UNIFORM_BINDING)?.kind)
         assertEquals(ResourceKind.SampledTexture, bindings.at(1)?.kind)
         assertEquals(ResourceKind.Sampler, bindings.at(2)?.kind)
         assertNull(bindings.at(3))
@@ -29,10 +30,11 @@ class GroupBindingsTest {
     }
 
     @Test
-    fun onlyTheUniformBlockSpansBothStages() {
+    fun onlyTheUniformBlocksSpanBothStages() {
         val bindings = GroupBindings.StandardMaterial
 
         assertEquals(setOf(ShaderStage.Vertex, ShaderStage.Fragment), bindings.at(0)?.stages)
+        assertEquals(setOf(ShaderStage.Vertex, ShaderStage.Fragment), bindings.at(FRAME_UNIFORM_BINDING)?.stages)
         assertEquals(
             listOf(1, 2, 5, 6, 7, 8),
             bindings.entries.filter { it.stages == setOf(ShaderStage.Fragment) }.map { it.binding },

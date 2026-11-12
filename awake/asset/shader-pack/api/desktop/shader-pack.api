@@ -293,6 +293,7 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
 	public final fun getPointLightColors ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getPointLightPositions ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getViewProjection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/ShadowUniformsKt {

@@ -75,7 +75,8 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * glTF metallic-roughness PBR for `PositionNormalColorUv` -- same Cook-Torrance BRDF and cascaded
  * sun shadow as lit_shadow, reading metallic/roughness/normal/occlusion/emissive from textures.
  * A material with no map binds a 1x1 neutral placeholder, so all five sample
- * unconditionally. The uniform struct derives from [MaterialUniformLayouts.PbrTextured] --
+ * unconditionally. The draw's struct derives from [MaterialUniformLayouts.PbrTexturedDraw] and
+ * the frame's from [MaterialUniformLayouts.Frame] --
  * whose field is named `pbrFactors`; the hand-written file drifted to `material`, and the
  * derivation is what ends that class of mismatch. Material bindings 3/4 stay unused so numbering
  * matches the other shaders; the shadow map is the engine's `ShadowDepth` group.
@@ -93,27 +94,28 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             group = BindingLayout.Standard.slot(BindingSemantic.Material),
             binding = 0,
         )
-        val handles = u.fieldsFrom(MaterialUniformLayouts.PbrTextured)
-        val mvp = handles.value("mvp")
-        val lightDirection = handles.value("lightDirection")
-        val lightColor = handles.value("lightColor")
-        val pointLightPositions = handles.array("pointLightPositions")
-        val pointLightColors = handles.array("pointLightColors")
+        val handles = u.fieldsFrom(MaterialUniformLayouts.PbrTexturedDraw)
+        val frame = frameUniforms()
+        val viewProjection = frame.value("viewProjection")
+        val lightDirection = frame.value("lightDirection")
+        val lightColor = frame.value("lightColor")
+        val pointLightPositions = frame.array("pointLightPositions")
+        val pointLightColors = frame.array("pointLightColors")
         val model = handles.value("model")
-        val cameraPosition = handles.value("cameraPosition")
+        val cameraPosition = frame.value("cameraPosition")
         val pbrFactors = handles.value("pbrFactors")
         val baseColorFactor = handles.value("baseColorFactor")
         val emissiveFactor = handles.value("emissiveFactor")
         val textureFrames = handles.value("textureFrames")
         val textureScroll = handles.value("textureScroll")
-        val fogColor = handles.value("fogColor")
-        val debugView = handles.value("debugView")
-        val exposure = handles.value("exposure")
+        val fogColor = frame.value("fogColor")
+        val debugView = frame.value("debugView")
+        val exposure = exposureAndFade(frame, handles)
         val cascadeInputs = CascadeShadowInputs(
-            handles.array("cascadeViewProjections"),
-            handles.array("cascadeDepthScales"),
+            frame.array("cascadeViewProjections"),
+            frame.array("cascadeDepthScales"),
             cameraPosition,
-            handles.value("cameraForward"),
+            frame.value("cameraForward"),
         )
         val shadowMap by textureDepth2dArray(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 0)
         val shadowMapSampler by samplerComparison(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 1)
@@ -139,10 +141,9 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
         vertex {
             val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
             val inPosition = ins.input(VertexSemantic.Position)
-            // Instanced, each copy's model comes from the instance buffer and `mvp` holds only the
-            // view-projection; otherwise `mvp` already includes this draw's model.
+            // Instanced, each copy's model comes from the instance buffer and the block's is identity.
             val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
-            out.position set (mvp * if (instanced) drawModel * vec4(inPosition, 1f.lit) else vec4(inPosition, 1f.lit))
+            out.position set (viewProjection * (drawModel * vec4(inPosition, 1f.lit)))
             color set ins.input(VertexSemantic.Color)
             // World-space normal (model matrix directly -- correct for the rigid/uniform scales
             // Transform can express), so shading stays put while the mesh spins.

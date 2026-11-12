@@ -7,27 +7,40 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslArrayHandle
 import com.awakekt.awake.asset.shaderdsl.AslExpr
+import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
+import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.vec4
+import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 
 /**
- * The shadow pair's uniform struct handles. shadow_depth binds the SAME per-draw uniform
- * buffer lit_shadow writes, so its struct must be a field-for-field prefix of lit_shadow's --
- * the drift that once put lightMvp at float offset 24 instead of 56 and wrote an empty shadow
- * map.
+ * The shadow pair's uniform handles: the draw's own block, and the frame block beside it.
  *
- * Every name, shape, and array count here comes from [MaterialUniformLayouts.LitShadow] via
- * `fieldsFrom` -- the same layout the renderer packs and the material is sized from. There is
- * no ASL-side field list to keep in step: rename or resize a layout field and both shader
+ * shadow_depth binds the SAME per-draw uniform buffer lit_shadow writes, so its struct must be a
+ * field-for-field prefix of lit_shadow's -- the drift that once put lightMvp at float offset 24
+ * instead of 56 and wrote an empty shadow map. That prefix is `model` and `vertexAnimation`.
+ *
+ * Every name, shape, and array count here comes from [MaterialUniformLayouts.LitShadowDraw] and
+ * [MaterialUniformLayouts.Frame] via `fieldsFrom` -- the layouts the renderer packs. There is no
+ * ASL-side field list to keep in step: rename or resize a layout field and both shader
  * definitions fail to build until their bodies catch up.
+ *
+ * What the camera, the light and the cascades decide is the frame block's, which a pass writes
+ * once; a shader that reads none of it declares it and binds nothing for it.
  */
 @Suppress("LongParameterList") // Pure aggregation of the derived field handles.
 class ShadowUniforms internal constructor(
-    /** Model-view-projection matrix handle. */
+    /** The frame's view-projection times this draw's [model]; an instanced shader multiplies
+     * [viewProjection] by its instance's matrix instead. */
     val mvp: AslExpr,
+    /** World space to the pass's clip space, from the frame block. */
+    val viewProjection: AslExpr,
     /** Primary directional light vector handle. */
     val lightDirection: AslExpr,
     /** Primary directional light color and intensity handle. */
@@ -62,7 +75,8 @@ class ShadowUniforms internal constructor(
     val fogColor: AslExpr?,
     /** `UniformFields.DebugView`; see [debugViewColor]. */
     val debugView: AslExpr?,
-    /** `x` = the exposure [SceneDisplayTransform.display] applies. */
+    /** `x` = the exposure [SceneDisplayTransform.display] applies, from the frame block; `y` =
+     * this draw's dither fade, from its own. */
     val exposure: AslExpr?,
 )
 
@@ -73,30 +87,43 @@ class ShadowUniforms internal constructor(
  * @return Aggregated [ShadowUniforms] handle object.
  */
 fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
-    val block = uniformBlock(
-        "Uniforms",
-        group = BindingLayout.Standard.slot(BindingSemantic.Material),
-        binding = 0,
-    )
-    val handles = block.fieldsFrom(
-        MaterialUniformLayouts.LitShadow,
+    val group = BindingLayout.Standard.slot(BindingSemantic.Material)
+    val draw = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(
+        MaterialUniformLayouts.LitShadowDraw,
         throughField = if (includeLitTail) null else "vertexAnimation",
     )
+    val frame = frameUniforms()
+    val viewProjection = frame.value("viewProjection")
     return ShadowUniforms(
-        mvp = handles.value("mvp"),
-        lightDirection = handles.value("lightDirection"),
-        lightColor = handles.value("lightColor"),
-        pointLightPositions = handles.array("pointLightPositions"),
-        pointLightColors = handles.array("pointLightColors"),
-        cascadeViewProjections = handles.array("cascadeViewProjections"),
-        cascadeDepthScales = handles.array("cascadeDepthScales"),
-        model = handles.value("model"),
-        vertexAnimation = handles.value("vertexAnimation"),
-        cameraPosition = if (includeLitTail) handles.value("cameraPosition") else null,
-        cameraForward = if (includeLitTail) handles.value("cameraForward") else null,
-        material = if (includeLitTail) handles.value("material") else null,
-        fogColor = if (includeLitTail) handles.value("fogColor") else null,
-        debugView = if (includeLitTail) handles.value("debugView") else null,
-        exposure = if (includeLitTail) handles.value("exposure") else null,
+        mvp = viewProjection * draw.value("model"),
+        viewProjection = viewProjection,
+        lightDirection = frame.value("lightDirection"),
+        lightColor = frame.value("lightColor"),
+        pointLightPositions = frame.array("pointLightPositions"),
+        pointLightColors = frame.array("pointLightColors"),
+        cascadeViewProjections = frame.array("cascadeViewProjections"),
+        cascadeDepthScales = frame.array("cascadeDepthScales"),
+        model = draw.value("model"),
+        vertexAnimation = draw.value("vertexAnimation"),
+        cameraPosition = if (includeLitTail) frame.value("cameraPosition") else null,
+        cameraForward = if (includeLitTail) frame.value("cameraForward") else null,
+        material = if (includeLitTail) draw.value("material") else null,
+        fogColor = if (includeLitTail) frame.value("fogColor") else null,
+        debugView = if (includeLitTail) frame.value("debugView") else null,
+        exposure = if (includeLitTail) exposureAndFade(frame, draw) else null,
     )
 }
+
+/**
+ * Declares the frame block, [MaterialUniformLayouts.Frame], beside the draw's block in the
+ * material group. A pipeline's layout holds it only when a stage reads one of its fields.
+ */
+internal fun AslShaderBuilder.frameUniforms(): AslLayoutHandles = uniformBlock(
+    "FrameUniforms",
+    group = BindingLayout.Standard.slot(BindingSemantic.Material),
+    binding = FRAME_UNIFORM_BINDING,
+).fieldsFrom(MaterialUniformLayouts.Frame)
+
+/** `x` = the frame's exposure, `y` = the draw's dither fade: what a block's `exposure` field held. */
+internal fun exposureAndFade(frame: AslLayoutHandles, draw: AslLayoutHandles): AslExpr =
+    vec4(frame.value("exposure").x, draw.value("drawFade").x, 0f.lit, 0f.lit)

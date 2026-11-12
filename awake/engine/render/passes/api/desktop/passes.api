@@ -568,6 +568,19 @@ public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms$
 	public final fun getDefault ()Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
 }
 
+public final class com/awakekt/awake/render/passes/uniforms/FrameUniformBlock {
+	public fun <init> ()V
+	public final fun pack (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/render/command/GpuDebugView;F)[F
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/FrameUniformBlockKt {
+	public static final fun drawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZZ)[F
+	public static synthetic fun drawBlockFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZZILjava/lang/Object;)[F
+	public static final fun identityFrameBlock ()[F
+	public static final fun planDrawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/render/pipeline/InstancedDrawKind;Z)I
+	public static synthetic fun planDrawBlockFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZILjava/lang/Object;)I
+}
+
 public final class com/awakekt/awake/render/passes/uniforms/GpuShadowUniformsKt {
 	public static final fun gpuLitShadowUniforms (Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;F)[F
 	public static final fun gpuLitShadowUniforms (Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuDebugView;F)[F
@@ -580,10 +593,13 @@ public final class com/awakekt/awake/render/passes/uniforms/MaterialUniformLayou
 	public final fun getCameraPosition ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getDirectionalLight ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getFog ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getFrame ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLit ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLitShadow ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getLitShadowDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPbrMaterial ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPbrTextured ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getPbrTexturedDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPbrTexturedMaterial ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPointLightSlots ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPrimary ()Lcom/awakekt/awake/render/renderer/UniformLayout;
