@@ -23,8 +23,8 @@ enum class TrailBlend {
  * [visible] as the trail is revealed and rewrites colours as it fades; [TrailBatch] draws it with one
  * GPU buffer, sized once at [capacity] and updated in place over only the pairs that changed.
  *
- * It is drawn unlit, in the transparent pass, depth tested and not depth written, from both faces,
- * through its placement's matrix (an entity's world matrix in a scene), and culled by the box around
+ * It is drawn unlit and depth tested in the transparent pass, through its placement's matrix (an
+ * entity's world matrix in a scene), and culled by the box around
  * its visible pairs.
  *
  * @param capacity The most pairs it holds, at least 2; its GPU buffer is sized for this once.
@@ -33,13 +33,24 @@ enum class TrailBlend {
  * vertices' colours alone.
  * @property tint Straight-alpha colour multiplied into every vertex's: one trail's colour per use,
  * without rewriting its vertices.
+ * @property depthWrite Whether fragments that pass the depth test update the depth buffer.
+ * @property doubleSided Whether the ribbon is visible from both sides. When false, back faces are
+ * culled and only the front shows: the side from which, with each pair's `b` above its `a`, the
+ * pairs run right to left, so each pair's triangles wind counter-clockwise. That is the side the
+ * cross product `(b - a) x (next a - a)` points to.
  */
 class TrailRenderer(
     capacity: Int,
     var blend: TrailBlend = TrailBlend.Additive,
     var texture: TextureAsset? = null,
     var tint: Color = Color.White,
+    var depthWrite: Boolean = false,
+    var doubleSided: Boolean = true,
 ) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(capacity: Int, blend: TrailBlend = TrailBlend.Additive, texture: TextureAsset? = null, tint: Color = Color.White) :
+        this(capacity, blend, texture, tint, depthWrite = false)
+
     /** The pairs, their colours and which of them changed. */
     val strip: TrailStrip = TrailStrip(capacity)
 

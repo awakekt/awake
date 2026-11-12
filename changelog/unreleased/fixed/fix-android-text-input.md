@@ -1,1 +1,0 @@
-- Route Android hardware keyboard text to the focused field and show on-screen keyboard composition while typing.

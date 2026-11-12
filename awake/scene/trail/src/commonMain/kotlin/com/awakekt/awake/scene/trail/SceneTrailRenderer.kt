@@ -25,6 +25,10 @@ import kotlinx.serialization.Serializable
  * @property blend Whether it adds to what is behind it or covers it by its alpha; the names of
  *   [TrailBlend]'s constants, which are part of the file format.
  * @property tint A straight-alpha colour multiplied into every vertex's own.
+ * @property depthWrite Whether the trail records depth when drawn.
+ * @property doubleSided Whether the ribbon is visible from both sides; when false only its front
+ *   shows, the face [com.awakekt.awake.trail.TrailRenderer.doubleSided] describes.
+ * @property texture An optional scene texture name or project-relative image path.
  */
 @Serializable
 @SerialName("trail_renderer")
@@ -32,13 +36,29 @@ data class SceneTrailRenderer(
     @PropertyRange(min = 2.0, max = 65536.0) val capacity: Int = 64,
     val blend: TrailBlend = TrailBlend.Additive,
     val tint: SceneColor = SceneColor(),
+    val depthWrite: Boolean = false,
+    val doubleSided: Boolean = true,
+    val texture: String? = null,
 ) : SceneComponent {
-    override fun validate(path: String): List<SceneValidationIssue> =
-        if (capacity in MIN_CAPACITY..MAX_CAPACITY) {
-            emptyList()
-        } else {
-            listOf(SceneValidationIssue(path, "trail_renderer.capacity must be within $MIN_CAPACITY..$MAX_CAPACITY"))
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(capacity: Int = 64, blend: TrailBlend = TrailBlend.Additive, tint: SceneColor = SceneColor()) :
+        this(capacity, blend, tint, depthWrite = false)
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        capacity: Int = this.capacity,
+        blend: TrailBlend = this.blend,
+        tint: SceneColor = this.tint,
+    ): SceneTrailRenderer = copy(capacity, blend, tint, depthWrite, doubleSided, texture)
+
+    override fun validate(path: String): List<SceneValidationIssue> = buildList {
+        if (capacity !in MIN_CAPACITY..MAX_CAPACITY) {
+            add(SceneValidationIssue(path, "trail_renderer.capacity must be within $MIN_CAPACITY..$MAX_CAPACITY"))
         }
+        if (texture?.isBlank() == true) {
+            add(SceneValidationIssue(path, "trail_renderer.texture must name an image"))
+        }
+    }
 }
 
 private const val MIN_CAPACITY = 2

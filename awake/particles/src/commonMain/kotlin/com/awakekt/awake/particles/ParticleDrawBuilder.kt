@@ -33,6 +33,9 @@ import kotlin.math.sqrt
 class ParticleDrawBuilder {
     /** The current emitter entity's quad axes for [ParticleFacing.Flat], laid out like the camera basis. */
     private val planeBasis = FloatArray(PLANE_BASIS_FLOATS)
+
+    /** The current emitter entity's quad axes for [ParticleFacing.Upright]: its +X and +Y. */
+    private val uprightBasis = FloatArray(PLANE_BASIS_FLOATS)
     private val cameraBasis = FloatArray(PLANE_BASIS_FLOATS)
 
     /** The current emitter entity's frame, loaded only when one of its emitters is [ParticleSpace.Local]. */
@@ -50,8 +53,11 @@ class ParticleDrawBuilder {
      *
      * A [ParticleFacing.Flat] emitter draws along the plane of its entity's [placement] orientation
      * (its +X is the quads' right and its -Z their up, so a flat quad faces its +Y), or along the
-     * world's ground when [placement] has none. A [ParticleSpace.Local] emitter's particles are drawn
-     * through its entity's frame as [placement] reports it now, so they move, turn and scale with it.
+     * world's ground when [placement] has none. A [ParticleFacing.Upright] emitter draws along its
+     * entity's XY plane (its +X the quads' right and its +Y their up, so an upright quad faces its +Z),
+     * or along the world's XY plane when [placement] has none. A [ParticleSpace.Local] emitter's
+     * particles are drawn through its entity's frame as [placement] reports it now, so they move, turn
+     * and scale with it.
      */
     fun appendWorldDrawCalls(
         destination: MutableList<RenderDrawCommand>,
@@ -75,7 +81,7 @@ class ParticleDrawBuilder {
         cameraBasis[PLANE_UP_OFFSET + 3] = 0f
         val frustumPlanes = Frustum.planes(lens, aspect)
         family.forEach { entity, emitter ->
-            writePlaneBasis(placement.orientation(world, entity))
+            writeEntityBases(placement.orientation(world, entity))
             if (emitter.keepsAnyLocal()) entityFrame.load(placement, world, entity) else entityFrame.setIdentity()
             appendDrawCalls(destination, emitter, cameraBasis, frustumPlanes, lens.eye)
         }
@@ -87,7 +93,8 @@ class ParticleDrawBuilder {
      * walked here explicitly, same recursion shape [ParticleSystem] already uses to
      * advance them. [cameraBasis] is shared across the whole tree (computed once per frame by the
      * caller), not recomputed per emitter; a [ParticleFacing.Flat] emitter draws along [planeBasis],
-     * its entity's plane, which the caller writes first. */
+     * its entity's plane, and a [ParticleFacing.Upright] one along [uprightBasis], its entity's XY plane;
+     * the caller writes both first. */
     private fun appendDrawCalls(
         destination: MutableList<RenderDrawCommand>,
         emitter: ParticleEmitter,
@@ -150,8 +157,7 @@ class ParticleDrawBuilder {
         }
         if (instanceModels.isNotEmpty()) {
             val uniformFloats = emitter.uniformFloatsBuffer
-            val basis = if (visual.facing == ParticleFacing.Flat) planeBasis else cameraBasis
-            basis.copyInto(
+            quadBasis(visual.facing, cameraBasis).copyInto(
                 uniformFloats,
                 destinationOffset = ParticleExtraUniformLayout.offsetOf(ParticleExtraFields.CameraRight),
             )
@@ -182,6 +188,13 @@ class ParticleDrawBuilder {
         }
     }
 
+    /** The quad axes a [facing] emitter draws along: the camera's, or its entity's plane. */
+    private fun quadBasis(facing: ParticleFacing, cameraBasis: FloatArray): FloatArray = when (facing) {
+        ParticleFacing.Camera -> cameraBasis
+        ParticleFacing.Flat -> planeBasis
+        ParticleFacing.Upright -> uprightBasis
+    }
+
     private fun isSphereInFrustum(
         planes: List<Plane>,
         x: Float,
@@ -197,11 +210,19 @@ class ParticleDrawBuilder {
         return true
     }
 
-    /** [placed]'s +X as the quad's right and its -Z as the quad's up, so a flat quad faces its +Y;
-     * the world's axes without one. */
-    private fun writePlaneBasis(placed: Mat4?) {
-        planeBasis.writeAxis(0, placed?.m00 ?: 1f, placed?.m10 ?: 0f, placed?.m20 ?: 0f)
+    /**
+     * [placed]'s +X as the quad's right in both bases; its -Z as a flat quad's up, so a flat quad faces
+     * its +Y, and its +Y as an upright quad's up, so an upright quad faces its +Z. The world's axes
+     * without one.
+     */
+    private fun writeEntityBases(placed: Mat4?) {
+        val rightX = placed?.m00 ?: 1f
+        val rightY = placed?.m10 ?: 0f
+        val rightZ = placed?.m20 ?: 0f
+        planeBasis.writeAxis(0, rightX, rightY, rightZ)
         planeBasis.writeAxis(PLANE_UP_OFFSET, -(placed?.m02 ?: 0f), -(placed?.m12 ?: 0f), -(placed?.m22 ?: 1f))
+        uprightBasis.writeAxis(0, rightX, rightY, rightZ)
+        uprightBasis.writeAxis(PLANE_UP_OFFSET, placed?.m01 ?: 0f, placed?.m11 ?: 1f, placed?.m21 ?: 0f)
     }
 
     private fun FloatArray.writeAxis(offset: Int, x: Float, y: Float, z: Float) {

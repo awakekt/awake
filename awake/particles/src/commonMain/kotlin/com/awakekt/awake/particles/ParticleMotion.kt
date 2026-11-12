@@ -50,7 +50,8 @@ import com.awakekt.awake.core.math.Vec3f
  * no rotation to inherit.
  *
  * [orientSpawnRing] `true` tilts the spawn ring alone by that same rotation, so the ring lies in the
- * plane a [ParticleFacing.Flat] quad of this emitter lies in and turns with its sprites, while
+ * plane a [ParticleFacing.Flat] quad of this emitter lies in and turns with its sprites (a
+ * [ParticleFacing.Upright] quad stands perpendicular to that ring and turns with it too), while
  * [baseVelocity] and every other vector stay in world axes: a magic circle laid on a sloped wall whose
  * sparks still rise straight up. Scale is ignored. It adds nothing beside [inheritOrientation], which
  * already turns the ring, or in [ParticleSpace.Local], where the ring already lies in the entity's axes.

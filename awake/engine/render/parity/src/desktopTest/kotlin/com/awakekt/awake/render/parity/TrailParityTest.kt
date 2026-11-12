@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.trail.TrailBlend
@@ -45,6 +46,67 @@ class TrailParityTest {
             if (worst > MAX_PARITY_ERROR) failures += "frame $index: Vulkan and WebGPU differ by $worst on a channel"
         }
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    /**
+     * With depth writes off, the far ribbon's green channel reads 255. With writes on, it reads 0.
+     * The back face reads red 255 with culling off and 0 with culling on. The front face reads 255.
+     * Both controls produced these values on Vulkan and WebGPU for both blend modes.
+     */
+    @Test
+    fun blendedTrailsWriteDepthAndCullBackFacesOnBothBackends() {
+        val failures = ArrayList<String>()
+        HeadlessUiBackend.entries.forEach { backend ->
+            openHeadlessScene(backend, SIZE).use { session ->
+                TrailView(session.renderer, SIZE).use { view ->
+                    for (blend in TrailBlend.entries) {
+                        view.checkDepthWrite(backend, blend, failures)
+                        view.checkBackFaceCulling(backend, blend, failures)
+                    }
+                }
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    /** One draw submits the near red ribbon first, then the far green ribbon at the same pixels. */
+    private fun TrailView.checkDepthWrite(backend: HeadlessUiBackend, blend: TrailBlend, failures: MutableList<String>) {
+        val trail = TrailRenderer(4, blend).apply {
+            setPair(0, -1f, 0.3f, RED)
+            setPair(1, 1f, 0.3f, RED)
+            setPair(2, 1f, -0.3f, GREEN)
+            setPair(3, -1f, -0.3f, GREEN)
+            visible = 4
+        }
+        val control = frame(listOf(trail))
+        trail.depthWrite = true
+        val writesDepth = frame(listOf(trail))
+        val centerGreen = (CENTRE * SIZE + CENTRE) * RGBA + 1
+        println("Trail $backend $blend depth write: green ${channel(control, centerGreen)} -> ${channel(writesDepth, centerGreen)}")
+        expect(failures, backend, "$blend depth control green", channel(control, centerGreen), 255, ADD_TOLERANCE)
+        expect(failures, backend, "$blend depth write green", channel(writesDepth, centerGreen), 0, ADD_TOLERANCE)
+        expect(failures, backend, "$blend depth write red", red(writesDepth, CENTRE, CENTRE), 255, ADD_TOLERANCE)
+    }
+
+    private fun TrailView.checkBackFaceCulling(backend: HeadlessUiBackend, blend: TrailBlend, failures: MutableList<String>) {
+        val back = straightTrail(2, RED, blend).apply { visible = 2 }
+        val front = TrailRenderer(2, blend, doubleSided = false).apply {
+            setPair(0, -1f, 0f, RED, halfHeight = -0.2f)
+            setPair(1, 1f, 0f, RED, halfHeight = -0.2f)
+            visible = 2
+        }
+        val control = red(frame(listOf(back)), CENTRE, CENTRE)
+        back.doubleSided = false
+        val culled = red(frame(listOf(back)), CENTRE, CENTRE)
+        val facing = red(frame(listOf(front)), CENTRE, CENTRE)
+        println("Trail $backend $blend culling: back $control -> $culled, front $facing")
+        expect(failures, backend, "$blend double-sided back", control, 255, ADD_TOLERANCE)
+        expect(failures, backend, "$blend single-sided back", culled, 0, ADD_TOLERANCE)
+        expect(failures, backend, "$blend single-sided front", facing, 255, ADD_TOLERANCE)
+    }
+
+    private fun TrailRenderer.setPair(index: Int, x: Float, z: Float, color: Color, halfHeight: Float = 0.2f) {
+        set(index, Vec3f(x, -halfHeight, z), Vec3f(x, halfHeight, z), color, color)
     }
 
     /** Draws the frames in order on one view, checks each, and returns them for the parity check. */
@@ -112,6 +174,8 @@ class TrailParityTest {
         PixelMap(SIZE, SIZE, frame).writePng(File("build/reports/render-captures/trail-$backend-$name.png"))
 
     private companion object {
+        val RED = Color(1f, 0f, 0f)
+        val GREEN = Color(0f, 1f, 0f)
         const val SIZE = 128
         const val PAIRS = 64
         const val RGBA = 4

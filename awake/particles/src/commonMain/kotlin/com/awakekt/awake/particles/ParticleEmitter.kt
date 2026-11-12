@@ -45,7 +45,8 @@ import kotlin.random.Random
  * [additive] adds each particle's colour to what is
  * behind it instead of blending over it, for glows and sparks; it needs the plan's particle
  * pipeline built with `buildAdditive`, and draws blended without it. [facing] turns each quad to the
- * camera (the default) or lays it flat; see [ParticleFacing]. [alphaCurve] shapes a particle's
+ * camera (the default), lays it flat or stands it upright in the emitter entity's own frame; see
+ * [ParticleFacing]. [alphaCurve] shapes a particle's
  * opacity over its life; `null` (default) is the plain linear fade from `startAlpha` to 0, see
  * [ParticleAlphaCurve]. [spin] turns each particle's quad as it lives; `null` (default) never turns
  * one, see [ParticleSpin]. */
@@ -71,8 +72,8 @@ data class ParticleVisual(
  * random angle too, so the particles of one emitter do not all begin alike; without it they start
  * upright.
  *
- * The turn is in the quad's own plane, for a camera-facing and a flat ([ParticleFacing.Flat]) emitter
- * alike. A particle that [ParticleVisual.stretchWithVelocity] stretches keeps pointing along its
+ * The turn is in the quad's own plane, for a camera-facing, a flat ([ParticleFacing.Flat]) and an
+ * upright ([ParticleFacing.Upright]) emitter alike. A particle that [ParticleVisual.stretchWithVelocity] stretches keeps pointing along its
  * motion, so spin does nothing to it, and one that has landed ([ParticleGround]) stops turning.
  *
  * `ParticleSpin(90f, 90f)` turns every particle a quarter turn a second. Both rates must be finite and
@@ -125,6 +126,19 @@ enum class ParticleFacing {
      * plane. [ParticleVisual.stretchWithVelocity] stretches along the motion within that plane.
      */
     Flat,
+
+    /**
+     * Each quad stands upright in the emitter entity's own frame: in the plane of the entity's X and Y
+     * axes, facing along its Z, its texture's top toward the entity's +Y. A spawn ring
+     * ([ParticleMotion.spawnRadius], turned by [ParticleMotion.orientSpawnRing],
+     * [ParticleMotion.inheritOrientation] or [ParticleSpace.Local]) lies in the entity's XZ plane, so
+     * the sprites stand perpendicular to their ring, and an emitter tilted by pitch or roll tilts its
+     * ring, its velocity and its sprites together: a legacy effect's fixed sprites standing on a ring.
+     * An emitter entity without a `Transform` stands its quads in the world's XY plane.
+     * [ParticleVisual.stretchWithVelocity] stretches along the motion within that plane, and
+     * [ParticleVisual.spin] turns each quad about the entity's Z.
+     */
+    Upright,
 }
 
 /** How (and whether) a particle interacts with the ground. Resolution priority: [groundY]/

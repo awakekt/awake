@@ -13,16 +13,18 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Every option of a trail is either something a `trail_renderer` can set or something only code can,
- * and this says which: a new option on [TrailRenderer], or a new scene field, fails here until it is
- * listed. `TrailMapping.kt` carries a listed option across; `TrailBindingTest` checks it.
+ * Every option on [TrailRenderer] is exposed through `trail_renderer`. A new option or scene field
+ * fails here until it is listed. `TrailBindingTest` checks the mapping in both directions.
  */
 @OptIn(ExperimentalSerializationApi::class)
 class TrailExposureTest {
-    private val setFromSceneFile = mapOf("blend" to "blend", "tint" to "tint", "strip" to "capacity")
-
-    private val codeOnly = mapOf(
-        "texture" to "a scene names no texture yet; a loaded texture is set from code",
+    private val setFromSceneFile = mapOf(
+        "blend" to "blend",
+        "tint" to "tint",
+        "strip" to "capacity",
+        "depthWrite" to "depthWrite",
+        "doubleSided" to "doubleSided",
+        "texture" to "texture",
     )
 
     private val options: Set<String> = TrailRenderer::class.java.declaredFields
@@ -33,9 +35,9 @@ class TrailExposureTest {
     private val sceneFields = SceneTrailRenderer.serializer().descriptor.elementNames.toSet()
 
     @Test
-    fun everyOptionIsSetFromASceneFileOrListedAsCodeOnly() {
-        val accountedFor = setFromSceneFile.keys + codeOnly.keys
-        assertEquals(emptySet(), options - accountedFor, "TrailRenderer has options neither mapped nor listed as code-only")
+    fun everyOptionIsSetFromASceneFile() {
+        val accountedFor = setFromSceneFile.keys
+        assertEquals(emptySet(), options - accountedFor, "TrailRenderer has options that are not mapped")
         assertEquals(emptySet(), accountedFor - options, "TrailRenderer lists options it no longer has")
     }
 

@@ -896,11 +896,11 @@ one it moves by its transform. Code sends it somewhere with `NavigationAgent.mov
 
 ## `particle_emitter`
 
-Spawns sprites at its node's world position, turned to the camera or lying flat, and follows the
+Spawns sprites at its node's world position, turned to the camera, lying flat or standing upright, and follows the
 node. `SceneParticleEmitter`.
 
 Sizes, speeds and `spawnRadius` are world units; the node's scale does not apply, and its rotation
-only tilts a `Flat` emitter's plane, turns the spawn ring with `orientSpawnRing` and, with
+only tilts a `Flat` or `Upright` emitter's plane, turns the spawn ring with `orientSpawnRing` and, with
 `inheritOrientation`, turns the spawn ring and `velocity`. A `Local` space emitter is the exception: its particles live in the node's own axes and
 units, so they move, turn and scale with it. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
 its tint moves from `color` to `endColor` and its size from `scale` to `endScale`. `runProject` runs
@@ -925,7 +925,7 @@ it; see [Particles](../guides/particles.md).
 | `frameCount` | number | `1` | Treats the texture as a horizontal strip of this many frames. At least 1. |
 | `frameRate` | number | `8` | Frames per second of that strip. Not negative. |
 | `additive` | boolean | `false` | Adds to what is behind, for glows. Needs the particle pipeline built with `buildAdditive`. |
-| `facing` | `Camera` · `Flat` | `Camera` | `Camera` turns each sprite to the camera. `Flat` lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles. |
+| `facing` | `Camera` · `Flat` · `Upright` | `Camera` | `Camera` turns each sprite to the camera. `Flat` lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles. `Upright` stands it in the node's own XY plane, facing along the node's Z, its texture's top toward the node's +Y, so it stands perpendicular to a turned spawn ring and tilts with the node. |
 | `acceleration` | vector | `{x: 0, y: 0, z: 0}` | A constant world-space acceleration in units per second squared, added to every live particle's velocity: `{y: -9.8}` is gravity. Finite. |
 | `inheritOrientation` | boolean | `false` | The node's rotation turns the spawn ring and `velocity` (so also the cone's axis and the jitter axes). `acceleration` and `radialSpeed` stay in world space. |
 | `alphaCurve` | alpha curve | none | Fades a particle in and out over its life. None is the linear fade from `startAlpha` to 0. Described below. |
@@ -939,7 +939,7 @@ it; see [Particles](../guides/particles.md).
 | `ground` | ground | none | Where falling particles land. None lets them fall and fade. Described below. |
 | `spin` | spin | none | A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (`stretchWithVelocity`) points along its motion and ignores it. Described below. |
 | `space` | `World` · `Local` | `World` | `World` leaves each particle where it was emitted however the node moves next. `Local` keeps particles relative to the node and draws them through its current transform, so they move, turn and scale with it: an aura on a moving bone. `velocity` and the spawn ring are then in the node's axes and `inheritOrientation` adds nothing; `acceleration` still pulls in world space; camera-facing sprites still face the camera. A `Local` emitter cannot have a `ground`. |
-| `orientSpawnRing` | boolean | `false` | The node's rotation tilts the spawn ring alone, so it lies in the plane a `Flat` emitter's sprites lie in, while `velocity`, `acceleration` and `radialSpeed` stay in world space. Adds nothing beside `inheritOrientation` or with `space` `Local`. |
+| `orientSpawnRing` | boolean | `false` | The node's rotation tilts the spawn ring alone, so it lies in the plane a `Flat` emitter's sprites lie in (an `Upright` emitter's sprites stand perpendicular to it), while `velocity`, `acceleration` and `radialSpeed` stay in world space. Adds nothing beside `inheritOrientation` or with `space` `Local`. |
 | `radialInRingPlane` | boolean | `false` | `radialSpeed` pushes outward in the turned spawn ring's own plane instead of horizontally, when `orientSpawnRing` or `inheritOrientation` turns the ring: an outward ripple across a sloped surface. Adds nothing while the ring is not turned, or with `space` `Local`. |
 
 `alphaCurve` is an object with the fractions of a particle's life at which it reaches full opacity and
@@ -1410,6 +1410,9 @@ many show and their colours every frame. `SceneTrailRenderer`.
 | `capacity` | integer | `64` | The most point pairs it holds, 2 to 65536. |
 | `blend` | `Additive` · `Alpha` | `Additive` | `Additive` adds to what is behind it; `Alpha` covers it by its alpha. |
 | `tint` | color | white | Multiplied into every vertex's own colour. |
+| `texture` | string | none | Scene texture name or project-relative image path. |
+| `depthWrite` | boolean | `false` | Records the trail's depth so it can occlude blended draws that follow it. |
+| `doubleSided` | boolean | `true` | Set to `false` to cull back faces. The front is the side from which, with each pair's `b` above its `a`, the pairs run right to left. |
 
 ## `world_text`
 

@@ -49,7 +49,30 @@ class PipelineTable<P>(
     /** [PipelineVariant.EdgeOverlay] companions: an opaque draw's edges, drawn over it. A format
      * with none draws no edges. */
     val edgesByFormat: Map<VertexFormat, P> = emptyMap(),
-)
+    /** Optional blended companions indexed by format and raster state. */
+    val blendedRasterByFormat: Map<VertexFormat, Map<BlendedRasterVariant, P>> = emptyMap(),
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        primary: P,
+        primaryFormat: VertexFormat,
+        byFormat: Map<VertexFormat, P> = emptyMap(),
+        wireframeByFormat: Map<VertexFormat, P> = emptyMap(),
+        backCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+        transparentByFormat: Map<VertexFormat, P> = emptyMap(),
+        additiveByFormat: Map<VertexFormat, P> = emptyMap(),
+        instancedByFormat: Map<VertexFormat, P> = emptyMap(),
+        skinnedInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
+        particlePipelines: Map<VertexFormat, P> = emptyMap(),
+        additiveParticlePipelines: Map<VertexFormat, P> = emptyMap(),
+        instancedBackCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+        edgesByFormat: Map<VertexFormat, P> = emptyMap(),
+    ) : this(
+        primary, primaryFormat, byFormat, wireframeByFormat, backCulledByFormat,
+        transparentByFormat, additiveByFormat, instancedByFormat, skinnedInstancedByFormat, particlePipelines,
+        additiveParticlePipelines, instancedBackCulledByFormat, edgesByFormat, blendedRasterByFormat = emptyMap(),
+    )
+}
 
 /** The pipeline that draws a [format] mesh's edges over its fill, or null when the table built none. */
 fun <P> PipelineTable<P>.edges(format: VertexFormat): P? = edgesByFormat[format]
@@ -108,8 +131,7 @@ data class UiShaderSet<T>(
  * @receiver The frame's pipeline registry.
  * @param format The mesh's own vertex format -- the key everything here is indexed by.
  * @param cullMode The draw's per-mesh winding preference, from `MeshRenderer.cullMode`.
- * @param transparent Per-draw, from `RenderDrawCommand.transparent`. Ahead of [cullMode] because a
- * surface's blending matters more than its winding, and in practice the two never combine.
+ * @param transparent Per-draw, from `RenderDrawCommand.transparent`.
  * @param wireframe The renderer-wide debug override. Wins outright because it is something the
  * user asked for explicitly, and seeing a transparent surface's edges beats seeing it blended.
  * @param additive Per-draw, from `RenderDrawCommand.additive`; only meaningful with [transparent].
@@ -121,12 +143,25 @@ fun <P> PipelineTable<P>.resolve(
     transparent: Boolean = false,
     wireframe: Boolean = false,
     additive: Boolean = false,
+): P? = resolve(format, cullMode, transparent, wireframe, additive, depthWrite = false)
+
+/** Resolves a draw, including any requested blended depth-write and back-cull companion. */
+fun <P> PipelineTable<P>.resolve(
+    format: VertexFormat,
+    cullMode: CullMode = CullMode.None,
+    transparent: Boolean = false,
+    wireframe: Boolean = false,
+    additive: Boolean = false,
+    depthWrite: Boolean,
 ): P? {
     val fill = if (format == primaryFormat) primary else byFormat[format]
     return when {
         wireframe -> wireframeByFormat[format] ?: fill
-        transparent && additive -> additiveByFormat[format] ?: transparentByFormat[format] ?: fill
-        transparent -> transparentByFormat[format] ?: fill
+        transparent -> {
+            val raster = BlendedRasterVariant.select(additive, cullMode, depthWrite)
+            val companion = raster?.let { blendedRasterByFormat[format]?.get(it) }
+            companion ?: (if (additive) additiveByFormat[format] else null) ?: transparentByFormat[format] ?: fill
+        }
         cullMode == CullMode.Back -> backCulledByFormat[format] ?: fill
         else -> fill
     }

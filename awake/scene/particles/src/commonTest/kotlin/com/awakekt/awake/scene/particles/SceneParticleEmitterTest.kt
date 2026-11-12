@@ -374,7 +374,27 @@ class SceneParticleEmitterTest {
     /** `facing` is written in scene files as the runtime enum's constant names, so those names are the file format. */
     @Test
     fun theNamesOfTheFacingsAreTheFileFormat() {
-        assertEquals(listOf("Camera", "Flat"), ParticleFacing.entries.map { it.name })
+        assertEquals(listOf("Camera", "Flat", "Upright"), ParticleFacing.entries.map { it.name })
+    }
+
+    /** `"Upright"` survives the scene document both ways, reaches the live emitter and is exported back. */
+    @Test
+    fun uprightRoundTripsThroughTheDocumentAndTheExport() {
+        val standing = SceneLoader.decode(
+            """{"version": 1, "nodes": [{"components": [{"component": "particle_emitter", "texture": "glow.png",
+                "facing": "Upright", "spawnRadius": 1.5, "orientSpawnRing": true}]}]}""",
+        ).nodes.single().components.single() as SceneParticleEmitter
+        val encoded = SceneLoader.encode(SceneDocument(nodes = listOf(SceneNode("ring", components = listOf(standing)))))
+        val world = World()
+        val node = world.node(standing)
+
+        ParticleContentSystem(CountingRenderer(), mapOf("glow.png" to sprite)).update(world, 0f)
+
+        assertEquals(ParticleFacing.Upright, standing.facing)
+        assertTrue(Regex(""""facing":\s*"Upright"""").containsMatchIn(encoded), "written by its name: $encoded")
+        assertEquals(standing, SceneLoader.decode(encoded).nodes.single().components.single())
+        assertEquals(ParticleFacing.Upright, world.get<ParticleEmitter>(node)!!.visual.facing)
+        assertEquals(standing, ParticleEmitterBinding.export(world, node, world.get<ParticleEmitterSource>(node)!!))
     }
 
     // --- authored options doing what they say, through the systems a played scene runs

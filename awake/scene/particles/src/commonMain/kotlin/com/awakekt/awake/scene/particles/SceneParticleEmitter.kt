@@ -51,6 +51,9 @@ import kotlinx.serialization.Serializable
  * glows. It needs the plan's particle pipeline built with `buildAdditive`.
  * @property facing Turns each sprite to the camera, or with [ParticleFacing.Flat] lays it in the plane
  * perpendicular to the node's up axis, which is also how [inheritOrientation] uses the node's rotation.
+ * [ParticleFacing.Upright] stands it in the node's own XY plane instead, its texture's top toward the
+ * node's +Y, so it stands perpendicular to a turned spawn ring and tilts with the node. In a scene file
+ * it is `"Camera"`, `"Flat"` or `"Upright"`.
  * @property acceleration A constant world-space acceleration, in units per second squared, added to
  * every live particle's velocity: `(0, -9.8, 0)` is gravity. Zero changes nothing.
  * @property inheritOrientation Whether the node's rotation turns the spawn ring and [velocity] (so
@@ -87,7 +90,8 @@ import kotlinx.serialization.Serializable
  * node's own axes and units, and [inheritOrientation] adds nothing. [acceleration] still pulls in world
  * space. A local emitter has no [ground], since its particles do not keep to the world.
  * @property orientSpawnRing Whether the node's rotation tilts the spawn ring alone, so the ring lies in
- * the plane a [ParticleFacing.Flat] sprite of this emitter lies in and turns with it, while [velocity] and
+ * the plane a [ParticleFacing.Flat] sprite of this emitter lies in and turns with it (a
+ * [ParticleFacing.Upright] sprite stands perpendicular to it and turns with it too), while [velocity] and
  * every other vector stay in world space. It adds nothing beside [inheritOrientation], which already turns
  * the ring, or in [ParticleSpace.Local], where the ring is already in the node's axes.
  * @property radialInRingPlane Whether [radialSpeed] pushes outward in the turned spawn ring's own plane

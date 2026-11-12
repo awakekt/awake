@@ -151,10 +151,53 @@ data class PipelineRequest(
     val buildAdditive: Boolean = false,
     /** A [PipelineVariant.EdgeOverlay] line companion, for drawing an opaque draw's edges over it. */
     val buildEdges: Boolean = false,
-)
+    /** Build all blended cull and depth-write companions for single draws. */
+    val buildBlendedRasterVariants: Boolean = false,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        key: PipelineKey,
+        spec: PipelineSpec,
+        buildWireframe: Boolean = false,
+        buildBackCulled: Boolean = false,
+        buildTransparent: Boolean = false,
+        buildAdditive: Boolean = false,
+        buildEdges: Boolean = false,
+    ) : this(
+        key,
+        spec,
+        buildWireframe,
+        buildBackCulled,
+        buildTransparent,
+        buildAdditive,
+        buildEdges,
+        buildBlendedRasterVariants = false,
+    )
+
+    /** The previous copy signature, which carries the blended raster setting forward. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        key: PipelineKey = this.key,
+        spec: PipelineSpec = this.spec,
+        buildWireframe: Boolean = this.buildWireframe,
+        buildBackCulled: Boolean = this.buildBackCulled,
+        buildTransparent: Boolean = this.buildTransparent,
+        buildAdditive: Boolean = this.buildAdditive,
+        buildEdges: Boolean = this.buildEdges,
+    ): PipelineRequest = copy(
+        key,
+        spec,
+        buildWireframe,
+        buildBackCulled,
+        buildTransparent,
+        buildAdditive,
+        buildEdges,
+        buildBlendedRasterVariants = buildBlendedRasterVariants,
+    )
+}
 
 /**
- * The up-to-four pipelines one [PipelineRequest] produces. A companion is null exactly when its
+ * The pipelines one [PipelineRequest] produces. A companion is null exactly when its
  * `build*` flag was false.
  */
 data class PipelineSet<P>(
@@ -170,7 +213,46 @@ data class PipelineSet<P>(
     val additive: P? = null,
     /** The edge overlay companion pipeline, or `null`. */
     val edges: P? = null,
+    /** Blended companions with a non-default culling or depth-write state. */
+    val blendedRasterVariants: Map<BlendedRasterVariant, P> = emptyMap(),
 ) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        fill: P,
+        wireframe: P? = null,
+        backCulled: P? = null,
+        transparent: P? = null,
+        additive: P? = null,
+        edges: P? = null,
+    ) : this(
+        fill,
+        wireframe,
+        backCulled,
+        transparent,
+        additive,
+        edges,
+        blendedRasterVariants = emptyMap(),
+    )
+
+    /** The previous copy signature, which carries the blended raster setting forward. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        fill: P = this.fill,
+        wireframe: P? = this.wireframe,
+        backCulled: P? = this.backCulled,
+        transparent: P? = this.transparent,
+        additive: P? = this.additive,
+        edges: P? = this.edges,
+    ): PipelineSet<P> = copy(
+        fill,
+        wireframe,
+        backCulled,
+        transparent,
+        additive,
+        edges,
+        blendedRasterVariants = blendedRasterVariants,
+    )
+
     /**
      * Every pipeline in this set, for teardown.
      *
@@ -179,7 +261,7 @@ data class PipelineSet<P>(
      * pipeline per vertex format on every backend at once. A companion added to this class from
      * now on joins this list automatically.
      */
-    val all: List<P> get() = listOfNotNull(fill, wireframe, backCulled, transparent, additive, edges)
+    val all: List<P> get() = listOfNotNull(fill, wireframe, backCulled, transparent, additive, edges) + blendedRasterVariants.values
 }
 
 /**

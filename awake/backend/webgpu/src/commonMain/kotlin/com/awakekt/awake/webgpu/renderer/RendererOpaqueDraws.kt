@@ -88,6 +88,7 @@ internal fun Renderer.prepareGpuDraw(
         transparent = isTransparent,
         wireframe = primary.wireframe,
         additive = cmd.additive,
+        depthWrite = cmd.depthWrite,
     )
     val pipeline = resolved?.handle ?: primary.pipeline
     // A line-list pipeline, the wireframe view's or an edge overlay's, takes its indices in pairs:
