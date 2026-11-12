@@ -1,0 +1,1 @@
+- A prop that has not moved keeps its draw command and cull verdict between frames while its transform, bounds, material and the camera hold, instead of being classified and rebuilt every frame (#1452).
