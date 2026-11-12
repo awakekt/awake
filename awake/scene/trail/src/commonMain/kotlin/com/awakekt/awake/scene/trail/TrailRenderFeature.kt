@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.RenderContribution
 import com.awakekt.awake.scene.rendering.RenderFeature3D
@@ -28,9 +29,13 @@ import com.awakekt.awake.trail.TrailRenderer
  *
  * A host with no renderer never builds one, so a headless world allocates nothing for its trails.
  */
-class TrailRenderFeature(renderer: Renderer) :
-    RenderFeature3D,
+class TrailRenderFeature(
+    renderer: Renderer,
+    private val resolveTexture: (String) -> GpuImageSource?,
+) : RenderFeature3D,
     AutoCloseable {
+    constructor(renderer: Renderer) : this(renderer, { null })
+
     private val batch = TrailBatch(renderer)
     private val draws = ArrayList<RenderDrawCommand>()
     private val contribution = RenderContribution(draws = draws)
@@ -39,8 +44,13 @@ class TrailRenderFeature(renderer: Renderer) :
         draws.clear()
         if (!batch.canDraw) return contribution
         val frustum = view.planesFor(context.camera.lens, context.viewportAspect)
-        world.queryEach<Transform, TrailRenderer> { _, transform, trail ->
-            batch.collect(trail, transform.worldMatrix, frustum, draws)
+        world.queryEach<Transform, TrailRenderer> { entity, transform, trail ->
+            val reference = world.get<TrailTextureReference>(entity)
+            if (reference == null || trail.texture != null) {
+                batch.collect(trail, transform.worldMatrix, frustum, draws)
+            } else {
+                batch.collect(trail, transform.worldMatrix, frustum, draws, reference.name, resolveTexture)
+            }
         }
         batch.releaseUnseen()
         return contribution
@@ -48,7 +58,13 @@ class TrailRenderFeature(renderer: Renderer) :
 
     private val view = ViewPlanes()
 
-    /** Frees every trail's buffer. */
+    /** Invalidates the uploaded material for this scene texture. */
+    fun forgetTexture(name: String) = batch.forgetTexture(name)
+
+    /** Invalidates every uploaded scene texture material. */
+    fun forgetTextures() = batch.forgetTextures()
+
+    /** Frees the buffers and materials owned by this feature. */
     override fun close() = batch.close()
 }
 

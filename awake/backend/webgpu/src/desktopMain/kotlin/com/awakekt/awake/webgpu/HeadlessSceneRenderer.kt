@@ -6,9 +6,11 @@
 package com.awakekt.awake.webgpu
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.trailScenePipeline
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.shaders.toRequests
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
@@ -114,22 +116,6 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.WorldText.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.WorldText.webGpu.bindingsMetadataAvailable,
     )
-    // Trails: alpha blended as their fill, and the additive twin a glowing trail resolves to.
-    val (trailPipeline, additiveTrailPipeline) = listOf(PipelineVariant.AlphaBlended, PipelineVariant.AdditiveBlended).map { variant ->
-        RenderPipeline(
-            graphicsDevice,
-            swapchainManager,
-            DescriptorSetLayoutHandle(0),
-            wgsl(PackShaderSets.Trail),
-            ByteArray(0),
-            VertexFormat.PositionRgbaUv,
-            "vertexMain",
-            "fragmentMain",
-            variant = variant,
-            bindingsByGroup = PackShaderSets.Trail.webGpu.bindingsByGroup,
-            bindingsMetadataAvailable = PackShaderSets.Trail.webGpu.bindingsMetadataAvailable,
-        )
-    }
     val texturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -324,6 +310,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
     val linePipeline = LineRenderPipeline(graphicsDevice, swapchainManager, wgsl(EngineShaderSets.DebugLine))
     // Content features attach as WebGpuEngine attaches them, casting into the cascades.
     val contentPipelines = PipelineRegistry(WebGpuPipelineFactory(graphicsDevice, swapchainManager, WebGpuShaderResolver()))
+    val trailPipelines = contentPipelines.register(listOf(trailScenePipeline()).toRequests(ShaderSet::webGpu)).values.single()
     val attacher = ContentFeatureAttacher(WebGpuContentFeatureGpu(graphicsDevice, contentPipelines, depthPrePass))
     val renderer = WebGpuRenderer(
         graphicsDevice = graphicsDevice,
@@ -335,14 +322,15 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 VertexFormat.PositionNormalColorUv to texturedPipeline,
                 VertexFormat.PositionUv to atlasPipeline,
                 VertexFormat.PositionUvColor to distanceFieldPipeline,
-                VertexFormat.PositionRgbaUv to trailPipeline,
+                VertexFormat.PositionRgbaUv to trailPipelines.fill,
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
+            blendedRasterByFormat = mapOf(VertexFormat.PositionRgbaUv to trailPipelines.blendedRasterVariants),
             additiveByFormat = mapOf(
                 VertexFormat.PositionNormalColorUv to additiveTexturedPipeline,
-                VertexFormat.PositionRgbaUv to additiveTrailPipeline,
+                VertexFormat.PositionRgbaUv to requireNotNull(trailPipelines.additive),
             ),
             backCulledByFormat = mapOf(
                 VertexFormat.PositionNormalColor to backCulledScenePipeline,
@@ -381,8 +369,6 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             texturedPipeline.destroy()
             atlasPipeline.destroy()
             distanceFieldPipeline.destroy()
-            trailPipeline.destroy()
-            additiveTrailPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             backCulledTexturedPipeline.destroy()

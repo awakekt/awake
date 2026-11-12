@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.scene.audio.SceneAudioSource
+import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.ScenePrefab
@@ -15,13 +16,14 @@ import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.scene2d.SceneParticleEmitter2D
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import com.awakekt.awake.scene.scene2d.SceneTilemap
+import com.awakekt.awake.scene.trail.SceneTrailRenderer
 
 /**
  * The assets a scene tree draws and plays, by name, read from its components without putting
  * anything into a world: what [prewarm] gets ready before the tree is spawned.
  *
  * @property renderables Each `mesh_renderer`'s mesh and material, as [SceneAssetLibrary.resolve] builds them.
- * @property textures The textures `sprite`, `tilemap` and `particle_emitter_2d` draw through
+ * @property textures The textures `sprite`, `tilemap`, `particle_emitter_2d` and `trail_renderer` draw through
  *   [SceneAssetLibrary.texture].
  * @property particleTextures The images 3D `particle_emitter`s show, by project path, which load through
  *   [SceneAssetLibrary.particleImages] rather than [SceneAssetLibrary.texture].
@@ -68,20 +70,27 @@ private class SceneAssetCollector {
     private val prefabLinks = linkedSetOf<String>()
 
     fun collect(node: SceneNode) {
-        node.components.forEach { component ->
-            when (component) {
-                is SceneMeshRenderer -> renderables += SceneRenderableKey(component.mesh, component.material)
-                is SceneSprite -> textures += component.texture
-                is SceneTilemap -> textures += component.texture
-                is SceneParticleEmitter2D -> if (component.texture.isNotEmpty()) textures += component.texture
-                is SceneParticleEmitter -> if (component.texture.isNotBlank()) particleTextures += component.texture
-                is SceneAudioSource -> if (component.clip != SceneAudioSource.UNASSIGNED) audioClips += component.clip
-                // An expanded link has the prefab's root as its only child, so only a bare link is unexpanded.
-                is ScenePrefabLink -> if (node.children.isEmpty()) prefabLinks += component.path
-                else -> Unit
-            }
-        }
+        node.components.forEach { collect(it, node.children.isNotEmpty()) }
         node.children.forEach(::collect)
+    }
+
+    private fun collect(component: SceneComponent, hasChildren: Boolean) {
+        when (component) {
+            is SceneMeshRenderer -> renderables += SceneRenderableKey(component.mesh, component.material)
+            is SceneSprite -> textures += component.texture
+            is SceneTilemap -> textures += component.texture
+            is SceneTrailRenderer -> addOptionalTexture(component.texture)
+            is SceneParticleEmitter2D -> if (component.texture.isNotEmpty()) textures += component.texture
+            is SceneParticleEmitter -> if (component.texture.isNotBlank()) particleTextures += component.texture
+            is SceneAudioSource -> if (component.clip != SceneAudioSource.UNASSIGNED) audioClips += component.clip
+            // An expanded link has the prefab's root as its only child, so only a bare link is unexpanded.
+            is ScenePrefabLink -> if (!hasChildren) prefabLinks += component.path
+            else -> Unit
+        }
+    }
+
+    private fun addOptionalTexture(name: String?) {
+        if (!name.isNullOrBlank()) textures += name
     }
 
     fun build() = SceneAssetReferences(renderables, textures, particleTextures, audioClips, prefabLinks)

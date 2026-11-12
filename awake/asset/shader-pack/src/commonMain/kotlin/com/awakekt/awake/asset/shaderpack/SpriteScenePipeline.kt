@@ -42,8 +42,8 @@ fun worldTextScenePipeline(): ScenePipeline = ScenePipeline(
 
 /**
  * Trails: strips of point pairs in [VertexFormat.PositionRgbaUv], rewritten in place every frame, drawn
- * unlit over the scene, depth tested and not written. Alpha blended, with the additive companion a
- * glowing trail draws with.
+ * unlit over the scene. Both alpha and additive blending support optional depth writes and back-face
+ * culling.
  */
 fun trailScenePipeline(): ScenePipeline = ScenePipeline(
     key = PipelineKey.Format(VertexFormat.PositionRgbaUv),
@@ -52,4 +52,5 @@ fun trailScenePipeline(): ScenePipeline = ScenePipeline(
     variant = PipelineVariant.AlphaBlended,
     materialBindings = GroupBindings.TexturedMaterial,
     buildAdditive = true,
+    buildBlendedRasterVariants = true,
 )

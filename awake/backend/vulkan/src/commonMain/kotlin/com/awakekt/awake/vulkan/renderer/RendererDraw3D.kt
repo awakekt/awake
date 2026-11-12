@@ -167,7 +167,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         )
     }
     // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
-    val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive) ?: return null
+    val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite) ?: return null
     val uniformSlotIndex = materialUsage.nextSlot(material)
     val coverage = pipeline.multisample.alphaToCoverageEnabled
     val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)

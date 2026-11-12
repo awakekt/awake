@@ -166,9 +166,9 @@ open class VulkanEngine(
      * additional-format requests supply the rest. One helper rather than four near-identical
      * `buildMap` blocks -- the same collapse `WebGpuEngine.byFormat` already uses.
      */
-    private fun companionsByFormat(
-        select: (PipelineSet<RenderPipeline>) -> RenderPipeline?,
-    ): Map<VertexFormat, RenderPipeline> = buildMap {
+    private fun <P> companionsByFormat(
+        select: (PipelineSet<RenderPipeline>) -> P?,
+    ): Map<VertexFormat, P> = buildMap {
         requestedPipelines.forEach { (key, requested) ->
             val format = when {
                 key is PipelineKey.Format -> key.vertexFormat
@@ -200,6 +200,7 @@ open class VulkanEngine(
         edgesByFormat = companionsByFormat { it.edges },
         transparentByFormat = companionsByFormat { it.transparent },
         additiveByFormat = companionsByFormat { it.additive },
+        blendedRasterByFormat = companionsByFormat { it.blendedRasterVariants.takeUnless { variants -> variants.isEmpty() } },
         backCulledByFormat = companionsByFormat { it.backCulled },
         // Particles belong in particlePipelines, NOT here: `resolveInstanced` reads that map
         // for them, and folding them in under PositionUv left the field empty on this backend

@@ -45,6 +45,7 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * @property buildAdditive Also build the additive companion, for transparent draws that set
  * `RenderDrawCommand.additive`. On a particle pipeline it is the additive particle twin, for
  * emitters whose `ParticleVisual.additive` is set.
+ * @property buildBlendedRasterVariants Builds the optional depth-writing and back-culled blend states.
  */
 data class ScenePipeline(
     val key: PipelineKey,
@@ -59,7 +60,49 @@ data class ScenePipeline(
     val buildTransparent: Boolean = false,
     val depthShaders: ShaderSet? = null,
     val buildAdditive: Boolean = false,
-)
+    val buildBlendedRasterVariants: Boolean = false,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        key: PipelineKey,
+        shaders: ShaderSet,
+        vertexFormat: VertexFormat,
+        variant: PipelineVariant = PipelineVariant.Opaque,
+        bindingLayout: BindingLayout = BindingLayout.Standard,
+        materialBindings: GroupBindings? = null,
+        usesMaterialGroup: Boolean = true,
+        buildWireframe: Boolean = false,
+        buildBackCulled: Boolean = false,
+        buildTransparent: Boolean = false,
+        depthShaders: ShaderSet? = null,
+        buildAdditive: Boolean = false,
+    ) : this(
+        key, shaders, vertexFormat, variant, bindingLayout,
+        materialBindings, usesMaterialGroup, buildWireframe, buildBackCulled, buildTransparent,
+        depthShaders, buildAdditive, buildBlendedRasterVariants = false,
+    )
+
+    /** The previous copy signature, which carries the blended raster setting forward. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        key: PipelineKey = this.key,
+        shaders: ShaderSet = this.shaders,
+        vertexFormat: VertexFormat = this.vertexFormat,
+        variant: PipelineVariant = this.variant,
+        bindingLayout: BindingLayout = this.bindingLayout,
+        materialBindings: GroupBindings? = this.materialBindings,
+        usesMaterialGroup: Boolean = this.usesMaterialGroup,
+        buildWireframe: Boolean = this.buildWireframe,
+        buildBackCulled: Boolean = this.buildBackCulled,
+        buildTransparent: Boolean = this.buildTransparent,
+        depthShaders: ShaderSet? = this.depthShaders,
+        buildAdditive: Boolean = this.buildAdditive,
+    ): ScenePipeline = copy(
+        key, shaders, vertexFormat, variant, bindingLayout,
+        materialBindings, usesMaterialGroup, buildWireframe, buildBackCulled, buildTransparent,
+        depthShaders, buildAdditive, buildBlendedRasterVariants = buildBlendedRasterVariants,
+    )
+}
 
 /**
  * Whether the plan's depth shader, built for this pipeline's vertex format, draws its meshes into
@@ -105,6 +148,7 @@ fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<Pi
             buildBackCulled = declared.buildBackCulled || declared.key.isPlainInstanced,
             buildTransparent = declared.buildTransparent,
             buildAdditive = declared.buildAdditive,
+            buildBlendedRasterVariants = declared.buildBlendedRasterVariants,
             // Unconditional, as the plan's other debug companions are: whether a wireframe overlay
             // can draw is not a per-app choice. Opaque single draws only, which the overlay covers.
             buildEdges = declared.variant == PipelineVariant.Opaque &&

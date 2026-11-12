@@ -724,7 +724,14 @@ class SceneAppLifecycleRuntime internal constructor(
 
     // Text a scene places with world_text; it uploads nothing until a scene has some.
     internal val worldTextFeature by lazy { WorldTextRenderFeature(renderer) }
-    internal val trailFeature by lazy { TrailRenderFeature(renderer) }
+    internal val trailFeature by lazy {
+        TrailRenderFeature(renderer) { session.assetLibraryOrNull()?.textureImage(it) }.also { feature ->
+            forgetsTextures(object : SceneTextureUploads {
+                override fun forgetTexture(name: String) = feature.forgetTexture(name)
+                override fun forgetTextures() = feature.forgetTextures()
+            })
+        }
+    }
 
     // A texture the library forgets is uploaded again from what it gives next.
     private fun forgetsTextures(uploads: SceneTextureUploads) {

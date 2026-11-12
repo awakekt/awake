@@ -15,6 +15,8 @@ import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.pipeline.GpuCapability
 import com.awakekt.awake.render.pipeline.GpuCapabilityKind
 import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderFeatureContext3D
@@ -57,7 +59,7 @@ class TrailRenderFeatureTest {
         1f,
     )
 
-    private fun World.withTrail(): Pair<World, TrailRenderer> {
+    private fun World.withTrail(textureName: String? = null): Pair<World, TrailRenderer> {
         val trail = TrailRenderer(4).apply {
             for (i in 0 until 4) set(i, Vec3f(i * 0.2f, 0f, 0f), Vec3f(i * 0.2f, 0.1f, 0f), Color.White, Color.White)
             visible = 4
@@ -65,6 +67,7 @@ class TrailRenderFeatureTest {
         val entity = create()
         add(entity, Transform())
         add(entity, trail)
+        textureName?.let { add(entity, TrailTextureReference(it)) }
         return this to trail
     }
 
@@ -95,6 +98,32 @@ class TrailRenderFeatureTest {
         assertEquals(0, feature.collect(world, context).draws.size)
         assertEquals(0, renderer.created)
         feature.close()
+    }
+
+    @Test
+    fun anAuthoredTextureWaitsForItsImageAndResolvesAgainAfterInvalidation() {
+        val renderer = DynamicRenderer(supported = true)
+        val name = "textures/ribbon.png"
+        val (world, _) = World().withTrail(name)
+        val image = TextureAsset(byteArrayOf(-1, 0, 0, -1), 1, 1).asGpuImageSource()
+        var ready = false
+        var requests = 0
+        TrailRenderFeature(renderer) { requested ->
+            assertEquals(name, requested)
+            requests++
+            image.takeIf { ready }
+        }.use { feature ->
+            assertEquals(0, feature.collect(world, context).draws.size)
+            assertEquals(0, renderer.created)
+            ready = true
+            assertEquals(1, feature.collect(world, context).draws.size)
+            assertEquals(1, feature.collect(world, context).draws.size)
+            assertEquals(2, requests, "the uploaded material is reused")
+            feature.forgetTexture(name)
+            assertEquals(1, feature.collect(world, context).draws.size)
+            assertEquals(3, requests)
+            assertEquals(1, renderer.created, "reloading the texture reuses the mesh")
+        }
     }
 
     private fun World.queryFirstTrail(): TrailRenderer? {

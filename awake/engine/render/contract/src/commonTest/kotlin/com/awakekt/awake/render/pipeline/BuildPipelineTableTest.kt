@@ -9,6 +9,8 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class BuildPipelineTableTest {
     private val factory = PipelineFactory<PipelineVariant> { _, spec -> spec.variant }
@@ -23,6 +25,35 @@ class BuildPipelineTableTest {
         ),
         buildAdditive = true,
     )
+
+    @Test
+    fun blendedRasterCompanionsPreserveBlendAndSelectDepthAndCullingIndependently() = runTest {
+        val format = VertexFormat.PositionRgbaUv
+        val key = PipelineKey.Format(format)
+        val request = request(key, format, PipelineVariant.AlphaBlended).copy(buildBlendedRasterVariants = true)
+        val set = buildPipelineTable(listOf(request)) { _, spec -> spec }.getValue(key)
+        val table = PipelineTable(
+            primary = set.fill,
+            primaryFormat = format,
+            additiveByFormat = mapOf(format to requireNotNull(set.additive)),
+            blendedRasterByFormat = mapOf(format to set.blendedRasterVariants),
+        )
+
+        for (additive in listOf(false, true)) {
+            for (depthWrite in listOf(false, true)) {
+                for (cull in listOf(CullMode.None, CullMode.Back)) {
+                    val selected = requireNotNull(table.resolve(format, cull, transparent = true, additive = additive, depthWrite = depthWrite))
+                    assertEquals(cull, selected.cullMode)
+                    assertEquals(depthWrite, selected.variant.depthWriteEnabled)
+                    assertEquals(additive, selected.variant.additive)
+                    assertTrue(selected.variant.blendEnabled)
+                    assertTrue(selected.variant.depthTestEnabled)
+                    assertFalse(selected.variant.instanced)
+                    assertTrue(selected in set.all)
+                }
+            }
+        }
+    }
 
     /** A particle's additive twin keeps its instance bindings; a mesh's is the plain additive blend. */
     @Test

@@ -18,8 +18,8 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
 - Its GPU buffer is created once, at `capacity`, the first frame the trail is drawn. A frame that
   changed pairs uploads only the range that changed; a frame that only changes `visible` uploads
   nothing; once warm, nothing is allocated per frame, with dozens of trails on screen.
-- It is drawn unlit, in the transparent pass, depth tested and not depth written, from both faces,
-  through its entity's world matrix, so it moves with its parent. It casts no shadow.
+- It is drawn unlit and depth tested in the transparent pass, through its entity's world matrix.
+  Trails are double-sided by default and depth writes are opt-in. A trail casts no shadow.
 - It is culled by the box around its visible pairs.
 - An optional texture is sampled with `u` along the strip and `v` across it: `v` is 0 at `a` and 1
   at `b`. Without one, the colour is the vertices' alone. `tint` multiplies every vertex's colour.
@@ -31,6 +31,9 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
   "component": "trail_renderer",
   "capacity": 300,
   "blend": "Additive",
+  "texture": "textures/ribbon.png",
+  "depthWrite": false,
+  "doubleSided": true,
   "tint": {"r": 1, "g": 0.6, "b": 0.2, "a": 1}
 }
 ```
@@ -40,9 +43,13 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
 | `capacity` | `64` | The most pairs it holds, 2 to 65536. |
 | `blend` | `Additive` | `Additive` adds to what is behind it; `Alpha` covers it by its alpha. |
 | `tint` | white | Multiplied into every vertex's colour. |
+| `texture` | none | Scene texture name or project-relative image path. |
+| `depthWrite` | `false` | Records the trail's depth so it can occlude blended draws that follow it. |
+| `doubleSided` | `true` | Set to `false` to cull back faces. The front is the side from which, with each pair's `b` above its `a`, the pairs run right to left: the side `(b - a) x (next a - a)` points to. |
 
 The document says how the trail is drawn. Its pairs, how many are visible and their colours are
-written by a game's systems; `texture` is set from code.
+written by a game's systems. A trail that names a texture starts drawing once the image is ready.
+Setting `TrailRenderer.texture` in code overrides the document's texture while it is set.
 
 ## Drive it from a system
 
