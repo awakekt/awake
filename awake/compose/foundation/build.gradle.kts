@@ -21,6 +21,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:compose:ui"))
+            api(project(":awake:asset:sprite"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

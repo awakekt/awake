@@ -644,6 +644,79 @@ public final class com/awakekt/awake/compose/foundation/selection/SelectionKt {
 	public static synthetic fun toggleable$default (Lcom/awakekt/awake/compose/ui/Modifier;ZZLcom/awakekt/awake/compose/ui/semantics/SemanticsRole;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
+public final class com/awakekt/awake/compose/foundation/sheet/SheetAxis : java/lang/Enum {
+	public static final field Column Lcom/awakekt/awake/compose/foundation/sheet/SheetAxis;
+	public static final field Row Lcom/awakekt/awake/compose/foundation/sheet/SheetAxis;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/sheet/SheetAxis;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/sheet/SheetAxis;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/SheetFillKt {
+	public static final fun cellFill (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;ILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;F)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static synthetic fun cellFill$default (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;ILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static final fun clipFill (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;ILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;F)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static synthetic fun clipFill$default (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;ILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static final fun gridCellFill (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;F)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static synthetic fun gridCellFill$default (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/SheetState : java/lang/Enum {
+	public static final field Disabled Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static final field Focused Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static final field Hovered Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static final field Normal Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static final field Pressed Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static final field Selected Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/SliceInsets {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/sheet/SliceInsets$Companion;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public fun <init> (IIII)V
+	public synthetic fun <init> (IIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Lcom/awakekt/awake/compose/foundation/sheet/SliceInsets;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/foundation/sheet/SliceInsets;IIIIILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/sheet/SliceInsets;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()I
+	public final fun getLeft ()I
+	public final fun getRight ()I
+	public final fun getTop ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/SliceInsets$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/compose/foundation/sheet/SliceInsets;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/StateSheet {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/sheet/StateSheet$Companion;
+	public fun <init> (Ljava/util/Map;)V
+	public final fun fill (Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZ)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public final fun fill (Lcom/awakekt/awake/compose/foundation/sheet/SheetState;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static synthetic fun fill$default (Lcom/awakekt/awake/compose/foundation/sheet/StateSheet;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public final fun getStates ()Ljava/util/Set;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/StateSheet$Companion {
+	public final fun fromGrid (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IILjava/util/List;Lcom/awakekt/awake/compose/foundation/sheet/SheetAxis;IILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;F)Lcom/awakekt/awake/compose/foundation/sheet/StateSheet;
+	public static synthetic fun fromGrid$default (Lcom/awakekt/awake/compose/foundation/sheet/StateSheet$Companion;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IILjava/util/List;Lcom/awakekt/awake/compose/foundation/sheet/SheetAxis;IILcom/awakekt/awake/compose/foundation/sheet/SliceInsets;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/sheet/StateSheet;
+}
+
+public final class com/awakekt/awake/compose/foundation/sheet/StateSheetKt {
+	public static final fun buttonState (Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZ)Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+	public static synthetic fun buttonState$default (Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/sheet/SheetState;
+}
+
 public final class com/awakekt/awake/compose/foundation/style/MutableStyleState : com/awakekt/awake/compose/foundation/style/StyleState {
 	public fun <init> ()V
 	public fun <init> (ZZZZZZ)V
