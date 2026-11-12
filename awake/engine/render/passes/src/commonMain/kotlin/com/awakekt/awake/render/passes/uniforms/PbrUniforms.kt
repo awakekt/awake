@@ -237,7 +237,7 @@ internal val RenderDrawCommand.blendsAdditively: Boolean
  * [timeSeconds]. A payload of only the three factor fields (from before texture animation) keeps
  * its factors and plays no animation.
  */
-private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, additive: Boolean, timeSeconds: Float): FloatArray {
+internal fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, additive: Boolean, timeSeconds: Float): FloatArray {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
     val output = when {
         values.size >= layout.total -> values.copyOf(layout.total)

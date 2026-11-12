@@ -1210,6 +1210,10 @@ public final class com/awakekt/awake/render/pipeline/GroupBindings$Companion {
 	public final fun getUniformOnlyMaterial ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 }
 
+public final class com/awakekt/awake/render/pipeline/GroupBindingsKt {
+	public static final field FRAME_UNIFORM_BINDING I
+}
+
 public final class com/awakekt/awake/render/pipeline/MultisampleState {
 	public static final field Companion Lcom/awakekt/awake/render/pipeline/MultisampleState$Companion;
 	public fun <init> ()V
@@ -1993,6 +1997,7 @@ public final class com/awakekt/awake/render/renderer/UniformFields {
 	public final fun getCascadeViewProjections ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getDebugView ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getDefaultMaterial ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getDrawFade ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getEmissiveFactor ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getExposure ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getFogColor ()Lcom/awakekt/awake/render/renderer/UniformField;
@@ -2007,6 +2012,7 @@ public final class com/awakekt/awake/render/renderer/UniformFields {
 	public final fun getTextureFrames ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getTextureScroll ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
 }
 
 public final class com/awakekt/awake/render/renderer/UniformLayout {

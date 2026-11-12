@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.PipelineFactory
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineSpec
@@ -101,6 +102,14 @@ class VulkanPipelineFactory(
             multisample = rasterState?.copy(
                 alphaToCoverageEnabled = rasterState.count > 1 && spec.multisample.alphaToCoverageEnabled,
             ) ?: spec.multisample,
-        )
+        ).also { if (spec.bindingsMetadataAvailable) it.splitDrawBlockFloats = spec.splitDrawBlockFloats() }
+    }
+
+    /** The draw block's floats when [this] shader reads the frame block beside it, else 0. */
+    private fun PipelineSpec.splitDrawBlockFloats(): Int {
+        val material = bindingsByGroup[bindingLayout.slot(BindingSemantic.Material)]
+            ?.takeIf { it.uniformBufferSize(FRAME_UNIFORM_BINDING) > 0L }
+            ?: return 0
+        return (material.uniformBufferSize(0) / Float.SIZE_BYTES).toInt()
     }
 }

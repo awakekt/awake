@@ -13,6 +13,7 @@ import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
+import com.awakekt.awake.webgpu.renderer.uniformBufferAt
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.writeBufferData
@@ -40,7 +41,7 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
  * the pipeline this material is first drawn through.
  */
 class Material(
-    graphicsDevice: GraphicsDevice,
+    private val graphicsDevice: GraphicsDevice,
     /** Declared ABI size used by transitional packet preparation to select shared writers. */
     val uniformFloatCount: Int = UniformFields.DefaultMaterial.total,
     /** What this material's bind group declares. Defaults to the glTF metallic-roughness shape
@@ -146,11 +147,19 @@ class Material(
         pipeline: GPURenderPipeline,
         uniformBuffer: GPUBuffer,
         pipelineBindings: GroupBindings = bindings,
+    ): GPUBindGroup = bindGroupFor(pipeline, uniformBuffer, pipelineBindings, edges = false)
+
+    /** As above, binding the wireframe-overlay [edges]' frame block where [pipeline] draws them. */
+    internal fun bindGroupFor(
+        pipeline: GPURenderPipeline,
+        uniformBuffer: GPUBuffer,
+        pipelineBindings: GroupBindings,
+        edges: Boolean,
     ): GPUBindGroup = drawBindGroups.getOrPut(pipeline) { HashMap() }.getOrPut(uniformBuffer) {
         device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(0u),
-                entries = bindGroupEntries(pipelineBindings, uniformBuffer),
+                entries = bindGroupEntries(pipelineBindings, uniformBuffer, edges),
             ),
         )
     }
@@ -158,6 +167,7 @@ class Material(
     private fun bindGroupEntries(
         declaredBindings: GroupBindings,
         drawUniformBuffer: GPUBuffer? = null,
+        edges: Boolean = false,
     ): List<BindGroupEntry> {
         val declaredPbrBindings = materialPbrBindings(declaredBindings)
         require(pbrTextures.size >= declaredPbrBindings.size) {
@@ -166,7 +176,9 @@ class Material(
         }
         return declaredBindings.entries.map { entry ->
             val resource = when (entry.kind) {
-                ResourceKind.UniformBuffer -> BufferBinding(buffer = drawUniformBuffer ?: requireUniformBuffer())
+                ResourceKind.UniformBuffer -> BufferBinding(
+                    buffer = graphicsDevice.uniformBufferAt(entry.binding, drawUniformBuffer ?: requireUniformBuffer(), edges),
+                )
                 ResourceKind.Sampler -> requireTexture().sampler
                 ResourceKind.SampledTexture ->
                     if (entry.binding == BASE_COLOR_IMAGE_BINDING) {

@@ -462,6 +462,63 @@ trade-offs, not a further refactor.
 So the honest framing: **abstraction buys ~44%; the remaining 56% is a strategic choice about
 how many backends to own.**
 
+## Uniform blocks: the frame's and the draw's
+
+A lit scene shader reads two uniform blocks, both in the material group
+(`BindingLayout.Standard.slot(BindingSemantic.Material)`, group/set 0):
+
+| Binding | Block | Layout (`MaterialUniformLayouts`) | Written |
+|---|---|---|---|
+| `0` | The draw's own (`Uniforms`) | `LitShadowDraw`: `model`, `vertexAnimation`, `material`, `drawFade`. `PbrTexturedDraw`: `model`, `vertexAnimation`, the PBR factors and texture animation, `drawFade` | When the draw's own inputs change |
+| `FRAME_UNIFORM_BINDING` (`9`) | The frame's (`FrameUniforms`) | `Frame`: `viewProjection`, the directional light, the point-light slots, the cascade matrices and scales, `cameraPosition`, `cameraForward`, `fogColor`, `debugView`, `exposure` | Once per batch, when it changed |
+
+The shader computes clip position as `viewProjection * (model * position)`; no block carries an
+MVP. Nothing in a draw's block is the camera's, the light's or the cascades', so a camera that
+moves over a static scene re-uploads the one frame block and no draw's (#1452). A draw's
+animation clock and dither fade are its own and stay in its block.
+
+**Why the frame block is a binding of the material group and not a group of its own.**
+`BindingLayout.Standard` already uses the four bind groups WebGPU guarantees: material, shadow
+depth (or a depth pass's cascade block), scene depth, and the joint palette or the mask. A fifth
+is not available, and moving the material group to make room would renumber the groups every
+content feature and consumer shader authors against. A second binding costs no bind call per
+draw: the material group a draw already binds names both buffers.
+
+**Depth passes.** A shadow, scene-depth or mask pass draws with the same per-draw buffer the
+scene pass wrote, so every split draw layout starts with `model` and `vertexAnimation`, and a
+depth shader's `Uniforms` struct is that prefix. A cascade's view-projection is the pass's own
+block (`ShadowCascadePassBinding`), never a draw's. A depth shader that draws from the camera
+reads `viewProjection` from the frame block; one that reads nothing from it binds nothing for
+it, because a binding is in a pipeline's layout only when a stage reads it.
+
+**Which draws are split.** The lit-shadow and textured PBR shaders and their instanced and
+skinned-instanced variants. A backend packs the draw's block by what the pipeline's shader
+declares (`drawBlockFloats` in `render:passes`), not by the material's size, and packs
+`FrameUniformBlock` once per batch. `MaterialUniformLayouts.LitShadow` and `PbrTextured` still
+size a material and name its draw plan (`createMaterial(LitShadowUniformLayout)`).
+
+**Three frame blocks, not one.** A batch's wireframe-overlay edges are prepared with the batch
+but are a pass of their own: a view-projection pulled toward the eye and the edge debug code. So
+a device holds a second frame block for edges, which an edge pipeline's groups (WebGPU) or an
+edge draw's descriptor set (Vulkan) bind in place of the batch's. The third never changes: an
+identity view-projection (`identityFrameBlock()`).
+
+**A shader that keeps one whole block.** The unshadowed lit, skinned, sprite, world-text, trail,
+particle and terrain shaders, a content feature's own, and a custom scene shader are packed as
+before, and a pipeline's layout holds no frame binding its shader does not read. The shared
+camera-depth shader multiplies the frame's view-projection by the matrix at the start of the
+draw's block. That is a split draw's `model`; for a single block that starts with its MVP, as
+`UniformFields.DefaultMaterial` does, the backend binds the identity frame block beside it, so
+the product is the MVP it always was. Casting a shadow through the shared cascade depth shaders
+needs `model` at the start of the block, which is the split layout: `shadowUniforms()` in
+`asset:shader-pack` declares both blocks and hands back `mvp` as the product, and a shader that
+replaces the engine's lit-shadow or textured shader with `ShaderReplacement` declares them too.
+
+**Vulkan.** The material's descriptor set layout is `GroupBindings.StandardMaterial`, which
+names the frame binding, so every material set carries it; a frame in flight has its own three
+buffers, and a set is rewritten only when its slot changes kind, which a steady frame never
+does.
+
 ## Adding an image effect
 
 Multi-pass 2D and post-processing effects (backdrop blur, layer blur, bloom, colour grading,

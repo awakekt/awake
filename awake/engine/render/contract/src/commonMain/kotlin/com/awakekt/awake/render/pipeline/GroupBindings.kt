@@ -193,8 +193,8 @@ data class GroupBindings(
                     binding = 0,
                     kind = ResourceKind.UniformBuffer,
                     stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
-                    // `MaterialUniformLayouts.PbrTextured`, 196 floats; `TexturedShaderBindingsTest` holds the two equal.
-                    minBindingSize = 784L,
+                    // `MaterialUniformLayouts.PbrTexturedDraw`, 44 floats; `TexturedShaderBindingsTest` holds the two equal.
+                    minBindingSize = 176L,
                 ),
                 ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
@@ -202,6 +202,13 @@ data class GroupBindings(
                 ResourceBinding(6, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(7, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(8, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(
+                    binding = FRAME_UNIFORM_BINDING,
+                    kind = ResourceKind.UniformBuffer,
+                    stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
+                    // `MaterialUniformLayouts.Frame`, 156 floats; the same test holds these equal too.
+                    minBindingSize = 624L,
+                ),
             ),
         )
 
@@ -226,3 +233,13 @@ data class GroupBindings(
         )
     }
 }
+
+/**
+ * Where the frame block binds in the material group, past every material texture: what the
+ * camera, the light and the shadow cascades decide, which a pass writes once for all its draws.
+ * Binding 0 of the same group stays the draw's own block.
+ *
+ * A second binding of that group rather than a group of its own: [BindingLayout.Standard] already
+ * uses the four bind groups WebGPU guarantees.
+ */
+const val FRAME_UNIFORM_BINDING: Int = 9

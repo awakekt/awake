@@ -87,8 +87,8 @@ class DepthPrePassFeature(
             ?.takeIf { it.vertexFormat == format }
     }
 
-    internal fun materialBinding(pipeline: DepthOnlyPipeline, buffer: io.ygdrasil.webgpu.GPUBuffer) =
-        pipeline.materialBinding(buffer)
+    internal fun materialBinding(pipeline: DepthOnlyPipeline, buffer: io.ygdrasil.webgpu.GPUBuffer, wholeBlock: Boolean = false) =
+        pipeline.materialBinding(buffer, wholeBlock)
 
     internal fun materialBinding(
         pipeline: DepthOnlyPipeline,

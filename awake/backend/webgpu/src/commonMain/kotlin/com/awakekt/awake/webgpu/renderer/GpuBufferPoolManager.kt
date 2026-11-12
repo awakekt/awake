@@ -10,6 +10,8 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.passes.GpuResourcePool
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.ResourceBinding
+import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.webgpu.mesh.FrameInstanceBuffer
@@ -109,9 +111,7 @@ internal class GpuBufferPoolManager(
             val bindGroup = device.createBindGroupReleasingLayout(
                 BindGroupDescriptor(
                     layout = pipeline.pipeline.getBindGroupLayout(0u),
-                    entries = listOf(
-                        BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
-                    ),
+                    entries = uniformEntries(pipeline.bindingsByGroup[0]?.entries, buffer),
                 ),
             )
             WebGpuUniformResources(buffer, bindGroup, WebGpuBindGroupHandle(bindGroup))
@@ -133,7 +133,9 @@ internal class GpuBufferPoolManager(
     /** Returns a draw slot only when the selected pipeline declares group 0. The handle carries
      * the shared shader metadata, so callers cannot accidentally create binding 0 for a
      * resource-free pipeline whose explicit layout is `[]`. */
-    fun uniformSlotForDraw(pipeline: WebGpuPipelineHandle, index: Int): UniformSlot? {
+
+    /** Draw [index]'s slot in [pipeline]'s pool. Wireframe-overlay [edges]' slots bind the edges' frame block. */
+    fun uniformSlotForDraw(pipeline: WebGpuPipelineHandle, index: Int, edges: Boolean = false): UniformSlot? {
         if (!pipeline.hasBindingGroup(0)) return null
         val slots = uniformSlotPools.getOrPut(pipeline.pipeline) { mutableListOf() }
         while (slots.size <= index) {
@@ -149,15 +151,13 @@ internal class GpuBufferPoolManager(
                 ),
             )
             val group0Entries = pipeline.bindingsByGroup[0]?.entries ?: pipeline.materialBindings?.entries
-            val singleBufferOnly = group0Entries == null || (group0Entries.size == 1 && group0Entries[0].kind == com.awakekt.awake.render.pipeline.ResourceKind.UniformBuffer)
-            val bindGroup = if (singleBufferOnly) {
+            val buffersOnly = group0Entries == null || group0Entries.all { it.kind == ResourceKind.UniformBuffer }
+            val bindGroup = if (buffersOnly) {
                 WebGpuBindGroupHandle(
                     device.createBindGroupReleasingLayout(
                         BindGroupDescriptor(
                             layout = pipeline.pipeline.getBindGroupLayout(0u),
-                            entries = listOf(
-                                BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
-                            ),
+                            entries = uniformEntries(group0Entries, buffer, edges),
                         ),
                     ),
                 )
@@ -170,6 +170,12 @@ internal class GpuBufferPoolManager(
     }
 
     /** Releases and evicts all buffers and bind groups cached against [pipeline]. */
+
+    /** A group of uniform buffers only: the [draw]'s block, and the frame block where declared. */
+    private fun uniformEntries(declared: List<ResourceBinding>?, draw: GPUBuffer, edges: Boolean = false): List<BindGroupEntry> =
+        declared?.map { BindGroupEntry(binding = it.binding.toUInt(), resource = BufferBinding(buffer = graphicsDevice.uniformBufferAt(it.binding, draw, edges))) }
+            ?: listOf(BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = draw)))
+
     fun invalidatePipeline(pipeline: GPURenderPipeline) {
         uniformSlotPools.remove(pipeline)?.forEach(UniformSlot::close)
         skinnedInstancedUniformResources.remove(pipeline)?.close()

@@ -6,8 +6,10 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
 import com.awakekt.awake.render.renderer.UniformField
 import kotlin.test.Test
@@ -15,8 +17,9 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 /**
- * Asserts the WGSL `Uniforms` structs are what [LitShadowUniformLayout] describes, declaration
- * for declaration -- name, type and array length.
+ * Asserts the WGSL `Uniforms` and `FrameUniforms` structs are what [MaterialUniformLayouts.LitShadowDraw]
+ * and [MaterialUniformLayouts.Frame] describe, declaration for declaration -- name, type and
+ * array length.
  *
  * `shadow_depth.wgsl` deliberately binds `lit_shadow.wgsl`'s buffer rather than owning a second
  * uniform scheme, so its struct must be a byte-identical prefix of that shader's. Nothing
@@ -35,7 +38,7 @@ import kotlin.test.fail
  * resized, and deriving from [UniformField]'s own `type`/`count` catches all three, where
  * comparing field names alone caught only the first.
  *
- * Since 2026-08-24 ASL's field list is DERIVED from [LitShadowUniformLayout] too
+ * Since 2026-08-24 ASL's field list is DERIVED from the layouts too
  * (`ShadowUniforms.kt`'s `fieldsFrom`), and the loop bound reads `MAX_POINT_LIGHTS` itself,
  * so the chain is closed at the source: layout -> ASL struct -> committed WGSL. This test is
  * now a regression witness over that chain rather than the only thing holding it together --
@@ -57,7 +60,7 @@ class ShaderUniformStructTest {
             expectedFields(),
             // Either backend: the uniform block is the same in both, only the shadow lookup differs.
             uniformStructFields(litShadowShader(ClipSpace.Vulkan)),
-            "lit_shadow.wgsl's Uniforms struct and LitShadowUniformLayout disagree. They size " +
+            "lit_shadow.wgsl's Uniforms struct and LitShadowDraw disagree. They size " +
                 "and order the same buffer, so whichever one changed has to be matched in the " +
                 "other -- and check shadow_depth.wgsl too, it binds this same buffer.",
         )
@@ -76,9 +79,23 @@ class ShaderUniformStructTest {
         )
     }
 
-    /** [LitShadowUniformLayout] as the WGSL declarations a shader must spell out to match it. */
+    /** What the camera, light and cascades decide sits in the frame block, in both lit shaders. */
+    @Test
+    fun theFrameStructIsExactlyWhatTheKotlinLayoutDeclares() {
+        val expected = MaterialUniformLayouts.Frame.fields.map { "${it.name} : ${it.wgslType()}" }
+        assertEquals(expected, structFields(litShadowShader(ClipSpace.Vulkan), "FrameUniforms"))
+        assertEquals(expected, structFields(texturedShader(ClipSpace.Vulkan), "FrameUniforms"))
+    }
+
+    /** A depth pass that reads only its cascade binds no frame block. */
+    @Test
+    fun shadowDepthDeclaresNoUseOfTheFrameBlock() {
+        assertEquals(listOf(0), ShadowDepthShader.bindingsForGroup(0)?.entries?.map { it.binding })
+    }
+
+    /** [MaterialUniformLayouts.LitShadowDraw] as the WGSL declarations a shader must spell out to match it. */
     private fun expectedFields(): List<String> =
-        LitShadowUniformLayout.fields.map { "${it.name} : ${it.wgslType()}" }
+        MaterialUniformLayouts.LitShadowDraw.fields.map { "${it.name} : ${it.wgslType()}" }
 
     private fun UniformField.wgslType(): String {
         val element = when (type) {
@@ -92,8 +109,10 @@ class ShaderUniformStructTest {
     }
 
     /** Each `name : type` inside the shader's `Uniforms` struct, comments and spacing removed. */
-    private fun uniformStructFields(shader: AslShaderDefinition): List<String> = shader.emitWgsl()
-        .substringAfter("struct Uniforms {")
+    private fun uniformStructFields(shader: AslShaderDefinition): List<String> = structFields(shader, "Uniforms")
+
+    private fun structFields(shader: AslShaderDefinition, struct: String): List<String> = shader.emitWgsl()
+        .substringAfter("struct $struct {")
         .substringBefore("}")
         .lineSequence()
         .map { it.substringBefore("//").trim().removeSuffix(",") }
