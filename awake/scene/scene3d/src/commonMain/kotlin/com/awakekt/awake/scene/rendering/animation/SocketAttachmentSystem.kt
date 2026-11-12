@@ -14,6 +14,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
+import com.awakekt.awake.scene.core.transform.worldAxisStretch
 import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.atan2
@@ -32,9 +33,11 @@ import kotlin.math.sqrt
  *
  * Everything is read as it stands when this runs, not as the last [TransformSystem] pass left it: the
  * target's world transform is composed from its own and its ancestors' position, rotation and scale,
- * so the attachment follows a character in the frame it moves. Register this after whatever moves or
+ * with [Transform.computeWorldMatrix] as [TransformSystem] composes it (so a node that keeps its
+ * rotation in world axes, [Transform.inheritRotation] false, is placed as that pass places it), and
+ * the attachment follows a character in the frame it moves. Register this after whatever moves or
  * poses the target, such as [AnimationSystem]. An attached entity with a parent is given the local
- * transform that puts it there.
+ * transform that puts it there, read in world axes when it does not inherit its parent's rotation.
  */
 class SocketAttachmentSystem : System {
     private val targetWorld = Mat4()
@@ -46,6 +49,7 @@ class SocketAttachmentSystem : System {
     private val local = Mat4()
     private val ancestorLocal = Mat4()
     private val product = Mat4()
+    private val chain = ArrayList<Transform>()
 
     /**
      * Updates all active socket attachments in [world] by [delta] seconds.
@@ -72,7 +76,7 @@ class SocketAttachmentSystem : System {
             )
             Mat4.multiplyColumnMajor(targetWorld, joint, onJoint)
             Mat4.multiplyColumnMajor(onJoint, offset, attached)
-            transform.setFrom(localFor(world, transform.parent) ?: return@forEach)
+            transform.setFrom(localFor(world, transform) ?: return@forEach)
         }
     }
 
@@ -93,27 +97,62 @@ class SocketAttachmentSystem : System {
         ((index + 1) * MATRIX_FLOATS <= pose.jointPalette.size).also { inPalette -> if (inPalette) pose.getJointMatrix(index, joint) }
     }
 
-    /** [attached] in [parent]'s space, or [attached] itself for an entity with no parent; null when the parent's matrix can't be inverted. */
-    private fun localFor(world: World, parent: Entity?): Mat4? {
+    /**
+     * [attached] in the space of [transform]'s parent, the local transform [Transform.computeWorldMatrix]
+     * turns back into it, or [attached] itself for an entity with no parent; null when the parent's
+     * matrix can't be inverted.
+     */
+    private fun localFor(world: World, transform: Transform): Mat4? {
+        val parent = transform.parent
         if (parent == null || !world.composeWorld(parent, parentWorld)) return attached
-        return parentWorld.inverse()?.let { inverseParent -> Mat4.multiplyColumnMajor(inverseParent, attached, local) }
+        val inverseParent = parentWorld.inverse()
+        return when {
+            inverseParent == null -> null
+            transform.inheritRotation -> Mat4.multiplyColumnMajor(inverseParent, attached, local)
+            else -> worldAlignedLocal(inverseParent)
+        }
+    }
+
+    /**
+     * The local transform that puts an entity which keeps its rotation in world axes at [attached]:
+     * only the position goes through the parent, and the basis stays in world axes, divided by the
+     * parent's stretch along each. [parentWorld] is invertible, so no stretch is zero.
+     */
+    private fun worldAlignedLocal(inverseParent: Mat4): Mat4 {
+        local.set(attached)
+        local.m03 = inverseParent.m00 * attached.m03 + inverseParent.m01 * attached.m13 + inverseParent.m02 * attached.m23 + inverseParent.m03
+        local.m13 = inverseParent.m10 * attached.m03 + inverseParent.m11 * attached.m13 + inverseParent.m12 * attached.m23 + inverseParent.m13
+        local.m23 = inverseParent.m20 * attached.m03 + inverseParent.m21 * attached.m13 + inverseParent.m22 * attached.m23 + inverseParent.m23
+        for (axis in 0 until 3) {
+            val stretch = worldAxisStretch(parentWorld, axis)
+            for (row in 0 until 3) local.data[axis * 4 + row] /= stretch
+        }
+        return local
     }
 
     /**
      * Writes [entity]'s world matrix into [out], composed from its own and its ancestors' current
-     * position, rotation and scale, as [TransformSystem] composes it; false when it has no [Transform].
+     * position, rotation and scale with [Transform.computeWorldMatrix], as [TransformSystem] composes
+     * it; false when it has no [Transform].
      */
     private fun World.composeWorld(entity: Entity, out: Mat4): Boolean {
         val transform = get<Transform>(entity) ?: return false
-        transform.computeLocalMatrix(out)
+        chain.clear()
+        chain += transform
         var ancestor = transform.parent
-        var depth = 0
-        while (ancestor != null && depth++ < MAX_HIERARCHY_DEPTH) {
+        while (ancestor != null && chain.size <= MAX_HIERARCHY_DEPTH) {
             val ancestorTransform = get<Transform>(ancestor) ?: break
-            Mat4.multiplyColumnMajor(ancestorTransform.computeLocalMatrix(ancestorLocal), out, product)
-            out.set(product)
+            chain += ancestorTransform
             ancestor = ancestorTransform.parent
         }
+        // Root first, alternating between the two matrices so a parent is never written while it is read.
+        var parentMatrix: Mat4? = null
+        for (index in chain.indices.reversed()) {
+            val target = if (parentMatrix === product) out else product
+            parentMatrix = chain[index].computeWorldMatrix(parentMatrix, target, ancestorLocal)
+        }
+        if (parentMatrix !== out) out.set(product)
+        chain.clear()
         return true
     }
 

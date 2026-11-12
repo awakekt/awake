@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.core
 
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.StaticTransform
@@ -61,19 +62,39 @@ class TransformSystemTest {
         system.update(world, 0f)
         assertEquals(5f, childTransform.worldMatrix.m03, 1e-5f)
         assertEquals(4f, childTransform.worldMatrix.m13, 1e-5f)
+        assertEquals(2f, childTransform.worldMatrix.m00, 1e-5f, "world X is stretched by the parent's 2")
+        assertEquals(3f, childTransform.worldMatrix.m21, 1e-5f, "the child's Y takes the parent's stretch along world Y, 3, before its own turn")
 
+        // Turned a quarter about Z, the parent stretches world X by its own Y scale, 3, and world Y by 2.
         parentTransform.rotation.z = quarterTurn
         system.update(world, 0f)
         assertEquals(3f, childTransform.worldMatrix.m03, 1e-5f)
         assertEquals(6f, childTransform.worldMatrix.m13, 1e-5f)
-        assertEquals(2f, childTransform.worldMatrix.m00, 1e-5f)
+        assertEquals(3f, childTransform.worldMatrix.m00, 1e-5f, "the child's X takes the parent's stretch along world X, now 3")
         assertEquals(0f, childTransform.worldMatrix.m10, 1e-5f)
-        assertEquals(3f, childTransform.worldMatrix.m21, 1e-5f)
+        assertEquals(2f, childTransform.worldMatrix.m21, 1e-5f)
+        assertEquals(-4f, childTransform.worldMatrix.m12, 1e-5f, "the child's Z takes the parent's stretch along world Z, 4, before its own turn")
 
         childTransform.inheritRotation = true
         system.update(world, 0f)
         assertEquals(0f, childTransform.worldMatrix.m00, 1e-5f)
         assertEquals(2f, childTransform.worldMatrix.m10, 1e-5f)
+    }
+
+    @Test
+    fun aUniformParentScaleIsKeptWhateverTheParentsTurn() {
+        val world = World()
+        val parent = world.create()
+        val child = world.create()
+        val parentTransform = Transform(rotation = Vec3f(0.3f, 1.1f, -0.7f), scale = Vec3f(2.5f, 2.5f, 2.5f))
+        val childTransform = Transform(rotation = Vec3f(0f, 0f, 0.4f), scale = Vec3f(1f, 2f, 3f), parent = parent, inheritRotation = false)
+        world.add(parent, parentTransform)
+        world.add(child, childTransform)
+
+        TransformSystem().update(world, 0f)
+
+        val expected = Mat4().setEulerTRS(0f, 0f, 0f, 0f, 0f, 0.4f, 2.5f, 5f, 7.5f)
+        for (i in 0 until 16) assertEquals(expected.data[i], childTransform.worldMatrix.data[i], 1e-5f, "element $i")
     }
 
     @Test

@@ -199,6 +199,7 @@ public final class com/awakekt/awake/scene/core/transform/Transform : com/awakek
 	public final fun component6 ()Z
 	public final fun computeLocalMatrix (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
 	public static synthetic fun computeLocalMatrix$default (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Mat4;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun computeWorldMatrix (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
 	public final synthetic fun copy-TJrHh0A (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public static synthetic fun copy-TJrHh0A$default (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;ILjava/lang/Object;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public final fun copy-qiHDDq0 (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;Z)Lcom/awakekt/awake/scene/core/transform/Transform;
@@ -226,6 +227,10 @@ public final class com/awakekt/awake/scene/core/transform/Transform : com/awakek
 public final class com/awakekt/awake/scene/core/transform/TransformExtensionsKt {
 	public static final fun setTransform-raSDhyQ (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public static synthetic fun setTransform-raSDhyQ$default (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/scene/core/transform/Transform;
+}
+
+public final class com/awakekt/awake/scene/core/transform/TransformKt {
+	public static final fun worldAxisStretch (Lcom/awakekt/awake/core/math/Mat4;I)F
 }
 
 public final class com/awakekt/awake/scene/core/transform/TransformSystem : com/awakekt/awake/ecs/System {

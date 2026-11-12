@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
+import kotlin.math.sqrt
 
 /**
  * Core 3D transformation component defining position, Euler rotation, scale, and hierarchy.
@@ -19,8 +20,13 @@ import com.awakekt.awake.ecs.Poolable
  * @property parent Optional parent [Entity] in the scene hierarchy.
  * @property worldMatrix Computed world transformation matrix cached by [TransformSystem].
  * @property inheritRotation Whether the parent turns this transform's axes. Position still
- * follows the full parent transform. When false, the lengths of the parent's world basis
- * vectors scale this transform's authored axes.
+ * follows the full parent transform. When false, [rotation] is in world axes and the parent's
+ * world scale is kept along the world axes, not its own: each [scale] component is multiplied by
+ * how far the parent's world matrix stretches the matching world axis (the length of that row of
+ * its basis, the extent of its scaled unit sphere along X, Y or Z). A parent scaled (2, 3, 4) and
+ * turned a quarter about Z stretches world X by 3 and world Y by 2, so this transform's X is scaled
+ * by 3 and its Y by 2. A uniform parent scale is kept unchanged whatever the parent's rotation, and
+ * a parent's mirroring is dropped. [computeWorldMatrix] is the composition.
  */
 data class Transform(
     var position: Vec3f = Vec3f(0f, 0f, 0f),
@@ -75,6 +81,36 @@ data class Transform(
     }
 
     /**
+     * Computes this transform's world matrix under [parentWorld] into [target] with zero
+     * allocations, as [TransformSystem] builds [worldMatrix]: the parent's world matrix times the
+     * local matrix, or, when [inheritRotation] is false, the position carried through the parent
+     * and the rotation and scale kept in world axes as [inheritRotation] describes.
+     *
+     * @param parentWorld The parent's world matrix, or null for a transform with no parent.
+     * @param target The matrix to write into; it must be neither [parentWorld] nor [scratch].
+     * @param scratch Holds the local matrix of a transform that inherits rotation.
+     * @return The [target] matrix containing the computed world transformation.
+     */
+    fun computeWorldMatrix(parentWorld: Mat4?, target: Mat4, scratch: Mat4): Mat4 = when {
+        parentWorld == null -> computeLocalMatrix(target)
+        inheritRotation -> Mat4.multiplyInPlace(computeLocalMatrix(scratch), parentWorld, target)
+        else -> computeWorldAlignedMatrix(parentWorld, target)
+    }
+
+    private fun computeWorldAlignedMatrix(parentWorld: Mat4, target: Mat4): Mat4 {
+        val (x, y, z) = position
+        return target.setEulerTRS(
+            parentWorld.m00 * x + parentWorld.m01 * y + parentWorld.m02 * z + parentWorld.m03,
+            parentWorld.m10 * x + parentWorld.m11 * y + parentWorld.m12 * z + parentWorld.m13,
+            parentWorld.m20 * x + parentWorld.m21 * y + parentWorld.m22 * z + parentWorld.m23,
+            rotation.x, rotation.y, rotation.z,
+            scale.x * worldAxisStretch(parentWorld, 0),
+            scale.y * worldAxisStretch(parentWorld, 1),
+            scale.z * worldAxisStretch(parentWorld, 2),
+        )
+    }
+
+    /**
      * Computes and returns a newly allocated local matrix.
      *
      * Prefer [computeLocalMatrix] in hot loops to avoid per-frame allocations.
@@ -99,3 +135,21 @@ data class Transform(
         rebuildRequested = true
     }
 }
+
+/**
+ * How far [matrix] stretches world axis [axis] (0 for X, 1 for Y, 2 for Z): the length of that row
+ * of its 3x3 basis, which is the extent along the axis of the unit sphere [matrix] maps. It is the
+ * world scale a transform with [Transform.inheritRotation] false keeps from its parent.
+ *
+ * @param matrix A world matrix.
+ * @param axis The world axis, 0, 1 or 2.
+ * @return The stretch, never negative.
+ */
+fun worldAxisStretch(matrix: Mat4, axis: Int): Float = when (axis) {
+    0 -> length(matrix.m00, matrix.m01, matrix.m02)
+    1 -> length(matrix.m10, matrix.m11, matrix.m12)
+    2 -> length(matrix.m20, matrix.m21, matrix.m22)
+    else -> throw IllegalArgumentException("World axis must be 0, 1 or 2, was $axis")
+}
+
+private fun length(x: Float, y: Float, z: Float): Float = sqrt(x * x + y * y + z * z)

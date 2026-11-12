@@ -74,7 +74,9 @@ plane when that entity has none.
 
 For a flat effect attached to a turning node, set `"inheritRotation": false` inside the effect
 node's `transform`. Its position follows the parent's full transform, and its authored rotation
-is in world axes. The lengths of the parent's world basis vectors still contribute to its scale.
+is in world axes. The parent's world scale is kept along the world axes: each scale component is
+multiplied by how far the parent stretches that world axis, so a uniformly scaled parent scales the
+effect evenly however it turns.
 The same option is available as `Transform.inheritRotation` in Kotlin.
 
 ## Gravity, fading, bouncing and streaks from a scene document

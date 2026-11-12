@@ -10,7 +10,6 @@ import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import kotlin.math.sqrt
 
 /**
  * Propagates world matrices parent-before-child every frame via a memoized DFS (with cycle
@@ -81,36 +80,11 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         val parentTransform = if (parent != null) world.get<Transform>(parent, transformType) else null
         if (parent != null && parentTransform != null) propagate(world, transformType, parent, parentTransform)
         if (needsRebuild(id, transform, parentTransform)) {
-            val parentMatrix = parentTransform?.worldMatrix
-            when {
-                parentMatrix == null -> transform.computeLocalMatrix(transform.worldMatrix)
-                transform.inheritRotation -> {
-                    transform.computeLocalMatrix(localScratch)
-                    Mat4.multiplyInPlace(localScratch, parentMatrix, transform.worldMatrix)
-                }
-                else -> computeWorldAlignedMatrix(transform, parentMatrix)
-            }
+            transform.computeWorldMatrix(parentTransform?.worldMatrix, transform.worldMatrix, localScratch)
             remember(id, transform, parentTransform)
         }
         visitedStamp[id] = frameStamp
     }
-
-    private fun computeWorldAlignedMatrix(transform: Transform, parent: Mat4) {
-        val (x, y, z) = transform.position
-        val rotation = transform.rotation
-        val scale = transform.scale
-        transform.worldMatrix.setEulerTRS(
-            parent.m00 * x + parent.m01 * y + parent.m02 * z + parent.m03,
-            parent.m10 * x + parent.m11 * y + parent.m12 * z + parent.m13,
-            parent.m20 * x + parent.m21 * y + parent.m22 * z + parent.m23,
-            rotation.x, rotation.y, rotation.z,
-            scale.x * axisLength(parent.m00, parent.m10, parent.m20),
-            scale.y * axisLength(parent.m01, parent.m11, parent.m21),
-            scale.z * axisLength(parent.m02, parent.m12, parent.m22),
-        )
-    }
-
-    private fun axisLength(x: Float, y: Float, z: Float): Float = sqrt(x * x + y * y + z * z)
 
     private fun needsRebuild(id: Int, transform: Transform, parent: Transform?): Boolean =
         transform.rebuildRequested ||

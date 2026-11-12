@@ -15,7 +15,9 @@ import kotlinx.serialization.Serializable
  * The angles are in world axes when [inheritRotation] is false.
  * @property scale Local scaling vector.
  * @property inheritRotation Whether the parent's rotation turns the node's axes. The parent
- * still transforms the node's position and contributes the lengths of its world basis vectors to scale.
+ * still transforms the node's position, and its world scale is kept along the world axes: each
+ * [scale] component is multiplied by how far the parent stretches the matching world axis, so a
+ * uniform parent scale is kept whatever the parent's rotation.
  */
 @Serializable
 data class SceneTransform(
