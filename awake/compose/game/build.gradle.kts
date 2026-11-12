@@ -34,3 +34,9 @@ mavenPublishing {
         description.set("Game UI built on Awake Compose: on-screen touch controls")
     }
 }
+
+tasks.named<Test>("desktopTest") {
+    // Allocation gates count every byte. With escape analysis on, C2 removes about half of what a frame
+    // allocates, which Android's runtime does not (#1169); :awake:ui:canvas and :awake:compose:ui set the same flag.
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
