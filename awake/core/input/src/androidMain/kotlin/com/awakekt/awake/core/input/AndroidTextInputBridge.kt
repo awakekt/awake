@@ -26,9 +26,35 @@ import android.view.inputmethod.InputMethodManager
  * @param input Target Awake [Input] accumulator receiving text events.
  */
 class AwakeInputConnection(private val targetView: View, private val input: Input) : BaseInputConnection(targetView, false) {
+    private var composingText: String? = null
+
+    override fun setComposingText(text: CharSequence, newCursorPosition: Int): Boolean {
+        val value = text.toString()
+        composingText = value
+        val cursor = if (newCursorPosition > 0) value.length else 0
+        input.setImeComposition(ImeComposition(value, selectionStart = cursor))
+        return true
+    }
 
     override fun commitText(text: CharSequence, newCursorPosition: Int): Boolean {
-        input.pushTypedText(text.toString())
+        if (composingText == null) {
+            input.pushTypedText(text.toString())
+        } else {
+            composingText = null
+            input.commitImeText(text.toString())
+        }
+        return true
+    }
+
+    override fun finishComposingText(): Boolean {
+        composingText?.let { commitText(it, 1) }
+        return true
+    }
+
+    override fun performEditorAction(actionCode: Int): Boolean {
+        if (actionCode != EditorInfo.IME_ACTION_DONE) return super.performEditorAction(actionCode)
+        finishComposingText()
+        input.pushEditAction(TextEditAction.Enter)
         return true
     }
 
@@ -38,13 +64,13 @@ class AwakeInputConnection(private val targetView: View, private val input: Inpu
     }
 
     override fun sendKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            when (event.keyCode) {
-                KeyEvent.KEYCODE_ENTER -> input.pushEditAction(TextEditAction.Enter)
-                KeyEvent.KEYCODE_DEL -> input.pushEditAction(TextEditAction.Backspace)
-            }
+        val edit = when (event.keyCode) {
+            KeyEvent.KEYCODE_ENTER -> TextEditAction.Enter
+            KeyEvent.KEYCODE_DEL -> TextEditAction.Backspace
+            else -> return super.sendKeyEvent(event)
         }
-        return super.sendKeyEvent(event)
+        if (event.action == KeyEvent.ACTION_DOWN) input.pushEditAction(edit)
+        return true
     }
 
     /**
