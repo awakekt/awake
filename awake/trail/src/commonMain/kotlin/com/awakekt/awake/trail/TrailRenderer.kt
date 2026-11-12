@@ -34,7 +34,10 @@ enum class TrailBlend {
  * @property tint Straight-alpha colour multiplied into every vertex's: one trail's colour per use,
  * without rewriting its vertices.
  * @property depthWrite Whether fragments that pass the depth test update the depth buffer.
- * @property doubleSided Whether the ribbon is visible from both sides.
+ * @property doubleSided Whether the ribbon is visible from both sides. When false, back faces are
+ * culled and only the front shows: the side from which, with each pair's `b` above its `a`, the
+ * pairs run right to left, so each pair's triangles wind counter-clockwise. That is the side the
+ * cross product `(b - a) x (next a - a)` points to.
  */
 class TrailRenderer(
     capacity: Int,

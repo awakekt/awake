@@ -1412,7 +1412,7 @@ many show and their colours every frame. `SceneTrailRenderer`.
 | `tint` | color | white | Multiplied into every vertex's own colour. |
 | `texture` | string | none | Scene texture name or project-relative image path. |
 | `depthWrite` | boolean | `false` | Records the trail's depth so it can occlude blended draws that follow it. |
-| `doubleSided` | boolean | `true` | Set to `false` to cull back faces. |
+| `doubleSided` | boolean | `true` | Set to `false` to cull back faces. The front is the side from which, with each pair's `b` above its `a`, the pairs run right to left. |
 
 ## `world_text`
 

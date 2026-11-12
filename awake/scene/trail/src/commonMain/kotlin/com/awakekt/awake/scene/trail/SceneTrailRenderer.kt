@@ -26,7 +26,8 @@ import kotlinx.serialization.Serializable
  *   [TrailBlend]'s constants, which are part of the file format.
  * @property tint A straight-alpha colour multiplied into every vertex's own.
  * @property depthWrite Whether the trail records depth when drawn.
- * @property doubleSided Whether the ribbon is visible from both sides.
+ * @property doubleSided Whether the ribbon is visible from both sides; when false only its front
+ *   shows, the face [com.awakekt.awake.trail.TrailRenderer.doubleSided] describes.
  * @property texture An optional scene texture name or project-relative image path.
  */
 @Serializable

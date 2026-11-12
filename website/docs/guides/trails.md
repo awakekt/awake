@@ -43,9 +43,9 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
 | `capacity` | `64` | The most pairs it holds, 2 to 65536. |
 | `blend` | `Additive` | `Additive` adds to what is behind it; `Alpha` covers it by its alpha. |
 | `tint` | white | Multiplied into every vertex's colour. |
-| `texture` | `null` | Scene texture name or project-relative image path. |
+| `texture` | none | Scene texture name or project-relative image path. |
 | `depthWrite` | `false` | Records the trail's depth so it can occlude blended draws that follow it. |
-| `doubleSided` | `true` | Set to `false` to cull back faces. |
+| `doubleSided` | `true` | Set to `false` to cull back faces. The front is the side from which, with each pair's `b` above its `a`, the pairs run right to left: the side `(b - a) x (next a - a)` points to. |
 
 The document says how the trail is drawn. Its pairs, how many are visible and their colours are
 written by a game's systems. A trail that names a texture starts drawing once the image is ready.
