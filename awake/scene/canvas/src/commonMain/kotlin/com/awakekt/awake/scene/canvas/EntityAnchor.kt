@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.scene.canvas
 
-import com.awakekt.awake.compose.foundation.layout.AnchorPoint
-import com.awakekt.awake.compose.foundation.layout.AnchorProvider
+import com.awakekt.awake.compose.game.AnchorPoint
+import com.awakekt.awake.compose.game.AnchorProvider
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World

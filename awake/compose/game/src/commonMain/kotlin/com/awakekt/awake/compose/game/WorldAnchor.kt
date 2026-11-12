@@ -5,7 +5,7 @@
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
 
-package com.awakekt.awake.compose.foundation.layout
+package com.awakekt.awake.compose.game
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
@@ -24,9 +24,10 @@ import kotlin.math.roundToInt
 /**
  * Where a child of [WorldAnchorLayout] goes: a point in the layout's own pixels, and whether the
  * child shows. One instance is reused for every read, so a provider writes into it and allocates
- * nothing.
+ * nothing. [surfaceWidth] and [surfaceHeight] are the layout's; the layout sets them, and a test
+ * of a provider passes its own.
  */
-class AnchorPoint {
+class AnchorPoint(surfaceWidth: Int = 0, surfaceHeight: Int = 0) {
     /** Pixels from the layout's left edge where the child's anchor sits. */
     var x: Float = 0f
 
@@ -43,11 +44,11 @@ class AnchorPoint {
     var pivotY: Float = 1f
 
     /** Width of the layout the child is placed in, in pixels, for a provider that culls what falls outside it. */
-    var surfaceWidth: Int = 0
+    var surfaceWidth: Int = surfaceWidth
         internal set
 
     /** Height of the layout the child is placed in, in pixels. */
-    var surfaceHeight: Int = 0
+    var surfaceHeight: Int = surfaceHeight
         internal set
 
     /** Puts the point back to a visible child, bottom-centre on the origin, before a provider fills it. */
@@ -175,7 +176,9 @@ private class WorldAnchorElement(private val provider: AnchorProvider) : Modifie
     }
 }
 
-private class WorldAnchorNode(var provider: AnchorProvider) : Modifier.Node(), ParentDataModifierNode {
+private class WorldAnchorNode(var provider: AnchorProvider) :
+    Modifier.Node(),
+    ParentDataModifierNode {
     // One holder per node, rewritten only when the provider changes, so the parent data read each frame is stable.
     private var data = AnchorParentData(provider)
 
