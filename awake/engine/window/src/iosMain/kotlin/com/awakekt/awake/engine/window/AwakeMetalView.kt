@@ -50,6 +50,7 @@ class AwakeMetalView(
     private val onPause: () -> Unit,
     private val onResume: () -> Unit,
     private val onSafeArea: (insets: DisplayInsets) -> Unit = {},
+    private val onKeyboard: (insets: DisplayInsets) -> Unit = {},
 ) : UIView(frame),
     UIKeyInputProtocol {
 
@@ -71,6 +72,7 @@ class AwakeMetalView(
     private var created = false
     private var textInputWasFocused = false
     private var textInputWasSecure = false
+    private val keyboardInset = IosKeyboardInset(this) { onKeyboard(it) }
 
     init {
         contentScaleFactor = UIScreen.mainScreen.scale
@@ -196,6 +198,7 @@ class AwakeMetalView(
 
     private fun startRenderLoop() {
         if (displayLink != null) return
+        keyboardInset.start()
         onResume()
         previousTimestamp = 0.0
         displayLink = UIScreen.mainScreen.displayLinkWithTarget(
@@ -207,6 +210,7 @@ class AwakeMetalView(
     }
 
     private fun stopRenderLoop() {
+        keyboardInset.stop()
         onPause()
         displayLink?.invalidate()
         displayLink = null
