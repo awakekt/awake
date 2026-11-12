@@ -346,6 +346,7 @@ public final class com/awakekt/awake/render/passes/ShadowCasterVolume : com/awak
 	public final fun clear ()Lcom/awakekt/awake/render/passes/ShadowCasterVolume;
 	public final fun getCascadeCount ()I
 	public final fun getPointShadowCount ()I
+	public final fun getRevision ()I
 	public final fun isEmpty ()Z
 	public final fun set (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;)Lcom/awakekt/awake/render/passes/ShadowCasterVolume;
 }

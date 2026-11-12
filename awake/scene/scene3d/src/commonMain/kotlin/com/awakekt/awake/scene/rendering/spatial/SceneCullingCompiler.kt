@@ -46,6 +46,8 @@ internal class FrameCulling(
     val casters: ShadowCasterVolume? = null,
     val casterIds: Set<Int>? = null,
     val cullingCamera: Camera = camera,
+    /** Names this frame's culling inputs other than an entity's own; equal across frames, a kept verdict holds. 0 keeps none. */
+    val epoch: Int = 0,
 )
 
 /** What one entity's culling decided: drawn, drawn into the shadow maps only, or not drawn. */
@@ -72,6 +74,7 @@ internal class SceneCullingCompiler(
     private val occluderBounds = ArrayList<ScreenBounds>()
     private val visibleIds = HashSet<Int>()
     private val casterIds = HashSet<Int>()
+    private val epochs = CullingEpoch()
     private val scratchBounds = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
 
     /**
@@ -132,6 +135,14 @@ internal class SceneCullingCompiler(
         val grid = world.findSpatialIndex()?.grid?.core
         val visible = grid?.let { visibleByIndex(it, cullCamera, cullingAspect) }
         val casters = shadows?.takeUnless { it.isEmpty }
+        val epoch = epochs.advance(
+            cullCamera.lens,
+            cullingAspect,
+            casters?.revision ?: 0,
+            minShadowCasterRatio,
+            indexed = grid != null,
+            cacheable = occluderFamily.size == 0 && probe == null,
+        )
         return FrameCulling(
             camera = camera,
             visible = visible,
@@ -144,7 +155,15 @@ internal class SceneCullingCompiler(
             casters = casters,
             casterIds = if (casters != null && grid != null) casterIdsByIndex(grid, casters) else null,
             cullingCamera = cullCamera,
+            epoch = epoch,
         )
+    }
+
+    /** Counts a kept [verdict] as [classify] would have, for the frame's diagnostics. */
+    fun replay(verdict: CullVerdict) {
+        if (verdict == CullVerdict.Visible) return
+        lastFrustumCulledCount++
+        if (verdict == CullVerdict.ShadowOnly) lastShadowOnlyCount++
     }
 
     /**

@@ -73,6 +73,13 @@ internal class SceneDrawCollector(
      */
     private var resolved: WorldResolution? = null
 
+    /** What the frame before kept for each mesh entity that has not moved; see [StaticDrawCache]. */
+    private val staticDraws = StaticDrawCache()
+
+    /** How many mesh entities' kept commands the last [collectBeforeParticles] reused instead of collecting again. */
+    internal var lastReusedCount: Int = 0
+        private set
+
     /** Picks every [LodGroup]'s level once a frame, before any draw reads it. */
     private val lodSelection = LodSelectionPass()
 
@@ -90,6 +97,8 @@ internal class SceneDrawCollector(
         beforeAabbs.reset()
         beforeMatrices.reset()
         beforeTints.reset()
+        staticDraws.beginFrame()
+        var reused = 0
 
         val resolution = resolve(world)
         val lodStore = world.componentStore<LodGroup>(resolution.lodType)
@@ -116,10 +125,15 @@ internal class SceneDrawCollector(
             // A transparent mesh never casts (the shadow pass keeps only opaque draws), and nor
             // does one that opted out, so the camera alone decides either.
             val casts = meshRenderer.castsShadows && !meshRenderer.transparent
-            val verdict = if (bounds == null) {
-                CullVerdict.Visible
-            } else {
-                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
+            val slot = if (bounds == null) null else staticDraws.slotFor(entity)
+            val verdict = when {
+                bounds == null -> CullVerdict.Visible
+                slot != null && slot.verdictHolds(entity, transform, bounds, casts, culling.epoch) ->
+                    slot.verdict.also(cullingCompiler::replay)
+
+                else -> cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts).also {
+                    slot?.keepVerdict(entity, transform, bounds, casts, culling.epoch, it)
+                }
             }
             if (verdict == CullVerdict.Culled) {
                 poseStore?.get(entity)?.culled = true
@@ -161,7 +175,21 @@ internal class SceneDrawCollector(
             // An LodGroup on the entity picks which of its levels this renderer draws, and which casts.
             val lod = lodStore?.get(entity)?.takeIf { it.activeLevel >= 0 }
             val shadowMesh = lod?.takeIf { casts && it.shadowLevel != it.activeLevel }?.let { it.levels[it.shadowLevel].mesh }
-            val command = beforeCommands.obtainCommand(
+            val fade = fadeStore?.get(entity)
+            val maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER
+            val alphaMode = pbr?.alphaMode ?: AlphaMode.Opaque
+            val alphaCutoff = pbr?.alphaCutoff ?: 0.5f
+            // Only a prop nothing animates or turns: a pose, billboard, LOD level, fade or vertex
+            // animation changes its draw without changing any input kept here.
+            val reusable = slot != null && pose == null && lod == null && fade == null && !meshRenderer.billboard &&
+                meshRenderer.vertexAnimation.isZero()
+            if (reusable && slot != null && slot.commandHolds(meshRenderer, extras, alphaMode, alphaCutoff, maskLayer)) {
+                slot.command.timeSeconds = elapsedTimeSeconds
+                drawCalls.add(slot.command)
+                reused++
+                return@forEach
+            }
+            val command = (if (reusable && slot != null) slot.command else beforeCommands.obtain()).fill(
                 mesh = lod?.levels?.get(lod.activeLevel)?.mesh ?: meshRenderer.mesh,
                 material = meshRenderer.material,
                 model = if (meshRenderer.billboard) {
@@ -173,18 +201,19 @@ internal class SceneDrawCollector(
                 vertexAnimation = meshRenderer.vertexAnimation,
                 timeSeconds = elapsedTimeSeconds,
                 cullMode = meshRenderer.cullMode,
-                alphaMode = pbr?.alphaMode ?: AlphaMode.Opaque,
-                alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
+                alphaMode = alphaMode,
+                alphaCutoff = alphaCutoff,
                 transparent = meshRenderer.transparent,
                 additive = meshRenderer.additive,
                 shadowsOnly = verdict == CullVerdict.ShadowOnly,
-                worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
-                maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
+                worldBounds = bounds?.writeWorldBounds(transform, if (reusable && slot != null) slot.boundsBox() else beforeAabbs.obtain()),
+                maskLayer = maskLayer,
                 castsShadows = casts && shadowMesh == null,
                 // Unlit colour reaches the target as stored, so no covering such as fog paints over it.
                 exemptFromCoverings = pbr?.unlit == true,
             )
-            fadeStore?.get(entity)?.let { command.fadeOpacity = it.opacity }
+            if (fade != null) command.fadeOpacity = fade.opacity
+            if (reusable && slot != null) slot.keepCommand(meshRenderer, extras, alphaMode, alphaCutoff, maskLayer)
             if (verdict != CullVerdict.ShadowOnly || shadowMesh == null) drawCalls.add(command)
             if (shadowMesh != null) drawCalls.add(beforeCommands.shadowTwin(command, shadowMesh))
         }
@@ -196,7 +225,7 @@ internal class SceneDrawCollector(
         resolution.instancedFamily.forEach { _, instanced ->
             cullingCompiler.recordNotCulled(instanced.mesh.localBounds, instanced.transforms)
             drawCalls.add(
-                beforeCommands.obtainCommand(
+                beforeCommands.obtain().fill(
                     mesh = instanced.mesh,
                     material = instanced.material,
                     model = IDENTITY_MATRIX,
@@ -211,7 +240,7 @@ internal class SceneDrawCollector(
         resolution.instancedSkinnedFamily.forEach { _, instanced ->
             cullingCompiler.recordNotCulled(instanced.mesh.localBounds, instanced.transforms)
             drawCalls.add(
-                beforeCommands.obtainCommand(
+                beforeCommands.obtain().fill(
                     mesh = instanced.mesh,
                     material = instanced.material,
                     model = IDENTITY_MATRIX,
@@ -255,7 +284,7 @@ internal class SceneDrawCollector(
             for (slotIndex in 0 until modularCharacter.slotCount) {
                 val slot = modularCharacter.slotAt(slotIndex)
                 if (!slot.isVisible) continue
-                val command = beforeCommands.obtainCommand(
+                val command = beforeCommands.obtain().fill(
                     mesh = slot.mesh,
                     material = slot.material,
                     model = transform.worldMatrix,
@@ -271,6 +300,7 @@ internal class SceneDrawCollector(
                 drawCalls.add(command)
             }
         }
+        lastReusedCount = reused
         return drawCalls
     }
 
@@ -313,7 +343,7 @@ internal class SceneDrawCollector(
                 cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
             }
             if (verdict == CullVerdict.Culled) return@forEach
-            val command = afterCommands.obtainCommand(
+            val command = afterCommands.obtain().fill(
                 mesh = level.mesh,
                 material = level.material,
                 model = transform.worldMatrix,
@@ -331,6 +361,7 @@ internal class SceneDrawCollector(
     private fun resolve(world: World): WorldResolution {
         val current = resolved
         if (current != null && current.world === world && current.generation == world.generation) return current
+        staticDraws.clear()
         return WorldResolution(world).also { resolved = it }
     }
 
@@ -355,7 +386,7 @@ internal class SceneDrawCollector(
     }
 
     @Suppress("LongParameterList")
-    private fun ScratchPool<RenderDrawCommand>.obtainCommand(
+    private fun RenderDrawCommand.fill(
         mesh: Mesh,
         material: Material,
         model: Mat4,
@@ -376,7 +407,7 @@ internal class SceneDrawCollector(
         maskLayer: Int = NO_MASK_LAYER,
         castsShadows: Boolean = true,
         exemptFromCoverings: Boolean = false,
-    ): RenderDrawCommand = obtain().set(
+    ): RenderDrawCommand = set(
         mesh = mesh,
         material = material,
         model = model,
@@ -402,19 +433,19 @@ internal class SceneDrawCollector(
 
 private fun createScratchAabb(): Aabb = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
 
-private fun createEmptyDrawCommand(): RenderDrawCommand = RenderDrawCommand(
+internal fun createEmptyDrawCommand(): RenderDrawCommand = RenderDrawCommand(
     mesh = EMPTY_MESH,
     material = EMPTY_MATERIAL,
     model = IDENTITY_MATRIX,
 )
 
-private val EMPTY_MESH = object : Mesh {
+internal val EMPTY_MESH = object : Mesh {
     override val format = VertexFormat.PositionNormalColor
     override val sizeBytes = 0L
     override fun destroy() = Unit
 }
 
-private val EMPTY_MATERIAL = object : Material {
+internal val EMPTY_MATERIAL = object : Material {
     override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
     override fun destroy() = Unit
 }
@@ -444,3 +475,5 @@ private fun SkinnedPose.tintedBy(material: PbrMaterial, into: FloatArray): Float
     into = into,
     unlit = material.unlit,
 )
+
+private fun Vec3f.isZero(): Boolean = x == 0f && y == 0f && z == 0f
