@@ -156,12 +156,7 @@ class ParticleDrawBuilder {
         }
         if (instanceModels.isNotEmpty()) {
             val uniformFloats = emitter.uniformFloatsBuffer
-            val basis = when (visual.facing) {
-                ParticleFacing.Camera -> cameraBasis
-                ParticleFacing.Flat -> planeBasis
-                ParticleFacing.Upright -> uprightBasis
-            }
-            basis.copyInto(
+            quadBasis(visual.facing, cameraBasis).copyInto(
                 uniformFloats,
                 destinationOffset = ParticleExtraUniformLayout.offsetOf(ParticleExtraFields.CameraRight),
             )
@@ -190,6 +185,13 @@ class ParticleDrawBuilder {
         for (i in emitter.children.indices) {
             appendDrawCalls(destination, emitter.children[i], cameraBasis, frustumPlanes, eye)
         }
+    }
+
+    /** The quad axes a [facing] emitter draws along: the camera's, or its entity's plane. */
+    private fun quadBasis(facing: ParticleFacing, cameraBasis: FloatArray): FloatArray = when (facing) {
+        ParticleFacing.Camera -> cameraBasis
+        ParticleFacing.Flat -> planeBasis
+        ParticleFacing.Upright -> uprightBasis
     }
 
     private fun isSphereInFrustum(

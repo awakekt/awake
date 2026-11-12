@@ -84,7 +84,8 @@ class ParticleUprightFacingTest {
         var count = 0
         emitter.forEachLiveParticle { position, velocity ->
             count += 1
-            assertEquals(0f, position.dot(entityY), TOLERANCE, "the spawn point is in the entity's XZ plane")
+            // The step has already moved each particle up to STEP seconds along its unit velocity.
+            assertEquals(0f, position.dot(entityY), STEP + TOLERANCE, "the spawn point is in the entity's XZ plane")
             assertEquals(RADIUS, position.length(), TOLERANCE, "on the ring")
             assertVec(entityY, velocity, "the velocity tilts with the entity")
             assertEquals(0f, velocity.dot(entityZ), TOLERANCE, "and runs along the standing sprite")
