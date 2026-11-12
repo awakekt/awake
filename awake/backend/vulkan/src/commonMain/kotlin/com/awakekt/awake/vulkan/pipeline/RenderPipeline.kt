@@ -152,6 +152,13 @@ class RenderPipeline(
      */
     var graphicsPipeline: LongArray = longArrayOf()
 
+    /**
+     * Floats of a draw's own block when this pipeline's shader also reads the frame block, 0 when
+     * its one block carries everything, or [UNKNOWN_DRAW_BLOCK] for a pipeline built without its
+     * shader's bindings, whose draws go by their plan.
+     */
+    internal var splitDrawBlockFloats: Int = UNKNOWN_DRAW_BLOCK
+
     private val uniforms = uniforms
     private val framesInFlight = framesInFlight
     private val materialBindings = materialBindings
@@ -612,3 +619,6 @@ internal fun GpuDataShape.toVkFormat(): VkFormat = when (this) {
     GpuDataShape.UInt4 -> VkFormat.VK_FORMAT_R32G32B32A32_UINT
     GpuDataShape.Mat4 -> error("Mat4 is not a valid vertex-attribute format.")
 }
+
+/** [RenderPipeline.splitDrawBlockFloats] of a pipeline that was not told what its shader binds. */
+internal const val UNKNOWN_DRAW_BLOCK = -1
