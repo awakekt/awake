@@ -1,1 +1,0 @@
-- Scene systems can prewarm a node or a batch of prefab assets through `SceneHostServices` before spawning.
