@@ -55,6 +55,28 @@ class ParticleSimulationTest {
     }
 
     @Test
+    fun negativeEndScaleShrinksThroughZeroWithoutOverflow() {
+        val sim = ParticleSimulation(maxParticles = 1, random = Random(3)).apply {
+            minLifetime = 2f
+            maxLifetime = 2f
+            initialScale = 2f
+            hasEndScale = true
+            endScale = -2f
+        }
+        assertEquals(1, sim.emit(1))
+        assertEquals(2f, sim.scaleAt(0), 1e-6f)
+        sim.step(1f)
+        assertEquals(0f, sim.scaleAt(0), 1e-6f)
+        sim.step(0.5f)
+        assertEquals(-1f, sim.scaleAt(0), 1e-6f)
+
+        sim.scale[0] = Float.MAX_VALUE
+        sim.endScale = -Float.MAX_VALUE
+        assertTrue(sim.scaleAt(0).isFinite(), "opposite extreme sizes must blend without overflowing")
+        assertEquals(-Float.MAX_VALUE / 2f, sim.scaleAt(0), Float.MAX_VALUE * 1e-6f)
+    }
+
+    @Test
     fun emitFillsFreeSlotsCountsOverflowAndLeavesBurstLimitUntouched() {
         val sim = ParticleSimulation(maxParticles = 4, random = Random(11)).apply {
             minLifetime = 5f
