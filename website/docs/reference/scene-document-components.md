@@ -1410,7 +1410,7 @@ many show and their colours every frame. `SceneTrailRenderer`.
 | `capacity` | integer | `64` | The most point pairs it holds, 2 to 65536. |
 | `blend` | `Additive` · `Alpha` | `Additive` | `Additive` adds to what is behind it; `Alpha` covers it by its alpha. |
 | `tint` | color | white | Multiplied into every vertex's own colour. |
-| `texture` | string | `null` | Scene texture name or project-relative image path. |
+| `texture` | string | none | Scene texture name or project-relative image path. |
 | `depthWrite` | boolean | `false` | Records the trail's depth so it can occlude blended draws that follow it. |
 | `doubleSided` | boolean | `true` | Set to `false` to cull back faces. |
 
