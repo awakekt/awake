@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.material
 
+import com.awakekt.awake.render.passes.DrawUniformInputs
 import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
@@ -197,7 +198,8 @@ class Material(
     /** Whether this material's set declares the frame block beside the draw's own. */
     private val readsFrameBlock = bindings.at(FRAME_UNIFORM_BINDING)?.kind == ResourceKind.UniformBuffer
 
-    private fun uniformSlot(frameIndex: Int, drawSlotIndex: Int): UniformSlot {
+    /** Frame [frameIndex]'s slot for this material's draw [drawSlotIndex] of the batch, made on first use. */
+    internal fun uniformSlot(frameIndex: Int, drawSlotIndex: Int): UniformSlot {
         require(frameIndex >= 0) { "frameIndex must be non-negative." }
         require(drawSlotIndex >= 0) { "drawSlotIndex must be non-negative." }
         while (uniformSlotsByFrame.size <= frameIndex) uniformSlotsByFrame.add(mutableListOf())
@@ -235,24 +237,31 @@ class Material(
      * As above, naming the frame block the draw's set binds beside its own: see [FrameBlockKind].
      * A slot is rebound only when it changes hands between kinds, which a steady frame never
      * does: its fills take the first slots and its edges the ones after.
+     *
+     * Null [values] leave the buffer as it is, for a draw whose block it already holds.
      */
     internal fun updateUniformBuffer(
         frameIndex: Int,
         drawSlotIndex: Int,
-        values: FloatArray,
+        values: FloatArray?,
         frameBlock: FrameBlockKind,
     ): VulkanMaterialBinding {
         // Catches an oversized write here, in Kotlin, with the actual float counts involved --
         // the alternative is vkMapMemory rejecting it deep in native code as a bare
         // VUID-vkMapMemory-size-00681 with no indication of which Material/packet draw was at
         // fault (see the entity-debugger/skybox session this check was added after).
-        require(values.size <= uniformFloatCount) {
-            "Uniform write of ${values.size} floats overflows this Material's " +
+        require(values == null || values.size <= uniformFloatCount) {
+            "Uniform write of ${values?.size} floats overflows this Material's " +
                 "$uniformFloatCount-float buffer -- createMaterial(uniformFloatCount = ...) " +
                 "was sized for a smaller layout than what's actually being written."
         }
         val slot = uniformSlot(frameIndex, drawSlotIndex)
-        VulkanBuffers.writeBufferMemoryFloats(device, slot.uniformBufferMemory.handle, slot.memoryOffset, values)
+        if (values != null) {
+            // Whatever the block was packed from, it no longer holds that; the caller records anew.
+            slot.inputs.clear()
+            VulkanBuffers.writeBufferMemoryFloats(device, slot.uniformBufferMemory.handle, slot.memoryOffset, values)
+            graphicsDevice.drawBlockWrites += 1
+        }
         if (slot.frameBlock != frameBlock && readsFrameBlock) {
             // Safe to rewrite: this frame's earlier commands, the only readers of its sets, have completed.
             bindFrameBlock(graphicsDevice, slot.descriptorSet.handle, frameIndex, frameBlock)
@@ -303,7 +312,7 @@ class Material(
         VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout.handle)
     }
 
-    private data class UniformSlot(
+    internal data class UniformSlot(
         val descriptorPool: DescriptorPoolHandle,
         val descriptorSet: DescriptorSetHandle,
         val uniformBuffer: BufferHandle,
@@ -315,6 +324,13 @@ class Material(
 
         /** The frame block [descriptorSet] binds: the identity one until a draw asks for another. */
         var frameBlock: FrameBlockKind = FrameBlockKind.Identity
+
+        /**
+         * What the draw's own block in [uniformBuffer] was last packed from, when it was packed as
+         * one beside the frame block; cleared by every other write. A draw whose inputs still
+         * match leaves the buffer as it is.
+         */
+        val inputs = DrawUniformInputs()
     }
 
     /**
