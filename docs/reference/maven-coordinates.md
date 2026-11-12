@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 111 | Existing root `v*` tags and the shared Core release train |
+| Core | 112 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -100,6 +100,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.compose:localization` | `:awake:compose:localization` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:core:localization`; `implementation` → `:awake:core:logging` |
 | `com.awakekt.awake.compose:foundation` | `:awake:compose:foundation` | `core` | `api` → `:awake:compose:ui` |
 | `com.awakekt.awake.compose:runtime` | `:awake:compose:runtime` | `core` | — |
+| `com.awakekt.awake.compose:game` | `:awake:compose:game` | `core` | `api` → `:awake:compose:foundation` |
 | `com.awakekt.awake.compose:state` | `:awake:compose:state` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:core:state` |
 | `com.awakekt.awake.compose:ui` | `:awake:compose:ui` | `core` | `api` → `:awake:core:graphics2d`; `api` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:input`; `api` → `:awake:compose:runtime`; `api` → `:awake:core:text` |
 | `com.awakekt.awake.compose:ui-testing` | `:awake:compose:ui-testing` | `core` | `api` → `:awake:compose:foundation`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:engine:render:testing`; `implementation` → `:awake:core:text` |

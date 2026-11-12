@@ -126,6 +126,7 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 | `compose:runtime` | Composition, recomposition, and state |
 | `compose:ui` | Layout, modifiers, measurement, drawing, semantics |
 | `compose:foundation` | Basic layouts, text, and interaction building blocks |
+| `compose:game` | Game UI on Compose core: `TouchStick` and `TouchAim` thumb controls |
 | `compose:state` | Bridge from `core:state` stores into composition |
 | `compose:di` | Ambient `core:di` injection through the UI tree |
 | `compose:localization` | `LocalStrings`, `stringResource` and input labels for Compose UI |
