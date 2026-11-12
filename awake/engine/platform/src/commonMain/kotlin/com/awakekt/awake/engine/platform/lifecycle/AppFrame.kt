@@ -45,15 +45,29 @@ data class AppFrame(
     val systemGestureInsets: DisplayInsets = DisplayInsets.None,
     val ime: DisplayInsets = DisplayInsets.None,
 ) {
-    /** The frame as it was before [ime]: kept so a caller built against that constructor still links. */
+    /** The constructor as released before [ime], kept for callers compiled against it. */
+    @Deprecated("Use the constructor that takes ime.", level = DeprecationLevel.HIDDEN)
     constructor(
         delta: Float,
         viewportWidth: Float,
         viewportHeight: Float,
         input: InputSnapshot,
-        density: Float,
-        safeArea: DisplayInsets,
-        dpi: Float,
-        systemGestureInsets: DisplayInsets,
+        density: Float = 1f,
+        safeArea: DisplayInsets = DisplayInsets.None,
+        dpi: Float = 0f,
+        systemGestureInsets: DisplayInsets = DisplayInsets.None,
     ) : this(delta, viewportWidth, viewportHeight, input, density, safeArea, dpi, systemGestureInsets, DisplayInsets.None)
+
+    /** `copy` as released before [ime]; the copy keeps this frame's [ime]. */
+    @Deprecated("Use the copy that takes ime.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        delta: Float = this.delta,
+        viewportWidth: Float = this.viewportWidth,
+        viewportHeight: Float = this.viewportHeight,
+        input: InputSnapshot = this.input,
+        density: Float = this.density,
+        safeArea: DisplayInsets = this.safeArea,
+        dpi: Float = this.dpi,
+        systemGestureInsets: DisplayInsets = this.systemGestureInsets,
+    ): AppFrame = copy(delta, viewportWidth, viewportHeight, input, density, safeArea, dpi, systemGestureInsets, ime)
 }
