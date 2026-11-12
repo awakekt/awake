@@ -371,8 +371,11 @@ class ParticleSimulation(
         if (!hasEndScale) return base
         val fraction = lifeFractionAt(slot)
         // Blend opposite signs directly so their difference cannot overflow.
-        if (base >= 0f && endScale < 0f) return base * (1f - fraction) + endScale * fraction
-        return base + (endScale - base) * fraction
+        return if (base >= 0f && endScale < 0f) {
+            base * (1f - fraction) + endScale * fraction
+        } else {
+            base + (endScale - base) * fraction
+        }
     }
 
     /** Current sprite-sheet frame index (`0 until frameCount`) of [slot] at its current [age]. */

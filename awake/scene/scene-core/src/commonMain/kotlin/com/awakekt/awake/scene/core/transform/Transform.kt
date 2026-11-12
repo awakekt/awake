@@ -39,6 +39,7 @@ data class Transform(
         worldMatrix: Mat4 = Mat4(),
     ) : this(position, rotation, scale, parent, worldMatrix, true)
 
+    /** Copies this transform while preserving its rotation inheritance setting. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(
         position: Vec3f = this.position,

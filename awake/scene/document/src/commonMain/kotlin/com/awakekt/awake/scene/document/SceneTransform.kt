@@ -31,6 +31,7 @@ data class SceneTransform(
         scale: SceneVec3 = SceneVec3(1f, 1f, 1f),
     ) : this(position, rotation, scale, true)
 
+    /** Copies this transform while preserving its rotation inheritance setting. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     fun copy(
         position: SceneVec3 = this.position,
