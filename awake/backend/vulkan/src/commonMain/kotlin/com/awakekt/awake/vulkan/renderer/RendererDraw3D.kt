@@ -126,11 +126,10 @@ internal fun VulkanRenderer.prepareGpuDraw(
         val uniformSlotIndex = materialUsage.nextSlot(material)
         val coverage = instancedPipeline.multisample.alphaToCoverageEnabled
         val split = instancedPipeline.drawBlockFloatsFor(cmd, material, kind, shadowCascades != null)
-        val uniformFloats = cmd.blockFloats(
-            split, kind, material.uniformFloatCount, coverage,
+        val binding = material.writeBlock(
+            cmd, frameIndex, uniformSlotIndex, split, kind, coverage, frameBlockKind(split, edges = false),
             viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
         )
-        val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats, frameBlockKind(split, edges = false))
         val palettes = cmd.instanceJointPalettes?.let {
             skinnedInstanceBufferForRun(instancedIndex).also { buffer ->
                 buffer.update(frameIndex, it, cmd.instanceColors)
@@ -172,11 +171,10 @@ internal fun VulkanRenderer.prepareGpuDraw(
     val uniformSlotIndex = materialUsage.nextSlot(material)
     val coverage = pipeline.multisample.alphaToCoverageEnabled
     val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)
-    val uniformFloats = cmd.blockFloats(
-        split, null, material.uniformFloatCount, coverage,
+    val binding = material.writeBlock(
+        cmd, frameIndex, uniformSlotIndex, split, null, coverage, frameBlockKind(split, edges = edgePipeline != null),
         viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
     )
-    val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats, frameBlockKind(split, edges = edgePipeline != null))
     return PreparedDrawCall(
         mesh = mesh,
         vertexBuffer = buffers.vertexBinding,
@@ -209,16 +207,23 @@ private fun RenderPipeline.drawBlockFloatsFor(cmd: GpuDrawRequest, material: Mat
 }
 
 /**
- * What this draw writes into its slot: its own block of [split] floats beside the frame block, or,
- * when [split] is 0, the one block that carries everything, the frame's share included. [kind] is
- * an instanced draw's, or null for a single one.
+ * Writes [cmd]'s block into this material's slot and returns the slot's binding.
+ *
+ * With [split] floats of its own beside the frame block, the block holds nothing of the camera's,
+ * the light's or the cascades', so a slot that already holds it, packed from the same inputs, is
+ * left as it is: a static draw is written once per frame in flight, not every frame. When [split]
+ * is 0 the one block carries the frame's share too and is written every frame. [kind] is an
+ * instanced draw's, or null for a single one.
  */
 @Suppress("LongParameterList") // prepareGpuDraw's frame inputs, passed through.
-private fun GpuDrawRequest.blockFloats(
+private fun Material.writeBlock(
+    cmd: GpuDrawRequest,
+    frameIndex: Int,
+    slotIndex: Int,
     split: Int,
     kind: InstancedDrawKind?,
-    materialUniformFloatCount: Int,
     coverage: Boolean,
+    frameBlock: FrameBlockKind,
     viewProjection: Mat4,
     cameraPosition: Vec3f,
     cameraForward: Vec3f,
@@ -228,36 +233,67 @@ private fun GpuDrawRequest.blockFloats(
     fogDensity: Float,
     debugView: GpuDebugView,
     exposure: Float,
-): FloatArray = when {
-    split > 0 -> drawBlockFloats(split, coverage, instanced = kind != null)
-    kind != null -> instancedUniformFloats(
-        kind = kind,
-        viewProjection = viewProjection,
-        lightPayload = lightUniforms,
-        cameraEye = cameraPosition,
-        cameraForward = cameraForward,
-        shadowCascades = shadowCascades,
-        fogColor = fogColor,
-        fogDensity = fogDensity,
-        debugView = debugView,
-        exposure = exposure,
-        materialUniformFloatCount = materialUniformFloatCount,
-        alphaToCoverageEnabled = coverage,
-    )
-    else -> uniformFloats(
-        materialUniformFloatCount = materialUniformFloatCount,
-        viewProjection = viewProjection,
-        cameraEye = cameraPosition,
-        cameraForward = cameraForward,
-        lightPayload = lightUniforms,
-        shadowCascades = shadowCascades,
-        fogColor = fogColor,
-        fogDensity = fogDensity,
-        debugView = debugView,
-        exposure = exposure,
-        alphaToCoverageEnabled = coverage,
-    )
+): VulkanMaterialBinding {
+    if (split > 0) return writeDrawBlock(cmd, frameIndex, slotIndex, split, kind, coverage, frameBlock)
+    val whole = if (kind != null) {
+        cmd.instancedUniformFloats(
+            kind = kind,
+            viewProjection = viewProjection,
+            lightPayload = lightUniforms,
+            cameraEye = cameraPosition,
+            cameraForward = cameraForward,
+            shadowCascades = shadowCascades,
+            fogColor = fogColor,
+            fogDensity = fogDensity,
+            debugView = debugView,
+            exposure = exposure,
+            materialUniformFloatCount = uniformFloatCount,
+            alphaToCoverageEnabled = coverage,
+        )
+    } else {
+        cmd.uniformFloats(
+            materialUniformFloatCount = uniformFloatCount,
+            viewProjection = viewProjection,
+            cameraEye = cameraPosition,
+            cameraForward = cameraForward,
+            lightPayload = lightUniforms,
+            shadowCascades = shadowCascades,
+            fogColor = fogColor,
+            fogDensity = fogDensity,
+            debugView = debugView,
+            exposure = exposure,
+            alphaToCoverageEnabled = coverage,
+        )
+    }
+    return updateUniformBuffer(frameIndex, slotIndex, whole, frameBlock)
 }
+
+/** The split half of [writeBlock]: packs and writes the draw's own block only when its inputs changed. */
+@Suppress("LongParameterList") // One per thing that names the slot and the block.
+private fun Material.writeDrawBlock(
+    cmd: GpuDrawRequest,
+    frameIndex: Int,
+    slotIndex: Int,
+    split: Int,
+    kind: InstancedDrawKind?,
+    coverage: Boolean,
+    frameBlock: FrameBlockKind,
+): VulkanMaterialBinding {
+    val inputs = uniformSlot(frameIndex, slotIndex).inputs
+    val inputKind = SPLIT_INPUTS + (kind?.ordinal ?: -1) + 1
+    if (inputs.matches(cmd, SPLIT_FRAME_VERSION, split, coverage, inputKind)) {
+        return updateUniformBuffer(frameIndex, slotIndex, null, frameBlock)
+    }
+    val binding = updateUniformBuffer(frameIndex, slotIndex, cmd.drawBlockFloats(split, coverage, instanced = kind != null), frameBlock)
+    inputs.record(cmd, SPLIT_FRAME_VERSION, split, coverage, inputKind)
+    return binding
+}
+
+/** Input kinds of a draw's own block beside the frame block: this for a single draw, the next ones per instanced kind. */
+private const val SPLIT_INPUTS = 16
+
+/** A split draw block holds nothing of the frame's, so every frame is the same frame to it. */
+private const val SPLIT_FRAME_VERSION = 0
 
 /** The frame block a draw's set binds: none of the batch's for a draw whose one block carries everything. */
 private fun frameBlockKind(splitDrawBlockFloats: Int, edges: Boolean): FrameBlockKind = when {

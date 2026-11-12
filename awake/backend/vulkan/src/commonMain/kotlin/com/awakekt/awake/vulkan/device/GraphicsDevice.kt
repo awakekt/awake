@@ -44,6 +44,9 @@ import com.awakekt.awake.vulkan.utils.getAppLayerProps
 class GraphicsDevice {
     private var frameUniformBuffers: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers? = null
 
+    /** Per-draw uniform blocks written to material slots so far. For tests and probes. */
+    internal var drawBlockWrites = 0L
+
     /** The frame block each frame's lit draws bind beside their own; made on first use. */
     internal val frameUniforms: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
         get() = frameUniformBuffers
