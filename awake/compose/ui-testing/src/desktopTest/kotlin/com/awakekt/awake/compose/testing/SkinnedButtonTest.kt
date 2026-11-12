@@ -27,7 +27,8 @@ private val Face = StatesKey("button.face")
 class SkinnedButtonTest {
     // Four 4 x 4 frames side by side: Normal, Hovered, Pressed, Disabled; one solid colour each.
     private val sheet = ImageBitmap(
-        16, 4,
+        16,
+        4,
         ByteArray(16 * 4 * 4) { i ->
             val colour = COLOURS[(i / 4) % 16 / 4]
             val channel = i % 4
