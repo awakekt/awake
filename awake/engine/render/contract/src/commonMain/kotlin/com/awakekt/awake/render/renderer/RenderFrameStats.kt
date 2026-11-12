@@ -26,11 +26,6 @@ data class RenderFrameStats(
      * WebGPU sums pass durations; browser timestamp precision may be reduced by the implementation.
      */
     val gpuTimeMs: Float? = null,
-    /**
-     * Render passes begun, offscreen blur and layer passes included, or 0 on a backend that does
-     * not count them. A pass that resumes an interrupted one counts again.
-     */
-    val renderPasses: Int = 0,
 )
 
 /**
@@ -44,6 +39,10 @@ class RenderStatsCounter {
     private var instances = 0
     private var triangles = 0L
     private var renderPasses = 0
+
+    /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
+    var latestRenderPasses: Int = 0
+        private set
 
     /** The last frame [publish] closed, or null before the first one. */
     var latest: RenderFrameStats? = null
@@ -63,10 +62,11 @@ class RenderStatsCounter {
 
     /** Closes the frame being recorded and starts counting the next one. */
     fun publish(gpuTimeMs: Float? = null) {
-        latest = RenderFrameStats(drawCalls, instances, triangles, gpuTimeMs, renderPasses)
+        latest = RenderFrameStats(drawCalls, instances, triangles, gpuTimeMs)
         drawCalls = 0
         instances = 0
         triangles = 0L
+        latestRenderPasses = renderPasses
         renderPasses = 0
     }
 

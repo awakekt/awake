@@ -1792,20 +1792,18 @@ public final class com/awakekt/awake/render/renderer/LineSegment {
 }
 
 public final class com/awakekt/awake/render/renderer/RenderFrameStats {
-	public fun <init> (IIJLjava/lang/Float;I)V
-	public synthetic fun <init> (IIJLjava/lang/Float;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIJLjava/lang/Float;)V
+	public synthetic fun <init> (IIJLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()J
 	public final fun component4 ()Ljava/lang/Float;
-	public final fun component5 ()I
-	public final fun copy (IIJLjava/lang/Float;I)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;IILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun copy (IIJLjava/lang/Float;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDrawCalls ()I
 	public final fun getGpuTimeMs ()Ljava/lang/Float;
 	public final fun getInstances ()I
-	public final fun getRenderPasses ()I
 	public final fun getTriangles ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -1864,6 +1862,7 @@ public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public static final field TRIANGLE_VERTICES I
 	public fun <init> ()V
 	public final fun getLatest ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun getLatestRenderPasses ()I
 	public final fun publish (Ljava/lang/Float;)V
 	public static synthetic fun publish$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;Ljava/lang/Float;ILjava/lang/Object;)V
 	public final fun recordDraw (IIZ)V
@@ -1905,6 +1904,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public fun getFrameRenderPasses ()I
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
@@ -1942,6 +1942,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun getEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public static fun getFrameRenderPasses (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I

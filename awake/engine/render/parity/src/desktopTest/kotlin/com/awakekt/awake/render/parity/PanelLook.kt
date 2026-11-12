@@ -24,8 +24,8 @@ import com.awakekt.awake.compose.foundation.skin.skin
 import com.awakekt.awake.compose.foundation.skin.skinBar
 import com.awakekt.awake.compose.foundation.skin.skinPart
 import com.awakekt.awake.compose.foundation.text.Text
-import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.BackdropGlassStyle
@@ -68,11 +68,13 @@ private val ButtonShadow = Shadow(radius = 4.dp, color = Color(0f, 0f, 0f, 0.5f)
 fun panelSheet(): ImageBitmap {
     val side = 64
     val pixels = ByteArray(side * side * 4)
-    for (y in 0 until side) for (x in 0 until side) {
-        val shade = (40 + (x * 3 + y * 2) % 120)
-        val o = (y * side + x) * 4
-        pixels[o] = shade.toByte(); pixels[o + 1] = (shade + 20).toByte(); pixels[o + 2] = (shade + 50).coerceAtMost(255).toByte()
-        pixels[o + 3] = 0xFF.toByte()
+    for (y in 0 until side) {
+        for (x in 0 until side) {
+            val shade = (40 + (x * 3 + y * 2) % 120)
+            val o = (y * side + x) * 4
+            pixels[o] = shade.toByte(); pixels[o + 1] = (shade + 20).toByte(); pixels[o + 2] = (shade + 50).coerceAtMost(255).toByte()
+            pixels[o + 3] = 0xFF.toByte()
+        }
     }
     return ImageBitmap(side, side, pixels)
 }

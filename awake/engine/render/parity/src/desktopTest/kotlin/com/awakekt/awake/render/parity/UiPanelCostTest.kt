@@ -5,9 +5,9 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
-import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
@@ -68,7 +68,10 @@ class UiPanelCostTest {
         val one = listOf(440 to 210)
         val c = PanelLook.entries.associateWith { measure(renderer, it, one) }
         c.forEach { (look, cost) -> println("panel $look: $cost") }
-        val (skinned, plain, styled, glass) = PanelLook.entries.map { c.getValue(it) }
+        val skinned = c.getValue(PanelLook.Skinned)
+        val plain = c.getValue(PanelLook.Plain)
+        val styled = c.getValue(PanelLook.Styled)
+        val glass = c.getValue(PanelLook.Glass)
 
         // Skinned: the plain panel's draws, plus at most one batch per image part kind.
         assertTrue(skinned.draws <= plain.draws + IMAGE_PARTS, "skinned ${skinned.draws} draws vs plain ${plain.draws} + $IMAGE_PARTS")
@@ -128,7 +131,7 @@ class UiPanelCostTest {
             }
         } + textured.sumOf { it.vertices.size }
         renderer.waitIdle()
-        val cost = PanelCost(stats.drawCalls, stats.renderPasses, stats.triangles, vertices, textured.size, textured.map { it.texture }.distinct().size, cpuMs, allocKb)
+        val cost = PanelCost(stats.drawCalls, renderer.frameRenderPasses, stats.triangles, vertices, textured.size, textured.map { it.texture }.distinct().size, cpuMs, allocKb)
         materials.values.forEach { it.destroy() }
         return cost
     }
