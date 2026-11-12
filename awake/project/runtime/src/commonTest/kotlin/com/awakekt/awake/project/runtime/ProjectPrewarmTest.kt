@@ -6,6 +6,8 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
@@ -13,10 +15,15 @@ import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
+import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.SceneAssetReferences
+import com.awakekt.awake.scene.runtime.ScenePrewarm
+import com.awakekt.awake.scene.runtime.SpawnedNode
+import com.awakekt.awake.scene.runtime.assetReferences
 import com.awakekt.awake.scene.runtime.prewarm
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -48,21 +55,64 @@ class ProjectPrewarmTest {
 
     @Test
     fun aNodePrewarmedWithItsModelDrawsOnTheFrameItSpawns() = runTest {
-        val (project, game, runtime) = play()
-        val prewarm = runtime.prewarm(node(HELD))
-        game.updateUntil { prewarm.isReady }
-        assertEquals(emptyMap(), prewarm.failed)
+        val effect by lazy { node(HELD) }
+        val progress = mutableListOf<Pair<Int, Int>>()
+        var prewarm: ScenePrewarm? = null
+        var batch: ScenePrewarm? = null
+        var spawned: SpawnedNode? = null
+        val (_, game, runtime) = play { services ->
+            val hold = prewarm
+            if (hold == null) {
+                assertTrue(services.canPrewarm)
+                assertTrue(services.canPrewarmAssets)
+                prewarm = services.prewarm(effect)
+                batch = services.prewarm(effect.assetReferences() + node(MISSING).assetReferences()) { settled, total ->
+                    progress += settled to total
+                }
+            } else if (hold.isReady && batch?.isReady == true && spawned == null) {
+                spawned = services.spawn(effect)
+            }
+        }
+        try {
+            game.updateUntil { spawned != null }
+            val hold = assertNotNull(prewarm)
+            val batchHold = assertNotNull(batch)
+            assertEquals(emptyMap(), hold.failed)
+            assertEquals(setOf("$MISSING + $MATERIAL"), batchHold.failed.keys)
+            assertEquals(listOf(1 to 2, 2 to 2), progress)
 
-        val spawned = runtime.spawn(project, node(HELD))
+            val instance = assertNotNull(spawned)
+            val drawn = assertNotNull(runtime.world.get<MeshRenderer>(instance.root), "it draws on the spawn frame")
+            assertTrue(instance.unattachedRenderables.isEmpty(), "no renderer waits for its model")
+            val library = runtime.requireAssetLibrary()
+            assertEquals(HELD, library.meshName(drawn.mesh))
+            assertEquals(3, library.meshHolderCount(HELD), "the spawn and both holds share one mesh")
+            hold.close()
+            batchHold.close()
+            assertEquals(1, library.meshHolderCount(HELD))
+            assertEquals(1, readsOf(HELD))
+        } finally {
+            game.dispose()
+        }
+    }
 
-        val drawn = assertNotNull(runtime.world.get<MeshRenderer>(spawned.root), "it draws before another frame")
-        assertTrue(spawned.unattachedRenderables.isEmpty(), "no renderer waits for its model")
-        val library = runtime.requireAssetLibrary()
-        assertEquals(HELD, library.meshName(drawn.mesh))
-        assertEquals(2, library.meshHolderCount(HELD), "the spawn shares the mesh the prewarm built and holds")
-        prewarm.close()
-        assertEquals(1, library.meshHolderCount(HELD))
-        assertEquals(1, readsOf(HELD))
+    @Test
+    fun headlessServicesAdvertiseOnlyThePrewarmerTheHostInstalls() {
+        val services = SceneHostServices.headless(input = { error("prewarming does not read input") })
+        val node = SceneNode(name = "Lantern")
+        val references = SceneAssetReferences()
+        assertFalse(services.canPrewarm)
+        assertFalse(services.canPrewarmAssets)
+        assertFailsWith<IllegalStateException> { services.prewarm(node) }
+        assertFailsWith<IllegalStateException> { services.prewarm(references) }
+
+        val custom = services.withPrewarmer { requested, _ ->
+            assertEquals(node, requested)
+            error("custom prewarmer")
+        }
+        assertTrue(custom.canPrewarm)
+        assertFalse(custom.canPrewarmAssets)
+        assertEquals("custom prewarmer", assertFailsWith<IllegalStateException> { custom.prewarm(node) }.message)
     }
 
     @Test
@@ -121,14 +171,30 @@ class ProjectPrewarmTest {
         prewarm.close()
     }
 
-    private suspend fun play(): Triple<LoadedProject, AwakeAppLifecycle, SceneAppLifecycleRuntime> {
+    private suspend fun play(onFrame: ((SceneHostServices) -> Unit)? = null): Triple<LoadedProject, AwakeAppLifecycle, SceneAppLifecycleRuntime> {
         val files = mapOf("awake.project.json" to MANIFEST, "scenes/main.scene.json" to SCENE, HELD to triangleGltf())
+        val capabilities = if (onFrame == null) {
+            emptyList()
+        } else {
+            listOf(object : SceneCapability {
+                override val id = "com.example.prewarm"
+
+                override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
+                    plan.frame("test-prewarm") { services ->
+                        object : System {
+                            override fun update(world: World, delta: Float) = onFrame(services)
+                        }
+                    }
+                }
+            })
+        }
         val project = loadProject(
             AssetSource { path ->
                 readsLock.withLock { reads += path.value }
                 if (path.value == HELD) holdRead()
                 runCatching { files.getValue(path.value).encodeToByteArray() }
             },
+            capabilities = capabilities,
         )
         val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())

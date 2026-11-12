@@ -43,7 +43,8 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  * animation, the still frame staged 3 blocks, not 0. With [UniformUploads.stageChanged] skipping
  * every block whatever it holds, the moved prop's frame read back the first frame's pixels. With
  * `DrawUniformInputs.matches` answering yes for any slot it has seen, the moved prop again kept its
- * old pixels, and the moved camera packed 0 draws, not 3.
+ * old pixels. With the frame block staged only on the first frame, the moved camera's frame read
+ * back the first frame's pixels.
  */
 class WebGpuStaticUniformReuseTest {
 
@@ -52,7 +53,7 @@ class WebGpuStaticUniformReuseTest {
         val first = scene.frame(timeSeconds = 1f)
         val still = scene.frame(timeSeconds = 2f)
 
-        assertEquals(DRAWS, first.staged, "the first frame uploads every draw's block")
+        assertEquals(DRAWS + FRAME_BLOCK + IDENTITY_BLOCK, first.staged, "the first frame uploads every draw's block and the frame's")
         assertEquals(DRAWS, first.packed, "having packed each")
         assertEquals(0, still.packed, "nothing moved, so nothing is packed")
         assertEquals(0, still.staged, "or uploaded")
@@ -70,12 +71,24 @@ class WebGpuStaticUniformReuseTest {
     }
 
     @Test
-    fun aMovedCameraPacksEveryDrawAgain() = withScene { scene ->
+    fun aMovedCameraUploadsTheFrameBlockAndNoDraws() = withScene { scene ->
         val first = scene.frame(timeSeconds = 1f)
         val turned = scene.frame(timeSeconds = 2f, eyeX = 1f)
 
         assertFalse(first.pixels.contentEquals(turned.pixels), "the scene is drawn from where the camera moved to")
-        assertEquals(DRAWS, turned.packed, "every block carries the camera, so every draw is packed")
+        assertEquals(0, turned.packed, "no draw's block carries the camera, so none is packed")
+        assertEquals(FRAME_BLOCK, turned.staged, "and the frame block alone is uploaded")
+    }
+
+    @Test
+    fun aMovedCameraDrawsWhatAFreshRendererDrawsFromThere() {
+        val moved = withScene { scene ->
+            scene.frame(timeSeconds = 1f)
+            scene.frame(timeSeconds = 2f, eyeX = 1f).pixels
+        }
+        val fresh = withScene { scene -> scene.frame(timeSeconds = 2f, eyeX = 1f).pixels }
+
+        assertContentEquals(fresh, moved, "draw blocks kept from the frame before draw as blocks packed for this camera")
     }
 
     @Test
@@ -87,7 +100,46 @@ class WebGpuStaticUniformReuseTest {
         assertEquals(1, next.staged, "and its block changes")
     }
 
-    private fun withScene(block: (Scene) -> Unit) = webGpuHeadlessScene().use { session ->
+    /**
+     * The scale #1452 measured: 1,300 static draws, each with a block of its own. Planning only;
+     * the counts are what a frame would upload.
+     */
+    @Test
+    fun aMovingCameraOverThirteenHundredStaticDrawsUploadsOneBlock() = webGpuHeadlessScene().use { session ->
+        val renderer = session.renderer
+        val mesh = renderer.createMesh(quad(VertexFormat.PositionNormalColor, half = 0.05f))
+        val materials = List(MANY_DRAWS) { renderer.createMaterial(uniformFloatCount = MaterialUniformLayouts.LitShadow.total) }
+        val draws = materials.mapIndexed { index, material ->
+            RenderDrawCommand(mesh = mesh, material = material, model = translation((index % ROW - ROW / 2) * 0.25f, 0f, (index / ROW - ROW / 2) * 0.25f))
+        }
+        val sun = SceneLight(direction = Vec3f(0.3f, 1f, 0.2f), color = Vec3f(1f, 1f, 1f))
+        val uploads = (renderer as WebGpuRenderer).uniformUploads
+
+        fun plan(eyeX: Float): Pair<Int, Int> {
+            val lens = Lens(eye = Vec3f(eyeX, 9f, 7f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
+            val packedBefore = uploads.packedBlocks
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = draws,
+                light = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, renderer.clipSpace)),
+                clipSpace = renderer.clipSpace,
+                aspect = 1f,
+                drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+            )
+            return (uploads.packedBlocks - packedBefore).toInt() to uploads.buffers.size
+        }
+        try {
+            assertEquals(MANY_DRAWS to MANY_DRAWS + FRAME_BLOCK + IDENTITY_BLOCK, plan(eyeX = 0f), "the first frame")
+            assertEquals(0 to FRAME_BLOCK, plan(eyeX = 0.5f), "the camera moved: the frame block, and no draw's")
+            assertEquals(0 to FRAME_BLOCK, plan(eyeX = 1f), "and again")
+            assertEquals(0 to 0, plan(eyeX = 1f), "the camera held: nothing")
+        } finally {
+            materials.forEach { it.destroy() }
+            mesh.destroy()
+        }
+    }
+
+    private fun <T> withScene(block: (Scene) -> T): T = webGpuHeadlessScene().use { session ->
         Scene(session.renderer).use(block)
     }
 
@@ -155,6 +207,14 @@ class WebGpuStaticUniformReuseTest {
     private companion object {
         const val SIZE = 96
         const val DRAWS = 3
+        const val MANY_DRAWS = 1_300
+        const val ROW = 36
+
+        /** The one block a batch uploads for the camera, the light and the cascades. */
+        const val FRAME_BLOCK = 1
+
+        /** The identity frame block, uploaded once in a device's life. */
+        const val IDENTITY_BLOCK = 1
         const val GROUND_HALF = 6f
         const val PROP_HALF = 1.2f
         const val PROP_HEIGHT = 1.5f

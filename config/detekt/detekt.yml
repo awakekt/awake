@@ -99,6 +99,7 @@ comments:
       - '**/awake/compose/state/**'
       - '**/awake/compose/runtime/**'
       - '**/awake/compose/foundation/**'
+      - '**/awake/compose/game/**'
       - '**/awake/compose/ui/**'
       - '**/awake/scene/audio/**'
       - '**/awake/scene/canvas/**'

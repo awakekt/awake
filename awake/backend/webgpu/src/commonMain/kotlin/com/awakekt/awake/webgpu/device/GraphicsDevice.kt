@@ -78,6 +78,13 @@ class GraphicsDevice {
     internal lateinit var wgpuContext: WGPUContext
         private set
 
+    private var frameUniformBuffer: com.awakekt.awake.webgpu.renderer.FrameUniformBuffer? = null
+
+    /** The frame block every lit draw's material group binds beside its own; made on first use. */
+    internal val frameUniforms: com.awakekt.awake.webgpu.renderer.FrameUniformBuffer
+        get() = frameUniformBuffer
+            ?: com.awakekt.awake.webgpu.renderer.FrameUniformBuffer(wgpuContext.device).also { frameUniformBuffer = it }
+
     /**
      * Whether a render pipeline's `unclippedDepth` takes effect on this device: it was granted
      * `depth-clip-control`, and this platform's binding passes the flag through. The shadow depth
@@ -125,6 +132,8 @@ class GraphicsDevice {
      * closed. The context must not be used or closed again by the caller afterwards.
      */
     fun destroy() {
+        frameUniformBuffer?.close()
+        frameUniformBuffer = null
         WebGpuHandles.release(device)
         closeContext(wgpuContext)
     }

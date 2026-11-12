@@ -228,6 +228,19 @@ object UniformFields {
     /** `x` = the scale a lit shader applies to its radiance before tone mapping; `yzw` unused. */
     val Exposure = UniformField("exposure", GpuDataShape.Vec4)
 
+    /**
+     * World space to the pass's clip space: the camera's view-projection. A field of the frame
+     * block, which a pass writes once; a shader multiplies it by a draw's [Model] where a block
+     * used to carry the product as [Mvp].
+     */
+    val ViewProjection = UniformField("viewProjection", GpuDataShape.Mat4)
+
+    /**
+     * `x` = the share of an opaque draw's pixels a dither fade discards, `1 - opacity`; `yzw`
+     * unused. A draw's own, so it sits in the draw's block where [Exposure] sits in the frame's.
+     */
+    val DrawFade = UniformField("drawFade", GpuDataShape.Vec4)
+
     /** Default material ABI used by [GpuDevice] when a caller has not selected a richer layout. */
     val DefaultMaterial = UniformLayout(
         Mvp,

@@ -39,6 +39,9 @@ internal class VulkanDrawPreparer(
      * with how many instanced draws a frame has rather than with where they sit in it. */
     private var instancedRuns = 0
 
+    /** Whether this batch's wireframe-overlay edges have their frame block written yet. */
+    private var edgeFrameWritten = false
+
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelinesByFormat
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
@@ -54,17 +57,23 @@ internal class VulkanDrawPreparer(
         if (sourceIndex == 0) {
             materialUsage.clear()
             instancedRuns = 0
+            edgeFrameWritten = false
             // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
             // phase usually waited for it already, but a frame with no UI never did, and preparing
             // runs before acquiring the image, which is the next wait. Free when already waited.
             renderer.waitForCurrentFrameResourceSlot()
             // Submitted offscreen work may still read the slots this batch is about to rewrite.
             renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
+            // After both waits: the block every lit draw of this batch reads beside its own.
+            renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades())
         }
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
-        val cascades = context.shadowCascadeData ?: context.shadowViewProjections
-            .takeIf { it.isNotEmpty() }
-            ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
+        if (edgePipeline != null && !edgeFrameWritten) {
+            // The batch's edges are a pass of their own: their view-projection and debug code.
+            renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades(), edges = true)
+            edgeFrameWritten = true
+        }
+        val cascades = context.cascades()
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
             frameIndex = renderer.swapchainManager.currentFrame,
@@ -106,6 +115,10 @@ internal class VulkanDrawPreparer(
             depthJointPaletteBinding = prepared.jointPaletteBinding,
         )
     }
+
+    private fun GpuDrawPreparationContext.cascades(): GpuShadowCascadeData? = shadowCascadeData ?: shadowViewProjections
+        .takeIf { it.isNotEmpty() }
+        ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
 
     /** The edge pipeline that draws [request]'s edges, or null when a wireframe overlay draws none. */
     private fun edgePipelineFor(request: GpuDrawRequest): RenderPipeline? =

@@ -18,6 +18,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.instancedUniformFloats
 import com.awakekt.awake.render.passes.uniformFloats
+import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.batchKey
@@ -92,23 +93,23 @@ internal fun Renderer.prepareGpuDraw(
     // A line-list pipeline, the wireframe view's or an edge overlay's, takes its indices in pairs:
     // it draws the mesh's line indices, since its triangle indices would join the wrong corners.
     val lines = resolved?.topology == GPUPrimitiveTopology.LineList
-    val slot = bufferPools.uniformSlotForDraw(pipeline, singleIndex)
+    val slot = bufferPools.uniformSlotForDraw(pipeline, singleIndex, edges = edgePipeline != null)
     slot?.let {
-        stageDrawBlock(
-            it, cmd, material.uniformFloatCount, (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled, frameVersion,
-            viewProjection, cameraEye, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
-        )
+        if (pipeline.splitDrawBlockFloats > 0) {
+            stageSplitDrawBlock(it, cmd, pipeline.splitDrawBlockFloats, (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled)
+        } else {
+            stageDrawBlock(
+                it, cmd, material.uniformFloatCount, (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled, frameVersion,
+                viewProjection, cameraEye, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
+            )
+        }
     }
     return WebGpuPreparedDraw(
         pipeline = pipeline,
         materialBinding = when {
             slot == null -> EmptyWebGpuMaterialBinding
             material.hasTexture -> WebGpuBindGroupHandle(
-                material.bindGroupFor(
-                    pipeline.pipeline,
-                    slot.buffer,
-                    pipeline.texturedMaterialBindings,
-                ),
+                material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings, edges = edgePipeline != null),
             )
             else -> slot.binding ?: EmptyWebGpuMaterialBinding
         },
@@ -172,6 +173,19 @@ private fun Renderer.stageDrawBlock(
     slot.inputs.record(cmd, frameVersion, materialUniformFloatCount, coverage)
 }
 
+/**
+ * Stages [cmd]'s own block for a pipeline that reads the frame block beside it, unless [slot]
+ * already holds it. Nothing in this block is the camera's or the light's, so a draw that holds
+ * still stages nothing while they move. An [instanced] draw's copies carry their transforms.
+ */
+private fun Renderer.stageSplitDrawBlock(slot: UniformSlot, cmd: GpuDrawRequest, drawBlockFloats: Int, coverage: Boolean, instanced: Boolean = false) {
+    val kind = if (instanced) SPLIT_INSTANCED_INPUTS else SPLIT_INPUTS
+    if (slot.inputs.matches(cmd, SPLIT_FRAME_VERSION, drawBlockFloats, coverage, kind)) return
+    uniformUploads.packedBlocks += 1
+    uniformUploads.stageChanged(slot, cmd.drawBlockFloats(drawBlockFloats, coverage, instanced))
+    slot.inputs.record(cmd, SPLIT_FRAME_VERSION, drawBlockFloats, coverage, kind)
+}
+
 private fun Renderer.prepareInstancedGpuDraw(
     cmd: GpuDrawRequest,
     mesh: Mesh,
@@ -217,8 +231,12 @@ private fun Renderer.prepareInstancedGpuDraw(
     // A slot already holding this draw's block, packed from the same inputs, needs no block; the
     // skinned draws share one buffer, so theirs is always packed.
     val inputKind = INSTANCED_INPUTS + kind.ordinal
-    val packs = drawSlot == null || !drawSlot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind)
-    val uniformFloats = if (!packs) {
+    // A pipeline that reads the frame block takes the draw's own block instead, staged per slot below.
+    val split = pipeline.splitDrawBlockFloats
+    val packs = split == 0 && (drawSlot == null || !drawSlot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind))
+    val uniformFloats = if (split > 0 && kind == InstancedDrawKind.Skinned) {
+        cmd.drawBlockFloats(split, coverage, instanced = true)
+    } else if (!packs) {
         null
     } else {
         cmd.instancedUniformFloats(
@@ -237,6 +255,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         )
     }
     fun stageFor(slot: UniformSlot) {
+        if (split > 0) return stageSplitDrawBlock(slot, cmd, split, coverage, instanced = true)
         uniformFloats ?: return
         uniformUploads.packedBlocks += 1
         uniformUploads.stageChanged(slot, uniformFloats)
@@ -338,6 +357,13 @@ internal const val NO_FRAME_VERSION = -2
 
 /** Instanced draws are told apart from ordinary ones in a slot's inputs, kind by kind, from here. */
 private const val INSTANCED_INPUTS = 1
+
+/** Input kinds of a draw's own block beside the frame block, apart from every whole-block kind. */
+private const val SPLIT_INPUTS = 16
+private const val SPLIT_INSTANCED_INPUTS = 17
+
+/** A split draw block holds nothing of the frame's, so every frame is the same frame to it. */
+private const val SPLIT_FRAME_VERSION = 0
 
 /** The primary pipeline and wireframe selection for a packet recording pass. */
 internal class PrimaryPipelineBinding(

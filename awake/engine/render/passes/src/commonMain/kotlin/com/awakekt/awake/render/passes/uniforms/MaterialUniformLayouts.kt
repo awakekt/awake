@@ -108,6 +108,52 @@ object MaterialUniformLayouts {
         UniformFields.Exposure,
     )
 
+    /**
+     * The frame block: everything a lit draw reads that is the pass's rather than the draw's, so
+     * a pass writes it once and a moving camera re-uploads this block instead of every draw's.
+     * Bound beside the draw's block, at
+     * [com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING] of the material group.
+     */
+    val Frame = UniformLayout(
+        UniformFields.ViewProjection,
+        UniformFields.LightDirection,
+        UniformFields.LightColor,
+        UniformFields.PointLightPositions,
+        UniformFields.PointLightColors,
+        UniformFields.CascadeViewProjections,
+        UniformFields.CascadeDepthScales,
+        UniformFields.CameraPosition,
+        UniformFields.CameraForward,
+        UniformFields.FogColor,
+        UniformFields.DebugView,
+        UniformFields.Exposure,
+    )
+
+    /**
+     * What a lit-shadow draw's own block holds beside [Frame]. A depth pass reads the first two
+     * fields from the same buffer, so every split draw layout starts with them.
+     *
+     * [LitShadow] still sizes the material and names the plan; this is what is written into it.
+     */
+    val LitShadowDraw = UniformLayout(
+        UniformFields.Model,
+        UniformFields.VertexAnimation,
+        UniformFields.Material,
+        UniformFields.DrawFade,
+    )
+
+    /** What a textured PBR draw's own block holds beside [Frame]; see [LitShadowDraw]. */
+    val PbrTexturedDraw = UniformLayout(
+        UniformFields.Model,
+        UniformFields.VertexAnimation,
+        UniformFields.PbrFactors,
+        UniformFields.BaseColorFactor,
+        UniformFields.EmissiveFactor,
+        UniformFields.TextureFrames,
+        UniformFields.TextureScroll,
+        UniformFields.DrawFade,
+    )
+
     /** Everything `textured.wgsl` reads after its MVP -- see [LitShadow]: 44 floats. */
     val TexturedExtra = UniformLayout(
         UniformFields.LightDirection,
