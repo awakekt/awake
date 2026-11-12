@@ -176,17 +176,20 @@ class AwakeSurfaceView(
             super.onKeyDown(keyCode, event)
 
     private fun handleTextKey(event: KeyEvent): Boolean {
-        if (!input.textInputFocused || event.isFromSource(InputDevice.SOURCE_GAMEPAD)) return false
-        if (event.isCtrlPressed || event.isMetaPressed) return false
+        if (!input.textInputFocused || event.isFromSource(InputDevice.SOURCE_GAMEPAD) || event.isCtrlPressed || event.isMetaPressed) return false
         val edit = TextEditKeys[event.keyCode]
-        if (edit != null) {
-            input.pushEditAction(edit)
-            return true
-        }
         val character = event.unicodeChar
-        if (!Character.isValidCodePoint(character) || Character.isISOControl(character)) return false
-        input.pushTypedText(String(Character.toChars(character)))
-        return true
+        return when {
+            edit != null -> {
+                input.pushEditAction(edit)
+                true
+            }
+            Character.isValidCodePoint(character) && !Character.isISOControl(character) -> {
+                input.pushTypedText(String(Character.toChars(character)))
+                true
+            }
+            else -> false
+        }
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
