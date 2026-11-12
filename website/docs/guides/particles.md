@@ -72,6 +72,13 @@ not fight it for depth. In Kotlin, set `ParticleVisual(facing = ParticleFacing.F
 comes from the `Transform` of the entity carrying the `ParticleEmitter`, or is the world's ground
 plane when that entity has none.
 
+For a flat effect attached to a turning node, set `"inheritRotation": false` inside the effect
+node's `transform`. Its position follows the parent's full transform, and its authored rotation
+is in world axes. The parent's world scale is kept along the world axes: each scale component is
+multiplied by how far the parent stretches that world axis, so a uniformly scaled parent scales the
+effect evenly however it turns.
+The same option is available as `Transform.inheritRotation` in Kotlin.
+
 ## Stand particles upright in the emitter's frame
 
 `facing: "Upright"` stands each quad in the plane of its node's own X and Y axes, facing along the
@@ -247,7 +254,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `frameRate` | `8` | Frames per second; each particle starts on a random frame. |
 | `stretchWithVelocity` | `false` | Stretches the quad along its screen motion, for streaks. |
 | `stretchFactor` | `0.05` | World units of stretch per unit of speed. |
-| `endScale` | none | Quad size at death, reached linearly from `scale`. None keeps `scale`. |
+| `endScale` | none | Signed quad size at death, reached linearly from `scale`. A negative endpoint shrinks the sprite through zero and grows it mirrored on both axes. None keeps `scale`. |
 | `additive` | `false` | Adds each particle's colour to what is behind it, for glows and sparks. Needs the particle pipeline built with `buildAdditive = true`; without it the particles blend. |
 | `facing` | `Camera` | `ParticleFacing.Flat` lays each quad in the emitter entity's horizontal plane instead of turning it to the camera; `ParticleFacing.Upright` stands it in the entity's XY plane, texture top toward its +Y. |
 | `alphaCurve` | none | A `ParticleAlphaCurve(fadeInEnd, fadeOutStart)`: opacity fades in until `fadeInEnd`, holds `startAlpha` until `fadeOutStart`, then fades out, both as fractions of the lifetime. None is the plain linear fade from `startAlpha` to 0. |

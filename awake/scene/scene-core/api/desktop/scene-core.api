@@ -189,16 +189,23 @@ public final class com/awakekt/awake/scene/core/transform/Transform : com/awakek
 	public fun <init> ()V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component4-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
 	public final fun component5 ()Lcom/awakekt/awake/core/math/Mat4;
+	public final fun component6 ()Z
 	public final fun computeLocalMatrix (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
 	public static synthetic fun computeLocalMatrix$default (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Mat4;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Mat4;
-	public final fun copy-TJrHh0A (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/scene/core/transform/Transform;
+	public final fun computeWorldMatrix (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public final synthetic fun copy-TJrHh0A (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public static synthetic fun copy-TJrHh0A$default (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;ILjava/lang/Object;)Lcom/awakekt/awake/scene/core/transform/Transform;
+	public final fun copy-qiHDDq0 (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;Z)Lcom/awakekt/awake/scene/core/transform/Transform;
+	public static synthetic fun copy-qiHDDq0$default (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Mat4;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInheritRotation ()Z
 	public final fun getParent-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
 	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getRotation ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -208,6 +215,7 @@ public final class com/awakekt/awake/scene/core/transform/Transform : com/awakek
 	public fun hashCode ()I
 	public final fun localMatrix ()Lcom/awakekt/awake/core/math/Mat4;
 	public fun reset ()V
+	public final fun setInheritRotation (Z)V
 	public final fun setParent-eOpPV3Q (Lcom/awakekt/awake/ecs/Entity;)V
 	public final fun setPosition (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun setRotation (Lcom/awakekt/awake/core/math/Vec3f;)V
@@ -219,6 +227,10 @@ public final class com/awakekt/awake/scene/core/transform/Transform : com/awakek
 public final class com/awakekt/awake/scene/core/transform/TransformExtensionsKt {
 	public static final fun setTransform-raSDhyQ (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public static synthetic fun setTransform-raSDhyQ$default (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/scene/core/transform/Transform;
+}
+
+public final class com/awakekt/awake/scene/core/transform/TransformKt {
+	public static final fun worldAxisStretch (Lcom/awakekt/awake/core/math/Mat4;I)F
 }
 
 public final class com/awakekt/awake/scene/core/transform/TransformSystem : com/awakekt/awake/ecs/System {

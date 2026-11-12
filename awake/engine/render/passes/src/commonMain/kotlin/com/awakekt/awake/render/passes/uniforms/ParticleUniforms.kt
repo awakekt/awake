@@ -54,7 +54,7 @@ val InstancedUniformLayout = UniformLayout(
  * quad along it. A plain particle's stretch is zero; anything else there, such as the size on the
  * diagonal [Mat4.setTranslationScale] leaves, stretches and mirrors it. Column 2's x is [rotation], the
  * quad's turn in its own plane in radians, counter-clockwise as the viewer sees it; a stretched
- * particle ignores it.
+ * particle ignores it. Column 2's z carries the signed size for mirroring the sprite on both axes.
  */
 fun Mat4.setParticleInstance(
     x: Float,

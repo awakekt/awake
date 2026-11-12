@@ -101,8 +101,10 @@ class SceneComponentCatalogTest {
         assertEquals(listOf("name", "transform", "components", "children"), node.children.map { it.name })
 
         val transform = node.child("transform")
-        assertEquals(listOf("position", "rotation", "scale"), transform.children.map { it.name })
-        assertTrue(transform.children.all { it.kind == PropertyKind.Vector3 })
+        assertEquals(listOf("position", "rotation", "scale", "inheritRotation"), transform.children.map { it.name })
+        assertTrue(transform.children.take(3).all { it.kind == PropertyKind.Vector3 })
+        assertEquals(PropertyKind.Boolean, transform.child("inheritRotation").kind)
+        assertEquals(JsonPrimitive(true), transform.child("inheritRotation").default)
         assertEquals(JsonPrimitive(1.0f), (transform.child("scale").default as JsonObject)["x"], "a node starts at scale 1")
         assertEquals(listOf("x", "y", "z"), transform.child("position").children.map { it.name })
     }

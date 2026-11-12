@@ -107,6 +107,7 @@ fun Transform.toSceneTransform(): SceneTransform = SceneTransform(
     position = position.toSceneVec3(),
     rotation = rotation.toSceneVec3(),
     scale = scale.toSceneVec3(),
+    inheritRotation = inheritRotation,
 )
 
 /** Converts a math [Vec3f] into a serializable [SceneVec3]. */

@@ -28,6 +28,7 @@ import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
@@ -41,6 +42,7 @@ import com.awakekt.awake.scene.particles.SceneParticleBox
 import com.awakekt.awake.scene.particles.SceneParticleBurstCycle
 import com.awakekt.awake.scene.particles.SceneParticleEmitter
 import com.awakekt.awake.scene.particles.SceneParticleGround
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -54,7 +56,7 @@ class SceneParticleEmitterTest {
     }
 
     private val sprite = TextureAsset(ByteArray(4) { -1 }, width = 1, height = 1)
-    private val dust = SceneParticleEmitter(texture = "dust.png", endScale = 0.5f, radialSpeed = 3f, additive = true)
+    private val dust = SceneParticleEmitter(texture = "dust.png", endScale = -0.5f, radialSpeed = 3f, additive = true)
 
     @Test
     fun anEmitterSpawnsAtAndFollowsItsNodeOnceItsSpriteIsLoaded() {
@@ -66,7 +68,7 @@ class SceneParticleEmitterTest {
         val emitter = requireNotNull(world.get<ParticleEmitter>(node))
         assertEquals(Vec3f(1f, 2f, 3f), emitter.origin)
         assertEquals(node, emitter.dynamics.followEntity)
-        assertEquals(0.5f, emitter.visual.endScale)
+        assertEquals(-0.5f, emitter.visual.endScale)
         assertEquals(true, emitter.visual.additive)
         assertEquals(3f, emitter.motion.radialSpeed)
     }
@@ -126,8 +128,13 @@ class SceneParticleEmitterTest {
 
         assertEquals(dust, ParticleEmitterBinding.export(world, node, world.get<ParticleEmitterSource>(node)!!))
         assertEquals(
-            listOf("particle_emitter.lifetime must be greater than 0", "particle_emitter.scale must be greater than 0"),
+            listOf("particle_emitter.lifetime must be greater than 0", "particle_emitter.scale must be finite and greater than 0"),
             dust.copy(lifetime = 0f, scale = 0f).validate("fx").map { it.message },
+        )
+        assertEquals(emptyList(), dust.validate("fx"))
+        assertEquals(
+            listOf("particle_emitter.endScale must be finite"),
+            dust.copy(endScale = Float.NEGATIVE_INFINITY).validate("fx").map { it.message },
         )
     }
 
@@ -410,6 +417,55 @@ class SceneParticleEmitterTest {
         assertEquals(-2f, velocityY, 1e-4f, "two 0.1s steps of -10")
     }
 
+    /**
+     * A node that keeps its rotation in world axes spawns its ring flat while its parent turns, and the
+     * ring follows the parent's turn once the node inherits it again.
+     */
+    @Test
+    fun aSpawnRingStaysFlatUnderATurningParentWhenItsNodeKeepsWorldRotation() {
+        val flat = ringHeightsUnderATurningParent(inheritRotation = false)
+        assertTrue(flat.size > 4, "the ring spawned ${flat.size} particles")
+        flat.forEach { assertEquals(RING_HEIGHT, it, 1e-4f, "every particle on the horizontal ring: $flat") }
+
+        val tilted = ringHeightsUnderATurningParent(inheritRotation = true)
+        assertTrue(tilted.any { abs(it - RING_HEIGHT) > 0.1f }, "inheriting the parent's turn tilts the ring: $tilted")
+    }
+
+    /**
+     * The height of each particle a ring-spawning node has spawned while its parent, scaled by 2 and
+     * turning about X and Z, moves it. The node sits [RING_HEIGHT] up in the world.
+     */
+    private fun ringHeightsUnderATurningParent(inheritRotation: Boolean): List<Float> {
+        val world = World()
+        val parent = world.create()
+        val parentTransform = Transform(position = Vec3f(2f, RING_HEIGHT, -3f), scale = Vec3f(2f, 2f, 2f))
+        world.add(parent, parentTransform)
+        val node = world.create()
+        world.add(node, Transform(parent = parent, inheritRotation = inheritRotation))
+        val ring = dust.copy(
+            maxParticles = 32,
+            spawnRate = 200f,
+            lifetime = 100f,
+            spawnRadius = 1f,
+            radialSpeed = 0f,
+            velocity = SceneVec3(0f, 0f, 0f),
+            inheritOrientation = true,
+        )
+        world.add(node, ParticleEmitterSource(ring))
+        val transforms = TransformSystem()
+        val content = ParticleContentSystem(CountingRenderer(), mapOf("dust.png" to sprite))
+        val particles = ParticleSystem(TransformPlacement)
+        repeat(8) { step ->
+            parentTransform.rotation.set(0.3f * step, 0f, 0.7f + 0.2f * step)
+            transforms.update(world, 0f)
+            content.update(world, 0f)
+            particles.update(world, 0.01f)
+        }
+        val heights = ArrayList<Float>()
+        world.queryOne<ParticleEmitter>().forEachLiveParticle { position, _ -> heights += position.y }
+        return heights
+    }
+
     /** Bursts at 0 and 0.25 of each second's first half, two particles each, nothing in the second half. */
     @Test
     fun anAuthoredBurstCycleSpawnsOnItsSchedule() {
@@ -502,3 +558,5 @@ class SceneParticleEmitterTest {
         }
     }
 }
+
+private const val RING_HEIGHT = 1.5f

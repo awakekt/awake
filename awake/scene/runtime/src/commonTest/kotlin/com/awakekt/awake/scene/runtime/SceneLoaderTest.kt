@@ -56,6 +56,21 @@ class SceneLoaderTest {
     }
 
     @Test
+    fun sceneTransformRoundTripsWorldRotation() {
+        val document = SceneLoader.decode(
+            """{"name":"test","nodes":[{"name":"parent","children":[
+                {"name":"child","transform":{"inheritRotation":false}}
+            ]}]}""",
+        )
+        val world = World()
+        document.instantiate(world = world)
+        val exported = SceneLoader.fromWorld(world, name = "test")
+
+        assertFalse(exported.nodes.single().children.single().transform.inheritRotation)
+        assertTrue(exported.nodes.single().transform.inheritRotation)
+    }
+
+    @Test
     fun fromWorldExportsLocalTransformsComponentsAndHierarchy() {
         val world = World()
         val parent = world.create()

@@ -198,6 +198,46 @@ class SocketAttachmentSystemTest {
         assertMatrixNear(rig.onHand(), rig.worldOf(shield))
     }
 
+    /**
+     * A character that keeps its rotation in world axes under a turned, scaled mount is placed as
+     * [TransformSystem] places it, and the attachment follows that hand, not one composed as if the
+     * mount turned the character. The mount's scale is even: an uneven one would shear the hand, which
+     * no position, rotation and scale can hold.
+     */
+    @Test
+    fun followsACharacterThatDoesNotInheritItsParentsRotation() {
+        val rig = SkinnedRig()
+        val mount = rig.mount(Vec3f(2f, 2f, 2f))
+        rig.world.get<Transform>(rig.character)!!.apply {
+            parent = mount
+            inheritRotation = false
+        }
+        val shield = rig.attach(SocketAttachmentComponent(rig.character, jointName = "hand", offsetPosition = GRIP, offsetRotation = GRIP_TURN))
+
+        rig.raiseArm()
+        rig.frame()
+
+        val placed = rig.worldOf(rig.character)
+        assertMatrixNear(rig.onHand(placed), rig.worldOf(shield))
+        assertTrue(abs(placed.m03 - rig.world.get<Transform>(rig.character)!!.localMatrix().m03) > 1f, "the mount moves the character")
+    }
+
+    /** An attachment that keeps its rotation in world axes under a turned, unevenly scaled parent is given the local transform that puts it on the hand. */
+    @Test
+    fun anAttachmentThatDoesNotInheritItsParentsRotationIsPutOnTheJoint() {
+        val rig = SkinnedRig()
+        val shield = rig.attach(SocketAttachmentComponent(rig.character, jointName = "hand", offsetPosition = GRIP, offsetRotation = GRIP_TURN))
+        rig.world.get<Transform>(shield)!!.apply {
+            parent = rig.mount()
+            inheritRotation = false
+        }
+
+        rig.raiseArm()
+        rig.frame()
+
+        assertMatrixNear(rig.onHand(), rig.worldOf(shield))
+    }
+
     /** The positive control: a target with no pose is not followed, and the attached entity stays where it was put. */
     @Test
     fun aTargetWithNoPoseLeavesTheAttachmentWhereItIs() {
@@ -269,18 +309,22 @@ class SocketAttachmentSystemTest {
 
         fun worldOf(entity: Entity): Mat4 = world.get<Transform>(entity)!!.worldMatrix
 
-        /** The hand's world transform, from the character's transform and the bones, not from the palette. */
-        fun handWorld(): Mat4 {
-            val placed = world.get<Transform>(character)!!.localMatrix()
+        /** A root node away from the origin, turned about two axes and scaled by [scale], unevenly unless given. */
+        fun mount(scale: Vec3f = Vec3f(2f, 3f, 0.5f)): Entity = world.create().also {
+            world.add(it, Transform(position = Vec3f(-3f, 2f, 1f), rotation = Vec3f(0.4f, 0f, QUARTER_TURN), scale = scale))
+        }
+
+        /** The hand's world transform, from the character's world transform [placed] and the bones, not from the palette. */
+        fun handWorld(placed: Mat4 = world.get<Transform>(character)!!.localMatrix()): Mat4 {
             val spine = Mat4.fromTrs(pose.boneTranslation(1), pose.boneRotation(1), Vec3f(1f, 1f, 1f))
             val hand = Mat4.fromTrs(HAND_REST, Quat.IDENTITY, Vec3f(1f, 1f, 1f))
             return Mat4.multiplyColumnMajor(Mat4.multiplyColumnMajor(placed, spine), hand)
         }
 
-        /** Where the grip puts a shield on the hand: [GRIP] and [GRIP_TURN] in the hand's own space. */
-        fun onHand(): Mat4 {
+        /** Where the grip puts a shield on the hand of a character placed at [placed]: [GRIP] and [GRIP_TURN] in the hand's own space. */
+        fun onHand(placed: Mat4 = world.get<Transform>(character)!!.localMatrix()): Mat4 {
             val grip = Mat4().setEulerTRS(GRIP.x, GRIP.y, GRIP.z, GRIP_TURN.x, GRIP_TURN.y, GRIP_TURN.z, 1f, 1f, 1f)
-            return Mat4.multiplyColumnMajor(handWorld(), grip)
+            return Mat4.multiplyColumnMajor(handWorld(placed), grip)
         }
     }
 
