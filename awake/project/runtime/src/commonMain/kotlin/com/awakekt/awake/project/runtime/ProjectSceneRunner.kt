@@ -36,6 +36,7 @@ import com.awakekt.awake.scene.runtime.SceneMeshLevels
 import com.awakekt.awake.scene.runtime.SceneMeshLoad
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.scene.runtime.prewarm
 import com.awakekt.awake.scene.runtime.schedule.guardedFor
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
@@ -393,6 +394,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
         val content = scene.content + sceneLoads.content
         val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = content)
             .withSpawner(spawner)
+            .withPrewarmer(runtime::prewarm, runtime::prewarm)
             .withFixedStep(runtime.fixedStep)
             .withSceneSwitch(this)
             .withSceneSwitchStatus(this)

@@ -125,6 +125,14 @@ down, stops it, and `await` then throws `CancellationException`. A ready prewarm
 held its assets for the whole scene, so teardown logs a warning naming them. Expand prefab links first
 (`withPrefabs`): `assetReferences` lists a link it can't follow in `prefabLinks`.
 
+Systems in a project played by `runProject` can call `services.prewarm(node)` during a frame-thread
+update. Close the hold when the system no longer needs it or when the system closes.
+Check `services.canPrewarm` when the same system also runs in headless hosts. To hold the
+assets of multiple prefabs together, combine their references with
+`firstPrefab.assetReferences() + secondPrefab.assetReferences()` and pass the result to
+`services.prewarm(references)`. Hosts that run their own systems can install callbacks with
+`withPrewarmer`. Check `services.canPrewarmAssets` for batch support.
+
 A glTF model the scene's resolver hasn't loaded is read and decoded off the frame thread in the
 session's `coroutineScope`, then built like the rest. Prewarms and a project `spawn` of the same model
 share one load, and closing every one of them, or tearing the scene down, cancels it. In a played

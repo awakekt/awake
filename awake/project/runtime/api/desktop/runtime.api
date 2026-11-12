@@ -199,6 +199,8 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun backgroundScope (Ljava/lang/String;)Lkotlinx/coroutines/CoroutineScope;
 	public final fun getAudio ()Lcom/awakekt/awake/core/audio/AudioPlayer;
+	public final fun getCanPrewarm ()Z
+	public final fun getCanPrewarmAssets ()Z
 	public final fun getCanSpawn ()Z
 	public final fun getContent ()Lcom/awakekt/awake/project/runtime/SceneContent;
 	public final fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
@@ -209,10 +211,16 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
 	public final fun getSceneSwitch ()Lcom/awakekt/awake/project/runtime/SceneSwitch;
 	public final fun getSceneSwitchStatus ()Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;
+	public final fun prewarm (Lcom/awakekt/awake/scene/document/SceneNode;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
+	public final fun prewarm (Lcom/awakekt/awake/scene/runtime/SceneAssetReferences;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
+	public static synthetic fun prewarm$default (Lcom/awakekt/awake/project/runtime/SceneHostServices;Lcom/awakekt/awake/scene/document/SceneNode;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
+	public static synthetic fun prewarm$default (Lcom/awakekt/awake/project/runtime/SceneHostServices;Lcom/awakekt/awake/scene/runtime/SceneAssetReferences;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
 	public final fun spawn (Lcom/awakekt/awake/scene/document/SceneNode;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 	public final fun withAudio (Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withCoroutineScope (Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withFixedStep (Lcom/awakekt/awake/core/host/FixedStepReport;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public final fun withPrewarmer (Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public final fun withPrewarmer (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSceneSwitch (Lcom/awakekt/awake/project/runtime/SceneSwitch;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSceneSwitchStatus (Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSpawner (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
