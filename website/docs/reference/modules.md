@@ -170,6 +170,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.compose:runtime` | `awake-compose-runtime` | AwakeKt Compose runtime: the composer, composition locals, `remember` and state. |
 | `com.awakekt.awake.compose:ui` | `awake-compose-ui` | Modifiers, layout nodes, input dispatch and semantics. |
 | `com.awakekt.awake.compose:foundation` | `awake-compose-foundation` | Compose Foundation: `Row`, `Column`, `Box`, scrolling and layout modifiers. |
+| `com.awakekt.awake.compose:game` | `awake-compose-game` | Game UI on AwakeKt Compose: `TouchStick` and `TouchAim` thumb controls. |
 | `com.awakekt.awake.compose:state` | `awake-compose-state` | State management integration for AwakeKt Compose. |
 | `com.awakekt.awake.compose:di` | `awake-compose-di` | Dependency injection bridge for AwakeKt Compose. |
 | `com.awakekt.awake.compose:assets` | `awake-compose-assets` | `LocalAssetSource`, `rememberAssetImage` and a per-scene image cache for AwakeKt Compose. |

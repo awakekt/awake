@@ -5,7 +5,7 @@
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
 
-package com.awakekt.awake.compose.foundation.touch
+package com.awakekt.awake.compose.game
 
 import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.runtime.Composer

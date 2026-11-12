@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.compose.foundation.touch
+package com.awakekt.awake.compose.game
 
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement

@@ -21,7 +21,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:compose:ui"))
-            implementation(project(":awake:core:input"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
