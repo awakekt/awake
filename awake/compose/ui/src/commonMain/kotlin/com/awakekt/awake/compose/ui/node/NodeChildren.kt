@@ -21,7 +21,12 @@ class NodeChildren internal constructor(private val owner: LayoutNode? = null) {
     /** Returns the node at [index]. */
     operator fun get(index: Int): LayoutNode = items[index]
 
-    /** The valid positions in this list. */
+    /**
+     * The valid positions in this list.
+     *
+     * Builds a new `IntRange` on every read, so a loop that runs every frame over every node must
+     * write `0 until size` instead: that compiles to a plain counted loop and allocates nothing.
+     */
     val indices: IntRange get() = items.indices
 
     /** Covariant, so this doubles as the `List<Measurable>` a [MeasurePolicy] receives. */

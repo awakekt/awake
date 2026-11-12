@@ -241,13 +241,13 @@ class FocusOwner {
 
     private fun collectFocusable(node: LayoutNode, into: MutableList<LayoutNode>) {
         if (node.canTakeFocus()) into.add(node)
-        for (i in node.children.indices) {
+        for (i in 0 until node.children.size) {
             collectFocusable(node.children[i], into)
         }
         // Layers last: a popup's contents come after the anchor that opened them, which is the
         // order a reader sees them in. Modal trapping -- a dialog bounding the ring rather than
         // extending it -- lands with `07-overlay-layering.md`'s modal work.
-        for (i in node.layers.indices) {
+        for (i in 0 until node.layers.size) {
             collectFocusable(node.layers[i], into)
         }
     }
@@ -277,8 +277,8 @@ private fun FocusOwner.resolvePendingFocusRequests(root: LayoutNode, node: Layou
         link.pendingTake = false
         link.pendingFree = false
     }
-    for (i in node.children.indices) resolvePendingFocusRequests(root, node.children[i])
-    for (i in node.layers.indices) resolvePendingFocusRequests(root, node.layers[i])
+    for (i in 0 until node.children.size) resolvePendingFocusRequests(root, node.children[i])
+    for (i in 0 until node.layers.size) resolvePendingFocusRequests(root, node.layers[i])
 }
 
 private fun LayoutNode.canTakeFocus(): Boolean {

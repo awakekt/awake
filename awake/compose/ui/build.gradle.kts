@@ -41,6 +41,12 @@ kotlin {
     }
 }
 
+tasks.named<Test>("desktopTest") {
+    // The allocation tests count every byte. With escape analysis on, C2 scalar-replaces short-lived
+    // objects, hiding garbage Android's runtime makes (#1169); the canvas module sets the same flag.
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Compose UI")

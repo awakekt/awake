@@ -132,8 +132,8 @@ class Painter {
     }
 
     private fun paintLayersOfKind(node: LayoutNode, kind: LayerKind) {
-        for (i in node.children.indices) paintLayersOfKind(node.children[i], kind)
-        for (i in node.layers.indices) {
+        for (i in 0 until node.children.size) paintLayersOfKind(node.children[i], kind)
+        for (i in 0 until node.layers.size) {
             val layer = node.layers[i]
             if (layer.nodeType == kind) paintNode(layer)
             paintLayersOfKind(layer, kind)
