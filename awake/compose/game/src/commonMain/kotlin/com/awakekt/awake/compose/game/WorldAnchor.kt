@@ -138,21 +138,25 @@ private class WorldAnchorPolicy : MeasurePolicy {
         for (i in 0 until count) {
             val placeable = placeables[i] ?: continue
             placeables[i] = null
-            val provider = measurables[i].anchorProvider()
-            if (provider == null) {
-                placeable.placeAt(0, 0)
-                continue
-            }
-            point.reset(width, height)
-            provider.anchor(point)
-            if (!point.visible) {
-                placeable.placeAt(OFF_SCREEN, OFF_SCREEN)
-                continue
-            }
+            placeAnchored(placeable, measurables[i].anchorProvider(), width, height)
+        }
+    }
+
+    /** Puts [placeable] where [provider] says, at the top-left with none, and off the surface when it hides. */
+    private fun placeAnchored(placeable: Placeable, provider: AnchorProvider?, width: Int, height: Int) {
+        if (provider == null) {
+            placeable.placeAt(0, 0)
+            return
+        }
+        point.reset(width, height)
+        provider.anchor(point)
+        if (point.visible) {
             placeable.placeAt(
                 (point.x - point.pivotX * placeable.width).roundToInt(),
                 (point.y - point.pivotY * placeable.height).roundToInt(),
             )
+        } else {
+            placeable.placeAt(OFF_SCREEN, OFF_SCREEN)
         }
     }
 
