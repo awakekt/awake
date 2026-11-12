@@ -107,7 +107,8 @@ private const val PREFAB: String = """{
                 "x": 1.0,
                 "y": 1.0,
                 "z": 1.0
-            }
+            },
+            "inheritRotation": true
         },
         "components": [
             {
@@ -152,7 +153,8 @@ private const val PREFAB: String = """{
                         "x": 1.0,
                         "y": 1.0,
                         "z": 1.0
-                    }
+                    },
+                    "inheritRotation": true
                 },
                 "components": [
                     {
