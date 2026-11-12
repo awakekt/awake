@@ -1792,18 +1792,20 @@ public final class com/awakekt/awake/render/renderer/LineSegment {
 }
 
 public final class com/awakekt/awake/render/renderer/RenderFrameStats {
-	public fun <init> (IIJLjava/lang/Float;)V
-	public synthetic fun <init> (IIJLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIJLjava/lang/Float;I)V
+	public synthetic fun <init> (IIJLjava/lang/Float;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()J
 	public final fun component4 ()Ljava/lang/Float;
-	public final fun copy (IIJLjava/lang/Float;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun component5 ()I
+	public final fun copy (IIJLjava/lang/Float;I)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;IILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDrawCalls ()I
 	public final fun getGpuTimeMs ()Ljava/lang/Float;
 	public final fun getInstances ()I
+	public final fun getRenderPasses ()I
 	public final fun getTriangles ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -1866,6 +1868,7 @@ public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public static synthetic fun publish$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;Ljava/lang/Float;ILjava/lang/Object;)V
 	public final fun recordDraw (IIZ)V
 	public static synthetic fun recordDraw$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;IIZILjava/lang/Object;)V
+	public final fun recordPass ()V
 }
 
 public final class com/awakekt/awake/render/renderer/RenderViewport {

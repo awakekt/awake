@@ -1,0 +1,1 @@
+- `RenderFrameStats.renderPasses` counts the render passes a frame began (Vulkan), offscreen blur and layer passes included, and a headless test measures draws and passes for a skinned, plain, styled and blurred UI panel.
