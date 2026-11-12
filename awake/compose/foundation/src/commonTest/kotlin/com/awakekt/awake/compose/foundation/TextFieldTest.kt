@@ -439,7 +439,8 @@ class TextFieldThroughFrameTest {
         val first = TextFieldState()
         val second = TextFieldState()
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Column {
                 BasicTextField(first, Modifier.size(100.dp, 32.dp))
                 BasicTextField(second, Modifier.size(100.dp, 32.dp))
