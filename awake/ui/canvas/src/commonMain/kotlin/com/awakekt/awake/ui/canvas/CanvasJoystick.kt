@@ -5,13 +5,10 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.core.input.StickVector
+import com.awakekt.awake.core.input.TouchStickMath
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.roundToInt
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -102,13 +99,12 @@ data class CanvasJoystick(
      * applied in that order.
      */
     fun deflection(dx: Float, dy: Float, reach: Float): Pair<Float, Float> {
-        val length = sqrt(dx * dx + dy * dy)
-        val share = if (reach > 0f) (length / reach).coerceAtMost(1f) else 0f
-        if (length == 0f || share <= deadZone) return ZERO
-        val stretched = (share - deadZone) / (1f - deadZone)
+        val stretched = TouchStickMath.stretched(sqrt(dx * dx + dy * dy), reach, deadZone)
+        if (stretched == 0f) return ZERO
         val shaped = (curve?.valueAt(stretched, stretched) ?: response.shape(stretched)).coerceIn(0f, 1f)
-        val angle = directions.snap(atan2(dy, dx))
-        return Pair(cos(angle) * shaped, sin(angle) * shaped)
+        val out = StickVector()
+        TouchStickMath.polar(dx, dy, shaped, directions.steps, out)
+        return Pair(out.x, out.y)
     }
 
     /** Defaults and limits. */
@@ -175,14 +171,11 @@ enum class CanvasStickDirections {
 
     ;
 
-    internal fun snap(radians: Float): Float {
-        val steps = when (this) {
-            Analog -> return radians
-            Four -> FOUR
-            Eight -> EIGHT
-        }
-        val step = 2f * PI.toFloat() / steps
-        return (radians / step).roundToInt() * step
+    /** How many evenly spaced directions are reported; 0 for any angle. */
+    internal val steps: Int get() = when (this) {
+        Analog -> 0
+        Four -> FOUR
+        Eight -> EIGHT
     }
 
     private companion object {

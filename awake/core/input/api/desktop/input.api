@@ -765,6 +765,14 @@ public final class com/awakekt/awake/core/input/ScrollSource : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/core/input/ScrollSource;
 }
 
+public final class com/awakekt/awake/core/input/StickVector {
+	public fun <init> ()V
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun isZero ()Z
+	public final fun set (FF)V
+}
+
 public final class com/awakekt/awake/core/input/TextEditAction : java/lang/Enum {
 	public static final field ArrowDown Lcom/awakekt/awake/core/input/TextEditAction;
 	public static final field ArrowLeft Lcom/awakekt/awake/core/input/TextEditAction;
@@ -803,5 +811,15 @@ public final class com/awakekt/awake/core/input/TouchPoint {
 	public final fun getY ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/TouchStickMath {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/TouchStickMath;
+	public final fun aim (FFFFZLcom/awakekt/awake/core/input/StickVector;)V
+	public final fun deflect (FFFFIILcom/awakekt/awake/core/input/StickVector;)V
+	public final fun polar (FFFILcom/awakekt/awake/core/input/StickVector;)V
+	public final fun response (FI)F
+	public final fun snapAngle (FI)F
+	public final fun stretched (FFF)F
 }
 
