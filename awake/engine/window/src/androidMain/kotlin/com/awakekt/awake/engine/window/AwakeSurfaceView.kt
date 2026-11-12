@@ -176,7 +176,8 @@ class AwakeSurfaceView(
             super.onKeyDown(keyCode, event)
 
     private fun handleTextKey(event: KeyEvent): Boolean {
-        if (!input.textInputFocused || event.isFromSource(InputDevice.SOURCE_GAMEPAD) || event.isCtrlPressed || event.isMetaPressed) return false
+        val hasCommandModifier = event.isCtrlPressed || event.isMetaPressed
+        if (!input.textInputFocused || event.isFromSource(InputDevice.SOURCE_GAMEPAD) || hasCommandModifier) return false
         val edit = TextEditKeys[event.keyCode]
         val character = event.unicodeChar
         return when {
