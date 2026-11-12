@@ -16,6 +16,8 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.runtime.SceneAssetReferences
+import com.awakekt.awake.scene.runtime.ScenePrewarm
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
  * passes its renderer; a game server or a test makes one with [headless], and the systems that draw
  * are left out.
  */
+@Suppress("TooManyFunctions") // Each optional host service has its own builder.
 class SceneHostServices private constructor(
     private val gpu: Renderer?,
     /** The keyboard, pointer and touch state, with what the UI owns of it. Read every frame. */
@@ -70,6 +73,8 @@ class SceneHostServices private constructor(
      * own child of it and cancels that when it closes.
      */
     val coroutineScope: CoroutineScope? = null,
+    private val prewarmer: ((SceneNode, (Int, Int) -> Unit) -> ScenePrewarm)? = null,
+    private val assetPrewarmer: ((SceneAssetReferences, (Int, Int) -> Unit) -> ScenePrewarm)? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -100,21 +105,58 @@ class SceneHostServices private constructor(
     fun spawn(node: SceneNode): SpawnedNode =
         checkNotNull(spawner) { "This scene host can't spawn; its host passes a spawner with withSpawner" }(node)
 
+    /** Whether the host installed [prewarm] with [withPrewarmer], as `runProject` does. */
+    val canPrewarm: Boolean get() = prewarmer != null
+
+    /** Whether the host installed a prewarmer for batches of [SceneAssetReferences]. */
+    val canPrewarmAssets: Boolean get() = assetPrewarmer != null
+
+    /**
+     * Prepares the assets [node] and its children name before [spawn]. Call from a running system on
+     * the frame thread. [onProgress] runs on that thread as each asset settles. Keep the returned
+     * [ScenePrewarm] open until the spawn can share its assets, then close it when the hold is no
+     * longer needed. Throws when the host gave no prewarmer. See [canPrewarm].
+     */
+    fun prewarm(node: SceneNode, onProgress: (settled: Int, total: Int) -> Unit = { _, _ -> }): ScenePrewarm =
+        checkNotNull(prewarmer) { "This scene host can't prewarm nodes; its host passes a prewarmer with withPrewarmer" }(node, onProgress)
+
+    /**
+     * Prepares [references] under one [ScenePrewarm] hold. Combine the references of several prefabs
+     * with [SceneAssetReferences.plus]. Uses the same frame-thread and progress rules as node prewarming.
+     * Throws when the host gave no asset prewarmer. See [canPrewarmAssets].
+     */
+    fun prewarm(references: SceneAssetReferences, onProgress: (settled: Int, total: Int) -> Unit = { _, _ -> }): ScenePrewarm =
+        checkNotNull(assetPrewarmer) { "This scene host can't prewarm asset references; pass an asset prewarmer with withPrewarmer" }(
+            references,
+            onProgress,
+        )
+
+    /** These services, with [prewarm] preparing nodes through [prewarmer]. */
+    fun withPrewarmer(prewarmer: (SceneNode, (Int, Int) -> Unit) -> ScenePrewarm): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+
+    /** These services, with [prewarm] preparing nodes through [prewarmer] and batches through [assetPrewarmer]. */
+    fun withPrewarmer(
+        prewarmer: (SceneNode, (Int, Int) -> Unit) -> ScenePrewarm,
+        assetPrewarmer: (SceneAssetReferences, (Int, Int) -> Unit) -> ScenePrewarm,
+    ): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
     fun withAudio(audio: AudioPlayer): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
 
     /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
     fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
 
     /** These services, with [sceneSwitchStatus] reporting what the [sceneSwitch] is doing, as `runProject` does. */
     fun withSceneSwitchStatus(sceneSwitchStatus: SceneSwitchStatus): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
 
     /**
      * These services, with [fixedStep] reporting the fixed-step loop the host steps the systems in, as
@@ -122,7 +164,7 @@ class SceneHostServices private constructor(
      * from its own [com.awakekt.awake.core.host.FixedTimestepLoop] passes that loop.
      */
     fun withFixedStep(fixedStep: FixedStepReport): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
 
     /**
      * These services, with the scene's systems running their background work in children of [scope],
@@ -130,7 +172,7 @@ class SceneHostServices private constructor(
      * its session's scope, or another it cancels when the scene goes away.
      */
     fun withCoroutineScope(scope: CoroutineScope): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope, prewarmer, assetPrewarmer)
 
     /**
      * A child of [coroutineScope] for one system's background work, which the system cancels when it
