@@ -421,6 +421,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
 	public fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public fun getFrameRenderPasses ()I
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 	public fun getOutputHeight ()I

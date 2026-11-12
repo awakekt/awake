@@ -53,6 +53,7 @@ internal fun Renderer.recordCommandBuffer(
     recordDepthPrePass(commandBuffer, frameIndex, drawCalls, cascades, true)
     // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
     recordSceneDepthPass(commandBuffer, frameIndex, drawCalls, cameraDepthPass(viewProjection))
+    statsCounter.recordPass()
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
@@ -131,6 +132,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
     recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
     recordMaskPass(commandBuffer, frameIndex, passInput?.maskPasses.orEmpty(), environment)
+    statsCounter.recordPass()
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
@@ -208,6 +210,7 @@ private fun Renderer.recordUiOrPresentTransitionPass(
         } else {
             uiPipeline.renderPass
         }
+        statsCounter.recordPass()
         Vulkan.vkCmdBeginRenderPass(
             commandBuffer,
             VkRenderPassBeginInfo(
@@ -222,6 +225,7 @@ private fun Renderer.recordUiOrPresentTransitionPass(
         recordSharedPassFeatures(RenderPassSlot.Ui, context)
         Vulkan.vkCmdEndRenderPass(commandBuffer)
     } else {
+        statsCounter.recordPass()
         Vulkan.vkCmdBeginRenderPass(
             commandBuffer,
             VkRenderPassBeginInfo(
@@ -250,6 +254,7 @@ internal fun Renderer.recordSwapchainPostPasses(
     if (colorImage == null || colorImageView == null || framebuffer == null) return
     imagePassExecutor.beginFrame(frameIndex)
     val continuePass = imagePassExecutor.ensureSwapchainContinueRenderPass(swapchain.imageFormat)
+    statsCounter.recordPass()
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(

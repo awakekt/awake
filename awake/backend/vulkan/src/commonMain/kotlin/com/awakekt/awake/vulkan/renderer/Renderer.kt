@@ -200,6 +200,9 @@ class Renderer internal constructor(
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
 
+    override val frameRenderPasses: Int
+        get() = statsCounter.latestRenderPasses
+
     override val surfaceAspect: Float
         get() = swapchainManager.extent.let { extent ->
             if (extent.height > 0) extent.width.toFloat() / extent.height.toFloat() else 16f / 9f

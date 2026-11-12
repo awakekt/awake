@@ -38,6 +38,11 @@ class RenderStatsCounter {
     private var drawCalls = 0
     private var instances = 0
     private var triangles = 0L
+    private var renderPasses = 0
+
+    /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
+    var latestRenderPasses: Int = 0
+        private set
 
     /** The last frame [publish] closed, or null before the first one. */
     var latest: RenderFrameStats? = null
@@ -50,12 +55,19 @@ class RenderStatsCounter {
         if (triangleList) triangles += (elementCount / TRIANGLE_VERTICES).toLong() * instanceCount
     }
 
+    /** Counts one render pass begun. */
+    fun recordPass() {
+        renderPasses += 1
+    }
+
     /** Closes the frame being recorded and starts counting the next one. */
     fun publish(gpuTimeMs: Float? = null) {
         latest = RenderFrameStats(drawCalls, instances, triangles, gpuTimeMs)
         drawCalls = 0
         instances = 0
         triangles = 0L
+        latestRenderPasses = renderPasses
+        renderPasses = 0
     }
 
     private companion object {

@@ -223,6 +223,7 @@ internal class VulkanImagePassExecutor(
         if (!canExecute) {
             if (!parentTarget.isOffscreen && !hasMoreImagePasses) {
                 Vulkan.vkCmdEndRenderPass(commandBuffer)
+                stats.recordPass()
                 beginParentRenderPass(commandBuffer, parentTarget, parentTarget.finalRenderPass)
             }
             return
@@ -280,6 +281,7 @@ internal class VulkanImagePassExecutor(
                         ensureTransientLoadRenderPass(target.format)
                     }
                     val framebuffer = if (useClear) target.clearFramebuffer else target.loadFramebuffer
+                    stats.recordPass()
                     Vulkan.vkCmdBeginRenderPass(
                         commandBuffer,
                         VkRenderPassBeginInfo(
@@ -347,6 +349,7 @@ internal class VulkanImagePassExecutor(
                             )
                             parentInShaderReadOnly = false
                         }
+                        stats.recordPass()
                         beginParentRenderPass(commandBuffer, parentTarget, desiredRenderPass)
                         parentPassOpen = true
                         currentParentRenderPass = desiredRenderPass
@@ -381,6 +384,7 @@ internal class VulkanImagePassExecutor(
                     VkImageLayout2.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                 )
             }
+            stats.recordPass()
             beginParentRenderPass(commandBuffer, parentTarget, finalResumeRenderPass)
         } else {
             Vulkan.vkCmdSetViewport(

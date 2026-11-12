@@ -1921,10 +1921,12 @@ public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public static final field TRIANGLE_VERTICES I
 	public fun <init> ()V
 	public final fun getLatest ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun getLatestRenderPasses ()I
 	public final fun publish (Ljava/lang/Float;)V
 	public static synthetic fun publish$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;Ljava/lang/Float;ILjava/lang/Object;)V
 	public final fun recordDraw (IIZ)V
 	public static synthetic fun recordDraw$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;IIZILjava/lang/Object;)V
+	public final fun recordPass ()V
 }
 
 public final class com/awakekt/awake/render/renderer/RenderViewport {
@@ -1961,6 +1963,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public fun getFrameRenderPasses ()I
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
@@ -1998,6 +2001,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun getEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public static fun getFrameRenderPasses (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
