@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.44.0] - 2026-11-12
+
+### Added
+
+- Scene systems can prewarm a node or a batch of prefab assets through `SceneHostServices` before spawning.
+- The browser host reports the on-screen keyboard's inset from `visualViewport` and the iOS host from its keyboard frame notifications, so `imePadding()` and `safeDrawingPadding()` follow the keyboard there too. (#1495)
+- Compose: `Skin` supplies named image parts from one sheet, declared in Kotlin with typed `FrameKey`, `StatesKey` and `BarKey` keys and provided through `LocalSkin`. `Modifier.skinPart` draws a frame or the state frame for the current interaction, `Modifier.skinBar` draws a gauge fill, and `Skin.requireParts` names any missing part. Nothing draws until the sheet has decoded. (#1501)
+- Compose: `TouchStick` (fixed, floating and dynamic pad) and `TouchAim` (drag to aim) are on-screen thumb controls with the same outputs as the canvas Joystick and Aim, skinnable with `TouchLook` and `ImageFill`; `TouchStickState` and `TouchAimState` hold the live values. The dead zone, response, direction snap and aim maths is now shared in `TouchStickMath` (`awake:core:input`), which the canvas controls call too. (#1499)
+- Compose: `Modifier.imePadding()`, `safeDrawingPadding()` and `systemBarsPadding()` keep content clear of the on-screen keyboard and the system bars. `AppFrame.ime` carries the keyboard's inset, and the Android host reports it. (#1495)
+- **Net features gain the hooks a game otherwise writes for itself.** On the server, `GameFeature.beforeSnapshot()` runs each tick after every feature's `onTick` and before snapshots are built (`ServerHost` dispatches it through `Features.beforeSnapshot()`), `Features.featureOf(type)` returns an installed feature by its class, and the `gameFeature` builder now keeps every `onJoin` and `onLeave` handler, run in registration order, where a second call used to replace the first. On the client, `ClientNetFeature` adds `onEntityDisappear(context, entity)` and `onReset(context)`, with matching `clientNetFeature` builder hooks and `ClientNetFeatures` dispatch. Every new hook defaults to a no-op.
+- **A sprite sheet skins a widget in a few calls.** `gridCellFill`, `SpriteSheet.cellFill` and `SpriteSheet.clipFill` (`awake:compose:foundation`) turn a grid cell, or a named clip's frame, into an `ImageFill`, with `SliceInsets` for a nine-slice and `tiled` for repeating edges. `StateSheet` holds one frame per `SheetState` (Normal, Hovered, Pressed, Disabled, Selected, Focused) read from equal cells in a row or column with `StateSheet.fromGrid`, falling back to the nearest frame it has, and `buttonState(source, enabled, selected)` turns an `InteractionSource` into that state.
+
+### Changed
+
+- **Vulkan reads the frame block beside each draw's own (#1452).** A frame in flight has its own frame block, which a batch writes once; every material descriptor set binds it at `FRAME_UNIFORM_BINDING`, and a lit-shadow or textured PBR draw writes only its own small block (model, vertex animation, material, fade) where it wrote 180 or 196 floats. A batch's wireframe-overlay edges read a frame block of their own, and a draw whose single block starts with its MVP binds an identity one, so the shared camera-depth shader draws it as before.
+- **A moving camera re-uploads one uniform block, not one per static draw (#1452).** The lit-shadow and textured PBR shaders, with their instanced and skinned-instanced variants, read what the camera, the light and the shadow cascades decide from a frame block (`MaterialUniformLayouts.Frame`, at `FRAME_UNIFORM_BINDING` of the material group) that a pass writes once, and keep a small block of their own (`LitShadowDraw`, `PbrTexturedDraw`: model, vertex animation, material, fade). Clip position is `viewProjection * model * position` in the shader. On WebGPU a moving camera over 1,300 static draws no longer packs or uploads any draw's block. `MaterialUniformLayouts.LitShadow` and `PbrTextured` still size a material and name its draw plan. **Shader ABI:** a shader that replaces the engine's lit-shadow or textured shader, or casts through the shared depth shaders, declares the two blocks (`shadowUniforms()` does); see "Uniform blocks: the frame's and the draw's" in `docs/reference/render-hardware-interface.md`.
+- **Vulkan writes a static draw's uniform block once, not every frame (#1452).** A lit-shadow or textured PBR draw whose own block (model, vertex animation, material, fade) is packed from the same inputs as the last time its slot was written is neither packed nor copied again, per frame in flight, whatever the camera, the light and the cascades do. On lavapipe this cut planning 1,300 static draws from about 1.2 ms to about 0.75 ms a frame.
+
+### Fixed
+
+- Route Android hardware keyboard text to the focused field and show on-screen keyboard composition while typing.
+- **Release cuts never step back to an older pre-release channel.** `releaseCut` now ignores pre-release tags from older base versions (such as `v0.1.0-dev.12` or `v0.38.0-rc.4` once `v0.42.0` exists), orders a stable `vX.Y.Z` tag ahead of its own `-rc` tags, refuses a cut without `-Prelease.bump` when the resulting version would not advance past the newest release, and defaults Core's manual `Release` workflow channel to `stable`.
+
 ## [0.43.0] - 2026-11-09
 
 ### Added
