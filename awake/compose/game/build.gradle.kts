@@ -28,6 +28,12 @@ kotlin {
     }
 }
 
+tasks.named<Test>("desktopTest") {
+    // Same as :awake:ui:canvas: allocation probes count every byte, so escape analysis is off. With it on,
+    // C2 removes about half of what a frame allocates, which Android's runtime does not (#1169).
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Compose Game")
