@@ -107,6 +107,7 @@ class ComposeHost(
 
     // Nothing has been placed before the first frame, so there is no geometry to hit-test against.
     private var placedOnce = false
+    private var imeOwner: LayoutNode? = null
 
     // Reset per frame: "did the UI take this frame's wheel" is a per-frame answer.
     private var scrollConsumed = false
@@ -192,6 +193,7 @@ class ComposeHost(
     fun dispose() {
         composition.dispose()
         placedOnce = false
+        imeOwner = null
     }
 
     /**
@@ -247,11 +249,19 @@ class ComposeHost(
      * point of a caret is that typing goes where it is rather than where the mouse is.
      */
     private fun dispatchText(input: FrameInput) {
-        val links = focusOwner.focused?.textInputs ?: return
-        if (links.isEmpty()) return
+        val focused = focusOwner.focused
+        // The IME can finish an old composition after focus has already moved to another field.
+        input.imeCommit?.let { text ->
+            (imeOwner ?: focused)?.textInputs?.forEach { it.onImeCommit(text) }
+            imeOwner = null
+        }
+        input.imeComposition?.let { composition ->
+            val owner = imeOwner ?: focused?.takeIf { it.textInputs.isNotEmpty() }
+            imeOwner = owner
+            owner?.textInputs?.forEach { it.onImeComposition(composition) }
+        }
+        val links = focused?.textInputs ?: return
         for (i in links.indices) {
-            input.imeComposition?.let(links[i]::onImeComposition)
-            input.imeCommit?.let(links[i]::onImeCommit)
             if (input.typedText.isNotEmpty()) links[i].onTextTyped(input.typedText)
             for (command in input.editActions) links[i].onEditAction(command)
         }

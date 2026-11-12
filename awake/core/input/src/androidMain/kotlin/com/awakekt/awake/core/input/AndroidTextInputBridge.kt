@@ -58,14 +58,6 @@ class AwakeInputConnection(private val targetView: View, private val input: Inpu
         return true
     }
 
-    override fun closeConnection() {
-        if (composingText != null) {
-            composingText = null
-            input.setImeComposition(null)
-        }
-        super.closeConnection()
-    }
-
     override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {
         repeat(beforeLength) { input.pushEditAction(TextEditAction.Backspace) }
         return true

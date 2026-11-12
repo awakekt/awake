@@ -435,6 +435,29 @@ class TextFieldThroughFrameTest {
     }
 
     @Test
+    fun imeCommitStaysWithTheFieldThatStartedComposition() {
+        val first = TextFieldState()
+        val second = TextFieldState()
+        val host = ComposeHost()
+        val content: context(Composer) () -> Unit = {
+            Column {
+                BasicTextField(first, Modifier.size(100.dp, 32.dp))
+                BasicTextField(second, Modifier.size(100.dp, 32.dp))
+            }
+        }
+        host.frame(idle, content)
+        host.frame(idle.copy(pointerDown = true), content)
+        host.frame(idle.copy(imeComposition = ImeComposition("old")), content)
+        host.frame(idle.copy(pointerY = 45, pointerDown = true, imeComposition = ImeComposition("old")), content)
+        host.frame(idle.copy(pointerY = 45), content)
+        host.frame(idle.copy(pointerY = 45, imeCommit = "old", imeComposition = ImeComposition("new")), content)
+        host.frame(idle.copy(pointerY = 45, imeCommit = "new"), content)
+
+        assertEquals("old", first.text)
+        assertEquals("new", second.text)
+    }
+
+    @Test
     fun draggingSelectsTextAndPaintingIncludesTheSelectedRange() {
         val state = TextFieldState("hello")
         val (host, content) = hostWith(state)
