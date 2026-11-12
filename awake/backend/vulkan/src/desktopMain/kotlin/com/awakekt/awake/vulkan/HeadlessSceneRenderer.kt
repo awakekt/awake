@@ -6,9 +6,11 @@
 package com.awakekt.awake.vulkan
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.trailScenePipeline
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.shaders.toRequests
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
@@ -107,20 +109,6 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         fragmentEntryPoint = "fragmentMain",
         variant = PipelineVariant.AlphaBlended,
     )
-    // Trails: alpha blended as their fill, and the additive twin a glowing trail resolves to.
-    val (trailPipeline, additiveTrailPipeline) = listOf(PipelineVariant.AlphaBlended, PipelineVariant.AdditiveBlended).map { variant ->
-        RenderPipeline(
-            graphicsDevice,
-            swapchainManager,
-            sceneRenderPass,
-            descriptorSetLayout,
-            runBlocking { spirvPair(PackShaderSets.Trail) },
-            VertexFormat.PositionRgbaUv,
-            vertexEntryPoint = "vertexMain",
-            fragmentEntryPoint = "fragmentMain",
-            variant = variant,
-        )
-    }
     val texturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -356,6 +344,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             loadShaders = ::spirvPair,
         ),
     )
+    val trailPipelines = runBlocking { contentPipelines.register(listOf(trailScenePipeline()).toRequests(ShaderSet::vulkan)).values.single() }
     val attacher = ContentFeatureAttacher(
         VulkanContentFeatureGpu(graphicsDevice, transferContext, contentPipelines, depthPrePass, FRAMES_IN_FLIGHT, ::spirvPair),
     )
@@ -369,14 +358,15 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 VertexFormat.PositionNormalColorUv to texturedPipeline,
                 VertexFormat.PositionUv to atlasPipeline,
                 VertexFormat.PositionUvColor to distanceFieldPipeline,
-                VertexFormat.PositionRgbaUv to trailPipeline,
+                VertexFormat.PositionRgbaUv to trailPipelines.fill,
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
+            blendedRasterByFormat = mapOf(VertexFormat.PositionRgbaUv to trailPipelines.blendedRasterVariants),
             additiveByFormat = mapOf(
                 VertexFormat.PositionNormalColorUv to additiveTexturedPipeline,
-                VertexFormat.PositionRgbaUv to additiveTrailPipeline,
+                VertexFormat.PositionRgbaUv to requireNotNull(trailPipelines.additive),
             ),
             backCulledByFormat = mapOf(
                 VertexFormat.PositionNormalColor to backCulledScenePipeline,
@@ -408,8 +398,6 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             texturedPipeline.destroy()
             atlasPipeline.destroy()
             distanceFieldPipeline.destroy()
-            trailPipeline.destroy()
-            additiveTrailPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             backCulledTexturedPipeline.destroy()

@@ -13,13 +13,16 @@ import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.TrailExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.TrailUniformLayout
+import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
+import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
 
 /**
- * Draws [TrailRenderer]s in the scene pass: one transparent draw each, unlit, depth tested and not
- * written, from both faces, culled by the box around its visible pairs. The draws need the pipeline
+ * Draws [TrailRenderer]s in the scene pass: one transparent draw each, unlit, depth tested and
+ * culled by the box around its visible pairs. The draws need the pipeline
  * `trailScenePipeline()` declares (`awake:asset:shader-pack`) in the backend's render plan.
  *
  * Each trail gets one [DynamicMesh] the first time it is drawn, sized for its whole capacity, and
@@ -34,6 +37,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 class TrailBatch(private val renderer: Renderer) : AutoCloseable {
     private val meshes: GpuDynamicMeshes? = renderer.capability(GpuDynamicMeshes)
     private val materials = HashMap<TextureAsset, Material>()
+    private val namedMaterials = HashMap<String, Material>()
     private var untextured: Material? = null
     private val uploads = HashMap<TrailRenderer, Upload>()
 
@@ -62,6 +66,31 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
         return visible
     }
 
+    /**
+     * Collects a trail that names a texture. The resolver supplies its image on demand; until it is
+     * available the trail is skipped. The batch owns and caches the GPU material by name.
+     */
+    fun collect(
+        trail: TrailRenderer,
+        placement: Mat4,
+        frustum: List<Plane>,
+        out: MutableList<RenderDrawCommand>,
+        textureName: String,
+        resolveTexture: (String) -> GpuImageSource?,
+    ): Boolean {
+        val dynamicMeshes = meshes
+        // A present trail keeps its mesh while hidden or waiting for a reloaded texture.
+        uploads[trail]?.frame = frame
+        if (dynamicMeshes == null || !culling.isVisible(trail.strip, placement, frustum)) return false
+        val material = namedMaterials[textureName] ?: resolveTexture(textureName)?.let {
+            renderer.createImageMaterial(it, uniformFloatCount = TrailUniformLayout.total).also { material ->
+                namedMaterials[textureName] = material
+            }
+        }
+        if (material != null) emit(trail, uploadChanges(trail, dynamicMeshes), placement, out, material)
+        return material != null
+    }
+
     /** [trail]'s upload, created the first time it is seen, with the pairs changed since brought up to date. */
     private fun uploadChanges(trail: TrailRenderer, dynamicMeshes: GpuDynamicMeshes): Upload {
         val strip = trail.strip
@@ -81,7 +110,13 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
         return upload
     }
 
-    private fun emit(trail: TrailRenderer, upload: Upload, placement: Mat4, out: MutableList<RenderDrawCommand>) {
+    private fun emit(
+        trail: TrailRenderer,
+        upload: Upload,
+        placement: Mat4,
+        out: MutableList<RenderDrawCommand>,
+        material: Material = materialFor(trail.texture),
+    ) {
         upload.mesh.drawIndexCount = (trail.strip.visible - 1) * INDICES_PER_SEGMENT
         upload.model.set(placement)
         val tint = trail.tint
@@ -90,7 +125,9 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
         upload.tint[2] = tint.b
         upload.tint[3] = tint.a
         val draw = upload.draw
-        draw.material = materialFor(trail.texture)
+        draw.material = material
+        draw.depthWrite = trail.depthWrite
+        draw.cullMode = if (trail.doubleSided) CullMode.None else CullMode.Back
         draw.additive = trail.blend == TrailBlend.Additive
         out.add(draw)
     }
@@ -122,15 +159,33 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
         frame++
     }
 
+    /** Releases a named material so the next draw will resolve and upload the texture again. */
+    fun forgetTexture(name: String) {
+        val material = namedMaterials.remove(name) ?: return
+        renderer.waitIdle()
+        material.destroy()
+    }
+
+    /** Releases all named materials. */
+    fun forgetTextures() {
+        if (namedMaterials.isEmpty()) return
+        renderer.waitIdle()
+        namedMaterials.values.forEach(Material::destroy)
+        namedMaterials.clear()
+    }
+
     /** Frees every trail's buffer and every material. Closing twice is harmless. */
     override fun close() {
-        if (uploads.isEmpty() && materials.isEmpty() && untextured == null) return
+        val hasMaterials = materials.isNotEmpty() || namedMaterials.isNotEmpty() || untextured != null
+        if (uploads.isEmpty() && !hasMaterials) return
         renderer.waitIdle()
         uploads.values.forEach { it.mesh.destroy() }
         uploads.clear()
         uploaded.clear()
         materials.values.forEach(Material::destroy)
         materials.clear()
+        namedMaterials.values.forEach(Material::destroy)
+        namedMaterials.clear()
         untextured?.destroy()
         untextured = null
     }

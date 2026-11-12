@@ -17,7 +17,7 @@ import com.awakekt.awake.render.pipeline.CullMode
  * companion at all for as long as Vulkan did.
  *
  * A failure is wrapped per request rather than once around the loop: a missing shader resource
- * otherwise surfaces as a bare file path with no hint which of the (up to seven) pipelines being
+ * otherwise surfaces as a bare file path with no hint which of the pipelines being
  * built was the one that failed.
  */
 // Broad by design: a backend's pipeline creation can fail with anything from a missing shader
@@ -67,6 +67,13 @@ suspend fun <P> buildPipelineTable(
                         factory.create(request.key, spec.copy(wireframe = true, variant = PipelineVariant.EdgeOverlay))
                     } else {
                         null
+                    },
+                    blendedRasterVariants = if (request.buildBlendedRasterVariants) {
+                        BlendedRasterVariant.entries.associateWith {
+                            factory.create(request.key, spec.copy(variant = it.variant, cullMode = it.cullMode))
+                        }
+                    } else {
+                        emptyMap()
                     },
                 ),
             )

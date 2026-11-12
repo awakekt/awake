@@ -229,10 +229,10 @@ open class WebGpuEngine(
         // refactor and `Renderer.pipelineFor` still relies on it. [includePrimary] is what keeps
         // an additional format that happens to equal vertexFormat from being dropped along with
         // it.
-        fun byFormat(
+        fun <P> byFormat(
             includePrimary: Boolean,
-            select: (PipelineSet<RenderPipeline>) -> RenderPipeline?,
-        ) = buildMap {
+            select: (PipelineSet<RenderPipeline>) -> P?,
+        ): Map<VertexFormat, P> = buildMap {
             builtPipelines.forEach { (key, set) ->
                 val format = when {
                     key is PipelineKey.Format -> key.vertexFormat
@@ -251,6 +251,7 @@ open class WebGpuEngine(
             backCulledByFormat = byFormat(includePrimary = true) { it.backCulled },
             transparentByFormat = byFormat(includePrimary = true) { it.transparent },
             additiveByFormat = byFormat(includePrimary = true) { it.additive },
+            blendedRasterByFormat = byFormat(includePrimary = true) { it.blendedRasterVariants.takeUnless { variants -> variants.isEmpty() } },
             instancedByFormat = buildMap {
                 builtPipelines[PipelineKey.Instanced]?.let { put(vertexFormat, it.fill) }
                 builtPipelines.forEach { (key, built) ->

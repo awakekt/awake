@@ -251,6 +251,7 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun getAlphaMode ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
 	public final fun getCastsShadows ()Z
 	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
+	public final fun getDepthWrite ()Z
 	public final fun getExemptFromCoverings ()Z
 	public final fun getExtraUniformFloats ()[F
 	public final fun getFadeOpacity ()F
@@ -279,6 +280,7 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun setAlphaMode (Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
 	public final fun setCastsShadows (Z)V
 	public final fun setCullMode (Lcom/awakekt/awake/render/pipeline/CullMode;)V
+	public final fun setDepthWrite (Z)V
 	public final fun setExemptFromCoverings (Z)V
 	public final fun setExtraUniformFloats ([F)V
 	public final fun setFadeOpacity (F)V
@@ -1055,6 +1057,18 @@ public final class com/awakekt/awake/render/pipeline/BindingSemantic$ShadowDepth
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/pipeline/BlendedRasterVariant : java/lang/Enum {
+	public static final field AdditiveBack Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static final field AdditiveDepth Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static final field AdditiveDepthBack Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static final field AlphaBack Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static final field AlphaDepth Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static final field AlphaDepthBack Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+	public static fun values ()[Lcom/awakekt/awake/render/pipeline/BlendedRasterVariant;
+}
+
 public final class com/awakekt/awake/render/pipeline/BuildPipelineTableKt {
 	public static final fun buildPipelineTable (Ljava/util/List;Lcom/awakekt/awake/render/pipeline/PipelineFactory;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -1314,8 +1328,10 @@ public final class com/awakekt/awake/render/pipeline/PipelineRegistry {
 }
 
 public final class com/awakekt/awake/render/pipeline/PipelineRequest {
-	public fun <init> (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZ)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/render/pipeline/PipelineKey;
 	public final fun component2 ()Lcom/awakekt/awake/render/pipeline/PipelineSpec;
 	public final fun component3 ()Z
@@ -1323,11 +1339,15 @@ public final class com/awakekt/awake/render/pipeline/PipelineRequest {
 	public final fun component5 ()Z
 	public final fun component6 ()Z
 	public final fun component7 ()Z
-	public final fun copy (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZ)Lcom/awakekt/awake/render/pipeline/PipelineRequest;
+	public final fun component8 ()Z
+	public final synthetic fun copy (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZ)Lcom/awakekt/awake/render/pipeline/PipelineRequest;
+	public final fun copy (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZZ)Lcom/awakekt/awake/render/pipeline/PipelineRequest;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/PipelineRequest;Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineRequest;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/PipelineRequest;Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;ZZZZZZILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineRequest;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBuildAdditive ()Z
 	public final fun getBuildBackCulled ()Z
+	public final fun getBuildBlendedRasterVariants ()Z
 	public final fun getBuildEdges ()Z
 	public final fun getBuildTransparent ()Z
 	public final fun getBuildWireframe ()Z
@@ -1338,20 +1358,26 @@ public final class com/awakekt/awake/render/pipeline/PipelineRequest {
 }
 
 public final class com/awakekt/awake/render/pipeline/PipelineSet {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
 	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component3 ()Ljava/lang/Object;
 	public final fun component4 ()Ljava/lang/Object;
 	public final fun component5 ()Ljava/lang/Object;
 	public final fun component6 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineSet;
+	public final fun component7 ()Ljava/util/Map;
+	public final synthetic fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineSet;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;)Lcom/awakekt/awake/render/pipeline/PipelineSet;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/PipelineSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineSet;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/PipelineSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/PipelineSet;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Ljava/lang/Object;
 	public final fun getAll ()Ljava/util/List;
 	public final fun getBackCulled ()Ljava/lang/Object;
+	public final fun getBlendedRasterVariants ()Ljava/util/Map;
 	public final fun getEdges ()Ljava/lang/Object;
 	public final fun getFill ()Ljava/lang/Object;
 	public final fun getTransparent ()Ljava/lang/Object;
@@ -1401,11 +1427,14 @@ public final class com/awakekt/awake/render/pipeline/PipelineSpec {
 }
 
 public final class com/awakekt/awake/render/pipeline/PipelineTable {
-	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
 	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAdditiveByFormat ()Ljava/util/Map;
 	public final fun getAdditiveParticlePipelines ()Ljava/util/Map;
 	public final fun getBackCulledByFormat ()Ljava/util/Map;
+	public final fun getBlendedRasterByFormat ()Ljava/util/Map;
 	public final fun getByFormat ()Ljava/util/Map;
 	public final fun getEdgesByFormat ()Ljava/util/Map;
 	public final fun getInstancedBackCulledByFormat ()Ljava/util/Map;
@@ -1421,7 +1450,9 @@ public final class com/awakekt/awake/render/pipeline/PipelineTable {
 public final class com/awakekt/awake/render/pipeline/PipelineTableKt {
 	public static final fun edges (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;)Ljava/lang/Object;
 	public static final fun resolve (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;ZZZ)Ljava/lang/Object;
+	public static final fun resolve (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;ZZZZ)Ljava/lang/Object;
 	public static synthetic fun resolve$default (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;ZZZILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun resolve$default (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;ZZZZILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public abstract interface class com/awakekt/awake/render/pipeline/PipelineVariant {
@@ -1436,6 +1467,20 @@ public abstract interface class com/awakekt/awake/render/pipeline/PipelineVarian
 
 public final class com/awakekt/awake/render/pipeline/PipelineVariant$AdditiveBlended : com/awakekt/awake/render/pipeline/PipelineVariant {
 	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$AdditiveBlended;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAdditive ()Z
+	public fun getBlendEnabled ()Z
+	public fun getDepthTestEnabled ()Z
+	public fun getDepthWriteEnabled ()Z
+	public fun getInstanceAlpha ()Z
+	public fun getInstanceFrame ()Z
+	public fun getInstanced ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/pipeline/PipelineVariant$AdditiveBlendedDepthWrite : com/awakekt/awake/render/pipeline/PipelineVariant {
+	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$AdditiveBlendedDepthWrite;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAdditive ()Z
 	public fun getBlendEnabled ()Z
@@ -1464,6 +1509,20 @@ public final class com/awakekt/awake/render/pipeline/PipelineVariant$AdditiveBle
 
 public final class com/awakekt/awake/render/pipeline/PipelineVariant$AlphaBlended : com/awakekt/awake/render/pipeline/PipelineVariant {
 	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$AlphaBlended;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAdditive ()Z
+	public fun getBlendEnabled ()Z
+	public fun getDepthTestEnabled ()Z
+	public fun getDepthWriteEnabled ()Z
+	public fun getInstanceAlpha ()Z
+	public fun getInstanceFrame ()Z
+	public fun getInstanced ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/pipeline/PipelineVariant$AlphaBlendedDepthWrite : com/awakekt/awake/render/pipeline/PipelineVariant {
+	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$AlphaBlendedDepthWrite;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAdditive ()Z
 	public fun getBlendEnabled ()Z

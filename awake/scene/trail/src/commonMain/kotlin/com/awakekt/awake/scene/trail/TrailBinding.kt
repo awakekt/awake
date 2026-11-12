@@ -22,7 +22,13 @@ object TrailBinding : SceneComponentBinding<TrailRenderer, SceneTrailRenderer> {
 
     override fun attachTyped(world: World, entity: Entity, component: SceneTrailRenderer, context: SceneResolutionContext) {
         world.add(entity, component.toTrailRenderer())
+        if (component.texture != null) {
+            world.add(entity, TrailTextureReference(component.texture))
+        } else {
+            world.remove<TrailTextureReference>(entity)
+        }
     }
 
-    override fun export(world: World, entity: Entity, component: TrailRenderer): SceneTrailRenderer = component.toScene()
+    override fun export(world: World, entity: Entity, component: TrailRenderer): SceneTrailRenderer =
+        component.toScene(world.get<TrailTextureReference>(entity))
 }

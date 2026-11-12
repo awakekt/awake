@@ -103,6 +103,9 @@ data class GpuDrawRequest(
      */
     var fadeOpacity: Float = 1f
 
+    /** With [transparent], requests a blended pipeline that also writes depth. [set] clears it. */
+    var depthWrite: Boolean = false
+
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
      * [model] and [vertexAnimation] have no default: `Mat4()` and `Vec3f.ZERO` each build a new
@@ -156,6 +159,7 @@ data class GpuDrawRequest(
         this.castsShadows = castsShadows
         this.exemptFromCoverings = exemptFromCoverings
         this.fadeOpacity = 1f
+        this.depthWrite = false
         return this
     }
 

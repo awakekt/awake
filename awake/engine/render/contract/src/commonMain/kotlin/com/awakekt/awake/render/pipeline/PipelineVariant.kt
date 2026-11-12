@@ -111,6 +111,16 @@ sealed interface PipelineVariant {
         override val depthTestEnabled = true
     }
 
+    /** Alpha blending with depth testing and writing enabled. */
+    data object AlphaBlendedDepthWrite : PipelineVariant by AlphaBlended {
+        override val depthWriteEnabled = true
+    }
+
+    /** Additive blending with depth testing and writing enabled. */
+    data object AdditiveBlendedDepthWrite : PipelineVariant by AdditiveBlended {
+        override val depthWriteEnabled = true
+    }
+
     /** Billboard particles -- instanced + per-instance alpha + per-instance sprite frame +
      * straight-alpha blend + no depth write (order-independent draws don't self-occlude). See
      * `particle.wgsl`. */

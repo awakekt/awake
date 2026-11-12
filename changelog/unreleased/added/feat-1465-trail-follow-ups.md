@@ -1,0 +1,1 @@
+- Trails can write depth while blending and cull back faces on Vulkan and WebGPU. Scene documents can name a texture for a trail.

@@ -1,17 +1,27 @@
 public final class com/awakekt/awake/scene/trail/SceneTrailRenderer : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/trail/SceneTrailRenderer$Companion;
 	public fun <init> ()V
-	public fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;)V
 	public synthetic fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ZZLjava/lang/String;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ZZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()Lcom/awakekt/awake/trail/TrailBlend;
 	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
-	public final fun copy (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/String;
+	public final synthetic fun copy (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public final fun copy (ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ZZLjava/lang/String;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ILjava/lang/Object;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;ILcom/awakekt/awake/trail/TrailBlend;Lcom/awakekt/awake/scene/document/SceneColor;ZZLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/trail/SceneTrailRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getBlend ()Lcom/awakekt/awake/trail/TrailBlend;
 	public final fun getCapacity ()I
+	public final fun getDepthWrite ()Z
+	public final fun getDoubleSided ()Z
+	public final fun getTexture ()Ljava/lang/String;
 	public final fun getTint ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -51,8 +61,11 @@ public final class com/awakekt/awake/scene/trail/TrailBinding : com/awakekt/awak
 
 public final class com/awakekt/awake/scene/trail/TrailRenderFeature : com/awakekt/awake/scene/rendering/RenderFeature3D, java/lang/AutoCloseable {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function1;)V
 	public fun close ()V
 	public fun collect (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;)Lcom/awakekt/awake/scene/rendering/RenderContribution;
+	public final fun forgetTexture (Ljava/lang/String;)V
+	public final fun forgetTextures ()V
 }
 
 public final class com/awakekt/awake/scene/trail/TrailSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {

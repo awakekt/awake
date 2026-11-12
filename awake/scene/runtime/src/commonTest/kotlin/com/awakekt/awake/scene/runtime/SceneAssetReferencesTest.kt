@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.document.ScenePrefabLink
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.scene2d.SceneParticleEmitter2D
 import com.awakekt.awake.scene.scene2d.SceneSprite
+import com.awakekt.awake.scene.trail.SceneTrailRenderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -24,7 +25,7 @@ class SceneAssetReferencesTest {
         val references = HARBOR.assetReferences()
 
         assertEquals(setOf(SceneRenderableKey("cube", "lit"), SceneRenderableKey("models/crate.glb", "lit")), references.renderables)
-        assertEquals(setOf("sprites/flag.png", "sprites/spark.png"), references.textures)
+        assertEquals(setOf("sprites/flag.png", "sprites/spark.png", "textures/ribbon.png"), references.textures)
         assertEquals(setOf("audio/bell.wav"), references.audioClips)
         assertEquals(emptySet(), references.prefabLinks)
     }
@@ -61,7 +62,13 @@ class SceneAssetReferencesTest {
             name = "Harbor Town",
             components = listOf(SceneMeshRenderer(mesh = "cube", material = "lit"), SceneAudioSource(clip = "audio/bell.wav")),
             children = listOf(
-                SceneNode(name = "Crate", components = listOf(SceneMeshRenderer(mesh = "models/crate.glb", material = "lit"))),
+                SceneNode(
+                    name = "Crate",
+                    components = listOf(
+                        SceneMeshRenderer(mesh = "models/crate.glb", material = "lit"),
+                        SceneTrailRenderer(texture = "textures/ribbon.png"),
+                    ),
+                ),
                 SceneNode(
                     name = "Flag",
                     components = listOf(SceneSprite(texture = "sprites/flag.png"), SceneParticleEmitter2D(texture = "sprites/spark.png")),

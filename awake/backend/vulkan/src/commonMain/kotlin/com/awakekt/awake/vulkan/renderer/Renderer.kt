@@ -299,7 +299,8 @@ class Renderer internal constructor(
         cullMode: CullMode = CullMode.None,
         transparent: Boolean = false,
         additive: Boolean = false,
-    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive)
+        depthWrite: Boolean = false,
+    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive, depthWrite)
 
     internal val device get() = graphicsDevice.device
     internal val physicalDevice get() = graphicsDevice.physicalDevice
