@@ -21,6 +21,10 @@ import kotlin.test.assertTrue
  * texture's top) above green. Rolled a quarter about +Z, the band is vertical and red lies toward the
  * world's -X, the entity's +Y. A [ParticleFacing.Flat] emitter on the unturned entity lays its sprites
  * edge on to the camera and draws nothing, so the band is the facing's doing.
+ *
+ * Measured on lavapipe at 128 px, identical on both backends: each band holds 1472 sprite pixels and
+ * reaches 1.42 world units along its length and 0.23 across it; red's centre is 0.125 above green's
+ * (unturned) or 0.125 toward -X of it (rolled); the flat emitter draws 0 pixels.
  */
 class ParticleUprightParityTest {
     @Test
@@ -101,8 +105,8 @@ class ParticleUprightParityTest {
         /** A few sprites' worth: one 0.5-unit sprite covers about 256 pixels at 128 px. */
         const val MIN_BAND = 1000
 
-        /** An edge-on quad covers no pixels; a few allow for rasterisation at its rim. */
-        const val MAX_EDGE_ON = 16
+        /** An exactly edge-on quad has no area, so it covers no pixels. */
+        const val MAX_EDGE_ON = 0
         const val TONE_MIN = 120
     }
 }
