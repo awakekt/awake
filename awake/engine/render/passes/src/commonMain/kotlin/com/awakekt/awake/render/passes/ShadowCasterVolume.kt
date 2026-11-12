@@ -101,39 +101,22 @@ class ShadowCasterVolume : BoundedVolume {
         pointShadowCount += 1
     }
 
-    private var revisionCounter = 0
-    private var snapshotPlanes = FloatArray(0)
-    private var snapshotBoxes = FloatArray(0)
-    private var snapshotCascades = -1
-    private var snapshotPoints = -1
+    private val revisionTracker = VolumeRevision()
 
     /**
      * Counts the times the volume's content differs from when this was last read, so a consumer
-     * can keep a per-caster verdict for as long as it holds. Compares what the volume covers, not
-     * how it was written: a volume rebuilt every frame to the same cascades keeps its revision.
+     * can keep a per-caster verdict for as long as it holds. A volume rebuilt every frame to the
+     * same cascades keeps its revision.
      */
     val revision: Int
-        get() {
-            val planeFloats = cascadeCount * CASTING_PLANE_FLOATS
-            val boxFloats = pointShadowCount * BOX_FLOATS
-            if (cascadeCount != snapshotCascades || pointShadowCount != snapshotPoints ||
-                !sameRange(cascadePlanes, snapshotPlanes, planeFloats) || !sameRange(pointBoxes, snapshotBoxes, boxFloats)
-            ) {
-                snapshotCascades = cascadeCount
-                snapshotPoints = pointShadowCount
-                snapshotPlanes = cascadePlanes.copyInto(snapshotPlanes.sizedFor(planeFloats), endIndex = planeFloats)
-                snapshotBoxes = pointBoxes.copyInto(snapshotBoxes.sizedFor(boxFloats), endIndex = boxFloats)
-                revisionCounter++
-            }
-            return revisionCounter
-        }
-
-    private fun sameRange(live: FloatArray, snapshot: FloatArray, count: Int): Boolean {
-        for (i in 0 until count) if (live[i] != snapshot[i]) return false
-        return true
-    }
-
-    private fun FloatArray.sizedFor(count: Int): FloatArray = if (size >= count) this else FloatArray(count)
+        get() = revisionTracker.read(
+            cascadeCount,
+            cascadePlanes,
+            cascadeCount * CASTING_PLANE_FLOATS,
+            pointShadowCount,
+            pointBoxes,
+            pointShadowCount * BOX_FLOATS,
+        )
 
     /** Whether a caster with world bounds [box] can write a texel of any shadow map. */
     override fun admits(box: Aabb): Boolean = admits(box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)
