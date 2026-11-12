@@ -17,6 +17,8 @@ import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
 import com.awakekt.awake.asset.shaderdsl.length
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
+import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
@@ -31,6 +33,7 @@ import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
+import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
@@ -124,7 +127,12 @@ private fun particle(): AslShaderDefinition = shader("particle") {
         out.position set (camera * vec4(worldPos, 1f.lit))
         val frameCount = let("frameCount", frameInfo.x)
         // Horizontal sprite strip: this instance's own frame picks a 1/frameCount-wide slice.
-        uv set vec2((inUv.x + inFrame) / frameCount, inUv.y)
+        val spriteUv = variable("spriteUv", inUv)
+        // Column 2's z retains the sign of the size. Mirror within the selected frame.
+        iff(column(model, 2).z lt 0f.lit) {
+            assign(spriteUv, vec2(1f.lit - inUv.x, 1f.lit - inUv.y))
+        }
+        uv set vec2((spriteUv.x + inFrame) / frameCount, spriteUv.y)
         color set inColor
     }
 

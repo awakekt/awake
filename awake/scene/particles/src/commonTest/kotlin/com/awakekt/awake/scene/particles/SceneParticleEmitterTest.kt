@@ -53,7 +53,7 @@ class SceneParticleEmitterTest {
     }
 
     private val sprite = TextureAsset(ByteArray(4) { -1 }, width = 1, height = 1)
-    private val dust = SceneParticleEmitter(texture = "dust.png", endScale = 0.5f, radialSpeed = 3f, additive = true)
+    private val dust = SceneParticleEmitter(texture = "dust.png", endScale = -0.5f, radialSpeed = 3f, additive = true)
 
     @Test
     fun anEmitterSpawnsAtAndFollowsItsNodeOnceItsSpriteIsLoaded() {
@@ -65,7 +65,7 @@ class SceneParticleEmitterTest {
         val emitter = requireNotNull(world.get<ParticleEmitter>(node))
         assertEquals(Vec3f(1f, 2f, 3f), emitter.origin)
         assertEquals(node, emitter.dynamics.followEntity)
-        assertEquals(0.5f, emitter.visual.endScale)
+        assertEquals(-0.5f, emitter.visual.endScale)
         assertEquals(true, emitter.visual.additive)
         assertEquals(3f, emitter.motion.radialSpeed)
     }
@@ -125,8 +125,13 @@ class SceneParticleEmitterTest {
 
         assertEquals(dust, ParticleEmitterBinding.export(world, node, world.get<ParticleEmitterSource>(node)!!))
         assertEquals(
-            listOf("particle_emitter.lifetime must be greater than 0", "particle_emitter.scale must be greater than 0"),
+            listOf("particle_emitter.lifetime must be greater than 0", "particle_emitter.scale must be finite and greater than 0"),
             dust.copy(lifetime = 0f, scale = 0f).validate("fx").map { it.message },
+        )
+        assertEquals(emptyList(), dust.validate("fx"))
+        assertEquals(
+            listOf("particle_emitter.endScale must be finite"),
+            dust.copy(endScale = Float.NEGATIVE_INFINITY).validate("fx").map { it.message },
         )
     }
 

@@ -40,8 +40,9 @@ import kotlin.random.Random
  * is momentarily stationary) draws the exact same plain quad this flag's `false` default always
  * has.
  *
- * [endScale] is a particle's size at death, grown or shrunk linearly from the emitter's `scale`
- * over its life; `null` (default) keeps `scale`. [additive] adds each particle's colour to what is
+ * [endScale] is a particle's signed size at death, interpolated linearly from the emitter's `scale`.
+ * A negative size mirrors the sprite on both axes. A `null` endpoint keeps `scale`.
+ * [additive] adds each particle's colour to what is
  * behind it instead of blending over it, for glows and sparks; it needs the plan's particle
  * pipeline built with `buildAdditive`, and draws blended without it. [facing] turns each quad to the
  * camera (the default) or lays it flat; see [ParticleFacing]. [alphaCurve] shapes a particle's

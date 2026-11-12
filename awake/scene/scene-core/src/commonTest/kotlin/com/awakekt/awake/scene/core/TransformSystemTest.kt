@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.StaticTransform
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
+import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -41,6 +42,41 @@ class TransformSystemTest {
     }
 
     @Test
+    fun worldRotationKeepsItsAxesWhileFollowingTheParent() {
+        val world = World()
+        val parent = world.create()
+        val child = world.create()
+        val parentTransform = Transform(position = Vec3f(3f, 4f, 0f), scale = Vec3f(2f, 3f, 4f))
+        val quarterTurn = (PI / 2).toFloat()
+        val childTransform = Transform(
+            position = Vec3f(1f, 0f, 0f),
+            rotation = Vec3f(quarterTurn, 0f, 0f),
+            parent = parent,
+            inheritRotation = false,
+        )
+        world.add(parent, parentTransform)
+        world.add(child, childTransform)
+        val system = TransformSystem()
+
+        system.update(world, 0f)
+        assertEquals(5f, childTransform.worldMatrix.m03, 1e-5f)
+        assertEquals(4f, childTransform.worldMatrix.m13, 1e-5f)
+
+        parentTransform.rotation.z = quarterTurn
+        system.update(world, 0f)
+        assertEquals(3f, childTransform.worldMatrix.m03, 1e-5f)
+        assertEquals(6f, childTransform.worldMatrix.m13, 1e-5f)
+        assertEquals(2f, childTransform.worldMatrix.m00, 1e-5f)
+        assertEquals(0f, childTransform.worldMatrix.m10, 1e-5f)
+        assertEquals(3f, childTransform.worldMatrix.m21, 1e-5f)
+
+        childTransform.inheritRotation = true
+        system.update(world, 0f)
+        assertEquals(0f, childTransform.worldMatrix.m00, 1e-5f)
+        assertEquals(2f, childTransform.worldMatrix.m10, 1e-5f)
+    }
+
+    @Test
     fun transformSystemThrowsOnCyclicParenting() {
         val world = World()
         val a = world.create()
@@ -66,6 +102,7 @@ class TransformSystemTest {
         first.rotation.y = 2f
         first.scale.z = 3f
         first.parent = parent
+        first.inheritRotation = false
         first.worldMatrix.m03 = 9f
 
         val removed = world.remove<Transform>(firstEntity)
@@ -87,6 +124,7 @@ class TransformSystemTest {
         assertEquals(1f, reused.scale.y)
         assertEquals(1f, reused.scale.z)
         assertEquals(null, reused.parent)
+        assertEquals(true, reused.inheritRotation)
         assertEquals(1f, reused.worldMatrix.m00)
         assertEquals(1f, reused.worldMatrix.m11)
         assertEquals(1f, reused.worldMatrix.m22)

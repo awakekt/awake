@@ -268,7 +268,6 @@ class RangeAnnotationsAreEnforcedTest {
             "particle_emitter.lifetime",
             "particle_emitter.startAlpha",
             "particle_emitter.scale",
-            "particle_emitter.endScale",
             "particle_emitter.spawnRadius",
             "particle_emitter.frameCount",
             "particle_emitter.frameRate",

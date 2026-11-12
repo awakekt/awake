@@ -99,6 +99,7 @@ fun SceneTransform.toComponent(parent: Entity?): Transform = Transform(
     rotation = rotation.toVec3(),
     scale = scale.toVec3(),
     parent = parent,
+    inheritRotation = inheritRotation,
 )
 
 /** Converts a [SceneVec3] into a math [Vec3f]. */

@@ -14,10 +14,13 @@ import com.awakekt.awake.ecs.Poolable
  * Core 3D transformation component defining position, Euler rotation, scale, and hierarchy.
  *
  * @property position Local position vector.
- * @property rotation Local Euler rotation angles in radians.
+ * @property rotation Euler rotation angles in radians, in world axes when [inheritRotation] is false.
  * @property scale Local scaling factor vector.
  * @property parent Optional parent [Entity] in the scene hierarchy.
  * @property worldMatrix Computed world transformation matrix cached by [TransformSystem].
+ * @property inheritRotation Whether the parent turns this transform's axes. Position still
+ * follows the full parent transform. When false, the lengths of the parent's world basis
+ * vectors scale this transform's authored axes.
  */
 data class Transform(
     var position: Vec3f = Vec3f(0f, 0f, 0f),
@@ -25,7 +28,26 @@ data class Transform(
     var scale: Vec3f = Vec3f(1f, 1f, 1f),
     var parent: Entity? = null,
     var worldMatrix: Mat4 = Mat4(),
+    var inheritRotation: Boolean = true,
 ) : Poolable {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        position: Vec3f = Vec3f(0f, 0f, 0f),
+        rotation: Vec3f = Vec3f(0f, 0f, 0f),
+        scale: Vec3f = Vec3f(1f, 1f, 1f),
+        parent: Entity? = null,
+        worldMatrix: Mat4 = Mat4(),
+    ) : this(position, rotation, scale, parent, worldMatrix, true)
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        position: Vec3f = this.position,
+        rotation: Vec3f = this.rotation,
+        scale: Vec3f = this.scale,
+        parent: Entity? = this.parent,
+        worldMatrix: Mat4 = this.worldMatrix,
+    ): Transform = copy(position, rotation, scale, parent, worldMatrix, inheritRotation)
+
     /**
      * How many times [TransformSystem] has rebuilt [worldMatrix]. Unchanged means the matrix is too,
      * so a consumer can key a cache on it.
@@ -71,6 +93,7 @@ data class Transform(
         scale.y = 1f
         scale.z = 1f
         parent = null
+        inheritRotation = true
         worldMatrix.identity()
         rebuildRequested = true
     }

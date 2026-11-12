@@ -34,7 +34,8 @@ import kotlinx.serialization.Serializable
  * @property startAlpha Opacity at birth, 0 to 1. A particle fades from it to 0 over its [lifetime],
  * or as [alphaCurve] says.
  * @property scale Size at birth. Above 0.
- * @property endScale Size at death, grown or shrunk linearly from [scale]. Left out, it stays [scale].
+ * @property endScale Signed size at death, interpolated linearly from [scale]. Negative values
+ * shrink the sprite through zero and grow it mirrored on both axes. Left out, it stays [scale].
  * @property velocity The starting velocity, in world units per second.
  * @property velocityJitter Random per-axis variation added to [velocity]. Ignored with
  * [coneHalfAngleDegrees].
@@ -102,7 +103,7 @@ data class SceneParticleEmitter(
     @PropertyRange(min = 0.0, exclusiveMin = true) val lifetime: Float = 1f,
     @PropertyRange(min = 0.0, max = 1.0) val startAlpha: Float = 1f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val scale: Float = 0.2f,
-    @PropertyRange(min = 0.0) val endScale: Float? = null,
+    val endScale: Float? = null,
     val velocity: SceneVec3 = SceneVec3(0f, 1f, 0f),
     val velocityJitter: Float = 0f,
     val coneHalfAngleDegrees: Float? = null,
@@ -388,8 +389,8 @@ data class SceneParticleEmitter(
         if (spawnRate < 0f) add("spawnRate must not be negative")
         if (lifetime <= 0f) add("lifetime must be greater than 0")
         if (startAlpha !in 0f..1f) add("startAlpha must be within 0..1")
-        if (scale <= 0f) add("scale must be greater than 0")
-        if (endScale != null && endScale < 0f) add("endScale must not be negative")
+        if (!(scale > 0f && scale.isFinite())) add("scale must be finite and greater than 0")
+        if (endScale != null && !endScale.isFinite()) add("endScale must be finite")
         if (spawnRadius < 0f) add("spawnRadius must not be negative")
         if (frameCount < 1) add("frameCount must be at least 1")
         if (frameRate < 0f) add("frameRate must not be negative")

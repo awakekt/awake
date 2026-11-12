@@ -11,15 +11,33 @@ import kotlinx.serialization.Serializable
  * Serializable 3D local transform spatial descriptor.
  *
  * @property position Local translation vector.
- * @property rotation Local Euler angles in radians, applied X, then Y, then Z (`Mat4.setEulerTRS`).
+ * @property rotation Euler angles in radians, applied X, then Y, then Z (`Mat4.setEulerTRS`).
+ * The angles are in world axes when [inheritRotation] is false.
  * @property scale Local scaling vector.
+ * @property inheritRotation Whether the parent's rotation turns the node's axes. The parent
+ * still transforms the node's position and contributes the lengths of its world basis vectors to scale.
  */
 @Serializable
 data class SceneTransform(
     val position: SceneVec3 = SceneVec3(),
     val rotation: SceneVec3 = SceneVec3(),
     val scale: SceneVec3 = SceneVec3(1f, 1f, 1f),
-)
+    val inheritRotation: Boolean = true,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        position: SceneVec3 = SceneVec3(),
+        rotation: SceneVec3 = SceneVec3(),
+        scale: SceneVec3 = SceneVec3(1f, 1f, 1f),
+    ) : this(position, rotation, scale, true)
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        position: SceneVec3 = this.position,
+        rotation: SceneVec3 = this.rotation,
+        scale: SceneVec3 = this.scale,
+    ): SceneTransform = copy(position, rotation, scale, inheritRotation)
+}
 
 /**
  * Serializable 3-component floating-point vector.

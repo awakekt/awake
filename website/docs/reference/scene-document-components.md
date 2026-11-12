@@ -914,7 +914,7 @@ it; see [Particles](../guides/particles.md).
 | `lifetime` | number | `1` | Seconds each particle lives. Above 0. |
 | `startAlpha` | number | `1` | Opacity at birth, 0 to 1. |
 | `scale` | number | `0.2` | Size at birth. Above 0. |
-| `endScale` | number | none | Size at death. None keeps `scale`. Not negative. |
+| `endScale` | number | none | Signed size at death. Negative sizes mirror the sprite on both axes. None keeps `scale`. |
 | `velocity` | vector | `{x: 0, y: 1, z: 0}` | Starting velocity. |
 | `velocityJitter` | number | `0` | Random per-axis variation added to `velocity`. |
 | `coneHalfAngleDegrees` | number | none | Spreads the direction within this angle of `velocity`, keeping its speed. |

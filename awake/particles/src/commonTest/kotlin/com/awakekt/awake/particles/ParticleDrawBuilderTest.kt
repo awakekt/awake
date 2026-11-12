@@ -62,6 +62,29 @@ class ParticleDrawBuilderTest {
     }
 
     @Test
+    fun particleSizeCrossesZeroAndKeepsItsSignInTheDraw() {
+        val world = World()
+        // At z = 0 the right frustum edge is x ~= 2.73. A radius of 0.5 still overlaps it.
+        val emitter = liveEmitter(
+            ParticleFacing.Camera,
+            at = Vec3f(3f, 0f, 0f),
+            visual = ParticleVisual(endScale = -1f),
+        )
+        world.add(world.create(), emitter)
+        val builder = ParticleDrawBuilder()
+        val draws = ArrayList<RenderDrawCommand>()
+        val particle = emitter.particles[0]
+
+        particle.age = 0.5f
+        builder.appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
+        assertTrue(draws.isEmpty(), "At zero size the particle no longer intersects the frustum")
+
+        particle.age = 0.75f
+        builder.appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
+        assertEquals(-0.5f, requireNotNull(draws.single().instanceModels).single().m22)
+    }
+
+    @Test
     fun anEmitterWithNoLiveParticlesDrawsNothing() {
         val world = World()
         world.add(world.create(), liveEmitter(ParticleFacing.Camera, spawned = false))

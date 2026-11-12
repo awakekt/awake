@@ -178,6 +178,7 @@ free light.intensity | No validate() limits it; every value is accepted today.
 free light.range | No validate() limits it; every value is accepted today.
 free locomotion_animation.runAbove | Relational: 0 <= walkAbove <= runAbove, enforced by validate().
 free locomotion_animation.walkAbove | Relational: 0 <= walkAbove <= runAbove, enforced by validate().
+free particle_emitter.endScale | Any finite signed endpoint is valid. Negative sizes mirror the sprite.
 free particle_emitter.alphaCurve.fadeInEnd | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
 free particle_emitter.alphaCurve.fadeOutStart | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
 free particle_emitter.burstCycle.activeSeconds | Relational: 0 < activeSeconds <= cycleSeconds, enforced by validate().

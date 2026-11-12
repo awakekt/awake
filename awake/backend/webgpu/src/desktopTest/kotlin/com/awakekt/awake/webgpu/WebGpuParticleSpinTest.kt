@@ -57,6 +57,20 @@ class WebGpuParticleSpinTest {
         assertTrue(abs(red.y - blue.y) < 1.0, "an unturned sprite's halves sit level: red y=${red.y}, blue y=${blue.y}")
     }
 
+    /**
+     * With the size sign stripped from the instance (control), the red centroid is at x = 49 and
+     * the blue centroid is at x = 78. A negative size reverses that order.
+     */
+    @Test
+    fun negativeSizeMirrorsTheSpriteAndZeroSizeDisappears() = withScene { renderer ->
+        val mirrored = renderer.draw(spin = 0f, size = -SPRITE_SIZE)
+        val red = mirrored.centroid { it.isRed() }
+        val blue = mirrored.centroid { it.isBlue() }
+
+        assertTrue(red.x > blue.x + SPREAD, "red x=${red.x} must be right of blue x=${blue.x}")
+        assertTrue(renderer.draw(spin = 0f, size = 0f).drawn.isEmpty(), "zero-size sprite produced pixels")
+    }
+
     /** Counter-clockwise as the viewer sees it: the right half (blue) goes to the top, the left half (red) to the bottom. */
     @Test
     fun aQuarterTurnPutsBlueOnTopAndRedBelow() = withScene { renderer ->
@@ -102,7 +116,13 @@ class WebGpuParticleSpinTest {
     private fun withScene(block: (Renderer) -> Unit) = block(shared.renderer)
 
     /** One sprite drawn at [spin] radians, seen straight on (or from above when [flat]), as a [Picture]. */
-    private fun Renderer.draw(spin: Float, flat: Boolean = false, centreY: Float = 0f, stretchX: Float = 0f): Picture {
+    private fun Renderer.draw(
+        spin: Float,
+        flat: Boolean = false,
+        centreY: Float = 0f,
+        stretchX: Float = 0f,
+        size: Float = SPRITE_SIZE,
+    ): Picture {
         val target = createRenderTarget(SIZE, SIZE)
         val quad = shared.quad
         val material = shared.material
@@ -119,7 +139,7 @@ class WebGpuParticleSpinTest {
             val sprite = RenderDrawCommand(
                 mesh = quad,
                 material = material,
-                instanceModels = listOf(Mat4().setParticleInstance(0f, centreY, 0f, SPRITE_SIZE, stretchX = stretchX, rotation = spin)),
+                instanceModels = listOf(Mat4().setParticleInstance(0f, centreY, 0f, size, stretchX = stretchX, rotation = spin)),
                 instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
                 instanceFrames = listOf(0f),
                 // cameraRight, cameraUp, frameInfo: ParticleExtraUniformLayout.

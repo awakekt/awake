@@ -18,6 +18,7 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.setParticleInstance
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
@@ -106,7 +107,7 @@ class ParticleDrawBuilder {
         for (slot in 0 until sim.maxParticles) {
             if (sim.isAlive(slot)) {
                 frame.toWorld(sim.posX[slot], sim.posY[slot], sim.posZ[slot], placed)
-                val radius = sim.scaleAt(slot) * sizeScale
+                val radius = abs(sim.scaleAt(slot)) * sizeScale
                 if (isSphereInFrustum(frustumPlanes, placed.x, placed.y, placed.z, radius)) {
                     val dx = placed.x - eye.x
                     val dy = placed.y - eye.y
