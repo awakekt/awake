@@ -42,6 +42,13 @@ import com.awakekt.awake.vulkan.utils.getAppLayerProps
  * not a behavior change.
  */
 class GraphicsDevice {
+    private var frameUniformBuffers: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers? = null
+
+    /** The frame block each frame's lit draws bind beside their own; made on first use. */
+    internal val frameUniforms: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
+        get() = frameUniformBuffers
+            ?: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers(this).also { frameUniformBuffers = it }
+
     /** The `VkInstance` handle, or 0 until [create] or [createHeadless] has run. */
     var instance: Long = 0
 
@@ -392,6 +399,8 @@ class GraphicsDevice {
      * validation layer reported errors; the message lists them.
      */
     fun destroy() {
+        if (device != 0L) frameUniformBuffers?.destroy()
+        frameUniformBuffers = null
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
         if (device != 0L) Vulkan.vkDestroyDevice(device)
         if (debugUtilsMessenger != 0L) Vulkan.vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessenger)

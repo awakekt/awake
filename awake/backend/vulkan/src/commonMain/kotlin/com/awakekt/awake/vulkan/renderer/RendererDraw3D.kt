@@ -15,6 +15,8 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.instancedUniformFloats
 import com.awakekt.awake.render.passes.uniformFloats
+import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
+import com.awakekt.awake.render.passes.uniforms.planDrawBlockFloats
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.depthSortKey
 import com.awakekt.awake.render.pipeline.instancedDrawKind
@@ -32,6 +34,7 @@ import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
+import com.awakekt.awake.vulkan.pipeline.UNKNOWN_DRAW_BLOCK
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import kotlin.collections.getOrNull
@@ -121,21 +124,13 @@ internal fun VulkanRenderer.prepareGpuDraw(
             it.update(frameIndex, instanceModels)
         }
         val uniformSlotIndex = materialUsage.nextSlot(material)
-        val uniformFloats = cmd.instancedUniformFloats(
-            kind = kind,
-            viewProjection = viewProjection,
-            lightPayload = lightUniforms,
-            cameraEye = cameraPosition,
-            cameraForward = cameraForward,
-            shadowCascades = shadowCascades,
-            fogColor = fogColor,
-            fogDensity = fogDensity,
-            debugView = debugView,
-            exposure = exposure,
-            materialUniformFloatCount = material.uniformFloatCount,
-            alphaToCoverageEnabled = instancedPipeline.multisample.alphaToCoverageEnabled,
+        val coverage = instancedPipeline.multisample.alphaToCoverageEnabled
+        val split = instancedPipeline.drawBlockFloatsFor(cmd, material, kind, shadowCascades != null)
+        val uniformFloats = cmd.blockFloats(
+            split, kind, material.uniformFloatCount, coverage,
+            viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
         )
-        val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
+        val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats, frameBlockKind(split, edges = false))
         val palettes = cmd.instanceJointPalettes?.let {
             skinnedInstanceBufferForRun(instancedIndex).also { buffer ->
                 buffer.update(frameIndex, it, cmd.instanceColors)
@@ -175,20 +170,13 @@ internal fun VulkanRenderer.prepareGpuDraw(
     // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
     val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive) ?: return null
     val uniformSlotIndex = materialUsage.nextSlot(material)
-    val uniformFloats = cmd.uniformFloats(
-        materialUniformFloatCount = material.uniformFloatCount,
-        viewProjection = viewProjection,
-        cameraEye = cameraPosition,
-        cameraForward = cameraForward,
-        lightPayload = lightUniforms,
-        shadowCascades = shadowCascades,
-        fogColor = fogColor,
-        fogDensity = fogDensity,
-        debugView = debugView,
-        exposure = exposure,
-        alphaToCoverageEnabled = pipeline.multisample.alphaToCoverageEnabled,
+    val coverage = pipeline.multisample.alphaToCoverageEnabled
+    val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)
+    val uniformFloats = cmd.blockFloats(
+        split, null, material.uniformFloatCount, coverage,
+        viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
     )
-    val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
+    val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats, frameBlockKind(split, edges = edgePipeline != null))
     return PreparedDrawCall(
         mesh = mesh,
         vertexBuffer = buffers.vertexBinding,
@@ -204,6 +192,78 @@ internal fun VulkanRenderer.prepareGpuDraw(
         sortOrder = cmd.sortOrder,
         sortLayer = cmd.sortLayer,
     )
+}
+
+/**
+ * Floats of [cmd]'s own block when this pipeline's shader reads the frame block beside it, else 0:
+ * by what the shader binds where the pipeline knows, else by the draw's plan. 0 as well for a
+ * material too small to hold that block, which keeps the block it was sized for.
+ */
+private fun RenderPipeline.drawBlockFloatsFor(cmd: GpuDrawRequest, material: Material, kind: InstancedDrawKind?, shadowed: Boolean): Int {
+    val floats = if (splitDrawBlockFloats != UNKNOWN_DRAW_BLOCK) {
+        splitDrawBlockFloats
+    } else {
+        cmd.planDrawBlockFloats(material.uniformFloatCount, kind, shadowed)
+    }
+    return if (floats <= material.uniformFloatCount) floats else 0
+}
+
+/**
+ * What this draw writes into its slot: its own block of [split] floats beside the frame block, or,
+ * when [split] is 0, the one block that carries everything, the frame's share included. [kind] is
+ * an instanced draw's, or null for a single one.
+ */
+@Suppress("LongParameterList") // prepareGpuDraw's frame inputs, passed through.
+private fun GpuDrawRequest.blockFloats(
+    split: Int,
+    kind: InstancedDrawKind?,
+    materialUniformFloatCount: Int,
+    coverage: Boolean,
+    viewProjection: Mat4,
+    cameraPosition: Vec3f,
+    cameraForward: Vec3f,
+    lightUniforms: FloatArray,
+    shadowCascades: GpuShadowCascadeData?,
+    fogColor: Color,
+    fogDensity: Float,
+    debugView: GpuDebugView,
+    exposure: Float,
+): FloatArray = when {
+    split > 0 -> drawBlockFloats(split, coverage, instanced = kind != null)
+    kind != null -> instancedUniformFloats(
+        kind = kind,
+        viewProjection = viewProjection,
+        lightPayload = lightUniforms,
+        cameraEye = cameraPosition,
+        cameraForward = cameraForward,
+        shadowCascades = shadowCascades,
+        fogColor = fogColor,
+        fogDensity = fogDensity,
+        debugView = debugView,
+        exposure = exposure,
+        materialUniformFloatCount = materialUniformFloatCount,
+        alphaToCoverageEnabled = coverage,
+    )
+    else -> uniformFloats(
+        materialUniformFloatCount = materialUniformFloatCount,
+        viewProjection = viewProjection,
+        cameraEye = cameraPosition,
+        cameraForward = cameraForward,
+        lightPayload = lightUniforms,
+        shadowCascades = shadowCascades,
+        fogColor = fogColor,
+        fogDensity = fogDensity,
+        debugView = debugView,
+        exposure = exposure,
+        alphaToCoverageEnabled = coverage,
+    )
+}
+
+/** The frame block a draw's set binds: none of the batch's for a draw whose one block carries everything. */
+private fun frameBlockKind(splitDrawBlockFloats: Int, edges: Boolean): FrameBlockKind = when {
+    splitDrawBlockFloats == 0 -> FrameBlockKind.Identity
+    edges -> FrameBlockKind.Edges
+    else -> FrameBlockKind.Scene
 }
 
 internal fun RenderViewport.toVkViewport(): VkViewport =

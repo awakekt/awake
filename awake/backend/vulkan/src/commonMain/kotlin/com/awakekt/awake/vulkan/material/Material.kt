@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.material
 
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.ShaderStage
@@ -31,6 +32,8 @@ import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
+import com.awakekt.awake.vulkan.renderer.FrameBlockKind
+import com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
 import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.render.material.Material as RenderMaterial
 
@@ -146,7 +149,7 @@ class Material(
         pbrImageViews = pbr
     }
 
-    private fun createUniformSlot(): UniformSlot {
+    private fun createUniformSlot(frameIndex: Int): UniformSlot {
         require(samplerHandle != 0L && imageViewHandle != 0L) {
             "Material resources must be created before allocating uniform slots."
         }
@@ -181,6 +184,7 @@ class Material(
                 pbr = requireNotNull(pbrImageViews),
             ),
         )
+        if (readsFrameBlock) bindFrameBlock(graphicsDevice, rawDescriptorSet, frameIndex, FrameBlockKind.Identity)
         return UniformSlot(
             descriptorPool = DescriptorPoolHandle(block.descriptorPool),
             descriptorSet = DescriptorSetHandle(rawDescriptorSet),
@@ -190,12 +194,15 @@ class Material(
         )
     }
 
+    /** Whether this material's set declares the frame block beside the draw's own. */
+    private val readsFrameBlock = bindings.at(FRAME_UNIFORM_BINDING)?.kind == ResourceKind.UniformBuffer
+
     private fun uniformSlot(frameIndex: Int, drawSlotIndex: Int): UniformSlot {
         require(frameIndex >= 0) { "frameIndex must be non-negative." }
         require(drawSlotIndex >= 0) { "drawSlotIndex must be non-negative." }
         while (uniformSlotsByFrame.size <= frameIndex) uniformSlotsByFrame.add(mutableListOf())
         val frameSlots = uniformSlotsByFrame[frameIndex]
-        while (frameSlots.size <= drawSlotIndex) frameSlots += createUniformSlot()
+        while (frameSlots.size <= drawSlotIndex) frameSlots += createUniformSlot(frameIndex)
         val slot = frameSlots[drawSlotIndex]
         if (frameIndex == 0 && drawSlotIndex == 0) {
             descriptorPool = slot.descriptorPool
@@ -222,6 +229,18 @@ class Material(
         frameIndex: Int,
         drawSlotIndex: Int,
         values: FloatArray,
+    ): VulkanMaterialBinding = updateUniformBuffer(frameIndex, drawSlotIndex, values, FrameBlockKind.Identity)
+
+    /**
+     * As above, naming the frame block the draw's set binds beside its own: see [FrameBlockKind].
+     * A slot is rebound only when it changes hands between kinds, which a steady frame never
+     * does: its fills take the first slots and its edges the ones after.
+     */
+    internal fun updateUniformBuffer(
+        frameIndex: Int,
+        drawSlotIndex: Int,
+        values: FloatArray,
+        frameBlock: FrameBlockKind,
     ): VulkanMaterialBinding {
         // Catches an oversized write here, in Kotlin, with the actual float counts involved --
         // the alternative is vkMapMemory rejecting it deep in native code as a bare
@@ -234,6 +253,11 @@ class Material(
         }
         val slot = uniformSlot(frameIndex, drawSlotIndex)
         VulkanBuffers.writeBufferMemoryFloats(device, slot.uniformBufferMemory.handle, slot.memoryOffset, values)
+        if (slot.frameBlock != frameBlock && readsFrameBlock) {
+            // Safe to rewrite: this frame's earlier commands, the only readers of its sets, have completed.
+            bindFrameBlock(graphicsDevice, slot.descriptorSet.handle, frameIndex, frameBlock)
+            slot.frameBlock = frameBlock
+        }
         return slot
     }
 
@@ -288,6 +312,9 @@ class Material(
         val memoryOffset: Long,
     ) : VulkanMaterialBinding {
         override val descriptorSetHandle: Long get() = descriptorSet.handle
+
+        /** The frame block [descriptorSet] binds: the identity one until a draw asks for another. */
+        var frameBlock: FrameBlockKind = FrameBlockKind.Identity
     }
 
     /**
@@ -369,6 +396,18 @@ data class PbrImageViews(
 }
 
 /** One memory allocation and descriptor pool shared by [Material.SLOTS_PER_BLOCK] uniform slots. */
+
+/** Points [descriptorSet]'s frame binding at frame [frameIndex]'s block of [kind]. */
+private fun bindFrameBlock(graphicsDevice: GraphicsDevice, descriptorSet: Long, frameIndex: Int, kind: FrameBlockKind) {
+    VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+        graphicsDevice.device,
+        descriptorSet,
+        FRAME_UNIFORM_BINDING,
+        VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        VkDescriptorBufferInfo(buffer = graphicsDevice.frameUniforms.bufferFor(frameIndex, kind), range = FrameUniformBuffers.BYTES),
+    )
+}
+
 private class SlotBlock(val memory: Long, val descriptorPool: Long, val stride: Long)
 
 /** Memory for [Material.SLOTS_PER_BLOCK] buffers shaped like [requirements], each at an aligned stride. */

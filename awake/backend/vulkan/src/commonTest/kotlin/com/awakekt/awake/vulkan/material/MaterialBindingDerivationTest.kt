@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.material
 
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceBinding
 import com.awakekt.awake.render.pipeline.ResourceKind
@@ -25,36 +26,39 @@ class MaterialBindingDerivationTest {
     fun standardLayoutMatchesWhatWasHardcodedBefore() {
         val layout = materialLayoutBindings(GroupBindings.StandardMaterial)
 
-        assertEquals(listOf(0, 1, 2, 5, 6, 7, 8), layout.map { it.binding })
+        assertEquals(listOf(0, 1, 2, 5, 6, 7, 8, FRAME_UNIFORM_BINDING), layout.map { it.binding })
         assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, layout[0].descriptorType)
         assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, layout[1].descriptorType)
         assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, layout[2].descriptorType)
         assertEquals(
             List(4) { VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE },
-            layout.drop(3).map { it.descriptorType },
+            layout.drop(3).dropLast(1).map { it.descriptorType },
         )
+        // The frame block, beside the draw's own.
+        assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, layout.last().descriptorType)
     }
 
-    /** The uniform block is the only entry Vulkan needs both stage bits for -- omitting either
-     * trips VUID-VkGraphicsPipelineCreateInfo-layout-07988 once a shader reads it. */
+    /** The uniform blocks are the only entries Vulkan needs both stage bits for -- omitting either
+     * trips VUID-VkGraphicsPipelineCreateInfo-layout-07988 once a shader reads one. */
     @Test
     fun standardStageFlagsMatchWhatWasHardcodedBefore() {
         val layout = materialLayoutBindings(GroupBindings.StandardMaterial)
         val bothStages = VkShaderStageFlagBits.VERTEX.value or VkShaderStageFlagBits.FRAGMENT.value
 
         assertEquals(bothStages, layout.first { it.binding == 0 }.stageFlags)
+        assertEquals(bothStages, layout.first { it.binding == FRAME_UNIFORM_BINDING }.stageFlags)
         assertEquals(
             List(6) { VkShaderStageFlagBits.FRAGMENT.value },
-            layout.filter { it.binding != 0 }.map { it.stageFlags },
+            layout.filter { it.binding != 0 && it.binding != FRAME_UNIFORM_BINDING }.map { it.stageFlags },
         )
     }
 
-    /** Previously `1 + PBR_TEXTURE_BINDINGS.size` sampled images, one uniform, one sampler. */
+    /** `1 + PBR_TEXTURE_BINDINGS.size` sampled images, one sampler, and two uniforms: the draw's block and the frame's. */
     @Test
     fun standardPoolSizesMatchWhatWasHardcodedBefore() {
         val sizes = materialPoolSizes(GroupBindings.StandardMaterial).associate { it.type to it.descriptorCount }
 
-        assertEquals(1, sizes[VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER])
+        assertEquals(2, sizes[VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER])
         assertEquals(5, sizes[VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE])
         assertEquals(1, sizes[VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER])
     }
