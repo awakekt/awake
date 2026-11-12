@@ -359,12 +359,12 @@ class LayoutNode(
         for (i in placedNodes.indices) {
             placedNodes[i].onPlaced(absoluteX, absoluteY, width, height)
         }
-        for (i in children.indices) {
+        for (i in 0 until children.size) {
             children[i].resolveAbsolutePositions(contentX, contentY)
         }
         // Layers resolve against this node too -- an anchored popup needs its declaring node's
         // position -- but their size comes from the viewport, not from this node's constraints.
-        for (i in layers.indices) {
+        for (i in 0 until layers.size) {
             layers[i].resolveAbsolutePositions(absoluteX, absoluteY)
         }
     }

@@ -98,9 +98,9 @@ class SemanticsTreeBuilder {
     }
 
     private inline fun forEachChild(node: LayoutNode, action: (LayoutNode) -> Unit) {
-        for (i in node.children.indices) action(node.children[i])
+        for (i in 0 until node.children.size) action(node.children[i])
         // Layers are part of the accessibility tree too -- a dialog's contents must be reachable.
-        for (i in node.layers.indices) action(node.layers[i])
+        for (i in 0 until node.layers.size) action(node.layers[i])
     }
 }
 

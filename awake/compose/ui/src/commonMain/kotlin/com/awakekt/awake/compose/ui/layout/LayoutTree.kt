@@ -33,7 +33,7 @@ private fun Constraints.loosened(): Constraints =
     Constraints.of(0, maxWidth, 0, maxHeight)
 
 private fun LayoutNode.layoutLayers(viewport: Constraints) {
-    for (i in layers.indices) {
+    for (i in 0 until layers.size) {
         val layer = layers[i]
         layer.measure(viewport)
         val position = layer.layerPositionProvider?.position(
@@ -47,7 +47,7 @@ private fun LayoutNode.layoutLayers(viewport: Constraints) {
         layer.placeAt(position.x, position.y)
         layer.layoutLayers(viewport)
     }
-    for (i in children.indices) {
+    for (i in 0 until children.size) {
         children[i].layoutLayers(viewport)
     }
 }
