@@ -5,9 +5,10 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.core.input.StickVector
+import com.awakekt.awake.core.input.TouchStickMath
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
-import kotlin.math.sqrt
 
 /**
  * Drag to aim: while an action button is held, dragging away from it aims, and letting go fires the
@@ -55,14 +56,9 @@ data class CanvasAim(
      * [CanvasAimMode.Ground].
      */
     fun aim(dx: Float, dy: Float): Pair<Float, Float> {
-        val length = sqrt(dx * dx + dy * dy)
-        val share = length / reach
-        if (length == 0f || share <= deadZone) return Pair(0f, 0f)
-        val scale = when (mode) {
-            CanvasAimMode.Direction -> 1f / length
-            CanvasAimMode.Ground -> share.coerceAtMost(1f) / length
-        }
-        return Pair(dx * scale, dy * scale)
+        val out = StickVector()
+        TouchStickMath.aim(dx, dy, reach, deadZone, mode == CanvasAimMode.Ground, out)
+        return Pair(out.x, out.y)
     }
 
     /** Defaults. */
