@@ -81,6 +81,10 @@ private fun stopIssues(path: String, stops: List<SceneDayStop>): List<SceneValid
         if (intensity != null && !(intensity.isFinite() && intensity >= 0f)) {
             add(SceneValidationIssue(path, "day_cycle stop lightIntensity must be finite and at least 0; was $intensity"))
         }
+        val skyExposure = stop.skyExposure
+        if (skyExposure != null && !(skyExposure.isFinite() && skyExposure >= 0f)) {
+            add(SceneValidationIssue(path, "day_cycle stop skyExposure must be finite and at least 0; was $skyExposure"))
+        }
         val ambient = stop.ambient
         if (ambient != null && !(ambient > 0f && ambient <= 1f)) {
             add(SceneValidationIssue(path, "day_cycle stop ambient must be above 0 and at most 1; was $ambient"))
@@ -100,6 +104,8 @@ private fun stopIssues(path: String, stops: List<SceneDayStop>): List<SceneValid
  * @property lightIntensity The light's intensity, 0 or more.
  * @property ambient The light's ambient share, above 0 and at most 1.
  * @property fogColor The `fog` colour.
+ * @property skyTint The colour a cubemap `skybox` is multiplied by; white leaves it as baked.
+ * @property skyExposure A multiplier on a cubemap `skybox`'s exposure, 0 or more; 1 leaves it as authored.
  */
 @Serializable
 data class SceneDayStop(
@@ -110,6 +116,8 @@ data class SceneDayStop(
     val lightIntensity: Float? = null,
     val ambient: Float? = null,
     val fogColor: SceneColor? = null,
+    val skyTint: SceneColor? = null,
+    val skyExposure: Float? = null,
 )
 
 /**
@@ -143,7 +151,7 @@ object DayCycleBinding : SceneComponentBinding<DayCycle, SceneDayCycle> {
 /**
  * Advances each [DayCycle] and writes the sun's direction and the blended stops to the [Light] on
  * its entity and to the first [Skybox] and [Fog] in the world, the ones the renderer reads. A
- * procedural sky takes both colours, a solid-colour sky the horizon colour, a cubemap sky neither.
+ * procedural sky takes both colours, a solid-colour sky the horizon colour, a cubemap sky its tint, exposure and panoramas (see [CubemapSkySpans]).
  *
  * Nothing changes until this runs, so a scene that is not playing shows its light, sky and fog as
  * authored. Running it with a delta of 0 applies the current time without advancing it, for a host
@@ -162,6 +170,7 @@ class DayCycleSystem : System {
     private val horizon = StopSpan { it.horizonColor }
     private val zenith = StopSpan { it.zenithColor }
     private val fogColor = StopSpan { it.fogColor }
+    private val cubemapSky = CubemapSkySpans()
     private var families: Families? = null
 
     override fun update(world: World, delta: Float) {
@@ -172,6 +181,8 @@ class DayCycleSystem : System {
             cycle.time = cycle.time.mod(1f)
             sunDirection(cycle.time, day.sunriseAzimuthDegrees, day.noonElevationDegrees, light.direction)
             if (day.stops.isNotEmpty()) applyStops(families, day.stops, cycle.time, light)
+            val sky = families.skies.takeIf { it.size > 0 }?.componentAt(0)?.mode
+            if (sky is Skybox.Mode.Cubemap) cubemapSky.apply(sky, day.stops, cycle.time)
         }
     }
 
@@ -233,59 +244,8 @@ private fun sunDirection(time: Float, sunriseAzimuthDegrees: Float, noonElevatio
     )
 }
 
-/** One stop field's values either side of a time of day, and how far between them the time is. */
-private class StopSpan<T : Any>(private val field: (SceneDayStop) -> T?) {
-    lateinit var from: T
-    lateinit var to: T
-    var fraction = 0f
-
-    /** Finds the stops around [time] that set this field; false when none does. */
-    fun find(stops: List<SceneDayStop>, time: Float): Boolean {
-        var first = -1
-        var last = -1
-        var before = -1
-        var after = -1
-        for (index in stops.indices) {
-            if (field(stops[index]) == null) continue
-            if (first < 0) first = index
-            last = index
-            if (stops[index].time <= time) {
-                before = index
-            } else if (after < 0) {
-                after = index
-            }
-        }
-        // Before the day's first stop, yesterday's last one leads in; after its last, tomorrow's first follows.
-        if (first >= 0) between(stops[if (before >= 0) before else last], stops[if (after >= 0) after else first], time)
-        return first >= 0
-    }
-
-    private fun between(fromStop: SceneDayStop, toStop: SceneDayStop, time: Float) {
-        from = checkNotNull(field(fromStop))
-        to = checkNotNull(field(toStop))
-        val gap = (toStop.time - fromStop.time).mod(1f)
-        fraction = if (gap > 0f) (time - fromStop.time).mod(1f) / gap else 0f
-    }
-}
-
-private fun StopSpan<Float>.value(): Float = lerp(from, to, fraction)
-
-private fun StopSpan<SceneColor>.colorInto(target: Vec3f) {
-    target.set(lerp(from.r, to.r, fraction), lerp(from.g, to.g, fraction), lerp(from.b, to.b, fraction))
-}
-
-/** The blended colour, or [current] while it is within [COLOR_STEP] of it. */
-private fun StopSpan<SceneColor>.color(current: Color): Color {
-    val r = lerp(from.r, to.r, fraction)
-    val g = lerp(from.g, to.g, fraction)
-    val b = lerp(from.b, to.b, fraction)
-    val a = lerp(from.a, to.a, fraction)
-    val moved = maxOf(maxOf(abs(current.r - r), abs(current.g - g)), maxOf(abs(current.b - b), abs(current.a - a)))
-    return if (moved < COLOR_STEP) current else Color(r, g, b, a)
-}
-
 /** A quarter of an 8-bit display step: too small to see, large enough to skip most frames' writes. */
-private const val COLOR_STEP = 1f / 1024f
+internal const val COLOR_STEP = 1f / 1024f
 private const val NOON = 0.5f
 private const val TURN = (2.0 * PI).toFloat()
 private const val RADIANS_PER_DEGREE = (PI / 180.0).toFloat()

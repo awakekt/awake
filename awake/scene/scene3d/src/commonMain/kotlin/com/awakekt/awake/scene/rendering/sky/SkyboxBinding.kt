@@ -53,7 +53,7 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
             zenithColor.toColor()
         }
         val mode = when (type.lowercase()) {
-            "cubemap" -> Skybox.Mode.Cubemap(assetPath = cubemapPath ?: "", exposure = exposure)
+            "cubemap" -> Skybox.Mode.Cubemap(assetPath = cubemapPath ?: "", exposure = exposure, panoramas = panoramas)
             "solidcolor" -> Skybox.Mode.SolidColor(color = horizon)
             else -> Skybox.Mode.Procedural(horizonColor = horizon, zenithColor = zenith)
         }
@@ -84,6 +84,7 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
             cubemapPath = m.assetPath,
             exposure = m.exposure,
             type = "Cubemap",
+            panoramas = m.panoramas,
         )
         is Skybox.Mode.SolidColor -> SceneSkybox(
             enabled = enabled,

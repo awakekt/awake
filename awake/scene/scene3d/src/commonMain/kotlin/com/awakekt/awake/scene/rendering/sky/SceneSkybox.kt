@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.sky
 
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,6 +25,8 @@ import kotlinx.serialization.Serializable
  * @property zenithColorB Optional explicit blue channel override for the zenith color.
  * @property cubemapPath Asset path to cubemap texture when mode is cubemap.
  * @property exposure Exposure multiplier applied during cubemap rendering.
+ * @property panoramas More cubemap panoramas by time of day, in time order. A `day_cycle` blends the
+ *   two around its time; without one the first shows. Empty keeps the single [cubemapPath].
  * @property type Skybox mode type name ("Procedural", "Cubemap", or "SolidColor").
  */
 @Serializable
@@ -41,4 +44,12 @@ data class SceneSkybox(
     val cubemapPath: String? = null,
     val exposure: Float = 1.0f,
     val type: String = "Procedural",
-) : SceneComponent
+    val panoramas: List<ScenePanorama> = emptyList(),
+) : SceneComponent {
+    override fun validate(path: String): List<SceneValidationIssue> = buildList {
+        val times = panoramas.map { it.time }
+        if (times.any { !(it >= 0f && it < 1f) } || times.zipWithNext().any { (a, b) -> b < a }) {
+            add(SceneValidationIssue(path, "skybox.panoramas must be in time order from 0 up to 1"))
+        }
+    }
+}

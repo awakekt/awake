@@ -644,8 +644,11 @@ first across midnight. A field no stop sets keeps its authored value.
 | `lightIntensity` | number | The light's `intensity`. At least `0`. |
 | `ambient` | number | The light's `ambient` share. Above `0`, at most `1`. |
 | `fogColor` | color | The `fog` colour. |
+| `skyTint` | color | The colour a `Cubemap` `skybox` is multiplied by. |
+| `skyExposure` | number | A multiplier on a `Cubemap` `skybox`'s `exposure`. At least `0`. |
 
-The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky keeps its image. A
+The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky takes `skyTint` and
+`skyExposure`, and blends between its `panoramas` by time of day. A
 rotated light node shines along its rotation and ignores the sun's direction.
 
 ## `factions`
@@ -1191,6 +1194,7 @@ The background drawn behind the scene. `SceneSkybox`.
 | `zenithColorB` | number | none | Legacy channel. |
 | `cubemapPath` | string | none | Cubemap asset path, for `Cubemap`. |
 | `exposure` | number | `1` | Cubemap brightness, for `Cubemap`. |
+| `panoramas` | list | empty | More cubemap strips by time of day, each `{ time, path }` in time order; a `day_cycle` blends the two around its time. |
 
 ## `spin_control`
 
