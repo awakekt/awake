@@ -10,12 +10,20 @@ import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.math2d.Rectangle
 
 /**
- * Bounded retained storage for the backend-neutral result of UI draw-run staging.
+ * Retained storage for the backend-neutral result of UI draw-run staging.
  *
  * UI composition still emits a fresh command list every frame, but most contiguous spans in a
  * scene are unchanged. Keeping their staged arrays avoids repeating tessellation and array
  * materialisation on the frame-critical path. The cache belongs to one renderer: staged texture
  * runs retain renderer-owned material handles and must not outlive that renderer.
+ *
+ * Every span the frame being drawn uses is kept, however many there are, up to a hard bound of 64 x `capacity` (16,384 spans by default);
+ * `capacity` bounds only the spans no frame uses any more. A fixed bound on all spans made a UI
+ * with more spans than it evict each span before the next frame reached it, re-staging and
+ * re-uploading them forever (#1545). Past that bound nothing live is evicted either: new
+ * spans are simply not stored, so the spans that fit stay cached and only the excess re-stages.
+ * Memory is the live spans' staged runs plus at most `capacity` stale ones; a UI that shrinks
+ * releases the rest at the next [beginFrame].
  *
  * A cache hit is only valid while the returned [StagedDrawRun]s remain read-only. Uploaders consume
  * their arrays but do not mutate them; that is the contract that makes sharing them across frames
@@ -32,57 +40,84 @@ class RetainedDrawRunCache(
         val runs: List<StagedDrawRun>,
         var frame: Long,
     ) {
-        fun matches(
-            maxQuadsPerRun: Int,
-            primitives: List<DrawCommand>,
-            pathClips: List<DrawPath>,
-            safeInteriorRect: Rectangle?,
-        ): Boolean =
-            this.maxQuadsPerRun == maxQuadsPerRun &&
-                this.primitives.retainedEquals(primitives) &&
-                (this.pathClips == pathClips && this.safeInteriorRect == safeInteriorRect)
+        /** The next span with the same hash: draw commands' hashes collide, in grids especially. */
+        var next: Entry? = null
+
+        fun matches(primitives: List<DrawCommand>, from: Int, to: Int, maxQuads: Int, clips: List<DrawPath>, safe: Rectangle?) =
+            maxQuadsPerRun == maxQuads && safeInteriorRect == safe && pathClips.sameAs(clips) &&
+                this.primitives.retainedEquals(primitives, from, to)
     }
 
-    /** Spans by retained hash, oldest stored first. A hash collision keeps the newer span. */
-    private val entries = LinkedHashMap<Int, Entry>()
+    /** A hash map key that a lookup can reuse, so finding a span boxes nothing. */
+    private class Key(var hash: Int) {
+        override fun hashCode(): Int = hash
 
-    /** The frame [beginFrame] opened; an entry used in it is live and is not evicted. 0 until a
-     * caller opens frames, and then nothing is live: a cache used without frames stays LRU-bounded. */
+        override fun equals(other: Any?): Boolean = other is Key && other.hash == hash
+    }
+
+    /** Chains of spans by retained hash, oldest hash first. */
+    private val entries = LinkedHashMap<Key, Entry>()
+
+    /** Spans held across every chain. */
+    private var count = 0
+    private val probe = Key(0)
+
+    /** The frame [beginFrame] opened, or 0 while the caller opens none: the cache is then LRU-bounded by [capacity]. */
     private var frame = 0L
 
-    /**
-     * The most spans held, live or not. [capacity] bounds only the spans no frame uses any more:
-     * the spans of the frame being drawn are never evicted for each other, because a frame with
-     * more spans than [capacity] would then evict each span before the next frame reached it, and
-     * re-stage and re-upload it forever (#1545).
-     */
+    /** Entries the current frame has found or stored. */
+    private var live = 0
+
+    /** The most spans held, live or not; see the class comment. */
     internal val maxCapacity: Int = capacity * MAX_LIVE_SPANS_PER_CAPACITY
+
+    /** Retained spans held now, for tests and probes. */
+    internal val size: Int get() = count
 
     /** The hash of the span the last [find] missed, so a miss can be recognised next frame without
      * hashing it again; see [StableSpanTracker]. */
     internal var lastMissHash: Int = 0
         private set
 
-    /** Opens a frame: spans not found or stored from now on become evictable once over [capacity]. */
+    /**
+     * Closes the frame and opens the next: the spans the closed frame did not use are dropped,
+     * oldest first, down to [capacity]. One pass per frame, so stores never scan.
+     */
     internal fun beginFrame() {
+        if (count > capacity) dropStale(count - capacity)
         frame += 1
+        live = 0
     }
 
-    /** Returns a retained span and marks it used in this frame, or `null` on a miss. A hit moves
-     * nothing, so a still frame allocates no map nodes. */
+    /** Whether [store] would keep a new span now, rather than refuse it at [maxCapacity]. */
+    internal fun canStore(): Boolean = frame == 0L || count < maxCapacity || live < count
+
+    /** Returns a retained span and marks it used in this frame, or `null` on a miss. */
     fun find(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int,
         pathClips: List<DrawPath> = emptyList(),
         safeInteriorRect: Rectangle? = null,
+    ): List<StagedDrawRun>? = find(primitives, 0, primitives.size, maxQuadsPerRun, pathClips, safeInteriorRect)
+
+    /** [find] for `primitives[from until to]`, with no sub-list: a hit allocates nothing. */
+    internal fun find(
+        primitives: List<DrawCommand>,
+        from: Int,
+        to: Int,
+        maxQuadsPerRun: Int,
+        pathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
     ): List<StagedDrawRun>? {
-        val hash = retainedHash(primitives, pathClips, safeInteriorRect)
-        val entry = entries[hash]
-        if (entry == null || !entry.matches(maxQuadsPerRun, primitives, pathClips, safeInteriorRect)) {
+        val hash = retainedHash(primitives.retainedHashCode(from, to), pathClips, safeInteriorRect)
+        probe.hash = hash
+        var entry = entries[probe]
+        while (entry != null && !entry.matches(primitives, from, to, maxQuadsPerRun, pathClips, safeInteriorRect)) entry = entry.next
+        if (entry == null) {
             lastMissHash = hash
             return null
         }
-        entry.frame = frame
+        markLive(entry)
         return entry.runs
     }
 
@@ -94,131 +129,104 @@ class RetainedDrawRunCache(
         safeInteriorRect: Rectangle? = null,
         runs: List<StagedDrawRun>,
     ) {
-        if (capacity == 0 || primitives.isEmpty()) return
+        if (capacity == 0 || primitives.isEmpty() || !canStore()) return
         val snapshot = primitives.map(DrawCommand::retentionSnapshot)
         val clipSnapshot = pathClips.map { it.copy(commands = it.commands.toList()) }
-        val hash = retainedHash(snapshot, clipSnapshot, safeInteriorRect)
-        entries.remove(hash)
-        entries[hash] = Entry(maxQuadsPerRun, snapshot, clipSnapshot, safeInteriorRect, runs.toList(), frame)
-        evict()
-    }
-
-    /**
-     * Past [capacity], drops the oldest spans the current frame has not used, then, only past
-     * [maxCapacity], live ones too. Without frames ([beginFrame] never called), it drops the oldest.
-     */
-    private fun evict() {
-        if (entries.size <= capacity) return
-        val unused = entries.values.iterator()
-        while (entries.size > capacity && unused.hasNext()) {
-            val entry = unused.next()
-            if (frame == 0L || entry.frame != frame) unused.remove()
-        }
-        val oldest = entries.values.iterator()
-        while (entries.size > maxCapacity) {
-            oldest.next()
-            oldest.remove()
-        }
+        val key = Key(retainedHash(snapshot.retainedHashCode(), clipSnapshot, safeInteriorRect))
+        unlink(key) { it.matches(snapshot, 0, snapshot.size, maxQuadsPerRun, clipSnapshot, safeInteriorRect) }
+        if (count >= maxCapacity) dropStale(1)
+        val entry = Entry(maxQuadsPerRun, snapshot, clipSnapshot, safeInteriorRect, runs.toList(), frame = -1)
+        entry.next = entries[key]
+        entries[key] = entry
+        count += 1
+        markLive(entry)
+        if (frame == 0L) while (count > capacity) dropOldestChain()
     }
 
     /** Clears all retained entries from the cache. */
-    fun clear() = entries.clear()
+    fun clear() {
+        entries.clear()
+        count = 0
+        live = 0
+    }
 
-    private fun retainedHash(
-        primitives: List<DrawCommand>,
-        pathClips: List<DrawPath>,
-        safeInteriorRect: Rectangle?,
-    ): Int = 31 * (31 * primitives.retainedHashCode() + pathClips.hashCode()) + (safeInteriorRect?.hashCode() ?: 0)
+    private fun markLive(entry: Entry) {
+        if (entry.frame != frame) {
+            entry.frame = frame
+            live += 1
+        }
+    }
+
+    /** Drops up to [excess] spans the current frame has not used, oldest hash first. One pass. */
+    private fun dropStale(excess: Int) {
+        var left = excess
+        val chains = entries.entries.iterator()
+        while (left > 0 && chains.hasNext()) {
+            val chain = chains.next()
+            var kept: Entry? = null
+            var node: Entry? = chain.value
+            while (node != null) {
+                val next = node.next
+                if (left > 0 && node.frame != frame) {
+                    left -= 1
+                    count -= 1
+                } else {
+                    node.next = kept
+                    kept = node
+                }
+                node = next
+            }
+            if (kept == null) chains.remove() else chain.setValue(kept)
+        }
+    }
+
+    /** Without frames: drops the oldest hash's whole chain, as an LRU-by-insertion bound. */
+    private fun dropOldestChain() {
+        val oldest = entries.entries.iterator()
+        var node: Entry? = oldest.next().value
+        oldest.remove()
+        while (node != null) {
+            if (node.frame == frame) live -= 1
+            count -= 1
+            node = node.next
+        }
+    }
+
+    /** Removes the span in [key]'s chain that [matches] selects, if any. */
+    private inline fun unlink(key: Key, matches: (Entry) -> Boolean) {
+        var previous: Entry? = null
+        var node = entries[key]
+        while (node != null && !matches(node)) {
+            previous = node
+            node = node.next
+        }
+        if (node == null) return
+        if (previous == null) {
+            val rest = node.next
+            if (rest == null) entries.remove(key) else entries[key] = rest
+        } else {
+            previous.next = node.next
+        }
+        count -= 1
+        if (node.frame == frame) live -= 1
+    }
+
+    private fun retainedHash(primitivesHash: Int, pathClips: List<DrawPath>, safeInteriorRect: Rectangle?): Int =
+        31 * (31 * primitivesHash + pathClips.hashCode()) + (safeInteriorRect?.hashCode() ?: 0)
 
     /** Cache size and configuration constants. */
     companion object {
-        /** Keeps the common case bounded without making large Studio screens churn the cache. */
+        /** Stale spans kept for a UI that comes back, such as a window closed and reopened. */
         const val DEFAULT_CAPACITY = 256
 
-        /** [maxCapacity] over [capacity]: a frame of up to 16,384 spans by default stays retained. */
+        /** [maxCapacity] over [capacity]: a frame of up to 16,384 spans by default stays wholly retained. */
         private const val MAX_LIVE_SPANS_PER_CAPACITY = 64
     }
 }
 
-/**
- * Protects retention keys from callers that reuse and mutate mesh/path backing collections.
- * Scalar draw commands and texture material handles are immutable for key purposes and can be
- * retained as-is.
- */
-private fun DrawCommand.retentionSnapshot(): DrawCommand = when (this) {
-    is DrawCommand.Mesh -> if (retainedGeometryKey == null) {
-        copy(
-            mesh = mesh.copy(
-                vertices = mesh.vertices.toList(),
-                indices = mesh.indices.copyOf(),
-            ),
-        )
-    } else {
-        copy().also { it.retainedGeometryKey = retainedGeometryKey }
-    }
-    is DrawCommand.FilledPath -> copy(path = path.copy(commands = path.commands.toList()))
-    is DrawCommand.StrokedPath -> copy(path = path.copy(commands = path.commands.toList()))
-    is DrawCommand.ClipPathPush -> copy(path = path.copy(commands = path.commands.toList()))
-    else -> this
-}
-
-private fun List<DrawCommand>.retainedHashCode(): Int = fold(1) { result, primitive ->
-    31 * result + primitive.retainedHashCode()
-}
-
-private fun DrawCommand.retainedHashCode(): Int {
-    val meshCommand = this as? DrawCommand.Mesh
-    val key = meshCommand?.retainedGeometryKey
-    return if (meshCommand == null || key == null) {
-        hashCode()
-    } else {
-        var result = key.hashCode()
-        result = 31 * result + meshCommand.mesh.vertices.size
-        result = 31 * result + meshCommand.mesh.indices.size
-        result = 31 * result + meshCommand.offsetX.hashCode()
-        result = 31 * result + meshCommand.offsetY.hashCode()
-        result = 31 * result + meshCommand.scaleX.hashCode()
-        result = 31 * result + meshCommand.scaleY.hashCode()
-        result = 31 * result + meshCommand.alpha.hashCode()
-        result = 31 * result + (meshCommand.tokenId?.hashCode() ?: 0)
-        result = 31 * result + meshCommand.rotationDegrees.hashCode()
-        result = 31 * result + meshCommand.pivotX.hashCode()
-        31 * result + meshCommand.pivotY.hashCode()
-    }
-}
-
-/** Index loop rather than `indices.all`, which allocates an `IntRange` on every lookup. */
-private fun List<DrawCommand>.retainedEquals(other: List<DrawCommand>): Boolean {
+/** List equality by index, with no iterator; path clips are compared on every lookup under a clip. */
+private fun List<DrawPath>.sameAs(other: List<DrawPath>): Boolean {
     var index = if (size == other.size) 0 else -1
-    while (index in 0 until size) index = if (get(index).retainedEquals(other[index])) index + 1 else -1
+    while (index in 0 until size) index = if (get(index) == other[index]) index + 1 else -1
     return index == size
 }
-
-private fun DrawCommand.retainedEquals(other: DrawCommand): Boolean =
-    when {
-        this === other -> true
-        this is DrawCommand.Mesh && other is DrawCommand.Mesh && hasSameRetainedGeometry(other) ->
-            hasSamePlacement(other)
-        else -> this == other
-    }
-
-private fun DrawCommand.Mesh.hasSameRetainedGeometry(other: DrawCommand.Mesh): Boolean =
-    retainedGeometryKey != null &&
-        retainedGeometryKey === other.retainedGeometryKey &&
-        mesh === other.mesh
-
-private fun DrawCommand.Mesh.hasSamePlacement(other: DrawCommand.Mesh): Boolean =
-    hasSamePosition(other) && hasSameScale(other) && hasSameAppearance(other)
-
-private fun DrawCommand.Mesh.hasSamePosition(other: DrawCommand.Mesh): Boolean =
-    offsetX == other.offsetX && offsetY == other.offsetY
-
-private fun DrawCommand.Mesh.hasSameScale(other: DrawCommand.Mesh): Boolean =
-    scaleX == other.scaleX && scaleY == other.scaleY
-
-private fun DrawCommand.Mesh.hasSameAppearance(other: DrawCommand.Mesh): Boolean =
-    alpha == other.alpha &&
-        tokenId == other.tokenId &&
-        rotationDegrees == other.rotationDegrees &&
-        pivotX == other.pivotX &&
-        pivotY == other.pivotY

@@ -38,8 +38,6 @@ internal class StableSpanTracker {
     private var previousCount = 0
     private var current = IntArray(INITIAL_SPANS)
     private var currentCount = 0
-    private var cacheableSpans = 0
-    private var previousCacheableSpans = 0
 
     /** How many spans were promoted into the retained cache so far, for probes and tests. */
     var promotions: Int = 0
@@ -53,26 +51,20 @@ internal class StableSpanTracker {
         current = swap
         currentCount = 0
         previous.sort(0, previousCount)
-        previousCacheableSpans = cacheableSpans
-        cacheableSpans = 0
-    }
-
-    /** Counts one cacheable span, hit or miss, toward this frame's total. */
-    fun countCacheableSpan() {
-        cacheableSpans += 1
     }
 
     /**
      * Records a miss of [hash] that was not a first sight and reports whether to store the span.
      *
      * @param hash The span's retained-cache hash, from [RetainedDrawRunCache.lastMissHash].
-     * @param capacity The retained cache's capacity.
-     * @return `true` when the same content missed last frame too and the cache can hold every
-     * cacheable span of a frame; the caller then stages fresh, immutable arrays and stores them.
+     * @param cacheHasRoom Whether the retained cache would keep it ([RetainedDrawRunCache.canStore]).
+     * A full cache of live spans refuses it, so promoting would allocate fresh arrays every frame
+     * for nothing; the span stays pooled, and only it re-stages.
+     * @return `true` when the same content missed last frame too and the cache has room; the caller
+     * then stages fresh, immutable arrays and stores them.
      */
-    fun shouldPromote(hash: Int, capacity: Int): Boolean {
-        val settled = missedLastFrame(hash)
-        if (settled && previousCacheableSpans <= capacity) {
+    fun shouldPromote(hash: Int, cacheHasRoom: Boolean): Boolean {
+        if (cacheHasRoom && missedLastFrame(hash)) {
             promotions += 1
             return true
         }
