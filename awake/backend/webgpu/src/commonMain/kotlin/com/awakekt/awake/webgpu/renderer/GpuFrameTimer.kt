@@ -15,6 +15,7 @@ import io.ygdrasil.webgpu.GPUBufferUsage
 import io.ygdrasil.webgpu.GPUCommandBufferDescriptor
 import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPUComputePassDescriptor
+import io.ygdrasil.webgpu.GPUComputePassEncoder
 import io.ygdrasil.webgpu.GPUDevice
 import io.ygdrasil.webgpu.GPUFeatureName
 import io.ygdrasil.webgpu.GPUMapMode
@@ -167,7 +168,7 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice, 
 
         override fun beginComputePass(descriptor: GPUComputePassDescriptor?) = nextPair()?.let { first ->
             val base = descriptor ?: io.ygdrasil.webgpu.ComputePassDescriptor()
-            encoder.beginComputePass(object : GPUComputePassDescriptor by base {
+            encoder.beginTimestampedComputePass(object : GPUComputePassDescriptor by base {
                 override val timestampWrites = ComputePassTimestampWrites(resources!!.queries, first.toUInt(), (first + 1).toUInt())
             })
         } ?: encoder.beginComputePass(descriptor)
@@ -193,26 +194,35 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice, 
         private const val MAX_QUERIES = 256
         private val BUFFER_BYTES = (MAX_QUERIES * Long.SIZE_BYTES).toULong()
 
-        internal fun durationMs(bytes: ByteArray, queryCount: Int, nanosPerTick: Float): Double {
+        /**
+         * The summed duration of [queryCount] / 2 passes, or null when no pass wrote a timestamp: a
+         * binding that drops the writes resolves every query to 0, which must not read as 0 ms.
+         */
+        internal fun durationMs(bytes: ByteArray, queryCount: Int, nanosPerTick: Float): Double? {
             fun timestamp(offset: Int): ULong {
                 var value = 0uL
                 repeat(Long.SIZE_BYTES) { byte -> value = value or ((bytes[offset + byte].toULong() and 0xFFuL) shl (byte * 8)) }
                 return value
             }
             var nanoseconds = 0.0
+            var written = false
             for (query in 0 until queryCount step 2) {
                 val start = timestamp(query * Long.SIZE_BYTES)
                 val end = timestamp((query + 1) * Long.SIZE_BYTES)
+                written = written || start != 0uL || end != 0uL
                 // Unsigned subtraction handles timestamp wrap without converting an absolute clock to Float.
                 nanoseconds += (end - start).toDouble() * nanosPerTick
             }
-            return nanoseconds / 1_000_000.0
+            return if (written) nanoseconds / 1_000_000.0 else null
         }
     }
 }
 
 /** Native wgpu4k currently omits render-pass timestamp writes from its descriptor mapping. */
 internal expect fun GPUCommandEncoder.beginTimestampedRenderPass(descriptor: GPURenderPassDescriptor): GPURenderPassEncoder
+
+/** A compute pass that writes its descriptor's timestamps; the browser binding's mapper drops them. */
+internal expect fun GPUCommandEncoder.beginTimestampedComputePass(descriptor: GPUComputePassDescriptor): GPUComputePassEncoder
 
 internal fun Renderer.createRenderEncoder(): GPUCommandEncoder =
     gpuFrameTimer?.createEncoder() ?: graphicsDevice.wgpuContext.device.createCommandEncoder()
