@@ -9,7 +9,10 @@ import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.provides
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.node.LayoutNode
@@ -62,8 +65,9 @@ class TextTabularDigitsTest {
     @Test
     fun rightAlignedCounterKeepsItsRightEdgeFixedFrom1To999() {
         val host = ComposeHost(density = 1f)
-        var counter = "1"
-        var numerals: FontNumerals? = FontNumerals.Tabular
+        // State, not plain vars: a host that skips unchanged passes only sees reads it can track.
+        var counter by mutableStateOf("1")
+        var numerals: FontNumerals? by mutableStateOf(FontNumerals.Tabular)
 
         fun measureCounter(): Pair<Int, Int> {
             val out = host.frame(FrameInput(200, 60)) {
