@@ -65,10 +65,7 @@ class BackdropBlurWork internal constructor(
 internal class BackdropGrouping(private val target: ImagePassTargetContext) {
     val works = ArrayList<BackdropBlurWork>()
     private var open: BackdropBlurWork? = null
-    private var dirtyLeft = Float.POSITIVE_INFINITY
-    private var dirtyTop = Float.POSITIVE_INFINITY
-    private var dirtyRight = Float.NEGATIVE_INFINITY
-    private var dirtyBottom = Float.NEGATIVE_INFINITY
+    private val dirty = BackdropDirtyRects()
 
     /** Whether a later panel could still share a blur, which is when painting has to be watched. */
     val watching: Boolean get() = open != null
@@ -99,20 +96,14 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
         val work = BackdropBlurWork(blur, target.width, target.height, region)
         works += work
         open = work
-        dirtyLeft = Float.POSITIVE_INFINITY
-        dirtyTop = Float.POSITIVE_INFINITY
-        dirtyRight = Float.NEGATIVE_INFINITY
-        dirtyBottom = Float.NEGATIVE_INFINITY
+        dirty.clear()
         return work
     }
 
     /** Records that the pixels in these bounds may have changed since the open blur ran. */
     fun painted(left: Float, top: Float, right: Float, bottom: Float) {
         if (open == null || right <= left || bottom <= top) return
-        dirtyLeft = min(dirtyLeft, left)
-        dirtyTop = min(dirtyTop, top)
-        dirtyRight = max(dirtyRight, right)
-        dirtyBottom = max(dirtyBottom, bottom)
+        dirty.add(left, top, right, bottom)
     }
 
     /** [painted] for whatever [primitive] can cover. */
@@ -121,7 +112,7 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
     }
 
     private fun dirtyTouches(region: BackdropRegion): Boolean =
-        dirtyRight > region.left && dirtyLeft < region.right && dirtyBottom > region.top && dirtyTop < region.bottom
+        dirty.touches(region.left.toFloat(), region.top.toFloat(), region.right.toFloat(), region.bottom.toFloat())
 
     @Suppress("CyclomaticComplexMethod")
     private fun paintBounds(primitive: DrawCommand) {
@@ -222,11 +213,25 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
                             grouping.painted(left, top, right, bottom)
                         }
                     }
+                    is DrawCommand.ShadowQuad -> {
+                        if (!castsUnder(primitive, primitives.getOrNull(index + 1))) grouping.painted(primitive)
+                    }
                     else -> grouping.painted(primitive)
                 }
             }
             return result
         }
+
+        /**
+         * Whether [shadow] is the drop shadow of the glass panel [next] that follows it: the same
+         * rectangle. A panel's own shadow lies under its glass, and the glass hides it the way a CSS
+         * `box-shadow` stays outside the border box of a `backdrop-filter` panel, so it does not
+         * count as paint the panel's own blur must see. Without this a shadowed panel could never
+         * share a blur (#1512).
+         */
+        private fun castsUnder(shadow: DrawCommand.ShadowQuad, next: DrawCommand?): Boolean =
+            next is DrawCommand.BackdropBlur && next.transform == null &&
+                shadow.x == next.x && shadow.y == next.y && shadow.w == next.w && shadow.h == next.h
     }
 }
 

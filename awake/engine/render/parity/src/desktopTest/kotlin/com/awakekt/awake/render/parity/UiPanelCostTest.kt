@@ -43,10 +43,11 @@ data class PanelCost(
     val vertices: Int,
     val texturedParts: Int,
     val sheets: Int,
+    val chains: Int,
     val cpuMs: Double,
     val allocKb: Long,
 ) {
-    override fun toString() = "draws=$draws passes=$passes tris=$triangles verts=$vertices parts=$texturedParts sheets=$sheets " +
+    override fun toString() = "draws=$draws passes=$passes tris=$triangles verts=$vertices parts=$texturedParts sheets=$sheets chains=$chains " +
         "| cpu=${"%.2f".format(cpuMs)}ms alloc=${allocKb}KB (reference only)"
 }
 
@@ -61,6 +62,7 @@ class UiPanelCostTest {
     private val sheet = panelSheet()
     private val skin = panelSkin(sheet)
     private val apart = listOf(60 to 60, 700 to 360)
+    private val corners = listOf(0 to 0, 880 to 0, 0 to 420, 880 to 420)
     private val overlapping = listOf(60 to 60, 180 to 140)
 
     @Test
@@ -89,16 +91,21 @@ class UiPanelCostTest {
     }
 
     @Test
-    fun aSecondBlurredPanelCostsItsOwnBlurChainTodayAndMustNotCostMore() = withRenderer { renderer ->
+    fun blurredPanelsThatCannotSeeEachOtherShareOneChain() = withRenderer { renderer ->
         val one = measure(renderer, PanelLook.Glass, listOf(60 to 60))
         val twoApart = measure(renderer, PanelLook.Glass, apart)
+        val fourApart = measure(renderer, PanelLook.Glass, corners)
         val twoStacked = measure(renderer, PanelLook.Glass, overlapping)
-        println("glass x1: $one\nglass x2 apart: $twoApart\nglass x2 overlapping: $twoStacked")
-        println("passes per extra panel apart: ${twoApart.passes - one.passes}")
-        // Measured: 6 passes per blurred panel, apart or overlapping, so the count DOES grow with the
-        // number of panels (#1512). The ceiling ratchets that; the target is one shared chain.
-        assertTrue(twoApart.passes <= one.passes + BLUR_PASSES - 1, "two apart: ${twoApart.passes} passes vs one ${one.passes}")
+        println("glass x1: $one\nglass x2 apart: $twoApart\nglass x4 apart: $fourApart\nglass x2 overlapping: $twoStacked")
+        // One chain for the frame: every further panel only composites (#1512).
+        assertTrue(twoApart.passes <= one.passes + EXTRA_PANEL_PASSES, "two apart: ${twoApart.passes} passes vs one ${one.passes}")
+        assertTrue(fourApart.passes <= one.passes + 3 * EXTRA_PANEL_PASSES, "four apart: ${fourApart.passes} passes vs one ${one.passes}")
+        assertEquals(1, twoApart.chains, "two panels apart share one chain")
+        assertEquals(1, fourApart.chains, "four panels apart share one chain")
+        // Stacked glass must see the panel beneath, so it keeps its own chain.
         assertTrue(twoStacked.passes <= one.passes + BLUR_PASSES - 1, "two stacked: ${twoStacked.passes} passes vs one ${one.passes}")
+        assertEquals(2, twoStacked.chains, "the upper panel reads the lower one, so it blurs again")
+        assertTrue(twoStacked.passes > twoApart.passes, "stacked glass reads the panel under it, so it does not share")
     }
 
     private fun measure(renderer: Renderer, look: PanelLook, positions: List<Pair<Int, Int>>): PanelCost {
@@ -131,7 +138,7 @@ class UiPanelCostTest {
             }
         } + textured.sumOf { it.vertices.size }
         renderer.waitIdle()
-        val cost = PanelCost(stats.drawCalls, renderer.frameRenderPasses, stats.triangles, vertices, textured.size, textured.map { it.texture }.distinct().size, cpuMs, allocKb)
+        val cost = PanelCost(stats.drawCalls, renderer.frameRenderPasses, stats.triangles, vertices, textured.size, textured.map { it.texture }.distinct().size, runs.filterIsInstance<StagedDrawRun.ImagePassRun>().count { it.chain.steps.size > 1 }, cpuMs, allocKb)
         materials.values.forEach { it.destroy() }
         return cost
     }
@@ -172,6 +179,7 @@ class UiPanelCostTest {
         const val READY_TIMEOUT_MS = 30_000L
         const val IMAGE_PARTS = 6 // measured 5 textured parts, 0 extra draws over plain
         const val SHADOW_DRAWS = 5 // measured 4: one per shadowed node (window + 3 buttons)
+        const val EXTRA_PANEL_PASSES = 1 // a panel that shares the chain only composites
         const val BLUR_PASSES = 7 // measured 6 extra passes and 6 extra draws for one blurred panel
     }
 }
