@@ -7,7 +7,10 @@ package com.awakekt.awake.compose.ui
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.RememberObserver
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.SubcomposeLayout
@@ -50,7 +53,8 @@ class SubcomposeForgetTest {
     @Test
     fun aSlotNoLongerSubcomposedIsForgotten() {
         val host = ComposeHost()
-        var slots = listOf("a", "b")
+        // State, not a plain var: a host that skips unchanged passes only sees reads it can track.
+        var slots by mutableStateOf(listOf("a", "b"))
         val content: context(Composer)
         () -> Unit = { TrackedSlots(slots) }
 
@@ -67,7 +71,7 @@ class SubcomposeForgetTest {
     @Test
     fun aRemovedSubcomposeLayoutForgetsItsSlotsOnce() {
         val host = ComposeHost()
-        var show = true
+        var show by mutableStateOf(true)
         val content: context(Composer)
         () -> Unit = { if (show) TrackedSlots(listOf("a", "b")) }
 

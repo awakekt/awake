@@ -1,1 +1,0 @@
-- `awake:net`: `BatchedSession` collects a client's messages for one tick and writes them as one frame (`BatchFrame`), with a latest-only lane that drops a stale snapshot, a per-batch size cap, `GameTransportConfig.batching` and a `?awake-batch=1` opt-in so older clients keep unbatched frames, and `UnbatchingTransport` to read batches back as the same packet stream (#1469).

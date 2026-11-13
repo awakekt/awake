@@ -106,13 +106,13 @@ class ScopedComponentRegistryTest {
         override fun export(world: World, entity: Entity, component: Crane) = CraneSpawner(component.reach)
     }
 
-    private object DockCapability : SceneCapability {
+    private object DockCapability : SceneFeature {
         override val id = "com.example.docks"
         override val components = listOf(DockBinding)
         override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = Unit
     }
 
-    private object CraneCapability : SceneCapability {
+    private object CraneCapability : SceneFeature {
         override val id = "com.example.cranes"
         override val components = listOf(CraneBinding)
         override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = Unit

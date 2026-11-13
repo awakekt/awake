@@ -417,7 +417,7 @@ class SceneSwitchStateTest {
     }
 
     /** Keeps the services each scene's systems were given. */
-    private class ProbeCapability : SceneCapability {
+    private class ProbeCapability : SceneFeature {
         override val id = "com.example.harbor-town.probe"
         val services = mutableListOf<SceneHostServices>()
 

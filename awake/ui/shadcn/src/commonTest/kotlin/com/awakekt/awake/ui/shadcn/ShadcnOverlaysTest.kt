@@ -9,6 +9,9 @@ import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.testing.composeFrame
 import com.awakekt.awake.compose.testing.composeTestSession
 import com.awakekt.awake.compose.ui.Modifier
@@ -36,6 +39,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+// The caller-owned flags below are state, not plain vars: a host that skips unchanged passes only sees
+// reads it can track (#1512).
 class ShadcnOverlaysTest {
 
     private val theme = ShadcnThemeValues(ShadcnTheme)
@@ -157,7 +162,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun controlledMenuOpensBelowItsTriggerThenClosesAfterSelection() {
-        var expanded = false
+        var expanded by mutableStateOf(false)
         var selected: Int? = null
         val session = composeTestSession(width = 300, height = 200) {
             provideShadcnTheme(theme) {
@@ -194,7 +199,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun controlledMenuDismissesOnOutsidePressAndEscape() {
-        var expanded = false
+        var expanded by mutableStateOf(false)
         val session = composeTestSession(width = 300, height = 200) {
             provideShadcnTheme(theme) {
                 ShadcnDropdownMenu(
@@ -230,7 +235,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun controlledMenuSelectsTheRovingKeyboardEntry() {
-        var expanded = false
+        var expanded by mutableStateOf(false)
         var selected: Int? = null
         val session = composeTestSession(width = 300, height = 200) {
             provideShadcnTheme(theme) {
@@ -350,8 +355,8 @@ class ShadcnOverlaysTest {
 
     @Test
     fun controlledSelectOpensItsScrollableOptionsAndCommitsTheClickedItem() {
-        var expanded = false
-        var selected = 1
+        var expanded by mutableStateOf(false)
+        var selected by mutableStateOf(1)
         val session = composeTestSession(width = 300, height = 260) {
             provideShadcnTheme(theme) {
                 Column {
@@ -404,7 +409,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun selectKeyboardNavigationSkipsDisabledItemsAndSupportsEscape() {
-        var expanded = false
+        var expanded by mutableStateOf(false)
         var selected: Int? = null
         val session = composeTestSession(width = 300, height = 260) {
             provideShadcnTheme(theme) {
@@ -439,7 +444,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun overflowingSelectExposesBothScrollControls() {
-        var expanded = true
+        var expanded by mutableStateOf(true)
         val session = composeTestSession(width = 300, height = 260) {
             provideShadcnTheme(theme) {
                 ShadcnSelect(
@@ -475,7 +480,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun dialogRendersContentWithScrimAndDismissesOnOutsideClick() {
-        var visible = true
+        var visible by mutableStateOf(true)
         var dismissed = false
         val session = composeTestSession(width = 600, height = 400) {
             provideShadcnTheme(theme) {
@@ -530,7 +535,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun dialogDismissesOnEscapeKey() {
-        var visible = true
+        var visible by mutableStateOf(true)
         var dismissed = false
         val session = composeTestSession(width = 600, height = 400) {
             provideShadcnTheme(theme) {
@@ -557,7 +562,7 @@ class ShadcnOverlaysTest {
 
     @Test
     fun dialogCloseButtonSitsInTheTopRightCornerAndDismisses() {
-        var visible = true
+        var visible by mutableStateOf(true)
         val session = composeTestSession(width = 600, height = 400) {
             provideShadcnTheme(theme) {
                 ShadcnDialog(visible = visible, onDismissRequest = { visible = false }, id = "close-dialog") {

@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
  * and the host gives a physics world. An index that names a palette draws with terrain layers; one
  * without draws the neutral paged surface. A scene streams at most one.
  */
-internal object StreamedTerrainCapability : SceneCapability {
+internal object StreamedTerrainFeature : SceneFeature {
     override val id = "com.awakekt.awake.streamed-terrain"
     override val components = WorldstreamSceneComponents.bindings
 
@@ -59,7 +59,7 @@ internal object StreamedTerrainCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val config = scene.pagedTerrain() ?: return
         // A fixed system, so it runs before the physics step that builds the bodies of its collision cells.
-        plan.fixed("paged-terrain") { services ->
+        plan.fixed(CoreSystems.PAGED_TERRAIN) { services ->
             val assets = requireNotNull(services.content[Terrain]) {
                 "The scene has a paged_terrain; pass the content loadSceneContent reads in SceneHostServices"
             }

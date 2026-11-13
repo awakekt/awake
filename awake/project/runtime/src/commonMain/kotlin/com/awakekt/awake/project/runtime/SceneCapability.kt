@@ -12,48 +12,56 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import kotlin.reflect.KClass
 
 /**
- * A capability as scenes use it: the scene components it adds, what it reads from a project's files
+ * A feature as scenes use it: the scene components it adds, what it reads from a project's files
  * before the scene runs, and the systems a scene that uses it runs.
  *
  * Core's controls, physics, AI, motion, particles, shader effects and skinned animation are
- * capabilities. A game, or a package it depends on, adds its own by passing them to [loadProject],
- * [loadSceneContent] and [sceneSystemsFor]; they run after Core's, in the order given. Capabilities
+ * features. A game, or a package it depends on, adds its own by passing them to [loadProject],
+ * [loadSceneContent] and [sceneSystemsFor]; they run after Core's, in the order given. Features
  * are linked when the game is built, like any dependency: Kotlin/Native and wasmJs cannot load code.
  *
- * A capability is code that ships in the game. An editor plugin only edits the data it reads (D36).
+ * A feature is code that ships in the game. An editor plugin only edits the data it reads (D36).
  */
-interface SceneCapability {
+interface SceneFeature {
     /**
-     * Reverse-domain id, unique among the capabilities a project runs with. A project's manifest names
-     * it in `plugins`; a plugin marked `required` refuses the load when no capability has its id.
+     * Reverse-domain id, unique among the features a project runs with. A project's manifest names
+     * it in `plugins`; a plugin marked `required` refuses the load when no feature has its id.
      */
     val id: String
 
-    /** Bindings for the scene components this capability adds, registered before a scene decodes. */
+    /** Bindings for the scene components this feature adds, registered before a scene decodes. */
     val components: List<SceneComponentBinding<*, *>> get() = emptyList()
 
     /**
      * Reads what [scene] needs from the project's [files] before it runs, such as images or meshes,
      * and puts it into [content] for the systems to read. Called once per load, before the physics
-     * world exists. Throws [IllegalArgumentException] for a scene this capability cannot run.
+     * world exists. Throws [IllegalArgumentException] for a scene this feature cannot run.
      */
     suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) = Unit
 
-    /** Adds to [plan] the systems [scene] runs with this capability, in run order: none when it uses none. */
+    /**
+     * The names of every system this feature can plan, for a host that disables systems by name: a
+     * name listed here is known even for a scene that does not use the feature, so disabling it is
+     * not mistaken for a typo. Leave it empty and a name is known only for a scene that plans it.
+     */
+    val systemNames: List<String> get() = emptyList()
+
+    /** Adds to [plan] the systems [scene] runs with this feature, in run order: none when it uses none. */
     fun plan(scene: SceneDocument, plan: SceneSystemPlan)
 }
 
 /**
- * Whether a node of this scene, at any depth, has a component of [type]: what a capability checks to
+ * Whether a node of this scene, at any depth, has a component of [type]: what a feature checks to
  * decide whether the scene uses it.
  */
 fun SceneDocument.uses(type: KClass<out SceneComponent>): Boolean = nodes.any { it.has(type) }
 
 /**
- * The systems a scene runs, as [SceneCapability.plan] adds them. Each is built once the host's
+ * The systems a scene runs, as [SceneFeature.plan] adds them. Each is built once the host's
  * services exist, from [SceneHostServices]; a system that holds something to give back implements
  * [AutoCloseable] and is closed when the scene stops.
  *
@@ -66,7 +74,7 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
     private var physicsSystem: PhysicsSystem? = null
 
     /**
-     * The one physics step this plan's systems share, for a capability whose systems read the step's
+     * The one physics step this plan's systems share, for a feature whose systems read the step's
      * contacts or remove bodies: streamed terrain's collision cells do, and so do a blueprint's sensor
      * events. A body is destroyed only through the system that built it. Needs [hasPhysics].
      */
@@ -79,7 +87,10 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
      * every step, such as a networked game's prediction, reads what was dropped from
      * [SceneHostServices.fixedStep].
      */
-    fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, create)
+    fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, SceneSystemRole.Simulation, create)
+
+    /** [fixed] for a system with [role]: a host that does not run that role leaves it out. */
+    fun fixed(name: String, role: SceneSystemRole, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, role, create)
 
     /**
      * Adds a system run on every fixed step, named [name], just before the system named [before] in the
@@ -91,23 +102,30 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
      */
     fun fixed(name: String, before: String, create: (SceneHostServices) -> System) {
         val at = specs.indexOfFirst { it.name == before && it.phase == SceneSystemPhase.Fixed }
-        add(name, SceneSystemPhase.Fixed, create)
+        add(name, SceneSystemPhase.Fixed, SceneSystemRole.Simulation, create)
         if (at >= 0) specs.add(at, specs.removeAt(specs.lastIndex))
     }
 
     /** Adds a system run once per rendered frame, named [name] in the scene's schedule. */
-    fun frame(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, create)
+    fun frame(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, SceneSystemRole.Simulation, create)
+
+    /** [frame] for a system with [role]: a host that does not run that role leaves it out. */
+    fun frame(name: String, role: SceneSystemRole, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, role, create)
 
     /**
      * Adds a system run once per rendered frame before world matrices are propagated for animation,
      * camera and [frame] systems, named [name] in the scene's schedule.
      */
     fun preAnimation(name: String, create: (SceneHostServices) -> System) =
-        add(name, SceneSystemPhase.PreAnimation, create)
+        add(name, SceneSystemPhase.PreAnimation, SceneSystemRole.Simulation, create)
 
-    private fun add(name: String, phase: SceneSystemPhase, create: (SceneHostServices) -> System) {
+    /** [preAnimation] for a system with [role]: a host that does not run that role leaves it out. */
+    fun preAnimation(name: String, role: SceneSystemRole, create: (SceneHostServices) -> System) =
+        add(name, SceneSystemPhase.PreAnimation, role, create)
+
+    private fun add(name: String, phase: SceneSystemPhase, role: SceneSystemRole, create: (SceneHostServices) -> System) {
         require(specs.none { it.name == name }) { "Two systems are named '$name'; each system in a scene needs its own name" }
-        specs += SceneSystemSpec(name, phase, create)
+        specs += SceneSystemSpec(name, phase, role, create)
     }
 
     /** The names of Core's systems a game plans its own around. */
@@ -116,13 +134,13 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
          * Core's character controller step, which moves every `character_controller` by its intent. A fixed
          * system planned `before` it writes the velocity and facing that same step applies.
          */
-        const val CHARACTER_CONTROLLER: String = "character"
+        const val CHARACTER_CONTROLLER: String = CoreSystems.CHARACTER_CONTROLLER
     }
 }
 
 /**
  * The name of one piece of [SceneContent], typed by what it holds. Keys compare by identity, so a
- * capability declares each of its keys once and reads with the same instance.
+ * feature declares each of its keys once and reads with the same instance.
  *
  * @param T The type of the content the key names.
  * @property name What the content is, for messages.
@@ -132,9 +150,9 @@ class SceneContentKey<T : Any>(val name: String) {
 }
 
 /**
- * What capabilities read from a project's files for its systems, by [SceneContentKey]: the sprites of
+ * What features read from a project's files for its systems, by [SceneContentKey]: the sprites of
  * its particle emitters, the documents of its shader effects, the triangles of its collision meshes,
- * and whatever a game's own capabilities load. [loadSceneContent] fills it.
+ * and whatever a game's own features load. [loadSceneContent] fills it.
  */
 class SceneContent private constructor(internal val values: Map<SceneContentKey<*>, Any>) {
     /** The content under [key], or null when nothing loaded it. */
@@ -154,10 +172,10 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
     }
 
     /**
-     * Collects content while capabilities load it.
+     * Collects content while features load it.
      *
      * @property hasRenderer Whether the host draws. A host with no renderer, such as a game server,
-     * leaves out the systems that draw ([SceneSystemPlan.hasRenderer]), so a capability then loads only
+     * leaves out the systems that draw ([SceneSystemPlan.hasRenderer]), so a feature then loads only
      * what its other systems read: for what only drawing reads, such as images, it checks that the files
      * resolve and decodes nothing. [loadSceneContent] and [loadProject] take it from the host.
      */
@@ -175,7 +193,7 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
 
     /** The empty content. */
     companion object {
-        /** No content: a scene whose capabilities load nothing. */
+        /** No content: a scene whose features load nothing. */
         val Empty: SceneContent = SceneContent(emptyMap())
 
         /** Content built by [block], for a host or a test that has its own. */
@@ -184,11 +202,11 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
 }
 
 /**
- * Reads what [scene]'s capabilities need from the project's [files]: the sprites of its particle
- * emitters, the triangles of its collision meshes, its shader documents, and what [capabilities] load.
+ * Reads what [scene]'s features need from the project's [files]: the sprites of its particle
+ * emitters, the triangles of its collision meshes, its shader documents, and what [features] load.
  * A host that builds a scene's systems with [sceneSystemsFor] passes the result as
  * [SceneHostServices.content]; [loadProject] reads it for a project. Throws [IllegalArgumentException]
- * for content a capability cannot load.
+ * for content a feature cannot load.
  *
  * A host with no renderer, such as a game server, passes `hasRenderer = false` and reads no more than
  * its systems use: the scene's canvas images are checked to resolve and not decoded, so no
@@ -197,60 +215,88 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
 suspend fun loadSceneContent(
     scene: SceneDocument,
     files: AssetSource,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
-): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
+): SceneContent = loadContent(scene, files, installedFeatures(capabilities), "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
 
 /**
- * Reads what Core's own capabilities need for [scene] from the project's [files]: every kind of
+ * Reads what Core's own features need for [scene] from the project's [files]: every kind of
  * [CoreSceneContent] the scene uses, such as its canvas images and fonts, collision meshes, particle
- * sprites, audio clips and shader effects, and none of a game's capabilities'. [loadSceneContent] is
- * this and a game's capabilities together.
+ * sprites, audio clips and shader effects, and none of a game's features'. [loadSceneContent] is
+ * this and a game's features together.
  *
  * This is for a host that loads Core's content itself while a scene is edited, as an editor does,
  * when its Play switches to another scene through a [SceneSwitch]: the editor loaded nothing for the
  * scene switched to, and this reads all of it, including a `paged_terrain`'s, which has no public
  * key, and any kind Core adds later. The editor lays what it holds itself over the result with
- * [SceneContent.plus], and loads a game's capabilities on top with [loadCapabilityContent].
+ * [SceneContent.plus], and loads a game's features on top with [loadFeatureContent].
  *
- * Throws [IllegalArgumentException] for content a capability cannot load. [hasRenderer] is as for
+ * Throws [IllegalArgumentException] for content a feature cannot load. [hasRenderer] is as for
  * [loadSceneContent].
  */
 suspend fun loadCoreSceneContent(scene: SceneDocument, files: AssetSource, hasRenderer: Boolean = true): SceneContent =
-    loadContent(scene, files, CORE_CAPABILITIES, "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
+    loadContent(scene, files, CORE_FEATURES, "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
 
 /**
- * [loaded] with what [capabilities] read for [scene] from the project's [files] added to it. Only their
- * own [SceneCapability.load] runs, none of Core's capabilities': [loadCoreSceneContent] runs those.
+ * [loaded] with what [features] read for [scene] from the project's [files] added to it. Only their
+ * own [SceneFeature.load] runs, none of Core's features': [loadCoreSceneContent] runs those.
  *
  * This is for a host that keeps Core's content loaded while a scene is edited, so that Play starts at
- * once, and loads a game's own capabilities when Play starts: an editor. It passes the result as
- * [SceneHostServices.content], and the same [capabilities] to [sceneSystemsFor]. A host that loads
+ * once, and loads a game's own features when Play starts: an editor. It passes the result as
+ * [SceneHostServices.content], and the same [features] to [sceneSystemsFor]. A host that loads
  * everything when the scene starts uses [loadSceneContent] instead.
  *
- * A capability may not load a key [loaded] already holds. Throws [IllegalArgumentException] for that,
- * for content a capability cannot load, and for two capabilities with one id, Core's included.
+ * A feature may not load a key [loaded] already holds. Throws [IllegalArgumentException] for that,
+ * for content a feature cannot load, and for two features with one id, Core's included.
  * [hasRenderer] is as for [loadSceneContent].
  */
-suspend fun loadCapabilityContent(
+suspend fun loadFeatureContent(
     scene: SceneDocument,
     files: AssetSource,
-    capabilities: List<SceneCapability>,
+    capabilities: List<SceneFeature>,
     loaded: SceneContent = SceneContent.Empty,
     hasRenderer: Boolean = true,
 ): SceneContent {
-    installedCapabilities(capabilities)
+    installedFeatures(capabilities)
     return loadContent(scene, files, capabilities, "The scene", SceneContent.Builder(loaded.values, hasRenderer))
 }
 
+/** [loadFeatureContent] under its name before the rename of features to features. */
+@Deprecated("Renamed to loadFeatureContent", ReplaceWith("loadFeatureContent(scene, files, capabilities, loaded, hasRenderer)"))
+suspend fun loadCapabilityContent(
+    scene: SceneDocument,
+    files: AssetSource,
+    capabilities: List<SceneFeature>,
+    loaded: SceneContent = SceneContent.Empty,
+    hasRenderer: Boolean = true,
+): SceneContent = loadFeatureContent(scene, files, capabilities, loaded, hasRenderer)
+
 /**
- * Runs each of [installed]'s [SceneCapability.load] in order into [content], prefixing a refusal with
+ * [SceneFeature] under its name before the rename of features to features, kept for one release so
+ * a game compiled against an earlier release still links and an implementation still compiles, with a
+ * warning that offers the new name. Everything that takes a feature takes one of these.
+ */
+@Deprecated("Renamed to SceneFeature", ReplaceWith("SceneFeature", "com.awakekt.awake.project.runtime.SceneFeature"))
+interface SceneCapability : SceneFeature {
+    override val id: String
+
+    override val components: List<SceneComponentBinding<*, *>> get() = emptyList()
+
+    override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) = Unit
+
+    override val systemNames: List<String> get() = super.systemNames
+
+    override fun plan(scene: SceneDocument, plan: SceneSystemPlan)
+}
+
+/**
+ * Runs each of [installed]'s [SceneFeature.load] in order into [content], prefixing a refusal with
  * [label].
  */
 internal suspend fun loadContent(
     scene: SceneDocument,
     files: AssetSource,
-    installed: List<SceneCapability>,
+    installed: List<SceneFeature>,
     label: String,
     content: SceneContent.Builder,
 ): SceneContent {
