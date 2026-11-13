@@ -76,13 +76,13 @@ class WebGpuMeshUploadStagingTest {
             repeat(FRAMES) { mesh.update(vertices, indices) }
             assertEquals(1, mesh.uploadCount, "the same immutable arrays upload once")
             repeat(FRAMES) { mesh.update(vertices, indices, forceUpload = true) }
-            assertEquals(1, mesh.uploadCount, "pooled arrays whose contents did not change write nothing (#1545)")
+            assertEquals(2, mesh.uploadCount, "a run turning pooled writes once to seed its shadow, then nothing while unchanged (#1545)")
             val floatsBefore = mesh.uploadedFloats
             repeat(FRAMES) { frame ->
                 vertices[DynamicMesh.FLOATS_PER_VERTEX + 1] = 100f + frame
                 mesh.update(vertices, indices, forceUpload = true)
             }
-            assertEquals(1 + FRAMES, mesh.uploadCount, "a pooled array whose contents changed writes every time")
+            assertEquals(2 + FRAMES, mesh.uploadCount, "a pooled array whose contents changed writes every time")
             assertEquals(FRAMES.toLong(), mesh.uploadedFloats - floatsBefore, "and writes only the changed float")
         } finally {
             mesh.destroy()

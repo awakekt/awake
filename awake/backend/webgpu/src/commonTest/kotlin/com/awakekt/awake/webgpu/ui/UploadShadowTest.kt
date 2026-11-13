@@ -46,4 +46,12 @@ class UploadShadowTest {
         assertEquals(0, shadow.floats(Float.NaN, 2f).first, "a NaN differs from 1")
         assertEquals(0, shadow.floats(Float.NaN, 2f).second, "a NaN matches its own bits")
     }
+
+    @Test
+    fun releasingFreesTheCopyAndTheNextUploadWritesAll() {
+        val shadow = UploadShadow()
+        shadow.ints(1, 2, 3)
+        shadow.release()
+        assertEquals(0 to 3, shadow.ints(1, 2, 3))
+    }
 }

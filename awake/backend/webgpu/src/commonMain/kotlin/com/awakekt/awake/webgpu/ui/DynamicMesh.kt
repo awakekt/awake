@@ -113,11 +113,17 @@ class DynamicMesh(
         // Written from kept host memory (see [MeshUploadStaging]): on the web straight from a view
         // of wasm linear memory, with no `ArrayBuffer` sliced out per array; on the JVM through a
         // native buffer grown once. The retained-run skip above means a stable run writes nothing.
-        // Only the span that differs from what the buffer holds is written: one copy and one
-        // `writeBuffer` per buffer, however many primitives in it changed.
+        // A pooled run (forced: same arrays, new contents) writes only the span that differs from
+        // what the buffer holds: one copy and one `writeBuffer` per buffer. A retained run's new
+        // arrays are new content, written whole, and the shadow is released: only runs that keep
+        // changing pay for a CPU copy of their buffer.
         val queue = graphicsDevice.wgpuContext.device.queue
-        val vertexRange = vertexShadow.changedFloats(vertices)
-        val indexRange = indexShadow.changedInts(indices)
+        if (!forceUpload) {
+            vertexShadow.release()
+            indexShadow.release()
+        }
+        val vertexRange = if (forceUpload) vertexShadow.changedFloats(vertices) else UploadShadow.range(0, vertices.size)
+        val indexRange = if (forceUpload) indexShadow.changedInts(indices) else UploadShadow.range(0, indices.size)
         val floats = UploadShadow.count(vertexRange)
         val ints = UploadShadow.count(indexRange)
         if (floats > 0) queue.writeMeshFloatRange(vertexBuffer, vertices, UploadShadow.first(vertexRange), floats, staging)

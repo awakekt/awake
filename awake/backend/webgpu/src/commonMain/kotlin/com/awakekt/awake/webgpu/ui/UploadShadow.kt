@@ -8,6 +8,9 @@ package com.awakekt.awake.webgpu.ui
 /**
  * The CPU copy of what one GPU buffer holds, so an upload writes only the span that changed (#1545).
  *
+ * Kept only for a pooled run, one that changes frame after frame; it costs 4 bytes per float and
+ * index of that run, and [release] frees it when the run settles.
+ *
  * A UI run whose span changed is staged whole, but usually only a few primitives in it moved: one
  * glyph of a chat line, one bar of a status frame. Comparing against the copy costs one read of
  * each element, less than the copy into upload memory and the `writeBuffer` it saves for every
@@ -17,15 +20,22 @@ package com.awakekt.awake.webgpu.ui
  * exclusive end in the low 32, from [range]; an empty range (first == end) means nothing to write.
  */
 internal class UploadShadow {
-    private var floats = FloatArray(0)
+    private var floats = NO_FLOATS
     private var floatCount = 0
-    private var ints = IntArray(0)
+    private var ints = NO_INTS
     private var intCount = 0
 
     /** Forgets the copy: the next upload writes everything, as after the buffer is reallocated. */
     fun invalidate() {
         floatCount = 0
         intCount = 0
+    }
+
+    /** Forgets the copy and frees its memory, for a buffer whose next uploads are not diffed. */
+    fun release() {
+        invalidate()
+        floats = NO_FLOATS
+        ints = NO_INTS
     }
 
     /** The span of [data] that differs from the copy, then records [data] as the copy. */
@@ -55,6 +65,9 @@ internal class UploadShadow {
     }
 
     companion object {
+        private val NO_FLOATS = FloatArray(0)
+        private val NO_INTS = IntArray(0)
+
         /** Packs [first] and the exclusive [end] of a range. */
         fun range(first: Int, end: Int): Long = (first.toLong() shl 32) or end.toLong()
 
