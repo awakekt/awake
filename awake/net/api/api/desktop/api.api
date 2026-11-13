@@ -2,6 +2,52 @@ public abstract interface class com/awakekt/awake/net/AbortableTransport : com/a
 	public abstract fun abort ()V
 }
 
+public final class com/awakekt/awake/net/BatchFrame {
+	public static final field HEADER_BYTES I
+	public static final field INSTANCE Lcom/awakekt/awake/net/BatchFrame;
+	public static final field MARKER I
+	public static final field NEGOTIATION_PARAMETER Ljava/lang/String;
+	public static final field NEGOTIATION_VALUE Ljava/lang/String;
+	public static final field VERSION I
+	public final fun decode ([B)Ljava/util/List;
+	public final fun encode (Ljava/util/List;II)[B
+	public static synthetic fun encode$default (Lcom/awakekt/awake/net/BatchFrame;Ljava/util/List;IIILjava/lang/Object;)[B
+	public final fun entrySize (I)I
+	public final fun varIntSize (I)I
+}
+
+public final class com/awakekt/awake/net/BatchFrameKt {
+	public static final fun getAcceptsBatches (Lcom/awakekt/awake/net/TransportSession;)Z
+}
+
+public abstract interface class com/awakekt/awake/net/BatchNegotiated {
+	public abstract fun getClientAcceptsBatches ()Z
+}
+
+public final class com/awakekt/awake/net/BatchedSession : com/awakekt/awake/net/TransportSession {
+	public static final field Companion Lcom/awakekt/awake/net/BatchedSession$Companion;
+	public static final field DEFAULT_BATCH_BYTES I
+	public static final field MIN_BATCH_BYTES I
+	public fun <init> (Lcom/awakekt/awake/net/TransportSession;IZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/net/TransportSession;IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun flush (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getCloseReason ()Lcom/awakekt/awake/net/SessionCloseReason;
+	public final fun getEnabled ()Z
+	public final fun getFramesWritten ()J
+	public fun getId-H4EDovs ()J
+	public final fun getMaxBatchBytes ()I
+	public fun getPrincipal ()Ljava/lang/String;
+	public final fun getStaged ()I
+	public final fun getStaleDropped ()J
+	public fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
+	public fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendLatest (I[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/net/BatchedSession$Companion {
+}
+
 public abstract interface class com/awakekt/awake/net/ClientEntityDisappearListener {
 	public abstract fun onEntityDisappear-3Mx35h0 (Ljava/lang/Object;J)V
 }
@@ -783,6 +829,15 @@ public final class com/awakekt/awake/net/TransportStallWatch$Companion {
 public final class com/awakekt/awake/net/TransportStallWatchKt {
 	public static final fun watchStalls (Lcom/awakekt/awake/net/DirectTransport;IDD)Lcom/awakekt/awake/net/TransportStallWatch;
 	public static synthetic fun watchStalls$default (Lcom/awakekt/awake/net/DirectTransport;IDDILjava/lang/Object;)Lcom/awakekt/awake/net/TransportStallWatch;
+}
+
+public final class com/awakekt/awake/net/UnbatchingTransport : com/awakekt/awake/net/Transport {
+	public fun <init> (Lcom/awakekt/awake/net/Transport;Lkotlinx/coroutines/CoroutineScope;)V
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getMalformed ()J
+	public fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
+	public fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class com/awakekt/awake/net/ViolationSink {

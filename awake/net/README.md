@@ -34,6 +34,26 @@ net:prediction   PredictionHistory, reconcile -> Correction (None, Blend, Shift,
 
 For `DirectTransport` sockets (such as `:awake:net:client-browser`), `DirectOutbox<M>` in `:awake:net:api` passes discrete packets (`sendNow`) straight through in FIFO order while folding replaceable state updates (`submit`) into a single waiting slot (`merge`, `folded`, `waiting`) whenever `bufferedBytes > limit` (`512 B` default), retrying every `retryMillis` (`8 ms` default).
 
+## Batching a tick's messages (`BatchedSession`, `BatchFrame`)
+
+A game sends each client several messages per tick; each `TransportSession.send` is its own queue
+hand-off, writer wake-up and WebSocket frame. `BatchedSession` stages them and `flush()` writes one
+frame per client per tick (more only above `maxBatchBytes`, 16 KiB by default).
+
+- **Opt in, per connection.** The server sets `install(GameTransport) { batching = true }` and the client
+  connects with `?awake-batch=1` (`BatchFrame.NEGOTIATION_PARAMETER`). Any other client, or a server that
+  left `batching` off, gets today's one frame per `send`: `BatchedSession` is then a pass-through and
+  `flush()` a no-op, so an older client never sees a batch.
+- **Wire format** (`BatchFrame`, version 1): `0xB7 | 0x01 | varint count | count x (varint length | bytes)`.
+  A client that asked receives only batches (one packet is a batch of one).
+- **Semantics.** Order is the order staged. `sendLatest(lane, packet)` replaces the packet staged for that
+  lane, so a stale snapshot is dropped, not queued. A batch rides the reliable channel if any packet in it
+  did. Backpressure is the delegate's, now seeing one send per batch.
+- **Client.** `UnbatchingTransport(transport, scope)` yields the same packet stream as before; a
+  `DirectTransport` client calls `BatchFrame.decode` in its `listen` callback. A malformed batch is dropped
+  whole (`malformed` counts it) and the connection stays open.
+- **Tick.** Call `flush()` on each `BatchedSession` once at the end of the tick, after the snapshot.
+
 ## Browser client (`:awake:net:client-browser`)
 
 On wasmJs, `connectBrowserSocket(url)` opens the browser's own `WebSocket` (binary messages, one per
