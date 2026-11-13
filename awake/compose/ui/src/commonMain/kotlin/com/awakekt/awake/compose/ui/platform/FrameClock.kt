@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.ui.platform
 
 import com.awakekt.awake.compose.runtime.PolledState
 import com.awakekt.awake.compose.runtime.compositionLocalOf
+import com.awakekt.awake.compose.runtime.readsAreTracked
 
 /**
  * How much time this frame covers, and how much has passed since the host started.
@@ -41,19 +42,19 @@ class FrameClock {
     /**
      * Seconds covered by this frame, clamped -- see [advance].
      *
-     * Reading it in composition records the read: a host that skips unchanged passes recomposes
-     * when the clock moves.
+     * Reading it in a pass that tracks reads records the read: a host that skips unchanged passes
+     * recomposes when the clock moves. Otherwise it records nothing.
      */
     val deltaSeconds: Float
         get() {
-            time.value
+            if (readsAreTracked) time.value
             return delta
         }
 
     /** Seconds since the host's first frame. Monotonic, and the same for every reader in a pass. Tracked like [deltaSeconds]. */
     val totalSeconds: Float
         get() {
-            time.value
+            if (readsAreTracked) time.value
             return total
         }
 

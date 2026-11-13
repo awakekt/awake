@@ -185,6 +185,13 @@ class LayoutComposition(root: LayoutNode) {
     /** Marks the latest pass out of date, for a change no tracked state carries. */
     fun invalidate() = composition.invalidate()
 
+    /** See [Composition.tracksChanges]. */
+    var tracksChanges: Boolean
+        get() = composition.tracksChanges
+        set(value) {
+            composition.tracksChanges = value
+        }
+
     /** Drops the composed tree, telling what it remembers that it was forgotten. See [Composition.dispose]. */
     fun dispose() {
         composition.dispose()

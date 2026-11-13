@@ -33,9 +33,11 @@ public final class com/awakekt/awake/compose/runtime/Composition {
 	public fun <init> (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun dispose ()V
+	public final fun getTracksChanges ()Z
 	public final fun invalidate ()V
 	public final fun isInvalid ()Z
 	public final fun reconcile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
+	public final fun setTracksChanges (Z)V
 }
 
 public final class com/awakekt/awake/compose/runtime/CompositionLocal {
@@ -78,6 +80,10 @@ public final class com/awakekt/awake/compose/runtime/ProvidedLocals {
 }
 
 public final class com/awakekt/awake/compose/runtime/ProvidedValue {
+}
+
+public final class com/awakekt/awake/compose/runtime/ReadTrackingKt {
+	public static final fun getReadsAreTracked ()Z
 }
 
 public abstract interface class com/awakekt/awake/compose/runtime/RememberHolder {

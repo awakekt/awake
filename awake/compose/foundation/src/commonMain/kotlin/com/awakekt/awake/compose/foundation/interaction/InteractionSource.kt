@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.compose.foundation.interaction
 
+import com.awakekt.awake.compose.runtime.MutableState
 import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.readsAreTracked
 
 /**
  * Something that happened to a component, which a styling layer may want to react to.
@@ -75,29 +77,22 @@ sealed interface Interaction {
  * for -- a styling layer reads these counters during the pass that runs every frame anyway.
  */
 class InteractionSource {
-    // Read-tracked, so a host that skips unchanged composition passes sees a hover, press or focus
-    // change reach a pass that read it. A write only marks that pass out of date.
-    private val hoverCount = mutableStateOf(0)
-    private val pressCount = mutableStateOf(0)
-    private val focusCount = mutableStateOf(0)
-    private var hovers: Int
-        get() = hoverCount.value
-        set(value) { hoverCount.value = value }
-    private var presses: Int
-        get() = pressCount.value
-        set(value) { pressCount.value = value }
-    private var focuses: Int
-        get() = focusCount.value
-        set(value) { focusCount.value = value }
+    // The three counts packed into one Int, 10 bits each, so a source is as large as it was with
+    // three Int fields even with the reference below. A count saturates at 1023 live interactions.
+    private var counts = 0
+
+    // Created on the first read made by a pass that tracks reads (a host that skips unchanged
+    // composition), never otherwise: a host that composes every frame allocates and records nothing.
+    private var version: MutableState<Boolean>? = null
 
     /** Whether at least one hover is live. */
-    val isHovered: Boolean get() = hovers > 0
+    val isHovered: Boolean get() = count(HOVER_SHIFT) > 0
 
     /** Whether at least one press is live. */
-    val isPressed: Boolean get() = presses > 0
+    val isPressed: Boolean get() = count(PRESS_SHIFT) > 0
 
     /** Whether at least one focus is live. */
-    val isFocused: Boolean get() = focuses > 0
+    val isFocused: Boolean get() = count(FOCUS_SHIFT) > 0
 
     /**
      * Applies [interaction] to the live counts.
@@ -107,23 +102,45 @@ class InteractionSource {
      */
     fun tryEmit(interaction: Interaction) {
         when (interaction) {
-            is Interaction.Hover.Enter -> hovers++
-            is Interaction.Hover.Exit -> hovers = (hovers - 1).coerceAtLeast(0)
-            is Interaction.Press.Press -> presses++
-            is Interaction.Press.Release, is Interaction.Press.Cancel ->
-                presses = (presses - 1).coerceAtLeast(0)
-            is Interaction.Focus.Focus -> focuses++
-            is Interaction.Focus.Unfocus -> focuses = (focuses - 1).coerceAtLeast(0)
+            is Interaction.Hover.Enter -> add(HOVER_SHIFT, 1)
+            is Interaction.Hover.Exit -> add(HOVER_SHIFT, -1)
+            is Interaction.Press.Press -> add(PRESS_SHIFT, 1)
+            is Interaction.Press.Release, is Interaction.Press.Cancel -> add(PRESS_SHIFT, -1)
+            is Interaction.Focus.Focus -> add(FOCUS_SHIFT, 1)
+            is Interaction.Focus.Unfocus -> add(FOCUS_SHIFT, -1)
         }
     }
 
     /** Drops every live interaction. For a component leaving the tree mid-gesture. */
     fun reset() {
-        hovers = 0
-        presses = 0
-        focuses = 0
+        if (counts != 0) {
+            counts = 0
+            changed()
+        }
+    }
+
+    private fun count(shift: Int): Int {
+        if (readsAreTracked) (version ?: mutableStateOf(false).also { version = it }).value
+        return (counts shr shift) and MASK
+    }
+
+    private fun add(shift: Int, delta: Int) {
+        val next = ((counts shr shift) and MASK) + delta
+        if (next < 0 || next > MASK) return
+        counts = (counts and (MASK shl shift).inv()) or (next shl shift)
+        changed()
+    }
+
+    // Flips the flag a pass read, so that pass is out of date. Nothing happens if no pass read one.
+    private fun changed() {
+        version?.let { it.value = !it.value }
     }
 
     override fun toString(): String =
         "InteractionSource(hovered=$isHovered, pressed=$isPressed, focused=$isFocused)"
 }
+
+private const val MASK = 0x3FF
+private const val HOVER_SHIFT = 0
+private const val PRESS_SHIFT = 10
+private const val FOCUS_SHIFT = 20

@@ -110,6 +110,12 @@ class ComposeHost(
      * leave this off. Content must not rely on running every frame.
      */
     var skipUnchangedComposition: Boolean = false
+        set(value) {
+            field = value
+            // Plain holders (hover, press, focus counts, the clock) only create tracking state for
+            // a host that skips, so the default path allocates what it always did.
+            composition.tracksChanges = value
+        }
 
     /** How many frames [skipUnchangedComposition] spared a composition pass. */
     var skippedCompositions: Int = 0
