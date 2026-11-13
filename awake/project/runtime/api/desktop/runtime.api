@@ -41,6 +41,11 @@ public final class com/awakekt/awake/project/runtime/CoreFeatures {
 	public final fun getTerrain ()Lcom/awakekt/awake/project/runtime/SceneCapability;
 }
 
+public final class com/awakekt/awake/project/runtime/CoreFeaturesKt {
+	public static final fun features (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;)V
+	public static synthetic fun features$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/project/runtime/CoreSceneContent {
 	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/CoreSceneContent;
 	public final fun getAnimationUpdateRate ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
@@ -215,11 +220,6 @@ public final class com/awakekt/awake/project/runtime/ProjectSpawnKt {
 
 public final class com/awakekt/awake/project/runtime/ProjectSystemPlan {
 	public final fun getPlanned ()Ljava/util/List;
-}
-
-public final class com/awakekt/awake/project/runtime/SceneAppFeaturesKt {
-	public static final fun features (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;)V
-	public static synthetic fun features$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ILjava/lang/Object;)V
 }
 
 public abstract interface class com/awakekt/awake/project/runtime/SceneCapability {
