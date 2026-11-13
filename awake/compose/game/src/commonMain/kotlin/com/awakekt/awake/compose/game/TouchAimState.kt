@@ -25,6 +25,18 @@ class TouchAimState {
     /** Whether a finger holds the control and is dragging it. */
     val isAiming: Boolean get() = pointer != TouchStickState.NONE
 
+    private var released = false
+
+    /**
+     * Whether a finger let go since this was last asked, then false until the next release: how a
+     * system that polls once a frame sees a tap that came and went between two frames.
+     */
+    fun consumeRelease(): Boolean {
+        val was = released
+        released = false
+        return was
+    }
+
     internal var pointer: Long = TouchStickState.NONE
         private set
     internal var originX = 0f
@@ -65,6 +77,7 @@ class TouchAimState {
     internal fun release() {
         if (pointer == TouchStickState.NONE) return
         pointer = TouchStickState.NONE
+        released = true
         onAimEnd?.invoke(out.x, out.y)
     }
 }

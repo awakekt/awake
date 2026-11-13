@@ -83,6 +83,7 @@ fun ShadcnSlider(
         // build runs, so one that happened is already waiting here. Consuming it now rather than on the
         // next frame is what keeps the thumb under the pointer (or the keyboard) instead of one frame
         // behind it.
+        state.trackRead()
         val next = if (enabled && state.pendingPx != 0f && state.trackWidthPx > 0f) {
             val track = ShadcnSliderTrack(0f, state.trackWidthPx)
             val moved = shadcnSliderValueAt(
@@ -122,7 +123,12 @@ fun ShadcnSlider(
                     state.trackWidthPx = shadcnSliderTrack(0f, width.toFloat(), state.thumbPx).width
                 }
                 .draggable(
-                    onDrag = { dx, _ -> if (enabled) state.pendingPx += dx.toFloat() },
+                    onDrag = { dx, _ ->
+                        if (enabled) {
+                            state.pendingPx += dx.toFloat()
+                            state.trackChange()
+                        }
+                    },
                     onDragStopped = onValueChangeFinished,
                 )
                 .focusable(enabled = enabled, interactionSource = interaction)
@@ -202,6 +208,7 @@ fun ShadcnRangeSlider(
         val startFraction = shadcnSliderFraction(start, min, max)
         val endFraction = shadcnSliderFraction(end, min, max)
 
+        state.trackRead()
         // Same before-this-build timing as ShadcnSlider: a press picks the nearer thumb and an absolute
         // pointer x, a move only updates the x, and both are resolved into a value here so the draw
         // below and the caller's state agree within the same frame.
@@ -247,9 +254,15 @@ fun ShadcnRangeSlider(
                             val endThumbX = track.x + track.width * endFraction
                             state.activeThumb = shadcnNearerThumb(x.toFloat(), startThumbX, endThumbX)
                             state.pendingXPx = x
+                            state.trackChange()
                         }
                     },
-                    onDrag = { x -> if (enabled) state.pendingXPx = x },
+                    onDrag = { x ->
+                        if (enabled) {
+                            state.pendingXPx = x
+                            state.trackChange()
+                        }
+                    },
                 )
                 // Same reason as ShadcnSlider: the captured fractions change on drag, the size does not.
                 .drawBehind {
@@ -307,6 +320,7 @@ private fun handleSliderKey(
         Key.ArrowRight, Key.ArrowUp -> state.pendingKeyDelta += step
         else -> return false
     }
+    state.trackChange()
     state.onValueChangeFinished()
     return true
 }
@@ -349,7 +363,7 @@ private fun DrawScope.drawSliderThumb(
  * A class rather than four `remember`s because they are one fact -- and because `remember`'s slots
  * are positional, so four of them in a row is four chances to add a fifth in the wrong place.
  */
-private class SliderDragState {
+private class SliderDragState : ChangeSource() {
     var pendingPx: Float = 0f
     var pendingKeyDelta: Float = 0f
     var trackWidthPx: Float = 0f
@@ -364,7 +378,7 @@ private class SliderDragState {
  * Absolute x rather than a delta -- unlike the single-value drag, a range press has to resolve
  * which of two thumbs it means before there is any delta to apply, so the position itself is kept.
  */
-private class RangeSliderDragState {
+private class RangeSliderDragState : ChangeSource() {
     var activeThumb: ShadcnSliderThumb? = null
     var pendingXPx: Int? = null
     var slotWidthPx: Float = 0f

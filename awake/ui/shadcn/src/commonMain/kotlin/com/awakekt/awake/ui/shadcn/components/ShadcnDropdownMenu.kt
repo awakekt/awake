@@ -24,8 +24,11 @@ import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.focus.focusTarget
@@ -106,8 +109,7 @@ fun ShadcnDropdownMenu(
         val itemPaddingY = shadcnDensity.menuItemPaddingY()
         val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s1) }
         val state = remember { MenuState() }
-        val clicked = state.clicked
-        state.clicked = null
+        val clicked = state.clicked.take()
 
         Box(modifier.menuSurface(style)) {
             Column {
@@ -126,7 +128,7 @@ fun ShadcnDropdownMenu(
                             // Pointer links after padding only see the text's inner box. The menu row
                             // is the target, so capture hover/click before the visual inset.
                             .hoverable(interaction, enabled = item.enabled)
-                            .clickable(interaction) { if (item.enabled) state.clicked = index }
+                            .clickable(interaction) { if (item.enabled) state.clicked.offer(index) }
                             .let {
                                 if (!highlighted) {
                                     it
@@ -264,12 +266,13 @@ fun ShadcnDropdownMenu(
 
 /** The click that arrived during input dispatch, consumed by the next build. */
 private class MenuState {
-    var clicked: Int? = null
+    val clicked = Handoff<Int>()
 }
 
 /** The enabled entry reached by roving keyboard navigation, or null until Arrow/Home/End is used. */
 private class MenuKeyboardState {
-    var highlightedIndex: Int? = null
+    // State, not a plain field: composition reads it, and a key or pointer event changes it (#1512).
+    var highlightedIndex: Int? by mutableStateOf(null)
 }
 
 private fun handleMenuKey(

@@ -13,7 +13,9 @@ import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.foundation.skin.LocalSkin
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.drawBehind
@@ -41,7 +43,8 @@ import kotlin.math.min
  *   bar's. [ticks]: that many equal parts marked by thin lines across the bar, as on a gauge.
  *   Both apply to a straight bar.
  * - [label]: words centred on the bar, such as `"75 / 100"`.
- * - [fill] and [track]: nine-slice art in place of the colours. The fill keeps both end caps whole
+ * - [fill] and [track]: nine-slice art in place of the colours. Left out, they come from `LocalSkin`'s
+ *   [ShadcnSkinKeys.ProgressFill] and [ShadcnSkinKeys.ProgressTrack] parts when it declares them. The fill keeps both end caps whole
  *   at every value, as `drawImageFillBar` draws it.
  *
  * Colours default to the theme's primary, on the primary at 20% for the track, and the
@@ -67,6 +70,7 @@ fun ShadcnProgressBar(
     trailingColor: Color? = null,
 ) {
     val theme = shadcnTheme
+    val skin = LocalSkin.current
     val colors = BarColors(
         fill = color ?: theme.palette.primary,
         track = trackColor ?: theme.palette.primary.withAlpha(ShadcnProgressTrackAlpha),
@@ -87,7 +91,18 @@ fun ShadcnProgressBar(
             if (trail != null) drawRadialSweep(trail, 0f, true, DrawShape.Circle, ring, colors.trail, colors.track, null)
             drawRadialSweep(amount, 0f, true, DrawShape.Circle, ring, colors.fill, if (trail == null) colors.track else Color.Transparent, null)
         } else {
-            drawStraightBar(orientation == ShadcnProgressOrientation.Vertical, amount, trail, segments, ticks, fill, track, colors)
+            // An explicit fill or track wins; else the skin's part, resolved here so a sheet that
+            // decodes later shows without recomposition. Until then the token look draws.
+            drawStraightBar(
+                orientation == ShadcnProgressOrientation.Vertical,
+                amount,
+                trail,
+                segments,
+                ticks,
+                fill ?: skin?.resolve(ShadcnSkinKeys.ProgressFill),
+                track ?: skin?.resolve(ShadcnSkinKeys.ProgressTrack),
+                colors,
+            )
         }
     }
     Box(drawn, contentAlignment = Alignment.Center) {

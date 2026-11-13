@@ -59,7 +59,7 @@ fun World.steerPlayers(actions: InputActions) {
     val moveZ = actions.axisY(MovementActions.MOVE)
     val jump = actions.isActive(MovementActions.JUMP)
     val run = actions.isActive(MovementActions.RUN)
-    queryEach(MovementControl::class) { _, control ->
+    queryEach(MOVEMENT_CONTROL) { _, control ->
         if (control.driver != MovementDriver.Player) return@queryEach
         control.moveX = moveX
         control.moveZ = moveZ
@@ -67,3 +67,6 @@ fun World.steerPlayers(actions: InputActions) {
         control.run = run
     }
 }
+
+// Held in a val: on the JVM `MovementControl::class` written out makes a new class reference every frame.
+private val MOVEMENT_CONTROL = MovementControl::class

@@ -135,8 +135,7 @@ private fun ShadcnComboboxContent(
     val theme = shadcnTheme
     val itemPaddingY = shadcnDensity.menuItemPaddingY()
     val state = remember { ComboboxContentState() }
-    val clicked = state.clicked
-    state.clicked = null
+    val clicked = state.clicked.take()
     val query = searchState.text.trim()
 
     val filteredItems = if (query.isEmpty()) {
@@ -182,7 +181,7 @@ private fun ShadcnComboboxContent(
                                     .fillMaxWidth()
                                     .hoverable(interaction, enabled = item.enabled)
                                     .clickable(interaction) {
-                                        if (item.enabled) state.clicked = originalIndex
+                                        if (item.enabled) state.clicked.offer(originalIndex)
                                     }
                                     .let {
                                         if (isHovered || isSelected) {
@@ -234,7 +233,7 @@ private fun ShadcnComboboxContent(
 }
 
 private class ComboboxContentState {
-    var clicked: Int? = null
+    val clicked = Handoff<Int>()
 }
 
 /** Matches shadcn's current Base UI ComboboxContent `sideOffset={6}`. */

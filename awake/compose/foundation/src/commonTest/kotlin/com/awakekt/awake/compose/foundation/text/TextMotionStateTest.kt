@@ -8,6 +8,9 @@ package com.awakekt.awake.compose.foundation.text
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.absoluteOffset
 import com.awakekt.awake.compose.foundation.layout.offset
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
@@ -122,7 +125,8 @@ class TextMotionStateTest {
     fun rtlOffsetAndTwoAxisAbsoluteOffsetMirrorSubpixelResidualsCorrectly() {
         val style = TextStyle(size = 14.sp)
         val rtlHost = ComposeHost(density = 1f, layoutDirection = LayoutDirection.Rtl)
-        var step = 0f
+        // State, not a plain var: a host that skips unchanged passes only sees reads it can track.
+        var step by mutableStateOf(0f)
         fun rtlGlyphX(): Float = rtlHost.frame(FrameInput(200, 60)) {
             Box(Modifier.offset(x = step.dp, y = (step * 0.5f).dp)) { Text("Harbor", style = style) }
         }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>().first().x
@@ -134,12 +138,15 @@ class TextMotionStateTest {
         assertTrue(rtl1 < rtl0, "RTL positive offset must shift glyph x left: $rtl0 -> $rtl1")
 
         val absHost = ComposeHost(density = 1f)
-        val abs0 = absHost.frame(FrameInput(200, 60)) {
-            Box(Modifier.absoluteOffset(x = 0.dp, y = 0.dp)) { Text("Harbor", style = style) }
+        var absX by mutableStateOf(0f)
+        var absY by mutableStateOf(0f)
+        fun absGlyph() = absHost.frame(FrameInput(200, 60)) {
+            Box(Modifier.absoluteOffset(x = absX.dp, y = absY.dp)) { Text("Harbor", style = style) }
         }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>().first()
-        val abs1 = absHost.frame(FrameInput(200, 60)) {
-            Box(Modifier.absoluteOffset(x = 0.2f.dp, y = 0.3f.dp)) { Text("Harbor", style = style) }
-        }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>().first()
+        val abs0 = absGlyph()
+        absX = 0.2f
+        absY = 0.3f
+        val abs1 = absGlyph()
         assertTrue(abs(abs1.x - (abs0.x - 0.5f + 0.2f)) < 1e-3f)
         assertTrue(abs(abs1.y - (abs0.y - 0.5f + 0.3f)) < 1e-3f)
     }

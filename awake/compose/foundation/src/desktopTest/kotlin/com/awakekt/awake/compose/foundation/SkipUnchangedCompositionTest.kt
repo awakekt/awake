@@ -24,6 +24,8 @@ import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.LocalViewportSize
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.input.ImeComposition
+import com.awakekt.awake.core.input.TextEditAction
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -136,6 +138,57 @@ class SkipUnchangedCompositionTest {
         }
         assertTrue(skipping.host.skippedCompositions > 0, "the skipping host never skipped a pass")
         assertEquals(1, skipping.count.value)
+    }
+
+    /**
+     * A composition that reads the field's text, caret, selection and composition state (a status
+     * line) must repaint when typing, an edit key, a selection or an IME composition changes them.
+     */
+    @Test
+    fun readsOfATextFieldStayCurrentThroughTheRealInputPath() {
+        val always = TextRig(skip = false)
+        val skipping = TextRig(skip = true)
+        val still = FrameInput(400, 300, deltaSeconds = 0f)
+        val at = still.copy(pointerX = 10, pointerY = 30)
+        val frames = listOf(
+            "first" to still,
+            "hover" to at,
+            "press" to at.copy(pointerDown = true, pointerPressed = true),
+            "release" to at.copy(pointerReleased = true),
+            "type" to at.copy(typedText = "hello"),
+            "backspace" to at.copy(editActions = listOf(TextEditAction.Backspace)),
+            "arrow left" to at.copy(editActions = listOf(TextEditAction.ArrowLeft)),
+            "select all" to at.copy(editActions = listOf(TextEditAction.SelectAll)),
+            "ime composing" to at.copy(imeComposition = ImeComposition("ab")),
+            "ime commit" to at.copy(imeCommit = "ab"),
+            "still" to still,
+            "still 2" to still,
+        )
+        val drawn = mutableListOf<Any>()
+        for ((name, input) in frames) {
+            val expected = always.host.frame(input) { always.ui() }
+            val actual = skipping.host.frame(input) { skipping.ui() }
+            assertEquals(expected.primitives, actual.primitives, "draw primitives differ at '$name'")
+            assertEquals(expected.semantics, actual.semantics, "semantics differ at '$name'")
+            drawn.add(expected.primitives.toList())
+        }
+        assertEquals("ab", skipping.field.text, "the IME commit replaces the selected text")
+        for (i in 4..9) assertTrue(drawn[i] != drawn[i - 1], "'${frames[i].first}' changed nothing, the script proves nothing")
+        assertTrue(skipping.host.skippedCompositions >= 2, "the skipping host skipped ${skipping.host.skippedCompositions} passes")
+    }
+
+    private class TextRig(skip: Boolean) {
+        val host = ComposeHost().also { it.skipUnchangedComposition = skip }
+        val field = TextFieldState("")
+
+        context(_: Composer)
+        fun ui() {
+            Column(Modifier.width(300.dp)) {
+                val selection = "${field.selectionStart}-${field.selectionEnd}"
+                Text("${field.text}|${field.cursor}|$selection|${field.hasComposition}", Modifier.height(20.dp))
+                BasicTextField(field, Modifier.size(100.dp, 20.dp))
+            }
+        }
     }
 
     private fun still(w: Int, h: Int, delta: Float = 1f / 60f) = FrameInput(w, h, deltaSeconds = delta)

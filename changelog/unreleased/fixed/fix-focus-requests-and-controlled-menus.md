@@ -1,0 +1,1 @@
+- Input-driven state in the shadcn slider, range slider, dropdown menu, select, combobox and context menu (the drag and key deltas, chosen row, keyboard-highlighted row and open flag) now invalidates a composition that skips unchanged passes (`ComposeHost.skipUnchangedComposition`). With the skip forced on for the whole default, the Compose and shadcn suites pass.
