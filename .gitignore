@@ -57,5 +57,8 @@ shared/shared.podspec
 hs_err_pid*.log
 replay_pid*.log
 
+# Obsidian vault settings -- the docs folder opens as a vault without committing them.
+.obsidian/
+
 # MkDocs build directory
 /website/site/
