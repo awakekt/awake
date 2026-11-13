@@ -38,7 +38,7 @@ class SceneHostServices private constructor(
     val input: () -> GameplayInput,
     /** The physics world the scene's bodies and characters live in; null runs the scene without physics. */
     val physics: PhysicsWorld?,
-    /** What the scene's capabilities read from the project's files, as [loadSceneContent] reads it. */
+    /** What the scene's features read from the project's files, as [loadSceneContent] reads it. */
     val content: SceneContent,
     private val spawner: ((SceneNode) -> SpawnedNode)? = null,
     /** What the scene's sounds play through; null plays them silently. A host adds one with [withAudio]. */
@@ -224,7 +224,7 @@ class SceneHostServices private constructor(
  * `runProject` runs them in. [close] when the scene stops, to release what the systems created.
  */
 class SceneSystemSet internal constructor(
-    /** The systems run on each fixed simulation step, in capability order. */
+    /** The systems run on each fixed simulation step, in feature order. */
     val fixed: List<System>,
     /** The systems run once per rendered frame after world matrices are propagated. */
     val frame: List<System>,
@@ -254,8 +254,8 @@ class SceneSystemSet internal constructor(
 }
 
 /**
- * The systems [scene] runs, and none it doesn't, built from [services]: Core's capabilities first, then
- * [capabilities] in order, each adding what [scene] uses of it. A host that runs a scene in a world of
+ * The systems [scene] runs, and none it doesn't, built from [services]: Core's features first, then
+ * [features] in order, each adding what [scene] uses of it. A host that runs a scene in a world of
  * its own, as an editor's Play does, runs these instead of keeping a list of its own, so it gains a
  * system when Core does:
  * - `movement_control`, `input_actions` or a `canvas_element` with an action: the input actions, read
@@ -288,7 +288,7 @@ class SceneSystemSet internal constructor(
  *   the system that answers their route requests
  * - skinned glTF animation, always
  *
- * Pass the same [capabilities] to [loadSceneContent] for the content. `runProject` is built on the same
+ * Pass the same [features] to [loadSceneContent] for the content. `runProject` is built on the same
  * decision, so the two cannot drift apart. These are only the scene's own systems: the host still
  * places the scene, resolves its assets, picks the camera, resolves transforms and draws. A scene that
  * needs physics with no [SceneHostServices.physics] runs without those systems.
@@ -296,19 +296,19 @@ class SceneSystemSet internal constructor(
 fun sceneSystemsFor(
     scene: SceneDocument,
     services: SceneHostServices,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
 ): SceneSystemSet = sceneSystemSetFor(scene, services, capabilities, disabled = emptySet(), hostRuns = emptySet())
 
 /**
  * [sceneSystemsFor], leaving out the systems named in [disabled], such as `CoreSystems.CAMERA` on a
  * dedicated server. A name no system has is refused, with the names that exist: Core's in
- * [CoreSystems.all], those [SceneCapability.systemNames] lists, and any [SceneSystemSet.planned] for
+ * [CoreSystems.all], those [SceneFeature.systemNames] lists, and any [SceneSystemSet.planned] for
  * this scene. Nothing disabled plans exactly what [sceneSystemsFor] does without it.
  */
 fun sceneSystemsFor(
     scene: SceneDocument,
     services: SceneHostServices,
-    capabilities: List<SceneCapability>,
+    capabilities: List<SceneFeature>,
     disabled: Set<String>,
 ): SceneSystemSet = sceneSystemSetFor(scene, services, capabilities, disabled, hostRuns = emptySet())
 
@@ -321,7 +321,7 @@ fun sceneSystemsFor(
 internal fun sceneSystemSetFor(
     scene: SceneDocument,
     services: SceneHostServices,
-    capabilities: List<SceneCapability>,
+    capabilities: List<SceneFeature>,
     disabled: Set<String>,
     hostRuns: Set<String>,
 ): SceneSystemSet {
@@ -330,7 +330,7 @@ internal fun sceneSystemSetFor(
     val frame = mutableListOf<System>()
     val releasing = SystemReleases()
     val specs = sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities, hasRenderer = services.hasRenderer)
-    val installed = installedCapabilities(capabilities)
+    val installed = installedFeatures(capabilities)
     requireKnownSystemNames(disabled, CoreSystems.all + installed.flatMap { it.systemNames } + specs.map { it.name }, "the scene's systems")
     val dropped = disabled + hostRuns
     val kept = specs.filter { it.name !in dropped && services.hostRole.runs(it.role) }
@@ -356,24 +356,36 @@ internal class SceneSystemSpec(
 )
 
 /**
- * The decision, as data: which systems [scene] needs, in the order they run, from Core's capabilities
- * and then [capabilities]. Both [sceneSystemsFor] and `runProject` build from this list, so there is
+ * The decision, as data: which systems [scene] needs, in the order they run, from Core's features
+ * and then [features]. Both [sceneSystemsFor] and `runProject` build from this list, so there is
  * one place that says what a component needs.
  */
 internal fun sceneSystemSpecsFor(
     scene: SceneDocument,
     hasPhysics: Boolean,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
+): List<SceneSystemSpec> = sceneSystemSpecsOf(scene, hasPhysics, hasRenderer, installedFeatures(capabilities))
+
+/**
+ * [sceneSystemSpecsFor] for an explicit list of [installed] features, planned in the order given and
+ * with Core's not added. The project runtime and a scene app's `features` both plan through this one
+ * function, so the same features give the same systems in the same order.
+ */
+internal fun sceneSystemSpecsOf(
+    scene: SceneDocument,
+    hasPhysics: Boolean,
+    hasRenderer: Boolean,
+    installed: List<SceneFeature>,
 ): List<SceneSystemSpec> {
     val plan = SceneSystemPlan(hasPhysics, hasRenderer)
-    installedCapabilities(capabilities).forEach { it.plan(scene, plan) }
+    installed.forEach { it.plan(scene, plan) }
     return plan.specs
 }
 
-/** Core's capabilities followed by [extra], refusing two with one id. */
-internal fun installedCapabilities(extra: List<SceneCapability>): List<SceneCapability> {
-    val installed = CORE_CAPABILITIES + extra
+/** Core's features followed by [extra], refusing two with one id. */
+internal fun installedFeatures(extra: List<SceneFeature>): List<SceneFeature> {
+    val installed = CORE_FEATURES + extra
     val repeated = installed.groupBy { it.id }.filterValues { it.size > 1 }.keys
     require(repeated.isEmpty()) { "More than one capability has the id ${repeated.joinToString()}" }
     return installed

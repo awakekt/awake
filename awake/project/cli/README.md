@@ -42,7 +42,7 @@ the codec spells it, so nothing is left that reads differently from what was set
 
 ## Rendering
 
-`awake render` loads the scene as a played project loads its entry scene, with Core's capabilities
+`awake render` loads the scene as a played project loads its entry scene, with Core's features
 and `ProjectRenderPlan`, plays `--frames` frames (1 by default) and saves the primary camera's view as
 a PNG (`<scene>.png` by default), `--width` by `--height` pixels (1280 by 720 by default). The
 picture is the 3D scene; a scene canvas drawn over it isn't included yet.
@@ -96,21 +96,21 @@ so it can't check their fields. `validate` names them as warnings, unless it is 
 ## Validating with the project's code
 
 `awake validate --code <classpath>` is the CI step for "this project still opens in the editor", for a
-project with capabilities of its own. `<classpath>` holds the project's built code, class folders and
+project with features of its own. `<classpath>` holds the project's built code, class folders and
 jars split by the platform's path separator (`:`, or `;` on Windows); entries a build never wrote are
 skipped. With it, `validate` also:
 
 - loads each `plugins[].capabilityClass` from that code, in a class loader of its own whose parent holds
-  Core, and checks it is a `SceneCapability` (a Kotlin `object`, or a class with a public constructor
+  Core, and checks it is a `SceneFeature` (a Kotlin `object`, or a class with a public constructor
   that takes nothing) with the plugin's `id`;
-- opens every scene with those capabilities through `checkProjectOpens` in `awake:project:runtime`:
+- opens every scene with those features through `checkProjectOpens` in `awake:project:runtime`:
   decoded with the project's own registry, its prefabs expanded, every component known (one no
-  capability registers is an error at its node), instantiated, loaded with its content and a physics
+  feature registers is an error at its node), instantiated, loaded with its content and a physics
   world by `LoadedProject.switchTo`, and its systems run for one fixed step and one frame;
 - saves each scene and prefab, reopens it and compares, and saves it again, which must write the same
   text;
 - moves back to the entry scene and closes the project: every physics world it made must be destroyed,
-  and no capability's component may have reached the process-wide scene serializers;
+  and no feature's component may have reached the process-wide scene serializers;
 - warns when the project's code stays loaded once the check has closed it, which means something outside
   the project holds one of its classes, as a process-wide registry or a thread can.
 

@@ -35,5 +35,5 @@ way: `scene:scene3d` stores a `TerrainSurfaceReference` beside a terrain entity 
 a provider; nothing here knows a scene exists.
 
 The surface seam and page residency both work without an ECS or scene. `scene:worldstream` maps
-authored configuration and observers to these types; the capability depends on no scene module
-(`./gradlew verifyCapabilityLayering`).
+authored configuration and observers to these types; the feature depends on no scene module
+(`./gradlew verifyFeatureLayering`).

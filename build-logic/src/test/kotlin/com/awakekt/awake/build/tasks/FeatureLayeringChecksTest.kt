@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class CapabilityLayeringChecksTest {
+class FeatureLayeringChecksTest {
     // --- which configurations are main code
 
     @Test
@@ -80,20 +80,20 @@ class CapabilityLayeringChecksTest {
         )
     }
 
-    /** A capability that needs another module that needs the scene layer cannot be used without it either. */
+    /** A feature that needs another module that needs the scene layer cannot be used without it either. */
     @Test
     fun aSceneModuleReachedThroughAnotherModuleIsFoundWithItsChain() {
         val graph = mapOf(
-            ":awake:capability" to setOf(":awake:helper"),
+            ":awake:feature" to setOf(":awake:helper"),
             ":awake:helper" to setOf(":awake:project:runtime"),
             ":awake:project:runtime" to setOf(":awake:scene:document"),
         )
 
         assertEquals(
             mapOf(
-                ":awake:scene:document" to listOf(":awake:capability", ":awake:helper", ":awake:project:runtime", ":awake:scene:document"),
+                ":awake:scene:document" to listOf(":awake:feature", ":awake:helper", ":awake:project:runtime", ":awake:scene:document"),
             ),
-            sceneModulesReached(graph, ":awake:capability"),
+            sceneModulesReached(graph, ":awake:feature"),
         )
     }
 
@@ -190,7 +190,7 @@ class CapabilityLayeringChecksTest {
 
     @Test
     fun aModuleCoupledToTheSceneLayerFailsAndSaysWhyAndWhatToDo() {
-        val failures = capabilityLayeringFailures(
+        val failures = featureLayeringFailures(
             mapOf(
                 ":awake:particles" to listOf("reaches :awake:scene:document through :awake:particles -> :awake:x -> :awake:scene:document"),
                 ":awake:core:math" to emptyList(),
@@ -207,7 +207,7 @@ class CapabilityLayeringChecksTest {
     fun aLongListOfReasonsIsCutShort() {
         val reasons = (1..10).map { "awake/x/src/commonMain/kotlin/X.kt:$it names a scene type" }
 
-        val failure = capabilityLayeringFailures(mapOf(":awake:x" to reasons)).single()
+        val failure = featureLayeringFailures(mapOf(":awake:x" to reasons)).single()
 
         assertTrue("and 7 more" in failure, failure)
         assertFalse("X.kt:4 " in failure, failure)
@@ -216,7 +216,7 @@ class CapabilityLayeringChecksTest {
     /** There is no list of tolerated modules, so a failure must not point at one as a way out. */
     @Test
     fun everyCoupledModuleFailsAndNoneIsToldItMayBeListed() {
-        val failures = capabilityLayeringFailures(
+        val failures = featureLayeringFailures(
             mapOf(
                 ":awake:ai:behavior" to listOf("depends on :awake:scene:document"),
                 ":awake:navigation" to listOf("depends on :awake:scene:world"),
@@ -224,11 +224,11 @@ class CapabilityLayeringChecksTest {
         )
 
         assertEquals(2, failures.size)
-        assertTrue(failures.none { "capabilityLayeringDebt" in it || "debt" in it }, failures.toString())
+        assertTrue(failures.none { "featureLayeringDebt" in it || "debt" in it }, failures.toString())
     }
 
     @Test
     fun cleanModulesPass() {
-        assertEquals(emptyList(), capabilityLayeringFailures(mapOf(":awake:core:math" to emptyList(), ":awake:ecs" to emptyList())))
+        assertEquals(emptyList(), featureLayeringFailures(mapOf(":awake:core:math" to emptyList(), ":awake:ecs" to emptyList())))
     }
 }

@@ -35,15 +35,15 @@ Awake-owned UI/runtime framework. They take precedence over generic `kmp-*` skil
 When a task spans both systems, route the Awake-owned boundary first and explicitly
 identify any generic KMP/Compose follow-up.
 
-## Scene is the wrapper, not the home for capabilities
+## Scene is the wrapper, not the home for features
 
-Awake is a library first. `awake:scene:*` binds capabilities into the ECS scene graph and the scene
-document: a scene schema, its binding, the mapping to the capability's types, and the system that runs
-the capability over a `World`. The capability itself, an algorithm or behaviour with an API of its own
+Awake is a library first. `awake:scene:*` binds features into the ECS scene graph and the scene
+document: a scene schema, its binding, the mapping to the feature's types, and the system that runs
+the feature over a `World`. The feature itself, an algorithm or behaviour with an API of its own
 (a simulation, sampling, culling, a clock), lives in a module outside `awake/scene/` and depends on no
-`awake:scene` module; `./gradlew verifyCapabilityLayering` enforces it. Before you add to or change
+`awake:scene` module; `./gradlew verifyFeatureLayering` enforces it. Before you add to or change
 anything under `awake/scene/`, read "What belongs in a scene module" in `awake/scene/README.md` and
-activate `awake-framework-boundary`. A capability that still lives in a scene module is separated
+activate `awake-framework-boundary`. A feature that still lives in a scene module is separated
 first, not extended in place.
 
 A played project needs no display: `awake:project` and `awake:project:runtime` reach no GPU backend
@@ -65,8 +65,8 @@ must not register or consume that overlay.
 | Vulkan and WebGPU backends | `awake-render-vulkan`, `awake-render-webgpu` |
 | Physics contracts and Jolt native bridge (`awake:physics:api`, `awake:backend:jolt`) | `awake-physics-jolt` |
 | Awake UI layers, shadcn component authoring, icons, parity, and frame cost | `awake-ui-authoring`, `awake-shadcn-recipe-authoring`, `awake-shadcn-parity-workflow`, `awake-ui-icons`, `awake-ui-performance`, `awake-ui-verification` |
-| ECS, scenes, capabilities, app lifecycle, and retained Compose-shaped UI | `awake-ecs-authoring`, `awake-ecs-scene-runtime`, `awake-app-composition`, `awake-compose-authoring`, `awake-state-management`, `awake-core-math` |
-| Portable capabilities, editor contracts, framework boundaries, provenance, and milestones | `awake-platform-capability-design`, `awake-core-editor`, `awake-framework-boundary`, `awake-copyright-provenance`, `awake-milestone-workflow` |
+| ECS, scenes, features, app lifecycle, and retained Compose-shaped UI | `awake-ecs-authoring`, `awake-ecs-scene-runtime`, `awake-app-composition`, `awake-compose-authoring`, `awake-state-management`, `awake-core-math` |
+| Portable features, editor contracts, framework boundaries, provenance, and milestones | `awake-platform-capability-design`, `awake-core-editor`, `awake-framework-boundary`, `awake-copyright-provenance`, `awake-milestone-workflow` |
 | KMP module boundaries, coroutines/Flow, `expect`/`actual`, JNI, publishing, and CI | `kmp-clean-architecture`, `kmp-coroutines-flow-patterns`, `kmp-expect-actual`, `kmp-jni-pro`, `kmp-library-publishing`, `kmp-ci-github-actions` |
 
 To install them without the prompt:

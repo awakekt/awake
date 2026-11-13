@@ -156,7 +156,7 @@ class RunnerFailureContainmentTest {
  * A capability whose scenes always run a healthy frame system, and whose first scene, the menu, also runs
  * a system that throws [failure] when the scene stops.
  */
-private class ClosingCapability(private val failure: Exception) : SceneCapability {
+private class ClosingCapability(private val failure: Exception) : SceneFeature {
     override val id = "com.example.harbor-town.closing"
     val healthy = StepCount()
 

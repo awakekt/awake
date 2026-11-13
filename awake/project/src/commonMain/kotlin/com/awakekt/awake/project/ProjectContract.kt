@@ -14,16 +14,16 @@ import kotlinx.serialization.json.Json
  * A plugin declared by an Awake project manifest.
  *
  * @property id Unique reverse-domain identifier of the plugin.
- * @property path Relative file path to the plugin bundle or archive. Empty for a capability compiled
+ * @property path Relative file path to the plugin bundle or archive. Empty for a feature compiled
  * into the game's own app project, which has a [capabilityClass] and no file in the project.
  * @property version Semantic version string of the plugin.
  * @property sha256 Expected SHA-256 checksum of the plugin archive.
  * @property entrypointClass Fully qualified class name of the plugin entrypoint.
  * @property required Whether engine initialization requires this plugin to be present.
  * @property artifact The published artifact that holds the plugin's runtime code, for an export or an
- * editor to resolve; null for a plugin that is not published, such as a capability in the game's own
+ * editor to resolve; null for a plugin that is not published, such as a feature in the game's own
  * app project.
- * @property capabilityClass Fully qualified name of the `SceneCapability` object [artifact] provides
+ * @property capabilityClass Fully qualified name of the `SceneFeature` object [artifact] provides
  * under this plugin's [id], named like [entrypointClass]; null when nothing needs to look it up.
  */
 @Serializable
@@ -369,7 +369,7 @@ private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<Proje
     }
 }
 
-/** Where a plugin's runtime code is published and which capability object it is. */
+/** Where a plugin's runtime code is published and which feature object it is. */
 private fun runtimeReferenceIssues(index: Int, plugin: AwakeProjectPluginReference): List<ProjectContentIssue> = buildList {
     plugin.artifact?.let { artifact ->
         listOf("group" to artifact.group, "name" to artifact.name, "version" to artifact.version)
