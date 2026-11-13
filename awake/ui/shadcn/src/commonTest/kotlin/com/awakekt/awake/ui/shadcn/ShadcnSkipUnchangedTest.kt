@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
@@ -21,9 +22,15 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.platform.PointerFrame
+import com.awakekt.awake.compose.ui.semantics.SemanticsNode
+import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.ui.shadcn.components.ShadcnButton
 import com.awakekt.awake.ui.shadcn.components.ShadcnCalendar
+import com.awakekt.awake.ui.shadcn.components.ShadcnDropdownMenu
+import com.awakekt.awake.ui.shadcn.components.ShadcnMenuItem
+import com.awakekt.awake.ui.shadcn.components.ShadcnSlider
 import com.awakekt.awake.ui.shadcn.components.ShadcnToggle
 import com.awakekt.awake.ui.shadcn.components.ShadcnTooltipped
 import com.awakekt.awake.ui.shadcn.components.SidebarState
@@ -64,6 +71,8 @@ class ShadcnSkipUnchangedTest {
             drawn.add(expected.primitives.toList())
             return expected
         }
+
+        val frames: Int get() = drawn.size
 
         fun assertChanged(from: Int, to: Int, what: String) =
             assertNotEquals(drawn[from], drawn[to], "$what changed nothing, so the script proves nothing")
@@ -146,6 +155,77 @@ class ShadcnSkipUnchangedTest {
     }
 
     @Test
+    fun draggingASliderMovesItOnASkippingHost() {
+        val rig = TwinHosts {
+            provideShadcnTheme(shadcnThemeValues(dark = true)) {
+                val value = remember { mutableStateOf(0.3f) }
+                ShadcnSlider(
+                    value = value.value,
+                    modifier = Modifier.fillMaxWidth().testTag("slider"),
+                    onValueChange = { value.value = it },
+                )
+            }
+        }
+
+        val first = rig.frame("first", quiet(400, 60))
+        val bounds = first.semantics.firstNotNullOf { it.findTag("slider") }
+        val y = bounds.y + bounds.height / 2
+        val from = bounds.x + (bounds.width * 0.3f).toInt()
+
+        fun at(x: Int, down: Boolean) = quiet(400, 60).copy(pointerX = x, pointerY = y, pointerDown = down)
+        rig.frame("hover", at(from, down = false))
+        rig.frame("press", at(from, down = true))
+        for (step in 1..4) rig.frame("drag $step", at(from + step * 10, down = true))
+        rig.frame("release", at(from + 40, down = false))
+        rig.frame("after", at(from + 40, down = false))
+        rig.assertChanged(3, 5, "dragging the thumb")
+        rig.assertChanged(5, 6, "dragging the thumb further")
+        rig.assertSkipped()
+    }
+
+    @Test
+    fun aControlledMenuFollowsTheArrowKeysOnASkippingHost() {
+        val rig = TwinHosts {
+            provideShadcnTheme(shadcnThemeValues(dark = true)) {
+                val expanded = remember { mutableStateOf(false) }
+                ShadcnDropdownMenu(
+                    entries = listOf(ShadcnMenuItem("One"), ShadcnMenuItem("Two"), ShadcnMenuItem("Three")),
+                    expanded = expanded.value,
+                    onExpandedChange = { expanded.value = it },
+                    onItemSelected = {},
+                    id = "menu",
+                ) { onClick ->
+                    ShadcnButton("Open", modifier = Modifier.testTag("menu.trigger"), onClick = onClick)
+                }
+            }
+        }
+
+        fun key(key: Key, type: KeyEventType): () -> FrameInput =
+            { quiet(300, 200).copy(keyEvents = listOf(KeyEvent(key = key, type = type))) }
+        val trigger = rig.frame("first", quiet(300, 200)).semantics.firstNotNullOf { it.findTag("menu.trigger") }
+        val x = trigger.x + trigger.width / 2
+        val y = trigger.y + trigger.height / 2
+        fun at(down: Boolean) =
+            quiet(300, 200).copy(pointerX = x, pointerY = y, pointerDown = down)
+
+        // The menu fades in on the frame clock; frames with time run until it settles.
+        fun live(input: FrameInput) = input.copy(deltaSeconds = 1f / 60f)
+        rig.frame("hover", live(at(down = false)))
+        rig.frame("press", live(at(down = true)))
+        rig.frame("release", live(at(down = false)))
+        repeat(40) { rig.frame("settle $it", live(quiet(300, 200).copy(pointerX = 290, pointerY = 190))) }
+        rig.frame("settled", quiet(300, 200).copy(pointerX = 290, pointerY = 190))
+        val settled = rig.frames - 1
+        rig.frame("down 1", key(Key.ArrowDown, KeyEventType.Down))
+        rig.frame("still 1", quiet(300, 200).copy(pointerX = 290, pointerY = 190))
+        rig.frame("down 2", key(Key.ArrowDown, KeyEventType.Down))
+        rig.frame("still 2", quiet(300, 200).copy(pointerX = 290, pointerY = 190))
+        rig.assertChanged(settled, settled + 2, "the first arrow key")
+        rig.assertChanged(settled + 2, settled + 4, "the second arrow key")
+        rig.assertSkipped()
+    }
+
+    @Test
     fun aSidebarOpenedFromOutsideCompositionRedrawsOnASkippingHost() {
         val states = mutableListOf<SidebarState>()
         val rig = TwinHosts {
@@ -162,4 +242,7 @@ class ShadcnSkipUnchangedTest {
         rig.assertChanged(1, 2, "toggling the sidebar")
         rig.assertSkipped()
     }
+
+    private fun SemanticsNode.findTag(tag: String): SemanticsNode? =
+        if (testTag == tag) this else children.firstNotNullOfOrNull { it.findTag(tag) }
 }

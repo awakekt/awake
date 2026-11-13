@@ -62,8 +62,8 @@ internal data class CheckReport(val projectId: String?, val sceneCount: Int, val
  *
  * With [code], the class folders and jars of the project's own built code, it also opens the project
  * with that code, as an editor does: each plugin's `capabilityClass` loads from [code] in a class
- * loader of its own, and [checkProjectOpens] opens every scene with those capabilities. A component
- * no capability registers is then an error, and so is a capability that can't be loaded, a scene that
+ * loader of its own, and [checkProjectOpens] opens every scene with those features. A component
+ * no feature registers is then an error, and so is a feature that can't be loaded, a scene that
  * can't be opened, or one that reads back different after a save. Code that stays loaded after the
  * check, held by something outside the project, is a warning. A project whose manifest has an error,
  * an engine too old for it included, is not opened.
@@ -100,7 +100,7 @@ internal class ProjectCheck(private val project: ProjectScenes, private val code
         return findings
     }
 
-    /** Every scene checked and opened with the capabilities [projectCode] holds; nothing of the project's code outlives it. */
+    /** Every scene checked and opened with the features [projectCode] holds; nothing of the project's code outlives it. */
     private fun openWithCode(projectCode: ProjectCode, manifest: AwakeProjectManifest, scenes: List<File>): MutableList<Finding> {
         val (capabilities, findings) = projectCode.capabilities(manifest)
         val withCode = ProjectScenes(project.root, capabilities)

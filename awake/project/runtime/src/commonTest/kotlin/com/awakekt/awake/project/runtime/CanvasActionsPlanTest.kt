@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class CanvasActionsPlanTest {
     private fun planned(hasRenderer: Boolean): List<String> {
         val plan = SceneSystemPlan(hasPhysics = false, hasRenderer = hasRenderer)
-        ControlsCapability.plan(SceneDocument(), plan)
+        ControlsFeature.plan(SceneDocument(), plan)
         return plan.specs.map { it.name }
     }
 

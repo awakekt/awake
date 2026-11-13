@@ -32,6 +32,8 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.AssetSourceTextureResolver
+import com.awakekt.awake.scene.runtime.SceneHostRole
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
@@ -42,7 +44,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
 
 /**
  * A project read from its files, ready to [runProject]: its manifest and the scene it plays, with that
- * scene's loaded models, what its capabilities loaded, and a physics world when the scene has bodies or
+ * scene's loaded models, what its features loaded, and a physics world when the scene has bodies or
  * characters. It plays its entry scene until a [SceneSwitch] request has [runProject] play another of
  * its scenes, or a host without a frame loop moves it to another with [switchTo].
  *
@@ -54,7 +56,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  *
  * @property manifest Validated project manifest describing entry points and asset directories.
  * @param entry The entry scene, as it loaded.
- * @property capabilities The capabilities the project was loaded with besides Core's.
+ * @property capabilities The features the project was loaded with besides Core's.
  * @property componentRegistry The registry the project was loaded into, which [runProject] attaches
  * its components with, or null when its components were registered globally.
  * @property files The project's files, which a switch reads its next scene from.
@@ -75,7 +77,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
     entry: ProjectScene,
-    internal val capabilities: List<SceneCapability> = emptyList(),
+    internal val capabilities: List<SceneFeature> = emptyList(),
     internal val componentRegistry: SceneComponentRegistry? = null,
     internal val files: AssetSource,
     internal val hasRenderer: Boolean = true,
@@ -105,7 +107,7 @@ class LoadedProject internal constructor(
     /** The playing scene's physics world, or null when it has no bodies or characters. */
     internal val physics: PhysicsWorld? get() = playing.physics
 
-    /** What Core's and [capabilities]' loads read for the playing scene. */
+    /** What Core's and [features]' loads read for the playing scene. */
     internal val content: SceneContent get() = playing.content
 
     /** The models the playing scene's spawned nodes draw that it didn't load, loaded as they are spawned. */
@@ -131,11 +133,11 @@ class LoadedProject internal constructor(
 
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models its
- * `mesh_renderer`s name (with a renderer; see below) and what each capability reads, and calls
+ * `mesh_renderer`s name (with a renderer; see below) and what each feature reads, and calls
  * [physicsWorld] when the scene has bodies or characters. The host picks the backend, for example
  * `::createJoltPhysicsWorld`, and the returned project owns the world it makes.
  *
- * The scene runs with Core's capabilities and then [capabilities], in order: a game passes its own,
+ * The scene runs with Core's features and then [features], in order: a game passes its own,
  * and those of the packages it depends on, so their components decode and their systems run. A
  * plugin the manifest marks `required` must be one of them, by id.
  *
@@ -143,7 +145,7 @@ class LoadedProject internal constructor(
  * renderer, passes `hasRenderer = false`: the scene's canvas images are then checked to resolve and not
  * decoded, its canvas font files are not read, and the glTF models its `mesh_renderer`s name are not
  * read or decoded either, which saves the time and memory of pictures, fonts and meshes nothing draws. A collision shape's model still loads, through
- * its capability, not [models]. Such a project, if it is played by [runProject] after all, draws its
+ * its feature, not [models]. Such a project, if it is played by [runProject] after all, draws its
  * canvas without the images or fonts and its meshes without their models; load with `hasRenderer = true` for a
  * host that later draws.
  *
@@ -153,10 +155,10 @@ class LoadedProject internal constructor(
  * [SceneSwitchState.Loading.progress] defines it; where [files] can't report bytes it is 0 and then 1.
  *
  * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
- * capability, a component no capability registers, content a capability cannot load (a collision
+ * feature, a component no feature registers, content a feature cannot load (a collision
  * model that can't be read, for one), or a scene that needs physics when [physicsWorld] is null.
  *
- * Decoding installs Core's default scene components and every capability's into the process-wide
+ * Decoding installs Core's default scene components and every feature's into the process-wide
  * registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts. Installing twice is
  * harmless. A host that loads more than one project, such as an editor, loads each into a registry of
  * its own with the other `loadProject`.
@@ -175,7 +177,7 @@ class LoadedProject internal constructor(
  */
 suspend fun loadProject(
     files: AssetSource,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
@@ -194,7 +196,7 @@ suspend fun loadProject(
 suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
@@ -203,11 +205,11 @@ suspend fun loadProject(
 
 /**
  * [loadProject] into [componentRegistry] instead of the process-wide registry: Core's scene components
- * and [capabilities]' are registered into it, the scene and its prefabs decode with its
+ * and [features]' are registered into it, the scene and its prefabs decode with its
  * [SceneComponentRegistry.sceneJson], and [runProject] attaches the scene's components with it.
  *
  * Pass a [SceneComponentRegistry.scoped] registry per project, and drop it when the project closes: two
- * projects whose capabilities use the same component name for different components then load one after
+ * projects whose features use the same component name for different components then load one after
  * the other, and each decodes only its own. A project's scene uses only components its registry holds.
  *
  * With `strings`, the project's tables are added to the app's own [Strings], as the first
@@ -216,7 +218,7 @@ suspend fun loadProject(
 suspend fun loadProject(
     files: AssetSource,
     componentRegistry: SceneComponentRegistry,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
@@ -234,7 +236,7 @@ suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
     componentRegistry: SceneComponentRegistry,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     onProgress: (Float) -> Unit = {},
     strings: Strings? = null,
@@ -248,7 +250,7 @@ suspend fun loadProject(
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 suspend fun loadProject(
     files: AssetSource,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): LoadedProject = loadProject(files, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
@@ -258,7 +260,7 @@ suspend fun loadProject(
 suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): LoadedProject = loadProject(files, entryScene, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
@@ -268,7 +270,7 @@ suspend fun loadProject(
 suspend fun loadProject(
     files: AssetSource,
     componentRegistry: SceneComponentRegistry,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): LoadedProject = loadProject(files, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
@@ -279,14 +281,14 @@ suspend fun loadProject(
     files: AssetSource,
     entryScene: String,
     componentRegistry: SceneComponentRegistry,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): LoadedProject = loadProject(files, entryScene, componentRegistry, capabilities, hasRenderer, onProgress = {}, physicsWorld = physicsWorld)
 
 /**
  * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own
- * physics world, content and capabilities, for a host that runs the scene in a world of its own.
+ * physics world, content and features, for a host that runs the scene in a world of its own.
  * With no [renderer], as on a game server or in a test, the systems that draw are left out and the
  * rest simulate as they do in a drawn game. A host that never draws loads the project with
  * `hasRenderer = false` too, so it decodes no images. With [audio], the scene's `audio_source`s play through it;
@@ -302,7 +304,17 @@ fun LoadedProject.sceneSystems(
     audio: AudioPlayer? = null,
     fixedStep: FixedStepReport? = null,
     coroutineScope: CoroutineScope,
-): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope)
+): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope, disabled = emptySet())
+
+/** [sceneSystems], leaving out the systems named in [disabled], as `sceneSystemsFor` describes. */
+fun LoadedProject.sceneSystems(
+    input: () -> GameplayInput,
+    renderer: Renderer? = null,
+    audio: AudioPlayer? = null,
+    fixedStep: FixedStepReport? = null,
+    coroutineScope: CoroutineScope,
+    disabled: Set<String>,
+): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope, disabled)
 
 private fun LoadedProject.sceneSystemsIn(
     input: () -> GameplayInput,
@@ -310,6 +322,7 @@ private fun LoadedProject.sceneSystemsIn(
     audio: AudioPlayer?,
     fixedStep: FixedStepReport?,
     coroutineScope: CoroutineScope?,
+    disabled: Set<String> = emptySet(),
 ): SceneSystemSet {
     val drawn = if (renderer == null) {
         SceneHostServices.headless(input, physics, content)
@@ -318,7 +331,7 @@ private fun LoadedProject.sceneSystemsIn(
     }
     val scoped = coroutineScope?.let(drawn::withCoroutineScope) ?: drawn
     val stepped = fixedStep?.let(scoped::withFixedStep) ?: scoped
-    return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities)
+    return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities, disabled)
 }
 
 /**
@@ -343,9 +356,9 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  * Moves this project to its scene at [path], relative to the project root, such as
  * `scenes/level-2.scene.json`: for a host without a frame loop, such as a test, a game server or a
  * project check, that plays a scene other than the entry scene, or each of a project's scenes in turn.
- * The scene loads as [loadProject] loads the entry scene, with the registry, capabilities,
+ * The scene loads as [loadProject] loads the entry scene, with the registry, features,
  * `hasRenderer` and physics world factory the project was loaded with: decoded and checked, its models
- * and its capabilities' content read, and a physics world made when it has bodies or characters. Then
+ * and its features' content read, and a physics world made when it has bodies or characters. Then
  * the scene it leaves is closed and its physics world destroyed, as a [SceneSwitch] closes it, and
  * [LoadedProject.scene] is the new one. Moving to the scene playing reads it again from its file.
  *
@@ -401,7 +414,32 @@ suspend fun LoadedProject.switchTo(path: String) {
  * error message the game draws itself.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
-    val scenes = ProjectSceneRunner(project)
+    runProject(project, disabledSystems = emptySet(), touchControls)
+}
+
+/**
+ * [runProject], leaving out the systems named in [disabledSystems], such as `CoreSystems.CAMERA` for a
+ * dedicated server: a name no system has is refused when the first scene's systems are built, with the
+ * names that exist. Each scene the project switches to is planned the same way. What the playing
+ * scene planned is the [ProjectSystemPlan] service, in the order the systems run.
+ */
+fun SceneAppDsl.runProject(project: LoadedProject, disabledSystems: Set<String>, touchControls: Boolean = false) {
+    runProject(project, SceneHostRole.Full, disabledSystems, touchControls)
+}
+
+/**
+ * [runProject] for a host with [hostRole]: a [SceneHostRole.SimulationOnly] host plans none of the systems
+ * marked [SceneSystemRole.Presentation], on top of any in [disabledSystems]. Each scene the project
+ * switches to is planned the same way.
+ */
+fun SceneAppDsl.runProject(
+    project: LoadedProject,
+    hostRole: SceneHostRole,
+    disabledSystems: Set<String> = emptySet(),
+    touchControls: Boolean = false,
+) {
+    val scenes = ProjectSceneRunner(project, disabledSystems, hostRole)
+    service(ProjectSystemPlan::class) { ProjectSystemPlan(scenes::plannedSystems) }
     // Every scene's sprite and tilemap textures, read from the project as they are first drawn: the
     // KTX2 file each was cooked to when the project ships one, else the image. The device's block
     // formats are known once the renderer is, before the first frame asks for a texture.

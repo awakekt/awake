@@ -35,14 +35,14 @@ class CapabilitySceneComponentsTest {
 
     @Test
     fun capabilitiesTakeTheirBindingsFromGeneratedModuleRegistries() {
-        assertEquals(ControlsSceneComponents.bindings, ControlsCapability.components)
-        assertEquals(PhysicsSceneComponents.bindings + CharacterSceneComponents.bindings, PhysicsCapability.components)
-        assertEquals(AiSceneComponents.bindings + NavigationSceneComponents.bindings, AiCapability.components)
-        assertEquals(AiCapability.components, AiBehaviorBindings.bindings)
-        assertEquals(AudioSceneComponents.bindings, AudioCapability.components)
-        assertEquals(WorldstreamSceneComponents.bindings, StreamedTerrainCapability.components)
+        assertEquals(ControlsSceneComponents.bindings, ControlsFeature.components)
+        assertEquals(PhysicsSceneComponents.bindings + CharacterSceneComponents.bindings, PhysicsFeature.components)
+        assertEquals(AiSceneComponents.bindings + NavigationSceneComponents.bindings, AiFeature.components)
+        assertEquals(AiFeature.components, AiBehaviorBindings.bindings)
+        assertEquals(AudioSceneComponents.bindings, AudioFeature.components)
+        assertEquals(WorldstreamSceneComponents.bindings, StreamedTerrainFeature.components)
 
-        val capabilityBindings = CORE_CAPABILITIES.flatMap { it.components }
+        val capabilityBindings = CORE_FEATURES.flatMap { it.components }
         assertEquals(capabilityModules.flatMap { it.bindings }, capabilityBindings)
         assertEquals(capabilityBindings.size, capabilityBindings.toSet().size, "duplicate capability binding")
     }

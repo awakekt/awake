@@ -49,10 +49,10 @@ data class ProjectOpenIssue(
  * @property code The issue's machine-readable name.
  */
 enum class ProjectOpenIssueKind(val code: String) {
-    /** The project doesn't load: its manifest, a required plugin no capability provides, or its entry scene. */
+    /** The project doesn't load: its manifest, a required plugin no feature provides, or its entry scene. */
     ProjectLoad("project_load"),
 
-    /** A scene or a prefab it links uses a component no capability registers. */
+    /** A scene or a prefab it links uses a component no feature registers. */
     UnknownComponent("unknown_component"),
 
     /** A scene, or a prefab it links, can't be read, decoded, expanded, instantiated, or loaded with its content and physics. */
@@ -64,7 +64,7 @@ enum class ProjectOpenIssueKind(val code: String) {
     /** Saved and reopened, a scene or a prefab reads back different, or a second save writes other bytes. */
     RoundTrip("round_trip"),
 
-    /** A capability's component serializer reached the process-wide scene serializers, which outlive the project. */
+    /** A feature's component serializer reached the process-wide scene serializers, which outlive the project. */
     GlobalSerializer("global_serializer"),
 
     /** Something the check opened was left open after it closed the project, such as a physics world. */
@@ -72,14 +72,14 @@ enum class ProjectOpenIssueKind(val code: String) {
 }
 
 /**
- * Opens the project in [files] with [capabilities] the way an editor or a player does, and returns
+ * Opens the project in [files] with [features] the way an editor or a player does, and returns
  * what kept it from opening: empty when every scene opens. [scenes] are the scene files to open, from
  * the project root; the manifest lists none, so a tool passes every scene file it finds.
  *
  * The project loads with [loadProject], into a [SceneComponentRegistry.scoped] registry of its own,
  * with no renderer and [physicsWorld] for its scenes' bodies. Then, for each scene:
  * - it decodes with the registry's `sceneJson(keepUnknownComponents = true)`, and its prefabs expand;
- *   a component no capability registers, in the scene or in a prefab, is a
+ *   a component no feature registers, in the scene or in a prefab, is a
  *   [ProjectOpenIssueKind.UnknownComponent] at its node;
  * - it instantiates into a world of its own, the project [switchTo]s it, which reads its content and
  *   makes its physics world, and its systems are built and run for one fixed step and one frame;
@@ -87,23 +87,23 @@ enum class ProjectOpenIssueKind(val code: String) {
  *   compared, and saved again, which must write the same text.
  *
  * Last, the project moves back to its entry scene and closes, and every physics world it made must
- * have been destroyed, and no capability's component may have reached [SceneSerializers]' global set.
+ * have been destroyed, and no feature's component may have reached [SceneSerializers]' global set.
  * This reads scenes and prefabs; it checks no image, model or sound that only drawing reads, and runs
  * no scene for longer than one step. `ProjectContentValidator` and [SceneValidator] check the rest.
  *
- * A capability that throws anything is reported, not thrown: only cancelling throws.
+ * A feature that throws anything is reported, not thrown: only cancelling throws.
  */
 suspend fun checkProjectOpens(
     files: AssetSource,
     scenes: List<String>,
-    capabilities: List<SceneCapability> = emptyList(),
+    capabilities: List<SceneFeature> = emptyList(),
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): List<ProjectOpenIssue> = ProjectOpenCheck(files, capabilities, physicsWorld).run(scenes)
 
 /** One run of [checkProjectOpens]. */
 private class ProjectOpenCheck(
     private val files: AssetSource,
-    private val capabilities: List<SceneCapability>,
+    private val capabilities: List<SceneFeature>,
     physicsWorld: (suspend () -> PhysicsWorld)?,
 ) {
     private val issues = ArrayList<ProjectOpenIssue>()
@@ -150,7 +150,7 @@ private class ProjectOpenCheck(
         }
     }
 
-    /** Reports each component of [document] no capability registers, and whether there was one. */
+    /** Reports each component of [document] no feature registers, and whether there was one. */
     private fun hasUnknownComponents(path: String, document: SceneDocument): Boolean {
         val unknown = SceneValidator.unknownComponentIssues(document)
         unknown.forEach { report(ProjectOpenIssueKind.UnknownComponent, it.message.replace(KEPT_AS_DATA, NOT_REGISTERED), path, it.path) }
@@ -216,7 +216,7 @@ private class ProjectOpenCheck(
     }
 
     /** [block]'s result, or null with an issue of [kind] in [file] when it throws anything but a cancellation. */
-    // TooGenericExceptionCaught: a project's capability, an asset source or a decoder reports a bad file in its own type.
+    // TooGenericExceptionCaught: a project's feature, an asset source or a decoder reports a bad file in its own type.
     @Suppress("TooGenericExceptionCaught")
     private inline fun <T> attempt(kind: ProjectOpenIssueKind, file: String, block: () -> T): T? = try {
         block()

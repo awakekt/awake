@@ -86,7 +86,7 @@ class ProjectFixedStepTest {
     private data class Frame(val ran: Int, val dropped: Int)
 
     /** A game's capability whose systems count the fixed steps and read the loop's report each frame. */
-    private class ClockCapability : SceneCapability {
+    private class ClockCapability : SceneFeature {
         override val id = "com.example.harbor-town.clock"
         var report: FixedStepReport? = null
         var fixedSteps = 0

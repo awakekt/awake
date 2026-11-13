@@ -230,5 +230,5 @@ sprite does.
 ## What stays out of it
 
 An algorithm or behaviour with an API of its own (overlap tests, batching, sampling) lives in a module
-that depends on no `awake:scene` module, and this one binds it. `./gradlew verifyCapabilityLayering`
+that depends on no `awake:scene` module, and this one binds it. `./gradlew verifyFeatureLayering`
 enforces that. 2D overlap already lives in `awake:core:math` (`Box2`, `Circle2`, `Overlap2`).
