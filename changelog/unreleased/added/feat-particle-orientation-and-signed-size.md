@@ -1,1 +1,0 @@
-- Scene nodes can keep a world-space rotation while following their parent. 3D particle sprites can shrink through zero and grow mirrored using a negative end scale.
