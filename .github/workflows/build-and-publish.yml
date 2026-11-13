@@ -155,7 +155,9 @@ jobs:
         include:
           - runner: macos-15
             platform: macos-arm64
-          - runner: ubuntu-latest
+          # Not ubuntu-latest: a Linux library only loads where glibc is at least the one it was linked
+          # against, so it is built on the oldest supported image (tools/check_linux_glibc.sh).
+          - runner: ubuntu-22.04
             platform: linux-x86_64
           - runner: windows-latest
             platform: windows-x86_64
@@ -195,6 +197,9 @@ jobs:
 
       - name: Build the desktop native library
         run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
+      - name: Check the Linux library's glibc
+        if: runner.os == 'Linux'
+        run: tools/check_linux_glibc.sh awake/backend/vulkan/bindings/build/generated/natives-resources/natives/linux-x86_64
 
       - name: Upload ${{ matrix.platform }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -220,7 +225,9 @@ jobs:
         include:
           - runner: macos-15
             platform: macos-arm64
-          - runner: ubuntu-latest
+          # Not ubuntu-latest: a Linux library only loads where glibc is at least the one it was linked
+          # against, so it is built on the oldest supported image (tools/check_linux_glibc.sh).
+          - runner: ubuntu-22.04
             platform: linux-x86_64
           - runner: windows-latest
             platform: windows-x86_64
@@ -242,6 +249,9 @@ jobs:
           sudo apt-get install -y libglfw3-dev
       - name: Build libawake-window
         run: ./gradlew :awake:engine:window:buildDesktopNative
+      - name: Check the Linux library's glibc
+        if: runner.os == 'Linux'
+        run: tools/check_linux_glibc.sh awake/engine/window/build/generated/natives-resources/natives/linux-x86_64
       - name: Upload ${{ matrix.platform }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -267,7 +277,9 @@ jobs:
         include:
           - runner: macos-15
             platform: macos-arm64
-          - runner: ubuntu-latest
+          # Not ubuntu-latest: a Linux library only loads where glibc is at least the one it was linked
+          # against, so it is built on the oldest supported image (tools/check_linux_glibc.sh).
+          - runner: ubuntu-22.04
             platform: linux-x86_64
           - runner: windows-latest
             platform: windows-x86_64
@@ -285,6 +297,9 @@ jobs:
           target-path: awake/asset/shader-compiler/rust-native/target
       - name: Build libawake_naga
         run: ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
+      - name: Check the Linux library's glibc
+        if: runner.os == 'Linux'
+        run: tools/check_linux_glibc.sh awake/asset/shader-compiler/build/generated/natives-resources/natives/linux-x86_64
       - name: Upload ${{ matrix.platform }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
