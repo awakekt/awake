@@ -31,6 +31,19 @@ class GpuShadowCascadeData(
         worldExtents: FloatArray = FloatArray(viewProjections.size) { 2f / scaleAlong(viewProjections[it], WIDTH_AXIS) },
     ) : this(viewProjections, splitDistances, depthScales, worldExtents, splitDistances.copyOf())
 
+    /**
+     * The share of the last cascade's reach, from 0 to under 1, over which a shadow fades out, so it
+     * does not end on a hard line at the shadow distance. 0 keeps the hard end. Set once by whoever
+     * fits the cascades, before this is handed to a backend.
+     */
+    var shadowFade: Float = 0f
+
+    /**
+     * [count] and [shadowFade] as the one float a shader reads from `cameraForward.w`: the whole part
+     * is the cascade count and the fractional part the fade, capped below 1 so it never carries into it.
+     */
+    val countAndFade: Float get() = count.toFloat() + shadowFade.coerceIn(0f, MAX_FADE)
+
     init {
         require(viewProjections.isNotEmpty()) { "A shadow needs at least one cascade." }
         require(viewProjections.size == splitDistances.size) {
@@ -100,3 +113,4 @@ private fun scaleAlong(matrix: Mat4, axis: Int): Float {
 }
 
 private const val ROW_STRIDE = 4
+private const val MAX_FADE = 0.99f

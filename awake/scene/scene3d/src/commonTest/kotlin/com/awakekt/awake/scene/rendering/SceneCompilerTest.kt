@@ -15,10 +15,12 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_FADE
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.debug.debugSettings
 import com.awakekt.awake.scene.rendering.light.Light
+import com.awakekt.awake.scene.rendering.light.SceneLight
 import com.awakekt.awake.scene.rendering.light.SceneLightingCompiler
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
@@ -43,6 +45,22 @@ class SceneCompilerTest {
 
         assertEquals(0.5f, ambient(Light(type = Light.Type.Directional, ambient = 0.5f)))
         assertNull(ambient(Light(type = Light.Type.Directional)), "an unset ambient keeps each shader's own")
+    }
+
+    @Test
+    fun theLightsShadowFadeReachesTheCascadesAndDefaultsToAShortFade() {
+        fun fade(light: Light): Float {
+            val world = World()
+            world.add(world.create(), light)
+            val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f))
+            return requireNotNull(SceneLightingCompiler(ClipSpace.WebGpu).sceneLight(world, camera, viewportAspect = 1f).cascades).shadowFade
+        }
+
+        assertEquals(0.3f, fade(Light(type = Light.Type.Directional, shadowFade = 0.3f)))
+        assertEquals(0f, fade(Light(type = Light.Type.Directional, shadowFade = 0f)), "0 keeps the hard end")
+        assertEquals(DEFAULT_SHADOW_FADE, fade(Light(type = Light.Type.Directional)))
+        assertEquals(1, SceneLight(shadowFade = 1f).validate("light").size)
+        assertEquals(emptyList(), SceneLight(shadowFade = 0f).validate("light"))
     }
 
     @Test

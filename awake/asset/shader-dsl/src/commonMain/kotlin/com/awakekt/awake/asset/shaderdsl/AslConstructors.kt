@@ -36,6 +36,14 @@ fun mat4(vararg columns: AslExpr): AslExpr = AslConstruct(GpuDataShape.Mat4, col
 fun toF32(value: AslExpr): AslExpr = AslCall("f32", listOf(value), F32)
 
 /**
+ * Converts a value to `i32`, truncating toward zero.
+ *
+ * @param value The expression to convert.
+ * @return The `i32` expression.
+ */
+fun toI32(value: AslExpr): AslExpr = AslCall("i32", listOf(value), AslType.I32)
+
+/**
  * Converts a value to `u32`.
  *
  * The counterpart to [toF32], for the one place a float has to become an index: WGSL array

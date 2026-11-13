@@ -22,20 +22,55 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Where a directional light's shadows end: a ground wholly in the shadow of a sheet overhead, seen
- * along its length, with `shadowDistance` cutting across it. Reads one image column from the
- * camera's feet outward, so the shadow's end shows as a step in that profile.
+ * Where a directional light's shadows end, for #1537 stage D: a ground wholly in the shadow of a sheet
+ * overhead, seen along its length, with `shadowDistance` cutting across it. Reads one image column from
+ * the camera's feet outward, so the end of the shadow shows as a step in that profile.
  *
- * Pins what #1537 stage D changes: today the shadow stops on a hard line, one pixel row from
- * shadowed to fully lit, at the shadow distance. When the fade lands, this test is the one to flip.
+ * With no fade the shadow stops on a hard line, one pixel row from shadowed to lit, at the distance.
+ * With a fade it eases out over the last share of the distance and is untouched before it.
  */
 class RendererHeadlessShadowDistanceTest {
 
     @Test
-    fun theShadowEndsAtTheShadowDistance() {
+    fun withNoFadeTheShadowEndsOnAHardLineAtTheDistance() {
+        for (light in LIGHTS) {
+            val ground = profile(light, fade = 0f)
+            val steps = ground.zipWithNext { a, b -> b - a }
+            val edge = steps.indexOf(steps.max())
+            val contrast = ground.max() - ground.first()
+
+            assertTrue(contrast > MIN_CONTRAST, "$light: the near ground is shadowed and the far ground lit: ${ground.first()}..${ground.max()}")
+            assertTrue(steps[edge] >= contrast * HARD_SHARE, "$light: the shadow ends in one row: step ${steps[edge]} of $contrast")
+            val depth = viewDepth(SIZE - 1 - edge)
+            assertTrue(abs(depth - SHADOW_DISTANCE) < DEPTH_TOLERANCE, "$light: and at the shadow distance: $depth")
+        }
+    }
+
+    @Test
+    fun aFadeEasesTheShadowOutOverTheLastShareOfTheDistanceAndLeavesTheRestAlone() {
+        for (light in LIGHTS) {
+            val hard = profile(light, fade = 0f)
+            val soft = profile(light, fade = FADE)
+            val contrast = soft.max() - soft.first()
+            val steps = soft.zipWithNext { a, b -> b - a }
+
+            assertTrue(steps.max() <= contrast * SOFT_SHARE, "$light: no row carries the whole change: ${steps.max()} of $contrast")
+            assertTrue(soft.zipWithNext().all { (a, b) -> b >= a - 1 }, "$light: it only ever gets lighter going out: $soft")
+            val rowsChanging = steps.count { it > 0 }
+            assertTrue(rowsChanging >= MIN_FADE_ROWS, "$light: the change spreads over $rowsChanging rows")
+            val fadeStart = SHADOW_DISTANCE * (1f - FADE)
+            val before = soft.indices.filter { viewDepth(SIZE - 1 - it) < fadeStart - DEPTH_TOLERANCE }
+            assertTrue(before.all { soft[it] == hard[it] }, "$light: before the fade the shadow is exactly as dark as without one")
+            assertEquals(hard.max(), soft.max(), "$light: and beyond the distance it is fully lit")
+        }
+    }
+
+    /** The red channel of the ground along the image's middle column, nearest row first, up to the far edge of the ground. */
+    private fun profile(sun: Vec3f, fade: Float): List<Int> {
         val (renderer, release) = newHeadlessShadowRenderer(SIZE)
         val target = renderer.createRenderTarget(SIZE, SIZE)
         val ground = renderer.createMesh(sheet(y = 0f))
@@ -43,25 +78,17 @@ class RendererHeadlessShadowDistanceTest {
         val material = renderer.createMaterial(LitShadowUniformLayout)
         try {
             val camera = Lens(eye = Vec3f(0f, EYE_HEIGHT, 20f), center = Vec3f(0f, 0f, -30f), fovYRadians = 1f, near = 0.1f, far = 300f)
-            val base = SceneLight(direction = Vec3f(0.1f, 1f, 0.1f), color = Vec3f(1f, 1f, 1f))
-            val light = base.copy(cascades = shadowCascadeUniforms(base, camera, 1f, renderer.clipSpace, shadowDistance = SHADOW_DISTANCE))
+            val base = SceneLight(direction = sun, color = Vec3f(1f, 1f, 1f))
+            val cascades = shadowCascadeUniforms(base, camera, 1f, renderer.clipSpace, shadowDistance = SHADOW_DISTANCE, shadowFade = fade)
             renderer.renderSceneToTexture(
                 target,
                 camera,
                 listOf(RenderDrawCommand(ground, material), RenderDrawCommand(sheet, material, shadowsOnly = true)),
-                light,
+                base.copy(cascades = cascades),
             )
             val pixels = runBlocking { renderer.readPixels(target) }.data
             val rows = (SIZE - 1 downTo 0).map { y -> pixels[(y * SIZE + SIZE / 2) * 4].toInt() and 0xFF }
-            val ground = rows.takeWhile { it > 0 }
-            val steps = ground.zipWithNext { a, b -> b - a }
-            val edge = steps.indexOf(steps.max())
-            val contrast = ground.max() - ground.first()
-
-            assertTrue(contrast > MIN_CONTRAST, "the near ground is shadowed and the far ground lit: ${ground.first()}..${ground.max()}")
-            assertTrue(steps[edge] >= contrast * HARD_SHARE, "the shadow ends in one row: step ${steps[edge]} of $contrast")
-            val depth = viewDepth(SIZE - 1 - edge)
-            assertTrue(abs(depth - SHADOW_DISTANCE) < DEPTH_TOLERANCE, "and at the shadow distance, not elsewhere: $depth")
+            return rows.takeWhile { it > 0 }
         } finally {
             material.destroy()
             sheet.destroy()
@@ -101,6 +128,10 @@ class RendererHeadlessShadowDistanceTest {
         const val NEAR_END = 40f
         const val MIN_CONTRAST = 20
         const val HARD_SHARE = 0.9f
+        const val SOFT_SHARE = 0.3f
+        const val FADE = 0.4f
+        const val MIN_FADE_ROWS = 6
+        val LIGHTS = listOf(Vec3f(0.1f, 1f, 0.1f), Vec3f(0.5f, 1f, -0.3f))
         const val DEPTH_TOLERANCE = 2f
         const val EYE_HEIGHT = 6f
         const val EYE_TO_CENTRE = 50f

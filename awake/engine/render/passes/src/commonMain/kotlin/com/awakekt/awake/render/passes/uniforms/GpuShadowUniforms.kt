@@ -118,7 +118,7 @@ internal fun packLitShadowBlock(
         .put(transform.data, UniformFields.Model)
         .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
         .put(cameraPositionFloats(cameraEye), UniformFields.CameraPosition)
-        .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
+        .put(UniformFields.CameraForward, cameraForward, cascades.countAndFade)
         .put(material, UniformFields.Material)
         .put(fogUniformFloats(fogColor, fogDensity), UniformFields.FogColor)
         .putDebugView(debugView, cameraForward)

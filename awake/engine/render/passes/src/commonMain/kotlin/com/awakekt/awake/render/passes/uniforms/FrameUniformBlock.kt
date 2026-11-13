@@ -54,7 +54,7 @@ class FrameUniformBlock {
             .put(cascadeMatrices, UniformFields.CascadeViewProjections)
             .put(cascadeScales, UniformFields.CascadeDepthScales)
             .put(UniformFields.CameraPosition, cameraEye)
-            .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
+            .put(UniformFields.CameraForward, cameraForward, cascades.countAndFade)
             .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
             .putDebugView(debugView, cameraForward)
             .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
