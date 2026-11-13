@@ -6,6 +6,7 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public static synthetic fun entity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun hostRole (Lcom/awakekt/awake/scene/runtime/SceneHostRole;)V
 	public final fun infrastructureSystems (Lkotlin/jvm/functions/Function1;)V
 	public final fun maxFixedStepsPerFrame (I)V
 	public final fun name (Ljava/lang/String;)V
@@ -17,6 +18,7 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun scene (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun scene$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun service (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)V
+	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun systems (Lkotlin/jvm/functions/Function1;)V
 	public final fun ui (Lkotlin/jvm/functions/Function1;)V
@@ -69,6 +71,7 @@ public final class com/awakekt/awake/scene/authoring/SceneSystemsDsl {
 	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun preAnimationSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 }
 

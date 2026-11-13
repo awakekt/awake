@@ -397,7 +397,7 @@ class SkinnedPlaybackTest {
         assertSame(sharedPose, runtime.world.get<SkinnedPose>(body))
     }
 
-    private object SpawnOnce : SceneCapability {
+    private object SpawnOnce : SceneFeature {
         override val id = "com.example.harbor-town.spawn-once"
 
         override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {

@@ -17,13 +17,14 @@ import com.awakekt.awake.scene.audio.SceneAudioSource
 import com.awakekt.awake.scene.audio.loadAudioClips
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 
 /**
  * A scene's `audio_source`s: each clip is read from the project's files when it loads, and plays
  * through the host's [SceneHostServices.audio], heard from the active camera. A host with no audio
  * player, such as a game server or a test, runs the sources silently.
  */
-internal object AudioCapability : SceneCapability {
+internal object AudioFeature : SceneFeature {
     override val id = "com.awakekt.awake.audio"
     override val components = AudioSceneComponents.bindings
 
@@ -33,8 +34,8 @@ internal object AudioCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneAudioSource::class)) return
-        plan.frame(CoreSystems.AUDIO_LISTENER) { CameraListenerSystem() }
-        plan.frame(CoreSystems.AUDIO) {
+        plan.frame(CoreSystems.AUDIO_LISTENER, SceneSystemRole.Presentation) { CameraListenerSystem() }
+        plan.frame(CoreSystems.AUDIO, SceneSystemRole.Presentation) {
             val player = it.audio ?: NoOpAudioPlayer()
             it.content[CoreSceneContent.AudioClipLoads]?.let { loads -> AudioSystem(player, loads) }
                 ?: AudioSystem(player, it.content[CoreSceneContent.AudioClips].orEmpty())

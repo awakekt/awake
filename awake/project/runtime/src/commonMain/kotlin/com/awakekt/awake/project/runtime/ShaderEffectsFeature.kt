@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.shader.SceneShaderEffect
 import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.scene.shader.ShaderEffectSystem
@@ -17,7 +18,7 @@ import com.awakekt.awake.scene.shader.loadShaderEffects
  * A scene's `shader_effect`s: the shader documents the project ships, drawn through the renderer when
  * it takes content features. A document that does not check out is logged and not drawn.
  */
-internal object ShaderEffectsCapability : SceneCapability {
+internal object ShaderEffectsFeature : SceneFeature {
     override val id = "com.awakekt.awake.shader-effects"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
@@ -26,7 +27,7 @@ internal object ShaderEffectsCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneShaderEffect::class) || !plan.hasRenderer) return
-        plan.frame(CoreSystems.SHADER_EFFECTS) {
+        plan.frame(CoreSystems.SHADER_EFFECTS, SceneSystemRole.Presentation) {
             ShaderEffectSystem(
                 it.renderer as? ContentFeatureHost,
                 it.content[CoreSceneContent.ShaderEffects] ?: ShaderEffectAssets.Empty,

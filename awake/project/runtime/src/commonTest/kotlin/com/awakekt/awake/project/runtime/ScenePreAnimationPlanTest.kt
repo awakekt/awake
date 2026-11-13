@@ -170,7 +170,7 @@ class ScenePreAnimationPlanTest {
         val clipTime: Float,
     )
 
-    private inner class PoseProbe : SceneCapability {
+    private inner class PoseProbe : SceneFeature {
         override val id = "com.example.harbor-town.pose-probe"
         var nextPosition: Vec3f? = null
         val observations = mutableListOf<FrameObservation>()
@@ -229,7 +229,7 @@ class ScenePreAnimationPlanTest {
         private val closed: MutableList<String>,
         private val preName: String? = null,
         private val frameName: String? = null,
-    ) : SceneCapability {
+    ) : SceneFeature {
         override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
             preName?.let { name -> plan.preAnimation(name) { NamedCloseableSystem(name, closed) } }
             frameName?.let { name -> plan.frame(name) { NamedCloseableSystem(name, closed) } }
@@ -240,7 +240,7 @@ class ScenePreAnimationPlanTest {
         override fun update(world: World, delta: Float) = block(world, delta)
     }
 
-    private fun capability(id: String, configure: (SceneSystemPlan) -> Unit): SceneCapability = object : SceneCapability {
+    private fun capability(id: String, configure: (SceneSystemPlan) -> Unit): SceneFeature = object : SceneFeature {
         override val id = id
 
         override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = configure(plan)

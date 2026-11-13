@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import kotlin.jvm.JvmOverloads
+
 /**
  * One system a scene run planned: the name it is known by and the phase it runs in. The project
  * runtime and the declarative scene app both list their systems as these, in the order they run
@@ -12,13 +14,19 @@ package com.awakekt.awake.scene.runtime
  *
  * @property name The system's name, such as a Core constant or the name a game gave it.
  * @property phase The [SceneSystemPhase] it runs in.
+ * @property role The [SceneSystemRole] it was given, [SceneSystemRole.Simulation] unless marked.
  */
-class PlannedSystem(val name: String, val phase: SceneSystemPhase) {
-    override fun equals(other: Any?): Boolean = other is PlannedSystem && other.name == name && other.phase == phase
+class PlannedSystem @JvmOverloads constructor(
+    val name: String,
+    val phase: SceneSystemPhase,
+    val role: SceneSystemRole = SceneSystemRole.Simulation,
+) {
+    override fun equals(other: Any?): Boolean =
+        other is PlannedSystem && other.name == name && other.phase == phase && other.role == role
 
-    override fun hashCode(): Int = 31 * name.hashCode() + phase.hashCode()
+    override fun hashCode(): Int = 31 * (31 * name.hashCode() + phase.hashCode()) + role.hashCode()
 
-    override fun toString(): String = "$name ($phase)"
+    override fun toString(): String = "$name ($phase, $role)"
 }
 
 /**

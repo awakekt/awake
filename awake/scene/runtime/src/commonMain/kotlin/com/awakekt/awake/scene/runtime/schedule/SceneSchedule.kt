@@ -80,9 +80,9 @@ class SceneSchedule internal constructor(
 
     internal fun initialize(runtime: SceneAppLifecycleRuntime) {
         requireKnownSystemNames(spec.disabledSystems, spec.systems.map { it.handle.name }, "the scene app")
-        val kept = spec.systems.filterNot { it.handle.name in spec.disabledSystems }
+        val kept = spec.systems.filter { it.handle.name !in spec.disabledSystems && spec.hostRole.runs(it.role) }
         planned = listOf(SceneSystemPhase.Fixed, SceneSystemPhase.PreAnimation, SceneSystemPhase.Frame).flatMap { phase ->
-            kept.filter { it.phase == phase }.map { PlannedSystem(it.handle.name, phase) }
+            kept.filter { it.phase == phase }.map { PlannedSystem(it.handle.name, phase, it.role) }
         }
         infrastructureSystems = spec.infrastructureSystemsFactory(runtime)
         guardedInfrastructure = infrastructureSystems.map { it.guardedFor(runtime) }

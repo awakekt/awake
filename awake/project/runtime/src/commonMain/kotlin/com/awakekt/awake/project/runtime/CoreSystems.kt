@@ -10,7 +10,7 @@ package com.awakekt.awake.project.runtime
  * name a host passes to disable it, as `sceneSystemsFor(..., disabled = setOf(CoreSystems.CAMERA))`
  * does. They are stable across releases: a name is never changed or reused, and a system that goes
  * away has its constant deprecated first. [all] lists them. A game's own systems are named by its
- * capabilities, which list them in [SceneCapability.systemNames].
+ * features, which list them in [SceneFeature.systemNames].
  */
 object CoreSystems {
     /** `playerInput`: The keymap, or the canvas touch controls, read into the frame's input actions. */

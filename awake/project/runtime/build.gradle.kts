@@ -48,7 +48,7 @@ kotlin {
             api(project(":awake:terrain"))
             implementation(project(":awake:kit:terrain-layers"))
             implementation(project(":awake:core:logging"))
-            // A SceneCapability lists the bindings of the components it adds, so their type is in this API.
+            // A SceneFeature lists the bindings of the components it adds, so their type is in this API.
             api(project(":awake:scene:binding"))
             // Names the components a scene uses that no capability registers.
             implementation(libs.kotlinx.serialization.json)

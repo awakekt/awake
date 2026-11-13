@@ -130,7 +130,7 @@ internal class RenderedImage(val width: Int, val height: Int, val rgba: ByteArra
 /**
  * Plays one of [project]'s scenes headless, as a played project runs it, and reads back what its
  * primary camera sees. The scene is loaded as the project's entry scene would be, with Core's
- * capabilities and [ProjectRenderPlan], so the picture is the one a game built on the project shows
+ * features and [ProjectRenderPlan], so the picture is the one a game built on the project shows
  * for the 3D scene. A scene canvas drawn over it isn't included.
  */
 internal class ProjectRender(private val project: ProjectScenes) {

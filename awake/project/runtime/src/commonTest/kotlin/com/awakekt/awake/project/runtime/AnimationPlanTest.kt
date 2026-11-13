@@ -51,7 +51,7 @@ class AnimationPlanTest {
     /** Plans the skinned animation for a host that does or doesn't draw, and runs it 0.5 s on a one-bone model. */
     private fun runAnimation(hasRenderer: Boolean): Pair<AnimationPlayer, SkinnedPose> {
         val plan = SceneSystemPlan(hasPhysics = false, hasRenderer = hasRenderer)
-        SkinnedAnimationCapability.plan(SceneDocument(), plan)
+        SkinnedAnimationFeature.plan(SceneDocument(), plan)
         val services = SceneHostServices.headless(input = { GameplayInput(Input().currentSnapshot, InputOwnership()) })
         val system = plan.specs.single { it.name == "animation" }.create(services)
 
