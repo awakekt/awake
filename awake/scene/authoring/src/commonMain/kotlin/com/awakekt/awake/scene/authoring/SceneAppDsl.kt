@@ -127,6 +127,7 @@ class SceneAppDsl internal constructor() {
     private var infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems
     private var fixedStepCap: Int? = null
+    private var disabledSystems: Set<String> = emptySet()
 
     /**
      * Sets the descriptive name of the scene.
@@ -368,6 +369,17 @@ class SceneAppDsl internal constructor() {
         fixedStepCap = value
     }
 
+    /**
+     * Leaves out the registered systems named [names], as a dedicated server leaves out a camera. A name
+     * no system registered by this scene is refused when the app starts, with the names that exist.
+     * See [SceneAppSpec.disabledSystems].
+     *
+     * @param names The system names to disable, such as the ones a `system(...)` call was given.
+     */
+    fun disableSystems(vararg names: String) {
+        disabledSystems = disabledSystems + names
+    }
+
     internal fun build(): SceneAppSpec = SceneAppSpec(
         sceneName = sceneName,
         systems = systemsDsl.build(),
@@ -380,7 +392,10 @@ class SceneAppDsl internal constructor() {
         onDisposeBlock = { onDisposeBlocks.forEach { it(this) } },
         serviceRegistrations = serviceRegistrations.toList(),
         infrastructureSystemsFactory = infrastructureSystemsFactory,
-    ).also { spec -> fixedStepCap?.let { spec.maxFixedStepsPerFrame = it } }
+    ).also { spec ->
+        fixedStepCap?.let { spec.maxFixedStepsPerFrame = it }
+        spec.disabledSystems = disabledSystems
+    }
 }
 
 /**

@@ -113,21 +113,21 @@ internal object AiCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val navigation = scene.navigation()?.also(::requireValid)
         if (navigation != null && scene.uses(SceneNavigationAgent::class)) {
-            plan.frame("navigation-agents") { NavigationAgentSystem(navigation.surface(it)) }
+            plan.frame(CoreSystems.NAVIGATION_AGENTS) { NavigationAgentSystem(navigation.surface(it)) }
         }
         val behaviours = if (navigation == null) emptyList() else ROUTE_BEHAVIOURS.filter { scene.uses(it.type) }
         val definitions = scene.uses(SceneBehaviorTree::class) || scene.uses(SceneStateMachine::class)
         val perceives = scene.uses(ScenePerceiver::class)
         if (behaviours.isEmpty() && !definitions && !perceives) return
-        plan.frame("ai-intents") { AgentIntentResetSystem() }
+        plan.frame(CoreSystems.AI_INTENTS) { AgentIntentResetSystem() }
         if (perceives) planPerception(scene, navigation, plan)
         if (definitions) {
-            plan.frame("ai-definitions") { AiDefinitionAttachSystem(it.content[AiDefinitions] ?: AiDefinitionLibrary()) }
-            plan.frame("ai-trees") { BehaviorTreeSystem() }
-            plan.frame("ai-machines") { AiStateMachineSystem() }
+            plan.frame(CoreSystems.AI_DEFINITIONS) { AiDefinitionAttachSystem(it.content[AiDefinitions] ?: AiDefinitionLibrary()) }
+            plan.frame(CoreSystems.AI_TREES) { BehaviorTreeSystem() }
+            plan.frame(CoreSystems.AI_MACHINES) { AiStateMachineSystem() }
         }
         behaviours.forEach { behaviour -> plan.frame(behaviour.name) { behaviour.create() } }
-        if (navigation != null) plan.frame("path-requests") { PathRequestSystem(navigation.grid(it)) }
+        if (navigation != null) plan.frame(CoreSystems.PATH_REQUESTS) { PathRequestSystem(navigation.grid(it)) }
     }
 }
 
@@ -135,7 +135,7 @@ internal object AiCapability : SceneCapability {
 private fun planPerception(scene: SceneDocument, navigation: SceneNavigation?, plan: SceneSystemPlan) {
     val factions = scene.nodes.flatMap { it.withDescendants() }.flatMap { it.components }
         .filterIsInstance<SceneFactions>().firstOrNull()?.toTable() ?: FactionTable()
-    plan.frame("ai-perception") { services ->
+    plan.frame(CoreSystems.AI_PERCEPTION) { services ->
         val physics = services.physics
         val sight = when {
             physics != null -> PhysicsLineOfSight(physics, bodyOf = { world, entity -> world.get<PhysicsBody>(entity)?.handle })
@@ -180,9 +180,9 @@ private class RouteBehaviour(val type: KClass<out SceneComponent>, val name: Str
 
 /** The behaviours that need a `navigation` component to route over, in the order they run. */
 private val ROUTE_BEHAVIOURS = listOf(
-    RouteBehaviour(ScenePatrol::class, "ai-patrol") { PatrolAiSystem(MovementAgentPlacement) },
-    RouteBehaviour(SceneChase::class, "ai-chase") { ChaseAiSystem(MovementAgentPlacement) },
-    RouteBehaviour(SceneFlee::class, "ai-flee") { FleeAiSystem(MovementAgentPlacement) },
+    RouteBehaviour(ScenePatrol::class, CoreSystems.AI_PATROL) { PatrolAiSystem(MovementAgentPlacement) },
+    RouteBehaviour(SceneChase::class, CoreSystems.AI_CHASE) { ChaseAiSystem(MovementAgentPlacement) },
+    RouteBehaviour(SceneFlee::class, CoreSystems.AI_FLEE) { FleeAiSystem(MovementAgentPlacement) },
 )
 
 /** The names of this node and its descendants that have a route behaviour or a `navigation_agent` and a character controller but no `Agent` movement control. */

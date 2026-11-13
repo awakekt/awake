@@ -26,7 +26,7 @@ internal object ShaderEffectsCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneShaderEffect::class) || !plan.hasRenderer) return
-        plan.frame("shader-effects") {
+        plan.frame(CoreSystems.SHADER_EFFECTS) {
             ShaderEffectSystem(
                 it.renderer as? ContentFeatureHost,
                 it.content[CoreSceneContent.ShaderEffects] ?: ShaderEffectAssets.Empty,

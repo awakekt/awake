@@ -709,6 +709,12 @@ class SceneAppLifecycleRuntime internal constructor(
      */
     fun hasInfrastructureSystem(type: KClass<out System>): Boolean = session.schedule.runsInfrastructure(type)
 
+    /**
+     * The systems this scene app registered and did not disable, in the order they run: fixed, then
+     * pre-animation, then frame. For diagnostics and tests. The infrastructure systems are not listed.
+     */
+    val plannedSystems: List<PlannedSystem> get() = session.schedule.planned
+
     // Every world's View pictures, made by the first canvas that asks for one.
     private var viewStore: SceneCanvasViews? = null
 

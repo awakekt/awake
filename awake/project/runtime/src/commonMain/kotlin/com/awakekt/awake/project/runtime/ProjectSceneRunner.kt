@@ -30,6 +30,7 @@ import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
+import com.awakekt.awake.scene.runtime.PlannedSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
 import com.awakekt.awake.scene.runtime.SceneMeshLevels
@@ -89,8 +90,10 @@ import kotlin.reflect.KClass
  */
 // TooManyFunctions: the steps of a switch, each small so that its failure is contained where it can be told apart.
 @Suppress("TooManyFunctions")
-internal class ProjectSceneRunner(private val project: LoadedProject) :
-    SceneSwitch,
+internal class ProjectSceneRunner(
+    private val project: LoadedProject,
+    private val disabledSystems: Set<String> = emptySet(),
+) : SceneSwitch,
     SceneSwitchStatus {
     /** Resolves the playing scene's glTF models for the app's asset library, whichever scene plays. */
     val models = PlayingModels(project.models)
@@ -115,6 +118,9 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
     // The manifest's, checked when the project loaded, so each layer is named once.
     private val sortingLayers = SortingLayers(project.manifest.sortingLayers)
     private var systems: SceneSystemSet? = null
+
+    /** What the playing scene planned, in run order; empty between scenes. */
+    fun plannedSystems(): List<PlannedSystem> = systems?.planned.orEmpty()
     private var instance: Scene? = null
 
     // The playing scene's clips and particle images, shared by its systems and the runtime's prewarms;
@@ -374,7 +380,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
             if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) add(SPRITE_CLIPS_SYSTEM)
             if (runtime.hasInfrastructureSystem(Particle2DSystem::class)) add(PARTICLES_2D_SYSTEM)
         }
-        val built = sceneSystemsFor(scene.document, services(scene, sceneLoads), project.capabilities, hostRuns)
+        val built = sceneSystemSetFor(scene.document, services(scene, sceneLoads), project.capabilities, disabledSystems, hostRuns)
         // Each system guarded, so one that throws is reported to the app's error handler and skipped, not
         // the frame. Built once per scene; the guard adds no allocation to a frame. The set still closes the systems themselves.
         return SceneSystemSet(
@@ -385,6 +391,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
                 sceneLoads.close()
             },
             built.preAnimation.map { it.guardedFor(runtime) },
+            built.planned,
         )
     }
 

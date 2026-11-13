@@ -25,6 +25,16 @@ files, and adds the systems a scene that uses it runs. The contract is in the
 4. **What a project needs is checked when it loads.** A plugin the manifest marks `required` must
    have a capability with its `id`, and a scene component no capability registers refuses the load,
    naming the component, instead of failing deep in the decoder.
+5. **Every planned system has a stable public name, and a host can drop one by name.** Core's names
+   are the constants of `CoreSystems`, listed in `CoreSystems.all`; a game's own are listed in
+   `SceneCapability.systemNames`. A name is never changed or reused. `sceneSystemsFor(..., disabled)`,
+   `loadedProject.sceneSystems(..., disabled)`, `runProject(project, disabledSystems)` and the scene
+   app's `disableSystems(...)` leave the named systems out; a name nothing knows is refused at start,
+   listing the known names, so a typo never leaves a system running. `SceneSystemSet.planned`, the
+   `ProjectSystemPlan` service of a `runProject` app and `SceneAppLifecycleRuntime.plannedSystems` list
+   what a run planned, by name and phase, in run order. A scene app's systems are named by the
+   author's own `system(name, ...)` calls and disabled by the same rule; its infrastructure systems
+   (transforms, drawing) are not listed. With nothing disabled the plan is exactly what it was.
 
 ## Why "capability"
 
