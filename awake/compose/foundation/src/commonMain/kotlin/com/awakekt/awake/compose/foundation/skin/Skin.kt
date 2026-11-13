@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.foundation.sheet.SheetAxis
 import com.awakekt.awake.compose.foundation.sheet.SheetState
 import com.awakekt.awake.compose.foundation.sheet.SliceInsets
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.graphics.ImageFill
 
 /**
  * An immutable set of named image parts cut from one sheet: build it with [skin], provide it with
@@ -24,7 +25,8 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
  */
 class Skin internal constructor(
     private val sheet: () -> ImageBitmap?,
-    private val pixelsPerDp: Float,
+    /** The art's scale: source pixels per dp. */
+    val pixelsPerDp: Float,
     private val specs: Map<PartKey<*>, PartSpec<*>>,
 ) {
     private var resolvedFor: ImageBitmap? = null
@@ -46,6 +48,12 @@ class Skin internal constructor(
         @Suppress("UNCHECKED_CAST")
         return (resolved[key] as R?) ?: (specs[key] as PartSpec<R>?)?.resolve(image, pixelsPerDp)?.also { resolved[key] = it }
     }
+
+    /**
+     * The nine-slice insets of the frame or bar [key] names, in source pixels, or `null` if this
+     * skin lacks it. Known before the sheet has decoded, so a layout can pad by it from the first frame.
+     */
+    fun sliceInsets(key: PartKey<ImageFill>): SliceInsets? = (specs[key] as? FrameSpec)?.slice
 
     /** The keys of [required] this skin does not declare, in order. */
     fun missing(required: Collection<PartKey<*>>): List<PartKey<*>> = required.filter { it !in specs }
