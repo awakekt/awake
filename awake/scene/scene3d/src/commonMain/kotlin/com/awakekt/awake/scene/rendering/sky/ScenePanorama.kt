@@ -16,4 +16,7 @@ import kotlinx.serialization.Serializable
  * @property path Asset path of the cubemap strip, as `skybox.cubemapPath`.
  */
 @Serializable
-data class ScenePanorama(val time: Float, val path: String)
+data class ScenePanorama(
+    val time: Float,
+    val path: String,
+)

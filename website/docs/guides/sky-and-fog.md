@@ -129,7 +129,7 @@ next pair as the day moves on.
 | `zenithColor` | color | `(0.20, 0.38, 0.68)` | Gradient colour overhead. |
 | `cubemapPath` | string | none | `Cubemap` only. The strip image, read through the app's asset source. |
 | `exposure` | number | `1.0` | `Cubemap` only. Multiplies the sampled colour. |
-| `panoramas` | list of `{ time, path }` | empty | `Cubemap` only. More strips by time of day, in time order; a `day_cycle` blends the two around its time. |
+| `panoramas` | list of `{ time, path }` | `[]` | `Cubemap` only. More strips by time of day, in time order; a `day_cycle` blends the two around its time. |
 
 `fog`:
 

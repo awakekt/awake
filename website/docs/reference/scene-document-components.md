@@ -1194,7 +1194,7 @@ The background drawn behind the scene. `SceneSkybox`.
 | `zenithColorB` | number | none | Legacy channel. |
 | `cubemapPath` | string | none | Cubemap asset path, for `Cubemap`. |
 | `exposure` | number | `1` | Cubemap brightness, for `Cubemap`. |
-| `panoramas` | list | empty | More cubemap strips by time of day, each `{ time, path }` in time order; a `day_cycle` blends the two around its time. |
+| `panoramas` | list of panoramas | `[]` | More cubemap strips by time of day, each `{ time, path }` in time order; a `day_cycle` blends the two around its time. |
 
 ## `spin_control`
 
