@@ -38,6 +38,11 @@ data class GpuEnvironmentState(
     val contentFeatures: Boolean = true,
     /** The colour this pass clears to; null keeps the renderer's own `clearColor`. */
     val clearColor: Color? = null,
+    /**
+     * Whether the built-in sky draws its own sun and moon discs. False when a scene draws them
+     * itself, over any sky, so they are not drawn twice.
+     */
+    val skyBodies: Boolean = true,
 ) {
     /** The colour this pass clears to: [clearColor] when it sets one, else [default]. */
     fun clearColorOr(default: Color): Color = clearColor ?: default

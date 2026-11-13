@@ -57,10 +57,12 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
             "solidcolor" -> Skybox.Mode.SolidColor(color = horizon)
             else -> Skybox.Mode.Procedural(horizonColor = horizon, zenithColor = zenith)
         }
-        return Skybox(
-            enabled = enabled,
-            mode = mode,
-        )
+        return Skybox(enabled = enabled, mode = mode).also {
+            it.sunTexture = sunTexture
+            it.moonTexture = moonTexture
+            it.moonPhase = moonPhase
+            it.sunAndMoon = sunAndMoon
+        }
     }
 
     /**
@@ -68,7 +70,14 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
      *
      * @return The serialized [SceneSkybox] descriptor.
      */
-    fun Skybox.toSceneComponent(): SceneSkybox = when (val m = mode) {
+    fun Skybox.toSceneComponent(): SceneSkybox = modeComponent().copy(
+        sunTexture = sunTexture,
+        moonTexture = moonTexture,
+        moonPhase = moonPhase,
+        sunAndMoon = sunAndMoon,
+    )
+
+    private fun Skybox.modeComponent(): SceneSkybox = when (val m = mode) {
         is Skybox.Mode.Procedural -> SceneSkybox(
             enabled = enabled,
             horizonColor = SceneColor(m.horizonColor.r, m.horizonColor.g, m.horizonColor.b, m.horizonColor.a),

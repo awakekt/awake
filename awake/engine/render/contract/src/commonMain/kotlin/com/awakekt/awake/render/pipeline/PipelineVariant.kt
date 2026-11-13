@@ -163,6 +163,20 @@ sealed interface PipelineVariant {
     }
 
     /**
+     * [Background] with straight-alpha blending, so a sky decoration (the sun, the moon) can be drawn
+     * over the sky without a hard rectangle: depth test and write both off, drawn before geometry,
+     * which then paints over it. Not instanced.
+     */
+    data object BackgroundBlended : PipelineVariant {
+        override val instanced = false
+        override val instanceAlpha = false
+        override val instanceFrame = false
+        override val blendEnabled = true
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = false
+    }
+
+    /**
      * A full-screen effect drawn AFTER geometry: blended, depth test and write both off. See
      * `AslDepthFogShader`.
      *

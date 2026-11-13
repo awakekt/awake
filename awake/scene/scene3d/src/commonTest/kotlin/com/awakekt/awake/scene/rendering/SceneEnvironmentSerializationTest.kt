@@ -118,6 +118,21 @@ class SceneEnvironmentSerializationTest {
     }
 
     @Test
+    fun theSunAndMoonFieldsRoundTripAndAnOldSkyHasTheDefaults() {
+        val skybox = SceneSkybox(sunTexture = "sun.png", moonTexture = "moon.png", moonPhase = 0.25f, sunAndMoon = true)
+        val round = json.decodeFromString(SceneSkybox.serializer(), json.encodeToString(SceneSkybox.serializer(), skybox))
+        assertEquals(skybox, round)
+        with(SkyboxBinding) {
+            val exported = round.toComponent().toSceneComponent()
+            assertEquals(listOf("sun.png", "moon.png", 0.25f, true), listOf(exported.sunTexture, exported.moonTexture, exported.moonPhase, exported.sunAndMoon))
+        }
+
+        val old = json.decodeFromString(SceneSkybox.serializer(), """{"type": "Procedural"}""")
+        assertEquals(listOf(null, null, 0.5f, false), listOf(old.sunTexture, old.moonTexture, old.moonPhase, old.sunAndMoon))
+        assertEquals(1, SceneSkybox(moonPhase = 1.5f).validate("skybox").size)
+    }
+
+    @Test
     fun testFogSerializationWithSceneColor() {
         val fog = SceneFog(
             enabled = true,

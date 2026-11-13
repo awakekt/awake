@@ -25,6 +25,7 @@ free character_controller.slopeLimit | Any slope limit angle in radians is valid
 free chase.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
 free chase.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
 free day_cycle.stops[].ambient | Relational element in list: above 0 and at most 1, enforced by validate().
+free day_cycle.stops[].moonVisibility | Relational element in list: from 0 to 1, enforced by validate().
 free day_cycle.stops[].skyExposure | Relational element in list: finite and at least 0, enforced by validate().
 free day_cycle.stops[].fogColor.a | Alpha channel is valid between 0 and 1.
 free day_cycle.stops[].fogColor.b | Blue channel is valid between 0 and 1.
@@ -34,6 +35,7 @@ free day_cycle.stops[].skyTint.a | Alpha channel is valid between 0 and 1.
 free day_cycle.stops[].skyTint.b | Blue channel is valid between 0 and 1.
 free day_cycle.stops[].skyTint.g | Green channel is valid between 0 and 1.
 free day_cycle.stops[].skyTint.r | Red channel is valid between 0 and 1.
+free day_cycle.stops[].sunVisibility | Relational element in list: from 0 to 1, enforced by validate().
 free day_cycle.stops[].horizonColor.a | Alpha channel is valid between 0 and 1.
 free day_cycle.stops[].horizonColor.b | Blue channel is valid between 0 and 1.
 free day_cycle.stops[].horizonColor.g | Green channel is valid between 0 and 1.

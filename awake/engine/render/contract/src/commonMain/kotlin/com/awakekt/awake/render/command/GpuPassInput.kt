@@ -58,6 +58,17 @@ data class GpuPassInput(
     val resolvedDraws: List<GpuResolvedDraw>
         get() = resolvedOpaqueDraws + resolvedTransparentDraws
 
+    /**
+     * Writes the direction toward the pass's directional light into [out], from the packed [passUniforms]
+     * (whose first three floats are `lightDirection.xyz`), without allocating. False, leaving [out]
+     * as it was, when the pass carries no packed light.
+     */
+    fun writeSunDirection(out: Vec3f): Boolean {
+        if (passUniforms.size < 3) return false
+        out.set(passUniforms[0], passUniforms[1], passUniforms[2])
+        return true
+    }
+
     /** Factory and sentinel values for [GpuPassInput]. */
     companion object {
         /** An empty pass input with zero draws, identity view projection, and default environment. */

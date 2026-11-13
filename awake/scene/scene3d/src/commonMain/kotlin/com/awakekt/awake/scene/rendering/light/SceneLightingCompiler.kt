@@ -225,6 +225,7 @@ internal class SceneLightingCompiler(
             fogColor = fogColor,
             shadowsEnabled = shadows,
             exposure = exposure(world),
+            skyBodies = skybox?.drawsCelestials != true,
         ).withDebugView(debug)
     }
 

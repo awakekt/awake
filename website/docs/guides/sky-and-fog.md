@@ -104,6 +104,17 @@ scene shows its light, sky and fog as authored; `DayCycleSystem().update(world, 
 current time without advancing it. Saving writes the authored `time` back, never the time play
 reached. See [`day_cycle`](../reference/scene-document-components.md#day_cycle) for every field.
 
+### Sun and moon over any sky
+
+A procedural sky draws its own sun and moon discs; a cubemap or flat-colour sky does not. Set
+`sunAndMoon` to `true` on the `skybox` to draw them over any sky, where the light shines from and
+opposite it. `sunTexture` and `moonTexture` replace a disc with an image on a square the size of the
+disc, and transparent pixels leave the sky showing. `moonPhase` cuts the moon: `0` new, `0.25` first
+quarter (lit on the right), `0.5` full, `0.75` last quarter (lit on the left). A texture or a phase
+other than full draws the bodies without `sunAndMoon`, and a procedural sky then stops drawing its
+own discs so they are not doubled. The moon always stays opposite the sun. Wire `SkyboxCelestialSystem`
+beside `SkyboxCubemapSystem`, passing it the cubemap system so it draws after the sky.
+
 ### A cubemap sky that follows the day
 
 A stop can set `skyTint`, a colour the cubemap is multiplied by, and `skyExposure`, a multiplier on
@@ -129,6 +140,10 @@ next pair as the day moves on.
 | `zenithColor` | color | `(0.20, 0.38, 0.68)` | Gradient colour overhead. |
 | `cubemapPath` | string | none | `Cubemap` only. The strip image, read through the app's asset source. |
 | `exposure` | number | `1.0` | `Cubemap` only. Multiplies the sampled colour. |
+| `sunAndMoon` | boolean | `false` | Draw the sun and moon over this sky, whatever its type. |
+| `sunTexture` | string | none | Asset path of an image drawn as the sun. |
+| `moonTexture` | string | none | Asset path of an image drawn as the moon. |
+| `moonPhase` | number | `0.5` | The moon's phase, `0` to `1`: `0` new, `0.5` full. |
 | `panoramas` | list of `{ time, path }` | `[]` | `Cubemap` only. More strips by time of day, in time order; a `day_cycle` blends the two around its time. |
 
 `fog`:

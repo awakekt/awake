@@ -83,6 +83,16 @@ interface RenderFrameContext {
     /** Normalized direction pointing towards the sun / directional light source. */
     val sunDirection: Vec3f get() = light.direction
 
+    /**
+     * Writes the direction toward the pass's sun into [out], the scene's light when the frame
+     * came from the scene compiler, else [sunDirection]. Allocates nothing, so a feature calls it each frame.
+     */
+    fun writeSunDirection(out: Vec3f) {
+        if (passInput?.writeSunDirection(out) == true) return
+        val fallback = sunDirection
+        out.set(fallback.x, fallback.y, fallback.z)
+    }
+
     /** The canonical lowered environment policy for this pass. It contains no ECS or authoring
      * types; scene code creates it before the packet reaches a backend. */
     val environment: GpuEnvironmentState get() = GpuEnvironmentState.Default

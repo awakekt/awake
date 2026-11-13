@@ -50,6 +50,8 @@ data class EnvironmentUniforms(
      * draws, draw no edges.
      */
     val wireframe: Boolean = false,
+    /** Whether the built-in sky draws its own sun and moon discs; false when a scene draws them over the sky. */
+    val skyBodies: Boolean = true,
 ) {
     init {
         require(exposure > 0f && exposure.isFinite()) { "exposure must be finite and above 0; was $exposure." }
@@ -83,5 +85,6 @@ data class EnvironmentUniforms(
         exposure = exposure,
         contentFeatures = contentFeatures,
         clearColor = clearColor,
+        skyBodies = skyBodies,
     )
 }

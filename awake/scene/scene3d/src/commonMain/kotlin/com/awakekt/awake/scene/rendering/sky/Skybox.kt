@@ -23,6 +23,25 @@ data class Skybox(
     var enabled: Boolean = true,
     var mode: Mode = Mode.Procedural(),
 ) {
+    /** Asset path of an image drawn as the sun, or null for its disc. Not part of [copy] or equality. */
+    var sunTexture: String? = null
+
+    /** Asset path of an image drawn as the moon, or null for its disc. */
+    var moonTexture: String? = null
+
+    /** The moon's phase, 0 to 1: 0 new, 0.25 first quarter, 0.5 full, 0.75 last quarter. */
+    var moonPhase: Float = FULL_MOON
+
+    /** Whether the sun and moon are drawn over this sky whatever its type. */
+    var sunAndMoon: Boolean = false
+
+    /**
+     * Whether the sun and moon are drawn over this sky by the celestial pass rather than by a
+     * procedural sky's own discs: asked for, or given a texture or a phase other than full.
+     */
+    val drawsCelestials: Boolean
+        get() = enabled && (sunAndMoon || sunTexture != null || moonTexture != null || moonPhase != FULL_MOON)
+
     /**
      * Discriminated skybox representation modes.
      */
