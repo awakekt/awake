@@ -92,6 +92,9 @@ object PackShaderSets {
     /** Sampled cubemap skybox shader set with exposure tone mapping. */
     val SkyboxCubemap = aslShaderSet(SkyboxCubemapShader)
 
+    /** The sun and moon drawn over a sky: see [CelestialShader]. */
+    val Celestial = aslShaderSet(CelestialShader)
+
     /** Billboard textured particle shader set with particle tinting. */
     val Particle = aslShaderSet(ParticleShader)
 

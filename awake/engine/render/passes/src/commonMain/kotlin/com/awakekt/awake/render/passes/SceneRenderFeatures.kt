@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.passes
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
@@ -75,8 +76,8 @@ class SkyboxRenderFeature(
             put(SkyboxFields.SunDirection, light.direction)
             put(SkyboxFields.HorizonColor, environment.horizonColor)
             put(SkyboxFields.ZenithColor, environment.zenithColor)
-            put(SkyboxFields.SunColor, SUN_DISC_COLOR)
-            put(SkyboxFields.MoonColor, MOON_DISC_COLOR)
+            put(SkyboxFields.SunColor, if (environment.skyBodies) SUN_DISC_COLOR else Color.Black)
+            put(SkyboxFields.MoonColor, if (environment.skyBodies) MOON_DISC_COLOR else Color.Black)
         }
         shared.recordCommands(
             recorder = recorder,

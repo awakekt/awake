@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.sky
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -28,6 +29,13 @@ import kotlinx.serialization.Serializable
  * @property type Skybox mode type name ("Procedural", "Cubemap", or "SolidColor").
  * @property panoramas More cubemap panoramas by time of day, in time order. A `day_cycle` blends the
  *   two around its time; without one the first shows. Empty keeps the single [cubemapPath].
+ * @property sunTexture Optional asset path of an image drawn as the sun, on a square the size of its disc.
+ * @property moonTexture Optional asset path of an image drawn as the moon.
+ * @property moonPhase The moon's phase from 0 to 1: 0 new, 0.25 first quarter, 0.5 full, 0.75 last quarter.
+ * @property sunAndMoon Draw the sun and moon over this sky, whatever its type, instead of only a
+ *   procedural sky's own discs. A texture or a phase other than full draws them too.
+ * @property additiveBodies Add the sun and moon to the sky instead of covering it, as a glowing sun
+ *   texture wants.
  */
 @Serializable
 @SerialName("skybox")
@@ -45,6 +53,11 @@ data class SceneSkybox(
     val exposure: Float = 1.0f,
     val type: String = "Procedural",
     val panoramas: List<ScenePanorama> = emptyList(),
+    val sunTexture: String? = null,
+    val moonTexture: String? = null,
+    @PropertyRange(min = 0.0, max = 1.0) val moonPhase: Float = FULL_MOON,
+    val sunAndMoon: Boolean = false,
+    val additiveBodies: Boolean = false,
 ) : SceneComponent {
     /** The constructor as released before panoramas, kept so compiled callers still link. */
     @Deprecated("Use the constructor with panoramas.", level = DeprecationLevel.HIDDEN)
@@ -91,5 +104,9 @@ data class SceneSkybox(
         if (times.any { !(it >= 0f && it < 1f) } || times.zipWithNext().any { (a, b) -> b < a }) {
             add(SceneValidationIssue(path, "skybox.panoramas must be in time order from 0 up to 1"))
         }
+        if (!(moonPhase >= 0f && moonPhase <= 1f)) add(SceneValidationIssue(path, "skybox.moonPhase must be from 0 to 1; was $moonPhase"))
     }
 }
+
+/** A full moon: the whole disc, as the procedural sky draws it. */
+const val FULL_MOON = 0.5f

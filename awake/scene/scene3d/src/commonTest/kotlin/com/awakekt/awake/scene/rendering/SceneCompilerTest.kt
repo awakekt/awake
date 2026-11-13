@@ -26,6 +26,7 @@ import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.sky.Skybox
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -138,6 +139,21 @@ class SceneCompilerTest {
         val plain = SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(World())
         assertEquals(RenderDebugView.Off, plain.debugView)
         assertFalse(plain.wireframe)
+    }
+
+    @Test
+    fun theBuiltInSkyDrawsItsOwnBodiesUnlessTheSceneDrawsThemOverTheSky() {
+        fun bodies(sky: Skybox?): Boolean {
+            val world = World()
+            if (sky != null) world.add(world.create(), sky)
+            return SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(world).skyBodies
+        }
+
+        assertTrue(bodies(null), "no sky")
+        assertTrue(bodies(Skybox()), "a default sky keeps its own discs")
+        assertFalse(bodies(Skybox().also { it.sunAndMoon = true }), "the scene draws them")
+        assertFalse(bodies(Skybox().also { it.moonPhase = 0.25f }), "a phase needs the scene's moon")
+        assertFalse(bodies(Skybox().also { it.sunTexture = "sun.png" }), "a texture needs the scene's sun")
     }
 
     @Test

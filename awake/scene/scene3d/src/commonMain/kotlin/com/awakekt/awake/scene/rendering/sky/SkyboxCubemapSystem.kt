@@ -42,12 +42,20 @@ class SkyboxCubemapSystem(
     private var shown: Loaded? = null
     private var loading: Job? = null
 
+    /**
+     * Counts each time the sky on screen changes: a panorama attached, replaced or detached. Anything
+     * drawn over the sky re-attaches when it moves, to stay after the sky in the draw order.
+     */
+    var generation: Int = 0
+        private set
+
     override fun update(world: World, delta: Float) {
         while (true) {
             val result = loaded.tryReceive().getOrNull() ?: break
             if (result.key == wanted) {
                 shown?.feature?.detach()
                 shown = result
+                generation++
             } else {
                 result.feature.detach()
             }
@@ -60,6 +68,7 @@ class SkyboxCubemapSystem(
         wanted = key
         loading?.cancel()
         if (key == null) {
+            if (shown != null) generation++
             shown?.feature?.detach()
             shown = null
             return
