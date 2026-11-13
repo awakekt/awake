@@ -26,6 +26,12 @@ package com.awakekt.awake.net
  *   splits a larger tick into several batches in order. One packet bigger than the cap goes alone.
  * - **Backpressure:** unchanged in kind. [delegate] sees one send per batch instead of one per
  *   packet, so its outbound queue fills more slowly; a full queue is handled by the delegate as ever.
+ * - **Allocation:** staging copies each packet into one buffer the session keeps and reuses (it grows
+ *   only when a tick needs more than any before it, and a flush resets it), so staging, a latest-only
+ *   replacement and a reset allocate nothing, and the caller may reuse its array at once. A flush
+ *   allocates the one exactly sized array it hands to [delegate]: [TransportSession.send] takes
+ *   ownership of its array and may write it later (a channel to a writer coroutine), so the staging
+ *   buffer cannot be lent to it without a data race.
  *
  * Not thread-safe: call it from the thread that runs the tick.
  *
@@ -42,12 +48,16 @@ class BatchedSession(
         require(maxBatchBytes >= MIN_BATCH_BYTES) { "maxBatchBytes must be at least $MIN_BATCH_BYTES, was $maxBatchBytes" }
     }
 
-    private val packets = ArrayList<ByteArray>()
+    // Entries laid out back to back as `varint length | bytes`; starts[i] is where entry i begins.
+    private var entries = ByteArray(INITIAL_BYTES)
+    private var used = 0
+    private var starts = IntArray(INITIAL_SLOTS)
     private var lanes = IntArray(INITIAL_SLOTS)
+    private var count = 0
     private var reliable = false
 
     /** Packets staged and not yet flushed. */
-    val staged: Int get() = packets.size
+    val staged: Int get() = count
 
     /** Frames handed to the delegate by [flush]. */
     var framesWritten: Long = 0L
@@ -61,7 +71,18 @@ class BatchedSession(
     override suspend fun send(channel: DeliveryChannel, packet: ByteArray) {
         if (!enabled) return delegate.send(channel, packet)
         if (channel == DeliveryChannel.Reliable) reliable = true
-        stage(packet, NO_LANE)
+        stage(packet, 0, packet.size, NO_LANE)
+    }
+
+    /**
+     * Stages `packet[offset until offset + length]`, so a caller can encode into one array it reuses.
+     * Not [enabled]: the range is copied out and sent at once.
+     */
+    suspend fun send(channel: DeliveryChannel, packet: ByteArray, offset: Int, length: Int) {
+        require(offset >= 0 && length >= 0 && offset + length <= packet.size) { "range is outside the packet" }
+        if (!enabled) return delegate.send(channel, packet.copyOfRange(offset, offset + length))
+        if (channel == DeliveryChannel.Reliable) reliable = true
+        stage(packet, offset, length, NO_LANE)
     }
 
     /**
@@ -69,42 +90,71 @@ class BatchedSession(
      * [lane] is dropped, so only the newest of the tick is sent. Not [enabled]: sent at once,
      * unconflated, as before.
      */
-    suspend fun sendLatest(lane: Int, packet: ByteArray) {
+    suspend fun sendLatest(lane: Int, packet: ByteArray) = sendLatest(lane, packet, 0, packet.size)
+
+    /** [sendLatest] for `packet[offset until offset + length]`. */
+    suspend fun sendLatest(lane: Int, packet: ByteArray, offset: Int, length: Int) {
         require(lane >= 0) { "lane must be non-negative, was $lane" }
-        if (!enabled) return delegate.send(DeliveryChannel.Unreliable, packet)
-        val stale = packets.indices.lastOrNull { lanes[it] == lane }
-        if (stale != null) {
-            packets.removeAt(stale)
-            lanes.copyInto(lanes, stale, stale + 1, packets.size + 1)
-            staleDropped++
+        require(offset >= 0 && length >= 0 && offset + length <= packet.size) { "range is outside the packet" }
+        if (!enabled) {
+            val whole = offset == 0 && length == packet.size
+            return delegate.send(DeliveryChannel.Unreliable, if (whole) packet else packet.copyOfRange(offset, offset + length))
         }
-        stage(packet, lane)
+        dropStale(lane)
+        stage(packet, offset, length, lane)
     }
 
     /** Writes everything staged as one batch, or as several in order when it exceeds [maxBatchBytes]. */
     suspend fun flush() {
-        if (packets.isEmpty()) return
+        if (count == 0) return
         val channel = if (reliable) DeliveryChannel.Reliable else DeliveryChannel.Unreliable
         var from = 0
-        while (from < packets.size) {
-            var to = from
-            var size = BatchFrame.HEADER_BYTES + BatchFrame.varIntSize(packets.size - from)
-            while (to < packets.size && (to == from || size + BatchFrame.entrySize(packets[to].size) <= maxBatchBytes)) {
-                size += BatchFrame.entrySize(packets[to].size)
-                to++
-            }
-            delegate.send(channel, BatchFrame.encode(packets, from, to))
+        while (from < count) {
+            var to = from + 1
+            while (to < count && fits(from, to + 1)) to++
+            delegate.send(channel, BatchFrame.frameEntries(entries, starts[from], endOf(to - 1), to - from))
             framesWritten++
             from = to
         }
-        packets.clear()
+        used = 0
+        count = 0
         reliable = false
     }
 
-    private fun stage(packet: ByteArray, lane: Int) {
-        if (lanes.size <= packets.size) lanes = lanes.copyOf(lanes.size * 2)
-        lanes[packets.size] = lane
-        packets += packet
+    private fun endOf(entry: Int): Int = if (entry + 1 < count) starts[entry + 1] else used
+
+    /** Whether entries `from until to` form a batch within [maxBatchBytes]; one entry always does. */
+    private fun fits(from: Int, to: Int): Boolean =
+        BatchFrame.HEADER_BYTES + BatchFrame.varIntSize(to - from) + (endOf(to - 1) - starts[from]) <= maxBatchBytes
+
+    private fun dropStale(lane: Int) {
+        var i = count - 1
+        while (i >= 0 && lanes[i] != lane) i--
+        if (i < 0) return
+        val start = starts[i]
+        val end = endOf(i)
+        entries.copyInto(entries, start, end, used)
+        used -= end - start
+        starts.copyInto(starts, i, i + 1, count)
+        lanes.copyInto(lanes, i, i + 1, count)
+        for (j in i until count - 1) starts[j] -= end - start
+        count--
+        staleDropped++
+    }
+
+    private fun stage(packet: ByteArray, offset: Int, length: Int, lane: Int) {
+        val need = BatchFrame.entrySize(length)
+        if (used + need > entries.size) entries = entries.copyOf(maxOf(entries.size * 2, used + need))
+        if (count == starts.size) {
+            starts = starts.copyOf(count * 2)
+            lanes = lanes.copyOf(count * 2)
+        }
+        starts[count] = used
+        lanes[count] = lane
+        count++
+        used = BatchFrame.writeVarInt(entries, used, length)
+        packet.copyInto(entries, used, offset, offset + length)
+        used += length
     }
 
     /** Defaults and limits of [BatchedSession]. */
@@ -117,5 +167,6 @@ class BatchedSession(
 
         private const val NO_LANE = -1
         private const val INITIAL_SLOTS = 32
+        private const val INITIAL_BYTES = 2048
     }
 }

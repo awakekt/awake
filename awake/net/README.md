@@ -52,6 +52,7 @@ frame per client per tick (more only above `maxBatchBytes`, 16 KiB by default).
 - **Client.** `UnbatchingTransport(transport, scope)` yields the same packet stream as before; a
   `DirectTransport` client calls `BatchFrame.decode` in its `listen` callback. A malformed batch is dropped
   whole (`malformed` counts it) and the connection stays open.
+- **Allocation.** Staging copies into one buffer the session reuses, so `send`, `sendLatest` and a stale replacement allocate nothing and the caller may reuse its array (the `offset, length` overloads stage a slice). A flush allocates the one exactly sized frame it hands to the transport, which owns it and may write it later, so it cannot be a shared buffer.
 - **Tick.** Call `flush()` on each `BatchedSession` once at the end of the tick, after the snapshot.
 
 ## Browser client (`:awake:net:client-browser`)

@@ -60,6 +60,36 @@ class BatchedSessionTest {
     }
 
     @Test
+    fun replacingAStalePacketOfAnotherSizeKeepsEveryOtherEntryIntact() = runTest {
+        val sink = Recorder()
+        val session = BatchedSession(sink, enabled = true)
+        session.send(DeliveryChannel.Reliable, bytes("first"))
+        session.sendLatest(1, bytes("a-much-longer-stale-snapshot"))
+        session.send(DeliveryChannel.Reliable, bytes("middle"))
+        session.sendLatest(2, bytes("x"))
+        session.sendLatest(1, bytes("new"))
+        session.flush()
+        assertEquals(listOf(listOf("first", "middle", "x", "new")), sink.texts())
+        // The staging buffer is reused: a second tick starts clean.
+        session.send(DeliveryChannel.Reliable, bytes("next"))
+        session.flush()
+        assertEquals(listOf("next"), sink.texts().last())
+    }
+
+    @Test
+    fun rangeOverloadsStageASliceOfAReusedArray() = runTest {
+        val sink = Recorder()
+        val session = BatchedSession(sink, enabled = true)
+        val scratch = bytes("..hello..world")
+        session.send(DeliveryChannel.Reliable, scratch, 2, 5)
+        session.sendLatest(0, scratch, 9, 5)
+        scratch.fill('#'.code.toByte()) // the caller may reuse its array at once
+        session.flush()
+        assertEquals(listOf(listOf("hello", "world")), sink.texts())
+        assertFailsWith<IllegalArgumentException> { session.send(DeliveryChannel.Reliable, scratch, 10, 10) }
+    }
+
+    @Test
     fun aTickOverTheCapSplitsIntoOrderedBatchesEachWithinTheCap() = runTest {
         val sink = Recorder()
         val session = BatchedSession(sink, maxBatchBytes = 64, enabled = true)

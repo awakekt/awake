@@ -111,7 +111,21 @@ object BatchFrame {
         return if (cursor[0] == frame.size) packets else null
     }
 
-    private fun writeVarInt(out: ByteArray, start: Int, value: Int): Int {
+    /**
+     * Frames entries already laid out as `varint length | bytes` in [entries] (`from until to`, `count`
+     * of them) into one exactly sized batch: the only array a flush allocates.
+     */
+    internal fun frameEntries(entries: ByteArray, from: Int, to: Int, count: Int): ByteArray {
+        val out = ByteArray(HEADER_BYTES + varIntSize(count) + (to - from))
+        out[0] = MARKER.toByte()
+        out[1] = VERSION.toByte()
+        val at = writeVarInt(out, HEADER_BYTES, count)
+        entries.copyInto(out, at, from, to)
+        return out
+    }
+
+    /** Writes [value] as a varint at [start] and returns the index after it. */
+    internal fun writeVarInt(out: ByteArray, start: Int, value: Int): Int {
         var at = start
         var rest = value
         while (rest ushr SHIFT != 0) {

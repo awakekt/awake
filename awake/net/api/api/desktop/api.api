@@ -41,7 +41,9 @@ public final class com/awakekt/awake/net/BatchedSession : com/awakekt/awake/net/
 	public final fun getStaged ()I
 	public final fun getStaleDropped ()J
 	public fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
+	public final fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendLatest (I[BIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun sendLatest (I[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
