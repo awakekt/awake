@@ -17,10 +17,10 @@ import kotlin.test.assertTrue
  * slot uploads when the run is forced or its arrays are not the instances the slot last received,
  * and an upload writes the vertex and index arrays whole.
  *
- * On main at 0.46.0 the fixture's 282 runs upload 2,397,148 bytes on the first frame, then **26 runs,
- * 3,295 triangles and 251,804 bytes on every still frame after it**: the spans past the retained
- * cache's fixed 256 entries evict each other and are re-staged and re-uploaded forever. Since the
- * cache keeps every span of the frame being drawn, a still frame costs 0.
+ * On 0.46.0 the fixture's 630 runs (632 spans) upload 7,952,168 bytes on the first frame, then
+ * **374 runs, 54,340 triangles and 4,031,624 bytes on every still frame after it**: the spans past
+ * the retained cache's fixed 256 entries evicted each other and were re-staged and re-uploaded
+ * forever. The cache now keeps every span the frame being drawn uses, so a still frame costs 0.
  */
 class StillVectorHudUploadGateTest {
 
@@ -81,6 +81,9 @@ class StillVectorHudUploadGateTest {
     @Test
     fun aStillVectorHudReStagesAndUploadsNothingAfterTheFirstFrame() {
         val costs = stillFrames(FRAMES)
+        val commands = VectorHudFixture.frame()
+        val spans = commands.indices.count { it == 0 || commands[it]::class != commands[it - 1]::class }
+        println("PERF stillVectorHud commands=${commands.size} spans=$spans")
         costs.forEachIndexed { frame, cost -> println("PERF stillVectorHud frame=$frame $cost") }
         assertTrue(costs.first().uploadedBytes > 0, "the first frame uploads the HUD")
         costs.drop(1).forEachIndexed { index, cost ->

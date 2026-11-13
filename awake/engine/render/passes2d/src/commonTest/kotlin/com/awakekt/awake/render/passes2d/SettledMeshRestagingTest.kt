@@ -121,12 +121,10 @@ class SettledMeshRestagingTest {
     }
 
     /**
-     * More live spans than the cache's [RetainedDrawRunCache.maxCapacity] evict each other before
-     * they are reached again, so promoting them would store, and allocate, every frame without ever
-     * hitting. They stay pooled. A cache of capacity 4 holds at most 256 live spans.
-     *
-     * Negative control: dropping the capacity check from [StableSpanTracker.shouldPromote] measured
-     * promotions every frame of the window here, none of which ever hit.
+     * More live spans than the cache's [RetainedDrawRunCache.maxCapacity] cannot all be kept: a full
+     * cache of live spans refuses new ones, so promoting them would stage fresh arrays every frame
+     * for nothing. They stay pooled, and the spans that fit stay cached. A cache of capacity 4 holds
+     * at most 256 live spans.
      */
     @Test
     fun spansBeyondTheCacheCapacityAreNotPromotedEveryFrame() {

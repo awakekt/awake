@@ -26,8 +26,10 @@ import kotlin.math.sin
  * A vector-drawn game HUD as one frame's draw commands, with no image skin: what #1545 measured.
  *
  * Status frames (player, target, four party members), a row of buff icons with timers, a quest
- * tracker, two slot bars of twelve slots and a clipped chat panel: about 350 draw spans, near the
- * 343 extra draw calls the vector theme measured. Every piece is drawn the way a vector theme draws it: soft shadows, rounded panels
+ * tracker, two slot bars of twelve slots, a clipped chat panel, and an open inventory window in a flat
+ * design: a tab strip, round gauges and a 10 x 8 grid of small rounded slots with 1 px borders and
+ * counts. Over a thousand draw spans, the shape of a HUD of a few hundred to a couple of thousand
+ * pieces. Every piece is drawn the way a vector theme draws it: soft shadows, rounded panels
  * filled as paths, gradient bars, stroked borders, coloured polygon icons (some under a rounded
  * clip, so they are clipped to its contour) and text. Text and shapes interleave, so most commands
  * open a span of their own, as in a real HUD. Each call builds fresh command objects, as a UI
@@ -51,6 +53,31 @@ internal object VectorHudFixture {
         questTracker(width - 344f, 260f)
         repeat(SLOT_BARS) { bar -> slotBar(width / 2f - 330f, height - 80f - bar * 64f, firstKey = bar * SLOTS) }
         chatPanel(24f, height - 320f)
+        inventoryWindow(width - 620f, 120f)
+    }
+
+    private fun MutableList<DrawCommand>.inventoryWindow(x: Float, y: Float) {
+        add(DrawCommand.FilledPath(rounded(x, y, 580f, 560f, 8f), panel))
+        add(DrawCommand.StrokedPath(rounded(x, y, 580f, 560f, 8f), DrawStroke(1f.dp), border))
+        repeat(TABS) { tab ->
+            val tx = x + 12f + tab * 92f
+            add(DrawCommand.FilledPath(rounded(tx, y + 10f, 86f, 26f, 13f), if (tab == 0) border else panel))
+            add(DrawCommand.StrokedPath(rounded(tx, y + 10f, 86f, 26f, 13f), DrawStroke(1f.dp), border))
+            text(tx + 12f, y + 16f, "Tab ${tab + 1}")
+        }
+        repeat(GAUGES) { gauge ->
+            val cx = x + 60f + gauge * 120f
+            add(DrawCommand.StrokedPath(DrawShape.Circle.toPath(Rectangle(cx - 26f, y + 50f, 52f, 52f)), DrawStroke(4f.dp), border))
+            text(cx - 12f, y + 70f, "${40 + gauge * 10}%")
+        }
+        repeat(GRID_ROWS * GRID_COLUMNS) { slot ->
+            val sx = x + 14f + (slot % GRID_COLUMNS) * 55f
+            val sy = y + 120f + (slot / GRID_COLUMNS) * 54f
+            add(DrawCommand.FilledPath(rounded(sx, sy, 48f, 48f, 6f), Color(0.14f, 0.16f, 0.22f, 1f)))
+            add(DrawCommand.StrokedPath(rounded(sx, sy, 48f, 48f, 6f), DrawStroke(1f.dp), border))
+            add(DrawCommand.Mesh(polygon(sx + 24f, sy + 22f, 13f, sides = 4 + slot % 5, Color(0.6f, 0.45f + slot % 7 * 0.05f, 0.3f, 1f))))
+            text(sx + 30f, sy + 32f, "${slot % 20 + 1}")
+        }
     }
 
     private fun MutableList<DrawCommand>.statusFrame(x: Float, y: Float, name: String, large: Boolean) {
@@ -150,4 +177,8 @@ internal object VectorHudFixture {
     const val CHAT_LINES = 14
     const val BUFFS = 20
     const val QUEST_LINES = 10
+    const val TABS = 6
+    const val GAUGES = 4
+    const val GRID_ROWS = 8
+    const val GRID_COLUMNS = 10
 }
