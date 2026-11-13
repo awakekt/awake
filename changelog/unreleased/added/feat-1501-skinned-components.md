@@ -1,1 +1,0 @@
-- `ShadcnButton`, `ShadcnCard` and `ShadcnProgressBar` draw from `LocalSkin` when it declares the parts named in `ShadcnSkinKeys` (`ButtonFace`, `CardFrame`, `ProgressTrack`, `ProgressFill`), and look exactly as before without a skin or a part. Check a skin with `skin.requireParts(ShadcnSkinKeys.All)`. `Skin.sliceInsets` and `Skin.pixelsPerDp` let a layout pad by the art. (#1501)
