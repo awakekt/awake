@@ -525,6 +525,7 @@ public final class com/awakekt/awake/core/math/Quat$Companion {
 	public final fun fromEuler (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Quat;
 	public final fun getIDENTITY ()Lcom/awakekt/awake/core/math/Quat;
 	public final fun nlerp (Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Quat;F)Lcom/awakekt/awake/core/math/Quat;
+	public final fun nlerp (Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Quat;FLcom/awakekt/awake/core/math/Quat;)Lcom/awakekt/awake/core/math/Quat;
 }
 
 public final class com/awakekt/awake/core/math/Ray {
