@@ -24,6 +24,23 @@ public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {
 	public static final fun loadCollisionMeshes (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/runtime/CoreFeatures {
+	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/CoreFeatures;
+	public final fun getAi ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getAll ()Ljava/util/List;
+	public final fun getAudio ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getCanvas ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getControls ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getDayCycle ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getMotion ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getParticles ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getPhysics ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getShaderEffects ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getSkinnedAnimation ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getStreamedTerrain ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+	public final fun getTerrain ()Lcom/awakekt/awake/project/runtime/SceneCapability;
+}
+
 public final class com/awakekt/awake/project/runtime/CoreSceneContent {
 	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/CoreSceneContent;
 	public final fun getAnimationUpdateRate ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
@@ -198,6 +215,11 @@ public final class com/awakekt/awake/project/runtime/ProjectSpawnKt {
 
 public final class com/awakekt/awake/project/runtime/ProjectSystemPlan {
 	public final fun getPlanned ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneAppFeaturesKt {
+	public static final fun features (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;)V
+	public static synthetic fun features$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ILjava/lang/Object;)V
 }
 
 public abstract interface class com/awakekt/awake/project/runtime/SceneCapability {

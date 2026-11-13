@@ -365,9 +365,21 @@ internal fun sceneSystemSpecsFor(
     hasPhysics: Boolean,
     capabilities: List<SceneCapability> = emptyList(),
     hasRenderer: Boolean = true,
+): List<SceneSystemSpec> = sceneSystemSpecsOf(scene, hasPhysics, hasRenderer, installedCapabilities(capabilities))
+
+/**
+ * [sceneSystemSpecsFor] for an explicit list of [installed] capabilities, planned in the order given and
+ * with Core's not added. The project runtime and a scene app's `features` both plan through this one
+ * function, so the same capabilities give the same systems in the same order.
+ */
+internal fun sceneSystemSpecsOf(
+    scene: SceneDocument,
+    hasPhysics: Boolean,
+    hasRenderer: Boolean,
+    installed: List<SceneCapability>,
 ): List<SceneSystemSpec> {
     val plan = SceneSystemPlan(hasPhysics, hasRenderer)
-    installedCapabilities(capabilities).forEach { it.plan(scene, plan) }
+    installed.forEach { it.plan(scene, plan) }
     return plan.specs
 }
 

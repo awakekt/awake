@@ -63,6 +63,15 @@ files, and adds the systems a scene that uses it runs. The contract is in the
      server's networked input needs no `playerInput`.
    - `keyframes` moves a transform, so a moving platform driven by it stops on a `SimulationOnly` host;
      such a game runs that host as `Full` or keeps the platform's motion in a system of its own.
+7. **A code-first scene app plans through the same function.** `SceneAppDsl.features(scene, features, ...)`
+   registers the systems `sceneSystemsFor` and `runProject` plan for the same scene and the same
+   features, by name, phase and role, in the same order (`sceneSystemSpecsOf` is the one function both
+   call). Core's are the typed handles of `CoreFeatures` (`CoreFeatures.all` is what a project runs with
+   before its own); a game's are its own objects. Explicit `system(...)` registrations and other
+   `features` calls run in the order the calls were made within each phase, so `features` placed first
+   runs its systems first; nothing is reordered across calls. The app's renderer and input are wired;
+   physics and content are parameters; a project runner's spawning and scene switching are not. The
+   project runtime still builds a plan per scene, as it switches scenes, through that same function.
 
 ## Why "capability"
 
