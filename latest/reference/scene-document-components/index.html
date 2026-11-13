@@ -7984,10 +7984,10 @@ one it moves by its transform. Code sends it somewhere with <code>NavigationAgen
 </tbody>
 </table>
 <h2 id="particle_emitter"><code>particle_emitter</code></h2>
-<p>Spawns sprites at its node's world position, turned to the camera or lying flat, and follows the
+<p>Spawns sprites at its node's world position, turned to the camera, lying flat or standing upright, and follows the
 node. <code>SceneParticleEmitter</code>.</p>
 <p>Sizes, speeds and <code>spawnRadius</code> are world units; the node's scale does not apply, and its rotation
-only tilts a <code>Flat</code> emitter's plane, turns the spawn ring with <code>orientSpawnRing</code> and, with
+only tilts a <code>Flat</code> or <code>Upright</code> emitter's plane, turns the spawn ring with <code>orientSpawnRing</code> and, with
 <code>inheritOrientation</code>, turns the spawn ring and <code>velocity</code>. A <code>Local</code> space emitter is the exception: its particles live in the node's own axes and
 units, so they move, turn and scale with it. Each particle fades from <code>startAlpha</code> to 0 over its <code>lifetime</code> (or by <code>alphaCurve</code>), while
 its tint moves from <code>color</code> to <code>endColor</code> and its size from <code>scale</code> to <code>endScale</code>. <code>runProject</code> runs
@@ -8042,7 +8042,7 @@ it; see <a href="../../guides/particles/">Particles</a>.</p>
 <td><code>endScale</code></td>
 <td>number</td>
 <td>none</td>
-<td>Size at death. None keeps <code>scale</code>. Not negative.</td>
+<td>Signed size at death. Negative sizes mirror the sprite on both axes. None keeps <code>scale</code>.</td>
 </tr>
 <tr>
 <td><code>velocity</code></td>
@@ -8106,9 +8106,9 @@ it; see <a href="../../guides/particles/">Particles</a>.</p>
 </tr>
 <tr>
 <td><code>facing</code></td>
-<td><code>Camera</code> · <code>Flat</code></td>
+<td><code>Camera</code> · <code>Flat</code> · <code>Upright</code></td>
 <td><code>Camera</code></td>
-<td><code>Camera</code> turns each sprite to the camera. <code>Flat</code> lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles.</td>
+<td><code>Camera</code> turns each sprite to the camera. <code>Flat</code> lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles. <code>Upright</code> stands it in the node's own XY plane, facing along the node's Z, its texture's top toward the node's +Y, so it stands perpendicular to a turned spawn ring and tilts with the node.</td>
 </tr>
 <tr>
 <td><code>acceleration</code></td>
@@ -8192,7 +8192,7 @@ it; see <a href="../../guides/particles/">Particles</a>.</p>
 <td><code>orientSpawnRing</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
-<td>The node's rotation tilts the spawn ring alone, so it lies in the plane a <code>Flat</code> emitter's sprites lie in, while <code>velocity</code>, <code>acceleration</code> and <code>radialSpeed</code> stay in world space. Adds nothing beside <code>inheritOrientation</code> or with <code>space</code> <code>Local</code>.</td>
+<td>The node's rotation tilts the spawn ring alone, so it lies in the plane a <code>Flat</code> emitter's sprites lie in (an <code>Upright</code> emitter's sprites stand perpendicular to it), while <code>velocity</code>, <code>acceleration</code> and <code>radialSpeed</code> stay in world space. Adds nothing beside <code>inheritOrientation</code> or with <code>space</code> <code>Local</code>.</td>
 </tr>
 <tr>
 <td><code>radialInRingPlane</code></td>
@@ -9732,6 +9732,24 @@ many show and their colours every frame. <code>SceneTrailRenderer</code>.</p>
 <td>color</td>
 <td>white</td>
 <td>Multiplied into every vertex's own colour.</td>
+</tr>
+<tr>
+<td><code>texture</code></td>
+<td>string</td>
+<td>none</td>
+<td>Scene texture name or project-relative image path.</td>
+</tr>
+<tr>
+<td><code>depthWrite</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Records the trail's depth so it can occlude blended draws that follow it.</td>
+</tr>
+<tr>
+<td><code>doubleSided</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Set to <code>false</code> to cull back faces. The front is the side from which, with each pair's <code>b</code> above its <code>a</code>, the pairs run right to left.</td>
 </tr>
 </tbody>
 </table>

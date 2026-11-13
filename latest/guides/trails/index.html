@@ -2976,8 +2976,8 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
 <li>Its GPU buffer is created once, at <code>capacity</code>, the first frame the trail is drawn. A frame that
   changed pairs uploads only the range that changed; a frame that only changes <code>visible</code> uploads
   nothing; once warm, nothing is allocated per frame, with dozens of trails on screen.</li>
-<li>It is drawn unlit, in the transparent pass, depth tested and not depth written, from both faces,
-  through its entity's world matrix, so it moves with its parent. It casts no shadow.</li>
+<li>It is drawn unlit and depth tested in the transparent pass, through its entity's world matrix.
+  Trails are double-sided by default and depth writes are opt-in. A trail casts no shadow.</li>
 <li>It is culled by the box around its visible pairs.</li>
 <li>An optional texture is sampled with <code>u</code> along the strip and <code>v</code> across it: <code>v</code> is 0 at <code>a</code> and 1
   at <code>b</code>. Without one, the colour is the vertices' alone. <code>tint</code> multiplies every vertex's colour.</li>
@@ -2987,8 +2987,11 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"trail_renderer"</span><span class="p">,</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">"capacity"</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">"blend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Additive"</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">"tint"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"r"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"g"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="nt">"b"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="nt">"a"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">}</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">"texture"</span><span class="p">:</span><span class="w"> </span><span class="s2">"textures/ribbon.png"</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">"depthWrite"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">"doubleSided"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">"tint"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"r"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"g"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="nt">"b"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="nt">"a"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -3014,10 +3017,26 @@ melee swing's ribbon, a projectile's streak, a tyre mark, a beam or a lightning 
 <td>white</td>
 <td>Multiplied into every vertex's colour.</td>
 </tr>
+<tr>
+<td><code>texture</code></td>
+<td>none</td>
+<td>Scene texture name or project-relative image path.</td>
+</tr>
+<tr>
+<td><code>depthWrite</code></td>
+<td><code>false</code></td>
+<td>Records the trail's depth so it can occlude blended draws that follow it.</td>
+</tr>
+<tr>
+<td><code>doubleSided</code></td>
+<td><code>true</code></td>
+<td>Set to <code>false</code> to cull back faces. The front is the side from which, with each pair's <code>b</code> above its <code>a</code>, the pairs run right to left: the side <code>(b - a) x (next a - a)</code> points to.</td>
+</tr>
 </tbody>
 </table>
 <p>The document says how the trail is drawn. Its pairs, how many are visible and their colours are
-written by a game's systems; <code>texture</code> is set from code.</p>
+written by a game's systems. A trail that names a texture starts drawing once the image is ready.
+Setting <code>TrailRenderer.texture</code> in code overrides the document's texture while it is set.</p>
 <h2 id="drive-it-from-a-system">Drive it from a system</h2>
 <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">trail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world</span><span class="p">.</span><span class="na">get</span><span class="o">&lt;</span><span class="n">TrailRenderer</span><span class="o">&gt;</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span><span class="w"> </span><span class="o">?:</span><span class="w"> </span><span class="k">return</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>

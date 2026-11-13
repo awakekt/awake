@@ -1423,6 +1423,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stand-particles-upright-in-the-emitters-frame" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stand particles upright in the emitter's frame
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gravity-fading-bouncing-and-streaks-from-a-scene-document" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3000,6 +3011,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stand-particles-upright-in-the-emitters-frame" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stand particles upright in the emitter's frame
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gravity-fading-bouncing-and-streaks-from-a-scene-document" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3186,6 +3208,20 @@ motion, <code>spawnRadius</code> and <code>radialSpeed</code> stay in world spac
 not fight it for depth. In Kotlin, set <code>ParticleVisual(facing = ParticleFacing.Flat)</code>; the plane
 comes from the <code>Transform</code> of the entity carrying the <code>ParticleEmitter</code>, or is the world's ground
 plane when that entity has none.</p>
+<p>For a flat effect attached to a turning node, set <code>"inheritRotation": false</code> inside the effect
+node's <code>transform</code>. Its position follows the parent's full transform, and its authored rotation
+is in world axes. The parent's world scale is kept along the world axes: each scale component is
+multiplied by how far the parent stretches that world axis, so a uniformly scaled parent scales the
+effect evenly however it turns.
+The same option is available as <code>Transform.inheritRotation</code> in Kotlin.</p>
+<h2 id="stand-particles-upright-in-the-emitters-frame">Stand particles upright in the emitter's frame</h2>
+<p><code>facing: "Upright"</code> stands each quad in the plane of its node's own X and Y axes, facing along the
+node's Z, with the texture's top toward the node's +Y. Its spawn ring (with <code>orientSpawnRing</code>,
+<code>inheritOrientation</code> or <code>space</code> <code>Local</code>) lies in the node's XZ plane, so the sprites stand
+perpendicular to the ring, and a node turned by pitch or roll tilts the ring, the motion and the
+sprites together. Effects authored for a legacy format whose fixed sprites stand on a tilted ring
+read this way. In Kotlin, set <code>ParticleVisual(facing = ParticleFacing.Upright)</code>; without a
+<code>Transform</code> on the entity, the quads stand in the world's XY plane.</p>
 <h2 id="gravity-fading-bouncing-and-streaks-from-a-scene-document">Gravity, fading, bouncing and streaks from a scene document</h2>
 <p>These options are fields of <code>particle_emitter</code> too, with the same names and defaults as the Kotlin
 types in the tables below. Sparks that arc under gravity, fade in and out, streak with their speed and
@@ -3210,7 +3246,8 @@ bounce on the floor:</p>
 <p><code>acceleration</code> is in world space, so gravity stays down however the node is turned; set
 <code>inheritOrientation</code> to turn the spawn ring and <code>velocity</code> with the node instead, so an emitter aimed
 along a direction fires that way. Set <code>orientSpawnRing</code> to turn the spawn ring alone, so it lies in the
-plane a <code>Flat</code> emitter's sprites lie in and tilts with them while <code>velocity</code> stays in world space: a
+plane a <code>Flat</code> emitter's sprites lie in (an <code>Upright</code> emitter's sprites stand perpendicular to it)
+and tilts with them while <code>velocity</code> stays in world space: a
 circle on a sloped wall whose sparks still rise straight up. <code>radialSpeed</code> still pushes horizontally; set
 <code>radialInRingPlane</code> to push outward in the turned ring's own plane instead, for a ripple that spreads
 across a sloped surface. <code>ground</code> takes a flat floor at <code>groundY</code> and any number of
@@ -3465,7 +3502,7 @@ The plan on <a href="../shaders/">Render plans and shaders</a> has one.</p>
 <tr>
 <td><code>orientSpawnRing</code></td>
 <td><code>false</code></td>
-<td>Turns the spawn ring alone by the emitter entity's rotation, so it lies in the plane its <code>Flat</code> quads lie in, while <code>baseVelocity</code> and every other vector stay in world axes. Adds nothing beside <code>inheritOrientation</code> or in <code>ParticleSpace.Local</code>.</td>
+<td>Turns the spawn ring alone by the emitter entity's rotation, so it lies in the plane its <code>Flat</code> quads lie in and its <code>Upright</code> quads stand perpendicular to, while <code>baseVelocity</code> and every other vector stay in world axes. Adds nothing beside <code>inheritOrientation</code> or in <code>ParticleSpace.Local</code>.</td>
 </tr>
 <tr>
 <td><code>radialInRingPlane</code></td>
@@ -3522,7 +3559,7 @@ The plan on <a href="../shaders/">Render plans and shaders</a> has one.</p>
 <tr>
 <td><code>endScale</code></td>
 <td>none</td>
-<td>Quad size at death, reached linearly from <code>scale</code>. None keeps <code>scale</code>.</td>
+<td>Signed quad size at death, reached linearly from <code>scale</code>. A negative endpoint shrinks the sprite through zero and grows it mirrored on both axes. None keeps <code>scale</code>.</td>
 </tr>
 <tr>
 <td><code>additive</code></td>
@@ -3532,7 +3569,7 @@ The plan on <a href="../shaders/">Render plans and shaders</a> has one.</p>
 <tr>
 <td><code>facing</code></td>
 <td><code>Camera</code></td>
-<td><code>ParticleFacing.Flat</code> lays each quad in the emitter entity's horizontal plane instead of turning it to the camera.</td>
+<td><code>ParticleFacing.Flat</code> lays each quad in the emitter entity's horizontal plane instead of turning it to the camera; <code>ParticleFacing.Upright</code> stands it in the entity's XY plane, texture top toward its +Y.</td>
 </tr>
 <tr>
 <td><code>alphaCurve</code></td>
