@@ -45,7 +45,7 @@ class ComposeHostTest {
     fun theContentLambdaRunsExactlyOncePerFrame() {
         // The claim the engine exists for. The removed `ui-core` re-executed a container's content as
         // a trial pass, 7,696 times per frame on the Checkout Form.
-        val host = ComposeHost()
+        val host = ComposeHost().also { it.skipUnchangedComposition = false }
         var runs = 0
         val content: context(Composer)
         () -> Unit = {
@@ -58,6 +58,26 @@ class ComposeHostTest {
 
         host.frame(at(0, 0), content)
         assertEquals(2, runs, "one run per frame, not one per measurement")
+    }
+
+    @Test
+    fun aSkippingHostRunsTheContentOnlyWhenSomethingItReadChanged() {
+        val host = ComposeHost().also { it.skipUnchangedComposition = true }
+        var runs = 0
+        var size by mutableStateOf(10)
+        val content: context(Composer)
+        () -> Unit = {
+            runs++
+            Column { Spacer(Modifier.size(size.dp).background(red)) }
+        }
+
+        host.frame(at(0, 0), content)
+        host.frame(at(0, 0), content)
+        assertEquals(1, runs, "nothing it read changed, so the second frame does not run it")
+
+        size = 20
+        host.frame(at(0, 0), content)
+        assertEquals(2, runs, "a state it read changed: once, not once per measurement")
     }
 
     @Test
@@ -105,7 +125,8 @@ class ComposeHostTest {
     @Test
     fun insertingAChildlessBoxBeforeAPopulatedBoxClearsTheReusedSlotsChildren() {
         val host = ComposeHost()
-        var scrim = false
+        // State, not a plain var: a host that skips unchanged passes only sees reads it can track.
+        var scrim by mutableStateOf(false)
         val content: context(Composer)
         () -> Unit = {
             if (scrim) {
@@ -313,14 +334,20 @@ class GestureAcrossFramesTest {
         val host = ComposeHost()
         var clicks = 0
         var links = 0
+        // Read by the content and bumped each frame, so a host that skips unchanged passes rebuilds the
+        // chain too: the claim here is a click surviving the rebuild, not that a rebuild happens.
+        var frame by mutableStateOf(0)
         val content: context(Composer)
         () -> Unit = {
             links++
+            frame.hashCode()
             Spacer(Modifier.size(50.dp).clickable { clicks++ })
         }
 
         host.frame(at(5, 5), content)
+        frame++
         host.frame(at(5, 5, down = true), content)
+        frame++
         host.frame(at(5, 5, down = false), content)
 
         assertEquals(1, clicks)

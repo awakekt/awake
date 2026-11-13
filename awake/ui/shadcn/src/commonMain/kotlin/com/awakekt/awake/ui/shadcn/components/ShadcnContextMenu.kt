@@ -11,8 +11,11 @@ import com.awakekt.awake.compose.foundation.gestures.onSecondaryPress
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxMeasurePolicy
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -124,7 +127,9 @@ private var activeContextMenuState: ContextMenuState? = null
  */
 private class ContextMenuState {
     val anchor = PopupAnchor()
-    var open: Boolean = false
+
+    // State, not a plain field: composition reads it, and a key or pointer event changes it (#1512).
+    var open: Boolean by mutableStateOf(false)
 
     fun openAt(x: Int, y: Int) {
         if (activeContextMenuState != null && activeContextMenuState != this) {
