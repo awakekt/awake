@@ -71,6 +71,26 @@ class DayCycleCubemapTest {
     }
 
     @Test
+    fun aPanoramaHoldsFlatAcrossASpanWhenTwoEntriesShareItsPath() {
+        val sky = Skybox.Mode.Cubemap(
+            panoramas = listOf(
+                ScenePanorama(0.25f, "night.png"),
+                ScenePanorama(0.29f, "day.png"),
+                ScenePanorama(0.7f, "day.png"),
+                ScenePanorama(0.78f, "evening.png"),
+                ScenePanorama(0.82f, "night.png"),
+            ),
+        )
+        val scene = Scene(SceneDayCycle(), sky)
+
+        scene.at(0.5f)
+        assertEquals("day.png" to "day.png", sky.panoramas[sky.blendFrom].path to sky.panoramas[sky.blendTo].path, "midday holds the day panorama")
+        scene.at(0.27f)
+        assertEquals("night.png" to "day.png", sky.panoramas[sky.blendFrom].path to sky.panoramas[sky.blendTo].path, "dawn blends over its own window")
+        assertEquals(0.5f, sky.blend, 1e-5f)
+    }
+
+    @Test
     fun aSinglePanoramaNeverBlends() {
         val sky = Skybox.Mode.Cubemap(panoramas = listOf(ScenePanorama(0.5f, "only.png")))
         val scene = Scene(SceneDayCycle(), sky)
