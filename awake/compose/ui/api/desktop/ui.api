@@ -1104,6 +1104,8 @@ public final class com/awakekt/awake/compose/ui/layout/LayoutComposition {
 	public fun <init> (Lcom/awakekt/awake/compose/ui/node/LayoutNode;)V
 	public final fun compose (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
 	public final fun dispose ()V
+	public final fun invalidate ()V
+	public final fun isInvalid ()Z
 }
 
 public final class com/awakekt/awake/compose/ui/layout/LayoutKt {
@@ -1467,9 +1469,12 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getFrameClock ()Lcom/awakekt/awake/compose/ui/platform/FrameClock;
 	public final fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public final fun getRoot ()Lcom/awakekt/awake/compose/ui/node/LayoutNode;
+	public final fun getSkipUnchangedComposition ()Z
+	public final fun getSkippedCompositions ()I
 	public final fun getWindowInsets ()Lcom/awakekt/awake/compose/ui/platform/WindowInsets;
 	public final fun setDensity (F)V
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
+	public final fun setSkipUnchangedComposition (Z)V
 	public final fun setWindowInsets (Lcom/awakekt/awake/compose/ui/platform/WindowInsets;)V
 }
 

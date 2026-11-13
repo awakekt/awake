@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.compose.foundation.interaction
 
+import com.awakekt.awake.compose.runtime.mutableStateOf
+
 /**
  * Something that happened to a component, which a styling layer may want to react to.
  *
@@ -73,9 +75,20 @@ sealed interface Interaction {
  * for -- a styling layer reads these counters during the pass that runs every frame anyway.
  */
 class InteractionSource {
-    private var hovers = 0
-    private var presses = 0
-    private var focuses = 0
+    // Read-tracked, so a host that skips unchanged composition passes sees a hover, press or focus
+    // change reach a pass that read it. A write only marks that pass out of date.
+    private val hoverCount = mutableStateOf(0)
+    private val pressCount = mutableStateOf(0)
+    private val focusCount = mutableStateOf(0)
+    private var hovers: Int
+        get() = hoverCount.value
+        set(value) { hoverCount.value = value }
+    private var presses: Int
+        get() = pressCount.value
+        set(value) { pressCount.value = value }
+    private var focuses: Int
+        get() = focusCount.value
+        set(value) { focusCount.value = value }
 
     /** Whether at least one hover is live. */
     val isHovered: Boolean get() = hovers > 0

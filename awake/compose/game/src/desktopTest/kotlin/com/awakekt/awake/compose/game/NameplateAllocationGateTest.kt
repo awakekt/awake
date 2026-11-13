@@ -35,6 +35,10 @@ import kotlin.test.assertTrue
  * is deterministic here). The ceiling is 435,000 B: 11,422 B (2.7%) of headroom for JDK and
  * platform differences. Without the fix a frame is about 687,000 B and this fails.
  *
+ * `ComposeHost.skipUnchangedComposition` (stage a) is off by default, so [CEILING_BYTES] still gates
+ * the default path. With it on, a frame of this content is 221,482 B whether the anchors move or
+ * not, and [STILL_SKIP_CEILING_BYTES] is that plus the same 2.7% headroom.
+ *
  * **Each later step of #1512 lowers [CEILING_BYTES]** to the new measurement plus the same headroom;
  * a step that does not lower it did not save allocation.
  *
@@ -58,11 +62,44 @@ class NameplateAllocationGateTest {
 
     @Test
     fun framesOfMovingNameplatesStayUnderTheAllocationCeiling() {
+        val perFrame = measure(skip = false, moving = true)
+        assertTrue(perFrame <= CEILING_BYTES, "a frame of $COUNT nameplates allocated $perFrame B, over the $CEILING_BYTES B ceiling")
+    }
+
+    /**
+     * Skipping the composition pass (#1512 stage a), anchors still. The content reads only what
+     * the anchors read at placement, so nothing recomposes and a frame is measure, place and paint.
+     */
+    @Test
+    fun stillFramesWithSkippedCompositionStayUnderTheirCeiling() {
+        val perFrame = measure(skip = true, moving = false)
+        assertTrue(
+            perFrame <= STILL_SKIP_CEILING_BYTES,
+            "a still frame of $COUNT nameplates allocated $perFrame B, over the $STILL_SKIP_CEILING_BYTES B ceiling",
+        )
+    }
+
+    /**
+     * Anchors moving with skipping on. They move at placement, which no composition read, so these
+     * frames skip too: 221,483 B against 423,578 B. Content that read a moving value while composing
+     * would recompose every frame and cost what [CEILING_BYTES] allows.
+     */
+    @Test
+    fun movingFramesWithSkippedCompositionDoNotCostMore() {
+        val perFrame = measure(skip = true, moving = true)
+        assertTrue(
+            perFrame <= STILL_SKIP_CEILING_BYTES,
+            "a moving frame with skipping allocated $perFrame B, over the $STILL_SKIP_CEILING_BYTES B ceiling",
+        )
+    }
+
+    private fun measure(skip: Boolean, moving: Boolean): Long {
         val host = ComposeHost()
+        host.skipUnchangedComposition = skip
         var tick = 0
 
         fun frame() {
-            tick++
+            if (moving) tick++
             for (spot in spots) spot.tick = tick
             host.frame(FrameInput(WIDTH, HEIGHT)) { nameplates() }
         }
@@ -72,8 +109,11 @@ class NameplateAllocationGateTest {
         repeat(FRAMES) { frame() }
         val perFrame = (allocatedBytes() - before) / FRAMES
         val millis = (System.nanoTime() - start) / 1e6 / FRAMES
-        println("NameplateAllocationGate: $perFrame B/frame (ceiling $CEILING_BYTES), ${"%.3f".format(millis)} ms/frame")
-        assertTrue(perFrame <= CEILING_BYTES, "a frame of $COUNT nameplates allocated $perFrame B, over the $CEILING_BYTES B ceiling")
+        println(
+            "NameplateAllocationGate: skip=$skip moving=$moving $perFrame B/frame, ${"%.3f".format(millis)} ms/frame, " +
+                "skipped ${host.skippedCompositions} of ${WARMUP + FRAMES}",
+        )
+        return perFrame
     }
 
     context(_: Composer)
@@ -97,5 +137,6 @@ class NameplateAllocationGateTest {
         const val WARMUP = 300
         const val FRAMES = 400
         const val CEILING_BYTES = 435_000
+        const val STILL_SKIP_CEILING_BYTES = 227_500
     }
 }

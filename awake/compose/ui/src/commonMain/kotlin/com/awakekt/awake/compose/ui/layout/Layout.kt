@@ -176,6 +176,15 @@ class LayoutComposition(root: LayoutNode) {
      */
     fun compose(content: context(Composer) () -> Unit): Composer = composition.reconcile(content)
 
+    /**
+     * Whether the latest pass is out of date: none has run, a [com.awakekt.awake.compose.runtime.State]
+     * it read changed, or [invalidate] was called. See [Composition.isInvalid].
+     */
+    val isInvalid: Boolean get() = composition.isInvalid
+
+    /** Marks the latest pass out of date, for a change no tracked state carries. */
+    fun invalidate() = composition.invalidate()
+
     /** Drops the composed tree, telling what it remembers that it was forgotten. See [Composition.dispose]. */
     fun dispose() {
         composition.dispose()
