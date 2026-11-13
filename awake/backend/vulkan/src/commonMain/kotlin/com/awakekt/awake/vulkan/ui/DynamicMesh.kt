@@ -50,6 +50,10 @@ class DynamicMesh(
     private val device get() = graphicsDevice.device
     private val physicalDevice get() = graphicsDevice.physicalDevice
 
+    /** GPU writes so far, vertices and indices together counting one. A retained run adds none. */
+    internal var uploadCount: Int = 0
+        private set
+
     /**
      * How many times a buffer has been reallocated to fit a run.
      *
@@ -169,6 +173,7 @@ class DynamicMesh(
         VulkanBuffers.writeBufferMemoryBytes(device, frame.indexBufferMemory.handle, 0, frame.indexBytes)
         frame.writtenVertices = vertices
         frame.writtenIndices = indices
+        uploadCount += 1
     }
 
     /**

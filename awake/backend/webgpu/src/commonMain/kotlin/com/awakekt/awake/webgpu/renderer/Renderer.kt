@@ -36,6 +36,7 @@ import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
+import com.awakekt.awake.render.renderer.UiUploadStats
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -188,6 +189,9 @@ class Renderer internal constructor(
 
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
+
+    override val frameUiUploads: UiUploadStats?
+        get() = statsCounter.latestUiUploads
 
     override val surfaceAspect: Float
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->
