@@ -50,7 +50,49 @@ data class EnvironmentUniforms(
      * draws, draw no edges.
      */
     val wireframe: Boolean = false,
+    /** Whether the built-in sky draws its own sun and moon discs; false when a scene draws them over the sky. */
+    val skyBodies: Boolean = true,
 ) {
+    /** The constructor as released before [skyBodies], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with skyBodies.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        showSky: Boolean = false,
+        horizonColor: Color = DEFAULT_HORIZON_COLOR,
+        zenithColor: Color = DEFAULT_ZENITH_COLOR,
+        fogDensity: Float = 0f,
+        fogColor: Color = DEFAULT_FOG_COLOR,
+        shadowsEnabled: Boolean = true,
+        debugView: RenderDebugView = RenderDebugView.Off,
+        debugLayer: Int = 0,
+        exposure: Float = 1f,
+        contentFeatures: Boolean = true,
+        clearColor: Color? = null,
+        wireframe: Boolean = false,
+    ) : this(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
+        contentFeatures, clearColor, wireframe, true,
+    )
+
+    /** [copy] as released before [skyBodies]. */
+    @Deprecated("Use copy with skyBodies.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        showSky: Boolean = this.showSky,
+        horizonColor: Color = this.horizonColor,
+        zenithColor: Color = this.zenithColor,
+        fogDensity: Float = this.fogDensity,
+        fogColor: Color = this.fogColor,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        debugView: RenderDebugView = this.debugView,
+        debugLayer: Int = this.debugLayer,
+        exposure: Float = this.exposure,
+        contentFeatures: Boolean = this.contentFeatures,
+        clearColor: Color? = this.clearColor,
+        wireframe: Boolean = this.wireframe,
+    ): EnvironmentUniforms = copy(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
+        contentFeatures, clearColor, wireframe, skyBodies,
+    )
+
     init {
         require(exposure > 0f && exposure.isFinite()) { "exposure must be finite and above 0; was $exposure." }
     }
@@ -83,5 +125,6 @@ data class EnvironmentUniforms(
         exposure = exposure,
         contentFeatures = contentFeatures,
         clearColor = clearColor,
+        skyBodies = skyBodies,
     )
 }

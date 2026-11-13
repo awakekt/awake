@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.ShaderSource
@@ -70,10 +71,14 @@ internal class HeadlessContentAttachFixture private constructor(
     }
 
     /** One frame of whatever is attached, as tightly packed RGBA8 rows. */
-    fun render(lens: Lens, environment: EnvironmentUniforms = EnvironmentUniforms.Default): ByteArray {
+    fun render(
+        lens: Lens,
+        environment: EnvironmentUniforms = EnvironmentUniforms.Default,
+        light: SceneLight = DEFAULT_SCENE_LIGHT,
+    ): ByteArray {
         val target = renderer.createRenderTarget(size, size)
         try {
-            renderer.renderSceneToTexture(target, lens, emptyList(), environment = environment)
+            renderer.renderSceneToTexture(target, lens, emptyList(), light = light, environment = environment)
             return runBlocking { renderer.readPixels(target) }.data
         } finally {
             target.destroy()

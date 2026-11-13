@@ -215,6 +215,7 @@ the limits of the desktop backend coverage.
 | `range` | number | `10` | Point only. The distance at which the light reaches zero. |
 | `shadowsEnabled` | boolean | `true` | Whether this light casts shadows. |
 | `shadowDistance` | number | `100` | Directional only. How far from the camera shadows reach, in world units. Must be above 0. |
+| `shadowFade` | number | `0.2` | Directional only. The share of `shadowDistance`, counted back from its end, over which shadows fade out. From `0` up to `1`; `0` keeps the hard end. |
 | `ambient` | number or none | none | Directional only. The ambient share, above 0 and up to 1. |
 
 A color in a scene document is an object (`{ "r": 1, "g": 0.9, "b": 0.8 }`), an array

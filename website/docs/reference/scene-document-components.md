@@ -644,8 +644,13 @@ first across midnight. A field no stop sets keeps its authored value.
 | `lightIntensity` | number | The light's `intensity`. At least `0`. |
 | `ambient` | number | The light's `ambient` share. Above `0`, at most `1`. |
 | `fogColor` | color | The `fog` colour. |
+| `skyTint` | color | The colour a `Cubemap` `skybox` is multiplied by. |
+| `skyExposure` | number | A multiplier on a `Cubemap` `skybox`'s `exposure`. At least `0`. |
+| `sunVisibility` | number | How visible the sky's sun is, `0` hidden to `1` shown. |
+| `moonVisibility` | number | How visible the sky's moon is, `0` hidden to `1` shown. |
 
-The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky keeps its image. A
+The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky takes `skyTint` and
+`skyExposure`, and blends between its `panoramas` by time of day. A
 rotated light node shines along its rotation and ignores the sun's direction.
 
 ## `factions`
@@ -782,6 +787,7 @@ A directional or point light. `SceneLight`.
 | `range` | number | `10` | Falloff distance, for `Point`. |
 | `shadowsEnabled` | boolean | `true` | Whether a directional light casts shadows. |
 | `shadowDistance` | number | `100` | How far from the camera shadows reach. Finite and above 0. |
+| `shadowFade` | number | `0.2` | The share of `shadowDistance`, counted back from its end, over which shadows fade out. From `0` up to `1`; `0` ends them on a hard line. |
 | `ambient` | number | none | This light's ambient share. Above 0 and at most 1. |
 
 ## `locomotion_animation`
@@ -1191,6 +1197,12 @@ The background drawn behind the scene. `SceneSkybox`.
 | `zenithColorB` | number | none | Legacy channel. |
 | `cubemapPath` | string | none | Cubemap asset path, for `Cubemap`. |
 | `exposure` | number | `1` | Cubemap brightness, for `Cubemap`. |
+| `sunAndMoon` | boolean | `false` | Draw the sun and moon over this sky, whatever its type. |
+| `sunTexture` | string | none | Asset path of an image drawn as the sun, on a square the size of its disc. |
+| `moonTexture` | string | none | Asset path of an image drawn as the moon. |
+| `moonPhase` | number | `0.5` | The moon's phase, from 0 to 1: `0` new, `0.25` first quarter, `0.5` full, `0.75` last quarter. |
+| `additiveBodies` | boolean | `false` | Add the sun and moon to the sky instead of covering it. |
+| `panoramas` | list of panoramas | `[]` | More cubemap strips by time of day, each `{ time, path }` in time order; a `day_cycle` blends the two around its time. |
 
 ## `spin_control`
 

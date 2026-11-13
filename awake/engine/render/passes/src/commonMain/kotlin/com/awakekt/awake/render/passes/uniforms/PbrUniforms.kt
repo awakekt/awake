@@ -427,7 +427,7 @@ private fun UniformWriter.putStillModel(model: Mat4): UniformWriter = this
 
 /** `cameraForward.w` is the cascade count, 0 when nothing casts. */
 private fun UniformWriter.putCameraForward(cameraForward: Vec3f, cascades: GpuShadowCascadeData): UniformWriter =
-    put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
+    put(UniformFields.CameraForward, cameraForward, cascades.countAndFade)
 
 /** Packs the ordinary untextured lit block. A draw with PBR factors uses [Lit]; a plain draw
  * uses [Primary]. The source payload may contain the textured superset, so only the four
@@ -487,7 +487,7 @@ fun litShadowUniforms(
     .put(drawCall.model.data, UniformFields.Model)
     .put(UniformFields.VertexAnimation, drawCall.vertexAnimation, vertexAnimationClock(drawCall.vertexAnimation, drawCall.timeSeconds))
     .put(cameraPositionFloats(frame.cameraEye), UniformFields.CameraPosition)
-    .put(UniformFields.CameraForward, frame.cameraForward, cascades.count.toFloat())
+    .put(UniformFields.CameraForward, frame.cameraForward, cascades.countAndFade)
     .put(pbrMaterialFloats(drawCall), UniformFields.Material)
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)

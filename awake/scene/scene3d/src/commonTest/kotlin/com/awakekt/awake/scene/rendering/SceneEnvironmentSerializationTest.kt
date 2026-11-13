@@ -13,8 +13,10 @@ import com.awakekt.awake.scene.rendering.light.AmbientLightBinding.toComponent
 import com.awakekt.awake.scene.rendering.light.LightBinding.toComponent
 import com.awakekt.awake.scene.rendering.light.SceneAmbientLight
 import com.awakekt.awake.scene.rendering.light.SceneLight
+import com.awakekt.awake.scene.rendering.sky.ScenePanorama
 import com.awakekt.awake.scene.rendering.sky.SceneSkybox
 import com.awakekt.awake.scene.rendering.sky.Skybox
+import com.awakekt.awake.scene.rendering.sky.SkyboxBinding
 import com.awakekt.awake.scene.rendering.sky.SkyboxBinding.toComponent
 import com.awakekt.awake.scene.rendering.sky.SkyboxBinding.toSceneComponent
 import kotlinx.serialization.json.Json
@@ -100,6 +102,34 @@ class SceneEnvironmentSerializationTest {
         assertEquals(0.1f, component.zenithColor.r)
         assertEquals(0.2f, component.zenithColor.g)
         assertEquals(0.3f, component.zenithColor.b)
+    }
+
+    @Test
+    fun aCubemapSkyKeepsItsPanoramasAndAnOldOneHasNone() {
+        val skybox = SceneSkybox(type = "Cubemap", panoramas = listOf(ScenePanorama(0.25f, "day.png"), ScenePanorama(0.75f, "night.png")))
+        val round = json.decodeFromString(SceneSkybox.serializer(), json.encodeToString(SceneSkybox.serializer(), skybox))
+        assertEquals(skybox.panoramas, round.panoramas)
+        with(SkyboxBinding) { assertEquals(skybox.panoramas, round.toComponent().toSceneComponent().panoramas) }
+
+        val old = json.decodeFromString(SceneSkybox.serializer(), """{"type": "Cubemap", "cubemapPath": "sky.png"}""")
+        assertEquals(emptyList(), old.panoramas)
+        assertEquals(emptyList(), old.validate("skybox"))
+        assertEquals(1, SceneSkybox(panoramas = listOf(ScenePanorama(0.75f, "a"), ScenePanorama(0.25f, "b"))).validate("skybox").size)
+    }
+
+    @Test
+    fun theSunAndMoonFieldsRoundTripAndAnOldSkyHasTheDefaults() {
+        val skybox = SceneSkybox(sunTexture = "sun.png", moonTexture = "moon.png", moonPhase = 0.25f, sunAndMoon = true)
+        val round = json.decodeFromString(SceneSkybox.serializer(), json.encodeToString(SceneSkybox.serializer(), skybox))
+        assertEquals(skybox, round)
+        with(SkyboxBinding) {
+            val exported = round.toComponent().toSceneComponent()
+            assertEquals(listOf("sun.png", "moon.png", 0.25f, true), listOf(exported.sunTexture, exported.moonTexture, exported.moonPhase, exported.sunAndMoon))
+        }
+
+        val old = json.decodeFromString(SceneSkybox.serializer(), """{"type": "Procedural"}""")
+        assertEquals(listOf(null, null, 0.5f, false), listOf(old.sunTexture, old.moonTexture, old.moonPhase, old.sunAndMoon))
+        assertEquals(1, SceneSkybox(moonPhase = 1.5f).validate("skybox").size)
     }
 
     @Test

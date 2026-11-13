@@ -53,14 +53,17 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
             zenithColor.toColor()
         }
         val mode = when (type.lowercase()) {
-            "cubemap" -> Skybox.Mode.Cubemap(assetPath = cubemapPath ?: "", exposure = exposure)
+            "cubemap" -> Skybox.Mode.Cubemap(assetPath = cubemapPath ?: "", exposure = exposure, panoramas = panoramas)
             "solidcolor" -> Skybox.Mode.SolidColor(color = horizon)
             else -> Skybox.Mode.Procedural(horizonColor = horizon, zenithColor = zenith)
         }
-        return Skybox(
-            enabled = enabled,
-            mode = mode,
-        )
+        return Skybox(enabled = enabled, mode = mode).also {
+            it.sunTexture = sunTexture
+            it.moonTexture = moonTexture
+            it.moonPhase = moonPhase
+            it.sunAndMoon = sunAndMoon
+            it.additiveBodies = additiveBodies
+        }
     }
 
     /**
@@ -68,7 +71,15 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
      *
      * @return The serialized [SceneSkybox] descriptor.
      */
-    fun Skybox.toSceneComponent(): SceneSkybox = when (val m = mode) {
+    fun Skybox.toSceneComponent(): SceneSkybox = modeComponent().copy(
+        sunTexture = sunTexture,
+        moonTexture = moonTexture,
+        moonPhase = moonPhase,
+        sunAndMoon = sunAndMoon,
+        additiveBodies = additiveBodies,
+    )
+
+    private fun Skybox.modeComponent(): SceneSkybox = when (val m = mode) {
         is Skybox.Mode.Procedural -> SceneSkybox(
             enabled = enabled,
             horizonColor = SceneColor(m.horizonColor.r, m.horizonColor.g, m.horizonColor.b, m.horizonColor.a),
@@ -84,6 +95,7 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
             cubemapPath = m.assetPath,
             exposure = m.exposure,
             type = "Cubemap",
+            panoramas = m.panoramas,
         )
         is Skybox.Mode.SolidColor -> SceneSkybox(
             enabled = enabled,

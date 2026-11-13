@@ -1,0 +1,1 @@
+- `awake:scene:scene3d`, `awake:asset:shader-pack`: a cubemap sky follows the `day_cycle`. A stop sets `skyTint` and `skyExposure`, and `skybox.panoramas` lists more strips by time of day that the cycle blends between; the cubemap shader blends two cubemaps and tints them. With none set the sky is pixel-identical to before (#1537).
