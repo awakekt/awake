@@ -1,1 +1,0 @@
-- Shipped components whose drawn result depended on a plain field now report to a composition that skips unchanged passes (`ComposeHost.skipUnchangedComposition`): the tooltip finger hold, the calendar month, year and popover, the sidebar open flag and collapsible group, and the toggle and radio group click handoff. With the skip off nothing is tracked.

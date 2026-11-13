@@ -1,1 +1,0 @@
-- The workflow that removes generated attribution lines now also covers pull request reviews and review comments, removes a bare session link, and retries a GitHub call that answers with an error page instead of failing.

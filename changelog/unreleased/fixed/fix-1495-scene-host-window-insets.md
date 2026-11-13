@@ -1,1 +1,0 @@
-- **Compose UI hosted by the scene runtime now reads the window's insets.** `SceneAppLifecycleRuntime` handed its UI host no `AppFrame.safeArea` or `AppFrame.ime`, so `Modifier.imePadding()` and `safeDrawingPadding()` did nothing there and a keyboard could cover a focused text field. Both hosts now take them from one shared `ComposeHost.applyInsets(frame)` (#1495).
