@@ -90,7 +90,7 @@ class CanvasActionSystem : System {
     private fun feedStick(stick: CanvasJoystickWidget, pointer: CanvasPointerState, actions: InputActions): Boolean {
         if (stick.action !in actions) return false
         val deflected = pointer.stickX != 0f || pointer.stickY != 0f
-        if (deflected) actions.push(stick.action, pointer.stickX, -pointer.stickY)
+        if (deflected) actions.pushScreen(stick.action, pointer.stickX, pointer.stickY)
         return deflected
     }
 
@@ -157,7 +157,7 @@ class CanvasActionSystem : System {
         val aim = button.settings?.aim
         if (aim == null || aim.aimAction !in actions) return false
         val pushing = pointer.aiming || fired
-        if (pushing) actions.push(aim.aimAction, pointer.aimX, -pointer.aimY)
+        if (pushing) actions.pushScreen(aim.aimAction, pointer.aimX, pointer.aimY)
         return pushing
     }
 
