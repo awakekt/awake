@@ -50,7 +50,7 @@ internal object MotionCapability : SceneCapability {
         if (scene.uses(SceneLocomotionAnimation::class)) plan.frame(CoreSystems.LOCOMOTION) { LocomotionAnimationSystem() }
         // A headless plan still moves keyframed nodes, which colliders and sockets follow; only alpha is skipped.
         val hasRenderer = plan.hasRenderer
-        if (scene.uses(SceneKeyframeAnimation::class)) plan.frame(CoreSystems.KEYFRAMES, SceneSystemRole.Presentation) { KeyframeAnimationSystem(hasRenderer) }
+        if (scene.uses(SceneKeyframeAnimation::class)) plan.frame(CoreSystems.KEYFRAMES) { KeyframeAnimationSystem(hasRenderer) }
         if (scene.uses(SceneTextureClips::class)) plan.frame(CoreSystems.TEXTURE_CLIPS, SceneSystemRole.Presentation) { TextureClipSystem() }
         if (scene.uses(SceneSpriteClips::class)) plan.frame(CoreSystems.SPRITE_CLIPS, SceneSystemRole.Presentation) { SpriteClipSystem() }
     }
