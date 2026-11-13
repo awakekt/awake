@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-11-13
+
+### Added
+
+- Trails can write depth while blending and cull back faces on Vulkan and WebGPU. Scene documents can name a texture for a trail.
+- Compose: `WorldAnchorLayout` and `Modifier.worldAnchor` (new `:awake:compose:game` types) place each child at a screen point read from an `AnchorProvider` as the frame is laid out, for nameplates, bars over entities and damage text, and hide a child while its provider says it is not visible. `World.entityAnchor` in `awake:scene:canvas` projects an entity through the same `CanvasProjector` canvas followers use, hiding it behind the camera and off the surface. It is not allocation-free: the engine recomposes every node each frame. The canvas follow path is unchanged. (#1499)
+- Scene nodes can keep a world-space rotation while following their parent. 3D particle sprites can shrink through zero and grow mirrored using a negative end scale.
+- **Particles can stand upright in their emitter's own frame.** `ParticleFacing.Upright` (`facing: "Upright"` on `particle_emitter`) stands each quad in the plane of the emitter entity's X and Y axes, its texture's top toward the entity's +Y, so its sprites stand perpendicular to a spawn ring in the entity's XZ plane and tilt with the ring, and the motion, when the entity is pitched or rolled. Velocity stretch and spin stay in that plane.
+- `Renderer.frameRenderPasses` counts the render passes a frame began (Vulkan), offscreen blur and layer passes included, and a headless test measures draws and passes for a skinned, plain, styled and blurred UI panel.
+
+### Fixed
+
+- **Walking the Compose tree no longer allocates for every node.** Painting, position resolution, focus revalidation, semantics and overlay layout read `NodeChildren.indices`, which built a new `IntRange` on each read: about 190 B per node per frame in paint alone, with or without an overlay. They now loop over `0 until size`. A frame of 200 nameplates allocates about 150 KB less on a runtime without escape analysis (#1512).
+
 ## [0.44.0] - 2026-11-12
 
 ### Added
