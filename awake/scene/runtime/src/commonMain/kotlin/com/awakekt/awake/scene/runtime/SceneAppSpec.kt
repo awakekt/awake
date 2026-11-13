@@ -70,6 +70,14 @@ class SceneAppSpec(
         }
 
     /**
+     * The names of registered systems left out of the scene, empty unless set: a host that does not
+     * need a system, such as a dedicated server with no camera, names it here instead of not
+     * registering it. Read when the spec is installed; a name no registration has is refused then,
+     * with the names that exist. The scene DSL sets it with `disableSystems(...)`.
+     */
+    var disabledSystems: Set<String> = emptySet()
+
+    /**
      * Installs this scene module into the host application specification.
      *
      * @param into The builder receiving module configuration.

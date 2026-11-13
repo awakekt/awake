@@ -44,6 +44,7 @@ class SceneSystemPlanBinaryCompatibilityTest {
                 "close()V",
                 "getFixed()Ljava/util/List;",
                 "getFrame()Ljava/util/List;",
+                "getPlanned()Ljava/util/List;",
                 "getPreAnimation()Ljava/util/List;",
                 "interpolate(Lcom/awakekt/awake/ecs/World;F)V",
             ),

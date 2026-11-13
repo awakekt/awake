@@ -76,6 +76,8 @@ object BlueprintCapability : SceneCapability {
         }
     }
 
+    override val systemNames: List<String> = listOf("blueprint")
+
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneBlueprint::class)) return
         // After Core's physics step, which plans first, so a sensor's contacts are this step's.

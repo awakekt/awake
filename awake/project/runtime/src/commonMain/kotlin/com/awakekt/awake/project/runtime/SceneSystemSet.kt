@@ -16,10 +16,12 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.runtime.PlannedSystem
 import com.awakekt.awake.scene.runtime.SceneAssetReferences
 import com.awakekt.awake.scene.runtime.ScenePrewarm
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import com.awakekt.awake.scene.runtime.SpawnedNode
+import com.awakekt.awake.scene.runtime.requireKnownSystemNames
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -214,6 +216,11 @@ class SceneSystemSet internal constructor(
     private val release: () -> Unit,
     /** The systems run once per rendered frame after [interpolate] and before world-matrix propagation. */
     val preAnimation: List<System> = emptyList(),
+    /**
+     * The systems that were planned, with their names and phases, in the order they run: [fixed], then
+     * [preAnimation], then [frame]. For diagnostics and tests. Empty for a set built by hand.
+     */
+    val planned: List<PlannedSystem> = emptyList(),
 ) : AutoCloseable {
     private val interpolated = fixed.filterIsInstance<InterpolatedSystem>()
 
@@ -275,13 +282,32 @@ fun sceneSystemsFor(
     scene: SceneDocument,
     services: SceneHostServices,
     capabilities: List<SceneCapability> = emptyList(),
-): SceneSystemSet = sceneSystemsFor(scene, services, capabilities, hostRuns = emptySet())
+): SceneSystemSet = sceneSystemSetFor(scene, services, capabilities, disabled = emptySet(), hostRuns = emptySet())
 
-/** [sceneSystemsFor], leaving out the systems named in [hostRuns], which the host already runs over the same world. */
-internal fun sceneSystemsFor(
+/**
+ * [sceneSystemsFor], leaving out the systems named in [disabled], such as `CoreSystems.CAMERA` on a
+ * dedicated server. A name no system has is refused, with the names that exist: Core's in
+ * [CoreSystems.all], those [SceneCapability.systemNames] lists, and any [SceneSystemSet.planned] for
+ * this scene. Nothing disabled plans exactly what [sceneSystemsFor] does without it.
+ */
+fun sceneSystemsFor(
     scene: SceneDocument,
     services: SceneHostServices,
     capabilities: List<SceneCapability>,
+    disabled: Set<String>,
+): SceneSystemSet = sceneSystemSetFor(scene, services, capabilities, disabled, hostRuns = emptySet())
+
+/**
+ * The decision both [sceneSystemsFor] and `runProject` build from. [disabled] is what a host or consumer
+ * asked to drop and is refused when no system has the name. [hostRuns] are the systems the host already
+ * runs over the same world, such as the infrastructure's sprite clips: they are dropped the same way,
+ * and are not an error where the scene plans none of them.
+ */
+internal fun sceneSystemSetFor(
+    scene: SceneDocument,
+    services: SceneHostServices,
+    capabilities: List<SceneCapability>,
+    disabled: Set<String>,
     hostRuns: Set<String>,
 ): SceneSystemSet {
     val fixed = mutableListOf<System>()
@@ -289,7 +315,11 @@ internal fun sceneSystemsFor(
     val frame = mutableListOf<System>()
     val releasing = SystemReleases()
     val specs = sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities, hasRenderer = services.hasRenderer)
-    specs.filterNot { it.name in hostRuns }.forEach { spec ->
+    val installed = installedCapabilities(capabilities)
+    requireKnownSystemNames(disabled, CoreSystems.all + installed.flatMap { it.systemNames } + specs.map { it.name }, "the scene's systems")
+    val dropped = disabled + hostRuns
+    val kept = specs.filterNot { it.name in dropped }
+    kept.forEach { spec ->
         val system = releasing.keep(spec.create(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system
@@ -297,7 +327,9 @@ internal fun sceneSystemsFor(
             SceneSystemPhase.Frame -> frame += system
         }
     }
-    return SceneSystemSet(fixed, frame, releasing::release, preAnimation)
+    val planned = listOf(SceneSystemPhase.Fixed, SceneSystemPhase.PreAnimation, SceneSystemPhase.Frame)
+        .flatMap { phase -> kept.filter { it.phase == phase }.map { PlannedSystem(it.name, phase) } }
+    return SceneSystemSet(fixed, frame, releasing::release, preAnimation, planned)
 }
 
 /** One system a scene runs: its name, the phase it runs in, and how to build it. */

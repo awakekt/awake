@@ -59,7 +59,7 @@ internal object StreamedTerrainCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val config = scene.pagedTerrain() ?: return
         // A fixed system, so it runs before the physics step that builds the bodies of its collision cells.
-        plan.fixed("paged-terrain") { services ->
+        plan.fixed(CoreSystems.PAGED_TERRAIN) { services ->
             val assets = requireNotNull(services.content[Terrain]) {
                 "The scene has a paged_terrain; pass the content loadSceneContent reads in SceneHostServices"
             }

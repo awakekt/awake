@@ -74,18 +74,18 @@ internal object ControlsCapability : SceneCapability {
         val moves = scene.uses(SceneMovementControl::class)
         val touches = scene.hasCanvasActions()
         if (moves || touches || scene.uses(SceneInputActions::class)) {
-            plan.frame("playerInput") { PlayerInputSystem(it.input) }
+            plan.frame(CoreSystems.PLAYER_INPUT) { PlayerInputSystem(it.input) }
         } else {
-            plan.frame("playerInput") { RuntimeCanvasInputSystem(it.input) }
+            plan.frame(CoreSystems.PLAYER_INPUT) { RuntimeCanvasInputSystem(it.input) }
         }
         // Runtime HUDs need the same ordering as authored ones: begin/read actions before adding
         // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
         // A headless host (a game server) draws no canvas and takes no touches, so it plans none: walking
         // its canvas elements every frame cost a server about 5% of its tick for nothing.
-        if (plan.hasRenderer) plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
-        if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
+        if (plan.hasRenderer) plan.frame(CoreSystems.CANVAS_ACTIONS) { RuntimeCanvasActionsSystem() }
+        if (moves && !scene.uses(SceneCharacterController::class)) plan.frame(CoreSystems.MOVEMENT) { MatrixRelativeMovementSystem() }
         if (scene.uses(SceneCameraRig::class)) {
-            plan.frame("camera") { services ->
+            plan.frame(CoreSystems.CAMERA) { services ->
                 // Asked only for a rig with collision on, so a scene without it behaves as before.
                 val probes = SceneCameraCollisionProbes(services.physics, services.content[StreamedTerrainCapability.Terrain]?.terrain?.heights)
                 CameraSystem(inputProvider = services.input, viewportBounds = { null }, collisionProbes = probes)
@@ -93,7 +93,7 @@ internal object ControlsCapability : SceneCapability {
         }
         // Fades what a rig's occluderFade finds between its eye and its target, from the physics world's rays.
         if (plan.hasPhysics && scene.nodes.any { it.fadesOccluders() }) {
-            plan.frame("occluder-fade") { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
+            plan.frame(CoreSystems.OCCLUDER_FADE) { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
         }
     }
 }
@@ -116,7 +116,7 @@ internal object CanvasCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         // Only a canvas that draws is ever asked; a host with no renderer leaves the rays uncast.
         if (plan.hasPhysics && plan.hasRenderer && scene.asksForOcclusion()) {
-            plan.frame("canvas-occlusion") { PhysicsCanvasOcclusion(requireNotNull(it.physics), plan.physicsSystem(it)) }
+            plan.frame(CoreSystems.CANVAS_OCCLUSION) { PhysicsCanvasOcclusion(requireNotNull(it.physics), plan.physicsSystem(it)) }
         }
     }
 }
@@ -140,9 +140,9 @@ internal object PhysicsCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!plan.hasPhysics) return
-        if (scene.nodes.any { it.hasTerrainCollider() }) plan.fixed("terrain-collider") { TerrainColliderSystem() }
+        if (scene.nodes.any { it.hasTerrainCollider() }) plan.fixed(CoreSystems.TERRAIN_COLLIDER) { TerrainColliderSystem() }
         if (scene.nodes.any { it.hasMeshCollider() }) {
-            plan.fixed("mesh-collider") {
+            plan.fixed(CoreSystems.MESH_COLLIDER) {
                 MeshColliderSystem(
                     requireNotNull(it.content[CoreSceneContent.CollisionMeshes]) {
                         "The scene has mesh collision shapes; pass the content loadSceneContent reads in SceneHostServices"
@@ -151,11 +151,11 @@ internal object PhysicsCapability : SceneCapability {
             }
         }
         // Shared with streamed terrain, which must destroy the bodies of the cells it unloads through this step.
-        plan.fixed("physics") { plan.physicsSystem(it) }
+        plan.fixed(CoreSystems.PHYSICS) { plan.physicsSystem(it) }
         if (scene.uses(SceneCharacterController::class)) {
             // Before the character step builds each controller: a sensor sees a character only by a body of its own.
-            if (scene.nodes.any { it.hasSensor() }) plan.fixed("character-sensor-bodies") { CharacterSensorBodies() }
-            plan.fixed(SceneSystemPlan.CHARACTER_CONTROLLER) { CharacterControllerSystem(requireNotNull(it.physics)) }
+            if (scene.nodes.any { it.hasSensor() }) plan.fixed(CoreSystems.CHARACTER_SENSOR_BODIES) { CharacterSensorBodies() }
+            plan.fixed(CoreSystems.CHARACTER_CONTROLLER) { CharacterControllerSystem(requireNotNull(it.physics)) }
         }
     }
 }
@@ -172,7 +172,7 @@ internal object SkinnedAnimationCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val hasRenderer = plan.hasRenderer
-        plan.frame("animation") { services -> AnimationSystem(services.animationUpdateRate(), hasRenderer) }
+        plan.frame(CoreSystems.ANIMATION) { services -> AnimationSystem(services.animationUpdateRate(), hasRenderer) }
     }
 }
 

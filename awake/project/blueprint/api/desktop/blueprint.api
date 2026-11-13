@@ -3,6 +3,7 @@ public final class com/awakekt/awake/project/blueprint/BlueprintCapability : com
 	public static final field INSTANCE Lcom/awakekt/awake/project/blueprint/BlueprintCapability;
 	public fun getComponents ()Ljava/util/List;
 	public fun getId ()Ljava/lang/String;
+	public fun getSystemNames ()Ljava/util/List;
 	public fun load (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/runtime/SceneContent$Builder;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun plan (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/SceneSystemPlan;)V
 }

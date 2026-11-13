@@ -35,7 +35,7 @@ internal object TerrainCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneTerrain::class) || !plan.hasRenderer) return
-        plan.frame("terrain") { services ->
+        plan.frame(CoreSystems.TERRAIN) { services ->
             val host = services.renderer as? ContentFeatureHost
             // A renderer that can't take content features draws nothing, so it reads nothing either.
             val scope = host?.let { services.backgroundScope("terrain") }

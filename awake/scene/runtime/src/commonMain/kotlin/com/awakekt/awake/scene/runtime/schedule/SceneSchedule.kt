@@ -11,10 +11,12 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.RenderSystem3D
+import com.awakekt.awake.scene.runtime.PlannedSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.runtime.requireKnownSystemNames
 import kotlin.reflect.KClass
 import kotlin.time.TimeSource
 
@@ -69,10 +71,22 @@ class SceneSchedule internal constructor(
     internal var renderMs: Float = 0f
         private set
 
+    /**
+     * The systems the spec registered and did not disable, in the order they run: fixed, then
+     * pre-animation, then frame. Infrastructure systems are not listed.
+     */
+    internal var planned: List<PlannedSystem> = emptyList()
+        private set
+
     internal fun initialize(runtime: SceneAppLifecycleRuntime) {
+        requireKnownSystemNames(spec.disabledSystems, spec.systems.map { it.handle.name }, "the scene app")
+        val kept = spec.systems.filterNot { it.handle.name in spec.disabledSystems }
+        planned = listOf(SceneSystemPhase.Fixed, SceneSystemPhase.PreAnimation, SceneSystemPhase.Frame).flatMap { phase ->
+            kept.filter { it.phase == phase }.map { PlannedSystem(it.handle.name, phase) }
+        }
         infrastructureSystems = spec.infrastructureSystemsFactory(runtime)
         guardedInfrastructure = infrastructureSystems.map { it.guardedFor(runtime) }
-        spec.systems.forEach { registration ->
+        kept.forEach { registration ->
             val system = registration.factory(runtime)
             registeredSystems[registration.handle] = system
             val guarded = system.guardedFor(runtime)

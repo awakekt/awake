@@ -42,6 +42,13 @@ interface SceneCapability {
      */
     suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) = Unit
 
+    /**
+     * The names of every system this capability can plan, for a host that disables systems by name: a
+     * name listed here is known even for a scene that does not use the capability, so disabling it is
+     * not mistaken for a typo. Leave it empty and a name is known only for a scene that plans it.
+     */
+    val systemNames: List<String> get() = emptyList()
+
     /** Adds to [plan] the systems [scene] runs with this capability, in run order: none when it uses none. */
     fun plan(scene: SceneDocument, plan: SceneSystemPlan)
 }
@@ -116,7 +123,7 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
          * Core's character controller step, which moves every `character_controller` by its intent. A fixed
          * system planned `before` it writes the velocity and facing that same step applies.
          */
-        const val CHARACTER_CONTROLLER: String = "character"
+        const val CHARACTER_CONTROLLER: String = CoreSystems.CHARACTER_CONTROLLER
     }
 }
 

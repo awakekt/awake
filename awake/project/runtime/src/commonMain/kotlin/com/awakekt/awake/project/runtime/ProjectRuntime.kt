@@ -302,7 +302,17 @@ fun LoadedProject.sceneSystems(
     audio: AudioPlayer? = null,
     fixedStep: FixedStepReport? = null,
     coroutineScope: CoroutineScope,
-): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope)
+): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope, disabled = emptySet())
+
+/** [sceneSystems], leaving out the systems named in [disabled], as `sceneSystemsFor` describes. */
+fun LoadedProject.sceneSystems(
+    input: () -> GameplayInput,
+    renderer: Renderer? = null,
+    audio: AudioPlayer? = null,
+    fixedStep: FixedStepReport? = null,
+    coroutineScope: CoroutineScope,
+    disabled: Set<String>,
+): SceneSystemSet = sceneSystemsIn(input, renderer, audio, fixedStep, coroutineScope, disabled)
 
 private fun LoadedProject.sceneSystemsIn(
     input: () -> GameplayInput,
@@ -310,6 +320,7 @@ private fun LoadedProject.sceneSystemsIn(
     audio: AudioPlayer?,
     fixedStep: FixedStepReport?,
     coroutineScope: CoroutineScope?,
+    disabled: Set<String> = emptySet(),
 ): SceneSystemSet {
     val drawn = if (renderer == null) {
         SceneHostServices.headless(input, physics, content)
@@ -318,7 +329,7 @@ private fun LoadedProject.sceneSystemsIn(
     }
     val scoped = coroutineScope?.let(drawn::withCoroutineScope) ?: drawn
     val stepped = fixedStep?.let(scoped::withFixedStep) ?: scoped
-    return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities)
+    return sceneSystemsFor(scene, audio?.let(stepped::withAudio) ?: stepped, capabilities, disabled)
 }
 
 /**
@@ -401,7 +412,18 @@ suspend fun LoadedProject.switchTo(path: String) {
  * error message the game draws itself.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
-    val scenes = ProjectSceneRunner(project)
+    runProject(project, disabledSystems = emptySet(), touchControls)
+}
+
+/**
+ * [runProject], leaving out the systems named in [disabledSystems], such as `CoreSystems.CAMERA` for a
+ * dedicated server: a name no system has is refused when the first scene's systems are built, with the
+ * names that exist. Each scene the project switches to is planned the same way. What the playing
+ * scene planned is the [ProjectSystemPlan] service, in the order the systems run.
+ */
+fun SceneAppDsl.runProject(project: LoadedProject, disabledSystems: Set<String>, touchControls: Boolean = false) {
+    val scenes = ProjectSceneRunner(project, disabledSystems)
+    service(ProjectSystemPlan::class) { ProjectSystemPlan(scenes::plannedSystems) }
     // Every scene's sprite and tilemap textures, read from the project as they are first drawn: the
     // KTX2 file each was cooked to when the project ships one, else the image. The device's block
     // formats are known once the renderer is, before the first frame asks for a texture.

@@ -32,10 +32,10 @@ import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.scene.scene2d.Transform2DPlacement
 
 /** The name of the system that advances a scene's `sprite_clips` in its schedule. */
-internal const val SPRITE_CLIPS_SYSTEM = "sprite-clips"
+internal const val SPRITE_CLIPS_SYSTEM = CoreSystems.SPRITE_CLIPS
 
 /** The name of the system that advances a scene's `particle_emitter_2d` components in its schedule. */
-internal const val PARTICLES_2D_SYSTEM = "particles-2d"
+internal const val PARTICLES_2D_SYSTEM = CoreSystems.PARTICLES_2D
 
 /** Spin, locomotion, keyframes, sprite-sheet clips and sprite clips, for the scenes that have them. */
 internal object MotionCapability : SceneCapability {
@@ -43,15 +43,15 @@ internal object MotionCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (scene.uses(SceneSpinControl::class)) {
-            plan.frame("spin-clock") { SpinClockSystem() }
-            plan.frame("spin") { SpinSystem() }
+            plan.frame(CoreSystems.SPIN_CLOCK) { SpinClockSystem() }
+            plan.frame(CoreSystems.SPIN) { SpinSystem() }
         }
-        if (scene.uses(SceneLocomotionAnimation::class)) plan.frame("locomotion") { LocomotionAnimationSystem() }
+        if (scene.uses(SceneLocomotionAnimation::class)) plan.frame(CoreSystems.LOCOMOTION) { LocomotionAnimationSystem() }
         // A headless plan still moves keyframed nodes, which colliders and sockets follow; only alpha is skipped.
         val hasRenderer = plan.hasRenderer
-        if (scene.uses(SceneKeyframeAnimation::class)) plan.frame("keyframes") { KeyframeAnimationSystem(hasRenderer) }
-        if (scene.uses(SceneTextureClips::class)) plan.frame("texture-clips") { TextureClipSystem() }
-        if (scene.uses(SceneSpriteClips::class)) plan.frame(SPRITE_CLIPS_SYSTEM) { SpriteClipSystem() }
+        if (scene.uses(SceneKeyframeAnimation::class)) plan.frame(CoreSystems.KEYFRAMES) { KeyframeAnimationSystem(hasRenderer) }
+        if (scene.uses(SceneTextureClips::class)) plan.frame(CoreSystems.TEXTURE_CLIPS) { TextureClipSystem() }
+        if (scene.uses(SceneSpriteClips::class)) plan.frame(CoreSystems.SPRITE_CLIPS) { SpriteClipSystem() }
     }
 }
 
@@ -66,15 +66,15 @@ internal object ParticlesCapability : SceneCapability {
     // Planned whenever something can draw them, not only for a document that has an emitter: a scene can
     // spawn prefabs with emitters at runtime, and with nothing to emit both systems' frames are an empty query.
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(PARTICLES_2D_SYSTEM) { Particle2DSystem(Transform2DPlacement()) }
+        if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(CoreSystems.PARTICLES_2D) { Particle2DSystem(Transform2DPlacement()) }
         if (!plan.hasRenderer) return
-        plan.frame("particle-content") {
+        plan.frame(CoreSystems.PARTICLE_CONTENT) {
             val sprites = it.content[CoreSceneContent.ParticleSprites].orEmpty()
             // The shared loads already hold the scene's own images, so the map isn't given beside them.
             it.content[CoreSceneContent.ParticleImageLoads]?.let { loads -> ParticleContentSystem(it.renderer, sprites, emptyMap(), loads) }
                 ?: ParticleContentSystem(it.renderer, sprites, it.content[CoreSceneContent.ParticleImages].orEmpty())
         }
-        plan.frame("particles") { ParticleSystem(TransformPlacement) }
+        plan.frame(CoreSystems.PARTICLES) { ParticleSystem(TransformPlacement) }
     }
 }
 
@@ -83,7 +83,7 @@ internal object DayCycleCapability : SceneCapability {
     override val id = "com.awakekt.awake.day-cycle"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        if (scene.uses(SceneDayCycle::class)) plan.frame("day-cycle") { DayCycleSystem() }
+        if (scene.uses(SceneDayCycle::class)) plan.frame(CoreSystems.DAY_CYCLE) { DayCycleSystem() }
     }
 }
 
