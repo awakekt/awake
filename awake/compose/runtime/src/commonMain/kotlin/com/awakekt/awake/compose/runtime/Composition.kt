@@ -31,6 +31,16 @@ class Composition(
      */
     val isInvalid: Boolean get() = reads.isInvalid()
 
+    /**
+     * Whether holders of plain state should report their reads to this composition's passes, see
+     * [readsAreTracked]. Off by default: a host that composes every frame has no use for them.
+     */
+    var tracksChanges: Boolean
+        get() = reads.tracksChanges
+        set(value) {
+            reads.tracksChanges = value
+        }
+
     /** Marks the latest pass out of date, for a change no tracked [State] carries. */
     fun invalidate() {
         reads.invalid = true

@@ -22,6 +22,9 @@ internal class ReadObserver {
     /** Set by a write to a state the latest pass read, or by [Composition.invalidate]. */
     var invalid = true
 
+    /** Whether the pass wants reads of plain holders reported to it. See [readsAreTracked]. */
+    var tracksChanges = false
+
     private var polled = arrayOfNulls<PolledState<*>>(INITIAL_READS)
     private var polledSeen = arrayOfNulls<Any?>(INITIAL_READS)
     private var polledCount = 0
@@ -79,6 +82,14 @@ internal class ReadObserver {
         const val INITIAL_READS = 8
     }
 }
+
+/**
+ * Whether the pass running now asks plain holders to report their reads (see
+ * [Composition.tracksChanges]). A holder that keeps a counter or flag in a plain field checks this
+ * before creating a [State] for the pass to read, so a host that does not skip unchanged passes
+ * pays nothing: no state, no recorded read.
+ */
+val readsAreTracked: Boolean get() = ReadTracking.current?.tracksChanges == true
 
 /**
  * The composition whose pass is running, if any. Composition is synchronous on the frame thread, so

@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.compose.ui.platform
 
+import com.awakekt.awake.compose.runtime.PolledState
 import com.awakekt.awake.compose.runtime.compositionLocalOf
+import com.awakekt.awake.compose.runtime.readsAreTracked
 
 /**
  * How much time this frame covers, and how much has passed since the host started.
@@ -27,13 +29,34 @@ import com.awakekt.awake.compose.runtime.compositionLocalOf
  */
 class FrameClock {
 
-    /** Seconds covered by this frame, clamped -- see [advance]. */
-    var deltaSeconds: Float = 0f
-        private set
+    private var delta = 0f
+    private var total = 0f
 
-    /** Seconds since the host's first frame. Monotonic, and the same for every reader in a pass. */
-    var totalSeconds: Float = 0f
-        private set
+    /** Bumped by an [advance] that moves time, so a pass that read the clock is out of date. */
+    private var revision = 0
+
+    private val time = object : PolledState<Int>() {
+        override fun read(): Int = revision
+    }
+
+    /**
+     * Seconds covered by this frame, clamped -- see [advance].
+     *
+     * Reading it in a pass that tracks reads records the read: a host that skips unchanged passes
+     * recomposes when the clock moves. Otherwise it records nothing.
+     */
+    val deltaSeconds: Float
+        get() {
+            if (readsAreTracked) time.value
+            return delta
+        }
+
+    /** Seconds since the host's first frame. Monotonic, and the same for every reader in a pass. Tracked like [deltaSeconds]. */
+    val totalSeconds: Float
+        get() {
+            if (readsAreTracked) time.value
+            return total
+        }
 
     /**
      * Clamped to [MAX_DELTA_SECONDS], because a stalled frame is not a fast-forward.
@@ -45,8 +68,10 @@ class FrameClock {
      */
     internal fun advance(delta: Float) {
         val step = delta.coerceIn(0f, MAX_DELTA_SECONDS)
-        deltaSeconds = step
-        totalSeconds += step
+        // A run of still frames (step 0 after step 0) leaves the clock where it was.
+        if (step != 0f || this.delta != 0f) revision++
+        this.delta = step
+        total += step
     }
 
     /** Holds the clamp applied to every frame delta. */

@@ -97,6 +97,32 @@ class ComposeHost(
     /** Advanced once per frame, before content runs, so every animation in a pass agrees on now. */
     val frameClock: FrameClock = FrameClock()
 
+    /**
+     * Skips the composition pass of a frame in which nothing it read has changed. Off by default.
+     *
+     * When on, [frame] runs [content] only if a [com.awakekt.awake.compose.runtime.State] the last
+     * pass read was written with a different value, a polled state it read now differs, the frame
+     * clock moved while the pass read it, or the density, viewport, window insets, pointer modifiers
+     * or layout direction differ from the last composed pass. Measure, place, paint, input, focus and
+     * semantics run every frame either way, so the output is the same as with it off **provided the
+     * content reads only tracked state and the values above**. A content lambda that reads a plain
+     * `var` another frame changed would show the old value: keep that data in `mutableStateOf`, or
+     * leave this off. Content must not rely on running every frame.
+     */
+    var skipUnchangedComposition: Boolean = false
+        set(value) {
+            field = value
+            // Plain holders (hover, press, focus counts, the clock) only create tracking state for
+            // a host that skips, so the default path allocates what it always did.
+            composition.tracksChanges = value
+        }
+
+    /** How many frames [skipUnchangedComposition] spared a composition pass. */
+    var skippedCompositions: Int = 0
+        private set
+
+    private val compositionInputs = CompositionInputs()
+
     /** Disabled-by-default composition attribution for Stage 2 profiling. */
     val compositionStats: ComposeFrameStats = ComposeFrameStats()
 
@@ -136,7 +162,9 @@ class ComposeHost(
         // Before content, not after: an animation reads the clock as it is declared, so advancing
         // afterwards would paint every frame one step stale.
         frameClock.advance(input.deltaSeconds)
-        if (compositionStats.enabled) {
+        if (skipUnchangedComposition && !needsComposition(input)) {
+            skippedCompositions++
+        } else if (compositionStats.enabled) {
             val started = TimeSource.Monotonic.markNow()
             compose(content, input)
             compositionStats.recordComposition(started.elapsedNow().inWholeNanoseconds)
@@ -198,6 +226,7 @@ class ComposeHost(
      */
     fun dispose() {
         composition.dispose()
+        compositionInputs.reset()
         placedOnce = false
         imeOwner = null
     }
@@ -232,7 +261,16 @@ class ComposeHost(
         it.cutSelection()
     }
 
-    private fun compose(content: context(Composer) () -> Unit, input: FrameInput): Composer =
+    private fun needsComposition(input: FrameInput): Boolean =
+        composition.isInvalid ||
+            compositionInputs.differsFrom(density, input, windowInsets, layoutDirection)
+
+    private fun compose(content: context(Composer) () -> Unit, input: FrameInput): Composer {
+        compositionInputs.record(density, input, windowInsets, layoutDirection)
+        return composeContent(content, input)
+    }
+
+    private fun composeContent(content: context(Composer) () -> Unit, input: FrameInput): Composer =
         composition.compose {
             // The constructor's density reaches the *root* node directly, but every other node reads
             // it from the local -- so without this the whole tree below the root laid out at 1x and
