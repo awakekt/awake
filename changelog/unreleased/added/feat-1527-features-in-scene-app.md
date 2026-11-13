@@ -1,1 +1,0 @@
-- `SceneAppDsl.features(scene, features, ...)` registers in a code-first scene app the systems the project runtime plans for the same scene and features, in the same order, with the same names, phases and roles. `CoreFeatures` has Core's by typed handle (`CoreFeatures.all` is what a project runs with). Systems the app registers itself run in call order relative to them (#1527).

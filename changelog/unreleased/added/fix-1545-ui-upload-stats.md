@@ -1,1 +1,0 @@
-- `Renderer.frameUiUploads` reports what the last frame wrote into UI meshes, as `UiUploadStats`: bytes uploaded, draw runs re-uploaded and the triangles in them, counted by the Vulkan and WebGPU backends. A still UI reads zero, so a non-zero figure on a frame where nothing moved shows what is dirty (#1545).
