@@ -8,6 +8,9 @@ package com.awakekt.awake.ui.shadcn
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.focus.FocusRequester
 import com.awakekt.awake.compose.ui.focus.focusRequester
@@ -254,9 +257,10 @@ class ShadcnFormRecipeContractsTest {
 
     @Test
     fun toggleAndToggleGroupSupportKeyboardActivationAndDisabledExclusion() {
-        var toggleChecked = false
-        var disabledToggleChecked = false
-        var groupSelection = emptySet<String>()
+        // State, not plain vars: a host that skips unchanged passes only sees reads it can track.
+        var toggleChecked by mutableStateOf(false)
+        var disabledToggleChecked by mutableStateOf(false)
+        var groupSelection by mutableStateOf(emptySet<String>())
         val host = ComposeHost()
         val content: context(Composer)
         () -> Unit = {

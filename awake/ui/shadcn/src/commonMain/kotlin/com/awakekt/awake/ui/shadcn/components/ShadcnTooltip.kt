@@ -6,6 +6,7 @@
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.hoverable
+import com.awakekt.awake.compose.foundation.interaction.Interaction
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.style.Style
@@ -107,7 +108,7 @@ fun ShadcnTooltipped(
         Box(
             modifier
                 .hoverable(interaction)
-                .then(FingerHoldElement(anchor))
+                .then(FingerHoldElement(anchor, interaction))
                 // The trigger's resolved bounds, in viewport space. Read a frame later than they are
                 // written, which costs nothing here: the tooltip cannot open before the pointer has
                 // been over the trigger for a frame anyway.
@@ -119,7 +120,8 @@ fun ShadcnTooltipped(
                 },
         ) {
             content()
-            if (interaction.isHovered || anchor.heldByFinger) {
+            // A finger hold counts as one more hover on the same source, so a pass that read it is invalidated.
+            if (interaction.isHovered) {
                 Layer(
                     kind = LayerKind.Tooltip,
                     // Two keys, because `remember` has no three-key overload; the anchor is the same
@@ -149,25 +151,33 @@ private class TooltipAnchor {
  * trigger underneath that the lift is not a click; the release still arrives, through the trigger's
  * capture, to close it.
  */
-private class FingerHoldElement(private val anchor: TooltipAnchor) : ModifierNodeElement<FingerHoldNode>() {
-    override fun create(): FingerHoldNode = FingerHoldNode(anchor)
+private class FingerHoldElement(
+    private val anchor: TooltipAnchor,
+    private val interaction: InteractionSource,
+) : ModifierNodeElement<FingerHoldNode>() {
+    override fun create(): FingerHoldNode = FingerHoldNode(anchor, interaction)
 
     override fun update(node: FingerHoldNode) {
         node.anchor = anchor
+        node.interaction = interaction
     }
 }
 
-private class FingerHoldNode(var anchor: TooltipAnchor) :
+private class FingerHoldNode(var anchor: TooltipAnchor, var interaction: InteractionSource) :
     Modifier.Node(),
     PointerInputNode {
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || event.pointerId == MOUSE_POINTER) return
         when (event.type) {
             PointerEventType.LongPress -> if (!event.isConsumed) {
+                if (!anchor.heldByFinger) interaction.tryEmit(Interaction.Hover.Enter)
                 anchor.heldByFinger = true
                 event.consume()
             }
-            PointerEventType.Release -> anchor.heldByFinger = false
+            PointerEventType.Release -> if (anchor.heldByFinger) {
+                anchor.heldByFinger = false
+                interaction.tryEmit(Interaction.Hover.Exit(Interaction.Hover.Enter))
+            }
             else -> Unit
         }
     }
