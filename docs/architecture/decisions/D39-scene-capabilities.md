@@ -43,14 +43,14 @@ files, and adds the systems a scene that uses it runs. The contract is in the
    or `system(name, phase, role) { ... }` in the scene app, and a host sets its role with
    `SceneHostServices.withHostRole`, `runProject(project, hostRole)` or the scene app's `hostRole(...)`.
    Without one a host is `Full`, a `headless` one too, so a host built before roles plans what it
-   always did (a headless host that plays sound, or moves a platform by keyframes, keeps doing so); a
-   dedicated server opts in. Both paths filter
-   at registration with `SceneHostRole.runs`. A server-only role is not added: nothing in Core is
+   always did (a headless host that plays sound keeps doing so); a dedicated server opts in with one line,
+   `SceneHostServices.headless(input, physics).withHostRole(SceneHostRole.SimulationOnly)` or
+   `runProject(project, SceneHostRole.SimulationOnly)`. Both paths filter at registration with `SceneHostRole.runs`. A server-only role is not added: nothing in Core is
    server-only. `hasRenderer` checks stay, as what a system needs from the host, and some are now
    redundant for a `SimulationOnly` host.
 
    Core marks as `Presentation`: `playerInput`, `canvas-actions`, `occluder-fade`, `canvas-occlusion`,
-   `terrain`, `keyframes`, `texture-clips`, `sprite-clips`, `particle-content`, `particles`, `day-cycle`,
+   `terrain`, `texture-clips`, `sprite-clips`, `particle-content`, `particles`, `day-cycle`,
    `shader-effects`, `audio-listener` and `audio`. Everything else is `Simulation`, deliberately:
    - `camera` places the active camera, whose basis `movement` and the character controller turn a
      player's intent into world motion with, so a host that simulates needs it. A rule that reads the
@@ -61,8 +61,11 @@ files, and adds the systems a scene that uses it runs. The contract is in the
      may read; marking them is a decision for a consumer that knows it does not.
    - `movement` reads the input actions `playerInput` writes, and any other system may write them, so a
      server's networked input needs no `playerInput`.
-   - `keyframes` moves a transform, so a moving platform driven by it stops on a `SimulationOnly` host;
-     such a game runs that host as `Full` or keeps the platform's motion in a system of its own.
+   - `keyframes` writes the transform that colliders, triggers and the network follow (its alpha track
+     already skips without a renderer), so it stays simulation.
+   - `occluder-fade`, `canvas-occlusion` and `terrain` only read physics rays or draw, and write opacity,
+     canvas visibility or GPU content that no simulation system reads: presentation. Collision for terrain
+     is the separate `terrain-collider` system, which stays simulation.
 7. **A code-first scene app plans through the same function.** `SceneAppDsl.features(scene, features, ...)`
    registers the systems `sceneSystemsFor` and `runProject` plan for the same scene and the same
    features, by name, phase and role, in the same order (`sceneSystemSpecsOf` is the one function both

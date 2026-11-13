@@ -66,13 +66,15 @@ class SceneSystemRolesTest {
     fun coreMarksItsPresentationSystemsAndLeavesTheRestSimulation() {
         val roles = planned(client).associate { it.name to it.role }
         assertEquals(
-            setOf("playerInput", "canvas-actions", "keyframes", "particle-content", "particles", "day-cycle"),
+            setOf("playerInput", "canvas-actions", "particle-content", "particles", "day-cycle"),
             roles.filterValues { it == SceneSystemRole.Presentation }.keys,
         )
         // The camera places the basis movement reads, so a host that simulates keeps it.
         assertEquals(SceneSystemRole.Simulation, roles.getValue("camera"))
         assertEquals(SceneSystemRole.Simulation, roles.getValue("movement"))
         assertEquals(SceneSystemRole.Simulation, roles.getValue("animation"))
+        // It writes the transform colliders, triggers and the network follow; only its alpha track is visual.
+        assertEquals(SceneSystemRole.Simulation, roles.getValue("keyframes"))
     }
 
     @Test
