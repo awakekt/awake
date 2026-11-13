@@ -27,11 +27,14 @@ class SceneSystemPlanBinaryCompatibilityTest {
             setOf(
                 "fixed(Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
                 "fixed(Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
+                "fixed(Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;Lkotlin/jvm/functions/Function1;)V",
                 "frame(Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
+                "frame(Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;Lkotlin/jvm/functions/Function1;)V",
                 "getHasPhysics()Z",
                 "getHasRenderer()Z",
                 "physicsSystem(Lcom/awakekt/awake/project/runtime/SceneHostServices;)Lcom/awakekt/awake/scene/physics/PhysicsSystem;",
                 "preAnimation(Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V",
+                "preAnimation(Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;Lkotlin/jvm/functions/Function1;)V",
             ),
             SceneSystemPlan::class.java.publicMethodSignatures(),
         )
@@ -78,7 +81,11 @@ class SceneSystemPlanBinaryCompatibilityTest {
             "system(Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;",
         )
         assertTrue(SceneAppDsl::class.java.publicMethodSignatures().containsAll(expectedSystemBuilders))
-        assertEquals(expectedSystemBuilders, SceneSystemsDsl::class.java.publicMethodSignatures())
+        assertEquals(
+            expectedSystemBuilders +
+                "system(Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;",
+            SceneSystemsDsl::class.java.publicMethodSignatures(),
+        )
         assertEquals(emptySet(), SceneSchedule::class.java.publicMethodSignatures())
     }
 

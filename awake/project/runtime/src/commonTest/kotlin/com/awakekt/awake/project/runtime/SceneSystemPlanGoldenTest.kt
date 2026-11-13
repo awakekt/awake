@@ -15,8 +15,8 @@ import kotlin.test.assertEquals
 
 /**
  * What [sceneSystemsFor] builds for the scenes below, as the classes of its fixed, pre-animation and
- * frame systems in run order, for a host that draws and one that does not. Recorded from main before
- * systems had names, so a change that alters what a scene plans, with nothing disabled, fails here.
+ * frame systems in run order, for a host that draws and one that does not. Recorded from main before systems had
+ * names or roles, so a change that alters what a scene plans, with nothing disabled, fails here.
  */
 class SceneSystemPlanGoldenTest {
     private val input = Input()

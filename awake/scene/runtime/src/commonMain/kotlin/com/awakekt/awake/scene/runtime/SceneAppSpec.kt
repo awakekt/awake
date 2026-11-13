@@ -78,6 +78,14 @@ class SceneAppSpec(
     var disabledSystems: Set<String> = emptySet()
 
     /**
+     * What this host runs: [SceneHostRole.Full] unless set, which runs every registered system. A
+     * [SceneHostRole.SimulationOnly] host leaves out the systems registered as
+     * [SceneSystemRole.Presentation]. Read when the spec is installed; the scene DSL sets it with
+     * `hostRole(...)`.
+     */
+    var hostRole: SceneHostRole = SceneHostRole.Full
+
+    /**
      * Installs this scene module into the host application specification.
      *
      * @param into The builder receiving module configuration.

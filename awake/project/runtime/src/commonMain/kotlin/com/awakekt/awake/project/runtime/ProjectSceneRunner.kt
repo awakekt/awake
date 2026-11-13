@@ -33,6 +33,7 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.PlannedSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
+import com.awakekt.awake.scene.runtime.SceneHostRole
 import com.awakekt.awake.scene.runtime.SceneMeshLevels
 import com.awakekt.awake.scene.runtime.SceneMeshLoad
 import com.awakekt.awake.scene.runtime.SpawnedNode
@@ -93,6 +94,7 @@ import kotlin.reflect.KClass
 internal class ProjectSceneRunner(
     private val project: LoadedProject,
     private val disabledSystems: Set<String> = emptySet(),
+    private val hostRole: SceneHostRole = SceneHostRole.Full,
 ) : SceneSwitch,
     SceneSwitchStatus {
     /** Resolves the playing scene's glTF models for the app's asset library, whichever scene plays. */
@@ -400,6 +402,7 @@ internal class ProjectSceneRunner(
     private fun services(scene: ProjectScene, sceneLoads: PlayedSceneLoads): SceneHostServices {
         val content = scene.content + sceneLoads.content
         val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = content)
+            .withHostRole(hostRole)
             .withSpawner(spawner)
             .withPrewarmer(runtime::prewarm, runtime::prewarm)
             .withFixedStep(runtime.fixedStep)

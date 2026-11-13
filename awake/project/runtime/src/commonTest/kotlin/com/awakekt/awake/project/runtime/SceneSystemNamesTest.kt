@@ -140,7 +140,7 @@ class SceneSystemNamesTest {
     fun theSceneAppAndTheProjectRuntimeListNamesAndPhasesAlike() = runTest {
         val viaProject = plan(SCENE, drawn = true).also { it.close() }.planned
         val game = app {
-            scene("play") { viaProject.forEach { system(it.name, it.phase) { noop() } } }
+            scene("play") { viaProject.forEach { system(it.name, it.phase, it.role) { noop() } } }
         }
         game.ready(TestRenderer())
         assertEquals(viaProject, game.requireService<SceneAppLifecycleRuntime>().plannedSystems)

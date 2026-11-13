@@ -32,6 +32,8 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.AssetSourceTextureResolver
+import com.awakekt.awake.scene.runtime.SceneHostRole
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
@@ -422,7 +424,21 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
  * scene planned is the [ProjectSystemPlan] service, in the order the systems run.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, disabledSystems: Set<String>, touchControls: Boolean = false) {
-    val scenes = ProjectSceneRunner(project, disabledSystems)
+    runProject(project, SceneHostRole.Full, disabledSystems, touchControls)
+}
+
+/**
+ * [runProject] for a host with [hostRole]: a [SceneHostRole.SimulationOnly] host plans none of the systems
+ * marked [SceneSystemRole.Presentation], on top of any in [disabledSystems]. Each scene the project
+ * switches to is planned the same way.
+ */
+fun SceneAppDsl.runProject(
+    project: LoadedProject,
+    hostRole: SceneHostRole,
+    disabledSystems: Set<String> = emptySet(),
+    touchControls: Boolean = false,
+) {
+    val scenes = ProjectSceneRunner(project, disabledSystems, hostRole)
     service(ProjectSystemPlan::class) { ProjectSystemPlan(scenes::plannedSystems) }
     // Every scene's sprite and tilemap textures, read from the project as they are first drawn: the
     // KTX2 file each was cooked to when the project ships one, else the image. The device's block

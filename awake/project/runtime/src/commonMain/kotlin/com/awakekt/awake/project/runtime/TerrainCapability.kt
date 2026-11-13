@@ -14,6 +14,7 @@ import com.awakekt.awake.kit.terrainlayers.TerrainLayersSurfaceProvider
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.terrain.TerrainContentSystem
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -35,7 +36,7 @@ internal object TerrainCapability : SceneCapability {
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneTerrain::class) || !plan.hasRenderer) return
-        plan.frame(CoreSystems.TERRAIN) { services ->
+        plan.frame(CoreSystems.TERRAIN, SceneSystemRole.Presentation) { services ->
             val host = services.renderer as? ContentFeatureHost
             // A renderer that can't take content features draws nothing, so it reads nothing either.
             val scope = host?.let { services.backgroundScope("terrain") }

@@ -18,8 +18,10 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.runtime.PlannedSystem
 import com.awakekt.awake.scene.runtime.SceneAssetReferences
+import com.awakekt.awake.scene.runtime.SceneHostRole
 import com.awakekt.awake.scene.runtime.ScenePrewarm
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.requireKnownSystemNames
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +79,7 @@ class SceneHostServices private constructor(
     val coroutineScope: CoroutineScope? = null,
     private val prewarmer: ((SceneNode, (Int, Int) -> Unit) -> ScenePrewarm)? = null,
     private val assetPrewarmer: ((SceneAssetReferences, (Int, Int) -> Unit) -> ScenePrewarm)? = null,
+    private val role: SceneHostRole? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -95,6 +98,18 @@ class SceneHostServices private constructor(
 
     /** Whether there is a [renderer]: false on a host made by [headless]. */
     val hasRenderer: Boolean get() = gpu != null
+
+    /**
+     * What this host runs: [SceneHostRole.Full] unless set with [withHostRole], for a [headless] host too,
+     * so a host built before roles plans what it always did. A [SceneHostRole.SimulationOnly] host plans
+     * none of the systems marked [SceneSystemRole.Presentation]; a dedicated server sets it. [hasRenderer]
+     * still decides what [renderer] is, and the systems that need one check it.
+     */
+    val hostRole: SceneHostRole get() = role ?: SceneHostRole.Full
+
+    /** These services, running as [hostRole]: a game server passes [SceneHostRole.SimulationOnly]. */
+    fun withHostRole(hostRole: SceneHostRole): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, hostRole)
 
     /** Whether [spawn] works: true once the host gave a spawner with [withSpawner], as `runProject` does. */
     val canSpawn: Boolean get() = spawner != null
@@ -135,30 +150,30 @@ class SceneHostServices private constructor(
 
     /** These services, with [prewarm] preparing nodes through [prewarmer]. */
     fun withPrewarmer(prewarmer: (SceneNode, (Int, Int) -> Unit) -> ScenePrewarm): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /** These services, with [prewarm] preparing nodes through [prewarmer] and batches through [assetPrewarmer]. */
     fun withPrewarmer(
         prewarmer: (SceneNode, (Int, Int) -> Unit) -> ScenePrewarm,
         assetPrewarmer: (SceneAssetReferences, (Int, Int) -> Unit) -> ScenePrewarm,
     ): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
     fun withAudio(audio: AudioPlayer): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
     fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /** These services, with [sceneSwitchStatus] reporting what the [sceneSwitch] is doing, as `runProject` does. */
     fun withSceneSwitchStatus(sceneSwitchStatus: SceneSwitchStatus): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /**
      * These services, with [fixedStep] reporting the fixed-step loop the host steps the systems in, as
@@ -166,7 +181,7 @@ class SceneHostServices private constructor(
      * from its own [com.awakekt.awake.core.host.FixedTimestepLoop] passes that loop.
      */
     fun withFixedStep(fixedStep: FixedStepReport): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
 
     /**
      * These services, with the scene's systems running their background work in children of [scope],
@@ -174,7 +189,7 @@ class SceneHostServices private constructor(
      * its session's scope, or another it cancels when the scene goes away.
      */
     fun withCoroutineScope(scope: CoroutineScope): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope, prewarmer, assetPrewarmer)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope, prewarmer, assetPrewarmer, role)
 
     /**
      * A child of [coroutineScope] for one system's background work, which the system cancels when it
@@ -318,7 +333,7 @@ internal fun sceneSystemSetFor(
     val installed = installedCapabilities(capabilities)
     requireKnownSystemNames(disabled, CoreSystems.all + installed.flatMap { it.systemNames } + specs.map { it.name }, "the scene's systems")
     val dropped = disabled + hostRuns
-    val kept = specs.filterNot { it.name in dropped }
+    val kept = specs.filter { it.name !in dropped && services.hostRole.runs(it.role) }
     kept.forEach { spec ->
         val system = releasing.keep(spec.create(services))
         when (spec.phase) {
@@ -328,14 +343,15 @@ internal fun sceneSystemSetFor(
         }
     }
     val planned = listOf(SceneSystemPhase.Fixed, SceneSystemPhase.PreAnimation, SceneSystemPhase.Frame)
-        .flatMap { phase -> kept.filter { it.phase == phase }.map { PlannedSystem(it.name, phase) } }
+        .flatMap { phase -> kept.filter { it.phase == phase }.map { PlannedSystem(it.name, phase, it.role) } }
     return SceneSystemSet(fixed, frame, releasing::release, preAnimation, planned)
 }
 
-/** One system a scene runs: its name, the phase it runs in, and how to build it. */
+/** One system a scene runs: its name, the phase it runs in, its role, and how to build it. */
 internal class SceneSystemSpec(
     val name: String,
     val phase: SceneSystemPhase,
+    val role: SceneSystemRole,
     val create: (SceneHostServices) -> System,
 )
 

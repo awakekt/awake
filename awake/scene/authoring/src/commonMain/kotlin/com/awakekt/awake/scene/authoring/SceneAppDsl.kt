@@ -19,12 +19,14 @@ import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneAssetLibrary
 import com.awakekt.awake.scene.runtime.SceneContent
 import com.awakekt.awake.scene.runtime.SceneDisposeBlock
+import com.awakekt.awake.scene.runtime.SceneHostRole
 import com.awakekt.awake.scene.runtime.SceneReadyBlock
 import com.awakekt.awake.scene.runtime.SceneRenderableFactory
 import com.awakekt.awake.scene.runtime.SceneServiceRegistration
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import com.awakekt.awake.scene.runtime.SceneSystemRegistration
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.runtime.SceneUpdateBlock
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
@@ -128,6 +130,7 @@ class SceneAppDsl internal constructor() {
         SceneAppLifecycleRuntime::defaultInfrastructureSystems
     private var fixedStepCap: Int? = null
     private var disabledSystems: Set<String> = emptySet()
+    private var hostRole: SceneHostRole = SceneHostRole.Full
 
     /**
      * Sets the descriptive name of the scene.
@@ -380,6 +383,34 @@ class SceneAppDsl internal constructor() {
         disabledSystems = disabledSystems + names
     }
 
+    /**
+     * Sets what this host runs: [SceneHostRole.SimulationOnly] leaves out the systems registered as
+     * [SceneSystemRole.Presentation], as a dedicated server does. See [SceneAppSpec.hostRole].
+     *
+     * @param role The role of the host running this scene.
+     */
+    fun hostRole(role: SceneHostRole) {
+        hostRole = role
+    }
+
+    /**
+     * Registers a lifecycle-managed system with a [role]: a host that does not run that role leaves it
+     * out. Without a role, [system] registers a [SceneSystemRole.Simulation] system, which every host runs.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param phase The [SceneSystemPhase] in which this system executes.
+     * @param role The [SceneSystemRole] of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
+    fun <T : System> system(
+        name: String,
+        phase: SceneSystemPhase,
+        role: SceneSystemRole,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = systemsDsl.system(name, phase, role, factory)
+
     internal fun build(): SceneAppSpec = SceneAppSpec(
         sceneName = sceneName,
         systems = systemsDsl.build(),
@@ -395,6 +426,7 @@ class SceneAppDsl internal constructor() {
     ).also { spec ->
         fixedStepCap?.let { spec.maxFixedStepsPerFrame = it }
         spec.disabledSystems = disabledSystems
+        spec.hostRole = hostRole
     }
 }
 
@@ -466,6 +498,27 @@ class SceneSystemsDsl internal constructor() {
         name: String,
         factory: SceneAppLifecycleRuntime.() -> T,
     ): SceneSystemHandle<T> = system(name, SceneSystemPhase.PreAnimation, factory)
+
+    /**
+     * Registers a system with a [role]; see [SceneAppDsl.system].
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param phase The [SceneSystemPhase] in which this system executes.
+     * @param role The [SceneSystemRole] of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
+    fun <T : System> system(
+        name: String,
+        phase: SceneSystemPhase,
+        role: SceneSystemRole,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> {
+        val handle = SceneSystemHandle<T>(name)
+        registrations += SceneSystemRegistration(handle, phase, role) { factory() }
+        return handle
+    }
 
     internal fun build(): List<SceneSystemRegistration> = registrations.toList()
 }

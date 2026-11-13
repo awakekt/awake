@@ -12,6 +12,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import kotlin.reflect.KClass
 
 /**
@@ -86,7 +87,10 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
      * every step, such as a networked game's prediction, reads what was dropped from
      * [SceneHostServices.fixedStep].
      */
-    fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, create)
+    fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, SceneSystemRole.Simulation, create)
+
+    /** [fixed] for a system with [role]: a host that does not run that role leaves it out. */
+    fun fixed(name: String, role: SceneSystemRole, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, role, create)
 
     /**
      * Adds a system run on every fixed step, named [name], just before the system named [before] in the
@@ -98,23 +102,30 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
      */
     fun fixed(name: String, before: String, create: (SceneHostServices) -> System) {
         val at = specs.indexOfFirst { it.name == before && it.phase == SceneSystemPhase.Fixed }
-        add(name, SceneSystemPhase.Fixed, create)
+        add(name, SceneSystemPhase.Fixed, SceneSystemRole.Simulation, create)
         if (at >= 0) specs.add(at, specs.removeAt(specs.lastIndex))
     }
 
     /** Adds a system run once per rendered frame, named [name] in the scene's schedule. */
-    fun frame(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, create)
+    fun frame(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, SceneSystemRole.Simulation, create)
+
+    /** [frame] for a system with [role]: a host that does not run that role leaves it out. */
+    fun frame(name: String, role: SceneSystemRole, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Frame, role, create)
 
     /**
      * Adds a system run once per rendered frame before world matrices are propagated for animation,
      * camera and [frame] systems, named [name] in the scene's schedule.
      */
     fun preAnimation(name: String, create: (SceneHostServices) -> System) =
-        add(name, SceneSystemPhase.PreAnimation, create)
+        add(name, SceneSystemPhase.PreAnimation, SceneSystemRole.Simulation, create)
 
-    private fun add(name: String, phase: SceneSystemPhase, create: (SceneHostServices) -> System) {
+    /** [preAnimation] for a system with [role]: a host that does not run that role leaves it out. */
+    fun preAnimation(name: String, role: SceneSystemRole, create: (SceneHostServices) -> System) =
+        add(name, SceneSystemPhase.PreAnimation, role, create)
+
+    private fun add(name: String, phase: SceneSystemPhase, role: SceneSystemRole, create: (SceneHostServices) -> System) {
         require(specs.none { it.name == name }) { "Two systems are named '$name'; each system in a scene needs its own name" }
-        specs += SceneSystemSpec(name, phase, create)
+        specs += SceneSystemSpec(name, phase, role, create)
     }
 
     /** The names of Core's systems a game plans its own around. */

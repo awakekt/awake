@@ -37,6 +37,7 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.AnimationUpdateRate
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
+import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
 
@@ -74,16 +75,18 @@ internal object ControlsCapability : SceneCapability {
         val moves = scene.uses(SceneMovementControl::class)
         val touches = scene.hasCanvasActions()
         if (moves || touches || scene.uses(SceneInputActions::class)) {
-            plan.frame(CoreSystems.PLAYER_INPUT) { PlayerInputSystem(it.input) }
+            plan.frame(CoreSystems.PLAYER_INPUT, SceneSystemRole.Presentation) { PlayerInputSystem(it.input) }
         } else {
-            plan.frame(CoreSystems.PLAYER_INPUT) { RuntimeCanvasInputSystem(it.input) }
+            plan.frame(CoreSystems.PLAYER_INPUT, SceneSystemRole.Presentation) { RuntimeCanvasInputSystem(it.input) }
         }
         // Runtime HUDs need the same ordering as authored ones: begin/read actions before adding
         // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
         // A headless host (a game server) draws no canvas and takes no touches, so it plans none: walking
         // its canvas elements every frame cost a server about 5% of its tick for nothing.
-        if (plan.hasRenderer) plan.frame(CoreSystems.CANVAS_ACTIONS) { RuntimeCanvasActionsSystem() }
+        if (plan.hasRenderer) plan.frame(CoreSystems.CANVAS_ACTIONS, SceneSystemRole.Presentation) { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame(CoreSystems.MOVEMENT) { MatrixRelativeMovementSystem() }
+        // A simulation system, not presentation: movement turns a player's intent into world motion through the
+        // active camera's basis (CameraRelativeBasis), which this system places, so a host that simulates needs it.
         if (scene.uses(SceneCameraRig::class)) {
             plan.frame(CoreSystems.CAMERA) { services ->
                 // Asked only for a rig with collision on, so a scene without it behaves as before.
@@ -93,7 +96,7 @@ internal object ControlsCapability : SceneCapability {
         }
         // Fades what a rig's occluderFade finds between its eye and its target, from the physics world's rays.
         if (plan.hasPhysics && scene.nodes.any { it.fadesOccluders() }) {
-            plan.frame(CoreSystems.OCCLUDER_FADE) { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
+            plan.frame(CoreSystems.OCCLUDER_FADE, SceneSystemRole.Presentation) { PhysicsOccluderFading(requireNotNull(it.physics), plan.physicsSystem(it)) }
         }
     }
 }
@@ -116,7 +119,7 @@ internal object CanvasCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         // Only a canvas that draws is ever asked; a host with no renderer leaves the rays uncast.
         if (plan.hasPhysics && plan.hasRenderer && scene.asksForOcclusion()) {
-            plan.frame(CoreSystems.CANVAS_OCCLUSION) { PhysicsCanvasOcclusion(requireNotNull(it.physics), plan.physicsSystem(it)) }
+            plan.frame(CoreSystems.CANVAS_OCCLUSION, SceneSystemRole.Presentation) { PhysicsCanvasOcclusion(requireNotNull(it.physics), plan.physicsSystem(it)) }
         }
     }
 }

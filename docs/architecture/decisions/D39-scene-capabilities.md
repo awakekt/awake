@@ -35,6 +35,34 @@ files, and adds the systems a scene that uses it runs. The contract is in the
    what a run planned, by name and phase, in run order. A scene app's systems are named by the
    author's own `system(name, ...)` calls and disabled by the same rule; its infrastructure systems
    (transforms, drawing) are not listed. With nothing disabled the plan is exactly what it was.
+6. **A system has a role, and a host has a role, so a server plans no presentation systems without a
+   list.** `SceneSystemRole` has two members: `Simulation`, the default, which every host runs, so an
+   unmarked system plans where it always did; and `Presentation`, for local input, drawing, effects and
+   sound. `SceneHostRole` is `Full` (runs both) or `SimulationOnly` (a dedicated server or a headless
+   simulation). A system is marked with `plan.frame(name, role) { ... }` (also `fixed` and `preAnimation`),
+   or `system(name, phase, role) { ... }` in the scene app, and a host sets its role with
+   `SceneHostServices.withHostRole`, `runProject(project, hostRole)` or the scene app's `hostRole(...)`.
+   Without one a host is `Full`, a `headless` one too, so a host built before roles plans what it
+   always did (a headless host that plays sound, or moves a platform by keyframes, keeps doing so); a
+   dedicated server opts in. Both paths filter
+   at registration with `SceneHostRole.runs`. A server-only role is not added: nothing in Core is
+   server-only. `hasRenderer` checks stay, as what a system needs from the host, and some are now
+   redundant for a `SimulationOnly` host.
+
+   Core marks as `Presentation`: `playerInput`, `canvas-actions`, `occluder-fade`, `canvas-occlusion`,
+   `terrain`, `keyframes`, `texture-clips`, `sprite-clips`, `particle-content`, `particles`, `day-cycle`,
+   `shader-effects`, `audio-listener` and `audio`. Everything else is `Simulation`, deliberately:
+   - `camera` places the active camera, whose basis `movement` and the character controller turn a
+     player's intent into world motion with, so a host that simulates needs it. A rule that reads the
+     camera-relative basis (a knock-back, a dash) is the same case. Whether such a system could depend on
+     the camera through a stated order, rather than by role, is stage C of #1527.
+   - `particles-2d` simulates, headless too (`twoDimensionalParticlesGetTheirSimulationSystemEvenWhenHeadless`).
+   - `spin`, `spin-clock`, `locomotion` and `animation` write transforms and clip state that simulation
+     may read; marking them is a decision for a consumer that knows it does not.
+   - `movement` reads the input actions `playerInput` writes, and any other system may write them, so a
+     server's networked input needs no `playerInput`.
+   - `keyframes` moves a transform, so a moving platform driven by it stops on a `SimulationOnly` host;
+     such a game runs that host as `Full` or keeps the platform's motion in a system of its own.
 
 ## Why "capability"
 
