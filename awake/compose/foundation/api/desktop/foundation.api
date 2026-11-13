@@ -725,15 +725,6 @@ public final class com/awakekt/awake/compose/foundation/skin/FrameKey : com/awak
 	public fun <init> (Ljava/lang/String;)V
 }
 
-public final class com/awakekt/awake/compose/foundation/skin/FramePadding {
-	public synthetic fun <init> (FFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getBottom-LGk54g8 ()F
-	public final fun getEnd-LGk54g8 ()F
-	public final fun getStart-LGk54g8 ()F
-	public final fun getTop-LGk54g8 ()F
-}
-
 public abstract class com/awakekt/awake/compose/foundation/skin/PartKey {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getName ()Ljava/lang/String;
@@ -790,48 +781,6 @@ public final class com/awakekt/awake/compose/foundation/skin/SkinModifiersKt {
 	public static final fun skinPart (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/skin/FrameKey;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun skinPart (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/skin/StatesKey;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZ)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun skinPart$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/skin/StatesKey;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
-}
-
-public final class com/awakekt/awake/compose/foundation/skin/SkinnedBarColors {
-	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getFill ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getTrack ()Lcom/awakekt/awake/core/color/Color;
-}
-
-public final class com/awakekt/awake/compose/foundation/skin/SkinnedBarKt {
-	public static final fun SkinnedBar (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/FillDirection;Lcom/awakekt/awake/compose/foundation/skin/FrameKey;Lcom/awakekt/awake/compose/foundation/skin/BarKey;Lcom/awakekt/awake/compose/foundation/skin/SkinnedBarColors;)V
-	public static synthetic fun SkinnedBar$default (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/FillDirection;Lcom/awakekt/awake/compose/foundation/skin/FrameKey;Lcom/awakekt/awake/compose/foundation/skin/BarKey;Lcom/awakekt/awake/compose/foundation/skin/SkinnedBarColors;ILjava/lang/Object;)V
-}
-
-public final class com/awakekt/awake/compose/foundation/skin/SkinnedButtonColors {
-	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getDisabled ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getHovered ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getNormal ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getPressed ()Lcom/awakekt/awake/core/color/Color;
-}
-
-public final class com/awakekt/awake/compose/foundation/skin/SkinnedButtonKt {
-	public static final fun SkinnedButton (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/lang/String;Lcom/awakekt/awake/compose/foundation/skin/StatesKey;Lcom/awakekt/awake/compose/foundation/skin/SkinnedButtonColors;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun SkinnedButton$default (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/lang/String;Lcom/awakekt/awake/compose/foundation/skin/StatesKey;Lcom/awakekt/awake/compose/foundation/skin/SkinnedButtonColors;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-}
-
-public final class com/awakekt/awake/compose/foundation/skin/SkinnedFrameKt {
-	public static final fun SkinnedFrame (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/skin/FrameKey;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/foundation/skin/FramePadding;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun SkinnedFrame$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/skin/FrameKey;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/foundation/skin/FramePadding;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-}
-
-public final class com/awakekt/awake/compose/foundation/skin/SkinnedKeys {
-	public static final field INSTANCE Lcom/awakekt/awake/compose/foundation/skin/SkinnedKeys;
-	public final fun getAll ()Ljava/util/List;
-	public final fun getBarFill ()Lcom/awakekt/awake/compose/foundation/skin/BarKey;
-	public final fun getBarTrack ()Lcom/awakekt/awake/compose/foundation/skin/FrameKey;
-	public final fun getButtonFace ()Lcom/awakekt/awake/compose/foundation/skin/StatesKey;
-	public final fun getFrame ()Lcom/awakekt/awake/compose/foundation/skin/FrameKey;
 }
 
 public final class com/awakekt/awake/compose/foundation/skin/StatesKey : com/awakekt/awake/compose/foundation/skin/PartKey {
