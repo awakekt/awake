@@ -16,6 +16,8 @@ import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.fract
 import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.le
@@ -35,6 +37,7 @@ import com.awakekt.awake.asset.shaderdsl.textureDimensions
 import com.awakekt.awake.asset.shaderdsl.textureSampleCompareLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
+import com.awakekt.awake.asset.shaderdsl.toI32
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec4
@@ -56,7 +59,8 @@ import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
  * @property depthScales Per cascade: x = NDC depth per world unit, y = world extent, z = split far
  *   distance, w = blend start.
  * @property cameraPosition The camera's world position; only xyz is read.
- * @property cameraForward xyz = the camera's forward direction, w = the active cascade count.
+ * @property cameraForward xyz = the camera's forward direction, w = the active cascade count plus the
+ * shadow fade as its fractional part (see `GpuShadowCascadeData.countAndFade`).
  */
 class CascadeShadowInputs(
     val viewProjections: AslArrayHandle,
@@ -231,7 +235,7 @@ fun AslShaderBuilder.cascadeShadowSampling(
             assign(resolved, 1.lit)
             assign(lit, primaryShadow)
             iff(
-                (toF32(cascade) lt (inputs.cameraForward.w - 1f.lit)) and (viewDepth gt blendStart),
+                (toF32(cascade) lt (floor(inputs.cameraForward.w) - 1f.lit)) and (viewDepth gt blendStart),
             ) {
                 val nextCascade = let("nextCascade", cascade + 1.lit)
                 val nextShadow = let(
@@ -243,6 +247,13 @@ fun AslShaderBuilder.cascadeShadowSampling(
                     assign(lit, mix(primaryShadow, nextShadow, alpha))
                 }
             }
+        }
+        // Over the last part of the last cascade's reach the shadow fades to lit, so it does not end on a
+        // hard line at the shadow distance. A fade of 0 skips this and keeps that line.
+        val fade = let("shadowFade", fract(inputs.cameraForward.w))
+        iff(fade gt 0f.lit) {
+            val reach = let("shadowReach", inputs.depthScales[toI32(floor(inputs.cameraForward.w)) - 1.lit].z)
+            assign(lit, mix(lit, 1f.lit, smoothstep(reach * (1f.lit - fade), reach, viewDepth)))
         }
         returnValue(lit)
     }

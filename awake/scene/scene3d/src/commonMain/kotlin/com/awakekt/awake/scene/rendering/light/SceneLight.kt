@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.light
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_FADE
 import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.binding.SceneValueConverter
 import com.awakekt.awake.scene.document.SceneColor
@@ -28,6 +29,8 @@ import kotlinx.serialization.Serializable
  * @property range Maximum falloff distance for point lights.
  * @property shadowDistance How far from the camera a directional light's shadows reach, in world units.
  * @property ambient A directional light's ambient share, above 0 and up to 1; null keeps each shader's default.
+ * @property shadowFade The share of [shadowDistance], counted back from its end, over which a directional
+ *   light's shadows fade out instead of ending on a line; 0 keeps the hard end.
  */
 @Serializable
 @SerialName("light")
@@ -43,10 +46,40 @@ data class SceneLight(
     val shadowsEnabled: Boolean = true,
     @PropertyRange(min = 0.0, exclusiveMin = true) val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
     @PropertyRange(min = 0.0, max = 1.0, exclusiveMin = true) val ambient: Float? = null,
+    @PropertyRange(min = 0.0, max = 0.99) val shadowFade: Float = DEFAULT_SHADOW_FADE,
 ) : SceneComponent {
+    /** The constructor as released before [shadowFade], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with shadowFade.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        color: SceneColor = SceneColor.White,
+        intensity: Float = 1f,
+        type: Type = Type.Point,
+        direction: SceneVec3 = SceneVec3(0.4f, 0.8f, 0.4f),
+        range: Float = 10f,
+        shadowsEnabled: Boolean = true,
+        shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+        ambient: Float? = null,
+    ) : this(color, intensity, type, direction, range, shadowsEnabled, shadowDistance, ambient, DEFAULT_SHADOW_FADE)
+
+    /** [copy] as released before [shadowFade]. */
+    @Deprecated("Use copy with shadowFade.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        color: SceneColor = this.color,
+        intensity: Float = this.intensity,
+        type: Type = this.type,
+        direction: SceneVec3 = this.direction,
+        range: Float = this.range,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        shadowDistance: Float = this.shadowDistance,
+        ambient: Float? = this.ambient,
+    ): SceneLight = copy(color, intensity, type, direction, range, shadowsEnabled, shadowDistance, ambient, shadowFade)
+
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (!shadowDistance.isFinite() || shadowDistance <= 0f) {
             add(SceneValidationIssue(path, "light.shadowDistance must be finite and > 0; was $shadowDistance"))
+        }
+        if (!(shadowFade >= 0f && shadowFade < 1f)) {
+            add(SceneValidationIssue(path, "light.shadowFade must be from 0 up to 1; was $shadowFade"))
         }
         if (ambient != null && !(ambient > 0f && ambient <= 1f)) {
             add(SceneValidationIssue(path, "light.ambient must be above 0 and at most 1; was $ambient"))

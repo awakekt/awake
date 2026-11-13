@@ -467,11 +467,14 @@ public final class com/awakekt/awake/render/command/GpuShadowCascadeData {
 	public final fun depthScaleFloats ()[F
 	public final fun getBlendStartDistances ()[F
 	public final fun getCount ()I
+	public final fun getCountAndFade ()F
 	public final fun getDepthScales ()[F
+	public final fun getShadowFade ()F
 	public final fun getSplitDistances ()[F
 	public final fun getViewProjections ()Ljava/util/List;
 	public final fun getWorldExtents ()[F
 	public final fun matrixFloats ()[F
+	public final fun setShadowFade (F)V
 }
 
 public final class com/awakekt/awake/render/command/GpuShadowCascadeData$Companion {

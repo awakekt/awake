@@ -785,6 +785,7 @@ A directional or point light. `SceneLight`.
 | `range` | number | `10` | Falloff distance, for `Point`. |
 | `shadowsEnabled` | boolean | `true` | Whether a directional light casts shadows. |
 | `shadowDistance` | number | `100` | How far from the camera shadows reach. Finite and above 0. |
+| `shadowFade` | number | `0.2` | The share of `shadowDistance`, counted back from its end, over which shadows fade out. From `0` up to `1`; `0` ends them on a hard line. |
 | `ambient` | number | none | This light's ambient share. Above 0 and at most 1. |
 
 ## `locomotion_animation`

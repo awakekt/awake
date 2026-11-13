@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.light
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_FADE
 
 private const val DEFAULT_DIRECTION_X = 0.4f
 private const val DEFAULT_DIRECTION_Y = 0.8f
@@ -37,6 +38,7 @@ private const val DEFAULT_POINT_RANGE = 10f
  * @property shadowsEnabled Whether this light casts shadows.
  * @property shadowDistance How far from the camera directional shadow cascades reach.
  * @property ambient Ambient lighting factor applied to unlit surfaces.
+ * @property shadowFade The share of [shadowDistance] over which directional shadows fade out at its end.
  */
 data class Light(
     val color: Vec3f = Vec3f(1f, 1f, 1f),
@@ -47,7 +49,34 @@ data class Light(
     val shadowsEnabled: Boolean = true,
     val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
     var ambient: Float? = null,
+    val shadowFade: Float = DEFAULT_SHADOW_FADE,
 ) {
+    /** The constructor as released before [shadowFade], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with shadowFade.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        color: Vec3f = Vec3f(1f, 1f, 1f),
+        intensity: Float = 1f,
+        type: Type = Type.Directional,
+        direction: Vec3f = Vec3f(DEFAULT_DIRECTION_X, DEFAULT_DIRECTION_Y, DEFAULT_DIRECTION_Z),
+        range: Float = DEFAULT_POINT_RANGE,
+        shadowsEnabled: Boolean = true,
+        shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+        ambient: Float? = null,
+    ) : this(color, intensity, type, direction, range, shadowsEnabled, shadowDistance, ambient, DEFAULT_SHADOW_FADE)
+
+    /** [copy] as released before [shadowFade]. */
+    @Deprecated("Use copy with shadowFade.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        color: Vec3f = this.color,
+        intensity: Float = this.intensity,
+        type: Type = this.type,
+        direction: Vec3f = this.direction,
+        range: Float = this.range,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        shadowDistance: Float = this.shadowDistance,
+        ambient: Float? = this.ambient,
+    ): Light = copy(color, intensity, type, direction, range, shadowsEnabled, shadowDistance, ambient, shadowFade)
+
     /** Light emission type classification. */
     enum class Type {
         /** Directional light simulating infinite distance (e.g. sun or moon). */

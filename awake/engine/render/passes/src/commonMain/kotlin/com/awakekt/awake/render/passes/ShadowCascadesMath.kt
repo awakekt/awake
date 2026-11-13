@@ -238,6 +238,9 @@ private fun boxAroundSlice(
  */
 const val DEFAULT_SHADOW_DISTANCE = 100f
 
+/** The share of the last cascade's reach over which a directional shadow fades out by default. */
+const val DEFAULT_SHADOW_FADE = 0.2f
+
 /** Toward logarithmic: the near field is where shadow detail is looked at. */
 const val DEFAULT_CASCADE_LAMBDA = 0.6f
 
