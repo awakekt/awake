@@ -13,9 +13,9 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.nodegraph.NodeGraphJson
 import com.awakekt.awake.project.AwakeProjectValidator
-import com.awakekt.awake.project.runtime.SceneFeature
 import com.awakekt.awake.project.runtime.SceneContent
 import com.awakekt.awake.project.runtime.SceneContentKey
+import com.awakekt.awake.project.runtime.SceneFeature
 import com.awakekt.awake.project.runtime.SceneSystemPlan
 import com.awakekt.awake.project.runtime.uses
 import com.awakekt.awake.scene.binding.SceneComponentBinding
