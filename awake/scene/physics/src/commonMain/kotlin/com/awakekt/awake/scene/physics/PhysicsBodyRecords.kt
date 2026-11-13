@@ -104,6 +104,9 @@ internal class BodyPose(position: Vec3f, rotation: Quat) {
     private val currentPosition = Vec3f(position.x, position.y, position.z)
     private val currentRotation = Quat(rotation.x, rotation.y, rotation.z, rotation.w)
 
+    /** Where [blendInto] writes the blend, so an interpolated frame allocates no quaternion per body. */
+    private val blended = Quat()
+
     /**
      * Every value is copied, never held.
      *
@@ -123,6 +126,6 @@ internal class BodyPose(position: Vec3f, rotation: Quat) {
         transform.position.x = previousPosition.x + (currentPosition.x - previousPosition.x) * alpha
         transform.position.y = previousPosition.y + (currentPosition.y - previousPosition.y) * alpha
         transform.position.z = previousPosition.z + (currentPosition.z - previousPosition.z) * alpha
-        Quat.nlerp(previousRotation, currentRotation, alpha).toEuler(transform.rotation)
+        Quat.nlerp(previousRotation, currentRotation, alpha, blended).toEuler(transform.rotation)
     }
 }
