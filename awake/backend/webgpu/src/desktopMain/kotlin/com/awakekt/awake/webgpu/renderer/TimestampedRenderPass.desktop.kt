@@ -10,6 +10,8 @@ package com.awakekt.awake.webgpu.renderer
 import io.ygdrasil.kffi.memoryScope
 import io.ygdrasil.webgpu.CommandEncoder
 import io.ygdrasil.webgpu.GPUCommandEncoder
+import io.ygdrasil.webgpu.GPUComputePassDescriptor
+import io.ygdrasil.webgpu.GPUComputePassEncoder
 import io.ygdrasil.webgpu.GPURenderPassDescriptor
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 import io.ygdrasil.webgpu.QuerySet
@@ -70,3 +72,7 @@ internal actual fun GPUCommandEncoder.beginTimestampedRenderPass(descriptor: GPU
         }
         RenderPassEncoder(checkNotNull(wgpuCommandEncoderBeginRenderPass((this as CommandEncoder).handler, pass)), descriptor.label)
     }
+
+/** The native compute-pass mapper keeps timestamp writes, so the pass begins as described. */
+internal actual fun GPUCommandEncoder.beginTimestampedComputePass(descriptor: GPUComputePassDescriptor): GPUComputePassEncoder =
+    beginComputePass(descriptor)

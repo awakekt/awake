@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.renderer
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class GpuTimestampReadbackTest {
@@ -20,6 +21,13 @@ class GpuTimestampReadbackTest {
     fun largeAbsoluteClocksKeepSmallDifferencesAndUnsignedWrapWorks() {
         val bytes = timestamps(ULong.MAX_VALUE - 9u, 10uL, (1uL shl 62), (1uL shl 62) + 1_000_000u)
         assertEquals(1.00002, GpuFrameTimer.durationMs(bytes, 4, nanosPerTick = 1f))
+    }
+
+    /** #1545: the browser binding dropped the writes, every query resolved to 0, and the frame read 0.0 ms. */
+    @Test
+    fun passesThatWroteNoTimestampReadAsUnmeasuredNotZero() {
+        assertNull(GpuFrameTimer.durationMs(timestamps(0uL, 0uL, 0uL, 0uL), 4, nanosPerTick = 1f))
+        assertEquals(0.0, GpuFrameTimer.durationMs(timestamps(5uL, 5uL), 2, nanosPerTick = 1f), "a written, instant pass is 0 ms")
     }
 
     private fun timestamps(vararg values: ULong): ByteArray = ByteArray(values.size * Long.SIZE_BYTES).also { bytes ->
