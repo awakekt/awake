@@ -276,7 +276,7 @@ class AppErrorRoutingTest {
 }
 
 /** A capability whose scenes always run a frame system that throws and one that does not. */
-private class FaultyCapability(private val failure: Exception) : SceneCapability {
+private class FaultyCapability(private val failure: Exception) : SceneFeature {
     override val id = "com.example.harbor-town.faulty"
     val faulty = Counting(failure)
     val healthy = Counting(null)

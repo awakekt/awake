@@ -28,4 +28,18 @@ class SceneSystemRegistration(
     val handle: SceneSystemHandle<out System>,
     val phase: SceneSystemPhase,
     val factory: SceneSystemFactory,
-)
+) {
+    /** The [SceneSystemRole] this system has, [SceneSystemRole.Simulation] unless registered with another. */
+    var role: SceneSystemRole = SceneSystemRole.Simulation
+        private set
+
+    /** A registration for a system with [role]: a host whose [SceneAppSpec.hostRole] does not run it leaves it out. */
+    constructor(
+        handle: SceneSystemHandle<out System>,
+        phase: SceneSystemPhase,
+        role: SceneSystemRole,
+        factory: SceneSystemFactory,
+    ) : this(handle, phase, factory) {
+        this.role = role
+    }
+}

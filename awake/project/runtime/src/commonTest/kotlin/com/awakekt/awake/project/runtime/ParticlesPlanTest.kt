@@ -16,7 +16,7 @@ import kotlin.test.assertEquals
 class ParticlesPlanTest {
     private fun planned(hasRenderer: Boolean): List<String> {
         val plan = SceneSystemPlan(hasPhysics = false, hasRenderer = hasRenderer)
-        ParticlesCapability.plan(SceneDocument(), plan)
+        ParticlesFeature.plan(SceneDocument(), plan)
         return plan.specs.map { it.name }
     }
 

@@ -8,6 +8,7 @@ package com.awakekt.awake.core.math
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class QuatTest {
@@ -99,6 +100,37 @@ class QuatTest {
         assertApprox(a.y, result.y)
         assertApprox(a.z, result.z)
         assertApprox(a.w, result.w)
+    }
+
+    @Test
+    fun nlerpIntoTargetMatchesTheAllocatingOverloadAndReturnsTheTarget() {
+        val a = Quat(0f, 0.6f, 0f, 0.8f)
+        // Opposite hemisphere, so the shorter-arc flip is exercised too.
+        val b = Quat(-0.6f, 0f, 0f, -0.8f)
+        val target = Quat()
+
+        val result = Quat.nlerp(a, b, 0.4f, target)
+        val expected = Quat.nlerp(a, b, 0.4f)
+
+        assertSame(target, result)
+        assertApprox(expected.x, target.x)
+        assertApprox(expected.y, target.y)
+        assertApprox(expected.z, target.z)
+        assertApprox(expected.w, target.w)
+    }
+
+    @Test
+    fun nlerpIntoTargetMayAliasItsFirstOperand() {
+        val a = Quat(0f, 0.6f, 0f, 0.8f)
+        val b = Quat(0.6f, 0f, 0f, 0.8f)
+        val expected = Quat.nlerp(a, b, 0.5f)
+
+        Quat.nlerp(a, b, 0.5f, a)
+
+        assertApprox(expected.x, a.x)
+        assertApprox(expected.y, a.y)
+        assertApprox(expected.z, a.z)
+        assertApprox(expected.w, a.w)
     }
 
     @Test

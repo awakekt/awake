@@ -59,7 +59,7 @@ import kotlin.test.fail
 class LoadSceneTest {
     @Test
     fun aLoadSceneNodePlaysTheLevelOfARunningProject() = runTest {
-        val project = loadProject(files(), capabilities = listOf(BlueprintCapability))
+        val project = loadProject(files(), capabilities = listOf(BlueprintFeature))
         val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val world = game.requireService<SceneAppLifecycleRuntime>().world
@@ -81,12 +81,12 @@ class LoadSceneTest {
     /** A host that runs a scene in a world of its own gives Load Scene its own switch, which hears the request. */
     @Test
     fun aHostsOwnSwitchHearsTheRequest() = runTest {
-        val project = loadProject(files(), capabilities = listOf(BlueprintCapability), hasRenderer = false)
-        val content = loadSceneContent(project.scene, files(), listOf(BlueprintCapability), hasRenderer = false)
+        val project = loadProject(files(), capabilities = listOf(BlueprintFeature), hasRenderer = false)
+        val content = loadSceneContent(project.scene, files(), listOf(BlueprintFeature), hasRenderer = false)
         val asked = mutableListOf<String>()
         val services = SceneHostServices.headless({ GameplayInput(Input().currentSnapshot, InputOwnership()) }, content = content)
             .withSceneSwitch { path -> asked += path }
-        val systems = sceneSystemsFor(project.scene, services, listOf(BlueprintCapability))
+        val systems = sceneSystemsFor(project.scene, services, listOf(BlueprintFeature))
         val world = World().also { SceneLoader.instantiate(project.scene, it) }
 
         systems.fixed.forEach { it.update(world, DELTA) }
@@ -99,7 +99,7 @@ class LoadSceneTest {
     @Test
     fun aLoadSceneNamingAMissingSceneWarnsAsTheProjectLoads() = runTest {
         val warnings = blueprintWarnings {
-            loadProject(files(play = graph(loadScene(MISSING))), capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files(play = graph(loadScene(MISSING))), capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
         }
 
         assertEquals(1, warnings.size, "one warning, for the one node: $warnings")
@@ -109,7 +109,7 @@ class LoadSceneTest {
     @Test
     fun aLoadSceneNamingOneOfTheProjectsScenesLoadsQuietly() = runTest {
         val warnings = blueprintWarnings {
-            loadProject(files(), capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files(), capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
         }
 
         assertEquals(emptyList(), warnings)
@@ -134,7 +134,7 @@ class LoadSceneTest {
         )
 
         val warnings = blueprintWarnings {
-            loadProject(files(play = wired), capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files(play = wired), capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
         }
 
         assertEquals(emptyList(), warnings)
@@ -146,7 +146,7 @@ class LoadSceneTest {
         val files = ProjectFiles(texts(play = graph(loadScene(MISSING))))
 
         val warnings = blueprintWarnings {
-            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files, capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
         }
 
         assertEquals(1, warnings.size, "the missing scene is still found: $warnings")
@@ -158,7 +158,7 @@ class LoadSceneTest {
         val files = ProjectFiles(texts())
 
         val warnings = blueprintWarnings {
-            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files, capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
         }
 
         assertEquals(emptyList(), warnings)
@@ -172,8 +172,8 @@ class LoadSceneTest {
         val pause = SceneDocument(name = "pause", nodes = listOf(SceneNode(name = "Pause", components = listOf(SceneBlueprint(PLAY)))))
 
         val warnings = blueprintWarnings {
-            val project = loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false)
-            loadSceneContent(pause, files, listOf(BlueprintCapability), hasRenderer = false)
+            val project = loadProject(files, capabilities = listOf(BlueprintFeature), hasRenderer = false)
+            loadSceneContent(pause, files, listOf(BlueprintFeature), hasRenderer = false)
             project.close()
         }
 
@@ -187,9 +187,9 @@ class LoadSceneTest {
         val files = ProjectFiles(texts)
 
         val warnings = blueprintWarnings {
-            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files, capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
             texts[PLAY] = graph(loadScene(ALSO_MISSING))
-            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            loadProject(files, capabilities = listOf(BlueprintFeature), hasRenderer = false).close()
         }
 
         assertEquals(2, warnings.size, "$warnings")
@@ -201,7 +201,7 @@ class LoadSceneTest {
         val play = graph(loadScene(MISSING))
 
         val warnings = blueprintWarnings {
-            repeat(2) { loadProject(ProjectFiles(texts(play)), capabilities = listOf(BlueprintCapability), hasRenderer = false).close() }
+            repeat(2) { loadProject(ProjectFiles(texts(play)), capabilities = listOf(BlueprintFeature), hasRenderer = false).close() }
         }
 
         assertEquals(2, warnings.size, "one for each project's files: $warnings")

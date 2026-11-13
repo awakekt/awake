@@ -52,7 +52,7 @@ class ValidateWithCodeTest {
     fun aCapabilityClassThatIsMissingIsNotACapabilityOrHasAnotherIdIsAnError() {
         for ((manifestEdit, expected) in listOf(
             ("com.example.harbortown.HarborSignalCapability" to "com.example.harbortown.Missing") to "is not in the project's code",
-            ("com.example.harbortown.HarborSignalCapability" to "com.example.harbortown.HarborTownNotes") to "is not a SceneCapability",
+            ("com.example.harbortown.HarborSignalCapability" to "com.example.harbortown.HarborTownNotes") to "is not a SceneFeature",
             ("\"com.example.harbor-town.signal\"" to "\"com.example.harbor-town.lamp\"") to
                 "has the id 'com.example.harbor-town.signal', not 'com.example.harbor-town.lamp'",
         )) {

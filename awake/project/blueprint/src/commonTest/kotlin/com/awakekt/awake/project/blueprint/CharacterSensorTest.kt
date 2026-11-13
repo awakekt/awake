@@ -45,7 +45,7 @@ class CharacterSensorTest {
 
     @Test
     fun walkingIntoTheGoalSetsOffItsBlueprint() = runTest {
-        val project = loadProject(files(), capabilities = listOf(BlueprintCapability), physicsWorld = ::createJoltPhysicsWorld)
+        val project = loadProject(files(), capabilities = listOf(BlueprintFeature), physicsWorld = ::createJoltPhysicsWorld)
         val systems = project.sceneSystems(gameplay)
         val world = World().also { SceneLoader.instantiate(project.scene, it) }
         fun steps(count: Int) = repeat(count) {

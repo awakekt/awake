@@ -26,7 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * One of a project's scenes as it loaded to play: the document at [path], the glTF models its
- * `mesh_renderer`s draw, what its capabilities read, and its physics world when it has bodies or
+ * `mesh_renderer`s draw, what its features read, and its physics world when it has bodies or
  * characters, which [close] destroys.
  */
 internal class ProjectScene(
@@ -72,7 +72,7 @@ internal class ProjectScene(
 internal suspend fun loadProjectInto(
     registry: SceneComponentRegistry?,
     files: AssetSource,
-    capabilities: List<SceneCapability>,
+    capabilities: List<SceneFeature>,
     hasRenderer: Boolean,
     physicsWorld: (suspend () -> PhysicsWorld)?,
     entryScene: String? = null,
@@ -87,7 +87,7 @@ internal suspend fun loadProjectInto(
     val scenePath = entryScene?.also {
         require(AwakeProjectValidator.isSafeProjectPath(it)) { "'$it' is not a project-relative path" }
     } ?: manifest.entryScene
-    val installed = installedCapabilities(capabilities)
+    val installed = installedFeatures(capabilities)
     requireRequiredPlugins(manifest, installed)
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
@@ -148,7 +148,7 @@ internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
 
 /**
  * Reads the project's scene at [path], as [loadProject] reads its entry scene, for a switch to play
- * it: decoded and checked with the project's registry, its models and its capabilities' content
+ * it: decoded and checked with the project's registry, its models and its features' content
  * loaded, and its physics world made. Throws [IllegalArgumentException] for a path that leaves the
  * project and for everything [loadProject] refuses in a scene. [onProgress] gets the share of the
  * scene's content bytes that have arrived, as [SceneSwitchState.Loading.progress] defines it.
@@ -156,7 +156,7 @@ internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
 internal suspend fun LoadedProject.loadScene(path: String, onProgress: (Float) -> Unit = {}): ProjectScene {
     require(AwakeProjectValidator.isSafeProjectPath(path)) { "'$path' is not a project-relative path" }
     files.prefetchSceneContent(path, onProgress)
-    return loadProjectScene(path, manifest, files, componentRegistry, installedCapabilities(capabilities), hasRenderer, physicsWorld)
+    return loadProjectScene(path, manifest, files, componentRegistry, installedFeatures(capabilities), hasRenderer, physicsWorld)
 }
 
 /** The scene at [path], read with what its project was loaded with, as [loadProject] reads the entry scene. */
@@ -166,7 +166,7 @@ internal suspend fun loadProjectScene(
     manifest: AwakeProjectManifest,
     files: AssetSource,
     registry: SceneComponentRegistry?,
-    installed: List<SceneCapability>,
+    installed: List<SceneFeature>,
     hasRenderer: Boolean,
     physicsWorld: (suspend () -> PhysicsWorld)?,
 ): ProjectScene {
@@ -184,7 +184,7 @@ internal suspend fun loadProjectScene(
     // Every file is read before the physics world exists, so a missing model, or a load cancelled
     // part way, leaves no world behind that nothing would destroy.
     val content = loadContent(scene, files, installed, path, SceneContent.Builder(emptyMap(), hasRenderer))
-    val physics = if (PhysicsCapability.needsPhysics(scene)) {
+    val physics = if (PhysicsFeature.needsPhysics(scene)) {
         requireNotNull(physicsWorld) { "$path has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
         null

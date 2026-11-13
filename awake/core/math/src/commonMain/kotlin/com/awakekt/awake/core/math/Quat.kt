@@ -237,37 +237,29 @@ data class Quat(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f, var w: 
          * small per-keyframe angular deltas real animation clips use). Picks the shorter arc by
          * flipping [b]'s sign when the quaternions' dot product is negative -- otherwise lerping
          * between two equivalent-but-oppositely-signed quaternions spins the long way around. */
-        fun nlerp(a: Quat, b: Quat, t: Float): Quat {
+        fun nlerp(a: Quat, b: Quat, t: Float): Quat = nlerp(a, b, t, Quat())
+
+        /**
+         * [nlerp] written into [target] rather than a new quaternion, for a per-frame blend that
+         * must not allocate. [target] may be [a] or [b]: every component is read before any is
+         * written. Returns [target].
+         */
+        fun nlerp(a: Quat, b: Quat, t: Float, target: Quat): Quat {
             val dot = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
-            val bx: Float
-            val by: Float
-            val bz: Float
-            val bw: Float
-            if (dot < 0f) {
-                bx = -b.x
-                by = -b.y
-                bz = -b.z
-                bw = -b.w
-            } else {
-                bx = b.x
-                by = b.y
-                bz = b.z
-                bw = b.w
-            }
-            val rx = a.x + (bx - a.x) * t
-            val ry = a.y + (by - a.y) * t
-            val rz = a.z + (bz - a.z) * t
-            val rw = a.w + (bw - a.w) * t
+            val sign = if (dot < 0f) -1f else 1f
+            val rx = a.x + (sign * b.x - a.x) * t
+            val ry = a.y + (sign * b.y - a.y) * t
+            val rz = a.z + (sign * b.z - a.z) * t
+            val rw = a.w + (sign * b.w - a.w) * t
             val length = sqrt(rx * rx + ry * ry + rz * rz + rw * rw)
             return if (length == 0f) {
-                IDENTITY
+                target.set(IDENTITY)
             } else {
-                Quat(
-                    rx / length,
-                    ry / length,
-                    rz / length,
-                    rw / length,
-                )
+                target.x = rx / length
+                target.y = ry / length
+                target.z = rz / length
+                target.w = rw / length
+                target
             }
         }
     }

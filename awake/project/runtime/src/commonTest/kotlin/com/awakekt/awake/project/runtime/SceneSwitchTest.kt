@@ -383,7 +383,7 @@ private object GateBinding : SceneComponentBinding<Gate, SceneGate> {
  * Plans a fixed system for each scene with a gate, keeping every one it made. With [requestAtStep], a
  * scene's system asks for the level on that step of its own, through its services.
  */
-private class GateCapability(private val requestAtStep: Int = 0) : SceneCapability {
+private class GateCapability(private val requestAtStep: Int = 0) : SceneFeature {
     override val id = "com.example.harbor-town.gate"
     override val components = listOf(GateBinding)
     val made = mutableListOf<GateSystem>()
