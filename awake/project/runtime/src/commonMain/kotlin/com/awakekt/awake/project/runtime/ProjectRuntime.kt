@@ -56,7 +56,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  *
  * @property manifest Validated project manifest describing entry points and asset directories.
  * @param entry The entry scene, as it loaded.
- * @property features The features the project was loaded with besides Core's.
+ * @property capabilities The features the project was loaded with besides Core's.
  * @property componentRegistry The registry the project was loaded into, which [runProject] attaches
  * its components with, or null when its components were registered globally.
  * @property files The project's files, which a switch reads its next scene from.
