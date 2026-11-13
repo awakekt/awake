@@ -48,7 +48,7 @@ class ProjectStreamedTerrainTest {
     @Test
     fun cellsLoadAndUnloadAroundTheCameraAsItMoves() = runTest {
         val project = loadProject(files(scene(collider = false)))
-        val terrain = assertNotNull(project.content[StreamedTerrainCapability.Terrain]).terrain
+        val terrain = assertNotNull(project.content[StreamedTerrainFeature.Terrain]).terrain
         val renderer = HostRenderer()
         val systems = sceneSystemsFor(project.scene, services(renderer, project))
         val world = World().also { SceneLoader.instantiate(project.scene, it) }

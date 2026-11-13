@@ -22,7 +22,7 @@ import org.gradle.work.DisableCachingByDefault
  * (`:awake:project:transport-ktor`, `:awake:project:transport-browser`) wraps the host's own client, and
  * the host passes it to `TokenAuthorizedFetch`. [modules]' main code therefore reaches no module under
  * [forbiddenModulePrefixes], or whose path starts with one of [forbiddenModuleNamePrefixes], directly or
- * through another module, read from the Gradle model as [VerifyCapabilityLayeringTask] reads it. Tests
+ * through another module, read from the Gradle model as [VerifyFeatureLayeringTask] reads it. Tests
  * may: a test that draws, steps physics or fetches over HTTP brings its own.
  */
 @DisableCachingByDefault(because = "Verification task with no outputs")

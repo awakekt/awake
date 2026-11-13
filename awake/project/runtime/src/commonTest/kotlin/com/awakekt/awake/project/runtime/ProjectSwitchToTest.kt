@@ -212,7 +212,7 @@ class ProjectSwitchToTest {
     }
 
     /** A game's own capability: a component, content it reads from the project, and a system that reads it. */
-    private class LevelSignalCapability : SceneCapability {
+    private class LevelSignalCapability : SceneFeature {
         override val id = "com.example.harbor-town.level-signal"
         override val components = listOf(LevelSignalBinding)
 

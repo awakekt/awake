@@ -20,11 +20,11 @@ import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
 /**
- * Keeps capabilities independent of the scene layer.
+ * Keeps features independent of the scene layer.
  *
- * Awake is a library first. `awake:scene:*` binds capabilities into the ECS scene graph and the scene
- * document; a capability, an algorithm or behaviour with an API of its own, must be usable without it,
- * so a capability module's main code does not depend on an `awake:scene` module. It fails a module that
+ * Awake is a library first. `awake:scene:*` binds features into the ECS scene graph and the scene
+ * document; a feature, an algorithm or behaviour with an API of its own, must be usable without it,
+ * so a feature module's main code does not depend on an `awake:scene` module. It fails a module that
  * does, in any of three ways:
  *
  * - **directly**, a project dependency in a main configuration, wherever it was declared: the build
@@ -40,7 +40,7 @@ import java.io.File
  * modules allowed to break the rule. See `awake/scene/README.md` for the rule and why.
  */
 @DisableCachingByDefault(because = "Verification task with no outputs")
-abstract class VerifyCapabilityLayeringTask : DefaultTask() {
+abstract class VerifyFeatureLayeringTask : DefaultTask() {
     /** The repository root, which source paths are taken relative to. */
     @get:Input
     abstract val rootPath: Property<String>
@@ -88,12 +88,12 @@ abstract class VerifyCapabilityLayeringTask : DefaultTask() {
                 }
             }
 
-        val failures = capabilityLayeringFailures(couplings)
+        val failures = featureLayeringFailures(couplings)
         if (failures.isNotEmpty()) {
             throw GradleException(
-                "Capability layering failed (${failures.size} problem(s)):\n" + failures.joinToString("\n") { "  $it" },
+                "Feature layering failed (${failures.size} problem(s)):\n" + failures.joinToString("\n") { "  $it" },
             )
         }
-        logger.lifecycle("Capability layering passed: ${couplings.size} modules checked")
+        logger.lifecycle("Feature layering passed: ${couplings.size} modules checked")
     }
 }

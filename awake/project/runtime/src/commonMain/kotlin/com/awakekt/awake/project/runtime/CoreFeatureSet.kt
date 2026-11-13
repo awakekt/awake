@@ -42,24 +42,24 @@ import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
 
 /**
- * Core's capabilities, in the order their systems run. A game's own capabilities run after these, so
+ * Core's features, in the order their systems run. A game's own features run after these, so
  * a scene's frame runs input, movement and the camera, then terrain, AI, motion, particles, the day,
  * shader effects and skinned animation, then the game's systems. Streamed terrain comes before
  * physics, so its collision cells exist before the physics step builds their bodies.
  */
-internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
-    ControlsCapability,
-    CanvasCapability,
-    StreamedTerrainCapability,
-    TerrainCapability,
-    PhysicsCapability,
-    AiCapability,
-    MotionCapability,
-    ParticlesCapability,
-    DayCycleCapability,
-    ShaderEffectsCapability,
-    AudioCapability,
-    SkinnedAnimationCapability,
+internal val CORE_FEATURES: List<SceneFeature> = listOf(
+    ControlsFeature,
+    CanvasFeature,
+    StreamedTerrainFeature,
+    TerrainFeature,
+    PhysicsFeature,
+    AiFeature,
+    MotionFeature,
+    ParticlesFeature,
+    DayCycleFeature,
+    ShaderEffectsFeature,
+    AudioFeature,
+    SkinnedAnimationFeature,
 )
 
 /**
@@ -67,7 +67,7 @@ internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
  * `movement_control` follows the actions and moves its entity straight through the world, unless the
  * scene has a `character_controller`, which physics moves instead.
  */
-internal object ControlsCapability : SceneCapability {
+internal object ControlsFeature : SceneFeature {
     override val id = "com.awakekt.awake.controls"
     override val components = ControlsSceneComponents.bindings
 
@@ -90,7 +90,7 @@ internal object ControlsCapability : SceneCapability {
         if (scene.uses(SceneCameraRig::class)) {
             plan.frame(CoreSystems.CAMERA) { services ->
                 // Asked only for a rig with collision on, so a scene without it behaves as before.
-                val probes = SceneCameraCollisionProbes(services.physics, services.content[StreamedTerrainCapability.Terrain]?.terrain?.heights)
+                val probes = SceneCameraCollisionProbes(services.physics, services.content[StreamedTerrainFeature.Terrain]?.terrain?.heights)
                 CameraSystem(inputProvider = services.input, viewportBounds = { null }, collisionProbes = probes)
             }
         }
@@ -107,7 +107,7 @@ internal object ControlsCapability : SceneCapability {
  * and reads no font. With a physics world, followers that ask for occlusion are answered by
  * [PhysicsCanvasOcclusion]'s rays.
  */
-internal object CanvasCapability : SceneCapability {
+internal object CanvasFeature : SceneFeature {
     override val id = "com.awakekt.awake.canvas"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
@@ -129,7 +129,7 @@ internal object CanvasCapability : SceneCapability {
  * `terrain` collider, the triangles of `mesh` and `convex_hull` shapes, the step itself and the
  * character controller.
  */
-internal object PhysicsCapability : SceneCapability {
+internal object PhysicsFeature : SceneFeature {
     override val id = "com.awakekt.awake.physics"
     override val components = PhysicsSceneComponents.bindings + CharacterSceneComponents.bindings
 
@@ -170,7 +170,7 @@ internal object PhysicsCapability : SceneCapability {
  * advances every clip, crossfade and finished clip the same but poses no bone, except a socket's target
  * or a model marked `PosedWithoutRenderer` (#1442).
  */
-internal object SkinnedAnimationCapability : SceneCapability {
+internal object SkinnedAnimationFeature : SceneFeature {
     override val id = "com.awakekt.awake.skinned-animation"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {

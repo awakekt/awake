@@ -42,7 +42,7 @@ class ButtonActionTest {
 
     @Test
     fun aPressTriggersTheButtonsActionAndTheBlueprint() = runTest {
-        val project = loadProject(files(), capabilities = listOf(BlueprintCapability))
+        val project = loadProject(files(), capabilities = listOf(BlueprintFeature))
         // Drawn, as a game is: a headless host skips Set Text, which only changes what is shown.
         val systems = project.sceneSystems(gameplay, renderer = NoopRenderer())
         val world = World().also { SceneLoader.instantiate(project.scene, it) }

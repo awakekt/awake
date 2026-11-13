@@ -128,7 +128,7 @@ class ProjectOpenCheckTest {
     }
 
     /** A game's capability: a component, content it reads from the project, and a system. */
-    private class SignalCapability(private val failLoad: Boolean = false, private val failStep: Boolean = false) : SceneCapability {
+    private class SignalCapability(private val failLoad: Boolean = false, private val failStep: Boolean = false) : SceneFeature {
         override val id = "com.example.harbor-town.open-signal"
         override val components = listOf(OpenSignalBinding)
 
@@ -152,7 +152,7 @@ class ProjectOpenCheckTest {
     }
 
     /** A capability whose one component saves less than it read. */
-    private object LossyCapability : SceneCapability {
+    private object LossyCapability : SceneFeature {
         override val id = "com.example.harbor-town.lossy"
         override val components = listOf(LossyBinding)
 

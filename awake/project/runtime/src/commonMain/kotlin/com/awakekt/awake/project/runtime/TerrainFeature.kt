@@ -23,9 +23,9 @@ import kotlinx.coroutines.cancel
  * A scene's `terrain`s, drawn when the host has a renderer: each by [TerrainContentSystem], with the
  * surface its `surface` names from [CoreSceneContent.TerrainSurfaces], or the built-in terrain shading
  * without one. A project's content holds the layered-terrain kit's provider, read from the project's
- * files. A headless host draws none. A terrain's collision is [PhysicsCapability]'s.
+ * files. A headless host draws none. A terrain's collision is [PhysicsFeature]'s.
  */
-internal object TerrainCapability : SceneCapability {
+internal object TerrainFeature : SceneFeature {
     override val id = "com.awakekt.awake.terrain"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {

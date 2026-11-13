@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineScope
  * [LoadedProject], one per party, room or match, and makes and closes them as those start and end.
  *
  * What was loaded once is shared and only read: the [scene] document, the component registry and
- * capabilities, the glTF models, and the scene's content, such as its collision meshes, baked
+ * features, the glTF models, and the scene's content, such as its collision meshes, baked
  * navigation grid and AI definitions. What changes is the instance's own: its [world], its systems and
  * its physics world, so a body moved in one instance stays where it is in every other.
  *
@@ -42,7 +42,7 @@ class SceneInstance internal constructor(
     val world: World,
     private val physics: PhysicsWorld?,
     private val content: SceneContent,
-    private val capabilities: List<SceneCapability>,
+    private val capabilities: List<SceneFeature>,
 ) : AutoCloseable {
     private val systemSets = mutableListOf<SceneSystemSet>()
 
@@ -111,7 +111,7 @@ class SceneInstance internal constructor(
 suspend fun LoadedProject.newSceneInstance(): SceneInstance {
     check(!closed) { "The project is closed; load it again to make an instance of its scene" }
     val source = playing
-    val physics = if (PhysicsCapability.needsPhysics(source.document)) {
+    val physics = if (PhysicsFeature.needsPhysics(source.document)) {
         // The project made the scene's own world from this factory, so a scene with bodies has one.
         checkNotNull(physicsWorld) { "${source.path} has physics bodies or characters and the project has no physicsWorld factory" }()
     } else {

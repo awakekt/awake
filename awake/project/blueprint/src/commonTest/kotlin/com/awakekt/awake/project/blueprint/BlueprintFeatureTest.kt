@@ -36,13 +36,13 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** A project that names the blueprint capability plays its scene's graphs, and a host can swap one in while it runs. */
-class BlueprintCapabilityTest {
+class BlueprintFeatureTest {
     private val input = Input()
     private val gameplay = { GameplayInput(input.currentSnapshot, InputOwnership()) }
 
     @Test
     fun aProjectWithTheCapabilityPlaysItsScenesBlueprint() = runTest {
-        val project = loadProject(files(SCENE, setScore(3f)), capabilities = listOf(BlueprintCapability))
+        val project = loadProject(files(SCENE, setScore(3f)), capabilities = listOf(BlueprintFeature))
         val systems = project.sceneSystems(gameplay)
         val world = World().also { SceneLoader.instantiate(project.scene, it) }
 
@@ -58,7 +58,7 @@ class BlueprintCapabilityTest {
         val broken = NodeGraph(kind = BlueprintGraphKind.id, nodes = listOf(GraphNode("set", "var.set.float")))
 
         val failure = assertFailsWith<IllegalArgumentException> {
-            loadProject(files(SCENE, NodeGraphJson.encode(broken)), capabilities = listOf(BlueprintCapability))
+            loadProject(files(SCENE, NodeGraphJson.encode(broken)), capabilities = listOf(BlueprintFeature))
         }
         assertTrue(GRAPH in failure.message.orEmpty(), failure.message)
     }
@@ -66,10 +66,10 @@ class BlueprintCapabilityTest {
     @Test
     fun aHostSwapsAnEditedGraphIntoTheRunningScene() = runTest {
         val files = files(SCENE, setScore(3f))
-        val project = loadProject(files, capabilities = listOf(BlueprintCapability))
+        val project = loadProject(files, capabilities = listOf(BlueprintFeature))
         val reloads = BlueprintReloads()
-        val content = loadCapabilityContent(project.scene, files, listOf(BlueprintCapability), loaded = SceneContent.build { this[BlueprintContent.Reloads] = reloads })
-        val systems = sceneSystemsFor(project.scene, SceneHostServices.headless(gameplay, content = content), listOf(BlueprintCapability))
+        val content = loadCapabilityContent(project.scene, files, listOf(BlueprintFeature), loaded = SceneContent.build { this[BlueprintContent.Reloads] = reloads })
+        val systems = sceneSystemsFor(project.scene, SceneHostServices.headless(gameplay, content = content), listOf(BlueprintFeature))
         val world = World().also { SceneLoader.instantiate(project.scene, it) }
         systems.fixed.forEach { it.update(world, STEP) }
         assertTrue(reloads.isRunning)
@@ -85,7 +85,7 @@ class BlueprintCapabilityTest {
 
     @Test
     fun aSceneWithoutBlueprintsLoadsNothingAndRunsNoSystem() = runTest {
-        val project = loadProject(files(EMPTY_SCENE, setScore(3f)), capabilities = listOf(BlueprintCapability))
+        val project = loadProject(files(EMPTY_SCENE, setScore(3f)), capabilities = listOf(BlueprintFeature))
 
         assertNull(project.sceneSystems(gameplay).fixed.firstOrNull { it.toString().contains("Blueprint") })
     }

@@ -148,7 +148,7 @@ class SceneSystemNamesTest {
 
     private fun noop(): System = NoopSystem
 
-    private object Beacons : SceneCapability {
+    private object Beacons : SceneFeature {
         override val id = "com.example.harbor-town.beacons"
         override val systemNames = listOf("beacons")
 

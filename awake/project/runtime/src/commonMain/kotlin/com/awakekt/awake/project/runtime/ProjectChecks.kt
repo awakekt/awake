@@ -21,11 +21,11 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
 /**
- * Refuses a manifest whose `required` plugins have no capability among [installed], naming each by id
- * and, when the manifest says, the capability class and the artifact that provides it. Naming them does
- * not load them: a capability is linked when the game is built.
+ * Refuses a manifest whose `required` plugins have no feature among [installed], naming each by id
+ * and, when the manifest says, the feature class and the artifact that provides it. Naming them does
+ * not load them: a feature is linked when the game is built.
  */
-internal fun requireRequiredPlugins(manifest: AwakeProjectManifest, installed: List<SceneCapability>) {
+internal fun requireRequiredPlugins(manifest: AwakeProjectManifest, installed: List<SceneFeature>) {
     val ids = installed.mapTo(HashSet()) { it.id }
     val missing = manifest.plugins.filter { it.required && it.id !in ids }
     // Each as its id, then `(capabilityClass from group:name:version)` for what the manifest names of it.
@@ -67,7 +67,7 @@ internal suspend fun decodeScene(path: String, files: AssetSource, registry: Sce
 
 /**
  * The component ids in [sceneJson] that no registered binding decodes, in the order they first
- * appear: what a project needs a capability for. [decodable] names what decodes, the global
+ * appear: what a project needs a feature for. [decodable] names what decodes, the global
  * serializers when null. A legacy camelCase id counts as its snake_case form, as the scene loader
  * reads it. Empty when the text is not JSON.
  */

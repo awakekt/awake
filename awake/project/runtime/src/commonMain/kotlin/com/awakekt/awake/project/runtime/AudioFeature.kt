@@ -24,7 +24,7 @@ import com.awakekt.awake.scene.runtime.SceneSystemRole
  * through the host's [SceneHostServices.audio], heard from the active camera. A host with no audio
  * player, such as a game server or a test, runs the sources silently.
  */
-internal object AudioCapability : SceneCapability {
+internal object AudioFeature : SceneFeature {
     override val id = "com.awakekt.awake.audio"
     override val components = AudioSceneComponents.bindings
 
