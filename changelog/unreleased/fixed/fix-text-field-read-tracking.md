@@ -1,1 +1,0 @@
-- `TextFieldState` text, caret, selection and IME composition are now read-tracked, so a composition that reads them (a counter, a clear button) is repainted by typing, selection and IME input when `ComposeHost.skipUnchangedComposition` is on. A host that composes every frame allocates and records nothing for it, and a state is 8 B smaller.
