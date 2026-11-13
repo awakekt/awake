@@ -50,7 +50,7 @@ fun ShadcnRadioGroup(
 ): Int = rememberGroup(ShadcnRadioGroupGroup) {
     val theme = shadcnTheme
     val state = remember { RadioGroupState() }
-    val next = state.clicked?.also { state.clicked = null } ?: selected
+    val next = state.clicked.take() ?: selected
     val density = shadcnDensity
     state.prepare(theme, next, enabled, density)
 
@@ -74,7 +74,7 @@ private fun ShadcnRadioItem(
     val interaction = remember { InteractionSource() }
     val active = index == state.selected
     Row(
-        Modifier.clickable(interaction) { if (state.enabled) state.clicked = index },
+        Modifier.clickable(interaction) { if (state.enabled) state.clicked.offer(index) },
         horizontalArrangement = Arrangement.spacedByHorizontal(state.density.radioLabelGap()),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -145,7 +145,7 @@ private fun ShadcnRadioControl(
 
 /** The click that arrived during input dispatch, consumed by the next build. */
 private class RadioGroupState {
-    var clicked: Int? = null
+    val clicked = Handoff<Int>()
     lateinit var theme: ShadcnThemeValues
     var density: ShadcnDensity = ShadcnDensity.Default
     var selected: Int = 0

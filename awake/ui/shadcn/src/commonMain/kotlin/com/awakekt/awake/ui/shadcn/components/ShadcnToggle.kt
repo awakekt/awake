@@ -66,20 +66,19 @@ fun ShadcnToggle(
     val interaction = interactionSource ?: owned
     val styleState = rememberStyleState(interaction, enabled = enabled)
     val toggleSize = if (shadcnDensity.isCompact) CompactToggleSize else ToggleSize
-    val state = remember { ToggleState() }
-    val next = if (state.clicked) !checked else checked
-    state.clicked = false
+    val clicked = remember { Handoff<Unit>() }
+    val next = if (clicked.take() != null) !checked else checked
 
     val style = remember(theme, next) { theme.toggleStyle(next) }
     Box(
         modifier
             .size(toggleSize)
             .hoverable(interaction, enabled = enabled)
-            .let { if (enabled) it.clickable(interaction) { state.clicked = true } else it }
+            .let { if (enabled) it.clickable(interaction) { clicked.offer(Unit) } else it }
             .focusable(enabled = enabled, interactionSource = interaction)
             .onKeyEvent { event ->
                 if (enabled && isButtonActivationKey(event)) {
-                    state.clicked = true
+                    clicked.offer(Unit)
                     true
                 } else {
                     false
@@ -111,11 +110,6 @@ private fun ShadcnThemeValues.toggleStyle(checked: Boolean): Style = Style {
     if (checked) background(palette.accent)
     hovered(Style { background(if (checked) palette.accent else palette.muted) })
     disabled(Style { alpha(DISABLED_ALPHA) })
-}
-
-/** The click that arrived during input dispatch, consumed by the next build. */
-private class ToggleState {
-    var clicked: Boolean = false
 }
 
 /** The parity capture's `size-10`; upstream's default toggle is `h-9`, sized by the caller. */

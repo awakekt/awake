@@ -7,6 +7,9 @@ package com.awakekt.awake.compose.ui
 
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.focus.FocusRequester
 import com.awakekt.awake.compose.ui.focus.focusRequester
 import com.awakekt.awake.compose.ui.focus.focusTarget
@@ -79,7 +82,8 @@ class FocusRequesterQueueTest {
         val host = ComposeHost(density = 1f)
         val stays = FocusRequester()
         val leaves = FocusRequester()
-        var includeLeaves = true
+        // State, not a plain var: a host that skips unchanged passes only sees reads it can track.
+        var includeLeaves by mutableStateOf(true)
         val content: context(Composer)
         () -> Unit = {
             Layout(nodeType = "stays", modifier = Modifier.size(50.dp).focusRequester(stays).focusTarget(), measurePolicy = stackPolicy)
@@ -128,7 +132,7 @@ class FocusRequesterQueueTest {
     fun aRequestMadeBeforeItsNodeIsComposedWaitsForIt() {
         val host = ComposeHost(density = 1f)
         val requester = FocusRequester()
-        var shown = false
+        var shown by mutableStateOf(false)
         val content: context(Composer)
         () -> Unit = {
             if (shown) {

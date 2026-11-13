@@ -6,6 +6,9 @@
 package com.awakekt.awake.compose.foundation.text
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.MutableState
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.readsAreTracked
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.TextEditAction
@@ -20,14 +23,11 @@ import com.awakekt.awake.core.text.unicode.WordBoundaries
  * link is rebuilt every pass, so text kept inside one would be lost on the next frame -- which for
  * a text field means every keystroke vanishing.
  *
- * Plain fields, deliberately: nothing here is observable state. `BasicTextField` reads this during
- * layout and paint rather than capturing it at composition, so a keystroke reaches the glyphs
- * through the phase that already runs every frame -- the same discipline Compose's own
- * `BasicTextField` follows, and the reason typing there needs no recomposition.
- *
- * An earlier revision counter mirrored into `mutableStateOf` existed only because the text *was*
- * captured at composition, which left the glyphs stale until something unrelated re-ran the
- * composable. Fixing the phase removed the need for it.
+ * Plain fields that report to a composition: `BasicTextField` reads this during layout and paint, so
+ * typing reaches the glyphs through the phase that runs every frame. A composition that reads it too
+ * (a counter, a clear button shown while [text] is not empty) is invalidated by an edit when the host
+ * skips passes in which nothing changed (`ComposeHost.skipUnchangedComposition`); a host that composes
+ * every frame records nothing and allocates nothing for it.
  *
  * Edits step by grapheme cluster ([GraphemeClusters]), what a reader sees as one character: an
  * arrow key moves over a whole flag or ZWJ emoji, Backspace and Delete remove one whole, and the
@@ -36,13 +36,33 @@ import com.awakekt.awake.core.text.unicode.WordBoundaries
  * still `Char` indices into [text].
  */
 class TextFieldState(text: String = "", cursor: Int = text.length) {
+    // Created on the first read made by a pass that tracks reads, never otherwise: a host that composes
+    // every frame allocates and records nothing, and a write is one null check.
+    private var version: MutableState<Int>? = null
+
+    private fun track() {
+        if (readsAreTracked) (version ?: mutableStateOf(0).also { version = it }).value
+    }
+
+    private fun changed() {
+        version?.let { it.value += 1 }
+    }
+
     /** The committed text, excluding any in-progress IME composition. */
     var text: String = text
-        private set
+        get() = field.also { track() }
+        private set(value) {
+            field = value
+            changed()
+        }
 
     /** Character index the caret sits before: a cluster boundary within `0..text.length`. */
     var cursor: Int = GraphemeClusters.floorBoundary(text, cursor)
-        private set
+        get() = field.also { track() }
+        private set(value) {
+            field = value
+            changed()
+        }
 
     /**
      * The most [text] that typing, pasting or an IME commit may leave, counted in [maxLengthUnit];
@@ -69,7 +89,11 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
 
     /** Fixed end of the current selection; equals [cursor] when the selection is collapsed. */
     var selectionAnchor: Int = this.cursor
-        private set
+        get() = field.also { track() }
+        private set(value) {
+            field = value
+            changed()
+        }
 
     /** The lower end of the selection, whichever of [selectionAnchor] and [cursor] comes first. */
     val selectionStart: Int get() = minOf(selectionAnchor, cursor)
@@ -83,14 +107,17 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
     /** The selected part of [text], empty when nothing is selected. */
     val selectedText: String get() = text.substring(selectionStart, selectionEnd)
 
-    private var compositionRangeStart = this.cursor
-    private var compositionRangeEnd = this.cursor
-    private var compositionText = ""
-    private var compositionSelectionStart = 0
-    private var compositionSelectionEnd = 0
+    // The IME pre-edit, created by the first composition and kept: most fields never see one, so they
+    // pay a reference instead of five fields.
+    private var preEdit: PreEdit? = null
+
+    private fun activePreEdit(): PreEdit? {
+        track()
+        return preEdit?.takeIf { it.isActive }
+    }
 
     /** Whether an IME is showing text that has not yet entered the caller-owned [text]. */
-    val hasComposition: Boolean get() = compositionText.isNotEmpty() || compositionRangeStart != compositionRangeEnd
+    val hasComposition: Boolean get() = activePreEdit() != null
 
     /**
      * [text] with any in-progress IME composition spliced in.
@@ -102,20 +129,16 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
      * enough, from any caller.
      */
     internal val displayedText: String
-        get() = if (!hasComposition) {
-            text
-        } else {
-            text.substring(0, compositionRangeStart) + compositionText + text.substring(compositionRangeEnd)
-        }
+        get() = activePreEdit()?.let { text.substring(0, it.start) + it.text + text.substring(it.end) } ?: text
 
     internal val displayedCursor: Int
-        get() = if (hasComposition) compositionRangeStart + compositionSelectionEnd else cursor
+        get() = activePreEdit()?.let { it.start + it.selectionEnd } ?: cursor
 
     internal val displayedSelectionStart: Int
-        get() = if (hasComposition) compositionRangeStart + compositionSelectionStart else selectionStart
+        get() = activePreEdit()?.let { it.start + it.selectionStart } ?: selectionStart
 
     internal val displayedSelectionEnd: Int
-        get() = if (hasComposition) compositionRangeStart + compositionSelectionEnd else selectionEnd
+        get() = activePreEdit()?.let { it.start + it.selectionEnd } ?: selectionEnd
 
     private var preferredColumn: Int? = null
 
@@ -284,26 +307,29 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
 
     /** Updates the visible pre-edit range without changing the caller-owned committed [text]. */
     fun setComposition(composition: ImeComposition) {
-        if (!hasComposition) {
-            compositionRangeStart = selectionStart
-            compositionRangeEnd = selectionEnd
+        val edit = preEdit ?: PreEdit().also { preEdit = it }
+        if (!edit.isActive) {
+            edit.start = selectionStart
+            edit.end = selectionEnd
         }
-        compositionText = composition.text
-        compositionSelectionStart = composition.selectionStart.coerceIn(0, composition.text.length)
-        compositionSelectionEnd = composition.selectionEnd.coerceIn(0, composition.text.length)
+        edit.text = composition.text
+        edit.selectionStart = composition.selectionStart.coerceIn(0, composition.text.length)
+        edit.selectionEnd = composition.selectionEnd.coerceIn(0, composition.text.length)
+        changed()
     }
 
     /**
      * Finalizes [committed] over the range captured when composition began, as much of it as
      * [maxLength] allows. The pre-edit itself is shown whole while it is being composed.
      */
-    fun commitComposition(committed: String = compositionText) {
-        if (!hasComposition) {
+    fun commitComposition(committed: String = preEdit?.text ?: "") {
+        val edit = activePreEdit()
+        if (edit == null) {
             if (committed.isNotEmpty()) insert(committed)
             return
         }
-        val start = compositionRangeStart
-        val end = compositionRangeEnd
+        val start = edit.start
+        val end = edit.end
         clearComposition()
         replace(start, end, committed)
     }
@@ -312,11 +338,9 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
     fun cancelComposition() = clearComposition()
 
     private fun clearComposition() {
-        compositionRangeStart = cursor
-        compositionRangeEnd = cursor
-        compositionText = ""
-        compositionSelectionStart = 0
-        compositionSelectionEnd = 0
+        val edit = preEdit?.takeIf { it.isActive } ?: return
+        edit.clear()
+        changed()
     }
 
     private fun deleteSelection(): Boolean {

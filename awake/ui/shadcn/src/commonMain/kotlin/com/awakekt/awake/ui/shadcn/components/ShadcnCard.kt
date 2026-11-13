@@ -15,10 +15,13 @@ import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.RowScope
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.padding
+import com.awakekt.awake.compose.foundation.skin.LocalSkin
+import com.awakekt.awake.compose.foundation.skin.skinPart
 import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
@@ -122,7 +125,21 @@ fun ShadcnCard(
     rememberGroup(ShadcnCardGroup) {
         val theme = shadcnTheme
         val style = remember(theme, contentPadding) { theme.cardStyle(contentPadding) }
-        Box(modifier.styleable(StyleState.Default, style)) {
+        val skin = LocalSkin.current
+        val framed = skin != null && ShadcnSkinKeys.CardFrame in skin
+        val surface = if (!framed) {
+            modifier.styleable(StyleState.Default, style)
+        } else {
+            // The skin's art replaces the token surface; content sits inside the art's border.
+            val inset = Style {
+                contentPadding(
+                    contentPadding + skin.insetDp(ShadcnSkinKeys.CardFrame, vertical = false),
+                    contentPadding + skin.insetDp(ShadcnSkinKeys.CardFrame, vertical = true),
+                )
+            }
+            modifier.skinPart(ShadcnSkinKeys.CardFrame).styleable(StyleState.Default, style, SkinFaceStyle, inset)
+        }
+        Box(surface) {
             Column(
                 Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s6),
