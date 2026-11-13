@@ -59,7 +59,16 @@ data class Skybox(
             var blendFrom: Int = 0,
             var blendTo: Int = 0,
             var blend: Float = 0f,
-        ) : Mode
+        ) : Mode {
+            /** The constructor as released before panoramas, kept so compiled callers still link. */
+            @Deprecated("Use the constructor with panoramas.", level = DeprecationLevel.HIDDEN)
+            constructor(assetPath: String = "", exposure: Float = 1.0f) : this(assetPath, exposure, emptyList())
+
+            /** [copy] as released before panoramas. */
+            @Deprecated("Use copy with panoramas.", level = DeprecationLevel.HIDDEN)
+            fun copy(assetPath: String = this.assetPath, exposure: Float = this.exposure): Cubemap =
+                copy(assetPath, exposure, panoramas, tint, dayExposure, blendFrom, blendTo, blend)
+        }
 
         /**
          * Uniform solid background color.

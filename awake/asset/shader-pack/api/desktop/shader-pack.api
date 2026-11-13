@@ -66,8 +66,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
 public final class com/awakekt/awake/asset/shaderpack/AslSkyboxCubemapShaderKt {
 	public static final fun getSkyboxCubemapShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkyboxCubemapUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final synthetic fun skyboxCubemapUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;F)[F
 	public static final fun skyboxCubemapUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/Vec3f;)[F
 	public static synthetic fun skyboxCubemapUniformFloats$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)[F
+	public static synthetic fun skyboxCubemapUniformFloats$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)[F
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
@@ -305,7 +307,9 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxContentFeatureKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapContentFeatureKt {
+	public static final synthetic fun skyboxCubemapContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static final fun skyboxCubemapContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/SkyboxCubemapLook;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun skyboxCubemapContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static synthetic fun skyboxCubemapContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/SkyboxCubemapLook;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 

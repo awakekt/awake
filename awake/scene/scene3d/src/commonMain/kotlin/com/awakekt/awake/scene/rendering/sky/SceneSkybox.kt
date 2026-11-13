@@ -25,9 +25,9 @@ import kotlinx.serialization.Serializable
  * @property zenithColorB Optional explicit blue channel override for the zenith color.
  * @property cubemapPath Asset path to cubemap texture when mode is cubemap.
  * @property exposure Exposure multiplier applied during cubemap rendering.
+ * @property type Skybox mode type name ("Procedural", "Cubemap", or "SolidColor").
  * @property panoramas More cubemap panoramas by time of day, in time order. A `day_cycle` blends the
  *   two around its time; without one the first shows. Empty keeps the single [cubemapPath].
- * @property type Skybox mode type name ("Procedural", "Cubemap", or "SolidColor").
  */
 @Serializable
 @SerialName("skybox")
@@ -46,6 +46,46 @@ data class SceneSkybox(
     val type: String = "Procedural",
     val panoramas: List<ScenePanorama> = emptyList(),
 ) : SceneComponent {
+    /** The constructor as released before panoramas, kept so compiled callers still link. */
+    @Deprecated("Use the constructor with panoramas.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        enabled: Boolean = true,
+        horizonColor: SceneColor = SceneColor(0.72f, 0.80f, 0.88f, 1f),
+        zenithColor: SceneColor = SceneColor(0.20f, 0.38f, 0.68f, 1f),
+        horizonColorR: Float? = null,
+        horizonColorG: Float? = null,
+        horizonColorB: Float? = null,
+        zenithColorR: Float? = null,
+        zenithColorG: Float? = null,
+        zenithColorB: Float? = null,
+        cubemapPath: String? = null,
+        exposure: Float = 1.0f,
+        type: String = "Procedural",
+    ) : this(
+        enabled, horizonColor, zenithColor, horizonColorR, horizonColorG, horizonColorB, zenithColorR, zenithColorG,
+        zenithColorB, cubemapPath, exposure, type, emptyList(),
+    )
+
+    /** [copy] as released before panoramas. */
+    @Deprecated("Use copy with panoramas.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        enabled: Boolean = this.enabled,
+        horizonColor: SceneColor = this.horizonColor,
+        zenithColor: SceneColor = this.zenithColor,
+        horizonColorR: Float? = this.horizonColorR,
+        horizonColorG: Float? = this.horizonColorG,
+        horizonColorB: Float? = this.horizonColorB,
+        zenithColorR: Float? = this.zenithColorR,
+        zenithColorG: Float? = this.zenithColorG,
+        zenithColorB: Float? = this.zenithColorB,
+        cubemapPath: String? = this.cubemapPath,
+        exposure: Float = this.exposure,
+        type: String = this.type,
+    ): SceneSkybox = copy(
+        enabled, horizonColor, zenithColor, horizonColorR, horizonColorG, horizonColorB, zenithColorR, zenithColorG,
+        zenithColorB, cubemapPath, exposure, type, panoramas,
+    )
+
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         val times = panoramas.map { it.time }
         if (times.any { !(it >= 0f && it < 1f) } || times.zipWithNext().any { (a, b) -> b < a }) {

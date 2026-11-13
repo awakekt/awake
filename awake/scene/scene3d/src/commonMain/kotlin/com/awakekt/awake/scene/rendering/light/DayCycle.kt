@@ -118,7 +118,31 @@ data class SceneDayStop(
     val fogColor: SceneColor? = null,
     val skyTint: SceneColor? = null,
     val skyExposure: Float? = null,
-)
+) {
+    /** The constructor as released before the sky fields, kept so compiled callers still link. */
+    @Deprecated("Use the constructor with the sky fields.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        time: Float,
+        horizonColor: SceneColor? = null,
+        zenithColor: SceneColor? = null,
+        lightColor: SceneColor? = null,
+        lightIntensity: Float? = null,
+        ambient: Float? = null,
+        fogColor: SceneColor? = null,
+    ) : this(time, horizonColor, zenithColor, lightColor, lightIntensity, ambient, fogColor, null, null)
+
+    /** [copy] as released before the sky fields. */
+    @Deprecated("Use copy with the sky fields.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        time: Float = this.time,
+        horizonColor: SceneColor? = this.horizonColor,
+        zenithColor: SceneColor? = this.zenithColor,
+        lightColor: SceneColor? = this.lightColor,
+        lightIntensity: Float? = this.lightIntensity,
+        ambient: Float? = this.ambient,
+        fogColor: SceneColor? = this.fogColor,
+    ): SceneDayStop = copy(time, horizonColor, zenithColor, lightColor, lightIntensity, ambient, fogColor, skyTint, skyExposure)
+}
 
 /**
  * A playing day: the [authored] component and the current [time] of day, which [DayCycleSystem]

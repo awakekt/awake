@@ -81,6 +81,11 @@ fun skyboxCubemapUniformFloats(
     .put(SkyboxCubemapFields.Tint, tint.x, tint.y, tint.z, 0f)
     .build()
 
+/** [skyboxCubemapUniformFloats] as released before blend and tint, kept so compiled callers still link. */
+@Deprecated("Use the overload with blend and tint.", level = DeprecationLevel.HIDDEN)
+fun skyboxCubemapUniformFloats(inverseViewProjection: Mat4, cameraEye: Vec3f, exposure: Float = 1.0f): FloatArray =
+    skyboxCubemapUniformFloats(inverseViewProjection, cameraEye, exposure, 0f, Vec3f(1f, 1f, 1f))
+
 /**
  * Environmental cubemap sky drawn first in the 3D pass. No vertex buffer: the vertex stage
  * emits one oversized triangle from `vertex_index`. Samples two cubemaps via [textureSampleCube] and

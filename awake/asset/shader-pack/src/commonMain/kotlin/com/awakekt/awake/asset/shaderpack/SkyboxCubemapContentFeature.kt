@@ -22,24 +22,6 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.texture.TextureAsset
 
 /**
- * How a cubemap sky looks this frame, read each frame so a day cycle can change it without
- * reloading the panorama. The defaults draw the cubemap as baked.
- *
- * @property exposure Multiplies the sampled colour.
- * @property blend How far the first cubemap has blended into the second, 0 to 1.
- * @property tintR Red of the colour the sky is multiplied by.
- * @property tintG Green of the colour the sky is multiplied by.
- * @property tintB Blue of the colour the sky is multiplied by.
- */
-class SkyboxCubemapLook(
-    var exposure: Float = 1f,
-    var blend: Float = 0f,
-    var tintR: Float = 1f,
-    var tintG: Float = 1f,
-    var tintB: Float = 1f,
-)
-
-/**
  * A sky drawn from [cubemap], sampled along each pixel's view ray, behind everything else.
  *
  * [cubemap]'s six layers are the +X, -X, +Y, -Y, +Z and -Z faces in world axes, each laid out the
@@ -72,6 +54,14 @@ fun skyboxCubemapContentFeature(
         ) { pipeline, uniforms, _ -> SkyboxCubemapRenderFeature(pipeline, uniforms, look) }
     }
 }
+
+/** [skyboxCubemapContentFeature] as released before blending, kept so compiled callers still link. */
+@Deprecated("Use the overload with blendTo and look.", level = DeprecationLevel.HIDDEN)
+fun skyboxCubemapContentFeature(
+    cubemap: TextureAsset,
+    exposure: Float = 1f,
+    shaders: ShaderSet = PackShaderSets.SkyboxCubemap,
+): ContentFeatureSource = skyboxCubemapContentFeature(cubemap, exposure, shaders, cubemap, SkyboxCubemapLook(exposure))
 
 private class SkyboxCubemapRenderFeature(
     private val pipeline: PipelineHandle,
