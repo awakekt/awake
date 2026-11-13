@@ -131,7 +131,57 @@ class UiRunStagingAllocationProbeTest {
         )
     }
 
+    /**
+     * #1545: a still vector-drawn HUD, rebuilt as fresh but equal commands each frame, finds every
+     * span in the cache without allocating. Two pre-built copies alternate, so the measured loop
+     * allocates only in staging and upload.
+     *
+     * Measured 2026-11-13 on this host:
+     * - 0.46.0, the earlier 282-run fixture: **243,192 bytes/frame**, the spans past the cache's 256
+     *   entries re-staged every frame. A first fix still allocated 36,296, from per-span sub-lists,
+     *   boxed hash keys and map-node moves.
+     * - now, the 630-run fixture: **coalesce 10,568, with upload 29,584 bytes/frame**: about 17 and
+     *   47 bytes a run. Lookups allocate nothing. What remains is the output, the staged-run list,
+     *   and `uploadDrawRuns`' list with one `DrawRun` wrapper per run.
+     */
+    @Test
+    fun aStillVectorHudFindsEverySpanWithoutAllocating() {
+        val copies = List(2) { VectorHudFixture.frame() }
+        val runs = DrawRunCoalescer.coalesce(copies[0]).size.toLong()
+        val coalesce = stillBytesPerFrame(copies, upload = false)
+        val withUpload = stillBytesPerFrame(copies, upload = true)
+        println("PERF stillVectorHud runs=$runs bytes/frame coalesce=$coalesce coalesce+upload=$withUpload")
+        // A lookup that allocated a key, a sub-list or an iterator would add 16 bytes or more per
+        // span on top of the output list's references; geometry would add kilobytes per run.
+        assertTrue(coalesce <= runs * MAX_COALESCE_BYTES_PER_RUN, "coalesce allocates ${coalesce / runs} bytes per run")
+        assertTrue(withUpload <= runs * MAX_STILL_BYTES_PER_RUN, "a still HUD allocates ${withUpload / runs} bytes per run")
+    }
+
+    private fun stillBytesPerFrame(copies: List<List<DrawCommand>>, upload: Boolean): Long {
+        val cache = RetainedDrawRunCache()
+        val pool = DynamicRunArrayPool()
+        val uploader = Noop()
+        fun frame(f: Int) {
+            val staged = DrawRunCoalescer.coalesce(copies[f % 2], retained = cache, pool = pool)
+            if (upload) uploadDrawRuns(staged, uploader)
+        }
+        repeat(WARMUP) { frame(it) }
+        var quietest = Long.MAX_VALUE
+        repeat(WINDOWS) { window ->
+            val start = allocated()
+            repeat(WINDOW) { frame(window * WINDOW + it) }
+            quietest = minOf(quietest, (allocated() - start) / WINDOW)
+        }
+        return quietest
+    }
+
     private companion object {
+        // The output list's growth, about 17 bytes a run measured, with headroom below one 16-byte
+        // allocation per span on top of it.
+        const val MAX_COALESCE_BYTES_PER_RUN = 28L
+
+        // Plus one DrawRun wrapper and a list slot per run, about 47 measured.
+        const val MAX_STILL_BYTES_PER_RUN = 72L
         const val WARMUP = 200
         const val WINDOW = 50
         const val WINDOWS = 8

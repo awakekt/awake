@@ -39,9 +39,16 @@ class RenderStatsCounter {
     private var instances = 0
     private var triangles = 0L
     private var renderPasses = 0
+    private var uiBytes = 0L
+    private var uiRuns = 0
+    private var uiTriangles = 0L
 
     /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
     var latestRenderPasses: Int = 0
+        private set
+
+    /** UI mesh writes of the last frame [publish] closed, or null before the first one. */
+    var latestUiUploads: UiUploadStats? = null
         private set
 
     /** The last frame [publish] closed, or null before the first one. */
@@ -53,6 +60,13 @@ class RenderStatsCounter {
         drawCalls += 1
         instances += instanceCount
         if (triangleList) triangles += (elementCount / TRIANGLE_VERTICES).toLong() * instanceCount
+    }
+
+    /** Counts one UI run's mesh written to the GPU: [vertexFloats] floats and [indexCount] 32-bit indices. */
+    fun recordUiUpload(vertexFloats: Int, indexCount: Int) {
+        uiBytes += (vertexFloats.toLong() + indexCount) * Float.SIZE_BYTES
+        uiRuns += 1
+        uiTriangles += indexCount / TRIANGLE_VERTICES
     }
 
     /** Counts one render pass begun. */
@@ -68,6 +82,10 @@ class RenderStatsCounter {
         triangles = 0L
         latestRenderPasses = renderPasses
         renderPasses = 0
+        latestUiUploads = UiUploadStats(uiBytes, uiRuns, uiTriangles)
+        uiBytes = 0L
+        uiRuns = 0
+        uiTriangles = 0L
     }
 
     private companion object {

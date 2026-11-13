@@ -1960,11 +1960,13 @@ public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public fun <init> ()V
 	public final fun getLatest ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public final fun getLatestRenderPasses ()I
+	public final fun getLatestUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public final fun publish (Ljava/lang/Float;)V
 	public static synthetic fun publish$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;Ljava/lang/Float;ILjava/lang/Object;)V
 	public final fun recordDraw (IIZ)V
 	public static synthetic fun recordDraw$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;IIZILjava/lang/Object;)V
 	public final fun recordPass ()V
+	public final fun recordUiUpload (II)V
 }
 
 public final class com/awakekt/awake/render/renderer/RenderViewport {
@@ -2003,6 +2005,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public fun getFrameRenderPasses ()I
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public fun getFrameUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
 	public fun getRenderScale ()F
@@ -2041,6 +2044,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public static fun getFrameRenderPasses (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public static fun getFrameUiUploads (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
@@ -2066,6 +2070,21 @@ public final class com/awakekt/awake/render/renderer/UiTargetCompositeMode : jav
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;
 	public static fun values ()[Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;
+}
+
+public final class com/awakekt/awake/render/renderer/UiUploadStats {
+	public fun <init> (JIJ)V
+	public final fun component1 ()J
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun copy (JIJ)Lcom/awakekt/awake/render/renderer/UiUploadStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/UiUploadStats;JIJILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/UiUploadStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()J
+	public final fun getRuns ()I
+	public final fun getTriangles ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/render/renderer/UniformField {

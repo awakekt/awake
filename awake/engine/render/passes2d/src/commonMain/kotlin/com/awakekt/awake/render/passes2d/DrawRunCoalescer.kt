@@ -183,7 +183,10 @@ object DrawRunCoalescer {
         targetContext: ImagePassTargetContext? = null,
         pool: DynamicRunArrayPool?,
     ): List<StagedDrawRun> {
-        pool?.beginFrame()
+        if (pool != null) {
+            pool.beginFrame()
+            retained?.beginFrame()
+        }
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
@@ -233,13 +236,12 @@ object DrawRunCoalescer {
             val first = primitives[runStart]
             index += 1
             while (index < nextBoundary && continuesSpan(first, primitives[index])) index += 1
-            val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
 
             if (first is DrawCommand.BackdropBlur) {
                 @Suppress("UNCHECKED_CAST")
                 stageBackdrops(
-                    panels = slice as List<DrawCommand.BackdropBlur>,
+                    panels = primitives.subList(runStart, index) as List<DrawCommand.BackdropBlur>,
                     startIndex = runStart,
                     blurWorks = blurWorks,
                     targetContext = effectiveContext,
@@ -260,12 +262,14 @@ object DrawRunCoalescer {
                 first !is DrawCommand.ClipPop &&
                 first !is DrawCommand.BackdropBlur
             if (cacheable) {
-                pool?.stableSpans?.countCacheableSpan()
-                retained.find(slice, maxQuadsPerRun, activePathClips, safeInteriorRect)?.let { cached ->
-                    runs.addAll(cached)
+                retained.find(primitives, runStart, index, maxQuadsPerRun, activePathClips, safeInteriorRect)?.let { cached ->
+                    // Not addAll: it copies [cached] into an array first, on every hit of every frame.
+                    for (cachedIndex in cached.indices) runs += cached[cachedIndex]
                     continue
                 }
             }
+            // Only a miss needs the span as a list; a hit above allocated none.
+            val slice = primitives.subList(runStart, index)
             val stagedRunStart = runs.size
             // A cacheable span that just missed is routed through the pool only on its later
             // misses: its first sight is built fresh and stored, so a static span can hit and skip
@@ -698,7 +702,7 @@ object DrawRunCoalescer {
 
     /** Whether a cacheable miss goes through [pool]: not on first sight, nor once it has settled. */
     private fun pooledMiss(pool: DynamicRunArrayPool, retained: RetainedDrawRunCache): Boolean =
-        !pool.firstSightSpan() && !pool.stableSpans.shouldPromote(retained.lastMissHash, retained.capacity)
+        !pool.firstSightSpan() && !pool.stableSpans.shouldPromote(retained.lastMissHash, retained.canStore())
 
     /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font and pipeline. */
     private fun continuesSpan(first: DrawCommand, next: DrawCommand): Boolean =

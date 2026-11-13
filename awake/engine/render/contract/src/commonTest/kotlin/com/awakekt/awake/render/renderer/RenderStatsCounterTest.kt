@@ -33,4 +33,18 @@ class RenderStatsCounterTest {
 
         assertEquals(RenderFrameStats(drawCalls = 0, instances = 0, triangles = 0L), counter.latest)
     }
+
+    @Test
+    fun uiUploadsAreCountedPerFrameAndAStillFrameReadsZero() {
+        val counter = RenderStatsCounter()
+        assertNull(counter.latestUiUploads, "nothing is published before the first frame")
+        counter.recordUiUpload(vertexFloats = 24, indexCount = 6)
+        counter.recordUiUpload(vertexFloats = 12, indexCount = 3)
+        counter.publish()
+        assertEquals(UiUploadStats(bytes = (24L + 6 + 12 + 3) * 4, runs = 2, triangles = 3L), counter.latestUiUploads)
+
+        counter.publish()
+
+        assertEquals(UiUploadStats(bytes = 0L, runs = 0, triangles = 0L), counter.latestUiUploads)
+    }
 }

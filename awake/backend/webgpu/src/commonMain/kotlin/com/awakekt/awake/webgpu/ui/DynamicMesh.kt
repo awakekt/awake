@@ -45,6 +45,16 @@ class DynamicMesh(
     internal var uploadCount: Int = 0
         private set
 
+    /** Vertex floats and indices written so far; an upload writes only the span that changed. */
+    internal var uploadedFloats: Long = 0L
+        private set
+    internal var uploadedInts: Long = 0L
+        private set
+
+    /** What each buffer holds, to write only the span of an upload that differs; see [UploadShadow]. */
+    private val vertexShadow = UploadShadow()
+    private val indexShadow = UploadShadow()
+
     /** Reallocations so far. Steady state is zero; see the Vulkan DynamicMesh for why. */
     var growthCount: Int = 0
         private set
@@ -103,10 +113,24 @@ class DynamicMesh(
         // Written from kept host memory (see [MeshUploadStaging]): on the web straight from a view
         // of wasm linear memory, with no `ArrayBuffer` sliced out per array; on the JVM through a
         // native buffer grown once. The retained-run skip above means a stable run writes nothing.
+        // A pooled run (forced: same arrays, new contents) writes only the span that differs from
+        // what the buffer holds: one copy and one `writeBuffer` per buffer. A retained run's new
+        // arrays are new content, written whole, and the shadow is released: only runs that keep
+        // changing pay for a CPU copy of their buffer.
         val queue = graphicsDevice.wgpuContext.device.queue
-        queue.writeMeshFloats(vertexBuffer, vertices, staging)
-        queue.writeMeshInts(indexBuffer, indices, staging)
-        uploadCount += 1
+        if (!forceUpload) {
+            vertexShadow.release()
+            indexShadow.release()
+        }
+        val vertexRange = if (forceUpload) vertexShadow.changedFloats(vertices) else UploadShadow.range(0, vertices.size)
+        val indexRange = if (forceUpload) indexShadow.changedInts(indices) else UploadShadow.range(0, indices.size)
+        val floats = UploadShadow.count(vertexRange)
+        val ints = UploadShadow.count(indexRange)
+        if (floats > 0) queue.writeMeshFloatRange(vertexBuffer, vertices, UploadShadow.first(vertexRange), floats, staging)
+        if (ints > 0) queue.writeMeshIntRange(indexBuffer, indices, UploadShadow.first(indexRange), ints, staging)
+        if (floats + ints > 0) uploadCount += 1
+        uploadedFloats += floats
+        uploadedInts += ints
         lastUploadedVertices = vertices
         lastUploadedIndices = indices
     }
@@ -131,6 +155,8 @@ class DynamicMesh(
         indexBuffer.close()
         lastUploadedVertices = null
         lastUploadedIndices = null
+        vertexShadow.invalidate()
+        indexShadow.invalidate()
         vertexBuffer = device.createBuffer(
             BufferDescriptor(
                 size = vertexBufferByteSize(maxVertices),

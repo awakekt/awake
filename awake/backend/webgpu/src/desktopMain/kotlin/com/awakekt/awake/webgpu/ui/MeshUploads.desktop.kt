@@ -19,11 +19,11 @@ internal actual fun GPUQueue.writeMeshFloatRange(buffer: GPUBuffer, data: FloatA
     writeBuffer(buffer, first.toULong() * Float.SIZE_BYTES.toULong(), host, 0uL, bytes.toULong())
 }
 
-internal actual fun GPUQueue.writeMeshInts(buffer: GPUBuffer, data: IntArray, staging: MeshUploadStaging) {
-    val bytes = data.size.toLong() * Int.SIZE_BYTES
+internal actual fun GPUQueue.writeMeshIntRange(buffer: GPUBuffer, data: IntArray, first: Int, count: Int, staging: MeshUploadStaging) {
+    val bytes = count.toLong() * Int.SIZE_BYTES
     val host = staging.hostFor(bytes)
-    MemorySegment.copy(data, 0, (host as JvmArrayBuffer).buffer, ValueLayout.JAVA_INT_UNALIGNED, 0L, data.size)
-    writeBuffer(buffer, 0uL, host, 0uL, bytes.toULong())
+    MemorySegment.copy(data, first, (host as JvmArrayBuffer).buffer, ValueLayout.JAVA_INT_UNALIGNED, 0L, count)
+    writeBuffer(buffer, first.toULong() * Int.SIZE_BYTES.toULong(), host, 0uL, bytes.toULong())
 }
 
 /** The kept host bytes, doubled when [bytes] do not fit, so a steady mesh stops allocating. */
