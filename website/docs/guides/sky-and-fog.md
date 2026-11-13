@@ -104,6 +104,16 @@ scene shows its light, sky and fog as authored; `DayCycleSystem().update(world, 
 current time without advancing it. Saving writes the authored `time` back, never the time play
 reached. See [`day_cycle`](../reference/scene-document-components.md#day_cycle) for every field.
 
+### A cubemap sky that follows the day
+
+A stop can set `skyTint`, a colour the cubemap is multiplied by, and `skyExposure`, a multiplier on
+the sky's own `exposure`. Both blend between stops like the other fields; a stop that sets neither
+leaves the cubemap as baked. To change the picture itself, list more strips under the sky's
+`panoramas`, each with the `time` it shows at, in time order. The day cycle blends the two either side
+of its time, wrapping across midnight, so a sky can go from day to evening to night. Without a
+`day_cycle` the first panorama shows. `SkyboxCubemapSystem` loads the two it needs and swaps to the
+next pair as the day moves on.
+
 !!! warning "Keep the sun's node unrotated"
     A rotated light node shines along its rotation and ignores the direction the day cycle writes.
 
@@ -119,6 +129,7 @@ reached. See [`day_cycle`](../reference/scene-document-components.md#day_cycle) 
 | `zenithColor` | color | `(0.20, 0.38, 0.68)` | Gradient colour overhead. |
 | `cubemapPath` | string | none | `Cubemap` only. The strip image, read through the app's asset source. |
 | `exposure` | number | `1.0` | `Cubemap` only. Multiplies the sampled colour. |
+| `panoramas` | list of `{ time, path }` | `[]` | `Cubemap` only. More strips by time of day, in time order; a `day_cycle` blends the two around its time. |
 
 `fog`:
 

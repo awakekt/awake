@@ -66,7 +66,9 @@ public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
 public final class com/awakekt/awake/asset/shaderpack/AslSkyboxCubemapShaderKt {
 	public static final fun getSkyboxCubemapShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkyboxCubemapUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
-	public static final fun skyboxCubemapUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;F)[F
+	public static final synthetic fun skyboxCubemapUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;F)[F
+	public static final fun skyboxCubemapUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/Vec3f;)[F
+	public static synthetic fun skyboxCubemapUniformFloats$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)[F
 	public static synthetic fun skyboxCubemapUniformFloats$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)[F
 }
 
@@ -305,8 +307,10 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxContentFeatureKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapContentFeatureKt {
-	public static final fun skyboxCubemapContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final synthetic fun skyboxCubemapContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final fun skyboxCubemapContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/SkyboxCubemapLook;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static synthetic fun skyboxCubemapContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun skyboxCubemapContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/SkyboxCubemapLook;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapFields {
@@ -314,6 +318,23 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapFields {
 	public final fun getCameraEye ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getExposure ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getInverseViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTint ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapLook {
+	public fun <init> ()V
+	public fun <init> (FFFFF)V
+	public synthetic fun <init> (FFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBlend ()F
+	public final fun getExposure ()F
+	public final fun getTintB ()F
+	public final fun getTintG ()F
+	public final fun getTintR ()F
+	public final fun setBlend (F)V
+	public final fun setExposure (F)V
+	public final fun setTintB (F)V
+	public final fun setTintG (F)V
+	public final fun setTintR (F)V
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SkyboxFields {

@@ -43,11 +43,32 @@ data class Skybox(
          *
          * @property assetPath Logical or filesystem path to the cubemap asset.
          * @property exposure Exposure multiplier applied during sampling.
+         * @property panoramas More panoramas by time of day; empty means the single [assetPath].
+         * @property tint Colour the sky is multiplied by. Play state a `day_cycle` writes, never saved.
+         * @property dayExposure Further exposure multiplier a `day_cycle` writes. Play state, never saved.
+         * @property blendFrom Index into the panoramas (or 0 for [assetPath]) shown at blend 0.
+         * @property blendTo Index of the panorama blended in, reaching it at [blend] 1.
+         * @property blend How far [blendFrom] has moved to [blendTo], from 0 to 1. Play state, never saved.
          */
         data class Cubemap(
             var assetPath: String = "",
             var exposure: Float = 1.0f,
-        ) : Mode
+            var panoramas: List<ScenePanorama> = emptyList(),
+            var tint: Color = Color(r = 1f, g = 1f, b = 1f, a = 1f),
+            var dayExposure: Float = 1.0f,
+            var blendFrom: Int = 0,
+            var blendTo: Int = 0,
+            var blend: Float = 0f,
+        ) : Mode {
+            /** The constructor as released before panoramas, kept so compiled callers still link. */
+            @Deprecated("Use the constructor with panoramas.", level = DeprecationLevel.HIDDEN)
+            constructor(assetPath: String = "", exposure: Float = 1.0f) : this(assetPath, exposure, emptyList())
+
+            /** [copy] as released before panoramas. */
+            @Deprecated("Use copy with panoramas.", level = DeprecationLevel.HIDDEN)
+            fun copy(assetPath: String = this.assetPath, exposure: Float = this.exposure): Cubemap =
+                copy(assetPath, exposure, panoramas, tint, dayExposure, blendFrom, blendTo, blend)
+        }
 
         /**
          * Uniform solid background color.

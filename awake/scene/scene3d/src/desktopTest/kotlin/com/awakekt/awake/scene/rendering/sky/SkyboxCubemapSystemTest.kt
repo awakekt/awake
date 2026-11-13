@@ -54,6 +54,27 @@ class SkyboxCubemapSystemTest {
     }
 
     @Test
+    fun panoramasLoadTheBlendedPairAndSwapWhenTheDayMovesOn() = runTest {
+        val host = RecordingHost()
+        val world = World()
+        val panoramas = listOf(ScenePanorama(0.25f, "day.png"), ScenePanorama(0.5f, "evening.png"), ScenePanorama(0.75f, "night.png"))
+        val mode = Skybox.Mode.Cubemap(panoramas = panoramas, blendFrom = 0, blendTo = 1, blend = 0.5f)
+        world.add(world.create(), Skybox(mode = mode))
+        val system = SkyboxCubemapSystem(host, this, AssetSource { Result.success(STRIP) })
+
+        frame(system, world)
+        mode.blend = 0.9f
+        frame(system, world)
+        assertEquals(1 to 0, host.attached to host.detached, "blending within a pair reloads nothing")
+
+        mode.blendFrom = 1
+        mode.blendTo = 2
+        mode.blend = 0.1f
+        frame(system, world)
+        assertEquals(2 to 1, host.attached to host.detached, "the next pair replaces the old one")
+    }
+
+    @Test
     fun aStripThatFailsToLoadAttachesNothing() = runTest {
         val host = RecordingHost()
         val world = World()

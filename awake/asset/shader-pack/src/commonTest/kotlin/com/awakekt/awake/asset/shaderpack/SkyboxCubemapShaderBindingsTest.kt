@@ -27,7 +27,7 @@ class SkyboxCubemapShaderBindingsTest {
     fun cubemapSkyboxDeclaresExpectedMaterialBindings() {
         val derived = assertNotNull(SkyboxCubemapShader.bindingsForGroup(materialGroup))
 
-        assertEquals(listOf(0, 1, 2), derived.entries.map { it.binding })
+        assertEquals(listOf(0, 1, 2, 3), derived.entries.map { it.binding })
 
         val uniformBinding = assertNotNull(derived.at(0))
         assertEquals(ResourceKind.UniformBuffer, uniformBinding.kind)
@@ -53,6 +53,9 @@ class SkyboxCubemapShaderBindingsTest {
         assertTrue(wgsl.contains("var envSampler : sampler;"))
         assertTrue(wgsl.contains("textureSample(envMap, envSampler, rayDir)"))
         assertTrue(wgsl.contains("exposure : vec4f"))
+        assertTrue(wgsl.contains("var envMapB : texture_cube<f32>;"), "the second panorama the day blends toward")
+        assertTrue(wgsl.contains("tint : vec4f"))
+        assertTrue(wgsl.contains("textureSample(envMapB, envSampler, rayDir)"))
     }
 
     @Test
@@ -62,12 +65,14 @@ class SkyboxCubemapShaderBindingsTest {
             cameraEye = Vec3f(1f, 2f, 3f),
             exposure = 1.5f,
         )
-        // 16 floats for Mat4 + 4 floats for CameraEye (Vec4) + 4 floats for Exposure (Vec4) = 24 floats
-        assertEquals(24, floats.size)
+        // 16 floats for Mat4 + 4 each for CameraEye, Exposure and Tint (Vec4) = 28 floats
+        assertEquals(28, floats.size)
         assertEquals(1f, floats[16])
         assertEquals(2f, floats[17])
         assertEquals(3f, floats[18])
         assertEquals(0f, floats[19])
         assertEquals(1.5f, floats[20])
+        assertEquals(0f, floats[21], "blend defaults to the first cubemap")
+        assertEquals(listOf(1f, 1f, 1f), floats.slice(24..26), "tint defaults to white")
     }
 }
