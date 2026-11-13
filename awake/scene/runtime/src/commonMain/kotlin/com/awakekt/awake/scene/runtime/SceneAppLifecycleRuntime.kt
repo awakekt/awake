@@ -35,6 +35,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.engine.compose.ProvideAppCoroutineScope
+import com.awakekt.awake.engine.compose.applyInsets
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.error.AppCoroutineScope
@@ -452,6 +453,7 @@ class SceneAppLifecycleRuntime internal constructor(
             // `uiHost` was constructed -- see ComposeHost.density's own doc comment for why this is
             // a live per-frame assignment rather than a constructor argument.
             uiHost.density = frame.density
+            uiHost.applyInsets(frame)
             // Converted only when it changes, which is rarely: a rotation or a bar showing.
             if (frame.safeArea !== reportedSafeArea) {
                 reportedSafeArea = frame.safeArea

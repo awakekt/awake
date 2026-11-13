@@ -17,3 +17,5 @@ A piece goes in only if all three hold:
 - `TouchLook`: the base and knob fills (`ImageFill` or a colour).
 
 The dead zone, response and aim maths is `TouchStickMath` in `awake:core:input`, shared with the canvas controls.
+
+To move a player or fire an action with them, attach `TouchStickInput` / `TouchAimInput` (`awake:project:runtime`) to an entity with the same state; they feed the actions a canvas joystick or aim button feeds. This module depends on no scene module, so the binding lives there.
