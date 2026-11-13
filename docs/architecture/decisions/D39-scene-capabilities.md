@@ -76,6 +76,21 @@ files, and adds the systems a scene that uses it runs. The contract is in the
    physics and content are parameters; a project runner's spawning and scene switching are not. The
    project runtime still builds a plan per scene, as it switches scenes, through that same function.
 
+## Host services at registration
+
+A feature gets what its host owns through one typed hand-off, `FeatureHost` (an alias of
+`SceneHostServices`, so every released signature that takes the latter is unchanged). The host adds a
+service Core does not know, such as a network link or a game's own backend, with
+`provide<T>(value)`; the project runner and the scene app's `features(..., provided = { it.provide(...) })`
+both build the host this way. A feature reads it in its `plan` factory, which runs once when the scene's
+systems are built: `host.require<T>()` refuses, naming the feature, the system and the type, when the
+host provided none, and `host.optional<T>()` returns null. The feature passes the value to its system by
+constructor. **A system never looks a dependency up during `update`**: that is why the lookup is a
+registration step and not a per-frame call, and why a missing service fails at load. Lookup is by
+`KClass`, and `core:di`'s `Container` is not a dependency of the scene or project modules; a host with one
+adapts it in a leaf module, as bootstrap does. The alias is the new name for new code; `SceneHostServices`
+is not deprecated yet because renaming a final class breaks released binaries (#1527 D2).
+
 ## Why "feature"
 
 Scene modules "bind features into the ECS scene graph: a scene schema, its binding, and the system that
@@ -94,7 +109,7 @@ neither was used.
 | Ordering a feature's systems between Core's, rather than after them | A feature needs to run before Core's frame systems |
 | Dependencies between features, by id | Two community packages need to state that one builds on the other |
 | Resolving a manifest's plugins to build dependencies | The export pipeline links a project's plugins for it. A plugin reference already names its `artifact` (`group`, `name`, `version`) and `capabilityClass` (#537), so the pipeline has what it needs to read |
-| A feature that owns a service the host provides, such as audio | A feature needs more than the renderer, input and physics world |
+| The host passing the audio player in, and the runner no longer opening one | A host needs its own player; today `runProject` opens the platform's, so defaults are unchanged |
 
 None of these changes the contract's existing members, so each can be added without breaking
 features.

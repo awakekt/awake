@@ -25,6 +25,8 @@ import com.awakekt.awake.scene.runtime.SceneSystemRole
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.requireKnownSystemNames
 import kotlinx.coroutines.CoroutineScope
+import kotlin.reflect.KClass
+import kotlin.reflect.safeCast
 
 /**
  * What a scene's systems need from the host and cannot read from the scene itself. A host that draws
@@ -80,6 +82,8 @@ class SceneHostServices private constructor(
     private val prewarmer: ((SceneNode, (Int, Int) -> Unit) -> ScenePrewarm)? = null,
     private val assetPrewarmer: ((SceneAssetReferences, (Int, Int) -> Unit) -> ScenePrewarm)? = null,
     private val role: SceneHostRole? = null,
+    internal val provided: Map<KClass<*>, Any> = emptyMap(),
+    internal val owner: String? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -109,7 +113,30 @@ class SceneHostServices private constructor(
 
     /** These services, running as [hostRole]: a game server passes [SceneHostRole.SimulationOnly]. */
     fun withHostRole(hostRole: SceneHostRole): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, hostRole)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, hostRole, provided, owner)
+
+    /**
+     * These services, with [value] provided as a [type] for features to [require] or [optional]ly read
+     * once, when they register: a network link, a game's own backend, anything Core does not know. A
+     * second value of one type replaces the first.
+     */
+    fun <T : Any> provide(type: KClass<T>, value: T): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided + (type to value), owner)
+
+    /**
+     * The [type] the host provided, or a refusal naming the feature that asked and the type, so a missing
+     * service fails when the feature registers and not in a frame. Read it in the feature's registration
+     * and pass it to its system by constructor: a system does not look a service up in `update`.
+     */
+    fun <T : Any> require(type: KClass<T>): T =
+        optional(type) ?: throw IllegalStateException(missingService(type, owner))
+
+    /** The [type] the host provided, or null when it provided none. */
+    fun <T : Any> optional(type: KClass<T>): T? = type.safeCast(provided[type])
+
+    /** These services as one feature's system [system] of [feature] reads them, so a refusal names both. */
+    internal fun forSystem(feature: String, system: String): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, "feature '$feature', system '$system'")
 
     /** Whether [spawn] works: true once the host gave a spawner with [withSpawner], as `runProject` does. */
     val canSpawn: Boolean get() = spawner != null
@@ -150,30 +177,30 @@ class SceneHostServices private constructor(
 
     /** These services, with [prewarm] preparing nodes through [prewarmer]. */
     fun withPrewarmer(prewarmer: (SceneNode, (Int, Int) -> Unit) -> ScenePrewarm): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /** These services, with [prewarm] preparing nodes through [prewarmer] and batches through [assetPrewarmer]. */
     fun withPrewarmer(
         prewarmer: (SceneNode, (Int, Int) -> Unit) -> ScenePrewarm,
         assetPrewarmer: (SceneAssetReferences, (Int, Int) -> Unit) -> ScenePrewarm,
     ): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
     fun withAudio(audio: AudioPlayer): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
     fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /** These services, with [sceneSwitchStatus] reporting what the [sceneSwitch] is doing, as `runProject` does. */
     fun withSceneSwitchStatus(sceneSwitchStatus: SceneSwitchStatus): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /**
      * These services, with [fixedStep] reporting the fixed-step loop the host steps the systems in, as
@@ -181,7 +208,7 @@ class SceneHostServices private constructor(
      * from its own [com.awakekt.awake.core.host.FixedTimestepLoop] passes that loop.
      */
     fun withFixedStep(fixedStep: FixedStepReport): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, coroutineScope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /**
      * These services, with the scene's systems running their background work in children of [scope],
@@ -189,7 +216,7 @@ class SceneHostServices private constructor(
      * its session's scope, or another it cancels when the scene goes away.
      */
     fun withCoroutineScope(scope: CoroutineScope): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope, prewarmer, assetPrewarmer, role)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch, sceneSwitchStatus, fixedStep, scope, prewarmer, assetPrewarmer, role, provided, owner)
 
     /**
      * A child of [coroutineScope] for one system's background work, which the system cancels when it
@@ -335,7 +362,7 @@ internal fun sceneSystemSetFor(
     val dropped = disabled + hostRuns
     val kept = specs.filter { it.name !in dropped && services.hostRole.runs(it.role) }
     kept.forEach { spec ->
-        val system = releasing.keep(spec.create(services))
+        val system = releasing.keep(spec.build(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system
             SceneSystemPhase.PreAnimation -> preAnimation += system
@@ -353,7 +380,12 @@ internal class SceneSystemSpec(
     val phase: SceneSystemPhase,
     val role: SceneSystemRole,
     val create: (SceneHostServices) -> System,
-)
+    /** The id of the feature that planned it, for a refusal. */
+    val feature: String = "",
+) {
+    /** Builds the system once, from [services] as this system's feature reads them. */
+    fun build(services: SceneHostServices): System = create(services.forSystem(feature, name))
+}
 
 /**
  * The decision, as data: which systems [scene] needs, in the order they run, from Core's features
@@ -379,7 +411,10 @@ internal fun sceneSystemSpecsOf(
     installed: List<SceneFeature>,
 ): List<SceneSystemSpec> {
     val plan = SceneSystemPlan(hasPhysics, hasRenderer)
-    installed.forEach { it.plan(scene, plan) }
+    installed.forEach {
+        plan.feature = it.id
+        it.plan(scene, plan)
+    }
     return plan.specs
 }
 

@@ -72,6 +72,7 @@ fun SceneDocument.uses(type: KClass<out SceneComponent>): Boolean = nodes.any { 
 class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRenderer: Boolean = true) {
     internal val specs = mutableListOf<SceneSystemSpec>()
     private var physicsSystem: PhysicsSystem? = null
+    internal var feature: String = ""
 
     /**
      * The one physics step this plan's systems share, for a feature whose systems read the step's
@@ -125,7 +126,7 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
 
     private fun add(name: String, phase: SceneSystemPhase, role: SceneSystemRole, create: (SceneHostServices) -> System) {
         require(specs.none { it.name == name }) { "Two systems are named '$name'; each system in a scene needs its own name" }
-        specs += SceneSystemSpec(name, phase, role, create)
+        specs += SceneSystemSpec(name, phase, role, create, feature)
     }
 
     /** The names of Core's systems a game plans its own around. */

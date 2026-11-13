@@ -81,6 +81,7 @@ object CoreFeatures {
  * @param hasRenderer Whether the app draws; false plans no system that needs a renderer.
  * @param hostRole What the app runs: [SceneHostRole.SimulationOnly] leaves out the presentation systems.
  * @param disabledSystems Names to leave out; an unknown one is refused, listing the known names.
+ * @param provided Adds the host's own services with [SceneHostServices.provide], as a project's host does.
  */
 @Suppress("LongParameterList")
 fun SceneAppDsl.features(
@@ -91,6 +92,7 @@ fun SceneAppDsl.features(
     hasRenderer: Boolean = true,
     hostRole: SceneHostRole = SceneHostRole.Full,
     disabledSystems: Set<String> = emptySet(),
+    provided: (SceneHostServices) -> SceneHostServices = { it },
 ) {
     val installed = distinctFeatures(features)
     val specs = sceneSystemSpecsOf(scene, physics != null, hasRenderer, installed)
@@ -101,9 +103,9 @@ fun SceneAppDsl.features(
         system(spec.name, spec.phase, spec.role) {
             val host = services ?: run {
                 val base = if (hasRenderer) SceneHostServices({ gameplayInput() }, renderer, physics, content) else SceneHostServices.headless({ gameplayInput() }, physics, content)
-                base.withHostRole(hostRole).withFixedStep(fixedStep).withCoroutineScope(session.coroutineScope).also { services = it }
+                provided(base.withHostRole(hostRole).withFixedStep(fixedStep).withCoroutineScope(session.coroutineScope)).also { services = it }
             }
-            spec.create(host).also { if (it is AutoCloseable) closing += it }
+            spec.build(host).also { if (it is AutoCloseable) closing += it }
         }
     }
     onDispose {
