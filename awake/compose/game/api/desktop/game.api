@@ -29,6 +29,7 @@ public final class com/awakekt/awake/compose/game/TouchAimKt {
 
 public final class com/awakekt/awake/compose/game/TouchAimState {
 	public fun <init> ()V
+	public final fun consumeRelease ()Z
 	public final fun getX ()F
 	public final fun getY ()F
 	public final fun isAiming ()Z
