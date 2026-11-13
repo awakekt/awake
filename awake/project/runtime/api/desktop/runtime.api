@@ -42,8 +42,8 @@ public final class com/awakekt/awake/project/runtime/CoreFeatures {
 }
 
 public final class com/awakekt/awake/project/runtime/CoreFeaturesKt {
-	public static final fun features (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;)V
-	public static synthetic fun features$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;ILjava/lang/Object;)V
+	public static final fun features (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun features$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/List;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ZLcom/awakekt/awake/scene/runtime/SceneHostRole;Ljava/util/Set;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/project/runtime/CoreSceneContent {
@@ -304,10 +304,13 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
 	public final fun getSceneSwitch ()Lcom/awakekt/awake/project/runtime/SceneSwitch;
 	public final fun getSceneSwitchStatus ()Lcom/awakekt/awake/project/runtime/SceneSwitchStatus;
+	public final fun optional (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun prewarm (Lcom/awakekt/awake/scene/document/SceneNode;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
 	public final fun prewarm (Lcom/awakekt/awake/scene/runtime/SceneAssetReferences;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
 	public static synthetic fun prewarm$default (Lcom/awakekt/awake/project/runtime/SceneHostServices;Lcom/awakekt/awake/scene/document/SceneNode;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
 	public static synthetic fun prewarm$default (Lcom/awakekt/awake/project/runtime/SceneHostServices;Lcom/awakekt/awake/scene/runtime/SceneAssetReferences;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/ScenePrewarm;
+	public final fun provide (Lkotlin/reflect/KClass;Ljava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public final fun require (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun spawn (Lcom/awakekt/awake/scene/document/SceneNode;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 	public final fun withAudio (Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withCoroutineScope (Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
