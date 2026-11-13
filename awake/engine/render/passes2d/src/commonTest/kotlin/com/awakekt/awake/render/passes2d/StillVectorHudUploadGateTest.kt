@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.render.passes2d
 
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -20,7 +19,8 @@ import kotlin.test.assertTrue
  *
  * On main at 0.46.0 the fixture's 282 runs upload 2,397,148 bytes on the first frame, then **26 runs,
  * 3,295 triangles and 251,804 bytes on every still frame after it**: the spans past the retained
- * cache's fixed 256 entries evict each other and are re-staged and re-uploaded forever.
+ * cache's fixed 256 entries evict each other and are re-staged and re-uploaded forever. Since the
+ * cache keeps every span of the frame being drawn, a still frame costs 0.
  */
 class StillVectorHudUploadGateTest {
 
@@ -78,7 +78,6 @@ class StillVectorHudUploadGateTest {
         else -> null
     }
 
-    @Ignore // Fails on 0.46.0 with the figures above; the retained-span fix for #1545 enables it.
     @Test
     fun aStillVectorHudReStagesAndUploadsNothingAfterTheFirstFrame() {
         val costs = stillFrames(FRAMES)

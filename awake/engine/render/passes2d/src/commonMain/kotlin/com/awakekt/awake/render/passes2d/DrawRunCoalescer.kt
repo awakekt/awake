@@ -183,7 +183,10 @@ object DrawRunCoalescer {
         targetContext: ImagePassTargetContext? = null,
         pool: DynamicRunArrayPool?,
     ): List<StagedDrawRun> {
-        pool?.beginFrame()
+        if (pool != null) {
+            pool.beginFrame()
+            retained?.beginFrame()
+        }
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
@@ -262,7 +265,8 @@ object DrawRunCoalescer {
             if (cacheable) {
                 pool?.stableSpans?.countCacheableSpan()
                 retained.find(slice, maxQuadsPerRun, activePathClips, safeInteriorRect)?.let { cached ->
-                    runs.addAll(cached)
+                    // Not addAll: it copies [cached] into an array first, on every hit of every frame.
+                    for (cachedIndex in cached.indices) runs += cached[cachedIndex]
                     continue
                 }
             }
@@ -698,7 +702,7 @@ object DrawRunCoalescer {
 
     /** Whether a cacheable miss goes through [pool]: not on first sight, nor once it has settled. */
     private fun pooledMiss(pool: DynamicRunArrayPool, retained: RetainedDrawRunCache): Boolean =
-        !pool.firstSightSpan() && !pool.stableSpans.shouldPromote(retained.lastMissHash, retained.capacity)
+        !pool.firstSightSpan() && !pool.stableSpans.shouldPromote(retained.lastMissHash, retained.maxCapacity)
 
     /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font and pipeline. */
     private fun continuesSpan(first: DrawCommand, next: DrawCommand): Boolean =

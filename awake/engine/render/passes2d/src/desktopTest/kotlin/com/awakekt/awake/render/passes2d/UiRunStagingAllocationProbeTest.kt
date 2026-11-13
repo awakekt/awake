@@ -131,7 +131,37 @@ class UiRunStagingAllocationProbeTest {
         )
     }
 
+    /**
+     * #1545: a still vector-drawn HUD, rebuilt as fresh but equal commands each frame, stages for
+     * the cost of the cache lookups alone. Two pre-built copies alternate, so the measured loop
+     * allocates only in staging.
+     *
+     * Measured 2026-11-13 on this host: **before=243,192 bytes/frame** on 0.46.0, where the spans
+     * past the cache's 256 entries were re-staged every frame; **after=36,296 bytes/frame**, the
+     * per-span lookup of about 340 spans (sub-list views, boxed hash keys, path-list equality), no
+     * geometry. Negative control: the 0.46.0 cache measures the before figure, over the bound.
+     */
+    @Test
+    fun aStillVectorHudStagesWithoutAllocatingGeometry() {
+        val copies = List(2) { VectorHudFixture.frame() }
+        val cache = RetainedDrawRunCache()
+        val pool = DynamicRunArrayPool()
+        val uploader = Noop()
+        fun frame(f: Int) = uploadDrawRuns(DrawRunCoalescer.coalesce(copies[f % 2], retained = cache, pool = pool), uploader)
+        repeat(WARMUP) { frame(it) }
+        var quietest = Long.MAX_VALUE
+        repeat(WINDOWS) { window ->
+            val start = allocated()
+            repeat(WINDOW) { frame(window * WINDOW + it) }
+            quietest = minOf(quietest, (allocated() - start) / WINDOW)
+        }
+        println("PERF stillVectorHud staging bytes/frame=$quietest")
+        assertTrue(quietest < MAX_STILL_HUD_BYTES_PER_FRAME, "a still HUD must not re-stage geometry: $quietest bytes/frame")
+    }
+
     private companion object {
+        // Above the ~36 KB of lookups measured, far below the ~243 KB of re-staging removed.
+        const val MAX_STILL_HUD_BYTES_PER_FRAME = 65_536L
         const val WARMUP = 200
         const val WINDOW = 50
         const val WINDOWS = 8

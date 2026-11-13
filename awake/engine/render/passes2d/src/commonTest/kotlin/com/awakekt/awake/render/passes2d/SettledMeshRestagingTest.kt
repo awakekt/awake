@@ -71,8 +71,11 @@ class SettledMeshRestagingTest {
         }
     }
 
-    private fun measure(frames: Int, sceneAt: (frame: Int) -> List<DrawCommand>): Window {
-        val cache = RetainedDrawRunCache()
+    private fun measure(
+        frames: Int,
+        cache: RetainedDrawRunCache = RetainedDrawRunCache(),
+        sceneAt: (frame: Int) -> List<DrawCommand>,
+    ): Window {
         val pool = DynamicRunArrayPool()
         val uploader = CountingUploader()
         var restaged = 0
@@ -118,17 +121,18 @@ class SettledMeshRestagingTest {
     }
 
     /**
-     * More cacheable spans than the cache holds evict each other before they are reached again, so
-     * promoting them would store, and allocate, every frame without ever hitting. They stay pooled.
+     * More live spans than the cache's [RetainedDrawRunCache.maxCapacity] evict each other before
+     * they are reached again, so promoting them would store, and allocate, every frame without ever
+     * hitting. They stay pooled. A cache of capacity 4 holds at most 256 live spans.
      *
      * Negative control: dropping the capacity check from [StableSpanTracker.shouldPromote] measured
-     * 396 promotions over the 10-frame window here (300 plates), a store and its allocation for
-     * about 40 spans every frame, none of which ever hit.
+     * promotions every frame of the window here, none of which ever hit.
      */
     @Test
     fun spansBeyondTheCacheCapacityAreNotPromotedEveryFrame() {
-        val plates = RetainedDrawRunCache.DEFAULT_CAPACITY + OVER_CAPACITY
-        val window = measure(MOVING_FRAMES + SETTLE_FRAMES + WINDOW) { frame ->
+        val cache = RetainedDrawRunCache(capacity = 4)
+        val plates = cache.maxCapacity + OVER_CAPACITY
+        val window = measure(MOVING_FRAMES + SETTLE_FRAMES + WINDOW, cache) { frame ->
             scene(plates) { minOf(frame, MOVING_FRAMES).toFloat() }
         }
         assertEquals(0, window.promotions, "a thrashing cache must not be fed a store per span per frame")
