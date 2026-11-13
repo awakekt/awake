@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "environment",
+      "components": [
+        {
+          "component": "tone_mapping",
+          "exposure": 1.5
+        }
+      ]
+    }
+  ]
+}
