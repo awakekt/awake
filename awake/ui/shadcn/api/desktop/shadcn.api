@@ -1028,6 +1028,15 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnSkeletonKt {
 	public static synthetic fun ShadcnSkeleton$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnSkinKeys {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/shadcn/components/ShadcnSkinKeys;
+	public final fun getAll ()Ljava/util/List;
+	public final fun getButtonFace ()Lcom/awakekt/awake/compose/foundation/skin/StatesKey;
+	public final fun getCardFrame ()Lcom/awakekt/awake/compose/foundation/skin/FrameKey;
+	public final fun getProgressFill ()Lcom/awakekt/awake/compose/foundation/skin/BarKey;
+	public final fun getProgressTrack ()Lcom/awakekt/awake/compose/foundation/skin/FrameKey;
+}
+
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnSliderKt {
 	public static final fun ShadcnRangeSlider (Lcom/awakekt/awake/compose/runtime/Composer;FFLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun ShadcnRangeSlider$default (Lcom/awakekt/awake/compose/runtime/Composer;FFLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V

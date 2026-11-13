@@ -35,7 +35,7 @@ internal class RuntimeCanvasInputSystem(input: () -> GameplayInput) : System {
 
 /** Local UI buttons with no named game action must not create keyboard/movement defaults. */
 private fun World.needsCanvasActions(): Boolean =
-    family<CanvasLookAreaWidget>().size > 0 || hasStickActions() || hasButtonActions()
+    family<CanvasLookAreaWidget>().size > 0 || hasStickActions() || hasButtonActions() || hasTouchControls()
 
 private fun World.hasStickActions(): Boolean {
     val sticks = family<CanvasJoystickWidget>()
@@ -59,13 +59,20 @@ private fun CanvasButtonWidget.namesAction(): Boolean {
     return !settings?.longPressAction.isNullOrEmpty() || !settings?.releaseAction.isNullOrEmpty() || !settings?.aim?.aimAction.isNullOrEmpty()
 }
 
-/** Keeps idle scenes out of the canvas action reader, including its compatibility lookups. */
+/**
+ * Keeps idle scenes out of the canvas action reader, including its compatibility lookups, then adds
+ * the Compose touch controls ([TouchStickInput], [TouchAimInput]), which are not canvas elements.
+ */
 internal class RuntimeCanvasActionsSystem : System {
     private val actions = CanvasActionSystem()
+    private val touch = TouchControlInputSystem()
 
     override fun update(world: World, delta: Float) {
-        if (world.family<CanvasElement>().size == 0 && world.family<CanvasRect>().size == 0) return
-        // The action system syncs the canvas itself, once, before it reads a control.
-        actions.update(world, delta)
+        if (world.family<CanvasElement>().size > 0 || world.family<CanvasRect>().size > 0) {
+            // The action system syncs the canvas itself, once, before it reads a control.
+            actions.update(world, delta)
+        }
+        // After the canvas controls, so a deflected Compose stick wins over a canvas joystick beside it.
+        touch.update(world, delta)
     }
 }

@@ -751,9 +751,11 @@ public final class com/awakekt/awake/compose/foundation/skin/SheetRect {
 public final class com/awakekt/awake/compose/foundation/skin/Skin {
 	public final fun contains (Lcom/awakekt/awake/compose/foundation/skin/PartKey;)Z
 	public final fun getKeys ()Ljava/util/Set;
+	public final fun getPixelsPerDp ()F
 	public final fun missing (Ljava/util/Collection;)Ljava/util/List;
 	public final fun requireParts (Ljava/util/Collection;)V
 	public final fun resolve (Lcom/awakekt/awake/compose/foundation/skin/PartKey;)Ljava/lang/Object;
+	public final fun sliceInsets (Lcom/awakekt/awake/compose/foundation/skin/PartKey;)Lcom/awakekt/awake/compose/foundation/sheet/SliceInsets;
 }
 
 public final class com/awakekt/awake/compose/foundation/skin/SkinBuilder {

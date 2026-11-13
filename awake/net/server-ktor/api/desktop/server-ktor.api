@@ -217,6 +217,7 @@ public final class com/awakekt/awake/net/server/ktor/GameServerHostPluginKt {
 
 public final class com/awakekt/awake/net/server/ktor/GameTransportConfig {
 	public fun <init> ()V
+	public final fun getBatching ()Z
 	public final fun getInboxCapacity ()I
 	public final fun getMaxFrameSize ()J
 	public final fun getOutboundCapacity ()I
@@ -225,6 +226,7 @@ public final class com/awakekt/awake/net/server/ktor/GameTransportConfig {
 	public final fun getPort ()I
 	public final fun getPrincipal ()Lkotlin/jvm/functions/Function1;
 	public final fun getTimeout-UwyO8pc ()J
+	public final fun setBatching (Z)V
 	public final fun setInboxCapacity (I)V
 	public final fun setMaxFrameSize (J)V
 	public final fun setOutboundCapacity (I)V

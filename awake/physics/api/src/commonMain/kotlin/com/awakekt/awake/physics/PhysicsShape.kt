@@ -23,14 +23,24 @@ sealed interface PhysicsShape
  *
  * @property halfExtents Half-extent dimensions along each coordinate axis in meters.
  */
-data class BoxShape(val halfExtents: Vec3f) : PhysicsShape
+data class BoxShape(val halfExtents: Vec3f) : PhysicsShape {
+    init {
+        // A flat or non-finite box trips Jolt's own assertion, or worse a NaN, on its first query.
+        require(halfExtents.x.isFinite() && halfExtents.y.isFinite() && halfExtents.z.isFinite()) { "halfExtents must be finite: $halfExtents" }
+        require(halfExtents.x > 0f && halfExtents.y > 0f && halfExtents.z > 0f) { "halfExtents must be positive: $halfExtents" }
+    }
+}
 
 /**
  * The cheapest shape to collide and the only one with no orientation to get wrong.
  *
  * @property radius The radius of the sphere in meters.
  */
-data class SphereShape(val radius: Float) : PhysicsShape
+data class SphereShape(val radius: Float) : PhysicsShape {
+    init {
+        require(radius.isFinite() && radius > 0f) { "radius must be positive: $radius" }
+    }
+}
 
 /**
  * An upright capsule: a cylinder of `2 * [halfHeight]` topped and tailed by hemispheres of

@@ -9,6 +9,9 @@ import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.focus.FocusRequester
 import com.awakekt.awake.compose.ui.focus.focusRequester
@@ -92,7 +95,8 @@ class BasicTextFieldDisabledTest {
     @Test
     fun disablingAFocusedFieldDropsFocusAndPreservesCallerBufferAcrossReEnable() {
         val state = TextFieldState()
-        var enabled = true
+        // State, not a plain var: a host that skips unchanged passes only sees reads it can track.
+        var enabled by mutableStateOf(true)
         val host = ComposeHost()
         val content: context(Composer)
         () -> Unit = {

@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.net.server.ktor
 
+import com.awakekt.awake.net.BatchFrame
+import com.awakekt.awake.net.BatchNegotiated
 import com.awakekt.awake.net.DeliveryChannel
 import com.awakekt.awake.net.InboundDropMetrics
 import com.awakekt.awake.net.SessionCloseReason
@@ -99,6 +101,16 @@ class GameTransportConfig {
      * query parameters here. Throwing refuses the connection.
      */
     var principal: (ApplicationCall) -> String? = { null }
+
+    /**
+     * Whether a client may ask for batched frames by connecting with
+     * `?awake-batch=1` ([BatchFrame.NEGOTIATION_PARAMETER]) (default: `false`).
+     *
+     * Off, or for a client that does not ask, nothing changes: no frame is ever a batch. On, a
+     * session whose client asked reports [BatchNegotiated.clientAcceptsBatches], which a
+     * `BatchedSession` reads to batch a tick's messages into one frame.
+     */
+    var batching: Boolean = false
 }
 
 /**
@@ -116,7 +128,11 @@ class KtorGameTransport internal constructor(
 
     override fun sessions(): ReceiveChannel<TransportSession> = accepted
 
-    internal suspend fun onConnect(socket: WebSocketSession, principal: String? = null) {
+    internal suspend fun onConnect(
+        socket: WebSocketSession,
+        principal: String? = null,
+        batched: Boolean = false,
+    ) {
         val id = SessionId(nextSessionId.getAndIncrement())
         val session = KtorTransportSession(
             id = id,
@@ -125,6 +141,7 @@ class KtorGameTransport internal constructor(
             inboxCapacity = config.inboxCapacity,
             outboundCapacity = config.outboundCapacity,
             maxFrameSize = config.maxFrameSize,
+            clientAcceptsBatches = batched && config.batching,
         )
         accepted.send(session)
         session.pump()
@@ -180,7 +197,8 @@ val GameTransport: ApplicationPlugin<GameTransportConfig> =
                 if (this.maxFrameSize != maxFrame) this.maxFrameSize = maxFrame
                 if (this.timeoutMillis != timeoutMs) this.timeoutMillis = timeoutMs
                 if (pingIntervalMillis != pingMs) pingIntervalMillis = pingMs
-                transport.onConnect(this, cfg.principal(call))
+                val asked = call.request.queryParameters[BatchFrame.NEGOTIATION_PARAMETER] == BatchFrame.NEGOTIATION_VALUE
+                transport.onConnect(this, cfg.principal(call), asked)
             }
         }
 
@@ -213,8 +231,10 @@ internal class KtorTransportSession(
     writerDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val closeTimeout: Duration = 1.seconds,
     private val logger: Logger = transportLogger,
+    override val clientAcceptsBatches: Boolean = false,
 ) : TransportSession,
-    InboundDropMetrics {
+    InboundDropMetrics,
+    BatchNegotiated {
 
     private val discardedInbound = AtomicLong(0)
     override val droppedInbound: Long get() = discardedInbound.get()
