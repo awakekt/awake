@@ -30,17 +30,9 @@ import kotlin.math.cos
 import kotlin.math.sqrt
 
 /**
- * How the moon looks this frame, read every frame so a scene can change it without reloading.
- *
- * @property moonPhase 0 is a new moon, 0.25 a first quarter lit on the right, 0.5 a full moon (the
- *   whole disc, as the procedural sky draws it) and 0.75 a last quarter lit on the left; 1 wraps to new.
- */
-class CelestialLook(var moonPhase: Float = FULL_MOON)
-
-/**
  * The sun and moon drawn over the sky behind them, on any sky: a gradient, a cubemap or a flat colour.
  *
- * The sun is where the scene light comes from and the moon opposite it, as in the procedural sky.
+ * The sun is where the day cycle's sun is (or the scene light, without a day cycle) and the moon opposite it.
  * A body without a texture is the procedural sky's own disc. It draws before geometry and after
  * the features attached before it, so attach it after the sky it sits over.
  *
@@ -48,18 +40,20 @@ class CelestialLook(var moonPhase: Float = FULL_MOON)
  * @param moonTexture The moon's image, as [sunTexture]; the phase cuts it.
  * @param look The moon's phase, read every frame.
  * @param shaders The shader set to draw it with.
+ * @param additive Add the bodies to the sky rather than covering it.
  */
 fun celestialContentFeature(
     sunTexture: TextureAsset? = null,
     moonTexture: TextureAsset? = null,
     look: CelestialLook = CelestialLook(),
     shaders: ShaderSet = PackShaderSets.Celestial,
+    additive: Boolean = false,
 ): ContentFeatureSource = ContentFeatureSource { backend ->
     ContentFeature(
         name = "celestial",
         spec = shaders.stagesFor(backend).spec(
             vertexFormat = VertexFormat.None,
-            variant = PipelineVariant.BackgroundBlended,
+            variant = if (additive) PipelineVariant.BackgroundAdditive else PipelineVariant.BackgroundBlended,
             uniforms = CelestialUniformLayout,
         ),
         textures = mapOf(SUN_BINDING to (sunTexture ?: BLANK), MOON_BINDING to (moonTexture ?: BLANK)),
@@ -86,7 +80,7 @@ private class CelestialRenderFeature(
     override fun recordCommands(context: RenderFrameContext): Unit = with(context) {
         if (!environment.showSky) return
         val inverse = viewProjection.inverse() ?: return
-        writeSunDirection(sun)
+        if (look.followsDirection) sun.set(look.sunDirection.x, look.sunDirection.y, look.sunDirection.z) else writeSunDirection(sun)
         val length = sqrt(sun.x * sun.x + sun.y * sun.y + sun.z * sun.z)
         if (length < MIN_LENGTH) return
         sun.set(sun.x / length, sun.y / length, sun.z / length)
@@ -106,7 +100,8 @@ private class CelestialRenderFeature(
             put(CelestialFields.MoonUp, moonUp)
             put(CelestialFields.SunColor, SUN_DISC_COLOR)
             put(CelestialFields.MoonColor, MOON_DISC_COLOR)
-            put(CelestialFields.Params, cos(angle), if (phase < FULL_MOON) 1f else -1f, if (sunTextured) 1f else 0f, if (moonTextured) 1f else 0f)
+            put(CelestialFields.Visibility, look.sunVisibility, look.moonVisibility, 0f, 0f)
+            put(CelestialFields.Params, cos(angle), if (phase < CelestialLook.FULL_MOON) 1f else -1f, if (sunTextured) 1f else 0f, if (moonTextured) 1f else 0f)
         }
         shared.recordCommands(recorder, pipeline, uniforms.binding(frameIndex))
     }
@@ -137,7 +132,6 @@ private fun axes(direction: Vec3f, right: Vec3f, up: Vec3f) {
 /** Where [CelestialShader] declares the sun's and moon's textures. */
 private const val SUN_BINDING = 1
 private const val MOON_BINDING = 2
-private const val FULL_MOON = 0.5f
 private const val MIN_LENGTH = 1e-4f
 private const val POLE = 0.99f
 private const val TURN = (2.0 * PI).toFloat()

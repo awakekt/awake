@@ -44,6 +44,42 @@ data class GpuEnvironmentState(
      */
     val skyBodies: Boolean = true,
 ) {
+    /** The constructor as released before [skyBodies], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with skyBodies.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        showSky: Boolean = false,
+        horizonColor: Color = Color.Black,
+        zenithColor: Color = Color.Black,
+        fogDensity: Float = 0f,
+        fogColor: Color = Color.Black,
+        shadowsEnabled: Boolean = true,
+        debugView: GpuDebugView = GpuDebugView.Off,
+        exposure: Float = 1f,
+        contentFeatures: Boolean = true,
+        clearColor: Color? = null,
+    ) : this(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
+        clearColor, true,
+    )
+
+    /** [copy] as released before [skyBodies]. */
+    @Deprecated("Use copy with skyBodies.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        showSky: Boolean = this.showSky,
+        horizonColor: Color = this.horizonColor,
+        zenithColor: Color = this.zenithColor,
+        fogDensity: Float = this.fogDensity,
+        fogColor: Color = this.fogColor,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        debugView: GpuDebugView = this.debugView,
+        exposure: Float = this.exposure,
+        contentFeatures: Boolean = this.contentFeatures,
+        clearColor: Color? = this.clearColor,
+    ): GpuEnvironmentState = copy(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
+        clearColor, skyBodies,
+    )
+
     /** The colour this pass clears to: [clearColor] when it sets one, else [default]. */
     fun clearColorOr(default: Color): Color = clearColor ?: default
 

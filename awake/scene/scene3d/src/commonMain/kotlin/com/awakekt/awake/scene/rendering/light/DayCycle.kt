@@ -85,12 +85,22 @@ private fun stopIssues(path: String, stops: List<SceneDayStop>): List<SceneValid
         if (skyExposure != null && !(skyExposure.isFinite() && skyExposure >= 0f)) {
             add(SceneValidationIssue(path, "day_cycle stop skyExposure must be finite and at least 0; was $skyExposure"))
         }
+        addAll(visibilityIssues(path, stop))
         val ambient = stop.ambient
         if (ambient != null && !(ambient > 0f && ambient <= 1f)) {
             add(SceneValidationIssue(path, "day_cycle stop ambient must be above 0 and at most 1; was $ambient"))
         }
     }
 }
+
+private fun visibilityIssues(path: String, stop: SceneDayStop): List<SceneValidationIssue> =
+    listOf("sunVisibility" to stop.sunVisibility, "moonVisibility" to stop.moonVisibility).mapNotNull { (name, value) ->
+        if (value != null && !(value >= 0f && value <= 1f)) {
+            SceneValidationIssue(path, "day_cycle stop $name must be from 0 to 1; was $value")
+        } else {
+            null
+        }
+    }
 
 /**
  * How the scene looks at [time] of day. Every field is optional: between the stops that set a
@@ -106,6 +116,8 @@ private fun stopIssues(path: String, stops: List<SceneDayStop>): List<SceneValid
  * @property fogColor The `fog` colour.
  * @property skyTint The colour a cubemap `skybox` is multiplied by; white leaves it as baked.
  * @property skyExposure A multiplier on a cubemap `skybox`'s exposure, 0 or more; 1 leaves it as authored.
+ * @property sunVisibility How visible the sky's sun is, 0 hidden to 1 shown: a window of the day.
+ * @property moonVisibility How visible the sky's moon is, 0 hidden to 1 shown.
  */
 @Serializable
 data class SceneDayStop(
@@ -118,6 +130,8 @@ data class SceneDayStop(
     val fogColor: SceneColor? = null,
     val skyTint: SceneColor? = null,
     val skyExposure: Float? = null,
+    val sunVisibility: Float? = null,
+    val moonVisibility: Float? = null,
 ) {
     /** The constructor as released before the sky fields, kept so compiled callers still link. */
     @Deprecated("Use the constructor with the sky fields.", level = DeprecationLevel.HIDDEN)
@@ -129,7 +143,7 @@ data class SceneDayStop(
         lightIntensity: Float? = null,
         ambient: Float? = null,
         fogColor: SceneColor? = null,
-    ) : this(time, horizonColor, zenithColor, lightColor, lightIntensity, ambient, fogColor, null, null)
+    ) : this(time, horizonColor, zenithColor, lightColor, lightIntensity, ambient, fogColor, null, null, null, null)
 
     /** [copy] as released before the sky fields. */
     @Deprecated("Use copy with the sky fields.", level = DeprecationLevel.HIDDEN)
@@ -141,7 +155,7 @@ data class SceneDayStop(
         lightIntensity: Float? = this.lightIntensity,
         ambient: Float? = this.ambient,
         fogColor: SceneColor? = this.fogColor,
-    ): SceneDayStop = copy(time, horizonColor, zenithColor, lightColor, lightIntensity, ambient, fogColor, skyTint, skyExposure)
+    ): SceneDayStop = copy(time, horizonColor, zenithColor, lightColor, lightIntensity, ambient, fogColor, skyTint, skyExposure, sunVisibility, moonVisibility)
 }
 
 /**
@@ -151,6 +165,19 @@ data class SceneDayStop(
 class DayCycle(val authored: SceneDayCycle) {
     /** The time of day, as [SceneDayCycle.time]. Set it to jump to another time; the system wraps it. */
     var time: Float = authored.time
+
+    /**
+     * The direction toward the sun along the day's path at [time], written by [DayCycleSystem] whatever
+     * the light node does: a rotated light node shines along its rotation, but the sky's sun and moon
+     * still follow the time of day.
+     */
+    val sunDirection: Vec3f = Vec3f(0f, 1f, 0f)
+
+    /** How visible the sky's sun is, 0 to 1, from the stops' `sunVisibility`; 1 when none sets it. */
+    var sunVisibility: Float = 1f
+
+    /** How visible the sky's moon is, 0 to 1, from the stops' `moonVisibility`; 1 when none sets it. */
+    var moonVisibility: Float = 1f
 }
 
 /** Binding definition connecting [SceneDayCycle] descriptors to ECS [DayCycle] components. */
@@ -195,6 +222,7 @@ class DayCycleSystem : System {
     private val zenith = StopSpan { it.zenithColor }
     private val fogColor = StopSpan { it.fogColor }
     private val cubemapSky = CubemapSkySpans()
+    private val bodies = BodyVisibilitySpans()
     private var families: Families? = null
 
     override fun update(world: World, delta: Float) {
@@ -203,7 +231,9 @@ class DayCycleSystem : System {
             val day = cycle.authored
             if (day.dayLengthSeconds > 0f) cycle.time += delta / day.dayLengthSeconds
             cycle.time = cycle.time.mod(1f)
-            sunDirection(cycle.time, day.sunriseAzimuthDegrees, day.noonElevationDegrees, light.direction)
+            sunDirection(cycle.time, day.sunriseAzimuthDegrees, day.noonElevationDegrees, cycle.sunDirection)
+            light.direction.set(cycle.sunDirection.x, cycle.sunDirection.y, cycle.sunDirection.z)
+            bodies.apply(cycle, day.stops, cycle.time)
             if (day.stops.isNotEmpty()) applyStops(families, day.stops, cycle.time, light)
             val sky = families.skies.takeIf { it.size > 0 }?.componentAt(0)?.mode
             if (sky is Skybox.Mode.Cubemap) cubemapSky.apply(sky, day.stops, cycle.time)

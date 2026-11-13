@@ -35,6 +35,9 @@ data class Skybox(
     /** Whether the sun and moon are drawn over this sky whatever its type. */
     var sunAndMoon: Boolean = false
 
+    /** Whether the sun and moon are added to the sky rather than covering it. */
+    var additiveBodies: Boolean = false
+
     /**
      * Whether the sun and moon are drawn over this sky by the celestial pass rather than by a
      * procedural sky's own discs: asked for, or given a texture or a phase other than full.

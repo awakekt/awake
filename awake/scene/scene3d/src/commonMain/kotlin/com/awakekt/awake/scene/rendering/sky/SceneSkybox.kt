@@ -34,6 +34,8 @@ import kotlinx.serialization.Serializable
  * @property moonPhase The moon's phase from 0 to 1: 0 new, 0.25 first quarter, 0.5 full, 0.75 last quarter.
  * @property sunAndMoon Draw the sun and moon over this sky, whatever its type, instead of only a
  *   procedural sky's own discs. A texture or a phase other than full draws them too.
+ * @property additiveBodies Add the sun and moon to the sky instead of covering it, as a glowing sun
+ *   texture wants.
  */
 @Serializable
 @SerialName("skybox")
@@ -55,6 +57,7 @@ data class SceneSkybox(
     val moonTexture: String? = null,
     @PropertyRange(min = 0.0, max = 1.0) val moonPhase: Float = FULL_MOON,
     val sunAndMoon: Boolean = false,
+    val additiveBodies: Boolean = false,
 ) : SceneComponent {
     /** The constructor as released before panoramas, kept so compiled callers still link. */
     @Deprecated("Use the constructor with panoramas.", level = DeprecationLevel.HIDDEN)

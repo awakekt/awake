@@ -61,6 +61,36 @@ class RendererHeadlessCelestialSkyTest {
     }
 
     @Test
+    fun theBodiesFollowTheDayCyclesSunNotAFixedLight() {
+        // The scene light is held at noon, as a rotated light node does, while the day cycle's sun is at sunset.
+        val followed = CelestialLook(followsDirection = true).also { it.sunDirection.set(SUNSET.x, SUNSET.y, SUNSET.z) }
+
+        assertBright(look(SUNSET, light = NOON, phase = followed), "the sun is where the day cycle puts it")
+        assertEquals(SKY, look(NOON, light = NOON, phase = followed), "not where the fixed light shines from")
+        assertBright(look(-SUNSET, light = NOON, phase = followed), "and the moon is opposite the day cycle's sun")
+    }
+
+    @Test
+    fun aVisibilityOfZeroHidesABodyAndAHalfFadesIt() {
+        fun visible(sun: Float, moon: Float) = CelestialLook(sunVisibility = sun, moonVisibility = moon)
+
+        assertEquals(SKY, look(SUNSET, phase = visible(0f, 1f)), "no sun at night")
+        assertBright(look(-SUNSET, light = SUNSET, phase = visible(0f, 1f)), "the moon is still up")
+        assertEquals(SKY, look(-SUNSET, light = SUNSET, phase = visible(1f, 0f)), "no moon by day")
+        val half = look(SUNSET, phase = visible(0.5f, 1f))
+        assertTrue(half[0] in (SKY[0] + 40)..250, "half visible is between sky and sun: $half")
+    }
+
+    @Test
+    fun anAdditiveSunAddsToTheSkyInsteadOfCoveringIt() {
+        val covering = look(SUNSET)
+        val adding = look(SUNSET, additive = true)
+
+        assertEquals(listOf(255, 235, 184), covering, "covering is the sun's own colour")
+        assertEquals(listOf(255, 249, 224), adding, "adding is the sky plus the sun, clamped")
+    }
+
+    @Test
     fun aTextureFillsItsSquareAndLeavesTransparentPixelsToTheSky() {
         val red = square(listOf(255, 0, 0, 255))
         val corner = look(SUNSET, sun = red, pixelOffsetX = 7, pixelOffsetY = 7)
@@ -80,11 +110,12 @@ class RendererHeadlessCelestialSkyTest {
         phase: CelestialLook = CelestialLook(),
         sun: TextureAsset? = null,
         yawDegrees: Float = 0f,
+        additive: Boolean = false,
         pixelOffsetX: Int = 0,
         pixelOffsetY: Int = 0,
     ): List<Int> {
         val sky = runBlocking { shared().attacher.attachContentFeature(skyboxCubemapContentFeature(SKY_CUBEMAP)) }
-        val bodies = runBlocking { shared().attacher.attachContentFeature(celestialContentFeature(sun, null, phase)) }
+        val bodies = runBlocking { shared().attacher.attachContentFeature(celestialContentFeature(sun, null, phase, additive = additive)) }
         try {
             val rotated = rotateYaw(direction, yawDegrees)
             val pixels = shared().render(

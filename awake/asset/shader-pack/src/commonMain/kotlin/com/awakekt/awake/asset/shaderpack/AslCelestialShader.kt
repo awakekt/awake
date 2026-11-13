@@ -38,62 +38,6 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.renderer.UniformField
-import com.awakekt.awake.render.renderer.UniformLayout
-
-/** Uniform fields of the sun and moon pass. Each body has a direction and the screen-plane axes around it. */
-object CelestialFields {
-    /** Inverse view-projection matrix used to reconstruct view rays. */
-    val InverseViewProjection = UniformField("inverseViewProjection", GpuDataShape.Mat4)
-
-    /** World-space camera eye position. */
-    val CameraEye = UniformField("cameraEye", GpuDataShape.Vec4)
-
-    /** Direction toward the sun. */
-    val SunDirection = UniformField("sunDirection", GpuDataShape.Vec4)
-
-    /** The sun's right axis, perpendicular to [SunDirection]. */
-    val SunRight = UniformField("sunRight", GpuDataShape.Vec4)
-
-    /** The sun's up axis, perpendicular to [SunDirection] and [SunRight]. */
-    val SunUp = UniformField("sunUp", GpuDataShape.Vec4)
-
-    /** Direction toward the moon. */
-    val MoonDirection = UniformField("moonDirection", GpuDataShape.Vec4)
-
-    /** The moon's right axis. */
-    val MoonRight = UniformField("moonRight", GpuDataShape.Vec4)
-
-    /** The moon's up axis. */
-    val MoonUp = UniformField("moonUp", GpuDataShape.Vec4)
-
-    /** Sun colour in rgb. */
-    val SunColor = UniformField("sunColor", GpuDataShape.Vec4)
-
-    /** Moon colour in rgb. */
-    val MoonColor = UniformField("moonColor", GpuDataShape.Vec4)
-
-    /**
-     * x: the cosine of the moon's phase angle; y: +1 while it waxes and -1 while it wanes; z: 1 when
-     * the sun draws a texture; w: 1 when the moon does.
-     */
-    val Params = UniformField("params", GpuDataShape.Vec4)
-}
-
-/** Uniform layout of the sun and moon pass. */
-val CelestialUniformLayout = UniformLayout(
-    CelestialFields.InverseViewProjection,
-    CelestialFields.CameraEye,
-    CelestialFields.SunDirection,
-    CelestialFields.SunRight,
-    CelestialFields.SunUp,
-    CelestialFields.MoonDirection,
-    CelestialFields.MoonRight,
-    CelestialFields.MoonUp,
-    CelestialFields.SunColor,
-    CelestialFields.MoonColor,
-    CelestialFields.Params,
-)
 
 /**
  * The sun and moon drawn over whatever sky is behind them, before geometry, with alpha blending.
@@ -116,6 +60,7 @@ val CelestialShader: AslShaderDefinition = shader("celestial") {
     val moonUp = handles.value("moonUp")
     val sunColor = handles.value("sunColor")
     val moonColor = handles.value("moonColor")
+    val visibility = handles.value("visibility")
     val params = handles.value("params")
 
     val sunTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 1)
@@ -151,7 +96,7 @@ val CelestialShader: AslShaderDefinition = shader("celestial") {
         val sunTexel = let("sunTexel", textureSample(sunTexture, bodySampler, vec2(sunX * 0.5f.lit + 0.5f.lit, 0.5f.lit - sunY * 0.5f.lit)))
         val sunInside = let("sunInside", step(max(abs(sunX), abs(sunY)), 1f.lit) * sunFront)
         val sunDisc = let("sunDisc", smoothstep(sunCosOuter, sunCosInner, sunCos))
-        val sunAlpha = let("sunAlpha", mix(sunDisc, sunTexel.w * sunInside, params.z))
+        val sunAlpha = let("sunAlpha", mix(sunDisc, sunTexel.w * sunInside, params.z) * visibility.x)
         val sunRgb = let("sunRgb", sunColor.rgb * mix(vec3(1f.lit, 1f.lit, 1f.lit), sunTexel.rgb, params.z))
 
         val moonCos = let("moonCos", dot(rayDir, moonDirection.xyz))
@@ -166,7 +111,7 @@ val CelestialShader: AslShaderDefinition = shader("celestial") {
         val width = let("width", sqrt(max(1f.lit - moonY * moonY, 0f.lit)))
         val side = let("side", params.y * moonX - params.x * width)
         val litSide = let("litSide", max(smoothstep((-0.06f).lit, 0.06f.lit, side), step(params.x, (-0.9999f).lit)))
-        val moonAlpha = let("moonAlpha", mix(moonDisc, moonTexel.w * moonInside, params.w) * litSide)
+        val moonAlpha = let("moonAlpha", mix(moonDisc, moonTexel.w * moonInside, params.w) * litSide * visibility.y)
         val moonRgb = let("moonRgb", moonColor.rgb * mix(vec3(1f.lit, 1f.lit, 1f.lit), moonTexel.rgb, params.w))
 
         // The sun covers the moon where they meet, so both never paint one pixel.

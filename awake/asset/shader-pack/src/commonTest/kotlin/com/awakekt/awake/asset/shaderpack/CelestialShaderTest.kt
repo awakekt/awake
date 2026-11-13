@@ -39,9 +39,9 @@ class CelestialShaderTest {
     }
 
     @Test
-    fun layoutPacksElevenFieldsAndTheSkyIsBlendedBeforeGeometry() {
-        // 16 floats for the matrix, then ten vec4 fields.
-        assertEquals(16 + 10 * 4, CelestialUniformLayout.total)
+    fun layoutPacksTwelveFieldsAndTheSkyIsBlendedBeforeGeometry() {
+        // 16 floats for the matrix, then eleven vec4 fields.
+        assertEquals(16 + 11 * 4, CelestialUniformLayout.total)
         assertTrue(PipelineVariant.BackgroundBlended.blendEnabled)
         assertFalse(PipelineVariant.BackgroundBlended.additive)
         assertFalse(PipelineVariant.BackgroundBlended.depthTestEnabled)

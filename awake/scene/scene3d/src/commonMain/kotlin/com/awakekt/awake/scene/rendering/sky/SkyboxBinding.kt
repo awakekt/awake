@@ -62,6 +62,7 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
             it.moonTexture = moonTexture
             it.moonPhase = moonPhase
             it.sunAndMoon = sunAndMoon
+            it.additiveBodies = additiveBodies
         }
     }
 
@@ -75,6 +76,7 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
         moonTexture = moonTexture,
         moonPhase = moonPhase,
         sunAndMoon = sunAndMoon,
+        additiveBodies = additiveBodies,
     )
 
     private fun Skybox.modeComponent(): SceneSkybox = when (val m = mode) {

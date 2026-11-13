@@ -646,6 +646,8 @@ first across midnight. A field no stop sets keeps its authored value.
 | `fogColor` | color | The `fog` colour. |
 | `skyTint` | color | The colour a `Cubemap` `skybox` is multiplied by. |
 | `skyExposure` | number | A multiplier on a `Cubemap` `skybox`'s `exposure`. At least `0`. |
+| `sunVisibility` | number | How visible the sky's sun is, `0` hidden to `1` shown. |
+| `moonVisibility` | number | How visible the sky's moon is, `0` hidden to `1` shown. |
 
 The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky takes `skyTint` and
 `skyExposure`, and blends between its `panoramas` by time of day. A
@@ -1198,6 +1200,7 @@ The background drawn behind the scene. `SceneSkybox`.
 | `sunTexture` | string | none | Asset path of an image drawn as the sun, on a square the size of its disc. |
 | `moonTexture` | string | none | Asset path of an image drawn as the moon. |
 | `moonPhase` | number | `0.5` | The moon's phase, `0` to `1`: `0` new, `0.25` first quarter, `0.5` full, `0.75` last quarter. |
+| `additiveBodies` | boolean | `false` | Add the sun and moon to the sky instead of covering it. |
 | `panoramas` | list of panoramas | `[]` | More cubemap strips by time of day, each `{ time, path }` in time order; a `day_cycle` blends the two around its time. |
 
 ## `spin_control`

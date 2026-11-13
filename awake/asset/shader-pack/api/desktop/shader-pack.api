@@ -4,7 +4,6 @@ public final class com/awakekt/awake/asset/shaderpack/AslCascadeShadowKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslCelestialShaderKt {
 	public static final fun getCelestialShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun getCelestialUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslDebugViewKt {
@@ -130,8 +129,8 @@ public final class com/awakekt/awake/asset/shaderpack/CascadeShadowSampling {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/CelestialContentFeatureKt {
-	public static final fun celestialContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/CelestialLook;Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
-	public static synthetic fun celestialContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/CelestialLook;Lcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final fun celestialContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/CelestialLook;Lcom/awakekt/awake/asset/shaders/ShaderSet;Z)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun celestialContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/asset/shaderpack/CelestialLook;Lcom/awakekt/awake/asset/shaders/ShaderSet;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/CelestialFields {
@@ -147,14 +146,31 @@ public final class com/awakekt/awake/asset/shaderpack/CelestialFields {
 	public final fun getSunDirection ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getSunRight ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getSunUp ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getVisibility ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/CelestialFieldsKt {
+	public static final fun getCelestialUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/CelestialLook {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderpack/CelestialLook$Companion;
+	public static final field FULL_MOON F
 	public fun <init> ()V
-	public fun <init> (F)V
-	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFZ)V
+	public synthetic fun <init> (FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFollowsDirection ()Z
 	public final fun getMoonPhase ()F
+	public final fun getMoonVisibility ()F
+	public final fun getSunDirection ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getSunVisibility ()F
+	public final fun setFollowsDirection (Z)V
 	public final fun setMoonPhase (F)V
+	public final fun setMoonVisibility (F)V
+	public final fun setSunVisibility (F)V
+}
+
+public final class com/awakekt/awake/asset/shaderpack/CelestialLook$Companion {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/DebugSurface {

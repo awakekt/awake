@@ -23,7 +23,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
 /**
- * Draws the scene's sun and moon over its sky, whatever the sky is.
+ * Draws the scene's sun and moon over its sky, whatever the sky is. They follow the `day_cycle`'s sun
+ * path and visibility windows, not the light's direction, and the light's direction without one.
  *
  * Active while the first [Skybox] [drawsCelestials][Skybox.drawsCelestials]. Its sun and moon images
  * are read from [assets] off the frame thread and attached through [host]; the moon's phase changes
@@ -59,8 +60,8 @@ class SkyboxCelestialSystem(
             pending = null
         }
         val sky = world.firstOrNull<Skybox>()?.takeIf { it.drawsCelestials }
-        look.moonPhase = sky?.moonPhase ?: FULL_MOON
-        val key = sky?.let { Key(it.sunTexture, it.moonTexture) }
+        look.sync(world, sky)
+        val key = sky?.let { Key(it.sunTexture, it.moonTexture, it.additiveBodies) }
         if (key != wanted) {
             wanted = key
             loading?.cancel()
@@ -85,7 +86,7 @@ class SkyboxCelestialSystem(
         try {
             val images = textures?.takeIf { it.first == key }?.second ?: Textures(read(key.sun), read(key.moon))
             textures = key to images
-            val feature = host.attachContentFeature(celestialContentFeature(images.sun, images.moon, look))
+            val feature = host.attachContentFeature(celestialContentFeature(images.sun, images.moon, look, additive = key.additive))
             loaded.trySend(Loaded(key, generation, feature))
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -108,7 +109,7 @@ class SkyboxCelestialSystem(
         }
     }
 
-    private data class Key(val sun: String?, val moon: String?)
+    private data class Key(val sun: String?, val moon: String?, val additive: Boolean)
 
     private class Textures(val sun: TextureAsset?, val moon: TextureAsset?)
 
