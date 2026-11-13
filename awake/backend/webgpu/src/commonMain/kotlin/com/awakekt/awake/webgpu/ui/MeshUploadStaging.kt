@@ -34,4 +34,7 @@ internal fun GPUQueue.writeMeshFloats(buffer: GPUBuffer, data: FloatArray, stagi
 internal expect fun GPUQueue.writeMeshFloatRange(buffer: GPUBuffer, data: FloatArray, first: Int, count: Int, staging: MeshUploadStaging)
 
 /** Writes [data] to the start of [buffer] through [staging], allocating nothing once it has grown. */
-internal expect fun GPUQueue.writeMeshInts(buffer: GPUBuffer, data: IntArray, staging: MeshUploadStaging)
+internal fun GPUQueue.writeMeshInts(buffer: GPUBuffer, data: IntArray, staging: MeshUploadStaging) =
+    writeMeshIntRange(buffer, data, 0, data.size, staging)
+
+internal expect fun GPUQueue.writeMeshIntRange(buffer: GPUBuffer, data: IntArray, first: Int, count: Int, staging: MeshUploadStaging)

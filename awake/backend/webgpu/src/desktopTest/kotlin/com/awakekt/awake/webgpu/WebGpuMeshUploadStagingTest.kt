@@ -66,7 +66,7 @@ class WebGpuMeshUploadStagingTest {
     }
 
     @Test
-    fun aRetainedRunWritesOnceAndAForcedRunWritesEveryTime() = runBlocking {
+    fun aRetainedRunWritesOnceAndAForcedRunWritesOnlyWhatChanged() = runBlocking {
         val context = glfwContextRenderer(width = 1, height = 1, title = "awake-mesh-upload-count")
         val graphicsDevice = GraphicsDevice().apply { create(context.wgpuContext) }
         val mesh = DynamicMesh(graphicsDevice, maxQuads = 4)
@@ -76,7 +76,14 @@ class WebGpuMeshUploadStagingTest {
             repeat(FRAMES) { mesh.update(vertices, indices) }
             assertEquals(1, mesh.uploadCount, "the same immutable arrays upload once")
             repeat(FRAMES) { mesh.update(vertices, indices, forceUpload = true) }
-            assertEquals(1 + FRAMES, mesh.uploadCount, "pooled arrays upload every time")
+            assertEquals(1, mesh.uploadCount, "pooled arrays whose contents did not change write nothing (#1545)")
+            val floatsBefore = mesh.uploadedFloats
+            repeat(FRAMES) { frame ->
+                vertices[DynamicMesh.FLOATS_PER_VERTEX + 1] = 100f + frame
+                mesh.update(vertices, indices, forceUpload = true)
+            }
+            assertEquals(1 + FRAMES, mesh.uploadCount, "a pooled array whose contents changed writes every time")
+            assertEquals(FRAMES.toLong(), mesh.uploadedFloats - floatsBefore, "and writes only the changed float")
         } finally {
             mesh.destroy()
             graphicsDevice.destroy()

@@ -1,0 +1,1 @@
+- On WebGPU, a UI run that changed now writes only the span that differs from what its buffer already holds, with one copy and one `writeBuffer` per buffer, rather than the whole run. A pooled run whose contents did not change writes nothing, and `Renderer.frameUiUploads` counts the bytes actually written (#1545).

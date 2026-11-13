@@ -201,9 +201,12 @@ internal fun Renderer.performCompositeUiTargets(
  * a mesh actually makes is counted into the frame's [UiUploadStats]. */
 private class WebGpuUiMeshUploader(private val renderer: Renderer) : UiMeshUploader<DynamicMesh> {
     private fun DynamicMesh.write(vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh = apply {
-        val before = uploadCount
+        val floats = uploadedFloats
+        val ints = uploadedInts
         update(vertices, indices, forceUpload)
-        if (uploadCount != before) renderer.statsCounter.recordUiUpload(vertices.size, indices.size)
+        if (uploadedFloats + uploadedInts != floats + ints) {
+            renderer.statsCounter.recordUiUpload((uploadedFloats - floats).toInt(), (uploadedInts - ints).toInt())
+        }
     }
 
     override fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
