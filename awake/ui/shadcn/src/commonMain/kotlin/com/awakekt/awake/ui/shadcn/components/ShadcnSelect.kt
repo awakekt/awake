@@ -31,8 +31,11 @@ import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.foundation.verticalScroll
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -199,8 +202,7 @@ private fun ShadcnSelectContent(
     val itemHeight = shadcnDensity.selectItemHeight()
     val itemPaddingY = shadcnDensity.menuItemPaddingY()
     val state = remember { SelectContentState() }
-    val clicked = state.clicked
-    state.clicked = null
+    val clicked = state.clicked.take()
     val selected = selectedIndex?.takeIf { it in items.indices }
     val overflow = items.size * itemHeight.value > ShadcnSelectBaseViewportHeight.value
     // The selected item is initially aligned to the top of the visible list. Keep the state before
@@ -270,7 +272,7 @@ private fun ShadcnSelectContent(
                             Modifier
                                 .fillMaxWidth()
                                 .hoverable(interaction, enabled = item.enabled)
-                                .clickable(interaction) { if (item.enabled) state.clicked = index }
+                                .clickable(interaction) { if (item.enabled) state.clicked.offer(index) }
                                 .let {
                                     if (highlighted) {
                                         it.background(theme.palette.accent, theme.radii.sm)
@@ -336,13 +338,14 @@ private fun ShadcnSelectContent(
 }
 
 private class SelectContentState {
-    var clicked: Int? = null
+    val clicked = Handoff<Int>()
 }
 
 private const val DISABLED_ALPHA = 0.5f
 
 private class SelectKeyboardState {
-    var highlightedIndex: Int? = null
+    // State, not a plain field: composition reads it, and a key or pointer event changes it (#1512).
+    var highlightedIndex: Int? by mutableStateOf(null)
 }
 
 private fun handleSelectKey(
