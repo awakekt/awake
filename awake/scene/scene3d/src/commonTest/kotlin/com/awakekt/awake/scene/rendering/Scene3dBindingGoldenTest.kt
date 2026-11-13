@@ -77,7 +77,7 @@ class Scene3dBindingGoldenTest {
             ambient = 0.5f,
         )
         val json = """{"color":{"r":0.5,"g":0.25,"b":0.75},"intensity":1.5,"type":"Directional",""" +
-            """"direction":{"x":0.5,"y":0.25,"z":0.125},"range":2.5,"shadowsEnabled":false,"shadowDistance":12.5,"ambient":0.5}"""
+            """"direction":{"x":0.5,"y":0.25,"z":0.125},"range":2.5,"shadowsEnabled":false,"shadowDistance":12.5,"ambient":0.5,"shadowFade":0.2}"""
         assertExports(json, LightBinding, live)
         assertEquals(live, assertRoundTrips(json, LightBinding))
     }

@@ -329,6 +329,7 @@ public final class com/awakekt/awake/render/passes/ShadowCascadesMathKt {
 	public static final field DEFAULT_CASCADE_LAMBDA F
 	public static final field DEFAULT_SHADOW_CASCADES I
 	public static final field DEFAULT_SHADOW_DISTANCE F
+	public static final field DEFAULT_SHADOW_FADE F
 	public static final field DEFAULT_SHADOW_MAP_SIZE I
 	public static final field SHADOW_DEPTH_BIAS_CONSTANT F
 	public static final field SHADOW_DEPTH_BIAS_SLOPE F
@@ -802,7 +803,9 @@ public final class com/awakekt/awake/render/passes/uniforms/ShadowCascadeUniform
 	public static final fun getCascadePassUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getSHADOW_CASCADE_PASS_GROUP ()I
 	public static final fun getUNSHADOWED_CASCADES ()Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
-	public static final fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IF)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static final synthetic fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IF)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static final fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFF)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static synthetic fun shadowCascadeUniforms$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFFILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public static synthetic fun shadowCascadeUniforms$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 }
 

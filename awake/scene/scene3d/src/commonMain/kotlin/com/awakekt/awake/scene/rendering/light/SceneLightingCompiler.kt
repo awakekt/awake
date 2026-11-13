@@ -155,8 +155,13 @@ internal class SceneLightingCompiler(
         if (sun?.shadowsEnabled != true || world.debugSettingsOrNull()?.shadowsEnabledOverride == false) return base
         // A camera whose near plane is past the shadow distance sees nothing the shadows reach.
         if (camera.lens.near >= minOf(camera.lens.far, sun.shadowDistance)) return base
-        return shadowedLight(world, camera, base, viewportAspect, sun.shadowDistance)
+        return shadowedLight(world, camera, base, viewportAspect, sun.shadowDistance, sun.shadowFade)
     }
+
+    /** [shadowedLight] as released before the fade, kept so compiled callers still link. */
+    @Deprecated("Use the overload with shadowFade.", level = DeprecationLevel.HIDDEN)
+    fun shadowedLight(world: World, camera: Camera, base: SceneLight, viewportAspect: Float, shadowDistance: Float): SceneLight =
+        shadowedLight(world, camera, base, viewportAspect, shadowDistance, 0f)
 
     /** [base] plus whichever shadow fit is in force -- cascades out to [shadowDistance], or the single box. */
     fun shadowedLight(
@@ -165,6 +170,7 @@ internal class SceneLightingCompiler(
         base: SceneLight,
         viewportAspect: Float,
         shadowDistance: Float,
+        shadowFade: Float = 0f,
     ): SceneLight {
         // Fitted to THIS camera's frustum, in slices. The fixed box `directionalShadowBox` still
         // builds covers a volume at the origin, which is right for a demo scene sitting there and
@@ -178,7 +184,7 @@ internal class SceneLightingCompiler(
         val cascades = if (boxOnly) {
             null
         } else {
-            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, shadowDistance = shadowDistance)
+            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, shadowDistance = shadowDistance, shadowFade = shadowFade)
         }
         if (cascades == null) {
             return base.copy(

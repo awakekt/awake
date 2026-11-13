@@ -29,6 +29,7 @@ fun shadowCascadeUniforms(
     clipSpace: com.awakekt.awake.core.math.ClipSpace,
     count: Int = DEFAULT_SHADOW_CASCADES,
     shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+    shadowFade: Float = 0f,
 ): ShadowCascadeUniforms {
     // Cascades stop at the shadow distance, not at the camera's far plane. Fitting to the far
     // plane spends the whole map on ground nobody can resolve: a 1000m view gave a 5m-wide scene
@@ -46,8 +47,19 @@ fun shadowCascadeUniforms(
         // width onto -1..1.
         worldExtents = FloatArray(boxes.size) { 2f / abs(boxes[it].projection.m00) },
         blendStartDistances = cascadeBlendStartDistances(camera.near, splits),
-    )
+    ).also { it.shadowFade = shadowFade }
 }
+
+/** [shadowCascadeUniforms] as released before [shadowFade], kept so compiled callers still link. */
+@Deprecated("Use the overload with shadowFade.", level = DeprecationLevel.HIDDEN)
+fun shadowCascadeUniforms(
+    light: SceneLight,
+    camera: com.awakekt.awake.core.math.Lens,
+    aspect: Float,
+    clipSpace: com.awakekt.awake.core.math.ClipSpace,
+    count: Int = DEFAULT_SHADOW_CASCADES,
+    shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+): ShadowCascadeUniforms = shadowCascadeUniforms(light, camera, aspect, clipSpace, count, shadowDistance, 0f)
 
 /**
  * The depth pass's own tiny block: which cascade it is rendering right now.

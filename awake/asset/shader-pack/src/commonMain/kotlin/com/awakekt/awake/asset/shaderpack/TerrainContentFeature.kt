@@ -318,7 +318,7 @@ class TerrainRenderFeature(
             put(cascades?.depthScaleFloats() ?: noCascadeScales, UniformFields.CascadeDepthScales)
             put(UniformFields.CameraPosition, context.cameraEye)
             if (forward != null && cascades != null) {
-                put(UniformFields.CameraForward, forward, cascades.count.toFloat())
+                put(UniformFields.CameraForward, forward, cascades.countAndFade)
             } else {
                 put(UniformFields.CameraForward, 0f, 0f, -1f, 0f)
             }
