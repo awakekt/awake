@@ -20,6 +20,10 @@ public final class com/awakekt/awake/engine/compose/ComposeAppRuntime {
 	public final fun setCursorImage (Lcom/awakekt/awake/core/input/CursorImage;)V
 }
 
+public final class com/awakekt/awake/engine/compose/FrameInsetsKt {
+	public static final fun applyInsets (Lcom/awakekt/awake/compose/ui/platform/ComposeHost;Lcom/awakekt/awake/engine/platform/lifecycle/AppFrame;)V
+}
+
 public final class com/awakekt/awake/engine/compose/GraphicsLayerCompositor {
 	public fun <init> ()V
 	public final fun composite (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;II)Ljava/util/List;

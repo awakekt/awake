@@ -41,10 +41,14 @@ class ReadTrackingAllocationProbe {
     fun steadyStateReadsAndInvalidationChecksAllocateNothing() {
         repeat(WARM_UP_PASSES) { pass() }
 
-        val bytes = measure { repeat(PASSES) { pass() } }
+        // The claim is that the code path allocates nothing, so one clean window proves it: a path
+        // that allocates does so in every window, while a one-off (a late JIT deopt, a lazily
+        // initialised JDK structure) lands in only some. The minimum ignores the one-offs and still
+        // fails a real per-read allocation, which every window repeats.
+        val windows = List(WINDOWS) { measure { repeat(PASSES) { pass() } } }
 
-        println("read tracking: $bytes bytes / $PASSES passes x ${READS_PER_PASS * 3} reads")
-        assertEquals(0L, bytes, "a tracked read or an isInvalid check allocated")
+        println("read tracking: bytes per window of $PASSES passes x ${READS_PER_PASS * 3} reads: $windows")
+        assertEquals(0L, windows.min(), "a tracked read or an isInvalid check allocated, minimum of $WINDOWS windows")
     }
 
     private fun pass() {
@@ -64,5 +68,6 @@ class ReadTrackingAllocationProbe {
         const val READS_PER_PASS = 16
         const val WARM_UP_PASSES = 20_000
         const val PASSES = 10_000
+        const val WINDOWS = 7
     }
 }

@@ -7,6 +7,9 @@ package com.awakekt.awake.ui.shadcn
 
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.testing.ComposeComponentFrame
 import com.awakekt.awake.compose.testing.ComposeTestBounds
 import com.awakekt.awake.compose.testing.composeTestSession
@@ -99,8 +102,9 @@ class ShadcnDragTest {
 
     @Test
     fun draggingTheRangeSliderEndThumbChangesIt() {
-        var start = 0.25f
-        var end = 0.6f
+        // State, not plain vars: a host that skips unchanged passes only sees reads it can track.
+        var start by mutableStateOf(0.25f)
+        var end by mutableStateOf(0.6f)
         val session = composeTestSession(WIDTH, HEIGHT) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
                 ShadcnRangeSlider(

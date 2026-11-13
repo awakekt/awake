@@ -17,8 +17,11 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
@@ -328,8 +331,15 @@ fun ShadcnDatePicker(
     )
 }
 
-private class CalendarIntState(var value: Int)
-private class BooleanState(var value: Boolean)
+// State, not plain fields: the month, year and popover are read while composing, and a host that skips
+// unchanged passes only sees a change to something it can track (#1512).
+private class CalendarIntState(value: Int) {
+    var value by mutableStateOf(value)
+}
+
+private class BooleanState(value: Boolean) {
+    var value by mutableStateOf(value)
+}
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
 private object ShadcnCalendarGroup

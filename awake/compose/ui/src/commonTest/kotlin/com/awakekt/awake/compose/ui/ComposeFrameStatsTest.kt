@@ -25,7 +25,7 @@ class ComposeFrameStatsTest {
 
     @Test
     fun enabledStatsAttributeEveryCompositionPass() {
-        val host = ComposeHost()
+        val host = ComposeHost().also { it.skipUnchangedComposition = false }
         host.compositionStats.enabled = true
         repeat(2) { host.frame(FrameInput(viewportWidth = 20, viewportHeight = 20)) { Box {} } }
 
@@ -34,5 +34,15 @@ class ComposeFrameStatsTest {
         host.compositionStats.reset()
         assertEquals(0, host.compositionStats.compositionPasses)
         assertEquals(0, host.compositionStats.compositionNanos)
+    }
+
+    @Test
+    fun aSkippedFrameIsNotACompositionPass() {
+        val host = ComposeHost().also { it.skipUnchangedComposition = true }
+        host.compositionStats.enabled = true
+        repeat(2) { host.frame(FrameInput(viewportWidth = 20, viewportHeight = 20)) { Box {} } }
+
+        assertEquals(1, host.compositionStats.compositionPasses, "the second frame read nothing that changed")
+        assertEquals(1, host.skippedCompositions)
     }
 }

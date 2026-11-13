@@ -405,3 +405,18 @@ public final class com/awakekt/awake/project/runtime/TerrainColliderSystem : com
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/project/runtime/TouchAimInput {
+	public fun <init> (Lcom/awakekt/awake/compose/game/TouchAimState;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/game/TouchAimState;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAimAction ()Ljava/lang/String;
+	public final fun getFireAction ()Ljava/lang/String;
+	public final fun getState ()Lcom/awakekt/awake/compose/game/TouchAimState;
+}
+
+public final class com/awakekt/awake/project/runtime/TouchStickInput {
+	public fun <init> (Lcom/awakekt/awake/compose/game/TouchStickState;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/game/TouchStickState;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAction ()Ljava/lang/String;
+	public final fun getState ()Lcom/awakekt/awake/compose/game/TouchStickState;
+}
+
