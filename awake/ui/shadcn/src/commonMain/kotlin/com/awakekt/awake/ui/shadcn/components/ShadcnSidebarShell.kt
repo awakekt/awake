@@ -30,9 +30,12 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -53,11 +56,14 @@ class SidebarState internal constructor(
     val width: Dp,
     val collapsedWidth: Dp,
 ) {
-    var isOpen: Boolean = initiallyOpen
-        private set
+    // State, not a plain field: composition reads it, and a host that skips unchanged passes only sees a
+    // change to something it can track (#1512).
+    private val openState = mutableStateOf(initiallyOpen)
+
+    val isOpen: Boolean get() = openState.value
 
     fun setOpen(open: Boolean) {
-        isOpen = open
+        openState.value = open
     }
 
     fun toggle() = setOpen(!isOpen)

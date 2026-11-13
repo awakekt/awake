@@ -23,9 +23,12 @@ import com.awakekt.awake.compose.foundation.verticalScroll
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -375,7 +378,10 @@ private val MenuGap: Dp = Tw.Spacing.s1
 private val MenuButtonHeight: Dp = 32.dp
 
 /** Whether a collapsible sidebar group is open, kept across passes by `remember`. */
-private class CollapsibleGroupState(var expanded: Boolean)
+private class CollapsibleGroupState(expanded: Boolean) {
+    // State, not a plain field: composition reads it (#1512).
+    var expanded by mutableStateOf(expanded)
+}
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
 private object ShadcnSidebarGroup

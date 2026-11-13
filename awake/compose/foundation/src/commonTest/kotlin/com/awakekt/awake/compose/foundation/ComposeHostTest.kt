@@ -12,6 +12,9 @@ import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.getValue
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
@@ -387,20 +390,27 @@ class GestureAcrossFramesTest {
     @Test
     fun modalLayerSetsIsModalOpenOnOutputEvenWithoutPointerEvents() {
         val host = ComposeHost()
-        val outputWithoutModal = host.frame(at(0, 0)) {
-            Spacer(Modifier.size(50.dp))
-        }
-        assertFalse(outputWithoutModal.ownership.isModalOpen)
-
-        val outputWithModal = host.frame(at(0, 0)) {
-            com.awakekt.awake.compose.ui.layout.Layer(
-                kind = com.awakekt.awake.compose.ui.layout.LayerKind.Dialog,
-                modal = true,
-                measurePolicy = com.awakekt.awake.compose.foundation.layout.BoxMeasurePolicy(),
-            ) {
+        // State, not a second content lambda: a host that skips unchanged passes only sees reads it can track.
+        var modal by mutableStateOf(false)
+        val content: context(Composer)
+        () -> Unit = {
+            if (modal) {
+                com.awakekt.awake.compose.ui.layout.Layer(
+                    kind = com.awakekt.awake.compose.ui.layout.LayerKind.Dialog,
+                    modal = true,
+                    measurePolicy = com.awakekt.awake.compose.foundation.layout.BoxMeasurePolicy(),
+                ) {
+                    Spacer(Modifier.size(50.dp))
+                }
+            } else {
                 Spacer(Modifier.size(50.dp))
             }
         }
+        val outputWithoutModal = host.frame(at(0, 0), content)
+        assertFalse(outputWithoutModal.ownership.isModalOpen)
+
+        modal = true
+        val outputWithModal = host.frame(at(0, 0), content)
         assertTrue(outputWithModal.ownership.isModalOpen, "opening a modal layer must immediately set isModalOpen")
     }
 }
