@@ -77,7 +77,7 @@ import kotlin.reflect.KClass
  * because nothing could answer them, or an agent with a character controller and no `Agent` movement
  * control, which the controller would hold in place.
  */
-internal object AiCapability : SceneCapability {
+internal object AiFeature : SceneFeature {
     override val id = "com.awakekt.awake.ai"
     override val components = AiSceneComponents.bindings + NavigationSceneComponents.bindings
 

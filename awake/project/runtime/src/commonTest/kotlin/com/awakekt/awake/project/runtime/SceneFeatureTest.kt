@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
  * A game's own capability, as a community package would ship one: a `beacon` component, the content
  * it reads from the project, and the system that runs it. It goes through the same decision as Core's.
  */
-class SceneCapabilityTest {
+class SceneFeatureTest {
 
     @Test
     fun aProjectRunsAGamesCapabilityWithItsComponentContentAndSystem() = runTest {
@@ -242,7 +242,7 @@ private class BeaconSystem(private val step: Int) :
 }
 
 // --8<-- [start:capability]
-private object BeaconCapability : SceneCapability {
+private object BeaconCapability : SceneFeature {
     override val id = "com.example.harbor-town.beacon"
     override val components = listOf(BeaconBinding)
 
@@ -259,7 +259,7 @@ private object BeaconCapability : SceneCapability {
 // --8<-- [end:capability]
 
 /** A capability that names its system as one of Core's does. */
-private object ClashingCapability : SceneCapability {
+private object ClashingCapability : SceneFeature {
     override val id = "com.example.harbor-town.clash"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {

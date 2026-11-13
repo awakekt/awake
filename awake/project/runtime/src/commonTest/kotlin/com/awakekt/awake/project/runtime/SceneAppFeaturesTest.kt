@@ -33,13 +33,13 @@ import kotlin.test.assertTrue
 class SceneAppFeaturesTest {
     private val gameplay = { GameplayInput(Input().currentSnapshot, InputOwnership()) }
 
-    private fun viaProject(scene: String, extra: List<SceneCapability>, role: SceneHostRole): List<PlannedSystem> {
+    private fun viaProject(scene: String, extra: List<SceneFeature>, role: SceneHostRole): List<PlannedSystem> {
         installProjectComponents()
         val services = SceneHostServices(gameplay, NoopRenderer()).withHostRole(role)
         return sceneSystemsFor(SceneLoader.decode(scene), services, extra).use { it.planned }
     }
 
-    private suspend fun viaApp(scene: String, features: List<SceneCapability>, role: SceneHostRole, before: Boolean = false): List<PlannedSystem> {
+    private suspend fun viaApp(scene: String, features: List<SceneFeature>, role: SceneHostRole, before: Boolean = false): List<PlannedSystem> {
         installProjectComponents()
         val game = app {
             scene("play") {
@@ -85,7 +85,7 @@ class SceneAppFeaturesTest {
         assertFailsWith<IllegalArgumentException> { viaApp(RICH, listOf(CoreFeatures.Motion, CoreFeatures.Motion), SceneHostRole.Full) }
     }
 
-    private object Game : SceneCapability {
+    private object Game : SceneFeature {
         override val id = "com.example.harbor-town.game"
         override val systemNames = listOf("game-a", "game-b")
 

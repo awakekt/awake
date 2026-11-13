@@ -72,7 +72,7 @@ class FixedBeforeControllerTest {
     }
 
     /** A game's flight model: takes a player's character over and flies it along +X. */
-    private class Flight(private val before: Boolean) : SceneCapability {
+    private class Flight(private val before: Boolean) : SceneFeature {
         override val id = "com.example.flight"
 
         override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {

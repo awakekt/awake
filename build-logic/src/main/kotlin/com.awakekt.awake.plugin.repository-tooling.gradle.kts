@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
-import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
+import com.awakekt.awake.build.tasks.VerifyFeatureLayeringTask
 import com.awakekt.awake.build.tasks.VerifyCoroutineScopesTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
 import com.awakekt.awake.build.tasks.VerifyKeepRulesTask
@@ -19,9 +19,9 @@ plugins {
     id("com.awakekt.awake.plugin.release-cut")
 }
 
-val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("verifyCapabilityLayering") {
+val verifyFeatureLayering = tasks.register<VerifyFeatureLayeringTask>("verifyFeatureLayering") {
     group = "awake verification"
-    description = "Reject a capability module whose main code depends on an awake:scene module."
+    description = "Reject a feature module whose main code depends on an awake:scene module."
     rootPath.set(layout.projectDirectory.asFile.absolutePath)
     mainSources.from(
         fileTree(layout.projectDirectory.dir("awake")) {
@@ -32,6 +32,13 @@ val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("ver
     // The scene wrappers, the modules that compose and run whole projects, and a benchmark harness that
     // measures the scene by design.
     exemptModulePrefixes.set(listOf(":awake:scene", ":awake:project", ":awake:ecs:benchmark"))
+}
+
+// The task's name before capabilities became features: CI, docs and agent guides may still call it.
+tasks.register("verifyCapabilityLayering") {
+    group = "awake verification"
+    description = "Alias of verifyFeatureLayering, kept for one release."
+    dependsOn(verifyFeatureLayering)
 }
 
 val verifyHeadlessRuntime = tasks.register<VerifyHeadlessRuntimeTask>("verifyHeadlessRuntime") {
@@ -93,14 +100,14 @@ gradle.projectsEvaluated {
                 }
                 .filterValues { it.isNotEmpty() }
         }
-    verifyCapabilityLayering.configure { projectDependencies.set(declared) }
+    verifyFeatureLayering.configure { projectDependencies.set(declared) }
     verifyHeadlessRuntime.configure { projectDependencies.set(declared) }
 }
 
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
-    dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes)
+    dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
 }
 

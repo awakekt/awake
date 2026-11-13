@@ -7,7 +7,7 @@ package com.awakekt.awake.project.cli
 
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.runtime.PROJECT_MANIFEST
-import com.awakekt.awake.project.runtime.SceneCapability
+import com.awakekt.awake.project.runtime.SceneFeature
 import java.io.File
 import java.lang.ref.WeakReference
 import java.lang.reflect.Modifier
@@ -15,21 +15,21 @@ import java.net.URLClassLoader
 
 /**
  * A project's own built code, the class folders and jars on [classpath], in a class loader of its own
- * whose parent holds Core, as an editor loads a project's code: Core's types, [SceneCapability] among
+ * whose parent holds Core, as an editor loads a project's code: Core's types, [SceneFeature] among
  * them, are the ones `awake` runs with, and the project's are its own. [close] it after the check.
  */
 internal class ProjectCode(private val classpath: List<File>) : AutoCloseable {
     private var loader: URLClassLoader? = URLClassLoader(
         "project-code",
         classpath.map { it.toURI().toURL() }.toTypedArray(),
-        SceneCapability::class.java.classLoader,
+        SceneFeature::class.java.classLoader,
     )
 
     // Whether the loader has been collected, which only a weak reference can tell.
     private val collectable = WeakReference(loader)
 
-    /** The capabilities [manifest]'s plugins name, and what kept any of them from loading. */
-    fun capabilities(manifest: AwakeProjectManifest): Pair<List<SceneCapability>, List<Finding>> {
+    /** The features [manifest]'s plugins name, and what kept any of them from loading. */
+    fun capabilities(manifest: AwakeProjectManifest): Pair<List<SceneFeature>, List<Finding>> {
         val findings = ArrayList<Finding>()
         val capabilities = manifest.plugins.mapIndexedNotNull { index, plugin ->
             val name = plugin.capabilityClass
@@ -49,11 +49,11 @@ internal class ProjectCode(private val classpath: List<File>) : AutoCloseable {
         return capabilities to findings
     }
 
-    // TooGenericExceptionCaught: a capability's initializer may throw anything, which is a finding, not a crash.
+    // TooGenericExceptionCaught: a feature's initializer may throw anything, which is a finding, not a crash.
     @Suppress("TooGenericExceptionCaught")
     private fun load(name: String): Loaded = try {
         val type = Class.forName(name, true, checkNotNull(loader) { "The project's code is closed" })
-        if (SceneCapability::class.java.isAssignableFrom(type)) Loaded.Capability(instance(type) as SceneCapability) else Loaded.Refused("is not a SceneCapability")
+        if (SceneFeature::class.java.isAssignableFrom(type)) Loaded.Capability(instance(type) as SceneFeature) else Loaded.Refused("is not a SceneFeature")
     } catch (missing: ClassNotFoundException) {
         Loaded.Refused("is not in the project's code (${classpath.joinToString(File.pathSeparator)}): ${missing.message}")
     } catch (failure: LinkageError) {
@@ -95,7 +95,7 @@ internal class ProjectCode(private val classpath: List<File>) : AutoCloseable {
     private fun error(message: String) = Finding(Severity.Error, message, PROJECT_MANIFEST, code = CAPABILITY_CODE)
 
     private sealed interface Loaded {
-        class Capability(val capability: SceneCapability) : Loaded
+        class Capability(val capability: SceneFeature) : Loaded
 
         class Refused(val why: String) : Loaded
     }

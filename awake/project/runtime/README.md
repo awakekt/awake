@@ -22,7 +22,7 @@ A node's `tag` component becomes its entity's `Tags`, which gameplay finds with 
 offer as choices; `loadProject` then logs a warning for a scene tag the list leaves out, a guard
 against a typo rather than a refusal.
 
-Core's capabilities decide what runs, each for the components it owns:
+Core's features decide what runs, each for the components it owns:
 
 | Scene component | What runs |
 |---|---|
@@ -55,18 +55,18 @@ A project plays its entry scene first and can go on to any other scene in its fi
 button or a level's exit does. Ask with the scene's path relative to the project root:
 
 ```kotlin
-// In a system a capability plans:
+// In a system a feature plans:
 services.sceneSwitch?.request("scenes/level-2.scene.json")
 // From the app that runs the project:
 game.requireService<SceneSwitch>().request("scenes/level-2.scene.json")
 ```
 
 A blueprint asks with its Load Scene node (`scene.load`, in
-[`awake:scene:blueprint`](../../scene/blueprint/README.md)), which `BlueprintCapability` connects to
+[`awake:scene:blueprint`](../../scene/blueprint/README.md)), which `BlueprintFeature` connects to
 the switch.
 
 - **When.** The next scene loads off the frame thread, through the project's files, the way
-  `loadProject` loads the entry scene: decoded and checked, its models and its capabilities' content
+  `loadProject` loads the entry scene: decoded and checked, its models and its features' content
   read (collision meshes, particle sprites, canvas images, shader effects, terrain surfaces), and a
   physics world made when it has bodies. The scene that asked plays on meanwhile. The next one takes
   its place at the start of the next fixed step, or of the frame's own systems once the fixed steps
@@ -77,7 +77,7 @@ the switch.
   them, and whatever else joined the scene: a fallback camera, what its systems made), its meshes
   and materials are given back to the asset library, and its physics world is destroyed.
 - **What comes.** The next scene's entities, the systems its components call for (planned through the
-  same capabilities, Core's then the game's), its canvas images and its primary camera. The project's strings stay the same across scenes, in the locale last set.
+  same features, Core's then the game's), its canvas images and its primary camera. The project's strings stay the same across scenes, in the locale last set.
 - **What carries across.** Nothing of the scene: positions, variables, scores and spawned nodes start
   over. The app does: the renderer, the UI, the touch-controls setting, the platform's audio player,
   and a mesh both scenes draw, which stays loaded. A game that keeps something across scenes keeps it
@@ -146,7 +146,7 @@ without it, Load Scene only warns.
 
 A host with no frame loop, such as a test, a server or a project check, moves the project itself:
 `project.switchTo("scenes/level-2.scene.json")` loads that scene as `loadProject` loads the entry
-scene, with the project's registry, capabilities and physics world factory, then closes the scene it
+scene, with the project's registry, features and physics world factory, then closes the scene it
 leaves. Close the systems and entities of the scene it leaves first. A path that leaves the project,
 names no file or can't be loaded throws `IllegalArgumentException`, and the scene playing stays. A
 project moved this way and then played with `runProject` starts at the scene it was moved to; once
@@ -154,7 +154,7 @@ project moved this way and then played with `runProject` starts at the scene it 
 
 ```kotlin
 val registry = SceneComponentRegistry.scoped()
-val project = loadProject(files, registry, capabilities, hasRenderer = false, physicsWorld = ::createJoltPhysicsWorld)
+val project = loadProject(files, registry, features, hasRenderer = false, physicsWorld = ::createJoltPhysicsWorld)
 for (path in scenes) {
     project.switchTo(path)
     val world = World().also { project.scene.instantiate(it, registry) }
@@ -163,8 +163,8 @@ for (path in scenes) {
 project.close()
 ```
 
-`checkProjectOpens(files, scenes, capabilities, physicsWorld)` is built on this. It opens each of a
-project's scenes with its capabilities, as an editor does: decoded, prefabs expanded, instantiated,
+`checkProjectOpens(files, scenes, features, physicsWorld)` is built on this. It opens each of a
+project's scenes with its features, as an editor does: decoded, prefabs expanded, instantiated,
 switched to, systems run for a step, and saved and reopened. It returns a typed `ProjectOpenIssue` for
 each problem, with its file and node path. `awake validate --code` runs it with the project's own built
 code; see the [CLI](../cli/README.md#validating-with-the-projects-code).
@@ -297,7 +297,7 @@ Each `SceneInstance` has a `World` of its own with the scene's entities in it, t
 `sceneSystems` plans for it, and, when the scene has bodies or characters, a physics world of its own
 from the project's `physicsWorld` factory, so a body moved in one stays where it is in every other.
 What the project loaded is shared and only read: the scene document, the component registry and
-capabilities, the glTF models, and the scene's content (collision meshes, the baked navigation grid,
+features, the glTF models, and the scene's content (collision meshes, the baked navigation grid,
 AI definitions). Making one reads no file.
 
 - `close()` closes the systems it built, destroys its entities and then its physics world. The project,
@@ -311,33 +311,33 @@ AI definitions). Making one reads no file.
 
 ## Loading more than one project
 
-`loadProject(files, capabilities)` registers the project's components in the process-wide registry,
+`loadProject(files, features)` registers the project's components in the process-wide registry,
 which is right for a game that plays one project. A host that opens one project after another, such
-as an editor, gives each its own scope, so two projects whose capabilities use one component name for
+as an editor, gives each its own scope, so two projects whose features use one component name for
 different components never meet:
 
 ```kotlin
 val registry = SceneComponentRegistry.scoped()
-val project = loadProject(files, registry, capabilities)
+val project = loadProject(files, registry, features)
 // runProject(project) attaches the scene's components with the same registry.
 ```
 
 A scoped registry holds only what is registered on it and keeps its serializers out of the global
 set; its `sceneJson()` decodes only those components. Drop it with the project. A host that decodes
-the project's scenes itself prepares the scope with `registry.registerProjectComponents(capabilities)`,
+the project's scenes itself prepares the scope with `registry.registerProjectComponents(features)`,
 decodes with `SceneLoader.decode(text, registry.sceneJson())`, and instantiates with
 `SceneLoader.instantiate(scene, world, registry)`. An editor that may lack the game's code decodes
-with `registry.sceneJson(keepUnknownComponents = true)`, which keeps a component no capability
+with `registry.sceneJson(keepUnknownComponents = true)`, which keeps a component no feature
 registers as a `SceneUnknownComponent` instead of refusing the scene; `loadProject` never does. `loadSceneContent` and `sceneSystemsFor` work on
 an already-decoded scene and take no registry.
 
-## Adding components and systems: scene capabilities
+## Adding components and systems: scene features
 
 A game, or a package it depends on, adds its own components and the systems that run them as a
-`SceneCapability`, the same contract Core's controls, physics, AI, particles and shader effects use:
+`SceneFeature`, the same contract Core's controls, physics, AI, particles and shader effects use:
 
 ```kotlin
-object GrapplingHookCapability : SceneCapability {
+object GrapplingHookCapability : SceneFeature {
     override val id = "com.example.grappling-hook"
     override val components = listOf(GrapplingHookBinding)
 
@@ -346,13 +346,13 @@ object GrapplingHookCapability : SceneCapability {
     }
 }
 
-val project = loadProject(files, capabilities = listOf(GrapplingHookCapability), physicsWorld = ::createJoltPhysicsWorld)
+val project = loadProject(files, features = listOf(GrapplingHookCapability), physicsWorld = ::createJoltPhysicsWorld)
 ```
 
 - `components` are registered before the scene decodes, so a document can name them. A scene that
-  names a component no capability registers is refused, naming the component.
+  names a component no feature registers is refused, naming the component.
 - `load` reads what the systems need from the project's files into `SceneContent`, under a
-  `SceneContentKey` the capability declares; systems read it from `SceneHostServices.content`. It runs
+  `SceneContentKey` the feature declares; systems read it from `SceneHostServices.content`. It runs
   before the physics world exists.
 - `plan` adds the systems the scene uses, with `plan.fixed`, `plan.preAnimation` (before world
   matrices are propagated for animation and camera systems) or `plan.frame`. A system that holds
@@ -363,11 +363,11 @@ val project = loadProject(files, capabilities = listOf(GrapplingHookCapability),
   that predicts its local player sends or replays the dropped steps, or raises the cap. A host that
   steps the systems itself passes its own `FixedTimestepLoop` with `withFixedStep`, or to
   `project.sceneSystems(input, fixedStep = loop)`.
-- Core's capabilities run first, then the ones passed in, in order. Pass the same list to
+- Core's features run first, then the ones passed in, in order. Pass the same list to
   `loadProject`, or to `loadSceneContent` and `sceneSystemsFor`.
-- A plugin the manifest marks `required` must have a capability with its `id`, or the load is refused.
+- A plugin the manifest marks `required` must have a feature with its `id`, or the load is refused.
   A published plugin's reference can also name where its code is and which object it is, so an export
-  or an editor can resolve what to link; a project's own `capabilities/` module needs neither:
+  or an editor can resolve what to link; a project's own `features/` module needs neither:
 
   ```json
   { "id": "com.example.docks", "path": "plugins/docks.awakeplugin", "required": true,
@@ -375,9 +375,9 @@ val project = loadProject(files, capabilities = listOf(GrapplingHookCapability),
     "capabilityClass": "com.example.docks.DocksCapability" }
   ```
 
-  Naming them loads nothing: the capability is still linked when the game is built, and a refused
-  load names the plugin's id, its capability class and its artifact.
+  Naming them loads nothing: the feature is still linked when the game is built, and a refused
+  load names the plugin's id, its feature class and its artifact.
 
-Capabilities are linked when the game is built, like any dependency: Kotlin/Native and wasmJs cannot
+Features are linked when the game is built, like any dependency: Kotlin/Native and wasmJs cannot
 load code. They are code that ships in the game; an editor plugin only edits the data they read. See
 [D39](../../../docs/architecture/decisions/D39-scene-capabilities.md).

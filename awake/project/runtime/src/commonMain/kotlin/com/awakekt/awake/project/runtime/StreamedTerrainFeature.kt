@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
  * and the host gives a physics world. An index that names a palette draws with terrain layers; one
  * without draws the neutral paged surface. A scene streams at most one.
  */
-internal object StreamedTerrainCapability : SceneCapability {
+internal object StreamedTerrainFeature : SceneFeature {
     override val id = "com.awakekt.awake.streamed-terrain"
     override val components = WorldstreamSceneComponents.bindings
 

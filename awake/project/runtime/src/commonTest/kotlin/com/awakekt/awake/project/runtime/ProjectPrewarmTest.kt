@@ -176,7 +176,7 @@ class ProjectPrewarmTest {
         val capabilities = if (onFrame == null) {
             emptyList()
         } else {
-            listOf(object : SceneCapability {
+            listOf(object : SceneFeature {
                 override val id = "com.example.prewarm"
 
                 override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {

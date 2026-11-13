@@ -10,7 +10,7 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.project.runtime.SceneCapability
+import com.awakekt.awake.project.runtime.SceneFeature
 import com.awakekt.awake.project.runtime.SceneContent
 import com.awakekt.awake.project.runtime.SceneContentKey
 import com.awakekt.awake.project.runtime.SceneSystemPlan
@@ -45,8 +45,8 @@ object HarborSignalBinding : SceneComponentBinding<HarborSignal, SceneHarborSign
     override fun export(world: World, entity: Entity, component: HarborSignal): SceneHarborSignal = SceneHarborSignal(component.signal)
 }
 
-/** The project's own capability: its `harbor_signal` component, the signal files it reads, and the system that shows them. */
-object HarborSignalCapability : SceneCapability {
+/** The project's own feature: its `harbor_signal` component, the signal files it reads, and the system that shows them. */
+object HarborSignalCapability : SceneFeature {
     private val signals = SceneContentKey<Map<String, String>>("harbor signals")
 
     override val id = "com.example.harbor-town.signal"
@@ -76,5 +76,5 @@ object HarborSignalCapability : SceneCapability {
 /** The signals this node's lamps and its children's read. */
 private fun SceneNode.signals(): List<String> = components.filterIsInstance<SceneHarborSignal>().map { it.signal } + children.flatMap { it.signals() }
 
-/** Not a capability: what a manifest that names the wrong class points at. */
+/** Not a feature: what a manifest that names the wrong class points at. */
 class HarborTownNotes

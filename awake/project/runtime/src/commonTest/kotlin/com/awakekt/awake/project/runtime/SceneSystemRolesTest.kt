@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
 class SceneSystemRolesTest {
     private val gameplay = { GameplayInput(Input().currentSnapshot, InputOwnership()) }
 
-    private fun planned(host: SceneHostServices, scene: String = RICH, extra: List<SceneCapability> = emptyList()): List<PlannedSystem> {
+    private fun planned(host: SceneHostServices, scene: String = RICH, extra: List<SceneFeature> = emptyList()): List<PlannedSystem> {
         installProjectComponents()
         return sceneSystemsFor(SceneLoader.decode(scene), host, extra).use { it.planned }
     }
@@ -109,7 +109,7 @@ class SceneSystemRolesTest {
         }
     }
 
-    private object Marked : SceneCapability {
+    private object Marked : SceneFeature {
         override val id = "com.example.harbor-town.roles"
         override val systemNames = MARKED
 

@@ -720,7 +720,7 @@ scene layer (#386). The split follows particles (§9):
   through its `Agent` movement control so a character controller moves it (#543).
 - `scene:navigation` holds the `navigation` component, the grid a scene carries.
 
-With this, no capability module depends on the scene layer, so `verifyCapabilityLayering` has no
+With this, no capability module depends on the scene layer, so `verifyFeatureLayering` has no
 list of tolerated modules any more: a coupling fails, with no way to record it as debt. The old
 names were removed, not kept as deprecated aliases, on the owner's decision.
 

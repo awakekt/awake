@@ -18,7 +18,7 @@ import com.awakekt.awake.scene.shader.loadShaderEffects
  * A scene's `shader_effect`s: the shader documents the project ships, drawn through the renderer when
  * it takes content features. A document that does not check out is logged and not drawn.
  */
-internal object ShaderEffectsCapability : SceneCapability {
+internal object ShaderEffectsFeature : SceneFeature {
     override val id = "com.awakekt.awake.shader-effects"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {

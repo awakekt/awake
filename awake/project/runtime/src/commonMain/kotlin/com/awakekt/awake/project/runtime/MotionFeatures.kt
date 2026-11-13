@@ -39,7 +39,7 @@ internal const val SPRITE_CLIPS_SYSTEM = CoreSystems.SPRITE_CLIPS
 internal const val PARTICLES_2D_SYSTEM = CoreSystems.PARTICLES_2D
 
 /** Spin, locomotion, keyframes, sprite-sheet clips and sprite clips, for the scenes that have them. */
-internal object MotionCapability : SceneCapability {
+internal object MotionFeature : SceneFeature {
     override val id = "com.awakekt.awake.motion"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
@@ -57,7 +57,7 @@ internal object MotionCapability : SceneCapability {
 }
 
 /** A scene's `particle_emitter` and `particle_emitter_2d` components. */
-internal object ParticlesCapability : SceneCapability {
+internal object ParticlesFeature : SceneFeature {
     override val id = "com.awakekt.awake.particles"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
@@ -80,7 +80,7 @@ internal object ParticlesCapability : SceneCapability {
 }
 
 /** The sun's path and the blended sky, light and fog of a `day_cycle`. */
-internal object DayCycleCapability : SceneCapability {
+internal object DayCycleFeature : SceneFeature {
     override val id = "com.awakekt.awake.day-cycle"
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {

@@ -1,10 +1,10 @@
 # Awake Scene
 
-`awake:scene` is the wrapper that binds Awake's capabilities into the ECS scene graph and the scene
+`awake:scene` is the wrapper that binds Awake's features into the ECS scene graph and the scene
 document above `awake:ecs`: serialized scene documents and their validation, component bindings, the
-systems that run a capability over a `World`, runtime loading, and authoring helpers. It is how games,
-templates and the editor describe and run a world. It is **not where a capability lives**: Awake is a
-library first, and the capabilities (simulation, sampling, culling, clocks, curves) are libraries that
+systems that run a feature over a `World`, runtime loading, and authoring helpers. It is how games,
+templates and the editor describe and run a world. It is **not where a feature lives**: Awake is a
+library first, and the features (simulation, sampling, culling, clocks, curves) are libraries that
 work without a scene.
 
 ## Modules
@@ -25,7 +25,7 @@ do not split all components from all systems merely because one is data and the 
 `Transform` is in scene-core because it is shared, while `MeshRenderer` stays with the scene's
 rendering because it binds meshes into the scene graph.
 
-Some capabilities (terrain, sky, culling) still live in `scene:scene3d` from before the rule below.
+Some features (terrain, sky, culling) still live in `scene:scene3d` from before the rule below.
 They are not a precedent: do not extend them in place; separate them first.
 
 ## What belongs in a scene module, and what does not
@@ -34,13 +34,13 @@ Before you add to or change anything under `awake/scene/`, sort each piece:
 
 | It is | It belongs in |
 | --- | --- |
-| A document schema (`Scene<X>`) and its validation, the component binding, the mapping from the schema to the capability's types, the system that runs the capability over the world, loading a document's assets | `awake:scene:<x>` |
+| A document schema (`Scene<X>`) and its validation, the component binding, the mapping from the schema to the feature's types, the system that runs the feature over the world, loading a document's assets | `awake:scene:<x>` |
 | An algorithm, state or behaviour with an API of its own that someone could use without a scene | A module of its own outside `scene/` |
 
 The rules:
 
-1. **A capability module depends on no `awake:scene` module** in its main source sets. The
-   `verifyCapabilityLayering` task, part of `awakeVerify`, fails on a new dependency, however it
+1. **A feature module depends on no `awake:scene` module** in its main source sets. The
+   `verifyFeatureLayering` task, part of `awakeVerify`, fails on a new dependency, however it
    arrives:
    - a project dependency in a main configuration, read from the Gradle model, so one a convention
      plugin adds counts as much as one in the build file;
@@ -50,16 +50,16 @@ The rules:
 
    There is no list of modules allowed to break it. The last ones were separated in #386, into
    `awake:terrain`, `awake:world`, `awake:scene:navigation` and `awake:scene:ai`.
-2. **A capability's types never hold a `Scene*` schema type.** The scene module maps schema to
-   capability types in one file, and a test fails when a capability option is neither mapped from a
+2. **A feature's types never hold a `Scene*` schema type.** The scene module maps schema to
+   feature types in one file, and a test fails when a feature option is neither mapped from a
    scene field nor listed as code-only, so leaving an option out of the scene file is a decision
    written down, not a slip.
-3. **Extending a capability that still lives in a scene module means separating it first**, or saying
+3. **Extending a feature that still lives in a scene module means separating it first**, or saying
    in the PR that it is debt and why.
-4. **A new option is, in order:** the capability type, the scene field, the mapping, the docs, and the
+4. **A new option is, in order:** the feature type, the scene field, the mapping, the docs, and the
    test above.
 
-The pattern already exists for audio: `awake:core:audio` is the capability, with no scene and no ECS
+The pattern already exists for audio: `awake:core:audio` is the feature, with no scene and no ECS
 dependency, and `awake:scene:audio` is the wrapper with the components and the system. Particles
 follow it too: `awake:particles` has the emitters, the simulation and the draw packets and depends on
 no scene module, and `awake:scene:particles` has the `particle_emitter` schema, its binding and the
@@ -109,7 +109,7 @@ app {
 
 - A scene system belongs in Awake only when generic and reusable; authored gameplay belongs in a
   game or sample.
-- A capability with an API of its own lives outside `scene/` and depends on no scene module; a scene
+- A feature with an API of its own lives outside `scene/` and depends on no scene module; a scene
   module is its binding (see the section above).
 - `TransformSystem` precedes render systems; `SceneSchedule` owns that order.
 - Documents contain authored data, not GPU handles or generated-preview output.

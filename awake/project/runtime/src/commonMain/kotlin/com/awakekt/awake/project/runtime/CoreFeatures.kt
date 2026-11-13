@@ -13,48 +13,48 @@ import com.awakekt.awake.scene.runtime.SceneHostRole
 import com.awakekt.awake.scene.runtime.requireKnownSystemNames
 
 /**
- * Core's capabilities by typed handle, in the order their systems run: what a scene app passes to
+ * Core's features by typed handle, in the order their systems run: what a scene app passes to
  * [features] to get the systems a project gets for the same scene. A game's own are objects of its own.
  */
 object CoreFeatures {
     /** Input actions, the camera rig and movement. */
-    val Controls: SceneCapability get() = ControlsCapability
+    val Controls: SceneFeature get() = ControlsFeature
 
     /** The scene's canvas. */
-    val Canvas: SceneCapability get() = CanvasCapability
+    val Canvas: SceneFeature get() = CanvasFeature
 
     /** Paged terrain streamed around the camera. */
-    val StreamedTerrain: SceneCapability get() = StreamedTerrainCapability
+    val StreamedTerrain: SceneFeature get() = StreamedTerrainFeature
 
     /** Terrain drawing. */
-    val Terrain: SceneCapability get() = TerrainCapability
+    val Terrain: SceneFeature get() = TerrainFeature
 
     /** Bodies, characters and colliders. */
-    val Physics: SceneCapability get() = PhysicsCapability
+    val Physics: SceneFeature get() = PhysicsFeature
 
     /** Navigation, perception, behaviour trees and the route behaviours. */
-    val Ai: SceneCapability get() = AiCapability
+    val Ai: SceneFeature get() = AiFeature
 
     /** Spin, locomotion, keyframes and clips. */
-    val Motion: SceneCapability get() = MotionCapability
+    val Motion: SceneFeature get() = MotionFeature
 
     /** 3D and 2D particles. */
-    val Particles: SceneCapability get() = ParticlesCapability
+    val Particles: SceneFeature get() = ParticlesFeature
 
     /** The day cycle. */
-    val DayCycle: SceneCapability get() = DayCycleCapability
+    val DayCycle: SceneFeature get() = DayCycleFeature
 
     /** Shader effects. */
-    val ShaderEffects: SceneCapability get() = ShaderEffectsCapability
+    val ShaderEffects: SceneFeature get() = ShaderEffectsFeature
 
     /** Audio sources and the listener. */
-    val Audio: SceneCapability get() = AudioCapability
+    val Audio: SceneFeature get() = AudioFeature
 
     /** Skinned glTF animation. */
-    val SkinnedAnimation: SceneCapability get() = SkinnedAnimationCapability
+    val SkinnedAnimation: SceneFeature get() = SkinnedAnimationFeature
 
     /** Every one of Core's, in run order: what a project runs with before its own. */
-    val all: List<SceneCapability> get() = CORE_CAPABILITIES
+    val all: List<SceneFeature> get() = CORE_FEATURES
 }
 
 /**
@@ -85,14 +85,14 @@ object CoreFeatures {
 @Suppress("LongParameterList")
 fun SceneAppDsl.features(
     scene: SceneDocument,
-    features: List<SceneCapability>,
+    features: List<SceneFeature>,
     physics: PhysicsWorld? = null,
     content: SceneContent = SceneContent.Empty,
     hasRenderer: Boolean = true,
     hostRole: SceneHostRole = SceneHostRole.Full,
     disabledSystems: Set<String> = emptySet(),
 ) {
-    val installed = installedFeatures(features)
+    val installed = distinctFeatures(features)
     val specs = sceneSystemSpecsOf(scene, physics != null, hasRenderer, installed)
     requireKnownSystemNames(disabledSystems, CoreSystems.all + installed.flatMap { it.systemNames } + specs.map { it.name }, "the scene app's features")
     val closing = mutableListOf<AutoCloseable>()
@@ -112,8 +112,8 @@ fun SceneAppDsl.features(
     }
 }
 
-/** [features] refused when two share an id, with the message a project gives for its capabilities. */
-private fun installedFeatures(features: List<SceneCapability>): List<SceneCapability> {
+/** [features] refused when two share an id, with the message a project gives for its features. */
+private fun distinctFeatures(features: List<SceneFeature>): List<SceneFeature> {
     val repeated = features.groupBy { it.id }.filterValues { it.size > 1 }.keys
     require(repeated.isEmpty()) { "More than one capability has the id ${repeated.joinToString()}" }
     return features

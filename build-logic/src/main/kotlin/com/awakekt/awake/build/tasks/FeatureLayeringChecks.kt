@@ -5,14 +5,14 @@
  */
 package com.awakekt.awake.build.tasks
 
-/** The path prefix of the scene modules, `:awake:scene:<name>`, that a capability must not reach. */
+/** The path prefix of the scene modules, `:awake:scene:<name>`, that a feature must not reach. */
 internal const val SCENE_MODULE_PREFIX = ":awake:scene:"
 
 /**
  * Whether a dependency configuration named [name] declares what **main** code compiles or runs with.
  *
- * Awake is a library first and `awake:scene:*` is the wrapper that binds capabilities into the ECS
- * scene graph and the scene document, so a capability's main code must not depend on it. Tests may: an
+ * Awake is a library first and `awake:scene:*` is the wrapper that binds features into the ECS
+ * scene graph and the scene document, so a feature's main code must not depend on it. Tests may: an
  * integration test that loads a scene document is not a dependency of the library.
  *
  * The declaring configurations are the ones a build file writes to, under any source set:
@@ -36,7 +36,7 @@ internal fun mainProjectDependencies(configurations: Map<String, List<String>>):
  * The scene modules [module] reaches through the main dependencies in [graph], module path to the module
  * paths its main code depends on, each with the shortest chain that reaches it, [module] first.
  *
- * A dependency is followed whatever it is, so a capability that depends on another module that depends
+ * A dependency is followed whatever it is, so a feature that depends on another module that depends
  * on a scene module is found too: it cannot be used without the scene layer either. The walk stops at a
  * scene module, so a chain names the first scene module on its way and nothing behind it.
  */
@@ -67,7 +67,7 @@ internal fun modulesReached(graph: Map<String, Set<String>>, module: String, isT
  * The 1-based lines of [source], a Kotlin file, that name something in an `awake.scene` package: an
  * import or a fully qualified reference.
  *
- * This catches what a project dependency would not: a scene type that reaches a capability's main code
+ * This catches what a project dependency would not: a scene type that reaches a feature's main code
  * through a published `com.awakekt.awake.scene:*` coordinate, or through anything else on its classpath.
  * Comments and string literals are skipped, so a KDoc link to a scene type is not a dependency.
  */
@@ -152,14 +152,14 @@ private fun quotedEnd(source: String, start: Int, quote: Char): Int {
  * that has any reason at all.
  *
  * There is no list of tolerated modules. The last ones were separated in #386, so a coupling is always
- * new and always fails: the fix is to move the capability, not to record it.
+ * new and always fails: the fix is to move the feature, not to record it.
  */
-internal fun capabilityLayeringFailures(sceneCouplings: Map<String, List<String>>): List<String> = buildList {
+internal fun featureLayeringFailures(sceneCouplings: Map<String, List<String>>): List<String> = buildList {
     sceneCouplings.toSortedMap().forEach { (module, reasons) ->
         if (reasons.isNotEmpty()) {
             add(
-                "$module depends on the scene layer in main code: ${summarize(reasons)}. A capability must not " +
-                    "depend on a scene module: put the capability in a module of its own and bind it from " +
+                "$module depends on the scene layer in main code: ${summarize(reasons)}. A feature must not " +
+                    "depend on a scene module: put the feature in a module of its own and bind it from " +
                     "awake:scene:<name> (see awake/scene/README.md).",
             )
         }

@@ -77,11 +77,11 @@ On Sensor Enter -> Load Scene (scene: scenes/level-2.scene.json)
 ```
 
 It asks through `BlueprintScene.loadScene`, which the host that runs `BlueprintSystem` sets. In a
-project played by `runProject`, `BlueprintCapability` sets it to the project's scene switch: the next
+project played by `runProject`, `BlueprintFeature` sets it to the project's scene switch: the next
 scene loads while this one plays on, then replaces it at the start of a later step, and nothing of
 this scene carries across ([`awake:project:runtime`](../../project/runtime/README.md#switching-to-another-scene)).
 A scene that can't be loaded is logged and this one goes on. A `scene` set on the node, not wired,
-that names no file of the project is caught sooner: `BlueprintCapability` logs a warning naming the
+that names no file of the project is caught sooner: `BlueprintFeature` logs a warning naming the
 graph, the node and the path as the project loads, and the project still plays. It asks the project's
 files whether the scene is there with `AssetSource.exists`, without reading it, and a graph several
 of the project's scenes use warns as the first of them loads, not again as each one does. A wired
