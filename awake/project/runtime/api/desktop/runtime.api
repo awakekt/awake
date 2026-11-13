@@ -225,6 +225,7 @@ public final class com/awakekt/awake/project/runtime/ProjectSystemPlan {
 public abstract interface class com/awakekt/awake/project/runtime/SceneCapability : com/awakekt/awake/project/runtime/SceneFeature {
 	public fun getComponents ()Ljava/util/List;
 	public abstract fun getId ()Ljava/lang/String;
+	public fun getSystemNames ()Ljava/util/List;
 	public fun load (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/runtime/SceneContent$Builder;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun plan (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/SceneSystemPlan;)V
 }

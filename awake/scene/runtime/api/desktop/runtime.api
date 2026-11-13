@@ -129,6 +129,7 @@ public final class com/awakekt/awake/scene/runtime/LoadedSceneRoute : java/lang/
 }
 
 public final class com/awakekt/awake/scene/runtime/PlannedSystem {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;)V
 	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;)V
 	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lcom/awakekt/awake/scene/runtime/SceneSystemRole;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z

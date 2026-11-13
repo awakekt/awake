@@ -284,6 +284,8 @@ interface SceneCapability : SceneFeature {
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) = Unit
 
+    override val systemNames: List<String> get() = super.systemNames
+
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan)
 }
 
