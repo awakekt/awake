@@ -17,6 +17,8 @@ import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.foundation.skin.LocalSkin
+import com.awakekt.awake.compose.foundation.skin.skinPart
 import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.styleable
@@ -153,6 +155,10 @@ internal fun shadcnButtonContent(
             val horizontal = if (hasIcon && !size.square) ShadcnButtonIconPadding else size.paddingX
             contentPadding(horizontal + inset, size.paddingY + inset)
         }
+        // A skin that declares the face owns the look: its state frames are drawn and the token
+        // background, border and disabled dimming step aside. Which skin is decided here, the frame per draw.
+        val skin = LocalSkin.current
+        val skinned = skin != null && ShadcnSkinKeys.ButtonFace in skin
         val interactive = sized
             // The border is folded into the inset, not added beside it. shadcn is `border-box`, so
             // an outline button's 1px border consumes layout space and the button ends up 2px wider
@@ -160,10 +166,12 @@ internal fun shadcnButtonContent(
             // nothing, which left outline 2.53px narrow against the reference while every unbordered
             // variant matched. Same fix as `popoverSurfaceStyle`.
             .buttonInteractive(interaction, enabled, pressSource, onClick)
+            .let { if (skinned) it.skinPart(ShadcnSkinKeys.ButtonFace, interaction, enabled) else it }
+        val face = if (skinned) SkinFaceStyle else Style {}
         val surface = if (shape == null) {
-            interactive.styleable(state, borderSides, style, boxModel)
+            interactive.styleable(state, borderSides, style, boxModel, face)
         } else {
-            interactive.styleable(state, borderSides, style, boxModel, Style { shape(shape) })
+            interactive.styleable(state, borderSides, style, boxModel, Style { shape(shape) }, face)
         }
         Box(
             surface,
