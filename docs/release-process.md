@@ -103,7 +103,11 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    `scripts/central-upload.sh`), which publishes whole or not at all. The **Stage release** job
    publishes locally, checks the result and stages and signs the bundle beside Consumer; the
    **Release** job needs Consumer and that bundle and does only the upload and the GitHub Release,
-   so nothing reaches Central unless every gate passed. Wait for it to succeed and for
+   so nothing reaches Central unless every gate passed. The bundle travels through the Actions
+   cache under its own SHA-256 (not as an artifact, which shares an organisation storage quota):
+   Release restores that exact key, fails when it is missing, and checks the checksum Stage release
+   reported, so it can only upload the bundle that was staged. A missing bundle fails before any
+   upload; re-run the whole run once, as a run that never reached an upload. Wait for it to succeed and for
    `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version. Its **WebGPU release
    pin** job then publishes `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` once Core is on
    repo1; wait for that job too.
@@ -156,6 +160,14 @@ them. These checks used to run first on the tag, where a failure cost the versio
 0.37.1 all failed there. **A release-cut pull request must be green on the rehearsal before it is
 merged.** The rehearsal is not a required check, so wait for its **Publish** run rather than for
 the required ones alone, and fix a red one on the pull request.
+
+**A dry run of the release path.** To exercise the release jobs without a tag, dispatch the **Publish**
+workflow by hand from a branch (*Run workflow*, or `gh workflow run build-and-publish.yml --ref <branch>
+-f dry_run=true`). It runs Verify, Consumer, the natives, **Stage release** and **Release** with a
+throwaway local tag (`-f version=X.Y.Z[-rc.N]`, default `0.0.1-rc.1`), stops before **Publish to Maven
+Central**, and uploads nothing: the upload and GitHub Release steps and every job after Release
+require a `push` event, and the *Ref* job refuses a manual run without `dry_run: true`. Use it after
+any change to those jobs, and read its **Stage release** and **Release** jobs rather than assuming.
 
 **A failed publish is not re-run.** A tag whose Publish run failed may still have reached Central,
 and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the

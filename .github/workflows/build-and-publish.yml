@@ -34,6 +34,22 @@ on:
   pull_request:
     paths:
       - CHANGELOG.md
+  # A dry run of the release path from a branch: Verify, Consumer, the natives, Stage release and the
+  # Release job up to its upload, with a throwaway local tag giving the checkout `version`. It
+  # needs `dry_run: true` (the Ref job refuses anything else) and uploads nothing: the upload and
+  # GitHub Release steps require a `push` event, and the jobs after Release do too.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Must be true. Runs the release path without uploading anything.
+        required: true
+        type: boolean
+        default: true
+      version:
+        description: The release version the throwaway local tag names.
+        required: false
+        type: string
+        default: 0.0.1-rc.1
 
 # One run per ref, and a run in progress always finishes. A run publishes its snapshot about an hour
 # in, so cancelling it for a newer push threw the snapshot away, and a day of steady merges published
@@ -70,6 +86,7 @@ jobs:
     if: >-
       ${{
         github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
         (
           github.event_name == 'pull_request' &&
           startsWith(github.head_ref, 'release-cut/') &&
@@ -84,7 +101,18 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           REF: ${{ github.ref }}
           HEAD_REF: ${{ github.head_ref }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DRY_RUN_VERSION: ${{ inputs.version }}
         run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            if [[ "$DRY_RUN" == true && "$DRY_RUN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ \
+              && "$REF" =~ ^refs/heads/[0-9A-Za-z._/+-]+$ ]]; then
+              echo "Dry run of v$DRY_RUN_VERSION from $REF; this run uploads nothing."
+              exit 0
+            fi
+            echo "::error::A manual run is a dry run: dry_run must be true, version X.Y.Z[-alpha|beta|rc.N], from a branch."
+            exit 1
+          fi
           if [[ "$EVENT_NAME" == pull_request ]]; then
             if [[ "$HEAD_REF" =~ ^release-cut/v[0-9A-Za-z.+-]+$ ]]; then
               echo "Rehearsing the release $HEAD_REF cuts; this run uploads nothing."
@@ -115,7 +143,7 @@ jobs:
       vulkan: ${{ steps.impact.outputs.vulkan }}
       web: ${{ steps.impact.outputs.web }}
       docs_only: ${{ steps.impact.outputs.docs_only }}
-      vulkan_publish: ${{ github.event_name == 'pull_request' && 'false' || steps.vulkan-publish.outputs.vulkan_publish }}
+      vulkan_publish: ${{ github.event_name != 'push' && 'false' || steps.vulkan-publish.outputs.vulkan_publish }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -372,9 +400,9 @@ jobs:
       # A rehearsal (a release-cut pull request) builds the version its tag will: a throwaway tag on
       # this checkout, never pushed. The Ref job has checked the branch name.
       - name: Tag this commit as the release it cuts, locally
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'push'
         env:
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.head_ref }}
         run: git tag -f "${HEAD_REF#release-cut/}"
 
       - name: Verify Awake repository gates
@@ -437,9 +465,9 @@ jobs:
       # As in Verify: a rehearsal builds and checks the release version, so the WebGPU release pin
       # step below runs as it will on the tag.
       - name: Tag this commit as the release it cuts, locally
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'push'
         env:
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.head_ref }}
         run: git tag -f "${HEAD_REF#release-cut/}"
 
       # Resolve versions before downloading natives. Core-only changes use the last published
@@ -716,9 +744,14 @@ jobs:
     if: >-
       ${{
         !cancelled() &&
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/tags/v') &&
-        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        (
+          (
+            github.event_name == 'push' &&
+            startsWith(github.ref, 'refs/tags/v') &&
+            !startsWith(github.ref, 'refs/tags/vulkan-v')
+          ) ||
+          github.event_name == 'workflow_dispatch'
+        ) &&
         needs.verify.result == 'success' &&
         needs.naga-android.result == 'success' &&
         needs.naga-desktop.result == 'success' &&
@@ -726,6 +759,8 @@ jobs:
       }}
     needs: [verify, naga-android, naga-desktop, window-natives]
     runs-on: macos-15
+    outputs:
+      bundle_sha256: ${{ steps.bundle.outputs.sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -752,6 +787,12 @@ jobs:
       # A tag whose version derives to a snapshot means `git describe` did not see the tag -- a
       # shallow clone, or a tag that never reached the runner. Publishing anyway would put a
       # -SNAPSHOT on the release path and quietly produce no release at all.
+      - name: Tag this commit as the release it dry-runs, locally
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DRY_RUN_VERSION: ${{ inputs.version }}
+        run: git tag -f "v$DRY_RUN_VERSION"
+
       - name: Refuse to release a snapshot version
         run: |
           VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
@@ -760,6 +801,10 @@ jobs:
           case "$VERSION" in
             *-SNAPSHOT) echo "A tag build derived a snapshot version; the tag is not visible to git describe." && exit 1 ;;
           esac
+          # A dry run is on a branch: there is no tag name to match.
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            exit 0
+          fi
           case "$GITHUB_REF_NAME" in
             "v$VERSION") ;;
             *) echo "Tag $GITHUB_REF_NAME does not match derived version $VERSION." && exit 1 ;;
@@ -768,6 +813,7 @@ jobs:
       # A release is cut from reviewed code: the squash commit on `main` (docs/release-process.md),
       # or a maintenance `release/**` branch. A tag on any other commit never reaches Central.
       - name: Refuse a tag that is not on main or a release branch
+        if: github.event_name == 'push'
         run: |
           branches=$(git branch -r --contains "$GITHUB_SHA" --format='%(refname:short)')
           if ! grep -Eq '^origin/(main|release/.+)$' <<< "$branches"; then
@@ -840,15 +886,24 @@ jobs:
                     --no-configuration-cache
           scripts/central-bundle.sh "$STAGING" build/central-bundle.zip
 
-      # The bundle crosses to the job that uploads it. It is signed, so it is kept briefly: the
-      # GitHub Release carries the permanent copy.
+      # The bundle crosses to the job that uploads it through the cache, keyed by its own
+      # checksum: Release restores that exact key, fails when it is missing and checks the
+      # checksum again, so it can only ever upload the bundle this job staged and its job summary
+      # names. (Workflow artifacts would do, but share an organisation storage quota that has run
+      # out; the cache has a budget of its own.)
+      - name: Checksum the staged bundle
+        id: bundle
+        run: |
+          sha=$(shasum -a 256 build/central-bundle.zip | awk '{ print $1 }')
+          echo "Staged bundle sha256: $sha"
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          echo "Staged bundle sha256: \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Hand the staged bundle to the upload
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          name: central-bundle
           path: build/central-bundle.zip
-          if-no-files-found: error
-          retention-days: 3
+          key: central-bundle-${{ steps.bundle.outputs.sha256 }}
 
   # The gate and the upload. Explicit results: without them GitHub skips this job whenever any
   # transitive dependency was skipped, and `natives` is always skipped for a Core-only release (via
@@ -860,9 +915,14 @@ jobs:
     if: >-
       ${{
         !cancelled() &&
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/tags/v') &&
-        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        (
+          (
+            github.event_name == 'push' &&
+            startsWith(github.ref, 'refs/tags/v') &&
+            !startsWith(github.ref, 'refs/tags/vulkan-v')
+          ) ||
+          github.event_name == 'workflow_dispatch'
+        ) &&
         needs.verify.result == 'success' &&
         needs.consumer.result == 'success' &&
         needs.release-stage.result == 'success' &&
@@ -882,15 +942,30 @@ jobs:
           fetch-depth: 1
 
       - name: Collect the staged bundle
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          name: central-bundle
-          path: build
+          path: build/central-bundle.zip
+          key: central-bundle-${{ needs.release-stage.outputs.bundle_sha256 }}
+          fail-on-cache-miss: true
+
+      - name: Check it is the bundle that was staged
+        env:
+          STAGED_SHA256: ${{ needs.release-stage.outputs.bundle_sha256 }}
+        run: |
+          [[ "$STAGED_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "Stage release reported no checksum." >&2; exit 1; }
+          echo "$STAGED_SHA256  build/central-bundle.zip" | sha256sum --check -
+          echo "Bundle to upload: sha256 $STAGED_SHA256" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: A dry run stops here
+        if: github.event_name != 'push'
+        run: |
+          echo "Dry run. The bundle was staged, handed over and checked; nothing is uploaded."
 
       # Safe to re-run: central-upload.sh asks Central whether the bundle's version is already
       # published and, if it is, uploads nothing, so a re-run after a later step failed goes on to
       # the GitHub release instead of sending the same immutable version again.
       - name: Publish to Maven Central
+        if: github.event_name == 'push'
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -900,7 +975,7 @@ jobs:
       # said: the Maven fallback workflow serves the newest two from GitHub Pages, and a release
       # Central refused is the one it exists for.
       - name: Ensure GitHub Release exists
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -914,7 +989,7 @@ jobs:
           fi
 
       - name: Attach the Maven repository to the GitHub Release
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
