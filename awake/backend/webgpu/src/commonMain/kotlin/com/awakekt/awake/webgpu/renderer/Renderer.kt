@@ -193,6 +193,9 @@ class Renderer internal constructor(
     override val frameUiUploads: UiUploadStats?
         get() = statsCounter.latestUiUploads
 
+    override val framePassStats: com.awakekt.awake.render.renderer.RenderPassStats?
+        get() = statsCounter.latestPasses
+
     override val surfaceAspect: Float
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->
             if (context.height > 0u) context.width.toFloat() / context.height.toFloat() else 16f / 9f
@@ -264,6 +267,7 @@ class Renderer internal constructor(
 
     init {
         depthPrePass?.stats = statsCounter
+        depthPrePass?.countsShadowPasses = true
         sceneDepthPass?.stats = statsCounter
         maskPass?.stats = statsCounter
         swapchainManager.onSurfaceResize = { imagePassExecutor.releaseTransientTargets() }

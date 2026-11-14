@@ -11,20 +11,29 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.RenderPassCounts
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 /** Records the call sequence instead of issuing it -- the whole point of the port is that this
  * is possible with no GPU. */
-private class FakeRecorder : CommandRecorder {
+private class FakeRecorder(private val stats: RenderStatsCounter? = null) : CommandRecorder {
     val calls = mutableListOf<String>()
     override fun bindPipeline(pipeline: PipelineHandle) = log("pipeline(${(pipeline as Named).name})")
     override fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding) =
         log("material($semantic,${(binding as Named).name})")
     override fun bindVertexBuffer(binding: Int, buffer: BufferHandle) = log("vertex($binding,${(buffer as Named).name})")
     override fun bindIndexBuffer(buffer: BufferHandle) = log("index(${(buffer as Named).name})")
-    override fun draw(vertexCount: Int, instanceCount: Int) = log("draw($vertexCount,$instanceCount)")
-    override fun drawIndexed(indexCount: Int, instanceCount: Int) = log("drawIndexed($indexCount,$instanceCount)")
+    override fun draw(vertexCount: Int, instanceCount: Int) {
+        stats?.recordDraw(vertexCount, instanceCount)
+        log("draw($vertexCount,$instanceCount)")
+    }
+    override fun drawIndexed(indexCount: Int, instanceCount: Int) {
+        stats?.recordDraw(indexCount, instanceCount)
+        log("drawIndexed($indexCount,$instanceCount)")
+    }
     private fun log(call: String) {
         calls += call
     }
@@ -92,9 +101,31 @@ class SharedOpaqueRenderFeatureTest {
      */
     @Test
     fun theSceneFeatureRecordsLinesAfterEveryDraw() {
+        val recorder = FakeRecorder()
+
+        recordScene(recorder)
+
+        val pipelines = recorder.calls.filter { it.startsWith("pipeline(") }
+        assertEquals(listOf("pipeline(primary)", "pipeline(skinned)", "pipeline(edges)", "pipeline(glass)", "pipeline(lines)"), pipelines)
+    }
+
+    /** Each part of the scene pass counts toward its own pass: opaque, blended, and lines as other. */
+    @Test
+    fun theSceneFeatureCountsEachPartOfThePassApart() {
+        val stats = RenderStatsCounter()
+
+        recordScene(FakeRecorder(stats), stats)
+        stats.publish()
+
+        val passes = assertNotNull(stats.latestPasses)
+        assertEquals(RenderPassCounts(drawCalls = 3, instances = 3, triangles = 3), passes.sceneOpaque, "groups and edges")
+        assertEquals(RenderPassCounts(drawCalls = 1, instances = 1, triangles = 1), passes.sceneTransparent)
+        assertEquals(1, passes.other.drawCalls, "the debug lines")
+    }
+
+    private fun recordScene(recorder: FakeRecorder, stats: RenderStatsCounter? = null) {
         val primary = Named("primary")
         val skinned = Named("skinned")
-        val recorder = FakeRecorder()
         val lineDraw = FakeDraw(Named("lines"), Named("lineUniform"), Named("lineVerts"), null, 2)
         val frame = object : RenderFrameContext {
             override val frameIndex = 0
@@ -107,6 +138,7 @@ class SharedOpaqueRenderFeatureTest {
             override val surfaceWidth = 1
             override val surfaceHeight = 1
             override val recorder = recorder
+            override val stats = stats
         }
         val lines = object : LinePass<RenderFrameContext> {
             override fun writeMvp(frameIndex: Int, mvp: FloatArray) = Unit
@@ -115,9 +147,6 @@ class SharedOpaqueRenderFeatureTest {
         }
 
         OpaqueRenderFeature(lines).recordCommands(frame)
-
-        val pipelines = recorder.calls.filter { it.startsWith("pipeline(") }
-        assertEquals(listOf("pipeline(primary)", "pipeline(skinned)", "pipeline(edges)", "pipeline(glass)", "pipeline(lines)"), pipelines)
     }
 
     @Test

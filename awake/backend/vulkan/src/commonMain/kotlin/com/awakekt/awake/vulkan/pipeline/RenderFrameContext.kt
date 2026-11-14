@@ -32,7 +32,7 @@ internal interface VulkanRenderFrameContext : RenderFrameContext {
     val commandBuffer: Long
 
     /** The renderer's draw counter, for draws recorded outside [recorder]. */
-    val stats: RenderStatsCounter
+    override val stats: RenderStatsCounter
 
     override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>
     override val primaryPipeline: RenderPipeline
