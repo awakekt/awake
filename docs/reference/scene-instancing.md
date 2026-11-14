@@ -26,6 +26,20 @@ cascade costs about one draw per mesh.
 
 Nothing is merged into one mesh; instancing is the only batching.
 
+## Materials are shared by name
+
+Folding needs the copies to share one GPU material. A scene's asset library builds each material
+once per name (`SceneAssetLibrary.requireMaterial`), so every `mesh_renderer` that names the same
+`material` draws with the same one. An importer that writes one material per mesh, as a glTF import
+names them, folds; one that writes a material name per renderer, even with equal settings, never
+folds.
+
+To check a scene, turn on `RenderDiagnostics.drawStatsEnabled` and read `RenderDiagnostics.drawStats`:
+`misses(InstanceFoldMiss.DistinctMaterial)` counts the scene-pass draws kept apart only by their
+material, and `opaqueDraws` near the renderer count rather than the mesh count says the same.
+`Renderer.framePassStats.sceneOpaque` shows it from the backend's side: draws close to its instances
+mean little folded.
+
 ## What keeps draws apart
 
 `SceneDrawStats.misses` names the reason for every scene-pass draw that did not fold:
