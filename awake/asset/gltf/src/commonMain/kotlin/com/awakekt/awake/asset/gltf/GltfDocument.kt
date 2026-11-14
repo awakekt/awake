@@ -15,8 +15,9 @@ import kotlinx.serialization.Serializable
  * occlusion/emissive textures out of a `.gltf` file -- see [GltfParser]'s doc comment for
  * exactly which parts of [materials]/[textures]/[images] are read: still-encoded image bytes
  * per channel, plus [GltfPbrMetallicRoughness]'s `baseColorFactor`/`metallicFactor`/
- * `roughnessFactor` and [GltfMaterial.emissiveFactor] -- the scalar/vector factors a
- * texture-free (or partially textured) material tints or replaces its maps with. No other
+ * `roughnessFactor`, [GltfMaterial.emissiveFactor], [GltfMaterial.alphaMode], and
+ * [GltfMaterial.doubleSided] -- the scalar/vector factors and surface flags a texture-free
+ * (or partially textured) material tints, replaces its maps with, or culls with. No other
  * material fields (normal `scale`, occlusion `strength`) are read.
  */
 @Serializable
@@ -68,7 +69,42 @@ data class GltfMaterial(
     val emissiveFactor: List<Float>? = null,
     /** glTF alpha mode; defaults to opaque when omitted. */
     val alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
-)
+    /** Whether the material renders both sides of each triangle; glTF 2.0 spec default is `false` (back-face culled). */
+    val doubleSided: Boolean = false,
+) {
+    /** [GltfMaterial] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        name: String? = null,
+        pbrMetallicRoughness: GltfPbrMetallicRoughness? = null,
+        normalTexture: GltfTextureRef? = null,
+        occlusionTexture: GltfTextureRef? = null,
+        emissiveTexture: GltfTextureRef? = null,
+        emissiveFactor: List<Float>? = null,
+        alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
+    ) : this(name, pbrMetallicRoughness, normalTexture, occlusionTexture, emissiveTexture, emissiveFactor, alphaMode)
+
+    /** [copy] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        name: String? = this.name,
+        pbrMetallicRoughness: GltfPbrMetallicRoughness? = this.pbrMetallicRoughness,
+        normalTexture: GltfTextureRef? = this.normalTexture,
+        occlusionTexture: GltfTextureRef? = this.occlusionTexture,
+        emissiveTexture: GltfTextureRef? = this.emissiveTexture,
+        emissiveFactor: List<Float>? = this.emissiveFactor,
+        alphaMode: GltfAlphaMode = this.alphaMode,
+    ): GltfMaterial = copy(
+        name,
+        pbrMetallicRoughness,
+        normalTexture,
+        occlusionTexture,
+        emissiveTexture,
+        emissiveFactor,
+        alphaMode,
+        this.doubleSided,
+    )
+}
 
 /**
  * PBR metallic roughness material properties.

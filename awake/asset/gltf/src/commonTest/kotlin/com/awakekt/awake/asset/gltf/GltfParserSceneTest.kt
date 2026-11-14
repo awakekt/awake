@@ -9,7 +9,9 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * [GltfParser.parseScene] (GLB container + `scenes`/`nodes` traversal) tests -- builds real
@@ -304,6 +306,41 @@ class GltfParserSceneTest {
         val scene = GltfParser.parseScene(glb)
 
         assertNull(scene.meshes.single().primitives.single().baseColorImageBytes)
+        assertFalse(scene.meshes.single().primitives.single().doubleSided)
+    }
+
+    @Test
+    fun loadedPrimitivesCarryDoubleSidedFlagPerMaterial() {
+        val bin = triangleBinBytes()
+        val json = """
+            {
+              "bufferViews": [
+                { "buffer": 0, "byteOffset": 0, "byteLength": 36 },
+                { "buffer": 0, "byteOffset": 36, "byteLength": 6 }
+              ],
+              "accessors": [
+                { "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" },
+                { "bufferView": 1, "componentType": 5123, "count": 3, "type": "SCALAR" }
+              ],
+              "meshes": [{ "primitives": [
+                { "attributes": { "POSITION": 0 }, "indices": 1, "material": 0 },
+                { "attributes": { "POSITION": 0 }, "indices": 1, "material": 1 }
+              ]}],
+              "buffers": [{ "byteLength": ${bin.size} }],
+              "materials": [
+                { "doubleSided": false },
+                { "doubleSided": true }
+              ],
+              "nodes": [{ "mesh": 0 }],
+              "scenes": [{ "nodes": [0] }],
+              "scene": 0
+            }
+        """.trimIndent()
+
+        val scene = GltfParser.parseScene(encodeGlb(json, bin))
+        val primitives = scene.meshes.single().primitives
+        assertFalse(primitives[0].doubleSided)
+        assertTrue(primitives[1].doubleSided)
     }
 
     private fun identityData(): List<Float> = listOf(

@@ -24,6 +24,7 @@ internal fun GltfMesh.toStaticGeometry(): MeshGeometry =
             indices = indices,
             localTransform = com.awakekt.awake.core.math.Mat4(),
             baseColorFactor = baseColorFactor,
+            doubleSided = doubleSided,
         ),
     ).toStaticGeometry()
 
@@ -42,6 +43,7 @@ internal fun GltfMesh.toLoadedPrimitive(transform: Mat4): LoadedPrimitive = Load
     roughnessFactor = roughnessFactor,
     emissiveFactor = emissiveFactor,
     alphaMode = alphaMode,
+    doubleSided = doubleSided,
 )
 
 /** Converts parsed scene primitives into the vertex format the `lit-shadow` pipeline draws. */

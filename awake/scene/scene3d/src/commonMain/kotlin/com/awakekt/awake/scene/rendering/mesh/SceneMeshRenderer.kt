@@ -17,7 +17,10 @@ import kotlinx.serialization.json.JsonNames
  *
  * @property mesh Mesh asset resource identifier or primitive shape name.
  * @property material Material asset resource identifier.
- * @property cullMode GPU face culling mode.
+ * @property cullMode GPU face culling mode. Defaults to [CullMode.None] when omitted so
+ *   existing scenes keep drawing both faces; set [CullMode.FromMaterial] to honour the resolved
+ *   asset material (for glTF, `CullMode.Back` when `doubleSided` is `false` and `CullMode.None`
+ *   when `true`).
  * @property transparent Draws in the transparent pass: alpha-blended by the material's alpha,
  *   depth-tested but not depth-written, sorted back to front. See [MeshRenderer.transparent].
  * @property additive With [transparent], adds its colour to what is behind it: glows, fire,
@@ -52,6 +55,9 @@ data class SceneMeshRenderer(
 
         /** Front-facing polygons are culled. */
         Front,
+
+        /** Derives face culling from the resolved asset material (e.g. glTF `doubleSided`). */
+        FromMaterial,
     }
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {

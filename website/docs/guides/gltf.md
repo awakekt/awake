@@ -72,12 +72,12 @@ entry scene names, and `runProject` wires the resolver and the systems for you:
 | Buffers | Embedded `data:` URIs, the GLB binary chunk, and separate `.bin` files read through the asset source. |
 | Geometry | Positions, normals, `COLOR_0` (VEC3), `TEXCOORD_0`, 8-, 16- and 32-bit indices. Normalised integer attributes, as `KHR_mesh_quantization` writes them. |
 | Scenes | Every mesh and primitive in the default scene, with node matrices or TRS baked in. |
-| Materials | Base colour, metallic-roughness, normal, occlusion and emissive textures; `OPAQUE` and `MASK` alpha. `baseColorFactor` is multiplied into the vertex colour. |
+| Materials | Base colour, metallic-roughness, normal, occlusion and emissive textures; `OPAQUE`, `MASK` and `BLEND` (`alphaMode`); `doubleSided`; `baseColorFactor`, `metallicFactor`, `roughnessFactor`, `emissiveFactor`. Setting `"cullMode": "FromMaterial"` on `mesh_renderer` derives back-face culling from `doubleSided` (`Back` when `false`, `None` when `true`). |
 | Skins | `JOINTS_0` (8- or 16-bit) and `WEIGHTS_0`, inverse bind matrices, up to 64 joints. |
 | Animation | Translation, rotation and scale channels, sampled linearly. |
 
 Not supported: Draco and meshopt compression, sparse accessors, morph targets, other texture
-coordinate sets, texture samplers, and `BLEND` alpha (drawn as opaque).
+coordinate sets, texture samplers, normal `scale`, occlusion `strength`, `alphaCutoff`, and `BLEND` alpha (drawn as opaque).
 
 ## How it works
 

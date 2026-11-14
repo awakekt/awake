@@ -18,6 +18,7 @@ import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.project.GatedAssetSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.scene.audio.AudioSource
 import com.awakekt.awake.scene.audio.SceneAudioSource
 import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
@@ -473,6 +474,8 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
     override fun materialDefaults(name: String): PbrMaterial? = target.materialDefaults(name)
 
     override fun materialDefaults(mesh: String, material: String): PbrMaterial? = target.materialDefaults(mesh, material)
+
+    override fun defaultCullMode(mesh: String, material: String): CullMode? = target.defaultCullMode(mesh, material)
 
     override fun meshLevels(name: String): SceneMeshLevels? = target.meshLevels(name)
 
