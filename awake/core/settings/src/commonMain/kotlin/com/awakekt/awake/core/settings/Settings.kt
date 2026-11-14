@@ -128,29 +128,27 @@ class Settings private constructor(
         }
     }
 
+    /** Writes the latest pending text. It stays pending when the write fails or is cancelled, for [flush] to retry. */
     private suspend fun writePending() {
         val text = pending ?: return
-        pending = null
-        try {
-            storage.write(text)
-        } catch (cancelled: CancellationException) {
-            if (pending == null) pending = text
-            throw cancelled
-        } catch (@Suppress("TooGenericExceptionCaught") failure: Exception) {
-            report(SettingsProblem.StorageFailed(failure))
-        }
+        if (storageCall { storage.write(text) } != null && pending === text) pending = null
+    }
+
+    /** Runs [call] on the storage: a failure is reported and gives null; a cancellation is rethrown. */
+    private suspend fun <T : Any> storageCall(call: suspend () -> T): T? = try {
+        call()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (@Suppress("TooGenericExceptionCaught") failure: Exception) {
+        report(SettingsProblem.StorageFailed(failure))
+        null
     }
 
     private fun report(problem: SettingsProblem) = reported.update { it + problem }
 
     private suspend fun load(launch: LaunchValues?) {
-        val text = try {
-            storage.read()
-        } catch (@Suppress("TooGenericExceptionCaught") failure: Exception) {
-            report(SettingsProblem.StorageFailed(failure))
-            null
-        }
-        if (text != null) readSaved(text)
+        val text = storageCall { storage.read() ?: "" }
+        if (!text.isNullOrEmpty()) readSaved(text)
         var renamed = false
         for (key in schema.keys) {
             val former = key.formerly.firstOrNull { it in saved }
@@ -167,11 +165,7 @@ class Settings private constructor(
             Json.parseToJsonElement(text).jsonObject.mapValues { it.value.jsonPrimitive.content }
         } catch (@Suppress("TooGenericExceptionCaught") unreadable: Exception) {
             report(SettingsProblem.Unreadable(unreadable.message ?: "not a JSON object"))
-            try {
-                storage.keepAside(text)
-            } catch (@Suppress("TooGenericExceptionCaught") failure: Exception) {
-                report(SettingsProblem.StorageFailed(failure))
-            }
+            storageCall { storage.keepAside(text) }
             return
         }
         saved.putAll(values)
