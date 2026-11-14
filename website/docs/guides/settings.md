@@ -16,6 +16,22 @@ A player setting resolves in one order, declared once on its key rather than at 
 The launch option wins for that session only. It is never saved, and a change the player makes during
 the session replaces it.
 
+!!! danger "Settings are not for secrets"
+    Never keep a token, a password, a session or refresh token, or a sign-in in a setting. Settings
+    are saved as plain text and are meant to be seen:
+
+    - **On the web** they are in IndexedDB, where any script on the page can read them, so one
+      cross-site scripting bug or compromised third-party script leaks them.
+    - **On desktop and Android** they are in `settings.json`, readable by other software running as
+      the same user and copied into backups and support bundles. A copy set aside as
+      `settings.json.unreadable` holds them too.
+    - **A refused value is printed** in its `SettingsProblem`, and problems are meant to be logged.
+    - **A generated settings window shows every key**, through `keys` and `text(key)`.
+
+    Keep secrets in the platform's credential store (the iOS Keychain, the Android Keystore, a
+    non-extractable WebCrypto key on the web, the OS credential store on desktop), never in a
+    `SettingsSchema`.
+
 ## Declare the settings
 
 ```kotlin title="commonMain"
