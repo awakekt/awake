@@ -182,7 +182,7 @@ owns the component, and must be registered before a document that uses them is d
 | --- | --- | --- |
 | `SceneComponentRegistry().registerControls()` | `scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerGlobal(binding)` | any | that binding's id, for every load |
-| `loadProject(files, capabilities = …)` | `project:runtime` | each [scene capability](scene-capabilities.md)'s ids, for that project |
+| `loadProject(files, capabilities = …)` | `project:runtime` | each [scene feature](scene-capabilities.md)'s ids, for that project |
 
 A scene module's own components are listed in the registry the build generates for it, such as
 `SceneCoreSceneComponents`; register one with `registry.register(module)`. [Scene components](scene-components.md)

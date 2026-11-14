@@ -30,7 +30,7 @@ internal interface WebGpuRenderFrameContext : RenderFrameContext {
     val encoder: GPURenderPassEncoder
 
     /** The renderer's draw counter, for draws recorded outside [recorder]. */
-    val stats: RenderStatsCounter
+    override val stats: RenderStatsCounter
 
     /** Staged before the frame by `drawDebugLines`/`drawUi` respectively -- consumed here. */
     val lineMesh: LineMesh

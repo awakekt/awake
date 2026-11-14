@@ -25,7 +25,8 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `core:audio` | `AudioClip`, `AudioPlayer`, WAV decoding, a simple synthesizer |
 | `core:host` | Host services: `FrameLoop`, `FixedTimestepLoop`, resource bytes |
 | `core:io` | Asynchronous, root-relative file and byte-source contracts |
-| `core:config` | Typed configuration from environment and platform sources |
+| `core:config` | Typed configuration from environment and platform sources, and declared launch options |
+| `core:settings` | Typed player settings, saved when changed, with launch-option overrides |
 | `core:logging` | `Log`, sinks, and an in-memory ring buffer |
 | `core:schema` | Property schemas and authoring annotations read from `kotlinx.serialization` descriptors |
 | `core:di` | A small dependency-injection container: modules, keys, bindings |

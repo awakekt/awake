@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.document
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.ContentTooNew
 import kotlinx.serialization.json.Json
 
 /**
@@ -20,7 +21,11 @@ class SceneSchemaVersionException(
 ) : IllegalArgumentException(
     "Scene document declares schema version $documentVersion, but this build supports up to " +
         "$SCENE_SCHEMA_VERSION. Upgrade the engine or re-export the scene.",
-)
+),
+    ContentTooNew {
+    override val foundVersion: Int get() = documentVersion
+    override val supportedVersion: Int get() = SCENE_SCHEMA_VERSION
+}
 
 /** Default JSON serializer configured for Awake scene documents. */
 val DefaultSceneJson: Json

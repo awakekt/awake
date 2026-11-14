@@ -259,6 +259,7 @@ public abstract interface class com/awakekt/awake/render/passes/RenderFrameConte
 	public abstract fun getPrimaryPipeline ()Lcom/awakekt/awake/render/command/PipelineHandle;
 	public abstract fun getRecorder ()Lcom/awakekt/awake/render/command/CommandRecorder;
 	public fun getShadowCascades ()Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public fun getStats ()Lcom/awakekt/awake/render/renderer/RenderStatsCounter;
 	public fun getSunDirection ()Lcom/awakekt/awake/core/math/Vec3f;
 	public abstract fun getSurfaceHeight ()I
 	public abstract fun getSurfaceWidth ()I
@@ -275,6 +276,7 @@ public final class com/awakekt/awake/render/passes/RenderFrameContext$DefaultImp
 	public static fun getLight (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
 	public static fun getPassInput (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public static fun getShadowCascades (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static fun getStats (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/renderer/RenderStatsCounter;
 	public static fun getSunDirection (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/core/math/Vec3f;
 	public static fun getTransparentDrawCalls (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Ljava/util/List;
 	public static fun sceneDepthBinding (Lcom/awakekt/awake/render/passes/RenderFrameContext;Lcom/awakekt/awake/render/command/PipelineHandle;)Lcom/awakekt/awake/render/command/MaterialBinding;

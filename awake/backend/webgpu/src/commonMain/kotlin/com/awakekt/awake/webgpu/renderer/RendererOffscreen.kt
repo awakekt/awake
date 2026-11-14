@@ -86,7 +86,10 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
         graphicsDevice,
         width,
         height,
-        onDestroy = { createdRenderTargets.remove(target) },
+        onDestroy = {
+            createdRenderTargets.remove(target)
+            bufferPools.releaseUiSlots(target)
+        },
         sampleCount = renderPipeline.multisample.count,
     )
     createdRenderTargets += target

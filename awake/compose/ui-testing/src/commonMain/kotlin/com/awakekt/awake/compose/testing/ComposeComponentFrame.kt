@@ -66,6 +66,9 @@ class ComposeComponentFrame(
      */
     fun meshColors(): List<Color> = primitives.meshColors()
 
+    /** The colours borders paint, tessellated rings and analytic ones alike; see [borderColors]. */
+    fun borderColors(): List<Color> = primitives.borderColors()
+
     /** Every [UiDrawPrimitive.Mesh] vertex position, placed, for asserting a drawn shape's extent. */
     fun meshPoints(): List<DrawPoint> =
         primitivesOf<UiDrawPrimitive.Mesh>().flatMap { it.placedMesh().vertices.map { v -> v.position } }
@@ -153,3 +156,11 @@ fun List<UiDrawPrimitive>.meshColors(): List<Color> = filterIsInstance<UiDrawPri
     .flatMap { mesh -> mesh.mesh.vertices.map { it.color } }
     .filter { it.a > 0f }
     .distinct()
+
+/**
+ * The colours borders paint: a tessellated ring's ([meshColors]) and an analytic rounded border's,
+ * a [UiDrawPrimitive.RoundedQuad] with a stroke width, which is how `Modifier.border` draws a
+ * rounded shape (#1545).
+ */
+fun List<UiDrawPrimitive>.borderColors(): List<Color> =
+    (meshColors() + filterIsInstance<UiDrawPrimitive.RoundedQuad>().filter { it.strokeWidth > 0f }.map { it.color }).distinct()

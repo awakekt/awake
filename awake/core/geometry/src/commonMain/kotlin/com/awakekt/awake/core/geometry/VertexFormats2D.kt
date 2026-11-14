@@ -50,7 +50,7 @@ object VertexFormats2D {
         ),
     )
 
-    /** 2D Rounded Quad: pos (vec2) + localPos (vec2) + halfSize (vec2) + radius (float) + smoothing (float) + color (vec4) + transform (vec4) = 16 floats (64 bytes). */
+    /** 2D Rounded Quad: pos (vec2) + localPos (vec2) + halfSize (vec2) + radius (float) + smoothing (float) + color (vec4) + transform (vec4) + strokeWidth (float) = 17 floats (68 bytes). */
     val RoundedQuad = VertexFormat(
         listOf(
             VertexAttribute(VertexSemantic.Position, GpuDataShape.Vec2, location = 0),
@@ -60,6 +60,7 @@ object VertexFormats2D {
             VertexAttribute(VertexSemantic.Smoothing, GpuDataShape.Float, location = 4),
             VertexAttribute(VertexSemantic.Color, GpuDataShape.Vec4, location = 5),
             VertexAttribute(VertexSemantic.Transform, GpuDataShape.Vec4, location = 6),
+            VertexAttribute(VertexSemantic.StrokeWidth, GpuDataShape.Float, location = 7),
         ),
     )
 
@@ -73,7 +74,7 @@ object VertexFormats2D {
     const val DECORATED_GLYPH_FLOATS_PER_VERTEX = 34
 
     /** Rounded quad layout float count. */
-    const val ROUNDED_QUAD_FLOATS_PER_VERTEX = 16
+    const val ROUNDED_QUAD_FLOATS_PER_VERTEX = 17
 
     /** Standard quad geometry vertex count. */
     const val VERTICES_PER_QUAD = 4

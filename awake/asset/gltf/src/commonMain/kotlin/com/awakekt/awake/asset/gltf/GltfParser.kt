@@ -27,11 +27,13 @@ import com.awakekt.awake.core.math.Vec3f
  *   a document references before parsing it.
  * - **[parse] reads only the first mesh's first primitive** -- its `POSITION`/`NORMAL`/
  *   `COLOR_0`/`TEXCOORD_0`/`JOINTS_0`/`WEIGHTS_0` attributes, its index accessor, and (if
- *   present) its material's base color/metallic-roughness/normal/occlusion/emissive texture
- *   image bytes. Reading stops at the still-encoded image bytes per channel; no other material
- *   fields (normal `scale`, occlusion `strength`) are read. [parseScene] walks the full node
- *   hierarchy for static meshes; [parseSkinned] walks it for skeletal skinning/animation (skins +
- *   animation clips too).
+ *   present) its material's textures (`baseColorTexture`, `metallicRoughnessTexture`,
+ *   `normalTexture`, `occlusionTexture`, `emissiveTexture`), scalar/vector factors
+ *   (`baseColorFactor`, `metallicFactor`, `roughnessFactor`, `emissiveFactor`), `alphaMode`, and
+ *   `doubleSided`. Reading stops at the still-encoded image bytes per channel; no other material
+ *   fields (normal `scale`, occlusion `strength`, `alphaCutoff`) are read. [parseScene] walks the
+ *   full node hierarchy for static meshes; [parseSkinned] walks it for skeletal skinning/animation
+ *   (skins + animation clips too).
  * - **Only `FLOAT` vertex attributes and `UNSIGNED_BYTE`/`UNSIGNED_SHORT`/`UNSIGNED_INT`
  *   indices** are decoded -- glTF also allows signed `BYTE`/`SHORT` and normalized integer
  *   attributes, neither of which real exporters emit for `POSITION`/`NORMAL`/`COLOR_0` in
@@ -318,4 +320,5 @@ private fun GltfMesh.placedAt(world: Mat4): LoadedPrimitive = LoadedPrimitive(
     roughnessFactor,
     emissiveFactor,
     alphaMode,
+    doubleSided,
 )

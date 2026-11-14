@@ -474,9 +474,11 @@ public final class com/awakekt/awake/scene/document/SceneQuat$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/document/SceneSchemaVersionException : java/lang/IllegalArgumentException {
+public final class com/awakekt/awake/scene/document/SceneSchemaVersionException : java/lang/IllegalArgumentException, com/awakekt/awake/core/io/ContentTooNew {
 	public fun <init> (I)V
 	public final fun getDocumentVersion ()I
+	public fun getFoundVersion ()I
+	public fun getSupportedVersion ()I
 }
 
 public final class com/awakekt/awake/scene/document/SceneSerializers {

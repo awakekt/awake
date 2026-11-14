@@ -16,6 +16,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
+import com.awakekt.awake.project.ContentFormatTooNewException
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
@@ -78,10 +79,14 @@ internal suspend fun loadProjectInto(
     entryScene: String? = null,
     onProgress: (Float) -> Unit = {},
     sharedStrings: Strings? = null,
+    gate: EntryGate? = null,
 ): LoadedProject {
     val progress = ProgressReporter(onProgress)
     progress.report(0f)
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
+    if (manifest.formatVersion > MANIFEST_FORMAT_VERSION) {
+        throw ContentFormatTooNewException("project manifest", manifest.formatVersion, MANIFEST_FORMAT_VERSION)
+    }
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
     val scenePath = entryScene?.also {
@@ -92,8 +97,13 @@ internal suspend fun loadProjectInto(
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
     val ownStrings = if (sharedStrings == null) loadProjectStrings(files) else null
-    files.prefetchSceneContent(scenePath, progress::report)
-    val entry = loadProjectScene(scenePath, manifest, files, registry, installed, hasRenderer, physicsWorld)
+    val waitsFor = gate?.let { if (files.gates(scenePath)) scenePath else null }
+    val entry = if (waitsFor == null) {
+        files.prefetchSceneContent(scenePath, progress::report)
+        loadProjectScene(scenePath, manifest, files, registry, installed, hasRenderer, physicsWorld)
+    } else {
+        loadPlaceholder(checkNotNull(gate), manifest, files, registry, installed, hasRenderer, physicsWorld, progress::report)
+    }
     // The app's instance gets the project's tables only once nothing else can fail the load.
     val added = sharedStrings?.let { shared ->
         val tables = StringTableSource.assets(files)
@@ -109,7 +119,9 @@ internal suspend fun loadProjectInto(
     }
     val strings = sharedStrings ?: ownStrings
     progress.report(1f)
-    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings, added)
+    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings, added).also {
+        it.pendingEntryScene = waitsFor
+    }
 }
 
 /**
@@ -171,6 +183,20 @@ internal suspend fun loadProjectScene(
     physicsWorld: (suspend () -> PhysicsWorld)?,
 ): ProjectScene {
     val scene = decodeScene(path, files, registry)
+    return projectSceneOf(path, scene, manifest, files, installed, hasRenderer, physicsWorld)
+}
+
+/** [scene], a document read from [path] or made in code, loaded to play as [loadProjectScene] loads a file. */
+@Suppress("LongParameterList") // As loadProjectScene's.
+internal suspend fun projectSceneOf(
+    path: String,
+    scene: SceneDocument,
+    manifest: AwakeProjectManifest,
+    files: AssetSource,
+    installed: List<SceneFeature>,
+    hasRenderer: Boolean,
+    physicsWorld: (suspend () -> PhysicsWorld)?,
+): ProjectScene {
     warnUnlistedTags(manifest, scene, path)
     warnUnlistedSortingLayers(manifest, scene, path)
     val models = GltfAssetResolver().apply { readProjectFiles(files) }
@@ -194,6 +220,9 @@ internal suspend fun loadProjectScene(
 
 private fun SceneNode.meshNames(): List<String> =
     components.filterIsInstance<SceneMeshRenderer>().map { it.mesh } + children.flatMap { it.meshNames() }
+
+/** The newest project manifest format this build reads. */
+private const val MANIFEST_FORMAT_VERSION = 1
 
 /** How many spawned nodes a scene keeps before it first forgets the ones already despawned. */
 private const val SPAWNED_PRUNE_MIN = 32

@@ -17,6 +17,18 @@ import com.awakekt.awake.core.animation.AnimationPose
  * Off by default: [AnimationSystem] uses [EveryFrame] unless a consuming app passes a rate, and the
  * app authors the distances — Core ships the mechanism, not the tuning. The engine neither measures
  * distance nor throttles when the default is in force.
+ *
+ * A recommended starting band, for a world in metres seen by a third-person camera, is
+ * `byDistance(near = 12f, far = 40f, farInterval = 0.1f)`: full rate up close, easing to ten poses a
+ * second at 40 m, where a character spans a few dozen pixels. Widen `near` for a camera that frames
+ * characters closely; shorten `farInterval` if far crowds visibly step:
+ *
+ * ```kotlin
+ * val animation = AnimationSystem(AnimationUpdateRate.byDistance(near = 12f, far = 40f, farInterval = 0.1f))
+ * ```
+ *
+ * A model whose pose is held (speed 0, a finished clip on its last frame) is not posed again at any
+ * rate; see [com.awakekt.awake.core.animation.AnimationPlayer.updateIfChanged].
  */
 fun interface AnimationUpdateRate {
     /**

@@ -58,8 +58,8 @@ class ShadcnBadgeTest {
 
     @Test
     fun outlineIsTheOnlyVariantWithAVisibleBorder() {
-        val outline = badge(ShadcnBadgeVariant.Outline).meshColors()
-        val default = badge(ShadcnBadgeVariant.Default).meshColors()
+        val outline = badge(ShadcnBadgeVariant.Outline).borderColors()
+        val default = badge(ShadcnBadgeVariant.Default).borderColors()
 
         assertTrue(theme.palette.border in outline, "outline drew no bordered edge")
         assertTrue(theme.palette.border !in default, "a filled variant drew a visible border")

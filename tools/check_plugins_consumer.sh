@@ -152,11 +152,13 @@ point() {
 # Linux cross-compiles Apple klibs by default, and those need Core's, which only a Mac publishes. Off,
 # the iOS targets are skipped here as they are on the plugins' own Windows CI.
 NO_APPLE_KLIBS=-Pkotlin.native.enableKlibsCrossCompilation=false
+# publish() skips publishAndroidPublicationToMavenLocal, so skip optional Android targets in awake-plugins too.
+NO_ANDROID=-Pawake.plugins.android=false
 
 # Every plugin's JVM suite, on its own jar and on the R8-renamed one a game ships, which also proves
 # R8 still resolves everything the plugins reach in Core.
 run_tests() {
-  (cd "$1" && ./gradlew jvmTest jvmObfuscatedTest "$NO_APPLE_KLIBS" -Pawake.version="$2" --continue \
+  (cd "$1" && ./gradlew jvmTest jvmObfuscatedTest "$NO_APPLE_KLIBS" "$NO_ANDROID" -Pawake.version="$2" --continue \
     --max-workers=2 --stacktrace)
 }
 
@@ -165,14 +167,14 @@ run_tests() {
 # rpg-hud-studio's install path is held. Nothing changes on the plugins' side, so HEAD is the base
 # their detekt baseline is compared with. Throughput stays informational on a shared runner.
 scorecard() {
-  (cd "$1" && ./gradlew pluginScorecard "$NO_APPLE_KLIBS" -Pawake.version="$2" --continue \
+  (cd "$1" && ./gradlew pluginScorecard "$NO_APPLE_KLIBS" "$NO_ANDROID" -Pawake.version="$2" --continue \
     -Pscorecard.baseRef=HEAD --max-workers=2 --stacktrace)
 }
 
 # The table pluginScorecard writes even when its own gate fails, but not when a task it depends on failed
 # first: this writes what was measured and marks the rest unverified. It never fails the step itself.
 report() {
-  (cd "$1" && ./gradlew pluginScorecardReport -Pawake.version="$2" --max-workers=2) || true
+  (cd "$1" && ./gradlew pluginScorecardReport "$NO_ANDROID" -Pawake.version="$2" --max-workers=2) || true
 }
 
 command="${1:-}"

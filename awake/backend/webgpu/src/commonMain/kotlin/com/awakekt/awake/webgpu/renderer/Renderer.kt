@@ -193,6 +193,9 @@ class Renderer internal constructor(
     override val frameUiUploads: UiUploadStats?
         get() = statsCounter.latestUiUploads
 
+    override val framePassStats: com.awakekt.awake.render.renderer.RenderPassStats?
+        get() = statsCounter.latestPasses
+
     override val surfaceAspect: Float
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->
             if (context.height > 0u) context.width.toFloat() / context.height.toFloat() else 16f / 9f
@@ -264,6 +267,7 @@ class Renderer internal constructor(
 
     init {
         depthPrePass?.stats = statsCounter
+        depthPrePass?.countsShadowPasses = true
         sceneDepthPass?.stats = statsCounter
         maskPass?.stats = statsCounter
         swapchainManager.onSurfaceResize = { imagePassExecutor.releaseTransientTargets() }
@@ -310,10 +314,6 @@ class Renderer internal constructor(
     internal val uiRunArrayPool = DynamicRunArrayPool()
 
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
-    internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
-    internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
-    internal fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index, decorated = true)
-    internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
 
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES)
 

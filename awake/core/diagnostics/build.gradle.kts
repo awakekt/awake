@@ -30,6 +30,13 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.test)
+        }
+        // LocalStorageCrashStorage and the page lifecycle hooks: wasmJs-only, as awake:core:host's browser access.
+        named("wasmJsMain") {
+            dependencies {
+                implementation(libs.kotlinx.browser)
+            }
         }
     }
 }

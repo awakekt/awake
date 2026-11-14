@@ -1,0 +1,113 @@
+public final class com/awakekt/awake/core/settings/FileSettingsStorage : com/awakekt/awake/core/settings/SettingsStorage {
+	public fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFiles ()Lcom/awakekt/awake/core/io/FileSystem;
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public fun keepAside (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun read (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun write (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/settings/MemorySettingsStorage : com/awakekt/awake/core/settings/SettingsStorage {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getKeptAside ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public fun keepAside (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun read (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setText (Ljava/lang/String;)V
+	public fun write (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/settings/SettingKey {
+	public final fun getChoices ()Ljava/util/List;
+	public final fun getDefault ()Ljava/lang/Object;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getFormerly ()Ljava/util/List;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getMax ()Ljava/lang/Double;
+	public final fun getMin ()Ljava/lang/Double;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOverride ()Lcom/awakekt/awake/core/config/LaunchOption;
+	public final fun getType ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun refusal (Ljava/lang/Object;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/settings/Settings {
+	public static final field Companion Lcom/awakekt/awake/core/settings/Settings$Companion;
+	public static final field DEFAULT_SAVE_DELAY_MILLIS J
+	public synthetic fun <init> (Lcom/awakekt/awake/core/settings/SettingsSchema;Lcom/awakekt/awake/core/settings/SettingsStorage;Lkotlinx/coroutines/CoroutineScope;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun flush (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun get (Lcom/awakekt/awake/core/settings/SettingKey;)Ljava/lang/Object;
+	public final fun getProblems ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getSchema ()Lcom/awakekt/awake/core/settings/SettingsSchema;
+	public final fun isOverridden (Lcom/awakekt/awake/core/settings/SettingKey;)Z
+	public final fun isSaved (Lcom/awakekt/awake/core/settings/SettingKey;)Z
+	public final fun reset (Lcom/awakekt/awake/core/settings/SettingKey;)Z
+	public final fun set (Lcom/awakekt/awake/core/settings/SettingKey;Ljava/lang/Object;)Z
+	public final fun setText (Lcom/awakekt/awake/core/settings/SettingKey;Ljava/lang/String;)Z
+	public final fun state (Lcom/awakekt/awake/core/settings/SettingKey;)Lkotlinx/coroutines/flow/StateFlow;
+	public final fun text (Lcom/awakekt/awake/core/settings/SettingKey;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/settings/Settings$Companion {
+	public final fun open (Lcom/awakekt/awake/core/settings/SettingsSchema;Lcom/awakekt/awake/core/settings/SettingsStorage;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/config/LaunchValues;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun open$default (Lcom/awakekt/awake/core/settings/Settings$Companion;Lcom/awakekt/awake/core/settings/SettingsSchema;Lcom/awakekt/awake/core/settings/SettingsStorage;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/config/LaunchValues;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract class com/awakekt/awake/core/settings/SettingsProblem {
+	public abstract fun getMessage ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/settings/SettingsProblem$Invalid : com/awakekt/awake/core/settings/SettingsProblem {
+	public fun <init> (Lcom/awakekt/awake/core/settings/SettingKey;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getGiven ()Ljava/lang/String;
+	public final fun getKey ()Lcom/awakekt/awake/core/settings/SettingKey;
+	public fun getMessage ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/settings/SettingsProblem$StorageFailed : com/awakekt/awake/core/settings/SettingsProblem {
+	public fun <init> (Ljava/lang/Throwable;)V
+	public final fun getCause ()Ljava/lang/Throwable;
+	public fun getMessage ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/settings/SettingsProblem$Unreadable : com/awakekt/awake/core/settings/SettingsProblem {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/core/settings/SettingsProblem$Unreadable;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/settings/SettingsProblem$Unreadable;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingsProblem$Unreadable;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getMessage ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class com/awakekt/awake/core/settings/SettingsSchema {
+	public fun <init> ()V
+	protected final fun boolean (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public static synthetic fun boolean$default (Lcom/awakekt/awake/core/settings/SettingsSchema;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingKey;
+	protected final fun choice (Ljava/lang/String;Ljava/lang/Enum;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public static synthetic fun choice$default (Lcom/awakekt/awake/core/settings/SettingsSchema;Ljava/lang/String;Ljava/lang/Enum;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingKey;
+	protected final fun float (Ljava/lang/String;FLkotlin/ranges/ClosedFloatingPointRange;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public static synthetic fun float$default (Lcom/awakekt/awake/core/settings/SettingsSchema;Ljava/lang/String;FLkotlin/ranges/ClosedFloatingPointRange;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public final fun getKeys ()Ljava/util/List;
+	protected final fun int (Ljava/lang/String;ILkotlin/ranges/IntRange;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public static synthetic fun int$default (Lcom/awakekt/awake/core/settings/SettingsSchema;Ljava/lang/String;ILkotlin/ranges/IntRange;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingKey;
+	protected final fun setting (Ljava/lang/String;Lcom/awakekt/awake/core/config/ValueType;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;Ljava/lang/Double;Ljava/lang/Double;Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public static synthetic fun setting$default (Lcom/awakekt/awake/core/settings/SettingsSchema;Ljava/lang/String;Lcom/awakekt/awake/core/config/ValueType;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;Ljava/lang/Double;Ljava/lang/Double;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingKey;
+	protected final fun string (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/settings/SettingKey;
+	public static synthetic fun string$default (Lcom/awakekt/awake/core/settings/SettingsSchema;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/config/LaunchOption;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/settings/SettingKey;
+}
+
+public abstract interface class com/awakekt/awake/core/settings/SettingsStorage {
+	public abstract fun keepAside (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun read (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun write (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+

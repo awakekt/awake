@@ -1,0 +1,1 @@
+- The WebGPU backend no longer sends a bind group, vertex buffer or index buffer that a render pass already has bound. A static scene of 1,500 draws with a depth pre-pass and three shadow cascades sends 12,328 encoder calls a frame where it sent 22,587, each a crossing into JS on the web. Its uniform upload check no longer allocates a range per draw (#1545).

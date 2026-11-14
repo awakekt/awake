@@ -188,6 +188,7 @@ public abstract interface class com/awakekt/awake/compose/ui/draw/ContentDrawSco
 public final class com/awakekt/awake/compose/ui/draw/ContentDrawScope$DefaultImpls {
 	public static fun clippedWithMargin (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFLkotlin/jvm/functions/Function0;)V
 	public static fun drawDecoratedGlyph (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILcom/awakekt/awake/core/graphics2d/GlyphDecoration;)V
+	public static fun drawRoundedRectBorder (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFLcom/awakekt/awake/core/color/Color;FF)V
 	public static fun drawTexture (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
@@ -704,6 +705,8 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public static synthetic fun drawRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public abstract fun drawRoundedRect (FFFFLcom/awakekt/awake/core/color/Color;F)V
 	public static synthetic fun drawRoundedRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V
+	public fun drawRoundedRectBorder (FFFFLcom/awakekt/awake/core/color/Color;FF)V
+	public static synthetic fun drawRoundedRectBorder$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFILjava/lang/Object;)V
 	public abstract fun drawShadow (FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;)V
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
 	public abstract fun drawStrokedPath (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;Lcom/awakekt/awake/core/color/Color;)V
@@ -734,6 +737,8 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static synthetic fun drawGlyph$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;IILjava/lang/Object;)V
 	public static synthetic fun drawRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public static synthetic fun drawRoundedRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V
+	public static fun drawRoundedRectBorder (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FF)V
+	public static synthetic fun drawRoundedRectBorder$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFILjava/lang/Object;)V
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
 	public static fun drawTexture (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;ILjava/lang/Object;)V
@@ -1467,16 +1472,24 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun frame (Lcom/awakekt/awake/compose/ui/platform/FrameInput;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/platform/FrameOutput;
 	public final fun getCompositionStats ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStats;
 	public final fun getDensity ()F
+	public final fun getExternalChanges ()Lkotlin/jvm/functions/Function0;
 	public final fun getFocusOwner ()Lcom/awakekt/awake/compose/ui/focus/FocusOwner;
 	public final fun getFrameClock ()Lcom/awakekt/awake/compose/ui/platform/FrameClock;
 	public final fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
+	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;
 	public final fun getRoot ()Lcom/awakekt/awake/compose/ui/node/LayoutNode;
 	public final fun getSkipUnchangedComposition ()Z
 	public final fun getSkippedCompositions ()I
+	public final fun getStaleSkips ()I
+	public final fun getVerifySkippedCompositions ()Z
 	public final fun getWindowInsets ()Lcom/awakekt/awake/compose/ui/platform/WindowInsets;
+	public final fun invalidate ()V
 	public final fun setDensity (F)V
+	public final fun setExternalChanges (Lkotlin/jvm/functions/Function0;)V
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
+	public final fun setOnStaleSkip (Lkotlin/jvm/functions/Function1;)V
 	public final fun setSkipUnchangedComposition (Z)V
+	public final fun setVerifySkippedCompositions (Z)V
 	public final fun setWindowInsets (Lcom/awakekt/awake/compose/ui/platform/WindowInsets;)V
 }
 
@@ -1681,6 +1694,21 @@ public final class com/awakekt/awake/compose/ui/platform/PointerFrame {
 	public final fun getReleased ()Z
 	public final fun getX ()I
 	public final fun getY ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/ui/platform/StaleSkip {
+	public fun <init> (ILcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;
+	public final fun component3 ()Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;
+	public final fun copy (ILcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;)Lcom/awakekt/awake/compose/ui/platform/StaleSkip;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/StaleSkip;ILcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/StaleSkip;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComposed ()Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;
+	public final fun getPrimitiveIndex ()I
+	public final fun getSkipped ()Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

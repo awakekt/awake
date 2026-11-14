@@ -63,6 +63,7 @@ val EngineShowcaseRenderPlan = RenderPlan(
             skinned,
             VertexFormat.PositionNormalColorSkin,
             materialBindings = GroupBindings.UniformOnlyMaterial,
+            buildBackCulled = true,
         ),
         ScenePipeline(
             PipelineKey.Format(VertexFormat.PositionNormalColorUv),
@@ -71,12 +72,14 @@ val EngineShowcaseRenderPlan = RenderPlan(
             // The full PBR shader samples the four additional maps at bindings 5-8.
             // Keep its declared group shape aligned with the shader ABI.
             materialBindings = GroupBindings.StandardMaterial,
+            buildBackCulled = true,
         ),
         ScenePipeline(
             PipelineKey.Format(VertexFormat.PositionNormalColorUvSkin),
             PackShaderSets.SkinnedTextured,
             VertexFormat.PositionNormalColorUvSkin,
             materialBindings = GroupBindings.TexturedMaterial,
+            buildBackCulled = true,
         ),
         ScenePipeline(
             PipelineKey.Instanced,

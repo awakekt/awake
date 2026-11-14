@@ -17,24 +17,22 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
  * part, and turned into the PbrMaterial an entity draws with when it has none of its own.
  */
 
-internal fun LoadedPrimitive.toMaterialParameters() =
-    materialParameters(metallicFactor, roughnessFactor, baseColorFactor, emissiveFactor, alphaMode)
-
-internal fun GltfMesh.toMaterialParameters() =
-    materialParameters(metallicFactor, roughnessFactor, baseColorFactor, emissiveFactor, alphaMode)
-
-private fun materialParameters(
-    metallic: Float,
-    roughness: Float,
-    baseColor: FloatArray,
-    emissive: FloatArray,
-    alphaMode: GltfAlphaMode,
-) = GltfMaterialParameters(
-    metallic = metallic,
-    roughness = roughness,
-    baseColorFactor = baseColor.toColor(),
-    emissiveFactor = emissive.toColor(alpha = 0f),
+internal fun LoadedPrimitive.toMaterialParameters() = GltfMaterialParameters(
+    metallic = metallicFactor,
+    roughness = roughnessFactor,
+    baseColorFactor = baseColorFactor.toColor(),
+    emissiveFactor = emissiveFactor.toColor(alpha = 0f),
     alphaMode = alphaMode.toAlphaMode(),
+    doubleSided = doubleSided,
+)
+
+internal fun GltfMesh.toMaterialParameters() = GltfMaterialParameters(
+    metallic = metallicFactor,
+    roughness = roughnessFactor,
+    baseColorFactor = baseColorFactor.toColor(),
+    emissiveFactor = emissiveFactor.toColor(alpha = 0f),
+    alphaMode = alphaMode.toAlphaMode(),
+    doubleSided = doubleSided,
 )
 
 internal fun GltfMaterialParameters.toPbrMaterial() = PbrMaterial(

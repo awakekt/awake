@@ -102,7 +102,8 @@ internal class SceneDrawCollector(
         val fadeStore = world.componentStore<DitherFade>(resolution.fadeType)
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
-            if (!meshRenderer.visible) {
+            // Hidden, or past its own draw distance: drawn nowhere, its shadow included.
+            if (!meshRenderer.visible || meshRenderer.beyondDrawDistance(culling.camera, transform)) {
                 // Hidden is drawn nowhere, as culled is: its model keeps its clock but isn't posed. Without
                 // this a hidden skinned model counted as one no renderer looked at, posed every frame.
                 poseStore?.get(entity)?.culled = true

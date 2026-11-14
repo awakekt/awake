@@ -237,8 +237,8 @@ class DrawRunCoalescerTest {
         assertTrue(runs[0] is StagedDrawRun.RoundedQuadRun)
 
         val shadowRun = runs[0] as StagedDrawRun.RoundedQuadRun
-        // 1 quad * 4 vertices * 16 floats = 64 floats
-        assertEquals(64, shadowRun.vertices.size)
+        // 1 quad * 4 vertices * 17 floats = 68 floats
+        assertEquals(68, shadowRun.vertices.size)
         assertEquals(6, shadowRun.indices.size)
     }
 
@@ -258,11 +258,11 @@ class DrawRunCoalescerTest {
             ),
         ).single() as StagedDrawRun.RoundedQuadRun
 
-        // Rounded vertices store RGBA at offsets 8..11 of each 16-float vertex.
+        // Rounded vertices store RGBA at offsets 8..11 of each 17-float vertex.
         assertEquals(listOf(1f, 0f, 0f, 1f), run.vertices.slice(8..11))
-        assertEquals(listOf(0f, 1f, 0f, 1f), run.vertices.slice(24..27))
-        assertEquals(listOf(0f, 0f, 1f, 1f), run.vertices.slice(40..43))
-        assertEquals(listOf(1f, 1f, 1f, 1f), run.vertices.slice(56..59))
+        assertEquals(listOf(0f, 1f, 0f, 1f), run.vertices.slice(25..28))
+        assertEquals(listOf(0f, 0f, 1f, 1f), run.vertices.slice(42..45))
+        assertEquals(listOf(1f, 1f, 1f, 1f), run.vertices.slice(59..62))
     }
 
     /** Reproduces the shared local-mesh cache used by clipped rounded quads

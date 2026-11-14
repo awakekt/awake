@@ -14,6 +14,8 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.componentType
+import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.sqrt
 
@@ -56,9 +58,9 @@ class AudioSystem private constructor(
      */
     override fun update(world: World, delta: Float) {
         val listenerEntity = world.query(AudioListener::class, Transform::class).firstOrNull()
-        val listenerPos = listenerEntity?.let { world.get<Transform>(it)?.position } ?: Vec3f.ZERO
+        val listenerPos = listenerEntity?.let { world.get(it, TRANSFORM_TYPE)?.position } ?: Vec3f.ZERO
         val listenerRight = listenerEntity?.let {
-            val mat = world.get<Transform>(it)?.worldMatrix
+            val mat = world.get(it, TRANSFORM_TYPE)?.worldMatrix
             if (mat != null) Vec3f(mat.m00, mat.m10, mat.m20) else Vec3f.RIGHT
         } ?: Vec3f.RIGHT
 
@@ -105,7 +107,7 @@ class AudioSystem private constructor(
     ) {
         val active = source.playingHandle ?: return
         if (source.isSpatial3D) {
-            val emitterPos = world.get<Transform>(entity)?.position ?: Vec3f.ZERO
+            val emitterPos = world.get(entity, TRANSFORM_TYPE)?.position ?: Vec3f.ZERO
             val dx = emitterPos.x - listener.pos.x
             val dy = emitterPos.y - listener.pos.y
             val dz = emitterPos.z - listener.pos.z
@@ -125,7 +127,7 @@ class AudioSystem private constructor(
         listener: AudioListenerContext,
     ) {
         if (source.isSpatial3D) {
-            val emitterPos = world.get<Transform>(entity)?.position ?: Vec3f.ZERO
+            val emitterPos = world.get(entity, TRANSFORM_TYPE)?.position ?: Vec3f.ZERO
             source.playingHandle = audioPlayer.playSound3D(
                 clip = source.clip,
                 emitterPos = emitterPos,
@@ -168,7 +170,7 @@ class AudioSystem private constructor(
                 val cue = queue.pending.removeFirst()
                 val clip = clips[cue.path] ?: continue
                 if (cue.maxDistance > 0f) {
-                    val emitterPos = world.get<Transform>(entity)?.position ?: Vec3f.ZERO
+                    val emitterPos = world.get(entity, TRANSFORM_TYPE)?.position ?: Vec3f.ZERO
                     audioPlayer.playSound3D(
                         clip = clip,
                         emitterPos = emitterPos,
@@ -192,3 +194,6 @@ private class AudioListenerContext(
     val pos: Vec3f,
     val right: Vec3f,
 )
+
+/** Read per entity every frame: a handle reads an array, where a reified get looks the class up. */
+private val TRANSFORM_TYPE = componentType<Transform>()

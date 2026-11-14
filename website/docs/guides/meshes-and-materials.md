@@ -106,10 +106,11 @@ Both boxes are in the entity's local space, before its transform.
 | --- | --- | --- | --- |
 | `mesh` | string | required | The mesh name, resolved by the app's `assets { }`. |
 | `material` | string | required | The material name, resolved the same way. |
-| `cullMode` | `None` · `Back` · `Front` | `None` | Which triangle faces to skip. `Back` suits a solid, correctly wound mesh. |
+| `cullMode` | `None` · `Back` · `Front` · `FromMaterial` | `None` | Which triangle faces to skip. `Back` suits a solid, correctly wound mesh; `FromMaterial` derives `Back` or `None` from the resolved glTF material's `doubleSided` flag. |
 | `transparent` | boolean | `false` | Draws in the transparent pass: blended by the material's alpha, sorted back to front, no depth write. |
 | `additive` | boolean | `false` | With `transparent`, adds its colour to what is behind it instead of covering it: glows, fire, light shafts. A textured mesh then draws unlit, so its black texels add nothing. |
 | `castsShadows` | boolean | `true` | Draws the mesh into the shadow maps, in view or off screen. `false` for a decal, a ground card, a small prop or distant filler; the mesh still draws and still receives shadows. A `transparent` mesh never casts. |
+| `maxDrawDistance` | number | `0` | Stops drawing the mesh, and its shadow, past this distance from the camera. `0` draws it at any distance: give small clutter a short distance and landmarks a long one. |
 
 The ECS `MeshRenderer` also has `visible` (default `true`; `false` skips the draw) and
 `vertexAnimation`, a shader-defined vertex effect that is off at zero. Neither is saved in a scene

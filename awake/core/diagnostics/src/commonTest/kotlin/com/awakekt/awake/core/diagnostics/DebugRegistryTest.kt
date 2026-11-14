@@ -78,6 +78,7 @@ class DebugRegistryTest {
         assertEquals(0, lines)
     }
 
+    @Suppress("DEPRECATION") // The deprecated readers keep working as released.
     @Test
     fun theWebFlagNamesTheSourcesToTurnOn() {
         val query = mapOf("debug" to " Cells, net ,,", "other" to "1")
@@ -85,6 +86,7 @@ class DebugRegistryTest {
         assertEquals(emptySet(), DebugFlags.fromPage { null })
     }
 
+    @Suppress("DEPRECATION") // The deprecated readers keep working as released, `--debug ids` included.
     @Test
     fun theCommandLineFlagNamesTheSourcesToTurnOn() {
         assertEquals(setOf("cells", "net"), DebugFlags.fromArgs(listOf("--debug=cells,net")))
