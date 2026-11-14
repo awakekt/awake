@@ -100,7 +100,10 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
    **Publish** run stages the Core family, its alignment BOM and build-logic's plugins in one folder
    and uploads them as one Central deployment (`scripts/central-bundle.sh`,
-   `scripts/central-upload.sh`), which publishes whole or not at all. Wait for it to succeed and for
+   `scripts/central-upload.sh`), which publishes whole or not at all. The **Stage release** job
+   publishes locally, checks the result and stages and signs the bundle beside Consumer; the
+   **Release** job needs Consumer and that bundle and does only the upload and the GitHub Release,
+   so nothing reaches Central unless every gate passed. Wait for it to succeed and for
    `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version. Its **WebGPU release
    pin** job then publishes `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` once Core is on
    repo1; wait for that job too.
@@ -162,7 +165,8 @@ Central refused is still served by the fallback repository when its bundle was b
 send a version twice: `scripts/central-upload.sh` asks Central whether the bundle's version is
 already published and, if it is, uploads nothing and lets the GitHub release steps finish.
 
-**The one exception: a run that never reached an upload.** A Publish run whose failed jobs never
+**The one exception: a run that never reached an upload.** A **Stage release** failure is such a
+run: it holds the signing key but uploads nothing. A Publish run whose failed jobs never
 started (GitHub found no runner for them: "The job was not acquired by Runner of type hosted even
 after multiple attempts"), or that failed before any upload step ran, may have its failed jobs
 re-run, once. Nothing was sent, so the version is still free. **Publish recovery**
