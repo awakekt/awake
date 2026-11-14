@@ -8,7 +8,7 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.command.sortForRecording
+import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.Vulkan
@@ -62,7 +62,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
     val offscreen = target as OffscreenRenderTarget
     val sceneRect = input.viewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
     check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }
-    val sorted = sortForRecording(input.resolvedDraws)
+    val sorted = input.drawsForRecording()
     val depthDraws = prepareDepthDraws(input)
     return { commandBuffer ->
         prepareResources(commandBuffers.size, commandBuffer)

@@ -21,9 +21,19 @@ package com.awakekt.awake.webgpu.renderer
  * compact. GPU-free.
  */
 internal class StableDrawSlots {
-    private class Held(var slots: IntArray = IntArray(1), var count: Int = 0, var used: Int = 0, var batch: Long = 0)
+    private class Held(
+        val mesh: Any,
+        val material: Any,
+        var slots: IntArray = IntArray(1),
+        var count: Int = 0,
+        var used: Int = 0,
+        var batch: Long = 0,
+    )
 
     private val held = HashMap<Any, HashMap<Any, Held>>()
+
+    /** Every held entry, walked by index each batch: iterating the maps made an iterator per mesh (#1555). */
+    private val entries = ArrayList<Held>()
     private var free = IntArray(INITIAL)
     private var freeCount = 0
     private var next = 0
@@ -35,28 +45,34 @@ internal class StableDrawSlots {
     /** Starts a batch, giving back what the previous batch did not draw. */
     fun begin() {
         batch += 1
-        val meshes = held.values.iterator()
-        while (meshes.hasNext()) {
-            val byMaterial = meshes.next()
-            val each = byMaterial.values.iterator()
-            while (each.hasNext()) {
-                val entry = each.next()
-                when {
-                    batch - entry.batch >= 2 -> {
-                        release(entry, keep = 0)
-                        each.remove()
-                    }
-                    entry.batch == batch - 1 -> release(entry, keep = entry.used)
+        var index = 0
+        while (index < entries.size) {
+            val entry = entries[index]
+            when {
+                batch - entry.batch >= 2 -> {
+                    release(entry, keep = 0)
+                    forget(entry)
+                    // Swap-remove: entries keep no order.
+                    entries[index] = entries[entries.size - 1]
+                    entries.removeAt(entries.size - 1)
+                    continue
                 }
-                entry.used = 0
+                entry.batch == batch - 1 -> release(entry, keep = entry.used)
             }
-            if (byMaterial.isEmpty()) meshes.remove()
+            entry.used = 0
+            index++
         }
+    }
+
+    private fun forget(entry: Held) {
+        val byMaterial = held[entry.mesh] ?: return
+        byMaterial.remove(entry.material)
+        if (byMaterial.isEmpty()) held.remove(entry.mesh)
     }
 
     /** The slot of the next draw of [mesh] with [material] in this batch. */
     fun slotFor(mesh: Any, material: Any): Int {
-        val entry = held.getOrPut(mesh) { HashMap() }.getOrPut(material) { Held() }
+        val entry = held.getOrPut(mesh) { HashMap() }.getOrPut(material) { Held(mesh, material).also { entries += it } }
         if (entry.batch != batch) {
             entry.batch = batch
             entry.used = 0

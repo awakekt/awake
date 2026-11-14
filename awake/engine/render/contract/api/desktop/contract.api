@@ -390,6 +390,7 @@ public final class com/awakekt/awake/render/command/GpuPassInput {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCameraEye ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getCameraForward ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getDrawsInRecordingOrder ()Z
 	public final fun getEnvironment ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public final fun getMaskPasses ()Ljava/util/List;
 	public final fun getPassUniforms ()[F
@@ -405,6 +406,7 @@ public final class com/awakekt/awake/render/command/GpuPassInput {
 	public final fun getViewProjection ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun getViewport ()Lcom/awakekt/awake/render/renderer/RenderViewport;
 	public fun hashCode ()I
+	public final fun setDrawsInRecordingOrder (Z)V
 	public fun toString ()Ljava/lang/String;
 	public final fun writeSunDirection (Lcom/awakekt/awake/core/math/Vec3f;)Z
 }
@@ -1111,6 +1113,7 @@ public final class com/awakekt/awake/render/pipeline/DepthCasterKind : java/lang
 }
 
 public final class com/awakekt/awake/render/pipeline/DepthRenderKey {
+	public static final field Companion Lcom/awakekt/awake/render/pipeline/DepthRenderKey$Companion;
 	public fun <init> (Lcom/awakekt/awake/render/pipeline/DepthCasterKind;Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/pipeline/DepthCasterKind;Lcom/awakekt/awake/render/pipeline/AlphaMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/render/pipeline/DepthCasterKind;
@@ -1122,6 +1125,11 @@ public final class com/awakekt/awake/render/pipeline/DepthRenderKey {
 	public final fun getKind ()Lcom/awakekt/awake/render/pipeline/DepthCasterKind;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/pipeline/DepthRenderKey$Companion {
+	public final fun of (Lcom/awakekt/awake/render/pipeline/DepthCasterKind;Lcom/awakekt/awake/render/pipeline/AlphaMode;)Lcom/awakekt/awake/render/pipeline/DepthRenderKey;
+	public static synthetic fun of$default (Lcom/awakekt/awake/render/pipeline/DepthRenderKey$Companion;Lcom/awakekt/awake/render/pipeline/DepthCasterKind;Lcom/awakekt/awake/render/pipeline/AlphaMode;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/DepthRenderKey;
 }
 
 public final class com/awakekt/awake/render/pipeline/EffectQuality : java/lang/Enum {

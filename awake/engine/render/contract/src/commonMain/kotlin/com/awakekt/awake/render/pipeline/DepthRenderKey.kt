@@ -20,4 +20,15 @@ data class DepthRenderKey(
     val kind: DepthCasterKind,
     /** Alpha testing coverage mode for fragment discards. */
     val alphaMode: AlphaMode = AlphaMode.Opaque,
-)
+) {
+    /** Shared keys, so code that names a key for every draw of a frame allocates none (#1555). */
+    companion object {
+        private val keys = Array(DepthCasterKind.entries.size * AlphaMode.entries.size) { index ->
+            DepthRenderKey(DepthCasterKind.entries[index / AlphaMode.entries.size], AlphaMode.entries[index % AlphaMode.entries.size])
+        }
+
+        /** The key for [kind] and [alphaMode]: equal to `DepthRenderKey(kind, alphaMode)`, made once. */
+        fun of(kind: DepthCasterKind, alphaMode: AlphaMode = AlphaMode.Opaque): DepthRenderKey =
+            keys[kind.ordinal * AlphaMode.entries.size + alphaMode.ordinal]
+    }
+}

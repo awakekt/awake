@@ -54,6 +54,14 @@ data class GpuPassInput(
      */
     val maskPasses: List<GpuSubPass> = emptyList(),
 ) {
+    /**
+     * Whether [resolvedOpaqueDraws] already come grouped by pipeline in recording order and
+     * [resolvedTransparentDraws] in paint order, so an executor records them as they are instead of
+     * sorting them again (#1555). Set by the compiler that produced them; an input built by hand, or
+     * made by [copy], leaves it false and is sorted as before.
+     */
+    var drawsInRecordingOrder: Boolean = false
+
     /** Canonical draw sequence for executors; legacy lists are deliberately excluded. */
     val resolvedDraws: List<GpuResolvedDraw>
         get() = resolvedOpaqueDraws + resolvedTransparentDraws
