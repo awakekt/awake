@@ -1,3 +1,28 @@
+public final class com/awakekt/awake/core/pool/ReusableIdSet {
+	public static final field Companion Lcom/awakekt/awake/core/pool/ReusableIdSet$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public static final field NONE I
+	public fun <init> ()V
+	public fun <init> (II)V
+	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (I)Z
+	public final fun allocate ()I
+	public final fun clear ()V
+	public final fun contains (I)Z
+	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
+	public final fun getMaxIds ()I
+	public final fun getSize ()I
+	public final fun getWords ()[J
+	public final fun isEmpty ()Z
+	public final fun isFull ()Z
+	public final fun release (I)Z
+	public final fun setWords ([J)V
+	public final fun tryAllocate ()I
+}
+
+public final class com/awakekt/awake/core/pool/ReusableIdSet$Companion {
+}
+
 public final class com/awakekt/awake/core/pool/ScratchPool {
 	public static final field Companion Lcom/awakekt/awake/core/pool/ScratchPool$Companion;
 	public static final field DEFAULT_CAPACITY I
