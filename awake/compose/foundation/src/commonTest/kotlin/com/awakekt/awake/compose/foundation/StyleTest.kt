@@ -214,17 +214,13 @@ class StyleBoxModelTest {
         assertEquals(40f, fill.h)
         assertEquals(8f, fill.radius)
 
-        // The border is one continuous stroked outline, inset by half its own width so it
-        // paints fully inside the box.
-        val ring = primitives.filterIsInstance<UiDrawPrimitive.Mesh>().single().placedMesh()
-        // Centreline (0.5, 0.5, 39, 39) grown by half the 1px stroke and then by the outer half
-        // of the fringe, min(AA_FRINGE_PX, stroke / 2) = 0.5 centred on the edge.
-        assertEquals(Rectangle(-0.25f, -0.25f, 40.5f, 40.5f), ring.bounds())
-
-        // A real corner arc, not a square one: a naive right-angle outline never places a
-        // vertex inside the 7x7 corner square a rounded corner has to cut through.
-        val cornerCut = ring.vertices.any { it.position.x < 7f && it.position.y < 7f }
-        assertTrue(cornerCut, "the stroked outline never curves away from the corner")
+        // The border is one analytic rounded band over the whole box, its stroke inside the edge
+        // and its corners rounded by the same radius as the fill (#1545).
+        val ring = primitives.filterIsInstance<UiDrawPrimitive.RoundedQuad>().single { it.strokeWidth > 0f }
+        assertEquals(border, ring.color)
+        assertEquals(Rectangle(0f, 0f, 40f, 40f), Rectangle(ring.x, ring.y, ring.w, ring.h))
+        assertEquals(8f, ring.radius)
+        assertEquals(1f, ring.strokeWidth)
     }
 
     @Test

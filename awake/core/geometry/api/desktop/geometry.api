@@ -243,6 +243,7 @@ public final class com/awakekt/awake/core/geometry/VertexSemantic : java/lang/En
 	public static final field Radius Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public static final field Size Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public static final field Smoothing Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field StrokeWidth Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public static final field Tangent Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public static final field Transform Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public static final field Uv Lcom/awakekt/awake/core/geometry/VertexSemantic;

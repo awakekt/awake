@@ -38,7 +38,7 @@ class ShadcnCardTest {
     fun aCardFillsAndBordersItself() {
         val frame = card()
         val fill = frame.primitivesOf<DrawCommand.RoundedQuad>()
-        val border = frame.meshColors()
+        val border = frame.borderColors()
 
         assertTrue(fill.isNotEmpty(), "expected a fill, got none")
         assertTrue(border.isNotEmpty(), "expected a border, got none")

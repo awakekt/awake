@@ -547,6 +547,8 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
+    /** [fillRoundedQuad] that, for a [strokeWidth] above 0, covers only the band that wide inside the edge, as the GPU shader does. */
+    @Suppress("LongParameterList")
     fun fillRoundedQuad(
         x: Float,
         y: Float,
@@ -555,11 +557,14 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         rawRadius: Float,
         smoothing: Float,
         color: Color,
+        strokeWidth: Float,
     ) {
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
         val y0 = max(y, clipY0).toInt().coerceIn(0, height)
-        val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
-        val y1 = min(y + h, clipY1).toInt().coerceIn(0, height)
+        // A border reaches the pixels its edge only partly covers; the fill's floor, kept for its
+        // baselines, would drop that last column and row.
+        val x1 = min(x + w, clipX1).let { if (strokeWidth > 0f) ceil(it) else it }.toInt().coerceIn(0, width)
+        val y1 = min(y + h, clipY1).let { if (strokeWidth > 0f) ceil(it) else it }.toInt().coerceIn(0, height)
         val halfW = w / 2f
         val halfH = h / 2f
         val radius = rawRadius.coerceAtMost(minOf(halfW, halfH))
@@ -597,7 +602,11 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     kotlin.math.sqrt(maxQx * maxQx + maxQy * maxQy) + min(max(qx, qy), 0f) - radius
                 }
 
-                if (dist <= 1.0f) {
+                if (strokeWidth > 0f) {
+                    // The shader's border coverage: a pixel-wide box filter of each edge, outer less inner.
+                    val coverage = (0.5f - dist).coerceIn(0f, 1f) - (0.5f - (dist + strokeWidth)).coerceIn(0f, 1f)
+                    if (coverage > 0f) pixelMap.blend(px, py, cr.toFloat(), cg.toFloat(), cb.toFloat(), coverage * ca)
+                } else if (dist <= 1.0f) {
                     val alphaFactor = (1.0f - smoothstep(-1.0f, 1.0f, dist)) * ca
                     pixelMap.blend(px, py, cr.toFloat(), cg.toFloat(), cb.toFloat(), alphaFactor)
                 }
@@ -606,6 +615,16 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
             py += 1
         }
     }
+
+    fun fillRoundedQuad(
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        rawRadius: Float,
+        smoothing: Float,
+        color: Color,
+    ): Unit = fillRoundedQuad(x, y, w, h, rawRadius, smoothing, color, strokeWidth = 0f)
 
     // Mirrors buildShadowQuadRun's rounded-box distance, spread, blur floor and padded footprint.
     fun fillShadowQuad(shadow: UiDrawPrimitive.ShadowQuad) {
@@ -971,7 +990,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.transform,
                 ) { x, y, w, h ->
                     val scale = min(primitive.transform?.scaleX ?: 1f, primitive.transform?.scaleY ?: 1f)
-                    fillRoundedQuad(x, y, w, h, primitive.radius * scale, primitive.smoothing, primitive.color)
+                    fillRoundedQuad(x, y, w, h, primitive.radius * scale, primitive.smoothing, primitive.color, primitive.strokeWidth * scale)
                 }
             }
 
