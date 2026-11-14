@@ -164,9 +164,20 @@ private fun FloatArray.put(at: Int, vararg values: Float): Int {
     return at + values.size
 }
 
-/** Bit for bit, so `-0` and `0`, and NaNs, are told apart as the GPU would see them. */
-private fun FloatArray.sameBitsAs(other: FloatArray): Boolean =
-    size == other.size && indices.all { this[it].toRawBits() == other[it].toRawBits() }
+/**
+ * Bit for bit, so `-0` and `0`, and NaNs, are told apart as the GPU would see them. By index:
+ * `indices.all { }` built a range and its iterator for every draw's three comparisons, garbage on
+ * Kotlin/Wasm, which has no escape analysis to remove them (#1555).
+ */
+private fun FloatArray.sameBitsAs(other: FloatArray): Boolean {
+    if (size != other.size) return false
+    var index = 0
+    while (index < size) {
+        if (this[index].toRawBits() != other[index].toRawBits()) return false
+        index++
+    }
+    return true
+}
 
 private const val MAT4_FLOATS = 16
 

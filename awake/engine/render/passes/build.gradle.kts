@@ -67,3 +67,10 @@ mavenPublishing {
         description.set("Render features and pipelines: shadow, opaque, transparent, skybox and content passes")
     }
 }
+
+// The allocation gates here count every byte a frame's hot paths allocate. With escape analysis on,
+// the JVM removes the short-lived temporaries Kotlin/Wasm really allocates, so the gates would pass
+// over garbage the web build pays for (#1555).
+tasks.named<Test>("desktopTest") {
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
