@@ -28,3 +28,7 @@ internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.ja
 internal actual fun componentTypeIndexOf(key: Any): Int = SharedComponentTypeIndex.indexOf(key)
 
 internal actual val componentTypeIndexIsCheap: Boolean = false
+
+internal actual fun componentTypeKeyHash(key: Any): Int = key.hashCode()
+
+internal actual fun normalizedComponentTypeKey(key: Any): Any = key
