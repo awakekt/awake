@@ -27,17 +27,16 @@ import kotlin.math.min
  *
  * What [batch] returns, and the instanced requests in it, are valid until the next [batch]:
  * a backend reads them while it prepares the frame, copying the models into its own buffer.
- * Groups come out in [InstanceGroupOrder]'s order, which keeps each group's place across frames.
  */
 internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     private val groups = ArrayList<InstanceGroup>()
     private var groupCount = 0
     private var table = IntArray(INITIAL_TABLE)
     private val kept = ArrayList<RenderDrawCommand>()
+    private val others = ArrayList<RenderDrawCommand>()
     internal val order = InstanceGroupOrder()
     private var preparer: GpuDrawPreparer? = null
     private var canInstance: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
-
     private var tintPreparer: GpuDrawPreparer? = null
     private var canTint: (VertexFormat, CullMode) -> Boolean = NO_TINTS
 
@@ -70,13 +69,13 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     ): List<RenderDrawCommand> {
         groupCount = 0
         table.fill(0)
-        kept.clear()
+        kept.clear().also { others.clear() }
         // Entities spawned together iterate together, so a draw usually joins the previous draw's group.
         var last: InstanceGroup? = null
         for (index in drawCalls.indices) {
             val draw = drawCalls[index]
             if (!rule.folds(draw, canInstance)) {
-                if (rule.keepsOthers) kept.addSplitToCapacity(draw)
+                if (rule.keepsOthers) others.addSplitToCapacity(draw)
                 continue
             }
             val tints = canTint(draw.mesh.format, draw.cullMode)
@@ -85,6 +84,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
             last = group
         }
         order.emit(groups, groupCount) { it.emitInto(kept, rule.keepsOthers) }
+        kept.addAll(others)
         return kept
     }
 

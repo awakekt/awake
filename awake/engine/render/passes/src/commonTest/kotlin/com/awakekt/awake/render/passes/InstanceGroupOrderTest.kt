@@ -38,6 +38,16 @@ class InstanceGroupOrderTest {
     }
 
     @Test
+    fun removingADrawThatNeverFoldsMovesNoGroup() {
+        // A character's skinned or blended draw never folds; culled in or out, it must not move the scenery.
+        val character = draw(mesh(), 0).apply { transparent = true }
+        val with = positions(batcher.batch(listOf(character) + interleaved(copies = 2), canInstance))
+
+        assertEquals(with, positions(batcher.batch(interleaved(copies = 2), canInstance)), "the character culled")
+        assertEquals(with, positions(batcher.batch(interleaved(copies = 2) + character, canInstance)), "and back")
+    }
+
+    @Test
     fun aGroupThatDisappearsFreesItsPlaceAndReturnsLast() {
         batcher.batch(interleaved(copies = 2), canInstance)
         val without = interleaved(copies = 2).filter { it.mesh !== meshes[0] }
