@@ -1,0 +1,1 @@
+- Locomotion no longer allocates for every animated mover each frame: looking for ground contact up a mover's parents boxed its entity id at every step. Measured with escape analysis off, as the web build runs: 24 B a mover a frame, 33.6 KB a frame for 1,400 movers, now none (#1555).
