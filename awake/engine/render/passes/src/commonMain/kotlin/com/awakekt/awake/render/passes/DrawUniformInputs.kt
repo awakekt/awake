@@ -170,13 +170,10 @@ private fun FloatArray.put(at: Int, vararg values: Float): Int {
  * Kotlin/Wasm, which has no escape analysis to remove them (#1555).
  */
 private fun FloatArray.sameBitsAs(other: FloatArray): Boolean {
-    if (size != other.size) return false
     var index = 0
-    while (index < size) {
-        if (this[index].toRawBits() != other[index].toRawBits()) return false
-        index++
-    }
-    return true
+    val same = size == other.size
+    while (same && index < size && this[index].toRawBits() == other[index].toRawBits()) index++
+    return same && index == size
 }
 
 private const val MAT4_FLOATS = 16
