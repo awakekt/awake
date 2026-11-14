@@ -1,1 +1,0 @@
-- Checking whether a draw's uniforms are unchanged, which the WebGPU preparer does for every draw of every planned frame, no longer allocates a range and its iterator for each of its three comparisons. Measured with escape analysis off, as the web build runs: a 3,000-draw moving frame's compile drops from about 4.1 MB to 3.6 MB (#1555).

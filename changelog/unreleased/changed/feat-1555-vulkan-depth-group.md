@@ -1,1 +1,0 @@
-- On Vulkan, as on WebGPU since #1591, opaque instanced shadow and depth casters that animate their vertices alike share one depth descriptor set, and a depth pass no longer binds a set it already has bound: three instanced meshes went from three sets to one in every cascade, with the same pixels (#1555).
