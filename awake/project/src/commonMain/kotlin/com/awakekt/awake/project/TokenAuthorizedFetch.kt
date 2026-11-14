@@ -62,7 +62,7 @@ class TokenAuthorizedFetch(
     private val timeSource: TimeSource = TimeSource.Monotonic,
     private val rateLimitBackoff: RateLimitBackoff = RateLimitBackoff(),
     private val tokenProvider: suspend () -> ReadToken,
-) {
+) : AutoCloseable {
     private class HeldToken(val token: ReadToken, val refreshAt: TimeMark)
 
     /** One fetch's 429 and 503 answers and the time spent waiting them out, across its sends. */
@@ -74,6 +74,9 @@ class TokenAuthorizedFetch(
     private val lock = Mutex()
     private var held: HeldToken? = null
     private var lastFailure: Throwable? = null
+
+    @Volatile
+    private var closed = false
 
     // Read before waiting for the lock, so a request can tell a refresh that finished while it waited.
     @Volatile
@@ -91,8 +94,14 @@ class TokenAuthorizedFetch(
      * @return The response body of a 2xx answer.
      * @throws ContentFetchException for any other status, a second refusal, a failed [tokenProvider],
      * or a [transport] failure; its message names [url] and never the token.
+     * @throws IllegalStateException when this [TokenAuthorizedFetch] has already been [close]d.
      */
-    suspend fun fetch(url: String): ByteArray = bodyOf(url, authorized(url, emptyMap()))
+    suspend fun fetch(url: String): ByteArray {
+        check(!closed) { "TokenAuthorizedFetch is closed" }
+        val response = authorized(url, emptyMap())
+        check(!closed) { "TokenAuthorizedFetch is closed" }
+        return bodyOf(url, response)
+    }
 
     /**
      * Reads [length] bytes from [offset] of the file at [url], with the read token attached as
@@ -108,12 +117,15 @@ class TokenAuthorizedFetch(
      * @return The [length] bytes from [offset].
      * @throws ContentFetchException for any status but 206 or 200, an answer of the wrong size, or
      * whatever [fetch] throws for.
+     * @throws IllegalStateException when this [TokenAuthorizedFetch] has already been [close]d.
      */
     suspend fun fetchRange(url: String, offset: Long, length: Long): ByteArray {
+        check(!closed) { "TokenAuthorizedFetch is closed" }
         require(offset >= 0 && length >= 0) { "A range needs a non-negative offset and length: $offset, $length" }
         if (length == 0L) return ByteArray(0)
         val end = offset + length
         val response = authorized(url, mapOf(RANGE_HEADER to "bytes=$offset-${end - 1}"))
+        check(!closed) { "TokenAuthorizedFetch is closed" }
         val body = response.body
         val range = when (response.status) {
             PARTIAL_CONTENT -> body.takeIf { it.size.toLong() == length }
@@ -125,6 +137,16 @@ class TokenAuthorizedFetch(
             response.status,
             "$url answered ${body.size} bytes with HTTP ${response.status}, which don't hold bytes $offset to ${end - 1}",
         )
+    }
+
+    /**
+     * Drops any cached [ReadToken] so later or in-flight [fetch] and [fetchRange] calls fail with
+     * [IllegalStateException] instead of keeping or sending the held token. Idempotent.
+     */
+    override fun close() {
+        closed = true
+        held = null
+        lastFailure = null
     }
 
     /** Sends [url] with [headers] and the token, refreshing it and sending again once if it is refused. */
@@ -177,12 +199,11 @@ class TokenAuthorizedFetch(
         }
     }
 
-    private fun reasonPhrase(status: Int): String =
-        if (status == RateLimitBackoff.SERVICE_UNAVAILABLE) "Service Unavailable" else "Too Many Requests"
-
     private suspend fun currentToken(url: String, refused: ReadToken?): ReadToken {
+        check(!closed) { "TokenAuthorizedFetch is closed" }
         val refreshesOnArrival = refreshes
         val outcome = lock.withLock {
+            check(!closed) { "TokenAuthorizedFetch is closed" }
             val current = held
             val failure = lastFailure
             when {
@@ -201,6 +222,11 @@ class TokenAuthorizedFetch(
     /** Called with [lock] held. */
     private suspend fun refresh(): Result<ReadToken> {
         val outcome = suspendRunCatching { tokenProvider() }
+        if (closed) {
+            held = null
+            lastFailure = null
+            error("TokenAuthorizedFetch is closed")
+        }
         lastFailure = outcome.exceptionOrNull()
         outcome.getOrNull()?.let { token ->
             val lifetime = token.expiresIn.coerceAtLeast(Duration.ZERO)
@@ -234,13 +260,6 @@ class TokenAuthorizedFetch(
         return ContentFetchException(url, null, "Fetching $url failed: $redacted")
     }
 
-    private fun bodyOf(url: String, response: ContentResponse): ByteArray {
-        if (response.status !in SUCCESS_STATUSES) {
-            throw ContentFetchException(url, response.status, "$url answered HTTP ${response.status}")
-        }
-        return response.body
-    }
-
     /** Defaults for [TokenAuthorizedFetch]. */
     companion object {
         /** How long before a token expires [TokenAuthorizedFetch] asks for the next one, by default. */
@@ -253,10 +272,21 @@ class TokenAuthorizedFetch(
         private const val PARTIAL_CONTENT = 206
         private const val REDACTED = "<redacted>"
         private const val MAX_CAUSES_DESCRIBED = 8
-        private val SUCCESS_STATUSES = 200..299
         private val REFUSED_STATUSES = setOf(401, 403)
     }
 }
+
+private fun reasonPhrase(status: Int): String =
+    if (status == RateLimitBackoff.SERVICE_UNAVAILABLE) "Service Unavailable" else "Too Many Requests"
+
+private fun bodyOf(url: String, response: ContentResponse): ByteArray {
+    if (response.status !in SUCCESS_STATUSES) {
+        throw ContentFetchException(url, response.status, "$url answered HTTP ${response.status}")
+    }
+    return response.body
+}
+
+private val SUCCESS_STATUSES = 200..299
 
 /**
  * A short-lived token that grants reading a published project's content, as a game's token provider

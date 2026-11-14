@@ -254,6 +254,7 @@ val UiRoundedQuadShader: AslShaderDefinition = shader("ui_rounded_quad") {
     val radius by out.varying(GpuDataShape.Float, location = 2)
     val smoothing by out.varying(GpuDataShape.Float, location = 3)
     val color by out.varying(GpuDataShape.Vec4, location = 4)
+    val strokeWidth by out.varying(GpuDataShape.Float, location = 5)
 
     vertex {
         val inPos by input(GpuDataShape.Vec2, location = 0)
@@ -263,6 +264,7 @@ val UiRoundedQuadShader: AslShaderDefinition = shader("ui_rounded_quad") {
         val inSmoothing by input(GpuDataShape.Float, location = 4)
         val inColor by input(GpuDataShape.Vec4, location = 5)
         val inTransform by input(GpuDataShape.Vec4, location = 6)
+        val inStrokeWidth by input(GpuDataShape.Float, location = 7)
 
         val scale = inTransform.xy
         val pivot = inTransform.zw
@@ -274,6 +276,7 @@ val UiRoundedQuadShader: AslShaderDefinition = shader("ui_rounded_quad") {
         radius set inRadius
         smoothing set inSmoothing
         color set inColor
+        strokeWidth set inStrokeWidth
     }
 
     fragment {
@@ -291,7 +294,16 @@ val UiRoundedQuadShader: AslShaderDefinition = shader("ui_rounded_quad") {
         val curvedCorner = (smoothing gt 0f.lit) and (q.x gt 0f.lit) and (q.y gt 0f.lit)
         iff(curvedCorner) { assign(distance, roundedDistance) }
         val aa = let("aa", max(fwidth(distance), 0.5f.lit))
-        val alpha = let("alpha", 1f.lit - smoothstep(-aa, aa, distance))
+        val alpha = variable("alpha", 1f.lit - smoothstep(-aa, aa, distance))
+        // A border keeps only the band `strokeWidth` wide inside the edge. Its coverage is a pixel-wide
+        // box filter of each edge, the outer one less the inner one: exact on a pixel-aligned edge,
+        // where a 1 px border must be one solid pixel, not the smoothstep's two soft ones.
+        iff(strokeWidth gt 0f.lit) {
+            val pixel = let("pixel", max(fwidth(distance), 0.001f.lit))
+            val outer = let("outer", clamp(0.5f.lit - distance / pixel, 0f.lit, 1f.lit))
+            val inner = let("inner", clamp(0.5f.lit - (distance + strokeWidth) / pixel, 0f.lit, 1f.lit))
+            assign(alpha, outer - inner)
+        }
         colorOutput(vec4(color.rgb, color.a * alpha))
     }
 }

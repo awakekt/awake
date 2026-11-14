@@ -27,6 +27,7 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
@@ -73,6 +74,7 @@ class GltfAssetResolver(
     private val skinnedPartTextures = mutableMapOf<String, GpuImageSource>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
+    private val loadedCullModes = mutableMapOf<String, CullMode>()
     private val lodLevels = GltfLodLevels(loadedStaticMeshes)
 
     /** The last GPU mesh made for each full mesh with levels, whose vertex buffer its levels draw. */
@@ -159,23 +161,32 @@ class GltfAssetResolver(
     private fun preload(path: String, bytes: ByteArray, externalResources: Map<String, ByteArray>) {
         if (bytes.isGlb()) {
             if (path !in loadedStaticMeshes) {
-                loadedStaticMeshes[path] = GltfParser.parseScene(bytes, externalResources).toStaticGeometry()
+                val scene = GltfParser.parseScene(bytes, externalResources)
+                loadedStaticMeshes[path] = scene.toStaticGeometry()
+                scene.defaultCullMode()?.let { loadedCullModes[path] = it }
             }
         } else {
             val json = bytes.decodeToString()
             // Keep the skeletal scene when the file contains skin data; static geometry is also
             // retained as a fallback for a model whose first scene has no usable skin.
             if (path !in loadedScenes) {
-                runCatching { loadedScenes[path] = GltfParser.parseSkinned(json, externalResources) }
+                runCatching { GltfParser.parseSkinned(json, externalResources) }.onSuccess { scene ->
+                    loadedScenes[path] = scene
+                    scene.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
+                }
             }
             if (path !in loadedStaticMeshes) {
                 loadedStaticMeshes[path] = runCatching {
-                    GltfParser.parseScene(json.toEmbeddedGlb(), externalResources).toStaticGeometry()
+                    val scene = GltfParser.parseScene(json.toEmbeddedGlb(), externalResources)
+                    if (path !in loadedCullModes) scene.defaultCullMode()?.let { loadedCullModes[path] = it }
+                    scene.toStaticGeometry()
                 }.getOrElse {
                     // A valid document may omit a scene graph. Preserve the parser's first-primitive
                     // fallback for that narrow shape, while still supporting all scene primitives
                     // when the document provides nodes/scenes.
-                    GltfParser.parse(json, externalResources).toStaticGeometry()
+                    val mesh = GltfParser.parse(json, externalResources)
+                    if (path !in loadedCullModes) loadedCullModes[path] = mesh.doubleSided.toCullMode()
+                    mesh.toStaticGeometry()
                 }
             }
         }
@@ -196,6 +207,7 @@ class GltfAssetResolver(
         levelBases.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
         untexturedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
+        loadedCullModes.keys.removeAll { isModelCullKey(it, path) }
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
@@ -227,6 +239,9 @@ class GltfAssetResolver(
         loadedMaterials.adoptModel(from.loadedMaterials, path)
         untexturedMaterials.adoptModel(from.untexturedMaterials, path)
         skinnedPartTextures.adoptModel(from.skinnedPartTextures, path)
+        from.loadedCullModes.forEach { (key, mode) ->
+            if (isModelCullKey(key, path)) loadedCullModes.getOrPut(key) { mode }
+        }
     }
 
     /** Takes [from]'s entries for the model at [path], its own and its parts', keeping any this map already holds. */
@@ -290,12 +305,15 @@ class GltfAssetResolver(
             registerMaterial(materialKey, material, primitive)
             val meshKey = if (primitives.size == 1) path else "$PRIMITIVE_MESH_PREFIX$path#$index"
             loadedStaticMeshes[meshKey] = listOf(primitive).toStaticGeometry(textured = material != null)
+            loadedCullModes[meshKey] = primitive.doubleSided.toCullMode()
             slots += GltfMaterialSlot(
                 mesh = meshKey,
                 material = material?.let { "gltf-material:$materialKey" } ?: "lit-shadow",
                 parameters = material?.parameters,
+                doubleSided = primitive.doubleSided,
             )
         }
+        scene.defaultCullMode()?.let { loadedCullModes[path] = it }
         loadedMaterialSlots[path] = slots
         preloadLevels(path, bytes, slots)
     }
@@ -327,24 +345,31 @@ class GltfAssetResolver(
                 is GltfPart.Skinned -> {
                     val mesh = part.mesh
                     mesh.baseColorImageBytes?.takeIf { mesh.isTextured }?.let { skinnedPartTextures[key] = decodeTexture(it) }
+                    val meshKey = "$PRIMITIVE_MESH_PREFIX$key"
+                    loadedCullModes[meshKey] = mesh.doubleSided.toCullMode()
                     GltfMaterialSlot(
-                        mesh = "$PRIMITIVE_MESH_PREFIX$key",
+                        mesh = meshKey,
                         material = if (mesh.isTextured) "gltf-material:$key" else "skinned-material",
                         parameters = mesh.toMaterialParameters(),
+                        doubleSided = mesh.doubleSided,
                     )
                 }
                 // Drawn and textured as a static model's primitive is, so it takes the same slot.
                 is GltfPart.Static -> {
                     val material = part.primitive.toLoadedMaterial(::decodeTexture)
                     registerMaterial(key, material, part.primitive)
+                    val meshKey = "$PRIMITIVE_MESH_PREFIX$key"
+                    loadedCullModes[meshKey] = part.primitive.doubleSided.toCullMode()
                     GltfMaterialSlot(
-                        mesh = "$PRIMITIVE_MESH_PREFIX$key",
+                        mesh = meshKey,
                         material = material?.let { "gltf-material:$key" } ?: "lit-shadow",
                         parameters = material?.parameters,
+                        doubleSided = part.primitive.doubleSided,
                     )
                 }
             }
         }
+        loadedScenes[path]?.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
         preloadPartLevels(path, bytes)
     }
 
@@ -522,6 +547,13 @@ class GltfAssetResolver(
         return skinnedPartDefaults.getOrPut(mesh) { parameters.toPbrMaterial() }
     }
 
+    override fun defaultCullMode(mesh: String, material: String): CullMode? =
+        loadedCullModes[mesh]
+            ?: lodLevels.takeIf { it.isLevelKey(mesh) }?.baseKey(mesh)?.let { loadedCullModes[it] }
+            ?: material.takeIf { it.startsWith("gltf-material:") }
+                ?.removePrefix("gltf-material:")
+                ?.let { loadedMaterials[it]?.parameters?.cullMode ?: untexturedMaterials[it]?.cullMode }
+
     private fun skinnedPartParameters(mesh: String): GltfMaterialParameters? {
         if (part(mesh) !is GltfPart.Skinned) return null
         return loadedMaterialSlots[modelPath(mesh)]?.firstOrNull { it.mesh == mesh }?.parameters
@@ -542,12 +574,33 @@ private val PLAIN_TEXTURE = TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)
  * @property mesh Mesh identifier for the primitive part.
  * @property material Material key bound to the primitive mesh.
  * @property parameters PBR material parameters applied to this primitive slot, or null if default.
+ * @property doubleSided Whether the primitive's glTF material disables back-face culling.
  */
 data class GltfMaterialSlot(
     val mesh: String,
     val material: String,
     val parameters: GltfMaterialParameters?,
-)
+    val doubleSided: Boolean = false,
+) {
+    /** [GltfMaterialSlot] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mesh: String,
+        material: String,
+        parameters: GltfMaterialParameters?,
+    ) : this(mesh, material, parameters)
+
+    /** [copy] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mesh: String = this.mesh,
+        material: String = this.material,
+        parameters: GltfMaterialParameters? = this.parameters,
+    ): GltfMaterialSlot = copy(mesh, material, parameters, this.doubleSided)
+
+    /** Rasterizer cull mode matching [doubleSided]: [CullMode.Back] when single-sided, [CullMode.None] when double-sided. */
+    val cullMode: CullMode get() = doubleSided.toCullMode()
+}
 
 /**
  * PBR material rendering parameters extracted from a glTF material definition.
@@ -557,6 +610,7 @@ data class GltfMaterialSlot(
  * @property baseColorFactor Multiplier applied to the base color texture or vertex colors.
  * @property emissiveFactor Color emitted by the surface independently of light sources.
  * @property alphaMode Alpha blending mode specifying how transparency is calculated.
+ * @property doubleSided Whether the material disables back-face culling (`false` per glTF 2.0 when omitted).
  */
 data class GltfMaterialParameters(
     val metallic: Float,
@@ -564,7 +618,42 @@ data class GltfMaterialParameters(
     val baseColorFactor: Color,
     val emissiveFactor: Color,
     val alphaMode: AlphaMode,
-)
+    val doubleSided: Boolean = false,
+) {
+    /** [GltfMaterialParameters] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        metallic: Float,
+        roughness: Float,
+        baseColorFactor: Color,
+        emissiveFactor: Color,
+        alphaMode: AlphaMode,
+    ) : this(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode)
+
+    /** [copy] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        metallic: Float = this.metallic,
+        roughness: Float = this.roughness,
+        baseColorFactor: Color = this.baseColorFactor,
+        emissiveFactor: Color = this.emissiveFactor,
+        alphaMode: AlphaMode = this.alphaMode,
+    ): GltfMaterialParameters = copy(metallic, roughness, baseColorFactor, emissiveFactor, alphaMode, this.doubleSided)
+
+    /** Rasterizer cull mode matching [doubleSided]: [CullMode.Back] when single-sided, [CullMode.None] when double-sided. */
+    val cullMode: CullMode get() = doubleSided.toCullMode()
+}
+
+private fun Boolean.toCullMode(): CullMode = if (this) CullMode.None else CullMode.Back
+
+private fun isModelCullKey(key: String, path: String): Boolean =
+    key == path || key.startsWith("$path#") || key.startsWith("$PRIMITIVE_MESH_PREFIX$path#")
+
+private fun LoadedScene.defaultCullMode(): CullMode? {
+    val primitives = meshes.flatMap { it.primitives }
+    if (primitives.isEmpty()) return null
+    return primitives.any { it.doubleSided }.toCullMode()
+}
 
 // The images stay decoded for as long as the resolver keeps the model: in a browser that is the
 // ImageBitmap a WebGPU material copies, where the CPU pixels a TextureAsset held used to be.

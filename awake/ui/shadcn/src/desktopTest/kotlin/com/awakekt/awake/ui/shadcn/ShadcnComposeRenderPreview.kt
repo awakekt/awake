@@ -535,20 +535,12 @@ class ShadcnComposeRenderPreview {
         }
         assertTrue(frame.primitives.isNotEmpty(), "surface-border-debug drew nothing")
 
+        // A rounded border is one analytic band (#1545): its box is the bordered node's.
         val outline = frame.primitives
-            .filterIsInstance<com.awakekt.awake.core.graphics2d.UiDrawPrimitive.Mesh>()
-            .firstOrNull()
-        assertTrue(outline != null, "the border no longer draws as a tessellated ring")
-        // The ring's opaque core, not the whole mesh: an anti-aliased edge adds a transparent
-        // fringe outside the painted band, and sampling the raster at the mesh's outer rim would
-        // read background no matter what the border did.
-        val ring = outline.placedMesh()
-        val bounds = com.awakekt.awake.core.graphics2d.ColoredTriangleMesh(
-            // The fringe's outer rim is exactly alpha 0; the painted band keeps the border token's
-            // own alpha, which is translucent white here rather than opaque.
-            ring.vertices.filter { it.color.a > 0f },
-            ring.indices,
-        ).bounds()
+            .filterIsInstance<com.awakekt.awake.core.graphics2d.UiDrawPrimitive.RoundedQuad>()
+            .firstOrNull { it.strokeWidth > 0f }
+        assertTrue(outline != null, "the rounded border no longer draws as one analytic band")
+        val bounds = com.awakekt.awake.core.math2d.Rectangle(outline.x, outline.y, outline.w, outline.h)
 
         val pixels = frame.primitives.rasterize(
             width,

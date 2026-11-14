@@ -57,7 +57,7 @@ internal fun Renderer.performDrawUi(
             // offscreen pass stages fresh so it never ping-pongs the overlay's buffers out of step.
             pool = if (target == null) uiRunArrayPool else null,
         ),
-        WebGpuUiMeshUploader(this),
+        WebGpuUiMeshUploader(this, bufferPools.uiSlotsFor(target)),
         defaultFont = font,
     )
     if (allPrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad } ||
@@ -197,9 +197,9 @@ internal fun Renderer.performCompositeUiTargets(
     submitRenderCommands(encoder)
 }
 
-/** WebGPU's mesh allocation for [uploadUiRuns]. Single-buffered, so no frame index. Each write
- * a mesh actually makes is counted into the frame's [UiUploadStats]. */
-private class WebGpuUiMeshUploader(private val renderer: Renderer) : UiMeshUploader<DynamicMesh> {
+/** WebGPU's mesh allocation for [uploadUiRuns], into the pass's own [slots]. Single-buffered, so no
+ * frame index. Each write a mesh actually makes is counted into the frame's [UiUploadStats]. */
+private class WebGpuUiMeshUploader(private val renderer: Renderer, private val slots: UiMeshSlots) : UiMeshUploader<DynamicMesh> {
     private fun DynamicMesh.write(vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh = apply {
         val floats = uploadedFloats
         val ints = uploadedInts
@@ -222,14 +222,14 @@ private class WebGpuUiMeshUploader(private val renderer: Renderer) : UiMeshUploa
         decoratedGlyphMesh(runIndex, vertices, indices, forceUpload = false)
 
     override fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
-        renderer.quadMeshForRun(runIndex).write(vertices, indices, forceUpload)
+        slots.quadMesh(runIndex).write(vertices, indices, forceUpload)
 
     override fun roundedQuadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
-        renderer.roundedQuadMeshForRun(runIndex).write(vertices, indices, forceUpload)
+        slots.roundedQuadMesh(runIndex).write(vertices, indices, forceUpload)
 
     override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
-        renderer.glyphMeshForRun(runIndex).write(vertices, indices, forceUpload)
+        slots.glyphMesh(runIndex).write(vertices, indices, forceUpload)
 
     override fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, forceUpload: Boolean): DynamicMesh =
-        renderer.decoratedGlyphMeshForRun(runIndex).write(vertices, indices, forceUpload)
+        slots.glyphMesh(runIndex, decorated = true).write(vertices, indices, forceUpload)
 }

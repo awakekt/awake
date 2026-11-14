@@ -39,3 +39,7 @@ private object ComponentTypeIndexValue : ClassValue<Int>() {
 
     override fun computeValue(type: Class<*>): Int = next.getAndIncrement()
 }
+
+internal actual fun componentTypeKeyHash(key: Any): Int = key.hashCode()
+
+internal actual fun normalizedComponentTypeKey(key: Any): Any = key

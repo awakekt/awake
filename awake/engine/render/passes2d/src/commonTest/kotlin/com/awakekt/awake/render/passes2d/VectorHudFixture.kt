@@ -44,8 +44,15 @@ internal object VectorHudFixture {
     private val health = LinearGradient.horizontal(Color(0.85f, 0.15f, 0.12f, 1f), Color(0.55f, 0.05f, 0.05f, 1f))
     private val mana = LinearGradient.horizontal(Color(0.15f, 0.35f, 0.9f, 1f), Color(0.05f, 0.15f, 0.55f, 1f))
 
-    /** The whole HUD for a [width] x [height] surface. */
-    fun frame(width: Float = 1920f, height: Float = 1080f): List<DrawCommand> = buildList {
+    /**
+     * Whether rounded borders are analytic, one `RoundedQuad` with a stroke width each, as
+     * `Modifier.border` draws them since #1545, or stroked paths, as it drew them before.
+     */
+    private var analyticBorders = true
+
+    /** The whole HUD for a [width] x [height] surface; [analytic] picks the border form, see [analyticBorders]. */
+    fun frame(width: Float = 1920f, height: Float = 1080f, analytic: Boolean = true): List<DrawCommand> = buildList {
+        analyticBorders = analytic
         statusFrame(24f, 24f, "Player One", large = true)
         statusFrame(420f, 24f, "Training Dummy", large = true)
         repeat(PARTY) { statusFrame(24f, 140f + it * 72f, "Member ${it + 1}", large = false) }
@@ -58,11 +65,11 @@ internal object VectorHudFixture {
 
     private fun MutableList<DrawCommand>.inventoryWindow(x: Float, y: Float) {
         add(DrawCommand.FilledPath(rounded(x, y, 580f, 560f, 8f), panel))
-        add(DrawCommand.StrokedPath(rounded(x, y, 580f, 560f, 8f), DrawStroke(1f.dp), border))
+        border(x, y, 580f, 560f, 8f, 1f)
         repeat(TABS) { tab ->
             val tx = x + 12f + tab * 92f
             add(DrawCommand.FilledPath(rounded(tx, y + 10f, 86f, 26f, 13f), if (tab == 0) border else panel))
-            add(DrawCommand.StrokedPath(rounded(tx, y + 10f, 86f, 26f, 13f), DrawStroke(1f.dp), border))
+            border(tx, y + 10f, 86f, 26f, 13f, 1f)
             text(tx + 12f, y + 16f, "Tab ${tab + 1}")
         }
         repeat(GAUGES) { gauge ->
@@ -74,7 +81,7 @@ internal object VectorHudFixture {
             val sx = x + 14f + (slot % GRID_COLUMNS) * 55f
             val sy = y + 120f + (slot / GRID_COLUMNS) * 54f
             add(DrawCommand.FilledPath(rounded(sx, sy, 48f, 48f, 6f), Color(0.14f, 0.16f, 0.22f, 1f)))
-            add(DrawCommand.StrokedPath(rounded(sx, sy, 48f, 48f, 6f), DrawStroke(1f.dp), border))
+            border(sx, sy, 48f, 48f, 6f, 1f)
             add(DrawCommand.Mesh(polygon(sx + 24f, sy + 22f, 13f, sides = 4 + slot % 5, Color(0.6f, 0.45f + slot % 7 * 0.05f, 0.3f, 1f))))
             text(sx + 30f, sy + 32f, "${slot % 20 + 1}")
         }
@@ -98,7 +105,7 @@ internal object VectorHudFixture {
             val sx = x + 8f + slot * 54f
             add(DrawCommand.RoundedQuad(sx, y + 6f, 48f, 48f, Color(0.14f, 0.16f, 0.22f, 1f), radius = 8f, smoothing = 1f))
             add(DrawCommand.Mesh(polygon(sx + 24f, y + 30f, 16f, sides = 5 + slot % 4, Color(0.3f + slot * 0.05f, 0.5f, 0.7f, 1f))))
-            add(DrawCommand.StrokedPath(rounded(sx, y + 6f, 48f, 48f, 8f), DrawStroke(1.5f.dp), border))
+            border(sx, y + 6f, 48f, 48f, 8f, 1.5f)
             text(sx + 4f, y + 8f, "${(firstKey + slot) % 10}")
         }
     }
@@ -135,7 +142,7 @@ internal object VectorHudFixture {
     private fun MutableList<DrawCommand>.softPanel(x: Float, y: Float, w: Float, h: Float, radius: Float) {
         add(DrawCommand.ShadowQuad(x, y, w, h, radius, offsetX = 0f, offsetY = 6f, blurRadius = 18f, spread = 2f, color = shadow))
         add(DrawCommand.FilledPath(rounded(x, y, w, h, radius), panel))
-        add(DrawCommand.StrokedPath(rounded(x, y, w, h, radius), DrawStroke(2f.dp), border))
+        border(x, y, w, h, radius, 2f)
     }
 
     private fun MutableList<DrawCommand>.bar(x: Float, y: Float, w: Float, h: Float, gradient: LinearGradient) {
@@ -147,6 +154,16 @@ internal object VectorHudFixture {
         value.forEachIndexed { i, _ ->
             add(DrawCommand.Glyph(x + i * 8f, y, 8f, 14f, 0f, 0f, 0.1f, 0.1f, text, font = font))
         }
+    }
+
+    private fun MutableList<DrawCommand>.border(x: Float, y: Float, w: Float, h: Float, r: Float, stroke: Float) {
+        add(
+            if (analyticBorders) {
+                DrawCommand.RoundedQuad(x, y, w, h, border, r, strokeWidth = stroke)
+            } else {
+                DrawCommand.StrokedPath(rounded(x, y, w, h, r), DrawStroke(stroke.dp), border)
+            },
+        )
     }
 
     private fun rounded(x: Float, y: Float, w: Float, h: Float, r: Float) =

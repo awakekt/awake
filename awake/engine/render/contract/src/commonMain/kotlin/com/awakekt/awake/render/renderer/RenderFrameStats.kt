@@ -42,6 +42,7 @@ class RenderStatsCounter {
     private var uiBytes = 0L
     private var uiRuns = 0
     private var uiTriangles = 0L
+    private val passes = RenderPassTally()
 
     /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
     var latestRenderPasses: Int = 0
@@ -49,6 +50,10 @@ class RenderStatsCounter {
 
     /** UI mesh writes of the last frame [publish] closed, or null before the first one. */
     var latestUiUploads: UiUploadStats? = null
+        private set
+
+    /** The last frame [publish] closed split by the part of it that drew, or null before the first one. */
+    var latestPasses: RenderPassStats? = null
         private set
 
     /** The last frame [publish] closed, or null before the first one. */
@@ -59,8 +64,19 @@ class RenderStatsCounter {
     fun recordDraw(elementCount: Int, instanceCount: Int = 1, triangleList: Boolean = true) {
         drawCalls += 1
         instances += instanceCount
-        if (triangleList) triangles += (elementCount / TRIANGLE_VERTICES).toLong() * instanceCount
+        val drawn = if (triangleList) (elementCount / TRIANGLE_VERTICES).toLong() * instanceCount else 0L
+        triangles += drawn
+        passes.record(instanceCount, drawn)
     }
+
+    /**
+     * Counts the draws recorded from here on toward [kind], until the next call or [publish].
+     * A frame starts as [RenderPassKind.Other]. Shadow passes use [beginShadowPass] instead.
+     */
+    fun countAs(kind: RenderPassKind) = passes.countAs(kind)
+
+    /** Counts the draws recorded from here on toward a new shadow pass of this frame. */
+    fun beginShadowPass() = passes.beginShadowPass()
 
     /** Counts one UI run's mesh written to the GPU: [vertexFloats] floats and [indexCount] 32-bit indices. */
     fun recordUiUpload(vertexFloats: Int, indexCount: Int) {
@@ -77,6 +93,7 @@ class RenderStatsCounter {
     /** Closes the frame being recorded and starts counting the next one. */
     fun publish(gpuTimeMs: Float? = null) {
         latest = RenderFrameStats(drawCalls, instances, triangles, gpuTimeMs)
+        latestPasses = passes.publish()
         drawCalls = 0
         instances = 0
         triangles = 0L

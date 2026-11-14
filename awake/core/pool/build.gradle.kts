@@ -18,6 +18,10 @@ kotlin {
     }
 
     sourceSets {
+        // SortedLongSet's buffer and sort: multiplatform, and already a Core dependency.
+        commonMain.dependencies {
+            implementation(libs.androidx.collection)
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
@@ -27,6 +31,6 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake Core Pool")
-        description.set("Frame-scoped object pools that reuse instances without allocating -- no dependencies")
+        description.set("Frame-scoped object pools and reusable id sets that allocate nothing in steady state")
     }
 }

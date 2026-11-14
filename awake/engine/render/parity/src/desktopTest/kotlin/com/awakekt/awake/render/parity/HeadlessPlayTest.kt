@@ -12,6 +12,7 @@ import com.awakekt.awake.showcase.app.engineShowcaseApp
 import com.awakekt.awake.vulkan.application.VulkanEngine
 import com.awakekt.awake.vulkan.application.playHeadless
 import com.awakekt.awake.vulkan.application.runVulkanDesktopGame
+import com.awakekt.awake.vulkan.application.snapshotPng
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.io.path.createTempDirectory
@@ -48,6 +49,20 @@ class HeadlessPlayTest {
         println("Capture on Vulkan: ${image.width}x${image.height}, ${colours.size} sampled colours")
         assertEquals(app.windowConfig.width to app.windowConfig.height, image.width to image.height, "a capture is the window's size")
         assertTrue(colours.size > 1, "a drawn frame isn't one flat colour")
+    }
+
+    @Test
+    fun aSnapshotWritesThePlayedFrameAsAPng() {
+        val png = File(createTempDirectory("snapshot").toFile(), "shots/floor.png")
+
+        val frame = VulkanEngine(app(), EngineShowcaseRenderPlan).snapshotPng(png, WIDTH, HEIGHT, frames = FRAMES)
+
+        val image = ImageIO.read(png)
+        assertEquals(WIDTH to HEIGHT, image.width to image.height)
+        val at = (HEIGHT / 2 * WIDTH + WIDTH / 2) * RGBA
+        val (r, g, b) = (0..2).map { frame.data[at + it].toInt() and BYTE }
+        assertEquals((r shl 16) or (g shl 8) or b, image.getRGB(WIDTH / 2, HEIGHT / 2) and 0xFFFFFF, "the PNG holds the frame played")
+        assertTrue(greenPixels(frame) > FLOOR_PIXELS, "the tile floor is in the snapshot")
     }
 
     @Test

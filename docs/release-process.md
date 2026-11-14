@@ -127,6 +127,14 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    by hand with the Core tag (`core_tag: v0.28.0`): it makes the same decision and push
    (`scripts/push-vulkan-tag.sh`) once that release's BOM is on Central. Tag by hand only when either
    says so: `RELEASE_TOKEN` is not set, or the next version is taken.
+
+   **A Vulkan tag whose Publish run failed before Central took it** leaves the release's commit
+   carrying a version that never shipped, and the scripts stop at "already carries". Check that the
+   run is over and that Maven Central has no such version, then run the **Vulkan tag** workflow with
+   the Core tag and `replace_unpublished` ticked: it pushes the next version on the same commit and
+   the failed number stays a gap. The scripts refuse when the carried tag is on Central, and when
+   Central cannot say. Without the tick they never replace a tag, since a tag is also missing from
+   Central while its own Publish run is still uploading.
 4. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
    starter template repositories (awake-template, awake-project-template, awake-plugin-template)
    need no bump PR: their sources live in Core, under `templates/game`, `templates/project` and

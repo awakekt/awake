@@ -9,6 +9,8 @@ import com.awakekt.awake.ai.behavior.AgentPlacement
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.componentType
+import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.atan2
 
@@ -22,13 +24,13 @@ import kotlin.math.atan2
  */
 object TransformAgentPlacement : AgentPlacement {
     override fun position(world: World, entity: Entity, into: Vec3f): Boolean {
-        val transform = world.get<Transform>(entity) ?: return false
+        val transform = world.get(entity, TRANSFORM_TYPE) ?: return false
         into.set(transform.position)
         return true
     }
 
     override fun moveBy(world: World, entity: Entity, dx: Float, dz: Float) {
-        val transform = world.get<Transform>(entity) ?: return
+        val transform = world.get(entity, TRANSFORM_TYPE) ?: return
         transform.position.x += dx
         transform.position.z += dz
     }
@@ -36,7 +38,10 @@ object TransformAgentPlacement : AgentPlacement {
     /** Sets the transform's yaw to face the direction; a model faces +Z at yaw 0. A zero direction is left alone. */
     override fun face(world: World, entity: Entity, directionX: Float, directionZ: Float) {
         if (directionX == 0f && directionZ == 0f) return
-        val transform = world.get<Transform>(entity) ?: return
+        val transform = world.get(entity, TRANSFORM_TYPE) ?: return
         transform.rotation.y = atan2(directionX, directionZ)
     }
 }
+
+/** Read per entity every frame: a handle reads an array, where a reified get looks the class up. */
+private val TRANSFORM_TYPE = componentType<Transform>()

@@ -24,6 +24,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
             arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffers[currentFrame]))),
             swapchainManager.inFlightFences[currentFrame],
         )
+        bufferPools.frameSubmitted(currentFrame)
         swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
         return
     }
@@ -44,6 +45,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         ),
         swapchainManager.inFlightFences[currentFrame],
     )
+    bufferPools.frameSubmitted(currentFrame)
 
     val presentInfo = VkPresentInfoKHR(
         pWaitSemaphores = signalSemaphores,

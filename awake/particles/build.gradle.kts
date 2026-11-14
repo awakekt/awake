@@ -29,6 +29,13 @@ kotlin {
     }
 }
 
+tasks.named<Test>("desktopTest") {
+    // The allocation probes count every byte. With escape analysis on, C2 scalar-replaces short-lived
+    // objects, so what a probe sees depends on when the compile lands; the canvas and compose modules
+    // set the same flag (#1521).
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Particles")

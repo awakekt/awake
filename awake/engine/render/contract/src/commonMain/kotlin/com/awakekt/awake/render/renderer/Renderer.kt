@@ -100,6 +100,13 @@ interface Renderer : GpuDevice {
     val frameUiUploads: UiUploadStats?
         get() = null
 
+    /**
+     * [frameStats] split by pass: scene opaque, scene transparent, each shadow pass and UI. Null
+     * for a renderer that does not count; see [RenderPassStats].
+     */
+    val framePassStats: RenderPassStats?
+        get() = null
+
     /** RGBA (each `0f..1f`) color the 3D render pass clears to before every frame's
      * [draw] call -- defaults to opaque black on every backend, so any app that never sets
      * this sees exactly what it always did. A game with real 3D content whose camera can see

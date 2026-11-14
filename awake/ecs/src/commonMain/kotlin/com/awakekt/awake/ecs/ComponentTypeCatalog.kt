@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * @param beforeRegister Runs before a type not seen yet gets its ID, and may throw to refuse it.
  */
 internal class ComponentTypeCatalog(private val beforeRegister: () -> Unit = {}) {
-    private val typeIdsByKey = mutableMapOf<Any, ComponentTypeId>()
+    private val typeIdsByKey = TypeKeyTable()
     private var typesById = arrayOfNulls<KClass<out Any>>(INITIAL_CAPACITY)
 
     // Boxed once here, so a lookup that returns `ComponentTypeId?` hands back a stored box, never a new one.
@@ -27,12 +27,14 @@ internal class ComponentTypeCatalog(private val beforeRegister: () -> Unit = {})
 
     fun register(type: KClass<out Any>): ComponentTypeId {
         val key = componentTypeKeyOf(type)
-        return typeIdsByKey.getOrPut(key) {
-            beforeRegister()
-            val id = typeIdsByKey.size
-            ensureCapacity(id)
-            typesById[id] = type
-            ComponentTypeId(id).also { typeId -> indexTypeId(componentTypeIndexOf(key), typeId) }
+        typeIdsByKey[key]?.let { return it }
+        beforeRegister()
+        val id = typeIdsByKey.size
+        ensureCapacity(id)
+        typesById[id] = type
+        return ComponentTypeId(id).also { typeId ->
+            typeIdsByKey.put(key, typeId)
+            indexTypeId(componentTypeIndexOf(key), typeId)
         }
     }
 

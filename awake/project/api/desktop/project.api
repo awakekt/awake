@@ -410,6 +410,87 @@ public final class com/awakekt/awake/project/ContentFetchException : java/lang/I
 	public final fun getUrl ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/project/ContentFormatTooNewException : java/lang/IllegalArgumentException, com/awakekt/awake/core/io/ContentTooNew {
+	public fun <init> (Ljava/lang/String;II)V
+	public fun getFoundVersion ()I
+	public fun getSupportedVersion ()I
+	public final fun getWhat ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/project/ContentLoad {
+}
+
+public final class com/awakekt/awake/project/ContentLoad$Failed : com/awakekt/awake/project/ContentLoad {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Throwable;)Lcom/awakekt/awake/project/ContentLoad$Failed;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ContentLoad$Failed;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/awakekt/awake/project/ContentLoad$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getStage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentLoad$Idle : com/awakekt/awake/project/ContentLoad {
+	public static final field INSTANCE Lcom/awakekt/awake/project/ContentLoad$Idle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentLoad$Loading : com/awakekt/awake/project/ContentLoad {
+	public fun <init> (Ljava/lang/String;JJ)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun copy (Ljava/lang/String;JJ)Lcom/awakekt/awake/project/ContentLoad$Loading;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ContentLoad$Loading;Ljava/lang/String;JJILjava/lang/Object;)Lcom/awakekt/awake/project/ContentLoad$Loading;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytesDone ()J
+	public final fun getBytesTotal ()J
+	public final fun getFraction ()F
+	public final fun getStage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentLoad$Ready : com/awakekt/awake/project/ContentLoad {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/project/ContentLoad$Ready;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ContentLoad$Ready;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/ContentLoad$Ready;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentLoad$TooNew : com/awakekt/awake/project/ContentLoad {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Throwable;)Lcom/awakekt/awake/project/ContentLoad$TooNew;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ContentLoad$TooNew;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/awakekt/awake/project/ContentLoad$TooNew;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getStage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentLoad$WaitingForContent : com/awakekt/awake/project/ContentLoad {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/project/ContentLoad$WaitingForContent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ContentLoad$WaitingForContent;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/ContentLoad$WaitingForContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/project/ContentRequest {
 	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -426,6 +507,38 @@ public final class com/awakekt/awake/project/ContentResponse {
 	public final fun getStatus ()I
 	public final fun header (Ljava/lang/String;)Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentStage {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Z)Lcom/awakekt/awake/project/ContentStage;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ContentStage;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/project/ContentStage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFallback ()Ljava/util/List;
+	public final fun getLists ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getWaitForGate ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentStages {
+	public static final field Companion Lcom/awakekt/awake/project/ContentStages$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;)V
+	public final fun getStages ()Ljava/util/List;
+	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun load (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun loadAll (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun paths (Lcom/awakekt/awake/project/ContentStage;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/ContentStages$Companion {
+	public final fun parseList (Ljava/lang/String;)Ljava/util/List;
 }
 
 public abstract interface class com/awakekt/awake/project/ContentTransport {
@@ -449,13 +562,14 @@ public final class com/awakekt/awake/project/GatedAssetSource$DefaultImpls {
 	public static fun exists (Lcom/awakekt/awake/project/GatedAssetSource;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/awake/project/PrefetchableAssetSource {
+public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/awake/project/PrefetchableAssetSource, java/lang/AutoCloseable {
 	public static final field Companion Lcom/awakekt/awake/project/IndexedAssetSource$Companion;
 	public static final field DEFAULT_INDEX_PATH Ljava/lang/String;
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getCanPrefetch ()Z
 	public final fun getHasCache ()Z
@@ -476,12 +590,14 @@ public final class com/awakekt/awake/project/IndexedAssetSource$Companion {
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public final class com/awakekt/awake/project/LayeredAssetSource : com/awakekt/awake/project/GatedAssetSource, com/awakekt/awake/project/PrefetchableAssetSource {
+public final class com/awakekt/awake/project/LayeredAssetSource : com/awakekt/awake/project/GatedAssetSource, com/awakekt/awake/project/PrefetchableAssetSource, java/lang/AutoCloseable {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;)V
 	public final fun attachProtected (Lcom/awakekt/awake/core/io/AssetSource;)V
 	public fun awaitOpen (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun awaitProtected (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun close ()V
 	public final fun detachProtected ()V
+	public final fun detachProtected (Z)V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getCanPrefetch ()Z
 	public final fun getHasProtected ()Z
@@ -489,6 +605,41 @@ public final class com/awakekt/awake/project/LayeredAssetSource : com/awakekt/aw
 	public final fun needsProtected (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun prefetchWithProgress (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/LoadingPhase : java/lang/Enum {
+	public static final field Failed Lcom/awakekt/awake/project/LoadingPhase;
+	public static final field Idle Lcom/awakekt/awake/project/LoadingPhase;
+	public static final field Loading Lcom/awakekt/awake/project/LoadingPhase;
+	public static final field Ready Lcom/awakekt/awake/project/LoadingPhase;
+	public static final field TooNew Lcom/awakekt/awake/project/LoadingPhase;
+	public static final field WaitingForContent Lcom/awakekt/awake/project/LoadingPhase;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/project/LoadingPhase;
+	public static fun values ()[Lcom/awakekt/awake/project/LoadingPhase;
+}
+
+public final class com/awakekt/awake/project/LoadingView {
+	public fun <init> (Lcom/awakekt/awake/project/LoadingPhase;Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Throwable;Z)V
+	public final fun component1 ()Lcom/awakekt/awake/project/LoadingPhase;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Float;
+	public final fun component4 ()Ljava/lang/Throwable;
+	public final fun component5 ()Z
+	public final fun copy (Lcom/awakekt/awake/project/LoadingPhase;Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Throwable;Z)Lcom/awakekt/awake/project/LoadingView;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/LoadingView;Lcom/awakekt/awake/project/LoadingPhase;Ljava/lang/String;Ljava/lang/Float;Ljava/lang/Throwable;ZILjava/lang/Object;)Lcom/awakekt/awake/project/LoadingView;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCanRetry ()Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getFraction ()Ljava/lang/Float;
+	public final fun getPhase ()Lcom/awakekt/awake/project/LoadingPhase;
+	public final fun getStage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/LoadingViewKt {
+	public static final fun loadingView (Lcom/awakekt/awake/project/ContentLoad;)Lcom/awakekt/awake/project/LoadingView;
 }
 
 public final class com/awakekt/awake/project/LockVerifiedAssetSource : com/awakekt/awake/project/GatedAssetSource, com/awakekt/awake/project/PrefetchableAssetSource {
@@ -838,6 +989,19 @@ public final class com/awakekt/awake/project/RateLimitBackoff$Companion {
 	public final fun getNone ()Lcom/awakekt/awake/project/RateLimitBackoff;
 }
 
+public final class com/awakekt/awake/project/ReadActivitySource : com/awakekt/awake/project/GatedAssetSource, com/awakekt/awake/project/PrefetchableAssetSource {
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;)V
+	public fun awaitOpen (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitQuiet-VtjQ1oo (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getCanPrefetch ()Z
+	public final fun getReadsInFlight ()I
+	public final fun getReadsStarted ()J
+	public fun isGated (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun prefetchWithProgress (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/project/ReadToken {
 	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getExpiresIn-UwyO8pc ()J
@@ -873,10 +1037,11 @@ public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter :
 public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter$Companion {
 }
 
-public final class com/awakekt/awake/project/TokenAuthorizedFetch {
+public final class com/awakekt/awake/project/TokenAuthorizedFetch : java/lang/AutoCloseable {
 	public static final field Companion Lcom/awakekt/awake/project/TokenAuthorizedFetch$Companion;
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lcom/awakekt/awake/project/RateLimitBackoff;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lcom/awakekt/awake/project/RateLimitBackoff;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
 	public final fun fetch (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun fetchRange (Ljava/lang/String;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

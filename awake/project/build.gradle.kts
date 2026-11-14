@@ -45,7 +45,7 @@ kotlin {
             // The rule a tag follows (Tags.isValid), so the manifest's tags list checks against it.
             implementation(project(":awake:ecs"))
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.coroutines.core)
             // Encrypted bundles: AES-256-GCM and HKDF-SHA256 through each target's own provider
             // (JDK on desktop and Android, CryptoKit on iOS, WebCrypto in the browser).
             implementation(libs.cryptography.core)

@@ -17,6 +17,7 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.ShadowCascadePassBinding
+import com.awakekt.awake.render.renderer.RenderPassKind
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
@@ -43,6 +44,9 @@ class DepthPrePassFeature(
 ) {
     /** The owning `Renderer`'s counter, set when it takes this feature: a pass is built first. */
     internal var stats: RenderStatsCounter? = null
+
+    /** Whether each pass this records counts as a shadow pass: true for the light's cascades, not the camera's depth. */
+    internal var countsShadowPasses = false
 
     /** A content feature's depth pipeline, over that feature's own group 0, and what hands it a
      * draw each frame. Its pipeline is the caller's to destroy, once removed from `contentCasters`. */
@@ -124,7 +128,9 @@ class DepthPrePassFeature(
         for (cascade in 0 until activeCount) {
             val source = viewProjections[cascade]
             allPipelines.forEach { it.writeCascade(cascade, source) }
+            if (countsShadowPasses) stats?.beginShadowPass()
             recordCascade(encoder, draws, cascade)
+            stats?.countAs(RenderPassKind.Other)
         }
         for (layer in activeCount until minOf(4, depthTarget.layers)) {
             allPipelines.forEach { it.writeCascade(layer, Mat4()) }
@@ -147,7 +153,9 @@ class DepthPrePassFeature(
             val layer = subPass.targetLayer
             if (layer in 0 until depthTarget.layers) {
                 allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
+                if (countsShadowPasses) stats?.beginShadowPass()
                 recordCascade(encoder, subPass.resolvedDraws, layer, environment)
+                stats?.countAs(RenderPassKind.Other)
             }
         }
         val activeLayers = subPasses.map { it.targetLayer }.toSet()

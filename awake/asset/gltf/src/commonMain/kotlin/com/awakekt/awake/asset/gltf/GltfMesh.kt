@@ -66,7 +66,90 @@ data class GltfMesh(
     val emissiveFactor: FloatArray = floatArrayOf(0f, 0f, 0f),
     /** Alpha behavior inherited from the primitive's glTF material. */
     val alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
+    /** Whether the primitive's glTF material disables back-face culling (`false` per glTF 2.0 when omitted). */
+    val doubleSided: Boolean = false,
 ) {
+    /** [GltfMesh] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        positions: FloatArray,
+        normals: FloatArray?,
+        colors: FloatArray?,
+        uvs: FloatArray?,
+        indices: IntArray,
+        jointIndices: IntArray? = null,
+        jointWeights: FloatArray? = null,
+        baseColorImageBytes: ByteArray? = null,
+        metallicRoughnessImageBytes: ByteArray? = null,
+        normalImageBytes: ByteArray? = null,
+        occlusionImageBytes: ByteArray? = null,
+        emissiveImageBytes: ByteArray? = null,
+        baseColorFactor: FloatArray = floatArrayOf(1f, 1f, 1f, 1f),
+        metallicFactor: Float = 1f,
+        roughnessFactor: Float = 1f,
+        emissiveFactor: FloatArray = floatArrayOf(0f, 0f, 0f),
+        alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
+    ) : this(
+        positions,
+        normals,
+        colors,
+        uvs,
+        indices,
+        jointIndices,
+        jointWeights,
+        baseColorImageBytes,
+        metallicRoughnessImageBytes,
+        normalImageBytes,
+        occlusionImageBytes,
+        emissiveImageBytes,
+        baseColorFactor,
+        metallicFactor,
+        roughnessFactor,
+        emissiveFactor,
+        alphaMode,
+    )
+
+    /** [copy] before [doubleSided]: hidden, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        positions: FloatArray = this.positions,
+        normals: FloatArray? = this.normals,
+        colors: FloatArray? = this.colors,
+        uvs: FloatArray? = this.uvs,
+        indices: IntArray = this.indices,
+        jointIndices: IntArray? = this.jointIndices,
+        jointWeights: FloatArray? = this.jointWeights,
+        baseColorImageBytes: ByteArray? = this.baseColorImageBytes,
+        metallicRoughnessImageBytes: ByteArray? = this.metallicRoughnessImageBytes,
+        normalImageBytes: ByteArray? = this.normalImageBytes,
+        occlusionImageBytes: ByteArray? = this.occlusionImageBytes,
+        emissiveImageBytes: ByteArray? = this.emissiveImageBytes,
+        baseColorFactor: FloatArray = this.baseColorFactor,
+        metallicFactor: Float = this.metallicFactor,
+        roughnessFactor: Float = this.roughnessFactor,
+        emissiveFactor: FloatArray = this.emissiveFactor,
+        alphaMode: GltfAlphaMode = this.alphaMode,
+    ): GltfMesh = copy(
+        positions,
+        normals,
+        colors,
+        uvs,
+        indices,
+        jointIndices,
+        jointWeights,
+        baseColorImageBytes,
+        metallicRoughnessImageBytes,
+        normalImageBytes,
+        occlusionImageBytes,
+        emissiveImageBytes,
+        baseColorFactor,
+        metallicFactor,
+        roughnessFactor,
+        emissiveFactor,
+        alphaMode,
+        this.doubleSided,
+    )
+
     /** The total number of vertices in this mesh. */
     val vertexCount: Int get() = positions.size / POSITION_COMPONENTS
 

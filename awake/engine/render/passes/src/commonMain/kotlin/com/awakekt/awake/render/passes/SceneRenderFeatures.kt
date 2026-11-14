@@ -11,6 +11,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.renderer.MOON_DISC_COLOR
+import com.awakekt.awake.render.renderer.RenderPassKind
 import com.awakekt.awake.render.renderer.SUN_DISC_COLOR
 import com.awakekt.awake.render.renderer.SkyboxFields
 
@@ -112,6 +113,7 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
         // Debug lines are already in world space (no per-line model matrix), so their MVP is
         // exactly this frame's viewProjection.
         lines.writeMvp(frameIndex, viewProjection.data)
+        stats?.countAs(RenderPassKind.SceneOpaque)
         shared.recordCommands(
             recorder = recorder,
             primaryPipeline = primaryPipeline,
@@ -122,7 +124,9 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
         // After the opaque draws, in the same scene pass: a transparent surface must depth-test
         // against opaque geometry already written, and blend over the colour it left behind.
         // A separate RenderPassSlot would put it after the UI, which paints over the scene.
+        stats?.countAs(RenderPassKind.SceneTransparent)
         transparent.recordCommands(transparentDrawCalls, recorder)
+        stats?.countAs(RenderPassKind.Other)
         // Last in the scene: debug lines are an overlay over every surface, a skeleton inside its
         // skinned mesh included. Recorded earlier, a later pipeline group painted over them.
         shared.recordLines(recorder, lines.lineDraw(context))

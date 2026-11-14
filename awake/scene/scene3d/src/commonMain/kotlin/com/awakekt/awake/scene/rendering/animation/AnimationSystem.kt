@@ -98,12 +98,17 @@ class AnimationSystem(
         }
     }
 
-    /** Advances [animator] by [delta] and writes its pose into [skinnedPose]'s palette. */
+    /**
+     * Advances [animator] by [delta] and writes its pose into [skinnedPose]'s palette. A held pose
+     * (speed 0, a finished clip on its last frame) keeps the palette it already has: it is neither
+     * sampled nor rebuilt.
+     */
     private fun pose(animator: Animator, skinnedPose: SkinnedPose, delta: Float) {
-        val pose = animator.player.update(delta)
         val palette = skinnedPose.jointPalette
+        val fits = palette.size == animator.skin.joints.size * MATRIX_FLOATS
+        val pose = if (fits) animator.player.updateIfChanged(delta) ?: return else animator.player.update(delta)
         // In place when the palette fits: a new one per model per frame is garbage that lives a frame.
-        skinnedPose.jointPalette = if (palette.size == animator.skin.joints.size * MATRIX_FLOATS) {
+        skinnedPose.jointPalette = if (fits) {
             pose.jointPalette(animator.skin, palette)
         } else {
             pose.jointPalette(animator.skin)

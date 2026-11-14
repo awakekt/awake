@@ -16,8 +16,10 @@ public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline {
 	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun advance (D)V
 	public final fun advance (F)V
+	public final fun getClampedInputs ()J
 	public final fun getDelaySeconds ()D
 	public final fun getInitialIntervalSeconds ()D
+	public final fun getInputMode ()Lcom/awakekt/awake/net/prediction/TimelineInputMode;
 	public final fun getIntervalSeconds ()D
 	public final fun getJitterSeconds ()D
 	public final fun getMaxDelaySeconds ()D
@@ -29,6 +31,7 @@ public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline {
 	public final fun playbackTime (D)D
 	public final fun reset ()V
 	public final fun serverTime (D)D
+	public final fun setInputMode (Lcom/awakekt/awake/net/prediction/TimelineInputMode;)V
 }
 
 public final class com/awakekt/awake/net/prediction/AdaptiveSnapshotTimeline$Companion {
@@ -290,5 +293,13 @@ public final class com/awakekt/awake/net/prediction/SnapshotTimeline {
 }
 
 public final class com/awakekt/awake/net/prediction/SnapshotTimeline$Companion {
+}
+
+public final class com/awakekt/awake/net/prediction/TimelineInputMode : java/lang/Enum {
+	public static final field Clamp Lcom/awakekt/awake/net/prediction/TimelineInputMode;
+	public static final field Reject Lcom/awakekt/awake/net/prediction/TimelineInputMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/prediction/TimelineInputMode;
+	public static fun values ()[Lcom/awakekt/awake/net/prediction/TimelineInputMode;
 }
 

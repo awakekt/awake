@@ -98,6 +98,9 @@ enum class VertexSemantic {
     /** Edge smoothing or anti-aliasing factor. */
     Smoothing,
 
+    /** Width of a stroked outline drawn inside an SDF primitive's edge; 0 fills it. */
+    StrokeWidth,
+
     /** Custom application-defined shader attribute. */
     Custom,
 }

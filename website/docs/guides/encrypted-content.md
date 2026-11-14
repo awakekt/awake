@@ -137,6 +137,8 @@ a bundle sealed under that `keyId` is read or prefetched:
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:online"
 ```
 
+`IndexedAssetSource`, `LayeredAssetSource`, and `BundleKeyProvider.wrapped` implement `AutoCloseable`. Calling `close()` (or `LayeredAssetSource.detachProtected()` on sign-out or session lockdown) deterministically releases and zeros held `BundleKeyHandle`s, ephemeral RSA-OAEP session keys, and uncached staged bundle plaintext without clobbering caller-owned key byte arrays.
+
 ## Offline play
 
 In a browser, pass `platformBundleKeyStore(namespace)` to `BundleKeyProvider.wrapped(store)`:

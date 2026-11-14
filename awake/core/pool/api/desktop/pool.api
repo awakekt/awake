@@ -18,3 +18,25 @@ public final class com/awakekt/awake/core/pool/ScratchPool {
 public final class com/awakekt/awake/core/pool/ScratchPool$Companion {
 }
 
+public final class com/awakekt/awake/core/pool/SortedLongSet {
+	public static final field Companion Lcom/awakekt/awake/core/pool/SortedLongSet$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addUnsorted (J)V
+	public final fun clear ()V
+	public final fun contains (J)Z
+	public final fun copyFrom (Lcom/awakekt/awake/core/pool/SortedLongSet;)V
+	public final fun ensureCapacity (I)V
+	public final fun get (I)J
+	public final fun getSize ()I
+	public final fun isEmpty ()Z
+	public final fun isSorted ()Z
+	public final fun sort ()V
+}
+
+public final class com/awakekt/awake/core/pool/SortedLongSet$Companion {
+	public final fun diff (Lcom/awakekt/awake/core/pool/SortedLongSet;Lcom/awakekt/awake/core/pool/SortedLongSet;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+}
+

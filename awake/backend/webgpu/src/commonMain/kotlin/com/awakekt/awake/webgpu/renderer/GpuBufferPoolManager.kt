@@ -12,6 +12,7 @@ import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.ResourceBinding
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.webgpu.mesh.FrameInstanceBuffer
@@ -42,16 +43,10 @@ internal class GpuBufferPoolManager(
     // never shrink" once, this file names only what to build. Mirrors Vulkan's identical eight;
     // only the constructed type differs, and these are single-buffered where Vulkan's take a
     // frames-in-flight count.
-    private val uiQuadMeshPool = GpuResourcePool { DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS) }
-    private val uiGlyphMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
-    }
-    private val uiDecoratedGlyphMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, VertexFormats2D.DECORATED_GLYPH_FLOATS_PER_VERTEX)
-    }
-    private val uiRoundedQuadMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.ROUNDED_QUAD_FLOATS_PER_VERTEX)
-    }
+    /** The overlay's UI meshes; each offscreen target has its own in [targetUiSlots]. */
+    private val overlayUiSlots = UiMeshSlots(graphicsDevice)
+    private val targetUiSlots = HashMap<RenderTarget, UiMeshSlots>()
+
     private val uiTextureMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.TEXTURE_PRIMITIVE_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
     }
@@ -72,12 +67,14 @@ internal class GpuBufferPoolManager(
 
     private val skinnedInstancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
 
-    fun quadMeshForRun(index: Int): DynamicMesh = uiQuadMeshPool[index]
-    fun roundedQuadMeshForRun(index: Int): DynamicMesh = uiRoundedQuadMeshPool[index]
+    /** The UI meshes a pass into [target] stages into, or the overlay's for `null`. */
+    fun uiSlotsFor(target: RenderTarget?): UiMeshSlots =
+        if (target == null) overlayUiSlots else targetUiSlots.getOrPut(target) { UiMeshSlots(graphicsDevice) }
 
-    /** The [index]th glyph run's mesh, from the decorated glyph layout's pool when [decorated] (#1061). */
-    fun glyphMeshForRun(index: Int, decorated: Boolean = false): DynamicMesh =
-        if (decorated) uiDecoratedGlyphMeshPool[index] else uiGlyphMeshPool[index]
+    /** Frees [target]'s UI meshes, when it is destroyed. */
+    fun releaseUiSlots(target: RenderTarget) {
+        targetUiSlots.remove(target)?.destroy()
+    }
 
     /** One mesh per textured primitive, not one shared by all of them: queue.writeBuffer is
      * queue-scheduled rather than interleaved with encoding, so a run's later primitive writing a
@@ -183,10 +180,9 @@ internal class GpuBufferPoolManager(
     }
 
     fun destroy() {
-        uiQuadMeshPool.forEach { it.destroy() }
-        uiGlyphMeshPool.forEach { it.destroy() }
-        uiDecoratedGlyphMeshPool.forEach { it.destroy() }
-        uiRoundedQuadMeshPool.forEach { it.destroy() }
+        overlayUiSlots.destroy()
+        targetUiSlots.values.forEach(UiMeshSlots::destroy)
+        targetUiSlots.clear()
         uiTextureMeshPool.forEach { it.destroy() }
         imagePassMeshPool.forEach { it.destroy() }
         instanceBufferPool.forEach { it.destroy() }

@@ -55,6 +55,7 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             shaders = PackShaderSets.Skinned,
             vertexFormat = VertexFormat.PositionNormalColorSkin,
             depthShaders = PackShaderSets.SkinnedShadowDepth,
+            buildBackCulled = true,
         ),
         // Textured meshes drawn transparent or additive, like glowing effect parts, need their
         // blended twins; without them they fall back to the opaque pipeline.
@@ -62,6 +63,7 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             key = PipelineKey.Format(VertexFormat.PositionNormalColorUv),
             shaders = PackShaderSets.Textured,
             vertexFormat = VertexFormat.PositionNormalColorUv,
+            buildBackCulled = true,
             buildTransparent = true,
             buildAdditive = true,
         ),
@@ -70,6 +72,7 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             shaders = PackShaderSets.SkinnedTextured,
             vertexFormat = VertexFormat.PositionNormalColorUvSkin,
             depthShaders = PackShaderSets.SkinnedTexturedShadowDepth,
+            buildBackCulled = true,
         ),
         // Repeated props: Core folds copies of one mesh and material into a single instanced draw.
         ScenePipeline(

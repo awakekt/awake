@@ -192,7 +192,18 @@ private class BorderNode :
     override fun DrawScope.draw(drawContent: () -> Unit) {
         drawContent()
         val stroke = strokeWidth.value * density
-        if (stroke <= 0f || (!sides.top && !sides.end && !sides.bottom && !sides.start)) return
+        if (stroke > 0f && sides != BorderSides.None) drawBorder(stroke)
+    }
+
+    private fun DrawScope.drawBorder(stroke: Float) {
+        // A whole border on a uniformly rounded shape is one analytic quad: two triangles where the
+        // tessellated ring cost about a thousand, and closer to the true band (AnalyticBorderAccuracyTest,
+        // #1545). A square one stays a ring: a few dozen triangles, and exact on its square corners.
+        val roundedRadius = if (sides.isAll) uniformRadius() else 0f
+        if (roundedRadius > 0f) {
+            drawRoundedRectBorder(color = color, radius = roundedRadius, strokeWidth = stroke)
+            return
+        }
         val key = BorderKey(width, height, stroke, color, shape, sides, density, layoutDirection)
         cachedMesh?.let { if (cachedKey == key) return drawRetainedMesh(it, retainedMeshKey) }
         // Centred on a box inset by half the stroke width, so the ring's solid band lands inside
@@ -222,6 +233,10 @@ private class BorderNode :
         retainedMeshKey = Any()
         drawRetainedMesh(mesh, retainedMeshKey)
     }
+
+    /** The radius of a uniformly rounded [shape] at this size, or 0 for any other outline. */
+    private fun DrawScope.uniformRadius(): Float =
+        (shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection) as? ShapeOutline.Rounded)?.radius ?: 0f
 
     override fun toString(): String = "border($strokeWidth, $color, shape=$shape, sides=$sides)"
 }

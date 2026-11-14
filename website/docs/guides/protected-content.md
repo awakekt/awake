@@ -227,6 +227,9 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
   before the token was added. A transport failure whose message quotes the token is reported with
   it replaced by `<redacted>`, and without that cause attached. `ReadToken` and `ContentRequest`
   print without it, so logging one is safe.
+- **Close on sign-out or lockdown.** `TokenAuthorizedFetch` implements `AutoCloseable`: calling
+  `close()` drops any cached `ReadToken` and rejects later or in-flight fetches with
+  `IllegalStateException`.
 
 !!! tip "Keep network retries and resumes in the transport"
     `TokenAuthorizedFetch` retries only a refused token, a 429 and a 503 with `Retry-After`. Network retries, timeouts and
@@ -275,11 +278,19 @@ player's token and attach it:
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/PublicSignInSetDocsSampleTest.kt:attach"
 ```
 
+When the manifest's entry scene is the protected world itself, load with an `EntryGate` instead of
+naming a sign-in scene: `loadProject(files, EntryGate("scenes/sign-in.scene.json"))` plays that
+placeholder while the files gate the entry scene, or an empty scene with `EntryGate()`, and
+`runProject` asks for the entry scene as it starts. The switch waits in `WaitingForContent` and plays
+the entry scene once the protected source is attached. When the entry scene isn't gated, as for a
+returning player whose source is attached before the load, the project starts on it directly. A host
+with no frame loop reads `LoadedProject.pendingEntryScene` and calls `switchTo` once it has signed in.
+
 | When | A read of a path |
 | --- | --- |
 | Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. A `SceneSwitch` to such a scene waits in `WaitingForContent`; `LoadedProject.switchTo`, for a host without a frame loop, throws instead. |
 | After `attachProtected` | Is served by the protected source when it has the path, so it wins for a file both have, and by the public set otherwise. Each read goes to one source, which checks it against its own index's SHA-256. A scene switch's prefetch goes the same way, so its `Loading` progress counts bytes from both sources. |
-| After `detachProtected`, on sign-out | Is served by the public set alone again. |
+| After `detachProtected`, on sign-out | Is served by the public set alone again, and closes the detached source when it implements `AutoCloseable` (pass `detachProtected(close = false)` to keep the caller owning its lifecycle; `LayeredAssetSource.close()` closes both layers). |
 
 The token, and when to sign in or out, stay with your game: Core only takes the source you attach.
 The public set is never encrypted; protected bundles may be.

@@ -9,6 +9,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun createMaterial (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public fun defaultCullMode (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/CullMode;
 	public final fun forget (Ljava/lang/String;)V
 	public fun forgetTexture (Ljava/lang/String;)V
 	public fun forgetTextures ()V
@@ -37,17 +38,24 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolverKt {
 }
 
 public final class com/awakekt/awake/scene/gltf/GltfMaterialParameters {
-	public fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
+	public fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;Z)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component4 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
-	public final fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public final fun component6 ()Z
+	public final synthetic fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public final fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;Z)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;ILjava/lang/Object;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlphaMode ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
 	public final fun getBaseColorFactor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
+	public final fun getDoubleSided ()Z
 	public final fun getEmissiveFactor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getMetallic ()F
 	public final fun getRoughness ()F
@@ -56,13 +64,20 @@ public final class com/awakekt/awake/scene/gltf/GltfMaterialParameters {
 }
 
 public final class com/awakekt/awake/scene/gltf/GltfMaterialSlot {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
+	public final fun component4 ()Z
+	public final synthetic fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;Z)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;ILjava/lang/Object;)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
+	public final fun getDoubleSided ()Z
 	public final fun getMaterial ()Ljava/lang/String;
 	public final fun getMesh ()Ljava/lang/String;
 	public final fun getParameters ()Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
