@@ -7,7 +7,9 @@ package com.awakekt.awake.webgpu.pipeline
 
 import io.ygdrasil.webgpu.BindGroup
 import io.ygdrasil.webgpu.GPUBindGroup
+import io.ygdrasil.webgpu.GPURenderBundleEncoder
 import io.ygdrasil.webgpu.GPURenderPassEncoder
+import io.ygdrasil.webgpu.RenderBundleEncoder
 import io.ygdrasil.webgpu.RenderPassEncoder
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.toJsNumber
@@ -16,4 +18,10 @@ import kotlin.js.toJsNumber
 internal actual fun GPURenderPassEncoder.bindGroup(index: UInt, group: GPUBindGroup) {
     val pass = this as? RenderPassEncoder ?: return setBindGroup(index, group)
     pass.handler.setBindGroup(index.toInt().toJsNumber(), (group as BindGroup).handler)
+}
+
+@OptIn(ExperimentalWasmJsInterop::class)
+internal actual fun GPURenderBundleEncoder.bindGroup(index: UInt, group: GPUBindGroup) {
+    val bundle = this as? RenderBundleEncoder ?: return setBindGroup(index, group)
+    bundle.handler.setBindGroup(index.toInt().toJsNumber(), (group as BindGroup).handler)
 }

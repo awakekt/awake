@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.pipeline
 
 import io.ygdrasil.webgpu.GPUBindGroup
+import io.ygdrasil.webgpu.GPURenderBundleEncoder
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 
 /**
@@ -15,3 +16,6 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
  * browser actual calls WebGPU directly.
  */
 internal expect fun GPURenderPassEncoder.bindGroup(index: UInt, group: GPUBindGroup)
+
+/** [GPURenderPassEncoder.bindGroup] for a render bundle being recorded. */
+internal expect fun GPURenderBundleEncoder.bindGroup(index: UInt, group: GPUBindGroup)

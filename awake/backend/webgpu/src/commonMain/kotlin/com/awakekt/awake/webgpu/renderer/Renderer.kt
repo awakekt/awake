@@ -183,6 +183,9 @@ class Renderer internal constructor(
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
 
+    /** Each pass's retained render bundles: the opaque scene and every shadow cascade. */
+    internal val retainedBundles = com.awakekt.awake.webgpu.pipeline.bundles.RetainedBundleStore(graphicsDevice.wgpuContext.device)
+
     /** The latest main-pass colour, valid until the host returns this surface texture. */
     internal var presentedColor: PresentedColor? = null
     internal val gpuFrameTimer = backgroundScope?.let { GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device, it) }
@@ -267,6 +270,7 @@ class Renderer internal constructor(
 
     init {
         depthPrePass?.stats = statsCounter
+        depthPrePass?.retainedBundles = retainedBundles
         depthPrePass?.countsShadowPasses = true
         sceneDepthPass?.stats = statsCounter
         maskPass?.stats = statsCounter
@@ -382,6 +386,7 @@ class Renderer internal constructor(
 
     override fun destroy() {
         gpuFrameTimer?.destroy()
+        retainedBundles.destroy()
         sceneScale.release()
         uiRunCache.clear()
         imagePassExecutor.destroy()

@@ -36,6 +36,7 @@ internal fun Renderer.sceneContext(
     passInput: GpuPassInput? = null,
     commandEncoder: GPUCommandEncoder? = null,
     parentTarget: WebGpuImagePassParentTarget? = null,
+    retained: com.awakekt.awake.webgpu.pipeline.bundles.RetainedPassBundles? = null,
 ): WebGpuFrameContext = WebGpuFrameContext(
     renderer = this,
     encoder = encoder,
@@ -50,6 +51,7 @@ internal fun Renderer.sceneContext(
     passInput = passInput,
     commandEncoder = commandEncoder,
     parentTarget = parentTarget,
+    retained = retained,
 )
 
 /** What a pass is drawing into, so [sceneContext] takes one argument for it rather than two. */

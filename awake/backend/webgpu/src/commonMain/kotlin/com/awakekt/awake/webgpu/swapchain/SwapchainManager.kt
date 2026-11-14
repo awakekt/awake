@@ -30,7 +30,7 @@ class SwapchainManager(
      */
     val maxFramesInFlight: Int,
     /** Sample count for the main colour/depth pass; resolved colour and UI stay single-sample. */
-    private val sampleCount: Int = 1,
+    internal val sampleCount: Int = 1,
 ) {
     private val graphicsDevice = graphicsDevice
 

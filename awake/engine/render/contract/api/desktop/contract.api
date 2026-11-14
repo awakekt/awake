@@ -83,6 +83,7 @@ public abstract interface class com/awakekt/awake/render/command/BufferHandle {
 }
 
 public abstract interface class com/awakekt/awake/render/command/CommandRecorder {
+	public fun beginRetained (Ljava/lang/Object;)V
 	public abstract fun bindIndexBuffer (Lcom/awakekt/awake/render/command/BufferHandle;)V
 	public abstract fun bindMaterial (Lcom/awakekt/awake/render/pipeline/BindingSemantic;Lcom/awakekt/awake/render/command/MaterialBinding;)V
 	public abstract fun bindPipeline (Lcom/awakekt/awake/render/command/PipelineHandle;)V
@@ -91,12 +92,15 @@ public abstract interface class com/awakekt/awake/render/command/CommandRecorder
 	public static synthetic fun draw$default (Lcom/awakekt/awake/render/command/CommandRecorder;IIILjava/lang/Object;)V
 	public abstract fun drawIndexed (II)V
 	public static synthetic fun drawIndexed$default (Lcom/awakekt/awake/render/command/CommandRecorder;IIILjava/lang/Object;)V
+	public fun endRetained ()V
 	public fun setScissor (IIII)V
 }
 
 public final class com/awakekt/awake/render/command/CommandRecorder$DefaultImpls {
+	public static fun beginRetained (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/lang/Object;)V
 	public static synthetic fun draw$default (Lcom/awakekt/awake/render/command/CommandRecorder;IIILjava/lang/Object;)V
 	public static synthetic fun drawIndexed$default (Lcom/awakekt/awake/render/command/CommandRecorder;IIILjava/lang/Object;)V
+	public static fun endRetained (Lcom/awakekt/awake/render/command/CommandRecorder;)V
 	public static fun setScissor (Lcom/awakekt/awake/render/command/CommandRecorder;IIII)V
 }
 

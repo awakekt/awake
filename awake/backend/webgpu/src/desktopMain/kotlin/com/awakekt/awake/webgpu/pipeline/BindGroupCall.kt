@@ -6,6 +6,9 @@
 package com.awakekt.awake.webgpu.pipeline
 
 import io.ygdrasil.webgpu.GPUBindGroup
+import io.ygdrasil.webgpu.GPURenderBundleEncoder
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 
 internal actual fun GPURenderPassEncoder.bindGroup(index: UInt, group: GPUBindGroup) = setBindGroup(index, group)
+
+internal actual fun GPURenderBundleEncoder.bindGroup(index: UInt, group: GPUBindGroup) = setBindGroup(index, group)

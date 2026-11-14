@@ -14,9 +14,11 @@ import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.recordPassFeatures
 import com.awakekt.awake.render.texture.RenderTarget
+import com.awakekt.awake.webgpu.pipeline.bundles.BundleLayout
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import io.ygdrasil.webgpu.GPULoadOp
 import io.ygdrasil.webgpu.GPUStoreOp
+import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.RenderPassColorAttachment
 import io.ygdrasil.webgpu.RenderPassDepthStencilAttachment
 import io.ygdrasil.webgpu.RenderPassDescriptor
@@ -64,7 +66,7 @@ internal class RendererGpuPassExecutor(
             if (scaled == null) {
                 recordScene(
                     encoder,
-                    SceneAttachment(swapchainManager.multisampleColorView, requireNotNull(swapchainManager.depthTextureView), output),
+                    SceneAttachment(swapchainManager.multisampleColorView, requireNotNull(swapchainManager.depthTextureView), output, swapchainManager.sampleCount),
                     input,
                     sorted,
                     primary,
@@ -177,6 +179,11 @@ internal class RendererGpuPassExecutor(
                 SurfaceSize(target.width, target.height),
                 input.environment,
                 input,
+                retained = renderer.retainedBundles.pass(
+                    // The depth view, not the colour: a swapchain's colour is a new texture every frame.
+                    attachment.depth,
+                    BundleLayout(listOf(target.colorFormat), GPUTextureFormat.Depth32Float, attachment.sampleCount),
+                ),
             ),
         )
         if (!input.postPassChain.isEmpty) {

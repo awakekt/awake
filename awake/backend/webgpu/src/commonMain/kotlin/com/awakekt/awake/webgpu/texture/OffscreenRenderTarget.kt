@@ -61,7 +61,9 @@ class OffscreenRenderTarget(
      */
     val colorView: GPUTextureView = colorTexture.createView(TextureViewDescriptor())
     private val device = graphicsDevice.wgpuContext.device
-    private val sampleCount = sampleCount
+
+    /** The scene attachments' sample count: 1, or the MSAA count. */
+    internal val sampleCount = sampleCount
     private var scene: SceneAttachments? = null
 
     /** Depth and, above 1x, multisampled colour: what only a scene pass binds, built by the first one. */
