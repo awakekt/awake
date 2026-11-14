@@ -60,6 +60,35 @@ fun VulkanEngine.playHeadless(
     }
 }
 
+/**
+ * [playHeadless], then writes the last frame to [file] as a PNG: a screenshot of a game, a project or a
+ * scene for CI and docs, with no window and no display. A project plays as it ships when the app
+ * composes it as usual, such as `app { scene("shot") { runProject(project) } }` with
+ * `VulkanEngine(game, ProjectRenderPlan)`. It needs a Vulkan driver, or Mesa's lavapipe without a GPU.
+ *
+ * @param file Where the PNG goes; its directory is made if need be.
+ * @param width The picture's width in pixels.
+ * @param height The picture's height in pixels.
+ * @param frames How many frames to play before the picture is taken, so content that loads over a few
+ * frames is in it.
+ * @param step Each frame's delta, in seconds.
+ * @param beforeFrame Runs before each frame is updated.
+ * @return The frame written, for a caller that also checks its pixels.
+ * @throws IllegalStateException When the engine doesn't start, with why.
+ */
+@Suppress("LongParameterList") // playHeadless's, plus where the picture goes.
+fun VulkanEngine.snapshotPng(
+    file: File,
+    width: Int,
+    height: Int,
+    frames: Int = SNAPSHOT_FRAMES,
+    step: Float = STEP,
+    beforeFrame: () -> Unit = {},
+): TextureAsset = playHeadless(width, height, frames, step, beforeFrame).also { it.writePng(file) }
+
+/** Frames [snapshotPng] plays by default: enough for a scene's first loads to land. */
+private const val SNAPSHOT_FRAMES = 30
+
 /** Disposes the engine, adding a failure to [failure] rather than replacing it. */
 private fun GraphicsEngine.disposeAfter(failure: Throwable?) {
     if (failure == null) return dispose()
@@ -86,9 +115,9 @@ internal fun notStarted(engine: GraphicsEngine): String {
 
 /**
  * Writes these RGBA8 pixels to [file] as an opaque PNG, as a screen would show them, making its
- * directory if need be.
+ * directory if need be: a frame [playHeadless] returned, for a CI screenshot or a picture for docs.
  */
-internal fun TextureAsset.writePng(file: File) {
+fun TextureAsset.writePng(file: File) {
     val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     for (y in 0 until height) {
         for (x in 0 until width) {
