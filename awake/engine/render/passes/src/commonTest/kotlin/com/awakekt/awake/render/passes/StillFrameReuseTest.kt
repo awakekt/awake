@@ -82,6 +82,21 @@ class StillFrameReuseTest {
         assertEquals(prepared * 2, preparer.prepared)
     }
 
+    @Test
+    fun aCameraStillAgainIsHandedBackFromItsSecondFrame() {
+        compile(props())
+        lens.eye = Vec3f(1f, 2f, 6f)
+        val moving = compile(props())
+        assertFalse(scratch.reusedLastFrame)
+        val prepared = preparer.prepared
+
+        val firstStill = compile(props())
+        assertFalse(scratch.reusedLastFrame, "a moving frame's draws were not recorded")
+        assertTrue(preparer.prepared > prepared)
+        assertNotSame(moving, firstStill)
+        assertSame(firstStill, compile(props()), "the second still frame is handed back")
+    }
+
     private fun props(time: Float = 0f): List<RenderDrawCommand> = List(3) { index ->
         RenderDrawCommand(mesh, material, model = Mat4().translate(index * 2f, 0f, 0f), timeSeconds = time)
     }

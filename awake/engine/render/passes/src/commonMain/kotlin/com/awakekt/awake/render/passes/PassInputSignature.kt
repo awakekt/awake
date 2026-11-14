@@ -51,9 +51,13 @@ internal class PassInputSignature {
         light(light)
         float(maskLayers.size.toFloat())
         for (index in maskLayers.indices) floats(maskLayers[index])
+        // A frame whose view, light or masks changed cannot be handed back, so its draws are left
+        // unrecorded: a moving camera pays for these few values, not a pass over every draw. The
+        // first still frame after it records them and the next one is handed back.
+        if (!markFrame()) return false
         float(drawCalls.size.toFloat())
         for (index in drawCalls.indices) draw(drawCalls[index])
-        matchesPrevious()
+        return matchesPrevious()
     }
 
     /** Forgets the last frame, so the next [record] cannot match. */
@@ -132,7 +136,7 @@ internal class PassInputSignature {
 
     private fun floats(values: FloatArray) {
         buffer.float(values.size.toFloat())
-        for (index in values.indices) buffer.float(values[index])
+        buffer.floats(values)
     }
 
     private companion object {
@@ -155,11 +159,13 @@ private class SignatureBuffer {
     private var previousFloats = FloatArray(INITIAL_FLOATS)
     private var refs = arrayOfNulls<Any>(INITIAL_REFS)
     private var previousRefs = arrayOfNulls<Any>(INITIAL_REFS)
-    private var floatCount = 0
+    private var floatCount = NOT_RECORDED
     private var refCount = 0
     private var previousFloatCount = NOT_RECORDED
     private var previousRefCount = NOT_RECORDED
     private var matches = false
+    private var frameFloatEnd = 0
+    private var frameRefEnd = 0
 
     fun begin() {
         val lastFloats = floats
@@ -196,6 +202,13 @@ private class SignatureBuffer {
         floats[floatCount++] = value
     }
 
+    /** All of [values], copied in one move. */
+    fun floats(values: FloatArray) {
+        while (floatCount + values.size > floats.size) floats = floats.copyOf(floats.size * 2)
+        values.copyInto(floats, floatCount)
+        floatCount += values.size
+    }
+
     /** By identity. */
     fun ref(value: Any?) {
         if (refCount == refs.size) refs = refs.copyOf(refs.size * 2)
@@ -208,15 +221,35 @@ private class SignatureBuffer {
         ref(if (refCount < previousRefCount && previous == value) previous else value)
     }
 
-    fun matchesPrevious(): Boolean {
-        var same = matches && floatCount == previousFloatCount && refCount == previousRefCount
-        var index = 0
-        while (same && index < floatCount) {
+    /**
+     * Ends the frame-level part of this frame and answers whether to go on to its draws: yes when
+     * it equals the frame before's, or when there is no frame before to differ from. When it
+     * differs, the frame ends here and the draws that would follow are never recorded.
+     */
+    fun markFrame(): Boolean {
+        frameFloatEnd = floatCount
+        frameRefEnd = refCount
+        val recordedBefore = previousFloatCount != NOT_RECORDED
+        val same = recordedBefore && matches && previousFloatCount >= floatCount && previousRefCount >= refCount &&
+            same(0, floatCount, 0, refCount)
+        if (!same) matches = false
+        return same || !recordedBefore
+    }
+
+    /** Whether the whole frame, its draws after [markFrame], equals the frame before's. */
+    fun matchesPrevious(): Boolean = matches && floatCount == previousFloatCount && refCount == previousRefCount &&
+        same(frameFloatEnd, floatCount, frameRefEnd, refCount)
+
+    /** Floats bit for bit in [floatsFrom] until [floatsTo], references by identity in [refsFrom] until [refsTo]. */
+    private fun same(floatsFrom: Int, floatsTo: Int, refsFrom: Int, refsTo: Int): Boolean {
+        var same = true
+        var index = floatsFrom
+        while (same && index < floatsTo) {
             same = floats[index].toRawBits() == previousFloats[index].toRawBits()
             index += 1
         }
-        index = 0
-        while (same && index < refCount) {
+        index = refsFrom
+        while (same && index < refsTo) {
             same = refs[index] === previousRefs[index]
             index += 1
         }

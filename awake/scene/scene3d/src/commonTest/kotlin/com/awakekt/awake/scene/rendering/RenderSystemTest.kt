@@ -821,6 +821,7 @@ class RenderSystemTest {
 
         val system = RenderSystem3D(
             renderer,
+            drawPreparer = redrawing(renderer.gpuDrawPreparer),
             isRealtimeProvider = { realtime },
             isDirtyProvider = { dirty },
         )
@@ -848,6 +849,19 @@ class RenderSystemTest {
         assertFalse(system.lastFramePlanned)
     }
 
+    /** A backend that cannot draw a prepared frame again (Vulkan) plans every frame, realtime or not. */
+    @Test
+    fun aPreparerThatCannotRedrawPlansEveryFrameEvenWhenNothingChanged() {
+        val world = worldWithPrimaryCamera()
+        val renderer = RecordingRenderer()
+        val system = RenderSystem3D(renderer, isRealtimeProvider = { false }, isDirtyProvider = { false })
+
+        system.update(world, 1f / 60f)
+        system.update(world, 1f / 60f)
+
+        assertTrue(system.lastFramePlanned, "the last plan's slots may be rewritten while a reused frame is in flight")
+    }
+
     @Test
     fun triggersReplanWhenCameraMovesEvenIfRealtimeIsDisabled() {
         val world = worldWithPrimaryCamera()
@@ -855,6 +869,7 @@ class RenderSystemTest {
 
         val system = RenderSystem3D(
             renderer,
+            drawPreparer = redrawing(renderer.gpuDrawPreparer),
             isRealtimeProvider = { false },
             isDirtyProvider = { false },
         )
@@ -881,7 +896,8 @@ class RenderSystemTest {
     @Test
     fun aCaptureMakesTheNextFrameReplanWhenRealtimeIsDisabled() {
         val world = worldWithPrimaryCamera()
-        val system = RenderSystem3D(RecordingRenderer(), isRealtimeProvider = { false }, isDirtyProvider = { false })
+        val recording = RecordingRenderer()
+        val system = RenderSystem3D(recording, redrawing(recording.gpuDrawPreparer), isRealtimeProvider = { false }, isDirtyProvider = { false })
         system.update(world, 1f / 60f)
         system.update(world, 1f / 60f)
         assertFalse(system.lastFramePlanned, "unchanged, so replayed")
@@ -921,4 +937,9 @@ class RenderSystemTest {
         override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
         override fun destroy() = Unit
     }
+}
+
+/** [preparer] on a backend whose prepared frames may be drawn again, as WebGPU's may. */
+internal fun redrawing(preparer: GpuDrawPreparer): GpuDrawPreparer = object : GpuDrawPreparer by preparer {
+    override val redrawsPreparedFrames: Boolean get() = true
 }

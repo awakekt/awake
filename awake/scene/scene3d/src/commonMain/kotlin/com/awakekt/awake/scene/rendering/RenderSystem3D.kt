@@ -189,7 +189,9 @@ class RenderSystem3D(
         }
         val viewDirty = isViewDirty(camera, currentViewport, currentAspect)
         val isRealtime = isRealtimeProvider()
-        val isDirty = isRealtime || isDirtyProvider() || viewDirty || lastPlannedFrame == null
+        // A backend whose prepared frames bind per-frame-in-flight storage (Vulkan) cannot draw
+        // the last plan again: a later preparation rewrites the slot a frame still in flight reads.
+        val isDirty = isRealtime || isDirtyProvider() || viewDirty || lastPlannedFrame == null || !planner.redrawsPreparedFrames
 
         val plannedFrame = if (isDirty) {
             recordCameraState(camera, currentViewport, currentAspect)
