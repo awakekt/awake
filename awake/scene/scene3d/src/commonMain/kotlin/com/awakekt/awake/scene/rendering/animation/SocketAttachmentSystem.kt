@@ -12,6 +12,8 @@ import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.componentType
+import com.awakekt.awake.ecs.get
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.core.transform.worldAxisStretch
@@ -61,9 +63,9 @@ class SocketAttachmentSystem : System {
         world.family<Transform, SocketAttachmentComponent>().forEach { _, transform, attachment ->
             if (!attachment.enabled) return@forEach
             val target = attachment.targetEntity
-            val pose = world.get<SkinnedPose>(target) ?: return@forEach
-            val animator = world.get<Animator>(target)
-            val modular = world.get<ModularCharacterComponent>(target)
+            val pose = world.get(target, SKINNED_POSE_TYPE) ?: return@forEach
+            val animator = world.get(target, ANIMATOR_TYPE)
+            val modular = world.get(target, MODULAR_CHARACTER_COMPONENT_TYPE)
             // The skin the palette was written for: ModularSkeletalSystem writes a modular character's with its own.
             val skin = modular?.skin ?: animator?.skin
             val jointIndex = resolveJoint(attachment, skin, animator?.player?.skeleton ?: modular?.skeleton)
@@ -189,3 +191,8 @@ private const val HALF_PI = (PI / 2).toFloat()
 
 /** Deeper than any real hierarchy; it only stops a cycle, which [TransformSystem] reports itself. */
 private const val MAX_HIERARCHY_DEPTH = 1024
+
+/** Read per entity every frame: a handle reads an array, where a reified get looks the class up. */
+private val SKINNED_POSE_TYPE = componentType<SkinnedPose>()
+private val ANIMATOR_TYPE = componentType<Animator>()
+private val MODULAR_CHARACTER_COMPONENT_TYPE = componentType<ModularCharacterComponent>()
