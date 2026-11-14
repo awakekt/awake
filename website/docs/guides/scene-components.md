@@ -140,5 +140,5 @@ the component id for decoding.
 ## See also
 
 - [Scene documents](scene-documents.md) for loading, saving and registries.
-- [Scene capabilities](scene-capabilities.md) for adding a game's own components and systems.
+- [Scene features](scene-capabilities.md) for adding a game's own components and systems.
 - [Scene document components](../reference/scene-document-components.md) for every component id.

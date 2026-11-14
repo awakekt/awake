@@ -96,7 +96,7 @@ registers it.
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `behavior_tree`, `state_machine`, `factions`, `perceivable`, `perceiver` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
 | `SceneComponentRegistry.registerAudio()` | `com.awakekt.awake.scene:audio` | `audio_source` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `audio_source`, and the components of the [features](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
