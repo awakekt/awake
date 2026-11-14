@@ -1,1 +1,0 @@
-- **Per-pass draw counts in the frame stats.** `Renderer.framePassStats` splits `frameStats` into the scene's opaque and transparent draws, each shadow pass, the UI and everything else, with draws, instances and triangles for each, on Vulkan and WebGPU. A frame of 1,500 draws now tells its main pass from its shadow cascades (#1555).
