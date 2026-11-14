@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 112 | Existing root `v*` tags and the shared Core release train |
+| Core | 113 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -127,6 +127,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.core:pool` | `:awake:core:pool` | `core` | — |
 | `com.awakekt.awake.core:schema` | `:awake:core:schema` | `core` | — |
 | `com.awakekt.awake.core:spatial` | `:awake:core:spatial` | `core` | `api` → `:awake:core:math` |
+| `com.awakekt.awake.core:settings` | `:awake:core:settings` | `core` | `api` → `:awake:core:config`; `api` → `:awake:core:io` |
 | `com.awakekt.awake.core:state` | `:awake:core:state` | `core` | — |
 | `com.awakekt.awake.core:text` | `:awake:core:text` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:logging` |
 | `com.awakekt.awake:ecs` | `:awake:ecs` | `core` | — |
