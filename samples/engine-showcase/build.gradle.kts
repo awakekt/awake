@@ -103,6 +103,7 @@ kotlin {
         commonTest.dependencies {
             implementation(project(":awake:compose:ui-testing"))
             implementation(project(":awake:core:config"))
+            implementation(project(":awake:core:settings"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:render:testing"))

@@ -75,6 +75,7 @@ nav:
           - Input: guides/input.md
           - Launch parameters: guides/launch-parameters.md
           - Launch options: guides/launch-options.md
+          - Settings: guides/settings.md
           - Debug tools: guides/debug-tools.md
           - Math: guides/math.md
       - Rendering:
