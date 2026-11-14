@@ -1,0 +1,1 @@
+- **Stabilized `Particle3DAllocationTest` against JIT warm-up noise.** Increased `WARMUP_FRAMES` from 2,000 to 10,000 (matching `Particle2DAllocationTest`) and disabled escape analysis (`-XX:-DoEscapeAnalysis`) on `:awake:particles:desktopTest` while keeping the 0-byte median allocation gate (#1560).

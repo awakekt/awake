@@ -102,7 +102,7 @@ class Particle3DAllocationTest {
     }
 
     private companion object {
-        const val WARMUP_FRAMES = 2_000
+        const val WARMUP_FRAMES = 10_000
         const val MEASURED_FRAMES = 600
         const val MEASURED_WINDOWS = 5
         const val FRAME_DELTA = 1f / 60f

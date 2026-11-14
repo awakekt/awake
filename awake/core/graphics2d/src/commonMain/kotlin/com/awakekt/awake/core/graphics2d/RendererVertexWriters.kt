@@ -66,7 +66,10 @@ fun writeGlyphVertex(
     out[offset + 11] = t.pivotY
 }
 
-/** Writes a rounded-quad vertex with anti-aliased smoothing (16 floats). */
+/**
+ * Writes a rounded-quad vertex with anti-aliased smoothing (17 floats). A [strokeWidth] above 0
+ * draws only a band that wide inside the edge, an analytic border; 0 fills the shape.
+ */
 fun writeRoundedQuadVertex(
     out: FloatArray,
     offset: Int,
@@ -80,6 +83,7 @@ fun writeRoundedQuadVertex(
     smoothing: Float = 0.0f,
     color: Color,
     transform: UiPrimitiveTransform? = null,
+    strokeWidth: Float = 0f,
 ) {
     out[offset] = x
     out[offset + 1] = y
@@ -98,7 +102,25 @@ fun writeRoundedQuadVertex(
     out[offset + 13] = t.scaleY
     out[offset + 14] = t.pivotX
     out[offset + 15] = t.pivotY
+    out[offset + 16] = strokeWidth
 }
+
+/** [writeRoundedQuadVertex] as it was before `strokeWidth`: hidden, and kept so a consumer compiled against it still links. */
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun writeRoundedQuadVertex(
+    out: FloatArray,
+    offset: Int,
+    x: Float,
+    y: Float,
+    localX: Float,
+    localY: Float,
+    halfW: Float,
+    halfH: Float,
+    radius: Float,
+    smoothing: Float = 0.0f,
+    color: Color,
+    transform: UiPrimitiveTransform? = null,
+) = writeRoundedQuadVertex(out, offset, x, y, localX, localY, halfW, halfH, radius, smoothing, color, transform, 0f)
 
 /** Overload for rounded quad without explicit smoothing (defaults smoothing to 0f). */
 fun writeRoundedQuadVertex(

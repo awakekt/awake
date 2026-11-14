@@ -1906,6 +1906,57 @@ public final class com/awakekt/awake/render/renderer/RenderFrameStats {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/RenderPassCounts {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/RenderPassCounts$Companion;
+	public fun <init> (IIJ)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun copy (IIJ)Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderPassCounts;IIJILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDrawCalls ()I
+	public final fun getInstances ()I
+	public final fun getTriangles ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderPassCounts$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderPassKind : java/lang/Enum {
+	public static final field Other Lcom/awakekt/awake/render/renderer/RenderPassKind;
+	public static final field SceneOpaque Lcom/awakekt/awake/render/renderer/RenderPassKind;
+	public static final field SceneTransparent Lcom/awakekt/awake/render/renderer/RenderPassKind;
+	public static final field Shadow Lcom/awakekt/awake/render/renderer/RenderPassKind;
+	public static final field Ui Lcom/awakekt/awake/render/renderer/RenderPassKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/RenderPassKind;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/RenderPassKind;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderPassStats {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/RenderPassCounts;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Ljava/util/List;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Lcom/awakekt/awake/render/renderer/RenderPassCounts;)V
+	public final fun component1 ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun component2 ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun component5 ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun copy (Lcom/awakekt/awake/render/renderer/RenderPassCounts;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Ljava/util/List;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Lcom/awakekt/awake/render/renderer/RenderPassCounts;)Lcom/awakekt/awake/render/renderer/RenderPassStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderPassStats;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Ljava/util/List;Lcom/awakekt/awake/render/renderer/RenderPassCounts;Lcom/awakekt/awake/render/renderer/RenderPassCounts;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderPassStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOther ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun getSceneOpaque ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun getSceneTransparent ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun getShadow ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public final fun getShadowPasses ()Ljava/util/List;
+	public final fun getUi ()Lcom/awakekt/awake/render/renderer/RenderPassCounts;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/renderer/RenderQuality : java/lang/Enum {
 	public static final field Auto Lcom/awakekt/awake/render/renderer/RenderQuality;
 	public static final field Balanced Lcom/awakekt/awake/render/renderer/RenderQuality;
@@ -1958,7 +2009,10 @@ public final class com/awakekt/awake/render/renderer/RenderScale {
 public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public static final field TRIANGLE_VERTICES I
 	public fun <init> ()V
+	public final fun beginShadowPass ()V
+	public final fun countAs (Lcom/awakekt/awake/render/renderer/RenderPassKind;)V
 	public final fun getLatest ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun getLatestPasses ()Lcom/awakekt/awake/render/renderer/RenderPassStats;
 	public final fun getLatestRenderPasses ()I
 	public final fun getLatestUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public final fun publish (Ljava/lang/Float;)V
@@ -2003,6 +2057,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public fun getFramePassStats ()Lcom/awakekt/awake/render/renderer/RenderPassStats;
 	public fun getFrameRenderPasses ()I
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getFrameUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
@@ -2042,6 +2097,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun getEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public static fun getFramePassStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderPassStats;
 	public static fun getFrameRenderPasses (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getFrameUiUploads (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/UiUploadStats;

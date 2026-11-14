@@ -15,6 +15,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawPath
+import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.GlyphDecoration
@@ -23,6 +24,7 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.backdropFallbackColor
 import com.awakekt.awake.core.graphics2d.bounds
+import com.awakekt.awake.core.graphics2d.toPath
 import com.awakekt.awake.core.graphics2d.transform
 import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.math2d.Dp
@@ -100,6 +102,28 @@ interface DrawScope {
         color: Color,
         radius: Float,
     )
+
+    /**
+     * Strokes a band [strokeWidth] wide just inside a rectangle's edge, rounding every corner by
+     * [radius]: a border. Node-local pixels. The default traces the band as a path; the painter
+     * draws it analytically, as one anti-aliased quad, which is what makes a flat UI's many thin
+     * borders cheap (#1545).
+     */
+    @Suppress("LongParameterList")
+    fun drawRoundedRectBorder(
+        x: Float = 0f,
+        y: Float = 0f,
+        width: Float = this.width.toFloat(),
+        height: Float = this.height.toFloat(),
+        color: Color,
+        radius: Float,
+        strokeWidth: Float,
+    ) {
+        val inset = strokeWidth / 2f
+        val centreline = DrawShape.RoundedRectangle(Dp((radius - inset).coerceAtLeast(0f)))
+            .toPath(Rectangle(x + inset, y + inset, width - strokeWidth, height - strokeWidth))
+        drawStrokedPath(centreline, DrawStroke(Dp(strokeWidth)), color)
+    }
 
     /**
      * Draws a rounded-rectangle drop shadow beneath this node's content.
@@ -854,6 +878,34 @@ internal class PaintScope :
             // Scaled by the smaller axis: a radius is a single number, and taking the larger would
             // let a corner arc exceed the shorter side and invert.
             radius * minOf(transform.scaleX, transform.scaleY),
+        )
+    }
+
+    @Suppress("LongParameterList")
+    override fun drawRoundedRectBorder(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        color: Color,
+        radius: Float,
+        strokeWidth: Float,
+    ) {
+        if (strokeWidth <= 0f) return
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        val scale = minOf(transform.scaleX, transform.scaleY)
+        output += UiDrawPrimitive.RoundedQuad(
+            px,
+            py,
+            pw,
+            ph,
+            color.dimmedBy(alpha),
+            radius = radius.coerceAtLeast(0f) * scale,
+            strokeWidth = strokeWidth * scale,
         )
     }
 

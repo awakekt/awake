@@ -275,6 +275,14 @@ player's token and attach it:
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/PublicSignInSetDocsSampleTest.kt:attach"
 ```
 
+When the manifest's entry scene is the protected world itself, load with an `EntryGate` instead of
+naming a sign-in scene: `loadProject(files, EntryGate("scenes/sign-in.scene.json"))` plays that
+placeholder while the files gate the entry scene, or an empty scene with `EntryGate()`, and
+`runProject` asks for the entry scene as it starts. The switch waits in `WaitingForContent` and plays
+the entry scene once the protected source is attached. When the entry scene isn't gated, as for a
+returning player whose source is attached before the load, the project starts on it directly. A host
+with no frame loop reads `LoadedProject.pendingEntryScene` and calls `switchTo` once it has signed in.
+
 | When | A read of a path |
 | --- | --- |
 | Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. A `SceneSwitch` to such a scene waits in `WaitingForContent`; `LoadedProject.switchTo`, for a host without a frame loop, throws instead. |

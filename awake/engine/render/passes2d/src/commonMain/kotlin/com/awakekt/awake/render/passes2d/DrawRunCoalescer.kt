@@ -14,7 +14,9 @@ import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.DrawShape
+import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.DrawTransform
+import com.awakekt.awake.core.graphics2d.StrokeJoin
 import com.awakekt.awake.core.graphics2d.TexturedTriangleMesh
 import com.awakekt.awake.core.graphics2d.TexturedVertex
 import com.awakekt.awake.core.graphics2d.TriangleMesh
@@ -23,6 +25,7 @@ import com.awakekt.awake.core.graphics2d.clipToConvexPaths
 import com.awakekt.awake.core.graphics2d.convexClipContour
 import com.awakekt.awake.core.graphics2d.strokeToFillPath
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
+import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.graphics2d.toPath
 import com.awakekt.awake.core.graphics2d.transform
 import com.awakekt.awake.core.graphics2d.writeGlyphVertex
@@ -65,7 +68,7 @@ object DrawRunCoalescer {
     /** Everything a rounded rectangle's local (0,0-origin) tessellation depends on -- radius is
      * clamped against width/height by `toPath`, so raw (unclamped) values are still a valid key:
      * two quads with the same radius/w/h clamp to the same shape regardless of position. */
-    private data class RoundedRectShapeKey(val radius: Float, val width: Float, val height: Float)
+    private data class RoundedRectShapeKey(val radius: Float, val width: Float, val height: Float, val strokeWidth: Float)
 
     /** Corner-arc trig and AA-fringe geometry (`offsetPolygon`'s hypot/miter math) for a rounded
      * rectangle only depend on radius and size, not position -- see `DrawShape.RoundedRectangle`.
@@ -76,15 +79,25 @@ object DrawRunCoalescer {
     private val roundedRectMeshCache = linkedMapOf<RoundedRectShapeKey, ColoredTriangleMesh>()
     private const val ROUNDED_RECT_CACHE_CAPACITY = 256
 
-    private fun localRoundedRectMesh(radius: Float, width: Float, height: Float): ColoredTriangleMesh {
-        val key = RoundedRectShapeKey(radius, width, height)
+    private fun localRoundedRectMesh(radius: Float, width: Float, height: Float, strokeWidth: Float): ColoredTriangleMesh {
+        val key = RoundedRectShapeKey(radius, width, height, strokeWidth)
         roundedRectMeshCache.remove(key)?.let { cached ->
             roundedRectMeshCache[key] = cached
             return cached
         }
-        val mesh = DrawShape.RoundedRectangle(Dp(radius))
-            .toPath(Rectangle(0f, 0f, width, height))
-            .tessellateFillAa(WHITE_COLOR)
+        // Under a path clip there is no SDF pass, so a border (strokeWidth > 0) becomes the ring
+        // `Modifier.border` tessellated before it was drawn analytically: its centreline inset by
+        // half the stroke.
+        val mesh = if (strokeWidth > 0f) {
+            val inset = strokeWidth / 2f
+            DrawShape.RoundedRectangle(Dp((radius - inset).coerceAtLeast(0f)))
+                .toPath(Rectangle(inset, inset, width - strokeWidth, height - strokeWidth))
+                .tessellateStrokeAa(DrawStroke(Dp(strokeWidth), join = StrokeJoin.Round), WHITE_COLOR)
+        } else {
+            DrawShape.RoundedRectangle(Dp(radius))
+                .toPath(Rectangle(0f, 0f, width, height))
+                .tessellateFillAa(WHITE_COLOR)
+        }
         roundedRectMeshCache[key] = mesh
         if (roundedRectMeshCache.size > ROUNDED_RECT_CACHE_CAPACITY) {
             roundedRectMeshCache.remove(roundedRectMeshCache.keys.first())
@@ -351,7 +364,7 @@ object DrawRunCoalescer {
                     val roundedSlice = slice as List<DrawCommand.RoundedQuad>
                     if (canExactClip(activePathClips)) {
                         val tessellated = roundedSlice.map { quad ->
-                            val triangleMesh = localRoundedRectMesh(quad.radius, quad.w, quad.h)
+                            val triangleMesh = localRoundedRectMesh(quad.radius, quad.w, quad.h, quad.strokeWidth)
                                 .placedAt(quad.x, quad.y, quad.color)
                             if (canSkipExactClip(safeInteriorRect, quad.x, quad.y, quad.w, quad.h)) {
                                 triangleMesh
@@ -639,7 +652,7 @@ object DrawRunCoalescer {
         val path = panel.path
         val transform = panel.transform
         val mesh = if (path == null) {
-            localRoundedRectMesh(panel.placedCornerRadius(), right - left, bottom - top).placedAt(left, top, color)
+            localRoundedRectMesh(panel.placedCornerRadius(), right - left, bottom - top, 0f).placedAt(left, top, color)
         } else if (transform == null) {
             path.tessellateFillAa(color)
         } else {
@@ -817,10 +830,10 @@ object DrawRunCoalescer {
             val halfH = quad.h / 2f
             val radius = quad.radius.coerceAtMost(minOf(halfW, halfH))
             val vertexBase = quadIndex * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex
-            writeRoundedQuadVertex(vertices, vertexBase + 0 * floatsPerVertex, quad.x, quad.y, -halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform)
-            writeRoundedQuadVertex(vertices, vertexBase + 1 * floatsPerVertex, quad.x + quad.w, quad.y, halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform)
-            writeRoundedQuadVertex(vertices, vertexBase + 2 * floatsPerVertex, quad.x + quad.w, quad.y + quad.h, halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform)
-            writeRoundedQuadVertex(vertices, vertexBase + 3 * floatsPerVertex, quad.x, quad.y + quad.h, -halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform)
+            writeRoundedQuadVertex(vertices, vertexBase + 0 * floatsPerVertex, quad.x, quad.y, -halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 1 * floatsPerVertex, quad.x + quad.w, quad.y, halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 2 * floatsPerVertex, quad.x + quad.w, quad.y + quad.h, halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 3 * floatsPerVertex, quad.x, quad.y + quad.h, -halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
 
             val vertexOffset = quadIndex * VertexFormats2D.VERTICES_PER_QUAD
             val indexBase = quadIndex * VertexFormats2D.INDICES_PER_QUAD

@@ -129,6 +129,8 @@ sealed class DrawCommand {
      * @property smoothing Corner curvature smoothing factor between 0.0 (circular) and 1.0 (squircle).
      * @property tokenId Optional design system token identifier.
      * @property transform Optional per-primitive GPU scale transform.
+     * @property strokeWidth Above 0, only a band this many pixels wide inside the edge is drawn: a
+     * border, exactly anti-aliased in two triangles. 0 fills the shape.
      */
     data class RoundedQuad(
         val x: Float,
@@ -140,7 +142,35 @@ sealed class DrawCommand {
         val smoothing: Float = 0.0f,
         val tokenId: String? = null,
         val transform: DrawTransform? = null,
-    ) : UiDrawPrimitive()
+        val strokeWidth: Float = 0f,
+    ) : UiDrawPrimitive() {
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        constructor(
+            x: Float,
+            y: Float,
+            w: Float,
+            h: Float,
+            color: Color,
+            radius: Float,
+            smoothing: Float = 0.0f,
+            tokenId: String? = null,
+            transform: DrawTransform? = null,
+        ) : this(x, y, w, h, color, radius, smoothing, tokenId, transform, 0f)
+
+        /** The `copy` from before [strokeWidth], which keeps this one's [strokeWidth]. */
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        fun copy(
+            x: Float = this.x,
+            y: Float = this.y,
+            w: Float = this.w,
+            h: Float = this.h,
+            color: Color = this.color,
+            radius: Float = this.radius,
+            smoothing: Float = this.smoothing,
+            tokenId: String? = this.tokenId,
+            transform: DrawTransform? = this.transform,
+        ): RoundedQuad = RoundedQuad(x, y, w, h, color, radius, smoothing, tokenId, transform, strokeWidth)
+    }
 
     /**
      * One glyph quad sampling a font atlas, drawn via textured pipeline.

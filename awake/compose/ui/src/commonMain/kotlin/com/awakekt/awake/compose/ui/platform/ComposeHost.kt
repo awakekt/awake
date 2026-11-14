@@ -106,8 +106,9 @@ class ComposeHost(
      * or layout direction differ from the last composed pass. Measure, place, paint, input, focus and
      * semantics run every frame either way, so the output is the same as with it off **provided the
      * content reads only tracked state and the values above**. A content lambda that reads a plain
-     * `var` another frame changed would show the old value: keep that data in `mutableStateOf`, or
-     * leave this off. Content must not rely on running every frame.
+     * `var` another frame changed would show the old value: keep that data in `mutableStateOf`, call
+     * [invalidate] or answer [externalChanges] when it changes, or leave this off. Content must not
+     * rely on running every frame. [verifySkippedCompositions] finds reads the host does not observe.
      */
     var skipUnchangedComposition: Boolean = false
         set(value) {
@@ -120,6 +121,42 @@ class ComposeHost(
     /** How many frames [skipUnchangedComposition] spared a composition pass. */
     var skippedCompositions: Int = 0
         private set
+
+    /**
+     * Asked once a frame, before deciding to skip, whether state the content reads outside the
+     * snapshot system changed: an ECS field, a plain `var`, a list a system rewrites. Returning
+     * `true` makes this frame compose, as [invalidate] does. A consumer whose UI state lives in
+     * such fields sets it to a check its own systems already know the answer to, and can then turn
+     * [skipUnchangedComposition] on (#1544). Not called while [skipUnchangedComposition] is off.
+     */
+    var externalChanges: (() -> Boolean)? = null
+
+    /**
+     * Debug aid for [skipUnchangedComposition]: on a frame it would skip, compose anyway and compare
+     * the paint output with what the skipped frame would have drawn. A difference means the content
+     * read something the host does not observe; it counts in [staleSkips] and is reported to
+     * [onStaleSkip]. The frame shows the composed output, so this behaves like skipping off. Costs
+     * a second paint per frame: use it in tests and debug builds.
+     */
+    var verifySkippedCompositions: Boolean = false
+
+    /** Told of each stale skip [verifySkippedCompositions] found, with the first differing primitive. */
+    var onStaleSkip: ((StaleSkip) -> Unit)? = null
+
+    /** Frames [verifySkippedCompositions] found would have drawn stale output had they skipped. */
+    var staleSkips: Int = 0
+        private set
+
+    private var externallyInvalid = false
+
+    /**
+     * Marks state read outside the snapshot system as changed: the next frame composes even if
+     * [skipUnchangedComposition] would skip it. Cheap and idempotent; call it from wherever that
+     * state changes, or answer through [externalChanges] once a frame.
+     */
+    fun invalidate() {
+        externallyInvalid = true
+    }
 
     private val compositionInputs = CompositionInputs()
 
@@ -163,7 +200,7 @@ class ComposeHost(
         // afterwards would paint every frame one step stale.
         frameClock.advance(input.deltaSeconds)
         if (skipUnchangedComposition && !needsComposition(input)) {
-            skippedCompositions++
+            if (verifySkippedCompositions) verifySkip(content, input) else skippedCompositions++
         } else if (compositionStats.enabled) {
             val started = TimeSource.Monotonic.markNow()
             compose(content, input)
@@ -261,11 +298,28 @@ class ComposeHost(
         it.cutSelection()
     }
 
-    private fun needsComposition(input: FrameInput): Boolean =
-        composition.isInvalid ||
+    private fun needsComposition(input: FrameInput): Boolean {
+        if (externalChanges?.invoke() == true) externallyInvalid = true
+        return externallyInvalid || composition.isInvalid ||
             compositionInputs.differsFrom(density, input, windowInsets, layoutDirection)
+    }
+
+    /** [verifySkippedCompositions]: paints the tree as the skipped frame would, composes, and compares. */
+    private fun verifySkip(content: context(Composer) () -> Unit, input: FrameInput) {
+        root.layoutTree(Constraints.fixed(input.viewportWidth, input.viewportHeight))
+        val skipped = painter.paintOutput(root).primitives.toList()
+        compose(content, input)
+        root.layoutTree(Constraints.fixed(input.viewportWidth, input.viewportHeight))
+        val composed = painter.paintOutput(root).primitives
+        val index = firstDifference(skipped, composed)
+        if (index >= 0) {
+            staleSkips++
+            onStaleSkip?.invoke(StaleSkip(index, skipped.getOrNull(index), composed.getOrNull(index)))
+        }
+    }
 
     private fun compose(content: context(Composer) () -> Unit, input: FrameInput): Composer {
+        externallyInvalid = false
         compositionInputs.record(density, input, windowInsets, layoutDirection)
         return composeContent(content, input)
     }
