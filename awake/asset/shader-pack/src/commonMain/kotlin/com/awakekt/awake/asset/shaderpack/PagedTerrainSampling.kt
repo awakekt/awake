@@ -48,6 +48,10 @@ object PagedTerrainUniformLayout {
     /** Uniform layout shared by paged lit and depth shaders. */
     @Suppress("SpreadOperator") // One-time ABI composition, never a frame-path copy.
     val Layout = UniformLayout(*TerrainUniformLayout.Layout.fields, PageGrid, PageDimensions)
+
+    /** What a paged terrain feature's own uniform block holds beside the pass's frame block. */
+    @Suppress("SpreadOperator")
+    val Draw = UniformLayout(*TerrainUniformLayout.Draw.fields, PageGrid, PageDimensions)
 }
 
 /**

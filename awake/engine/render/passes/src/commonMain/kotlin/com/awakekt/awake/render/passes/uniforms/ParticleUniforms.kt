@@ -40,6 +40,9 @@ val ParticleExtraUniformLayout = UniformLayout(
     ParticleExtraFields.FrameInfo,
 )
 
+/** What a particle emitter draw's own block holds beside [MaterialUniformLayouts.Frame]. */
+val ParticleDrawLayout = ParticleExtraUniformLayout
+
 /** Uniform layout for instanced rigid mesh draws including MVP, lighting, and exposure. */
 val InstancedUniformLayout = UniformLayout(
     UniformFields.Mvp,

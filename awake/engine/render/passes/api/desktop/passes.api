@@ -593,9 +593,11 @@ public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms$
 public final class com/awakekt/awake/render/passes/uniforms/FrameUniformBlock {
 	public fun <init> ()V
 	public final fun pack (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/render/command/GpuDebugView;F)[F
+	public final fun pack (Lcom/awakekt/awake/render/command/GpuPassInput;)[F
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/FrameUniformBlockKt {
+	public static final fun drawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZLcom/awakekt/awake/render/pipeline/InstancedDrawKind;)[F
 	public static final fun drawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZZ)[F
 	public static synthetic fun drawBlockFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZZILjava/lang/Object;)[F
 	public static final fun identityFrameBlock ()[F
@@ -616,7 +618,9 @@ public final class com/awakekt/awake/render/passes/uniforms/MaterialUniformLayou
 	public final fun getDirectionalLight ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getFog ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getFrame ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getInstancedDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLit ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getLitDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLitShadow ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLitShadowDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPbrMaterial ()Lcom/awakekt/awake/render/renderer/UniformLayout;
@@ -626,6 +630,7 @@ public final class com/awakekt/awake/render/passes/uniforms/MaterialUniformLayou
 	public final fun getPointLightSlots ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPrimary ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getSceneLight ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getSkinnedDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getTexturedExtra ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
@@ -643,6 +648,7 @@ public final class com/awakekt/awake/render/passes/uniforms/ParticleExtraFields 
 
 public final class com/awakekt/awake/render/passes/uniforms/ParticleUniformsKt {
 	public static final fun getInstancedUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun getParticleDrawLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getParticleExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getParticleUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun setParticleInstance (Lcom/awakekt/awake/core/math/Mat4;FFFFFFFF)Lcom/awakekt/awake/core/math/Mat4;
@@ -829,6 +835,7 @@ public final class com/awakekt/awake/render/passes/uniforms/SpriteFields {
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/SpriteFieldsKt {
+	public static final fun getSpriteDrawLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getSpriteExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getSpriteUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
@@ -880,6 +887,7 @@ public final class com/awakekt/awake/render/passes/uniforms/TrailFields {
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/TrailFieldsKt {
+	public static final fun getTrailDrawLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getTrailExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getTrailUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
@@ -891,6 +899,7 @@ public final class com/awakekt/awake/render/passes/uniforms/WorldTextFields {
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/WorldTextFieldsKt {
+	public static final fun getWorldTextDrawLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getWorldTextExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getWorldTextUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
@@ -988,6 +997,7 @@ public final class com/awakekt/awake/render/renderer/SkinnedInstanceLayout {
 
 public final class com/awakekt/awake/render/renderer/SkinningKt {
 	public static final field MAX_JOINTS I
+	public static final fun getSkinnedDrawLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getSkinnedMaterialLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getSkinnedUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }

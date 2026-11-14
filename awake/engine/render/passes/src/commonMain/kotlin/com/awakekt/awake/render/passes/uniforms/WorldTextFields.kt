@@ -27,3 +27,6 @@ val WorldTextExtraUniformLayout = UniformLayout(WorldTextFields.Tint, WorldTextF
 
 /** Complete material ABI of distance-field text placed in a scene. */
 val WorldTextUniformLayout = UniformLayout(UniformFields.Mvp, WorldTextFields.Tint, WorldTextFields.Field)
+
+/** What a world-text draw's own block holds beside [MaterialUniformLayouts.Frame]. */
+val WorldTextDrawLayout = UniformLayout(UniformFields.Model, WorldTextFields.Tint, WorldTextFields.Field)

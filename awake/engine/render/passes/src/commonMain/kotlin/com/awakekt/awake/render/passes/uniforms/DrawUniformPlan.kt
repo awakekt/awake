@@ -54,20 +54,19 @@ fun drawUniformPlan(
     format == VertexFormat.PositionRgbaUv && materialUniformFloatCount == TrailUniformLayout.total -> DrawUniformPlan.Trail
 
     // Exact, and first: the textured block is larger than lit_shadow's, so "at least" cannot tell them apart.
-    format == VertexFormat.PositionNormalColorUv &&
-        materialUniformFloatCount == MaterialUniformLayouts.PbrTextured.total ->
+    format == VertexFormat.PositionNormalColorUv && materialUniformFloatCount in PBR_TEXTURED_TOTALS ->
         DrawUniformPlan.TexturedPbr
 
     materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total &&
         format in LIT_SHADOW_FORMATS ->
         DrawUniformPlan.LitShadow
 
-    format == VertexFormat.PositionNormalColorSkin ||
-        format == VertexFormat.PositionNormalColorUvSkin ->
+    format.isSkinned ->
         DrawUniformPlan.Skinned
 
     else -> DrawUniformPlan.Lit
 }
 
-/** Built once: this check runs per draw per frame. */
+/** Built once: these checks run per draw per frame. */
 private val LIT_SHADOW_FORMATS = setOf(VertexFormat.PositionNormalColor, VertexFormat.PositionNormalColorUv)
+private val PBR_TEXTURED_TOTALS = setOf(MaterialUniformLayouts.PbrTextured.total, MaterialUniformLayouts.PbrTexturedDraw.total)

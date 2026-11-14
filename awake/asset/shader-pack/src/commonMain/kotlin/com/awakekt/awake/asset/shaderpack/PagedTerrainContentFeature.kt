@@ -37,8 +37,8 @@ fun pagedTerrainContentFeature(
         val uploads = PagedTerrainUploads(terrain)
         ContentFeature(
             name = "paged-terrain",
-            spec = shaders.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Layout),
-            depth = depth.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Layout),
+            spec = shaders.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Draw),
+            depth = depth.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Draw),
             textures = uploads.initialImages() + sharedTextures,
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
             textureUpdates = uploads,

@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
-import com.awakekt.awake.asset.shaderdsl.TriangleShader
 import com.awakekt.awake.asset.shaders.aslShaderSet
 
 /**
@@ -20,8 +19,8 @@ import com.awakekt.awake.asset.shaders.aslShaderSet
  * A `RenderPlan` names one of these instead of a resource-path shader set without binding metadata.
  */
 object PackShaderSets {
-    /** Minimal unlit colored triangle shader set. */
-    val Triangle = aslShaderSet(TriangleShader)
+    /** Minimal unshadowed lit colored mesh shader set. */
+    val Triangle = aslShaderSet(LitShader)
 
     /** Unlit atlas quad with straight alpha and an explicit frame and tint. */
     val Sprite = aslShaderSet(SpriteShader)

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.passes.uniforms
 
+import com.awakekt.awake.render.renderer.SkinnedDrawLayout
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformLayout
 
@@ -153,6 +154,19 @@ object MaterialUniformLayouts {
         UniformFields.TextureScroll,
         UniformFields.DrawFade,
     )
+
+    /** What an unshadowed lit draw's own block holds beside [Frame]; starts with the depth prefix. */
+    val LitDraw = UniformLayout(
+        UniformFields.Model,
+        UniformFields.VertexAnimation,
+        UniformFields.DrawFade,
+    )
+
+    /** What an unshadowed instanced draw's own block holds beside [Frame]; starts with the depth prefix. */
+    val InstancedDraw = LitDraw
+
+    /** What a single-draw skinned mesh's own block holds beside [Frame]. */
+    val SkinnedDraw = SkinnedDrawLayout
 
     /** Everything `textured.wgsl` reads after its MVP -- see [LitShadow]: 44 floats. */
     val TexturedExtra = UniformLayout(

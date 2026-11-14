@@ -212,12 +212,25 @@ data class GroupBindings(
             ),
         )
 
-        /** Particle sprites use only their uniform block, texture, and sampler. */
+        /** Particle sprites use their draw block, texture, sampler, and the shared frame block. */
         val ParticleMaterial = GroupBindings(
             listOf(
-                ResourceBinding(0, ResourceKind.UniformBuffer, setOf(ShaderStage.Vertex, ShaderStage.Fragment)),
+                ResourceBinding(
+                    binding = 0,
+                    kind = ResourceKind.UniformBuffer,
+                    stages = setOf(ShaderStage.Vertex),
+                    // `ParticleDrawLayout`, 12 floats.
+                    minBindingSize = 48L,
+                ),
                 ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+                ResourceBinding(
+                    binding = FRAME_UNIFORM_BINDING,
+                    kind = ResourceKind.UniformBuffer,
+                    stages = setOf(ShaderStage.Vertex),
+                    // `MaterialUniformLayouts.Frame`, 156 floats.
+                    minBindingSize = 624L,
+                ),
             ),
         )
 

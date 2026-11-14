@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.uniforms.FrameUniformBlock
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
@@ -34,7 +35,24 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
  * starts with its whole MVP binds, so the shared camera-depth shader draws it as before.
  */
 internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
-    private class Entry(val buffer: Long, val memory: Long)
+    private class Entry(val buffer: Long, val memory: Long) {
+        var lastWritten: FloatArray? = null
+
+        fun matchesLastWritten(floats: FloatArray): Boolean {
+            val prev = lastWritten ?: return false
+            return prev.size == floats.size &&
+                floats.indices.all { prev[it].toRawBits() == floats[it].toRawBits() }
+        }
+
+        fun recordWritten(floats: FloatArray) {
+            val prev = lastWritten
+            if (prev == null || prev.size != floats.size) {
+                lastWritten = floats.copyOf()
+            } else {
+                floats.copyInto(prev)
+            }
+        }
+    }
 
     private val entries = ArrayList<Entry>()
     private val block = FrameUniformBlock()
@@ -57,7 +75,20 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
             debugView = environment.debugView,
             exposure = environment.exposure,
         )
-        VulkanBuffers.writeBufferMemoryFloats(graphicsDevice.device, entry(frameIndex, kind).memory, 0L, floats)
+        writeEntry(entry(frameIndex, kind), floats)
+    }
+
+    /** Writes [input]'s frame block into frame [frameIndex]'s buffer, for offscreen slots or pass-only frames. */
+    fun write(frameIndex: Int, input: GpuPassInput, edges: Boolean = false) {
+        val kind = if (edges) FrameBlockKind.Edges else FrameBlockKind.Scene
+        writeEntry(entry(frameIndex, kind), block.pack(input))
+    }
+
+    private fun writeEntry(target: Entry, floats: FloatArray) {
+        if (!target.matchesLastWritten(floats)) {
+            target.recordWritten(floats)
+            VulkanBuffers.writeBufferMemoryFloats(graphicsDevice.device, target.memory, 0L, floats)
+        }
     }
 
     /** A frame's buffers sit side by side, one per [FrameBlockKind]. */

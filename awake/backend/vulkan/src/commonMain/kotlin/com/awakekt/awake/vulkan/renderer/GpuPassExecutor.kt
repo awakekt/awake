@@ -31,6 +31,7 @@ internal class RendererGpuPassExecutor(
         val currentFrame = renderer.swapchainManager.currentFrame
         val imageIndex = renderer.acquireSwapchainImage(currentFrame) ?: return
         check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }
+        renderer.graphicsDevice.frameUniforms.write(currentFrame, input)
         val resolvedDraws = input.resolvedDraws
         val depthDraws = renderer.prepareDepthDraws(input)
         Vulkan.vkResetCommandBuffer(renderer.commandBuffers[currentFrame], 0)
@@ -66,6 +67,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
     val depthDraws = prepareDepthDraws(input)
     return { commandBuffer ->
         prepareResources(commandBuffers.size, commandBuffer)
+        graphicsDevice.frameUniforms.write(commandBuffers.size, input)
         // The offscreen frame's own slots, past the last frame in flight, as its materials use.
         recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment)
         recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))

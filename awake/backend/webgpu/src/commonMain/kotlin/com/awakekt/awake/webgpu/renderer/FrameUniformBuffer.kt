@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.uniforms.FrameUniformBlock
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
@@ -69,6 +70,12 @@ internal class FrameUniformBuffer(private val device: GPUDevice) {
             exposure = environment.exposure,
         )
         return uploads.stageChanged(target.slot, floats)
+    }
+
+    /** Stages [input]'s frame block when no draw preparation ran for this pass (e.g. terrain-only frames). */
+    fun stage(uploads: UniformUploads, input: GpuPassInput, edges: Boolean = false): Boolean {
+        val target = block(edges)
+        return uploads.stageChanged(target.slot, target.packer.pack(input))
     }
 
     private fun block(edges: Boolean): Block = if (edges) this.edges else scene

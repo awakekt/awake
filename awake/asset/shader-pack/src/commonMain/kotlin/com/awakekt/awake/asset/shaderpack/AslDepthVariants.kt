@@ -40,12 +40,12 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.render.passes.uniforms.CascadePassUniformLayout
-import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
+import com.awakekt.awake.render.passes.uniforms.ParticleDrawLayout
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.MAX_JOINTS
-import com.awakekt.awake.render.renderer.SkinnedUniformLayout
+import com.awakekt.awake.render.renderer.SkinnedDrawLayout
 
 /**
  * Depth-only companions for structural families whose vertex inputs differ from the ordinary
@@ -136,7 +136,7 @@ val SkinnedMaskedTexturedDepthShader: AslShaderDefinition = shader("skinned_text
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
         binding = 0,
-    ).fieldsFrom(SkinnedUniformLayout)
+    ).fieldsFrom(SkinnedDrawLayout, throughField = "pbrFactors")
     val cascade = uniformBlock(
         "Cascade",
         group = SHADOW_CASCADE_PASS_GROUP,
@@ -170,7 +170,7 @@ private fun skinnedDepth(name: String, format: VertexFormat): AslShaderDefinitio
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
         binding = 0,
     )
-    val handles = u.fieldsFrom(SkinnedUniformLayout)
+    val handles = u.fieldsFrom(SkinnedDrawLayout, throughField = "model")
     val palette = handles.array("jointPalette")
     val model = handles.value("model")
     val cascade = uniformBlock(
@@ -204,8 +204,7 @@ val ParticleShadowDepthShader: AslShaderDefinition = shader("particle_shadow_dep
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
         binding = 0,
     )
-    val handles = u.fieldsFrom(ParticleUniformLayout)
-    handles.value("mvp")
+    val handles = u.fieldsFrom(ParticleDrawLayout, throughField = "cameraUp")
     val cameraRight = handles.value("cameraRight")
     val cameraUp = handles.value("cameraUp")
     val cascade = uniformBlock(

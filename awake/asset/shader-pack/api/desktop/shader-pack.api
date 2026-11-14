@@ -35,6 +35,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslInfiniteGridShaderKt {
 	public static final fun getInfiniteGridShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslLitShaderKt {
+	public static final fun getLitShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslMeshVariantShadersKt {
 	public static final fun getInstancedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkinnedInstancedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
@@ -285,6 +289,7 @@ public final class com/awakekt/awake/asset/shaderpack/PagedTerrainContentFeature
 
 public final class com/awakekt/awake/asset/shaderpack/PagedTerrainUniformLayout {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/PagedTerrainUniformLayout;
+	public final fun getDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getPageDimensions ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getPageGrid ()Lcom/awakekt/awake/render/renderer/UniformField;
@@ -460,6 +465,7 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainUniformLayout {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/TerrainUniformLayout;
+	public final fun getDraw ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getRingParams ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getSunDirection ()Lcom/awakekt/awake/render/renderer/UniformField;

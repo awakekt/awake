@@ -5,12 +5,18 @@
  */
 package com.awakekt.awake.vulkan
 
+import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.terrainContentFeature
+import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.asset.terrain.Heightmap
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -18,8 +24,14 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.TrailUniformLayout
+import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
+import com.awakekt.awake.render.passes.uniforms.setParticleInstance
+import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureAsset
@@ -90,6 +102,122 @@ class VulkanStaticUniformReuseTest {
         val next = scene.frame(timeSeconds = 9f, wave = WAVE)
 
         assertEquals(1, next.written, "a waving prop's clock moves it, so its block is written")
+    }
+
+    @Test
+    fun remainingSceneDrawsReuseTheirBlocksUnderAMovingCamera() {
+        val session = vulkanHeadlessScene(SIZE, SIZE)
+        try {
+            val renderer = session.renderer
+            val device = (renderer as VulkanRenderer).graphicsDevice
+            val target = renderer.createRenderTarget(SIZE, SIZE)
+            val skinnedMesh = renderer.createMesh(skinnedQuad(half = 1.2f))
+            val spriteMesh = renderer.createMesh(uvQuad(half = 0.8f))
+            val textMesh = renderer.createMesh(uvColorQuad(half = 0.8f))
+            val trailMesh = renderer.createMesh(rgbaUvQuad(half = 0.8f))
+            val particleMesh = renderer.createMesh(uvQuad(half = 0.5f))
+            val skinnedMat = renderer.createMaterial(SkinnedUniformLayout, texture = WHITE, pbrTextures = PbrTextureSet())
+            val spriteMat = renderer.createMaterial(SpriteUniformLayout, texture = WHITE)
+            val textMat = renderer.createMaterial(WorldTextUniformLayout, texture = WHITE)
+            val trailMat = renderer.createMaterial(TrailUniformLayout, texture = WHITE)
+            val particleMat = renderer.createMaterial(ParticleUniformLayout, texture = WHITE)
+            val palette = FloatArray(32).also { Mat4().data.copyInto(it, 0); Mat4().data.copyInto(it, 16) }
+            val spriteExtras = floatArrayOf(0f, 0f, 1f, 1f, 1f, 1f, 1f, 1f)
+            val textExtras = floatArrayOf(1f, 1f, 1f, 1f, 0.5f, 0.25f, 0f, 0f)
+            val trailExtras = floatArrayOf(1f, 1f, 1f, 1f)
+            val particleExtras = floatArrayOf(1f, 0f, 0f, 0f, 0f, 0f, -1f, 0f, 1f, 0f, 0f, 0f)
+            val particleInstances = listOf(Mat4().setParticleInstance(2f, 0.5f, 0f, 1.2f))
+            val particleColors = listOf(Vec4(1f, 1f, 1f, 1f))
+            val particleFrames = listOf(0f)
+            val sun = SceneLight(direction = Vec3f(0.3f, 1f, 0.2f), color = Vec3f(1f, 1f, 1f))
+
+            fun render(eyeX: Float, timeSeconds: Float): Frame {
+                val lens = Lens(eye = Vec3f(eyeX, 8f, 6f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
+                val writtenBefore = device.drawBlockWrites
+                val draws = listOf(
+                    RenderDrawCommand(mesh = skinnedMesh, material = skinnedMat, model = translation(-1.5f, 0f, 0f), extraUniformFloats = palette, timeSeconds = timeSeconds),
+                    RenderDrawCommand(mesh = spriteMesh, material = spriteMat, model = translation(0f, 0.2f, -1.5f), extraUniformFloats = spriteExtras, transparent = true, timeSeconds = timeSeconds),
+                    RenderDrawCommand(mesh = textMesh, material = textMat, model = translation(0f, 0.4f, 1.5f), extraUniformFloats = textExtras, transparent = true, timeSeconds = timeSeconds),
+                    RenderDrawCommand(mesh = trailMesh, material = trailMat, model = translation(1.5f, 0.3f, -1.2f), extraUniformFloats = trailExtras, transparent = true, timeSeconds = timeSeconds),
+                    RenderDrawCommand(
+                        mesh = particleMesh,
+                        material = particleMat,
+                        instanceModels = particleInstances,
+                        instanceColors = particleColors,
+                        instanceFrames = particleFrames,
+                        extraUniformFloats = particleExtras,
+                        transparent = true,
+                        timeSeconds = timeSeconds,
+                    ),
+                )
+                val pass = ScenePassCompiler.compile(
+                    lens = lens,
+                    drawCalls = draws,
+                    light = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, renderer.clipSpace)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = 1f,
+                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                )
+                val written = (device.drawBlockWrites - writtenBefore).toInt()
+                renderer.renderToTexture(target, pass)
+                return Frame(written, runBlocking { renderer.readPixels(target) }.data)
+            }
+            try {
+                var warm = render(eyeX = 0f, timeSeconds = 0f)
+                repeat(WARM_FRAMES - 1) { warm = render(eyeX = 0f, timeSeconds = it + 1f) }
+                val moved = render(eyeX = 1.5f, timeSeconds = 9f)
+
+                assertFalse(warm.pixels.contentEquals(moved.pixels), "the scene draws from the moved camera")
+                assertEquals(0, moved.written, "none of the five shaders rewrites its draw block when only the camera and clock move")
+            } finally {
+                listOf(skinnedMat, spriteMat, textMat, trailMat, particleMat).forEach { it.destroy() }
+                listOf(skinnedMesh, spriteMesh, textMesh, trailMesh, particleMesh).forEach { it.destroy() }
+                target.destroy()
+            }
+        } finally {
+            session.close()
+        }
+    }
+
+    @Test
+    fun terrainReusesItsContentUniformsWhileTheCameraStaysWithinASnapCell() = runBlocking {
+        val session = vulkanHeadlessScene(SIZE, SIZE)
+        try {
+            val renderer = session.renderer
+            val device = (renderer as VulkanRenderer).graphicsDevice
+            val attached = (renderer as ContentFeatureHost).attachContentFeature(
+                terrainContentFeature(
+                    shaders = PackShaderSets.Terrain,
+                    heightmap = domeHeightmap(),
+                    config = TerrainClipmapConfig(ringCount = 3, ringResolution = 16, baseSpacing = 4f),
+                ),
+            )
+            val target = renderer.createRenderTarget(SIZE, SIZE)
+            suspend fun render(eyeX: Float): Pair<Int, ByteArray> {
+                val writesBefore = device.contentUniformWrites
+                renderer.renderSceneToTexture(
+                    target,
+                    Lens(eye = Vec3f(eyeX, 8f, 16f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 200f),
+                    emptyList(),
+                )
+                return (device.contentUniformWrites - writesBefore).toInt() to renderer.readPixels(target).data
+            }
+            try {
+                var warmPixels = render(eyeX = 0f).second
+                repeat(WARM_FRAMES - 1) { warmPixels = render(eyeX = 0f).second }
+                val (inCellWrites, movedPixels) = render(eyeX = 1f)
+                val (snappedWrites, _) = render(eyeX = 5f)
+
+                assertFalse(warmPixels.contentEquals(movedPixels), "moving the camera changes the rendered terrain")
+                assertEquals(0, inCellWrites, "staying within the 4-unit snap cell leaves the terrain uniform buffer untouched")
+                assertEquals(1, snappedWrites, "crossing into the next snap cell writes the shifted ring origins")
+            } finally {
+                target.destroy()
+                attached.detach()
+            }
+        } finally {
+            session.close()
+        }
     }
 
     private fun <T> withScene(block: (Scene) -> T): T {
@@ -196,5 +324,51 @@ class VulkanStaticUniformReuseTest {
             }
             return MeshGeometry(vertices.toFloatArray(), intArrayOf(0, 1, 2, 2, 3, 0), format)
         }
+
+        fun skinnedQuad(half: Float): MeshGeometry {
+            val corners = listOf(-half to -half, half to -half, half to half, -half to half)
+            val j0 = Float.fromBits(0)
+            val vertices = corners.flatMap { (x, z) ->
+                val u = (x + half) / (2 * half)
+                val v = (z + half) / (2 * half)
+                listOf(x, 0f, z, 0f, 1f, 0f, 1f, 1f, 1f, u, v, j0, j0, j0, j0, 1f, 0f, 0f, 0f)
+            }
+            return MeshGeometry(vertices.toFloatArray(), intArrayOf(0, 1, 2, 2, 3, 0), VertexFormat.PositionNormalColorUvSkin)
+        }
+
+        fun uvQuad(half: Float): MeshGeometry {
+            val corners = listOf(-half to -half, half to -half, half to half, -half to half)
+            val vertices = corners.flatMap { (x, z) ->
+                listOf(x, 0f, z, (x + half) / (2 * half), (z + half) / (2 * half))
+            }
+            return MeshGeometry(vertices.toFloatArray(), intArrayOf(0, 1, 2, 2, 3, 0), VertexFormat.PositionUv)
+        }
+
+        fun uvColorQuad(half: Float): MeshGeometry {
+            val corners = listOf(-half to -half, half to -half, half to half, -half to half)
+            val vertices = corners.flatMap { (x, z) ->
+                listOf(x, 0f, z, (x + half) / (2 * half), (z + half) / (2 * half), 1f, 1f, 1f, 1f)
+            }
+            return MeshGeometry(vertices.toFloatArray(), intArrayOf(0, 1, 2, 2, 3, 0), VertexFormat.PositionUvColor)
+        }
+
+        fun rgbaUvQuad(half: Float): MeshGeometry {
+            val corners = listOf(-half to -half, half to -half, half to half, -half to half)
+            val vertices = corners.flatMap { (x, z) ->
+                listOf(x, 0f, z, 1f, 1f, 1f, 1f, (x + half) / (2 * half), (z + half) / (2 * half))
+            }
+            return MeshGeometry(vertices.toFloatArray(), intArrayOf(0, 1, 2, 2, 3, 0), VertexFormat.PositionRgbaUv)
+        }
+
+        fun domeHeightmap(samples: Int = 17): Heightmap = Heightmap(
+            samples = FloatArray(samples * samples) { index ->
+                val x = (index % samples - samples / 2f) / (samples / 2f)
+                val z = (index / samples - samples / 2f) / (samples / 2f)
+                (1f - (x * x + z * z)).coerceAtLeast(0f)
+            },
+            width = samples,
+            depth = samples,
+            scale = Vec3f(2f, 6f, 2f),
+        )
     }
 }

@@ -6,13 +6,18 @@
 package com.awakekt.awake.render.passes.uniforms
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
+import com.awakekt.awake.render.renderer.SkinnedDrawLayout
+import com.awakekt.awake.render.renderer.SkinnedFields
+import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 
@@ -57,8 +62,27 @@ class FrameUniformBlock {
             .put(UniformFields.CameraForward, cameraForward, cascades.countAndFade)
             .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
             .putDebugView(debugView, cameraForward)
-            .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
+            .put(UniformFields.Exposure, exposure, debugView.layer.toFloat(), 0f, 0f)
             .build()
+    }
+
+    /** Packs [input]'s frame block, supplying default forward/light values for pass-only or offscreen inputs. */
+    fun pack(input: GpuPassInput): FloatArray {
+        val environment = input.environment
+        val cascades = input.shadowCascadeData ?: input.prePasses
+            .takeIf { it.isNotEmpty() }
+            ?.let { subs -> GpuShadowCascadeData(subs.map { it.viewProjection }, FloatArray(subs.size) { Float.MAX_VALUE }) }
+        return pack(
+            viewProjection = input.viewProjection,
+            cameraEye = input.cameraEye,
+            cameraForward = input.cameraForward ?: DEFAULT_FORWARD,
+            lightPayload = if (input.passUniforms.isEmpty()) DEFAULT_LIGHT_PAYLOAD else input.passUniforms,
+            shadowCascades = cascades,
+            fogColor = environment.fogColor,
+            fogDensity = environment.fogDensity,
+            debugView = environment.debugView,
+            exposure = environment.exposure,
+        )
     }
 
     /** As [GpuShadowCascadeData.matrixFloats] and `depthScaleFloats` fill them, into kept arrays. */
@@ -106,65 +130,167 @@ private fun UniformWriter.putLights(lightPayload: FloatArray): UniformWriter {
 
 /**
  * This draw's own block beside the frame's, for a pipeline whose draw block holds
- * [drawBlockFloats]: [MaterialUniformLayouts.PbrTexturedDraw], or [MaterialUniformLayouts.LitShadowDraw]
- * or its leading fields.
+ * [drawBlockFloats].
  *
  * Chosen by what the pipeline's shader declares, not by the material's size: the block is the
  * shader's. Nothing here reads the camera, the light or the cascades, so a draw that holds still
  * packs the same block while they move. An [instanced] draw's copies carry their own transforms,
  * so its block's model is the identity.
  */
-fun RenderDrawCommand.drawBlockFloats(drawBlockFloats: Int, alphaToCoverageEnabled: Boolean, instanced: Boolean = false): FloatArray {
-    val transform = if (instanced) IDENTITY else model
+fun RenderDrawCommand.drawBlockFloats(drawBlockFloats: Int, alphaToCoverageEnabled: Boolean, instanced: Boolean = false): FloatArray =
+    drawBlockFloats(
+        drawBlockFloats = drawBlockFloats,
+        alphaToCoverageEnabled = alphaToCoverageEnabled,
+        instancedKind = if (instanced) InstancedDrawKind.Plain else null,
+    )
+
+/**
+ * This draw's own block beside the frame's, disambiguating particle and skinned instanced batches
+ * via [instancedKind].
+ */
+fun RenderDrawCommand.drawBlockFloats(
+    drawBlockFloats: Int,
+    alphaToCoverageEnabled: Boolean,
+    instancedKind: InstancedDrawKind?,
+): FloatArray {
+    if (instancedKind == InstancedDrawKind.Particle && drawBlockFloats in 1..ParticleDrawLayout.total) {
+        return UniformWriter(ParticleDrawLayout)
+            .put(extraUniformFloats, *ParticleDrawLayout.fields)
+            .build()
+    }
     val fade = if (fadeOpacity < 1f) 1f - fadeOpacity.coerceIn(0f, 1f) else 0f
-    return when (drawBlockFloats) {
-        MaterialUniformLayouts.PbrTexturedDraw.total -> UniformWriter(MaterialUniformLayouts.PbrTexturedDraw)
-            .put(transform.data, UniformFields.Model)
-            .put(UniformFields.VertexAnimation, 0f, 0f, 0f, 0f)
-            .put(
-                texturedMaterialPayload(extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), blendsAdditively, timeSeconds),
-                UniformFields.PbrFactors,
-                UniformFields.BaseColorFactor,
-                UniformFields.EmissiveFactor,
-                UniformFields.TextureFrames,
-                UniformFields.TextureScroll,
-            )
-            .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
-            .build()
+    return (if (instancedKind == null) singlePlanDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, fade) else null)
+        ?: sharedLayoutDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, instancedKind, fade)
+}
+
+private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
+    drawBlockFloats: Int,
+    alphaToCoverageEnabled: Boolean,
+    instancedKind: InstancedDrawKind?,
+    fade: Float,
+): FloatArray {
+    val transform = if (instancedKind != null) IDENTITY else model
+    return when {
+        drawBlockFloats == MaterialUniformLayouts.PbrTexturedDraw.total ->
+            UniformWriter(MaterialUniformLayouts.PbrTexturedDraw)
+                .put(transform.data, UniformFields.Model)
+                .put(UniformFields.VertexAnimation, 0f, 0f, 0f, 0f)
+                .put(
+                    texturedMaterialPayload(extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), blendsAdditively, timeSeconds),
+                    UniformFields.PbrFactors,
+                    UniformFields.BaseColorFactor,
+                    UniformFields.EmissiveFactor,
+                    UniformFields.TextureFrames,
+                    UniformFields.TextureScroll,
+                )
+                .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+                .build()
+        drawBlockFloats == MaterialUniformLayouts.LitDraw.total ->
+            UniformWriter(MaterialUniformLayouts.LitDraw)
+                .put(transform.data, UniformFields.Model)
+                .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
+                .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+                .build()
         // A shader that declares only the leading fields, as a depth shader does, reads them from this one.
-        in 1..MaterialUniformLayouts.LitShadowDraw.total -> UniformWriter(MaterialUniformLayouts.LitShadowDraw)
-            .put(transform.data, UniformFields.Model)
-            .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
-            .put(pbrMaterialFloats(extraUniformFloats), UniformFields.Material)
-            .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
-            .build()
+        drawBlockFloats in 1..MaterialUniformLayouts.LitShadowDraw.total ->
+            UniformWriter(MaterialUniformLayouts.LitShadowDraw)
+                .put(transform.data, UniformFields.Model)
+                .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
+                .put(pbrMaterialFloats(extraUniformFloats), UniformFields.Material)
+                .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+                .build()
         else -> error("No draw block holds $drawBlockFloats floats beside the frame block.")
     }
 }
 
+private fun RenderDrawCommand.singlePlanDrawBlockFloats(
+    drawBlockFloats: Int,
+    alphaToCoverageEnabled: Boolean,
+    fade: Float,
+): FloatArray? = when (drawUniformPlan(mesh.format, materialUniformFloatCount = drawBlockFloats, hasShadowCascades = false)) {
+    DrawUniformPlan.Skinned -> if (drawBlockFloats in 1..SkinnedDrawLayout.total) {
+        skinnedDrawBlockFloats(sceneCoverageCutoff(alphaToCoverageEnabled), fade)
+    } else {
+        null
+    }
+    DrawUniformPlan.Sprite -> if (drawBlockFloats == SpriteDrawLayout.total) {
+        UniformWriter(SpriteDrawLayout).put(model.data, UniformFields.Model).put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint).build()
+    } else {
+        null
+    }
+    DrawUniformPlan.WorldText -> if (drawBlockFloats == WorldTextDrawLayout.total) {
+        UniformWriter(WorldTextDrawLayout).put(model.data, UniformFields.Model).put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field).build()
+    } else {
+        null
+    }
+    DrawUniformPlan.Trail -> if (drawBlockFloats == TrailDrawLayout.total) {
+        UniformWriter(TrailDrawLayout).put(model.data, UniformFields.Model).put(extraUniformFloats, TrailFields.Tint).build()
+    } else {
+        null
+    }
+    else -> null
+}
+
+private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: Float): FloatArray {
+    val writer = UniformWriter(SkinnedDrawLayout)
+    val unlit = if (extraUniformFloats.size == SkinnedMaterialLayout.total) {
+        writer
+            .put(extraUniformFloats, 0, SkinnedFields.JointPalette)
+            .put(model.data, UniformFields.Model)
+            .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
+            .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
+        SkinnedMaterialLayout.readVec4(extraUniformFloats, UniformFields.PbrFactors).w
+    } else {
+        writer
+            .putPadded(SkinnedFields.JointPalette, extraUniformFloats)
+            .put(model.data, UniformFields.Model)
+            .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
+            .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
+        0f
+    }
+    return writer
+        .put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, unlit)
+        .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
+        .build()
+}
+
 /**
  * The draw block this draw's plan implies, for a pipeline that does not carry what its shader
- * binds: [MaterialUniformLayouts.LitShadowDraw]'s or `PbrTexturedDraw`'s floats, or 0 when the
- * plan's shader keeps one whole block. A pipeline that knows its shader's bindings goes by those.
- * [instancedKind] is null for a single draw.
+ * binds, or 0 when the shader keeps one whole block. A pipeline that knows its shader's bindings
+ * goes by those. [instancedKind] is null for a single draw.
  */
 fun RenderDrawCommand.planDrawBlockFloats(
     materialUniformFloatCount: Int,
     instancedKind: InstancedDrawKind? = null,
     hasShadowCascades: Boolean = false,
 ): Int {
-    if (instancedKind == InstancedDrawKind.Particle) return 0
+    if (instancedKind == InstancedDrawKind.Particle) return ParticleDrawLayout.total
     val plan = drawUniformPlan(mesh.format, materialUniformFloatCount, hasShadowCascades)
     return when {
         plan == DrawUniformPlan.TexturedPbr && instancedKind != InstancedDrawKind.Skinned -> MaterialUniformLayouts.PbrTexturedDraw.total
         instancedKind != null ->
-            if (hasShadowCascades || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) MaterialUniformLayouts.LitShadowDraw.total else 0
-        plan == DrawUniformPlan.LitShadow -> MaterialUniformLayouts.LitShadowDraw.total
-        else -> 0
+            if (hasShadowCascades || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) {
+                MaterialUniformLayouts.LitShadowDraw.total
+            } else {
+                MaterialUniformLayouts.InstancedDraw.total
+            }
+        else -> plan.singleDrawBlockFloats(mesh.format)
     }
 }
 
+private fun DrawUniformPlan.singleDrawBlockFloats(format: VertexFormat): Int = when (this) {
+    DrawUniformPlan.Skinned -> SkinnedDrawLayout.total
+    DrawUniformPlan.Sprite -> SpriteDrawLayout.total
+    DrawUniformPlan.WorldText -> WorldTextDrawLayout.total
+    DrawUniformPlan.Trail -> TrailDrawLayout.total
+    DrawUniformPlan.LitShadow -> MaterialUniformLayouts.LitShadowDraw.total
+    DrawUniformPlan.Lit -> if (format == VertexFormat.PositionNormalColor) MaterialUniformLayouts.LitDraw.total else 0
+    DrawUniformPlan.TexturedPbr -> MaterialUniformLayouts.PbrTexturedDraw.total
+}
+
 private val IDENTITY = Mat4()
+private val DEFAULT_FORWARD = Vec3f(0f, 0f, -1f)
+private val DEFAULT_LIGHT_PAYLOAD = sceneLightFloats(DEFAULT_SCENE_LIGHT)
 private val SUN_FLOATS = UniformFields.LightDirection.floats + UniformFields.LightColor.floats
 private val POINTS_AT = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.PointLightPositions)
 private val NO_LIGHTS = FloatArray(0)

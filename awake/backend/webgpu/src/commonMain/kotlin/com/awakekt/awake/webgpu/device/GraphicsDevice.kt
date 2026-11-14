@@ -31,6 +31,9 @@ import io.ygdrasil.webgpu.WGPUContext
  * fields need.
  */
 class GraphicsDevice {
+    /** Content-feature uniform blocks written to GPU buffers so far. For tests and probes. */
+    internal var contentUniformWrites = 0L
+
     /** Vulkan-parity placeholder, always 0: WebGPU has no instance object to hold. */
     var instance: Long = 0
 

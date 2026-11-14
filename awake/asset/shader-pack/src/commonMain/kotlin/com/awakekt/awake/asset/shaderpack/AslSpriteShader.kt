@@ -23,15 +23,17 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
-import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.SpriteDrawLayout
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
 /** Unlit straight-alpha atlas quad: authored RGBA passes through without scene lighting. */
 val SpriteShader = shader("sprite") {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
-    val u = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(SpriteUniformLayout)
-    val matrix = u.value("mvp")
+    val u = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(SpriteDrawLayout)
+    val frame = frameUniforms()
+    val viewProjection = frame.value("viewProjection")
+    val model = u.value("model")
     val atlas = u.value("uvTransform")
     val tint = u.value("tint")
     val image by texture2d(group = group, binding = 1)
@@ -40,7 +42,7 @@ val SpriteShader = shader("sprite") {
     val uv by out.varying(GpuDataShape.Vec2, location = 0)
     vertex {
         val ins = inputsFrom(VertexFormat.PositionUv)
-        out.position set (matrix * vec4(ins.input(VertexSemantic.Position), 1f.lit))
+        out.position set (viewProjection * (model * vec4(ins.input(VertexSemantic.Position), 1f.lit)))
         uv set (ins.input(VertexSemantic.Uv) * vec2(atlas.x, atlas.y) + vec2(atlas.z, atlas.w))
     }
     fragment {

@@ -11,6 +11,7 @@ import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.renderer.sameBitsAs
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
@@ -26,7 +27,7 @@ import io.ygdrasil.webgpu.GPUBufferUsage
  * the pipeline's own group is. The textures are the caller's; [destroy] frees the rest.
  */
 internal class WebGpuContentGroup(
-    graphicsDevice: GraphicsDevice,
+    private val graphicsDevice: GraphicsDevice,
     private val pipeline: RenderPipeline,
     private val layout: UniformLayout,
     private val textures: Map<Int, Texture>,
@@ -40,6 +41,7 @@ internal class WebGpuContentGroup(
         ),
     )
     private var bindGroup: WebGpuBindGroupHandle? = null
+    private var lastWritten: FloatArray? = null
 
     /** The pipeline [bindGroup] was built for; a swap gives the wrapper a new one. */
     private var builtFor = NOT_BUILT
@@ -74,6 +76,10 @@ internal class WebGpuContentGroup(
 
     override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
         val floats = UniformWriter(layout).apply(fill).build()
+        val prev = lastWritten
+        if (prev != null && prev.sameBitsAs(floats)) return
+        lastWritten = if (prev != null && prev.size == floats.size) floats.copyInto(prev) else floats.copyOf()
+        graphicsDevice.contentUniformWrites += 1
         device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 

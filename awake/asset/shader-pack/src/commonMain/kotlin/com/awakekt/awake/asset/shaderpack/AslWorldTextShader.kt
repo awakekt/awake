@@ -38,7 +38,7 @@ import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
-import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
+import com.awakekt.awake.render.passes.uniforms.WorldTextDrawLayout
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
@@ -65,8 +65,10 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  */
 val WorldTextShader = shader("world_text") {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
-    val u = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(WorldTextUniformLayout)
-    val matrix = u.value("mvp")
+    val u = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(WorldTextDrawLayout)
+    val frame = frameUniforms()
+    val viewProjection = frame.value("viewProjection")
+    val model = u.value("model")
     val tint = u.value("tint")
     val field = u.value("field")
     val atlasImage by texture2d(group = group, binding = 1)
@@ -76,7 +78,7 @@ val WorldTextShader = shader("world_text") {
     val color by out.varying(GpuDataShape.Vec4, location = 1)
     vertex {
         val ins = inputsFrom(VertexFormat.PositionUvColor)
-        out.position set (matrix * vec4(ins.input(VertexSemantic.Position), 1f.lit))
+        out.position set (viewProjection * (model * vec4(ins.input(VertexSemantic.Position), 1f.lit)))
         uv set ins.input(VertexSemantic.Uv)
         color set ins.input(VertexSemantic.Color)
     }

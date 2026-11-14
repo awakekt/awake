@@ -37,7 +37,7 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
-import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
+import com.awakekt.awake.render.passes.uniforms.ParticleDrawLayout
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
@@ -64,8 +64,9 @@ private fun particle(): AslShaderDefinition = shader("particle") {
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
         binding = 0,
     )
-    val handles = u.fieldsFrom(ParticleUniformLayout)
-    val camera = handles.value("mvp")
+    val handles = u.fieldsFrom(ParticleDrawLayout)
+    val frame = frameUniforms()
+    val camera = frame.value("viewProjection")
     // World-space quad axes, CPU-computed per draw: the camera's right/up for a billboard, or the
     // emitter's plane for a flat emitter. Not derivable from the view-projection without an inverse,
     // and every instance of a draw needs the same pair.

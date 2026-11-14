@@ -33,6 +33,7 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.pipeline.ShaderStage
@@ -92,13 +93,14 @@ class TerrainShaderCompileTest {
         )
     }
 
-    /** One block for every ring -- see `TerrainUniformLayout`'s own note on why. */
+    /** One draw block for every ring beside the shared frame block -- see `TerrainUniformLayout`'s own note. */
     @Test
-    fun theUniformBlockIsTheOnlyBufferBinding() {
+    fun theUniformBlocksAreTheDrawAndFrameBindings() {
         val bindings = assertNotNull(terrain.bindingsForGroup(0))
 
-        assertEquals(listOf(0, 1, 2), bindings.entries.map { it.binding })
+        assertEquals(listOf(0, 1, 2, FRAME_UNIFORM_BINDING), bindings.entries.map { it.binding })
         assertEquals(ResourceKind.UniformBuffer, bindings.at(0)?.kind)
+        assertEquals(ResourceKind.UniformBuffer, bindings.at(FRAME_UNIFORM_BINDING)?.kind)
     }
 
     /**
@@ -134,7 +136,7 @@ class TerrainShaderCompileTest {
     fun aSurfaceShaderDeclaresItsBindingsAfterTheStages() {
         val bindings = assertNotNull(surfaceProbe.bindingsForGroup(0))
 
-        assertEquals(listOf(0, 1, 2, 3, 4), bindings.entries.map { it.binding })
+        assertEquals(listOf(0, 1, 2, 3, 4, FRAME_UNIFORM_BINDING), bindings.entries.map { it.binding })
         val layers = assertNotNull(bindings.at(TERRAIN_SURFACE_FIRST_BINDING))
         assertEquals(ResourceKind.SampledTexture, layers.kind)
         assertTrue(layers.arrayed)

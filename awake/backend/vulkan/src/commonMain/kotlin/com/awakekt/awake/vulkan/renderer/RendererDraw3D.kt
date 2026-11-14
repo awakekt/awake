@@ -290,7 +290,7 @@ private fun Material.writeDrawBlock(
     val binding = stageUniformBuffer(
         frameIndex,
         slotIndex,
-        cmd.drawBlockFloats(split, coverage, instanced = kind != null),
+        cmd.drawBlockFloats(split, coverage, instancedKind = kind),
         dirtyBlocks,
         frameBlock,
     )

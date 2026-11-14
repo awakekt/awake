@@ -26,10 +26,7 @@ import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
-import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
-import com.awakekt.awake.render.passes.uniforms.putDebugView
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.texture.TextureAsset
 
 /** Grey the heightfield is shaded with. Terrain colour is authored world policy (D28); this is
@@ -91,13 +88,13 @@ fun terrainContentFeature(
             name = "terrain",
             spec = shaders.stagesFor(backend).spec(
                 vertexFormat = VertexFormat.PositionNormalColorUv,
-                uniforms = TerrainUniformLayout.Layout,
+                uniforms = TerrainUniformLayout.Draw,
             ),
             // The rings themselves cast, whatever surface shades them: the depth stage reads only
             // the clipmap stage's own bindings, which every terrain surface shares.
             depth = PackShaderSets.TerrainShadowDepth.stagesFor(backend).spec(
                 vertexFormat = VertexFormat.PositionNormalColorUv,
-                uniforms = TerrainUniformLayout.Layout,
+                uniforms = TerrainUniformLayout.Draw,
             ),
             textures = surfaceTextures + (HEIGHTMAP_BINDING to encoded.texture),
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
@@ -261,11 +258,6 @@ class TerrainRenderFeature(
     private val ringParams = FloatArray(TerrainUniformLayout.RingParams.floats)
     private val terrainParams = FloatArray(TerrainUniformLayout.TerrainParams.floats)
 
-    /** Written on a frame with no shadow pass: no cascades, and a count of 0 in the forward's `w`. */
-    private val noCascadeMatrices = FloatArray(UniformFields.CascadeViewProjections.floats)
-    private val noCascadeScales = FloatArray(UniformFields.CascadeDepthScales.floats)
-
-    @Suppress("LongMethod", "CyclomaticComplexMethod") // One layout-ordered write shared by lit and depth.
     override fun recordCommands(context: RenderFrameContext) {
         // Before the tracker updates: a hidden terrain should cost nothing, and its rings have no
         // meaning to keep current while nothing reads them.
@@ -295,35 +287,12 @@ class TerrainRenderFeature(
             z = BASE_SHADE,
             w = heightBias - (terrain?.originY?.toFloat() ?: 0f),
         )
-        val pass = context.passInput
-        val cascades = context.shadowCascades
-        val forward = pass?.cameraForward
         // Written in layout order -- UniformWriter checks each field against the layout's next
         // slot, so a reordering here is an error rather than a wrongly-shaped buffer.
         uniforms.write(context.frameIndex) {
-            put(TerrainUniformLayout.ViewProjection, context.viewProjection)
-            // The scene's own light when the pass carries it: the cascades are fitted to that
-            // light, so shading and shadows have to agree on where the sun is.
-            val light = pass?.passUniforms
-            if (light != null && light.size >= LIGHT_COLOR + 4) {
-                val ambient = light[LIGHT_COLOR + 3].takeIf { it > 0f } ?: AMBIENT
-                put(TerrainUniformLayout.SunDirection, light[LIGHT_DIRECTION], light[LIGHT_DIRECTION + 1], light[LIGHT_DIRECTION + 2], ambient)
-            } else {
-                put(TerrainUniformLayout.SunDirection, context.light.direction, context.light.ambient ?: AMBIENT)
-            }
             put(terrainParams, TerrainUniformLayout.TerrainParams)
             put(sampling, TerrainUniformLayout.TerrainSampling)
             put(ringParams, TerrainUniformLayout.RingParams)
-            put(cascades?.matrixFloats() ?: noCascadeMatrices, UniformFields.CascadeViewProjections)
-            put(cascades?.depthScaleFloats() ?: noCascadeScales, UniformFields.CascadeDepthScales)
-            put(UniformFields.CameraPosition, context.cameraEye)
-            if (forward != null && cascades != null) {
-                put(UniformFields.CameraForward, forward, cascades.countAndFade)
-            } else {
-                put(UniformFields.CameraForward, 0f, 0f, -1f, 0f)
-            }
-            putDebugView(context.environment.debugView, forward ?: NO_FORWARD)
-            put(UniformFields.Exposure, context.environment.exposure, 0f, 0f, 0f)
             put(TerrainUniformLayout.TerrainOrigin, placed, 0f)
             if (terrain != null) {
                 val layout = terrain.layout
@@ -343,13 +312,7 @@ class TerrainRenderFeature(
     override fun destroy() = Unit
 
     private companion object {
+        @Suppress("UnusedPrivateProperty") // Kept for binary compatibility on the outer class.
         const val AMBIENT = 0.35f
-        val NO_FORWARD = Vec3f(0f, 0f, -1f)
-
-        /** Where the directional light's direction starts in a pass's packed scene light. */
-        val LIGHT_DIRECTION = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightDirection)
-
-        /** `w` is the scene's ambient, 0 when it keeps [AMBIENT]. */
-        val LIGHT_COLOR = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightColor)
     }
 }
