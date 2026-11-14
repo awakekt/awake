@@ -15,6 +15,7 @@ import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.SceneDrawStats
 import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.passes.ScenePassScratch
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -42,6 +43,7 @@ internal class SceneRenderPlanner3D(
     private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features)
     private val drawCalls = ArrayList<RenderDrawCommand>()
     private val shadowCasters = ShadowCasterVolume()
+    private val passScratch = ScenePassScratch()
 
     val lastFrustumCulledCount: Int get() = geometryFeature.lastFrustumCulledCount
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
@@ -79,10 +81,10 @@ internal class SceneRenderPlanner3D(
         val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
         shadowCasters.set(contributions.light, contributions.environment)
         val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds, aspect, shadowCasters)
-        drawCalls += geometryFrame.beforeParticles
-        drawCalls += contributions.particleDraws
-        drawCalls += geometryFeature.finish(world, geometryFrame, camera)
-        drawCalls += contributions.authoredDraws
+        drawCalls.append(geometryFrame.beforeParticles)
+        drawCalls.append(contributions.particleDraws)
+        drawCalls.append(geometryFeature.finish(world, geometryFrame, camera))
+        drawCalls.append(contributions.authoredDraws)
 
         val postProcessing = cameraEntity?.let { world.get<com.awakekt.awake.scene.rendering.postprocessing.PostProcessing>(it) }
         val hasPostEffects = postProcessing != null && postProcessing.enabled && postProcessing.effects.isNotEmpty()
@@ -116,6 +118,7 @@ internal class SceneRenderPlanner3D(
             maskLayers = world.outlineMaskLayers(),
             postPassChain = postPassChain,
             drawStats = drawStats,
+            scratch = passScratch,
         )
         return PlannedFrame(
             passInput = passInput,
@@ -136,6 +139,11 @@ internal class SceneRenderPlanner3D(
         /** Draws the backend's preparer rejected, counted after instancing folded them. */
         val unresolved: Int,
     )
+}
+
+/** Adds every one of [draws] by index: `addAll` copies its argument into a new array first. */
+private fun ArrayList<RenderDrawCommand>.append(draws: List<RenderDrawCommand>) {
+    for (index in draws.indices) add(draws[index])
 }
 
 /**

@@ -85,9 +85,34 @@ object ScenePassCompiler {
         maskLayers: List<FloatArray>,
         postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain,
         drawStats: SceneDrawStats?,
+    ): GpuPassInput = compile(
+        lens, drawCalls, light, environment, clipSpace, aspect, viewport, drawPreparer, maskLayers, postPassChain, drawStats,
+        ScenePassScratch(),
+    )
+
+    /**
+     * [compile], folding instances in [scratch]'s memory, which a caller keeps from frame to frame
+     * so a frame like the last one allocates nothing to fold. One scratch serves one caller.
+     */
+    @Suppress("LongParameterList") // The overload above's parameters, and the scratch.
+    fun compile(
+        lens: Lens,
+        drawCalls: List<RenderDrawCommand>,
+        light: SceneLight?,
+        environment: EnvironmentUniforms,
+        clipSpace: ClipSpace,
+        aspect: Float,
+        viewport: RenderViewport?,
+        drawPreparer: GpuDrawPreparer?,
+        maskLayers: List<FloatArray>,
+        postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain,
+        drawStats: SceneDrawStats?,
+        scratch: ScenePassScratch,
     ): GpuPassInput {
         drawStats?.reset()
-        return compileFrame(lens, drawCalls, light, environment, clipSpace, aspect, viewport, drawPreparer, maskLayers, postPassChain, drawStats)
+        return compileFrame(
+            lens, drawCalls, light, environment, clipSpace, aspect, viewport, drawPreparer, maskLayers, postPassChain, drawStats, scratch,
+        )
     }
 
     @Suppress("LongParameterList") // [compile]'s.
@@ -103,6 +128,7 @@ object ScenePassCompiler {
         maskLayers: List<FloatArray>,
         postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain,
         drawStats: SceneDrawStats?,
+        scratch: ScenePassScratch,
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
         val cameraForward = lens.forwardDirection()
@@ -133,7 +159,7 @@ object ScenePassCompiler {
                 shadowViewProjections = shadowViewProjections,
                 shadowCascadeData = shadowCascadeData,
             )
-            val requests = foldInstances(drawCalls, preparer, drawStats)
+            val requests = foldInstances(drawCalls, preparer, drawStats, scratch.batcher)
             val visible = ArrayList<Caster>(requests.size)
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
@@ -175,10 +201,15 @@ object ScenePassCompiler {
  * [drawCalls] with their copies folded into instanced draws as [preparer] can draw them, after
  * counting into [stats], when there are any, what folds and why the rest does not.
  */
-private fun foldInstances(drawCalls: List<RenderDrawCommand>, preparer: GpuDrawPreparer, stats: SceneDrawStats?): List<RenderDrawCommand> {
-    val canInstance = { format: VertexFormat, cullMode: CullMode -> preparer.canInstance(format, cullMode) }
+private fun foldInstances(
+    drawCalls: List<RenderDrawCommand>,
+    preparer: GpuDrawPreparer,
+    stats: SceneDrawStats?,
+    batcher: InstanceBatcher,
+): List<RenderDrawCommand> {
+    val canInstance = batcher.canInstanceWith(preparer)
     if (stats != null) diagnoseInstanceFolds(drawCalls, canInstance, stats)
-    return batchInstances(drawCalls, canInstance)
+    return batcher.batch(drawCalls, canInstance)
 }
 
 /** Counts the draws each pass of a compiled frame receives. */
