@@ -20,6 +20,22 @@ constructor takes nullable injected pipelines for optional content
 always-available draw primitives. Full convention:
 [docs/reference/render-extensibility.md](../../../docs/reference/render-extensibility.md).
 
+## Render bundles
+
+The scene pass's opaque draws and each shadow cascade's casters are kept as render bundles and
+replayed with one `executeBundles` a pass; a frame records again only the cells whose draws changed,
+and a change of instance counts alone rewrites indirect arguments (#1555).
+
+**If a frame draws differently on some browser or GPU, turn this off first:**
+
+```kotlin
+(renderer as com.awakekt.awake.webgpu.renderer.Renderer).keepsRenderBundles = false
+```
+
+Off records every draw directly each frame, as before, and draws the same pixels: a desktop test
+and a browser test (`RenderBundleBrowserTest`, at one and four samples) compare both settings frame
+by frame. Report the difference with the browser and GPU, so it can be fixed with bundles on.
+
 ## Device loss
 
 When the browser reports the `GPUDevice` lost (a GPU process crash, a driver reset, memory

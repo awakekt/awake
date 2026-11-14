@@ -43,6 +43,9 @@ class SharedOpaqueRenderFeature {
         grouped: Map<out PipelineHandle, List<PreparedDraw>>,
         lines: PreparedDraw? = null,
     ) {
+        // The groups are the same draws frame after frame, give or take instance counts: a backend
+        // may keep them recorded (WebGPU's render bundles). Lines are an overlay and stay direct.
+        recorder.beginRetained(OPAQUE_GROUPS)
         var primaryBound = false
         grouped.forEach { (pipeline, group) ->
             if (pipeline === primaryPipeline && group.isNotEmpty()) {
@@ -59,6 +62,7 @@ class SharedOpaqueRenderFeature {
             recorder.bindPipeline(pipeline)
             recordDraws(recorder, group)
         }
+        recorder.endRetained()
 
         recordLines(recorder, lines)
     }
@@ -161,5 +165,8 @@ class SharedOpaqueRenderFeature {
         const val INSTANCE_MODEL_BINDING = 1
         const val INSTANCE_COLOR_BINDING = 2
         const val INSTANCE_FRAME_BINDING = 3
+
+        /** [recordCommands]' retained region: the opaque pipeline groups. */
+        private const val OPAQUE_GROUPS = "opaque-groups"
     }
 }

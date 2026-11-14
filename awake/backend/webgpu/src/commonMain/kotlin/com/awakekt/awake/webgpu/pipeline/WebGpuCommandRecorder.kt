@@ -13,6 +13,9 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.mesh.meshIndexFormat
+import com.awakekt.awake.webgpu.pipeline.bundles.RetainedBundle
+import com.awakekt.awake.webgpu.pipeline.bundles.RetainedCells
+import com.awakekt.awake.webgpu.pipeline.bundles.RetainedPassBundles
 import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPURenderPassEncoder
@@ -31,6 +34,8 @@ internal class WebGpuCommandRecorder(
     private val encoder: GPURenderPassEncoder,
     /** Where every draw recorded here is counted; the owning `Renderer`'s. */
     private val stats: RenderStatsCounter?,
+    /** This pass's retained bundles, or null for a pass that records every draw directly. */
+    private val retained: RetainedPassBundles? = null,
 ) : CommandRecorder {
 
     private var bindingLayout: BindingLayout = BindingLayout.Standard
@@ -38,11 +43,30 @@ internal class WebGpuCommandRecorder(
 
     private val bound = PassBindings()
 
+    /** The open retained region: binds and draws are captured into its cells, not sent. */
+    private var region: RetainedCells<RetainedBundle>? = null
+
+    /** Captures what follows into [key]'s cells, on a pass that keeps bundles; elsewhere a no-op. */
+    override fun beginRetained(key: Any) {
+        region = retained?.region(key)?.also { it.begin() }
+    }
+
+    /** Executes the region's bundles in one call. A bundle leaves nothing bound, so the pass forgets its binds. */
+    override fun endRetained() {
+        val open = region ?: return
+        region = null
+        val bundles = checkNotNull(retained).settle(open)
+        if (bundles.isNotEmpty()) encoder.executeBundles(bundles)
+        bound.forget()
+        currentPipeline = null
+    }
+
     override fun bindPipeline(pipeline: PipelineHandle) {
         val webGpuPipeline = pipeline as WebGpuPipelineHandle
-        encoder.setPipeline(webGpuPipeline.pipeline)
         bindingLayout = webGpuPipeline.bindingLayout
         currentPipeline = webGpuPipeline
+        region?.let { return it.bindPipeline(webGpuPipeline.pipeline) }
+        encoder.setPipeline(webGpuPipeline.pipeline)
         bound.forget()
     }
 
@@ -52,17 +76,20 @@ internal class WebGpuCommandRecorder(
         val group = bindingLayout.slot(semantic)
         if (currentPipeline?.hasBindingGroup(group) != true) return
         val bindGroup = (binding as WebGpuBindGroupHandle).bindGroup
+        region?.let { return it.bindGroup(group, bindGroup) }
         if (bound.bindGroup(group, bindGroup)) encoder.bindGroup(group.toUInt(), bindGroup)
     }
 
     override fun bindVertexBuffer(binding: Int, buffer: RenderBufferHandle) {
         val gpuBuffer = (buffer as WebGpuBufferHandle).buffer
+        region?.let { return it.bindVertexBuffer(binding, gpuBuffer) }
         if (bound.bindVertexBuffer(binding, gpuBuffer)) encoder.setVertexBuffer(binding.toUInt(), gpuBuffer)
     }
 
     /** Every index buffer here is bound whole in [meshIndexFormat], so the buffer alone says whether it is bound. */
     override fun bindIndexBuffer(buffer: RenderBufferHandle) {
         val gpuBuffer = (buffer as WebGpuBufferHandle).buffer
+        region?.let { return it.bindIndexBuffer(gpuBuffer) }
         if (bound.bindIndexBuffer(gpuBuffer)) encoder.setIndexBuffer(gpuBuffer, meshIndexFormat)
     }
 
@@ -71,12 +98,14 @@ internal class WebGpuCommandRecorder(
     }
 
     override fun draw(vertexCount: Int, instanceCount: Int) {
-        encoder.draw(vertexCount.toUInt(), instanceCount.toUInt())
+        val open = region
+        if (open != null) open.draw(indexed = false, vertexCount, instanceCount) else encoder.draw(vertexCount.toUInt(), instanceCount.toUInt())
         stats?.recordDraw(vertexCount, instanceCount, currentPipeline?.drawsTriangles ?: true)
     }
 
     override fun drawIndexed(indexCount: Int, instanceCount: Int) {
-        encoder.drawIndexed(indexCount.toUInt(), instanceCount.toUInt())
+        val open = region
+        if (open != null) open.draw(indexed = true, indexCount, instanceCount) else encoder.drawIndexed(indexCount.toUInt(), instanceCount.toUInt())
         stats?.recordDraw(indexCount, instanceCount, currentPipeline?.drawsTriangles ?: true)
     }
 }

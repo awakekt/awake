@@ -183,6 +183,27 @@ class Renderer internal constructor(
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
 
+    /** Each pass's retained render bundles: the opaque scene and every shadow cascade. */
+    internal val retainedBundles = com.awakekt.awake.webgpu.pipeline.bundles.RetainedBundleStore(graphicsDevice.wgpuContext.device)
+
+    /**
+     * Whether the scene pass's opaque draws and each shadow cascade's casters are kept as render
+     * bundles, replayed with one `executeBundles` a pass, and recorded again only where they
+     * changed (#1555). On by default. Off records every draw directly each frame, as before: the
+     * first thing to turn off if a frame draws differently on some browser or GPU. Turning it off
+     * releases every kept bundle.
+     */
+    var keepsRenderBundles: Boolean = true
+        set(value) {
+            field = value
+            if (!value) retainedBundles.destroy()
+            depthPrePass?.retainedBundles = retainedBundles.takeIf { value }
+        }
+
+    /** This pass's kept bundles, or null when [keepsRenderBundles] is off. */
+    internal fun retainedPass(key: Any, layout: com.awakekt.awake.webgpu.pipeline.bundles.BundleLayout) =
+        if (keepsRenderBundles) retainedBundles.pass(key, layout) else null
+
     /** The latest main-pass colour, valid until the host returns this surface texture. */
     internal var presentedColor: PresentedColor? = null
     internal val gpuFrameTimer = backgroundScope?.let { GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device, it) }
@@ -267,6 +288,7 @@ class Renderer internal constructor(
 
     init {
         depthPrePass?.stats = statsCounter
+        depthPrePass?.retainedBundles = retainedBundles.takeIf { keepsRenderBundles }
         depthPrePass?.countsShadowPasses = true
         sceneDepthPass?.stats = statsCounter
         maskPass?.stats = statsCounter
@@ -382,6 +404,7 @@ class Renderer internal constructor(
 
     override fun destroy() {
         gpuFrameTimer?.destroy()
+        retainedBundles.destroy()
         sceneScale.release()
         uiRunCache.clear()
         imagePassExecutor.destroy()

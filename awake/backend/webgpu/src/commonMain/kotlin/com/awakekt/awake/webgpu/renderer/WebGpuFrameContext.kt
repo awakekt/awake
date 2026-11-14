@@ -48,6 +48,8 @@ internal class WebGpuFrameContext(
     override val passInput: GpuPassInput? = null,
     private val commandEncoder: GPUCommandEncoder? = null,
     private val parentTarget: WebGpuImagePassParentTarget? = null,
+    /** The scene pass's retained bundles; null for a pass that records every draw directly. */
+    retained: com.awakekt.awake.webgpu.pipeline.bundles.RetainedPassBundles? = null,
 ) : WebGpuRenderFrameContext {
 
     /** Single-buffered on this backend; the ports still take it because Vulkan's resources are
@@ -56,7 +58,7 @@ internal class WebGpuFrameContext(
 
     override val stats: RenderStatsCounter get() = renderer.statsCounter
 
-    override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder, renderer.statsCounter)
+    override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder, renderer.statsCounter, retained)
 
     /**
      * Built against [pipeline]'s own group-2 layout, and cached there -- a bind group belongs to

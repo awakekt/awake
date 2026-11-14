@@ -762,9 +762,12 @@ jobs:
       # A texture copied from a browser image on the GPU (copyExternalImageToTexture, GPU mips) against
       # the CPU decode's upload, texel by texel, under SwiftShader WebGPU, and the main-thread timing of
       # both; then the engine's glTF, scene-sprite and shader-effect loaders taking that path, with a glTF model's
-      # timing. Only these classes: the backend's draw-preparation benchmark is too long for this job.
-      - name: GPU texture upload browser tests
-        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*"
+      # timing. Then a shadowed scene of folded copies drawn through render bundles (indirect draws),
+      # at one and four samples, against the same frames recorded directly: the browser validates
+      # bundles apart from desktop wgpu. Only these classes: the backend's draw-preparation benchmark
+      # is too long for this job.
+      - name: GPU texture upload and render bundle browser tests
+        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*"
 
       # The vendored Basis Universal transcoder, loaded the way an app loads it, transcoding a cooked
       # KTX2 texture to RGBA8 and to every block format it offers.

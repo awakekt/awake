@@ -79,12 +79,15 @@ internal class SceneAttachment(
     val multisampleColor: io.ygdrasil.webgpu.GPUTextureView?,
     val depth: io.ygdrasil.webgpu.GPUTextureView,
     val resolved: com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget,
+    /** The colour and depth attachments' sample count, which a retained bundle must match. */
+    val sampleCount: Int,
 )
 
 /** This target as a scene pass's attachment, its colour also the post chain's parent. */
 internal fun OffscreenRenderTarget.attachment(): SceneAttachment = SceneAttachment(
     multisampleColor = sceneColorView.takeIf { sceneResolveView != null },
     depth = depthView,
+    sampleCount = sampleCount,
     resolved = com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget(
         colorTexture = colorTexture,
         colorView = colorView,

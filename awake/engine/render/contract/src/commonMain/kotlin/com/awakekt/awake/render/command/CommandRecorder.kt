@@ -51,6 +51,18 @@ interface CommandRecorder {
 
     /** Records an indexed draw command for [indexCount] indices and [instanceCount] instances. */
     fun drawIndexed(indexCount: Int, instanceCount: Int = 1)
+
+    /**
+     * Opens a retained region: what is recorded until [endRetained] is the same draws in the same
+     * order frame after frame, give or take instance counts, so a backend may record it once and
+     * replay it (WebGPU keeps it as render bundles). [key] tells a pass's regions apart. Pipeline
+     * and bind state does not carry past [endRetained]: whatever follows binds its own pipeline.
+     * The default records every draw directly.
+     */
+    fun beginRetained(key: Any) {}
+
+    /** Closes the region [beginRetained] opened. */
+    fun endRetained() {}
 }
 
 /**

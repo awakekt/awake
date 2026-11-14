@@ -30,6 +30,7 @@ draw, a set it already has bound since the last pipeline is not bound again.
 | Copies per draw | 4,096 (larger sets split) | 4,096 |
 | Skinned copies per draw | 256, authored only | 256, authored only |
 | Still frame handed back unplanned | Opt-in (`Renderer.redrawsStillFrames`); the batch prepared after one waits for every frame in flight (#1555) | Yes (`GpuDrawPreparer.redrawsPreparedFrames`) |
+| Static draws kept as render bundles | No | Yes, opaque scene and cascade casters; `Renderer.keepsRenderBundles` turns it off (#1555) |
 
 Nothing is merged into one mesh; instancing is the only batching.
 

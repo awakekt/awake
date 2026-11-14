@@ -19,10 +19,13 @@ import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.ShadowCascadePassBinding
 import com.awakekt.awake.render.renderer.RenderPassKind
 import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.webgpu.pipeline.bundles.BundleLayout
+import com.awakekt.awake.webgpu.pipeline.bundles.RetainedBundleStore
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPULoadOp
 import io.ygdrasil.webgpu.GPUStoreOp
+import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.RenderPassDepthStencilAttachment
 import io.ygdrasil.webgpu.RenderPassDescriptor
 import io.ygdrasil.webgpu.beginRenderPass
@@ -44,6 +47,9 @@ class DepthPrePassFeature(
 ) {
     /** The owning `Renderer`'s counter, set when it takes this feature: a pass is built first. */
     internal var stats: RenderStatsCounter? = null
+
+    /** Where each cascade keeps its casters as render bundles; null records them directly. */
+    internal var retainedBundles: RetainedBundleStore? = null
 
     /** Whether each pass this records counts as a shadow pass: true for the light's cascades, not the camera's depth. */
     internal var countsShadowPasses = false
@@ -184,10 +190,12 @@ class DepthPrePassFeature(
                 ),
             ),
         ) {
-            val recorder = WebGpuCommandRecorder(this, stats)
+            val retained = retainedBundles?.pass(depthTarget.viewFor(cascade), CASCADE_LAYOUT)
+            val recorder = WebGpuCommandRecorder(this, stats, retained)
             recorder.setScissor(0, 0, depthTarget.size, depthTarget.size)
             var boundPipeline: DepthOnlyPipeline? = null
             var drawIndex = 0
+            recorder.beginRetained(CASTERS)
             while (drawIndex < draws.size) {
                 val prepared = draws[drawIndex]
                 // An instance buffer, not a count above one, makes a draw instanced: a lone copy
@@ -252,6 +260,7 @@ class DepthPrePassFeature(
                 }
                 drawIndex += 1
             }
+            recorder.endRetained()
             if (content != null) recorder.recordContentCasters(contentCasters, cascade, content)
             end()
         }
@@ -298,3 +307,9 @@ private fun WebGpuCommandRecorder.recordContentCasters(
         }
     }
 }
+
+/** The casters' retained region in a cascade's pass. */
+private const val CASTERS = "casters"
+
+/** A cascade pass's attachments: depth only, one sample. */
+private val CASCADE_LAYOUT = BundleLayout(emptyList(), GPUTextureFormat.Depth32Float, sampleCount = 1)
