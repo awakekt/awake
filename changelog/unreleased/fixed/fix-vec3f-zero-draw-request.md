@@ -1,0 +1,1 @@
+- A `GpuDrawRequest` built without a vertex animation no longer allocates a zero vector. Its default read `Vec3f.ZERO`, which returns a new vector on every read. Requests now share one zero vector, as `SceneDrawCollector` already did, and a request costs 96 bytes instead of 120. `Vec3f.ZERO` and its sibling constants still return fresh vectors, because `Vec3f` is mutable.
