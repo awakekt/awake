@@ -35,7 +35,35 @@ class RendererHeadlessAnalyticBorderTest {
         }
     }
 
+    @Test
+    fun aThinPillsStraightEdgesAreOneSolidBandWithNothingInside() {
+        RendererHeadlessUiGlyphBaselineTest.withSharedHeadlessRenderer { renderer ->
+            val target = renderer.createRenderTarget(WIDE, SIZE)
+            val failures = mutableListOf<String>()
+            for (h in 3..8) {
+                for (stroke in listOf(1, 2)) {
+                    for (w in listOf(93, 40, 17)) {
+                        for (radius in listOf(h / 2f, h / 2f - 0.5f)) {
+                            if (2 * stroke >= h) continue
+                            for (top in listOf(8, 9)) {
+                                val pill = UiDrawPrimitive.RoundedQuad(8f, top.toFloat(), w.toFloat(), h.toFloat(), Color(1f, 1f, 1f, 1f), radius, strokeWidth = stroke.toFloat())
+                                renderer.renderUiToTexture(target, listOf(pill), font = null)
+                                val pixels = runBlocking { renderer.readPixels(target) }.data
+                                val column = 8 + w / 2
+                                val rows = (top until top + h).map { pixels[(it * WIDE + column) * 4 + 3].toInt() and 0xFF }
+                                val expected = (0 until h).map { if (it < stroke || it >= h - stroke) 255 else 0 }
+                                if (rows != expected) failures += "${w}x$h r=$radius stroke=$stroke top=$top: $rows"
+                            }
+                        }
+                    }
+                }
+            }
+            assertEquals(emptyList(), failures, failures.joinToString("\n"))
+        }
+    }
+
     private companion object {
+        const val WIDE = 128
         const val SIZE = 64
     }
 }
