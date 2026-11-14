@@ -32,6 +32,7 @@ import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureSample
+import com.awakekt.awake.asset.shaderdsl.textureSampleLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
@@ -277,10 +278,22 @@ object PostProcessingShaders {
             val colorResult = variable("colorResult", colorM)
 
             iff(range gt edgeThreshold) {
-                val lumaNW = let("lumaNW", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, -rcpFrame.y))))
-                val lumaNE = let("lumaNE", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, -rcpFrame.y))))
-                val lumaSW = let("lumaSW", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, rcpFrame.y))))
-                val lumaSE = let("lumaSE", luma(textureSample(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, rcpFrame.y))))
+                val lumaNW = let(
+                    "lumaNW",
+                    luma(textureSampleLevel(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, -rcpFrame.y), 0f.lit)),
+                )
+                val lumaNE = let(
+                    "lumaNE",
+                    luma(textureSampleLevel(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, -rcpFrame.y), 0f.lit)),
+                )
+                val lumaSW = let(
+                    "lumaSW",
+                    luma(textureSampleLevel(sourceTexture, sourceSampler, uv + vec2(-rcpFrame.x, rcpFrame.y), 0f.lit)),
+                )
+                val lumaSE = let(
+                    "lumaSE",
+                    luma(textureSampleLevel(sourceTexture, sourceSampler, uv + vec2(rcpFrame.x, rcpFrame.y), 0f.lit)),
+                )
 
                 val lumaL = let("lumaL", (lumaN + lumaS + lumaW + lumaE) * 0.25f.lit)
                 val rangeL = let("rangeL", abs(lumaL - lumaM))
@@ -317,7 +330,10 @@ object PostProcessingShaders {
                     ),
                 )
                 val subpixelOffset = let("subpixelOffset", offset * blendL)
-                val filtered = let("filtered", textureSample(sourceTexture, sourceSampler, uv + subpixelOffset))
+                val filtered = let(
+                    "filtered",
+                    textureSampleLevel(sourceTexture, sourceSampler, uv + subpixelOffset, 0f.lit),
+                )
                 assign(colorResult, vec4(filtered.rgb, 1f.lit))
             }
 
