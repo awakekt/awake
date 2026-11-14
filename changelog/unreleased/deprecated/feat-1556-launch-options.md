@@ -1,0 +1,1 @@
+- `DebugFlags.fromPage` and `DebugFlags.fromArgs` are deprecated in favour of an `ids("debug")` launch option. Both keep working as released, `--debug ids` included (#1556).

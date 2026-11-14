@@ -46,12 +46,24 @@ class DebugRegistry(val enabled: Set<String>) {
  * on desktop. Ids are trimmed, lower-cased and comma-separated; empty ones are dropped.
  *
  * Only the `debug` flag is read. A game that keeps older aliases of its own adds their ids to what these return.
+ *
+ * Declaring the flag as a launch option is the newer way: `val debug = ids("debug")` in a `LaunchOptions`
+ * schema (`awake:core:config`) reads it on every host with the game's other options, and reports a mistyped
+ * name or `--debug a,b` written with a space instead of dropping it. [parse] stays.
  */
 object DebugFlags {
     /** The ids a web page's query turns on, read through [parameter]: `?debug=`. */
+    @Deprecated(
+        "Declare the flag as a launch option: ids(\"debug\") in a LaunchOptions schema (awake:core:config), " +
+            "then DebugRegistry(launch[Launch.debug]).",
+    )
     fun fromPage(parameter: (String) -> String?): Set<String> = parse(parameter("debug"))
 
     /** The ids a command line turns on: `--debug=<ids>`, or `--debug <ids>`. Repeated flags add up. */
+    @Deprecated(
+        "Declare the flag as a launch option: ids(\"debug\") in a LaunchOptions schema (awake:core:config), " +
+            "then DebugRegistry(launch[Launch.debug]).",
+    )
     fun fromArgs(args: List<String>): Set<String> = buildSet {
         args.forEachIndexed { i, arg ->
             when {

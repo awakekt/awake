@@ -10,7 +10,7 @@
 package com.awakekt.awake.showcase.docs
 
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.core.diagnostics.DebugFlags
+import com.awakekt.awake.core.config.LaunchOptions
 import com.awakekt.awake.core.diagnostics.DebugLines
 import com.awakekt.awake.core.diagnostics.DebugRegistry
 import com.awakekt.awake.core.diagnostics.DebugRowBuffer
@@ -21,6 +21,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.engine.window.LaunchParameters
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.scene.authoring.dsl.camera
 import com.awakekt.awake.scene.authoring.dsl.scene
@@ -99,14 +100,21 @@ fun debugTools(registry: DebugRegistry, spawner: SpawnerProbe): AwakeAppLifecycl
 }
 // --8<-- [end:app]
 
+// --8<-- [start:options]
+object DebugLaunch : LaunchOptions() {
+    val debug = ids("debug", description = "Debug sources to show, comma-separated")
+}
+// --8<-- [end:options]
+
 /** The "Debug tools" guide includes the samples above; this checks they do what it says. */
 class DebugToolsDocsSampleTest {
 
     @Test
     fun theFlagsTurnSourcesOnByName() {
         // --8<-- [start:flags]
-        val desktop = DebugRegistry(DebugFlags.fromArgs(listOf("--debug=cells,spawner")))
-        val web = DebugRegistry(DebugFlags.fromPage { name -> if (name == "debug") "cells" else null })
+        val args = listOf("--debug=cells,spawner")
+        val desktop = DebugRegistry(DebugLaunch.parse(LaunchParameters.fromArguments(args).toMap())[DebugLaunch.debug])
+        val web = DebugRegistry(DebugLaunch.parse(LaunchParameters.fromQuery("?debug=cells").toMap())[DebugLaunch.debug])
         // --8<-- [end:flags]
 
         assertTrue(desktop.isOn("cells") && desktop.isOn("spawner"))
