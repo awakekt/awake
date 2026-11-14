@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.vulkan.Vulkan
+
 /**
  * Whether a batch about to be prepared must wait for every frame slot, not only its own (#1555).
  *
@@ -41,4 +43,10 @@ internal class ReusedFrameGuard {
     private companion object {
         const val NEVER = -1L
     }
+}
+
+/** Waits until no frame slot is referenced by the GPU: a reused frame may read any of them. */
+internal fun Renderer.waitForAllFrameResourceSlots() {
+    val fences = swapchainManager.inFlightFences.filter { it != 0L }
+    if (fences.isNotEmpty()) Vulkan.vkWaitForFences(device, fences.toLongArray(), true, Long.MAX_VALUE)
 }
