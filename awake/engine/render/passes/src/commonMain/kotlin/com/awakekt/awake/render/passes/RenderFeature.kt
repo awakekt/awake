@@ -17,6 +17,8 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.RenderPassKind
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.texture.TextureUploadRecorder
 
 /**
@@ -107,6 +109,9 @@ interface RenderFrameContext {
      * graphics calls itself, which is what lets a feature body be shared across backends. */
     val recorder: CommandRecorder
 
+    /** The backend's draw counter, which features tag by pass; null for a backend that does not count. */
+    val stats: RenderStatsCounter? get() = null
+
     /**
      * This frame's camera-space depth group for [pipeline], or null when there is nothing to
      * bind -- the app opted into no scene-depth pass, or the backend binds it without being asked.
@@ -178,10 +183,12 @@ fun <C : RenderFrameContext> recordPassFeatures(
     slot: RenderPassSlot,
     context: C,
 ) {
+    context.stats?.countAs(if (slot == RenderPassSlot.Ui) RenderPassKind.Ui else RenderPassKind.Other)
     var index = 0
     while (index < features.size) {
         val feature = features[index]
         if (feature.pass == slot) feature.recordCommands(context)
         index += 1
     }
+    context.stats?.countAs(RenderPassKind.Other)
 }

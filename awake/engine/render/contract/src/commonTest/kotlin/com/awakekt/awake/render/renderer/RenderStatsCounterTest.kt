@@ -7,6 +7,8 @@ package com.awakekt.awake.render.renderer
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class RenderStatsCounterTest {
@@ -46,5 +48,56 @@ class RenderStatsCounterTest {
         counter.publish()
 
         assertEquals(UiUploadStats(bytes = 0L, runs = 0, triangles = 0L), counter.latestUiUploads)
+    }
+
+    @Test
+    fun drawsCountTowardThePassTheBackendTaggedAndAddUpToTheFrame() {
+        val counter = RenderStatsCounter()
+        counter.recordDraw(elementCount = 3) // before any tag: other
+        counter.beginShadowPass()
+        counter.recordDraw(elementCount = 36, instanceCount = 100)
+        counter.beginShadowPass()
+        counter.recordDraw(elementCount = 36, instanceCount = 40)
+        counter.countAs(RenderPassKind.SceneOpaque)
+        counter.recordDraw(elementCount = 36, instanceCount = 100)
+        counter.recordDraw(elementCount = 6)
+        counter.countAs(RenderPassKind.SceneTransparent)
+        counter.recordDraw(elementCount = 6, instanceCount = 2)
+        counter.countAs(RenderPassKind.Ui)
+        counter.recordDraw(elementCount = 600)
+
+        counter.publish()
+
+        val passes = assertNotNull(counter.latestPasses)
+        assertEquals(RenderPassCounts(drawCalls = 2, instances = 101, triangles = 1_202), passes.sceneOpaque)
+        assertEquals(RenderPassCounts(drawCalls = 1, instances = 2, triangles = 4), passes.sceneTransparent)
+        assertEquals(listOf(RenderPassCounts(1, 100, 1_200), RenderPassCounts(1, 40, 480)), passes.shadowPasses)
+        assertEquals(RenderPassCounts(drawCalls = 1, instances = 1, triangles = 200), passes.ui)
+        assertEquals(RenderPassCounts(drawCalls = 1, instances = 1, triangles = 1), passes.other)
+        val total = assertNotNull(counter.latest)
+        val parts = listOf(passes.sceneOpaque, passes.sceneTransparent, passes.shadow, passes.ui, passes.other)
+        assertEquals(total.drawCalls, parts.sumOf { it.drawCalls })
+        assertEquals(total.instances, parts.sumOf { it.instances })
+        assertEquals(total.triangles, parts.sumOf { it.triangles })
+    }
+
+    @Test
+    fun theNextFrameStartsUntaggedWithNoShadowPasses() {
+        val counter = RenderStatsCounter()
+        counter.beginShadowPass()
+        counter.recordDraw(elementCount = 3)
+        counter.publish()
+
+        counter.recordDraw(elementCount = 3)
+        counter.publish()
+
+        val passes = assertNotNull(counter.latestPasses)
+        assertEquals(emptyList(), passes.shadowPasses)
+        assertEquals(1, passes.other.drawCalls)
+    }
+
+    @Test
+    fun aShadowPassIsBegunNotTagged() {
+        assertFailsWith<IllegalArgumentException> { RenderStatsCounter().countAs(RenderPassKind.Shadow) }
     }
 }
