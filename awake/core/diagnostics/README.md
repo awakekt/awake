@@ -29,7 +29,16 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
   whose process or browser tab can die without running shutdown hooks. Keeps a bounded ring of
   `CrashBreadcrumb` samples and truncated `RecordedError` entries in `CrashStorage` (such as
   `localStorage` on the web or `InMemoryCrashStorage` in tests) and promotes an un-ended prior
-  session to `pending()` on the next `begin(...)` until `markSent()`.
+  session to `pending()` on the next `begin(...)` until `markSent()`. An app's own counters go in a
+  breadcrumb's `metrics`.
+- **Web crash pieces (wasmJs)**: `LocalStorageCrashStorage` keeps the session in the page's
+  `localStorage`, guarded so blocked or full storage never stops the app, and
+  `installPageCrashHooks(recorder, sampler)` ends the session on `pagehide`, records a breadcrumb when
+  the tab is hidden, and sends `error` and `unhandledrejection` events to `recorder.error(...)`.
+- **Sending reports**: `CrashReportSender` is the seam to a service the engine doesn't own (Core has no
+  HTTP client); `recorder.sendPending(sender)` sends the pending crash and marks it sent only once the
+  sender returns. `ErrorSampler` rate-limits and deduplicates errors by key before they are recorded
+  or sent.
 
 ```kotlin
 val registry = DebugRegistry(DebugFlags.fromArgs(args))

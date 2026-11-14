@@ -70,6 +70,14 @@ public final class com/awakekt/awake/core/diagnostics/CrashRecorder {
 public final class com/awakekt/awake/core/diagnostics/CrashRecorder$Companion {
 }
 
+public abstract interface class com/awakekt/awake/core/diagnostics/CrashReportSender {
+	public abstract fun send (Lcom/awakekt/awake/core/diagnostics/CrashSession;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/diagnostics/CrashReportSenderKt {
+	public static final fun sendPending (Lcom/awakekt/awake/core/diagnostics/CrashRecorder;Lcom/awakekt/awake/core/diagnostics/CrashReportSender;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/core/diagnostics/CrashSession {
 	public static final field Companion Lcom/awakekt/awake/core/diagnostics/CrashSession$Companion;
 	public fun <init> (Ljava/lang/String;JLcom/awakekt/awake/core/diagnostics/CrashSessionMeta;ZLjava/util/List;Ljava/util/List;)V
@@ -223,6 +231,26 @@ public abstract interface class com/awakekt/awake/core/diagnostics/DebugSource {
 
 public final class com/awakekt/awake/core/diagnostics/DebugSource$DefaultImpls {
 	public static fun lines (Lcom/awakekt/awake/core/diagnostics/DebugSource;Lcom/awakekt/awake/core/diagnostics/DebugLines;)V
+}
+
+public final class com/awakekt/awake/core/diagnostics/ErrorSampler {
+	public static final field Companion Lcom/awakekt/awake/core/diagnostics/ErrorSampler$Companion;
+	public static final field DEFAULT_DEDUPE_MILLIS J
+	public static final field DEFAULT_MAX_KEYS I
+	public static final field DEFAULT_MAX_PER_WINDOW I
+	public static final field DEFAULT_WINDOW_MILLIS J
+	public fun <init> (Lkotlin/jvm/functions/Function0;IJJI)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;IJJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun admit (Ljava/lang/String;)Z
+	public final fun clear ()V
+	public final fun getDedupeMillis ()J
+	public final fun getMaxKeys ()I
+	public final fun getMaxPerWindow ()I
+	public final fun getRefused ()J
+	public final fun getWindowMillis ()J
+}
+
+public final class com/awakekt/awake/core/diagnostics/ErrorSampler$Companion {
 }
 
 public final class com/awakekt/awake/core/diagnostics/FrameBreakdown {
