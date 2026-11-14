@@ -113,6 +113,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
     edgePipeline: RenderPipeline? = null,
+    explicitUniformSlotIndex: Int = -1,
 ): PreparedDrawCall? {
     val mesh = cmd.mesh as RenderMesh
     val buffers = mesh.sceneBuffers(frameIndex)
@@ -125,7 +126,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         val instanceBuffer = instanceBufferForRun(instancedIndex).also {
             it.update(frameIndex, instanceModels)
         }
-        val uniformSlotIndex = materialUsage.nextSlot(material)
+        val uniformSlotIndex = if (explicitUniformSlotIndex >= 0) explicitUniformSlotIndex else materialUsage.nextSlot(material)
         val coverage = instancedPipeline.multisample.alphaToCoverageEnabled
         val split = instancedPipeline.drawBlockFloatsFor(cmd, material, kind, shadowCascades != null)
         val binding = material.writeBlock(
@@ -167,7 +168,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     }
     // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
     val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite) ?: return null
-    val uniformSlotIndex = materialUsage.nextSlot(material)
+    val uniformSlotIndex = if (explicitUniformSlotIndex >= 0) explicitUniformSlotIndex else materialUsage.nextSlot(material)
     val coverage = pipeline.multisample.alphaToCoverageEnabled
     val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)
     val binding = material.writeBlock(

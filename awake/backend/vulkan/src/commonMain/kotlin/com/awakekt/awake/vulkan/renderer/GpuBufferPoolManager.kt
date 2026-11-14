@@ -98,6 +98,15 @@ internal class GpuBufferPoolManager(
     fun imagePassMeshForStep(index: Int): DynamicMesh = imagePassMeshPool[index]
 
     fun instanceBufferForRun(index: Int): InstanceBuffer = instanceBufferPool[index]
+
+    /** Instance-buffer uploads so far, across the pool: for tests. */
+    val instanceUploads: Long
+        get() {
+            var total = 0L
+            instanceBufferPool.forEach { total += it.uploads }
+            return total
+        }
+
     fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = skinnedInstanceBufferPool[index]
     fun alphaInstanceBufferForRun(index: Int): AlphaInstanceBuffer = alphaInstanceBufferPool[index]
     fun frameInstanceBufferForRun(index: Int): FrameInstanceBuffer = frameInstanceBufferPool[index]
