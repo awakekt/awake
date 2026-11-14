@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 
 /**
  * A `KClass` on Kotlin/Wasm hashes a qualified name it builds anew on every call, so a type lookup
- * keyed by it paid a string build and a full hash. The key hashes the simple name instead.
+ * keyed by it paid a string build and a full hash. The type table hashes the simple name instead.
  */
 class WasmTypeKeyTest {
 
@@ -18,7 +18,8 @@ class WasmTypeKeyTest {
 
     @Test
     fun aTypeKeyHashesTheSimpleName() {
-        assertEquals("Position".hashCode(), componentTypeKey<Position>().hashCode())
-        assertEquals("Position".hashCode(), componentTypeKeyOf(Position::class).hashCode())
+        assertEquals("Position".hashCode(), componentTypeKeyHash(componentTypeKey<Position>()))
+        assertEquals("Position".hashCode(), componentTypeKeyHash(componentTypeKeyOf(Position::class)))
+        assertEquals("Position".hashCode(), WasmTypeKey(Position::class).hashCode())
     }
 }
