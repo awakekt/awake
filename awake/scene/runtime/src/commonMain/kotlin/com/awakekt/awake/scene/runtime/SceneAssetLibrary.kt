@@ -425,6 +425,7 @@ class SceneAssetLibrary(
             additive = request.meshRenderer.additive,
             billboard = request.meshRenderer.billboard,
             castsShadows = request.meshRenderer.castsShadows,
+            maxDrawDistance = request.meshRenderer.maxDrawDistance,
             defaultMaterial = dynamicResolvers.firstNotNullOfOrNull { resolver ->
                 resolver.takeIf { it.canResolveMaterial(key.material) }?.materialDefaults(key.mesh, key.material)
             },

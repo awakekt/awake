@@ -854,6 +854,7 @@ Draws a mesh with a material. Names are looked up in the scene's asset library. 
 | `additive` | boolean | `false` | With `transparent`, add its colour to what is behind it: glows and fire. A textured mesh draws unlit then, adding only its base and emissive colour, so black texels add nothing, unless its `pbr_material` sets `litWhenAdditive`. |
 | `billboard` | boolean | `false` | Face the camera every frame, keeping the entity's position and scale. The mesh's +Z turns toward the eye. A billboard is not culled. |
 | `castsShadows` | boolean | `true` | Draw the mesh into the shadow maps, whether the camera sees it or not. `false` for a decal, a ground card or distant filler; the mesh still draws and still receives shadows. A `transparent` mesh never casts. |
+| `maxDrawDistance` | number | `0` | Past this distance from the camera eye to the entity's position, the mesh draws nowhere, its shadow included. `0` draws it at any distance. Small clutter takes a short distance and a landmark a long one. Not negative. |
 
 ## `movement_control`
 
