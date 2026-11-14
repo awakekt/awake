@@ -253,6 +253,7 @@ internal class DepthPrePassFeature(
             arrayOf(VkRect2D(extent = VkExtent2D(depthTarget.size, depthTarget.size))),
         )
         var boundPipeline: DepthOnlyPipeline? = null
+        var boundMaterialSet = NO_SET
         var drawIndex = 0
         while (drawIndex < drawCalls.size) {
             val prepared = drawCalls[drawIndex]
@@ -289,6 +290,7 @@ internal class DepthPrePassFeature(
                         )
                     }
                     boundPipeline = pipeline
+                    boundMaterialSet = NO_SET
                 }
                 VulkanBuffers.vkCmdBindVertexBuffers(
                     commandBuffer,
@@ -305,12 +307,17 @@ internal class DepthPrePassFeature(
                         VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 3, it.asArray, longArrayOf(0L))
                     }
                 }
-                VulkanDescriptors.vkCmdBindDescriptorSet(
-                    commandBuffer,
-                    pipeline.pipelineLayout,
-                    BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
-                    (depthMaterial as VulkanMaterialBinding).descriptorSetHandle,
-                )
+                // Alike instanced casters share one set (#1555): bound once until the pipeline changes.
+                val materialSet = (depthMaterial as VulkanMaterialBinding).descriptorSetHandle
+                if (materialSet != boundMaterialSet) {
+                    VulkanDescriptors.vkCmdBindDescriptorSet(
+                        commandBuffer,
+                        pipeline.pipelineLayout,
+                        BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
+                        materialSet,
+                    )
+                    boundMaterialSet = materialSet
+                }
                 if (kind == DepthCasterKind.SkinnedInstanced && paletteBinding != null) {
                     VulkanDescriptors.vkCmdBindDescriptorSet(
                         commandBuffer,
@@ -385,3 +392,6 @@ internal class DepthPrePassFeature(
         depthTarget.destroy()
     }
 }
+
+/** No material set bound yet in this pass, or since its last pipeline bind: no real handle is 0. */
+private const val NO_SET = 0L
