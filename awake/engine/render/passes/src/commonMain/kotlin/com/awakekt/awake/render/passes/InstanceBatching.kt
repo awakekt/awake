@@ -6,12 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.core.math.Aabb
-import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.pipeline.CullMode
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * [drawCalls] with every set of draws that differ only in their model matrix folded into one
@@ -28,29 +23,7 @@ import kotlin.math.min
 internal fun batchInstances(
     drawCalls: List<RenderDrawCommand>,
     canInstance: (VertexFormat, CullMode) -> Boolean,
-): List<RenderDrawCommand> {
-    val groups = LinkedHashMap<InstanceKey, MutableList<RenderDrawCommand>>()
-    val kept = ArrayList<RenderDrawCommand>(drawCalls.size)
-    // Entities spawned together iterate together, so a draw usually joins the group the previous
-    // one did. Checking that first skips building a key and hashing its uniform extras per draw.
-    var lastDraw: RenderDrawCommand? = null
-    var lastMembers: MutableList<RenderDrawCommand>? = null
-    for (draw in drawCalls) {
-        if (!draw.foldsIntoInstances(canInstance)) {
-            kept.addSplitToCapacity(draw)
-            continue
-        }
-        val members = lastMembers?.takeIf { lastDraw?.instancesWith(draw) == true }
-            ?: groups.getOrPut(InstanceKey(draw)) { ArrayList() }
-        members += draw
-        lastDraw = draw
-        lastMembers = members
-    }
-    for (members in groups.values) {
-        if (members.size == 1) kept += members[0] else members.chunked(MAX_BATCHED_INSTANCES).mapTo(kept, ::instancedDraw)
-    }
-    return kept
-}
+): List<RenderDrawCommand> = InstanceBatcher().batch(drawCalls, canInstance)
 
 /**
  * Most copies one instanced draw carries: both backends' instance buffers hold 4096 matrices a
@@ -65,7 +38,7 @@ internal const val MAX_SKINNED_BATCHED_INSTANCES = 256
  * Adds [draw], split into several when it carries more instances than one draw's buffer holds.
  * An authored instance list of any length draws; the buffers stay the size they are.
  */
-private fun MutableList<RenderDrawCommand>.addSplitToCapacity(draw: RenderDrawCommand) {
+internal fun MutableList<RenderDrawCommand>.addSplitToCapacity(draw: RenderDrawCommand) {
     val models = draw.instanceModels
     val capacity = if (draw.instanceJointPalettes != null) MAX_SKINNED_BATCHED_INSTANCES else MAX_BATCHED_INSTANCES
     if (models == null || models.size <= capacity) {
@@ -91,38 +64,8 @@ internal fun RenderDrawCommand.foldsIntoInstances(canInstance: (VertexFormat, Cu
         !transparent &&
         canInstance(mesh.format, cullMode)
 
-private fun instancedDraw(members: List<RenderDrawCommand>): RenderDrawCommand =
-    members[0].copy(
-        model = Mat4(),
-        instanceModels = members.map { it.model },
-        worldBounds = enclosingBounds(members),
-    )
-
-/**
- * One box around every member's bounds, or null when any member is unbounded: an unbounded copy
- * makes the whole draw unbounded. Accumulated in floats, so a batch of thousands builds one box.
- */
-private fun enclosingBounds(members: List<RenderDrawCommand>): Aabb? {
-    var minX = Float.MAX_VALUE
-    var minY = Float.MAX_VALUE
-    var minZ = Float.MAX_VALUE
-    var maxX = -Float.MAX_VALUE
-    var maxY = -Float.MAX_VALUE
-    var maxZ = -Float.MAX_VALUE
-    for (index in members.indices) {
-        val bounds = members[index].worldBounds ?: return null
-        minX = min(minX, bounds.min.x)
-        minY = min(minY, bounds.min.y)
-        minZ = min(minZ, bounds.min.z)
-        maxX = max(maxX, bounds.max.x)
-        maxY = max(maxY, bounds.max.y)
-        maxZ = max(maxZ, bounds.max.z)
-    }
-    return Aabb(Vec3f(minX, minY, minZ), Vec3f(maxX, maxY, maxZ))
-}
-
 /** Everything but the model matrix is equal, so the two render identically but for placement. */
-private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
+internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
     mesh === other.mesh &&
         material === other.material &&
         extraUniformFloats.contentEquals(other.extraUniformFloats) &&
@@ -139,11 +82,13 @@ private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
 
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */
 internal class InstanceKey(private val draw: RenderDrawCommand) {
-    private val hash: Int =
-        ((draw.mesh.hashCode() * 31 + draw.material.hashCode()) * 31 + draw.extraUniformFloats.contentHashCode()) * 31 +
-            draw.alphaMode.hashCode()
+    private val hash: Int = draw.instanceHash()
 
     override fun hashCode(): Int = hash
 
     override fun equals(other: Any?): Boolean = other is InstanceKey && draw.instancesWith(other.draw)
 }
+
+/** A hash equal for draws that [instancesWith] each other. */
+internal fun RenderDrawCommand.instanceHash(): Int =
+    ((mesh.hashCode() * 31 + material.hashCode()) * 31 + extraUniformFloats.contentHashCode()) * 31 + alphaMode.hashCode()

@@ -63,8 +63,10 @@ kotlin {
                 // Run the actual sample app and its plan. Scene/sample dependencies stay in tests.
                 implementation(project(":samples:engine-showcase"))
                 implementation(project(":awake:scene:authoring"))
+                implementation(project(":awake:scene:gltf"))
                 implementation(project(":awake:scene:physics"))
                 implementation(project(":awake:scene:scene2d"))
+                implementation(project(":awake:project:runtime"))
                 // Scene UI styles, drawn on both backends.
                 implementation(project(":awake:scene:canvas"))
                 // Text a screen draws, rendered on both backends at a given display scale.

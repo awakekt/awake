@@ -96,7 +96,7 @@ registers it.
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `behavior_tree`, `state_machine`, `factions`, `perceivable`, `perceiver` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
 | `SceneComponentRegistry.registerAudio()` | `com.awakekt.awake.scene:audio` | `audio_source` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `navigation_agent`, `audio_source`, and the components of the [features](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
@@ -849,11 +849,12 @@ Draws a mesh with a material. Names are looked up in the scene's asset library. 
 | --- | --- | --- | --- |
 | `mesh` | string | required | Name of a registered or resolvable mesh. Must not be blank. |
 | `material` | string | required | Name of a registered or resolvable material. Must not be blank. |
-| `cullMode` | `None` · `Back` · `Front` | `None` | Face culling. Also read as `cull_mode`. |
+| `cullMode` | `None` · `Back` · `Front` · `FromMaterial` | `None` | Face culling. `FromMaterial` uses the resolved glTF material's `doubleSided` flag (`Back` when `false`, `None` when `true`), falling back to `None`. Also read as `cull_mode`. |
 | `transparent` | boolean | `false` | Draw in the transparent pass, blended and sorted back to front. |
 | `additive` | boolean | `false` | With `transparent`, add its colour to what is behind it: glows and fire. A textured mesh draws unlit then, adding only its base and emissive colour, so black texels add nothing, unless its `pbr_material` sets `litWhenAdditive`. |
 | `billboard` | boolean | `false` | Face the camera every frame, keeping the entity's position and scale. The mesh's +Z turns toward the eye. A billboard is not culled. |
 | `castsShadows` | boolean | `true` | Draw the mesh into the shadow maps, whether the camera sees it or not. `false` for a decal, a ground card or distant filler; the mesh still draws and still receives shadows. A `transparent` mesh never casts. |
+| `maxDrawDistance` | number | `0` | Past this distance from the camera eye to the entity's position, the mesh draws nowhere, its shadow included. `0` draws it at any distance. Small clutter takes a short distance and a landmark a long one. Not negative. |
 
 ## `movement_control`
 

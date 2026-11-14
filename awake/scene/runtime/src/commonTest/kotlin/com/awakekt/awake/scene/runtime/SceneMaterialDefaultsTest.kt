@@ -9,10 +9,12 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
@@ -27,6 +29,11 @@ class SceneMaterialDefaultsTest {
             override fun destroy() = Unit
         }
         override fun materialDefaults(name: String) = authored.takeIf { name == "model:crate" }
+        override fun defaultCullMode(mesh: String, material: String): CullMode? = when (material) {
+            "model:crate" -> CullMode.Back
+            "model:banner" -> CullMode.None
+            else -> null
+        }
     }
 
     private val library = SceneAssetLibrary(
@@ -113,5 +120,70 @@ class SceneMaterialDefaultsTest {
 
         assertSame(authored, withDefaults.defaultMaterial)
         assertNull(without.defaultMaterial)
+    }
+
+    @Test
+    fun cullModeDefaultsToNoneAndExplicitEntityChoiceAlwaysWinsOverResolver() {
+        val world = World()
+        val omitted = library.resolve(
+            runtime,
+            SceneRenderableRequest(world.create(), SceneMeshRenderer(mesh = "crate", material = "model:crate")),
+        )
+        val explicitNone = library.resolve(
+            runtime,
+            SceneRenderableRequest(
+                world.create(),
+                SceneMeshRenderer(mesh = "crate", material = "model:crate", cullMode = SceneMeshRenderer.CullMode.None),
+            ),
+        )
+        val explicitBack = library.resolve(
+            runtime,
+            SceneRenderableRequest(
+                world.create(),
+                SceneMeshRenderer(mesh = "crate", material = "model:banner", cullMode = SceneMeshRenderer.CullMode.Back),
+            ),
+        )
+        val explicitFront = library.resolve(
+            runtime,
+            SceneRenderableRequest(
+                world.create(),
+                SceneMeshRenderer(mesh = "crate", material = "model:banner", cullMode = SceneMeshRenderer.CullMode.Front),
+            ),
+        )
+
+        assertEquals(CullMode.None, omitted.cullMode)
+        assertEquals(CullMode.None, explicitNone.cullMode)
+        assertEquals(CullMode.Back, explicitBack.cullMode)
+        assertEquals(CullMode.Front, explicitFront.cullMode)
+    }
+
+    @Test
+    fun cullModeFromMaterialUsesResolverOpinionOrFallsBackToNone() {
+        val world = World()
+        val oneSided = library.resolve(
+            runtime,
+            SceneRenderableRequest(
+                world.create(),
+                SceneMeshRenderer(mesh = "crate", material = "model:crate", cullMode = SceneMeshRenderer.CullMode.FromMaterial),
+            ),
+        )
+        val twoSided = library.resolve(
+            runtime,
+            SceneRenderableRequest(
+                world.create(),
+                SceneMeshRenderer(mesh = "crate", material = "model:banner", cullMode = SceneMeshRenderer.CullMode.FromMaterial),
+            ),
+        )
+        val noOpinion = library.resolve(
+            runtime,
+            SceneRenderableRequest(
+                world.create(),
+                SceneMeshRenderer(mesh = "crate", material = "model:plain", cullMode = SceneMeshRenderer.CullMode.FromMaterial),
+            ),
+        )
+
+        assertEquals(CullMode.Back, oneSided.cullMode)
+        assertEquals(CullMode.None, twoSided.cullMode)
+        assertEquals(CullMode.None, noOpinion.cullMode)
     }
 }

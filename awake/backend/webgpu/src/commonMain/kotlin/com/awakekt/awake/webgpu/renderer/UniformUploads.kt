@@ -81,10 +81,15 @@ internal class UniformUploads {
 
 /**
  * Whether [other] holds exactly these floats, bit for bit: `==` on floats calls `-0` and `0` the
- * same, and a NaN unequal to itself.
+ * same, and a NaN unequal to itself. An index loop: `indices.all` built an `IntRange` per draw per
+ * frame, which wasm, with no escape analysis, never elides.
  */
-internal fun FloatArray.sameBitsAs(other: FloatArray): Boolean =
-    size == other.size && indices.all { this[it].toRawBits() == other[it].toRawBits() }
+internal fun FloatArray.sameBitsAs(other: FloatArray): Boolean {
+    if (size != other.size) return false
+    var index = 0
+    while (index < size && this[index].toRawBits() == other[index].toRawBits()) index++
+    return index == size
+}
 
 /** Writes the draws staged so far. Called before anything records them, and before a new batch restages slots. */
 internal fun Renderer.flushUniformUploads() = uniformUploads.flush(graphicsDevice.wgpuContext.device.queue)

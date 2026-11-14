@@ -63,11 +63,12 @@ nav:
       - Your first scene: get-started/first-scene.md
       - Load a scene document: get-started/load-a-scene-document.md
       - Run in the browser: get-started/run-in-the-browser.md
+      - What the engine gives an app: get-started/what-the-engine-gives-an-app.md
   - Guides:
       - Scene and ECS:
           - Scene documents: guides/scene-documents.md
           - Scene DSL: guides/scene-dsl.md
-          - Scene capabilities: guides/scene-capabilities.md
+          - Scene features: guides/scene-capabilities.md
           - Scene components: guides/scene-components.md
           - ECS: guides/ecs.md
           - App lifecycle: guides/app-lifecycle.md
@@ -75,6 +76,7 @@ nav:
           - Input: guides/input.md
           - Launch parameters: guides/launch-parameters.md
           - Launch options: guides/launch-options.md
+          - Settings: guides/settings.md
           - Debug tools: guides/debug-tools.md
           - Math: guides/math.md
       - Rendering:

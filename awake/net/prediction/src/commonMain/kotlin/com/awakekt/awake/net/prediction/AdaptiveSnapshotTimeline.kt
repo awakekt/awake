@@ -30,7 +30,11 @@ import kotlin.math.exp
  *   the server dropped ticks during the stall ([REBASE_SECONDS]), the offset absorbs the step
  *   immediately from the held delay without jumping or rewinding.
  * - When client frames pause for longer than [PAUSE_REBASE_SECONDS] (such as a backgrounded tab),
- *   [observe] rebases onto the resumed server clock immediately.
+ *   [observe] rebases onto the resumed server clock immediately. The rebase keeps the learned
+ *   [intervalSeconds], since a pause doesn't change the server's tick rate, so [delaySeconds] resumes
+ *   from it rather than from [initialIntervalSeconds]; only [reset] forgets it.
+ * - A negative or non-finite time or delta is refused by default; with [inputMode] set to
+ *   [TimelineInputMode.Clamp] it is absorbed and counted in [clampedInputs] instead.
  *
  * All windows use fixed primitive ring buffers and allocate zero bytes after construction.
  *
@@ -72,6 +76,13 @@ class AdaptiveSnapshotTimeline(
 
     private val scratch = DoubleArray(JITTER_CAPACITY)
 
+    /** What a time or delta this timeline can't use does: throw, by default, or be absorbed. */
+    var inputMode: TimelineInputMode = TimelineInputMode.Reject
+
+    /** How many bad times or deltas [TimelineInputMode.Clamp] has absorbed since construction or [reset]. */
+    var clampedInputs: Long = 0L
+        private set
+
     /** Learned median snapshot interval in seconds of server time. */
     var intervalSeconds: Double = initialIntervalSeconds
         private set
@@ -99,15 +110,11 @@ class AdaptiveSnapshotTimeline(
      * @param serverSeconds Authoritative server timestamp carried by the snapshot in seconds.
      */
     fun observe(clientSeconds: Double, serverSeconds: Double) {
-        require(clientSeconds.isFinite()) {
-            "clientSeconds must be finite, was $clientSeconds."
-        }
-        require(serverSeconds.isFinite()) {
-            "serverSeconds must be finite, was $serverSeconds."
-        }
+        if (!accept(clientSeconds.isFinite()) { "clientSeconds must be finite, was $clientSeconds." }) return
+        if (!accept(serverSeconds.isFinite()) { "serverSeconds must be finite, was $serverSeconds." }) return
         val arrival = clientSeconds - serverSeconds
         if (offsetCount > 0 && arrival - offset < -PAUSE_REBASE_SECONDS) {
-            clearWindows()
+            clearWindows(keepInterval = true)
             pendingPauseRebase = true
         }
         if (offsetCount == 0 || (pendingPauseRebase && arrival < offset)) {
@@ -136,9 +143,8 @@ class AdaptiveSnapshotTimeline(
      * @param deltaSeconds Non-negative frame duration in seconds.
      */
     fun advance(deltaSeconds: Double) {
-        require(deltaSeconds >= 0.0 && deltaSeconds.isFinite()) {
-            "deltaSeconds must be finite and non-negative, was $deltaSeconds."
-        }
+        if (!accept(deltaSeconds.isFinite()) { "deltaSeconds must be finite and non-negative, was $deltaSeconds." }) return
+        if (!accept(deltaSeconds >= 0.0) { "deltaSeconds must be finite and non-negative, was $deltaSeconds." }) return
         if (offsetCount > 0) {
             pendingPauseRebase = false
             val limit = deltaSeconds * MAX_SLEW_RATE
@@ -178,14 +184,12 @@ class AdaptiveSnapshotTimeline(
      * @param maxLeadSeconds Maximum extrapolation lead past [newestServerSeconds] in seconds.
      */
     fun hold(clientSeconds: Double, maxLeadSeconds: Double) {
-        require(clientSeconds.isFinite()) {
-            "clientSeconds must be finite, was $clientSeconds."
-        }
-        require(maxLeadSeconds >= 0.0 && maxLeadSeconds.isFinite()) {
-            "maxLeadSeconds must be finite and non-negative, was $maxLeadSeconds."
-        }
+        if (!accept(clientSeconds.isFinite()) { "clientSeconds must be finite, was $clientSeconds." }) return
+        // An infinite lead caps nothing, so it is skipped; a negative or NaN one holds at the newest snapshot.
+        if (!accept(maxLeadSeconds != Double.POSITIVE_INFINITY) { "maxLeadSeconds must be finite, was $maxLeadSeconds." }) return
+        val lead = if (accept(maxLeadSeconds >= 0.0) { "maxLeadSeconds must be non-negative, was $maxLeadSeconds." }) maxLeadSeconds else 0.0
         if (!newestServerSeconds.isNaN()) {
-            val excess = playbackTime(clientSeconds) - (newestServerSeconds + maxLeadSeconds)
+            val excess = playbackTime(clientSeconds) - (newestServerSeconds + lead)
             if (excess > 0.0) {
                 delaySeconds += excess
             }
@@ -212,21 +216,35 @@ class AdaptiveSnapshotTimeline(
     fun reset() {
         offset = 0.0
         pendingPauseRebase = false
-        clearWindows()
+        clampedInputs = 0L
+        clearWindows(keepInterval = false)
+    }
+
+    /**
+     * Whether a value passed its [valid] check. When it didn't, [TimelineInputMode.Reject] throws with
+     * [message], and [TimelineInputMode.Clamp] counts it and answers false.
+     */
+    private inline fun accept(valid: Boolean, message: () -> String): Boolean {
+        if (valid) return true
+        require(inputMode == TimelineInputMode.Clamp, message)
+        clampedInputs++
+        return false
     }
 
     private fun computeTargetDelay(): Double =
         (2.0 * intervalSeconds + jitterSeconds).coerceIn(minDelaySeconds, maxDelaySeconds)
 
-    private fun clearWindows() {
+    private fun clearWindows(keepInterval: Boolean) {
         offsetCount = 0
         offsetNext = 0
-        gapCount = 0
-        gapNext = 0
         lateStart = 0
         lateCount = 0
         newestServerSeconds = Double.NaN
-        intervalSeconds = initialIntervalSeconds
+        if (!keepInterval) {
+            gapCount = 0
+            gapNext = 0
+            intervalSeconds = initialIntervalSeconds
+        }
         jitterSeconds = 0.0
         delaySeconds = computeTargetDelay()
     }

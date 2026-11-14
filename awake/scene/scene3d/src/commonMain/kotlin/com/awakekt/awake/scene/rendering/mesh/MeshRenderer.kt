@@ -57,4 +57,53 @@ data class MeshRenderer(
      * and still receives shadows. A [transparent] mesh never casts, whatever this says.
      */
     val castsShadows: Boolean = true,
-)
+    /**
+     * Past this distance from the camera eye to the entity's position, the mesh draws nowhere: not
+     * in the scene and not in the shadow maps. `0`, the default, draws it at any distance. Small
+     * clutter takes a short distance and a landmark a long one, within one streamed cell.
+     */
+    val maxDrawDistance: Float = 0f,
+) {
+    /** [MeshRenderer] as it was before [maxDrawDistance]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mesh: Mesh,
+        material: Material,
+        cullMode: CullMode = CullMode.None,
+        vertexAnimation: Vec3f = Vec3f.ZERO,
+        transparent: Boolean = false,
+        visible: Boolean = true,
+        additive: Boolean = false,
+        billboard: Boolean = false,
+        defaultMaterial: PbrMaterial? = null,
+        castsShadows: Boolean = true,
+    ) : this(mesh, material, cullMode, vertexAnimation, transparent, visible, additive, billboard, defaultMaterial, castsShadows, 0f)
+
+    /** [copy] as it was before [maxDrawDistance]: hidden, kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mesh: Mesh = this.mesh,
+        material: Material = this.material,
+        cullMode: CullMode = this.cullMode,
+        vertexAnimation: Vec3f = this.vertexAnimation,
+        transparent: Boolean = this.transparent,
+        visible: Boolean = this.visible,
+        additive: Boolean = this.additive,
+        billboard: Boolean = this.billboard,
+        defaultMaterial: PbrMaterial? = this.defaultMaterial,
+        castsShadows: Boolean = this.castsShadows,
+    ): MeshRenderer = MeshRenderer(
+        mesh, material, cullMode, vertexAnimation, transparent, visible, additive, billboard, defaultMaterial, castsShadows, maxDrawDistance,
+    )
+}
+
+/** Whether [camera]'s eye is farther than [MeshRenderer.maxDrawDistance] from [transform]'s position; never with no limit. */
+internal fun MeshRenderer.beyondDrawDistance(camera: com.awakekt.awake.scene.rendering.camera.Camera, transform: com.awakekt.awake.scene.core.transform.Transform): Boolean {
+    if (maxDrawDistance <= 0f) return false
+    val eye = camera.lens.eye
+    val world = transform.worldMatrix
+    val dx = world.m03 - eye.x
+    val dy = world.m13 - eye.y
+    val dz = world.m23 - eye.z
+    return dx * dx + dy * dy + dz * dz > maxDrawDistance * maxDrawDistance
+}

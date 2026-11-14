@@ -21,7 +21,7 @@ import com.awakekt.awake.render.command.BufferHandle as RenderBufferHandle
 
 /**
  * This backend's half of the [CommandRecorder] port: one `GPURenderPassEncoder` call per method,
- * no draw-order logic (that lives once, in `SharedOpaqueRenderFeature`). The only file in this
+ * unless [PassBindings] finds the binding already in place, and no draw-order logic (that lives once, in `SharedOpaqueRenderFeature`). The only file in this
  * module allowed to turn a shared render-feature call into a real WebGPU call.
  *
  * Constructed per pass rather than reused like Vulkan's: a `GPURenderPassEncoder` only exists
@@ -36,11 +36,14 @@ internal class WebGpuCommandRecorder(
     private var bindingLayout: BindingLayout = BindingLayout.Standard
     private var currentPipeline: WebGpuPipelineHandle? = null
 
+    private val bound = PassBindings()
+
     override fun bindPipeline(pipeline: PipelineHandle) {
         val webGpuPipeline = pipeline as WebGpuPipelineHandle
         encoder.setPipeline(webGpuPipeline.pipeline)
         bindingLayout = webGpuPipeline.bindingLayout
         currentPipeline = webGpuPipeline
+        bound.forget()
     }
 
     /** WebGPU validates a bind group against the currently bound pipeline's own layout, so the
@@ -48,15 +51,19 @@ internal class WebGpuCommandRecorder(
     override fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding) {
         val group = bindingLayout.slot(semantic)
         if (currentPipeline?.hasBindingGroup(group) != true) return
-        encoder.bindGroup(group.toUInt(), (binding as WebGpuBindGroupHandle).bindGroup)
+        val bindGroup = (binding as WebGpuBindGroupHandle).bindGroup
+        if (bound.bindGroup(group, bindGroup)) encoder.bindGroup(group.toUInt(), bindGroup)
     }
 
     override fun bindVertexBuffer(binding: Int, buffer: RenderBufferHandle) {
-        encoder.setVertexBuffer(binding.toUInt(), (buffer as WebGpuBufferHandle).buffer)
+        val gpuBuffer = (buffer as WebGpuBufferHandle).buffer
+        if (bound.bindVertexBuffer(binding, gpuBuffer)) encoder.setVertexBuffer(binding.toUInt(), gpuBuffer)
     }
 
+    /** Every index buffer here is bound whole in [meshIndexFormat], so the buffer alone says whether it is bound. */
     override fun bindIndexBuffer(buffer: RenderBufferHandle) {
-        encoder.setIndexBuffer((buffer as WebGpuBufferHandle).buffer, meshIndexFormat)
+        val gpuBuffer = (buffer as WebGpuBufferHandle).buffer
+        if (bound.bindIndexBuffer(gpuBuffer)) encoder.setIndexBuffer(gpuBuffer, meshIndexFormat)
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) {

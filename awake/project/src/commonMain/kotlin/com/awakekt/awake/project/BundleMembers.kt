@@ -11,6 +11,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -29,7 +30,7 @@ internal class BundleMembers(
     private val cache: ContentCache?,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)?,
     private val seals: MemberSeals?,
-) {
+) : AutoCloseable {
     private val bundles = index.bundles.associateBy { it.sha256 }
     private val membersOf = index.files.filter { it.bundle != null }.groupBy { it.bundle!! }
 
@@ -38,14 +39,24 @@ internal class BundleMembers(
     private val staged = LinkedHashMap<String, ByteArray>()
     private var stagedBytes = 0L
 
+    @Volatile
+    private var closed = false
+
     /** [entry]'s bytes, checked: kept from an earlier fetch, by range, or from its whole bundle. */
     suspend fun read(entry: ProjectIndexEntry, label: String): ByteArray {
+        check(!closed) { "IndexedAssetSource is closed" }
         val bundle = bundles.getValue(entry.bundle!!)
         val range = rangeFetch
         return takeStaged(entry)
             ?: range?.let {
                 val stored = it(bundle.url, entry.offset!!, index.storedSizeOf(entry))
-                opened(bundle, entry, label, stored).also { cache?.put(index.cacheKeyOf(entry), stored) }
+                opened(bundle, entry, label, stored).also { plain ->
+                    if (closed) {
+                        if (plain !== stored) plain.fill(0)
+                        error("IndexedAssetSource is closed")
+                    }
+                    cache?.put(index.cacheKeyOf(entry), stored)
+                }
             }
             ?: load(bundle.sha256).getValue(entry.sha256).also {
                 // This read takes its member; the staged copy is for reads still to come.
@@ -57,6 +68,7 @@ internal class BundleMembers(
     // TooGenericExceptionCaught: whatever fails the fetch fails the reads waiting on it too, then propagates.
     @Suppress("TooGenericExceptionCaught")
     suspend fun load(sha256: String): Map<String, ByteArray> {
+        check(!closed) { "IndexedAssetSource is closed" }
         while (true) {
             var leader = false
             val pending = lock.withLock {
@@ -73,10 +85,18 @@ internal class BundleMembers(
             try {
                 val bundle = bundles.getValue(sha256)
                 val stored = fetchChecked(bundle)
-                return stored.mapValues { it.value.read }.also {
-                    keep(bundle, it, stored)
-                    pending.complete(it)
+                if (closed) {
+                    stored.values.forEach { it.read.fill(0) }
+                    error("IndexedAssetSource is closed")
                 }
+                val members = stored.mapValues { it.value.read }
+                keep(bundle, members, stored)
+                if (closed) {
+                    stored.values.forEach { it.read.fill(0) }
+                    error("IndexedAssetSource is closed")
+                }
+                pending.complete(members)
+                return members
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Throwable) {
@@ -157,13 +177,15 @@ internal class BundleMembers(
             // The cache outlives this index and serves a hit by size alone, so each plaintext member it
             // keeps is hashed here even though the whole bundle's SHA-256 has matched: a key in it always
             // names its bytes. A sealed member is checked by its tag on every read instead.
-            membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }.forEach { member ->
+            for (member in membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }) {
+                if (closed) break
                 val bytes = stored.getValue(member.sha256).stored
                 cache.put(index.cacheKeyOf(member), if (seals != null) bytes else checked(member, "${member.key} in ${bundle.url}", bytes))
             }
             return
         }
         lock.withLock {
+            if (closed) return
             // By key, not SHA-256: two files with the same bytes are two reads to come.
             membersOf.getValue(bundle.sha256).forEach { member ->
                 if (member.key !in staged) {
@@ -182,6 +204,20 @@ internal class BundleMembers(
     private suspend fun takeStaged(entry: ProjectIndexEntry): ByteArray? =
         if (cache != null) null else lock.withLock { staged.remove(entry.key)?.also { stagedBytes -= it.size } }
 
+    override fun close() {
+        closed = true
+        while (!lock.tryLock()) {
+            // Other lock holders only run brief non-suspending map operations.
+        }
+        try {
+            staged.values.forEach { it.fill(0) }
+            staged.clear()
+            stagedBytes = 0L
+        } finally {
+            lock.unlock()
+        }
+    }
+
     /** One distinct member: its bytes as the bundle stores them, and as a read answers them. */
     private class Member(val stored: ByteArray, val read: ByteArray)
 
@@ -193,7 +229,7 @@ internal class BundleMembers(
  * One [MemberSeal] per distinct key id in [index], so reading a bundle asks [keys] only for its own
  * key id and leaves untouched bundles' keys unrequested.
  */
-internal class MemberSeals(private val index: ProjectIndex, keys: BundleKeyProvider) {
+internal class MemberSeals(private val index: ProjectIndex, keys: BundleKeyProvider) : AutoCloseable {
     private val byKeyId: Map<String, MemberSeal> = buildSet {
         add(checkNotNull(index.encryption).keyId)
         index.bundles.mapNotNullTo(this) { it.keyId }
@@ -204,31 +240,67 @@ internal class MemberSeals(private val index: ProjectIndex, keys: BundleKeyProvi
 
     /** The seal for [entry]'s bundle's effective key id. */
     fun of(entry: ProjectIndexEntry): MemberSeal = byKeyId.getValue(checkNotNull(index.keyIdOf(entry)))
+
+    override fun close() {
+        byKeyId.values.forEach { it.close() }
+    }
 }
 
 /**
  * Opens members sealed under [keyId], with the master key [keys] answers, asked once and kept until
- * the source is dropped, or until a bundle that matches the index byte for byte fails to open under
- * it, which only the wrong key does; a failed ask is not kept either, so the next read asks again.
+ * the source is dropped or closed, or until a bundle that matches the index byte for byte fails to
+ * open under it, which only the wrong key does; a failed ask is not kept either, so the next read
+ * asks again.
  */
-internal class MemberSeal(private val keyId: String, private val keys: BundleKeyProvider) {
+internal class MemberSeal(private val keyId: String, private val keys: BundleKeyProvider) : AutoCloseable {
     private val lock = Mutex()
+
+    @Volatile
     private var cipher: BundleCipher? = null
+
+    @Volatile
+    private var closed = false
 
     /** [stored], [entry]'s sealed bytes, opened; fails naming [label] when they don't authenticate. */
     suspend fun open(entry: ProjectIndexEntry, stored: ByteArray, label: String): ByteArray = cipher().open(stored, entry.sha256, label)
 
     /** The cipher, asking for the key handle the first time; a failure to get it is the provider's own. */
-    suspend fun cipher(): BundleCipher =
-        lock.withLock { cipher ?: BundleCipher(keys.keyHandle(keyId)).also { cipher = it } }
+    suspend fun cipher(): BundleCipher {
+        check(!closed) { "IndexedAssetSource is closed" }
+        return lock.withLock {
+            check(!closed) { "IndexedAssetSource is closed" }
+            cipher?.let { return@withLock it }
+            val handle = keys.keyHandle(keyId)
+            if (closed) {
+                handle.close()
+                error("IndexedAssetSource is closed")
+            }
+            val created = BundleCipher(handle)
+            cipher = created
+            if (closed) {
+                cipher = null
+                created.close()
+                error("IndexedAssetSource is closed")
+            }
+            created
+        }
+    }
 
     /** Drops and closes the key handle, which a matching bundle has just proved wrong, so the next read asks again. */
     suspend fun forget() {
         lock.withLock {
-            cipher?.close()
+            val current = cipher
             cipher = null
+            current?.close()
             (keys as? WrappedBundleKeyProvider)?.forgetStored(keyId)
         }
+    }
+
+    override fun close() {
+        closed = true
+        val current = cipher
+        cipher = null
+        current?.close()
     }
 }
 

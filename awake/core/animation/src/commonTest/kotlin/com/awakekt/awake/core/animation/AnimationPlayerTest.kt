@@ -11,6 +11,8 @@ import com.awakekt.awake.core.math.Vec3f
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AnimationPlayerTest {
@@ -44,6 +46,37 @@ class AnimationPlayerTest {
 
     private fun translationX(player: AnimationPlayer, delta: Float): Float =
         player.update(delta).jointPalette(skin)[12]
+
+    @Test
+    fun aHeldPoseIsNotComputedAgain() {
+        val player = player(clip("attack", x = 7f, duration = 0.5f), clip("loop", x = 3f))
+        player.play("attack", playback = AnimationPlayback.Once)
+        assertNotNull(player.updateIfChanged(0.25f), "the first pose is computed")
+        assertNotNull(player.updateIfChanged(0.5f), "the clip reaches its end: a new pose")
+        assertNull(player.updateIfChanged(0.1f), "a finished clip rests on its last frame")
+        assertNull(player.updateIfChanged(0.1f))
+
+        player.play("loop")
+        assertNotNull(player.updateIfChanged(0.1f), "a new clip is posed")
+        assertNotNull(player.updateIfChanged(0.1f), "a playing loop advances every frame")
+        player.speed = 0f
+        assertNull(player.updateIfChanged(0.1f), "speed 0 holds the pose already computed")
+        assertNull(player.updateIfChanged(0.1f))
+    }
+
+    @Test
+    fun aCrossfadeIsPosedUntilItEnds() {
+        val player = player(clip("a", x = 1f), clip("b", x = 5f))
+        player.play("a")
+        player.speed = 0f
+        player.updateIfChanged(0f)
+        assertNull(player.updateIfChanged(0.1f))
+        player.speed = 1f
+        player.crossFadeTo("b", durationSeconds = 0.2f)
+        assertNotNull(player.updateIfChanged(0.1f), "blending")
+        assertNotNull(player.updateIfChanged(0.15f), "the blend ends")
+        assertEquals(5f, player.updateIfChanged(0f)?.jointPalette(skin)?.get(12) ?: 5f, "and lands on the new clip")
+    }
 
     @Test
     fun loopingPlaybackWrapsAtClipDuration() {

@@ -11,6 +11,8 @@ import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.CompressedTextureImage
@@ -480,6 +482,77 @@ class GltfAssetResolverTextureTest {
         }
         bytes[offset + 2] = 2
         return bytes
+    }
+
+    @Test
+    fun doubleSidedDrivesMaterialSlotAndDefaultCullModeForTexturedAndUntexturedPrimitives() = runTest {
+        val path = "models/flags.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, doubleSidedFlagsJson().encodeToByteArray())
+
+        val slots = resolver.materialSlots(path)
+        assertEquals(4, slots.size)
+
+        assertFalse(slots[0].doubleSided)
+        assertEquals(CullMode.Back, slots[0].cullMode)
+        assertEquals(false, slots[0].parameters?.doubleSided)
+        assertEquals(CullMode.Back, resolver.defaultCullMode(slots[0].mesh, slots[0].material))
+
+        assertTrue(slots[1].doubleSided)
+        assertEquals(CullMode.None, slots[1].cullMode)
+        assertEquals(AlphaMode.Masked, slots[1].parameters?.alphaMode)
+        assertEquals(true, slots[1].parameters?.doubleSided)
+        assertEquals(CullMode.None, resolver.defaultCullMode(slots[1].mesh, slots[1].material))
+
+        assertFalse(slots[2].doubleSided)
+        assertEquals(CullMode.Back, resolver.defaultCullMode(slots[2].mesh, slots[2].material))
+
+        assertTrue(slots[3].doubleSided)
+        assertEquals(CullMode.None, resolver.defaultCullMode(slots[3].mesh, slots[3].material))
+
+        val adopted = GltfAssetResolver()
+        adopted.adopt(path, resolver)
+        assertEquals(CullMode.Back, adopted.defaultCullMode(slots[0].mesh, slots[0].material))
+        assertEquals(CullMode.None, adopted.defaultCullMode(slots[1].mesh, slots[1].material))
+
+        resolver.forget(path)
+        assertNull(resolver.defaultCullMode(slots[0].mesh, slots[0].material))
+        assertNull(resolver.defaultCullMode(slots[1].mesh, slots[1].material))
+    }
+
+    private fun doubleSidedFlagsJson(): String {
+        val bytes = triangleBufferBytes()
+        val bufferUri = "data:application/octet-stream;base64,${Base64.encode(bytes)}"
+        return """
+            {
+              "buffers": [{"uri":"$bufferUri","byteLength":${bytes.size}}],
+              "bufferViews": [
+                {"buffer":0,"byteOffset":0,"byteLength":36},
+                {"buffer":0,"byteOffset":36,"byteLength":6}
+              ],
+              "accessors": [
+                {"bufferView":0,"componentType":5126,"count":3,"type":"VEC3"},
+                {"bufferView":1,"componentType":5123,"count":3,"type":"SCALAR"}
+              ],
+              "materials": [
+                {"pbrMetallicRoughness":{"baseColorTexture":{"index":0}}},
+                {"pbrMetallicRoughness":{"baseColorTexture":{"index":0}},"alphaMode":"MASK","doubleSided":true},
+                {},
+                {"doubleSided":true}
+              ],
+              "textures":[{"source":0}],
+              "images":[{"uri":"data:image/png;base64,$PIXEL_PNG"}],
+              "meshes":[{"primitives":[
+                {"attributes":{"POSITION":0},"indices":1,"material":0},
+                {"attributes":{"POSITION":0},"indices":1,"material":1},
+                {"attributes":{"POSITION":0},"indices":1,"material":2},
+                {"attributes":{"POSITION":0},"indices":1,"material":3}
+              ]}],
+              "nodes":[{"mesh":0}],
+              "scenes":[{"nodes":[0]}],
+              "scene":0
+            }
+        """.trimIndent()
     }
 
     private companion object {
