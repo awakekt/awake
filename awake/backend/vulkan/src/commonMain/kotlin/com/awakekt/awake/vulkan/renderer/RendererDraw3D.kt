@@ -328,6 +328,12 @@ internal fun VulkanRenderer.waitForCurrentFrameResourceSlot() {
     bufferPools.frameSlotIdle(currentFrame)
 }
 
+/** Waits until no frame slot is referenced by the GPU: a reused frame may read any of them. */
+internal fun VulkanRenderer.waitForAllFrameResourceSlots() {
+    val fences = swapchainManager.inFlightFences.filter { it != 0L }
+    if (fences.isNotEmpty()) Vulkan.vkWaitForFences(device, fences.toLongArray(), true, Long.MAX_VALUE)
+}
+
 /**
  * Also this backend's [PreparedDraw]: the port's members are computed off the fields already
  * here, so the shared opaque feature iterates these directly instead of a second per-draw object

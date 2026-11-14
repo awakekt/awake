@@ -54,6 +54,13 @@ internal class VulkanDrawPreparer(
     /** The shadow depth pipelines enable `depthClampEnable` exactly when the device has the feature. */
     override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.depthClamp
 
+    /**
+     * A prepared frame's draws bind the slot they were prepared in, frame block included, so drawn
+     * again they read what they read; the batch prepared after a reused frame waits for every slot
+     * first ([ReusedFrameGuard]).
+     */
+    override val redrawsPreparedFrames: Boolean get() = true
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,
@@ -67,6 +74,8 @@ internal class VulkanDrawPreparer(
             // phase usually waited for it already, but a frame with no UI never did, and preparing
             // runs before acquiring the image, which is the next wait. Free when already waited.
             renderer.waitForCurrentFrameResourceSlot()
+            // A frame handed back unprepared still reads the slot it was prepared in, which may be this one.
+            if (renderer.bufferPools.reusedFrames.preparing()) renderer.waitForAllFrameResourceSlots()
             // Submitted offscreen work may still read the slots this batch is about to rewrite.
             renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
             // After both waits: the block every lit draw of this batch reads beside its own.
