@@ -1,6 +1,6 @@
 # What the engine gives an app
 
-<p class="awake-lede">A checklist of the pieces every app needs that Awake already has, so you look here before writing your own loading screen state, crash recorder, playback clock or id pool.</p>
+<p class="awake-lede">A checklist of the pieces every app needs that Awake already has, so you look here before writing your own loading screen state, crash recorder, playback clock or id set.</p>
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
@@ -74,6 +74,6 @@ Both need a Vulkan driver; Mesa's lavapipe is enough on a machine with no GPU.
 
 | You need | Use | Module |
 |---|---|---|
-| Small ids handed out and reused once released | `ReusableIdSet` | `awake:core:pool` |
+| A sorted set of 64-bit ids refilled every tick, and what entered and left since the last | `SortedLongSet`, `SortedLongSet.diff(previous, current, onEnter, onLeave)` | `awake:core:pool` |
 | Scratch objects reused every frame | `ScratchPool` | `awake:core:pool` |
 | A map from `Long` or `Int` keys without boxing | `MutableLongObjectMap`, `MutableIntObjectMap`, `MutableIntSet`, `MutableLongSet` | `androidx.collection`, which Core already depends on |
