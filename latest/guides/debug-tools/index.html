@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://docs.awakekt.com/latest/guides/debug-tools/">
       
       
-        <link rel="prev" href="../launch-parameters/">
+        <link rel="prev" href="../settings/">
       
       
         <link rel="next" href="../math/">
@@ -423,6 +423,8 @@
       
         
       
+        
+      
     
     
     
@@ -608,6 +610,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -698,6 +728,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -839,7 +873,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -1008,6 +1042,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -3212,36 +3302,49 @@ in amber. Each <code>line</code> is two points and a colour:</p>
 </ul>
 <h2 id="turn-sources-on">Turn sources on</h2>
 <p>A <code>DebugRegistry</code> holds the sources a game has and the ids that are on. Build it from the launch
-flags: <code>--debug=cells,spawner</code> on desktop, <code>?debug=cells,spawner</code> on the web.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">desktop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DebugRegistry</span><span class="p">(</span><span class="n">DebugFlags</span><span class="p">.</span><span class="na">fromArgs</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="s">"--debug=cells,spawner"</span><span class="p">)))</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">web</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DebugRegistry</span><span class="p">(</span><span class="n">DebugFlags</span><span class="p">.</span><span class="na">fromPage</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">"debug"</span><span class="p">)</span><span class="w"> </span><span class="s">"cells"</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">})</span>
+flags: <code>--debug=cells,spawner</code> on desktop, <code>?debug=cells,spawner</code> on the web. Declare the flag once
+as a <a href="../launch-options/">launch option</a>, with the game's other options:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">object</span><span class="w"> </span><span class="nc">DebugLaunch</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LaunchOptions</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ids</span><span class="p">(</span><span class="s">"debug"</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Debug sources to show, comma-separated"</span><span class="p">)</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="p">}</span>
 </span></code></pre></div>
-<p>On the web, pass the page's query parameter to <code>fromPage</code>, for example
-<code>DebugFlags.fromPage(browserLaunchParameters()::first)</code> (see
-<a href="../launch-parameters/">Launch parameters</a>). Ids are trimmed, lower-cased and split on commas, and a
-repeated flag adds to the set.</p>
+<p>Then read it from whatever the host was launched with:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">listOf</span><span class="p">(</span><span class="s">"--debug=cells,spawner"</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">desktop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DebugRegistry</span><span class="p">(</span><span class="n">DebugLaunch</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">LaunchParameters</span><span class="p">.</span><span class="na">fromArguments</span><span class="p">(</span><span class="n">args</span><span class="p">).</span><span class="na">toMap</span><span class="p">())</span><span class="o">[</span><span class="n">DebugLaunch</span><span class="p">.</span><span class="na">debug</span><span class="o">]</span><span class="p">)</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">web</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DebugRegistry</span><span class="p">(</span><span class="n">DebugLaunch</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">LaunchParameters</span><span class="p">.</span><span class="na">fromQuery</span><span class="p">(</span><span class="s">"?debug=cells"</span><span class="p">).</span><span class="na">toMap</span><span class="p">())</span><span class="o">[</span><span class="n">DebugLaunch</span><span class="p">.</span><span class="na">debug</span><span class="o">]</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Ids are trimmed, lower-cased and split on commas, and a repeated flag adds to the set. A mistyped
+name, or <code>--debug cells</code> written with a space, is reported in the parse's <code>problems</code> with what to
+write instead (<code>--debug=cells</code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Moving from <code>DebugFlags</code></p>
+<p><code>DebugFlags.fromPage</code> and <code>DebugFlags.fromArgs</code> are deprecated and still work as before,
+<code>--debug cells</code> with a space included. On the launch-option path that spelling is a bare
+<code>--debug</code> and a stray <code>cells</code>, and both are reported, each saying <code>use --debug=cells</code>. Write
+<code>--debug=cells</code>.</p>
+</div>
 <p>Then register the registry as an app service, and the sources with it:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">debugTools</span><span class="p">(</span><span class="n">registry</span><span class="p">:</span><span class="w"> </span><span class="n">DebugRegistry</span><span class="p">,</span><span class="w"> </span><span class="n">spawner</span><span class="p">:</span><span class="w"> </span><span class="n">SpawnerProbe</span><span class="p">):</span><span class="w"> </span><span class="n">AwakeAppLifecycle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="c1">// A scene on the default infrastructure systems draws the lines and the panel of every source that is on.</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">service</span><span class="p">(</span><span class="n">DebugRegistry</span><span class="o">::</span><span class="n">class</span><span class="p">,</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"debug-tools"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">        </span><span class="kd">val</span><span class="w"> </span><span class="nv">cells</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frameSystem</span><span class="p">(</span><span class="s">"cells"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">            </span><span class="n">WorldPartitionSystem</span><span class="p">(</span><span class="n">WorldPartitionConfig</span><span class="p">(</span><span class="n">cellSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">,</span><span class="w"> </span><span class="n">loadingRadius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">8f</span><span class="p">,</span><span class="w"> </span><span class="n">unloadRadius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12f</span><span class="p">))</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">        </span><span class="p">}</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">        </span><span class="n">onReady</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">            </span><span class="c1">// Off unless `cells` is in the flags: an off source is never added, so it costs nothing.</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">            </span><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">WorldPartitionDebugSource</span><span class="p">(</span><span class="n">system</span><span class="p">(</span><span class="n">cells</span><span class="p">).</span><span class="na">probe</span><span class="p">))</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">            </span><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">SpawnerDebugSource</span><span class="p">(</span><span class="n">spawner</span><span class="p">))</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">            </span><span class="n">world</span><span class="p">.</span><span class="na">scene</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">                </span><span class="n">entity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">camera</span><span class="p">(</span><span class="n">lens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Lens</span><span class="p">.</span><span class="na">perspective</span><span class="p">(</span><span class="n">eye</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">24f</span><span class="p">,</span><span class="w"> </span><span class="m">18f</span><span class="p">),</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">)))</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">                </span><span class="n">entity</span><span class="p">(</span><span class="s">"player"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">                    </span><span class="n">transform</span><span class="p">()</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">                    </span><span class="n">with</span><span class="p">(</span><span class="n">StreamObserver</span><span class="p">)</span><span class="w"> </span><span class="c1">// cells stream, and are drawn, around this entity</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">                </span><span class="p">}</span>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">            </span><span class="p">}</span>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">        </span><span class="p">}</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">debugTools</span><span class="p">(</span><span class="n">registry</span><span class="p">:</span><span class="w"> </span><span class="n">DebugRegistry</span><span class="p">,</span><span class="w"> </span><span class="n">spawner</span><span class="p">:</span><span class="w"> </span><span class="n">SpawnerProbe</span><span class="p">):</span><span class="w"> </span><span class="n">AwakeAppLifecycle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="c1">// A scene on the default infrastructure systems draws the lines and the panel of every source that is on.</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">service</span><span class="p">(</span><span class="n">DebugRegistry</span><span class="o">::</span><span class="n">class</span><span class="p">,</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"debug-tools"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">        </span><span class="kd">val</span><span class="w"> </span><span class="nv">cells</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frameSystem</span><span class="p">(</span><span class="s">"cells"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">            </span><span class="n">WorldPartitionSystem</span><span class="p">(</span><span class="n">WorldPartitionConfig</span><span class="p">(</span><span class="n">cellSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">,</span><span class="w"> </span><span class="n">loadingRadius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">8f</span><span class="p">,</span><span class="w"> </span><span class="n">unloadRadius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12f</span><span class="p">))</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">        </span><span class="n">onReady</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">            </span><span class="c1">// Off unless `cells` is in the flags: an off source is never added, so it costs nothing.</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">            </span><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">WorldPartitionDebugSource</span><span class="p">(</span><span class="n">system</span><span class="p">(</span><span class="n">cells</span><span class="p">).</span><span class="na">probe</span><span class="p">))</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">            </span><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">SpawnerDebugSource</span><span class="p">(</span><span class="n">spawner</span><span class="p">))</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">            </span><span class="n">world</span><span class="p">.</span><span class="na">scene</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">                </span><span class="n">entity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">camera</span><span class="p">(</span><span class="n">lens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Lens</span><span class="p">.</span><span class="na">perspective</span><span class="p">(</span><span class="n">eye</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">24f</span><span class="p">,</span><span class="w"> </span><span class="m">18f</span><span class="p">),</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vec3f</span><span class="p">(</span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">)))</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">                </span><span class="n">entity</span><span class="p">(</span><span class="s">"player"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">                    </span><span class="n">transform</span><span class="p">()</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">                    </span><span class="n">with</span><span class="p">(</span><span class="n">StreamObserver</span><span class="p">)</span><span class="w"> </span><span class="c1">// cells stream, and are drawn, around this entity</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">                </span><span class="p">}</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">            </span><span class="p">}</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="p">}</span>
 </span></code></pre></div>
 <p><code>service(DebugRegistry::class, registry)</code> is all a scene on the default infrastructure systems needs:
 <code>DebugVisualizationSystem</code> draws the lines of every source that is on, and <code>DebugPanelSystem</code> shows
@@ -3260,7 +3363,7 @@ hidden by it, and the renderer takes at most 65,536 lines a frame; any past that
 <p><code>WorldPartitionSystem</code> keeps a <code>probe</code>, a <code>WorldPartitionProbe</code>, of what it streams: the observer,
 the cell it is in, and each active cell with its state. <code>WorldPartitionDebugSource</code> shows it, with
 the id <code>cells</code>:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">WorldPartitionDebugSource</span><span class="p">(</span><span class="n">partition</span><span class="p">.</span><span class="na">probe</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">WorldPartitionDebugSource</span><span class="p">(</span><span class="n">partition</span><span class="p">.</span><span class="na">probe</span><span class="p">))</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -3384,7 +3487,7 @@ frozen culling camera's frustum. <code>DebugToggleIds</code> holds the ids.</p>
 <p><code>PerceptionDebugSource</code> shows what each <code>Perceiver</code> sees, hears and remembers, with the id <code>sight</code>.
 Give it the world and the same <code>PerceptionSpace</code> the <code>PerceptionSystem</code> was made with, so it draws
 from where the system looks:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">PerceptionDebugSource</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="n">space</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">PerceptionDebugSource</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="n">space</span><span class="p">))</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -3450,7 +3553,7 @@ a game draws them with a source of its own, registered the same way.</p>
 <h2 id="the-physics-source">The physics source</h2>
 <p><code>PhysicsDebugSource(world)</code>, in <code>awake:scene:physics</code>, shows the physics bodies of a <code>World</code>, with the
 id <code>physics</code>:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">PhysicsDebugSource</span><span class="p">(</span><span class="n">world</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">PhysicsDebugSource</span><span class="p">(</span><span class="n">world</span><span class="p">))</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -3484,8 +3587,8 @@ needs no scene.</p>
 <h2 id="the-navigation-source">The navigation source</h2>
 <p><code>NavDebugSource</code>, in <code>awake:navigation</code>, shows a navigation grid and the routes agents walk on it, with
 the id <code>nav</code>. Make it over one baked <code>NavGridTile</code> or over a <code>StreamedNavGrid</code>:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">ground</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavGroundHeight</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">heightAtWorld</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">).</span><span class="na">let</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">it</span><span class="p">.</span><span class="na">isNaN</span><span class="p">())</span><span class="w"> </span><span class="m">0f</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="nb">it</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">NavDebugSource</span><span class="p">(</span><span class="n">streamedGrid</span><span class="p">,</span><span class="w"> </span><span class="n">ground</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">routes</span><span class="w"> </span><span class="p">})</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">ground</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NavGroundHeight</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">heightAtWorld</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">).</span><span class="na">let</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">it</span><span class="p">.</span><span class="na">isNaN</span><span class="p">())</span><span class="w"> </span><span class="m">0f</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="nb">it</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">NavDebugSource</span><span class="p">(</span><span class="n">streamedGrid</span><span class="p">,</span><span class="w"> </span><span class="n">ground</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">routes</span><span class="w"> </span><span class="p">})</span>
 </span></code></pre></div>
 <p><code>ground</code> lays the lines on the terrain; <code>NavGroundHeight.FLAT</code>, the default, is level ground at <code>y = 0</code>.
 The last argument returns the routes to draw, as <code>AgentRoute</code>s. The navigation module can't see who
@@ -3622,9 +3725,9 @@ draws each one's world box in the colour of that decision.</p>
 from the live one, so you can fly out and see what the frozen view kept (green) and dropped (grey
 and red). Press F9 again to thaw. In code, set <code>CullingProbe.frozen</code>.</p>
 <p>Outside the default systems, give a render system the probe yourself:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">probe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CullingProbe</span><span class="p">()</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">renderSystem</span><span class="p">.</span><span class="na">cullingProbe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">probe</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">CullingDebugSource</span><span class="p">(</span><span class="n">probe</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">probe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CullingProbe</span><span class="p">()</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">renderSystem</span><span class="p">.</span><span class="na">cullingProbe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">probe</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">CullingDebugSource</span><span class="p">(</span><span class="n">probe</span><span class="p">))</span>
 </span></code></pre></div>
 <p>A mesh without <code>MeshBounds</code> is never culled, so it has no box. Culled meshes aren't drawn at all, so
 the boxes, not the meshes, show what was dropped.</p>
@@ -3686,7 +3789,7 @@ the boxes, not the meshes, show what was dropped.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../launch-parameters/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Launch parameters">
+          <a href="../settings/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Settings">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -3696,7 +3799,7 @@ the boxes, not the meshes, show what was dropped.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Launch parameters
+                Settings
               </div>
             </div>
           </a>

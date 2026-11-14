@@ -423,6 +423,8 @@
       
         
       
+        
+      
     
     
     
@@ -608,6 +610,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -696,6 +726,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -837,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -1006,6 +1040,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -3169,6 +3259,7 @@ a bundle sealed under that <code>keyId</code> is read or prefetched:</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">online</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BundleKeyProvider</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">keyId</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">account</span><span class="p">.</span><span class="na">bundleKey</span><span class="p">(</span><span class="n">keyId</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IndexedAssetSource</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="w"> </span><span class="n">fetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">url</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">upload</span><span class="p">.</span><span class="na">getValue</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="n">keys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">online</span><span class="p">)</span>
 </span></code></pre></div>
+<p><code>IndexedAssetSource</code>, <code>LayeredAssetSource</code>, and <code>BundleKeyProvider.wrapped</code> implement <code>AutoCloseable</code>. Calling <code>close()</code> (or <code>LayeredAssetSource.detachProtected()</code> on sign-out or session lockdown) deterministically releases and zeros held <code>BundleKeyHandle</code>s, ephemeral RSA-OAEP session keys, and uncached staged bundle plaintext without clobbering caller-owned key byte arrays.</p>
 <h2 id="offline-play">Offline play</h2>
 <p>In a browser, pass <code>platformBundleKeyStore(namespace)</code> to <code>BundleKeyProvider.wrapped(store)</code>:
 <code>IndexedDbBundleKeyStore</code> persists unwrapped WebCrypto <code>CryptoKey</code> handles in IndexedDB via HTML

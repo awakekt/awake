@@ -423,6 +423,8 @@
       
         
       
+        
+      
     
     
     
@@ -608,6 +610,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -696,6 +726,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -837,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -1006,6 +1040,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -3120,7 +3210,7 @@
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge">Desktop · Android · iOS</span></p>
 </div>
-<p>The Vulkan backend is released on its own, as version <code>0.1.52</code>, and each release
+<p>The Vulkan backend is released on its own, as version <code>0.1.54</code>, and each release
 depends on one exact AwakeKt Engine release. See
 <a href="../../get-started/installation/#core-and-vulkan-versions">Core and Vulkan versions</a> for the pairing
 and <a href="../../get-started/first-window/">Your first window</a> for a first <code>main()</code>.</p>
@@ -3351,7 +3441,14 @@ draws. The game needs no code for it: <code>runVulkanDesktopGame</code> reads tw
 </table>
 <p>Either run fails if the engine never starts, with the reason, so a missing driver or native library
 can't pass as a short run. In code, <code>VulkanEngine.playHeadless(width, height, frames)</code> plays the
-same way and returns the last frame's pixels.</p>
+same way and returns the last frame's pixels, and <code>snapshotPng(file, width, height)</code> also writes them
+as a PNG, for a CI screenshot or a picture in the docs. A project plays as it ships when the app
+composes it as usual:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">scene</span><span class="p">(</span><span class="s">"shot"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">runProject</span><span class="p">(</span><span class="n">loadProject</span><span class="p">(</span><span class="n">files</span><span class="p">))</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">VulkanEngine</span><span class="p">(</span><span class="n">game</span><span class="p">,</span><span class="w"> </span><span class="n">ProjectRenderPlan</span><span class="p">).</span><span class="na">snapshotPng</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="s">"build/shots/entry.png"</span><span class="p">),</span><span class="w"> </span><span class="m">1280</span><span class="p">,</span><span class="w"> </span><span class="m">720</span><span class="p">,</span><span class="w"> </span><span class="n">frames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">60</span><span class="p">)</span>
+</span></code></pre></div>
+<p>With no GPU, Mesa's lavapipe is enough. <code>awake render &lt;scene&gt;</code> (<code>awake:project:cli</code>)
+renders one scene from the command line the same way.</p>
 <h2 id="how-it-works">How it works</h2>
 <p><code>VulkanEngine(appLifecycle, plan)</code> owns the GPU side of an app: it creates the device, swapchain and
 the plan's pipelines, and tears them down. The app's own behaviour comes from its lifecycle. Shaders

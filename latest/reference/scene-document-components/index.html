@@ -421,6 +421,8 @@
       
         
       
+        
+      
     
     
     
@@ -606,6 +608,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -689,6 +719,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -827,7 +861,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -996,6 +1030,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5245,7 +5335,7 @@ registers it.</p>
 <tr>
 <td><code>loadProject(...)</code></td>
 <td><code>com.awakekt.awake.project:runtime</code></td>
-<td>The defaults, plus <code>movement_control</code>, <code>camera_rig</code>, <code>input_actions</code>, <code>physics_body</code>, <code>character_controller</code>, <code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>navigation_agent</code>, <code>audio_source</code>, and the components of the <a href="../../guides/scene-capabilities/">capabilities</a> passed to it</td>
+<td>The defaults, plus <code>movement_control</code>, <code>camera_rig</code>, <code>input_actions</code>, <code>physics_body</code>, <code>character_controller</code>, <code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, <code>navigation_agent</code>, <code>audio_source</code>, and the components of the <a href="../../guides/scene-capabilities/">features</a> passed to it</td>
 </tr>
 </tbody>
 </table>
@@ -7236,9 +7326,30 @@ first across midnight. A field no stop sets keeps its authored value.</p>
 <td>color</td>
 <td>The <code>fog</code> colour.</td>
 </tr>
+<tr>
+<td><code>skyTint</code></td>
+<td>color</td>
+<td>The colour a <code>Cubemap</code> <code>skybox</code> is multiplied by.</td>
+</tr>
+<tr>
+<td><code>skyExposure</code></td>
+<td>number</td>
+<td>A multiplier on a <code>Cubemap</code> <code>skybox</code>'s <code>exposure</code>. At least <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>sunVisibility</code></td>
+<td>number</td>
+<td>How visible the sky's sun is, <code>0</code> hidden to <code>1</code> shown.</td>
+</tr>
+<tr>
+<td><code>moonVisibility</code></td>
+<td>number</td>
+<td>How visible the sky's moon is, <code>0</code> hidden to <code>1</code> shown.</td>
+</tr>
 </tbody>
 </table>
-<p>The stops write the first <code>skybox</code> and <code>fog</code> in the scene. A <code>Cubemap</code> sky keeps its image. A
+<p>The stops write the first <code>skybox</code> and <code>fog</code> in the scene. A <code>Cubemap</code> sky takes <code>skyTint</code> and
+<code>skyExposure</code>, and blends between its <code>panoramas</code> by time of day. A
 rotated light node shines along its rotation and ignores the sun's direction.</p>
 <h2 id="factions"><code>factions</code></h2>
 <p>Who regards whom how, for every perceiver in the scene. <code>SceneFactions</code>. A scene has at most one; with none, every faction is neutral to every other and friendly to itself.</p>
@@ -7580,6 +7691,12 @@ number for alpha.</p>
 <td>How far from the camera shadows reach. Finite and above 0.</td>
 </tr>
 <tr>
+<td><code>shadowFade</code></td>
+<td>number</td>
+<td><code>0.2</code></td>
+<td>The share of <code>shadowDistance</code>, counted back from its end, over which shadows fade out. From <code>0</code> up to <code>1</code>; <code>0</code> ends them on a hard line.</td>
+</tr>
+<tr>
 <td><code>ambient</code></td>
 <td>number</td>
 <td>none</td>
@@ -7802,9 +7919,9 @@ of running up the steepest walkable slope.</p>
 </tr>
 <tr>
 <td><code>cullMode</code></td>
-<td><code>None</code> · <code>Back</code> · <code>Front</code></td>
+<td><code>None</code> · <code>Back</code> · <code>Front</code> · <code>FromMaterial</code></td>
 <td><code>None</code></td>
-<td>Face culling. Also read as <code>cull_mode</code>.</td>
+<td>Face culling. <code>FromMaterial</code> uses the resolved glTF material's <code>doubleSided</code> flag (<code>Back</code> when <code>false</code>, <code>None</code> when <code>true</code>), falling back to <code>None</code>. Also read as <code>cull_mode</code>.</td>
 </tr>
 <tr>
 <td><code>transparent</code></td>
@@ -7829,6 +7946,12 @@ of running up the steepest walkable slope.</p>
 <td>boolean</td>
 <td><code>true</code></td>
 <td>Draw the mesh into the shadow maps, whether the camera sees it or not. <code>false</code> for a decal, a ground card or distant filler; the mesh still draws and still receives shadows. A <code>transparent</code> mesh never casts.</td>
+</tr>
+<tr>
+<td><code>maxDrawDistance</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Past this distance from the camera eye to the entity's position, the mesh draws nowhere, its shadow included. <code>0</code> draws it at any distance. Small clutter takes a short distance and a landmark a long one. Not negative.</td>
 </tr>
 </tbody>
 </table>
@@ -9089,6 +9212,42 @@ document's format is in the <a href="../shader-document/">shader document refere
 <td>number</td>
 <td><code>1</code></td>
 <td>Cubemap brightness, for <code>Cubemap</code>.</td>
+</tr>
+<tr>
+<td><code>sunAndMoon</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draw the sun and moon over this sky, whatever its type.</td>
+</tr>
+<tr>
+<td><code>sunTexture</code></td>
+<td>string</td>
+<td>none</td>
+<td>Asset path of an image drawn as the sun, on a square the size of its disc.</td>
+</tr>
+<tr>
+<td><code>moonTexture</code></td>
+<td>string</td>
+<td>none</td>
+<td>Asset path of an image drawn as the moon.</td>
+</tr>
+<tr>
+<td><code>moonPhase</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>The moon's phase, from 0 to 1: <code>0</code> new, <code>0.25</code> first quarter, <code>0.5</code> full, <code>0.75</code> last quarter.</td>
+</tr>
+<tr>
+<td><code>additiveBodies</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Add the sun and moon to the sky instead of covering it.</td>
+</tr>
+<tr>
+<td><code>panoramas</code></td>
+<td>list of panoramas</td>
+<td><code>[]</code></td>
+<td>More cubemap strips by time of day, each <code>{ time, path }</code> in time order; a <code>day_cycle</code> blends the two around its time.</td>
 </tr>
 </tbody>
 </table>

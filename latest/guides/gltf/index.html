@@ -423,6 +423,8 @@
       
         
       
+        
+      
     
     
     
@@ -608,6 +610,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -696,6 +726,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -837,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -1006,6 +1040,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -3090,7 +3180,7 @@ entry scene names, and <code>runProject</code> wires the resolver and the system
 </tr>
 <tr>
 <td>Materials</td>
-<td>Base colour, metallic-roughness, normal, occlusion and emissive textures; <code>OPAQUE</code> and <code>MASK</code> alpha. <code>baseColorFactor</code> is multiplied into the vertex colour.</td>
+<td>Base colour, metallic-roughness, normal, occlusion and emissive textures; <code>OPAQUE</code>, <code>MASK</code> and <code>BLEND</code> (<code>alphaMode</code>); <code>doubleSided</code>; <code>baseColorFactor</code>, <code>metallicFactor</code>, <code>roughnessFactor</code>, <code>emissiveFactor</code>. Setting <code>"cullMode": "FromMaterial"</code> on <code>mesh_renderer</code> derives back-face culling from <code>doubleSided</code> (<code>Back</code> when <code>false</code>, <code>None</code> when <code>true</code>).</td>
 </tr>
 <tr>
 <td>Skins</td>
@@ -3103,7 +3193,7 @@ entry scene names, and <code>runProject</code> wires the resolver and the system
 </tbody>
 </table>
 <p>Not supported: Draco and meshopt compression, sparse accessors, morph targets, other texture
-coordinate sets, texture samplers, and <code>BLEND</code> alpha (drawn as opaque).</p>
+coordinate sets, texture samplers, normal <code>scale</code>, occlusion <code>strength</code>, <code>alphaCutoff</code>, and <code>BLEND</code> alpha (drawn as opaque).</p>
 <h2 id="how-it-works">How it works</h2>
 <p><code>preload(path)</code> parses the file once and keeps the result. For a <code>.glb</code>, the resolver keeps static
 geometry. For a <code>.gltf</code>, it also keeps the skeleton, skins and clips, and <code>getLoadedScene(path)</code>

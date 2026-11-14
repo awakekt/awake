@@ -423,6 +423,8 @@
       
         
       
+        
+      
     
     
     
@@ -608,6 +610,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -696,6 +726,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -837,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -1006,6 +1040,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -1290,6 +1380,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Day and night">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sun-and-moon-over-any-sky" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sun and moon over any sky
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-cubemap-sky-that-follows-the-day" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A cubemap sky that follows the day
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2958,6 +3076,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Day and night">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sun-and-moon-over-any-sky" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sun and moon over any sky
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-cubemap-sky-that-follows-the-day" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A cubemap sky that follows the day
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3193,6 +3339,28 @@ A field no stop sets keeps the value its own component authors, and blending wra
 scene shows its light, sky and fog as authored; <code>DayCycleSystem().update(world, 0f)</code> applies the
 current time without advancing it. Saving writes the authored <code>time</code> back, never the time play
 reached. See <a href="../../reference/scene-document-components/#day_cycle"><code>day_cycle</code></a> for every field.</p>
+<h3 id="sun-and-moon-over-any-sky">Sun and moon over any sky</h3>
+<p>A procedural sky draws its own sun and moon discs; a cubemap or flat-colour sky does not. Set
+<code>sunAndMoon</code> to <code>true</code> on the <code>skybox</code> to draw them over any sky, where the light shines from and
+opposite it. <code>sunTexture</code> and <code>moonTexture</code> replace a disc with an image on a square the size of the
+disc, and transparent pixels leave the sky showing. <code>moonPhase</code> cuts the moon: <code>0</code> new, <code>0.25</code> first
+quarter (lit on the right), <code>0.5</code> full, <code>0.75</code> last quarter (lit on the left). A texture or a phase
+other than full draws the bodies without <code>sunAndMoon</code>, and a procedural sky then stops drawing its
+own discs so they are not doubled. The moon always stays opposite the sun. With a <code>day_cycle</code> they
+follow its sun path by time of day, not the <code>light</code>'s direction, so a rotated light node can hold the
+ground light still while the sun and moon cross the sky; without one they follow the light. Set
+<code>additiveBodies</code> to add them to the sky instead of covering it, as a glowing sun texture wants. A stop's
+<code>sunVisibility</code> and <code>moonVisibility</code> (0 hidden, 1 shown, blended between stops) give each body its hours
+of the day, and let both be hidden for a while at dusk. Wire <code>SkyboxCelestialSystem</code>
+beside <code>SkyboxCubemapSystem</code>, passing it the cubemap system so it draws after the sky.</p>
+<h3 id="a-cubemap-sky-that-follows-the-day">A cubemap sky that follows the day</h3>
+<p>A stop can set <code>skyTint</code>, a colour the cubemap is multiplied by, and <code>skyExposure</code>, a multiplier on
+the sky's own <code>exposure</code>. Both blend between stops like the other fields; a stop that sets neither
+leaves the cubemap as baked. To change the picture itself, list more strips under the sky's
+<code>panoramas</code>, each with the <code>time</code> it shows at, in time order. The day cycle blends the two either side
+of its time, wrapping across midnight, so a sky can go from day to evening to night. Without a
+<code>day_cycle</code> the first panorama shows. <code>SkyboxCubemapSystem</code> loads the two it needs and swaps to the
+next pair as the day moves on.</p>
 <div class="admonition warning">
 <p class="admonition-title">Keep the sun's node unrotated</p>
 <p>A rotated light node shines along its rotation and ignores the direction the day cycle writes.</p>
@@ -3244,6 +3412,42 @@ reached. See <a href="../../reference/scene-document-components/#day_cycle"><cod
 <td>number</td>
 <td><code>1.0</code></td>
 <td><code>Cubemap</code> only. Multiplies the sampled colour.</td>
+</tr>
+<tr>
+<td><code>sunAndMoon</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draw the sun and moon over this sky, whatever its type.</td>
+</tr>
+<tr>
+<td><code>sunTexture</code></td>
+<td>string</td>
+<td>none</td>
+<td>Asset path of an image drawn as the sun.</td>
+</tr>
+<tr>
+<td><code>moonTexture</code></td>
+<td>string</td>
+<td>none</td>
+<td>Asset path of an image drawn as the moon.</td>
+</tr>
+<tr>
+<td><code>moonPhase</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>The moon's phase, <code>0</code> to <code>1</code>: <code>0</code> new, <code>0.5</code> full.</td>
+</tr>
+<tr>
+<td><code>additiveBodies</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Add the sun and moon to the sky instead of covering it.</td>
+</tr>
+<tr>
+<td><code>panoramas</code></td>
+<td>list of <code>{ time, path }</code></td>
+<td><code>[]</code></td>
+<td><code>Cubemap</code> only. More strips by time of day, in time order; a <code>day_cycle</code> blends the two around its time.</td>
 </tr>
 </tbody>
 </table>

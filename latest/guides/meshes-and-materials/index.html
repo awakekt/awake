@@ -423,6 +423,8 @@
       
         
       
+        
+      
     
     
     
@@ -608,6 +610,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-the-engine-gives-an-app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the engine gives an app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -696,6 +726,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -837,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    Scene capabilities
+    Scene features
   
 
     
@@ -1006,6 +1040,62 @@
     
   
     Launch parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../launch-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Launch options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -3257,9 +3347,9 @@ material. To cook levels into your models and decide per entity which keep their
 </tr>
 <tr>
 <td><code>cullMode</code></td>
-<td><code>None</code> · <code>Back</code> · <code>Front</code></td>
+<td><code>None</code> · <code>Back</code> · <code>Front</code> · <code>FromMaterial</code></td>
 <td><code>None</code></td>
-<td>Which triangle faces to skip. <code>Back</code> suits a solid, correctly wound mesh.</td>
+<td>Which triangle faces to skip. <code>Back</code> suits a solid, correctly wound mesh; <code>FromMaterial</code> derives <code>Back</code> or <code>None</code> from the resolved glTF material's <code>doubleSided</code> flag.</td>
 </tr>
 <tr>
 <td><code>transparent</code></td>
@@ -3278,6 +3368,12 @@ material. To cook levels into your models and decide per entity which keep their
 <td>boolean</td>
 <td><code>true</code></td>
 <td>Draws the mesh into the shadow maps, in view or off screen. <code>false</code> for a decal, a ground card, a small prop or distant filler; the mesh still draws and still receives shadows. A <code>transparent</code> mesh never casts.</td>
+</tr>
+<tr>
+<td><code>maxDrawDistance</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Stops drawing the mesh, and its shadow, past this distance from the camera. <code>0</code> draws it at any distance: give small clutter a short distance and landmarks a long one.</td>
 </tr>
 </tbody>
 </table>
