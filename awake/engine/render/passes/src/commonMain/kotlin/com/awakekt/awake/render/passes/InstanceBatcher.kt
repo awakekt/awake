@@ -27,12 +27,14 @@ import kotlin.math.min
  *
  * What [batch] returns, and the instanced requests in it, are valid until the next [batch]:
  * a backend reads them while it prepares the frame, copying the models into its own buffer.
+ * Groups come out in [InstanceGroupOrder]'s order, which keeps each group's place across frames.
  */
 internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     private val groups = ArrayList<InstanceGroup>()
     private var groupCount = 0
     private var table = IntArray(INITIAL_TABLE)
     private val kept = ArrayList<RenderDrawCommand>()
+    internal val order = InstanceGroupOrder()
     private var preparer: GpuDrawPreparer? = null
     private var canInstance: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
 
@@ -82,7 +84,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
             group.add(draw, index)
             last = group
         }
-        for (index in 0 until groupCount) groups[index].emitInto(kept, rule.keepsOthers)
+        order.emit(groups, groupCount) { it.emitInto(kept, rule.keepsOthers) }
         return kept
     }
 
@@ -132,6 +134,8 @@ internal class InstanceGroup {
 
     /** Whether this frame's members may differ in tint and fade: their pipeline reads them per instance. */
     var tints = false
+
+    var place = 0 // This frame's place in [InstanceGroupOrder].
     private val groupTints = GroupTints()
     private var sources = IntArray(INITIAL_SOURCES)
     private val models = ArrayList<Mat4>()
