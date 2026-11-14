@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.squaredDistanceFrom
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
@@ -33,8 +34,8 @@ fun RenderDrawCommand.instancedDrawKind(): InstancedDrawKind? =
     resolveInstancedDrawKind(mesh.format, instanceModels, instanceJointPalettes)
 
 /** Shared source-packet identity used to select the matching depth caster on both backends. */
-fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = DepthRenderKey(
-    kind = when {
+fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = depthRenderKeyOf(
+    when {
         instanceModels.isNullOrEmpty() && mesh.format.isSkinned -> DepthCasterKind.Skinned
         !instanceModels.isNullOrEmpty() && instanceJointPalettes != null ->
             DepthCasterKind.SkinnedInstanced
@@ -43,8 +44,16 @@ fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = DepthRenderKey(
         !instanceModels.isNullOrEmpty() -> DepthCasterKind.Instanced
         else -> DepthCasterKind.Ordinary
     },
-    alphaMode = alphaMode,
+    alphaMode,
 )
+
+/** One key per kind and coverage, made once: asked for every draw of every planned frame (#1555). */
+private val DEPTH_RENDER_KEYS = Array(DepthCasterKind.entries.size * AlphaMode.entries.size) { index ->
+    DepthRenderKey(DepthCasterKind.entries[index / AlphaMode.entries.size], AlphaMode.entries[index % AlphaMode.entries.size])
+}
+
+private fun depthRenderKeyOf(kind: DepthCasterKind, alphaMode: AlphaMode): DepthRenderKey =
+    DEPTH_RENDER_KEYS[kind.ordinal * AlphaMode.entries.size + alphaMode.ordinal]
 
 /**
  * Resolves the [InstancedDrawKind] given a vertex [format], optional list of [instanceModels],
