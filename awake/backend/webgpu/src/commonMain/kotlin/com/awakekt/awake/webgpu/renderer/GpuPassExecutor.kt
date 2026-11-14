@@ -179,7 +179,7 @@ internal class RendererGpuPassExecutor(
                 SurfaceSize(target.width, target.height),
                 input.environment,
                 input,
-                retained = renderer.retainedBundles.pass(
+                retained = renderer.retainedPass(
                     // The depth view, not the colour: a swapchain's colour is a new texture every frame.
                     attachment.depth,
                     BundleLayout(listOf(target.colorFormat), GPUTextureFormat.Depth32Float, attachment.sampleCount),

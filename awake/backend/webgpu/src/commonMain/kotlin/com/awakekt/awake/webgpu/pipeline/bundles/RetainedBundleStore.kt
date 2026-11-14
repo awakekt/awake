@@ -16,6 +16,9 @@ internal class RetainedBundleStore(private val device: GPUDevice) {
     private val passes = HashMap<Any, RetainedPassBundles>()
     private var uses = 0L
 
+    /** Passes with bundles kept: for tests. */
+    val passCount: Int get() = passes.size
+
     fun pass(key: Any, layout: BundleLayout): RetainedPassBundles {
         uses += 1
         if (uses % STALE_AFTER == 0L) evictStale()
