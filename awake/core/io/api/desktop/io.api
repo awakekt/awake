@@ -102,6 +102,15 @@ public abstract interface class com/awakekt/awake/core/io/ByteWriteSession : jav
 	public abstract fun writeChunk ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface class com/awakekt/awake/core/io/ContentTooNew {
+	public abstract fun getFoundVersion ()I
+	public abstract fun getSupportedVersion ()I
+}
+
+public final class com/awakekt/awake/core/io/ContentTooNewKt {
+	public static final fun isTooNew (Ljava/lang/Throwable;)Z
+}
+
 public abstract interface class com/awakekt/awake/core/io/FileChange {
 }
 

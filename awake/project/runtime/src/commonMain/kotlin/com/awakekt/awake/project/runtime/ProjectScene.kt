@@ -16,6 +16,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
+import com.awakekt.awake.project.ContentFormatTooNewException
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
@@ -82,6 +83,9 @@ internal suspend fun loadProjectInto(
     val progress = ProgressReporter(onProgress)
     progress.report(0f)
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
+    if (manifest.formatVersion > MANIFEST_FORMAT_VERSION) {
+        throw ContentFormatTooNewException("project manifest", manifest.formatVersion, MANIFEST_FORMAT_VERSION)
+    }
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
     val scenePath = entryScene?.also {
@@ -194,6 +198,9 @@ internal suspend fun loadProjectScene(
 
 private fun SceneNode.meshNames(): List<String> =
     components.filterIsInstance<SceneMeshRenderer>().map { it.mesh } + children.flatMap { it.meshNames() }
+
+/** The newest project manifest format this build reads. */
+private const val MANIFEST_FORMAT_VERSION = 1
 
 /** How many spawned nodes a scene keeps before it first forgets the ones already despawned. */
 private const val SPAWNED_PRUNE_MIN = 32

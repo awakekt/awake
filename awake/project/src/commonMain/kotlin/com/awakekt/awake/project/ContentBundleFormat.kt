@@ -136,13 +136,15 @@ object ContentBundleFormat {
      *
      * @param bytes The bundle, or at least its first [HEADER_SIZE] bytes.
      * @return The header, whose [ContentBundleHeader.dataOffset] is how many bytes [readTableOfContents] needs.
-     * @throws IllegalArgumentException when [bytes] is too short, isn't a bundle, or is a version this engine can't read.
+     * @throws IllegalArgumentException when [bytes] is too short, isn't a bundle, or is a version this engine can't read:
+     * a [ContentFormatTooNewException] when the version is newer than this engine reads.
      */
     fun readHeader(bytes: ByteArray): ContentBundleHeader {
         require(bytes.size >= HEADER_SIZE) { "A content bundle header is $HEADER_SIZE bytes; got ${bytes.size}" }
         val reader = ByteReader(bytes)
         require(reader.ascii(MAGIC.length) == MAGIC) { "Not a content bundle: it doesn't start with $MAGIC" }
         val version = reader.u16()
+        if (version > ENCRYPTED_VERSION) throw ContentFormatTooNewException("content bundle", version, ENCRYPTED_VERSION)
         require(version == VERSION || version == ENCRYPTED_VERSION) {
             "Content bundle format $version isn't one this engine reads (it reads $VERSION and $ENCRYPTED_VERSION)"
         }

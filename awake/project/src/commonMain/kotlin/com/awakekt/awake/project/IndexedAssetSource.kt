@@ -109,6 +109,9 @@ class IndexedAssetSource(
     ) : this(index, fetch, cache, rangeFetch, null)
 
     init {
+        if (index.formatVersion > ProjectIndex.ENCRYPTED_FORMAT_VERSION) {
+            throw ContentFormatTooNewException("content index", index.formatVersion, ProjectIndex.ENCRYPTED_FORMAT_VERSION)
+        }
         val issues = ProjectContentValidator.indexIssueDetails(index)
         require(issues.isEmpty()) { "The project index is invalid: ${issues.joinToString("; ") { it.message }}" }
         require(index.encryption == null || keys != null) {
