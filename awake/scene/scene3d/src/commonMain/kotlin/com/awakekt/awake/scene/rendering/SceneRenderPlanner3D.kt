@@ -45,6 +45,9 @@ internal class SceneRenderPlanner3D(
     private val shadowCasters = ShadowCasterVolume()
     private val passScratch = ScenePassScratch()
 
+    /** Whether a frame this planner prepared may be drawn again later; see `GpuDrawPreparer.redrawsPreparedFrames`. */
+    val redrawsPreparedFrames: Boolean get() = drawPreparer.redrawsPreparedFrames
+
     val lastFrustumCulledCount: Int get() = geometryFeature.lastFrustumCulledCount
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
     val lastShadowOnlyCount: Int get() = geometryFeature.lastShadowOnlyCount
