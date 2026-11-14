@@ -171,15 +171,19 @@ object ScenePassCompiler {
                 shadowCascadeData = shadowCascadeData,
             )
             val requests = foldInstances(drawCalls, preparer, drawStats, scratch.batcher)
+            // Folded again by what a depth pass reads, when something casts: tinted copies cast as one.
+            scratch.casters.fold(requests, light != null && environment.shadowsEnabled, scratch.batcher.canInstanceWith(preparer))
             val visible = ArrayList<Caster>(requests.size)
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
-                val caster = Caster(draw, request.worldBounds, request.castsShadows)
-                when {
-                    !request.shadowsOnly -> visible += caster.also { masked.add(request, draw) }
-                    !draw.transparent && request.castsShadows -> shadowOnly += caster
+                val caster = Caster(draw, request.worldBounds, request.castsShadows && scratch.casters.castsAlone(index))
+                if (!request.shadowsOnly) {
+                    visible += caster.also { masked.add(request, draw) }
+                } else if (!draw.transparent && caster.casts) {
+                    shadowOnly += caster
                 }
             }
+            scratch.casters.prepare(preparer, requests.size, context) { draw, bounds -> shadowOnly += Caster(draw, bounds, true) }
             if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
         }
