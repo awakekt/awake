@@ -199,7 +199,10 @@ object ScenePassCompiler {
             resolvedEdgeDraws = edges,
             maskPasses = maskPasses,
             postPassChain = postPassChain,
-        )
+        ).also {
+            // Sorted above, once: the executors record these lists as they are.
+            it.drawsInRecordingOrder = resolved != null
+        }
     }
 }
 

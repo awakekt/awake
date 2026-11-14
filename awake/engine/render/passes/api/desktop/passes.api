@@ -5,6 +5,10 @@ public final class com/awakekt/awake/render/command/DrawCallCompilerKt {
 	public static final fun resolveDrawCalls (Ljava/util/List;Lkotlin/jvm/functions/Function2;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/render/command/RecordingOrderKt {
+	public static final fun drawsForRecording (Lcom/awakekt/awake/render/command/GpuPassInput;)Lcom/awakekt/awake/render/command/SortedDraws;
+}
+
 public final class com/awakekt/awake/render/command/SortedDraws {
 	public fun <init> (Ljava/util/Map;Ljava/util/List;)V
 	public final fun getOpaqueByPipeline ()Ljava/util/Map;

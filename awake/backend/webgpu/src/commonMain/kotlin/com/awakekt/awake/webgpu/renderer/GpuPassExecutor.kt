@@ -10,7 +10,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.allDraws
-import com.awakekt.awake.render.command.sortForRecording
+import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.recordPassFeatures
 import com.awakekt.awake.render.texture.RenderTarget
@@ -40,8 +40,7 @@ internal class RendererGpuPassExecutor(
             val activeRenderPipeline = if (useWireframe) wireframeRenderPipeline!! else renderPipeline
             val primary = PrimaryPipelineBinding(activeRenderPipeline.handle, useWireframe)
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
-            val resolved = input.resolvedDraws
-            val sorted = sortForRecording(resolved)
+            val sorted = input.drawsForRecording()
             val encoder = createRenderEncoder()
             com.awakekt.awake.render.passes.prepareFrameResources(
                 renderFeatures,
@@ -101,7 +100,7 @@ internal class RendererGpuPassExecutor(
         val offscreen = target as OffscreenRenderTarget
         val primary = PrimaryPipelineBinding(pipeline = renderer.renderPipeline.handle, wireframe = false)
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
-        val sorted = sortForRecording(input.resolvedDraws)
+        val sorted = input.drawsForRecording()
         val encoder = renderer.createRenderEncoder()
         com.awakekt.awake.render.passes.prepareFrameResources(
             renderer.renderFeatures,

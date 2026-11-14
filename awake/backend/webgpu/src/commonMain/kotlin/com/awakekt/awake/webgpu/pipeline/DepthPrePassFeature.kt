@@ -206,7 +206,7 @@ class DepthPrePassFeature(
                 val format = prepared.vertexFormat
                 // Keyed by coverage too: a masked caster draws through its cut-out shader, or not at all.
                 val alphaMode = prepared.depthRenderKey?.alphaMode ?: AlphaMode.Opaque
-                val pipeline = if (format == null) null else pipelineFor(DepthRenderKey(kind, alphaMode), format)
+                val pipeline = if (format == null) null else pipelineFor(DepthRenderKey.of(kind, alphaMode), format)
                 val vBuffer = prepared.vertexBuffer
                 val depthMaterial = prepared.depthMaterialBinding
                 val instanceBuffer = prepared.instanceVertexBuffer
