@@ -57,9 +57,9 @@ internal class VulkanDrawPreparer(
     /**
      * A prepared frame's draws bind the slot they were prepared in, frame block included, so drawn
      * again they read what they read; the batch prepared after a reused frame waits for every slot
-     * first ([ReusedFrameGuard]).
+     * first ([ReusedFrameGuard]). Only when the renderer opts in ([Renderer.redrawsStillFrames]).
      */
-    override val redrawsPreparedFrames: Boolean get() = true
+    override val redrawsPreparedFrames: Boolean get() = renderer.redrawsStillFrames
 
     override fun prepare(
         request: GpuDrawRequest,

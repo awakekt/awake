@@ -28,7 +28,7 @@ ordinary caster keeps its own, for its model matrix. Vulkan binds a group per dr
 | Back-culled instances | Where the plan built a back-culled instanced twin | Same |
 | Copies per draw | 4,096 (larger sets split) | 4,096 |
 | Skinned copies per draw | 256, authored only | 256, authored only |
-| Still frame handed back unplanned | Yes; the batch prepared after one waits for every frame in flight (#1555) | Yes (`GpuDrawPreparer.redrawsPreparedFrames`) |
+| Still frame handed back unplanned | Opt-in (`Renderer.redrawsStillFrames`); the batch prepared after one waits for every frame in flight (#1555) | Yes (`GpuDrawPreparer.redrawsPreparedFrames`) |
 
 Nothing is merged into one mesh; instancing is the only batching.
 

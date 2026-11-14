@@ -36,8 +36,8 @@ import kotlin.test.assertTrue
 /**
  * A still scene's frame, handed back by the compiler unprepared, draws exactly what it drew when
  * it was prepared, on both backends (#1555); a moved caster is prepared and drawn anew. Vulkan
- * draws it again since its preparer redraws prepared frames, the batch after a reused one waiting
- * for every frame slot.
+ * draws it again only when opted in (`redrawsStillFrames`), the batch after a reused one waiting
+ * for every frame slot; off, it plans every frame, as by default.
  */
 class ReusedFrameParityTest {
 
@@ -111,11 +111,23 @@ class ReusedFrameParityTest {
         }
     }
 
-    private fun Renderer.withScene(block: (Scene) -> Unit) {
+    @Test
+    fun vulkanPlansEveryFrameUnlessOptedIn() {
+        val vulkan = openSession(HeadlessUiBackend.Vulkan).renderer
+        vulkan.withScene(optIn = false) { scene ->
+            scene.frame(timeSeconds = 1f)
+            assertTrue(scene.frame(timeSeconds = 2f).prepared > 0, "by default a still Vulkan frame is planned again")
+        }
+    }
+
+    private fun Renderer.withScene(optIn: Boolean = true, block: (Scene) -> Unit) {
+        val vulkan = this as? com.awakekt.awake.vulkan.renderer.Renderer
+        vulkan?.redrawsStillFrames = optIn
         val scene = Scene(this)
         try {
             block(scene)
         } finally {
+            vulkan?.redrawsStillFrames = false
             scene.ground.destroy()
             scene.caster.destroy()
             scene.material.destroy()

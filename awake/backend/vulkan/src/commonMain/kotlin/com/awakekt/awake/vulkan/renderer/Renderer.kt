@@ -231,6 +231,15 @@ class Renderer internal constructor(
 
     override var clearColor: Color = Color.Black
 
+    /**
+     * Whether a still scene's last prepared frame is drawn again without preparing anything, as it
+     * is on WebGPU (#1555). Off by default: every frame is planned, as before. When on, the batch
+     * prepared after a reused frame waits for every frame in flight, since that frame still reads the
+     * slot it was prepared in. It stays opt-in until a run on a real GPU with the validation layers on
+     * shows none of them complain.
+     */
+    var redrawsStillFrames: Boolean = false
+
     /** See this class's own `wireframePipelinesByFormat` constructor parameter doc comment. */
     override var wireframe: Boolean = false
 
