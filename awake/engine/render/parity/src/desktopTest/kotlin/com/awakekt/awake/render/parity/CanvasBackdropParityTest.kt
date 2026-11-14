@@ -112,7 +112,6 @@ class CanvasBackdropParityTest {
      * At `renderScale` 0.5 the panel blurs the upscaled scene on the full-resolution surface: the
      * scene renders into an 80x60 target, the upscale fills the 160x120 surface, and only then does
      * the UI pass snapshot it. The unblurred reference is that same upscaled frame drawn with no UI.
-     * WebGPU only; Vulkan does not implement the render scale yet (#1181).
      *
      * Measured on wgpu-native over lavapipe: 0 pixels differ outside the panel, 1132 inside, and the
      * worst channel error against the reference is 2. Negative control, run: with the UI's image-pass
@@ -123,6 +122,21 @@ class CanvasBackdropParityTest {
     fun webGpuGlassPanelBlursTheUpscaledSceneAtHalfScale() = runBlocking {
         val engine = HeadlessWebGpuEngine(plan = EngineShowcaseRenderPlan)
         val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
+        try {
+            verifyHalfScale(HeadlessUiBackend.WebGpu, renderer, engine::present)
+        } finally {
+            engine.destroy()
+        }
+    }
+
+    @Test
+    fun vulkanGlassPanelBlursTheUpscaledSceneAtHalfScale() = runBlocking {
+        open(HeadlessUiBackend.Vulkan).use { session ->
+            verifyHalfScale(HeadlessUiBackend.Vulkan, session.renderer) {}
+        }
+    }
+
+    private suspend fun verifyHalfScale(backend: HeadlessUiBackend, renderer: Renderer, present: () -> Unit) {
         renderer.effectQuality = EffectQuality.High
         renderer.renderScale = HALF_SCALE
         val mesh = renderer.createMesh(generate { cube(size = CUBE, colored = false) })
@@ -132,29 +146,28 @@ class CanvasBackdropParityTest {
             renderer.drawUi(emptyList(), null)
             renderer.draw(pass)
             val upscaled = renderer.readPresentedPixels().data.copyOf()
-            engine.present()
+            present()
 
             renderer.drawUi(glassPanel(), null)
             renderer.draw(pass)
             val frame = renderer.readPresentedPixels().data.copyOf()
-            PixelMap(WIDTH, HEIGHT, frame.copyOf()).writePng(File(REPORT_DIR, "canvas-backdrop-half-scale.png"))
+            PixelMap(WIDTH, HEIGHT, frame.copyOf()).writePng(File(REPORT_DIR, "canvas-backdrop-half-scale-$backend.png"))
 
             val outsideDiffering = countPixels { x, y -> !inPanel(x, y) && differs(frame, upscaled, x, y, SAME) }
             val insideDiffering = countPixels { x, y -> inPanel(x, y, INSET) && differs(frame, upscaled, x, y, SAME) }
             val worst = worstReferenceError(frame, referenceBlur(upscaled))
-            println("half-scale canvas backdrop: outsideDiffering=$outsideDiffering insideDiffering=$insideDiffering worstReferenceError=$worst")
+            println("$backend half-scale canvas backdrop: outsideDiffering=$outsideDiffering insideDiffering=$insideDiffering worstReferenceError=$worst")
 
-            assertEquals(WIDTH / 2, renderer.surfaceWidth, "the scene renders at half the surface's width")
-            assertEquals(WIDTH * HEIGHT * 4, frame.size, "the UI and its snapshot stay on the full-resolution surface")
-            assertTrue(upscaled.luma(CUBE_EDGE - 4, HEIGHT / 2) > LIT, "control, the upscaled cube is lit")
-            assertEquals(0, outsideDiffering, "outside the panel the frame is the upscaled scene")
-            assertTrue(insideDiffering > MIN_BLURRED, "inside the panel the upscaled scene is blurred: $insideDiffering")
-            assertTrue(worst <= REFERENCE_TOLERANCE, "the panel matches the reference blur of the upscaled scene: $worst")
+            assertEquals(WIDTH / 2, renderer.surfaceWidth, "$backend: the scene renders at half the surface's width")
+            assertEquals(WIDTH * HEIGHT * 4, frame.size, "$backend: the UI and its snapshot stay on the full-resolution surface")
+            assertTrue(upscaled.luma(CUBE_EDGE - 4, HEIGHT / 2) > LIT, "$backend: control, the upscaled cube is lit")
+            assertEquals(0, outsideDiffering, "$backend: outside the panel the frame is the upscaled scene")
+            assertTrue(insideDiffering > MIN_BLURRED, "$backend: inside the panel the upscaled scene is blurred: $insideDiffering")
+            assertTrue(worst <= REFERENCE_TOLERANCE, "$backend: the panel matches the reference blur of the upscaled scene: $worst")
         } finally {
             renderer.waitIdle()
             mesh.destroy()
             material.destroy()
-            engine.destroy()
         }
     }
 

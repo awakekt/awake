@@ -24,6 +24,8 @@ import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.material.Material
+import com.awakekt.awake.vulkan.material.SlotBlock
+import com.awakekt.awake.vulkan.material.stageUniformBuffer
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.InstanceBuffer
@@ -129,6 +131,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         val binding = material.writeBlock(
             cmd, frameIndex, uniformSlotIndex, split, kind, coverage, frameBlockKind(split, edges = false),
             viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
+            dirtyUniformBlocks,
         )
         val palettes = cmd.instanceJointPalettes?.let {
             skinnedInstanceBufferForRun(instancedIndex).also { buffer ->
@@ -170,6 +173,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     val binding = material.writeBlock(
         cmd, frameIndex, uniformSlotIndex, split, null, coverage, frameBlockKind(split, edges = edgePipeline != null),
         viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
+        dirtyUniformBlocks,
     )
     return PreparedDrawCall(
         mesh = mesh,
@@ -229,8 +233,9 @@ private fun Material.writeBlock(
     fogDensity: Float,
     debugView: GpuDebugView,
     exposure: Float,
+    dirtyBlocks: MutableSet<SlotBlock>,
 ): VulkanMaterialBinding {
-    if (split > 0) return writeDrawBlock(cmd, frameIndex, slotIndex, split, kind, coverage, frameBlock)
+    if (split > 0) return writeDrawBlock(cmd, frameIndex, slotIndex, split, kind, coverage, frameBlock, dirtyBlocks)
     val whole = if (kind != null) {
         cmd.instancedUniformFloats(
             kind = kind,
@@ -261,7 +266,7 @@ private fun Material.writeBlock(
             alphaToCoverageEnabled = coverage,
         )
     }
-    return updateUniformBuffer(frameIndex, slotIndex, whole, frameBlock)
+    return stageUniformBuffer(frameIndex, slotIndex, whole, dirtyBlocks, frameBlock)
 }
 
 /** The split half of [writeBlock]: packs and writes the draw's own block only when its inputs changed. */
@@ -274,13 +279,20 @@ private fun Material.writeDrawBlock(
     kind: InstancedDrawKind?,
     coverage: Boolean,
     frameBlock: FrameBlockKind,
+    dirtyBlocks: MutableSet<SlotBlock>,
 ): VulkanMaterialBinding {
     val inputs = uniformSlot(frameIndex, slotIndex).inputs
     val inputKind = SPLIT_INPUTS + (kind?.ordinal ?: -1) + 1
     if (inputs.matches(cmd, SPLIT_FRAME_VERSION, split, coverage, inputKind)) {
-        return updateUniformBuffer(frameIndex, slotIndex, null, frameBlock)
+        return stageUniformBuffer(frameIndex, slotIndex, null, dirtyBlocks, frameBlock)
     }
-    val binding = updateUniformBuffer(frameIndex, slotIndex, cmd.drawBlockFloats(split, coverage, instanced = kind != null), frameBlock)
+    val binding = stageUniformBuffer(
+        frameIndex,
+        slotIndex,
+        cmd.drawBlockFloats(split, coverage, instanced = kind != null),
+        dirtyBlocks,
+        frameBlock,
+    )
     inputs.record(cmd, SPLIT_FRAME_VERSION, split, coverage, inputKind)
     return binding
 }

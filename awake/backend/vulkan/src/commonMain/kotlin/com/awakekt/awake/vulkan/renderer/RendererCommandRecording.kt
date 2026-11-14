@@ -16,6 +16,7 @@ import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes2d.DrawRun
+import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
@@ -29,6 +30,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 
 /** Records the Vulkan swapchain scene pass and its UI or present-transition pass. */
+@Suppress("LongParameterList", "LongMethod")
 internal fun Renderer.recordCommandBuffer(
     commandBuffer: Long,
     frameIndex: Int,
@@ -53,13 +55,18 @@ internal fun Renderer.recordCommandBuffer(
     recordDepthPrePass(commandBuffer, frameIndex, drawCalls, cascades, true)
     // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
     recordSceneDepthPass(commandBuffer, frameIndex, drawCalls, cameraDepthPass(viewProjection))
+    val outputWidth = swapchainManager.extent.width
+    val outputHeight = swapchainManager.extent.height
+    val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
+    scaled?.prepareForColorAttachment(commandBuffer)
+    val sceneExtent = if (scaled != null) VkExtent2D(scaled.width, scaled.height) else swapchainManager.extent
     statsCounter.recordPass()
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
             renderPass = renderPipeline.renderPass,
-            framebuffer = framebuffers[acquiredImageIndex],
-            renderArea = VkRect2D(extent = swapchainManager.extent),
+            framebuffer = scaled?.framebuffer ?: framebuffers[acquiredImageIndex],
+            renderArea = VkRect2D(extent = sceneExtent),
             pClearValues = arrayOf(clearColorValue(environment), Renderer.clearDepthValue),
         ),
         VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
@@ -83,19 +90,39 @@ internal fun Renderer.recordCommandBuffer(
         height = swapchainManager.extent.height.toFloat(),
     )
     val scissor = VkRect2D(extent = swapchainManager.extent)
-    val sceneRect = sceneViewport?.clampedTo(
-        swapchainManager.extent.width.toFloat(),
-        swapchainManager.extent.height.toFloat(),
+    val sceneFullViewport = VkViewport(
+        width = sceneExtent.width.toFloat(),
+        height = sceneExtent.height.toFloat(),
     )
-    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: viewport))
-    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: scissor))
+    val sceneFullScissor = VkRect2D(extent = sceneExtent)
+    val effectiveSceneViewport = if (scaled != null && sceneViewport != null) {
+        RenderScale.sceneViewport(sceneViewport, outputWidth, outputHeight, scaled.width, scaled.height)
+    } else {
+        sceneViewport
+    }
+    val sceneRect = effectiveSceneViewport?.clampedTo(
+        sceneExtent.width.toFloat(),
+        sceneExtent.height.toFloat(),
+    )
+    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: sceneFullViewport))
+    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: sceneFullScissor))
     bindDepthSets(commandBuffer)
     recordSharedPassFeatures(RenderPassSlot.Scene, context)
     Vulkan.vkCmdEndRenderPass(commandBuffer)
+    if (scaled != null) {
+        scaled.transitionToShaderReadOnly(commandBuffer)
+        recordSwapchainPostPasses(
+            commandBuffer = commandBuffer,
+            frameIndex = frameIndex,
+            acquiredImageIndex = acquiredImageIndex,
+            chain = sceneScale.upscale(scaled, outputWidth, outputHeight),
+            clearDestination = true,
+            environment = environment,
+        )
+    }
 
     recordUiOrPresentTransitionPass(
         commandBuffer = commandBuffer,
-        frameIndex = frameIndex,
         acquiredImageIndex = acquiredImageIndex,
         viewport = viewport,
         scissor = scissor,
@@ -132,13 +159,23 @@ internal fun Renderer.recordResolvedCommandBuffer(
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
     recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
     recordMaskPass(commandBuffer, frameIndex, passInput?.maskPasses.orEmpty(), environment)
+    val outputWidth = swapchainManager.extent.width
+    val outputHeight = swapchainManager.extent.height
+    val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
+    scaled?.prepareForColorAttachment(commandBuffer)
+    val sceneExtent = if (scaled != null) VkExtent2D(scaled.width, scaled.height) else swapchainManager.extent
+    val scenePassInput = if (scaled != null && passInput != null) {
+        sceneScale.sceneInput(passInput, scaled, outputWidth, outputHeight)
+    } else {
+        passInput
+    }
     statsCounter.recordPass()
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
             renderPass = renderPipeline.renderPass,
-            framebuffer = framebuffers[acquiredImageIndex],
-            renderArea = VkRect2D(extent = swapchainManager.extent),
+            framebuffer = scaled?.framebuffer ?: framebuffers[acquiredImageIndex],
+            renderArea = VkRect2D(extent = sceneExtent),
             pClearValues = arrayOf(clearColorValue(environment), Renderer.clearDepthValue),
         ),
         VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
@@ -154,7 +191,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         viewProjection = viewProjection,
         cameraEye = cameraEye,
         environment = environment,
-        passInput = passInput,
+        passInput = scenePassInput,
         acquiredImageIndex = acquiredImageIndex,
     )
     val viewport = VkViewport(
@@ -162,27 +199,51 @@ internal fun Renderer.recordResolvedCommandBuffer(
         height = swapchainManager.extent.height.toFloat(),
     )
     val scissor = VkRect2D(extent = swapchainManager.extent)
-    val sceneRect = sceneViewport?.clampedTo(
-        swapchainManager.extent.width.toFloat(),
-        swapchainManager.extent.height.toFloat(),
+    val sceneFullViewport = VkViewport(
+        width = sceneExtent.width.toFloat(),
+        height = sceneExtent.height.toFloat(),
     )
-    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: viewport))
-    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: scissor))
+    val sceneFullScissor = VkRect2D(extent = sceneExtent)
+    val effectiveSceneViewport = if (scaled != null && sceneViewport != null) {
+        RenderScale.sceneViewport(sceneViewport, outputWidth, outputHeight, scaled.width, scaled.height)
+    } else {
+        sceneViewport
+    }
+    val sceneRect = effectiveSceneViewport?.clampedTo(
+        sceneExtent.width.toFloat(),
+        sceneExtent.height.toFloat(),
+    )
+    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: sceneFullViewport))
+    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: sceneFullScissor))
     bindDepthSets(commandBuffer)
     recordSharedPassFeatures(RenderPassSlot.Scene, context)
     Vulkan.vkCmdEndRenderPass(commandBuffer)
 
     recordPostPasses(commandBuffer, postPasses)
-    recordSwapchainPostPasses(
-        commandBuffer = commandBuffer,
-        frameIndex = frameIndex,
-        acquiredImageIndex = acquiredImageIndex,
-        chain = passInput?.postPassChain ?: ImagePassChain.Empty,
-    )
+    if (scaled != null) {
+        if (scenePassInput != null) {
+            recordPostPassesToTexture(commandBuffer, scaled, scenePassInput, frameIndex)
+        }
+        scaled.transitionToShaderReadOnly(commandBuffer)
+        recordSwapchainPostPasses(
+            commandBuffer = commandBuffer,
+            frameIndex = frameIndex,
+            acquiredImageIndex = acquiredImageIndex,
+            chain = sceneScale.upscale(scaled, outputWidth, outputHeight),
+            clearDestination = true,
+            environment = environment,
+        )
+    } else {
+        recordSwapchainPostPasses(
+            commandBuffer = commandBuffer,
+            frameIndex = frameIndex,
+            acquiredImageIndex = acquiredImageIndex,
+            chain = passInput?.postPassChain ?: ImagePassChain.Empty,
+        )
+    }
 
     recordUiOrPresentTransitionPass(
         commandBuffer = commandBuffer,
-        frameIndex = frameIndex,
         acquiredImageIndex = acquiredImageIndex,
         viewport = viewport,
         scissor = scissor,
@@ -192,10 +253,8 @@ internal fun Renderer.recordResolvedCommandBuffer(
     Vulkan.vkEndCommandBuffer(commandBuffer)
 }
 
-@Suppress("LongParameterList")
 private fun Renderer.recordUiOrPresentTransitionPass(
     commandBuffer: Long,
-    frameIndex: Int,
     acquiredImageIndex: Int,
     viewport: VkViewport,
     scissor: VkRect2D,
@@ -203,7 +262,6 @@ private fun Renderer.recordUiOrPresentTransitionPass(
 ) {
     val uiPipeline = uiRenderPipeline
     if (uiPipeline != null) {
-        imagePassExecutor.beginFrame(frameIndex)
         val hasImagePass = uiRuns.any { it is DrawRun.ImagePassRun }
         val initialRenderPass = if (hasImagePass) {
             imagePassExecutor.ensureSwapchainContinueRenderPass(swapchainManager.imageFormat)
@@ -239,28 +297,36 @@ private fun Renderer.recordUiOrPresentTransitionPass(
     }
 }
 
-@Suppress("ReturnCount")
+@Suppress("ReturnCount", "LongParameterList")
 internal fun Renderer.recordSwapchainPostPasses(
     commandBuffer: Long,
     frameIndex: Int,
     acquiredImageIndex: Int,
     chain: ImagePassChain,
+    clearDestination: Boolean = false,
+    environment: GpuEnvironmentState = GpuEnvironmentState.Default,
 ) {
     if (chain.isEmpty) return
     val swapchain = swapchainManager
     val colorImage = swapchain.images.getOrNull(acquiredImageIndex)
     val colorImageView = swapchain.imageViews.getOrNull(acquiredImageIndex)
     val framebuffer = uiFramebuffers.getOrNull(acquiredImageIndex)
+        ?: presentTransitionFramebuffers.getOrNull(acquiredImageIndex)
     if (colorImage == null || colorImageView == null || framebuffer == null) return
-    imagePassExecutor.beginFrame(frameIndex)
     val continuePass = imagePassExecutor.ensureSwapchainContinueRenderPass(swapchain.imageFormat)
+    val initialPass = if (clearDestination) {
+        imagePassExecutor.ensureSwapchainClearRenderPass(swapchain.imageFormat)
+    } else {
+        continuePass
+    }
     statsCounter.recordPass()
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
-            renderPass = continuePass,
+            renderPass = initialPass,
             framebuffer = framebuffer,
             renderArea = VkRect2D(extent = swapchain.extent),
+            pClearValues = if (clearDestination) arrayOf(clearColorValue(environment)) else emptyArray(),
         ),
         VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
     )
@@ -303,11 +369,11 @@ internal fun Renderer.recordPostPassesToTexture(
     commandBuffer: Long,
     target: OffscreenRenderTarget,
     input: GpuPassInput,
+    frameIndex: Int = commandBuffers.size,
 ) {
     val chain = input.postPassChain
     if (!chain.isEmpty) {
         val swapchain = swapchainManager
-        imagePassExecutor.beginFrame(commandBuffers.size)
         val continuePass = imagePassExecutor.ensureOffscreenContinueRenderPass(swapchain.imageFormat)
         Vulkan.vkCmdBeginRenderPass(
             commandBuffer,
@@ -331,7 +397,7 @@ internal fun Renderer.recordPostPassesToTexture(
         )
         imagePassExecutor.executeImagePass(
             commandBuffer = commandBuffer,
-            frameIndex = commandBuffers.size,
+            frameIndex = frameIndex,
             parentTarget = parentTarget,
             chain = chain,
             hasMoreImagePasses = false,

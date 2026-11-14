@@ -144,6 +144,7 @@ class DepthOnlyPipeline(
     var pipelineLayout: Long = 0
         private set
     private var pipelineCache: Long = 0
+    private var ownsPipelineCache: Boolean = false
     private var graphicsPipeline: LongArray = longArrayOf()
 
     override val pipelineHandle: Long get() = graphicsPipeline[0]
@@ -307,7 +308,14 @@ class DepthOnlyPipeline(
                     basePipelineIndex = -1,
                 ),
             )
-            pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            val sharedCache = graphicsDevice.sharedPipelineCache
+            if (sharedCache != 0L) {
+                pipelineCache = sharedCache
+                ownsPipelineCache = false
+            } else {
+                pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+                ownsPipelineCache = true
+            }
             graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
 
             Vulkan.vkDestroyShaderModule(device, fragShaderModule)
@@ -335,6 +343,8 @@ class DepthOnlyPipeline(
         cascadeSlots?.destroy()
         graphicsPipeline.forEach { Vulkan.vkDestroyPipeline(device, it) }
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
-        Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+        if (ownsPipelineCache && pipelineCache != 0L) {
+            Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+        }
     }
 }

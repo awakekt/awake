@@ -223,6 +223,7 @@ internal fun Renderer.releaseSwapchainResources() {
     // depth image, image views) while they're torn down.
     VulkanBuffers.vkDeviceWaitIdle(device)
 
+    sceneScale.release()
     imagePassExecutor.releaseTransientTargets()
     framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
     presentTransitionFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
