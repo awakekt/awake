@@ -59,16 +59,28 @@ in amber. Each `line` is two points and a colour:
 ## Turn sources on
 
 A `DebugRegistry` holds the sources a game has and the ids that are on. Build it from the launch
-flags: `--debug=cells,spawner` on desktop, `?debug=cells,spawner` on the web.
+flags: `--debug=cells,spawner` on desktop, `?debug=cells,spawner` on the web. Declare the flag once
+as a [launch option](launch-options.md), with the game's other options:
+
+```kotlin title="Kotlin"
+--8<-- "samples/engine-showcase/src/commonTest/kotlin/com/awakekt/awake/showcase/docs/DebugToolsDocsSampleTest.kt:options"
+```
+
+Then read it from whatever the host was launched with:
 
 ```kotlin title="Kotlin"
 --8<-- "samples/engine-showcase/src/commonTest/kotlin/com/awakekt/awake/showcase/docs/DebugToolsDocsSampleTest.kt:flags"
 ```
 
-On the web, pass the page's query parameter to `fromPage`, for example
-`DebugFlags.fromPage(browserLaunchParameters()::first)` (see
-[Launch parameters](launch-parameters.md)). Ids are trimmed, lower-cased and split on commas, and a
-repeated flag adds to the set.
+Ids are trimmed, lower-cased and split on commas, and a repeated flag adds to the set. A mistyped
+name, or `--debug cells` written with a space, is reported in the parse's `problems` with what to
+write instead (`--debug=cells`).
+
+!!! note "Moving from `DebugFlags`"
+    `DebugFlags.fromPage` and `DebugFlags.fromArgs` are deprecated and still work as before,
+    `--debug cells` with a space included. On the launch-option path that spelling is a bare
+    `--debug` and a stray `cells`, and both are reported, each saying `use --debug=cells`. Write
+    `--debug=cells`.
 
 Then register the registry as an app service, and the sources with it:
 

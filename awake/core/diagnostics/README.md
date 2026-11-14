@@ -15,7 +15,8 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
   turns a number into text only when the number, its decimals or its warn flag changed, keeps each slot's
   `String` between readings, and says which slots changed (`consumeChanged`), so a host writes only those.
   It draws nothing, so the overlay's logic is tested without a canvas.
-- **`DebugFlags`**: the ids to turn on, from `?debug=a,b` on the web or `--debug=a,b` on desktop.
+- **`DebugFlags`**: parses a comma-separated id list. Its `fromPage` and `fromArgs` are deprecated: declare
+  `ids("debug")` as a launch option (`awake:core:config`) instead.
 - **`StatsSeries` / `StatsSummary`**: a fixed-capacity ring of timestamped `Double` readings that
   summarizes any trailing window into `avg`, `p50`, `p95` and `max` without per-sample allocations,
   optionally mapping readings on read (such as frame milliseconds to FPS).
@@ -32,7 +33,7 @@ plays: readings on an overlay and lines over the scene, each turned on by name w
   session to `pending()` on the next `begin(...)` until `markSent()`.
 
 ```kotlin
-val registry = DebugRegistry(DebugFlags.fromArgs(args))
+val registry = DebugRegistry(launch[Launch.debug]) // Launch declares ids("debug")
 registry.register(object : DebugSource {
     override val id = "cells"
     override val title = "Cells"

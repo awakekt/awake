@@ -33,6 +33,99 @@ public abstract interface class com/awakekt/awake/core/config/EnvSource {
 	public abstract fun get (Ljava/lang/String;)Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/config/LaunchOption {
+	public final fun getAliases ()Ljava/util/List;
+	public final fun getBounds ()Ljava/lang/String;
+	public final fun getDefault ()Ljava/lang/Object;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDevelopment ()Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSecret ()Z
+	public final fun getType ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun refusal (Ljava/lang/Object;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class com/awakekt/awake/core/config/LaunchOptions {
+	public fun <init> ()V
+	protected final fun boolean (Ljava/lang/String;ZLjava/lang/String;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun boolean$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;ZLjava/lang/String;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	protected final fun choice (Ljava/lang/String;Ljava/lang/Enum;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun choice$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;Ljava/lang/Enum;Ljava/util/List;Ljava/lang/String;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	public final fun defaults ()Lcom/awakekt/awake/core/config/LaunchValues;
+	public final fun describe ()Ljava/lang/String;
+	protected final fun float (Ljava/lang/String;FLjava/lang/String;Lkotlin/ranges/ClosedFloatingPointRange;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun float$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;FLjava/lang/String;Lkotlin/ranges/ClosedFloatingPointRange;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	public final fun getOptions ()Ljava/util/List;
+	protected final fun ids (Ljava/lang/String;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun ids$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	protected final fun ignore ([Ljava/lang/String;)V
+	protected final fun ignorePrefix ([Ljava/lang/String;)V
+	protected final fun int (Ljava/lang/String;ILjava/lang/String;Lkotlin/ranges/IntRange;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun int$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;ILjava/lang/String;Lkotlin/ranges/IntRange;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	protected final fun list (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun list$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	protected final fun option (Ljava/lang/String;Lcom/awakekt/awake/core/config/ValueType;Ljava/lang/Object;Ljava/lang/String;Ljava/util/List;ZZLjava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun option$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;Lcom/awakekt/awake/core/config/ValueType;Ljava/lang/Object;Ljava/lang/String;Ljava/util/List;ZZLjava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+	public final fun parse (Ljava/util/Map;Ljava/util/List;Z)Lcom/awakekt/awake/core/config/LaunchValues;
+	public static synthetic fun parse$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/util/Map;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchValues;
+	protected final fun string (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZZLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/config/LaunchOption;
+	public static synthetic fun string$default (Lcom/awakekt/awake/core/config/LaunchOptions;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchOption;
+}
+
+public abstract class com/awakekt/awake/core/config/LaunchProblem {
+	public abstract fun getMessage ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/LaunchProblem$DevelopmentOnly : com/awakekt/awake/core/config/LaunchProblem {
+	public fun <init> (Lcom/awakekt/awake/core/config/LaunchOption;)V
+	public fun getMessage ()Ljava/lang/String;
+	public final fun getOption ()Lcom/awakekt/awake/core/config/LaunchOption;
+}
+
+public final class com/awakekt/awake/core/config/LaunchProblem$Invalid : com/awakekt/awake/core/config/LaunchProblem {
+	public fun <init> (Lcom/awakekt/awake/core/config/LaunchOption;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getGiven ()Ljava/lang/String;
+	public fun getMessage ()Ljava/lang/String;
+	public final fun getOption ()Lcom/awakekt/awake/core/config/LaunchOption;
+	public final fun getReason ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/LaunchProblem$Stray : com/awakekt/awake/core/config/LaunchProblem {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/core/config/LaunchProblem$Stray;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/config/LaunchProblem$Stray;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchProblem$Stray;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArgument ()Ljava/lang/String;
+	public final fun getHint ()Ljava/lang/String;
+	public fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/LaunchProblem$Unknown : com/awakekt/awake/core/config/LaunchProblem {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/core/config/LaunchProblem$Unknown;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/config/LaunchProblem$Unknown;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/config/LaunchProblem$Unknown;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getMessage ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/LaunchValues {
+	public final fun get (Lcom/awakekt/awake/core/config/LaunchOption;)Ljava/lang/Object;
+	public final fun getProblems ()Ljava/util/List;
+	public final fun getSchema ()Lcom/awakekt/awake/core/config/LaunchOptions;
+	public final fun isGiven (Lcom/awakekt/awake/core/config/LaunchOption;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/config/MapEnvSource : com/awakekt/awake/core/config/EnvSource {
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Map;)V
@@ -42,5 +135,26 @@ public final class com/awakekt/awake/core/config/MapEnvSource : com/awakekt/awak
 
 public final class com/awakekt/awake/core/config/PlatformEnvSourceKt {
 	public static final fun defaultPlatformEnvSource ()Lcom/awakekt/awake/core/config/EnvSource;
+}
+
+public final class com/awakekt/awake/core/config/ValueType {
+	public static final field Companion Lcom/awakekt/awake/core/config/ValueType$Companion;
+	public fun <init> (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun format (Ljava/lang/Object;)Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getNeedsValue ()Z
+	public final fun parse (Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/config/ValueType$Companion {
+	public final fun choice (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/config/ValueType;
+	public static synthetic fun choice$default (Lcom/awakekt/awake/core/config/ValueType$Companion;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/config/ValueType;
+	public final fun getBoolean ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun getFloat ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun getIds ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun getInt ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun getList ()Lcom/awakekt/awake/core/config/ValueType;
+	public final fun getString ()Lcom/awakekt/awake/core/config/ValueType;
 }
 
