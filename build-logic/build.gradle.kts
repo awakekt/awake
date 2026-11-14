@@ -38,10 +38,23 @@ repositories {
 }
 
 // Embed the plugin release, independent of the consuming project's version or version catalog.
+//
+// Only the jars that are published need it. The Core build loads this project as an included build,
+// and the jar is part of the classpath every plugin task class is loaded from, so a version in it
+// changes the implementation of every task and no build cache entry from another version (`main`'s
+// snapshot, an earlier release) can serve a release build. An included build therefore embeds a
+// constant, which nothing in Core reads (it uses its own processor project). Building this project
+// on its own (`-p build-logic`, as publishing and the plugin checks do) embeds the real version.
+// `-Pawake.stampPluginVersion=true` forces the real version in an included build.
+val pluginVersion = if (gradle.parent != null && findProperty("awake.stampPluginVersion") != "true") {
+    "0.0.0-included"
+} else {
+    project.version.toString()
+}
 tasks.processResources {
-    inputs.property("awakePluginVersion", project.version.toString())
+    inputs.property("awakePluginVersion", pluginVersion)
     filesMatching("com/awakekt/awake/build/*.properties") {
-        expand("version" to project.version.toString())
+        expand("version" to pluginVersion)
     }
 }
 

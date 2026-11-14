@@ -37,6 +37,9 @@ internal class VulkanDrawPreparer(
      * for this resolver seam. */
     private val materialUsage = mutableMapOf<Material, Int>()
 
+    /** Instanced casters' shared depth sets, for this batch. */
+    private val sharedDepth = SharedDepthBindings()
+
     /** Instanced draws so far this batch: each gets the next instance buffer, so the pool grows
      * with how many instanced draws a frame has rather than with where they sit in it. */
     private var instancedRuns = 0
@@ -111,7 +114,9 @@ internal class VulkanDrawPreparer(
             depthRenderKey = depthKey,
             alphaCutoff = request.alphaCutoff,
             depthPipeline = depthPipeline,
-            depthMaterialBinding = prepared.materialBinding,
+            depthMaterialBinding = sharedDepth.bindingFor(request, depthKey, depthPipeline, prepared.pipeline, wholeBlock = false) {
+                prepared.materialBinding
+            },
             depthJointPaletteBinding = prepared.jointPaletteBinding,
         )
     }
@@ -119,6 +124,7 @@ internal class VulkanDrawPreparer(
     /** The frame boundary: resets this batch's allocations and makes the frame slot safe to write. */
     private fun startBatch(context: GpuDrawPreparationContext) {
         materialUsage.clear()
+        sharedDepth.clear()
         instancedRuns = 0
         edgeFrameWritten = false
         // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI

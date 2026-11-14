@@ -16,6 +16,7 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.mesh.GpuMesh
 import com.awakekt.awake.render.passes.instancedUniformFloats
 import com.awakekt.awake.render.passes.uniformFloats
 import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
@@ -112,7 +113,7 @@ internal fun Renderer.prepareGpuDraw(
             material.hasTexture -> WebGpuBindGroupHandle(
                 material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings, edges = edgePipeline != null),
             )
-            else -> slot.binding ?: EmptyWebGpuMaterialBinding
+            else -> slot.binding ?: untexturedMaterialError(mesh, material)
         },
         vertexBuffer = mesh.sceneVertexBinding(),
         indexBuffer = mesh.sceneIndexBinding(lines),
@@ -136,6 +137,20 @@ internal fun Renderer.prepareGpuDraw(
 }
 
 private object EmptyWebGpuMaterialBinding : MaterialBinding
+
+/**
+ * The pipeline's group 0 samples a base-colour texture and [material] has none, as for an untextured
+ * material on a `PositionNormalColorUv` mesh: `textured.wgsl` cannot draw it. Said here, naming
+ * both, rather than as a cast failure when the recorder binds the group.
+ */
+private fun untexturedMaterialError(mesh: GpuMesh, material: Material): Nothing =
+    error(
+        "Material ${material.identity()} has no base-colour texture, but mesh ${mesh.identity()} " +
+            "(${mesh.format}) draws through a textured pipeline whose group 0 samples one. " +
+            "Give the material a texture, or use a mesh format without UVs.",
+    )
+
+private fun Any.identity(): String = "${this::class.simpleName}@${hashCode().toString(16)}"
 
 /** Packs and stages [cmd]'s block into [slot], unless the slot already holds it, packed from the same inputs. */
 @Suppress("LongParameterList") // prepareGpuDraw's, passed through.
@@ -304,7 +319,7 @@ private fun Renderer.prepareInstancedGpuDraw(
                     ),
                 )
             } else {
-                slot.binding ?: EmptyWebGpuMaterialBinding
+                slot.binding ?: untexturedMaterialError(mesh, material)
             }
             jointPaletteBinding = null
             jointPaletteBuffer = null
