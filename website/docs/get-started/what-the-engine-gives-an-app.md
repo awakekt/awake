@@ -22,6 +22,7 @@ something belongs here: an app can't run and ship without it. Finished services 
 | Named loading stages declared as data | `ContentStages`, `ContentStage` | `awake:project` |
 | One state for a loading screen's bytes | `ContentStages.state`: `ContentLoad` (idle, loading, waiting for content, ready, too new, failed) | `awake:project` |
 | A loading screen's bar, label and retry button | `ContentLoad.loadingView()`: `LoadingView` (phase, fraction, error, can retry) | `awake:project` |
+| A default loading bar drawn from that model | `ShadcnLoadingBar(label, fraction, error, retryLabel, onRetry)` | `awake:ui:shadcn` |
 | "This content is newer than the app" without matching exception text | `isTooNew(throwable)`, `ContentTooNew` | `awake:core:io` |
 | A scene switch's progress, a wait for sign-in, a failure | `SceneSwitchStatus.state`: `SceneSwitchState` (`Loading`, `WaitingForContent`, `Ready`, `Failed`) | `awake:project:runtime` |
 | A first scene that only loads after sign-in | `loadProject(files, EntryGate(placeholderScene))` | `awake:project:runtime` |
