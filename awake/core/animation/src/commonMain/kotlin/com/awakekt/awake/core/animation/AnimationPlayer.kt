@@ -220,6 +220,34 @@ class AnimationPlayer(
     }
 
     /**
+     * [update], or `null` when the pose cannot have changed since the last pose this player
+     * computed: the same clip at the same time, with no crossfade then or now. A held pose (speed 0,
+     * a finished clip resting on its last frame, nothing playing) is then neither sampled nor
+     * blended, and a caller that kept what it derived from that pose, such as a joint palette, can
+     * keep it too. A paused looping idle still advances, so it is posed every frame.
+     *
+     * @param deltaSeconds Elapsed time step in seconds.
+     * @return The new pose, or `null` when it would equal the last one.
+     */
+    fun updateIfChanged(deltaSeconds: Float): AnimationPose? {
+        val held = activeClip != null && activeClip === posedClip && !outgoingActive && !posedBlending
+        advance(deltaSeconds)
+        val unchanged = held && activeClip === posedClip && elapsedSeconds == posedSeconds && !outgoingActive
+        if (unchanged) return null
+        // Advanced above, so the pose is sampled where playback now stands.
+        val pose = update(0f)
+        posedClip = activeClip
+        posedSeconds = elapsedSeconds
+        posedBlending = outgoingActive
+        return pose
+    }
+
+    /** What the last pose [updateIfChanged] computed was sampled from. */
+    private var posedClip: AnimationClip? = null
+    private var posedSeconds = Float.NaN
+    private var posedBlending = false
+
+    /**
      * Advances playback and any crossfade as [update] does, without computing a pose: for a model
      * nobody sees, whose clip must still end on time.
      *
