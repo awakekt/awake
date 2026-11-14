@@ -167,6 +167,6 @@ class SharedOpaqueRenderFeature {
         const val INSTANCE_FRAME_BINDING = 3
 
         /** [recordCommands]' retained region: the opaque pipeline groups. */
-        const val OPAQUE_GROUPS = "opaque-groups"
+        private const val OPAQUE_GROUPS = "opaque-groups"
     }
 }
