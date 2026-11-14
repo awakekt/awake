@@ -151,7 +151,17 @@ draws. The game needs no code for it: `runVulkanDesktopGame` reads two system pr
 
 Either run fails if the engine never starts, with the reason, so a missing driver or native library
 can't pass as a short run. In code, `VulkanEngine.playHeadless(width, height, frames)` plays the
-same way and returns the last frame's pixels.
+same way and returns the last frame's pixels, and `snapshotPng(file, width, height)` also writes them
+as a PNG, for a CI screenshot or a picture in the docs. A project plays as it ships when the app
+composes it as usual:
+
+```kotlin title="Kotlin"
+val game = app { scene("shot") { runProject(loadProject(files)) } }
+VulkanEngine(game, ProjectRenderPlan).snapshotPng(File("build/shots/entry.png"), 1280, 720, frames = 60)
+```
+
+With no GPU, Mesa's lavapipe is enough. `awake render <scene>` (`awake:project:cli`)
+renders one scene from the command line the same way.
 
 ## How it works
 

@@ -38,6 +38,9 @@ public class com/awakekt/awake/vulkan/application/VulkanEngine : com/awakekt/awa
 public final class com/awakekt/awake/vulkan/application/VulkanHeadlessPlayKt {
 	public static final fun playHeadless (Lcom/awakekt/awake/vulkan/application/VulkanEngine;IIIFLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/render/texture/TextureAsset;
 	public static synthetic fun playHeadless$default (Lcom/awakekt/awake/vulkan/application/VulkanEngine;IIIFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public static final fun snapshotPng (Lcom/awakekt/awake/vulkan/application/VulkanEngine;Ljava/io/File;IIIFLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public static synthetic fun snapshotPng$default (Lcom/awakekt/awake/vulkan/application/VulkanEngine;Ljava/io/File;IIIFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public static final fun writePng (Lcom/awakekt/awake/render/texture/TextureAsset;Ljava/io/File;)V
 }
 
 public final class com/awakekt/awake/vulkan/commands/TransferContext {
