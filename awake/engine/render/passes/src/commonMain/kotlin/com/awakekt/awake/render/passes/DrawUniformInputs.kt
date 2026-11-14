@@ -149,7 +149,7 @@ private fun RenderDrawCommand.fillScalars(out: FloatArray, materialUniformFloatC
 }
 
 /** The clock the textured packer writes for these extras: the time only when their animation moves. */
-private fun RenderDrawCommand.textureClock(): Float {
+internal fun RenderDrawCommand.textureClock(): Float {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
     val values = extraUniformFloats
     if (values.size < layout.total) return 0f

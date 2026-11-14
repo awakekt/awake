@@ -109,10 +109,21 @@ object ScenePassCompiler {
         drawStats: SceneDrawStats?,
         scratch: ScenePassScratch,
     ): GpuPassInput {
+        // Recorded only where a frame may be drawn again: elsewhere comparing would buy nothing.
+        val redraws = drawPreparer?.redrawsPreparedFrames == true
+        if (!redraws) scratch.signature.clear()
+        val unchanged = redraws &&
+            scratch.signature.record(lens, drawCalls, light, environment, clipSpace, aspect, viewport, maskLayers, postPassChain)
+        val last = scratch.lastInput
+        scratch.reusedLastFrame = unchanged && last != null && drawStats === scratch.lastStats
+        if (scratch.reusedLastFrame && last != null) return last
         drawStats?.reset()
         return compileFrame(
             lens, drawCalls, light, environment, clipSpace, aspect, viewport, drawPreparer, maskLayers, postPassChain, drawStats, scratch,
-        )
+        ).also {
+            scratch.lastInput = it
+            scratch.lastStats = drawStats
+        }
     }
 
     @Suppress("LongParameterList") // [compile]'s.
