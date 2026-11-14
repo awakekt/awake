@@ -132,11 +132,15 @@ internal class StableMaterialSlots {
 
     /** The next uniform slot in [material] for a draw of [mesh], partitioned by [instanced] and [edges]. */
     fun slotFor(material: Any, mesh: Any, instanced: Boolean, edges: Boolean): Int =
-        slotFor(material, mesh, when {
-            edges -> SlotKind.Edge
-            instanced -> SlotKind.Instanced
-            else -> SlotKind.Single
-        })
+        slotFor(
+            material,
+            mesh,
+            when {
+                edges -> SlotKind.Edge
+                instanced -> SlotKind.Instanced
+                else -> SlotKind.Single
+            },
+        )
 }
 
 /** Partition within one material's uniform slots so single, instanced, and wireframe-edge draws never share a slot. */

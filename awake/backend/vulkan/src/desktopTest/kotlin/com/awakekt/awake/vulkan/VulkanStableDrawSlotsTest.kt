@@ -92,7 +92,7 @@ class VulkanStableDrawSlotsTest {
             val renderer = session.renderer as Renderer
             val target = renderer.createRenderTarget(SIZE, SIZE)
             val white = TextureAsset(data = byteArrayOf(-1, -1, -1, -1), width = 1, height = 1)
-            val material = renderer.createMaterial(white, MaterialUniformLayouts.PbrTextured.total, pbrTextures = null)
+            val material = renderer.createMaterial(white, null, MaterialUniformLayouts.PbrTextured.total, null)
             val meshes = List(BENCH_MESHES) { renderer.createMesh(quad(VertexFormat.PositionNormalColorUv)) }
             val all = List(BENCH_RENDERERS) { i ->
                 RenderDrawCommand(mesh = meshes[i % BENCH_MESHES], material = material, model = at(i))
