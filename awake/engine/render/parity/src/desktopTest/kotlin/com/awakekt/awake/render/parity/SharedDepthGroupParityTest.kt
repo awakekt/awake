@@ -82,7 +82,10 @@ class SharedDepthGroupParityTest {
             val draws = listOf(RenderDrawCommand(ground, groundMaterial)) + posts.mapIndexed { index, post ->
                 val x = (index - 1) * POST_SPACING
                 RenderDrawCommand(
-                    post, material, vertexAnimation = animations[index], timeSeconds = TIME,
+                    post,
+                    material,
+                    vertexAnimation = animations[index],
+                    timeSeconds = TIME,
                     instanceModels = listOf(Mat4().translate(x, 0f, -1f), Mat4().translate(x, 0f, 1f)),
                 )
             }
