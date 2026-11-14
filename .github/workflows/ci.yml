@@ -98,11 +98,13 @@ jobs:
           fi
 
       # Other repositories call release-reusable.yml by tag, so a broken expression or script there
-      # breaks every repository's release; actionlint runs shellcheck on its inline scripts too.
+      # breaks every repository's release; actionlint runs shellcheck on its inline scripts too. The
+      # Publish workflow is linted as well: its release jobs run only on a tag, so an expression error
+      # there would first show when a version number is already at stake.
       - name: Release workflows lint
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -color \
-            .github/workflows/release-reusable.yml .github/workflows/release.yml
+            .github/workflows/release-reusable.yml .github/workflows/release.yml .github/workflows/build-and-publish.yml
 
       - name: Vulkan publication detector
         run: |
