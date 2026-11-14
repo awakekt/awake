@@ -420,7 +420,7 @@ class SceneAssetLibrary(
         return MeshRenderer(
             mesh = mesh,
             material = checkNotNull(material),
-            cullMode = request.meshRenderer.cullMode.toCullMode(),
+            cullMode = resolveCullMode(request.meshRenderer.cullMode, key),
             transparent = request.meshRenderer.transparent,
             additive = request.meshRenderer.additive,
             billboard = request.meshRenderer.billboard,
@@ -476,10 +476,14 @@ class SceneAssetLibrary(
         return leader
     }
 
-    private fun SceneMeshRenderer.CullMode.toCullMode(): CullMode = when (this) {
+    private fun resolveCullMode(cullMode: SceneMeshRenderer.CullMode, key: SceneRenderableKey): CullMode = when (cullMode) {
         SceneMeshRenderer.CullMode.None -> CullMode.None
         SceneMeshRenderer.CullMode.Back -> CullMode.Back
         SceneMeshRenderer.CullMode.Front -> CullMode.Front
+        SceneMeshRenderer.CullMode.FromMaterial -> dynamicResolvers.firstNotNullOfOrNull { resolver ->
+            resolver.takeIf { it.canResolveMesh(key.mesh) || it.canResolveMaterial(key.material) }
+                ?.defaultCullMode(key.mesh, key.material)
+        } ?: CullMode.None
     }
 
     /**

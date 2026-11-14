@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import kotlinx.coroutines.CoroutineScope
 
@@ -79,6 +80,14 @@ interface SceneAssetResolver {
      * @return The authored [PbrMaterial] factors, or `null` if unspecified.
      */
     fun materialDefaults(mesh: String, material: String): PbrMaterial? = materialDefaults(material)
+
+    /**
+     * Default rasterizer [CullMode] derived from the resolved material or asset for [mesh] and
+     * [material], or `null` when this resolver has no opinion. Used only when a
+     * [com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer] opts in via
+     * [com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer.CullMode.FromMaterial].
+     */
+    fun defaultCullMode(mesh: String, material: String): CullMode? = null
 
     /**
      * The levels of detail mesh [name] carries, such as a glTF model's `MSFT_lod` levels, or null

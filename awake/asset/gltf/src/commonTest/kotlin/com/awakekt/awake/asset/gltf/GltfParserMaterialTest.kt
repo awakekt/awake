@@ -9,6 +9,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -195,6 +196,42 @@ class GltfParserMaterialTest {
         assertEquals(1f, mesh.metallicFactor)
         assertEquals(1f, mesh.roughnessFactor)
         assertEquals(listOf(0f, 0f, 0f), mesh.emissiveFactor.toList())
+        assertFalse(mesh.doubleSided)
+    }
+
+    @Test
+    fun doubleSidedIsReadFromMaterialAndDefaultsFalsePerSpec() {
+        val json = """
+            {
+              $triangleAccessorsAndBuffer,
+              "materials": [
+                { "name": "defaulted" },
+                { "name": "two-sided", "doubleSided": true, "alphaMode": "MASK" }
+              ],
+              "meshes": [
+                { "primitives": [ { "attributes": { "POSITION": 0 }, "material": 0 } ] },
+                { "primitives": [ { "attributes": { "POSITION": 0 }, "material": 1 } ] }
+              ]
+            }
+        """.trimIndent()
+
+        val oneSided = GltfParser.parse(json)
+        assertFalse(oneSided.doubleSided)
+
+        val twoSidedJson = """
+            {
+              $triangleAccessorsAndBuffer,
+              "materials": [
+                { "name": "two-sided", "doubleSided": true, "alphaMode": "MASK" }
+              ],
+              "meshes": [
+                { "primitives": [ { "attributes": { "POSITION": 0 }, "material": 0 } ] }
+              ]
+            }
+        """.trimIndent()
+        val twoSided = GltfParser.parse(twoSidedJson)
+        assertTrue(twoSided.doubleSided)
+        assertEquals(GltfAlphaMode.MASK, twoSided.alphaMode)
     }
 
     @Test

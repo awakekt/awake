@@ -74,6 +74,7 @@ internal class GltfDocumentReader(
             roughnessFactor = pbr?.roughnessFactor ?: 1f,
             emissiveFactor = factor(material?.emissiveFactor, RGB, "$materialLocation.emissiveFactor") ?: floatArrayOf(0f, 0f, 0f),
             alphaMode = material?.alphaMode ?: GltfAlphaMode.OPAQUE,
+            doubleSided = material?.doubleSided ?: false,
         )
     }
 
