@@ -17,7 +17,8 @@ import com.awakekt.awake.render.pipeline.CullMode
  * Only opaque, non-instanced draws fold, and back-culled ones only where the backend built a
  * back-culled instanced pipeline: there is no blended one, and a draw that is already instanced
  * carries its own per-instance data. A
- * draw with no partner is left as it is. The rest keep their order; groups follow them. An
+ * draw with no partner is left as it is. Groups come first, in [InstanceGroupOrder]'s order; the
+ * rest follow them in their own order, so culling one of them moves no group. An
  * already-instanced draw carrying more copies than one draw's buffer holds is split.
  */
 internal fun batchInstances(
