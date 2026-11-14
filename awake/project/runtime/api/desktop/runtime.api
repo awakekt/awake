@@ -103,9 +103,27 @@ public final class com/awakekt/awake/project/runtime/CoreSystems {
 	public final fun getAll ()Ljava/util/List;
 }
 
+public final class com/awakekt/awake/project/runtime/EntryGate {
+	public static final field Companion Lcom/awakekt/awake/project/runtime/EntryGate$Companion;
+	public static final field EMPTY_PLACEHOLDER Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getPlaceholderScene ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/runtime/EntryGate$Companion {
+}
+
+public final class com/awakekt/awake/project/runtime/EntryGateKt {
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/runtime/EntryGate;Ljava/util/List;ZLjava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/runtime/EntryGate;Ljava/util/List;ZLjava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/core/localization/Strings;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/AutoCloseable {
 	public fun close ()V
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public final fun getPendingEntryScene ()Ljava/lang/String;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
 	public final fun getStrings ()Lcom/awakekt/awake/core/localization/Strings;
 }

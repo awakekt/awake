@@ -91,6 +91,15 @@ class LoadedProject internal constructor(
     /** Whether [runProject] plays this project, whose runner then switches its scenes on the frame thread. */
     internal var played = false
 
+    /**
+     * The entry scene this project waits to play, when it was loaded with an [EntryGate] while its
+     * files gated that scene: it plays a placeholder now, and [runProject] asks for this scene as it
+     * starts, which reports [SceneSwitchState.WaitingForContent] until the gate opens. Null once it has
+     * been asked for, and for a project that loaded its entry scene. Read on the frame thread.
+     */
+    var pendingEntryScene: String? = null
+        internal set
+
     /** Whether [close] has run: a closed project moves to no other scene. */
     internal var closed = false
         private set

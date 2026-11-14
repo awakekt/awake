@@ -167,6 +167,11 @@ internal class ProjectSceneRunner(
         playLoads = sceneLoads
         instance = runtime.instantiate(scene, project.componentRegistry)
         begin()
+        // A gated entry scene: the placeholder plays, and the real entry loads once the gate opens.
+        project.pendingEntryScene?.let { entry ->
+            project.pendingEntryScene = null
+            request(entry)
+        }
     }
 
     override fun request(path: String) {
