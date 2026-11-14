@@ -119,7 +119,7 @@ class ShadcnFieldsTest {
             provideShadcnTheme(theme) {
                 if (input) ShadcnInput(TextFieldState("x")) else ShadcnTextarea(TextFieldState("x"))
             }
-        }.meshColors()
+        }.borderColors()
 
         assertTrue(
             border(true).any { it == theme.palette.input },

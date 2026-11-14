@@ -53,7 +53,7 @@ class RendererVertexWritersTest {
 
     @Test
     fun testWriteRoundedQuadVertex() {
-        val out = FloatArray(16)
+        val out = FloatArray(17)
         val color = Color(1f, 0f, 0f, 1f)
 
         writeRoundedQuadVertex(
@@ -89,7 +89,7 @@ class RendererVertexWritersTest {
         assertEquals(12, UiVertexLayout.Glyph.strideBytes / Float.SIZE_BYTES)
         assertEquals(UiVertexLayout.GLYPH_FLOATS_PER_VERTEX, UiVertexLayout.Glyph.strideBytes / Float.SIZE_BYTES)
 
-        assertEquals(16, UiVertexLayout.RoundedQuad.strideBytes / Float.SIZE_BYTES)
+        assertEquals(17, UiVertexLayout.RoundedQuad.strideBytes / Float.SIZE_BYTES)
         assertEquals(UiVertexLayout.ROUNDED_QUAD_FLOATS_PER_VERTEX, UiVertexLayout.RoundedQuad.strideBytes / Float.SIZE_BYTES)
     }
 }
