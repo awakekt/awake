@@ -88,6 +88,30 @@ class InstancedPropsParityTest {
         }
     }
 
+    /**
+     * Tinted posts and a particle in one frame, both casting: depth passes tell a particle caster by its
+     * frame buffer, since a tinted prop carries colours too. Told apart wrongly, the folded posts would
+     * cast through the particle's depth shader and differ from the separate ones.
+     *
+     * Negative controls: the particle changes the frame (it draws and casts), so it is really there; and,
+     * measured on lavapipe, with depth passes telling a particle by its colour buffer as before, the
+     * folded posts differ from the separate ones in 624 channels on Vulkan.
+     */
+    @Test
+    fun foldedTintedPropsAndAParticleEachCastTheirOwnShadows() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val (separate, _) = renderer.renderRepeatedPropsScene(shareMaterial = false, tinted = true, withParticle = true)
+            val (instanced, instancedDraws) = renderer.renderRepeatedPropsScene(shareMaterial = true, tinted = true, withParticle = true)
+            val (noParticle, _) = renderer.renderRepeatedPropsScene(shareMaterial = true, tinted = true)
+            writeEvidence(backend, instanced, "repeated-props-tinted-with-particle")
+
+            assertEquals(FOLDED_DRAWS + 1, instancedDraws, "$backend: the ground, the folded posts and the particle")
+            assertEquals(0, separate.differingChannels(instanced), "$backend: folded tinted posts beside a particle differ from separate ones")
+            assertTrue(instanced.differingChannels(noParticle) > MIN_MASK_EFFECT, "$backend: the particle changed nothing, so this compares nothing")
+        }
+    }
+
     private fun ByteArray.differingChannels(other: ByteArray): Int =
         indices.count { kotlin.math.abs((this[it].toInt() and 0xFF) - (other[it].toInt() and 0xFF)) > CHANNEL_TOLERANCE }
 

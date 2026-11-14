@@ -10,6 +10,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.CullMode
@@ -34,6 +35,7 @@ fun Renderer.renderRepeatedPropsScene(
     masked: Boolean = false,
     cullMode: CullMode = CullMode.None,
     tinted: Boolean = false,
+    withParticle: Boolean = false,
 ): Pair<ByteArray, Int> {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val ground = createMesh(plane(GROUND_HALF, y = 0f))
@@ -43,6 +45,9 @@ fun Renderer.renderRepeatedPropsScene(
     val texture = if (masked) HalfClear else SolidOrange
     val shared = texturedMaterial(texture)
     val materials = POST_XS.map { if (shareMaterial) shared else texturedMaterial(texture) }
+    // A particle beside the posts, casting too: its depth pass and the tinted posts' must not be told apart wrongly.
+    val quad = createMesh(SpriteQuad)
+    val spriteMaterial = createMaterial(ParticleUniformLayout, texture = RedSprite)
     return try {
         val posts = POST_XS.zip(materials).mapIndexed { index, (x, material) ->
             RenderDrawCommand(
@@ -54,7 +59,8 @@ fun Renderer.renderRepeatedPropsScene(
                 cullMode = cullMode,
             ).apply { if (tinted) fadeOpacity = POST_FADES[index] }
         }
-        val input = compileShadowScene(listOf(RenderDrawCommand(ground, groundMaterial)) + posts)
+        val particle = listOfNotNull(flatParticleSprite(quad, spriteMaterial, x = 0f, z = PARTICLE_Z).takeIf { withParticle })
+        val input = compileShadowScene(listOf(RenderDrawCommand(ground, groundMaterial)) + posts + particle)
         if (submit) submitToTexture(target, input) else renderToTexture(target, input)
         runBlocking { readPixels(target) }.data to input.resolvedOpaqueDraws.size
     } finally {
@@ -62,6 +68,8 @@ fun Renderer.renderRepeatedPropsScene(
         post.destroy()
         groundMaterial.destroy()
         (materials + shared).distinct().forEach { it.destroy() }
+        quad.destroy()
+        spriteMaterial.destroy()
         target.destroy()
     }
 }
@@ -94,4 +102,5 @@ private val POST_TINTS = listOf(Color(1f, 0.3f, 0.3f), Color(0.3f, 1f, 0.3f), Co
 private val POST_FADES = listOf(1f, 0.5f, 1f, 0.75f, 1f)
 
 private const val POST_HALF = 0.5f
+private const val PARTICLE_Z = 2.5f
 private val POST_XS = listOf(-3f, -1.5f, 0f, 1.5f, 3f)
