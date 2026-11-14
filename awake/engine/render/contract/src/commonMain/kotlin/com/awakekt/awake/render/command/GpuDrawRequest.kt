@@ -37,8 +37,11 @@ data class GpuDrawRequest(
     var model: Mat4 = Mat4(),
     /** Format-specific extra lanes; the selected pipeline's declared layout owns them. */
     var extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
-    /** Parameter vector passed to vertex animation shaders (e.g. wind/sway offset). */
-    var vertexAnimation: Vec3f = Vec3f.ZERO,
+    /**
+     * Parameter vector passed to vertex animation shaders (e.g. wind/sway offset). The default is
+     * one shared zero vector: assign a new vector to change it, never write into it.
+     */
+    var vertexAnimation: Vec3f = NO_VERTEX_ANIMATION,
     /** Current elapsed simulation time in seconds for shader animations. */
     var timeSeconds: Float = 0f,
     /** List of per-instance model transform matrices for instanced rendering, or `null`. */
@@ -109,7 +112,8 @@ data class GpuDrawRequest(
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
      * [model] and [vertexAnimation] have no default: `Mat4()` and `Vec3f.ZERO` each build a new
-     * object on every read, so a default would allocate per call.
+     * object on every read, so a default would allocate per call. The constructor's default
+     * vector is a shared one for that reason.
      */
     @Suppress("LongParameterList")
     fun set(
@@ -171,7 +175,7 @@ data class GpuDrawRequest(
         material: GpuMaterial,
         model: Mat4 = Mat4(),
         extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
-        vertexAnimation: Vec3f = Vec3f.ZERO,
+        vertexAnimation: Vec3f = NO_VERTEX_ANIMATION,
         timeSeconds: Float = 0f,
         instanceModels: List<Mat4>? = null,
         instanceJointPalettes: List<FloatArray>? = null,
@@ -274,4 +278,12 @@ const val COVERING_EXEMPT_MASK_LAYER = MASK_LAYER_COUNT
 const val MASK_TARGET_LAYER_COUNT = MASK_LAYER_COUNT + 1
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)
+
+/**
+ * The default [GpuDrawRequest.vertexAnimation]. `Vec3f.ZERO` builds a new vector on every read
+ * (a `Vec3f` is mutable, so the constant cannot be shared), which made every request built
+ * without an animation allocate one. Requests share this instead: nothing writes into a
+ * request's vector, it is replaced. `SceneDrawCollector` shares one the same way.
+ */
+private val NO_VERTEX_ANIMATION = Vec3f(0f, 0f, 0f)
 private const val DEFAULT_ALPHA_CUTOFF = 0.5f
