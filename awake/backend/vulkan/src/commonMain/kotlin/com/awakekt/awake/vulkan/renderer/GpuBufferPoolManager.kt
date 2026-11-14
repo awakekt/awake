@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.render.passes.GpuResourcePool
+import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
@@ -24,18 +25,11 @@ internal class GpuBufferPoolManager(
     // Each pool is (policy, factory): GpuResourcePool owns "grow on demand, index by run,
     // never shrink" once, this file names only what to build. Both backends declare the same
     // eight; only the constructed type differs.
-    private val uiQuadMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, framesInFlight = maxFramesInFlight)
-    }
-    private val uiGlyphMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
-    }
-    private val uiDecoratedGlyphMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, VertexFormats2D.DECORATED_GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
-    }
-    private val uiRoundedQuadMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.ROUNDED_QUAD_FLOATS_PER_VERTEX, maxFramesInFlight)
-    }
+    /** The overlay's UI meshes; each offscreen target has its own in [targetUiSlots]. */
+    private val overlayUiSlots = UiMeshSlots(graphicsDevice, maxFramesInFlight)
+    private val targetUiSlots = HashMap<RenderTarget, UiMeshSlots>()
+    private val retiredUiSlots = RetiredUiMeshSlots(maxFramesInFlight)
+
     private val uiTextureMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.TEXTURE_PRIMITIVE_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
     }
@@ -67,17 +61,26 @@ internal class GpuBufferPoolManager(
     val uiMeshGrowthCount: Int
         get() {
             var total = 0
-            listOf(uiQuadMeshPool, uiGlyphMeshPool, uiDecoratedGlyphMeshPool, uiRoundedQuadMeshPool, uiTextureMeshPool, imagePassMeshPool)
-                .forEach { pool -> pool.forEach { total += it.growthCount } }
+            listOf(uiTextureMeshPool, imagePassMeshPool).forEach { pool -> pool.forEach { total += it.growthCount } }
+            total += overlayUiSlots.growthCount
+            targetUiSlots.values.forEach { total += it.growthCount }
             return total
         }
 
-    fun quadMeshForRun(index: Int): DynamicMesh = uiQuadMeshPool[index]
-    fun roundedQuadMeshForRun(index: Int): DynamicMesh = uiRoundedQuadMeshPool[index]
+    /** The UI meshes a pass into [target] stages into, or the overlay's for `null`. */
+    fun uiSlotsFor(target: RenderTarget?): UiMeshSlots =
+        if (target == null) overlayUiSlots else targetUiSlots.getOrPut(target) { UiMeshSlots(graphicsDevice, maxFramesInFlight) }
 
-    /** The [index]th glyph run's mesh, from the decorated glyph layout's pool when [decorated] (#1061). */
-    fun glyphMeshForRun(index: Int, decorated: Boolean = false): DynamicMesh =
-        if (decorated) uiDecoratedGlyphMeshPool[index] else uiGlyphMeshPool[index]
+    /** Retires [target]'s UI meshes when it is destroyed; they are freed once no frame in flight can read them. */
+    fun releaseUiSlots(target: RenderTarget) {
+        targetUiSlots.remove(target)?.let(retiredUiSlots::retire)
+    }
+
+    /** UI mesh sets retired and not yet freed, for tests. */
+    val retiredUiSlotCount: Int get() = retiredUiSlots.pending
+
+    /** The GPU finished frame slot [frame]: frees retired UI meshes no frame in flight can still read. */
+    fun frameSlotIdle(frame: Int) = retiredUiSlots.frameSlotIdle(frame)
 
     /** One mesh per textured primitive, not one shared by all of them -- a run's later primitive
      * would otherwise overwrite geometry an earlier, not-yet-submitted draw still points at. */
@@ -91,10 +94,10 @@ internal class GpuBufferPoolManager(
     fun frameInstanceBufferForRun(index: Int): FrameInstanceBuffer = frameInstanceBufferPool[index]
 
     fun destroy() {
-        uiQuadMeshPool.forEach { it.destroy() }
-        uiGlyphMeshPool.forEach { it.destroy() }
-        uiDecoratedGlyphMeshPool.forEach { it.destroy() }
-        uiRoundedQuadMeshPool.forEach { it.destroy() }
+        overlayUiSlots.destroy()
+        targetUiSlots.values.forEach(UiMeshSlots::destroy)
+        targetUiSlots.clear()
+        retiredUiSlots.destroyAll()
         uiTextureMeshPool.forEach { it.destroy() }
         imagePassMeshPool.forEach { it.destroy() }
         instanceBufferPool.forEach { it.destroy() }

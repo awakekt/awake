@@ -106,6 +106,7 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
         onDestroy = {
             createdRenderTargets.remove(target)
             dropStagedUiSampling(target)
+            bufferPools.releaseUiSlots(target)
         },
     )
     createdRenderTargets += target
