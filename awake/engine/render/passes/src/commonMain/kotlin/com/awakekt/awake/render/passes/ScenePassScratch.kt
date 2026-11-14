@@ -17,6 +17,9 @@ package com.awakekt.awake.render.passes
 class ScenePassScratch {
     internal val batcher = InstanceBatcher()
     internal val casters = ShadowCasterFolding()
+
+    /** Each caster's reach toward the light; null scans every caster in every cascade, as a reference. */
+    internal var reach: LightDepthReach? = LightDepthReach()
     internal val signature = PassInputSignature()
     internal var lastInput: com.awakekt.awake.render.command.GpuPassInput? = null
     internal var lastStats: SceneDrawStats? = null

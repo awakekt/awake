@@ -42,15 +42,20 @@ import kotlin.math.min
 internal fun GpuShadowCascadeData.reachingCasters(
     casters: List<GpuDrawRequest>,
     clipSpace: ClipSpace,
+    reach: LightDepthReach? = null,
 ): GpuShadowCascadeData {
     val nearDepth = if (clipSpace.depthZeroToOne) 0f else -1f
     val planes = FloatArray(CASTING_PLANE_FLOATS)
     var pulled: MutableList<Mat4>? = null
     var scales: FloatArray? = null
+    val measured = reach?.takeIf { it.measure(viewProjections.firstOrNull { matrix -> matrix.isOrthographic() }, casters) }
     viewProjections.forEachIndexed { cascade, viewProjection ->
         if (!viewProjection.isOrthographic()) return@forEachIndexed
+        // Along the light, how low a caster must reach to matter here; none that high, nothing to scan.
+        val cutoff = measured?.cutoff(viewProjection, nearDepth) ?: Float.POSITIVE_INFINITY
+        if (measured != null && cutoff <= measured.lowest) return@forEachIndexed
         writeCastingPlanes(viewProjection, planes, 0)
-        val lowest = casters.lowestDepthIn(viewProjection, planes, nearDepth)
+        val lowest = casters.lowestDepthIn(viewProjection, planes, nearDepth) { index -> measured?.scans(index, cutoff) ?: true }
         if (lowest >= nearDepth) return@forEachIndexed
         // A little past the farthest caster, so rounding cannot clip the corner that set the plane.
         val low = lowest - (nearDepth - lowest) * REACH_MARGIN
@@ -73,11 +78,16 @@ internal fun GpuShadowCascadeData.reachingCasters(
  * The smallest clip-space depth under [viewProjection] of any opaque, bounded caster that casts and
  * that the casting [planes] admit, or [floor] when none reaches below it.
  */
-private fun List<GpuDrawRequest>.lowestDepthIn(viewProjection: Mat4, planes: FloatArray, floor: Float): Float {
+private inline fun List<GpuDrawRequest>.lowestDepthIn(
+    viewProjection: Mat4,
+    planes: FloatArray,
+    floor: Float,
+    mayReach: (Int) -> Boolean,
+): Float {
     var lowest = floor
     for (index in indices) {
         val caster = this[index]
-        val box = caster.worldBounds.takeUnless { caster.transparent || !caster.castsShadows } ?: continue
+        val box = caster.worldBounds.takeUnless { caster.transparent || !caster.castsShadows || !mayReach(index) } ?: continue
         if (planes.admitsBox(0, box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)) {
             val depth = viewProjection.lowestDepth(box)
             if (depth.isFinite()) lowest = min(lowest, depth)
@@ -108,16 +118,16 @@ private fun Mat4.lowestDepth(box: Aabb): Float {
 }
 
 /** Whether this matrix leaves `w` at 1, as an orthographic projection does: only then is depth linear in position. */
-private fun Mat4.isOrthographic(): Boolean =
+internal fun Mat4.isOrthographic(): Boolean =
     abs(data[W_ROW]) < AFFINE_TOLERANCE &&
         abs(data[ROW_STRIDE + W_ROW]) < AFFINE_TOLERANCE &&
         abs(data[2 * ROW_STRIDE + W_ROW]) < AFFINE_TOLERANCE &&
         abs(data[TRANSLATION_COLUMN * ROW_STRIDE + W_ROW] - 1f) < AFFINE_TOLERANCE
 
-private const val ROW_STRIDE = 4
-private const val DEPTH_ROW = 2
+internal const val ROW_STRIDE = 4
+internal const val DEPTH_ROW = 2
 private const val W_ROW = 3
-private const val TRANSLATION_COLUMN = 3
+internal const val TRANSLATION_COLUMN = 3
 
 /** Clip-space depth of the far plane, in both depth conventions. */
 private const val FAR_DEPTH = 1f

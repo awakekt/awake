@@ -147,7 +147,7 @@ object ScenePassCompiler {
         // onto it; for one that clips there, the plane moves back to the casters instead. Before
         // preparation, because prepared draws carry the cascade matrices their receivers sample.
         val shadowCascadeData = shadowCascadeData(light, environment)?.let { cascades ->
-            if (drawPreparer?.clampsShadowDepth == true) cascades else cascades.reachingCasters(drawCalls, clipSpace)
+            if (drawPreparer?.clampsShadowDepth == true) cascades else cascades.reachingCasters(drawCalls, clipSpace, scratch.reach)
         }
         val shadowViewProjections = shadowCascadeData?.viewProjections.orEmpty()
         val packedPassUniforms = sceneLightUniforms(light ?: DEFAULT_SCENE_LIGHT, lens.eye).packed
