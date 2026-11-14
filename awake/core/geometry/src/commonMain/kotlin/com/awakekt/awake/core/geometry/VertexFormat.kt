@@ -45,13 +45,34 @@ data class VertexFormat(val attributes: List<VertexAttribute>) {
      * is a hand-maintained `COLOR_OFFSET = 6` beside a hand-maintained `STRIDE = 11`, which is two
      * more restatements of this format to keep in step with it.
      */
-    fun floatOffsetOf(semantic: VertexSemantic): Int =
-        entries.firstOrNull { it.attribute.semantic == semantic }
-            ?.let { it.offsetBytes / Float.SIZE_BYTES }
-            ?: -1
+    fun floatOffsetOf(semantic: VertexSemantic): Int {
+        // By index: an iterator per call is garbage on every draw that asks (#1555).
+        for (index in entries.indices) {
+            val entry = entries[index]
+            if (entry.attribute.semantic == semantic) return entry.offsetBytes / Float.SIZE_BYTES
+        }
+        return -1
+    }
 
     /** Whether a vertex carries joint indices: a mesh in this format is posed by a joint palette. */
-    val isSkinned: Boolean get() = floatOffsetOf(VertexSemantic.JointIndices) >= 0
+    val isSkinned: Boolean = floatOffsetOf(VertexSemantic.JointIndices) >= 0
+
+    /** [attributes]' hash, computed once: formats are hashed and compared for every draw. */
+    private val hash: Int = attributes.hashCode()
+
+    override fun hashCode(): Int = hash
+
+    /**
+     * Equal attributes, compared by index after the same instance and the cached hashes: the list's
+     * own `equals` walked two iterators, allocated on every comparison where escape analysis does not
+     * remove them, as on Kotlin/Wasm (#1555).
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is VertexFormat || hash != other.hash || attributes.size != other.attributes.size) return false
+        for (index in attributes.indices) if (attributes[index] != other.attributes[index]) return false
+        return true
+    }
 
     /**
      * Standard predefined vertex formats commonly used across 2D and 3D rendering pipelines.

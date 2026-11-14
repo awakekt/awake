@@ -39,17 +39,29 @@ fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
     return SortedDraws(
         opaqueByPipeline = opaque
             .groupBy { it.pipeline }
-            .mapValues { (_, group) -> group.sortedBy { it.batchKey } },
+            .mapValues { (_, group) -> group.sortedWith(BatchKeyOrder) },
         transparent = transparent.sortedWith(TransparentOrder),
     )
 }
 
 /**
  * Paint layer, then paint order within it, then farthest first. Depth is descending in the comparator
- * rather than the list reversed, which would allocate a second list every frame.
+ * rather than the list reversed, which would allocate a second list every frame; compared as
+ * primitives, not through `compareBy`, which boxed every key.
  */
-private val TransparentOrder: Comparator<PreparedDraw> =
-    compareBy<PreparedDraw> { it.sortLayer }.thenBy { it.sortOrder }.thenByDescending { it.depthSortKey }
+private val TransparentOrder: Comparator<PreparedDraw> = Comparator { a, b ->
+    when {
+        a.sortLayer != b.sortLayer -> a.sortLayer.compareTo(b.sortLayer)
+        a.sortOrder != b.sortOrder -> a.sortOrder.compareTo(b.sortOrder)
+        else -> b.depthSortKey.compareTo(a.depthSortKey)
+    }
+}
+
+/**
+ * By batch key, compared as ints: `sortedBy { it.batchKey }` boxed both keys on every comparison,
+ * which Kotlin/Wasm allocates where the JVM's escape analysis hides it (#1555).
+ */
+private val BatchKeyOrder: Comparator<PreparedDraw> = Comparator { a, b -> a.batchKey.compareTo(b.batchKey) }
 
 /** Flattened list of all prepared draws in this sorted set. */
 val <P : PreparedDraw> SortedDraws<P>.allDraws: List<P>
