@@ -86,6 +86,22 @@ sealed interface PipelineVariant {
     }
 
     /**
+     * [Instanced] with one `vec4f` per instance after the model matrix, on the instance-rate
+     * binding [instanceAlpha] adds: rgb tints the copy's colour and a is its fade, so copies of a
+     * mesh and material that differ only in tint or fade draw as one instanced draw. An untinted
+     * copy carries (1, 1, 1, 1). A shader built for [Instanced] does not read it, so a pipeline
+     * opts in by naming this variant and declaring the attribute at the location after the matrix.
+     */
+    data object InstancedTinted : PipelineVariant {
+        override val instanced = true
+        override val instanceAlpha = true
+        override val instanceFrame = false
+        override val blendEnabled = false
+        override val depthWriteEnabled = true
+        override val depthTestEnabled = true
+    }
+
+    /**
      * A transparent surface: alpha-blended, depth-tested, no depth write. Not instanced.
      *
      * Depth write off is the whole point -- see `RenderDrawCommand.transparent`. Depth *test* stays on so

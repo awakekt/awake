@@ -204,6 +204,7 @@ public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparat
 public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparer {
 	public fun canInstance (Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
 	public fun canInstance (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
+	public fun canTintInstances (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
 	public fun getClampsShadowDepth ()Z
 	public fun getRedrawsPreparedFrames ()Z
 	public abstract fun prepare (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/render/command/GpuDrawPreparationContext;)Lcom/awakekt/awake/render/command/GpuResolvedDraw;
@@ -212,6 +213,7 @@ public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparer
 public final class com/awakekt/awake/render/command/GpuDrawPreparer$DefaultImpls {
 	public static fun canInstance (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
 	public static fun canInstance (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
+	public static fun canTintInstances (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
 	public static fun getClampsShadowDepth (Lcom/awakekt/awake/render/command/GpuDrawPreparer;)Z
 	public static fun getRedrawsPreparedFrames (Lcom/awakekt/awake/render/command/GpuDrawPreparer;)Z
 }
@@ -1623,6 +1625,20 @@ public final class com/awakekt/awake/render/pipeline/PipelineVariant$EdgeOverlay
 
 public final class com/awakekt/awake/render/pipeline/PipelineVariant$Instanced : com/awakekt/awake/render/pipeline/PipelineVariant {
 	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$Instanced;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAdditive ()Z
+	public fun getBlendEnabled ()Z
+	public fun getDepthTestEnabled ()Z
+	public fun getDepthWriteEnabled ()Z
+	public fun getInstanceAlpha ()Z
+	public fun getInstanceFrame ()Z
+	public fun getInstanced ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/pipeline/PipelineVariant$InstancedTinted : com/awakekt/awake/render/pipeline/PipelineVariant {
+	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$InstancedTinted;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAdditive ()Z
 	public fun getBlendEnabled ()Z

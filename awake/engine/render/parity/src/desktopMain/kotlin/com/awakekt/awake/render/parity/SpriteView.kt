@@ -13,6 +13,8 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
@@ -144,15 +146,7 @@ fun Renderer.renderParticleShadowScene(withSprite: Boolean): ByteArray {
     val quad = createMesh(SpriteQuad)
     val spriteMaterial = createMaterial(ParticleUniformLayout, texture = RedSprite)
     return try {
-        val sprite = RenderDrawCommand(
-            mesh = quad,
-            material = spriteMaterial,
-            instanceModels = listOf(Mat4().setParticleInstance(0f, CASTER_Y, 0f, SHADOW_SPRITE_SIZE)),
-            instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
-            instanceFrames = listOf(0f),
-            // Lying flat: the ground's +X and -Z as its quad axes (ParticleExtraUniformLayout).
-            extraUniformFloats = floatArrayOf(1f, 0f, 0f, 0f, 0f, 0f, -1f, 0f, 1f, 0f, 0f, 0f),
-        )
+        val sprite = flatParticleSprite(quad, spriteMaterial, x = 0f, z = 0f)
         renderToTexture(target, compileShadowScene(listOfNotNull(RenderDrawCommand(ground, groundMaterial), sprite.takeIf { withSprite })))
         runBlocking { readPixels(target) }.data
     } finally {
@@ -163,6 +157,17 @@ fun Renderer.renderParticleShadowScene(withSprite: Boolean): ByteArray {
         target.destroy()
     }
 }
+
+/** A red particle sprite of [quad] and [material] lying flat at the caster's height over ([x], [z]), casting onto the ground. */
+internal fun flatParticleSprite(quad: Mesh, material: Material, x: Float, z: Float) = RenderDrawCommand(
+    mesh = quad,
+    material = material,
+    instanceModels = listOf(Mat4().setParticleInstance(x, CASTER_Y, z, SHADOW_SPRITE_SIZE)),
+    instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
+    instanceFrames = listOf(0f),
+    // Lying flat: the ground's +X and -Z as its quad axes (ParticleExtraUniformLayout).
+    extraUniformFloats = floatArrayOf(1f, 0f, 0f, 0f, 0f, 0f, -1f, 0f, 1f, 0f, 0f, 0f),
+)
 
 /** Two texels: red on the left, blue on the right. */
 private val RedLeftBlueRight = TextureAsset(data = byteArrayOf(-1, 0, 0, -1, 0, 0, -1, -1), width = 2, height = 1)

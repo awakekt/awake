@@ -81,11 +81,12 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             vertexFormat = VertexFormat.PositionNormalColor,
             variant = PipelineVariant.Instanced,
         ),
+        // Textured copies differing only in tint or dither fade fold too: each carries its own.
         ScenePipeline(
             key = PipelineKey.InstancedFormat(VertexFormat.PositionNormalColorUv),
-            shaders = PackShaderSets.InstancedTextured,
+            shaders = PackShaderSets.InstancedTexturedTinted,
             vertexFormat = VertexFormat.PositionNormalColorUv,
-            variant = PipelineVariant.Instanced,
+            variant = PipelineVariant.InstancedTinted,
             depthShaders = PackShaderSets.InstancedTexturedShadowDepth,
         ),
         // A scene's particle_emitters, blended or, for glows, added.

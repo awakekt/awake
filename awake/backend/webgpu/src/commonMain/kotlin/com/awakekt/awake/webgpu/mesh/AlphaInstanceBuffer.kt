@@ -55,7 +55,21 @@ class AlphaInstanceBuffer(
     fun update(colors: List<Vec4>) {
         val floats = packer.pack(colors, maxInstances) ?: return
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        holdsWhite = false
     }
+
+    /**
+     * Every instance (1, 1, 1, 1): untinted and unfaded, for an instanced draw on a tinted
+     * pipeline that carries no colours. Written once; a buffer already holding it is left alone.
+     */
+    fun fillWhite() {
+        if (holdsWhite) return
+        val white = FloatArray(maxInstances * FLOATS_PER_INSTANCE) { 1f }
+        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(white))
+        holdsWhite = true
+    }
+
+    private var holdsWhite = false
 
     /**
      * Returns the GPU vertex buffer bound at slot 2 for instanced billboard draws. The buffer is

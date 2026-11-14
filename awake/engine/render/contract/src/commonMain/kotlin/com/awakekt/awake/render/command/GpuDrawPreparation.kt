@@ -115,6 +115,14 @@ fun interface GpuDrawPreparer {
      * backend whose resolved draws bind per-frame-in-flight storage the next preparation rewrites.
      */
     val redrawsPreparedFrames: Boolean get() = false
+
+    /**
+     * Whether this backend's instanced pipeline for [format] and [cullMode] reads a tint and fade
+     * per instance (`PipelineVariant.InstancedTinted`), so copies differing only in those may share
+     * one instanced draw carrying them in `GpuDrawRequest.instanceColors`. False, the default,
+     * keeps such copies apart, as a pipeline built for `PipelineVariant.Instanced` needs.
+     */
+    fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean = false
 }
 
 /** Composition capability exposed by a backend bootstrap to scene/render-pipeline code. */

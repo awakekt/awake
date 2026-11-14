@@ -35,6 +35,8 @@ import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
+import com.awakekt.awake.asset.shaderdsl.namedInput
+import com.awakekt.awake.asset.shaderdsl.namedVarying
 import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.or
 import com.awakekt.awake.asset.shaderdsl.plus
@@ -87,8 +89,16 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * upgrade path unchanged: MikkTSpace tangents at load time plus a tangent vertex slot.
  */
 @Suppress("LongMethod")
-private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShaderDefinition =
-    shader(if (instanced) "instanced_textured" else "textured") {
+private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: Boolean = false): AslShaderDefinition =
+    shader(
+        if (tinted) {
+            "instanced_textured_tinted"
+        } else if (instanced) {
+            "instanced_textured"
+        } else {
+            "textured"
+        },
+    ) {
         val u = uniformBlock(
             "Uniforms",
             group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -137,6 +147,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
         val normal by out.varying(GpuDataShape.Vec3, location = 1)
         val uv by out.varying(GpuDataShape.Vec2, location = 2)
         val worldPos by out.varying(GpuDataShape.Vec3, location = 3)
+        val instanceFade = if (tinted) out.namedVarying("instanceFade", GpuDataShape.Float, location = 4) else null
 
         vertex {
             val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
@@ -144,7 +155,14 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             // Instanced, each copy's model comes from the instance buffer and the block's is identity.
             val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
             out.position set (viewProjection * (drawModel * vec4(inPosition, 1f.lit)))
-            color set ins.input(VertexSemantic.Color)
+            if (instanceFade != null) {
+                // One vec4 per copy after its matrix (`PipelineVariant.InstancedTinted`): rgb tints it, a fades it.
+                val tint = let("instanceTint", namedInput("inTint", GpuDataShape.Vec4, INSTANCE_TINT_LOCATION))
+                color set ins.input(VertexSemantic.Color) * tint.xyz
+                instanceFade set tint.w
+            } else {
+                color set ins.input(VertexSemantic.Color)
+            }
             // World-space normal (model matrix directly -- correct for the rigid/uniform scales
             // Transform can express), so shading stays put while the mesh spins.
             normal set (drawModel * vec4(ins.input(VertexSemantic.Normal), 0f.lit)).xyz
@@ -323,7 +341,8 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             // Coverage is applied after every derivative, including those used by debug views.
             val debugColor = let("debugColor", debugViewColor(debugView, cameraPosition, surface, shaded))
             val coverage = materialCoverage(sourceAlpha, pbrFactors.z, debugColor.a)
-            ditherFade(exposure.y)
+            // exposure.y is the share of the draw's pixels to discard (1 - its fade); a copy's own fade thins what is left.
+            ditherFade(if (instanceFade != null) 1f.lit - (1f.lit - exposure.y) * instanceFade else exposure.y)
             colorOutput(vec4(debugColor.rgb, coverage))
         }
     }
@@ -333,6 +352,16 @@ fun texturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpa
 
 /** `textured` drawing many copies of one mesh, each placed by its own instance matrix. */
 fun instancedTexturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true)
+
+/**
+ * [instancedTexturedShader] reading a tint and fade per copy after its matrix, for a pipeline built
+ * with `PipelineVariant.InstancedTinted`: copies that differ only in base colour or dither fade
+ * draw as one, each as it would alone.
+ */
+fun instancedTexturedTintedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true, tinted = true)
+
+/** The instance tint's location: after PositionNormalColorUv's four attributes and the matrix's four columns. */
+private const val INSTANCE_TINT_LOCATION = 8
 
 /**
  * The UV to sample a textured material at, and its screen derivatives, after the material's

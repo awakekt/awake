@@ -16,9 +16,11 @@ import com.awakekt.awake.render.passes.FrameUniformInputs
 import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.canInstance
 import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
+import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
@@ -45,6 +47,9 @@ internal class WebGpuDrawPreparer(
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelines
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
+
+    override fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean =
+        renderer.pipelines.resolveInstanced(format, InstancedDrawKind.Plain, cullMode = cullMode)?.readsInstanceTint == true
 
     /** The shadow depth pipelines set `unclippedDepth` exactly when the device can honour it. */
     override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.unclippedDepth

@@ -228,6 +228,7 @@ public final class com/awakekt/awake/vulkan/mesh/AlphaInstanceBuffer {
 	public final fun bind (IJ)V
 	public final fun binding (I)Lcom/awakekt/awake/vulkan/pipeline/VulkanBufferBinding;
 	public final fun destroy ()V
+	public final fun fillWhite (I)V
 	public final fun update (ILjava/util/List;)V
 }
 

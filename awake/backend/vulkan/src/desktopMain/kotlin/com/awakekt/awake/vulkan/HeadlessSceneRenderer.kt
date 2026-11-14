@@ -167,17 +167,18 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         VertexFormat.PositionNormalColorUv to edgeCompanion(PackShaderSets.Textured, VertexFormat.PositionNormalColorUv),
         VertexFormat.PositionNormalColorUvSkin to edgeCompanion(PackShaderSets.SkinnedTextured, VertexFormat.PositionNormalColorUvSkin),
     )
+    // Tinting copies per instance, as a played project's render plan builds it.
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
         sceneRenderPass,
         descriptorSetLayout,
-        runBlocking { spirvPair(PackShaderSets.InstancedTextured) },
+        runBlocking { spirvPair(PackShaderSets.InstancedTexturedTinted) },
         VertexFormat.PositionNormalColorUv,
         vertexEntryPoint = "vertexMain",
         fragmentEntryPoint = "fragmentMain",
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
-        variant = PipelineVariant.Instanced,
+        variant = PipelineVariant.InstancedTinted,
     )
 
     // The back-culled twins a render plan builds for the textured format and its instanced pipeline,
@@ -196,7 +197,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         cullMode = com.awakekt.awake.vulkan.enums.VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
     )
     val backCulledTexturedPipeline = backCulledTextured(PackShaderSets.Textured, PipelineVariant.Opaque)
-    val backCulledInstancedTexturedPipeline = backCulledTextured(PackShaderSets.InstancedTextured, PipelineVariant.Instanced)
+    val backCulledInstancedTexturedPipeline = backCulledTextured(PackShaderSets.InstancedTexturedTinted, PipelineVariant.InstancedTinted)
     // The sprite pipeline RenderPlan builds for PipelineKey.Particle.
     val spritePipeline = RenderPipeline(
         graphicsDevice,

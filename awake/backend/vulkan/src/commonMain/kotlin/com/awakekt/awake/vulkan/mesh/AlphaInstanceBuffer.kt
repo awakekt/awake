@@ -74,7 +74,22 @@ class AlphaInstanceBuffer(
     fun update(frameIndex: Int, colors: List<Vec4>) {
         val floats = packer.pack(colors, maxInstances) ?: return
         VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
+        holdsWhite[frameIndex] = false
     }
+
+    /**
+     * Every instance (1, 1, 1, 1) in [frameIndex]'s buffer: untinted and unfaded, for an
+     * instanced draw on a tinted pipeline that carries no colours. A slot already holding it is
+     * left alone.
+     */
+    fun fillWhite(frameIndex: Int) {
+        if (holdsWhite[frameIndex]) return
+        val white = FloatArray(maxInstances * FLOATS_PER_INSTANCE) { 1f }
+        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, white)
+        holdsWhite[frameIndex] = true
+    }
+
+    private val holdsWhite = BooleanArray(frameResources.size)
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 2. */
     fun binding(frameIndex: Int): VulkanBufferBinding = resourcesFor(frameIndex).binding

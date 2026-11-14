@@ -178,18 +178,19 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
     )
     val transparentTexturedPipeline = texturedCompanion(PipelineVariant.AlphaBlended)
     val additiveTexturedPipeline = texturedCompanion(PipelineVariant.AdditiveBlended)
+    // Tinting copies per instance, as a played project's render plan builds it.
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
         DescriptorSetLayoutHandle(0),
-        wgsl(PackShaderSets.InstancedTextured),
+        wgsl(PackShaderSets.InstancedTexturedTinted),
         ByteArray(0),
         VertexFormat.PositionNormalColorUv,
         "vertexMain",
         "fragmentMain",
-        variant = PipelineVariant.Instanced,
-        bindingsByGroup = PackShaderSets.InstancedTextured.webGpu.bindingsByGroup,
-        bindingsMetadataAvailable = PackShaderSets.InstancedTextured.webGpu.bindingsMetadataAvailable,
+        variant = PipelineVariant.InstancedTinted,
+        bindingsByGroup = PackShaderSets.InstancedTexturedTinted.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = PackShaderSets.InstancedTexturedTinted.webGpu.bindingsMetadataAvailable,
     )
 
     // The back-culled twins a render plan builds for the textured format and its instanced pipeline,
@@ -209,7 +210,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         cullMode = io.ygdrasil.webgpu.GPUCullMode.Back,
     )
     val backCulledTexturedPipeline = backCulledTextured(PackShaderSets.Textured, PipelineVariant.Opaque)
-    val backCulledInstancedTexturedPipeline = backCulledTextured(PackShaderSets.InstancedTextured, PipelineVariant.Instanced)
+    val backCulledInstancedTexturedPipeline = backCulledTextured(PackShaderSets.InstancedTexturedTinted, PipelineVariant.InstancedTinted)
     // The sprite pipeline RenderPlan builds for PipelineKey.Particle.
     val spritePipeline = RenderPipeline(
         graphicsDevice,

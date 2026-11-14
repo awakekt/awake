@@ -79,7 +79,7 @@ private object DepthCasterFold : FoldRule {
             !draw.mesh.format.isSkinned &&
             canInstance(draw.mesh.format, draw.cullMode)
 
-    override fun alike(first: RenderDrawCommand, second: RenderDrawCommand): Boolean =
+    override fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean): Boolean =
         first.mesh === second.mesh &&
             first.material === second.material &&
             first.cullMode == second.cullMode &&
