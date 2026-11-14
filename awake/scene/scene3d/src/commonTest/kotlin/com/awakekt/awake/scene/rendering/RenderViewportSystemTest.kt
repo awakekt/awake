@@ -33,7 +33,7 @@ class RenderViewportSystemTest {
         camera.lens.orthoHalfHeight = 4f
         camera.viewport = com.awakekt.awake.core.math.VirtualViewport(10f, 10f)
         val renderer = RecordingRenderer()
-        val system = RenderSystem3D(renderer, isRealtimeProvider = { false })
+        val system = RenderSystem3D(renderer, redrawing(renderer.gpuDrawPreparer), isRealtimeProvider = { false })
         system.update(world, 0f)
         assertEquals(RenderViewport(400f, 0f, 800f, 800f), renderer.lastViewport)
         assertEquals(4f, camera.lens.orthoHalfHeight)

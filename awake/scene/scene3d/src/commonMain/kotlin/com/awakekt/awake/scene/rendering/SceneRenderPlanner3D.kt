@@ -45,6 +45,9 @@ internal class SceneRenderPlanner3D(
     private val shadowCasters = ShadowCasterVolume()
     private val passScratch = ScenePassScratch()
 
+    /** Whether a frame this planner prepared may be drawn again later; see `GpuDrawPreparer.redrawsPreparedFrames`. */
+    val redrawsPreparedFrames: Boolean get() = drawPreparer.redrawsPreparedFrames
+
     val lastFrustumCulledCount: Int get() = geometryFeature.lastFrustumCulledCount
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
     val lastShadowOnlyCount: Int get() = geometryFeature.lastShadowOnlyCount
@@ -105,6 +108,7 @@ internal class SceneRenderPlanner3D(
             com.awakekt.awake.render.imagepass.ImagePassChain.Empty
         }
 
+        val rejectedBefore = drawPreparer.rejected
         drawPreparer.rejected = 0
         val passInput = ScenePassCompiler.compile(
             lens = camera.lens,
@@ -126,7 +130,9 @@ internal class SceneRenderPlanner3D(
             submittedInstances = drawCalls.sumOf { it.instanceModels?.size ?: 1 },
             frustumCulled = geometryFeature.lastFrustumCulledCount,
             occluded = geometryFeature.lastOccludedCount,
-            unresolved = drawPreparer.rejected,
+            // A frame handed back unchanged prepared nothing; its draws are the last frame's.
+            unresolved = if (passScratch.reusedLastFrame) rejectedBefore.also { drawPreparer.rejected = it } else drawPreparer.rejected,
+            reused = passScratch.reusedLastFrame,
         )
     }
 
@@ -138,6 +144,8 @@ internal class SceneRenderPlanner3D(
         val occluded: Int,
         /** Draws the backend's preparer rejected, counted after instancing folded them. */
         val unresolved: Int,
+        /** Whether nothing the compile reads changed, so the last frame's input was drawn again. */
+        val reused: Boolean = false,
     )
 }
 
@@ -167,4 +175,9 @@ private class RejectionCountingPreparer(private val delegate: GpuDrawPreparer) :
     // Forwarded, or the interface's default answers for unculled copies only, and copies of a
     // back-culled prop never reach the back-culled instanced pipeline the backend built for them.
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = delegate.canInstance(format, cullMode)
+
+    // Forwarded too, or the compiler sees the interface's defaults rather than the backend's.
+    override val clampsShadowDepth: Boolean get() = delegate.clampsShadowDepth
+
+    override val redrawsPreparedFrames: Boolean get() = delegate.redrawsPreparedFrames
 }

@@ -107,6 +107,14 @@ fun interface GpuDrawPreparer {
      * the casters it draws instead, at some cost in depth precision.
      */
     val clampsShadowDepth: Boolean get() = false
+
+    /**
+     * Whether a frame this preparer resolved may be drawn again on a later frame without being
+     * prepared again, while nothing it was prepared from changed. True lets the scene compiler
+     * hand back the last frame's [GpuPassInput] for a still scene. False, the default, is for a
+     * backend whose resolved draws bind per-frame-in-flight storage the next preparation rewrites.
+     */
+    val redrawsPreparedFrames: Boolean get() = false
 }
 
 /** Composition capability exposed by a backend bootstrap to scene/render-pipeline code. */

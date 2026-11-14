@@ -49,6 +49,9 @@ internal class WebGpuDrawPreparer(
     /** The shadow depth pipelines set `unclippedDepth` exactly when the device can honour it. */
     override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.unclippedDepth
 
+    /** Queue writes are ordered with submissions, so a resolved frame's buffers hold until rewritten. */
+    override val redrawsPreparedFrames: Boolean get() = true
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,
