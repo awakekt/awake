@@ -11,17 +11,22 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
+import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.toGpuResolvedDraw
 import com.awakekt.awake.render.passes.FrameUniformInputs
 import com.awakekt.awake.render.passes.drawsEdges
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.canInstance
 import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.material.Material
+import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
+import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 
@@ -40,6 +45,9 @@ internal class WebGpuDrawPreparer(
     /** The frame's share of the uniform blocks, so a draw whose block would come out the same is not packed again. */
     private val frameInputs = FrameUniformInputs()
     private var frameVersion = NO_FRAME_VERSION
+
+    /** Instanced casters' shared depth groups, for this batch. */
+    private val sharedDepth = SharedDepthBindings()
 
     /** Whether this batch's wireframe-overlay edges have their frame block staged yet. */
     private var edgeFrameStaged = false
@@ -107,13 +115,7 @@ internal class WebGpuDrawPreparer(
         ) {
             return keyed
         }
-        val depthMaterial = if (request.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked) {
-            draw.uniformBuffer?.let {
-                depthFeature.materialBinding(depthPipeline, sourceMaterial, it)
-            }
-        } else {
-            draw.uniformBuffer?.let { depthFeature.materialBinding(depthPipeline, it, draw.packsWholeBlock()) }
-        }
+        val depthMaterial = depthMaterialBinding(request, draw, depthKey, depthFeature, depthPipeline, sourceMaterial)
         val depthPalette = if (depthKey.kind == DepthCasterKind.SkinnedInstanced) {
             draw.jointPaletteGpuBuffer?.let { depthFeature.paletteBinding(depthPipeline, it) }
         } else {
@@ -126,6 +128,30 @@ internal class WebGpuDrawPreparer(
             depthMaterialBinding = depthMaterial,
             depthJointPaletteBinding = depthPalette,
         )
+    }
+
+    /**
+     * The group [draw]'s depth passes bind: a masked caster's through its material's textures, and
+     * an opaque one's from its own uniform buffer, or the group an alike instanced caster already has.
+     */
+    @Suppress("LongParameterList")
+    private fun depthMaterialBinding(
+        request: GpuDrawRequest,
+        draw: WebGpuPreparedDraw,
+        depthKey: DepthRenderKey,
+        depthFeature: DepthPrePassFeature,
+        depthPipeline: DepthOnlyPipeline,
+        sourceMaterial: Material,
+    ): MaterialBinding? {
+        val buffer = draw.uniformBuffer ?: return null
+        val wholeBlock = draw.packsWholeBlock()
+        return if (request.alphaMode == AlphaMode.Masked) {
+            depthFeature.materialBinding(depthPipeline, sourceMaterial, buffer)
+        } else {
+            sharedDepth.bindingFor(request, depthKey, depthPipeline, draw.pipeline, wholeBlock) {
+                depthFeature.materialBinding(depthPipeline, buffer, wholeBlock)
+            }
+        }
     }
 
     /** The batch's edges are a pass of their own: their view-projection and debug code, staged once. */
@@ -144,6 +170,7 @@ internal class WebGpuDrawPreparer(
         instancedRuns = 0
         edgeRuns = 0
         edgeFrameStaged = false
+        sharedDepth.clear()
         val environment = context.environment
         // Before any draw of the batch: the block its lit draws read beside their own.
         renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, context, context.cascades())

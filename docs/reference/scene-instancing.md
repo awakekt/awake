@@ -16,6 +16,12 @@ The **shadow passes fold again**, by what a depth pass reads alone: mesh, GPU ma
 and vertex animation. Copies the scene keeps apart for their tint or fade cast as one draw, so each
 cascade costs about one draw per mesh.
 
+On WebGPU those casters also **share one depth group**. An opaque instanced caster's depth shader
+reads only its vertex animation from its group (its matrices come from the instance buffer), so
+casters of different meshes that animate alike bind the first one's group, and a depth pass binds
+about one group rather than one per mesh. A masked caster keeps its own, for its texture; an
+ordinary caster keeps its own, for its model matrix. Vulkan binds a group per draw as before.
+
 | | Vulkan | WebGPU |
 |---|---|---|
 | Plain instanced pipelines | Formats the app's shader plan requests (`PipelineKey.Instanced`, `InstancedFormat`) | Same |
