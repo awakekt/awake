@@ -63,6 +63,7 @@ nav:
       - Your first scene: get-started/first-scene.md
       - Load a scene document: get-started/load-a-scene-document.md
       - Run in the browser: get-started/run-in-the-browser.md
+      - What the engine gives an app: get-started/what-the-engine-gives-an-app.md
   - Guides:
       - Scene and ECS:
           - Scene documents: guides/scene-documents.md
