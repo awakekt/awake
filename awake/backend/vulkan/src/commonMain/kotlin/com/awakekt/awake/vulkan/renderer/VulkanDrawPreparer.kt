@@ -57,25 +57,19 @@ internal class VulkanDrawPreparer(
     /** The shadow depth pipelines enable `depthClampEnable` exactly when the device has the feature. */
     override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.depthClamp
 
+    /**
+     * A prepared frame's draws bind the slot they were prepared in, frame block included, so drawn
+     * again they read what they read; the batch prepared after a reused frame waits for every slot
+     * first ([ReusedFrameGuard]). Only when the renderer opts in ([Renderer.redrawsStillFrames]).
+     */
+    override val redrawsPreparedFrames: Boolean get() = renderer.redrawsStillFrames
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw? {
-        if (sourceIndex == 0) {
-            materialUsage.clear()
-            sharedDepth.clear()
-            instancedRuns = 0
-            edgeFrameWritten = false
-            // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
-            // phase usually waited for it already, but a frame with no UI never did, and preparing
-            // runs before acquiring the image, which is the next wait. Free when already waited.
-            renderer.waitForCurrentFrameResourceSlot()
-            // Submitted offscreen work may still read the slots this batch is about to rewrite.
-            renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
-            // After both waits: the block every lit draw of this batch reads beside its own.
-            renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades())
-        }
+        if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         if (edgePipeline != null && !edgeFrameWritten) {
             // The batch's edges are a pass of their own: their view-projection and debug code.
@@ -125,6 +119,24 @@ internal class VulkanDrawPreparer(
             },
             depthJointPaletteBinding = prepared.jointPaletteBinding,
         )
+    }
+
+    /** The frame boundary: resets this batch's allocations and makes the frame slot safe to write. */
+    private fun startBatch(context: GpuDrawPreparationContext) {
+        materialUsage.clear()
+        sharedDepth.clear()
+        instancedRuns = 0
+        edgeFrameWritten = false
+        // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
+        // phase usually waited for it already, but a frame with no UI never did, and preparing
+        // runs before acquiring the image, which is the next wait. Free when already waited.
+        renderer.waitForCurrentFrameResourceSlot()
+        // A frame handed back unprepared still reads the slot it was prepared in, which may be this one.
+        if (renderer.bufferPools.reusedFrames.preparing()) renderer.waitForAllFrameResourceSlots()
+        // Submitted offscreen work may still read the slots this batch is about to rewrite.
+        renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
+        // After both waits: the block every lit draw of this batch reads beside its own.
+        renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades())
     }
 
     private fun GpuDrawPreparationContext.cascades(): GpuShadowCascadeData? = shadowCascadeData ?: shadowViewProjections

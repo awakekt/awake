@@ -432,6 +432,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
+	public final fun getRedrawsStillFrames ()Z
 	public fun getRenderScale ()F
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
@@ -445,6 +446,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setEffectQuality (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
+	public final fun setRedrawsStillFrames (Z)V
 	public fun setRenderScale (F)V
 	public fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V

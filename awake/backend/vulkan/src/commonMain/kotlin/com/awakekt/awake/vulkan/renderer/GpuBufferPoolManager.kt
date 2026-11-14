@@ -82,8 +82,14 @@ internal class GpuBufferPoolManager(
     /** The GPU finished frame slot [frame]: frees retired UI meshes no frame in flight can still read. */
     fun frameSlotIdle(frame: Int) = retiredUiSlots.frameSlotIdle(frame)
 
+    /** Whether a prepared batch must first wait for frames reused from another slot; see [ReusedFrameGuard]. */
+    val reusedFrames = ReusedFrameGuard()
+
     /** The frame recorded into slot [frame] was submitted; see [RetiredResources]. */
-    fun frameSubmitted(frame: Int) = retiredUiSlots.frameSubmitted(frame)
+    fun frameSubmitted(frame: Int) {
+        retiredUiSlots.frameSubmitted(frame)
+        reusedFrames.frameSubmitted()
+    }
 
     /** One mesh per textured primitive, not one shared by all of them -- a run's later primitive
      * would otherwise overwrite geometry an earlier, not-yet-submitted draw still points at. */
