@@ -32,6 +32,15 @@ git tag -a vulkan-v0.1.9 -m old "$base"
 git tag -a vulkan-v0.1.10 -m latest "$base"
 git tag -a vulkan-v0.2.0-rc.1 -m preview "$base"
 
+# What Maven Central would answer for a version, without the network: the file's content is the exit
+# code. Kept outside the repository, which every case resets.
+central="$(mktemp -d)"
+trap 'rm -rf "$repo" "$central"' EXIT
+printf '0\n' > "$central/answer"
+printf '#!/usr/bin/env bash\nexit "$(cat "%s/answer")"\n' "$central" > "$central/check"
+chmod +x "$central/check"
+export VULKAN_RELEASE_CHECK="$central/check"
+
 failures=0
 expect() { # name expected-output
   local actual
@@ -61,6 +70,27 @@ expect "an API outside Vulkan's closure changed" ""
 printf 'fun draw() = 2\n' > awake/backend/vulkan/src/Draw.kt && commit && git tag -a vulkan-v0.1.11 -m done HEAD
 expect "the commit already carries a Vulkan tag" ""
 git tag -d vulkan-v0.1.11 > /dev/null
+
+printf 'fun draw() = 2\n' > awake/backend/vulkan/src/Draw.kt && commit && git tag -a vulkan-v0.1.11 -m failed HEAD
+printf '1\n' > "$central/answer"
+expect "the commit's Vulkan tag is not on Central, and nobody said its run failed" ""
+git tag -d vulkan-v0.1.11 > /dev/null
+
+printf 'fun draw() = 2\n' > awake/backend/vulkan/src/Draw.kt && commit && git tag -a vulkan-v0.1.11 -m failed HEAD
+export VULKAN_REPLACE_UNPUBLISHED=1
+expect "the commit's Vulkan tag never reached Central: the next version" "vulkan-v0.1.12"
+git tag -d vulkan-v0.1.11 > /dev/null
+
+printf 'fun draw() = 2\n' > awake/backend/vulkan/src/Draw.kt && commit && git tag -a vulkan-v0.1.11 -m unknown HEAD
+printf '2\n' > "$central/answer"
+expect "Central cannot say whether the commit's Vulkan tag was published" ""
+git tag -d vulkan-v0.1.11 > /dev/null
+
+printf 'fun draw() = 2\n' > awake/backend/vulkan/src/Draw.kt && commit && git tag -a vulkan-v0.1.11 -m done HEAD
+printf '0\n' > "$central/answer"
+expect "a published tag is never replaced, even when asked" ""
+git tag -d vulkan-v0.1.11 > /dev/null
+unset VULKAN_REPLACE_UNPUBLISHED
 
 git tag -d vulkan-v0.1.9 vulkan-v0.1.10 vulkan-v0.2.0-rc.1 > /dev/null
 printf 'fun draw() = 2\n' > awake/backend/vulkan/src/Draw.kt && commit
