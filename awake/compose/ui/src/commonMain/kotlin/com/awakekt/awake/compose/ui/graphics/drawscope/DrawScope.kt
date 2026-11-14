@@ -108,6 +108,12 @@ interface DrawScope {
      * [radius]: a border. Node-local pixels. The default traces the band as a path; the painter
      * draws it analytically, as one anti-aliased quad, which is what makes a flat UI's many thin
      * borders cheap (#1545).
+     *
+     * The painter snaps a band of 1 device pixel or more to the nearest whole pixel (half up:
+     * 1.157 draws 1, 1.5 draws 2), as layout snaps the box it sits in, so a 1 dp border under a
+     * fractional scale stays one solid pixel rather than tinting the row inside it. A band under 1
+     * device pixel, a deliberate hairline, keeps its width and its partial coverage. [radius]
+     * stays fractional: an arc is anti-aliased either way.
      */
     @Suppress("LongParameterList")
     fun drawRoundedRectBorder(
@@ -905,7 +911,7 @@ internal class PaintScope :
             ph,
             color.dimmedBy(alpha),
             radius = radius.coerceAtLeast(0f) * scale,
-            strokeWidth = strokeWidth * scale,
+            strokeWidth = snapBorderStroke(strokeWidth * scale),
         )
     }
 
@@ -1464,3 +1470,6 @@ private class ClipStackState {
 private const val MAX_LAYER_TARGET_SIZE = 8192
 private const val HALF_CIRCLE_DEGREES = 180f
 private const val HALF_EXTENT = 0.5f
+
+/** A border band of at least 1 device pixel, rounded half up to whole pixels; a thinner hairline as it is. */
+internal fun snapBorderStroke(devicePixels: Float): Float = if (devicePixels >= 1f) floor(devicePixels + 0.5f) else devicePixels
