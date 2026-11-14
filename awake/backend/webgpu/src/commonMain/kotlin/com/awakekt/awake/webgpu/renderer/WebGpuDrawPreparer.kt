@@ -34,9 +34,10 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 internal class WebGpuDrawPreparer(
     private val renderer: Renderer,
 ) : GpuDrawPreparer {
-    /** Instanced draws so far this batch: each gets the next instance buffer, so the pool grows
-     * with how many instanced draws a frame has rather than with where they sit in it. */
-    private var instancedRuns = 0
+    /** Each single draw's uniform slot and each instanced draw's slot and instance buffers, by what
+     * the draw is: a draw culled earlier in the list leaves every later one where it was. */
+    private val singleSlots = StableDrawSlots()
+    private val instancedSlots = StableDrawSlots()
 
     /** Edge draws so far this batch, numbering their uniform slots in the edge pipelines' pools
      * from 0 rather than after every visible draw. */
@@ -79,8 +80,12 @@ internal class WebGpuDrawPreparer(
         )
         val draw = renderer.prepareGpuDraw(
             cmd = request,
-            singleIndex = if (edgePipeline != null) edgeRuns++ else sourceIndex,
-            instancedIndex = if (request.instanceModels != null) instancedRuns++ else sourceIndex,
+            singleIndex = when {
+                edgePipeline != null -> edgeRuns++
+                request.instanceModels != null -> sourceIndex
+                else -> singleSlots.slotFor(request.mesh, request.material)
+            },
+            instancedIndex = if (request.instanceModels != null) instancedSlots.slotFor(request.mesh, request.material) else sourceIndex,
             isTransparent = request.transparent,
             primary = primary,
             viewProjection = context.viewProjection,
@@ -167,7 +172,8 @@ internal class WebGpuDrawPreparer(
     private fun startBatch(context: GpuDrawPreparationContext) {
         // A batch prepared and never drawn has its writes land now, so the stage holds one batch at most.
         renderer.flushUniformUploads()
-        instancedRuns = 0
+        singleSlots.begin()
+        instancedSlots.begin()
         edgeRuns = 0
         edgeFrameStaged = false
         sharedDepth.clear()
