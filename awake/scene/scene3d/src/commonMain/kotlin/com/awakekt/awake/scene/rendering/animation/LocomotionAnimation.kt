@@ -353,14 +353,17 @@ class LocomotionAnimationSystem : System {
         val GROUND_CONTACT = componentType<GroundContact>()
     }
 
-    /** The [GroundContact] on [entity] or the nearest node above it, or null when none has one. */
+    /**
+     * The [GroundContact] on [entity] or the nearest node above it, or null when none has one. The
+     * walk holds a non-null [Entity]: a nullable one boxes the value class at every step, once per
+     * mover per frame, which Kotlin/Wasm allocates (#1555).
+     */
     private fun World.groundContactOf(entity: Entity): GroundContact? {
-        var node: Entity? = entity
-        while (node != null) {
+        var node = entity
+        while (true) {
             get(node, GROUND_CONTACT)?.let { return it }
-            node = get(node, TRANSFORM)?.parent
+            node = get(node, TRANSFORM)?.parent ?: return null
         }
-        return null
     }
 }
 
