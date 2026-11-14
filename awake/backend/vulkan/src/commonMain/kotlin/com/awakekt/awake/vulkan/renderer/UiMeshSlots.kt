@@ -52,37 +52,53 @@ internal class UiMeshSlots(graphicsDevice: GraphicsDevice, framesInFlight: Int) 
 }
 
 /**
- * Slots of destroyed targets, kept until every frame in flight that could still read them has
- * finished: each is destroyed once the fence of every frame slot has been waited on since.
+ * Resources of destroyed targets, kept until no frame that could still read them is in flight.
+ *
+ * Counted in frame submissions, not fence waits: a fence is waited on again mid-frame (draw
+ * preparation, UI recording), before the frame being recorded is submitted, so "every slot waited
+ * on since the retire" freed a target's meshes while the frame that drew it was still executing.
+ * A resource retired while frame `n` records is freed once a fence wait shows submission `n` done;
+ * frames on one queue complete in submission order, so any slot's fence covering a later
+ * submission covers it too.
  */
-internal class RetiredUiMeshSlots(private val framesInFlight: Int) {
-    private class Retired(val slots: UiMeshSlots, val idle: BooleanArray)
+internal class RetiredResources<T>(framesInFlight: Int, private val free: (T) -> Unit) {
+    private class Retired<T>(val resource: T, val lastReader: Long)
 
-    private val retired = ArrayList<Retired>()
+    private val retired = ArrayList<Retired<T>>()
+    private val submittedOn = LongArray(framesInFlight)
+    private var submitted = 0L
+    private var completed = 0L
 
-    /** Meshes waiting for their frames, for tests. */
+    /** Resources waiting for their frames, for tests. */
     val pending: Int get() = retired.size
 
-    fun retire(slots: UiMeshSlots) {
-        retired += Retired(slots, BooleanArray(framesInFlight))
+    /** [resource] is no longer used; the frame being recorded is the last that may read it. */
+    fun retire(resource: T) {
+        retired += Retired(resource, submitted + 1)
     }
 
-    /** The GPU is done with frame slot [frame]; destroys every retired set no frame can still read. */
+    /** The frame recorded into slot [frame] was submitted. */
+    fun frameSubmitted(frame: Int) {
+        submitted += 1
+        if (frame in submittedOn.indices) submittedOn[frame] = submitted
+    }
+
+    /** Slot [frame]'s fence was waited on: its last submission, and every earlier one, is done. */
     fun frameSlotIdle(frame: Int) {
+        if (frame in submittedOn.indices) completed = maxOf(completed, submittedOn[frame])
         if (retired.isEmpty()) return
         val each = retired.iterator()
         while (each.hasNext()) {
             val entry = each.next()
-            if (frame in entry.idle.indices) entry.idle[frame] = true
-            if (entry.idle.all { it }) {
-                entry.slots.destroy()
+            if (entry.lastReader <= completed) {
+                free(entry.resource)
                 each.remove()
             }
         }
     }
 
     fun destroyAll() {
-        retired.forEach { it.slots.destroy() }
+        retired.forEach { free(it.resource) }
         retired.clear()
     }
 }
