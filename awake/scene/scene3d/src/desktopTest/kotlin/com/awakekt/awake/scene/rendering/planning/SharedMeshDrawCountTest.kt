@@ -54,13 +54,23 @@ class SharedMeshDrawCountTest {
 
     @Test
     fun tintedAndFadingCopiesCastAsOneDrawPerMesh() {
-        val stats = plan(CullMode.None) { world, entity, index ->
-            world.add(entity, PbrMaterial(baseColorFactor = Color(1f, (index % 7) / 7f, 1f)))
-            world.add(entity, DitherFade(opacity = 0.5f + (index % 5) / 10f))
-        }
+        val stats = plan(CullMode.None, tints = false, decorate = ::tintAndFade)
 
-        assertTrue(stats.opaqueDraws > MESHES, "the scene pass keeps tints apart, or this proves nothing: $stats")
+        assertTrue(stats.opaqueDraws > MESHES, "a pipeline that reads no tint keeps tints apart, or this proves nothing: $stats")
         assertShadowPassesDrawAtMostOnePerMesh(stats)
+    }
+
+    @Test
+    fun tintedAndFadingCopiesDrawAsOneDrawPerMeshWhereThePipelineTintsInstances() {
+        val stats = plan(CullMode.None, tints = true, decorate = ::tintAndFade)
+
+        assertEquals(MESHES, stats.opaqueDraws, "seven tints and five fades over 190 meshes: $stats")
+        assertShadowPassesDrawAtMostOnePerMesh(stats)
+    }
+
+    private fun tintAndFade(world: World, entity: Entity, index: Int) {
+        world.add(entity, PbrMaterial(baseColorFactor = Color(1f, (index % 7) / 7f, 1f)))
+        world.add(entity, DitherFade(opacity = 0.5f + (index % 5) / 10f))
     }
 
     private fun assertShadowPassesDrawAtMostOnePerMesh(stats: SceneDrawStats) {
@@ -70,7 +80,7 @@ class SharedMeshDrawCountTest {
         }
     }
 
-    private fun plan(cullMode: CullMode, decorate: (World, Entity, Int) -> Unit): SceneDrawStats {
+    private fun plan(cullMode: CullMode, tints: Boolean = false, decorate: (World, Entity, Int) -> Unit): SceneDrawStats {
         val renderer = NoopRenderer()
         val world = World()
         val meshes = List(MESHES) { renderer.createMesh(MeshGeometry(FloatArray(0), IntArray(0), VertexFormat.PositionNormalColorUv)) }
@@ -85,12 +95,12 @@ class SharedMeshDrawCountTest {
         world.add(world.create(), Camera(Lens(eye = Vec3f(0f, 30f, 60f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 400f)))
         world.add(world.create(), Light(direction = Vec3f(0.4f, 1f, 0.3f)))
         RenderDiagnostics.drawStatsEnabled = true
-        RenderSystem3D(renderer, drawPreparer = InstancingPreparer).update(world, 1f / 60f)
+        RenderSystem3D(renderer, drawPreparer = InstancingPreparer(tints)).update(world, 1f / 60f)
         return checkNotNull(RenderDiagnostics.drawStats)
     }
 
-    /** A backend with instanced pipelines for every format and for back culling. */
-    private object InstancingPreparer : GpuDrawPreparer {
+    /** A backend with instanced pipelines for every format and for back culling, tinting copies where [tints]. */
+    private class InstancingPreparer(private val tints: Boolean) : GpuDrawPreparer {
         private val handle = object : PipelineHandle, MaterialBinding, BufferHandle {}
 
         override fun prepare(request: GpuDrawRequest, sourceIndex: Int, context: GpuDrawPreparationContext) = GpuResolvedDraw(
@@ -105,6 +115,8 @@ class SharedMeshDrawCountTest {
         override fun canInstance(format: VertexFormat): Boolean = true
 
         override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = cullMode != CullMode.Front
+
+        override fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean = tints && canInstance(format, cullMode)
     }
 
     private companion object {

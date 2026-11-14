@@ -310,10 +310,14 @@ private fun Renderer.prepareInstancedGpuDraw(
             jointPaletteBuffer = null
         }
     }
-    val particleColors = if (kind == InstancedDrawKind.Particle) {
-        alphaInstanceBufferForRun(instanceIndex).also { it.update(cmd.instanceColors.orEmpty()) }.binding
-    } else {
-        null
+    // A tinted pipeline reads a tint per instance whatever the draw carries: white where it carries none.
+    val particleColors = when {
+        kind == InstancedDrawKind.Particle ->
+            alphaInstanceBufferForRun(instanceIndex).also { it.update(cmd.instanceColors.orEmpty()) }.binding
+        kind == InstancedDrawKind.Plain && resolved.readsInstanceTint -> alphaInstanceBufferForRun(instanceIndex).also { buffer ->
+            cmd.instanceColors?.let(buffer::update) ?: buffer.fillWhite()
+        }.binding
+        else -> null
     }
     val particleFrames = if (kind == InstancedDrawKind.Particle) {
         frameInstanceBufferForRun(instanceIndex).also { it.update(cmd.instanceFrames.orEmpty()) }.binding

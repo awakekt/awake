@@ -61,3 +61,15 @@ fun AslVertexBuilder.instanceModelMatrix(startLocation: Int): AslExpr {
     }
     return mat4(columns[0], columns[1], columns[2], columns[3])
 }
+
+/**
+ * A vertex input of [shape] at [location], named [name]: what `val name by input(...)` declares,
+ * for an input a shader declares only in some of its variants, such as a per-instance tint.
+ */
+fun AslVertexBuilder.namedInput(name: String, shape: GpuDataShape, location: Int): AslExpr = input(shape, location).register(name)
+
+/**
+ * A varying of [shape] at [location], named [name]: what `val name by varying(...)` declares, for
+ * a varying a shader declares only in some of its variants.
+ */
+fun AslVaryings.namedVarying(name: String, shape: GpuDataShape, location: Int): AslVaryingRef = varying(shape, location).register(name)

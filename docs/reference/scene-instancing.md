@@ -26,6 +26,29 @@ cascade costs about one draw per mesh.
 
 Nothing is merged into one mesh; instancing is the only batching.
 
+## Tinted and fading copies
+
+A textured mesh's copies that differ only in their tint (`PbrMaterial.baseColorFactor` rgb) or
+their `DitherFade` opacity fold too, on a pipeline built with `PipelineVariant.InstancedTinted`, as
+a played project's render plan builds the textured instanced pipeline. Each copy carries one
+`vec4` after its model matrix, on the instance-rate binding `PipelineVariant.instanceAlpha` adds:
+rgb multiplies its colour and a is its fade. The shared block's tint is white and its fade 1, so
+each copy draws exactly as it does alone; the parity tests hold both backends to that. Copies that
+agree on tint and fade fold as before and carry nothing extra; an untinted copy on a tinting
+pipeline reads (1, 1, 1, 1). The tint's alpha stays in the shared block, so copies must agree on it.
+
+Blended draws never fold, tinted or not: they are sorted by depth and keep their own tint. The
+untextured instanced pipeline reads no base colour factor, alone or folded, so it is not a tinting
+pipeline and keeps copies with different fades apart. The 4,096-copy cap is unchanged; a tinting
+draw writes 16 more bytes per copy.
+
+A custom instanced pipeline built with `PipelineVariant.Instanced` is unchanged: it gets no tint
+binding and is never sent copies that differ in tint. To fold tinted copies, build it with
+`PipelineVariant.InstancedTinted` and declare a `vec4` input at the location after the matrix
+(after the vertex format's attributes and the matrix's four columns), multiplying it into the
+colour and the dither fade as `instancedTexturedTintedShader` does. A backend reports which
+pipelines tint through `GpuDrawPreparer.canTintInstances`.
+
 ## Materials are shared by name
 
 Folding needs the copies to share one GPU material. A scene's asset library builds each material
@@ -44,10 +67,10 @@ mean little folded.
 
 `SceneDrawStats.misses` names the reason for every scene-pass draw that did not fold:
 
-- **`DistinctUniforms`**: copies that differ in tint (`PbrMaterial.baseColorFactor` per entity),
-  `DitherFade` opacity, or any other factor. Every distinct value is its own draw in the scene
-  pass. Plain instanced pipelines carry no per-instance colour or fade yet, so seven tints over 190
-  meshes draw 1,330 scene draws; the shadow passes still draw 190.
+- **`DistinctUniforms`**: copies that differ in a factor their pipeline cannot carry per instance.
+  On a tinting pipeline (below) that is anything but the tint's rgb and the `DitherFade` opacity; on
+  a plain instanced pipeline it is any factor at all, so seven tints over 190 meshes draw 1,330
+  scene draws there. The shadow passes draw 190 either way.
 - **`DistinctMaterial`**: copies sharing a mesh, each with its own GPU material instance.
 - **`VertexFormat`** / **`CullMode`**: the backend has no instanced pipeline for the format, or for
   back culling of it.

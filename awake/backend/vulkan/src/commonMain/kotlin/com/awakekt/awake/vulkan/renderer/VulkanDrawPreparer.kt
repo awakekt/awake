@@ -15,9 +15,11 @@ import com.awakekt.awake.render.command.toGpuResolvedDraw
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.canInstance
 import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
+import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 
 /** Prepares one generic draw through Vulkan's existing resource preparation code.
@@ -45,6 +47,9 @@ internal class VulkanDrawPreparer(
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelinesByFormat
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
+
+    override fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean =
+        renderer.pipelines.resolveInstanced(format, InstancedDrawKind.Plain, cullMode = cullMode)?.readsInstanceTint == true
 
     /** The shadow depth pipelines enable `depthClampEnable` exactly when the device has the feature. */
     override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.depthClamp

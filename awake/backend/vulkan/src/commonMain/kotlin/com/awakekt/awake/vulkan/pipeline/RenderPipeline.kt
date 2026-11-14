@@ -133,6 +133,9 @@ class RenderPipeline(
     private val cullMode = cullMode
     private val polygonMode = polygonMode
     private val variant = variant
+
+    /** Whether this pipeline reads a tint and fade per instance: `PipelineVariant.InstancedTinted`. */
+    internal val readsInstanceTint: Boolean get() = variant.instanceAlpha && !variant.instanceFrame
     private val graphicsDevice = graphicsDevice
     private val swapchainManager = swapchainManager
     private val device get() = graphicsDevice.device

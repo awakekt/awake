@@ -196,7 +196,8 @@ class DepthPrePassFeature(
                 val kind = when {
                     instanced && prepared.jointPaletteBinding != null ->
                         DepthCasterKind.SkinnedInstanced
-                    instanced && prepared.instanceColorBuffer != null ->
+                    // Particles alone carry frames; a tinted prop carries colours too.
+                    instanced && prepared.instanceFrameBuffer != null ->
                         DepthCasterKind.Particle
                     instanced -> DepthCasterKind.Instanced
                     prepared.vertexFormat?.isSkinned == true -> DepthCasterKind.Skinned

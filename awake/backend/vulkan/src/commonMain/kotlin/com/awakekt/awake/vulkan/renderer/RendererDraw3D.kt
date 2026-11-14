@@ -135,11 +135,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
                 buffer.update(frameIndex, it, cmd.instanceColors)
             }
         }
-        val colors = if (kind == InstancedDrawKind.Particle) {
-            alphaInstanceBufferForRun(instancedIndex).also { it.update(frameIndex, cmd.instanceColors.orEmpty()) }
-        } else {
-            null
-        }
+        val colors = instanceColorsFor(cmd, kind, instancedPipeline, frameIndex, instancedIndex)
         val frames = if (kind == InstancedDrawKind.Particle) {
             frameInstanceBufferForRun(instancedIndex).also { it.update(frameIndex, cmd.instanceFrames.orEmpty()) }
         } else {
@@ -315,6 +311,7 @@ internal fun RenderViewport.toVkScissor(): VkRect2D = VkRect2D(
  * whatever pipeline the caller already bound -- [Renderer.renderToTexture]'s offscreen path,
  * which groups by pipeline and binds each group itself. The swapchain frame reaches the same
  * loop through `SharedOpaqueRenderFeature.recordCommands` instead. */
+
 internal fun VulkanRenderer.recordDrawCalls(commandBuffer: Long, drawCalls: List<PreparedDrawCall>) {
     commandRecorder.commandBuffer = commandBuffer
     sharedOpaqueFeature.recordDraws(commandRecorder, drawCalls)

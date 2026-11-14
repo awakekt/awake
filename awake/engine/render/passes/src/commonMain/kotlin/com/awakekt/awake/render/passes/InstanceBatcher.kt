@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.pipeline.CullMode
 import kotlin.math.max
@@ -35,6 +36,18 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     private var preparer: GpuDrawPreparer? = null
     private var canInstance: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
 
+    private var tintPreparer: GpuDrawPreparer? = null
+    private var canTint: (VertexFormat, CullMode) -> Boolean = NO_TINTS
+
+    /** [preparer]'s answer to whether a pipeline tints instances, as a function built once per preparer. */
+    fun canTintWith(preparer: GpuDrawPreparer): (VertexFormat, CullMode) -> Boolean {
+        if (preparer !== tintPreparer) {
+            tintPreparer = preparer
+            canTint = { format, cullMode -> preparer.canTintInstances(format, cullMode) }
+        }
+        return canTint
+    }
+
     /** [preparer]'s answer as a function, built once per preparer rather than once a frame. */
     fun canInstanceWith(preparer: GpuDrawPreparer): (VertexFormat, CullMode) -> Boolean {
         if (preparer !== this.preparer) {
@@ -44,7 +57,15 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         return canInstance
     }
 
-    fun batch(drawCalls: List<RenderDrawCommand>, canInstance: (VertexFormat, CullMode) -> Boolean): List<RenderDrawCommand> {
+    /**
+     * Folds [drawCalls] as [canInstance] allows; where [canTint] says a draw's pipeline reads a
+     * tint per instance, copies that differ only in tint and fade fold too.
+     */
+    fun batch(
+        drawCalls: List<RenderDrawCommand>,
+        canInstance: (VertexFormat, CullMode) -> Boolean,
+        canTint: (VertexFormat, CullMode) -> Boolean = NO_TINTS,
+    ): List<RenderDrawCommand> {
         groupCount = 0
         table.fill(0)
         kept.clear()
@@ -56,7 +77,8 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
                 if (rule.keepsOthers) kept.addSplitToCapacity(draw)
                 continue
             }
-            val group = last?.takeIf { rule.alike(it.members[it.members.size - 1], draw) } ?: groupOf(draw)
+            val tints = canTint(draw.mesh.format, draw.cullMode)
+            val group = last?.takeIf { it.tints == tints && rule.alike(it.members[it.members.size - 1], draw, tints) } ?: groupOf(draw, tints)
             group.add(draw, index)
             last = group
         }
@@ -69,7 +91,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         for (index in 0 until groupCount) groups[index].forEachFoldedSource(action)
     }
 
-    private fun groupOf(draw: RenderDrawCommand): InstanceGroup {
+    private fun groupOf(draw: RenderDrawCommand, tints: Boolean): InstanceGroup {
         if (groupCount * 2 >= table.size) growTable()
         val mask = table.size - 1
         var slot = rule.hash(draw) and mask
@@ -77,12 +99,13 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
             val stored = table[slot]
             if (stored == 0) break
             val group = groups[stored - 1]
-            if (rule.alike(group.members[0], draw)) return group
+            if (group.tints == tints && rule.alike(group.members[0], draw, tints)) return group
             slot = (slot + 1) and mask
         }
         if (groupCount == groups.size) groups += InstanceGroup()
         val group = groups[groupCount++]
         group.clear()
+        group.tints = tints
         table[slot] = groupCount
         return group
     }
@@ -99,35 +122,17 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
 
     private companion object {
         const val INITIAL_TABLE = 256
+        val NO_TINTS: (VertexFormat, CullMode) -> Boolean = { _, _ -> false }
     }
-}
-
-/** Which draws a [InstanceBatcher] folds, which of them render alike, and a hash equal for those that do. */
-internal interface FoldRule {
-    /** Whether a draw the rule does not fold is kept in the output as it is. */
-    val keepsOthers: Boolean
-
-    fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean): Boolean
-
-    fun alike(first: RenderDrawCommand, second: RenderDrawCommand): Boolean
-
-    fun hash(draw: RenderDrawCommand): Int
-}
-
-/** The scene pass's folding: draws that differ only in placement. */
-internal object SceneInstanceFold : FoldRule {
-    override val keepsOthers = true
-
-    override fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean) = draw.foldsIntoInstances(canInstance)
-
-    override fun alike(first: RenderDrawCommand, second: RenderDrawCommand) = first.instancesWith(second)
-
-    override fun hash(draw: RenderDrawCommand) = draw.instanceHash()
 }
 
 /** One frame's set of draws that render alike but for placement, and the instanced draws made of them. */
 internal class InstanceGroup {
     val members = ArrayList<RenderDrawCommand>()
+
+    /** Whether this frame's members may differ in tint and fade: their pipeline reads them per instance. */
+    var tints = false
+    private val groupTints = GroupTints()
     private var sources = IntArray(INITIAL_SOURCES)
     private val models = ArrayList<Mat4>()
     private val instanced = ArrayList<RenderDrawCommand>()
@@ -165,12 +170,23 @@ internal class InstanceGroup {
         }
         // One model per member, so a chunk's bounds are its members'; else every chunk takes the group's.
         val perMember = models.size == members.size
+        // Copies that differ in tint or fade carry theirs per instance, over a block whose tint is white.
+        val colors = if (tints && !InstanceTints.allAlike(members)) groupTints.colorsOf(members) else null
         var chunk = 0
         for (from in models.indices step MAX_BATCHED_INSTANCES) {
             val to = min(from + MAX_BATCHED_INSTANCES, models.size)
             val chunkModels = if (from == 0 && to == models.size) models else models.subList(from, to)
-            out += if (perMember) instancedChunk(chunk++, from, to, chunkModels) else instancedChunk(chunk++, 0, members.size, chunkModels)
+            val draw = if (perMember) instancedChunk(chunk++, from, to, chunkModels) else instancedChunk(chunk++, 0, members.size, chunkModels)
+            if (colors != null) tint(draw, colors, from, to)
+            out += draw
         }
+    }
+
+    /** [draw] carrying its copies' own tints and fades, from [from] until [to], over a white-tinted, unfaded block. */
+    private fun tint(draw: RenderDrawCommand, colors: List<Vec4>, from: Int, to: Int) {
+        draw.extraUniformFloats = groupTints.sharedExtras(members[0].extraUniformFloats)
+        draw.fadeOpacity = 1f
+        draw.instanceColors = if (from == 0 && to == colors.size) colors else colors.subList(from, to)
     }
 
     private fun instancedChunk(chunk: Int, from: Int, to: Int, chunkModels: List<Mat4>): RenderDrawCommand {

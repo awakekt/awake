@@ -28,9 +28,10 @@ internal fun diagnoseInstanceFolds(
     drawCalls: List<RenderDrawCommand>,
     canInstance: (VertexFormat, CullMode) -> Boolean,
     stats: SceneDrawStats,
+    canTint: (VertexFormat, CullMode) -> Boolean = { _, _ -> false },
 ) {
     stats.recordSource(drawCalls.size)
-    val groups = foldGroups(drawCalls, canInstance, stats)
+    val groups = foldGroups(drawCalls, canInstance, stats, canTint)
     val keysByMesh = HashMap<GpuMesh, Int>()
     val keysByMeshMaterial = HashMap<MeshMaterial, Int>()
     for (members in groups.values) {
@@ -65,13 +66,14 @@ private fun foldGroups(
     drawCalls: List<RenderDrawCommand>,
     canInstance: (VertexFormat, CullMode) -> Boolean,
     stats: SceneDrawStats,
+    canTint: (VertexFormat, CullMode) -> Boolean,
 ): Map<FoldGroup, List<RenderDrawCommand>> {
     val groups = LinkedHashMap<FoldGroup, MutableList<RenderDrawCommand>>()
     for (draw in drawCalls) {
         if (draw.instanceModels != null) stats.recordAuthoredInstanced()
         if (draw.instanceModels != null || draw.shadowsOnly) continue
         val miss = if (draw.foldsIntoInstances(canInstance)) null else draw.capabilityMiss(canInstance)
-        groups.getOrPut(FoldGroup(miss, InstanceKey(draw))) { ArrayList() } += draw
+        groups.getOrPut(FoldGroup(miss, InstanceKey(draw, canTint(draw.mesh.format, draw.cullMode)))) { ArrayList() } += draw
     }
     return groups
 }

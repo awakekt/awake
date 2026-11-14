@@ -550,6 +550,8 @@ public final class com/awakekt/awake/asset/shaderdsl/AslVertexInputHandles {
 public final class com/awakekt/awake/asset/shaderdsl/AslVertexInputHandlesKt {
 	public static final fun inputsFrom (Lcom/awakekt/awake/asset/shaderdsl/AslVertexBuilder;Lcom/awakekt/awake/core/geometry/VertexFormat;)Lcom/awakekt/awake/asset/shaderdsl/AslVertexInputHandles;
 	public static final fun instanceModelMatrix (Lcom/awakekt/awake/asset/shaderdsl/AslVertexBuilder;I)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun namedInput (Lcom/awakekt/awake/asset/shaderdsl/AslVertexBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/geometry/GpuDataShape;I)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun namedVarying (Lcom/awakekt/awake/asset/shaderdsl/AslVaryings;Ljava/lang/String;Lcom/awakekt/awake/core/geometry/GpuDataShape;I)Lcom/awakekt/awake/asset/shaderdsl/AslVaryingRef;
 }
 
 public final class com/awakekt/awake/asset/shaderdsl/AslVertexStage {

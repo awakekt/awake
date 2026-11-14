@@ -180,4 +180,6 @@ private class RejectionCountingPreparer(private val delegate: GpuDrawPreparer) :
     override val clampsShadowDepth: Boolean get() = delegate.clampsShadowDepth
 
     override val redrawsPreparedFrames: Boolean get() = delegate.redrawsPreparedFrames
+
+    override fun canTintInstances(format: VertexFormat, cullMode: CullMode): Boolean = delegate.canTintInstances(format, cullMode)
 }

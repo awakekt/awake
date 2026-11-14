@@ -122,6 +122,9 @@ class RenderPipeline(
     /** Raster state shared by every attachment in the colour/depth pass. */
     val multisample: com.awakekt.awake.render.pipeline.MultisampleState = com.awakekt.awake.render.pipeline.MultisampleState.Single,
 ) : UniformBlockOwner {
+    /** Whether this pipeline reads a tint and fade per instance: `PipelineVariant.InstancedTinted`. */
+    internal val readsInstanceTint: Boolean get() = variant.instanceAlpha && !variant.instanceFrame
+
     var renderPass: Long = 0
 
     /**

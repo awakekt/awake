@@ -64,6 +64,30 @@ class InstancedPropsParityTest {
         }
     }
 
+    /**
+     * Tinted and fading: copies of one textured post, each with its own base colour factor and dither
+     * fade, fold into one draw on the tinting instanced pipeline (`PipelineVariant.InstancedTinted`)
+     * and draw as they do one by one (#1555).
+     *
+     * Negative control: the same posts untinted and unfaded differ from the tinted ones by far more
+     * than rounding, so a fold that dropped the tints or fades would fail the first comparison.
+     */
+    @Test
+    fun foldedTintedAndFadingPropsDrawWhatSeparateOnesDo() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val (separate, separateDraws) = renderer.renderRepeatedPropsScene(shareMaterial = false, tinted = true)
+            val (instanced, instancedDraws) = renderer.renderRepeatedPropsScene(shareMaterial = true, tinted = true)
+            val (untinted, _) = renderer.renderRepeatedPropsScene(shareMaterial = true)
+            writeEvidence(backend, instanced, "repeated-props-tinted-instanced")
+
+            assertEquals(SEPARATE_DRAWS, separateDraws, "$backend: the ground and five posts")
+            assertEquals(FOLDED_DRAWS, instancedDraws, "$backend did not fold the tinted posts")
+            assertEquals(0, separate.differingChannels(instanced), "$backend: folded tinted posts differ from separate ones")
+            assertTrue(instanced.differingChannels(untinted) > MIN_MASK_EFFECT, "$backend: tints and fades changed nothing, so this compares nothing")
+        }
+    }
+
     private fun ByteArray.differingChannels(other: ByteArray): Int =
         indices.count { kotlin.math.abs((this[it].toInt() and 0xFF) - (other[it].toInt() and 0xFF)) > CHANNEL_TOLERANCE }
 

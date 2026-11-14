@@ -74,6 +74,9 @@ object PackShaderSets {
     /** Instanced diffuse textured mesh shader set with lighting and shadows. */
     val InstancedTextured = aslShaderSet(::instancedTexturedShader)
 
+    /** [InstancedTextured] with a tint and fade per instance, for `PipelineVariant.InstancedTinted`. */
+    val InstancedTexturedTinted = aslShaderSet(::instancedTexturedTintedShader)
+
     /** Instanced static mesh shader set with lighting and shadows. */
     val Instanced = aslShaderSet(::instancedLitShadowShader)
 

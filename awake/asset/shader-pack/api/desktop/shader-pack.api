@@ -100,6 +100,7 @@ public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
 	public static final fun instancedTexturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedTexturedTintedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
@@ -252,6 +253,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getInstancedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTexturedTinted ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getLitShadow ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;

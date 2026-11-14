@@ -64,11 +64,14 @@ internal fun RenderDrawCommand.foldsIntoInstances(canInstance: (VertexFormat, Cu
         !transparent &&
         canInstance(mesh.format, cullMode)
 
-/** Everything but the model matrix is equal, so the two render identically but for placement. */
-internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
+/**
+ * Everything but the model matrix is equal, so the two render identically but for placement; with
+ * [tints], also but for their tint and fade, which a tinting pipeline carries per instance.
+ */
+internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Boolean = false): Boolean =
     mesh === other.mesh &&
         material === other.material &&
-        extraUniformFloats.contentEquals(other.extraUniformFloats) &&
+        extrasAlike(other, tints) &&
         vertexAnimation == other.vertexAnimation &&
         timeSeconds == other.timeSeconds &&
         alphaMode == other.alphaMode &&
@@ -77,18 +80,46 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean 
         castsShadows == other.castsShadows &&
         maskLayer == other.maskLayer &&
         exemptFromCoverings == other.exemptFromCoverings &&
-        fadeOpacity == other.fadeOpacity &&
+        (tints || fadeOpacity == other.fadeOpacity) &&
         cullMode == other.cullMode
 
+/** Equal extras; with [tints], equal but for the tint a tinting pipeline carries per instance. */
+private fun RenderDrawCommand.extrasAlike(other: RenderDrawCommand, tints: Boolean): Boolean =
+    if (tints) InstanceTints.sameBesidesTint(extraUniformFloats, other.extraUniformFloats) else extraUniformFloats.contentEquals(other.extraUniformFloats)
+
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */
-internal class InstanceKey(private val draw: RenderDrawCommand) {
+internal class InstanceKey(private val draw: RenderDrawCommand, private val tints: Boolean = false) {
     private val hash: Int = draw.instanceHash()
 
     override fun hashCode(): Int = hash
 
-    override fun equals(other: Any?): Boolean = other is InstanceKey && draw.instancesWith(other.draw)
+    override fun equals(other: Any?): Boolean = other is InstanceKey && tints == other.tints && draw.instancesWith(other.draw, tints)
 }
 
-/** A hash equal for draws that [instancesWith] each other. */
+/** A hash equal for draws that [instancesWith] each other, tinted or not: the tint is left out of it. */
 internal fun RenderDrawCommand.instanceHash(): Int =
-    ((mesh.hashCode() * 31 + material.hashCode()) * 31 + extraUniformFloats.contentHashCode()) * 31 + alphaMode.hashCode()
+    ((mesh.hashCode() * 31 + material.hashCode()) * 31 + InstanceTints.hashBesidesTint(extraUniformFloats)) * 31 + alphaMode.hashCode()
+
+/** Which draws a [InstanceBatcher] folds, which of them render alike, and a hash equal for those that do. */
+internal interface FoldRule {
+    /** Whether a draw the rule does not fold is kept in the output as it is. */
+    val keepsOthers: Boolean
+
+    fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean): Boolean
+
+    /** Whether [first] and [second] draw alike; with [tints], their tint and fade may differ. */
+    fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean): Boolean
+
+    fun hash(draw: RenderDrawCommand): Int
+}
+
+/** The scene pass's folding: draws that differ only in placement. */
+internal object SceneInstanceFold : FoldRule {
+    override val keepsOthers = true
+
+    override fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean) = draw.foldsIntoInstances(canInstance)
+
+    override fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean) = first.instancesWith(second, tints)
+
+    override fun hash(draw: RenderDrawCommand) = draw.instanceHash()
+}
