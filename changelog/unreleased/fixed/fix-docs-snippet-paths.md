@@ -1,1 +1,0 @@
-- **The documentation site builds again.** Since 0.47.0 the scene features guide included its samples from a test that was renamed when scene capabilities became `SceneFeature`, so `mkdocs build --strict` failed and the Docs workflow published nothing. The guide now includes them from the renamed test, and says "feature" where the API does.

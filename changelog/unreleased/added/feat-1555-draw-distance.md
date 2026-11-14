@@ -1,1 +1,0 @@
-- **A draw distance per mesh renderer.** `mesh_renderer.maxDrawDistance` (and `MeshRenderer.maxDrawDistance`) stops drawing a mesh, and its shadow, past that distance from the camera; `0`, the default, draws it at any distance. Small clutter and large landmarks streamed in one cell can now end at different distances (#1555).
