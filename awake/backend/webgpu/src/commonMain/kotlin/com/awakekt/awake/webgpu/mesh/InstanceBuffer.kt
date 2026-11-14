@@ -50,6 +50,10 @@ class InstanceBuffer(
         model.data.copyInto(out, offset)
     }
 
+    /** Uploads [update] made, for tests: one a frame whose models changed, none for one whose held. */
+    internal var uploads = 0L
+        private set
+
     /**
      * Uploads this frame's per-instance model matrices, growing the buffer first when they do not
      * fit.
@@ -62,6 +66,7 @@ class InstanceBuffer(
      * @throws IllegalArgumentException If [models] holds more entries than the ceiling set at
      * construction.
      */
+
     fun update(models: List<Mat4>) {
         val floats = packer.pack(models, maxInstances) ?: return
         if (models.size > capacity) {
@@ -76,6 +81,7 @@ class InstanceBuffer(
         // Copies of a static prop hold still frame after frame: the buffer already has them (#1452).
         if (resident?.sameBitsAs(floats) == true) return
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        uploads += 1
         resident = resident?.takeIf { it.size == floats.size }?.let { floats.copyInto(it) } ?: floats.copyOf()
     }
 
