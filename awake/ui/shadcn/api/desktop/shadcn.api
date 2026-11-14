@@ -753,6 +753,11 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnLabelKt {
 	public static synthetic fun ShadcnLabel$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;ZILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnLoadingBarKt {
+	public static final fun ShadcnLoadingBar (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun ShadcnLoadingBar$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/Float;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+}
+
 public abstract interface class com/awakekt/awake/ui/shadcn/components/ShadcnMenuEntry {
 }
 
