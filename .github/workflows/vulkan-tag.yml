@@ -10,6 +10,10 @@ on:
       core_tag:
         description: "The stable Core release to tag Vulkan for, such as v0.28.0"
         required: true
+      replace_unpublished:
+        description: "The release's commit carries a Vulkan tag whose Publish run failed before Maven Central took it: tag the next version in its place"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -44,4 +48,5 @@ jobs:
         env:
           CORE_TAG: ${{ inputs.core_tag }}
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          VULKAN_REPLACE_UNPUBLISHED: ${{ inputs.replace_unpublished && '1' || '' }}
         run: scripts/push-vulkan-tag.sh "$CORE_TAG"
