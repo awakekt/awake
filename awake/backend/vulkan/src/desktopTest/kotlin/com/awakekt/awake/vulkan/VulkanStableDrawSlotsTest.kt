@@ -22,6 +22,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.renderer.Renderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * A draw culled earlier in the list leaves every later draw in its own slot, so none of them writes
@@ -84,6 +85,67 @@ class VulkanStableDrawSlotsTest {
         List(DRAWS * COPIES) { i -> RenderDrawCommand(mesh = meshes[i % DRAWS], material = material, model = at(i)) }
     }
 
+    @Test
+    fun benchmarkThreeThousandRenderersOver190Meshes() {
+        val session = vulkanHeadlessScene(SIZE, SIZE)
+        try {
+            val renderer = session.renderer as Renderer
+            val target = renderer.createRenderTarget(SIZE, SIZE)
+            val white = TextureAsset(data = byteArrayOf(-1, -1, -1, -1), width = 1, height = 1)
+            val material = renderer.createMaterial(white, MaterialUniformLayouts.PbrTextured.total, pbrTextures = null)
+            val meshes = List(BENCH_MESHES) { renderer.createMesh(quad(VertexFormat.PositionNormalColorUv)) }
+            val all = List(BENCH_RENDERERS) { i ->
+                RenderDrawCommand(mesh = meshes[i % BENCH_MESHES], material = material, model = at(i))
+            }
+            try {
+                repeat(WARM_FRAMES) { written(renderer, target, all) }
+
+                var stillUploads = 0L
+                repeat(BENCH_FRAMES) { stillUploads += written(renderer, target, all) }
+
+                var culledCopiesUploads = 0L
+                val firstMesh = meshes[0]
+                repeat(BENCH_FRAMES) { frame ->
+                    val filtered = filterFirstMeshCopies(all, firstMesh, drop = (frame % 5) + 1)
+                    culledCopiesUploads += written(renderer, target, filtered)
+                }
+
+                val withoutFirstGroup = all.filter { it.mesh !== firstMesh }
+                written(renderer, target, all)
+                var groupToggleUploads = 0L
+                repeat(BENCH_FRAMES) { frame ->
+                    groupToggleUploads += written(renderer, target, if (frame % 2 == 0) withoutFirstGroup else all)
+                }
+
+                assertEquals(0L, stillUploads, "still frames upload nothing")
+                assertTrue(culledCopiesUploads <= BENCH_FRAMES.toLong(), "only the mesh whose copy count changed uploads")
+                assertEquals(0L, groupToggleUploads, "a whole group leaving and returning re-uploads 0 buffers")
+            } finally {
+                meshes.forEach { it.destroy() }
+                material.destroy()
+                target.destroy()
+            }
+        } finally {
+            session.close()
+        }
+    }
+
+    private fun filterFirstMeshCopies(
+        all: List<RenderDrawCommand>,
+        firstMesh: Mesh,
+        drop: Int,
+    ): List<RenderDrawCommand> {
+        var seen = 0
+        return all.filter { cmd ->
+            if (cmd.mesh === firstMesh) {
+                seen++
+                seen > drop
+            } else {
+                true
+            }
+        }
+    }
+
     private fun at(i: Int) = Mat4().apply { data[12] = (i % 10 - 5) * 0.4f; data[14] = (i / 10 - 2) * 0.4f }
 
     private fun quad(format: VertexFormat): MeshGeometry {
@@ -98,5 +160,8 @@ class VulkanStableDrawSlotsTest {
         const val DRAWS = 12
         const val COPIES = 3
         const val WARM_FRAMES = 4
+        const val BENCH_RENDERERS = 3_000
+        const val BENCH_MESHES = 190
+        const val BENCH_FRAMES = 50
     }
 }
