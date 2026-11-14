@@ -133,8 +133,11 @@ class LayeredAssetSource(private val publicSet: AssetSource) :
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = when {
         closed.value -> Result.failure(IllegalStateException("LayeredAssetSource is closed"))
-        else -> layerFor(publicSet, protectedLayer.value, path)?.read(path)
-            ?: Result.failure(ProtectedContentNotAttachedException(path.value))
+        else -> {
+            val result = layerFor(publicSet, protectedLayer.value, path)?.read(path)
+                ?: Result.failure(ProtectedContentNotAttachedException(path.value))
+            if (closed.value) Result.failure(IllegalStateException("LayeredAssetSource is closed")) else result
+        }
     }
 
     /** Whether a layer that would serve a read can prefetch; see [PrefetchableAssetSource.canPrefetch]. */

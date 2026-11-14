@@ -1037,10 +1037,11 @@ public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter :
 public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter$Companion {
 }
 
-public final class com/awakekt/awake/project/TokenAuthorizedFetch {
+public final class com/awakekt/awake/project/TokenAuthorizedFetch : java/lang/AutoCloseable {
 	public static final field Companion Lcom/awakekt/awake/project/TokenAuthorizedFetch$Companion;
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lcom/awakekt/awake/project/RateLimitBackoff;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lcom/awakekt/awake/project/RateLimitBackoff;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
 	public final fun fetch (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun fetchRange (Ljava/lang/String;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

@@ -227,6 +227,9 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
   before the token was added. A transport failure whose message quotes the token is reported with
   it replaced by `<redacted>`, and without that cause attached. `ReadToken` and `ContentRequest`
   print without it, so logging one is safe.
+- **Close on sign-out or lockdown.** `TokenAuthorizedFetch` implements `AutoCloseable`: calling
+  `close()` drops any cached `ReadToken` and rejects later or in-flight fetches with
+  `IllegalStateException`.
 
 !!! tip "Keep network retries and resumes in the transport"
     `TokenAuthorizedFetch` retries only a refused token, a 429 and a 503 with `Retry-After`. Network retries, timeouts and

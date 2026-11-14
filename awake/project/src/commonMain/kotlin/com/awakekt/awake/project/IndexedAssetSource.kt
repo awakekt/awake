@@ -142,7 +142,12 @@ class IndexedAssetSource(
     override suspend fun read(path: AssetPath): Result<ByteArray> = suspendRunCatching {
         check(!closed) { "IndexedAssetSource is closed" }
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
-        readChecked(entry, path.value.removePrefix("/"))
+        val bytes = readChecked(entry, path.value.removePrefix("/"))
+        if (closed) {
+            if (seals != null) bytes.fill(0)
+            error("IndexedAssetSource is closed")
+        }
+        bytes
     }
 
     /** Whether [index] lists [path]: looked up, with nothing fetched. */
@@ -191,11 +196,13 @@ class IndexedAssetSource(
     }
 
     private suspend fun download(download: Download) {
+        check(!closed) { "IndexedAssetSource is closed" }
         val first = download.files.first()
         when {
             !download.isBundle -> readChecked(first.entry, first.label)
             cache == null || download.files.any { storedInCache(it.entry) == null } -> members.load(first.entry.bundle!!)
         }
+        check(!closed) { "IndexedAssetSource is closed" }
     }
 
     private fun entryFor(path: String): ProjectIndexEntry? {
@@ -208,7 +215,10 @@ class IndexedAssetSource(
         cached(entry) ?: if (entry.bundle != null) members.read(entry, label) else readLoose(entry, label)
 
     private suspend fun readLoose(entry: ProjectIndexEntry, label: String): ByteArray =
-        checked(entry, label, fetch(entry.url)).also { cache?.put(entry.sha256, it) }
+        checked(entry, label, fetch(entry.url)).also {
+            check(!closed) { "IndexedAssetSource is closed" }
+            cache?.put(entry.sha256, it)
+        }
 
     /** [entry]'s bytes from [cache]: as stored, of the right size, and, when sealed, opened. */
     private suspend fun cached(entry: ProjectIndexEntry): ByteArray? {

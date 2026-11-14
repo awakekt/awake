@@ -50,7 +50,13 @@ internal class BundleMembers(
         return takeStaged(entry)
             ?: range?.let {
                 val stored = it(bundle.url, entry.offset!!, index.storedSizeOf(entry))
-                opened(bundle, entry, label, stored).also { cache?.put(index.cacheKeyOf(entry), stored) }
+                opened(bundle, entry, label, stored).also { plain ->
+                    if (closed) {
+                        if (plain !== stored) plain.fill(0)
+                        error("IndexedAssetSource is closed")
+                    }
+                    cache?.put(index.cacheKeyOf(entry), stored)
+                }
             }
             ?: load(bundle.sha256).getValue(entry.sha256).also {
                 // This read takes its member; the staged copy is for reads still to come.
@@ -79,10 +85,18 @@ internal class BundleMembers(
             try {
                 val bundle = bundles.getValue(sha256)
                 val stored = fetchChecked(bundle)
-                return stored.mapValues { it.value.read }.also {
-                    keep(bundle, it, stored)
-                    pending.complete(it)
+                if (closed) {
+                    stored.values.forEach { it.read.fill(0) }
+                    error("IndexedAssetSource is closed")
                 }
+                val members = stored.mapValues { it.value.read }
+                keep(bundle, members, stored)
+                if (closed) {
+                    stored.values.forEach { it.read.fill(0) }
+                    error("IndexedAssetSource is closed")
+                }
+                pending.complete(members)
+                return members
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Throwable) {
@@ -163,7 +177,8 @@ internal class BundleMembers(
             // The cache outlives this index and serves a hit by size alone, so each plaintext member it
             // keeps is hashed here even though the whole bundle's SHA-256 has matched: a key in it always
             // names its bytes. A sealed member is checked by its tag on every read instead.
-            membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }.forEach { member ->
+            for (member in membersOf.getValue(bundle.sha256).distinctBy { it.sha256 }) {
+                if (closed) break
                 val bytes = stored.getValue(member.sha256).stored
                 cache.put(index.cacheKeyOf(member), if (seals != null) bytes else checked(member, "${member.key} in ${bundle.url}", bytes))
             }

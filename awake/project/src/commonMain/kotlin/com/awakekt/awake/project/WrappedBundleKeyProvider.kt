@@ -9,6 +9,7 @@ import dev.whyoleg.cryptography.BinarySize.Companion.bits
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.RSA
 import dev.whyoleg.cryptography.algorithms.SHA256
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
@@ -33,6 +34,8 @@ internal class WrappedBundleKeyProvider(
     @Volatile
     private var exchange: BundleSessionKeyExchange? = null
 
+    private val issuedHandles = MutableStateFlow<Set<BundleKeyHandle>>(emptySet())
+
     @Volatile
     private var closed = false
 
@@ -43,7 +46,7 @@ internal class WrappedBundleKeyProvider(
         require(keyId.isNotBlank()) { "A bundle key needs a non-blank keyId" }
         check(!closed) { "WrappedBundleKeyProvider is closed" }
         val cached = store?.get(keyId)?.takeIf { !it.isClosed }
-        if (cached != null) return cached
+        if (cached != null) return trackHandle(cached)
         val session = sessionExchange()
         val wrapped = fetchWrappedKey(keyId, session.publicKeySpki)
         val handle = session.unwrap(keyId, wrapped)
@@ -52,11 +55,7 @@ internal class WrappedBundleKeyProvider(
             error("WrappedBundleKeyProvider is closed")
         }
         store?.put(handle)
-        if (closed) {
-            handle.close()
-            error("WrappedBundleKeyProvider is closed")
-        }
-        return handle
+        return trackHandle(handle)
     }
 
     internal suspend fun forgetStored(keyId: String) {
@@ -68,6 +67,31 @@ internal class WrappedBundleKeyProvider(
         val current = exchange
         exchange = null
         current?.close()
+        closeIssuedHandles()
+    }
+
+    private fun trackHandle(handle: BundleKeyHandle): BundleKeyHandle {
+        while (true) {
+            val current = issuedHandles.value
+            if (issuedHandles.compareAndSet(current, current + handle)) break
+        }
+        if (closed) {
+            closeIssuedHandles()
+            handle.close()
+            error("WrappedBundleKeyProvider is closed")
+        }
+        return handle
+    }
+
+    private fun closeIssuedHandles() {
+        while (true) {
+            val current = issuedHandles.value
+            if (current.isEmpty()) return
+            if (issuedHandles.compareAndSet(current, emptySet())) {
+                current.forEach { it.close() }
+                return
+            }
+        }
     }
 
     private suspend fun sessionExchange(): BundleSessionKeyExchange = exchangeLock.withLock {

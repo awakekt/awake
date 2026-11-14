@@ -7,6 +7,8 @@ package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -15,6 +17,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 class IndexedAssetSourceCloseTest {
     @Test
@@ -133,6 +136,94 @@ class IndexedAssetSourceCloseTest {
         assertTrue(layered.read(AssetPath("public.txt")).isFailure)
         assertFailsWith<IllegalStateException> { layered.attachProtected(secondProtected) }
         assertFailsWith<IllegalStateException> { layered.prefetchWithProgress(listOf("public.txt")) { _, _ -> } }
+    }
+
+    @Test
+    fun closingWrappedKeyProviderDirectlyClosesIssuedAndStoredHandles() = runTest {
+        val project = EncryptedProject.write()
+        val serverKey = BundleEncryptionKey(EncryptedProject.KEY_ID, project.key)
+        val store = InMemoryBundleKeyStore()
+        val keys = BundleKeyProvider.wrapped(store) { _, spki -> serverKey.wrapFor(spki) }
+
+        val firstHandle = keys.keyHandle(EncryptedProject.KEY_ID)
+        val cachedHandle = keys.keyHandle(EncryptedProject.KEY_ID)
+        assertFalse(firstHandle.isClosed)
+        assertFalse(cachedHandle.isClosed)
+
+        (keys as AutoCloseable).close()
+        (keys as AutoCloseable).close()
+
+        assertTrue(firstHandle.isClosed, "Closing WrappedBundleKeyProvider directly must close issued handles")
+        assertTrue(cachedHandle.isClosed, "Closing WrappedBundleKeyProvider directly must close handles returned from store")
+        assertFailsWith<IllegalStateException> { keys.keyHandle(EncryptedProject.KEY_ID) }
+    }
+
+    @Test
+    fun closingEncryptedSourceDuringInFlightFetchRejectsReadAndSkipsCache() = runTest {
+        val project = EncryptedProject.write()
+        val cratePath = "assets/models/crate.glb"
+        val cache = RecordingContentCache()
+        val fetchStarted = CompletableDeferred<Unit>()
+        val releaseFetch = CompletableDeferred<Unit>()
+        val underlyingFetch = project.server()
+        val source = IndexedAssetSource(
+            index = project.index,
+            fetch = { url ->
+                fetchStarted.complete(Unit)
+                releaseFetch.await()
+                underlyingFetch(url)
+            },
+            cache = cache,
+            keys = project.keys(),
+        )
+
+        val pendingRead = async { source.read(AssetPath(cratePath)) }
+        fetchStarted.await()
+        source.close()
+        releaseFetch.complete(Unit)
+
+        val outcome = pendingRead.await()
+        assertTrue(outcome.isFailure)
+        assertTrue(outcome.exceptionOrNull() is IllegalStateException)
+        assertEquals(0, cache.putCount, "Closed source must not populate cache after teardown")
+    }
+
+    @Test
+    fun closingTokenAuthorizedFetchDropsHeldTokenAndRejectsFurtherFetches() = runTest {
+        var requests = 0
+        var tokenCalls = 0
+        val payload = byteArrayOf(7, 8, 9)
+        val transport = ContentTransport {
+            requests++
+            ContentResponse(status = 200, body = payload)
+        }
+        val tokenFetch = TokenAuthorizedFetch(transport = transport) {
+            tokenCalls++
+            ReadToken("secret-token-$tokenCalls", 5.minutes)
+        }
+
+        assertContentEquals(payload, tokenFetch.fetch("assets/main.scene.json"))
+        assertEquals(1, requests)
+        assertEquals(1, tokenCalls)
+
+        tokenFetch.close()
+        tokenFetch.close()
+
+        assertFailsWith<IllegalStateException> { tokenFetch.fetch("assets/main.scene.json") }
+        assertFailsWith<IllegalStateException> { tokenFetch.fetchRange("assets/bundle.bin", 0L, 4L) }
+        assertEquals(1, requests, "Closed TokenAuthorizedFetch must not invoke transport again")
+        assertEquals(1, tokenCalls, "Closed TokenAuthorizedFetch must not invoke tokenProvider again")
+    }
+
+    private class RecordingContentCache : ContentCache {
+        var putCount = 0
+            private set
+
+        override suspend fun get(sha256: String): ByteArray? = null
+
+        override suspend fun put(sha256: String, bytes: ByteArray) {
+            putCount++
+        }
     }
 
     private class InMemoryBundleKeyStore : BundleKeyStore {
