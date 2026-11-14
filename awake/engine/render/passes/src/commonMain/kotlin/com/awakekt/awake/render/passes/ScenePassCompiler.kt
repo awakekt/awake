@@ -171,15 +171,10 @@ object ScenePassCompiler {
                 shadowCascadeData = shadowCascadeData,
             )
             val requests = foldInstances(drawCalls, preparer, drawStats, scratch.batcher)
-            val visible = ArrayList<Caster>(requests.size)
-            requests.forEachIndexed { index, request ->
-                val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
-                val caster = Caster(draw, request.worldBounds, request.castsShadows)
-                when {
-                    !request.shadowsOnly -> visible += caster.also { masked.add(request, draw) }
-                    !draw.transparent && request.castsShadows -> shadowOnly += caster
-                }
-            }
+            // Folded again by what a depth pass reads, when something casts: tinted copies cast as one.
+            scratch.casters.fold(requests, light != null && environment.shadowsEnabled, scratch.batcher.canInstanceWith(preparer))
+            val visible = prepareRequests(requests, preparer, context, scratch.casters, masked, shadowOnly)
+            scratch.casters.prepare(preparer, requests.size, context) { draw, bounds -> shadowOnly += Caster(draw, bounds, true) }
             if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
         }
@@ -227,6 +222,34 @@ private fun foldInstances(
 private fun SceneDrawStats.recordPasses(prePasses: List<GpuSubPass>, opaque: Int, transparent: Int, maskPasses: List<GpuSubPass>, edges: Int) {
     prePasses.forEach { recordShadowPass(it.resolvedDraws.size) }
     recordMainPass(opaque, transparent, maskPasses.sumOf { it.resolvedDraws.size }, edges)
+}
+
+/**
+ * Prepares [requests] in source order, so each keeps its own source index: the scene's draws come
+ * back, with their mask layers gathered into [masked], and the shadow-only ones go to [shadowOnly].
+ * A draw that does not cast, or casts inside one of [casters]' folded draws, stays out of the
+ * shadow passes as itself.
+ */
+@Suppress("LongParameterList") // The compile's working state, threaded through one loop.
+private fun prepareRequests(
+    requests: List<RenderDrawCommand>,
+    preparer: GpuDrawPreparer,
+    context: GpuDrawPreparationContext,
+    casters: ShadowCasterFolding,
+    masked: MaskedDraws,
+    shadowOnly: MutableList<Caster>,
+): ArrayList<Caster> {
+    val visible = ArrayList<Caster>(requests.size)
+    requests.forEachIndexed { index, request ->
+        val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
+        val caster = Caster(draw, request.worldBounds, request.castsShadows && casters.castsAlone(index))
+        if (!request.shadowsOnly) {
+            visible += caster.also { masked.add(request, draw) }
+        } else if (!draw.transparent && caster.casts) {
+            shadowOnly += caster
+        }
+    }
+    return visible
 }
 
 /** The draws each mask layer names, gathered as they are prepared, and the layers' sub-passes. */

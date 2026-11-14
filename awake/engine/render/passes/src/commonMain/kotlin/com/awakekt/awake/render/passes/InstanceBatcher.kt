@@ -15,32 +15,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Working memory [ScenePassCompiler.compile] keeps from one frame to the next. A caller that
- * compiles every frame, such as a scene's planner, holds one and passes it each time; what a
- * compile returns stays valid until that scratch's next compile.
- *
- * It also remembers what the last compile read. When a frame reads the same, and the preparer
- * [redraws prepared frames][com.awakekt.awake.render.command.GpuDrawPreparer.redrawsPreparedFrames],
- * compile hands back the last frame's input without folding, preparing or sorting anything.
- */
-class ScenePassScratch {
-    internal val batcher = InstanceBatcher()
-    internal val signature = PassInputSignature()
-    internal var lastInput: com.awakekt.awake.render.command.GpuPassInput? = null
-    internal var lastStats: SceneDrawStats? = null
-
-    /** Whether the last compile handed back the frame before's input, nothing having changed. */
-    var reusedLastFrame: Boolean = false
-        internal set
-
-    /** Plans the next frame in full, whatever it reads. */
-    fun forgetLastFrame() {
-        signature.clear()
-        lastInput = null
-    }
-}
-
-/**
  * [batchInstances] with its working memory kept from frame to frame, so a frame that folds the
  * same groups as the last one allocates nothing: no key per draw, no map entry, list or copied
  * request per group.
@@ -53,7 +27,7 @@ class ScenePassScratch {
  * What [batch] returns, and the instanced requests in it, are valid until the next [batch]:
  * a backend reads them while it prepares the frame, copying the models into its own buffer.
  */
-internal class InstanceBatcher {
+internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
     private val groups = ArrayList<InstanceGroup>()
     private var groupCount = 0
     private var table = IntArray(INITIAL_TABLE)
@@ -78,32 +52,37 @@ internal class InstanceBatcher {
         var last: InstanceGroup? = null
         for (index in drawCalls.indices) {
             val draw = drawCalls[index]
-            if (!draw.foldsIntoInstances(canInstance)) {
-                kept.addSplitToCapacity(draw)
+            if (!rule.folds(draw, canInstance)) {
+                if (rule.keepsOthers) kept.addSplitToCapacity(draw)
                 continue
             }
-            val group = last?.takeIf { it.members[it.members.size - 1].instancesWith(draw) } ?: groupOf(draw)
-            group.members += draw
+            val group = last?.takeIf { rule.alike(it.members[it.members.size - 1], draw) } ?: groupOf(draw)
+            group.add(draw, index)
             last = group
         }
-        for (index in 0 until groupCount) groups[index].emitInto(kept)
+        for (index in 0 until groupCount) groups[index].emitInto(kept, rule.keepsOthers)
         return kept
+    }
+
+    /** Calls [action] with the index, in the last [batch]'s input, of every draw folded with another. */
+    inline fun forEachFolded(action: (Int) -> Unit) {
+        for (index in 0 until groupCount) groups[index].forEachFoldedSource(action)
     }
 
     private fun groupOf(draw: RenderDrawCommand): InstanceGroup {
         if (groupCount * 2 >= table.size) growTable()
         val mask = table.size - 1
-        var slot = draw.instanceHash() and mask
+        var slot = rule.hash(draw) and mask
         while (true) {
             val stored = table[slot]
             if (stored == 0) break
             val group = groups[stored - 1]
-            if (group.members[0].instancesWith(draw)) return group
+            if (rule.alike(group.members[0], draw)) return group
             slot = (slot + 1) and mask
         }
         if (groupCount == groups.size) groups += InstanceGroup()
         val group = groups[groupCount++]
-        group.members.clear()
+        group.clear()
         table[slot] = groupCount
         return group
     }
@@ -112,7 +91,7 @@ internal class InstanceBatcher {
         table = IntArray(table.size * 2)
         val mask = table.size - 1
         for (index in 0 until groupCount) {
-            var slot = groups[index].members[0].instanceHash() and mask
+            var slot = rule.hash(groups[index].members[0]) and mask
             while (table[slot] != 0) slot = (slot + 1) and mask
             table[slot] = index + 1
         }
@@ -123,25 +102,74 @@ internal class InstanceBatcher {
     }
 }
 
+/** Which draws a [InstanceBatcher] folds, which of them render alike, and a hash equal for those that do. */
+internal interface FoldRule {
+    /** Whether a draw the rule does not fold is kept in the output as it is. */
+    val keepsOthers: Boolean
+
+    fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean): Boolean
+
+    fun alike(first: RenderDrawCommand, second: RenderDrawCommand): Boolean
+
+    fun hash(draw: RenderDrawCommand): Int
+}
+
+/** The scene pass's folding: draws that differ only in placement. */
+internal object SceneInstanceFold : FoldRule {
+    override val keepsOthers = true
+
+    override fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean) = draw.foldsIntoInstances(canInstance)
+
+    override fun alike(first: RenderDrawCommand, second: RenderDrawCommand) = first.instancesWith(second)
+
+    override fun hash(draw: RenderDrawCommand) = draw.instanceHash()
+}
+
 /** One frame's set of draws that render alike but for placement, and the instanced draws made of them. */
-private class InstanceGroup {
+internal class InstanceGroup {
     val members = ArrayList<RenderDrawCommand>()
+    private var sources = IntArray(INITIAL_SOURCES)
     private val models = ArrayList<Mat4>()
     private val instanced = ArrayList<RenderDrawCommand>()
     private val bounds = ArrayList<Aabb>()
 
-    fun emitInto(out: MutableList<RenderDrawCommand>) {
+    fun clear() = members.clear()
+
+    fun add(draw: RenderDrawCommand, source: Int) {
+        if (members.size == sources.size) sources = sources.copyOf(sources.size * 2)
+        sources[members.size] = source
+        members += draw
+    }
+
+    inline fun forEachFoldedSource(action: (Int) -> Unit) {
+        if (members.size > 1) for (index in members.indices) action(sourceAt(index))
+    }
+
+    fun sourceAt(index: Int): Int = sources[index]
+
+    private companion object {
+        const val INITIAL_SOURCES = 16
+    }
+
+    /** One draw for the group, or several past one draw's capacity; a lone member as itself where [keepsSingles]. */
+    fun emitInto(out: MutableList<RenderDrawCommand>, keepsSingles: Boolean) {
         if (members.size == 1) {
-            out += members[0]
+            if (keepsSingles) out += members[0]
             return
         }
         models.clear()
-        for (index in members.indices) models += members[index].model
+        for (index in members.indices) {
+            val draw = members[index]
+            val copies = draw.instanceModels
+            if (copies == null) models += draw.model else for (copy in copies.indices) models += copies[copy]
+        }
+        // One model per member, so a chunk's bounds are its members'; else every chunk takes the group's.
+        val perMember = models.size == members.size
         var chunk = 0
-        for (from in members.indices step MAX_BATCHED_INSTANCES) {
-            val to = min(from + MAX_BATCHED_INSTANCES, members.size)
-            val chunkModels = if (from == 0 && to == members.size) models else models.subList(from, to)
-            out += instancedChunk(chunk++, from, to, chunkModels)
+        for (from in models.indices step MAX_BATCHED_INSTANCES) {
+            val to = min(from + MAX_BATCHED_INSTANCES, models.size)
+            val chunkModels = if (from == 0 && to == models.size) models else models.subList(from, to)
+            out += if (perMember) instancedChunk(chunk++, from, to, chunkModels) else instancedChunk(chunk++, 0, members.size, chunkModels)
         }
     }
 
