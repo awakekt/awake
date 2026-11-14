@@ -31,6 +31,9 @@ class AslUiShadersTest {
         assertTrue(wgsl.contains("screenToNdc"), "Should contain the live screenToNdc uniform")
         assertTrue(wgsl.contains("fwidth"), "Should use derivative-based corner AA")
         assertTrue(wgsl.contains("roundedDistance"), "Should preserve the smoothing branch")
+        val strokeBranch = wgsl.substringAfter("if (strokeWidth > 0.0)", missingDelimiterValue = "")
+        assertTrue(strokeBranch.isNotEmpty(), "Should contain the strokeWidth branch")
+        assertTrue(!strokeBranch.contains("fwidth"), "fwidth must not be called inside the non-uniform strokeWidth branch")
     }
 
     @Test

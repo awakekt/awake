@@ -293,13 +293,14 @@ val UiRoundedQuadShader: AslShaderDefinition = shader("ui_rounded_quad") {
         val distance = variable("distance", boxDistance)
         val curvedCorner = (smoothing gt 0f.lit) and (q.x gt 0f.lit) and (q.y gt 0f.lit)
         iff(curvedCorner) { assign(distance, roundedDistance) }
-        val aa = let("aa", max(fwidth(distance), 0.5f.lit))
+        val distanceWidth = let("distanceWidth", fwidth(distance))
+        val aa = let("aa", max(distanceWidth, 0.5f.lit))
         val alpha = variable("alpha", 1f.lit - smoothstep(-aa, aa, distance))
         // A border keeps only the band `strokeWidth` wide inside the edge. Its coverage is a pixel-wide
         // box filter of each edge, the outer one less the inner one: exact on a pixel-aligned edge,
         // where a 1 px border must be one solid pixel, not the smoothstep's two soft ones.
         iff(strokeWidth gt 0f.lit) {
-            val pixel = let("pixel", max(fwidth(distance), 0.001f.lit))
+            val pixel = let("pixel", max(distanceWidth, 0.001f.lit))
             val outer = let("outer", clamp(0.5f.lit - distance / pixel, 0f.lit, 1f.lit))
             val inner = let("inner", clamp(0.5f.lit - (distance + strokeWidth) / pixel, 0f.lit, 1f.lit))
             assign(alpha, outer - inner)

@@ -217,4 +217,53 @@ class StructuralChecksTest {
             }
         }
     }
+
+    @Test
+    fun derivativeInsideBranchThrows() {
+        assertFailsWith<AslDefinitionException> {
+            shader("bad") {
+                val out = varyings("V")
+                val distance by out.varying(GpuDataShape.Float, location = 0)
+                val strokeWidth by out.varying(GpuDataShape.Float, location = 1)
+                vertex {
+                    val inPos by input(GpuDataShape.Vec3, location = 0)
+                    out.position set vec4(inPos, 1f.lit)
+                    distance set inPos.x
+                    strokeWidth set inPos.y
+                }
+                fragment {
+                    val alpha = variable("alpha", 1f.lit)
+                    iff(strokeWidth gt 0f.lit) {
+                        val pixel = let("pixel", fwidth(distance))
+                        assign(alpha, pixel)
+                    }
+                    colorOutput(vec4(alpha))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun textureSampleInsideBranchThrows() {
+        assertFailsWith<AslDefinitionException> {
+            shader("bad") {
+                val tex by texture2d(group = 0, binding = 0)
+                val samp by sampler(group = 0, binding = 1)
+                val out = varyings("V")
+                val uv by out.varying(GpuDataShape.Vec2, location = 0)
+                vertex {
+                    val inPos by input(GpuDataShape.Vec2, location = 0)
+                    out.position set vec4(inPos, 0f.lit, 1f.lit)
+                    uv set inPos
+                }
+                fragment {
+                    val result = variable("result", vec4(0f.lit))
+                    iff(uv.x gt 0.5f.lit) {
+                        assign(result, textureSample(tex, samp, uv))
+                    }
+                    colorOutput(result)
+                }
+            }
+        }
+    }
 }

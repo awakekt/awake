@@ -55,6 +55,57 @@ internal fun validateStages(definition: AslShaderDefinition) {
         )
     }
     validateNoDeadDeclarations(definition)
+    validateUniformControlFlow(definition)
+}
+
+private val UNIFORM_FLOW_BUILTINS = setOf("dpdx", "dpdy", "fwidth", "textureSample")
+
+/** WGSL's uniformity rule: implicit-derivative builtins (`dpdx`, `dpdy`, `fwidth`, `textureSample`)
+ * must only be called from uniform control flow -- never inside an `if` or loop body, where naga
+ * accepts them for SPIR-V while WebGPU's tint rejects the module at `createShaderModule`. */
+private fun validateUniformControlFlow(definition: AslShaderDefinition) {
+    val requiresUniformFlow = UNIFORM_FLOW_BUILTINS.toMutableSet()
+    var changed = true
+    while (changed) {
+        changed = false
+        for (fn in definition.functions) {
+            if (fn.name in requiresUniformFlow) continue
+            val calls = mutableSetOf<String>()
+            fn.body.collectNames(calls)
+            if (calls.any { it in requiresUniformFlow }) {
+                requiresUniformFlow += fn.name
+                changed = true
+            }
+        }
+    }
+    definition.functions.forEach { fn ->
+        fn.body.findBranchCall(requiresUniformFlow)?.let { call ->
+            throw AslDefinitionException(
+                "Shader '${definition.name}' fn '${fn.name}' calls '$call' inside a branch or loop; " +
+                    "WGSL requires uniform control flow.",
+            )
+        }
+    }
+    definition.fragmentStage.statements.findBranchCall(requiresUniformFlow)?.let { call ->
+        throw AslDefinitionException(
+            "Shader '${definition.name}' calls '$call' inside a branch or loop; WGSL requires uniform control flow.",
+        )
+    }
+}
+
+private fun List<AslStatement>.findBranchCall(restricted: Set<String>): String? {
+    for (statement in this) {
+        val body = when (statement) {
+            is AslIf -> statement.body
+            is AslForI32 -> statement.body
+            is AslForU32 -> statement.body
+            is AslAssign, is AslLet, is AslVar, is AslSet, is AslReturn, AslContinue, AslDiscard -> null
+        } ?: continue
+        val names = mutableSetOf<String>()
+        body.collectNames(names)
+        names.firstOrNull { it in restricted }?.let { return it }
+    }
+    return null
 }
 
 private fun validatePosition(definition: AslShaderDefinition, written: Set<String>) {
