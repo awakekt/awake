@@ -58,31 +58,63 @@ class ProtectedContentNotAttachedException(val path: String) : IllegalStateExcep
  */
 class LayeredAssetSource(private val publicSet: AssetSource) :
     GatedAssetSource,
-    PrefetchableAssetSource {
+    PrefetchableAssetSource,
+    AutoCloseable {
     private val protectedLayer = MutableStateFlow<AssetSource?>(null)
+    private val closed = MutableStateFlow(false)
 
     /** Whether a protected source is attached. */
     val hasProtected: Boolean get() = protectedLayer.value != null
 
     /**
      * Attaches [source], the content a signed-in player can read; it then serves every path it
-     * has. Attaching again replaces the source attached before, as a new sign-in does. Coroutines
-     * waiting in [awaitProtected] resume.
+     * has. Attaching again replaces and closes (when [AutoCloseable]) the source attached before, as
+     * a new sign-in does. Coroutines waiting in [awaitProtected] resume.
      */
     fun attachProtected(source: AssetSource) {
-        protectedLayer.value = source
+        check(!closed.value) { "LayeredAssetSource is closed" }
+        val previous = protectedLayer.swap(source)
+        if (closed.value) {
+            protectedLayer.swap(null)?.let { current ->
+                if (current !== source && current !== previous) {
+                    (current as? AutoCloseable)?.close()
+                }
+            }
+            (source as? AutoCloseable)?.close()
+            if (previous !== source) {
+                (previous as? AutoCloseable)?.close()
+            }
+            error("LayeredAssetSource is closed")
+        }
+        if (previous !== source) {
+            (previous as? AutoCloseable)?.close()
+        }
     }
 
     /**
-     * Detaches the protected source, as a sign-out does: later reads of a path [publicSet] doesn't have
-     * fail with [ProtectedContentNotAttachedException] again. What was already read stays loaded.
+     * Detaches and closes (when [AutoCloseable]) the protected source, as a sign-out does: later
+     * reads of a path [publicSet] doesn't have fail with [ProtectedContentNotAttachedException] again.
+     * What was already read stays loaded.
      */
-    fun detachProtected() {
-        protectedLayer.value = null
+    fun detachProtected() = detachProtected(close = true)
+
+    /**
+     * Detaches the protected source, closing it when [close] is `true` and it implements
+     * [AutoCloseable]. Pass `close = false` when the caller keeps owning the detached source's
+     * lifecycle.
+     */
+    fun detachProtected(close: Boolean) {
+        val previous = protectedLayer.swap(null)
+        if (close) {
+            (previous as? AutoCloseable)?.close()
+        }
     }
 
     /** Suspends until a protected source is attached, and answers it; at once when one already is. */
-    suspend fun awaitProtected(): AssetSource = protectedLayer.filterNotNull().first()
+    suspend fun awaitProtected(): AssetSource {
+        check(!closed.value) { "LayeredAssetSource is closed" }
+        return protectedLayer.filterNotNull().first()
+    }
 
     /**
      * Whether a read of [path] needs the protected source, which isn't attached yet: [publicSet] doesn't
@@ -99,10 +131,10 @@ class LayeredAssetSource(private val publicSet: AssetSource) :
         if (needsProtected(path)) awaitProtected()
     }
 
-    override suspend fun read(path: AssetPath): Result<ByteArray> {
-        val protectedSource = protectedLayer.value
-        val layer = layerFor(path, protectedSource) ?: return Result.failure(ProtectedContentNotAttachedException(path.value))
-        return layer.read(path)
+    override suspend fun read(path: AssetPath): Result<ByteArray> = when {
+        closed.value -> Result.failure(IllegalStateException("LayeredAssetSource is closed"))
+        else -> layerFor(publicSet, protectedLayer.value, path)?.read(path)
+            ?: Result.failure(ProtectedContentNotAttachedException(path.value))
     }
 
     /** Whether a layer that would serve a read can prefetch; see [PrefetchableAssetSource.canPrefetch]. */
@@ -117,9 +149,10 @@ class LayeredAssetSource(private val publicSet: AssetSource) :
      * source is attached.
      */
     override suspend fun prefetchWithProgress(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) {
+        check(!closed.value) { "LayeredAssetSource is closed" }
         val protectedSource = protectedLayer.value
         val byLayer = paths.groupBy { path ->
-            layerFor(AssetPath(path), protectedSource) ?: throw ProtectedContentNotAttachedException(path)
+            layerFor(publicSet, protectedSource, AssetPath(path)) ?: throw ProtectedContentNotAttachedException(path)
         }
         val prefetches = byLayer.mapNotNull { (layer, chosen) ->
             (layer as? PrefetchableAssetSource)?.takeIf { it.canPrefetch }?.let { it to chosen }
@@ -148,15 +181,41 @@ class LayeredAssetSource(private val publicSet: AssetSource) :
         }
     }
 
-    /** The layer a read of [path] goes to, or null when only a protected source not yet attached could have it. */
-    private suspend fun layerFor(path: AssetPath, protectedSource: AssetSource?): AssetSource? = when {
-        protectedSource != null && protectedSource.exists(path) -> protectedSource
-        publicSet.exists(path) -> publicSet
-        else -> protectedSource
-    }
-
     /** Whether either layer has [path]; [publicSet] alone while no protected source is attached. */
     override suspend fun exists(path: AssetPath): Boolean = protectedLayer.value?.exists(path) == true || publicSet.exists(path)
+
+    /**
+     * Closes the attached protected source (if any) and [publicSet] when they implement
+     * [AutoCloseable]. Idempotent.
+     */
+    override fun close() {
+        if (!closed.compareAndSet(expect = false, update = true)) return
+        val protectedFailure = runCatching { (protectedLayer.swap(null) as? AutoCloseable)?.close() }.exceptionOrNull()
+        val publicFailure = runCatching { (publicSet as? AutoCloseable)?.close() }.exceptionOrNull()
+        val failure = protectedFailure ?: publicFailure
+        if (protectedFailure != null && publicFailure != null && protectedFailure !== publicFailure) {
+            protectedFailure.addSuppressed(publicFailure)
+        }
+        if (failure != null) throw failure
+    }
+}
+
+private fun MutableStateFlow<AssetSource?>.swap(next: AssetSource?): AssetSource? {
+    while (true) {
+        val current = value
+        if (compareAndSet(current, next)) return current
+    }
+}
+
+/** The layer a read of [path] goes to, or null when only a protected source not yet attached could have it. */
+private suspend fun layerFor(
+    publicSet: AssetSource,
+    protectedSource: AssetSource?,
+    path: AssetPath,
+): AssetSource? = when {
+    protectedSource != null && protectedSource.exists(path) -> protectedSource
+    publicSet.exists(path) -> publicSet
+    else -> protectedSource
 }
 
 /** One layer's latest prefetch progress, for [LayeredAssetSource.prefetchWithProgress]. */

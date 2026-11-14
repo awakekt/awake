@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlin.concurrent.Volatile
 
 /**
  * How many of [IndexedAssetSource.prefetch]'s files are fetched and verified at once. Its KDoc
@@ -94,11 +95,15 @@ class IndexedAssetSource(
     private val fetch: suspend (url: String) -> ByteArray,
     private val cache: ContentCache? = null,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
-    keys: BundleKeyProvider? = null,
-) : PrefetchableAssetSource {
+    private val keys: BundleKeyProvider? = null,
+) : PrefetchableAssetSource,
+    AutoCloseable {
     private val entries: Map<String, ProjectIndexEntry>
     private val seals: MemberSeals?
     private val members: BundleMembers
+
+    @Volatile
+    private var closed = false
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -135,6 +140,7 @@ class IndexedAssetSource(
     override suspend fun prefetchWithProgress(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) = prefetch(paths, onProgress)
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = suspendRunCatching {
+        check(!closed) { "IndexedAssetSource is closed" }
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
         readChecked(entry, path.value.removePrefix("/"))
     }
@@ -152,6 +158,7 @@ class IndexedAssetSource(
      * necessarily first in [paths] -- and cancels the fetches still in flight.
      */
     suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit = { _, _ -> }) {
+        check(!closed) { "IndexedAssetSource is closed" }
         val chosen = paths.map { path ->
             val entry = entryFor(path) ?: throw NoSuchElementException("$path is not in the project index")
             Requested(entry, path.removePrefix("/"))
@@ -223,6 +230,23 @@ class IndexedAssetSource(
 
     private suspend fun storedInCache(entry: ProjectIndexEntry): ByteArray? =
         cache?.get(index.cacheKeyOf(entry))?.takeIf { it.size.toLong() == index.storedSizeOf(entry) }
+
+    /**
+     * Releases and zeros any in-memory bundle key material, ephemeral session key-exchange state,
+     * and uncached staged bundle members held by this source. After closing, [read] fails and
+     * [prefetch] throws [IllegalStateException]. Idempotent.
+     */
+    override fun close() {
+        closed = true
+        val sealsFailure = runCatching { seals?.close() }.exceptionOrNull()
+        val keysFailure = runCatching { (keys as? AutoCloseable)?.close() }.exceptionOrNull()
+        val membersFailure = runCatching { members.close() }.exceptionOrNull()
+        val failures = listOfNotNull(sealsFailure, keysFailure, membersFailure)
+        failures.firstOrNull()?.let { first ->
+            failures.drop(1).forEach { first.addSuppressed(it) }
+            throw first
+        }
+    }
 
     /** One path [prefetch] was asked for: its entry, and the path as asked, for messages. */
     private class Requested(val entry: ProjectIndexEntry, val label: String)

@@ -26,21 +26,36 @@ import kotlin.io.encoding.Base64
 internal class WrappedBundleKeyProvider(
     private val store: BundleKeyStore?,
     private val fetchWrappedKey: suspend (keyId: String, publicKeySpki: ByteArray) -> ByteArray,
-) : BundleKeyProvider {
+) : BundleKeyProvider,
+    AutoCloseable {
     private val exchangeLock = Mutex()
+
+    @Volatile
     private var exchange: BundleSessionKeyExchange? = null
+
+    @Volatile
+    private var closed = false
 
     override suspend fun key(keyId: String): ByteArray =
         throw UnsupportedOperationException("Wrapped bundle keys are non-extractable; use keyHandle")
 
     override suspend fun keyHandle(keyId: String): BundleKeyHandle {
         require(keyId.isNotBlank()) { "A bundle key needs a non-blank keyId" }
+        check(!closed) { "WrappedBundleKeyProvider is closed" }
         val cached = store?.get(keyId)?.takeIf { !it.isClosed }
         if (cached != null) return cached
         val session = sessionExchange()
         val wrapped = fetchWrappedKey(keyId, session.publicKeySpki)
         val handle = session.unwrap(keyId, wrapped)
+        if (closed) {
+            handle.close()
+            error("WrappedBundleKeyProvider is closed")
+        }
         store?.put(handle)
+        if (closed) {
+            handle.close()
+            error("WrappedBundleKeyProvider is closed")
+        }
         return handle
     }
 
@@ -48,8 +63,25 @@ internal class WrappedBundleKeyProvider(
         store?.delete(keyId)
     }
 
-    private suspend fun sessionExchange(): BundleSessionKeyExchange =
-        exchangeLock.withLock { exchange ?: BundleSessionKeyExchange.generate().also { exchange = it } }
+    override fun close() {
+        closed = true
+        val current = exchange
+        exchange = null
+        current?.close()
+    }
+
+    private suspend fun sessionExchange(): BundleSessionKeyExchange = exchangeLock.withLock {
+        check(!closed) { "WrappedBundleKeyProvider is closed" }
+        exchange?.let { return@withLock it }
+        val created = BundleSessionKeyExchange.generate()
+        exchange = created
+        if (closed) {
+            exchange = null
+            created.close()
+            error("WrappedBundleKeyProvider is closed")
+        }
+        created
+    }
 }
 
 /**

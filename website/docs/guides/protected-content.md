@@ -287,7 +287,7 @@ with no frame loop reads `LoadedProject.pendingEntryScene` and calls `switchTo` 
 | --- | --- |
 | Before `attachProtected` | Is served by the public set. A path the public set lacks fails with `ProtectedContentNotAttachedException`, without a request; `needsProtected(path)` tells you so ahead, and `awaitProtected()` suspends until the source arrives. A `SceneSwitch` to such a scene waits in `WaitingForContent`; `LoadedProject.switchTo`, for a host without a frame loop, throws instead. |
 | After `attachProtected` | Is served by the protected source when it has the path, so it wins for a file both have, and by the public set otherwise. Each read goes to one source, which checks it against its own index's SHA-256. A scene switch's prefetch goes the same way, so its `Loading` progress counts bytes from both sources. |
-| After `detachProtected`, on sign-out | Is served by the public set alone again. |
+| After `detachProtected`, on sign-out | Is served by the public set alone again, and closes the detached source when it implements `AutoCloseable` (pass `detachProtected(close = false)` to keep the caller owning its lifecycle; `LayeredAssetSource.close()` closes both layers). |
 
 The token, and when to sign in or out, stay with your game: Core only takes the source you attach.
 The public set is never encrypted; protected bundles may be.
