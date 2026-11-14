@@ -1,1 +1,0 @@
-- Vulkan `Renderer.renderScale` parity with WebGPU, a device-shared `VkPipelineCache` across all 3D, depth, line, UI and post-pass pipelines, and batched `SlotBlock` uniform uploads with per-slot bit-exact deduplication (#1181).

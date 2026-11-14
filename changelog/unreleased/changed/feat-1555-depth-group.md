@@ -1,1 +1,0 @@
-- On WebGPU, opaque instanced shadow and depth casters that animate their vertices alike share one depth bind group, so a depth pass binds about one group rather than one per mesh: three instanced meshes went from three groups to one in every cascade, with the same pixels. Masked and non-instanced casters keep a group each, and Vulkan is unchanged (#1555).
