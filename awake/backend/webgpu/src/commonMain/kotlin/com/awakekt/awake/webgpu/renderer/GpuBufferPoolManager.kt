@@ -62,7 +62,7 @@ internal class GpuBufferPoolManager(
     /** Keyed by pipeline AND semantic: one pipeline can read both depth targets, and a single
      * key would let the second overwrite the first. */
     internal val shadowBindGroups =
-        mutableMapOf<Pair<GPURenderPipeline, BindingSemantic>, WebGpuBindGroupHandle>()
+        mutableMapOf<BindingSemantic, MutableMap<GPURenderPipeline, WebGpuBindGroupHandle>>()
     private val uniformSlotPools = mutableMapOf<GPURenderPipeline, MutableList<UniformSlot>>()
 
     private val skinnedInstancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
@@ -183,7 +183,7 @@ internal class GpuBufferPoolManager(
     fun invalidatePipeline(pipeline: GPURenderPipeline) {
         uniformSlotPools.remove(pipeline)?.forEach(UniformSlot::close)
         skinnedInstancedUniformResources.remove(pipeline)?.close()
-        shadowBindGroups.keys.filter { it.first == pipeline }.forEach { shadowBindGroups.remove(it)?.bindGroup?.close() }
+        shadowBindGroups.values.forEach { groups -> groups.remove(pipeline)?.bindGroup?.close() }
     }
 
     fun destroy() {
@@ -200,7 +200,7 @@ internal class GpuBufferPoolManager(
         uniformSlotPools.clear()
         skinnedInstancedUniformResources.values.forEach(WebGpuUniformResources::close)
         skinnedInstancedUniformResources.clear()
-        shadowBindGroups.values.forEach { it.bindGroup.close() }
+        shadowBindGroups.values.forEach { groups -> groups.values.forEach { it.bindGroup.close() } }
         shadowBindGroups.clear()
     }
 }
@@ -263,7 +263,7 @@ private fun GpuBufferPoolManager.depthBindingFor(
     pipeline: WebGpuPipelineHandle,
     semantic: BindingSemantic,
     depthTarget: com.awakekt.awake.webgpu.texture.DepthTarget,
-): MaterialBinding = shadowBindGroups.getOrPut(pipeline.pipeline to semantic) {
+): MaterialBinding = shadowBindGroups.getOrPut(semantic) { mutableMapOf() }.getOrPut(pipeline.pipeline) {
     val device = graphicsDevice.wgpuContext.device
     WebGpuBindGroupHandle(
         device.createBindGroupReleasingLayout(

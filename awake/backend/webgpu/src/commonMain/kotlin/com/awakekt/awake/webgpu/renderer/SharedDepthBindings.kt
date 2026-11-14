@@ -26,16 +26,17 @@ import com.awakekt.awake.render.pipeline.DepthRenderKey
  * does, and a later batch may write that slot for another draw.
  */
 internal class SharedDepthBindings {
-    private val shared = HashMap<Key, MaterialBinding>()
+    @PublishedApi
+    internal val shared = HashMap<Any, MaterialBinding>()
 
     /** Forgets every group, at the start of a batch. */
     fun clear() = shared.clear()
 
     /**
      * The group [request]'s depth draw binds: one shared with an earlier caster that reads the
-     * same values, or [create]'s for this draw's own buffer.
+     * same values, or [create]'s for this draw's own buffer. Inline, so [create] is no object per draw.
      */
-    fun bindingFor(
+    inline fun bindingFor(
         request: GpuDrawRequest,
         depthKey: DepthRenderKey,
         depthPipeline: Any,
@@ -44,11 +45,16 @@ internal class SharedDepthBindings {
         create: () -> MaterialBinding?,
     ): MaterialBinding? {
         if (!sharesDepthGroup(depthKey)) return create()
-        val animation = request.vertexAnimation
-        // The clock the block carries: the frame time for an animated draw, 0 for a still one.
-        val clock = if (animation.x != 0f) request.timeSeconds else 0f
-        val key = Key(depthPipeline, scenePipeline, wholeBlock, animation.x, animation.y, animation.z, clock)
+        val key = keyOf(request, depthPipeline, scenePipeline, wholeBlock)
         return shared[key] ?: create()?.also { shared[key] = it }
+    }
+
+    /** [request]'s batch of alike casters: the clock is the frame time for an animated draw, 0 for a still one. */
+    @PublishedApi
+    internal fun keyOf(request: GpuDrawRequest, depthPipeline: Any, scenePipeline: Any?, wholeBlock: Boolean): Any {
+        val animation = request.vertexAnimation
+        val clock = if (animation.x != 0f) request.timeSeconds else 0f
+        return Key(depthPipeline, scenePipeline, wholeBlock, animation.x, animation.y, animation.z, clock)
     }
 
     private data class Key(

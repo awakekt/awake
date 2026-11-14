@@ -68,6 +68,9 @@ kotlin {
     // to open while running beside these.
     tasks.withType<Test>().configureEach {
         requireExclusiveGpu(this)
+        // The allocation gates count what a frame's preparation allocates. With escape analysis on,
+        // the JVM removes the short-lived temporaries Kotlin/Wasm really allocates (#1555).
+        jvmArgs("-XX:-DoEscapeAnalysis")
         // Fixtures retain native contexts for the life of their class. As in render:parity,
         // isolate classes so a later fixture cannot inherit wgpu-native/GLFW driver state.
         setForkEvery(1)

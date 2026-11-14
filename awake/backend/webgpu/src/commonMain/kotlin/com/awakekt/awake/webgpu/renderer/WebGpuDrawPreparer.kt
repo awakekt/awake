@@ -74,10 +74,7 @@ internal class WebGpuDrawPreparer(
         if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         if (edgePipeline != null) stageEdgeFrame(context)
-        val primary = PrimaryPipelineBinding(
-            renderer.renderPipeline.handle,
-            renderer.wireframe && renderer.wireframeRenderPipeline != null,
-        )
+        val primary = primaryBinding()
         val draw = renderer.prepareGpuDraw(
             cmd = request,
             singleIndex = when {
@@ -109,16 +106,14 @@ internal class WebGpuDrawPreparer(
         val depthFeature = renderer.depthPrePass ?: renderer.sceneDepthPass ?: renderer.maskPass
         val format = draw.vertexFormat ?: return resolved
         val depthKey = request.depthRenderKey()
-        // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
-        // drawing its whole card.
-        val keyed = resolved.copy(depthRenderKey = depthKey)
-        val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return keyed
+        val depthPipeline = depthFeature?.pipelineFor(depthKey, format)
         val sourceMaterial = request.material as? com.awakekt.awake.webgpu.material.Material
-            ?: return keyed
-        if (request.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked &&
-            !sourceMaterial.hasTexture
-        ) {
-            return keyed
+        // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
+        // drawing its whole card. One copy either way, not one per step (#1555).
+        // A masked caster casts through its texture, so it needs one.
+        val canCast = request.alphaMode != AlphaMode.Masked || sourceMaterial?.hasTexture == true
+        if (depthPipeline == null || sourceMaterial == null || !canCast) {
+            return resolved.copy(depthRenderKey = depthKey)
         }
         val depthMaterial = depthMaterialBinding(request, draw, depthKey, depthFeature, depthPipeline, sourceMaterial)
         val depthPalette = if (depthKey.kind == DepthCasterKind.SkinnedInstanced) {
@@ -157,6 +152,17 @@ internal class WebGpuDrawPreparer(
                 depthFeature.materialBinding(depthPipeline, buffer, wholeBlock)
             }
         }
+    }
+
+    private var primary: PrimaryPipelineBinding? = null
+
+    /** The primary pipeline as a draw binds it, made again only when the pipeline or wireframe changed. */
+    private fun primaryBinding(): PrimaryPipelineBinding {
+        val handle = renderer.renderPipeline.handle
+        val wireframe = renderer.wireframe && renderer.wireframeRenderPipeline != null
+        val cached = primary
+        if (cached != null && cached.pipeline === handle && cached.wireframe == wireframe) return cached
+        return PrimaryPipelineBinding(handle, wireframe).also { primary = it }
     }
 
     /** The batch's edges are a pass of their own: their view-projection and debug code, staged once. */
