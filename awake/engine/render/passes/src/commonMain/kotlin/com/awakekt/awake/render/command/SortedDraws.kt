@@ -35,12 +35,21 @@ class SortedDraws<P : PreparedDraw>(
  * @return The same draws, reordered for recording.
  */
 fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
-    val (transparent, opaque) = draws.partition { it.transparent }
+    val opaqueByPipeline = LinkedHashMap<PipelineHandle, ArrayList<P>>()
+    val transparent = ArrayList<P>()
+    for (index in draws.indices) {
+        val draw = draws[index]
+        if (draw.transparent) {
+            transparent += draw
+        } else {
+            opaqueByPipeline.getOrPut(draw.pipeline) { ArrayList() } += draw
+        }
+    }
+    opaqueByPipeline.values.forEach { it.sortWith(BatchKeyOrder) }
+    transparent.sortWith(TransparentOrder)
     return SortedDraws(
-        opaqueByPipeline = opaque
-            .groupBy { it.pipeline }
-            .mapValues { (_, group) -> group.sortedWith(BatchKeyOrder) },
-        transparent = transparent.sortedWith(TransparentOrder),
+        opaqueByPipeline = opaqueByPipeline,
+        transparent = transparent,
     )
 }
 
@@ -49,7 +58,7 @@ fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
  * rather than the list reversed, which would allocate a second list every frame; compared as
  * primitives, not through `compareBy`, which boxed every key.
  */
-private val TransparentOrder: Comparator<PreparedDraw> = Comparator { a, b ->
+internal val TransparentOrder: Comparator<PreparedDraw> = Comparator { a, b ->
     when {
         a.sortLayer != b.sortLayer -> a.sortLayer.compareTo(b.sortLayer)
         a.sortOrder != b.sortOrder -> a.sortOrder.compareTo(b.sortOrder)
@@ -61,7 +70,7 @@ private val TransparentOrder: Comparator<PreparedDraw> = Comparator { a, b ->
  * By batch key, compared as ints: `sortedBy { it.batchKey }` boxed both keys on every comparison,
  * which Kotlin/Wasm allocates where the JVM's escape analysis hides it (#1555).
  */
-private val BatchKeyOrder: Comparator<PreparedDraw> = Comparator { a, b -> a.batchKey.compareTo(b.batchKey) }
+internal val BatchKeyOrder: Comparator<PreparedDraw> = Comparator { a, b -> a.batchKey.compareTo(b.batchKey) }
 
 /** Flattened list of all prepared draws in this sorted set. */
 val <P : PreparedDraw> SortedDraws<P>.allDraws: List<P>

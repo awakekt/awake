@@ -72,7 +72,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         kept.clear().also { others.clear() }
         // Entities spawned together iterate together, so a draw usually joins the previous draw's group.
         var last: InstanceGroup? = null
-        for (index in drawCalls.indices) {
+        for (index in 0 until drawCalls.size) {
             val draw = drawCalls[index]
             if (!rule.folds(draw, canInstance)) {
                 if (rule.keepsOthers) others.addSplitToCapacity(draw)
@@ -84,7 +84,7 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
             last = group
         }
         order.emit(groups, groupCount) { it.emitInto(kept, rule.keepsOthers) }
-        kept.addAll(others)
+        for (index in 0 until others.size) kept += others[index]
         return kept
     }
 
@@ -151,7 +151,7 @@ internal class InstanceGroup {
     }
 
     inline fun forEachFoldedSource(action: (Int) -> Unit) {
-        if (members.size > 1) for (index in members.indices) action(sourceAt(index))
+        if (members.size > 1) for (index in 0 until members.size) action(sourceAt(index))
     }
 
     fun sourceAt(index: Int): Int = sources[index]
@@ -167,22 +167,24 @@ internal class InstanceGroup {
             return
         }
         models.clear()
-        for (index in members.indices) {
+        for (index in 0 until members.size) {
             val draw = members[index]
             val copies = draw.instanceModels
-            if (copies == null) models += draw.model else for (copy in copies.indices) models += copies[copy]
+            if (copies == null) models += draw.model else for (copy in 0 until copies.size) models += copies[copy]
         }
         // One model per member, so a chunk's bounds are its members'; else every chunk takes the group's.
         val perMember = models.size == members.size
         // Copies that differ in tint or fade carry theirs per instance, over a block whose tint is white.
         val colors = if (tints && !InstanceTints.allAlike(members)) groupTints.colorsOf(members) else null
         var chunk = 0
-        for (from in models.indices step MAX_BATCHED_INSTANCES) {
+        var from = 0
+        while (from < models.size) {
             val to = min(from + MAX_BATCHED_INSTANCES, models.size)
             val chunkModels = if (from == 0 && to == models.size) models else models.subList(from, to)
             val draw = if (perMember) instancedChunk(chunk++, from, to, chunkModels) else instancedChunk(chunk++, 0, members.size, chunkModels)
             if (colors != null) tint(draw, colors, from, to)
             out += draw
+            from = to
         }
     }
 

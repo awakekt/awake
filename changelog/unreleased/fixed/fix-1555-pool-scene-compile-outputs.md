@@ -1,0 +1,1 @@
+- Pooled `Caster` wrappers, per-pipeline sort buckets, opaque and transparent draw lists, and per-cascade `seenBy` lists in `ScenePassScratch` so compiling a moving-camera frame allocates no per-draw or per-cascade collections (#1555).
