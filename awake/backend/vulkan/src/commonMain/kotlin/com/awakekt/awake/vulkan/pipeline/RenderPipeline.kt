@@ -146,8 +146,9 @@ class RenderPipeline(
      */
     var pipelineLayout: Long = 0
 
-    /** The `VkPipelineCache` the pipeline was created through, destroyed together with it. */
+    /** The `VkPipelineCache` the pipeline was created through, destroyed together with it if owned. */
     var pipelineCache: Long = 0
+    private var ownsPipelineCache: Boolean = false
 
     /**
      * Holds the live `VkPipeline` in element 0, its only element. A pipeline swap replaces that
@@ -225,7 +226,14 @@ class RenderPipeline(
                 uniformSlots?.let { DescriptorSetLayoutHandle(it.descriptorSetLayout) } ?: descriptorSetLayout,
                 extraDescriptorSetLayouts,
             )
-            pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            val sharedCache = graphicsDevice.sharedPipelineCache
+            if (sharedCache != 0L) {
+                pipelineCache = sharedCache
+                ownsPipelineCache = false
+            } else {
+                pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+                ownsPipelineCache = true
+            }
             graphicsPipeline = longArrayOf(buildPipeline(shaders, vertexEntryPoint, fragmentEntryPoint))
         } catch (e: Throwable) {
             destroy()
@@ -320,7 +328,9 @@ class RenderPipeline(
             Vulkan.vkDestroyPipeline(device, pipeline)
         }
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
-        Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+        if (ownsPipelineCache && pipelineCache != 0L) {
+            Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+        }
         uniformSlots?.destroy()
     }
 }

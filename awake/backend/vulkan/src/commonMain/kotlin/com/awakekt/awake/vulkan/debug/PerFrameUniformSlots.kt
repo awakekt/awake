@@ -60,6 +60,22 @@ internal class PerFrameUniformSlots(
         val bufferMemory: Long,
     ) : VulkanMaterialBinding {
         override val descriptorSetHandle: Long get() = descriptorSet
+        internal var lastWritten: FloatArray? = null
+
+        internal fun matchesLastWritten(floats: FloatArray): Boolean {
+            val prev = lastWritten ?: return false
+            return prev.size == floats.size &&
+                floats.indices.all { prev[it].toRawBits() == floats[it].toRawBits() }
+        }
+
+        internal fun recordWritten(floats: FloatArray) {
+            val prev = lastWritten
+            if (prev == null || prev.size != floats.size) {
+                lastWritten = floats.copyOf()
+            } else {
+                floats.copyInto(prev)
+            }
+        }
     }
 
     private val device get() = graphicsDevice.device
@@ -155,7 +171,11 @@ internal class PerFrameUniformSlots(
     }
 
     fun write(frameIndex: Int, floats: FloatArray) {
-        VulkanBuffers.writeBufferMemoryFloats(device, this[frameIndex].bufferMemory, 0, floats)
+        val slot = this[frameIndex]
+        if (!slot.matchesLastWritten(floats)) {
+            slot.recordWritten(floats)
+            VulkanBuffers.writeBufferMemoryFloats(device, slot.bufferMemory, 0, floats)
+        }
     }
 
     /** These slots as a [UniformBlock] laid out by [layout]: one slot per frame index. */

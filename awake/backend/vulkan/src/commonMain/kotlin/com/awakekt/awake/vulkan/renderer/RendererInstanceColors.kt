@@ -5,7 +5,7 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
-import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
@@ -16,7 +16,7 @@ import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
  * tint per instance, the copies' tints and fades, white where it carries none. Null for any other draw.
  */
 internal fun VulkanRenderer.instanceColorsFor(
-    cmd: RenderDrawCommand,
+    cmd: GpuDrawRequest,
     kind: InstancedDrawKind,
     pipeline: RenderPipeline,
     frameIndex: Int,

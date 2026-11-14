@@ -23,6 +23,7 @@ import com.awakekt.awake.vulkan.models.info.VkDeviceQueueCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 import com.awakekt.awake.vulkan.models.info.debug.DebugUtilsFormattedCallback
 import com.awakekt.awake.vulkan.models.info.debug.VkDebugUtilsMessengerCreateInfoEXT
+import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineCacheCreateInfo
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
@@ -110,6 +111,10 @@ class GraphicsDevice {
 
     /** Whether the logical device loaded `VK_KHR_swapchain`, which headless devices do only if offered. */
     internal var swapchainExtensionEnabled = false
+        private set
+
+    /** Device-wide `VkPipelineCache` shared across all graphics pipelines created on [device]. */
+    internal var sharedPipelineCache: Long = 0L
         private set
 
     private var failOnValidationError = false
@@ -380,6 +385,7 @@ class GraphicsDevice {
         )
         device = Vulkan.vkCreateDevice(physicalDevice, deviceInfo)
         swapchainExtensionEnabled = SWAPCHAIN_EXTENSION in requiredDeviceExtensions
+        sharedPipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
 
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
@@ -405,6 +411,10 @@ class GraphicsDevice {
         if (device != 0L) frameUniformBuffers?.destroy()
         frameUniformBuffers = null
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
+        if (sharedPipelineCache != 0L && device != 0L) {
+            Vulkan.vkDestroyPipelineCache(device, sharedPipelineCache)
+            sharedPipelineCache = 0L
+        }
         if (device != 0L) Vulkan.vkDestroyDevice(device)
         if (debugUtilsMessenger != 0L) Vulkan.vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessenger)
         if (instance != 0L) Vulkan.vkDestroyInstance(instance)

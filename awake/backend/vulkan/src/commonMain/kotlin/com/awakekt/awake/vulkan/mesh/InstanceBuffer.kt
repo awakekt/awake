@@ -17,6 +17,7 @@ import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
+import com.awakekt.awake.vulkan.renderer.sameBitsAs
 
 /**
  * The per-instance model matrices behind one instanced draw call -- an instance-rate vertex
@@ -49,12 +50,19 @@ class InstanceBuffer(
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
         val binding = VulkanBufferBinding(buffer.handle)
+
+        /** What [buffer] holds, as [update] last wrote it, or null when it holds nothing yet. */
+        var resident: FloatArray? = null
     }
 
     private val frameResources = arrayOfNulls<FrameResources>(framesInFlight)
 
     /** Outgrown buffers. A frame still in flight may read one, so they are freed in [destroy]. */
     private val retired = ArrayList<FrameResources>()
+
+    /** Uploads [update] made, for tests: one a frame slot whose models changed, none for one whose held. */
+    internal var uploads = 0L
+        private set
 
     // Reused across frames so a steady instance count allocates nothing per frame; reallocated
     // only when the count actually changes (writeBufferMemoryFloats writes the whole array, so
@@ -82,7 +90,12 @@ class InstanceBuffer(
      */
     fun update(frameIndex: Int, models: List<Mat4>) {
         val floats = packer.pack(models, maxInstances) ?: return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex, models.size).memory.handle, 0, floats)
+        val resources = resourcesFor(frameIndex, models.size)
+        // Copies of a static prop hold still frame after frame: the slot's buffer already has them (#1452).
+        if (resources.resident?.sameBitsAs(floats) == true) return
+        VulkanBuffers.writeBufferMemoryFloats(device, resources.memory.handle, 0, floats)
+        uploads += 1
+        resources.resident = resources.resident?.takeIf { it.size == floats.size }?.let { floats.copyInto(it) } ?: floats.copyOf()
     }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 1. */

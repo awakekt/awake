@@ -48,6 +48,7 @@ import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.renderer.UiUploadStats
@@ -215,9 +216,22 @@ class Renderer internal constructor(
             if (extent.height > 0) extent.width.toFloat() / extent.height.toFloat() else 16f / 9f
         }
 
-    override val surfaceWidth: Int get() = swapchainManager.extent.width
+    override val outputWidth: Int get() = swapchainManager.extent.width
 
-    override val surfaceHeight: Int get() = swapchainManager.extent.height
+    override val outputHeight: Int get() = swapchainManager.extent.height
+
+    override val surfaceWidth: Int get() = RenderScale.sceneExtent(outputWidth, renderScale)
+
+    override val surfaceHeight: Int get() = RenderScale.sceneExtent(outputHeight, renderScale)
+
+    override var renderScale: Float = RenderScale.FULL
+        set(value) {
+            field = RenderScale.coerce(value)
+        }
+
+    internal val sceneScale = SceneScaleTarget { width, height ->
+        performCreateRenderTarget(width, height) as OffscreenRenderTarget
+    }
 
     /** This backend's half of the shared draw-recording port -- retargeted at whichever command
      * buffer is being recorded (see [VulkanCommandRecorder.commandBuffer]) rather than rebuilt,
@@ -525,8 +539,19 @@ class Renderer internal constructor(
         recordPassFeatures(renderFeatures, slot, context)
 
     private val textureUploads = com.awakekt.awake.vulkan.texture.TextureUploads(graphicsDevice)
+    internal val dirtyUniformBlocks = LinkedHashSet<com.awakekt.awake.vulkan.material.SlotBlock>()
+
+    internal fun flushStagedUniformBlocks() {
+        if (dirtyUniformBlocks.isEmpty()) return
+        for (block in dirtyUniformBlocks) {
+            block.flush(device)
+        }
+        dirtyUniformBlocks.clear()
+    }
 
     internal fun prepareResources(frameIndex: Int, commandBuffer: Long) {
+        flushStagedUniformBlocks()
+        imagePassExecutor.beginFrame(frameIndex)
         textureUploads.beginFrame(frameIndex, commandBuffer)
         com.awakekt.awake.render.passes.prepareFrameResources(renderFeatures, frameIndex, textureUploads)
         textureUploads.endFrame()
@@ -615,6 +640,8 @@ class Renderer internal constructor(
         // submitted offscreen work leaves those frame slots in flight during direct teardown.
         waitIdle()
         awaitSubmittedOffscreenCommands()
+        dirtyUniformBlocks.clear()
+        sceneScale.release()
         textureUploads.destroy()
         uiRunCache.clear()
         // "Whoever holds the list destroys it": these were constructor-injected, but this class

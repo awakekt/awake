@@ -71,8 +71,8 @@ interface Renderer : GpuDevice {
      * target, no extra pass. Out-of-range values are clamped by [RenderScale.coerce]; a new value
      * takes effect on the next [draw].
      *
-     * Implemented by the WebGPU backend. On a backend that does not, the getter stays 1 and setting
-     * it does nothing.
+     * Implemented by the WebGPU and Vulkan backends. On a backend that does not, the getter stays 1
+     * and setting it does nothing.
      */
     var renderScale: Float
         get() = 1f

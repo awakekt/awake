@@ -12,7 +12,6 @@ import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.toGpuResolvedDraw
-import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
@@ -30,19 +29,13 @@ import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 internal class VulkanDrawPreparer(
     private val renderer: Renderer,
 ) : GpuDrawPreparer {
-    /** Uniform slots are allocated per material across the complete frame batch. Resolving one
-     * command at a time must retain that allocation map; resetting it for every command makes all
-     * draws sharing a material overwrite slot zero, so the presented frame shows only the last
-     * transform. The compiler starts each batch at source index zero, which is the frame boundary
-     * for this resolver seam. */
-    private val materialUsage = mutableMapOf<Material, Int>()
+    /** Each draw's uniform slot in its material and each instanced draw's instance buffers, by what
+     * the draw is: a draw culled earlier in the list leaves every later one where it was. */
+    private val materialSlots = StableMaterialSlots()
+    private val instancedSlots = StableDrawSlots()
 
     /** Instanced casters' shared depth sets, for this batch. */
     private val sharedDepth = SharedDepthBindings()
-
-    /** Instanced draws so far this batch: each gets the next instance buffer, so the pool grows
-     * with how many instanced draws a frame has rather than with where they sit in it. */
-    private var instancedRuns = 0
 
     /** Whether this batch's wireframe-overlay edges have their frame block written yet. */
     private var edgeFrameWritten = false
@@ -71,18 +64,13 @@ internal class VulkanDrawPreparer(
     ): GpuResolvedDraw? {
         if (sourceIndex == 0) startBatch(context)
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
-        if (edgePipeline != null && !edgeFrameWritten) {
-            // The batch's edges are a pass of their own: their view-projection and debug code.
-            renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades(), edges = true)
-            edgeFrameWritten = true
-        }
+        if (edgePipeline != null) writeEdgeFrame(context)
         val cascades = context.cascades()
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
             frameIndex = renderer.swapchainManager.currentFrame,
-            instancedIndex = if (request.instanceModels != null) instancedRuns++ else sourceIndex,
+            instancedIndex = if (request.instanceModels != null) instancedSlots.slotFor(request.mesh, request.material) else sourceIndex,
             isTransparent = request.transparent,
-            materialUsage = materialUsage,
             viewProjection = context.viewProjection,
             cameraPosition = context.cameraEye,
             cameraForward = context.cameraForward,
@@ -93,6 +81,12 @@ internal class VulkanDrawPreparer(
             debugView = context.environment.debugView,
             exposure = context.environment.exposure,
             edgePipeline = edgePipeline,
+            explicitUniformSlotIndex = materialSlots.slotFor(
+                material = request.material,
+                mesh = request.mesh,
+                instanced = request.instanceModels != null,
+                edges = edgePipeline != null,
+            ),
         ) ?: return null
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
         if (edgePipeline != null) return prepared.toGpuResolvedDraw()
@@ -121,11 +115,18 @@ internal class VulkanDrawPreparer(
         )
     }
 
+    /** The batch's edges are a pass of their own: their view-projection and debug code, written once. */
+    private fun writeEdgeFrame(context: GpuDrawPreparationContext) {
+        if (edgeFrameWritten) return
+        renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades(), edges = true)
+        edgeFrameWritten = true
+    }
+
     /** The frame boundary: resets this batch's allocations and makes the frame slot safe to write. */
     private fun startBatch(context: GpuDrawPreparationContext) {
-        materialUsage.clear()
+        materialSlots.begin()
+        instancedSlots.begin()
         sharedDepth.clear()
-        instancedRuns = 0
         edgeFrameWritten = false
         // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
         // phase usually waited for it already, but a frame with no UI never did, and preparing

@@ -75,6 +75,7 @@ class LineRenderPipeline(
 
     private var pipelineLayout: Long = 0
     private var pipelineCache: Long = 0
+    private var ownsPipelineCache: Boolean = false
     private var graphicsPipeline: LongArray = longArrayOf()
     private lateinit var uniformSlots: PerFrameUniformSlots
     private val descriptorSetLayout get() = uniformSlots.descriptorSetLayout
@@ -241,7 +242,14 @@ class LineRenderPipeline(
                 basePipelineIndex = -1,
             ),
         )
-        pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+        val sharedCache = graphicsDevice.sharedPipelineCache
+        if (sharedCache != 0L) {
+            pipelineCache = sharedCache
+            ownsPipelineCache = false
+        } else {
+            pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            ownsPipelineCache = true
+        }
         graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
 
         Vulkan.vkDestroyShaderModule(device, fragShaderModule)
@@ -278,7 +286,9 @@ class LineRenderPipeline(
     fun destroy() {
         graphicsPipeline.forEach { Vulkan.vkDestroyPipeline(device, it) }
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
-        Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+        if (ownsPipelineCache && pipelineCache != 0L) {
+            Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+        }
         if (::uniformSlots.isInitialized) uniformSlots.destroy()
     }
 }

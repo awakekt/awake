@@ -153,6 +153,7 @@ class UiRenderPipeline(
     private var screenSizeBufferMemory: Long = 0
     private var pipelineLayout: Long = 0
     private var pipelineCache: Long = 0
+    private var ownsPipelineCache: Boolean = false
     private var graphicsPipeline: LongArray = longArrayOf()
 
     private var screenWidth = 0f
@@ -765,7 +766,14 @@ class UiRenderPipeline(
             pPushConstantRanges = arrayOf(),
         )
         pipelineLayout = Vulkan.vkCreatePipelineLayout(device, pipelineLayoutInfo)
-        pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+        val sharedCache = graphicsDevice.sharedPipelineCache
+        if (sharedCache != 0L) {
+            pipelineCache = sharedCache
+            ownsPipelineCache = false
+        } else {
+            pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            ownsPipelineCache = true
+        }
 
         val pipelineInfo = arrayOf(
             VkGraphicsPipelineCreateInfo(
@@ -1021,7 +1029,9 @@ class UiRenderPipeline(
             pipelineLayout = 0
         }
         if (pipelineCache != 0L) {
-            Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+            if (ownsPipelineCache) {
+                Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+            }
             pipelineCache = 0
         }
         if (ownsRenderPass && renderPass != 0L) {

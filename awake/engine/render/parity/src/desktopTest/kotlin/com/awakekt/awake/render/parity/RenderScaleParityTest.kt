@@ -29,10 +29,10 @@ import kotlin.test.assertTrue
  * stripes, drawn through `Renderer.draw` and read back from the surface.
  *
  * At scale 1 the frame is the unscaled one byte for byte on both backends, also after a frame at 0.5.
- * At 0.5 on WebGPU the scene renders into a 64-square target that a bilinear upscale copies to the
+ * At 0.5 on both backends the scene renders into a 64-square target that a bilinear upscale copies to the
  * 128-square surface, and the UI draws over it at full resolution: every stripe pixel is the scale-1
  * pixel, while the scene matches within [SCENE_TOLERANCE] away from its edges and visibly softens on
- * them. Vulkan does not implement the scale yet (#1181): setting it leaves 1 and the frame as it was.
+ * them.
  *
  * Measured on lavapipe (wgpu-native over Mesa): at 0.5, 0 of the 384 stripe pixels differ from
  * scale 1, the worst scene pixel away from edges is 1/255 off, and 530 edge pixels change.
@@ -53,33 +53,33 @@ class RenderScaleParityTest {
      */
     @Test
     fun halfScaleUpscalesTheSceneUnderAFullResolutionUiOnWebGpu() = withWebGpu { frames ->
+        verifyHalfScale(HeadlessUiBackend.WebGpu, frames)
+    }
+
+    @Test
+    fun halfScaleUpscalesTheSceneUnderAFullResolutionUiOnVulkan() = withVulkan { frames ->
+        verifyHalfScale(HeadlessUiBackend.Vulkan, frames)
+    }
+
+    private fun verifyHalfScale(backend: HeadlessUiBackend, frames: Frames) {
         val full = frames.frame(1f)
         val half = frames.frame(HALF)
-        assertEquals(SIZE / 2, frames.sceneWidth, "the scene target is half the surface")
-        assertEquals(SIZE, frames.outputWidth, "the surface keeps its size")
-        assertEquals(SIZE * SIZE * 4, half.size, "the UI draws into, and the frame presents, the full-resolution surface")
-        write("render-scale-full", full)
-        write("render-scale-half", half)
+        assertEquals(SIZE / 2, frames.sceneWidth, "$backend: the scene target is half the surface")
+        assertEquals(SIZE, frames.outputWidth, "$backend: the surface keeps its size")
+        assertEquals(SIZE * SIZE * 4, half.size, "$backend: the UI draws into, and the frame presents, the full-resolution surface")
+        write("render-scale-full-$backend", full)
+        write("render-scale-half-$backend", half)
 
         val uiDiffering = stripePixels().count { (x, y) -> !full.sameAt(half, x, y) }
         val edges = edgeMask(full)
         val awayWorst = (0 until SIZE * SIZE).filter { !edges[it] && !inStripes(it % SIZE, it / SIZE) }
             .maxOf { full.channelDelta(half, it) }
         val edgeChanged = (0 until SIZE * SIZE).count { edges[it] && full.channelDelta(half, it) > 0 }
-        println("render scale 0.5: ui differing=$uiDiffering, worst away from edges=$awayWorst/255, edge pixels changed=$edgeChanged")
+        println("$backend render scale 0.5: ui differing=$uiDiffering, worst away from edges=$awayWorst/255, edge pixels changed=$edgeChanged")
 
-        assertEquals(0, uiDiffering, "the UI is drawn at full resolution over the upscaled scene")
-        assertTrue(awayWorst <= SCENE_TOLERANCE, "the scene away from edges is within $SCENE_TOLERANCE/255: $awayWorst")
-        assertTrue(edgeChanged >= MIN_EDGE_CHANGED, "the scene was rendered at half resolution: $edgeChanged edge pixels changed")
-    }
-
-    @Test
-    fun vulkanIgnoresTheScaleUntilItImplementsIt() = withVulkan { frames ->
-        val full = frames.frame(1f)
-        val half = frames.frame(HALF)
-        assertEquals(1f, frames.renderer.renderScale, "Vulkan keeps its scene at the surface's size")
-        assertEquals(SIZE, frames.sceneWidth)
-        assertContentEquals(full, half)
+        assertEquals(0, uiDiffering, "$backend: the UI is drawn at full resolution over the upscaled scene")
+        assertTrue(awayWorst <= SCENE_TOLERANCE, "$backend: the scene away from edges is within $SCENE_TOLERANCE/255: $awayWorst")
+        assertTrue(edgeChanged >= MIN_EDGE_CHANGED, "$backend: the scene was rendered at half resolution: $edgeChanged edge pixels changed")
     }
 
     private fun verifyScaleOne(backend: HeadlessUiBackend, frames: Frames) {

@@ -140,6 +140,7 @@ internal class VulkanImagePassExecutor(
     private val transientTargets = LinkedHashMap<String, PooledTransientTarget>()
     private val transientClearRenderPasses = HashMap<VkFormat, Long>()
     private val transientLoadRenderPasses = HashMap<VkFormat, Long>()
+    private val swapchainClearRenderPasses = HashMap<VkFormat, Long>()
     private val swapchainContinueRenderPasses = HashMap<VkFormat, Long>()
     private val offscreenContinueRenderPasses = HashMap<VkFormat, Long>()
     private val offscreenClearRenderPasses = HashMap<VkFormat, Long>()
@@ -176,6 +177,23 @@ internal class VulkanImagePassExecutor(
         stepSlotsUsedByFrame[safeFrame].clear()
         meshStepsUsedByFrame[safeFrame] = 0
     }
+
+    /**
+     * Render pass compatible with the 1-attachment swapchain UI pass that clears color contents
+     * (`loadOp = CLEAR`, `initialLayout = UNDEFINED`) and leaves the image in
+     * `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL`.
+     */
+    fun ensureSwapchainClearRenderPass(colorFormat: VkFormat): Long =
+        swapchainClearRenderPasses.getOrPut(colorFormat) {
+            createSingleColorRenderPass(
+                colorFormat = colorFormat,
+                loadOp = VkAttachmentLoadOp.CLEAR,
+                initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+                finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
+                srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
+            )
+        }
 
     /**
      * Render pass compatible with the 1-attachment swapchain UI pass that preserves color contents
@@ -426,6 +444,8 @@ internal class VulkanImagePassExecutor(
         transientClearRenderPasses.clear()
         transientLoadRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
         transientLoadRenderPasses.clear()
+        swapchainClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
+        swapchainClearRenderPasses.clear()
         swapchainContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
         swapchainContinueRenderPasses.clear()
         offscreenContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
@@ -834,7 +854,13 @@ internal class VulkanImagePassExecutor(
                     pPushConstantRanges = emptyArray(),
                 ),
             )
-            val pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            val sharedCache = graphicsDevice.sharedPipelineCache
+            val ownsPipelineCache = sharedCache == 0L
+            val pipelineCache = if (ownsPipelineCache) {
+                Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            } else {
+                sharedCache
+            }
             val uniformByteSize = ((spec.uniformLayout?.total ?: 0) * Float.SIZE_BYTES).toLong()
             val uniformBinding = spec.groupBindings.entries
                 .firstOrNull { it.kind == ResourceKind.UniformBuffer }
@@ -845,6 +871,7 @@ internal class VulkanImagePassExecutor(
                 descriptorSetLayout = descriptorSetLayout,
                 pipelineLayout = pipelineLayout,
                 pipelineCache = pipelineCache,
+                ownsPipelineCache = ownsPipelineCache,
                 uniformByteSize = uniformByteSize,
                 uniformBinding = uniformBinding,
             )
@@ -1111,13 +1138,16 @@ internal class VulkanImagePassExecutor(
         val descriptorSetLayout: Long,
         val pipelineLayout: Long,
         val pipelineCache: Long,
+        val ownsPipelineCache: Boolean,
         val uniformByteSize: Long,
         val uniformBinding: Int?,
     ) {
         fun destroy(device: Long) {
             Vulkan.vkDestroyShaderModule(device, shaderModule)
             Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
-            Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+            if (ownsPipelineCache && pipelineCache != 0L) {
+                Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+            }
             VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout)
         }
     }
