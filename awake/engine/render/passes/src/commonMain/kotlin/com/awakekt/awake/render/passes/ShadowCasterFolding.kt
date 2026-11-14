@@ -40,7 +40,7 @@ internal class ShadowCasterFolding {
         casters = if (enabled) batcher.batch(requests, canInstance) else emptyList()
         if (!enabled) return
         batcher.forEachFolded { folded[it] = true }
-        for (index in casters.indices) {
+        for (index in 0 until casters.size) {
             casters[index].shadowsOnly = true
             casters[index].castsShadows = true
         }
@@ -48,7 +48,7 @@ internal class ShadowCasterFolding {
 
     /** Prepares the last [fold]'s casters from source index [firstIndex] on, handing each to [add] with its bounds. */
     inline fun prepare(preparer: GpuDrawPreparer, firstIndex: Int, context: GpuDrawPreparationContext, add: (GpuResolvedDraw, Aabb?) -> Unit) {
-        for (index in casters.indices) {
+        for (index in 0 until casters.size) {
             val caster = casters[index]
             preparer.prepare(caster, firstIndex + index, context)?.let { add(it, caster.worldBounds) }
         }

@@ -17,6 +17,7 @@ package com.awakekt.awake.render.passes
 class ScenePassScratch {
     internal val batcher = InstanceBatcher()
     internal val casters = ShadowCasterFolding()
+    internal val draws = ScenePassDraws()
     internal val signature = PassInputSignature()
     internal var lastInput: com.awakekt.awake.render.command.GpuPassInput? = null
     internal var lastStats: SceneDrawStats? = null
