@@ -20,6 +20,7 @@ import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
+import com.awakekt.awake.scene.rendering.debug.TransparentDrawSources
 import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
 
 /**
@@ -77,16 +78,21 @@ internal class SceneRenderPlanner3D(
         targetWidth: Int = 0,
         targetHeight: Int = 0,
         drawStats: SceneDrawStats? = null,
+        transparentSources: TransparentDrawSources? = null,
     ): PlannedFrame {
         drawCalls.clear()
+        transparentSources?.reset()
         // Features first, though their draws go after the opaque geometry: the light they settle
         // decides which meshes the camera culls are still drawn into the shadow maps.
-        val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
+        val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect, transparentSources)
         shadowCasters.set(contributions.light, contributions.environment)
         val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds, aspect, shadowCasters)
         drawCalls.append(geometryFrame.beforeParticles)
         drawCalls.append(contributions.particleDraws)
-        drawCalls.append(geometryFeature.finish(world, geometryFrame, camera))
+        val afterParticles = geometryFeature.finish(world, geometryFrame, camera)
+        drawCalls.append(afterParticles)
+        transparentSources?.addMeshRenderers(geometryFrame.beforeParticles)
+        transparentSources?.addMeshRenderers(afterParticles)
         drawCalls.append(contributions.authoredDraws)
 
         val postProcessing = cameraEntity?.let { world.get<com.awakekt.awake.scene.rendering.postprocessing.PostProcessing>(it) }
@@ -135,6 +141,9 @@ internal class SceneRenderPlanner3D(
             reused = passScratch.reusedLastFrame,
         )
     }
+
+    /** This planner's feature names, as [TransparentDrawSources] lists them. */
+    val featureNames: List<String> get() = featureCollector.featureNames
 
     internal data class PlannedFrame(
         val passInput: com.awakekt.awake.render.command.GpuPassInput,

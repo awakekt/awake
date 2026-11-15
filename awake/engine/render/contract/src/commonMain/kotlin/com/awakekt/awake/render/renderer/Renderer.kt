@@ -101,6 +101,13 @@ interface Renderer : GpuDevice {
         get() = null
 
     /**
+     * GPU buffers the draw path created during the last submitted frame, by site, or null for a
+     * renderer that does not count them. A warm frame reads zero; see [BufferCreationStats].
+     */
+    val frameBufferCreations: BufferCreationStats?
+        get() = null
+
+    /**
      * [frameStats] split by pass: scene opaque, scene transparent, each shadow pass and UI. Null
      * for a renderer that does not count; see [RenderPassStats].
      */

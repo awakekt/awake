@@ -164,6 +164,7 @@ internal class GpuBufferPoolManager(
                 pipeline.uniformByteSize(0, 0),
                 (MaterialUniformLayouts.LitShadow.total * Float.SIZE_BYTES).toLong(),
             )
+            creations.uniformSlots += 1
             val buffer = device.createBuffer(
                 BufferDescriptor(
                     size = byteSize.toULong(),

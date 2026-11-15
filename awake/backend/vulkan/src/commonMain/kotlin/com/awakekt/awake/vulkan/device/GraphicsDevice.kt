@@ -48,6 +48,12 @@ class GraphicsDevice {
     /** Per-draw uniform blocks written to material slots so far. For tests and probes. */
     internal var drawBlockWrites = 0L
 
+    /** Instanced draws' model buffers created so far: one per frame slot, and one each time a slot's grows. */
+    internal var instanceBuffersCreated = 0L
+
+    /** Per-draw uniform buffers created so far, one per material uniform slot. */
+    internal var uniformBuffersCreated = 0L
+
     /** Content-feature uniform blocks written to per-frame slots so far. For tests and probes. */
     internal var contentUniformWrites = 0L
 

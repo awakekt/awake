@@ -17,6 +17,7 @@ package com.awakekt.awake.core.diagnostics
  * @property uiUploads What the frame wrote into UI meshes, or `null` when the renderer does not count it.
  * @property passes Where the frame's draws went, by part of the frame, or `null` when uncounted.
  * @property renderPasses Render passes the frame began, offscreen passes included, or `null` when uncounted.
+ * @property bufferCreations GPU buffers the frame's draw path created, by site, or `null` when uncounted.
  */
 data class FrameBreakdownSample(
     val phases: FramePhaseSample = FramePhaseSample(),
@@ -24,13 +25,14 @@ data class FrameBreakdownSample(
     val uiUploads: FrameUiUploadSample? = null,
     val passes: FramePassSample? = null,
     val renderPasses: Int? = null,
+    val bufferCreations: FrameBufferCreationSample? = null,
 ) {
     /** The constructor as released before [uiUploads], kept so compiled callers still link. */
     @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
     constructor(
         phases: FramePhaseSample = FramePhaseSample(),
         render: FrameRenderSample? = null,
-    ) : this(phases, render, null, null, null)
+    ) : this(phases, render, null, null, null, null)
 
     /** The constructor as released before [passes] and [renderPasses], kept so compiled callers still link. */
     @Deprecated("Use the constructor with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
@@ -38,14 +40,14 @@ data class FrameBreakdownSample(
         phases: FramePhaseSample = FramePhaseSample(),
         render: FrameRenderSample? = null,
         uiUploads: FrameUiUploadSample? = null,
-    ) : this(phases, render, uiUploads, null, null)
+    ) : this(phases, render, uiUploads, null, null, null)
 
     /** [copy] as released before [uiUploads]. */
     @Deprecated("Use copy with uiUploads.", level = DeprecationLevel.HIDDEN)
     fun copy(
         phases: FramePhaseSample = this.phases,
         render: FrameRenderSample? = this.render,
-    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses)
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations)
 
     /** [copy] as released before [passes] and [renderPasses]. */
     @Deprecated("Use copy with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
@@ -53,7 +55,7 @@ data class FrameBreakdownSample(
         phases: FramePhaseSample = this.phases,
         render: FrameRenderSample? = this.render,
         uiUploads: FrameUiUploadSample? = this.uiUploads,
-    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses)
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations)
 }
 
 /**
@@ -126,4 +128,19 @@ data class FramePassSample(
     val shadowPasses: Int,
     val uiDraws: Int,
     val otherDraws: Int,
+)
+
+/**
+ * GPU buffers a single frame's draw path created, by the site that created them. The draw path pools
+ * its buffers, so a warm frame reads zero; a reading that stays above zero names the pool that is not
+ * holding.
+ *
+ * @property argumentBuffers Indirect-argument buffers of retained render bundles.
+ * @property instanceBuffers Per-instance model buffers of instanced draws.
+ * @property uniformBuffers Per-draw uniform buffers.
+ */
+data class FrameBufferCreationSample(
+    val argumentBuffers: Int,
+    val instanceBuffers: Int,
+    val uniformBuffers: Int,
 )

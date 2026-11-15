@@ -56,6 +56,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.sprites.SpriteRenderBatch
+import com.awakekt.awake.render.renderer.BufferCreationStats
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderPassStats
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -79,6 +80,7 @@ import com.awakekt.awake.scene.rendering.debug.CullingDebugSource
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
+import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
@@ -344,6 +346,10 @@ class SceneAppLifecycleRuntime internal constructor(
     internal val rendererRenderPasses: Int?
         get() = if (::renderer.isInitialized) renderer.frameRenderPasses.takeIf { it > 0 } else null
 
+    /** GPU buffers the renderer's last frame created, or null before [ready] or when it does not count. */
+    internal val rendererBufferCreations: BufferCreationStats?
+        get() = if (::renderer.isInitialized) renderer.frameBufferCreations else null
+
     private fun recordFrameTime(deltaSeconds: Float) {
         recentFrames.update(deltaSeconds)
         frameSpread.update(deltaSeconds)
@@ -372,6 +378,14 @@ class SceneAppLifecycleRuntime internal constructor(
             field = value
             RenderDiagnostics.drawStatsEnabled = value
         }
+
+    /**
+     * Told around each scheduled system, the app's update block and the UI host's phases, for a
+     * profile that reads the heap or the clock at those marks; see [SceneSystemObserver]. Null, the
+     * default, calls nothing and allocates nothing. Kept across scene changes.
+     */
+    var systemObserver: SceneSystemObserver? = null
+
     private var uiBuildMs = 0f
     private var uiWaitMs = 0f
     private var uiStageMs = 0f
@@ -389,6 +403,19 @@ class SceneAppLifecycleRuntime internal constructor(
 
     private inline fun <T> timePhase(record: (Float) -> Unit, block: () -> T): T {
         if (!perfStatsEnabled) return block()
+        return timed(record, block)
+    }
+
+    /** [timePhase], between [systemObserver]'s marks for [name] when one is installed. */
+    private inline fun <T> timePhase(name: String, record: (Float) -> Unit, block: () -> T): T {
+        val observer = systemObserver ?: return timePhase(record, block)
+        observer.before(name)
+        val result = timePhase(record, block)
+        observer.after(name)
+        return result
+    }
+
+    private inline fun <T> timed(record: (Float) -> Unit, block: () -> T): T {
         val start = TimeSource.Monotonic.markNow()
         try {
             return block()
@@ -455,6 +482,7 @@ class SceneAppLifecycleRuntime internal constructor(
         // 1. Simulation & infrastructure pump. Rendering systems stage the scene and any
         // backend-neutral 2D overlay before the runtime composites the frame below.
         session.schedule.timed = perfStatsEnabled
+        session.schedule.observer = systemObserver
         timePhase({ simRenderMs = it }) {
             session.advance(delta) { step ->
                 runUpdateBlock(step, snapshot)
@@ -474,14 +502,14 @@ class SceneAppLifecycleRuntime internal constructor(
                 platformSafeArea = frame.safeArea.toCanvasInsets()
             }
             platformDpi = frame.dpi
-            timePhase({ uiBuildMs = it }) {
+            timePhase(SceneSystemObserver.UI_BUILD, { uiBuildMs = it }) {
                 buildUiFrameGuarded(snapshot, delta, viewportWidth, viewportHeight)
             }.also { builtFrame ->
                 // Timed on its own, before staging. `drawUi` waits on this fence anyway; taking it
                 // here first costs nothing and stops a GPU-bound frame from reading as an
                 // expensive UI. See Renderer.awaitFrameResources.
-                timePhase({ uiWaitMs = it }) { renderer.awaitFrameResources() }
-                timePhase({ uiStageMs = it }) {
+                timePhase(SceneSystemObserver.UI_WAIT, { uiWaitMs = it }) { renderer.awaitFrameResources() }
+                timePhase(SceneSystemObserver.UI_STAGE, { uiStageMs = it }) {
                     // Before the UI that samples them, so each View shows this frame's picture.
                     viewStore?.render()
                     renderer.drawUi(
@@ -526,8 +554,8 @@ class SceneAppLifecycleRuntime internal constructor(
         }
 
         if (uiFrame == null && stagedUiPrimitives.isNotEmpty()) {
-            timePhase({ uiWaitMs = it }) { renderer.awaitFrameResources() }
-            timePhase({ uiStageMs = it }) {
+            timePhase(SceneSystemObserver.UI_WAIT, { uiWaitMs = it }) { renderer.awaitFrameResources() }
+            timePhase(SceneSystemObserver.UI_STAGE, { uiStageMs = it }) {
                 renderer.drawUi(stagedUiPrimitives.toList(), font)
             }
             uiPrimitives = stagedUiPrimitives.toList()

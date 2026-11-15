@@ -1,0 +1,1 @@
+- A `MeshRenderer` added without `MeshBounds` (by `MeshCellStreamer`, the authoring DSL or a game's own code) is now culled by its mesh's bounds, in every view, instead of being drawn by every view: a portrait looking away from 40 such cells drew all 40, and now draws none (#1621).

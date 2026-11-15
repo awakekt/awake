@@ -6,7 +6,8 @@
 package com.awakekt.awake.webgpu.renderer
 
 /**
- * GPU buffers the per-frame draw path created, by site, over a renderer's life: for tests and probes.
+ * GPU buffers the per-frame draw path created, by site, over a renderer's life. Each frame's growth is
+ * published as the renderer's `frameBufferCreations`.
  *
  * Every buffer is a new wgpu4k `Buffer`, whose web wrapper builds a logger by capturing and parsing
  * a JS stack trace, so a warm frame should create none at any site (#1555). Retained bundles'
@@ -16,6 +17,6 @@ internal class GpuBufferCreations {
     /** Instanced draws' model buffers: one per pooled `InstanceBuffer`, and one each time it grows. */
     var instanceBuffers = 0L
 
-    /** Per-draw uniform buffers, one per new `uniformSlotForDraw` slot. */
+    /** Per-draw uniform buffers: one per new `uniformSlotForDraw` slot, and one per skinned instanced pipeline. */
     var uniformSlots = 0L
 }

@@ -752,6 +752,7 @@ public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSys
 
 public final class com/awakekt/awake/scene/rendering/debug/RenderDiagnostics {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/debug/RenderDiagnostics;
+	public final fun getCaptureTransparentSources ()Ljava/util/List;
 	public final fun getDrawStats ()Lcom/awakekt/awake/render/passes/SceneDrawStats;
 	public final fun getDrawStatsEnabled ()Z
 	public final fun getFrustumCulled ()I
@@ -759,8 +760,19 @@ public final class com/awakekt/awake/scene/rendering/debug/RenderDiagnostics {
 	public final fun getSubmittedDrawCalls ()I
 	public final fun getSubmittedInstances ()I
 	public final fun getSurfaceAspect ()F
+	public final fun getTransparentSources ()Lcom/awakekt/awake/scene/rendering/debug/TransparentDrawSources;
 	public final fun getUnresolvedDrawCalls ()I
 	public final fun setDrawStatsEnabled (Z)V
+}
+
+public final class com/awakekt/awake/scene/rendering/debug/TransparentDrawSources {
+	public final fun featureDraws (I)I
+	public final fun featureDraws (Ljava/lang/String;)I
+	public final fun getFeatureNames ()Ljava/util/List;
+	public final fun getMeshRenderers ()I
+	public final fun getParticles ()I
+	public final fun getTotal ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {

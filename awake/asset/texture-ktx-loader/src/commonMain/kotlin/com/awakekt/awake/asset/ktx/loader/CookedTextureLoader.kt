@@ -12,6 +12,7 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.asGpuImageSource
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -45,7 +46,7 @@ class CookedTextureLoader(
     // The cooked file at [path], or null when it isn't there or doesn't load here. A Basis Universal one needs the transcoder.
     private suspend fun loadFile(path: String, isBasis: Boolean, formats: Set<CompressedTextureFormat>): GpuImageSource? {
         val codec = if (isBasis) transcoderOrNull() else null
-        val file = if (isBasis && codec == null) null else files.read(AssetPath(path)).getOrNull()
+        val file = if (isBasis && codec == null) null else readCooked(path)
         return file?.let { bytes ->
             when (val upload = Ktx2TextureLoader.decode(bytes, formats, codec)) {
                 is Ktx2Upload.Compressed -> Ktx2ImageSource(upload.image) { rgba(bytes, codec) }
@@ -77,8 +78,23 @@ class CookedTextureLoader(
     }
 
     private suspend fun cookedBytes(source: String): Result<ByteArray>? {
-        val basis = cookedPath(source) ?: return null
-        return transcoderOrNull()?.let { files.read(AssetPath(basis)).takeIf { it.isSuccess } }
+        val basis = cookedPath(source)?.takeIf { transcoderOrNull() != null } ?: return null
+        return readCooked(basis)?.let { Result.success(it) }
+    }
+
+    /**
+     * Cooked paths a read found missing. A project cooks what it ships, so a cooked file that is not
+     * there now will not be there for this loader: without this every read of an image that was not
+     * cooked asked for its `.ktx2` first, a failed fetch each time on the web (#1621). Copied on write,
+     * so a read on another thread sees a whole set; two reads racing may both ask once.
+     */
+    @Volatile
+    private var missing: Set<String> = emptySet()
+
+    /** The cooked file at [path], or null when it is missing, asking the files only the first time. */
+    private suspend fun readCooked(path: String): ByteArray? {
+        if (path in missing) return null
+        return files.read(AssetPath(path)).getOrNull() ?: null.also { missing = missing + path }
     }
 
     // Asked once: a transcoder that can't load isn't tried again for every texture.

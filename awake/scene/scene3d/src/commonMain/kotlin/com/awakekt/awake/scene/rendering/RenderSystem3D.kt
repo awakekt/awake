@@ -145,15 +145,24 @@ class RenderSystem3D(
      */
     fun planCapture(world: World, camera: Camera, aspect: Float): GpuPassInput {
         require(camera.viewport == null) { "A virtual viewport capture requires pixel width and height." }
-        return planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null).passInput.also { forgetPlannedFrame() }
+        return planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null, transparentSources = captureSources())
+            .passInput.also { forgetPlannedFrame() }
     }
 
     /** Plans an offscreen view with physical-pixel dimensions, including virtual viewport scaling. */
     fun planCapture(world: World, camera: Camera, width: Int, height: Int): GpuPassInput {
         require(captureViewport.update(camera, width.toFloat(), height.toFloat())) { "Capture dimensions must be positive." }
-        return planner.plan(world, captureViewport.camera, elapsedTimeSeconds, captureViewport.aspect, captureViewport.viewport).passInput
-            .also { forgetPlannedFrame() }
+        return planner.plan(
+            world,
+            captureViewport.camera,
+            elapsedTimeSeconds,
+            captureViewport.aspect,
+            captureViewport.viewport,
+            transparentSources = captureSources(),
+        ).passInput.also { forgetPlannedFrame() }
     }
+
+    private fun captureSources() = RenderDiagnostics.transparentSourcesForCapture(planner.featureNames)
 
     // A capture's draws are prepared into the per-draw uniform slots a replayed frame's draws point
     // at, so the next frame plans afresh rather than drawing with the capture's camera.
@@ -238,6 +247,7 @@ class RenderSystem3D(
         aspect: Float,
     ): SceneRenderPlanner3D.PlannedFrame {
         val drawStats = RenderDiagnostics.drawStatsForFrame()
+        val transparentSources = RenderDiagnostics.transparentSourcesForMain(planner.featureNames)
         return if (camera.viewport == null) {
             planner.plan(
                 world = world,
@@ -249,6 +259,7 @@ class RenderSystem3D(
                 targetWidth = renderer.surfaceWidth,
                 targetHeight = renderer.surfaceHeight,
                 drawStats = drawStats,
+                transparentSources = transparentSources,
             )
         } else {
             planner.plan(
@@ -261,6 +272,7 @@ class RenderSystem3D(
                 targetWidth = renderer.surfaceWidth,
                 targetHeight = renderer.surfaceHeight,
                 drawStats = drawStats,
+                transparentSources = transparentSources,
             )
         }
     }
