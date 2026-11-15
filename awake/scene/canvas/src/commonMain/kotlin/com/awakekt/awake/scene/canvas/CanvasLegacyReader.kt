@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.document.SceneNodeView
 import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
@@ -94,10 +95,32 @@ fun SceneDocument.withCanvasComponents(): SceneDocument = copy(nodes = nodes.map
  * or `canvas_element`: what a tool written for the single component reads, such as an element's id
  * or kind. A node saved in the older form answers its own.
  */
-fun SceneNode.canvasElementView(): SceneCanvasElement? = components.firstNotNullOfOrNull { it as? SceneCanvasElement }
-    ?: components.firstNotNullOfOrNull { it as? SceneCanvasRect }?.let { rect ->
-        components.fold(rect.toLegacy()) { element, component -> element.with(component) }
+fun SceneNode.canvasElementView(): SceneCanvasElement? {
+    // By index, not an iterator: a HUD reads this every frame for every slot (#1621).
+    var element: SceneCanvasElement? = null
+    var rect: SceneCanvasRect? = null
+    for (index in 0 until components.size) {
+        when (val component = components[index]) {
+            is SceneCanvasElement -> if (element == null) element = component
+            is SceneCanvasRect -> if (rect == null) rect = component
+            else -> Unit
+        }
     }
+    return element ?: rect?.let { derived(CanvasElementView, foldView) }
+}
+
+/**
+ * The view a node in the component form folds from its rect and its other canvas components, a
+ * `copy()` of the element's 49 fields per component; kept on the node, so a HUD reading it every
+ * frame builds it once (#1621).
+ */
+private val CanvasElementView = SceneNodeView<SceneCanvasElement>()
+
+/** A node's view folded from its rect and its other canvas components; stored, so a read makes no closure. */
+private val foldView: (SceneNode) -> SceneCanvasElement = { node ->
+    val rect = node.components.first { it is SceneCanvasRect } as SceneCanvasRect
+    node.components.fold(rect.toLegacy()) { element, component -> element.with(component) }
+}
 
 private fun SceneCanvasRect.toLegacy() = SceneCanvasElement(
     kind = CanvasElementKind.Panel, anchor = anchor, offsetX = offsetX, offsetY = offsetY, width = width, height = height,

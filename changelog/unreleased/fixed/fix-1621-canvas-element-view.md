@@ -1,0 +1,1 @@
+- `SceneNode.canvasElementView()` builds a component-form node's view once and keeps it on the node, instead of folding a copy of the 49-field element per canvas component on every read: 10,000 reads of an unchanged node allocated 13 MB, and now nothing past the first, for any number of nodes (#1621).
