@@ -138,6 +138,14 @@ internal class GpuBufferPoolManager(
      * the shared shader metadata, so callers cannot accidentally create binding 0 for a
      * resource-free pipeline whose explicit layout is `[]`. */
 
+    /** Uniform slots pooled across every pipeline, each a buffer created once: for tests and probes. */
+    internal val uniformSlotCount: Int get() = uniformSlotPools.values.sumOf { it.size }
+
+    /** Calls [action] with the uniform buffer of slot [index] in each pipeline's pool that has one. */
+    fun forEachUniformBufferAt(index: Int, action: (GPUBuffer) -> Unit) {
+        for (slots in uniformSlotPools.values) if (index < slots.size) action(slots[index].buffer)
+    }
+
     /** Draw [index]'s slot in [pipeline]'s pool. Wireframe-overlay [edges]' slots bind the edges' frame block. */
     fun uniformSlotForDraw(pipeline: WebGpuPipelineHandle, index: Int, edges: Boolean = false): UniformSlot? {
         if (!pipeline.hasBindingGroup(0)) return null

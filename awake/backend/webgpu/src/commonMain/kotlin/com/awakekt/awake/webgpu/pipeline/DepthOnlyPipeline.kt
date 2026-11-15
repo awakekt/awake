@@ -141,6 +141,10 @@ class DepthOnlyPipeline(
     }
 
     private val materialBindGroups = mutableMapOf<GPUBuffer, WebGpuBindGroupHandle>()
+
+    /** Groups [materialBinding] built, one per uniform buffer a caster brought: for tests (#1621). */
+    internal var groupsCreated = 0L
+        private set
     private val paletteBindGroups = mutableMapOf<GPUBuffer, WebGpuBindGroupHandle>()
 
     /** Rebinds a prepared draw's uniform buffer against this depth pipeline's own explicit layout.
@@ -155,6 +159,7 @@ class DepthOnlyPipeline(
     internal fun materialBinding(buffer: GPUBuffer, wholeBlock: Boolean): MaterialBinding? {
         if (!handle.hasBindingGroup(0)) return null
         return materialBindGroups.getOrPut(buffer) {
+            groupsCreated += 1
             val frame = graphicsDevice.frameUniforms
             WebGpuBindGroupHandle(
                 device.createBindGroupReleasingLayout(

@@ -11,7 +11,7 @@ import kotlin.test.assertNotEquals
 
 /** [StableDrawSlots] gives a draw the same slot by what it is, and gives slots back by its eviction rule. */
 class StableDrawSlotsTest {
-    private val slots = StableDrawSlots()
+    private val slots = StableDrawSlots(retainBatches = 2)
     private val meshes = List(8) { Any() }
     private val material = Any()
 
@@ -60,5 +60,21 @@ class StableDrawSlotsTest {
         repeat(1_000) { frame -> batch(frame % 8, (frame + 3) % 8) }
         assertEquals(true, slots.inUse <= 4, "never more than two consecutive batches' draws, was ${slots.inUse}")
         assertNotEquals(0, slots.inUse)
+    }
+
+    @Test
+    fun aKeyAwayForFewerBatchesThanTheWindowComesBackToItsSlots() {
+        val window = StableDrawSlots(retainBatches = 8)
+        fun drawn(vararg keys: Int): List<Int> {
+            window.begin()
+            return keys.map { window.slotFor(meshes[it], material) }
+        }
+        val first = drawn(0, 1, 2)
+        // Two scenes a frame, each its own batch, and key 1 out of view for a few frames.
+        repeat(3) {
+            drawn(0, 2)
+            drawn(5, 6)
+        }
+        assertEquals(first, drawn(0, 1, 2), "every key back in the slots it had")
     }
 }

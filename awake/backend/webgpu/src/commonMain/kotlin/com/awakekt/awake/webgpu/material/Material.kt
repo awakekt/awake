@@ -84,7 +84,11 @@ class Material(
     /** Bind-group layouts belong to one concrete pipeline object; a material may be drawn
      * through several pipeline variants, so each variant needs its own compatible bind group. */
     private val bindGroups = HashMap<GPURenderPipeline, GPUBindGroup>()
-    private val drawBindGroups = HashMap<GPURenderPipeline, MutableMap<GPUBuffer, GPUBindGroup>>()
+    internal val drawBindGroups = HashMap<GPURenderPipeline, MutableMap<GPUBuffer, GPUBindGroup>>()
+
+    /** Per-draw groups this material created, over its life: a warm frame creates none (#1621). */
+    internal var drawGroupsCreated = 0L
+        private set
 
     /** Scoped to the UI-compositing case -- see this class's own doc comment. */
     fun createResourcesFromRenderTarget(textureView: GPUTextureView, sampler: GPUSampler) {
@@ -156,6 +160,7 @@ class Material(
         pipelineBindings: GroupBindings,
         edges: Boolean,
     ): GPUBindGroup = drawBindGroups.getOrPut(pipeline) { HashMap() }.getOrPut(uniformBuffer) {
+        drawGroupsCreated += 1
         device.createBindGroupReleasingLayout(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(0u),
@@ -267,3 +272,8 @@ internal fun materialPbrBindings(bindings: GroupBindings): List<Int> =
         .filter { it.kind == ResourceKind.SampledTexture && it.binding > 1 }
         .map { it.binding }
         .sorted()
+
+/** Closes the per-draw groups built for [buffer], whose slot a draw of this material gave back (#1621). */
+internal fun Material.dropDrawGroups(buffer: GPUBuffer) {
+    drawBindGroups.values.forEach { groups -> groups.remove(buffer)?.close() }
+}
