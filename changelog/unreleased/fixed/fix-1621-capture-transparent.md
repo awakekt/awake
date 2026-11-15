@@ -1,1 +1,0 @@
-- A view draws only the world texts in its frustum. Every label in the world was drawn again for each view, so a canvas portrait far above a town drew every name plate in the transparent pass; a label out of one view now keeps its quads for the next, rather than being freed and uploaded again. The world text suites now run in CI (#1621).
