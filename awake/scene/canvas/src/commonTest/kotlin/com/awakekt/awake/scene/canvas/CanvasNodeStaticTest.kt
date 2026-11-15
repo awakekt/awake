@@ -66,6 +66,35 @@ class CanvasNodeStaticTest {
     }
 
     @Test
+    fun aMarkedNodeThatBecomesAFollowTargetIsUnmarkedAndBuiltFromWhereItIs() {
+        val carrier = world.create().also { world.add(it, Transform(position = Vec3f(5f, 0f, 0f))) }
+        val banner = canvasNode(parent = carrier, name = "Banner")
+        val follower = canvasNode()
+        step()
+        assertTrue(world.has<StaticTransform>(banner))
+
+        world.get<Transform>(carrier)!!.position.x = 30f
+        world.get<CanvasElement>(follower)!!.follow = "Banner"
+        step()
+
+        assertFalse(world.has<StaticTransform>(banner), "a follow target is unmarked")
+        assertEquals(30f, world.get<Transform>(banner)!!.worldMatrix.data[12], "and placed where its parent now is")
+    }
+
+    @Test
+    fun aNodeNoLongerFollowedIsMarkedAgain() {
+        val banner = canvasNode(name = "Banner")
+        val follower = canvasNode(CanvasElement().apply { follow = "Banner" })
+        step()
+        assertFalse(world.has<StaticTransform>(banner))
+
+        world.get<CanvasElement>(follower)!!.follow = ""
+        step()
+
+        assertTrue(world.has<StaticTransform>(banner))
+    }
+
+    @Test
     fun aMarkedFollowerStillFollowsAMovingEntity() {
         val hero = world.create().also {
             world.add(it, Name("Hero"))

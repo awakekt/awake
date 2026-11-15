@@ -25,31 +25,63 @@ import com.awakekt.awake.ui.canvas.CanvasElement
  * stays where it was first built.
  *
  * A node another element follows by name is left unmarked, since a follower is placed by the
- * world matrix of what it follows. A node that only becomes a follow target after it was marked
- * keeps the world matrix it was first built with; remove its [StaticTransform] to follow it.
+ * world matrix of what it follows. Follow targets are checked every frame, by comparing each node's
+ * follow with the last frame's: a node that becomes a target is unmarked, so its matrix is built
+ * again from where it is, and one no longer followed is marked again.
  *
- * It looks again only when a node joined or left, by the family's change count, so a frame that
- * adds no node costs one comparison. Run it before `TransformSystem`; the scene runtime's
- * infrastructure systems include it.
+ * Membership is looked at again only when a node joined or left, by the family's change count, and
+ * the follows only compared, so a frame that changes neither costs a string comparison a node.
+ * Run it before `TransformSystem`; the scene runtime's infrastructure systems include it.
  */
 class CanvasNodeStaticSystem : System {
     private var nodes: Family2<CanvasElement, Transform>? = null
     private var changes = 0
-    private val unmarked = ArrayList<Entity>()
+    private var follows = emptyArray<String>()
+    private val marking = ArrayList<Entity>()
+    private val unmarking = ArrayList<Entity>()
     private val followed = HashSet<String>()
 
     override fun update(world: World, delta: Float) {
         val family = world.family<CanvasElement, Transform>()
-        if (family === nodes && family.changes == changes) return
-        // Collected first: marking a node changes the world's families, which must not happen mid-walk.
-        family.forEach { _, element, _ -> if (element.follow.isNotEmpty()) followed += element.follow }
-        family.forEach { entity, _, _ ->
-            if (!world.has<StaticTransform>(entity) && world.get<Name>(entity)?.value !in followed) unmarked += entity
-        }
-        for (index in 0 until unmarked.size) world.add(unmarked[index], StaticTransform)
-        unmarked.clear()
-        followed.clear()
+        if (family === nodes && family.changes == changes && !followsChanged(family)) return
+        reconcile(world, family)
         nodes = family
         changes = family.changes
+    }
+
+    /** Whether any node's follow differs from the last reconcile's, in the family's order. */
+    private fun followsChanged(family: Family2<CanvasElement, Transform>): Boolean {
+        var index = 0
+        var changed = family.size != follows.size
+        family.forEach { _, element, _ ->
+            if (!changed && element.follow != follows[index]) changed = true
+            index += 1
+        }
+        return changed
+    }
+
+    /** Marks every node no element follows and unmarks every node one does, recording the follows. */
+    private fun reconcile(world: World, family: Family2<CanvasElement, Transform>) {
+        follows = Array(family.size) { "" }
+        var index = 0
+        family.forEach { _, element, _ ->
+            follows[index++] = element.follow
+            if (element.follow.isNotEmpty()) followed += element.follow
+        }
+        // Collected first: marking a node changes the world's families, which must not happen mid-walk.
+        family.forEach { entity, _, _ ->
+            val target = world.get<Name>(entity)?.value in followed
+            val marked = world.has<StaticTransform>(entity)
+            if (!target && !marked) {
+                marking += entity
+            } else if (target && marked) {
+                unmarking += entity
+            }
+        }
+        for (index in 0 until marking.size) world.add(marking[index], StaticTransform)
+        for (index in 0 until unmarking.size) world.remove<StaticTransform>(unmarking[index])
+        marking.clear()
+        unmarking.clear()
+        followed.clear()
     }
 }
