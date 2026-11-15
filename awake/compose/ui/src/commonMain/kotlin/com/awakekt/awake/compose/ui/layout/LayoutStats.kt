@@ -20,6 +20,12 @@ object LayoutStats {
     var intrinsicQueries: Int = 0
         private set
 
+    /**
+     * Node measures since the process started, always counted (one increment): a host reads it before
+     * and after its layout pass, as `ComposeHost.frameStats` does. Frames run on one thread.
+     */
+    internal var nodeMeasures: Int = 0
+
     /** Counts one intrinsic query toward [intrinsicQueries], if [enabled]. */
     fun recordIntrinsicQuery() {
         if (enabled) intrinsicQueries++

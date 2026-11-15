@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.input.pointer.PointerInputDispatcher
 import com.awakekt.awake.compose.ui.input.pointer.PointerModifiers
 import com.awakekt.awake.compose.ui.layout.LayoutComposition
+import com.awakekt.awake.compose.ui.layout.LayoutStats
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
@@ -173,6 +174,12 @@ class ComposeHost(
     /** How many subtrees [retainUnchangedDraw] replayed instead of drawing them. */
     val retainedDraws: Int get() = painter.retainedDraws
 
+    /** What the last [frame] composed, measured, drew and replayed; see [ComposeFrameCounts]. */
+    val frameCounts: ComposeFrameCounts = ComposeFrameCounts()
+
+    // The composer's emitted count after the last pass, so a pass's own nodes are a difference.
+    private var emittedSeen = 0
+
     /**
      * Asked once a frame, before deciding to skip, whether state the content reads outside the
      * snapshot system changed: an ECS field, a plain `var`, a list a system rewrites. Returning
@@ -246,6 +253,10 @@ class ComposeHost(
      */
     fun frame(input: FrameInput, content: context(Composer) () -> Unit): FrameOutput {
         val stages = frameStages
+        val measuresBefore = LayoutStats.nodeMeasures
+        val paintedBefore = painter.nodesPainted
+        val replayedBefore = painter.retainedDraws
+        frameCounts.nodesComposed = 0
         scrollConsumed = false
         // Before input, as documented: a `FocusRequester.requestFocus()`/`freeFocus()` queued
         // since the last frame -- typically from outside composition entirely -- takes effect
@@ -264,6 +275,9 @@ class ComposeHost(
         stages?.begin(ComposeFrameStage.Measure)
         val measureSkipped = layout(input, composed)
         stages?.end(ComposeFrameStage.Measure)
+        frameCounts.composed = composed
+        frameCounts.measured = !measureSkipped
+        frameCounts.nodesMeasured = LayoutStats.nodeMeasures - measuresBefore
         if (measureSkipped) skippedMeasures++
         placedOnce = true
 
@@ -282,6 +296,8 @@ class ComposeHost(
         stages?.begin(ComposeFrameStage.Draw)
         val paint = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped)
         stages?.end(ComposeFrameStage.Draw)
+        frameCounts.nodesDrawn = painter.nodesPainted - paintedBefore
+        frameCounts.subtreesReplayed = painter.retainedDraws - replayedBefore
         return FrameOutput(
             primitives = paint.primitives,
             graphicsLayers = paint.layers,
@@ -408,7 +424,10 @@ class ComposeHost(
     private fun compose(content: context(Composer) () -> Unit, input: FrameInput): Composer {
         externallyInvalid = false
         compositionInputs.record(density, input, windowInsets, layoutDirection)
-        return composeContent(content, input)
+        return composeContent(content, input).also { composer ->
+            frameCounts.nodesComposed += composer.emittedNodes - emittedSeen
+            emittedSeen = composer.emittedNodes
+        }
     }
 
     private fun composeContent(content: context(Composer) () -> Unit, input: FrameInput): Composer =
