@@ -271,6 +271,9 @@ public final class com/awakekt/awake/core/diagnostics/FrameBreakdown {
 	public static final field KEY_TRIANGLES Ljava/lang/String;
 	public static final field KEY_UI_BUILD_MS Ljava/lang/String;
 	public static final field KEY_UI_STAGE_MS Ljava/lang/String;
+	public static final field KEY_UI_UPLOAD_BYTES Ljava/lang/String;
+	public static final field KEY_UI_UPLOAD_RUNS Ljava/lang/String;
+	public static final field KEY_UI_UPLOAD_TRIANGLES Ljava/lang/String;
 	public static final field KEY_UI_WAIT_MS Ljava/lang/String;
 	public fun <init> ()V
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;I)V
@@ -287,15 +290,17 @@ public final class com/awakekt/awake/core/diagnostics/FrameBreakdown$Companion {
 
 public final class com/awakekt/awake/core/diagnostics/FrameBreakdownSample {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
 	public final fun component2 ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
-	public final fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public final fun component3 ()Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
+	public final fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getPhases ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
 	public final fun getRender ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
+	public final fun getUiUploads ()Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -337,6 +342,21 @@ public final class com/awakekt/awake/core/diagnostics/FrameRenderSample {
 	public final fun getDrawCalls ()I
 	public final fun getGpuTimeMs ()Ljava/lang/Float;
 	public final fun getInstances ()I
+	public final fun getTriangles ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/diagnostics/FrameUiUploadSample {
+	public fun <init> (JIJ)V
+	public final fun component1 ()J
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun copy (JIJ)Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;JIJILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()J
+	public final fun getRuns ()I
 	public final fun getTriangles ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

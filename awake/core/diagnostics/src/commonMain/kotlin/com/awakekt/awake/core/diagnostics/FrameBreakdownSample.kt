@@ -14,10 +14,12 @@ package com.awakekt.awake.core.diagnostics
  *
  * @property phases Per-phase CPU durations for the frame; ignored until [FramePhaseSample.isMeasured].
  * @property render GPU timing and geometry submission counts for the frame, or `null` when uncounted.
+ * @property uiUploads What the frame wrote into UI meshes, or `null` when the renderer does not count it.
  */
 data class FrameBreakdownSample(
     val phases: FramePhaseSample = FramePhaseSample(),
     val render: FrameRenderSample? = null,
+    val uiUploads: FrameUiUploadSample? = null,
 )
 
 /**
@@ -56,4 +58,18 @@ data class FrameRenderSample(
     val instances: Int,
     val triangles: Long,
     val gpuTimeMs: Float? = null,
+)
+
+/**
+ * UI mesh data a single frame uploaded to the GPU. A still UI reads zero; a non-zero reading on a
+ * frame where nothing on screen moved names UI geometry that was staged and uploaded again.
+ *
+ * @property bytes Vertex and index bytes written to UI meshes.
+ * @property runs UI draw runs whose mesh was written.
+ * @property triangles Triangles in those runs.
+ */
+data class FrameUiUploadSample(
+    val bytes: Long,
+    val runs: Int,
+    val triangles: Long,
 )

@@ -9,6 +9,7 @@ import com.awakekt.awake.core.diagnostics.FrameBreakdown
 import com.awakekt.awake.core.diagnostics.FrameBreakdownSample
 import com.awakekt.awake.core.diagnostics.FramePhaseSample
 import com.awakekt.awake.core.diagnostics.FrameRenderSample
+import com.awakekt.awake.core.diagnostics.FrameUiUploadSample
 import com.awakekt.awake.render.renderer.Renderer
 
 private const val PIXELS_PER_MEGAPIXEL = 1_000_000.0
@@ -16,7 +17,7 @@ private const val PIXELS_PER_MEGAPIXEL = 1_000_000.0
 /**
  * Converts a [SceneFrameStats] snapshot into a scene-neutral [FrameBreakdownSample].
  *
- * @return Phase and render submission readings ready for [FrameBreakdown].
+ * @return Phase, render submission, and UI upload readings ready for [FrameBreakdown].
  */
 fun SceneFrameStats.toBreakdownSample(): FrameBreakdownSample =
     FrameBreakdownSample(
@@ -36,6 +37,7 @@ fun SceneFrameStats.toBreakdownSample(): FrameBreakdownSample =
                 gpuTimeMs = stats.gpuTimeMs,
             )
         },
+        uiUploads = uiUploads?.let { FrameUiUploadSample(it.bytes, it.runs, it.triangles) },
     )
 
 /**

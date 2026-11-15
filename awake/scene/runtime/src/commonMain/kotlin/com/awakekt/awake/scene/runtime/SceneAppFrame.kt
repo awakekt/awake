@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.UiUploadStats
 import kotlin.math.roundToInt
 
 /**
@@ -22,6 +23,8 @@ import kotlin.math.roundToInt
  * @property p99FrameTimeMs The 99th-percentile frame time over the recent sampling window in milliseconds.
  * @property maxFrameTimeMs The maximum single frame duration observed over the recent sampling window in milliseconds.
  * @property render Detailed GPU draw and geometry statistics from the active renderer, or `null` if uncounted.
+ * @property uiUploads What the renderer's last frame wrote into UI meshes, or `null` before a renderer is
+ * ready or when it does not count; a still UI reads zero. See [UiUploadStats].
  */
 data class SceneFrameStats(
     val frameTimeMs: Float,
@@ -33,6 +36,7 @@ data class SceneFrameStats(
     val p99FrameTimeMs: Float = 0f,
     val maxFrameTimeMs: Float = 0f,
     val render: RenderFrameStats? = null,
+    val uiUploads: UiUploadStats? = null,
 ) {
     /**
      * Total number of text layout cache queries.
@@ -98,6 +102,7 @@ fun SceneAppLifecycleRuntime.frameStats(): SceneFrameStats {
         p99FrameTimeMs = frameSpread.p99FrameTimeMs.roundToTenth(),
         maxFrameTimeMs = frameSpread.maxFrameTimeMs.roundToTenth(),
         render = rendererFrameStats,
+        uiUploads = rendererUiUploads,
     )
 }
 
