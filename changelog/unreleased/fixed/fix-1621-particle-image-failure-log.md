@@ -1,0 +1,1 @@
+- A particle emitter whose image fails to load is logged once, naming the image, instead of going undrawn with nothing in the log (#1621).
