@@ -234,4 +234,20 @@ class SceneCanvasViewsTest {
 
         assertEquals(listOf("frame", "ui [200x100]"), frame())
     }
+
+    @Test
+    fun anOnRequestViewWhoseTargetIsRecreatedDrawsAgainByItself() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        frame()
+        frame()
+
+        portrait.visible = false
+        frame()
+        assertTrue(renderer.live.isEmpty(), "out of the tree for a frame: its target is freed")
+        portrait.visible = true
+        assertEquals(listOf("frame", "view 200x100", "ui [200x100]"), frame(), "back in the tree: a new target, drawn, never sampled empty")
+
+        assertEquals(listOf("frame", "ui [200x100]"), frame(), "then kept again")
+    }
 }
