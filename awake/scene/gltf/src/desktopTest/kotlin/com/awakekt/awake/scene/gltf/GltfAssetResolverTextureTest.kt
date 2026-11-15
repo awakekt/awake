@@ -312,6 +312,38 @@ class GltfAssetResolverTextureTest {
         assertNotNull(resolver.materialParameters(path))
     }
 
+    /**
+     * One load of a `.gltf` reads each of its files once, and preloading it again reads none (#1621).
+     * Measured on main: one load read the `.bin` and the image 3 times each, and 8 more preloads of the
+     * loaded model read the file 8 more times and each of them 8 more.
+     */
+    @Test
+    fun aModelsFilesAreReadOnceALoadAndNotAgainOnceLoaded() = runTest {
+        val path = "assets/effects/glow.gltf"
+        val reads = mutableMapOf<String, Int>()
+        val files = mapOf(
+            path to texturedTriangleJson(externalImage = true, externalBuffer = true).encodeToByteArray(),
+            "assets/effects/triangle.bin" to triangleBufferBytes(),
+            "assets/effects/paint.png" to Base64.Default.decode(PIXEL_PNG),
+        )
+        val resolver = GltfAssetResolver()
+        resolver.setAssetSource(
+            AssetSource { assetPath ->
+                reads[assetPath.value] = (reads[assetPath.value] ?: 0) + 1
+                files[assetPath.value]?.let(Result.Companion::success) ?: Result.failure(NoSuchElementException(assetPath.value))
+            },
+        )
+
+        resolver.preload(path)
+        val once = reads.toMap()
+        repeat(LOADS) { resolver.preload(path) }
+
+        println("Reads of $path's files: one load $once, after $LOADS more $reads")
+        assertEquals(files.keys.associateWith { 1 }, once, "one load reads each file once")
+        assertEquals(once, reads.toMap(), "a loaded model is not read again")
+        assertEquals("gltf-material:$path", resolver.materialName(path))
+    }
+
     /** A skinned model's parts: the textured one draws its texture, skinned; the other stays untextured. */
     @Test
     fun aSkinnedModelsPartsDrawTheirOwnTextures() = runTest {
@@ -612,6 +644,7 @@ class GltfAssetResolverTextureTest {
     }
 
     private companion object {
+        const val LOADS = 8
         const val LARGE_IMAGE_SIDE = 2048
         const val GC_PASSES = 3
         const val PIXEL_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
