@@ -192,6 +192,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getShowTouchControls ()Z
 	public final fun getSortingLayers ()Lcom/awakekt/awake/scene/scene2d/SortingLayers;
 	public final fun getSpec ()Lcom/awakekt/awake/scene/runtime/SceneAppSpec;
+	public final fun getSystemObserver ()Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver;
 	public final fun getUiHost ()Lcom/awakekt/awake/compose/ui/platform/ComposeHost;
 	public final fun getUiOwnership ()Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
 	public final fun getUiPrimitives ()Ljava/util/List;
@@ -234,6 +235,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun setPerfStatsEnabled (Z)V
 	public final fun setShowTouchControls (Z)V
 	public final fun setSortingLayers (Lcom/awakekt/awake/scene/scene2d/SortingLayers;)V
+	public final fun setSystemObserver (Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver;)V
 	public final fun setUiOwnership (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
 	public final fun stageUi (Ljava/util/List;)V
 	public final fun system (Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;)Lcom/awakekt/awake/ecs/System;
@@ -754,6 +756,24 @@ public final class com/awakekt/awake/scene/runtime/project/StandaloneProjectConf
 
 public final class com/awakekt/awake/scene/runtime/schedule/SceneSchedule {
 	public static final field NANOS_PER_MS F
+	public static final field PRE_FRAME_TRANSFORMS Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/scene/runtime/schedule/SceneSystemObserver {
+	public static final field APP_UPDATE Ljava/lang/String;
+	public static final field Companion Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver$Companion;
+	public static final field UI_BUILD Ljava/lang/String;
+	public static final field UI_STAGE Ljava/lang/String;
+	public static final field UI_WAIT Ljava/lang/String;
+	public abstract fun after (Ljava/lang/String;)V
+	public abstract fun before (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/scene/runtime/schedule/SceneSystemObserver$Companion {
+	public static final field APP_UPDATE Ljava/lang/String;
+	public static final field UI_BUILD Ljava/lang/String;
+	public static final field UI_STAGE Ljava/lang/String;
+	public static final field UI_WAIT Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/runtime/schedule/SystemGuardKt {
