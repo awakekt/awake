@@ -70,6 +70,7 @@ class FrameUniformBlock {
     fun pack(input: GpuPassInput): FloatArray {
         val environment = input.environment
         val cascades = input.shadowCascadeData ?: input.prePasses
+            .filter { it.targetLayer < MAX_SHADOW_CASCADES }
             .takeIf { it.isNotEmpty() }
             ?.let { subs -> GpuShadowCascadeData(subs.map { it.viewProjection }, FloatArray(subs.size) { Float.MAX_VALUE }) }
         return pack(
@@ -103,7 +104,8 @@ class FrameUniformBlock {
 }
 
 /**
- * A frame block whose view-projection is the identity and whose every other field is zero.
+ * A frame block whose view-projection is the identity, whose directional light is the default sun,
+ * and whose every other field is zero.
  *
  * What the shared camera-depth shader reads beside a draw whose single block still starts with
  * its MVP, as [com.awakekt.awake.render.renderer.UniformFields.DefaultMaterial] does: that shader
@@ -112,6 +114,12 @@ class FrameUniformBlock {
  */
 fun identityFrameBlock(): FloatArray = FloatArray(MaterialUniformLayouts.Frame.total).also {
     Mat4().data.copyInto(it, MaterialUniformLayouts.Frame.offsetOf(UniformFields.ViewProjection))
+    DEFAULT_LIGHT_PAYLOAD.copyInto(
+        destination = it,
+        destinationOffset = MaterialUniformLayouts.Frame.offsetOf(UniformFields.LightDirection),
+        startIndex = 0,
+        endIndex = SUN_FLOATS,
+    )
 }
 
 /** The sun, then the point-light slots; a payload without either leaves it dark. */

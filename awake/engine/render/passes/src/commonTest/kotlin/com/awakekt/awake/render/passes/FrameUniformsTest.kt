@@ -10,7 +10,9 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
+import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.FrameUniformBlock
@@ -25,9 +27,11 @@ import com.awakekt.awake.render.passes.uniforms.TrailUniformLayout
 import com.awakekt.awake.render.passes.uniforms.WorldTextDrawLayout
 import com.awakekt.awake.render.passes.uniforms.WorldTextUniformLayout
 import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
+import com.awakekt.awake.render.passes.uniforms.identityFrameBlock
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.render.passes.uniforms.planDrawBlockFloats
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
+import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 import com.awakekt.awake.render.renderer.SkinnedDrawLayout
 import com.awakekt.awake.render.renderer.SkinnedFields
 import com.awakekt.awake.render.renderer.UniformField
@@ -163,6 +167,25 @@ class FrameUniformsTest {
             MaterialUniformLayouts.InstancedDraw.total,
             unshadowedLit.planDrawBlockFloats(MaterialUniformLayouts.Lit.total, instancedKind = InstancedDrawKind.Plain, hasShadowCascades = false),
         )
+    }
+
+    @Test
+    fun packInputIgnoresPointShadowSubPassesWhenDirectionalCascadesAreAbsent() {
+        val pointFaces = List(18) { face ->
+            GpuSubPass(target = null, targetLayer = MAX_SHADOW_CASCADES + face, viewProjection = VIEW_PROJECTION)
+        }
+        val packed = FrameUniformBlock().pack(
+            GpuPassInput(
+                viewProjection = VIEW_PROJECTION,
+                cameraEye = EYE,
+                passUniforms = LIGHT,
+                prePasses = pointFaces,
+            ),
+        )
+        assertEquals(MaterialUniformLayouts.Frame.total, packed.size)
+        val identity = identityFrameBlock()
+        assertContentEquals(Mat4().data, identity.field(MaterialUniformLayouts.Frame, UniformFields.ViewProjection))
+        assertEquals(1f, identity.field(MaterialUniformLayouts.Frame, UniformFields.LightColor)[0])
     }
 
     private fun RenderDrawCommand.whole(count: Int): FloatArray = uniformFloats(
