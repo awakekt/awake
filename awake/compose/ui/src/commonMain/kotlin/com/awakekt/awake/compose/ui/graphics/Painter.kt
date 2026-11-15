@@ -131,7 +131,7 @@ class Painter {
         val children = node.children
         val count = children.size
         if (count <= 1) {
-            if (count == 1) paintNode(children[0])
+            if (count == 1 && node.placesChild(children[0])) paintNode(children[0])
             return
         }
         var hasNonZeroZ = false
@@ -143,7 +143,7 @@ class Painter {
         }
         if (!hasNonZeroZ) {
             for (i in 0 until count) {
-                paintNode(children[i])
+                if (node.placesChild(children[i])) paintNode(children[i])
             }
             return
         }
@@ -154,7 +154,8 @@ class Painter {
             if (zA != zB) zA.compareTo(zB) else a.compareTo(b)
         }
         for (i in 0 until count) {
-            paintNode(children[indices[i]])
+            val child = children[indices[i]]
+            if (node.placesChild(child)) paintNode(child)
         }
     }
 
@@ -172,7 +173,10 @@ class Painter {
     }
 
     private fun paintLayersOfKind(node: LayoutNode, kind: LayerKind) {
-        for (i in 0 until node.children.size) paintLayersOfKind(node.children[i], kind)
+        for (i in 0 until node.children.size) {
+            val child = node.children[i]
+            if (node.placesChild(child)) paintLayersOfKind(child, kind)
+        }
         for (i in 0 until node.layers.size) {
             val layer = node.layers[i]
             if (layer.nodeType == kind) paintNode(layer)

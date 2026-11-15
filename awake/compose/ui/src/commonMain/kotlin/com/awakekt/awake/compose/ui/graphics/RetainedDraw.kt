@@ -49,7 +49,7 @@ internal class RetainedDrawRecord {
     fun recordGeometry(node: LayoutNode, bounds: IntArray) {
         width = node.width
         height = node.height
-        childCount = node.children.size
+        childCount = placedChildren(node)
         val links = node.drawDepths.size
         if (linkBounds.size != links * 4) linkBounds = IntArray(links * 4)
         for (i in 0 until links) {
@@ -156,7 +156,9 @@ internal class RetainedDraw(private val scope: PaintScope) {
             record.context[CLIP_DEPTH + 2] += dy
         }
         val children = node.children
-        for (i in 0 until children.size) rebase(children[i], shift, dx, dy)
+        for (i in 0 until children.size) {
+            if (node.placesChild(children[i])) rebase(children[i], shift, dx, dy)
+        }
     }
 
     /** Starts recording [node]'s paint; returns false inside an offscreen layer, which is never retained. */
@@ -212,14 +214,16 @@ internal class RetainedDraw(private val scope: PaintScope) {
 
     private fun childrenUnchanged(node: LayoutNode, record: RetainedDrawRecord): Boolean {
         val children = node.children
-        var same = children.size == record.childCount
+        var same = placedChildren(node) == record.childCount
         var i = 0
         while (same && i < children.size) {
             val child = children[i]
+            i++
+            // Not drawn, so not in the range: only the drawn children have to match.
+            if (!node.placesChild(child)) continue
             val childRecord = child.retainedDraw
             same = childRecord != null && child.absoluteX - node.absoluteX == childRecord.relX &&
                 child.absoluteY - node.absoluteY == childRecord.relY && unchanged(child)
-            i++
         }
         return same
     }
@@ -232,3 +236,10 @@ private fun isPlainContext(context: FloatArray): Boolean =
 internal const val CONTEXT_SIZE = 10
 private const val CLIP_DEPTH = 5
 private const val NEVER = Int.MIN_VALUE
+
+/** How many of [node]'s children its placement placed this pass: the ones painted, and so recorded. */
+private fun placedChildren(node: LayoutNode): Int {
+    var count = 0
+    for (i in 0 until node.children.size) if (node.placesChild(node.children[i])) count++
+    return count
+}

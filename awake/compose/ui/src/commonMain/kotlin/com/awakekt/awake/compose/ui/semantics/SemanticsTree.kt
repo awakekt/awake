@@ -98,7 +98,10 @@ class SemanticsTreeBuilder {
     }
 
     private inline fun forEachChild(node: LayoutNode, action: (LayoutNode) -> Unit) {
-        for (i in 0 until node.children.size) action(node.children[i])
+        for (i in 0 until node.children.size) {
+            val child = node.children[i]
+            if (node.placesChild(child)) action(child)
+        }
         // Layers are part of the accessibility tree too -- a dialog's contents must be reachable.
         for (i in 0 until node.layers.size) action(node.layers[i])
     }

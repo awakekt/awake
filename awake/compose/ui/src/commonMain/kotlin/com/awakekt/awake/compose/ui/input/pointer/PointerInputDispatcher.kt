@@ -396,7 +396,8 @@ class PointerInputDispatcher(
             // input follows that same global overlay ordering.
             var i = node.children.size - 1
             while (layer == MISS && i >= 0) {
-                layer = hitDetachedLayer(into, node.children[i], x, y)
+                val child = node.children[i]
+                if (node.placesChild(child)) layer = hitDetachedLayer(into, child, x, y)
                 i--
             }
         }
@@ -442,6 +443,8 @@ class PointerInputDispatcher(
         var keptTo = -1
         for (n in 0 until count) {
             val child = node.children[if (order == null) count - 1 - n else order[n]]
+            // A child its parent did not place this pass is not on screen, so it takes no pointer.
+            if (!node.placesChild(child)) continue
             val mark = into.size
             val hit = hitTest(into, child, x, y, searchLayers = false)
             when {
