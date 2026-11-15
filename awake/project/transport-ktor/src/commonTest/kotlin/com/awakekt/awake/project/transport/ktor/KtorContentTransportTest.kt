@@ -27,6 +27,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -282,12 +283,40 @@ class KtorContentTransportTest {
         delay = { waits += it },
     )
 
+    @Test
+    fun aBodyWithNoContentLengthIsReadWhole() = runTest {
+        val body = ByteArray(BODY_PAST_ONE_GROWTH) { it.toByte() }
+        val server = Server { respond(ByteReadChannel(body), HttpStatusCode.OK) }
+
+        assertContentEquals(body, fetchThrough(server).fetch("files/assets/crate.glb"))
+    }
+
+    @Test
+    fun aBodyOfItsDeclaredLengthIsReadWhole() = runTest {
+        val body = ByteArray(BODY_PAST_ONE_GROWTH) { it.toByte() }
+        val server = Server { respond(ByteReadChannel(body), HttpStatusCode.OK, headersOf(HttpHeaders.ContentLength, body.size.toString())) }
+
+        assertContentEquals(body, fetchThrough(server).fetch("files/assets/crate.glb"))
+    }
+
+    @Test
+    fun anEmptyBodyIsAnEmptyArray() = runTest {
+        val server = Server { respond(ByteArray(0), HttpStatusCode.OK) }
+
+        assertContentEquals(ByteArray(0), fetchThrough(server).fetch("files/assets/crate.glb"))
+    }
+
     private fun fetchThrough(server: Server, backoff: RateLimitBackoff = RateLimitBackoff()) =
         TokenAuthorizedFetch(KtorContentTransport(HttpClient(server.engine), base), rateLimitBackoff = backoff) {
             ReadToken("t0ken", Duration.INFINITE)
         }
 
     /** A [MockEngine] that records each request before [answer] answers it. */
+    private companion object {
+        // Longer than the array an unsized body starts in, and not a multiple of it.
+        const val BODY_PAST_ONE_GROWTH = 200_001
+    }
+
     private class Server(answer: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData) {
         val requests = mutableListOf<HttpRequestData>()
         val engine = MockEngine { request ->
