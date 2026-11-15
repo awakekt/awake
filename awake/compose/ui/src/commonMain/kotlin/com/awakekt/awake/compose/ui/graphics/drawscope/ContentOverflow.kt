@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.compose.ui.graphics.drawscope
 
+import com.awakekt.awake.core.graphics2d.TranslatePop
+import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.core.math2d.Rectangle
@@ -138,7 +140,9 @@ internal class ContentOverflow {
             is UiDrawPrimitive.FilledPath -> rect(primitive.path.bounds(), ANTIALIAS_FRINGE)
             is UiDrawPrimitive.StrokedPath -> rect(primitive.path.bounds(), primitive.stroke.width.value + ANTIALIAS_FRINGE)
             is UiDrawPrimitive.Mesh -> rect(if (primitive.rotationDegrees == 0f) placedBounds(primitive) else primitive.placedMesh().bounds(), 0f)
-            is UiDrawPrimitive.ClipPush, is UiDrawPrimitive.ClipPathPush, is UiDrawPrimitive.ClipPop -> return false
+            is UiDrawPrimitive.ClipPush, is UiDrawPrimitive.ClipPathPush, is UiDrawPrimitive.ClipPop,
+            is TranslatePush, TranslatePop,
+            -> return false
         }
         return x1 > x0 && y1 > y0
     }

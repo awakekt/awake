@@ -253,7 +253,13 @@ data class PlatformEffects(
  * [primitives] is the backend-neutral `UiDrawPrimitive` list from `:awake:core:graphics2d`, so a
  * render backend consumes it without knowing anything about the UI engine that produced it.
  *
- * @property primitives The frame's draw primitives, in paint order.
+ * It may hold translate ranges (`TranslatePush` to `TranslatePop`): a subtree that moved as a
+ * whole hands on its last frame's primitives inside one, and their positions are local to it. The
+ * UI staging of both backends applies them as it stages. Code that reads positions itself, to test,
+ * inspect or hit a drawn primitive, reads `primitives.flattened()`, which applies every range.
+ *
+ * @property primitives The frame's draw primitives, in paint order; positions inside a translate
+ * range are local to it, see `flattened()`.
  * @property graphicsLayers The offscreen paint passes requested by `Modifier.graphicsLayer`, kept apart
  * from [primitives].
  * @property semantics The accessibility tree for the placed layout, as its top-level nodes.
