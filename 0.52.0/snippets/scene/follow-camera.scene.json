@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "player",
+      "transform": {
+        "position": { "x": 0.0, "y": 0.5, "z": 0.0 }
+      },
+      "components": [
+        { "component": "movement_control", "speed": 6.0 }
+      ]
+    },
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 4.0, "z": 8.0 },
+          "center": { "x": 0.0, "y": 1.0, "z": 0.0 },
+          "fovYDegrees": 60.0,
+          "near": 0.1,
+          "far": 500.0
+        },
+        {
+          "component": "camera_rig",
+          "mode": "ThirdPerson",
+          "target": "player",
+          "distance": 8.0,
+          "pitch": -0.3,
+          "offset": { "x": 0.0, "y": 1.5, "z": 0.0 }
+        }
+      ]
+    }
+  ]
+}
