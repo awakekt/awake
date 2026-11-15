@@ -28,10 +28,16 @@ internal data class BundleLayout(val colorFormats: List<GPUTextureFormat>, val d
 internal class BundleCounts {
     var encoded = 0L
     var argumentWrites = 0L
+
+    /** Argument buffers created: once a pass's pool is warm, re-recording a cell creates none. */
+    var argsBuffersCreated = 0L
 }
 
+/** An indirect-arguments buffer and the words staged for it, room for [draws] draws; pooled by that size. */
+internal class ArgsBuffer(val buffer: GPUBuffer, val words: IntArray, val draws: Int)
+
 /** A cell's render bundle and the indirect arguments its draws read, five words a draw. */
-internal class RetainedBundle(val bundle: GPURenderBundle, val args: GPUBuffer, val words: IntArray)
+internal class RetainedBundle(val bundle: GPURenderBundle, val args: ArgsBuffer)
 
 /**
  * The retained regions of one pass, by the key the shared feature opens each with, kept across
@@ -49,6 +55,15 @@ internal class RetainedPassBundles(
 
     private val executing = ArrayList<GPURenderBundle>()
 
+    /**
+     * Argument buffers of released bundles, by draw capacity, for the next cell recorded. A moving
+     * camera re-records cells every frame, and each new buffer was a new wgpu4k `Buffer`, whose
+     * web wrapper builds a logger by capturing and parsing a stack trace: thousands a second on the
+     * consumer's frame (#1555). A released bundle's buffer was last read by work already submitted,
+     * and `writeBuffer` is ordered after it, so reusing it is safe.
+     */
+    private val freeArgs = HashMap<Int, ArrayDeque<ArgsBuffer>>()
+
     /** When this pass last ran, in [RetainedBundleStore]'s count, so a pass no longer drawn is released. */
     var lastUse = 0L
 
@@ -64,17 +79,29 @@ internal class RetainedPassBundles(
     fun destroy() {
         regions.values.forEach(RetainedCells<RetainedBundle>::clear)
         regions.clear()
+        // Clearing released every bundle's buffer into the pool: close them all.
+        freeArgs.values.forEach { pooled -> pooled.forEach { it.buffer.close() } }
+        freeArgs.clear()
     }
 
     private fun record(stream: CellStream): RetainedBundle {
-        val words = IntArray(maxOf(stream.drawCount, 1) * ARGS_WORDS)
-        val args = device.createBuffer(
-            BufferDescriptor(size = (words.size * Int.SIZE_BYTES).toULong(), usage = GPUBufferUsage.Indirect or GPUBufferUsage.CopyDst),
-        )
-        val bundle = RetainedBundle(encode(stream, args), args, words)
+        val args = argsFor(maxOf(stream.drawCount, 1))
+        val bundle = RetainedBundle(encode(stream, args.buffer), args)
         counts.encoded += 1
         writeArguments(bundle, stream)
         return bundle
+    }
+
+    /** A pooled buffer with room for [draws] draws, rounded up to a power of two, or a new one. */
+    private fun argsFor(draws: Int): ArgsBuffer {
+        val capacity = if (draws <= 1) 1 else (draws - 1).takeHighestOneBit() shl 1
+        freeArgs[capacity]?.removeLastOrNull()?.let { return it }
+        counts.argsBuffersCreated += 1
+        val words = IntArray(capacity * ARGS_WORDS)
+        val buffer = device.createBuffer(
+            BufferDescriptor(size = (words.size * Int.SIZE_BYTES).toULong(), usage = GPUBufferUsage.Indirect or GPUBufferUsage.CopyDst),
+        )
+        return ArgsBuffer(buffer, words, capacity)
     }
 
     private fun encode(stream: CellStream, args: GPUBuffer): GPURenderBundle {
@@ -105,16 +132,17 @@ internal class RetainedPassBundles(
 
     /** One `writeBuffer` of the cell's arguments: each draw's element and instance count, the rest 0. */
     private fun writeArguments(bundle: RetainedBundle, stream: CellStream) {
-        val words = bundle.words
+        val words = bundle.args.words
+        // A pooled buffer may hold a larger cell's draws past this one's: those are never drawn.
         for (draw in 0 until stream.drawCount) {
             words[draw * ARGS_WORDS] = stream.counts[draw * 2]
             words[draw * ARGS_WORDS + 1] = stream.counts[draw * 2 + 1]
         }
-        device.queue.writeBufferData(bundle.args, 0uL, fastArrayBufferOf(words))
+        device.queue.writeBufferData(bundle.args.buffer, 0uL, fastArrayBufferOf(words))
     }
 
     private fun release(bundle: RetainedBundle) {
-        bundle.args.close()
+        freeArgs.getOrPut(bundle.args.draws) { ArrayDeque() }.addLast(bundle.args)
         bundle.bundle.release()
     }
 
