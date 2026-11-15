@@ -236,10 +236,15 @@ public final class com/awakekt/awake/scene/core/transform/TransformKt {
 public final class com/awakekt/awake/scene/core/transform/TransformSystem : com/awakekt/awake/ecs/System {
 	public static final field CAPACITY_GROWTH_FACTOR I
 	public static final field DEFAULT_CAPACITY I
+	public static final field DEFAULT_CHECK_SLICES I
 	public static final field TRS_FLOATS I
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOnMovedStatic ()Lkotlin/jvm/functions/Function1;
+	public final fun getStaticCheckSlices ()I
+	public final fun setOnMovedStatic (Lkotlin/jvm/functions/Function1;)V
+	public final fun setStaticCheckSlices (I)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
