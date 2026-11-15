@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
  * the next (#1621).
  *
  * Every label in the world was drawn again for each view: a canvas portrait far above a town drew
- * every name plate in the transparent pass, about 206 draws a frame in a consumer's measurement.
+ * every name plate in the transparent pass, where it sees none of them.
  */
 class WorldTextViewCullingTest {
     private class CountingRenderer : NoopRenderer() {
