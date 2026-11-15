@@ -28,6 +28,7 @@ import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -36,6 +37,7 @@ import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.material.Material
 import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
+import java.lang.ref.WeakReference
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -66,6 +68,27 @@ class RendererHeadlessContentAttachTest {
         assertTrue(attached > MIN_COVERED, "The attached terrain covered only $attached pixels.")
         assertEquals(0, detached, "The detached terrain still drew $detached pixels.")
         assertEquals(attached, reattached, "A re-attached terrain should draw exactly as before.")
+    }
+
+    /**
+     * The upload keeps the textures it made, not the feature they were made from: a feature's pixels,
+     * such as the full-capacity page arrays a paged terrain starts from, are free to go once they are on
+     * the GPU (#1619).
+     */
+    @Test
+    fun anAttachedFeatureIsNotKeptOnceItIsUploaded() {
+        var resolved: WeakReference<ContentFeature>? = null
+        val terrain = terrainSource()
+        val source = ContentFeatureSource { backend -> terrain.resolve(backend).also { resolved = WeakReference(it) } }
+        val attached = runBlocking { shared().attacher.attachContentFeature(source) }
+        try {
+            assertTrue(render().covered > MIN_COVERED, "the control: the attached terrain draws")
+
+            repeat(GC_PASSES) { if (resolved?.get() != null) System.gc() }
+            assertNull(resolved?.get(), "the attached upload still holds the content feature, and its pixels with it")
+        } finally {
+            attached.detach()
+        }
     }
 
     /** An isolated pass, as an asset preview renders, draws none of the attached content and clears to its own colour. */
@@ -171,6 +194,7 @@ class RendererHeadlessContentAttachTest {
         const val EYE_DISTANCE = 18f
         const val HEIGHT_SCALE = 8f
         const val MIN_COVERED = 100
+        const val GC_PASSES = 5
         const val GREEN_MIN = 200
         const val OTHER_MAX = 40
 

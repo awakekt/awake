@@ -87,7 +87,9 @@ internal class VulkanContentFeatureGpu(
             feature.images.mapValues { (_, image) -> create(image.toTextureAsset()) }
         // After the registry compiled the pipeline, because the layout comes from a spec and the
         // pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
-        val mutable = feature.textureUpdates?.bindings.orEmpty()
+        // Held on its own: the upload outlives this call, and must not keep the feature's pixels with it (#1619).
+        val updates = feature.textureUpdates
+        val mutable = updates?.bindings.orEmpty()
         val frames = List(slotCount) { index ->
             if (index == 0) {
                 textures
@@ -110,7 +112,7 @@ internal class VulkanContentFeatureGpu(
         // Owned here: a descriptor write or a recorded bind references these without owning them.
         return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }, prepare = { frameIndex, uploads ->
             val frame = frames[frameIndex]
-            feature.textureUpdates?.updates(frameIndex)?.forEach { update ->
+            updates?.updates(frameIndex)?.forEach { update ->
                 require(update.binding in mutable) { "Update names an immutable content binding." }
                 uploads.write(frame.getValue(update.binding), update.region)
             }

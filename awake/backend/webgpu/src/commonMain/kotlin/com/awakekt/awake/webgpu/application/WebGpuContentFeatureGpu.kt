@@ -83,10 +83,12 @@ internal class WebGpuContentFeatureGpu(
         val mesh = feature.geometry?.let { source ->
             Mesh(graphicsDevice, {}, source.vertices, source.indices, source.format)
         }
+        // Held on its own: the upload outlives this call, and must not keep the feature's pixels with it (#1619).
+        val updates = feature.textureUpdates
         // Owned here: a bind group or a recorded bind references these without owning them.
         return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }, prepare = { frameIndex, uploads ->
-            feature.textureUpdates?.updates(frameIndex)?.forEach { update ->
-                require(update.binding in requireNotNull(feature.textureUpdates).bindings)
+            updates?.updates(frameIndex)?.forEach { update ->
+                require(update.binding in updates.bindings)
                 uploads.write(textures.getValue(update.binding), update.region)
             }
         }) {
