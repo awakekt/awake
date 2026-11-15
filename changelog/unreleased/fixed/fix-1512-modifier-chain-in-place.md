@@ -1,0 +1,1 @@
+- Re-setting a Compose node's modifier with one of the same shape, as a mark that moves does every frame, no longer rebuilds the node's modifier chain: the retained nodes take the new values in place. A HUD of 300 moving marks costs 236 KB and about 0.35 ms a frame on wasm instead of 304 KB and about 0.53 ms, and 98 KB instead of 137 KB on the JVM (#1512).

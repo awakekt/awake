@@ -1224,6 +1224,7 @@ public final class com/awakekt/awake/render/pipeline/GpuImageUpload$Companion : 
 
 public final class com/awakekt/awake/render/pipeline/GpuImageUploadKt {
 	public static final fun createImageMaterial (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrImageSet;)Lcom/awakekt/awake/render/material/Material;
+	public static final fun createImageMaterial (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrImageSet;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public static synthetic fun createImageMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/GpuImageSource;Lcom/awakekt/awake/render/texture/TextureFiltering;ILcom/awakekt/awake/render/texture/PbrImageSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
 }
 
@@ -1837,6 +1838,36 @@ public final class com/awakekt/awake/render/pipeline/TextureSampleType : java/la
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/TextureSampleType;
 	public static fun values ()[Lcom/awakekt/awake/render/pipeline/TextureSampleType;
+}
+
+public final class com/awakekt/awake/render/pipeline/TextureUpload {
+	public fun <init> (Ljava/lang/String;IILcom/awakekt/awake/render/pipeline/TextureUploadPath;Lcom/awakekt/awake/render/texture/CompressedTextureFormat;Lcom/awakekt/awake/render/texture/TextureFiltering;)V
+	public final fun getFiltering ()Lcom/awakekt/awake/render/texture/TextureFiltering;
+	public final fun getFormat ()Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
+	public final fun getHeight ()I
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getPath ()Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+	public final fun getWidth ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/render/pipeline/TextureUploadObserver {
+	public abstract fun uploaded (Lcom/awakekt/awake/render/pipeline/TextureUpload;)V
+}
+
+public final class com/awakekt/awake/render/pipeline/TextureUploadPath : java/lang/Enum {
+	public static final field BlockCompressed Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+	public static final field CpuRgba8 Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+	public static final field GpuCopy Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+	public static fun values ()[Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+}
+
+public final class com/awakekt/awake/render/pipeline/TextureUploads {
+	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/TextureUploads;
+	public final fun getObserver ()Lcom/awakekt/awake/render/pipeline/TextureUploadObserver;
+	public final fun setObserver (Lcom/awakekt/awake/render/pipeline/TextureUploadObserver;)V
 }
 
 public final class com/awakekt/awake/render/pipeline/UiPipelineDescriptor {

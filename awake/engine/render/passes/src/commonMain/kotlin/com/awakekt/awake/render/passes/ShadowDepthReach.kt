@@ -5,13 +5,11 @@
  */
 package com.awakekt.awake.render.passes
 
-import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import kotlin.math.abs
-import kotlin.math.min
 
 /**
  * These cascades with each one's near plane pulled back toward its light until it holds every
@@ -44,19 +42,28 @@ internal fun GpuShadowCascadeData.reachingCasters(
     clipSpace: ClipSpace,
 ): GpuShadowCascadeData {
     val nearDepth = if (clipSpace.depthZeroToOne) 0f else -1f
-    val planes = FloatArray(CASTING_PLANE_FLOATS)
+    val count = viewProjections.size
+    // Each cascade's casting planes, then each one's lowest caster depth so far: NaN for a cascade
+    // that is not measured, so one array serves the whole frame.
+    val work = FloatArray(count * (CASTING_PLANE_FLOATS + 1))
+    val lowestAt = count * CASTING_PLANE_FLOATS
+    for (cascade in 0 until count) {
+        val viewProjection = viewProjections[cascade]
+        val measured = viewProjection.isOrthographic()
+        if (measured) writeCastingPlanes(viewProjection, work, cascade * CASTING_PLANE_FLOATS)
+        work[lowestAt + cascade] = if (measured) nearDepth else Float.NaN
+    }
+    casters.lowestDepthsIn(viewProjections, work, lowestAt)
     var pulled: MutableList<Mat4>? = null
     var scales: FloatArray? = null
-    viewProjections.forEachIndexed { cascade, viewProjection ->
-        if (!viewProjection.isOrthographic()) return@forEachIndexed
-        writeCastingPlanes(viewProjection, planes, 0)
-        val lowest = casters.lowestDepthIn(viewProjection, planes, nearDepth)
-        if (lowest >= nearDepth) return@forEachIndexed
+    for (cascade in 0 until count) {
+        val lowest = work[lowestAt + cascade]
+        if (!(lowest < nearDepth)) continue
         // A little past the farthest caster, so rounding cannot clip the corner that set the plane.
         val low = lowest - (nearDepth - lowest) * REACH_MARGIN
         val squeeze = (FAR_DEPTH - nearDepth) / (FAR_DEPTH - low)
         (pulled ?: viewProjections.toMutableList().also { pulled = it })[cascade] =
-            viewProjection.withDepthRemapped(low, nearDepth, squeeze)
+            viewProjections[cascade].withDepthRemapped(low, nearDepth, squeeze)
         (scales ?: depthScales.copyOf().also { scales = it })[cascade] = depthScales[cascade] * squeeze
     }
     val movedProjections = pulled ?: return this
@@ -70,20 +77,39 @@ internal fun GpuShadowCascadeData.reachingCasters(
 }
 
 /**
- * The smallest clip-space depth under [viewProjection] of any opaque, bounded caster that casts and
- * that the casting [planes] admit, or [floor] when none reaches below it.
+ * Lowers each measured cascade's entry at [lowestAt] in [work] to the smallest clip-space depth of
+ * any opaque, bounded caster that casts and that the cascade's casting planes admit.
+ *
+ * One pass over the casters, every cascade measured from the bounds read once. The depth comes
+ * first: three products, where the planes are five, and only a caster below the lowest so far can
+ * move the plane, so most casters never meet the planes.
  */
-private fun List<GpuDrawRequest>.lowestDepthIn(viewProjection: Mat4, planes: FloatArray, floor: Float): Float {
-    var lowest = floor
+private fun List<GpuDrawRequest>.lowestDepthsIn(projections: List<Mat4>, work: FloatArray, lowestAt: Int) {
     for (index in indices) {
         val caster = this[index]
         val box = caster.worldBounds.takeUnless { caster.transparent || !caster.castsShadows } ?: continue
-        if (planes.admitsBox(0, box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)) {
-            val depth = viewProjection.lowestDepth(box)
-            if (depth.isFinite()) lowest = min(lowest, depth)
+        val min = box.min
+        val max = box.max
+        for (cascade in projections.indices) {
+            val lowest = work[lowestAt + cascade]
+            val depth = projections[cascade].lowestDepth(min.x, min.y, min.z, max.x, max.y, max.z)
+            // A NaN lowest marks a cascade left as it is, and fails the comparison.
+            if (depth < lowest && depth.isFinite() && admitted(work, cascade, min.x, min.y, min.z, max.x, max.y, max.z)) {
+                work[lowestAt + cascade] = depth
+            }
         }
     }
-    return lowest
+}
+
+@Suppress("LongParameterList")
+private fun admitted(work: FloatArray, cascade: Int, minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean {
+    ShadowReachCounts.planeTests += 1
+    return work.admitsBox(cascade * CASTING_PLANE_FLOATS, minX, minY, minZ, maxX, maxY, maxZ)
+}
+
+/** Casting-plane tests [reachingCasters] made, for the gate that a caster above the near plane needs none. */
+internal object ShadowReachCounts {
+    var planeTests = 0
 }
 
 /** A copy of this matrix whose depth row maps clip depth [low] to [nearDepth] and leaves 1 at 1. */
@@ -95,16 +121,17 @@ private fun Mat4.withDepthRemapped(low: Float, nearDepth: Float, squeeze: Float)
     return moved
 }
 
-/** The smallest clip-space depth any corner of [box] reaches under this affine matrix. */
-private fun Mat4.lowestDepth(box: Aabb): Float {
+/** The smallest clip-space depth any corner of the box from min to max reaches under this affine matrix. */
+@Suppress("LongParameterList")
+private fun Mat4.lowestDepth(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Float {
     val m = data
     val x = m[DEPTH_ROW]
     val y = m[ROW_STRIDE + DEPTH_ROW]
     val z = m[2 * ROW_STRIDE + DEPTH_ROW]
     return m[TRANSLATION_COLUMN * ROW_STRIDE + DEPTH_ROW] +
-        x * (if (x > 0f) box.min.x else box.max.x) +
-        y * (if (y > 0f) box.min.y else box.max.y) +
-        z * (if (z > 0f) box.min.z else box.max.z)
+        x * (if (x > 0f) minX else maxX) +
+        y * (if (y > 0f) minY else maxY) +
+        z * (if (z > 0f) minZ else maxZ)
 }
 
 /** Whether this matrix leaves `w` at 1, as an orthographic projection does: only then is depth linear in position. */

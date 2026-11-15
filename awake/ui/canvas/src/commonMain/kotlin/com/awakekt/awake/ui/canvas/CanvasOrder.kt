@@ -59,7 +59,7 @@ fun canvasItemAt(items: List<CanvasItem>, x: Float, y: Float): CanvasItem? {
  */
 internal class CanvasHierarchy(items: List<CanvasItem>) {
     val roots = ArrayList<CanvasItem>()
-    private val children = HashMap<CanvasElement, ArrayList<CanvasItem>>()
+    val children = HashMap<CanvasElement, ArrayList<CanvasItem>>()
 
     init {
         for (item in items) {
