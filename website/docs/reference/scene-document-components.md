@@ -507,7 +507,7 @@ What a camera sees: the element's widget. `SceneCanvasView`.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `camera` | string | `""` | The name of a node with a `camera`, as `canvas_element.camera` describes. |
-| `settings` | object | none | Camera-picture transparency and masking, as described below. Omitted keeps the opaque default. |
+| `settings` | object | none | Camera-picture transparency, masking and refresh, as described below. Omitted keeps the opaque default, drawn every frame. |
 
 `settings.transparent` defaults to `false`. Set it to `true` for a portrait over a translucent or
 gradient panel: the runtime clears that camera target to transparent, omits the scene's sky, and
@@ -520,8 +520,14 @@ by the style's radius. These mask the camera picture, leaving the element's back
 children as authored. Explicit ancestor clips also constrain the picture. Target resolution follows
 the element's scaled pixel size; safe-area placement is unchanged.
 
+`settings.refresh` defaults to `Always`: the picture is drawn every frame the element shows. `OnRequest`
+draws it when the element first shows, again when its box changes size or its coverage changes, and
+on the frame after the host calls `SceneAppLifecycleRuntime.invalidateCanvasViews(camera)`. Between
+those the element keeps its last picture and the camera costs nothing: no planning and no draws. Use
+it for a picture whose subject changes rarely, such as a HUD portrait, and invalidate when it changes.
+
 ```json
-{ "type": "canvas_view", "camera": "Portrait Camera", "settings": { "transparent": true, "mask": "Circle" } }
+{ "type": "canvas_view", "camera": "Portrait Camera", "settings": { "transparent": true, "mask": "Circle", "refresh": "OnRequest" } }
 ```
 
 ## `canvas_follow_limit`

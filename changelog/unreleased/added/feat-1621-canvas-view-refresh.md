@@ -1,0 +1,1 @@
+- `CanvasView.refresh` (`CanvasViewRefresh.Always` or `OnRequest`) and `SceneAppLifecycleRuntime.invalidateCanvasViews(camera)`: a View element can keep its last camera picture and draw again only when first shown, resized, its coverage changes, or the host asks, so a HUD portrait whose subject changes rarely costs no planning and no draws between requests (#1621).

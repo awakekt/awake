@@ -713,6 +713,18 @@ class SceneAppLifecycleRuntime internal constructor(
      */
     fun canvasViews(world: World = this.world): CanvasViews = if (world === this.world) ownCanvasViews else views().forWorld(world)
 
+    /**
+     * Draws, on the next frame, every View picture of [camera] in [world] that keeps its last one
+     * ([com.awakekt.awake.ui.canvas.CanvasViewRefresh.OnRequest]): call it when what the camera shows
+     * has changed, such as a portrait's subject. A View that redraws every frame needs no call.
+     *
+     * @param camera The camera node the Views show.
+     * @param world The world the View elements are in; this runtime's own by default.
+     */
+    fun invalidateCanvasViews(camera: Entity, world: World = this.world) {
+        viewStore?.invalidate(world, camera)
+    }
+
     private val ownCanvasProjector by lazy { SceneCanvasProjector(world, renderer.clipSpace, ::renderedCameraViewport) }
 
     private fun renderedCameraViewport(): CameraViewport? = session.schedule.renderSystem?.cameraViewport
