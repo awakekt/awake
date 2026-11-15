@@ -20,7 +20,21 @@ data class FrameBreakdownSample(
     val phases: FramePhaseSample = FramePhaseSample(),
     val render: FrameRenderSample? = null,
     val uiUploads: FrameUiUploadSample? = null,
-)
+) {
+    /** The constructor as released before [uiUploads], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        phases: FramePhaseSample = FramePhaseSample(),
+        render: FrameRenderSample? = null,
+    ) : this(phases, render, null)
+
+    /** [copy] as released before [uiUploads]. */
+    @Deprecated("Use copy with uiUploads.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        phases: FramePhaseSample = this.phases,
+        render: FrameRenderSample? = this.render,
+    ): FrameBreakdownSample = copy(phases, render, uiUploads)
+}
 
 /**
  * CPU phase durations for a single frame in milliseconds.

@@ -290,12 +290,16 @@ public final class com/awakekt/awake/core/diagnostics/FrameBreakdown$Companion {
 
 public final class com/awakekt/awake/core/diagnostics/FrameBreakdownSample {
 	public fun <init> ()V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
 	public final fun component2 ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
 	public final fun component3 ()Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
+	public final synthetic fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public final fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getPhases ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;

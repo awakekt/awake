@@ -38,6 +38,40 @@ data class SceneFrameStats(
     val render: RenderFrameStats? = null,
     val uiUploads: UiUploadStats? = null,
 ) {
+    /** The constructor as released before [uiUploads], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        frameTimeMs: Float,
+        fps: Float,
+        trialPasses: Int,
+        textCacheHits: Int,
+        textCacheMisses: Int,
+        phases: ScenePhaseStats = ScenePhaseStats(),
+        p99FrameTimeMs: Float = 0f,
+        maxFrameTimeMs: Float = 0f,
+        render: RenderFrameStats? = null,
+    ) : this(
+        frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
+        null,
+    )
+
+    /** [copy] as released before [uiUploads]. */
+    @Deprecated("Use copy with uiUploads.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        frameTimeMs: Float = this.frameTimeMs,
+        fps: Float = this.fps,
+        trialPasses: Int = this.trialPasses,
+        textCacheHits: Int = this.textCacheHits,
+        textCacheMisses: Int = this.textCacheMisses,
+        phases: ScenePhaseStats = this.phases,
+        p99FrameTimeMs: Float = this.p99FrameTimeMs,
+        maxFrameTimeMs: Float = this.maxFrameTimeMs,
+        render: RenderFrameStats? = this.render,
+    ): SceneFrameStats = copy(
+        frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
+        uiUploads,
+    )
+
     /**
      * Total number of text layout cache queries.
      */
