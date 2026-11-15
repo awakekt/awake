@@ -71,6 +71,14 @@ interface UiFont {
     /** Uncompressed RGBA pixel byte array containing the glyph atlas texture data. */
     val atlasPixelsRgba: ByteArray
 
+    /**
+     * Lets go of the pixels [atlasPixelsRgba] holds, when this font can build them again: the next read
+     * of [atlasPixelsRgba] does, at the cost of building them. A renderer calls it once the atlas is in a
+     * texture, so the pixels are not kept on the heap beside it (#1619). A font whose pixels are its only
+     * copy, or are costly to build, keeps them: by default this does nothing.
+     */
+    fun releaseAtlasPixels() {}
+
     /** Ascent + descent as a multiple of the em size. 1.0 for fonts whose glyphs never exceed
      * their em box; the packed Roboto atlas reports ~1.19. */
     val lineHeightEm: Float get() = 1f

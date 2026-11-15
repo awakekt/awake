@@ -57,7 +57,18 @@ class WeightedUiFont internal constructor(
     override val textScaleStep: Float = baseFace.font.textScaleStep
     override val atlasWidth: Int = faces.maxOf { it.font.atlasWidth }
     override val atlasHeight: Int = faces.sumOf { it.font.atlasHeight }
-    override val atlasPixelsRgba: ByteArray by lazy { if (atlasOwner === this) combineAtlases() else atlasOwner.atlasPixelsRgba }
+    private val combinedAtlas = ReleasableValue(::combineAtlases)
+    override val atlasPixelsRgba: ByteArray get() = if (atlasOwner === this) combinedAtlas.get() else atlasOwner.atlasPixelsRgba
+
+    /** Drops the combined atlas and the face atlases it was stacked from; [atlasPixelsRgba] stacks them again. */
+    override fun releaseAtlasPixels() {
+        if (atlasOwner === this) {
+            combinedAtlas.release()
+            faces.forEach { it.font.releaseAtlasPixels() }
+        } else {
+            atlasOwner.releaseAtlasPixels()
+        }
+    }
     override val lineHeightEm: Float = baseFace.font.lineHeightEm
     override val distanceFieldRangePx: Float = baseFace.font.distanceFieldRangePx
 

@@ -131,7 +131,10 @@ internal fun Renderer.ensureFontAtlas(font: UiFont): Texture = fontAtlases.getOr
         // The atlas is a distance field: a box-filtered mip averages the distances, erodes thin
         // stems, and the sampler's implicit LOD (log2(32 texels per em / px)) reads mip 1-2 at UI sizes.
         filtering = TextureFiltering.BaseLevelLinear,
-    ).let(textureResources::register)
+    ).let(textureResources::register).also {
+        // The texture has the atlas now: a font that can build its pixels again need not keep them.
+        font.releaseAtlasPixels()
+    }
 }
 
 internal fun Renderer.ensureImagePassTexture(asset: TextureAsset): Texture = imagePassTextures.getOrPut(asset) {

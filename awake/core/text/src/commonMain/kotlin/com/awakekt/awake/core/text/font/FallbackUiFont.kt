@@ -58,11 +58,23 @@ internal class FallbackUiFont(
     override val textScaleStep: Float = primary.textScaleStep
     override val atlasWidth: Int = stackedFaces.maxOf { it.atlasWidth }
     override val atlasHeight: Int = if (pages.size == 1) pages[0].atlasHeight else stackedFaces.sumOf { it.atlasHeight }
-    override val atlasPixelsRgba: ByteArray by lazy {
-        when {
+    private val combinedAtlas = ReleasableValue(::combineAllAtlases)
+    override val atlasPixelsRgba: ByteArray
+        get() = when {
             sharedOrigin != null -> sharedOrigin.atlasPixelsRgba
             pages.size == 1 -> pages[0].atlasPixelsRgba
-            else -> combineAllAtlases()
+            else -> combinedAtlas.get()
+        }
+
+    /** Drops the stacked atlas and its faces' own; [atlasPixelsRgba] stacks them again. */
+    override fun releaseAtlasPixels() {
+        when {
+            sharedOrigin != null -> sharedOrigin.releaseAtlasPixels()
+            pages.size == 1 -> pages[0].releaseAtlasPixels()
+            else -> {
+                combinedAtlas.release()
+                stackedFaces.forEach { it.releaseAtlasPixels() }
+            }
         }
     }
     override val lineHeightEm: Float = primary.lineHeightEm
@@ -316,7 +328,14 @@ internal class FallbackAtlasPage(
     override val textScaleStep: Float = primary.textScaleStep
     override val atlasWidth: Int = pageFaces.maxOf { it.atlasWidth }
     override val atlasHeight: Int = pageFaces.sumOf { it.atlasHeight }
-    override val atlasPixelsRgba: ByteArray by lazy(::combineAtlases)
+    private val combinedAtlas = ReleasableValue(::combineAtlases)
+    override val atlasPixelsRgba: ByteArray get() = combinedAtlas.get()
+
+    /** Drops this page's stacked atlas and its faces' own; [atlasPixelsRgba] stacks them again. */
+    override fun releaseAtlasPixels() {
+        combinedAtlas.release()
+        pageFaces.forEach { it.releaseAtlasPixels() }
+    }
     override val lineHeightEm: Float = primary.lineHeightEm
     override val distanceFieldRangePx: Float = primary.distanceFieldRangePx
     override val effectFieldRangePx: Float = sharedEffectFieldRange(pageFaces)

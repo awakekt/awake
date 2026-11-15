@@ -404,6 +404,8 @@ private fun GPUDevice.uploadFont(font: UiFont): UiRenderPipeline.FontBinding {
         ),
         size = size,
     )
+    // The texture has the atlas now: a font that can build its pixels again need not keep them.
+    font.releaseAtlasPixels()
     val sampler = createSampler(
         SamplerDescriptor(
             addressModeU = GPUAddressMode.ClampToEdge,
