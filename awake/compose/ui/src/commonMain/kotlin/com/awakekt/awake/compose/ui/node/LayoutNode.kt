@@ -192,6 +192,9 @@ class LayoutNode(
     internal var drawDepths: IntArray = EMPTY_DEPTHS
         private set
 
+    /** What this subtree drew in the last paint, for `ComposeHost.retainUnchangedDraw`; null until then. */
+    internal var retainedDraw: com.awakekt.awake.compose.ui.graphics.RetainedDrawRecord? = null
+
     /** Pointer links, outermost first. Rebuilt with the chain, never per frame. */
     internal var pointerInputs: List<PointerInputNode> = emptyList()
         private set

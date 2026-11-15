@@ -1477,6 +1477,8 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getFrameClock ()Lcom/awakekt/awake/compose/ui/platform/FrameClock;
 	public final fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;
+	public final fun getRetainUnchangedDraw ()Z
+	public final fun getRetainedDraws ()I
 	public final fun getRoot ()Lcom/awakekt/awake/compose/ui/node/LayoutNode;
 	public final fun getSkipUnchangedComposition ()Z
 	public final fun getSkipUnchangedMeasure ()Z
@@ -1490,6 +1492,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun setExternalChanges (Lkotlin/jvm/functions/Function0;)V
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
 	public final fun setOnStaleSkip (Lkotlin/jvm/functions/Function1;)V
+	public final fun setRetainUnchangedDraw (Z)V
 	public final fun setSkipUnchangedComposition (Z)V
 	public final fun setSkipUnchangedMeasure (Z)V
 	public final fun setVerifySkippedCompositions (Z)V

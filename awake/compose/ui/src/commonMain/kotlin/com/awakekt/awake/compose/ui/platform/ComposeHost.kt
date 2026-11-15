@@ -145,6 +145,29 @@ class ComposeHost(
     private val measureSkip = MeasureSkip()
 
     /**
+     * Also replays a subtree's last draw output instead of drawing it, on a frame whose composition and
+     * measure were both skipped, when nothing that subtree's draw read has changed (#1512 stage e). Off
+     * by default, and does nothing unless [skipUnchangedComposition] and [skipUnchangedMeasure] are on.
+     *
+     * What each node's draw links read is recorded as measure's reads are: a written
+     * [com.awakekt.awake.compose.runtime.State] or a changed polled state (the frame clock, for anything
+     * animating) repaints that node. A subtree also repaints when a node in it changed size, draw rect
+     * or offset from its parent, when what encloses it (alpha, a transform, a clip) differs, and always
+     * when it draws an offscreen layer (`graphicsLayer`) or escapes its clip (`unclipped`). A subtree
+     * that moved as a whole is copied, translated, wherever that copy equals a fresh paint bit for bit,
+     * and drawn afresh where it would not. A draw block that reads a plain `var` another frame changed
+     * would show its old drawing: keep that value in `mutableStateOf`, call [invalidate], or leave this
+     * off. [verifySkippedCompositions] compares a retained frame with a fresh paint.
+     *
+     * The painter keeps the last frame's primitives to replay from, so while this is on,
+     * [FrameOutput.primitives] stays unchanged until the frame after next.
+     */
+    var retainUnchangedDraw: Boolean = false
+
+    /** How many subtrees [retainUnchangedDraw] replayed instead of drawing them. */
+    val retainedDraws: Int get() = painter.retainedDraws
+
+    /**
      * Asked once a frame, before deciding to skip, whether state the content reads outside the
      * snapshot system changed: an ECS field, a plain `var`, a list a system rewrites. Returning
      * `true` makes this frame compose, as [invalidate] does. A consumer whose UI state lives in
@@ -157,7 +180,8 @@ class ComposeHost(
      * Debug aid for [skipUnchangedComposition]: on a frame it would skip, compose anyway and compare
      * the paint output with what the skipped frame would have drawn. A difference means the content
      * read something the host does not observe; it counts in [staleSkips] and is reported to
-     * [onStaleSkip]. The frame shows the composed output, so this behaves like skipping off. Costs
+     * [onStaleSkip]. With [retainUnchangedDraw] on, the skipped frame's paint replays what it would
+     * have replayed, so a draw read the host does not observe is found the same way. The frame shows the composed output, so this behaves like skipping off. Costs
      * a second paint per frame: use it in tests and debug builds.
      */
     var verifySkippedCompositions: Boolean = false
@@ -239,7 +263,8 @@ class ComposeHost(
         // A node that this pass stopped declaring cannot keep focus, and a modal that just opened
         // takes it from whatever was behind it.
         focusOwner.revalidate(root)
-        if (layout(input, composed)) skippedMeasures++
+        val measureSkipped = layout(input, composed)
+        if (measureSkipped) skippedMeasures++
         placedOnce = true
 
         // After layout, so a field that only just appeared can still take this frame's typing.
@@ -254,7 +279,7 @@ class ComposeHost(
         val passThroughKeys = focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys }
         val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
-        val paint = painter.paintOutput(root)
+        val paint = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped)
         return FrameOutput(
             primitives = paint.primitives,
             graphicsLayers = paint.layers,
@@ -346,11 +371,11 @@ class ComposeHost(
      * [skipUnchangedMeasure] would have skipped measuring too -- composes, measures, and compares.
      */
     private fun verifySkip(content: context(Composer) () -> Unit, input: FrameInput) {
-        layout(input, composed = false)
-        val skipped = painter.paintOutput(root).primitives.toList()
+        val measureSkipped = layout(input, composed = false)
+        val skipped = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped).primitives.toList()
         compose(content, input)
         layout(input, composed = true)
-        val composed = painter.paintOutput(root).primitives
+        val composed = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = false).primitives
         val index = firstDifference(skipped, composed)
         if (index >= 0) {
             staleSkips++
