@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.scene.rendering.debug.TransparentDrawSources
 
 /** Collects built-in and authored feature output without knowing how a frame is submitted. */
 internal class SceneFeatureCollector3D(
@@ -19,11 +20,24 @@ internal class SceneFeatureCollector3D(
     private val lightingFeature = SceneLightingFeature3D(SceneLightingCompiler(clipSpace))
     private val particleFeature = SceneParticleFeature3D(ParticleDrawAdapter())
 
-    fun collect(world: World, camera: Camera, elapsedTimeSeconds: Float, viewportAspect: Float): Contributions {
+    /** Each feature's name for [TransparentDrawSources], built once: its class's, or its place in the list. */
+    val featureNames: List<String> = features.mapIndexed { index, feature -> feature::class.simpleName ?: "feature $index" }
+
+    fun collect(
+        world: World,
+        camera: Camera,
+        elapsedTimeSeconds: Float,
+        viewportAspect: Float,
+        sources: TransparentDrawSources? = null,
+    ): Contributions {
         val context = RenderFeatureContext3D(camera, elapsedTimeSeconds, viewportAspect)
         val particle = particleFeature.collect(world, context)
         val lighting = lightingFeature.collect(world, context)
         val authored = features.map { it.collect(world, context) }
+        if (sources != null) {
+            sources.addParticles(particle.draws)
+            authored.forEachIndexed { index, contribution -> sources.addFeature(index, contribution.draws) }
+        }
         return Contributions(
             particleDraws = particle.draws,
             authoredDraws = authored.flatMap { it.draws },

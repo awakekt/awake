@@ -1,0 +1,1 @@
+- `RenderDiagnostics.transparentSources` and `captureTransparentSources`: while draw stats are on (F2), each view's blended draws by source (mesh renderers after culling, particles, and each render feature by name), the main view apart from each offscreen capture such as a canvas view's portrait (#1621).
