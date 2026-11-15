@@ -54,6 +54,16 @@ class SceneSchedule internal constructor(
     private var guardedInfrastructure: List<System> = emptyList()
     private var preFrameTransform: System? = null
 
+    // Each system's name for [observer], in step with the list it runs from; built once.
+    private val fixedNames = mutableListOf<String>()
+    private val interpolatedNames = mutableListOf<String>()
+    private val preAnimationNames = mutableListOf<String>()
+    private val frameNames = mutableListOf<String>()
+    private var infrastructureNames: List<String> = emptyList()
+
+    /** Told around each system run, when installed; see [SceneSystemObserver]. Null calls nothing. */
+    internal var observer: SceneSystemObserver? = null
+
     /** Whether [advance] splits its time into [gameMs] and [renderMs]. Off, it reads no clock. */
     internal var timed = false
     private var gameNanos = 0L
@@ -86,17 +96,29 @@ class SceneSchedule internal constructor(
         }
         infrastructureSystems = spec.infrastructureSystemsFactory(runtime)
         guardedInfrastructure = infrastructureSystems.map { it.guardedFor(runtime) }
+        infrastructureNames = infrastructureSystems.map { "infrastructure:${it::class.simpleName ?: it}" }
         kept.forEach { registration ->
             val system = registration.factory(runtime)
             registeredSystems[registration.handle] = system
             val guarded = system.guardedFor(runtime)
+            val name = registration.handle.name
             when (registration.phase) {
                 SceneSystemPhase.Fixed -> {
                     fixedSystems += guarded
-                    if (guarded is InterpolatedSystem) interpolatedSystems += guarded
+                    fixedNames += name
+                    if (guarded is InterpolatedSystem) {
+                        interpolatedSystems += guarded
+                        interpolatedNames += "$name.interpolate"
+                    }
                 }
-                SceneSystemPhase.PreAnimation -> preAnimationSystems += guarded
-                SceneSystemPhase.Frame -> frameSystems += guarded
+                SceneSystemPhase.PreAnimation -> {
+                    preAnimationSystems += guarded
+                    preAnimationNames += name
+                }
+                SceneSystemPhase.Frame -> {
+                    frameSystems += guarded
+                    frameNames += name
+                }
             }
         }
         val transformIndex = infrastructureSystems.indexOfFirst { it is TransformSystem }
@@ -122,15 +144,17 @@ class SceneSchedule internal constructor(
             frameDelta = delta,
             fixedUpdate = { step ->
                 gameNanos += timed {
-                    for (index in fixedSystems.indices) fixedSystems[index].update(world, step)
-                    fixedUpdate(step)
+                    runAll(fixedSystems, fixedNames, world, step)
+                    observed(SceneSystemObserver.APP_UPDATE) { fixedUpdate(step) }
                 }
             },
             render = { alpha ->
                 // Before the frame systems, because they are what reads a Transform to draw it:
                 // interpolating after them would show the blend one frame late.
                 gameNanos += timed {
-                    for (index in interpolatedSystems.indices) interpolatedSystems[index].interpolate(world, alpha)
+                    for (index in interpolatedSystems.indices) {
+                        observed(interpolatedNames[index]) { interpolatedSystems[index].interpolate(world, alpha) }
+                    }
                 }
                 runFrame(world, delta)
             },
@@ -167,22 +191,39 @@ class SceneSchedule internal constructor(
         interpolatedSystems.clear()
         preAnimationSystems.clear()
         frameSystems.clear()
+        fixedNames.clear()
+        interpolatedNames.clear()
+        preAnimationNames.clear()
+        frameNames.clear()
+        infrastructureNames = emptyList()
         if (::infrastructureSystems.isInitialized) infrastructureSystems = emptyList()
         guardedInfrastructure = emptyList()
         preFrameTransform = null
     }
 
     private fun runFrame(world: World, delta: Float) {
-        gameNanos += timed {
-            for (index in preAnimationSystems.indices) preAnimationSystems[index].update(world, delta)
-        }
-        renderNanos += timed { preFrameTransform?.update(world, delta) }
-        gameNanos += timed {
-            for (index in frameSystems.indices) frameSystems[index].update(world, delta)
-        }
+        gameNanos += timed { runAll(preAnimationSystems, preAnimationNames, world, delta) }
         renderNanos += timed {
-            for (index in guardedInfrastructure.indices) guardedInfrastructure[index].update(world, delta)
+            preFrameTransform?.let { transforms -> observed(PRE_FRAME_TRANSFORMS) { transforms.update(world, delta) } }
         }
+        gameNanos += timed { runAll(frameSystems, frameNames, world, delta) }
+        renderNanos += timed { runAll(guardedInfrastructure, infrastructureNames, world, delta) }
+    }
+
+    private fun runAll(systems: List<System>, names: List<String>, world: World, delta: Float) {
+        for (index in systems.indices) observed(names[index]) { systems[index].update(world, delta) }
+    }
+
+    /** Runs [block] between [observer]'s marks for [name], or bare when none is installed. */
+    private inline fun observed(name: String, block: () -> Unit) {
+        val observer = observer
+        if (observer == null) {
+            block()
+            return
+        }
+        observer.before(name)
+        block()
+        observer.after(name)
     }
 
     /** Nanoseconds [block] took while [timed], else 0 without reading the clock. */
@@ -198,5 +239,6 @@ class SceneSchedule internal constructor(
 
     private companion object {
         const val NANOS_PER_MS = 1_000_000f
+        const val PRE_FRAME_TRANSFORMS = "infrastructure:pre-frame transforms"
     }
 }
