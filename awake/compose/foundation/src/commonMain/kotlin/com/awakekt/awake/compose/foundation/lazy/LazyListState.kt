@@ -6,6 +6,9 @@
 package com.awakekt.awake.compose.foundation.lazy
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.MutableState
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.readsAreTracked
 import com.awakekt.awake.compose.runtime.remember
 
 /**
@@ -19,13 +22,35 @@ class LazyListState(
     firstVisibleItemIndex: Int = 0,
     firstVisibleItemScrollOffset: Int = 0,
 ) {
+    // Created on the first read by a pass that tracks reads, as TextFieldState's is: the list measures
+    // from these, so a host that skips measuring (#1512) must see a scroll. Nothing is made otherwise.
+    private var version: MutableState<Int>? = null
+
+    private fun track() {
+        if (readsAreTracked) (version ?: mutableStateOf(0).also { version = it }).value
+    }
+
+    private fun changed() {
+        version?.let { it.value += 1 }
+    }
+
     /** The index of the first item that is at least partly visible. */
     var firstVisibleItemIndex: Int = firstVisibleItemIndex
-        internal set
+        get() = field.also { track() }
+        internal set(value) {
+            if (field == value) return
+            field = value
+            changed()
+        }
 
     /** How far the first visible item is scrolled past the top edge, in pixels. */
     var firstVisibleItemScrollOffset: Int = firstVisibleItemScrollOffset
-        internal set
+        get() = field.also { track() }
+        internal set(value) {
+            if (field == value) return
+            field = value
+            changed()
+        }
 
     /** Measured last pass. Sparse on purpose -- an unvisited item has no height to know. */
     private val heights = HashMap<Int, Int>()

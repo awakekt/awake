@@ -28,10 +28,12 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.compose.ui.unit.Dp
+import com.awakekt.awake.compose.ui.unit.IntOffset
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
+import kotlin.math.roundToInt
 
 /**
  * shadcn's `Drawer`: a bottom sheet with a grab handle that can be dragged away.
@@ -85,7 +87,8 @@ fun shadcnDrawer(
             Box(
                 modifier
                     .fillMaxWidth()
-                    .offset(y = (drag.travelPx / density).dp)
+                    // Read while placing, so a drag moves the sheet without composing or measuring it (#1512).
+                    .offset { IntOffset(0, drag.travelPx.roundToInt()) }
                     .background(theme.palette.background, theme.radii.lg)
                     .semantics {
                         this[SemanticsProperties.Role] = SemanticsRole.Dialog

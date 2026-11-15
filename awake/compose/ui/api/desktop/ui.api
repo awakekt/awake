@@ -1479,7 +1479,9 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;
 	public final fun getRoot ()Lcom/awakekt/awake/compose/ui/node/LayoutNode;
 	public final fun getSkipUnchangedComposition ()Z
+	public final fun getSkipUnchangedMeasure ()Z
 	public final fun getSkippedCompositions ()I
+	public final fun getSkippedMeasures ()I
 	public final fun getStaleSkips ()I
 	public final fun getVerifySkippedCompositions ()Z
 	public final fun getWindowInsets ()Lcom/awakekt/awake/compose/ui/platform/WindowInsets;
@@ -1489,6 +1491,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
 	public final fun setOnStaleSkip (Lkotlin/jvm/functions/Function1;)V
 	public final fun setSkipUnchangedComposition (Z)V
+	public final fun setSkipUnchangedMeasure (Z)V
 	public final fun setVerifySkippedCompositions (Z)V
 	public final fun setWindowInsets (Lcom/awakekt/awake/compose/ui/platform/WindowInsets;)V
 }

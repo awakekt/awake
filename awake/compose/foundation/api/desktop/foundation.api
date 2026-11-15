@@ -575,6 +575,10 @@ public final class com/awakekt/awake/compose/foundation/layout/OffsetAndSizingKt
 	public static synthetic fun widthIn-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
+public final class com/awakekt/awake/compose/foundation/layout/PlacementOffsetKt {
+	public static final fun offset (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
 public final class com/awakekt/awake/compose/foundation/layout/RowMeasurePolicy : com/awakekt/awake/compose/ui/layout/MeasurePolicy {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;)V

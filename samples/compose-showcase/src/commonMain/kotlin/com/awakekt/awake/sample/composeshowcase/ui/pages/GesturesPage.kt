@@ -25,6 +25,7 @@ import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.graphicsLayer
+import com.awakekt.awake.compose.ui.unit.IntOffset
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -84,7 +85,8 @@ internal val GesturesPage = ShowcasePage(
             ) {
                 Box(
                     modifier = Modifier
-                        .offset(drag.x.dp, drag.y.dp)
+                        // Read while placing: dragging moves the card without measuring it.
+                        .offset { IntOffset(drag.x.dp.roundToPx(), drag.y.dp.roundToPx()) }
                         .width(150.dp)
                         .height(72.dp)
                         .background(GestureBlue)

@@ -29,6 +29,16 @@ internal class ReadObserver {
     private var polledSeen = arrayOfNulls<Any?>(INITIAL_READS)
     private var polledCount = 0
 
+    /**
+     * Whether compositions that run inside this pass are held, so the pass is out of date whenever
+     * one of theirs is: set for a [PhaseReads], whose measure pass runs subcompositions again. A
+     * [Composition] does not, so a composition nested in another keeps its own invalidation.
+     */
+    var collectsNested = false
+
+    private var nested = arrayOfNulls<ReadObserver>(0)
+    private var nestedCount = 0
+
     /** Starts a pass: older read stamps go stale and the polled reads are forgotten. */
     fun beginPass() {
         pass++
@@ -43,10 +53,26 @@ internal class ReadObserver {
         clearPolled()
     }
 
+    /** Records that [observer]'s pass ran inside this one; see [nested]. */
+    fun recordNested(observer: ReadObserver) {
+        if (!collectsNested) return
+        for (i in 0 until nestedCount) if (nested[i] === observer) return
+        if (nestedCount == nested.size) nested = nested.copyOf(maxOf(INITIAL_READS, nestedCount * 2))
+        nested[nestedCount++] = observer
+    }
+
     fun recordPolled(source: PolledState<*>, seen: Any?) {
+        // A source this pass already recorded remembers where, so a pass over many polled sources (an
+        // anchor per nameplate) stays linear. Any other source scans: one that another observer read
+        // since may still be here.
+        if (source.recordedBy === this && source.recordedPass == pass) {
+            polledSeen[source.recordedAt] = seen
+            return
+        }
         for (i in 0 until polledCount) {
             if (polled[i] === source) {
                 polledSeen[i] = seen
+                source.markRecorded(this, i)
                 return
             }
         }
@@ -56,15 +82,24 @@ internal class ReadObserver {
         }
         polled[polledCount] = source
         polledSeen[polledCount] = seen
+        source.markRecorded(this, polledCount)
         polledCount++
     }
 
-    /** Whether a write or [Composition.invalidate] invalidated the pass, or a polled read changed. */
+    /**
+     * Whether a write or [Composition.invalidate] invalidated the pass, a polled read changed, or a
+     * composition that ran inside the pass is invalid.
+     */
     fun isInvalid(): Boolean {
         var changed = invalid
         var i = 0
         while (!changed && i < polledCount) {
             changed = polled[i]?.poll() != polledSeen[i]
+            i++
+        }
+        i = 0
+        while (!changed && i < nestedCount) {
+            changed = nested[i]?.isInvalid() == true
             i++
         }
         return changed
@@ -76,6 +111,8 @@ internal class ReadObserver {
             polledSeen[i] = null
         }
         polledCount = 0
+        for (i in 0 until nestedCount) nested[i] = null
+        nestedCount = 0
     }
 
     private companion object {
@@ -169,4 +206,18 @@ abstract class PolledState<out T> : State<T> {
         }
 
     internal fun poll(): T = read()
+
+    // Where the observer that read this last keeps it; see ReadObserver.recordPolled.
+    internal var recordedBy: ReadObserver? = null
+        private set
+    internal var recordedPass = 0
+        private set
+    internal var recordedAt = 0
+        private set
+
+    internal fun markRecorded(observer: ReadObserver, index: Int) {
+        recordedBy = observer
+        recordedPass = observer.pass
+        recordedAt = index
+    }
 }

@@ -22,7 +22,6 @@ import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
-import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.node.activeEscapeDismissLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
@@ -123,6 +122,29 @@ class ComposeHost(
         private set
 
     /**
+     * Also skips measuring, on a frame whose composition [skipUnchangedComposition] skipped, when
+     * nothing the last measure read has changed (#1512, the placement-only path). Off by default,
+     * and does nothing while [skipUnchangedComposition] is off.
+     *
+     * Placement, position resolution, paint, input, focus and semantics still run every frame, so a
+     * value read while placing or drawing -- `Modifier.offset { }`, `Modifier.graphicsLayer { }`, a
+     * world anchor's provider -- moves its node without measuring it, its subtree or anything else.
+     * What a measure policy reads is recorded as composition's reads are: a written
+     * [com.awakekt.awake.compose.runtime.State], a changed polled state, or a subcomposition that
+     * would compose again makes the next frame measure. A policy that reads a plain `var` another
+     * frame changed, such as text from a `() -> String` lambda over a plain field, would keep its
+     * old size: keep that value in `mutableStateOf`, call [invalidate] when it changes, or leave this
+     * off. [verifySkippedCompositions] compares a skipped frame with a measured one and finds such reads.
+     */
+    var skipUnchangedMeasure: Boolean = false
+
+    /** How many frames [skipUnchangedMeasure] placed without measuring. */
+    var skippedMeasures: Int = 0
+        private set
+
+    private val measureSkip = MeasureSkip()
+
+    /**
      * Asked once a frame, before deciding to skip, whether state the content reads outside the
      * snapshot system changed: an ECS field, a plain `var`, a list a system rewrites. Returning
      * `true` makes this frame compose, as [invalidate] does. A consumer whose UI state lives in
@@ -199,8 +221,14 @@ class ComposeHost(
         // Before content, not after: an animation reads the clock as it is declared, so advancing
         // afterwards would paint every frame one step stale.
         frameClock.advance(input.deltaSeconds)
+        var composed = true
         if (skipUnchangedComposition && !needsComposition(input)) {
-            if (verifySkippedCompositions) verifySkip(content, input) else skippedCompositions++
+            if (verifySkippedCompositions) {
+                verifySkip(content, input)
+            } else {
+                composed = false
+                skippedCompositions++
+            }
         } else if (compositionStats.enabled) {
             val started = TimeSource.Monotonic.markNow()
             compose(content, input)
@@ -211,7 +239,7 @@ class ComposeHost(
         // A node that this pass stopped declaring cannot keep focus, and a modal that just opened
         // takes it from whatever was behind it.
         focusOwner.revalidate(root)
-        root.layoutTree(Constraints.fixed(input.viewportWidth, input.viewportHeight))
+        if (layout(input, composed)) skippedMeasures++
         placedOnce = true
 
         // After layout, so a field that only just appeared can still take this frame's typing.
@@ -264,6 +292,7 @@ class ComposeHost(
     fun dispose() {
         composition.dispose()
         compositionInputs.reset()
+        measureSkip.invalidate()
         placedOnce = false
         imeOwner = null
     }
@@ -304,12 +333,23 @@ class ComposeHost(
             compositionInputs.differsFrom(density, input, windowInsets, layoutDirection)
     }
 
-    /** [verifySkippedCompositions]: paints the tree as the skipped frame would, composes, and compares. */
+    /** Lays the tree out for this frame; returns whether [skipUnchangedMeasure] skipped measuring it. */
+    private fun layout(input: FrameInput, composed: Boolean): Boolean = measureSkip.layout(
+        root,
+        Constraints.fixed(input.viewportWidth, input.viewportHeight),
+        enabled = skipUnchangedComposition && skipUnchangedMeasure,
+        composed = composed,
+    )
+
+    /**
+     * [verifySkippedCompositions]: paints the tree as the skipped frame would -- placed only, when
+     * [skipUnchangedMeasure] would have skipped measuring too -- composes, measures, and compares.
+     */
     private fun verifySkip(content: context(Composer) () -> Unit, input: FrameInput) {
-        root.layoutTree(Constraints.fixed(input.viewportWidth, input.viewportHeight))
+        layout(input, composed = false)
         val skipped = painter.paintOutput(root).primitives.toList()
         compose(content, input)
-        root.layoutTree(Constraints.fixed(input.viewportWidth, input.viewportHeight))
+        layout(input, composed = true)
         val composed = painter.paintOutput(root).primitives
         val index = firstDifference(skipped, composed)
         if (index >= 0) {
