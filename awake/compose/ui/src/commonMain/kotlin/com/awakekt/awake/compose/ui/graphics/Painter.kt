@@ -66,6 +66,11 @@ class Painter {
      * for the next one, and with [reuse] as well, replays a subtree whose inputs did not change
      * (#1512 stage e). [reuse] must be false on a frame that composed or measured.
      */
+
+    /** Nodes painted afresh, not replayed, since this painter was made. */
+    internal var nodesPainted = 0
+        private set
+
     internal fun paintOutput(root: LayoutNode, retain: Boolean, reuse: Boolean): PaintOutput {
         val retaining = if (retain) retainedDraw ?: RetainedDraw(scope).also { retainedDraw = it } else null
         retained = retaining
@@ -101,6 +106,7 @@ class Painter {
     }
 
     private fun paintNodeBody(node: LayoutNode) {
+        nodesPainted++
         scope.enter(node)
         val chain = node.drawModifiers
         if (chain.isEmpty()) {

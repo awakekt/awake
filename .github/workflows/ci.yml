@@ -286,6 +286,7 @@ jobs:
         run: >-
           ./gradlew
           :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.RetainedDrawTest
+          --tests com.awakekt.awake.compose.foundation.ComposeFrameCountsTest
           :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
 
       # Committed browser measurements; CI needs neither Chromium nor Playwright.

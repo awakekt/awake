@@ -325,6 +325,7 @@ class LayoutNode(
     }
 
     override fun measure(constraints: Constraints): Placeable {
+        LayoutStats.nodeMeasures++
         val outer = if (links.isEmpty()) {
             contentMeasurable.measure(constraints)
         } else {

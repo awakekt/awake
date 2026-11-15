@@ -1454,6 +1454,16 @@ public abstract interface class com/awakekt/awake/compose/ui/node/ZIndexModifier
 	public abstract fun modifyZIndex (F)F
 }
 
+public final class com/awakekt/awake/compose/ui/platform/ComposeFrameCounts {
+	public final fun getComposed ()Z
+	public final fun getMeasured ()Z
+	public final fun getNodesComposed ()I
+	public final fun getNodesDrawn ()I
+	public final fun getNodesMeasured ()I
+	public final fun getSubtreesReplayed ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/compose/ui/platform/ComposeFrameStage : java/lang/Enum {
 	public static final field Compose Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
 	public static final field Draw Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
@@ -1490,6 +1500,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getExternalChanges ()Lkotlin/jvm/functions/Function0;
 	public final fun getFocusOwner ()Lcom/awakekt/awake/compose/ui/focus/FocusOwner;
 	public final fun getFrameClock ()Lcom/awakekt/awake/compose/ui/platform/FrameClock;
+	public final fun getFrameCounts ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameCounts;
 	public final fun getFrameStages ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStages;
 	public final fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;

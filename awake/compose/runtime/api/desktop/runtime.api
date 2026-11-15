@@ -13,6 +13,7 @@ public abstract interface class com/awakekt/awake/compose/runtime/Applier {
 public final class com/awakekt/awake/compose/runtime/Composer {
 	public static final field INITIAL_DEPTH I
 	public final fun endGroup ()V
+	public final fun getEmittedNodes ()I
 	public final fun getLocalsSnapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 	public final fun key (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public final fun node (Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V

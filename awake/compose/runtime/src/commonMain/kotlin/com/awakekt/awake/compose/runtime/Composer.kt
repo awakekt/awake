@@ -23,6 +23,9 @@ class Composer internal constructor(
     root: Any? = null,
     parentLocals: ProvidedLocals? = null,
 ) {
+    /** Nodes declared by every pass so far, reused or new: a host reads it before and after a pass. */
+    var emittedNodes: Int = 0
+        private set
 
     // One cursor per depth, per slot. Grown once and reused, so composing allocates nothing here.
     private var childCursors = IntArray(INITIAL_DEPTH)
@@ -62,6 +65,7 @@ class Composer internal constructor(
         // Compose's key group does -- not just the first one.
         val key = pendingKey
 
+        emittedNodes++
         val existing = findReusable(slot, index, type, key)
         when {
             existing < 0 -> applier.createAt(slot, index, type, key)
