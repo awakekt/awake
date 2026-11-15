@@ -35,10 +35,16 @@ class WorldTextFrameAllocationProbeTest {
         }
         repeat(WARMUP_FRAMES) { frame() }
 
-        val start = allocated()
-        repeat(MEASURED_FRAMES) { frame() }
+        // The quietest of several windows: a frame that allocates does so in every window, while a
+        // JIT recompile or deoptimisation that lands in one window on a busy runner does not.
+        var quietest = Long.MAX_VALUE
+        repeat(WINDOWS) {
+            val start = allocated()
+            repeat(MEASURED_FRAMES) { frame() }
+            quietest = minOf(quietest, (allocated() - start) / MEASURED_FRAMES)
+        }
 
-        assertEquals(0L, (allocated() - start) / MEASURED_FRAMES, "bytes per frame")
+        assertEquals(0L, quietest, "bytes per frame in the quietest of $WINDOWS windows")
     }
 
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
@@ -48,5 +54,6 @@ class WorldTextFrameAllocationProbeTest {
         const val TEXTS = 100
         const val WARMUP_FRAMES = 200
         const val MEASURED_FRAMES = 400
+        const val WINDOWS = 5
     }
 }

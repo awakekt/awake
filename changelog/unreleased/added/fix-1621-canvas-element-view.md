@@ -1,1 +1,0 @@
-- `SceneNode.derived(key, build)` and `SceneNodeView<T>`: a value a module derives from a node, built once and kept with the node (it is not saved, compared or copied). A node is immutable, so the value never goes stale (#1621).

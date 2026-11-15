@@ -676,7 +676,7 @@ class Mat4 {
             up: com.awakekt.awake.core.math.Vec3f,
         ): Mat4 = Mat4().apply {
             val f = (center - eye).normalized() // forward
-            val s = f.cross(up).normalized() // side
+            val s = f.cross(lookAtUp(f, up)).normalized() // side, from an up that is not parallel to f
             val u = s.cross(f) // up
 
             // Rotation goes in ROWS, matching the row-form translation below. Writing it

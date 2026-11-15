@@ -24,6 +24,8 @@ import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.unit.IntOffset
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.TranslatePush
+import com.awakekt.awake.core.graphics2d.flattened
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.random.Random
@@ -55,7 +57,8 @@ class RetainedDrawTest {
         val input = FrameInput(1600, 900, deltaSeconds = 0f)
         val expected = reference.frame(input, content)
         val actual = retaining.frame(input, content)
-        assertEquals(expected.primitives, actual.primitives, "the retaining host drew something else at $label")
+        // A moved subtree replays inside a translate range; drawn, it is what a fresh paint draws.
+        assertEquals(expected.primitives, actual.primitives.flattened(), "the retaining host drew something else at $label")
         assertEquals(expected.graphicsLayers, actual.graphicsLayers, "the retaining host layered something else at $label")
         return actual
     }
@@ -87,15 +90,18 @@ class RetainedDrawTest {
         frame("first", content)
         frame("second", content)
         var replayed = 0
+        var ranged = 0
         // Across whole-pixel steps and the 128, 256 and 512 exponent boundaries, both ways.
         val steps = listOf(3, 3, 3, 7, 40, 90, 150, 300, -2, -260, -300, 1, 1)
         for ((i, step) in steps.withIndex()) {
             x += step
             val before = retaining.retainedDraws
-            frame("move $i to $x", content)
+            val output = frame("move $i to $x", content)
             if (retaining.retainedDraws > before) replayed++
+            if (output.primitives.any { it is TranslatePush }) ranged++
         }
         assertTrue(replayed >= steps.size / 2, "only $replayed of ${steps.size} moves replayed")
+        assertEquals(replayed, ranged, "each moved replay is a translate range, not a copy")
     }
 
     @Test
@@ -151,7 +157,7 @@ class RetainedDrawTest {
             }
         }
         frame("first", content)
-        val glyphs = retaining.frame(FrameInput(1600, 900, deltaSeconds = 0f), content).primitives
+        val glyphs = retaining.frame(FrameInput(1600, 900, deltaSeconds = 0f), content).primitives.flattened()
         assertTrue(glyphs.any { it is com.awakekt.awake.core.graphics2d.UiDrawPrimitive.Glyph && it.x != kotlin.math.floor(it.x) }, "no glyph sits between pixels")
         reference.frame(FrameInput(1600, 900, deltaSeconds = 0f), content)
         for (i in 0 until 120) {

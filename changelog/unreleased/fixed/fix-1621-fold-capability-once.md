@@ -1,1 +1,0 @@
-- Folding a frame's draws into instances asks the backend whether a vertex format can be instanced and tinted once per run of draws that share a format and cull mode, not once per draw: on WebGPU each tint question resolved an instanced pipeline. Folding 3,000 props takes about 161 µs instead of 183–208 µs on the JVM (#1621).
