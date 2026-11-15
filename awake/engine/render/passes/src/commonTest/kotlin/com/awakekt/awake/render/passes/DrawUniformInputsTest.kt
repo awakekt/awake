@@ -50,6 +50,11 @@ class DrawUniformInputsTest {
 
         assertTrue(inputs.matches(draw(time = 2f), FRAME, COUNT, false))
         assertFalse(inputs.matches(draw(time = 2f), FRAME + 1, COUNT, false), "the frame's share changed")
+
+        // Two identity joints put 1f at float 16, where a textured draw keeps scrollU.
+        val palette = FloatArray(32).also { Mat4().data.copyInto(it, 0); Mat4().data.copyInto(it, 16) }
+        inputs.record(draw(time = 1f, extras = palette, format = VertexFormat.PositionNormalColorUvSkin), FRAME, MaterialUniformLayouts.SkinnedDraw.total, false)
+        assertTrue(inputs.matches(draw(time = 2f, extras = palette, format = VertexFormat.PositionNormalColorUvSkin), FRAME, MaterialUniformLayouts.SkinnedDraw.total, false), "a posed skin's joint palette is not a texture scroll")
     }
 
     @Test

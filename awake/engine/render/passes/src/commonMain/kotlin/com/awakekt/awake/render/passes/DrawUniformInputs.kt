@@ -152,7 +152,7 @@ private fun RenderDrawCommand.fillScalars(out: FloatArray, materialUniformFloatC
 internal fun RenderDrawCommand.textureClock(): Float {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
     val values = extraUniformFloats
-    if (values.size < layout.total) return 0f
+    if (mesh.format != VertexFormat.PositionNormalColorUv || values.size < layout.total) return 0f
     val frames = layout.offsetOf(UniformFields.TextureFrames)
     val scroll = layout.offsetOf(UniformFields.TextureScroll)
     return textureAnimationClock(values[frames], values[frames + 1], values[frames + 2], values[scroll], values[scroll + 1], timeSeconds)

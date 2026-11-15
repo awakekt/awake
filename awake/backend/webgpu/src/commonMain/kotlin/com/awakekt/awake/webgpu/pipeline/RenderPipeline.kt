@@ -21,6 +21,8 @@ import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
+import com.awakekt.awake.webgpu.renderer.sameBitsAs
+import com.awakekt.awake.webgpu.renderer.uniformBufferAt
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.writeBufferData
@@ -74,7 +76,7 @@ import io.ygdrasil.webgpu.VertexState
  * (WebGPU has no `VK_POLYGON_MODE_LINE` equivalent).
  */
 class RenderPipeline(
-    graphicsDevice: GraphicsDevice,
+    private val graphicsDevice: GraphicsDevice,
     private val swapchainManager: SwapchainManager,
     descriptorSetLayout: DescriptorSetLayoutHandle,
     vertShaderCode: ByteArray,
@@ -185,7 +187,7 @@ class RenderPipeline(
         val sharedSampler = contentTextures.entries.minByOrNull { it.key }?.value?.sampler
         return declared.entries.map { entry ->
             val resource = when (entry.kind) {
-                ResourceKind.UniformBuffer -> BufferBinding(buffer = buffer)
+                ResourceKind.UniformBuffer -> BufferBinding(buffer = graphicsDevice.uniformBufferAt(entry.binding, buffer))
                 ResourceKind.SampledTexture -> requireNotNull(contentTextures[entry.binding]?.view) {
                     "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' declares sampled texture " +
                         "binding ${entry.binding}, but no content texture was supplied."
@@ -320,6 +322,8 @@ class RenderPipeline(
     override val uniformBlock: UniformBlock? = uniformBuffer?.takeIf { usesMaterialGroup }?.let { buffer ->
         val layout = requireNotNull(uniforms)
         object : UniformBlock {
+            private var lastWritten: FloatArray? = null
+
             // Recreated when invalidated, caching until the next pipeline swap.
             override fun binding(frameIndex: Int): MaterialBinding {
                 contentBindGroup?.let { return it }
@@ -339,6 +343,10 @@ class RenderPipeline(
 
             override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
                 val floats = UniformWriter(layout).apply(fill).build()
+                val prev = lastWritten
+                if (prev != null && prev.sameBitsAs(floats)) return
+                lastWritten = if (prev != null && prev.size == floats.size) floats.copyInto(prev) else floats.copyOf()
+                graphicsDevice.contentUniformWrites += 1
                 device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
             }
         }

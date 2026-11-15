@@ -21,3 +21,6 @@ val TrailExtraUniformLayout = UniformLayout(TrailFields.Tint)
 
 /** Complete material ABI of a trail. */
 val TrailUniformLayout = UniformLayout(UniformFields.Mvp, TrailFields.Tint)
+
+/** What a trail draw's own block holds beside [MaterialUniformLayouts.Frame]. */
+val TrailDrawLayout = UniformLayout(UniformFields.Model, TrailFields.Tint)

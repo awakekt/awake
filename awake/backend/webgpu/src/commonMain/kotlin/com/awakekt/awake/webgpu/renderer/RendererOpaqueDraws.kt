@@ -192,13 +192,19 @@ private fun Renderer.stageDrawBlock(
 /**
  * Stages [cmd]'s own block for a pipeline that reads the frame block beside it, unless [slot]
  * already holds it. Nothing in this block is the camera's or the light's, so a draw that holds
- * still stages nothing while they move. An [instanced] draw's copies carry their transforms.
+ * still stages nothing while they move. An [instancedKind] draw's copies carry their transforms.
  */
-private fun Renderer.stageSplitDrawBlock(slot: UniformSlot, cmd: GpuDrawRequest, drawBlockFloats: Int, coverage: Boolean, instanced: Boolean = false) {
-    val kind = if (instanced) SPLIT_INSTANCED_INPUTS else SPLIT_INPUTS
+private fun Renderer.stageSplitDrawBlock(
+    slot: UniformSlot,
+    cmd: GpuDrawRequest,
+    drawBlockFloats: Int,
+    coverage: Boolean,
+    instancedKind: InstancedDrawKind? = null,
+) {
+    val kind = if (instancedKind != null) SPLIT_INSTANCED_INPUTS + instancedKind.ordinal else SPLIT_INPUTS
     if (slot.inputs.matches(cmd, SPLIT_FRAME_VERSION, drawBlockFloats, coverage, kind)) return
     uniformUploads.packedBlocks += 1
-    uniformUploads.stageChanged(slot, cmd.drawBlockFloats(drawBlockFloats, coverage, instanced))
+    uniformUploads.stageChanged(slot, cmd.drawBlockFloats(drawBlockFloats, coverage, instancedKind))
     slot.inputs.record(cmd, SPLIT_FRAME_VERSION, drawBlockFloats, coverage, kind)
 }
 
@@ -243,16 +249,12 @@ private fun Renderer.prepareInstancedGpuDraw(
     // Its own slot per instanced draw, as an ordinary draw has: one buffer shared by every
     // instanced draw of a pipeline, or by every particle draw of a material, would hold only the
     // last draw's uniforms by submission.
-    val drawSlot = if (kind != InstancedDrawKind.Skinned) bufferPools.uniformSlotForDraw(pipeline, instanceIndex) else null
-    // A slot already holding this draw's block, packed from the same inputs, needs no block; the
-    // skinned draws share one buffer, so theirs is always packed.
+    val drawSlot = bufferPools.uniformSlotForDraw(pipeline, instanceIndex)
     val inputKind = INSTANCED_INPUTS + kind.ordinal
     // A pipeline that reads the frame block takes the draw's own block instead, staged per slot below.
     val split = pipeline.splitDrawBlockFloats
     val packs = split == 0 && (drawSlot == null || !drawSlot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind))
-    val uniformFloats = if (split > 0 && kind == InstancedDrawKind.Skinned) {
-        cmd.drawBlockFloats(split, coverage, instanced = true)
-    } else if (!packs) {
+    val uniformFloats = if (!packs) {
         null
     } else {
         cmd.instancedUniformFloats(
@@ -271,16 +273,11 @@ private fun Renderer.prepareInstancedGpuDraw(
         )
     }
     fun stageFor(slot: UniformSlot) {
-        if (split > 0) return stageSplitDrawBlock(slot, cmd, split, coverage, instanced = true)
+        if (split > 0) return stageSplitDrawBlock(slot, cmd, split, coverage, instancedKind = kind)
         uniformFloats ?: return
         uniformUploads.packedBlocks += 1
         uniformUploads.stageChanged(slot, uniformFloats)
         slot.inputs.record(cmd, frameVersion, materialUniformFloatCount, coverage, inputKind)
-    }
-    val skinnedUniformResources = if (kind == InstancedDrawKind.Skinned && pipeline.hasBindingGroup(0)) {
-        bufferPools.skinnedInstancedUniformResources(pipeline)
-    } else {
-        null
     }
 
     when (kind) {
@@ -295,9 +292,9 @@ private fun Renderer.prepareInstancedGpuDraw(
         }
 
         InstancedDrawKind.Skinned -> {
-            val resources = skinnedUniformResources ?: return null
-            uniformUploads.stage(resources.buffer, checkNotNull(uniformFloats))
-            materialBinding = resources.binding
+            val slot = drawSlot ?: return null
+            stageFor(slot)
+            materialBinding = slot.binding ?: untexturedMaterialError(mesh, material)
             jointPaletteBinding = cmd.instanceJointPalettes?.let { palettes ->
                 skinnedInstanceBufferForRun(instanceIndex).run {
                     update(palettes, cmd.instanceColors)
@@ -357,10 +354,7 @@ private fun Renderer.prepareInstancedGpuDraw(
                 bufferPools.sceneDepthBindingFor(pipeline, it)
             },
         // The depth pass binds this for the draw's shadow, so a particle reports its own slot too.
-        uniformBuffer = when (kind) {
-            InstancedDrawKind.Plain, InstancedDrawKind.Particle -> drawSlot?.buffer
-            InstancedDrawKind.Skinned -> skinnedUniformResources?.buffer
-        },
+        uniformBuffer = drawSlot?.buffer,
         instanceColorBuffer = particleColors,
         instanceFrameBuffer = particleFrames,
         transparent = isTransparent,

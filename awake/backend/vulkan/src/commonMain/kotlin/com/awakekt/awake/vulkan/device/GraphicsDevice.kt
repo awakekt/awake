@@ -48,6 +48,9 @@ class GraphicsDevice {
     /** Per-draw uniform blocks written to material slots so far. For tests and probes. */
     internal var drawBlockWrites = 0L
 
+    /** Content-feature uniform blocks written to per-frame slots so far. For tests and probes. */
+    internal var contentUniformWrites = 0L
+
     /** The frame block each frame's lit draws bind beside their own; made on first use. */
     internal val frameUniforms: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
         get() = frameUniformBuffers

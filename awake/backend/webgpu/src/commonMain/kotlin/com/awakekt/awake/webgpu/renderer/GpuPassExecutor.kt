@@ -30,7 +30,6 @@ internal class RendererGpuPassExecutor(
 ) : GpuPassExecutor {
     override fun draw(input: GpuPassInput) {
         with(renderer) {
-            flushUniformUploads()
             swapchainManager.syncSurface()
             // Per frame, not per UI pass: a post or upscale step and a UI step sharing a shader would
             // otherwise share a uniform slot, and the last write of the frame wins for both.
@@ -42,6 +41,10 @@ internal class RendererGpuPassExecutor(
             val activeRenderPipeline = if (useWireframe) wireframeRenderPipeline!! else renderPipeline
             val primary = PrimaryPipelineBinding(activeRenderPipeline.handle, useWireframe)
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
+            val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
+            val sceneInput = if (scaled == null) input else sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
+            graphicsDevice.frameUniforms.stage(uniformUploads, sceneInput)
+            flushUniformUploads()
             val sorted = input.drawsForRecording()
             val encoder = createRenderEncoder()
             com.awakekt.awake.render.passes.prepareFrameResources(
@@ -61,7 +64,6 @@ internal class RendererGpuPassExecutor(
                 isOffscreen = false,
                 sampleable = true,
             )
-            val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
             if (scaled == null) {
                 recordScene(
                     encoder,
@@ -71,7 +73,6 @@ internal class RendererGpuPassExecutor(
                     primary,
                 )
             } else {
-                val sceneInput = sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
                 recordScene(encoder, scaled.attachment(), sceneInput, sorted, primary)
                 recordUpscale(encoder, output, sceneScale.upscale(scaled, outputWidth, outputHeight), input)
             }
@@ -97,11 +98,12 @@ internal class RendererGpuPassExecutor(
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
         val renderer = this.renderer
+        check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
+        renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, input)
         renderer.flushUniformUploads()
         renderer.imagePassExecutor.beginPass()
         val offscreen = target as OffscreenRenderTarget
         val primary = PrimaryPipelineBinding(pipeline = renderer.renderPipeline.handle, wireframe = false)
-        check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
         val sorted = input.drawsForRecording()
         val encoder = renderer.createRenderEncoder()
         com.awakekt.awake.render.passes.prepareFrameResources(

@@ -34,6 +34,7 @@ import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.samplerComparison
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
@@ -130,7 +131,21 @@ object TerrainUniformLayout {
         UniformFields.Exposure,
         TerrainOrigin,
     )
+
+    /**
+     * What a terrain feature's own uniform block holds beside the pass's frame block: its height
+     * scale/bias, footprint sampling, snapped ring centres and placement. Only changes when the
+     * rings snap to a new grid cell or the terrain moves.
+     */
+    val Draw = UniformLayout(
+        TerrainParams,
+        TerrainSampling,
+        RingParams,
+        TerrainOrigin,
+    )
 }
+
+private const val TERRAIN_DEFAULT_AMBIENT = 0.35f
 
 /** First material-group binding a terrain surface may declare. 0-2 belong to [terrainClipmapVertexStage]. */
 const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
@@ -140,13 +155,13 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  *
  * @param exportedWorldNormal The normal varying, or null in the depth form; read through [worldNormal].
  * @param exportedWorldPosition The position varying, or null when not exported; read through [worldPosition].
- * @property sunDirection `xyz` toward the light, `w` the ambient term.
+ * @param exportedSunDirection `xyz` toward the light, `w` the ambient term, or null in the depth form; read through [sunDirection].
  * @property terrainParams [TerrainUniformLayout.TerrainParams]; `z` is the base grey.
  * @property terrainSampling [TerrainUniformLayout.TerrainSampling]; `xy` is the heightmap's world
  * footprint.
- * @property cascades The block's cascade fields, for [terrainShadowSampling].
- * @property debugView The block's `UniformFields.DebugView`, for [debugViewColor].
- * @property exposure The block's `UniformFields.Exposure`, for [SceneDisplayTransform].
+ * @param exportedCascades The frame block's cascade fields, or null in the depth form; read through [cascades].
+ * @param exportedDebugView The frame block's `UniformFields.DebugView`, or null in the depth form; read through [debugView].
+ * @param exportedExposure The frame block's `UniformFields.Exposure`, or null in the depth form; read through [exposure].
  * @property ringCell World `x`, `z` and ring level, for [terrainClipmapDiscardUnderFinerRing].
  * @property ringParams The block's [TerrainUniformLayout.RingParams].
  * @property pages Optional page-table helpers for streamed surfaces.
@@ -156,17 +171,41 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
 class TerrainClipmapOutputs internal constructor(
     private val exportedWorldNormal: AslExpr?,
     private val exportedWorldPosition: AslExpr?,
-    val sunDirection: AslExpr,
+    private val exportedSunDirection: AslExpr?,
     val terrainParams: AslExpr,
     val terrainSampling: AslExpr,
-    val cascades: CascadeShadowInputs,
-    val debugView: AslExpr,
-    val exposure: AslExpr,
+    private val exportedCascades: CascadeShadowInputs?,
+    private val exportedDebugView: AslExpr?,
+    private val exportedExposure: AslExpr?,
     internal val ringCell: AslExpr,
     internal val ringParams: AslArrayHandle,
     val pages: TerrainPageSampling? = null,
     val terrainOrigin: AslExpr,
 ) {
+    /** `xyz` toward the light, `w` the ambient term. */
+    val sunDirection: AslExpr
+        get() = exportedSunDirection ?: throw AslDefinitionException(
+            "sunDirection is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's cascade fields, for [terrainShadowSampling]. */
+    val cascades: CascadeShadowInputs
+        get() = exportedCascades ?: throw AslDefinitionException(
+            "cascades are not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.DebugView`, for [debugViewColor]. */
+    val debugView: AslExpr
+        get() = exportedDebugView ?: throw AslDefinitionException(
+            "debugView is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.Exposure`, for [SceneDisplayTransform]. */
+    val exposure: AslExpr
+        get() = exportedExposure ?: throw AslDefinitionException(
+            "exposure is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
     /** Heightmap normal, interpolated; normalise before use. */
     val worldNormal: AslExpr
         get() = exportedWorldNormal ?: throw AslDefinitionException(
@@ -227,14 +266,18 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
 internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean, cascadeDepth: Boolean, paged: Boolean = false): TerrainClipmapOutputs {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val u = uniformBlock("Uniforms", group = group, binding = 0)
-    val handles = u.fieldsFrom(if (paged) PagedTerrainUniformLayout.Layout else TerrainUniformLayout.Layout)
-    // The depth form reads the cascade it renders from the pass's own block, not the draw's.
+    val handles = u.fieldsFrom(if (paged) PagedTerrainUniformLayout.Draw else TerrainUniformLayout.Draw)
+    val frame = if (cascadeDepth) null else frameUniforms()
+    // The depth form reads the cascade it renders from the pass's own block, not the frame's.
     val placement = if (cascadeDepth) {
         uniformBlock("Cascade", group = SHADOW_CASCADE_PASS_GROUP, binding = 0).fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
     } else {
-        handles.value("viewProjection")
+        frame!!.value("viewProjection")
     }
-    val sunDirection = handles.value("sunDirection")
+    val sunDirection = frame?.let {
+        val lightColor = it.value("lightColor")
+        vec4(it.value("lightDirection").xyz, select(TERRAIN_DEFAULT_AMBIENT.lit, lightColor.w, lightColor.w gt 0f.lit))
+    }
     val terrainParams = handles.value("terrainParams")
     val terrainSampling = handles.value("terrainSampling")
     val ringParams = handles.array("ringParams")
@@ -314,9 +357,9 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
         sunDirection,
         terrainParams,
         terrainSampling,
-        handles.cascadeInputs(),
-        handles.value("debugView"),
-        handles.value("exposure"),
+        frame?.cascadeInputs(),
+        frame?.value("debugView"),
+        frame?.value("exposure"),
         ringCell,
         ringParams,
         pages,

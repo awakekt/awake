@@ -68,3 +68,16 @@ val SkinnedMaterialLayout = UniformLayout(
     UniformFields.EmissiveFactor,
     UniformFields.PbrFactors,
 )
+
+/**
+ * What a single-draw skinned mesh's own block holds beside the pass's frame block: its joint
+ * palette, model matrix, material factors and dither fade. Depth shaders read its leading fields.
+ */
+val SkinnedDrawLayout = UniformLayout(
+    SkinnedFields.JointPalette,
+    UniformFields.Model,
+    UniformFields.BaseColorFactor,
+    UniformFields.EmissiveFactor,
+    UniformFields.PbrFactors,
+    UniformFields.DrawFade,
+)

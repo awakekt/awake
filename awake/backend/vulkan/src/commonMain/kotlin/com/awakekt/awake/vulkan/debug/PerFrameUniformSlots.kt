@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.debug
 
 import com.awakekt.awake.render.command.UniformBlock
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.renderer.UniformLayout
@@ -27,6 +28,8 @@ import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkDescriptorType
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
+import com.awakekt.awake.vulkan.renderer.FrameBlockKind
+import com.awakekt.awake.vulkan.renderer.FrameUniformBuffers
 import com.awakekt.awake.vulkan.texture.Texture
 
 /** One `VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER` binding (binding 0, one descriptor set layout) with
@@ -111,7 +114,7 @@ internal class PerFrameUniformSlots(
             // already honours that index by growing its list on demand; these slots are fixed
             // size, so the extra one has to be allocated up front or the offscreen index is out
             // of range.
-            repeat(framesInFlight + OFFSCREEN_SLOTS) { slots += createSlot() }
+            repeat(framesInFlight + OFFSCREEN_SLOTS) { slotIndex -> slots += createSlot(slotIndex) }
         } catch (e: Throwable) {
             destroy()
             throw e
@@ -141,7 +144,7 @@ internal class PerFrameUniformSlots(
         return buffer to memory
     }
 
-    private fun createSlot(): Slot {
+    private fun createSlot(slotIndex: Int): Slot {
         val (buffer, bufferMemory) = createBuffer()
         // Sized from the same declaration the layout came from -- see materialPoolSizes for why
         // the two must not be counted separately.
@@ -160,6 +163,18 @@ internal class PerFrameUniformSlots(
             VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             VkDescriptorBufferInfo(buffer = buffer, range = uniformBytes.toLong()),
         )
+        if (bindings?.at(FRAME_UNIFORM_BINDING)?.kind == ResourceKind.UniformBuffer) {
+            VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+                device,
+                descriptorSet,
+                FRAME_UNIFORM_BINDING,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                VkDescriptorBufferInfo(
+                    buffer = graphicsDevice.frameUniforms.bufferFor(slotIndex, FrameBlockKind.Scene),
+                    range = FrameUniformBuffers.BYTES,
+                ),
+            )
+        }
         return Slot(descriptorPool, descriptorSet, buffer, bufferMemory)
     }
 
@@ -171,18 +186,25 @@ internal class PerFrameUniformSlots(
     }
 
     fun write(frameIndex: Int, floats: FloatArray) {
+        writeChanged(frameIndex, floats)
+    }
+
+    private fun writeChanged(frameIndex: Int, floats: FloatArray): Boolean {
         val slot = this[frameIndex]
-        if (!slot.matchesLastWritten(floats)) {
-            slot.recordWritten(floats)
-            VulkanBuffers.writeBufferMemoryFloats(device, slot.bufferMemory, 0, floats)
-        }
+        if (slot.matchesLastWritten(floats)) return false
+        slot.recordWritten(floats)
+        VulkanBuffers.writeBufferMemoryFloats(device, slot.bufferMemory, 0, floats)
+        return true
     }
 
     /** These slots as a [UniformBlock] laid out by [layout]: one slot per frame index. */
     fun uniformBlock(layout: UniformLayout): UniformBlock = object : UniformBlock {
         override fun binding(frameIndex: Int) = this@PerFrameUniformSlots[frameIndex]
-        override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) =
-            this@PerFrameUniformSlots.write(frameIndex, UniformWriter(layout).apply(fill).build())
+        override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
+            if (this@PerFrameUniformSlots.writeChanged(frameIndex, UniformWriter(layout).apply(fill).build())) {
+                graphicsDevice.contentUniformWrites += 1
+            }
+        }
     }
 
     /**

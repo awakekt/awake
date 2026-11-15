@@ -24,3 +24,6 @@ val SpriteExtraUniformLayout = UniformLayout(SpriteFields.UvTransform, SpriteFie
 
 /** Complete unlit atlas material ABI. */
 val SpriteUniformLayout = UniformLayout(UniformFields.Mvp, SpriteFields.UvTransform, SpriteFields.Tint)
+
+/** What a sprite draw's own block holds beside [MaterialUniformLayouts.Frame]. */
+val SpriteDrawLayout = UniformLayout(UniformFields.Model, SpriteFields.UvTransform, SpriteFields.Tint)

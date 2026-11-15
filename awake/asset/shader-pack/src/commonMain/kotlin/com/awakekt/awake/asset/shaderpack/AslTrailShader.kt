@@ -17,7 +17,7 @@ import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
-import com.awakekt.awake.render.passes.uniforms.TrailUniformLayout
+import com.awakekt.awake.render.passes.uniforms.TrailDrawLayout
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
@@ -28,8 +28,10 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  */
 val TrailShader = shader("trail") {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
-    val u = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(TrailUniformLayout)
-    val matrix = u.value("mvp")
+    val u = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(TrailDrawLayout)
+    val frame = frameUniforms()
+    val viewProjection = frame.value("viewProjection")
+    val model = u.value("model")
     val tint = u.value("tint")
     val image by texture2d(group = group, binding = 1)
     val imageSampler by sampler(group = group, binding = 2)
@@ -38,7 +40,7 @@ val TrailShader = shader("trail") {
     val uv by out.varying(GpuDataShape.Vec2, location = 1)
     vertex {
         val ins = inputsFrom(VertexFormat.PositionRgbaUv)
-        out.position set (matrix * vec4(ins.input(VertexSemantic.Position), 1f.lit))
+        out.position set (viewProjection * (model * vec4(ins.input(VertexSemantic.Position), 1f.lit)))
         color set ins.input(VertexSemantic.Color)
         uv set ins.input(VertexSemantic.Uv)
     }

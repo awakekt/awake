@@ -200,7 +200,7 @@ class Material(
     /** [bindGroupFor] as the shared render layer's opaque handle, cached per pipeline too. */
     fun bindingFor(pipeline: WebGpuPipelineHandle): WebGpuBindGroupHandle =
         bindGroupHandles.getOrPut(pipeline.pipeline) {
-            WebGpuBindGroupHandle(bindGroupFor(pipeline.pipeline, pipeline.materialBindings ?: bindings))
+            WebGpuBindGroupHandle(bindGroupFor(pipeline.pipeline, pipeline.bindingsByGroup[0] ?: pipeline.materialBindings ?: bindings))
         }
 
     private val bindGroupHandles = HashMap<GPURenderPipeline, WebGpuBindGroupHandle>()

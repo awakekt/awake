@@ -46,12 +46,12 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
-import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
 import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
+import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.MAX_JOINTS
-import com.awakekt.awake.render.renderer.SkinnedUniformLayout
+import com.awakekt.awake.render.renderer.SkinnedDrawLayout
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): AslShaderDefinition =
@@ -61,19 +61,19 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             group = BindingLayout.Standard.slot(BindingSemantic.Material),
             binding = 0,
         )
-        val handles = u.fieldsFrom(if (skinned && !instanced) SkinnedUniformLayout else InstancedUniformLayout)
-        val camera = handles.value("mvp")
-        val lightDirection = handles.value("lightDirection")
-        val lightColor = handles.value("lightColor")
+        val handles = u.fieldsFrom(if (skinned && !instanced) SkinnedDrawLayout else MaterialUniformLayouts.InstancedDraw)
+        val frame = frameUniforms()
+        val viewProjection = frame.value("viewProjection")
+        val lightDirection = frame.value("lightDirection")
+        val lightColor = frame.value("lightColor")
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
         val entityModel = if (skinned && !instanced) handles.value("model") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
         val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
         val pbrFactors = if (skinned && !instanced) handles.value("pbrFactors") else null
-        val exposure = handles.value("exposure")
-        // The single-draw skinned block carries the point lights and what the debug views read; the instanced block doesn't.
-        val pointLights = if (skinned && !instanced) SkinnedPointLights(handles::array) else null
-        val debug = if (skinned && !instanced) SkinnedDebugInputs(handles::value) else null
+        val exposure = exposureAndFade(frame, handles)
+        val pointLights = if (skinned && !instanced) SkinnedPointLights(frame::array) else null
+        val debug = if (skinned && !instanced) SkinnedDebugInputs(frame::value) else null
         val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
         val storagePalettes = if (skinned && instanced) {
             storageArrayOfArrays(
@@ -115,7 +115,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
                 )
                 position = let("skinnedPosition", skinMatrix * vec4(inPosition, 1f.lit))
                 outNormal = let("skinnedNormal", skinMatrix * vec4(inNormal, 0f.lit))
-                if (debugVaryings != null && debug != null) debugVaryings.write(this, entityModel!! * position, joints, weights, debug.joint)
+                if (debugVaryings != null) debugVaryings.write(this, entityModel!! * position, joints, weights, debug.joint)
             } else {
                 position = vec4(inPosition, 1f.lit)
                 outNormal = inNormal
@@ -123,10 +123,11 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
 
             if (instanced) {
                 val model = let("model", instanceModelMatrix(startLocation = if (skinned) 5 else 3))
-                out.position set (camera * model * position)
+                out.position set (viewProjection * (model * position))
                 normal set if (skinned) (model * outNormal).xyz else outNormal
             } else {
-                out.position set (camera * position)
+                val placed = if (entityModel != null) entityModel * position else position
+                out.position set (viewProjection * placed)
                 // The palette poses the mesh in its own space; the entity's model turns its normals
                 // into the world the light is in, or the lit side would turn with the mesh.
                 normal set if (entityModel != null) (entityModel * outNormal).xyz else outNormal
@@ -166,14 +167,16 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
         binding = 0,
     )
-    val handles = u.fieldsFrom(SkinnedUniformLayout)
-    val camera = handles.value("mvp")
+    val handles = u.fieldsFrom(SkinnedDrawLayout)
+    val frame = frameUniforms()
+    val viewProjection = frame.value("viewProjection")
+    val model = handles.value("model")
     val uniformPalette = handles.array("jointPalette")
     val tint = handles.value("baseColorFactor")
     val glow = handles.value("emissiveFactor")
     val pbrFactors = handles.value("pbrFactors")
-    val exposure = handles.value("exposure")
-    val debug = SkinnedDebugInputs(handles::value)
+    val exposure = exposureAndFade(frame, handles)
+    val debug = SkinnedDebugInputs(frame::value)
     val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
 
     val baseColorTexture by texture2d(
@@ -205,10 +208,11 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         )
         val position = let("skinnedPosition", skinMatrix * vec4(inPosition, 1f.lit))
         val outNormal = let("skinnedNormal", skinMatrix * vec4(inNormal, 0f.lit))
+        val world = let("worldPosition", model * position)
 
-        out.position set (camera * position)
-        normal set (handles.value("model") * outNormal).xyz
-        debugVaryings.write(this, handles.value("model") * position, joints, weights, debug.joint)
+        out.position set (viewProjection * world)
+        normal set (model * outNormal).xyz
+        debugVaryings.write(this, world, joints, weights, debug.joint)
         color set ins.input(VertexSemantic.Color)
         // Undo createBitmap's OpenGL bottom-up Y flip, as the textured shader does.
         val inUv = ins.input(VertexSemantic.Uv)
@@ -221,12 +225,12 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         // Sampled before the light loop: implicit derivatives need uniform control flow.
         val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
         val n = let("n", normalize(normal))
-        val l = let("l", normalize(handles.value("lightDirection").xyz))
+        val l = let("l", normalize(frame.value("lightDirection").xyz))
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-        val lightColor = handles.value("lightColor")
+        val lightColor = frame.value("lightColor")
         val ambientShare = let("ambientShare", select(ambient, lightColor.w, lightColor.w gt 0f.lit))
         val shade = variable("shade", sunShade(ambientShare, diffuse, lightColor))
-        addPointLights(shade, ambientShare, n, debugVaryings.worldPosition, SkinnedPointLights(handles::array))
+        addPointLights(shade, ambientShare, n, debugVaryings.worldPosition, SkinnedPointLights(frame::array))
         // The material's factors tint it as glTF's do; untinted they are white and black.
         val stored = let("stored", texColor.rgb * color * tint.xyz)
         val lit = stored * shade + glow.xyz
@@ -279,13 +283,13 @@ private fun AslBlockBuilder.addPointLights(shade: AslExpr, ambient: AslExpr, nor
 
 private const val POINT_EPSILON = 0.0001f
 
-/** What the single-draw skinned block holds for the debug views: the scene's sun, the eye, the view and the joint. */
+/** What the frame block holds for the skinned debug views: the scene's sun, the eye, the view and the joint. */
 private class SkinnedDebugInputs(value: (String) -> AslExpr) {
     val lightDirection = value("lightDirection")
     val lightColor = value("lightColor")
     val cameraPosition = value("cameraPosition")
     val view = value("debugView")
-    val joint = value("debugJoint")
+    val joint = value("exposure").y
 }
 
 /** The varyings the debug views read, from [firstLocation] on: world position, joint colour and the selected joint's weight. */
@@ -298,7 +302,7 @@ private class SkinnedDebugVaryings(out: AslVaryings, firstLocation: Int) {
     fun write(stage: AslVertexBuilder, world: AslExpr, joints: AslExpr, weights: AslExpr, joint: AslExpr) = with(stage) {
         worldPosition set world.xyz
         jointColor set jointWeightsColor(joints, weights)
-        jointWeight set selectedJointWeight(joints, weights, joint.x)
+        jointWeight set selectedJointWeight(joints, weights, joint)
     }
 }
 

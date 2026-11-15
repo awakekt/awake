@@ -7,7 +7,6 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaders.ScenePipeline
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import kotlin.jvm.JvmOverloads
@@ -23,7 +22,6 @@ fun spriteScenePipeline(buildAdditive: Boolean = false): ScenePipeline = ScenePi
     shaders = PackShaderSets.Sprite,
     vertexFormat = VertexFormat.PositionUv,
     variant = PipelineVariant.AlphaBlended,
-    materialBindings = GroupBindings.TexturedMaterial,
     buildAdditive = buildAdditive,
 )
 
@@ -37,7 +35,6 @@ fun worldTextScenePipeline(): ScenePipeline = ScenePipeline(
     shaders = PackShaderSets.WorldText,
     vertexFormat = VertexFormat.PositionUvColor,
     variant = PipelineVariant.AlphaBlended,
-    materialBindings = GroupBindings.TexturedMaterial,
 )
 
 /**
@@ -50,7 +47,6 @@ fun trailScenePipeline(): ScenePipeline = ScenePipeline(
     shaders = PackShaderSets.Trail,
     vertexFormat = VertexFormat.PositionRgbaUv,
     variant = PipelineVariant.AlphaBlended,
-    materialBindings = GroupBindings.TexturedMaterial,
     buildAdditive = true,
     buildBlendedRasterVariants = true,
 )

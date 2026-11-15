@@ -10,7 +10,13 @@ import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
-import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.ParticleDrawLayout
+import com.awakekt.awake.render.passes.uniforms.SpriteDrawLayout
+import com.awakekt.awake.render.passes.uniforms.TrailDrawLayout
+import com.awakekt.awake.render.passes.uniforms.WorldTextDrawLayout
+import com.awakekt.awake.render.pipeline.FRAME_UNIFORM_BINDING
+import com.awakekt.awake.render.pipeline.GroupBindings
+import com.awakekt.awake.render.renderer.SkinnedDrawLayout
 import com.awakekt.awake.render.renderer.UniformField
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,8 +56,45 @@ import kotlin.test.fail
 class ShaderUniformStructTest {
     @Test
     fun spriteUniformsMatchTheUnlitShader() {
-        val fields = SpriteUniformLayout.fields.map { "${it.name} : ${it.wgslType()}" }
+        val fields = SpriteDrawLayout.fields.map { "${it.name} : ${it.wgslType()}" }
         assertEquals(fields, uniformStructFields(SpriteShader))
+    }
+
+    @Test
+    fun migratedSceneShadersMatchTheirDrawLayoutsAndFrameBlock() {
+        val frameExpected = MaterialUniformLayouts.Frame.fields.map { "${it.name} : ${it.wgslType()}" }
+        val pairs = listOf(
+            LitShader to MaterialUniformLayouts.LitDraw,
+            InstancedShader to MaterialUniformLayouts.InstancedDraw,
+            SkinnedShader to SkinnedDrawLayout,
+            SkinnedTexturedShader to SkinnedDrawLayout,
+            SkinnedInstancedShader to MaterialUniformLayouts.InstancedDraw,
+            SpriteShader to SpriteDrawLayout,
+            WorldTextShader to WorldTextDrawLayout,
+            TrailShader to TrailDrawLayout,
+            ParticleShader to ParticleDrawLayout,
+            terrainShader(ClipSpace.Vulkan) to TerrainUniformLayout.Draw,
+            pagedTerrainShader(ClipSpace.Vulkan) to PagedTerrainUniformLayout.Draw,
+        )
+        pairs.forEach { (shader, layout) ->
+            assertEquals(
+                layout.fields.map { "${it.name} : ${it.wgslType()}" },
+                uniformStructFields(shader),
+                "${shader.name} Uniforms struct drifted from its draw layout",
+            )
+            assertEquals(
+                frameExpected,
+                structFields(shader, "FrameUniforms"),
+                "${shader.name} FrameUniforms struct drifted from MaterialUniformLayouts.Frame",
+            )
+            val group0 = shader.bindingsForGroup(0)
+            assertEquals(
+                MaterialUniformLayouts.Frame.total * Float.SIZE_BYTES.toLong(),
+                group0?.uniformBufferSize(FRAME_UNIFORM_BINDING),
+                "${shader.name} must bind FRAME_UNIFORM_BINDING in group 0",
+            )
+        }
+        assertEquals(GroupBindings.ParticleMaterial, ParticleShader.bindingsForGroup(0))
     }
 
     @Test

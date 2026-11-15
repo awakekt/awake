@@ -329,7 +329,7 @@ class RendererHeadlessTerrainTest {
                     VertexFormat.PositionNormalColorUv,
                     vertexEntryPoint = "vertexMain",
                     fragmentEntryPoint = "fragmentMain",
-                    uniforms = TerrainUniformLayout.Layout,
+                    uniforms = TerrainUniformLayout.Draw,
                     framesInFlight = MAX_FRAMES_IN_FLIGHT,
                     materialBindings = terrainDefinition.bindingsForGroup(materialGroup),
                     extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(shadowPlaceholder.descriptorSetLayout)),
