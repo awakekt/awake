@@ -507,6 +507,6 @@ private fun fallbackLens() = Lens(
 private const val FALLBACK_FOV_DEGREES = 60f
 
 /** The names of the three systems that run the playing scene's own, in the app's schedule. */
-private const val PROJECT_FIXED_SYSTEMS = "project-fixed"
-private const val PROJECT_PRE_ANIMATION_SYSTEMS = "project-pre-animation"
-private const val PROJECT_FRAME_SYSTEMS = "project-frame"
+internal const val PROJECT_FIXED_SYSTEMS = "project-fixed"
+internal const val PROJECT_PRE_ANIMATION_SYSTEMS = "project-pre-animation"
+internal const val PROJECT_FRAME_SYSTEMS = "project-frame"
