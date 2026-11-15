@@ -497,24 +497,11 @@ internal class PaintScope :
     LayerDrawScope,
     RetainedMeshDrawScope {
     private val clips = ClipStackState()
-    private var output = mutableListOf<UiDrawPrimitive>()
+
+    /** The base output and what retained draw (#1512 stage e) keeps of the last paint's. */
+    val retained = RetainedOutput()
+    private var output = retained.current
     private val layers = mutableListOf<GraphicsLayerFrame>()
-
-    // Retained draw (#1512 stage e): the last frame's base output, which a node's recorded range
-    // points into, and two counters a node compares before and after it paints.
-    private var previousOutput = mutableListOf<UiDrawPrimitive>()
-    private var layerDepth = 0
-
-    /** Bumped by a draw a retained range cannot replay at all: an offscreen layer, a path shadow, an `unclipped {}` escape. */
-    var unretainable: Int = 0
-        private set
-
-    /**
-     * Bumped by a draw whose output is not its node's origin plus a local offset -- a scale, a
-     * translation, a path, a raw [emit] -- so its range replays in place, never moved.
-     */
-    var placementBound: Int = 0
-        private set
     private var nextLayerId = 0
     private var originX = 0f
     private var originY = 0f
@@ -552,45 +539,19 @@ internal class PaintScope :
 
     fun layers(): List<GraphicsLayerFrame> = layers
 
-    /** Like [reset], keeping this frame's base output readable through [previous] for one more paint. */
-    fun resetRetaining() {
-        val last = output
-        output = previousOutput
-        previousOutput = last
-        reset()
-    }
-
-    /** How many base primitives this paint has emitted so far. */
-    val size: Int get() = output.size
-
     /** Whether drawing goes into an offscreen layer now, not the base output. */
-    val insideLayer: Boolean get() = layerDepth > 0
-
-    /** The layer ids handed out so far this paint. */
-    val layerCount: Int get() = nextLayerId
-
-    /** The primitive at [index] of the previous [resetRetaining] paint's base output. */
-    fun previous(index: Int): UiDrawPrimitive = previousOutput[index]
-
-    /** Appends a replayed primitive to the base output. */
-    fun append(primitive: UiDrawPrimitive) {
-        output += primitive
-    }
-
-    /** Whether [rect] is the "no clip" rect a pop restores to when nothing encloses it. */
-    fun isNoClip(rect: Rectangle): Boolean = clips.isNoClip(rect)
+    val insideLayer: Boolean get() = output !== retained.current
 
     /** Writes what a node's output depends on above it -- alpha, transform, the active clip -- into [out]. */
-    fun writeContext(out: FloatArray) {
-        out[0] = alpha
-        out[1] = transform.scaleX
-        out[2] = transform.scaleY
-        out[3] = transform.translateX
-        out[4] = transform.translateY
-        clips.writeTop(out, 5)
-    }
+    fun writeContext(out: FloatArray) = clips.writeTop(out, transform.writeTo(out, alpha))
 
-    fun reset() {
+    /**
+     * Starts a paint. [retaining] keeps the last paint's base output readable through
+     * [RetainedOutput.previous] for this one (#1512 stage e), instead of clearing it.
+     */
+    fun reset(retaining: Boolean = false) {
+        if (retaining) retained.swap()
+        output = retained.current
         output.clear()
         layers.clear()
         clips.reset()
@@ -613,7 +574,7 @@ internal class PaintScope :
         shape: Shape,
         drawContent: () -> Unit,
     ) {
-        unretainable++
+        retained.unretainable++
         val layerId = nextLayerId++
         val layerX = originX
         val layerY = originY
@@ -726,11 +687,9 @@ internal class PaintScope :
         output = layerOutput
         val enclosingAlpha = this.alpha
         this.alpha = 1f
-        layerDepth++
         try {
             clips.withIsolatedLayerClips { transform.withIdentity(drawContent) }
         } finally {
-            layerDepth--
             this.alpha = enclosingAlpha
             output = parentOutput
         }
@@ -764,7 +723,7 @@ internal class PaintScope :
         blurRadius: Float,
         rotationDegrees: Float,
     ) {
-        unretainable++
+        retained.unretainable++
         val inset = kotlin.math.ceil(blurRadius).toInt().coerceAtLeast(0)
         val layerId = nextLayerId++
         layers += GraphicsLayerFrame(
@@ -797,12 +756,12 @@ internal class PaintScope :
         // Pivot is the node's own centre, in the untransformed coordinates `enter` resolved -- so a
         // nested scale pivots about where its node actually sits, not about where an outer scale
         // moved it to.
-        if (scaleX != 1f || scaleY != 1f) placementBound++
+        if (scaleX != 1f || scaleY != 1f) retained.placementBound++
         transform.withScale(scaleX, scaleY, originX + width / 2f, originY + height / 2f, block)
     }
 
     override fun translate(left: Float, top: Float, block: () -> Unit) {
-        if (left != 0f || top != 0f) placementBound++
+        if (left != 0f || top != 0f) retained.placementBound++
         transform.withTranslation(left, top, block)
     }
 
@@ -1026,7 +985,6 @@ internal class PaintScope :
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
         val scalarScale = minOf(transform.scaleX, transform.scaleY)
-        if (path != null) placementBound++
         val placedPath = path?.transform(
             scaleX = transform.scaleX,
             scaleY = transform.scaleY,
@@ -1141,7 +1099,6 @@ internal class PaintScope :
      * worked. Clip primitives carry no colour and pass through by definition.
      */
     override fun drawPath(path: DrawPath, color: Color) {
-        placementBound++
         // The same mapping every other helper applies, expressed once against the path's own
         // transform: node origin first, then the scope's scale.
         val placed = path.transform(
@@ -1177,7 +1134,6 @@ internal class PaintScope :
     }
 
     override fun drawStrokedPath(path: DrawPath, stroke: DrawStroke, color: Color) {
-        placementBound++
         val placed = path.transform(
             scaleX = transform.scaleX,
             scaleY = transform.scaleY,
@@ -1189,7 +1145,6 @@ internal class PaintScope :
     }
 
     override fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle?, block: () -> Unit) {
-        placementBound++
         val tx = transform.mapX(originX)
         val ty = transform.mapY(originY)
         val placed = path.transform(
@@ -1210,12 +1165,12 @@ internal class PaintScope :
     }
 
     override fun unclipped(block: () -> Unit) {
-        if (clips.depth > 0) unretainable++
+        if (clips.depth > 0) retained.unretainable++
         clips.unclipped(output, block)
     }
 
     override fun emit(primitive: UiDrawPrimitive) {
-        placementBound++
+        retained.placementBound++
         output += if (alpha >= 1f) primitive else primitive.dimmedBy(alpha)
     }
 }
@@ -1313,10 +1268,18 @@ private class DrawTransformState {
     var scaleY = 1f
         private set
 
-    var translateX = 0f
-        private set
-    var translateY = 0f
-        private set
+    private var translateX = 0f
+    private var translateY = 0f
+
+    /** Writes [alpha], then scale and translation, into [out]: what a retained range was drawn under. Returns the next index. */
+    fun writeTo(out: FloatArray, alpha: Float): Int {
+        out[0] = alpha
+        out[1] = scaleX
+        out[2] = scaleY
+        out[3] = translateX
+        out[4] = translateY
+        return 5
+    }
 
     /** True when the transform only moves things by whole pixels, so nothing is resampled. */
     val isWholePixelTranslation: Boolean
@@ -1416,7 +1379,7 @@ private class ClipStackState {
     private val savedBoundsByDepth = ArrayList<ArrayList<Rectangle>>()
     private val savedCommandsByDepth = ArrayList<ArrayList<UiDrawPrimitive>>()
     private var unclippedDepth = 0
-    private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
+    private val fullClip = NoClipRect
 
     fun reset() {
         clipStack.clear()
@@ -1424,8 +1387,6 @@ private class ClipStackState {
     }
 
     val depth: Int get() = clipStack.size
-
-    fun isNoClip(rect: Rectangle): Boolean = rect === fullClip
 
     /** Writes the depth and the active clip rect (zeros when unclipped) into [out] from [offset]. */
     fun writeTop(out: FloatArray, offset: Int) {
@@ -1550,6 +1511,9 @@ private class ClipStackState {
  * size limit, the smallest a backend here guarantees.
  */
 private const val MAX_LAYER_TARGET_SIZE = 8192
+
+/** What a clip pop restores when nothing encloses it: every clip stack's "no clip", one instance. */
+internal val NoClipRect = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
 private const val HALF_CIRCLE_DEGREES = 180f
 private const val HALF_EXTENT = 0.5f
 

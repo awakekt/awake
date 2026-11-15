@@ -73,7 +73,7 @@ class Painter {
             scope.reset()
             retainedDraw?.skipPaint()
         } else {
-            scope.resetRetaining()
+            scope.reset(retaining = true)
             retaining.beginPaint(reuse)
         }
         paintNode(root)

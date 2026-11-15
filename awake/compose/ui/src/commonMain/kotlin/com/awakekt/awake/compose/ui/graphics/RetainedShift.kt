@@ -5,30 +5,70 @@
  */
 package com.awakekt.awake.compose.ui.graphics
 
-import com.awakekt.awake.compose.ui.graphics.drawscope.PaintScope
+import com.awakekt.awake.compose.ui.graphics.drawscope.NoClipRect
+import com.awakekt.awake.compose.ui.graphics.drawscope.RetainedOutput
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.math.abs
 import kotlin.math.floor
 
 // Moving a retained range (#1512 stage e): a copy is made only where it is bit-identical to a fresh paint.
 
+/** Whether every primitive of the last paint's `[start, end)` moves by ([dx], [dy]) exactly as a fresh paint would place it. */
+internal fun RetainedOutput.shiftsExactly(start: Int, end: Int, dx: Float, dy: Float): Boolean {
+    var exact = true
+    var i = start
+    while (exact && i < end) {
+        exact = previous(i).shiftsExactly(dx, dy)
+        i++
+    }
+    return exact
+}
+
 /** Whether this primitive, painted at a whole-pixel origin, moves by ([dx], [dy]) exactly as a fresh paint would place it. */
-internal fun UiDrawPrimitive.shiftsExactly(dx: Float, dy: Float, scope: PaintScope): Boolean = when (this) {
-    is DrawCommand.Quad -> transform == null && exact(x, dx) && exact(y, dy)
-    is DrawCommand.RoundedQuad -> transform == null && exact(x, dx) && exact(y, dy)
-    is DrawCommand.Glyph -> transform == null && exact(x, dx) && exact(y, dy)
-    is DrawCommand.GradientQuad -> exact(x, dx) && exact(y, dy)
-    is DrawCommand.ShadowQuad -> exact(x, dx) && exact(y, dy)
-    is DrawCommand.Texture -> transform == null && exact(x, dx) && exact(y, dy)
-    is DrawCommand.ClipPush -> wholeRect(rect.x, rect.y, rect.width, rect.height)
-    is DrawCommand.ClipPop -> scope.isNoClip(restoreRect) ||
-        wholeRect(restoreRect.x, restoreRect.y, restoreRect.width, restoreRect.height)
-    else -> false
+internal fun UiDrawPrimitive.shiftsExactly(dx: Float, dy: Float): Boolean = when (this) {
+    is DrawCommand.ClipPush -> rect.isWholePixels()
+    is DrawCommand.ClipPop -> restoreRect === NoClipRect || restoreRect.isWholePixels()
+    else -> {
+        val x = originX()
+        val y = originY()
+        // Paths, meshes and backdrops carry absolute positions a plain shift does not reproduce: no origin.
+        !x.isNaN() && gpuTransform() == null && exact(x, dx) && exact(y, dy)
+    }
+}
+
+// NaN rather than null for "no origin": a `Float?` would box once per primitive per frame.
+private fun UiDrawPrimitive.originX(): Float = when (this) {
+    is DrawCommand.Quad -> x
+    is DrawCommand.RoundedQuad -> x
+    is DrawCommand.Glyph -> x
+    is DrawCommand.GradientQuad -> x
+    is DrawCommand.ShadowQuad -> x
+    is DrawCommand.Texture -> x
+    else -> Float.NaN
+}
+
+private fun UiDrawPrimitive.originY(): Float = when (this) {
+    is DrawCommand.Quad -> y
+    is DrawCommand.RoundedQuad -> y
+    is DrawCommand.Glyph -> y
+    is DrawCommand.GradientQuad -> y
+    is DrawCommand.ShadowQuad -> y
+    is DrawCommand.Texture -> y
+    else -> Float.NaN
+}
+
+private fun UiDrawPrimitive.gpuTransform(): Any? = when (this) {
+    is DrawCommand.Quad -> transform
+    is DrawCommand.RoundedQuad -> transform
+    is DrawCommand.Glyph -> transform
+    is DrawCommand.Texture -> transform
+    else -> null
 }
 
 /** This primitive moved by ([dx], [dy]); only for one [shiftsExactly] accepted. */
-internal fun UiDrawPrimitive.shifted(dx: Float, dy: Float, scope: PaintScope): UiDrawPrimitive = when (this) {
+internal fun UiDrawPrimitive.shifted(dx: Float, dy: Float): UiDrawPrimitive = when (this) {
     is DrawCommand.Quad -> copy(x = x + dx, y = y + dy)
     is DrawCommand.RoundedQuad -> copy(x = x + dx, y = y + dy)
     is DrawCommand.Glyph -> copy(x = x + dx, y = y + dy)
@@ -36,7 +76,7 @@ internal fun UiDrawPrimitive.shifted(dx: Float, dy: Float, scope: PaintScope): U
     is DrawCommand.ShadowQuad -> copy(x = x + dx, y = y + dy)
     is DrawCommand.Texture -> copy(x = x + dx, y = y + dy)
     is DrawCommand.ClipPush -> copy(rect = rect.copy(x = rect.x + dx, y = rect.y + dy))
-    is DrawCommand.ClipPop -> if (scope.isNoClip(restoreRect)) this else copy(restoreRect = restoreRect.copy(x = restoreRect.x + dx, y = restoreRect.y + dy))
+    is DrawCommand.ClipPop -> if (restoreRect === NoClipRect) this else copy(restoreRect = restoreRect.copy(x = restoreRect.x + dx, y = restoreRect.y + dy))
     else -> error("$this does not shift")
 }
 
@@ -51,18 +91,21 @@ internal fun UiDrawPrimitive.shifted(dx: Float, dy: Float, scope: PaintScope): U
  * would have survived.
  */
 internal fun exact(v: Float, d: Float): Boolean {
-    if (d == 0f) return true
     val moved = v + d
-    if (abs(v) >= EXACT_LIMIT || abs(moved) >= EXACT_LIMIT) return false
     val before = v.toRawBits()
     val after = moved.toRawBits()
-    if (v == floor(v)) return v == 0f || (after ushr MANTISSA_BITS) and EXPONENT_MASK >= (before ushr MANTISSA_BITS) and EXPONENT_MASK
-    return before ushr MANTISSA_BITS == after ushr MANTISSA_BITS && before and MANTISSA_MASK != 0 && after and MANTISSA_MASK != 0
+    val inRange = abs(v) < EXACT_LIMIT && abs(moved) < EXACT_LIMIT
+    val sameSpacing = if (v == floor(v)) {
+        v == 0f || (after ushr MANTISSA_BITS) and EXPONENT_MASK >= (before ushr MANTISSA_BITS) and EXPONENT_MASK
+    } else {
+        before ushr MANTISSA_BITS == after ushr MANTISSA_BITS && before and MANTISSA_MASK != 0 && after and MANTISSA_MASK != 0
+    }
+    return d == 0f || (inRange && sameSpacing)
 }
 
 /** Clip rects are intersected afresh each paint, so only whole-pixel ones are known to move exactly. */
-private fun wholeRect(x: Float, y: Float, w: Float, h: Float): Boolean =
-    x == floor(x) && y == floor(y) && w == floor(w) && h == floor(h) && abs(x) < EXACT_LIMIT && abs(y) < EXACT_LIMIT
+private fun Rectangle.isWholePixels(): Boolean =
+    x == floor(x) && y == floor(y) && width == floor(width) && height == floor(height) && abs(x) < EXACT_LIMIT && abs(y) < EXACT_LIMIT
 
 private const val MANTISSA_BITS = 23
 private const val MANTISSA_MASK = 0x7FFFFF

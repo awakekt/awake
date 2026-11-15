@@ -35,9 +35,41 @@ internal class RetainedDrawRecord {
     var linkBounds = IntArray(0)
     var checkedPaint = NEVER
     var unchanged = false
-    var layerMark = 0
     var unretainableMark = 0
     var placementMark = 0
+
+    /** Records where [node] sits relative to its parent, which the parent's own record compares next. */
+    fun recordOffset(node: LayoutNode) {
+        val parent = node.parent
+        relX = node.absoluteX - (parent?.absoluteX ?: 0)
+        relY = node.absoluteY - (parent?.absoluteY ?: 0)
+    }
+
+    /** Records [node]'s size and each draw link's rect, using [bounds] as scratch. */
+    fun recordGeometry(node: LayoutNode, bounds: IntArray) {
+        width = node.width
+        height = node.height
+        childCount = node.children.size
+        val links = node.drawDepths.size
+        if (linkBounds.size != links * 4) linkBounds = IntArray(links * 4)
+        for (i in 0 until links) {
+            node.drawBoundsAt(node.drawDepths[i], bounds)
+            bounds.copyInto(linkBounds, i * 4)
+        }
+    }
+
+    /** Whether nothing [node]'s own draw links depend on changed: their reads, its size, their rects. */
+    fun ownInputsMatch(node: LayoutNode, bounds: IntArray): Boolean {
+        val links = node.drawDepths.size
+        var same = reads?.isInvalid != true && node.width == width && node.height == height && linkBounds.size == links * 4
+        var i = 0
+        while (same && i < links) {
+            node.drawBoundsAt(node.drawDepths[i], bounds)
+            for (k in 0 until 4) same = same && bounds[k] == linkBounds[i * 4 + k]
+            i++
+        }
+        return same
+    }
 }
 
 /**
@@ -72,26 +104,37 @@ internal class RetainedDraw(private val scope: PaintScope) {
 
     /** Appends [node]'s last output if nothing it depends on changed, and returns whether it did. */
     fun replay(node: LayoutNode): Boolean {
-        val record = node.retainedDraw ?: return false
-        if (!reuse || !record.cacheable || record.paint != paint - 1 || scope.insideLayer) return false
+        val record = node.retainedDraw
+        val replays = record != null && replayable(node, record)
+        if (replays) copy(node, checkNotNull(record))
+        return replays
+    }
+
+    private fun replayable(node: LayoutNode, record: RetainedDrawRecord): Boolean {
+        val current = reuse && record.cacheable && record.paint == paint - 1
+        if (!current || scope.insideLayer) return false
         scope.writeContext(context)
-        if (!context.contentEquals(record.context)) return false
+        val dx = (node.absoluteX - record.absX).toFloat()
+        val dy = (node.absoluteY - record.absY).toFloat()
+        val moved = dx != 0f || dy != 0f
+        val movable = !moved || (record.translatable && isPlainContext(context))
+        return context.contentEquals(record.context) && movable && unchanged(node) &&
+            (!moved || scope.retained.shiftsExactly(record.start, record.end, dx, dy))
+    }
+
+    private fun copy(node: LayoutNode, record: RetainedDrawRecord) {
         val dx = node.absoluteX - record.absX
         val dy = node.absoluteY - record.absY
         val moved = dx != 0 || dy != 0
-        if (moved && !(record.translatable && isPlainContext(context))) return false
-        if (!unchanged(node)) return false
-        if (moved && !shiftsExactly(record, dx.toFloat(), dy.toFloat())) return false
-        val start = scope.size
+        val output = scope.retained
+        val start = output.size
         for (i in record.start until record.end) {
-            val primitive = scope.previous(i)
-            scope.append(if (moved) primitive.shifted(dx.toFloat(), dy.toFloat(), scope) else primitive)
+            val primitive = output.previous(i)
+            output.append(if (moved) primitive.shifted(dx.toFloat(), dy.toFloat()) else primitive)
         }
         rebase(node, start - record.start, dx, dy)
-        // Where the output now sits relative to the parent, which a parent's own record compares next.
-        recordOffsetFromParent(node, record)
+        record.recordOffset(node)
         replayed++
-        return true
     }
 
     /**
@@ -121,10 +164,9 @@ internal class RetainedDraw(private val scope: PaintScope) {
         if (scope.insideLayer) return false
         val record = node.retainedDraw ?: RetainedDrawRecord().also { node.retainedDraw = it }
         scope.writeContext(record.context)
-        record.start = scope.size
-        record.layerMark = scope.layerCount
-        record.unretainableMark = scope.unretainable
-        record.placementMark = scope.placementBound
+        record.start = scope.retained.size
+        record.unretainableMark = scope.retained.unretainable
+        record.placementMark = scope.retained.placementBound
         record.paint = NEVER
         if (node.drawModifiers.isEmpty()) {
             record.reads = null
@@ -147,70 +189,39 @@ internal class RetainedDraw(private val scope: PaintScope) {
         }
         record.checkedPaint = NEVER
         if (!complete) return
-        record.end = scope.size
+        record.end = scope.retained.size
         record.paint = paint
-        record.cacheable = scope.layerCount == record.layerMark && scope.unretainable == record.unretainableMark
-        record.translatable = scope.placementBound == record.placementMark
+        record.cacheable = scope.retained.unretainable == record.unretainableMark
+        record.translatable = scope.retained.placementBound == record.placementMark
         record.absX = node.absoluteX
         record.absY = node.absoluteY
-        recordOffsetFromParent(node, record)
-        record.width = node.width
-        record.height = node.height
-        record.childCount = node.children.size
-        val links = node.drawDepths.size
-        if (record.linkBounds.size != links * 4) record.linkBounds = IntArray(links * 4)
-        for (i in 0 until links) {
-            node.drawBoundsAt(node.drawDepths[i], bounds)
-            bounds.copyInto(record.linkBounds, i * 4)
-        }
-    }
-
-    private fun recordOffsetFromParent(node: LayoutNode, record: RetainedDrawRecord) {
-        val parent = node.parent
-        record.relX = node.absoluteX - (parent?.absoluteX ?: 0)
-        record.relY = node.absoluteY - (parent?.absoluteY ?: 0)
+        record.recordOffset(node)
+        record.recordGeometry(node, bounds)
     }
 
     /** Whether nothing in [node]'s subtree changed since its record, checked once per paint. */
     private fun unchanged(node: LayoutNode): Boolean {
         val record = node.retainedDraw ?: return false
-        if (record.checkedPaint == paint) return record.unchanged
-        record.checkedPaint = paint
-        record.unchanged = record.paint != NEVER && record.cacheable && ownInputsUnchanged(node, record) && childrenUnchanged(node, record)
-        return record.unchanged
-    }
-
-    private fun ownInputsUnchanged(node: LayoutNode, record: RetainedDrawRecord): Boolean {
-        if (record.reads?.isInvalid == true) return false
-        if (node.width != record.width || node.height != record.height) return false
-        val links = node.drawDepths.size
-        if (record.linkBounds.size != links * 4) return false
-        for (i in 0 until links) {
-            node.drawBoundsAt(node.drawDepths[i], bounds)
-            for (k in 0 until 4) if (bounds[k] != record.linkBounds[i * 4 + k]) return false
+        if (record.checkedPaint != paint) {
+            record.checkedPaint = paint
+            record.unchanged = record.paint != NEVER && record.cacheable &&
+                record.ownInputsMatch(node, bounds) && childrenUnchanged(node, record)
         }
-        return true
+        return record.unchanged
     }
 
     private fun childrenUnchanged(node: LayoutNode, record: RetainedDrawRecord): Boolean {
         val children = node.children
-        if (children.size != record.childCount) return false
-        for (i in 0 until children.size) {
+        var same = children.size == record.childCount
+        var i = 0
+        while (same && i < children.size) {
             val child = children[i]
-            val childRecord = child.retainedDraw ?: return false
-            if (child.absoluteX - node.absoluteX != childRecord.relX) return false
-            if (child.absoluteY - node.absoluteY != childRecord.relY) return false
-            if (!unchanged(child)) return false
+            val childRecord = child.retainedDraw
+            same = childRecord != null && child.absoluteX - node.absoluteX == childRecord.relX &&
+                child.absoluteY - node.absoluteY == childRecord.relY && unchanged(child)
+            i++
         }
-        return true
-    }
-
-    /** Whether every primitive of [record]'s range moves by ([dx], [dy]) exactly as a fresh paint would place it. */
-    private fun shiftsExactly(record: RetainedDrawRecord, dx: Float, dy: Float): Boolean {
-        for (i in record.start until record.end) {
-            if (!scope.previous(i).shiftsExactly(dx, dy, scope)) return false
-        }
-        return true
+        return same
     }
 }
 
