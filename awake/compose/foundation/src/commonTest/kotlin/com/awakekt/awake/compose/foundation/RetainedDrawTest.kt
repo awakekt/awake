@@ -42,6 +42,7 @@ class RetainedDrawTest {
         it.skipUnchangedMeasure = true
         it.retainUnchangedDraw = true
     }
+
     // Off explicitly, so the reference composes, measures and draws every frame whatever the defaults.
     private val reference = ComposeHost().also {
         it.skipUnchangedComposition = false
