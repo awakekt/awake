@@ -28,7 +28,8 @@ import kotlin.test.assertTrue
 
 /**
  * A camera moving over a shadowed scene re-records retained bundles every frame, and once the
- * pass's pool of argument buffers is warm it creates no GPU buffer to do so (#1555).
+ * pass's pool of argument buffers is warm it creates no GPU buffer to do so (#1555): no argument
+ * buffer, instance buffer or per-draw uniform slot.
  *
  * Each buffer created is a new wgpu4k `Buffer`, whose web wrapper builds a logger by capturing and
  * parsing a JS stack trace: before, every re-recorded cell created one, 1.75 a frame at 1,000 draws
@@ -70,11 +71,16 @@ class BundleArgsPoolTest {
         println("Warm-up created ${bundles.counts.argsBuffersCreated} argument buffers for ${bundles.counts.encoded} bundles")
         val encoded = bundles.counts.encoded
         val created = bundles.counts.argsBuffersCreated
+        val sites = (renderer as Renderer).bufferPools.creations
+        val instanceBuffers = sites.instanceBuffers
+        val uniformSlots = sites.uniformSlots
 
         repeat(FRAMES) { frame(it) }
 
         assertTrue(bundles.counts.encoded - encoded > FRAMES / 2, "the moving camera keeps re-recording cells, or this proves nothing")
         assertEquals(0L, bundles.counts.argsBuffersCreated - created, "argument buffers created over $FRAMES frames")
+        assertEquals(0L, sites.instanceBuffers - instanceBuffers, "instance buffers created over $FRAMES frames")
+        assertEquals(0L, sites.uniformSlots - uniformSlots, "uniform slots created over $FRAMES frames")
         meshes.forEach { it.destroy() }
         materials.forEach { it.destroy() }
         target.destroy()

@@ -54,7 +54,10 @@ internal class GpuBufferPoolManager(
         DynamicMesh(graphicsDevice, 1, DynamicMesh.IMAGE_PASS_FLOATS_PER_VERTEX)
     }
 
-    private val instanceBufferPool = GpuResourcePool { InstanceBuffer(graphicsDevice) }
+    /** Buffers the draw path created, by site: a warm frame creates none (#1555). */
+    val creations = GpuBufferCreations()
+
+    private val instanceBufferPool = GpuResourcePool { InstanceBuffer(graphicsDevice, creations = creations) }
     private val skinnedInstanceBufferPool = GpuResourcePool { SkinnedInstanceBuffer(graphicsDevice) }
     private val alphaInstanceBufferPool = GpuResourcePool { AlphaInstanceBuffer(graphicsDevice) }
     private val frameInstanceBufferPool = GpuResourcePool { FrameInstanceBuffer(graphicsDevice) }
@@ -106,6 +109,7 @@ internal class GpuBufferPoolManager(
                 (MaterialUniformLayouts.LitShadow.total * Float.SIZE_BYTES).toLong(),
             )
             val device = graphicsDevice.wgpuContext.device
+            creations.uniformSlots += 1
             val buffer = device.createBuffer(
                 BufferDescriptor(
                     size = byteSize.toULong(),
