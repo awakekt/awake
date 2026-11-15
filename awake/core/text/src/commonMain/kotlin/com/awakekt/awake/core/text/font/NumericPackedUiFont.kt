@@ -98,6 +98,8 @@ private class NumericPackedUiFont(
     override val atlasWidth: Int = base.atlasWidth
     override val atlasHeight: Int = base.atlasHeight
     override val atlasPixelsRgba: ByteArray get() = base.atlasPixelsRgba
+
+    override fun releaseAtlasPixels() = base.releaseAtlasPixels()
     override val distanceFieldRangePx: Float = base.distanceFieldRangePx
     override val effectFieldRangePx: Float = base.effectFieldRangePx
     override val lineHeightEm: Float = base.lineHeightEm

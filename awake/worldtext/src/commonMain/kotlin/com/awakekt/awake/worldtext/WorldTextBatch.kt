@@ -114,6 +114,8 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
 
     private fun materialFor(font: UiFont): Material = materials.getOrPut(font) {
         renderer.createMaterial(WorldTextUniformLayout, texture = TextureAsset(font.atlasPixelsRgba, font.atlasWidth, font.atlasHeight))
+            // The material's texture has the atlas now: a font that can build its pixels again need not keep them.
+            .also { font.releaseAtlasPixels() }
     }
 
     private class Upload {
