@@ -37,6 +37,9 @@ import kotlin.test.assertEquals
  * Measured on main: the model once, as the prewarm and spawns share its load, but the `.bin` and the image
  * 3 times each, one read per stage of that one load. A game whose effects share sidecar files multiplies
  * that by the models sharing them.
+ *
+ * On the JVM: what it counts is the common loader's reads, and the browser test host serves no Basis
+ * Universal transcoder, which changes how the image is read there, not how often the model loads.
  */
 class HeldPrewarmReadsTest {
     private val reads = mutableListOf<String>()
