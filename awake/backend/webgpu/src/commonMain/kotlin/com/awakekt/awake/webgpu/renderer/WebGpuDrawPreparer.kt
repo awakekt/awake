@@ -12,7 +12,6 @@ import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.MaterialBinding
-import com.awakekt.awake.render.command.toGpuResolvedDraw
 import com.awakekt.awake.render.passes.FrameUniformInputs
 import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.AlphaMode
@@ -97,14 +96,13 @@ internal class WebGpuDrawPreparer(
             edgePipeline = edgePipeline,
             frameVersion = frameVersion,
         ) ?: return null
-        val resolved = draw.toGpuResolvedDraw()
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
-        if (edgePipeline != null) return resolved
+        if (edgePipeline != null) return draw.resolved()
         // A renderer may request camera-space depth, or a mask, without requesting shadow cascades.
         // The resolved packet still needs a depth pipeline and material binding for that pass; one
         // group serves every depth pass, whose group-0 layouts are the same.
         val depthFeature = renderer.depthPrePass ?: renderer.sceneDepthPass ?: renderer.maskPass
-        val format = draw.vertexFormat ?: return resolved
+        val format = draw.vertexFormat ?: return draw.resolved()
         val depthKey = request.depthRenderKey()
         val depthPipeline = depthFeature?.pipelineFor(depthKey, format)
         val sourceMaterial = request.material as? com.awakekt.awake.webgpu.material.Material
@@ -113,7 +111,7 @@ internal class WebGpuDrawPreparer(
         // A masked caster casts through its texture, so it needs one.
         val canCast = request.alphaMode != AlphaMode.Masked || sourceMaterial?.hasTexture == true
         if (depthPipeline == null || sourceMaterial == null || !canCast) {
-            return resolved.copy(depthRenderKey = depthKey)
+            return draw.resolved(depthRenderKey = depthKey)
         }
         val depthMaterial = depthMaterialBinding(request, draw, depthKey, depthFeature, depthPipeline, sourceMaterial)
         val depthPalette = if (depthKey.kind == DepthCasterKind.SkinnedInstanced) {
@@ -121,7 +119,7 @@ internal class WebGpuDrawPreparer(
         } else {
             null
         }
-        return resolved.copy(
+        return draw.resolved(
             depthRenderKey = depthKey,
             alphaCutoff = request.alphaCutoff,
             depthPipeline = depthPipeline.handle,
