@@ -6,7 +6,10 @@
 package com.awakekt.awake.scene.rendering.light
 
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.containsSphere
+import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.firstOrNull
 import com.awakekt.awake.ecs.singleOrNull
@@ -69,6 +72,10 @@ internal class SceneLightingCompiler(
         pointLights.clear()
         pointShadows.clear()
         val pointShadowsEnabled = world.debugSettingsOrNull()?.shadowsEnabledOverride != false
+        // A point light lights nothing past its range (its falloff reaches zero there), so one whose
+        // range misses this view's frustum changes no pixel of it and its shadow faces are not drawn:
+        // a canvas view's portrait far from the world drew every lamp's six faces (#1621).
+        val view = Frustum.planes(camera.lens, viewportAspect)
         world.family<Light>().forEach { entity, light ->
             when (light.type) {
                 Light.Type.Directional -> if (directional == null) {
@@ -88,6 +95,7 @@ internal class SceneLightingCompiler(
 
                 Light.Type.Point -> {
                     val transform = world.get<Transform>(entity) ?: return@forEach
+                    if (!view.containsSphere(transform.position, light.range)) return@forEach
                     val shadowBaseLayer = if (
                         pointShadowsEnabled &&
                         pointShadows.size < MAX_POINT_LIGHTS &&
