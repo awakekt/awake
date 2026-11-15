@@ -39,6 +39,12 @@ import kotlin.test.assertTrue
  * the default path. With it on, a frame of this content is 221,482 B whether the anchors move or
  * not, and [STILL_SKIP_CEILING_BYTES] is that plus the same 2.7% headroom.
  *
+ * `ComposeHost.skipUnchangedMeasure` (the placement-only path) also skips measuring a frame whose
+ * composition was skipped and whose measure reads did not change. The anchors move at placement and
+ * stay visible, so a moving frame is placement, position resolution and paint: 190,906 B against
+ * 221,483 B (-14%), identical in three runs, and about 0.25 against 0.36 ms (time is not asserted).
+ * [MOVING_PLACEMENT_ONLY_CEILING_BYTES] is that plus the same 2.7% headroom.
+ *
  * **Each later step of #1512 lowers [CEILING_BYTES]** to the new measurement plus the same headroom;
  * a step that does not lower it did not save allocation.
  *
@@ -93,9 +99,26 @@ class NameplateAllocationGateTest {
         )
     }
 
-    private fun measure(skip: Boolean, moving: Boolean): Long {
+    /**
+     * Anchors moving with measuring skipped too (#1512, the placement-only path). The anchors move at
+     * placement and stay visible, so no frame after the first measures: the frame is placement,
+     * position resolution and paint. [MOVING_PLACEMENT_ONLY_CEILING_BYTES] is the measurement plus the
+     * same 2.7% headroom. Before the placement-only path the same frames measured and cost what
+     * [STILL_SKIP_CEILING_BYTES] allows.
+     */
+    @Test
+    fun movingFramesThatOnlyPlaceCostLessThanSkippingCompositionAlone() {
+        val perFrame = measure(skip = true, moving = true, skipMeasure = true)
+        assertTrue(
+            perFrame <= MOVING_PLACEMENT_ONLY_CEILING_BYTES,
+            "a moving frame that only places allocated $perFrame B, over the $MOVING_PLACEMENT_ONLY_CEILING_BYTES B ceiling",
+        )
+    }
+
+    private fun measure(skip: Boolean, moving: Boolean, skipMeasure: Boolean = false): Long {
         val host = ComposeHost()
         host.skipUnchangedComposition = skip
+        host.skipUnchangedMeasure = skipMeasure
         var tick = 0
 
         fun frame() {
@@ -110,8 +133,9 @@ class NameplateAllocationGateTest {
         val perFrame = (allocatedBytes() - before) / FRAMES
         val millis = (System.nanoTime() - start) / 1e6 / FRAMES
         println(
-            "NameplateAllocationGate: skip=$skip moving=$moving $perFrame B/frame, ${"%.3f".format(millis)} ms/frame, " +
-                "skipped ${host.skippedCompositions} of ${WARMUP + FRAMES}",
+            "NameplateAllocationGate: skip=$skip moving=$moving skipMeasure=$skipMeasure $perFrame B/frame, " +
+                "${"%.3f".format(millis)} ms/frame, skipped ${host.skippedCompositions} compositions and " +
+                "${host.skippedMeasures} measures of ${WARMUP + FRAMES}",
         )
         return perFrame
     }
@@ -138,5 +162,6 @@ class NameplateAllocationGateTest {
         const val FRAMES = 400
         const val CEILING_BYTES = 435_000
         const val STILL_SKIP_CEILING_BYTES = 227_500
+        const val MOVING_PLACEMENT_ONLY_CEILING_BYTES = 196_000
     }
 }

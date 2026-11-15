@@ -8,6 +8,7 @@
 package com.awakekt.awake.compose.game
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.PolledState
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
@@ -66,7 +67,9 @@ class AnchorPoint(surfaceWidth: Int = 0, surfaceHeight: Int = 0) {
 /**
  * Reports where a world-following child belongs. The layout asks while it places the child, once
  * for each frame the child is laid out, so the position can change every frame without the content
- * composing or measuring again for it.
+ * composing or measuring again for it. Measuring asks only whether the child shows: with
+ * `ComposeHost.skipUnchangedMeasure` on, the host asks that again before each frame and measures
+ * only when the answer changed, so a moving anchor that stays visible is placed and never measured.
  *
  * It must not allocate: it runs for every anchored child every frame. A provider that projects a
  * world position fills [AnchorPoint] from its camera; the layout knows nothing of scenes.
@@ -106,7 +109,12 @@ fun WorldAnchorLayout(
 
 private object WorldAnchorNodeType
 
-/** Measures and places anchored children; one is kept per layout so measuring reuses its scratch. */
+/**
+ * Measures and places anchored children; one is kept per layout so measuring reuses its scratch.
+ *
+ * The placeables stay in `placeables` after placing, because a host that skips measuring places the
+ * tree again from the last measure's block (#1512).
+ */
 private class WorldAnchorPolicy : MeasurePolicy {
     private val point = AnchorPoint()
     private var placeables = arrayOfNulls<Placeable>(INITIAL)
@@ -120,24 +128,17 @@ private class WorldAnchorPolicy : MeasurePolicy {
         val height = constraints.constrainHeight(constraints.maxHeight)
         val placeables = placeables
         for (i in 0 until count) {
-            val provider = measurables[i].anchorProvider()
-            placeables[i] = measurables[i].measure(if (provider != null && !visible(provider, width, height)) hidden else free)
+            val shown = measurables[i].anchorData()?.shown
+            placeables[i] = measurables[i].measure(if (shown != null && !shown.on(width, height).value) hidden else free)
         }
+        for (i in count until placeables.size) placeables[i] = null
         return layout(width, height) { place(measurables, count, width, height) }
-    }
-
-    /** Whether the provider shows its child, read for sizing; placement reads it again for the position. */
-    private fun visible(provider: AnchorProvider, width: Int, height: Int): Boolean {
-        point.reset(width, height)
-        provider.anchor(point)
-        return point.visible
     }
 
     private fun place(measurables: List<Measurable>, count: Int, width: Int, height: Int) {
         val placeables = placeables
         for (i in 0 until count) {
             val placeable = placeables[i] ?: continue
-            placeables[i] = null
             placeAnchored(placeable, measurables[i].anchorProvider(), width, height)
         }
     }
@@ -168,9 +169,36 @@ private class WorldAnchorPolicy : MeasurePolicy {
     }
 }
 
-private fun Measurable.anchorProvider(): AnchorProvider? = (parentData as? AnchorParentData)?.provider
+private fun Measurable.anchorData(): AnchorParentData? = parentData as? AnchorParentData
 
-private class AnchorParentData(val provider: AnchorProvider)
+private fun Measurable.anchorProvider(): AnchorProvider? = anchorData()?.provider
+
+private class AnchorParentData(val provider: AnchorProvider) {
+    val shown = AnchorShown(provider)
+}
+
+/**
+ * Whether [provider] shows its child on a surface of the size last given to [on], as a polled state:
+ * a host that records what measuring read asks it again before the next frame, and measures again
+ * only when the child appeared or hid. It reads the provider, which must not allocate.
+ */
+private class AnchorShown(private val provider: AnchorProvider) : PolledState<Boolean>() {
+    private val point = AnchorPoint()
+    private var surfaceWidth = 0
+    private var surfaceHeight = 0
+
+    fun on(width: Int, height: Int): AnchorShown {
+        surfaceWidth = width
+        surfaceHeight = height
+        return this
+    }
+
+    override fun read(): Boolean {
+        point.reset(surfaceWidth, surfaceHeight)
+        provider.anchor(point)
+        return point.visible
+    }
+}
 
 private class WorldAnchorElement(private val provider: AnchorProvider) : ModifierNodeElement<WorldAnchorNode>() {
     override fun create(): WorldAnchorNode = WorldAnchorNode(provider)

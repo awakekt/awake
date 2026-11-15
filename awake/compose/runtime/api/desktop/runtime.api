@@ -64,6 +64,20 @@ public final class com/awakekt/awake/compose/runtime/MutableState$DefaultImpls {
 	public static fun component2 (Lcom/awakekt/awake/compose/runtime/MutableState;)Lkotlin/jvm/functions/Function1;
 }
 
+public final class com/awakekt/awake/compose/runtime/PhaseReads {
+	public fun <init> ()V
+	public final fun beginPass ()V
+	public final fun forget ()V
+	public final fun invalidate ()V
+	public final fun isInvalid ()Z
+	public final fun pause ()V
+	public final fun resume ()V
+}
+
+public final class com/awakekt/awake/compose/runtime/PhaseReadsKt {
+	public static final fun recording (Lcom/awakekt/awake/compose/runtime/PhaseReads;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
 public abstract class com/awakekt/awake/compose/runtime/PolledState : com/awakekt/awake/compose/runtime/State {
 	public fun <init> ()V
 	public final fun getValue ()Ljava/lang/Object;

@@ -51,12 +51,18 @@ class Composition(
      * new, drops what this pass no longer declares, and returns the composer it ran with.
      *
      * The pass's [State] reads replace the previous pass's. A nested pass -- a subcomposition run
-     * inside this one -- records its reads to its own composition, not this one. A pass that throws
+     * inside this one -- records its reads to its own composition, not this one. A pass run while a
+     * [PhaseReads] records makes that record invalid while this composition is. A pass that throws
      * stays invalid.
      */
     fun reconcile(content: context(Composer) () -> Unit): Composer {
         val enclosing = ReadTracking.current
         reads.beginPass()
+        // A pass run while a host records what measure read ([PhaseReads]), such as a subcomposition,
+        // invalidates that record while it is invalid, and tracks plain holders if the record does.
+        enclosing?.recordNested(reads)
+        val ownTracking = reads.tracksChanges
+        if (enclosing?.tracksChanges == true) reads.tracksChanges = true
         ReadTracking.current = reads
         var completed = false
         try {
@@ -66,6 +72,7 @@ class Composition(
             completed = true
         } finally {
             ReadTracking.current = enclosing
+            reads.tracksChanges = ownTracking
             if (!completed) reads.invalid = true
         }
         return composer

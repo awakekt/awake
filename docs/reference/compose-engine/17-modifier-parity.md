@@ -25,6 +25,9 @@ Added 2026-08-23: `offset` · `aspectRatio` · `widthIn` · `heightIn` · `sizeI
 `onSizeChanged` · `layout {}` · `layoutId` · `clearAndSetSemantics` · `focusTarget` ·
 `onKeyEvent` · `onPreviewKeyEvent`
 
+Added 2026-11-15: `offset { }`, the offset read while placing (#1512), so a node that moves every
+frame need not compose or measure for it.
+
 The core `Modifier` chain also provides Compose's `foldIn`, `foldOut`, `any`, and `all` operations.
 
 Awake-only: `styleable` — see `04-styling-theme.md`. Convergent with Compose's own experimental
