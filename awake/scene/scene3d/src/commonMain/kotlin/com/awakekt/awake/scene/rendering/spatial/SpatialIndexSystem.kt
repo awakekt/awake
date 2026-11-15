@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
+import com.awakekt.awake.scene.rendering.mesh.MeshBoundsFallback
 
 /**
  * Keeps the scene's [SpatialIndex] current, so [RenderSystem3D] can ask which entities are in
@@ -48,10 +49,13 @@ class SpatialIndexSystem : System {
     /** Ids seen this frame, to find the ones the grid still holds and the world no longer has. */
     private val live = HashSet<Int>()
     private val stale = ArrayList<Int>()
+    private val boundsFallback = MeshBoundsFallback()
 
     override fun update(world: World, delta: Float) {
         val grid = (world.findSpatialIndex() ?: install(world)).grid.core
         live.clear()
+        // A renderer added without bounds gets its mesh's here too, before it would be missed.
+        boundsFallback.attach(world)
         world.family<Transform, MeshBounds>().forEach { entity, transform, bounds ->
             live.add(entity.id)
             // Cheap for a still entity, and the only place the transformed box is built for a

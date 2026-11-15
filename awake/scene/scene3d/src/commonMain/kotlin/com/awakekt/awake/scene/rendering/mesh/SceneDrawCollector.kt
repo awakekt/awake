@@ -76,6 +76,9 @@ internal class SceneDrawCollector(
     /** Picks every [LodGroup]'s level once a frame, before any draw reads it. */
     private val lodSelection = LodSelectionPass()
 
+    /** Bounds for a renderer added without them, from its mesh, so it is culled too. */
+    private val boundsFallback = MeshBoundsFallback()
+
     /** An animated texture on an entity with no [PbrMaterial]: glTF's default factors, packed once per animation. */
     private val defaultFactorsByAnimation = HashMap<TextureAnimation, FloatArray>()
 
@@ -91,6 +94,7 @@ internal class SceneDrawCollector(
         beforeMatrices.reset()
         beforeTints.reset()
 
+        boundsFallback.attach(world)
         val resolution = resolve(world)
         val lodStore = world.componentStore<LodGroup>(resolution.lodType)
         val boundsStore = world.componentStore<MeshBounds>(resolution.boundsType)
