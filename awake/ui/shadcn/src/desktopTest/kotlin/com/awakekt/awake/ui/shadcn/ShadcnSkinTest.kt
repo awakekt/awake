@@ -75,16 +75,17 @@ class ShadcnSkinTest {
         ShadcnButton(Modifier.size(24.dp).testTag("b"), size = ShadcnButtonSizeVariant.Icon, enabled = enabled, content = {})
 
     private fun buttonStates(skin: Skin?, density: Float): List<ByteArray> {
-        var enabled = true
+        // State, not a plain var: a host that skips unchanged composition sees only state writes (#1512).
+        val enabled = mutableStateOf(true)
         val session = composeTestSession(width = 24, height = 24, density = density) {
-            themed(skin) { button(enabled) }
+            themed(skin) { button(enabled.value) }
         }
         val mid = (12 * density).toInt()
         val press = FrameInput(24, 24, pointerX = mid, pointerY = mid, pointerDown = true)
         val normal = pixels(session.frame(), 24)
         val hovered = pixels(session.hover("b"), 24)
         val pressed = pixels(session.frame(press), 24)
-        enabled = false
+        enabled.value = false
         return listOf(normal, hovered, pressed, pixels(session.frame(press), 24))
     }
 
