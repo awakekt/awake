@@ -13,8 +13,11 @@ import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.GlyphDecoration
 import com.awakekt.awake.core.graphics2d.TextureRegion
+import com.awakekt.awake.core.graphics2d.TranslatePop
+import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
+import com.awakekt.awake.core.graphics2d.flattened
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.graphics2d.translatedBy
@@ -239,13 +242,22 @@ fun List<UiDrawPrimitive>.rasterize(
 // moment its parameter list reaches five, reproduced with a fifth parameter that is not even read
 // anywhere in the body; the function's own complexity has not changed. Suppressed rather than
 // reshaped around a measurement that does not track what it is meant to.
-@Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
 fun List<UiDrawPrimitive>.rasterizeToPixelMap(
     width: Int,
     height: Int,
     background: Color = Color(0.1f, 0.1f, 0.12f, 1f),
     font: UiFont? = null,
     layers: List<GraphicsLayerFrame> = emptyList(),
+): PixelMap = flattened().rasterizeDrawnToPixelMap(width, height, background, font, layers)
+
+/** [rasterizeToPixelMap] for a list whose translate ranges are already applied. */
+@Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
+private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
+    width: Int,
+    height: Int,
+    background: Color,
+    font: UiFont?,
+    layers: List<GraphicsLayerFrame>,
 ): PixelMap {
     val pixelMap = PixelMap(width, height)
     pixelMap.fill(background)
@@ -1079,6 +1091,9 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
             }
 
             is UiDrawPrimitive.ShadowQuad -> fillShadowQuad(primitive)
+
+            // Applied by flattened() before this walk.
+            is TranslatePush, TranslatePop -> Unit
 
             is UiDrawPrimitive.BackdropBlur -> {
                 val effectiveColor = if (primitive.fallback.a > 0f) {

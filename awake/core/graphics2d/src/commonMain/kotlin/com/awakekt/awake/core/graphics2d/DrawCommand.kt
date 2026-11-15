@@ -557,6 +557,7 @@ fun <T : DrawCommand> T.scaledByAlpha(factor: Float): T {
         )
         is DrawCommand.ClipPathPush,
         is DrawCommand.ClipPush, is DrawCommand.ClipPop,
+        is TranslatePush, TranslatePop,
         -> this
     }
     return res as T
@@ -606,6 +607,11 @@ fun UiDrawPrimitive.translatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (
         path = path?.transform(translateX = dx, translateY = dy),
         transform = transform?.translatedBy(dx, dy),
     )
+    else -> clipTranslatedBy(dx, dy)
+}
+
+/** [translatedBy] for the clips; a translate range's markers stay, its offset moves what is inside it. */
+private fun UiDrawPrimitive.clipTranslatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (this) {
     is UiDrawPrimitive.ClipPathPush -> copy(
         path = path.transform(translateX = dx, translateY = dy),
         boundsRect = boundsRect.translatedBy(dx, dy),
@@ -613,6 +619,7 @@ fun UiDrawPrimitive.translatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (
     )
     is UiDrawPrimitive.ClipPush -> copy(rect = rect.translatedBy(dx, dy))
     is UiDrawPrimitive.ClipPop -> copy(restoreRect = restoreRect.translatedBy(dx, dy))
+    else -> this
 }
 
 private fun DrawTransform.translatedBy(dx: Float, dy: Float) =

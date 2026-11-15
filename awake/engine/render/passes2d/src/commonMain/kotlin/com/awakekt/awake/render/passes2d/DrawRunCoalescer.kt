@@ -19,6 +19,9 @@ import com.awakekt.awake.core.graphics2d.DrawTransform
 import com.awakekt.awake.core.graphics2d.StrokeJoin
 import com.awakekt.awake.core.graphics2d.TexturedTriangleMesh
 import com.awakekt.awake.core.graphics2d.TexturedVertex
+import com.awakekt.awake.core.graphics2d.TranslateOffsets
+import com.awakekt.awake.core.graphics2d.TranslatePop
+import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.TriangleMesh
 import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.core.graphics2d.clipToConvexPaths
@@ -204,6 +207,8 @@ object DrawRunCoalescer {
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
         val safeInteriorRectStack = ArrayDeque<Rectangle?>()
+        // Per call, so a list that ends with a range open cannot move the next frame's.
+        val translation = TranslateOffsets()
         val effectiveContext = if (snapshotSupported) {
             targetContext
         } else {
@@ -250,6 +255,21 @@ object DrawRunCoalescer {
             index += 1
             while (index < nextBoundary && continuesSpan(first, primitives[index])) index += 1
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
+            if (first is TranslatePush || first === TranslatePop) {
+                for (at in runStart until index) {
+                    val marker = primitives[at]
+                    if (marker is TranslatePush) {
+                        translation.push(marker)
+                    } else if (translation.active) {
+                        translation.pop()
+                    }
+                }
+                continue
+            }
+            // A translated span is staged where it was recorded, then moved: never from or into the
+            // retained cache, whose runs are keyed by the primitives and not by where they are drawn.
+            val translated = translation.active
+            if (translated) checkTranslatable(first, activePathClips)
 
             if (first is DrawCommand.BackdropBlur) {
                 @Suppress("UNCHECKED_CAST")
@@ -270,6 +290,7 @@ object DrawRunCoalescer {
             // so include their active context in the retained-span key. Clip commands themselves
             // update state and must always be replayed in emission order.
             val cacheable = retained != null &&
+                !translated &&
                 first !is DrawCommand.ClipPathPush &&
                 first !is DrawCommand.ClipPush &&
                 first !is DrawCommand.ClipPop &&
@@ -290,7 +311,11 @@ object DrawRunCoalescer {
             // next frame, which would corrupt a cache entry holding them. A pooled span whose
             // content repeats from last frame has settled and is built fresh and stored again
             // (#1408), so a span that changed once does not miss forever.
-            val spanPool = if (cacheable && pool != null && pooledMiss(pool, retained)) pool else null
+            val spanPool = when {
+                translated -> pool
+                cacheable && pool != null && pooledMiss(pool, retained) -> pool
+                else -> null
+            }
 
             // Each branch below casts `slice` (a List<DrawCommand>) to the concrete subtype
             // confirmed by the `is` check that opens the branch.  The inner while-loop above
@@ -506,7 +531,10 @@ object DrawRunCoalescer {
                     }
                 }
                 is DrawCommand.BackdropBlur -> Unit
+                // Handled above, before the span is staged.
+                is TranslatePush, TranslatePop -> Unit
             }
+            if (translated) shiftStagedRuns(runs, stagedRunStart, translation.dx, translation.dy)
             if (spanPool != null) {
                 for (runIndex in stagedRunStart until runs.size) runs[runIndex].requiresUpload = true
             }
