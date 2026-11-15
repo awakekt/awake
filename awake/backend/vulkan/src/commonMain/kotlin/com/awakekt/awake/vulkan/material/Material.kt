@@ -154,6 +154,7 @@ class Material(
         require(samplerHandle != 0L && imageViewHandle != 0L) {
             "Material resources must be created before allocating uniform slots."
         }
+        graphicsDevice.uniformBuffersCreated += 1
         val rawUniformBuffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(

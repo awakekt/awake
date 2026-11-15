@@ -68,6 +68,13 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
         frameStats.uiUploads?.let { uploads ->
             ShadcnText("UI upload: ${uploads.bytes.bytes()} in ${uploads.runs} runs", variant = ShadcnTextVariant.Small)
         }
+        // Above zero once the scene is warm, a pool is not holding its buffers.
+        frameStats.bufferCreations?.let { created ->
+            ShadcnText(
+                "New buffers: ${created.argumentBuffers} args, ${created.instanceBuffers} instance, ${created.uniformBuffers} uniform",
+                variant = ShadcnTextVariant.Small,
+            )
+        }
         ShadcnText("Culled: ${RenderDiagnostics.frustumCulled}  Occluded: ${RenderDiagnostics.occluded}", variant = ShadcnTextVariant.Small)
         ShadcnText("Unresolved: ${RenderDiagnostics.unresolvedDrawCalls}", variant = ShadcnTextVariant.Small)
     }

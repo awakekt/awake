@@ -92,6 +92,11 @@ internal class RendererGpuPassExecutor(
             colorView.close()
             presentedColor = PresentedColor(colorTexture, outputWidth, outputHeight, swapchainManager.imageFormatWebGpu)
             gpuFrameTimer?.publish()
+            statsCounter.bufferCreationTotals(
+                argumentBuffers = retainedBundles.counts.argsBuffersCreated,
+                instanceBuffers = bufferPools.creations.instanceBuffers,
+                uniformBuffers = bufferPools.creations.uniformSlots,
+            )
             statsCounter.publish(gpuFrameTimer?.lastMs)
         }
     }

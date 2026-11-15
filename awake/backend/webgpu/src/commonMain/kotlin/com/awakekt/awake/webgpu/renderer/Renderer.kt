@@ -217,6 +217,9 @@ class Renderer internal constructor(
     override val framePassStats: com.awakekt.awake.render.renderer.RenderPassStats?
         get() = statsCounter.latestPasses
 
+    override val frameBufferCreations: com.awakekt.awake.render.renderer.BufferCreationStats?
+        get() = statsCounter.latestBufferCreations
+
     override val surfaceAspect: Float
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->
             if (context.height > 0u) context.width.toFloat() / context.height.toFloat() else 16f / 9f

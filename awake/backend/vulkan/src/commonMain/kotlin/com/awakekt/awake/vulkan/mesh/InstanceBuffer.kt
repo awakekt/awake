@@ -139,6 +139,7 @@ class InstanceBuffer(
         var capacity = MIN_CAPACITY
         while (capacity < instances) capacity *= 2
         capacity = capacity.coerceAtMost(maxInstances)
+        graphicsDevice.instanceBuffersCreated += 1
         val (buffer, memory) = allocateHostVisibleBuffer((capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
         return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), capacity).also { frameResources[frameIndex] = it }
     }

@@ -211,6 +211,9 @@ class Renderer internal constructor(
     override val framePassStats: com.awakekt.awake.render.renderer.RenderPassStats?
         get() = statsCounter.latestPasses
 
+    override val frameBufferCreations: com.awakekt.awake.render.renderer.BufferCreationStats?
+        get() = statsCounter.latestBufferCreations
+
     override val surfaceAspect: Float
         get() = swapchainManager.extent.let { extent ->
             if (extent.height > 0) extent.width.toFloat() / extent.height.toFloat() else 16f / 9f
