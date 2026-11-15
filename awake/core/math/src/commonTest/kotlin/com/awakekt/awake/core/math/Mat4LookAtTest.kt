@@ -119,35 +119,30 @@ class Mat4LookAtTest {
     // ---- degenerate input ----
 
     /**
-     * Forward parallel to up: `f.cross(up)` is the zero vector, and [Vec3f.normalize]'s zero guard
-     * leaves it zero rather than producing NaN. The result is a rank-deficient matrix that
-     * collapses the whole scene onto a line -- a black frame, not a NaN cascade. Asserted so a
-     * future change to that guard cannot silently start emitting NaNs into a uniform buffer.
+     * Forward parallel to up: `f.cross(up)` is zero, so the view is built with +Z for its up instead,
+     * as the shadow cascades do for a near-vertical light. It used to collapse the scene onto a line,
+     * a black frame, and gave the same camera a frustum with no planes, which culled nothing (#1621).
      */
     @Test
-    fun forwardParallelToUpProducesADegenerateMatrixRatherThanNaNs() {
+    fun forwardParallelToUpBuildsARotationWithAZUp() {
         val view =
             Mat4.setLookAt(eye = Vec3f(0f, 0f, 0f), center = Vec3f(0f, 1f, 0f), up = Vec3f.UP)
 
         assertTrue(view.data.none { it.isNaN() }, "expected no NaNs, got ${view.data.toList()}")
-        // Side (row 0) and up (row 1) both collapsed to zero.
-        assertEquals(0f, view.m00, TOLERANCE)
-        assertEquals(0f, view.m01, TOLERANCE)
-        assertEquals(0f, view.m02, TOLERANCE)
-        assertEquals(0f, view.m10, TOLERANCE)
-        assertEquals(0f, view.m11, TOLERANCE)
-        assertEquals(0f, view.m12, TOLERANCE)
-        // Only -forward survives, in row 2.
+        assertEquals(1f, Vec3f(view.m00, view.m01, view.m02).length3(), TOLERANCE)
+        assertEquals(1f, Vec3f(view.m10, view.m11, view.m12).length3(), TOLERANCE)
+        // View up is world +Z, and -forward stays in row 2.
+        assertEquals(1f, view.m12, TOLERANCE)
         assertEquals(-1f, view.m21, TOLERANCE)
     }
 
     @Test
-    fun forwardAntiParallelToUpIsEquallyDegenerate() {
+    fun forwardAntiParallelToUpIsEquallyARotation() {
         val view =
             Mat4.setLookAt(eye = Vec3f(0f, 0f, 0f), center = Vec3f(0f, -1f, 0f), up = Vec3f.UP)
 
         assertTrue(view.data.none { it.isNaN() }, "expected no NaNs, got ${view.data.toList()}")
-        assertEquals(0f, view.m00, TOLERANCE)
+        assertEquals(1f, Vec3f(view.m00, view.m01, view.m02).length3(), TOLERANCE)
         assertEquals(1f, view.m21, TOLERANCE)
     }
 

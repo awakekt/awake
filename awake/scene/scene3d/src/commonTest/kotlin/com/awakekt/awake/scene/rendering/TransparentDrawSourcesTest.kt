@@ -30,6 +30,7 @@ import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.spatial.SpatialIndexSystem
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -88,6 +89,28 @@ class TransparentDrawSourcesTest {
         assertEquals(0, capture.meshRenderers, "the portrait's culling drops every prop")
         assertEquals(GLOWS, capture.featureDraws("Glow"), "and names the feature that draws there anyway")
         assertEquals(GLOWS, capture.total)
+    }
+
+    @Test
+    fun aPortraitLookingStraightUpDrawsNoneOfTheTownsBlendedProps() {
+        RenderDiagnostics.drawStatsEnabled = true
+        populate()
+        // Orthographic, looking straight up with the default +Y up, 20,000 units above the props.
+        val lookingUp = Camera(
+            Lens(eye = Vec3f(-2.2f, HIGH, -1.3f), center = Vec3f(-2.2f, HIGH + 1f, -1.3f), fovYRadians = 1f, near = 0.1f, far = 20f)
+                .apply {
+                    projection = Lens.Projection.Orthographic
+                    orthoHalfHeight = 1.2f
+                },
+            isPrimary = false,
+        )
+        for (indexed in listOf(false, true)) {
+            if (indexed) SpatialIndexSystem().update(world, 1f / 60f)
+            frame()
+            system.planCapture(world, lookingUp, SIZE, SIZE)
+            val capture = RenderDiagnostics.captureTransparentSources.single()
+            assertEquals(0, capture.meshRenderers, "indexed=$indexed: its frustum misses every prop")
+        }
     }
 
     @Test

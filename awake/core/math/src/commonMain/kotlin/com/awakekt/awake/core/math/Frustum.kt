@@ -23,7 +23,7 @@ object Frustum {
      */
     fun corners(camera: Lens, aspect: Float): List<com.awakekt.awake.core.math.Vec3f> {
         val forward = (camera.center - camera.eye).normalized()
-        val right = forward.cross(camera.up).normalized()
+        val right = forward.cross(lookAtUp(forward, camera.up)).normalized()
         val up = right.cross(forward)
 
         // An orthographic lens is a BOX: the same half-height at the near plane and the far one,
