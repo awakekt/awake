@@ -5,8 +5,10 @@
  */
 import com.awakekt.awake.build.extension.HostOs
 import com.awakekt.awake.build.extension.VulkanDesktopEnv
+import com.awakekt.awake.build.extension.dumpThreadsOnHang
 import com.awakekt.awake.build.extension.requireExclusiveGpu
 import com.awakekt.awake.build.extension.useNagaShaderCompiler
+import java.time.Duration
 
 // `awake`, the command line for an Awake project's files: validate it, read and edit its scenes, and
 // render one headless. Run it with `./gradlew :awake:project:cli:run --args="validate path/to/project"`,
@@ -89,10 +91,16 @@ dependencies {
 val fixtureCode = fixture.output.classesDirs
 val fixtureProject = layout.projectDirectory.dir("src/fixture/project")
 
+// Both tasks together take under 3 minutes in CI. One that hangs dumps its JVMs' threads into the log at
+// 6 minutes and fails at 8, rather than holding the Vulkan job until its 45-minute timeout (#1592).
+val hangDumpAfter = Duration.ofMinutes(6)
+val hangFailAfter = Duration.ofMinutes(8)
+
 // The GPU-free commands' tests run anywhere; `renderTest` needs a GPU (or Mesa's lavapipe) and, for
 // WebGPU, a display, so it runs where the render parity suite does.
 tasks.test {
     filter { excludeTestsMatching("*RenderTest") }
+    dumpThreadsOnHang(this, hangDumpAfter, hangFailAfter)
     inputs.files(fixtureCode).withPropertyName("fixtureCode")
     inputs.dir(fixtureProject).withPropertyName("fixtureProject")
     inputs.files(projectWorkerClasspath).withPropertyName("projectWorkerClasspath")
@@ -121,6 +129,7 @@ tasks.register<Test>("renderTest") {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     filter { includeTestsMatching("*RenderTest") }
+    dumpThreadsOnHang(this, hangDumpAfter, hangFailAfter)
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     if (HostOs.isMac) {
         // GLFW, which WebGPU's headless bootstrap uses to get an adapter, starts only on the first thread.

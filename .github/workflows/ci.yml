@@ -556,8 +556,12 @@ jobs:
 
       # The awake command line: its GPU-free commands, and `awake render` playing a project headless on
       # both backends. Here because its classpath carries the backends this job builds natives for.
+      # About 3 minutes when well. Each test task dumps its threads at 6 minutes and fails at 8, and
+      # this stops the step at 20 whatever hangs, so a hang fails here, with a log, and the reports
+      # below upload, rather than the job running into its own timeout with nothing to read (#1592).
       - name: awake command line, and awake render on Vulkan and WebGPU
         if: ${{ !cancelled() }}
+        timeout-minutes: 20
         run: xvfb-run -a ./gradlew :awake:project:cli:test :awake:project:cli:renderTest --stacktrace
 
       - name: Upload graphics test reports and parity images
@@ -572,6 +576,8 @@ jobs:
             awake/backend/webgpu/build/reports/tests/desktopTest/
             awake/engine/render/parity/build/test-results/desktopTest/
             awake/engine/render/parity/build/reports/
+            awake/project/cli/build/test-results/
+            awake/project/cli/build/reports/
           if-no-files-found: warn
 
   # The only job on a macOS runner, and the only one that can build or run anything for iOS: the
