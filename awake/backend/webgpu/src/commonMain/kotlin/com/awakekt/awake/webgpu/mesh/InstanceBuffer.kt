@@ -35,9 +35,10 @@ class InstanceBuffer(
     /** Hard ceiling on instances per draw call -- [update] fails loudly (rather than silently
      * truncating) with a message naming this knob. */
     private val maxInstances: Int = DEFAULT_MAX_INSTANCES,
-    /** Counts each buffer this creates, for the per-site creation gate (#1555). */
-    private val creations: GpuBufferCreations? = null,
 ) {
+    /** Counts each buffer this creates after it is set, for the per-site creation gate (#1555). */
+    internal var creations: GpuBufferCreations? = null
+
     private var capacity = MIN_CAPACITY.coerceAtMost(maxInstances)
     private var buffer: GPUBuffer = createBuffer(capacity)
 
