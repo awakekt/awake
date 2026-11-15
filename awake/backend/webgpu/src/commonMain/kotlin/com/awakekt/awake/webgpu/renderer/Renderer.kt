@@ -32,6 +32,7 @@ import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
@@ -399,6 +400,13 @@ class Renderer internal constructor(
      * ([RendererDraw3D.kt]). See [drawUi]'s doc comment for why this can't just be the
      * extracted body under the same name. */
     override fun drawDebugLines(lines: List<LineSegment>) = performDrawDebugLines(lines)
+
+    /** Told around each stage of [draw] while installed; see [observeDrawStages]. */
+    internal var drawStages: RenderDrawStages? = null
+
+    override fun observeDrawStages(stages: RenderDrawStages?) {
+        drawStages = stages
+    }
 
     override fun draw(input: GpuPassInput) = gpuPassExecutor.draw(input)
 

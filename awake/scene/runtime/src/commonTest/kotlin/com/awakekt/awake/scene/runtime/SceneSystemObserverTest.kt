@@ -10,6 +10,8 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.render.renderer.RenderDrawStage
+import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
 import kotlinx.coroutines.test.runTest
@@ -61,12 +63,39 @@ class SceneSystemObserverTest {
 
     @Test
     fun withNoObserverNothingIsMarked() = runTest {
-        val scene = observedScene()
+        val scene = observedScene(drawing = true)
+        scene.frame(steps = 1)
         scene.runtime.systemObserver = null
 
         scene.frame(steps = 2)
 
         assertTrue(scene.marks.isEmpty())
+        assertEquals(null, scene.renderer.stages, "the renderer is told to stop telling anyone")
+    }
+
+    @Test
+    fun theRenderersDrawStagesSplitTheSystemThatDraws() = runTest {
+        val scene = observedScene(drawing = true)
+
+        scene.frame(steps = 1)
+
+        val drawing = scene.marks.dropWhile { it.second != "infrastructure:Extraction" }
+        val extraction = "infrastructure:Extraction"
+        assertEquals(
+            listOf(
+                "before" to extraction, "after" to extraction,
+                "before" to SceneSystemObserver.RENDER_PREPARE, "after" to SceneSystemObserver.RENDER_PREPARE,
+                "before" to extraction, "after" to extraction,
+                "before" to SceneSystemObserver.RENDER_UPLOAD, "after" to SceneSystemObserver.RENDER_UPLOAD,
+                "before" to extraction, "after" to extraction,
+                "before" to SceneSystemObserver.RENDER_RECORD, "after" to SceneSystemObserver.RENDER_RECORD,
+                "before" to extraction, "after" to extraction,
+                "before" to SceneSystemObserver.RENDER_SUBMIT, "after" to SceneSystemObserver.RENDER_SUBMIT,
+                "before" to extraction, "after" to extraction,
+            ),
+            drawing,
+            "no mark encloses another: the system's mark is ended around each stage",
+        )
     }
 
     private class Recording : SceneSystemObserver {
@@ -79,7 +108,24 @@ class SceneSystemObserverTest {
         }
     }
 
-    private class Scene(val runtime: SceneAppLifecycleRuntime, val app: AwakeAppLifecycle, private val recording: Recording) {
+    /** Splits its draw the way a backend that reports stages does, when [Extraction] calls it. */
+    private class StagedRenderer : NoopRenderer() {
+        var stages: RenderDrawStages? = null
+        override fun observeDrawStages(stages: RenderDrawStages?) {
+            this.stages = stages
+        }
+        fun drawStaged() = RenderDrawStage.entries.forEach { stage ->
+            stages?.begin(stage)
+            stages?.end(stage)
+        }
+    }
+
+    private class Scene(
+        val runtime: SceneAppLifecycleRuntime,
+        val app: AwakeAppLifecycle,
+        val renderer: StagedRenderer,
+        private val recording: Recording,
+    ) {
         val marks get() = recording.marks
 
         fun frame(steps: Int) {
@@ -88,11 +134,14 @@ class SceneSystemObserverTest {
         }
     }
 
-    private class Extraction : System {
-        override fun update(world: World, delta: Float) = Unit
+    private class Extraction(private val renderer: StagedRenderer?) : System {
+        override fun update(world: World, delta: Float) {
+            renderer?.drawStaged()
+        }
     }
 
-    private suspend fun observedScene(): Scene {
+    private suspend fun observedScene(drawing: Boolean = false): Scene {
+        val renderer = StagedRenderer()
         val idle = object : System {
             override fun update(world: World, delta: Float) = Unit
         }
@@ -115,14 +164,14 @@ class SceneSystemObserverTest {
             onReadyBlock = {},
             onDisposeBlock = {},
             serviceRegistrations = emptyList(),
-            infrastructureSystemsFactory = { listOf(Extraction()) },
+            infrastructureSystemsFactory = { listOf(Extraction(renderer.takeIf { drawing })) },
         )
         val builder = AppSpecBuilder()
         val runtime = spec.installInto(builder)
-        val app = builder.build().createLifecycle().also { it.ready(NoopRenderer()) }
+        val app = builder.build().createLifecycle().also { it.ready(renderer) }
         val recording = Recording()
         runtime.systemObserver = recording
-        return Scene(runtime, app, recording)
+        return Scene(runtime, app, renderer, recording)
     }
 
     private companion object {
