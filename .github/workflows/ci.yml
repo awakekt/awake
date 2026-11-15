@@ -328,9 +328,10 @@ jobs:
       # file in step with the library, and until this step it ran only on a contributor's machine
       # (#387). The WebGPU backend and render parity suites need a GPU or the Vulkan natives and are
       # the rest of #387.
-      - name: Particle, scene rendering, render pass and shader tests
+      - name: Core math, particle, scene rendering, render pass and shader tests
         run: >-
           ./gradlew
+          :awake:core:math:desktopTest
           :awake:core:spatial:desktopTest
           :awake:core:particles:desktopTest
           :awake:particles:desktopTest
