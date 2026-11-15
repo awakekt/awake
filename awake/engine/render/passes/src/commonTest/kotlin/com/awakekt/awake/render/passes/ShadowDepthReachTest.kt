@@ -40,6 +40,21 @@ class ShadowDepthReachTest {
     private val box = directionalShadowBox(toLight, ClipSpace.WebGpu)
     private val cascades = GpuShadowCascadeData(listOf(box.viewProjection), floatArrayOf(10f))
 
+    /**
+     * A caster inside the cascade's depth range cannot move its near plane, so it is not tested
+     * against the casting planes at all: each one was, for every cascade, on every frame.
+     */
+    @Test
+    fun castersBehindTheNearPlaneAreNotTestedAgainstTheCastingPlanes() {
+        val inside = List(100) { request(boundsAround(Vec3f(it * 0.01f, 0f, 0f))) }
+        val tests = ShadowReachCounts.planeTests
+
+        val reached = cascades.reachingCasters(inside, ClipSpace.WebGpu)
+
+        assertSame(cascades, reached)
+        assertEquals(tests, ShadowReachCounts.planeTests, "plane tests for casters that cannot move the plane")
+    }
+
     @Test
     fun aCasterInFrontOfTheNearPlanePullsItBackFarEnoughToHoldTheCaster() {
         val caster = request(boundsAround(toLight * 50f))
