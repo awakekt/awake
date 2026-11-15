@@ -24,6 +24,12 @@ import io.ygdrasil.webgpu.RenderBundleEncoderDescriptor
 /** What a pass's bundles must match: its attachments' formats and sample count. */
 internal data class BundleLayout(val colorFormats: List<GPUTextureFormat>, val depthFormat: GPUTextureFormat?, val sampleCount: Int)
 
+/** Bundles encoded and argument buffers rewritten, over a store's life: for tests and probes. */
+internal class BundleCounts {
+    var encoded = 0L
+    var argumentWrites = 0L
+}
+
 /** A cell's render bundle and the indirect arguments its draws read, five words a draw. */
 internal class RetainedBundle(val bundle: GPURenderBundle, val args: GPUBuffer, val words: IntArray)
 
@@ -34,7 +40,11 @@ internal class RetainedBundle(val bundle: GPURenderBundle, val args: GPUBuffer, 
  * reuses the bundle. `firstInstance` is always 0: each draw keeps its own instance buffers, so
  * nothing needs the optional `indirect-first-instance` feature.
  */
-internal class RetainedPassBundles(private val device: GPUDevice, val layout: BundleLayout) {
+internal class RetainedPassBundles(
+    private val device: GPUDevice,
+    val layout: BundleLayout,
+    private val counts: BundleCounts = BundleCounts(),
+) {
     private val regions = HashMap<Any, RetainedCells<RetainedBundle>>()
 
     private val executing = ArrayList<GPURenderBundle>()
@@ -62,7 +72,8 @@ internal class RetainedPassBundles(private val device: GPUDevice, val layout: Bu
             BufferDescriptor(size = (words.size * Int.SIZE_BYTES).toULong(), usage = GPUBufferUsage.Indirect or GPUBufferUsage.CopyDst),
         )
         val bundle = RetainedBundle(encode(stream, args), args, words)
-        writeCounts(bundle, stream)
+        counts.encoded += 1
+        writeArguments(bundle, stream)
         return bundle
     }
 
@@ -86,8 +97,14 @@ internal class RetainedPassBundles(private val device: GPUDevice, val layout: Bu
         return encoder.use { it.finish(RenderBundleDescriptor()) }
     }
 
-    /** One `writeBuffer` of the cell's arguments: each draw's element and instance count, the rest 0. */
+    /** A kept bundle whose draws' counts alone changed. */
     private fun writeCounts(bundle: RetainedBundle, stream: CellStream) {
+        counts.argumentWrites += 1
+        writeArguments(bundle, stream)
+    }
+
+    /** One `writeBuffer` of the cell's arguments: each draw's element and instance count, the rest 0. */
+    private fun writeArguments(bundle: RetainedBundle, stream: CellStream) {
         val words = bundle.words
         for (draw in 0 until stream.drawCount) {
             words[draw * ARGS_WORDS] = stream.counts[draw * 2]
