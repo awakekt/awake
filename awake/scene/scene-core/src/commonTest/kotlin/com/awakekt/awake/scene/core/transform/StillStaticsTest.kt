@@ -79,4 +79,20 @@ class StillStaticsTest {
 
         assertEquals(5f, fresh.worldMatrix.data[12])
     }
+
+    @Test
+    fun aStaticWrittenAfterItWasBuiltIsReportedOnceWithinTheCheckSlices() {
+        val reported = ArrayList<Long>()
+        system.onMovedStatic = { reported += it.packed }
+        system.staticCheckSlices = 4
+        val props = List(8) { addStatic(it.toFloat()) }
+        repeat(4) { system.update(world, 0f) }
+        assertEquals(emptyList(), reported, "nothing moved")
+
+        props[5].position.x = 50f
+        repeat(8) { system.update(world, 0f) }
+
+        assertEquals(1, reported.size, "reported once, within four frames, not again")
+        assertEquals(5f, props[5].worldMatrix.data[12], "and left where it was built")
+    }
 }

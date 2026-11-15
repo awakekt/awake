@@ -601,6 +601,11 @@ public final class com/awakekt/awake/scene/canvas/CanvasLookAreaPart : com/awake
 	public final fun getWidget ()Lcom/awakekt/awake/ui/canvas/CanvasLookAreaWidget;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasNodeStaticSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public abstract interface class com/awakekt/awake/scene/canvas/CanvasOcclusion {
 	public abstract fun occluded-ELLNkjA (JLcom/awakekt/awake/core/math/Vec3f;FFF)Z
 }
