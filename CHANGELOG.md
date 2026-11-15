@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-11-15
+
+### Added
+
+- **UI mesh uploads show in the frame stats.** `SceneFrameStats.uiUploads` carries the renderer's `frameUiUploads` (bytes, runs and triangles written into UI meshes, null when headless or uncounted), `FrameBreakdownSample.uiUploads` and the `uiUploadBytes`, `uiUploadRuns` and `uiUploadTriangles` keys of `FrameBreakdown` summarize it per frame, and the engine showcase's stats card shows it, so a UI that re-uploads while standing still is visible in a profile (#1545).
+
+### Changed
+
+- **Remaining scene shaders and clipmap terrain read the shared frame uniform block.** Skinned meshes, unshadowed lit and instanced meshes, sprites, world text, trails, particles, and clipmap terrain now read camera, lighting, shadow cascades, fog, exposure, and debug views from binding 16 instead of carrying `viewProjection` inside their own uniform blocks, so a moving camera re-uploads only the frame block while static draws and in-cell terrain rings keep their GPU buffers untouched (#1452).
+- **Compose: move a node without composing or measuring it** (#1512). `Modifier.offset { }` reads its offset while placing, and `ComposeHost.skipUnchangedMeasure` (opt-in, with `skipUnchangedComposition`) skips measuring a frame whose composition was skipped and in which nothing the last measure read changed, so a node moved by an offset lambda, a `graphicsLayer { }` transform or a world anchor is placed again and nothing else runs for it. A world anchor measures again only on the frame its child hides or shows; the shadcn drawer and the gestures sample's draggable card move through `offset { }`. With both switches on, a frame of 200 moving nameplates allocates 190,906 B, down from 221,483 B (-14%), and the gate's new ceiling is 196,000 B. Off by default: a host that leaves it off composes and measures every frame as before.
+- **WebGPU render bundles are held across camera moves, with a test that counts it.** A moving camera over a static scene encodes no bundle after the first frame, and a moved draw only rewrites its own uniform block. A draw whose mesh changed re-encodes only its own cell in the scene pass and in each cascade it casts into. `WebGpuRenderBundleReuseTest` checks these exact counts against `RetainedBundleStore.counts`, and compares every frame's pixels with direct recording (#1555).
+
+### Fixed
+
+- Pooled `Caster` wrappers, per-pipeline sort buckets, opaque and transparent draw lists, and per-cascade `seenBy` lists in `ScenePassScratch` so compiling a moving-camera frame allocates no per-draw or per-cascade collections (#1555).
+
 ## [0.49.0] - 2026-11-15
 
 ### Added
