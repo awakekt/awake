@@ -1,1 +1,0 @@
-- A Compose child that its parent's layout does not place is now skipped by drawing, hit-testing, semantics, focus and layer collection, and `LayoutNode.isPlaced` reports it. `WorldAnchorLayout` no longer measures or places a hidden anchored child, so 200 nameplates with three in four hidden cost 335 KB a frame instead of 550 KB on the JVM (#1512).

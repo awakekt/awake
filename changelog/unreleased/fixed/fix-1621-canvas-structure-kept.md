@@ -1,1 +1,0 @@
-- A canvas no longer builds its element hierarchy, move-handle windows and subtree densities again every frame: `CanvasOverlay` keeps them until the items' structure changes, and finds an element's children and density by its index instead of a map. A 180-item canvas's tree costs 432 B and about 9 µs a frame instead of 25 KB and 36 µs on the JVM (#1621).

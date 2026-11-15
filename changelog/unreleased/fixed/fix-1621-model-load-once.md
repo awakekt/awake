@@ -1,1 +1,0 @@
-- One load of a `.gltf` model reads its `.bin` and image files once, not two or three times, and preloading a model already loaded reads nothing: a model with a `.bin` and an image read each 3 times a load, and again on every later preload (#1621).

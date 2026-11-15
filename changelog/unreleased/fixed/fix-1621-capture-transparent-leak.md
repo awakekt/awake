@@ -1,1 +1,0 @@
-- A camera looking exactly along its up vector, such as straight up or down with the default +Y up, now has a real view and frustum. `Mat4.setLookAt` and `Frustum` take +Z for its up, as the shadow cascades do for a near-vertical light. Before, its view matrix collapsed the scene onto a line and its frustum had no planes, so culling admitted every mesh with bounds (#1621).
