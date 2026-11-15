@@ -57,6 +57,15 @@ class WorldTextBatch(private val renderer: Renderer) : AutoCloseable {
         }
     }
 
+    /**
+     * Keeps [text]'s uploaded quads through this frame without drawing it: a live text outside the
+     * view being drawn, which another view may still draw. [releaseUnseen] frees only texts neither
+     * collected nor kept, so a text off one view's screen is not uploaded again for the next (#1621).
+     */
+    fun keep(text: WorldText) {
+        uploads[text]?.frame = frame
+    }
+
     /** Frees [text]'s uploaded quads; drawing it again uploads them again. */
     fun release(text: WorldText) {
         val upload = uploads.remove(text) ?: return
