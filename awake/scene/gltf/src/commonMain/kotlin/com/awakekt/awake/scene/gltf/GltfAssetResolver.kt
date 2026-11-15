@@ -114,8 +114,6 @@ class GltfAssetResolver(
         imageDecoder = decode
     }
 
-    internal suspend fun readAsset(path: AssetPath): Result<ByteArray> = assetSource.read(path)
-
     // decodeImage, not createBitmap: nothing here reads the pixels, so a browser keeps them for the GPU.
     // Anywhere else the pixels go once a material is made from them, and are decoded again for the next.
     private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource =
@@ -127,6 +125,7 @@ class GltfAssetResolver(
      * @param path The glTF or GLB asset path to load.
      */
     suspend fun preload(path: String) {
+        if (isFullyLoaded(path)) return
         val bytes = assetSource.read(AssetPath(path)).getOrThrow()
         preload(path, bytes)
     }
@@ -140,21 +139,16 @@ class GltfAssetResolver(
      * @param bytes Raw model file content bytes.
      */
     suspend fun preload(path: String, bytes: ByteArray) {
-        val externalResources = if (bytes.isGlb()) {
-            emptyMap()
-        } else {
-            GltfParser.loadExternalResources(
-                bytes.decodeToString(),
-                AssetPath(path),
-                assetSource,
-            ).getOrThrow()
-        }
+        // Read once and handed to every stage below: each read its own, so one load of a `.gltf` read
+        // its `.bin` and images two or three times (#1621).
+        if (isFullyLoaded(path)) return
+        val externalResources = externalResourcesOf(path, bytes)
         if (path !in loadedScenes || path !in loadedStaticMeshes) {
             preload(path, bytes, externalResources)
         }
         if (path !in loadedMaterialSlots) {
             // A model whose textures fail to load still draws, untextured, with lit-shadow.
-            suspendRunCatching { preloadMaterials(path, bytes) }
+            suspendRunCatching { preloadMaterials(path, bytes, externalResources) }
                 .onFailure { log.warn { "Drawing '$path' untextured: its materials failed to load (${it.message})" } }
         }
     }
@@ -214,6 +208,10 @@ class GltfAssetResolver(
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
     }
+
+    // Everything a preload makes is here, so preloading it again reads nothing: not the file, not its sidecars.
+    private fun isFullyLoaded(path: String): Boolean =
+        path in loadedMaterialSlots && (path in loadedStaticMeshes || path in loadedScenes)
 
     /**
      * Whether the model file at [path] has been preloaded, or adopted with [adopt], so the meshes and
@@ -291,12 +289,25 @@ class GltfAssetResolver(
      */
     suspend fun preloadMaterials(path: String, bytes: ByteArray) {
         if (path in loadedMaterialSlots) return
-        val skinned = loadedScenes[path] ?: parseSkinnedScene(path, bytes)?.also { loadedScenes[path] = it }
-        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) preloadSkinnedParts(path, bytes) else preloadStaticSlots(path, bytes)
+        preloadMaterials(path, bytes, externalResourcesOf(path, bytes))
     }
 
-    private suspend fun preloadStaticSlots(path: String, bytes: ByteArray) {
-        val scene = parseStaticScene(path, bytes)
+    private suspend fun preloadMaterials(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
+        if (path in loadedMaterialSlots) return
+        val skinned = loadedScenes[path] ?: parseSkinnedScene(bytes, external)?.also { loadedScenes[path] = it }
+        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) {
+            preloadSkinnedParts(path, bytes, external)
+        } else {
+            preloadStaticSlots(path, bytes, external)
+        }
+    }
+
+    /** The `.bin` and image files a `.gltf` [bytes] names, read next to [path]; none for a `.glb`. */
+    private suspend fun externalResourcesOf(path: String, bytes: ByteArray): Map<String, ByteArray> =
+        if (bytes.isGlb()) emptyMap() else GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
+
+    private suspend fun preloadStaticSlots(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
+        val scene = parseStaticScene(bytes, external)
         val primitives = scene.meshes.flatMap { it.primitives }
         if (primitives.isEmpty()) return
 
@@ -317,7 +328,7 @@ class GltfAssetResolver(
         }
         scene.defaultCullMode()?.let { loadedCullModes[path] = it }
         loadedMaterialSlots[path] = slots
-        preloadLevels(path, bytes, slots)
+        preloadLevels(path, bytes, slots, external)
     }
 
     /**
@@ -329,18 +340,13 @@ class GltfAssetResolver(
     }
 
     /** The model's `MSFT_lod` levels, for each mesh its slots name and for the whole model, when it has any. */
-    private suspend fun preloadLevels(path: String, bytes: ByteArray, slots: List<GltfMaterialSlot>) {
-        val external = if (bytes.isGlb()) {
-            emptyMap()
-        } else {
-            GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
-        }
+    private suspend fun preloadLevels(path: String, bytes: ByteArray, slots: List<GltfMaterialSlot>, external: Map<String, ByteArray>) {
         val keys = slots.associate { it.mesh to (it.material != UNTEXTURED_MATERIAL) }.toMutableMap()
         keys.getOrPut(path) { false }
         lodLevels.preload(path, bytes, external, keys)
     }
 
-    private suspend fun preloadSkinnedParts(path: String, bytes: ByteArray) {
+    private suspend fun preloadSkinnedParts(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
         loadedMaterialSlots[path] = parts(path).orEmpty().mapIndexed { index, part ->
             val key = "$path#$index"
             when (part) {
@@ -372,13 +378,12 @@ class GltfAssetResolver(
             }
         }
         loadedScenes[path]?.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
-        preloadPartLevels(path, bytes)
+        preloadPartLevels(path, bytes, external)
     }
 
     /** A skinned model's `MSFT_lod` levels, part by part, when it has any. Its parts keep their vertices. */
-    private suspend fun preloadPartLevels(path: String, bytes: ByteArray) {
+    private suspend fun preloadPartLevels(path: String, bytes: ByteArray, external: Map<String, ByteArray>) {
         if (bytes.isGlb()) return
-        val external = GltfParser.loadExternalResources(bytes.decodeToString(), AssetPath(path), assetSource).getOrThrow()
         val keys = loadedMaterialSlots[path].orEmpty().map { it.mesh }
         lodLevels.preloadParts(path, bytes, keys, ::partGeometry, { level ->
             runCatching { GltfParser.parseSkinned(level.decodeToString(), external).parts() }.getOrNull()?.map { part ->
@@ -713,15 +718,11 @@ private fun LoadedSkinnedScene.parts(): List<GltfPart> {
 private val GltfMesh.isTextured: Boolean get() = uvs != null && baseColorImageBytes != null
 
 /** The skinned scene in a `.gltf` [bytes], or null for a `.glb` or a file this parser cannot skin. */
-private suspend fun GltfAssetResolver.parseSkinnedScene(path: String, bytes: ByteArray): LoadedSkinnedScene? {
-    if (bytes.isGlb()) return null
-    val json = bytes.decodeToString()
-    val external = GltfParser.loadExternalResources(json, AssetPath(path), AssetSource { assetPath -> readAsset(assetPath) }).getOrThrow()
-    return runCatching { GltfParser.parseSkinned(json, external) }.getOrNull()
-}
+private fun parseSkinnedScene(bytes: ByteArray, external: Map<String, ByteArray>): LoadedSkinnedScene? =
+    if (bytes.isGlb()) null else runCatching { GltfParser.parseSkinned(bytes.decodeToString(), external) }.getOrNull()
 
-private suspend fun GltfAssetResolver.parseStaticScene(path: String, bytes: ByteArray): LoadedScene =
-    parseGltfScene(path, bytes, AssetSource { assetPath -> readAsset(assetPath) })
+private fun parseStaticScene(bytes: ByteArray, external: Map<String, ByteArray>): LoadedScene =
+    if (bytes.isGlb()) GltfParser.parseScene(bytes) else GltfParser.parseScene(bytes.decodeToString().toEmbeddedGlb(), external)
 
 /**
  * Reads the model at [path] from [source] as a [LoadedScene]: a `.glb`, or a `.gltf` with its `.bin`
