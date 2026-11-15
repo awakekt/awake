@@ -104,8 +104,32 @@ class SceneAssetLibrary(
     private val levelLeaders = mutableMapOf<Pair<Entity, String>, Entity>()
     private var retainedBytes = 0L
 
-    // The textures already reported as not drawn yet, and as failed, so each is logged once.
+    // The textures reported as not drawn yet until they load, and as failed, so each is logged once.
     private val awaitedTextures = mutableSetOf<String>()
+
+    /**
+     * Counts the textures that settled: one waited for that loaded, or one forgotten so it loads
+     * again. A canvas View that keeps its picture draws again when this moves (#1621).
+     */
+    internal var textureSettles = 0
+        private set
+
+    /**
+     * [textureSettles], after asking again for each texture still waited for: a View that keeps its
+     * picture asks for its textures only when it draws, so nothing else would see them load.
+     */
+    internal fun pollTextureSettles(): Int {
+        if (awaitedTextures.isEmpty()) return textureSettles
+        val iterator = awaitedTextures.iterator()
+        while (iterator.hasNext()) {
+            val name = iterator.next()
+            if (dynamicResolvers.firstNotNullOfOrNull { it.texture(name) } is SceneTextureLoad.Loaded) {
+                iterator.remove()
+                textureSettles += 1
+            }
+        }
+        return textureSettles
+    }
     private val failedTextures = mutableSetOf<String>()
 
     // What the frame uploaded from [texture], told to let go of a texture when it is forgotten.
@@ -156,7 +180,7 @@ class SceneAssetLibrary(
     }
 
     private fun loadedTexture(name: String): SceneTextureLoad.Loaded? = when (val load = dynamicResolvers.firstNotNullOfOrNull { it.texture(name) }) {
-        is SceneTextureLoad.Loaded -> load
+        is SceneTextureLoad.Loaded -> load.also { if (awaitedTextures.remove(name)) textureSettles += 1 }
         SceneTextureLoad.Loading -> {
             if (awaitedTextures.add(name)) log.info { "Texture '$name' has not loaded yet. Not drawn yet; it draws once it has." }
             null
@@ -188,6 +212,7 @@ class SceneAssetLibrary(
      * @param name The texture's name, as the `sprite` or `tilemap` gives it.
      */
     fun forgetTexture(name: String) {
+        textureSettles += 1
         awaitedTextures.remove(name)
         failedTextures.remove(name)
         dynamicResolvers.forEach { it.forgetTexture(name) }
@@ -200,6 +225,7 @@ class SceneAssetLibrary(
      * [forgetTexture] is; from another thread, call [requestForgetTextures] instead.
      */
     fun forgetTextures() {
+        textureSettles += 1
         awaitedTextures.clear()
         failedTextures.clear()
         dynamicResolvers.forEach { it.forgetTextures() }

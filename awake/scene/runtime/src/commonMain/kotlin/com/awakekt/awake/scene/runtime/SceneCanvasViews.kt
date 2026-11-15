@@ -27,7 +27,11 @@ import com.awakekt.awake.ui.canvas.CanvasViewRefresh
 internal class SceneCanvasViews(
     private val renderer: Renderer,
     private val plan: (World, Camera, Int, Int) -> GpuPassInput,
+    private val textureSettles: () -> Int = { 0 },
 ) {
+    /** The renderables attached since the Views were last drawn; see [CanvasViewAttachments]. */
+    val attachments = CanvasViewAttachments()
+
     private class View(val target: RenderTarget, var world: World, var camera: Camera, renderer: Renderer) {
         val material: Material = renderer.createMaterial(renderTarget = target)
         var shown = true
@@ -39,6 +43,9 @@ internal class SceneCanvasViews(
 
         /** Whether the target lacks the picture asked for: true for a new target, and after [invalidate]. */
         var stale = true
+
+        /** The library's texture settles when this View last drew; see [render]. */
+        var settlesSeen = 0
 
         // The plan's environment last seen, and its transparent form: a camera's sky and clear
         // rarely change, so a transparent View reuses one override rather than copying every frame.
@@ -93,12 +100,28 @@ internal class SceneCanvasViews(
         for (view in views.values) if (view.world === world && view.cameraEntity == camera) view.stale = true
     }
 
-    /** Renders every view asked for since the last call and frees the others. */
+    /**
+     * Renders every view asked for since the last call and frees the others.
+     *
+     * A View that keeps its picture ([CanvasViewRefresh.OnRequest]) draws again by itself, once, when
+     * what it shows has settled: a renderable attached inside its view, such as a model that loaded
+     * late, or a texture the scene waited for loaded or was forgotten. A material changed on a renderer
+     * already attached is not seen; the host asks with [invalidate].
+     */
     fun render() {
+        // Asked only when a View keeps its picture, so a scene without one polls nothing.
+        var settles = -1
+        var keepsPictures = false
         val iterator = views.values.iterator()
         while (iterator.hasNext()) {
             val view = iterator.next()
             if (view.shown) {
+                if (view.refresh == CanvasViewRefresh.OnRequest) {
+                    if (!keepsPictures) settles = textureSettles()
+                    keepsPictures = true
+                    if (!view.stale && settled(view, settles)) view.stale = true
+                    view.settlesSeen = settles
+                }
                 // An OnRequest View keeps its last picture: no plan, no draw, until it is asked for again (#1621).
                 if (view.refresh == CanvasViewRefresh.Always || view.stale) {
                     // Not waited for: the frame that samples the target is submitted after it.
@@ -111,7 +134,13 @@ internal class SceneCanvasViews(
                 iterator.remove()
             }
         }
+        attachments.clear()
+        attachments.recording = keepsPictures
     }
+
+    private fun settled(view: View, settles: Int): Boolean =
+        settles != view.settlesSeen ||
+            attachments.meets(view.world, view.camera.lens, view.target.width.toFloat() / view.target.height)
 
     fun dispose() {
         views.values.forEach(View::destroy)

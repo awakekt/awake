@@ -56,6 +56,7 @@ class SpawnedNode internal constructor(
             waiting -= request
             if (world.isAlive(request.entity)) {
                 world.attachRenderable(request, runtime.spec.renderableFactory(runtime, request))
+                runtime.noteRenderableAttached(world, request.entity)
                 attached += request.entity
             }
         }
@@ -138,7 +139,10 @@ fun SceneAppLifecycleRuntime.spawn(
     // behind with nothing to despawn it (#1410); the failure still reaches the caller.
     var attached = false
     try {
-        now.forEach { request -> world.attachRenderable(request, spec.renderableFactory(this, request)) }
+        now.forEach { request ->
+            world.attachRenderable(request, spec.renderableFactory(this, request))
+            noteRenderableAttached(world, request.entity)
+        }
         attached = true
     } finally {
         if (!attached) spawned.despawn()
