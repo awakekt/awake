@@ -33,6 +33,27 @@ class InstanceBatcherTest {
         assertEquals(listOf(at(0f), at(1f)).map { it.data.toList() }, models.map { it.data.toList() })
     }
 
+    /**
+     * The preparer's answers depend only on a draw's vertex format and cull mode, and each was asked
+     * per draw: a map lookup each, and on WebGPU a pipeline resolution for the tint. They are asked
+     * once per run of draws that share both.
+     */
+    @Test
+    fun thePreparerIsAskedOncePerRunOfDrawsSharingAFormatAndCullMode() {
+        val material = material()
+        val meshes = List(30) { mesh() }
+        var instanceAsks = 0
+        var tintAsks = 0
+        val draws = meshes.flatMap { mesh -> List(10) { draw(mesh, material, it) } } +
+            List(5) { draw(meshes[0], material, it).apply { cullMode = com.awakekt.awake.render.pipeline.CullMode.Back } }
+
+        val batched = batcher.batch(draws, { _, _ -> instanceAsks++ >= 0 }, { _, _ -> tintAsks++ < 0 })
+
+        assertEquals(2, instanceAsks, "asked per draw: ${draws.size}")
+        assertEquals(2, tintAsks)
+        assertEquals(31, batched.size, "every run still folds")
+    }
+
     @Test
     fun manyDistinctGroupsGrowTheTableAndStayApart() {
         val material = material()

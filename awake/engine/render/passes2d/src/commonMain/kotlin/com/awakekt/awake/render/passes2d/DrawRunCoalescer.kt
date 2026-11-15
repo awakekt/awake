@@ -19,6 +19,9 @@ import com.awakekt.awake.core.graphics2d.DrawTransform
 import com.awakekt.awake.core.graphics2d.StrokeJoin
 import com.awakekt.awake.core.graphics2d.TexturedTriangleMesh
 import com.awakekt.awake.core.graphics2d.TexturedVertex
+import com.awakekt.awake.core.graphics2d.TranslateOffsets
+import com.awakekt.awake.core.graphics2d.TranslatePop
+import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.TriangleMesh
 import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.core.graphics2d.clipToConvexPaths
@@ -204,6 +207,8 @@ object DrawRunCoalescer {
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
         val safeInteriorRectStack = ArrayDeque<Rectangle?>()
+        // Per call, so a list that ends with a range open cannot move the next frame's.
+        val translation = TranslateOffsets()
         val effectiveContext = if (snapshotSupported) {
             targetContext
         } else {
@@ -250,6 +255,23 @@ object DrawRunCoalescer {
             index += 1
             while (index < nextBoundary && continuesSpan(first, primitives[index])) index += 1
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
+            if (first is TranslatePush || first === TranslatePop) {
+                for (at in runStart until index) {
+                    val marker = primitives[at]
+                    if (marker is TranslatePush) {
+                        translation.push(marker)
+                    } else if (translation.active) {
+                        translation.pop()
+                    }
+                }
+                continue
+            }
+            // A translated span is staged where it was recorded, then moved: never from or into the
+            // retained cache, whose runs are keyed by the primitives and not by where they are drawn.
+            val translated = translation.active
+            if (translated) checkTranslatable(first, activePathClips)
+            val moveX = translation.dx
+            val moveY = translation.dy
 
             if (first is DrawCommand.BackdropBlur) {
                 @Suppress("UNCHECKED_CAST")
@@ -270,6 +292,7 @@ object DrawRunCoalescer {
             // so include their active context in the retained-span key. Clip commands themselves
             // update state and must always be replayed in emission order.
             val cacheable = retained != null &&
+                !translated &&
                 first !is DrawCommand.ClipPathPush &&
                 first !is DrawCommand.ClipPush &&
                 first !is DrawCommand.ClipPop &&
@@ -290,7 +313,11 @@ object DrawRunCoalescer {
             // next frame, which would corrupt a cache entry holding them. A pooled span whose
             // content repeats from last frame has settled and is built fresh and stored again
             // (#1408), so a span that changed once does not miss forever.
-            val spanPool = if (cacheable && pool != null && pooledMiss(pool, retained)) pool else null
+            val spanPool = when {
+                translated -> pool
+                cacheable && pool != null && pooledMiss(pool, retained) -> pool
+                else -> null
+            }
 
             // Each branch below casts `slice` (a List<DrawCommand>) to the concrete subtype
             // confirmed by the `is` check that opens the branch.  The inner while-loop above
@@ -324,7 +351,7 @@ object DrawRunCoalescer {
                         var chunkStart = 0
                         while (chunkStart < quadSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, quadSlice.size)
-                            runs += buildQuadRun(quadSlice.subList(chunkStart, chunkEnd), spanPool)
+                            runs += buildQuadRun(quadSlice.subList(chunkStart, chunkEnd), spanPool, moveX, moveY)
                             chunkStart = chunkEnd
                         }
                     }
@@ -354,7 +381,7 @@ object DrawRunCoalescer {
                         var chunkStart = 0
                         while (chunkStart < gradientSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, gradientSlice.size)
-                            runs += buildGradientQuadRun(gradientSlice.subList(chunkStart, chunkEnd), spanPool)
+                            runs += buildGradientQuadRun(gradientSlice.subList(chunkStart, chunkEnd), spanPool, moveX, moveY)
                             chunkStart = chunkEnd
                         }
                     }
@@ -377,7 +404,7 @@ object DrawRunCoalescer {
                         var chunkStart = 0
                         while (chunkStart < roundedSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, roundedSlice.size)
-                            runs += buildRoundedQuadRun(roundedSlice.subList(chunkStart, chunkEnd), spanPool)
+                            runs += buildRoundedQuadRun(roundedSlice.subList(chunkStart, chunkEnd), spanPool, moveX, moveY)
                             chunkStart = chunkEnd
                         }
                     }
@@ -453,7 +480,7 @@ object DrawRunCoalescer {
                         var chunkStart = 0
                         while (chunkStart < glyphSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, glyphSlice.size)
-                            runs += buildGlyphRun(glyphSlice.subList(chunkStart, chunkEnd), font, spanPool)
+                            runs += buildGlyphRun(glyphSlice.subList(chunkStart, chunkEnd), font, spanPool, moveX, moveY)
                             chunkStart = chunkEnd
                         }
                     }
@@ -501,12 +528,15 @@ object DrawRunCoalescer {
                     var chunkStart = 0
                     while (chunkStart < shadowSlice.size) {
                         val chunkEnd = minOf(chunkStart + maxQuadsPerRun, shadowSlice.size)
-                        runs += buildShadowQuadRun(shadowSlice.subList(chunkStart, chunkEnd), spanPool)
+                        runs += buildShadowQuadRun(shadowSlice.subList(chunkStart, chunkEnd), spanPool, moveX, moveY)
                         chunkStart = chunkEnd
                     }
                 }
                 is DrawCommand.BackdropBlur -> Unit
+                // Handled above, before the span is staged.
+                is TranslatePush, TranslatePop -> Unit
             }
+            if (translated) moveStagedClips(runs, stagedRunStart, moveX, moveY)
             if (spanPool != null) {
                 for (runIndex in stagedRunStart until runs.size) runs[runIndex].requiresUpload = true
             }
@@ -752,7 +782,7 @@ object DrawRunCoalescer {
 
     /** [buildQuadRun] with a [pool] that supplies reused buffers for a dynamic run instead of
      * allocating per frame; internal so the public signature stays binary-compatible. */
-    internal fun buildQuadRun(quads: List<DrawCommand.Quad>, pool: DynamicRunArrayPool?): StagedDrawRun.QuadRun {
+    internal fun buildQuadRun(quads: List<DrawCommand.Quad>, pool: DynamicRunArrayPool?, dx: Float = 0f, dy: Float = 0f): StagedDrawRun.QuadRun {
         val buffers = pool?.take(
             quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX,
             quads.size * VertexFormats2D.INDICES_PER_QUAD,
@@ -762,11 +792,14 @@ object DrawRunCoalescer {
         var quadIndex = 0
         while (quadIndex < quads.size) {
             val quad = quads[quadIndex]
+            // Moved before anything is added to it, as a moved copy of the primitive would be.
+            val x = if (dx == 0f) quad.x else quad.x + dx
+            val y = if (dy == 0f) quad.y else quad.y + dy
             val vertexBase = quadIndex * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX
-            writeVertex(vertices, vertexBase + 0 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x, quad.y, quad.color, quad.transform)
-            writeVertex(vertices, vertexBase + 1 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x + quad.w, quad.y, quad.color, quad.transform)
-            writeVertex(vertices, vertexBase + 2 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x + quad.w, quad.y + quad.h, quad.color, quad.transform)
-            writeVertex(vertices, vertexBase + 3 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x, quad.y + quad.h, quad.color, quad.transform)
+            writeVertex(vertices, vertexBase + 0 * VertexFormats2D.FLOATS_PER_VERTEX, x, y, quad.color, quad.transform)
+            writeVertex(vertices, vertexBase + 1 * VertexFormats2D.FLOATS_PER_VERTEX, x + quad.w, y, quad.color, quad.transform)
+            writeVertex(vertices, vertexBase + 2 * VertexFormats2D.FLOATS_PER_VERTEX, x + quad.w, y + quad.h, quad.color, quad.transform)
+            writeVertex(vertices, vertexBase + 3 * VertexFormats2D.FLOATS_PER_VERTEX, x, y + quad.h, quad.color, quad.transform)
 
             val vertexOffset = quadIndex * VertexFormats2D.VERTICES_PER_QUAD
             val indexBase = quadIndex * VertexFormats2D.INDICES_PER_QUAD
@@ -785,7 +818,7 @@ object DrawRunCoalescer {
     fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>): StagedDrawRun.QuadRun = buildGradientQuadRun(quads, null)
 
     /** [buildGradientQuadRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
-    internal fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>, pool: DynamicRunArrayPool?): StagedDrawRun.QuadRun {
+    internal fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>, pool: DynamicRunArrayPool?, dx: Float = 0f, dy: Float = 0f): StagedDrawRun.QuadRun {
         val buffers = pool?.take(
             quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX,
             quads.size * VertexFormats2D.INDICES_PER_QUAD,
@@ -795,11 +828,14 @@ object DrawRunCoalescer {
         var quadIndex = 0
         while (quadIndex < quads.size) {
             val quad = quads[quadIndex]
+            // Moved before anything is added to it, as a moved copy of the primitive would be.
+            val x = if (dx == 0f) quad.x else quad.x + dx
+            val y = if (dy == 0f) quad.y else quad.y + dy
             val vertexBase = quadIndex * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX
-            writeVertex(vertices, vertexBase + 0 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x, quad.y, quad.gradient.topLeft)
-            writeVertex(vertices, vertexBase + 1 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x + quad.w, quad.y, quad.gradient.topRight)
-            writeVertex(vertices, vertexBase + 2 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x + quad.w, quad.y + quad.h, quad.gradient.bottomRight)
-            writeVertex(vertices, vertexBase + 3 * VertexFormats2D.FLOATS_PER_VERTEX, quad.x, quad.y + quad.h, quad.gradient.bottomLeft)
+            writeVertex(vertices, vertexBase + 0 * VertexFormats2D.FLOATS_PER_VERTEX, x, y, quad.gradient.topLeft)
+            writeVertex(vertices, vertexBase + 1 * VertexFormats2D.FLOATS_PER_VERTEX, x + quad.w, y, quad.gradient.topRight)
+            writeVertex(vertices, vertexBase + 2 * VertexFormats2D.FLOATS_PER_VERTEX, x + quad.w, y + quad.h, quad.gradient.bottomRight)
+            writeVertex(vertices, vertexBase + 3 * VertexFormats2D.FLOATS_PER_VERTEX, x, y + quad.h, quad.gradient.bottomLeft)
 
             val vertexOffset = quadIndex * VertexFormats2D.VERTICES_PER_QUAD
             val indexBase = quadIndex * VertexFormats2D.INDICES_PER_QUAD
@@ -818,7 +854,7 @@ object DrawRunCoalescer {
     fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>): StagedDrawRun.RoundedQuadRun = buildRoundedQuadRun(quads, null)
 
     /** [buildRoundedQuadRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
-    internal fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>, pool: DynamicRunArrayPool?): StagedDrawRun.RoundedQuadRun {
+    internal fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>, pool: DynamicRunArrayPool?, dx: Float = 0f, dy: Float = 0f): StagedDrawRun.RoundedQuadRun {
         val floatsPerVertex = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
         val buffers = pool?.take(quads.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex, quads.size * VertexFormats2D.INDICES_PER_QUAD)
         val vertices = buffers?.vertices ?: FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
@@ -826,14 +862,17 @@ object DrawRunCoalescer {
         var quadIndex = 0
         while (quadIndex < quads.size) {
             val quad = quads[quadIndex]
+            // Moved before anything is added to it, as a moved copy of the primitive would be.
+            val x = if (dx == 0f) quad.x else quad.x + dx
+            val y = if (dy == 0f) quad.y else quad.y + dy
             val halfW = quad.w / 2f
             val halfH = quad.h / 2f
             val radius = quad.radius.coerceAtMost(minOf(halfW, halfH))
             val vertexBase = quadIndex * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex
-            writeRoundedQuadVertex(vertices, vertexBase + 0 * floatsPerVertex, quad.x, quad.y, -halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
-            writeRoundedQuadVertex(vertices, vertexBase + 1 * floatsPerVertex, quad.x + quad.w, quad.y, halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
-            writeRoundedQuadVertex(vertices, vertexBase + 2 * floatsPerVertex, quad.x + quad.w, quad.y + quad.h, halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
-            writeRoundedQuadVertex(vertices, vertexBase + 3 * floatsPerVertex, quad.x, quad.y + quad.h, -halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 0 * floatsPerVertex, x, y, -halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 1 * floatsPerVertex, x + quad.w, y, halfW, -halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 2 * floatsPerVertex, x + quad.w, y + quad.h, halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
+            writeRoundedQuadVertex(vertices, vertexBase + 3 * floatsPerVertex, x, y + quad.h, -halfW, halfH, halfW, halfH, radius, quad.smoothing, quad.color, quad.transform, quad.strokeWidth)
 
             val vertexOffset = quadIndex * VertexFormats2D.VERTICES_PER_QUAD
             val indexBase = quadIndex * VertexFormats2D.INDICES_PER_QUAD
@@ -852,7 +891,7 @@ object DrawRunCoalescer {
     fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>): StagedDrawRun.RoundedQuadRun = buildShadowQuadRun(shadows, null)
 
     /** [buildShadowQuadRun] with a reuse [pool]; internal to keep the public signature binary-compatible. */
-    internal fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>, pool: DynamicRunArrayPool?): StagedDrawRun.RoundedQuadRun {
+    internal fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>, pool: DynamicRunArrayPool?, dx: Float = 0f, dy: Float = 0f): StagedDrawRun.RoundedQuadRun {
         val floatsPerVertex = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
         val buffers = pool?.take(shadows.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex, shadows.size * VertexFormats2D.INDICES_PER_QUAD)
         val vertices = buffers?.vertices ?: FloatArray(shadows.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
@@ -860,8 +899,11 @@ object DrawRunCoalescer {
         var quadIndex = 0
         while (quadIndex < shadows.size) {
             val shadow = shadows[quadIndex]
-            val centerX = shadow.x + shadow.offsetX + shadow.w / 2f
-            val centerY = shadow.y + shadow.offsetY + shadow.h / 2f
+            // Moved before anything is added to it, as a moved copy of the primitive would be.
+            val x = if (dx == 0f) shadow.x else shadow.x + dx
+            val y = if (dy == 0f) shadow.y else shadow.y + dy
+            val centerX = x + shadow.offsetX + shadow.w / 2f
+            val centerY = y + shadow.offsetY + shadow.h / 2f
             val halfW = (shadow.w / 2f + shadow.spread).coerceAtLeast(0f)
             val halfH = (shadow.h / 2f + shadow.spread).coerceAtLeast(0f)
             val radius = (shadow.radius + shadow.spread).coerceIn(0f, minOf(halfW, halfH))
@@ -913,6 +955,8 @@ object DrawRunCoalescer {
         glyphs: List<DrawCommand.Glyph>,
         font: UiFont?,
         pool: DynamicRunArrayPool?,
+        dx: Float = 0f,
+        dy: Float = 0f,
     ): StagedDrawRun.GlyphRun {
         val buffers = pool?.take(
             glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX,
@@ -924,11 +968,14 @@ object DrawRunCoalescer {
         var glyphIndex = 0
         while (glyphIndex < glyphs.size) {
             val glyph = glyphs[glyphIndex]
+            // Moved before anything is added to it, as a moved copy of the primitive would be.
+            val x = if (dx == 0f) glyph.x else glyph.x + dx
+            val y = if (dy == 0f) glyph.y else glyph.y + dy
             val vertexBase = glyphIndex * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX
-            writeGlyphVertex(glyphVertices, vertexBase + 0 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, glyph.x, glyph.y, glyph.u0, glyph.v0, glyph.color, glyph.transform)
-            writeGlyphVertex(glyphVertices, vertexBase + 1 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, glyph.x + glyph.w, glyph.y, glyph.u1, glyph.v0, glyph.color, glyph.transform)
-            writeGlyphVertex(glyphVertices, vertexBase + 2 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, glyph.x + glyph.w, glyph.y + glyph.h, glyph.u1, glyph.v1, glyph.color, glyph.transform)
-            writeGlyphVertex(glyphVertices, vertexBase + 3 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, glyph.x, glyph.y + glyph.h, glyph.u0, glyph.v1, glyph.color, glyph.transform)
+            writeGlyphVertex(glyphVertices, vertexBase + 0 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, x, y, glyph.u0, glyph.v0, glyph.color, glyph.transform)
+            writeGlyphVertex(glyphVertices, vertexBase + 1 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, x + glyph.w, y, glyph.u1, glyph.v0, glyph.color, glyph.transform)
+            writeGlyphVertex(glyphVertices, vertexBase + 2 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, x + glyph.w, y + glyph.h, glyph.u1, glyph.v1, glyph.color, glyph.transform)
+            writeGlyphVertex(glyphVertices, vertexBase + 3 * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, x, y + glyph.h, glyph.u0, glyph.v1, glyph.color, glyph.transform)
 
             val vertexOffset = glyphIndex * VertexFormats2D.VERTICES_PER_QUAD
             val indexBase = glyphIndex * VertexFormats2D.INDICES_PER_QUAD

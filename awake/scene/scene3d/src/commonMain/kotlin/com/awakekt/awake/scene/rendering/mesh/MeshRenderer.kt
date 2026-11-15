@@ -42,8 +42,9 @@ data class MeshRenderer(
     val additive: Boolean = false,
     /**
      * Faces the camera: drawn at this entity's position and scale, turned so its local +Z points
-     * back at the eye. Its own rotation is ignored. A billboard is never culled, because its
-     * bounds turn with the camera.
+     * back at the eye. Its own rotation is ignored. With [MeshBounds], it is culled by the sphere
+     * it turns in, its bounds' farthest corner from its origin; one that casts shadows is never
+     * culled.
      */
     val billboard: Boolean = false,
     /**

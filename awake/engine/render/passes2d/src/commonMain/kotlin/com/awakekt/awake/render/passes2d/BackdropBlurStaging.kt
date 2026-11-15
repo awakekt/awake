@@ -9,6 +9,9 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.graphics2d.DrawTransform
+import com.awakekt.awake.core.graphics2d.TranslateOffsets
+import com.awakekt.awake.core.graphics2d.TranslatePop
+import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.render.effects.BackdropRegion
 import com.awakekt.awake.render.effects.BlurChain
@@ -67,6 +70,9 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
     private var open: BackdropBlurWork? = null
     private val dirty = BackdropDirtyRects()
 
+    // What paints inside a translate range is local to it, so its bounds move by the range's offset.
+    private val offsets = TranslateOffsets()
+
     /** Whether a later panel could still share a blur, which is when painting has to be watched. */
     val watching: Boolean get() = open != null
 
@@ -103,12 +109,17 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
     /** Records that the pixels in these bounds may have changed since the open blur ran. */
     fun painted(left: Float, top: Float, right: Float, bottom: Float) {
         if (open == null || right <= left || bottom <= top) return
-        dirty.add(left, top, right, bottom)
+        dirty.add(left + offsets.dx, top + offsets.dy, right + offsets.dx, bottom + offsets.dy)
     }
 
     /** [painted] for whatever [primitive] can cover. */
     fun painted(primitive: DrawCommand) {
-        if (open != null) paintBounds(primitive)
+        // Ranges are followed whether or not a blur is open, so a later panel sees the right offset.
+        when {
+            primitive is TranslatePush -> offsets.push(primitive)
+            primitive === TranslatePop -> if (offsets.active) offsets.pop()
+            open != null -> paintBounds(primitive)
+        }
     }
 
     private fun dirtyTouches(region: BackdropRegion): Boolean =
@@ -154,7 +165,9 @@ internal class BackdropGrouping(private val target: ImagePassTargetContext) {
             }
             is DrawCommand.Mesh -> meshBounds(primitive)
             is DrawCommand.BackdropBlur -> painted(primitive.placedLeft(), primitive.placedTop(), primitive.placedRight(), primitive.placedBottom())
-            is DrawCommand.ClipPathPush, is DrawCommand.ClipPush, is DrawCommand.ClipPop -> Unit
+            is DrawCommand.ClipPathPush, is DrawCommand.ClipPush, is DrawCommand.ClipPop,
+            is TranslatePush, TranslatePop,
+            -> Unit
         }
     }
 

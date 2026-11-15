@@ -68,6 +68,10 @@ import kotlin.reflect.KClass
  * last one's systems close, its sounds stop, its spawned nodes despawn, its entities go with every
  * other entity the world held, and its physics world is destroyed.
  *
+ * With a [SceneAppLifecycleRuntime.systemObserver] installed, each of the playing scene's systems is
+ * reported under its plan name, and the three systems below are reported for the runner's own steps
+ * around them (see [runMarked]).
+ *
  * The runner's own steps run inside `project-fixed`, `project-pre-animation` and `project-frame`, which
  * the schedule guards as one system each, so they contain their failures themselves: a step that throws
  * must not end any of those systems, which would be skipped for the rest of the scene and stop the
@@ -121,6 +125,12 @@ internal class ProjectSceneRunner(
     // The manifest's, checked when the project loaded, so each layer is named once.
     private val sortingLayers = SortingLayers(project.manifest.sortingLayers)
     private var systems: SceneSystemSet? = null
+
+    // The playing scene's plan names for the app's system observer; built once an observer is installed.
+    private var marks: ProjectSystemMarks? = null
+
+    private fun marksFor(set: SceneSystemSet): ProjectSystemMarks =
+        marks?.takeIf { it.set === set } ?: ProjectSystemMarks(set).also { marks = it }
 
     /** What the playing scene planned, in run order; empty between scenes. */
     fun plannedSystems(): List<PlannedSystem> = systems?.planned.orEmpty()
@@ -199,6 +209,7 @@ internal class ProjectSceneRunner(
         status.stopped()
         systems?.close()
         systems = null
+        marks = null
         playLoads = null
         if (audio.isInitialized()) audio.value.dispose()
         loads?.cancel()
@@ -317,6 +328,7 @@ internal class ProjectSceneRunner(
         }
         val closing = systems
         systems = null
+        marks = null
         playLoads = null
         step { closing?.close() }
         step {
@@ -421,8 +433,9 @@ internal class ProjectSceneRunner(
     private inner class FixedSystems : InterpolatedSystem {
         override fun update(world: World, delta: Float) {
             carryOut()
-            val fixed = systems?.fixed ?: return
-            for (index in fixed.indices) fixed[index].update(world, delta)
+            val set = systems ?: return
+            val observer = runtime.systemObserver
+            runMarked(set.fixed, observer?.let { marksFor(set).fixed }, observer, PROJECT_FIXED_SYSTEMS, world, delta)
         }
 
         override fun interpolate(world: World, alpha: Float) {
@@ -436,9 +449,10 @@ internal class ProjectSceneRunner(
             status.frameStarted()
             carryOut()
             attachSpawnedModels()
-            val preAnimation = systems?.preAnimation
-            if (preAnimation != null) {
-                for (index in preAnimation.indices) preAnimation[index].update(world, delta)
+            val set = systems
+            if (set != null) {
+                val observer = runtime.systemObserver
+                runMarked(set.preAnimation, observer?.let { marksFor(set).preAnimation }, observer, PROJECT_PRE_ANIMATION_SYSTEMS, world, delta)
             }
             frameOpen = true
         }
@@ -452,8 +466,11 @@ internal class ProjectSceneRunner(
             }
             frameOpen = false
             attachSpawnedModels()
-            val frame = systems?.frame
-            if (frame != null) for (index in frame.indices) frame[index].update(world, delta)
+            val set = systems
+            if (set != null) {
+                val observer = runtime.systemObserver
+                runMarked(set.frame, observer?.let { marksFor(set).frame }, observer, PROJECT_FRAME_SYSTEMS, world, delta)
+            }
             status.frameEnded()
         }
     }

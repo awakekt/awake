@@ -116,15 +116,17 @@ internal class SceneDrawCollector(
             // Culling first, before this entity's uniforms are gathered: that work is wasted on
             // something about to be discarded, and this is the one ordering the loop can get wrong
             // for free.
-            // A billboard turns with the camera, so its authored bounds do not describe it.
-            val bounds = if (meshRenderer.billboard) null else boundsStore?.get(entity)
+            val bounds = boundsStore?.get(entity)
             // A transparent mesh never casts (the shadow pass keeps only opaque draws), and nor
             // does one that opted out, so the camera alone decides either.
             val casts = meshRenderer.castsShadows && !meshRenderer.transparent
-            val verdict = if (bounds == null) {
-                CullVerdict.Visible
-            } else {
-                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
+            val verdict = when {
+                bounds == null -> CullVerdict.Visible
+                // A billboard turns with each view, so its authored box does not describe it: the
+                // sphere it turns in does. One that casts is kept, as before, for the shadow maps.
+                meshRenderer.billboard ->
+                    if (casts || cullingCompiler.billboardInView(transform, bounds, culling)) CullVerdict.Visible else CullVerdict.Culled
+                else -> cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
             }
             if (verdict == CullVerdict.Culled) {
                 poseStore?.get(entity)?.culled = true

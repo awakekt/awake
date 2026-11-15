@@ -80,6 +80,42 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         movingFamily(world, statics).forEach { entity ->
             world.get<Transform>(entity, transformType)?.let { propagate(world, transformType, entity, it) }
         }
+        onMovedStatic?.let { report -> checkStaticSlice(statics, report) }
+    }
+
+    /**
+     * Called once with each [StaticTransform] entity whose position, rotation or scale was written
+     * after it was built: it stays where it was built, which is almost always a mark left on
+     * something that moves. Null, the default, checks nothing.
+     *
+     * The check compares one in [staticCheckSlices] of the statics each frame, a different slice each
+     * frame, so it costs a fraction of comparing them all, which would cost what the mark saves. A
+     * moved static is reported within [staticCheckSlices] frames of the write.
+     */
+    var onMovedStatic: ((Entity) -> Unit)? = null
+
+    /** How many frames [onMovedStatic] takes to compare every static once. */
+    var staticCheckSlices: Int = DEFAULT_CHECK_SLICES
+
+    private var reported = BooleanArray(0)
+
+    private fun checkStaticSlice(statics: Family2<Transform, StaticTransform>, report: (Entity) -> Unit) {
+        val slices = staticCheckSlices.coerceAtLeast(1)
+        val slice = frameStamp % slices
+        var index = 0
+        statics.forEach { entity, transform, _ ->
+            if (index++ % slices == slice && movedSinceBuilt(entity.id, transform)) {
+                reported[entity.id] = true
+                report(entity)
+            }
+        }
+    }
+
+    /** Whether static [id] was built from [transform] and written since, and is not reported yet. */
+    private fun movedSinceBuilt(id: Int, transform: Transform): Boolean {
+        if (!isBuilt(id, transform) || !trsChanged(id, transform)) return false
+        if (id >= reported.size) reported = reported.copyOf(maxOf(id + 1, reported.size * 2, DEFAULT_CAPACITY))
+        return !reported[id]
     }
 
     /** Whether a static may need building: a different family, a member joined, left or swapped, or a transform was reset. */
@@ -174,6 +210,8 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         builtInheritRotation[id] = transform.inheritRotation
         transform.rebuildRequested = false
         transform.worldVersion++
+        // Built again, so a later write is reported again.
+        if (id < reported.size) reported[id] = false
     }
 
     private fun ensureCapacity(id: Int) {
@@ -196,6 +234,7 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         const val DEFAULT_CAPACITY = 16
         const val CAPACITY_GROWTH_FACTOR = 2
         const val TRS_FLOATS = 9
+        const val DEFAULT_CHECK_SLICES = 16
 
         // Held, not written per frame: a `Transform::class` builds a new class reference each time.
         val TRANSFORM = Transform::class
