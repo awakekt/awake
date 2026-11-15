@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.compose.foundation.text
 
+import com.awakekt.awake.compose.runtime.MutableState
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.runtime.readsAreTracked
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -45,6 +48,18 @@ internal class TextMotionState {
     private var scaleHoldFrames = 0
     private val paintOffsetTracker = SubpixelOffsetTracker()
 
+    // A settling run changes on its next pass although nothing tracked changed: the holds count down
+    // per pass. A host that skips an unchanged measure or replays an unchanged draw (#1512) would
+    // freeze it mid-settle, so while it settles each recorded pass reads and flips this flag, which
+    // marks that pass out of date. Made only for such a host, so the default path allocates nothing.
+    private var settling: MutableState<Boolean>? = null
+
+    private fun runAgainWhile(unsettled: Boolean) {
+        if (!unsettled || !readsAreTracked) return
+        val flag = settling ?: mutableStateOf(false).also { settling = it }
+        flag.value = !flag.value
+    }
+
     /** True while the run's em size or `TextStyle.scale` is animating across frames. */
     var smoothSizing: Boolean = false
         private set
@@ -78,6 +93,7 @@ internal class TextMotionState {
         } else {
             smoothSizing = false
         }
+        runAgainWhile(sizeHoldFrames > 0)
         return smoothSizing
     }
 
@@ -94,6 +110,8 @@ internal class TextMotionState {
         val forceDistanceField = isScopeScaled || scaleHoldFrames > 0 || sizeHoldFrames > 0
         if (forceDistanceField) {
             paintOffsetTracker.resetTo(offsetX, offsetY)
+            // A constant scale paints the same each pass; a hold counting down to the pixel glyphs does not.
+            runAgainWhile((!isScopeScaled && scaleHoldFrames > 0) || sizeHoldFrames > 0)
             return TextPaintMotion(
                 forceDistanceField = true,
                 subpixelTranslated = false,
@@ -104,6 +122,7 @@ internal class TextMotionState {
         val snappedX = wholePixelHalfUp(offsetX).toInt()
         val snappedY = wholePixelHalfUp(offsetY).toInt()
         paintOffsetTracker.step(offsetX, offsetY, snappedX, snappedY)
+        runAgainWhile(paintOffsetTracker.isSettling)
         val hasDirectResidual = abs(paintOffsetTracker.residualX) > RESIDUAL_EPSILON ||
             abs(paintOffsetTracker.residualY) > RESIDUAL_EPSILON
         return TextPaintMotion(
@@ -156,6 +175,9 @@ internal class SubpixelOffsetTracker {
 
     var residualY: Float = 0f
         private set
+
+    /** Whether a remainder is still easing in or out, so the next step changes [residualX] or [residualY]. */
+    val isSettling: Boolean get() = active
 
     fun resetTo(pxX: Float, pxY: Float) {
         initialized = true

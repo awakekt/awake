@@ -152,7 +152,9 @@ on the target at once, for a bar refilled or shown for the first time. A `NaN` t
    rebuilt chain.
 3. If the effect is visual only, drive it from a `DrawModifierNode` reading a value passed through
    its `ModifierNodeElement.update`, as `shimmer` does. There is no `invalidateDraw()` to call: the
-   host repaints the whole tree every frame.
+   host repaints the whole tree every frame. With `ComposeHost.retainUnchangedDraw` on, it repaints a
+   node whose draw read changed and replays the rest, so read the animated value from tracked state or
+   the clock, never from a plain field the node keeps.
 4. Cover it with a test that advances the clock over several frames (`AnimateTest`, in
    `awake/compose/foundation/src/commonTest`).
 

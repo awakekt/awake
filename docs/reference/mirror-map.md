@@ -86,7 +86,7 @@ Source: `compose/foundation/.../layout/`. Contract: [`01-layout.md`](compose-eng
 | `BoxWithConstraints`, `SubcomposeLayout` | Same | Faithful | |
 | `Layout`, `MeasurePolicy`, `Constraints`, intrinsics | Same | Faithful (subset) | `Constraints` packs fixed 16-bit fields (65534 px cap) and saturates; `Rulers` is deferred. See `15-compose-parity.md` "Layout" |
 | `Popup` / `Dialog` | `Layer(kind, ...)` into a node's `Slot.Layers` | Diverges | A layer belongs to the node that declared it, which is what an anchored popup anchors to |
-| Layout invalidation | Off by default the whole tree composes, measures and places every frame; `ComposeHost.skipUnchangedComposition` and `skipUnchangedMeasure` skip composing and measuring a frame in which nothing they read changed | Diverges | Whole-tree, opt-in, placement and paint every frame. See `15-compose-parity.md` "Layout invalidation" |
+| Layout invalidation | Off by default the whole tree composes, measures and places every frame; `ComposeHost.skipUnchangedComposition` and `skipUnchangedMeasure` skip composing and measuring a frame in which nothing they read changed, and `retainUnchangedDraw` then replays each unchanged subtree's last draw output | Diverges | Whole-tree, opt-in, placement and paint every frame. See `15-compose-parity.md` "Layout invalidation" |
 
 ## State and `remember`
 

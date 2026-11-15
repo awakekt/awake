@@ -24,8 +24,9 @@ import com.awakekt.awake.ui.shadcn.components.ShadcnTextVariant
  *
  * Average FPS on its own hides the stalls a player feels, so p99 and the worst frame of the last
  * few seconds sit beside it. Game, Render, UI, Wait and GPU are where the frame's time went, shown
- * while phase timing is on (F2); draws and triangles are what the backend recorded, and UI upload
- * is what the frame wrote into UI meshes: zero while nothing on screen changes.
+ * while phase timing is on (F2); draws and triangles are what the backend recorded, split below by
+ * the pass that recorded them, and UI upload is what the frame wrote into UI meshes: zero while
+ * nothing on screen changes.
  */
 context(_: Composer)
 internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
@@ -51,6 +52,18 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
         if (render != null) {
             ShadcnText("Recorded: ${render.drawCalls} draws, ${render.triangles.compact()} tris", variant = ShadcnTextVariant.Small)
         }
+        // Where those draws went: shadow cascades can outnumber the scene they shadow.
+        frameStats.passes?.let { passes ->
+            ShadcnText(
+                "Scene: ${passes.sceneOpaque.drawCalls} opaque + ${passes.sceneTransparent.drawCalls} blend  UI: ${passes.ui.drawCalls}",
+                variant = ShadcnTextVariant.Small,
+            )
+            ShadcnText(
+                "Shadow: ${passes.shadow.drawCalls} in ${passes.shadowPasses.size} passes  Other: ${passes.other.drawCalls}",
+                variant = ShadcnTextVariant.Small,
+            )
+        }
+        frameStats.renderPasses?.let { ShadcnText("Render passes: $it", variant = ShadcnTextVariant.Small) }
         // Bytes here while the UI stands still are geometry staged and uploaded again for nothing.
         frameStats.uiUploads?.let { uploads ->
             ShadcnText("UI upload: ${uploads.bytes.bytes()} in ${uploads.runs} runs", variant = ShadcnTextVariant.Small)
