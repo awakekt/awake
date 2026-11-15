@@ -14,7 +14,7 @@ class FrameBreakdownTest {
     @Test
     fun attributesMeasuredPhasesOutsideTimeDrawCountsAndSurfaceMegapixels() {
         val breakdown = FrameBreakdown(
-            sample = { FrameBreakdownSample(phases = PHASES, render = RENDER) },
+            sample = { FrameBreakdownSample(phases = PHASES, render = RENDER, uiUploads = UI_UPLOADS) },
             surfaceMpx = { 2.1 },
         )
         repeat(10) { step ->
@@ -33,6 +33,9 @@ class FrameBreakdownTest {
         assertEquals(180.0, summaries.getValue(FrameBreakdown.KEY_DRAW_CALLS).max)
         assertEquals(240.0, summaries.getValue(FrameBreakdown.KEY_INSTANCES).avg)
         assertEquals(250_000.0, summaries.getValue(FrameBreakdown.KEY_TRIANGLES).avg)
+        assertEquals(1_120.0, summaries.getValue(FrameBreakdown.KEY_UI_UPLOAD_BYTES).avg)
+        assertEquals(2.0, summaries.getValue(FrameBreakdown.KEY_UI_UPLOAD_RUNS).avg)
+        assertEquals(40.0, summaries.getValue(FrameBreakdown.KEY_UI_UPLOAD_TRIANGLES).avg)
         assertEquals(2.1, summaries.getValue(FrameBreakdown.KEY_SURFACE_MPX).avg)
         assertNull(summaries[FrameBreakdown.KEY_HEAP_MB])
     }
@@ -99,6 +102,7 @@ class FrameBreakdownTest {
             uiStageMs = 2f,
             uiWaitMs = 1f,
         )
+        val UI_UPLOADS = FrameUiUploadSample(bytes = 1_120, runs = 2, triangles = 40)
         val RENDER = FrameRenderSample(
             drawCalls = 180,
             instances = 240,

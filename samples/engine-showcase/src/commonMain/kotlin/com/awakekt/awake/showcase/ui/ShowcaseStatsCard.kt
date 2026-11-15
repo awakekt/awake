@@ -24,7 +24,8 @@ import com.awakekt.awake.ui.shadcn.components.ShadcnTextVariant
  *
  * Average FPS on its own hides the stalls a player feels, so p99 and the worst frame of the last
  * few seconds sit beside it. Game, Render, UI, Wait and GPU are where the frame's time went, shown
- * while phase timing is on (F2); draws and triangles are what the backend recorded.
+ * while phase timing is on (F2); draws and triangles are what the backend recorded, and UI upload
+ * is what the frame wrote into UI meshes: zero while nothing on screen changes.
  */
 context(_: Composer)
 internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
@@ -50,6 +51,10 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
         if (render != null) {
             ShadcnText("Recorded: ${render.drawCalls} draws, ${render.triangles.compact()} tris", variant = ShadcnTextVariant.Small)
         }
+        // Bytes here while the UI stands still are geometry staged and uploaded again for nothing.
+        frameStats.uiUploads?.let { uploads ->
+            ShadcnText("UI upload: ${uploads.bytes.bytes()} in ${uploads.runs} runs", variant = ShadcnTextVariant.Small)
+        }
         ShadcnText("Culled: ${RenderDiagnostics.frustumCulled}  Occluded: ${RenderDiagnostics.occluded}", variant = ShadcnTextVariant.Small)
         ShadcnText("Unresolved: ${RenderDiagnostics.unresolvedDrawCalls}", variant = ShadcnTextVariant.Small)
     }
@@ -62,5 +67,14 @@ private fun Long.compact(): String = when {
     else -> "${(this / 100_000L) / 10f}M"
 }
 
+/** 0 B, 840 B, 12.3 KB, 4.1 MB. */
+private fun Long.bytes(): String = when {
+    this < BYTES_PER_KB -> "$this B"
+    this < BYTES_PER_MB -> "${(this * 10L / BYTES_PER_KB) / 10f} KB"
+    else -> "${(this * 10L / BYTES_PER_MB) / 10f} MB"
+}
+
 private const val COMPACT_THOUSAND = 10_000L
 private const val COMPACT_MILLION = 1_000_000L
+private const val BYTES_PER_KB = 1_024L
+private const val BYTES_PER_MB = 1_024L * 1_024L

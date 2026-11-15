@@ -59,6 +59,7 @@ import com.awakekt.awake.render.passes.sprites.SpriteRenderBatch
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.UiUploadStats
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.canvas.CanvasContentSystem
@@ -329,6 +330,10 @@ class SceneAppLifecycleRuntime internal constructor(
     /** The renderer's last frame, or null before [ready] hands this runtime one. */
     internal val rendererFrameStats: RenderFrameStats?
         get() = if (::renderer.isInitialized) renderer.frameStats else null
+
+    /** UI mesh uploads of the renderer's last frame, or null before [ready] or when it does not count. */
+    internal val rendererUiUploads: UiUploadStats?
+        get() = if (::renderer.isInitialized) renderer.frameUiUploads else null
 
     private fun recordFrameTime(deltaSeconds: Float) {
         recentFrames.update(deltaSeconds)

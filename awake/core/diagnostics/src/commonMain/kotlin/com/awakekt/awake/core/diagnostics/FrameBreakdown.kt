@@ -9,8 +9,8 @@ import kotlin.math.round
 
 /**
  * Rolling window aggregator that attributes each frame's wall time across simulation, rendering, UI,
- * external host/GPU wait (`outsideMs`), renderer draw counts, drawable megapixels, and heap growth
- * or garbage-collection frequency.
+ * external host/GPU wait (`outsideMs`), renderer draw counts, UI mesh uploads, drawable megapixels,
+ * and heap growth or garbage-collection frequency.
  *
  * Call [frame] once per rendered frame on the frame thread and [summaries] whenever a diagnostic
  * snapshot is requested. Parts without readings in the requested window are omitted rather than
@@ -59,6 +59,11 @@ class FrameBreakdown(
             series[Part.DrawCalls.ordinal].add(nowSeconds, render.drawCalls.toDouble())
             series[Part.Instances.ordinal].add(nowSeconds, render.instances.toDouble())
             series[Part.Triangles.ordinal].add(nowSeconds, render.triangles.toDouble())
+        }
+        current.uiUploads?.let { uploads ->
+            series[Part.UiUploadBytes.ordinal].add(nowSeconds, uploads.bytes.toDouble())
+            series[Part.UiUploadRuns.ordinal].add(nowSeconds, uploads.runs.toDouble())
+            series[Part.UiUploadTriangles.ordinal].add(nowSeconds, uploads.triangles.toDouble())
         }
     }
 
@@ -130,6 +135,9 @@ class FrameBreakdown(
         DrawCalls(KEY_DRAW_CALLS),
         Instances(KEY_INSTANCES),
         Triangles(KEY_TRIANGLES),
+        UiUploadBytes(KEY_UI_UPLOAD_BYTES),
+        UiUploadRuns(KEY_UI_UPLOAD_RUNS),
+        UiUploadTriangles(KEY_UI_UPLOAD_TRIANGLES),
         SurfaceMpx(KEY_SURFACE_MPX),
         HeapMb(KEY_HEAP_MB),
         AllocKbPerFrame(KEY_ALLOC_KB_PER_FRAME),
@@ -175,6 +183,15 @@ class FrameBreakdown(
 
         /** Summary key for submitted triangles per frame. */
         const val KEY_TRIANGLES: String = "triangles"
+
+        /** Summary key for UI mesh bytes uploaded per frame; a still UI reads zero. */
+        const val KEY_UI_UPLOAD_BYTES: String = "uiUploadBytes"
+
+        /** Summary key for UI draw runs whose mesh was uploaded per frame. */
+        const val KEY_UI_UPLOAD_RUNS: String = "uiUploadRuns"
+
+        /** Summary key for triangles in the UI draw runs uploaded per frame. */
+        const val KEY_UI_UPLOAD_TRIANGLES: String = "uiUploadTriangles"
 
         /** Summary key for drawable surface size in megapixels. */
         const val KEY_SURFACE_MPX: String = "surfaceMpx"
