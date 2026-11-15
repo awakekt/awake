@@ -24,8 +24,9 @@ import com.awakekt.awake.compose.runtime.readsAreTracked
  * clock where it is declared, keeping its own state in `remember`, which lives on the node and does
  * survive.
  *
- * For the same reason there is no `invalidateDraw()`: `ComposeHost.frame` repaints the whole tree
- * unconditionally, so there is no invalidation to request.
+ * For the same reason there is no `invalidateDraw()`: `ComposeHost.frame` repaints the whole tree,
+ * so there is no invalidation to request. With `ComposeHost.retainUnchangedDraw` on, a node whose
+ * draw read the clock repaints on every frame that moves time, as a pass that read it composes.
  */
 class FrameClock {
 

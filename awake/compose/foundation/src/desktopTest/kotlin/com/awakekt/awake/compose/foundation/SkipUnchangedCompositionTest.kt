@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.LocalViewportSize
@@ -39,8 +40,13 @@ import kotlin.test.assertTrue
  * animation. The skipping host must also have skipped, or the test proves nothing.
  */
 class SkipUnchangedCompositionTest {
-    private class Rig(skip: Boolean, private val clockFree: Boolean = false) {
-        val host = ComposeHost().also { it.skipUnchangedComposition = skip }
+    private class Rig(skip: Boolean, private val clockFree: Boolean = false, retain: Boolean = false) {
+        val host = ComposeHost().also {
+            it.skipUnchangedComposition = skip
+            // Retained draw (#1512 stage e) replays only on a frame that skipped measuring too.
+            it.skipUnchangedMeasure = retain
+            it.retainUnchangedDraw = retain
+        }
         val count = mutableStateOf(0)
         val target = mutableStateOf(0f)
         val field = TextFieldState("")
@@ -90,9 +96,46 @@ class SkipUnchangedCompositionTest {
     )
 
     @Test
-    fun drawOutputIsIdenticalWithSkippingOnAndOff() {
+    fun drawOutputIsIdenticalWithSkippingOnAndOff() = runScript(Rig(skip = true))
+
+    /** The same script with measuring skipped and unchanged subtrees replayed from the last frame. */
+    @Test
+    fun drawOutputIsIdenticalWithRetainedDrawOn() {
+        val retaining = Rig(skip = true, retain = true)
+        runScript(retaining)
+        assertTrue(retaining.host.retainedDraws > 0, "the retaining host never replayed a subtree")
+    }
+
+    /**
+     * A draw block that reads a plain `var` is the hazard retained draw documents: the replayed frame
+     * keeps the old colour. [ComposeHost.verifySkippedCompositions] must find it, and must find nothing
+     * when the same value is a tracked state.
+     */
+    @Test
+    fun verifyingSkipsFindsAPlainVarReadWhileDrawing() {
+        var plain = 0.1f
+        val tracked = mutableStateOf(0.1f)
+        fun host() = ComposeHost().also {
+            it.skipUnchangedComposition = true
+            it.skipUnchangedMeasure = true
+            it.retainUnchangedDraw = true
+            it.verifySkippedCompositions = true
+        }
+        val untracked = host()
+        val observed = host()
+        val input = still(200, 100, delta = 0f)
+        for (i in 0 until 6) {
+            plain = 0.1f * i
+            tracked.value = 0.1f * i
+            untracked.frame(input) { Box(Modifier.size(10.dp).drawBehind { drawRect(0f, 0f, 10f, 10f, Color(plain, 0f, 0f)) }) }
+            observed.frame(input) { Box(Modifier.size(10.dp).drawBehind { drawRect(0f, 0f, 10f, 10f, Color(tracked.value, 0f, 0f)) }) }
+        }
+        assertTrue(untracked.staleSkips > 0, "a plain var read while drawing went unnoticed")
+        assertEquals(0, observed.staleSkips, "a tracked state read while drawing was reported stale")
+    }
+
+    private fun runScript(skipping: Rig) {
         val always = Rig(skip = false)
-        val skipping = Rig(skip = true)
         for ((name, step) in script) {
             val expected = always.frame(always.step())
             val actual = skipping.frame(skipping.step())
