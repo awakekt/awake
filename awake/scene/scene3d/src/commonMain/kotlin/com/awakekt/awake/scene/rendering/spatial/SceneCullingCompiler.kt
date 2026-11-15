@@ -28,6 +28,7 @@ import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.sqrt
 
 private const val HALF = 0.5f
 
@@ -46,7 +47,11 @@ internal class FrameCulling(
     val casters: ShadowCasterVolume? = null,
     val casterIds: Set<Int>? = null,
     val cullingCamera: Camera = camera,
-)
+    val aspect: Float = CONSERVATIVE_ASPECT,
+) {
+    /** [planes], or with a spatial index, the view's planes built the first time a billboard asks. */
+    internal var billboardPlanes: List<Plane>? = planes
+}
 
 /** What one entity's culling decided: drawn, drawn into the shadow maps only, or not drawn. */
 internal enum class CullVerdict {
@@ -144,6 +149,7 @@ internal class SceneCullingCompiler(
             casters = casters,
             casterIds = if (casters != null && grid != null) casterIdsByIndex(grid, casters) else null,
             cullingCamera = cullCamera,
+            aspect = cullingAspect,
         )
     }
 
@@ -170,6 +176,33 @@ internal class SceneCullingCompiler(
         if (verdict == CullVerdict.ShadowOnly) lastShadowOnlyCount++
         probe?.let { record(it, verdict, transform, bounds) }
         return verdict
+    }
+
+    /**
+     * Whether a billboard at [transform], whose mesh fits [bounds] however it turns, can be in
+     * [culling]'s view. A billboard faces each view's eye, so its authored box does not describe it;
+     * the sphere about its position through the box's farthest corner, scaled as the billboard is
+     * drawn, does, in every view. Before this a billboard was never culled, so a portrait camera far
+     * from the town drew every glow in it (#1621). Occlusion is not tested.
+     */
+    fun billboardInView(transform: Transform, bounds: MeshBounds, culling: FrameCulling): Boolean {
+        val planes = culling.billboardPlanes
+            ?: Frustum.planes(culling.cullingCamera.lens, culling.aspect).also { culling.billboardPlanes = it }
+        val local = bounds.localBounds
+        val reachX = max(abs(local.min.x), abs(local.max.x))
+        val reachY = max(abs(local.min.y), abs(local.max.y))
+        val reachZ = max(abs(local.min.z), abs(local.max.z))
+        val world = transform.worldMatrix
+        // The largest axis scale, as billboardMatrix keeps each axis's.
+        val m = world.data
+        val scaleSquared = max(m[0] * m[0] + m[1] * m[1] + m[2] * m[2], max(m[4] * m[4] + m[5] * m[5] + m[6] * m[6], m[8] * m[8] + m[9] * m[9] + m[10] * m[10]))
+        val radius = sqrt(reachX * reachX + reachY * reachY + reachZ * reachZ) * sqrt(scaleSquared)
+        val x = world.m03
+        val y = world.m13
+        val z = world.m23
+        val inView = planes.intersects(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius)
+        if (!inView) lastFrustumCulledCount++
+        return inView
     }
 
     private fun record(probe: CullingProbe, verdict: CullVerdict, transform: Transform, bounds: MeshBounds) {
