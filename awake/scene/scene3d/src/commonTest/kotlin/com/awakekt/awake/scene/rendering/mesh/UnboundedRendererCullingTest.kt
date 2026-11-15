@@ -26,8 +26,9 @@ import kotlin.test.assertEquals
  * A renderer added without [MeshBounds], as a cell streamer or a game's own code adds one, is
  * culled by the bounds of its mesh (#1621).
  *
- * Measured on main: a portrait looking away from [CELLS] additive transparent cells drew all of
- * them, as the main view did, because an entity with no bounds was never culled.
+ * Measured on main: the main view turned away from [CELLS] additive transparent cells, and a
+ * portrait looking away from them, each drew all of them, because an entity with no bounds was
+ * never culled.
  */
 class UnboundedRendererCullingTest {
     private val bounded = mesh(Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f)))
@@ -39,6 +40,9 @@ class UnboundedRendererCullingTest {
     /** Looks down -z at the cells. */
     private val main = Camera(Lens(eye = Vec3f(0f, 0f, 50f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 500f))
 
+    /** The same main view turned round: its back to the cells. */
+    private val mainAway = Camera(Lens(eye = Vec3f(0f, 0f, 50f), center = Vec3f(0f, 0f, 100f), fovYRadians = 1f, near = 0.1f, far = 500f))
+
     /** Stands in front of the cells looking the other way, as a HUD portrait faces its subject. */
     private val portrait = Camera(Lens(eye = Vec3f(0f, 0f, 60f), center = Vec3f(0f, 0f, 70f), fovYRadians = 0.5f, near = 0.1f, far = 30f))
 
@@ -48,11 +52,13 @@ class UnboundedRendererCullingTest {
         repeat(CELLS) { place(world, x = it * 4f - CELLS * 2f, MeshRenderer(bounded, material, transparent = true, additive = true)) }
 
         val seen = collect(world, main).size
+        val turned = collect(world, mainAway).size
         val behind = collect(world, portrait).size
 
-        println("Cells added without bounds: main view $seen, a portrait looking away $behind")
+        println("Cells added without bounds: main view facing $seen, main view turned away $turned, a portrait looking away $behind")
         assertEquals(CELLS, seen, "the view facing them draws every cell")
-        assertEquals(0, behind, "a view looking away draws none")
+        assertEquals(0, turned, "the main view turned away draws none")
+        assertEquals(0, behind, "nor does a portrait looking away")
     }
 
     @Test
