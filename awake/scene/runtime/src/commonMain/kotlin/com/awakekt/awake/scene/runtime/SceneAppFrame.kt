@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.RenderPassStats
 import com.awakekt.awake.render.renderer.UiUploadStats
 import kotlin.math.roundToInt
 
@@ -25,6 +26,10 @@ import kotlin.math.roundToInt
  * @property render Detailed GPU draw and geometry statistics from the active renderer, or `null` if uncounted.
  * @property uiUploads What the renderer's last frame wrote into UI meshes, or `null` before a renderer is
  * ready or when it does not count; a still UI reads zero. See [UiUploadStats].
+ * @property passes The renderer's last frame split by pass (scene opaque, scene transparent, each shadow
+ * pass, UI, other), or `null` before a renderer is ready or when it does not count. See [RenderPassStats].
+ * @property renderPasses Render passes the renderer's last frame began, offscreen passes included, or
+ * `null` before a renderer is ready or when it does not count them.
  */
 data class SceneFrameStats(
     val frameTimeMs: Float,
@@ -37,6 +42,8 @@ data class SceneFrameStats(
     val maxFrameTimeMs: Float = 0f,
     val render: RenderFrameStats? = null,
     val uiUploads: UiUploadStats? = null,
+    val passes: RenderPassStats? = null,
+    val renderPasses: Int? = null,
 ) {
     /** The constructor as released before [uiUploads], kept so compiled callers still link. */
     @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
@@ -52,7 +59,25 @@ data class SceneFrameStats(
         render: RenderFrameStats? = null,
     ) : this(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        null,
+        null, null, null,
+    )
+
+    /** The constructor as released before [passes] and [renderPasses], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        frameTimeMs: Float,
+        fps: Float,
+        trialPasses: Int,
+        textCacheHits: Int,
+        textCacheMisses: Int,
+        phases: ScenePhaseStats = ScenePhaseStats(),
+        p99FrameTimeMs: Float = 0f,
+        maxFrameTimeMs: Float = 0f,
+        render: RenderFrameStats? = null,
+        uiUploads: UiUploadStats? = null,
+    ) : this(
+        frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
+        uiUploads, null, null,
     )
 
     /** [copy] as released before [uiUploads]. */
@@ -69,7 +94,25 @@ data class SceneFrameStats(
         render: RenderFrameStats? = this.render,
     ): SceneFrameStats = copy(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads,
+        uiUploads, passes, renderPasses,
+    )
+
+    /** [copy] as released before [passes] and [renderPasses]. */
+    @Deprecated("Use copy with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        frameTimeMs: Float = this.frameTimeMs,
+        fps: Float = this.fps,
+        trialPasses: Int = this.trialPasses,
+        textCacheHits: Int = this.textCacheHits,
+        textCacheMisses: Int = this.textCacheMisses,
+        phases: ScenePhaseStats = this.phases,
+        p99FrameTimeMs: Float = this.p99FrameTimeMs,
+        maxFrameTimeMs: Float = this.maxFrameTimeMs,
+        render: RenderFrameStats? = this.render,
+        uiUploads: UiUploadStats? = this.uiUploads,
+    ): SceneFrameStats = copy(
+        frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
+        uiUploads, passes, renderPasses,
     )
 
     /**
@@ -137,6 +180,8 @@ fun SceneAppLifecycleRuntime.frameStats(): SceneFrameStats {
         maxFrameTimeMs = frameSpread.maxFrameTimeMs.roundToTenth(),
         render = rendererFrameStats,
         uiUploads = rendererUiUploads,
+        passes = rendererPassStats,
+        renderPasses = rendererRenderPasses,
     )
 }
 
