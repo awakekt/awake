@@ -11,15 +11,14 @@ import com.awakekt.awake.core.graphics2d.TranslatePop
 import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.flattened
 import com.awakekt.awake.core.math2d.Rectangle
-import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 /**
  * A subtree that moved as a whole hands on its primitives unchanged inside a translate range. The
- * staging moves them as it stages, so a range stages what moved copies of its primitives would.
+ * staging moves them as it stages, so a range stages, bit for bit, what moved copies of its
+ * primitives would.
  */
 class TranslatedStagingTest {
     private val frame = DrawCommand.Quad(10f, 20f, 70f, 20f, Color(0.1f, 0.1f, 0.1f, 1f))
@@ -33,6 +32,13 @@ class TranslatedStagingTest {
     @Test
     fun aRangeStagesWhatMovedCopiesOfItsPrimitivesStage() {
         val range = moved(37f, -12f)
+
+        assertStagedAlike(DrawRunCoalescer.coalesce(range.flattened()), DrawRunCoalescer.coalesce(range))
+    }
+
+    @Test
+    fun aFractionalOffsetStagesBitIdenticalVertices() {
+        val range = moved(0.37f, 1023.5f)
 
         assertStagedAlike(DrawRunCoalescer.coalesce(range.flattened()), DrawRunCoalescer.coalesce(range))
     }
@@ -82,7 +88,7 @@ class TranslatedStagingTest {
             val got = actual[index]
             when (want) {
                 is StagedDrawRun.ClipRun -> assertEquals(want.rect, (got as StagedDrawRun.ClipRun).rect)
-                else -> assertNear(verticesOf(want), verticesOf(got))
+                else -> assertBitIdentical(verticesOf(want), verticesOf(got))
             }
         }
     }
@@ -94,12 +100,8 @@ class TranslatedStagingTest {
         else -> error("unexpected $run")
     }
 
-    // Moving a staged position adds the offset once to x + w, where a moved copy adds it to x
-    // first: equal to the last bit at whole-pixel offsets, and within one rounding step otherwise.
-    private fun assertNear(expected: FloatArray, actual: FloatArray) {
-        assertEquals(expected.size, actual.size)
-        for (index in expected.indices) {
-            assertTrue(abs(expected[index] - actual[index]) <= 1e-3f, "float $index: ${expected[index]} against ${actual[index]}")
-        }
+    // Bit for bit: each position is moved before anything is added to it, as a moved copy's is.
+    private fun assertBitIdentical(expected: FloatArray, actual: FloatArray) {
+        assertEquals(expected.toList(), actual.toList())
     }
 }
