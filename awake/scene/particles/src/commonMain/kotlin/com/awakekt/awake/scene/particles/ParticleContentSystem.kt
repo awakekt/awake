@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.io.AssetLoad
 import com.awakekt.awake.core.io.AssetLoads
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
@@ -57,6 +58,9 @@ class ParticleContentSystem(
     private val materials = HashMap<String, Material>()
     private val waiting = ArrayList<Entity>()
 
+    /** Images whose load failed and was logged: an emitter waiting on one is not drawn, and says so once. */
+    private val failed = HashSet<String>()
+
     // Resolved once: a `KClass` made at the call site can allocate on the JVM, and this runs every frame
     // of every scene that can draw particles, whether or not it has an emitter yet.
     private val sourceType = ParticleEmitterSource::class
@@ -92,9 +96,13 @@ class ParticleContentSystem(
         }
 
     // The image [loads] has decoded for [path], asking it to start when it has not.
-    private fun loaded(path: String): GpuImageSource? {
-        val load = loads?.request(path)
-        return if (load is AssetLoad.Loaded) load.value else null
+    private fun loaded(path: String): GpuImageSource? = when (val load = loads?.request(path)) {
+        is AssetLoad.Loaded -> load.value
+        is AssetLoad.Failed -> null.also {
+            // An emitter with no image is not drawn, so without this a failed image drew nothing and said nothing.
+            if (failed.add(path)) log.error(load.cause) { "Particle image '$path' could not load: ${load.cause.message}. Its emitters are not drawn." }
+        }
+        else -> null
     }
 
     private fun emitter(world: World, entity: Entity, settings: SceneParticleEmitter, material: Material): ParticleEmitter {
@@ -129,3 +137,5 @@ private val QUAD = MeshGeometry(
     intArrayOf(0, 1, 2, 2, 3, 0),
     format = VertexFormat.PositionUv,
 )
+
+private val log = Logger("scene-particles")
