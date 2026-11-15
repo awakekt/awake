@@ -15,12 +15,19 @@ package com.awakekt.awake.webgpu.renderer
  * by its order (the [n]th such draw): the same draw finds the same slot frame after frame, with
  * its block and its instances still in it.
  *
- * Eviction: when a batch begins, a key the previous batch did not draw gives its slots back, and
- * one it drew fewer times than it holds slots gives back the slots past that count, so slots in
- * use never exceed the draws of two consecutive batches. Freed slots are taken before the pool grows, so indices stay
- * compact. GPU-free.
+ * Eviction: a key keeps its slots until [retainBatches] batches have begun without it drawing,
+ * and gives back the slots past its count once that many have begun without it reaching it. A
+ * window of a batch or two gave a prop leaving and re-entering a moving view, or drawn by one of
+ * two scenes a frame (a canvas view's beside the main one), whichever slot was free when it came
+ * back: a textured draw then built a material group for a buffer it had never had, and a frame
+ * built about 18 (#1621). So slots in use stay bounded by the draws of the last [retainBatches]
+ * batches. Freed slots are taken before the pool grows, so indices stay compact; [onRelease] hears
+ * each slot given back, with the material that held it. GPU-free.
  */
-internal class StableDrawSlots {
+internal class StableDrawSlots(
+    private val retainBatches: Int = RETAIN_BATCHES,
+    private val onRelease: ((material: Any, slot: Int) -> Unit)? = null,
+) {
     private class Held(
         val mesh: Any,
         val material: Any,
@@ -28,6 +35,8 @@ internal class StableDrawSlots {
         var count: Int = 0,
         var used: Int = 0,
         var batch: Long = 0,
+        var peak: Int = 0,
+        var peakBatch: Long = 0,
     )
 
     private val held = HashMap<Any, HashMap<Any, Held>>()
@@ -42,24 +51,25 @@ internal class StableDrawSlots {
     /** Slots handed out and not given back: for tests. */
     val inUse: Int get() = next - freeCount
 
-    /** Starts a batch, giving back what the previous batch did not draw. */
+    /** Starts a batch, giving back what has not been drawn for [retainBatches] batches. */
     fun begin() {
         batch += 1
         var index = 0
         while (index < entries.size) {
             val entry = entries[index]
-            when {
-                batch - entry.batch >= 2 -> {
-                    release(entry, keep = 0)
-                    forget(entry)
-                    // Swap-remove: entries keep no order.
-                    entries[index] = entries[entries.size - 1]
-                    entries.removeAt(entries.size - 1)
-                    continue
-                }
-                entry.batch == batch - 1 -> release(entry, keep = entry.used)
+            if (batch - entry.batch >= retainBatches) {
+                release(entry, keep = 0)
+                forget(entry)
+                // Swap-remove: entries keep no order.
+                entries[index] = entries[entries.size - 1]
+                entries.removeAt(entries.size - 1)
+                continue
             }
-            entry.used = 0
+            if (entry.count > entry.used && batch - entry.peakBatch >= retainBatches) {
+                release(entry, keep = entry.used)
+                entry.peak = entry.used
+                entry.peakBatch = batch
+            }
             index++
         }
     }
@@ -81,17 +91,27 @@ internal class StableDrawSlots {
             if (entry.count == entry.slots.size) entry.slots = entry.slots.copyOf(entry.count * 2)
             entry.slots[entry.count++] = if (freeCount > 0) free[--freeCount] else next++
         }
-        return entry.slots[entry.used++]
+        val slot = entry.slots[entry.used++]
+        if (entry.used >= entry.peak) {
+            entry.peak = entry.used
+            entry.peakBatch = batch
+        }
+        return slot
     }
 
     private fun release(entry: Held, keep: Int) {
         while (entry.count > keep) {
             if (freeCount == free.size) free = free.copyOf(free.size * 2)
-            free[freeCount++] = entry.slots[--entry.count]
+            val slot = entry.slots[--entry.count]
+            free[freeCount++] = slot
+            onRelease?.invoke(entry.material, slot)
         }
     }
 
-    private companion object {
+    internal companion object {
         const val INITIAL = 64
+
+        /** About ten seconds of one view at 60 frames a second, five of two. */
+        const val RETAIN_BATCHES = 600
     }
 }

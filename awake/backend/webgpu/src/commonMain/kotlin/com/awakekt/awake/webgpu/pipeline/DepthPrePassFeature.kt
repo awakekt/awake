@@ -72,6 +72,9 @@ class DepthPrePassFeature(
             contentCasters.forEach { add(it.pipeline) }
         }.distinct()
 
+    /** Casters' depth groups built by this pass's pipelines, over its life: for tests (#1621). */
+    internal val depthGroupsCreated: Long get() = cascadePipelines.sumOf { it.groupsCreated }
+
     /** This pass own pipeline, for a caller that has to build the prepared draws it takes. */
     val depthOnlyHandle get() = depthOnlyPipeline.handle
 

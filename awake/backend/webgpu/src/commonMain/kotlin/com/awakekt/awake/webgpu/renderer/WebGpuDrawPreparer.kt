@@ -24,6 +24,7 @@ import com.awakekt.awake.render.pipeline.depthRenderKey
 import com.awakekt.awake.render.pipeline.edges
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.material.Material
+import com.awakekt.awake.webgpu.material.dropDrawGroups
 import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
@@ -35,8 +36,8 @@ internal class WebGpuDrawPreparer(
 ) : GpuDrawPreparer {
     /** Each single draw's uniform slot and each instanced draw's slot and instance buffers, by what
      * the draw is: a draw culled earlier in the list leaves every later one where it was. */
-    private val singleSlots = StableDrawSlots()
-    private val instancedSlots = StableDrawSlots()
+    private val singleSlots = StableDrawSlots(onRelease = renderer::dropMaterialGroups)
+    private val instancedSlots = StableDrawSlots(onRelease = renderer::dropMaterialGroups)
 
     /** Edge draws so far this batch, numbering their uniform slots in the edge pipelines' pools
      * from 0 rather than after every visible draw. */
@@ -208,4 +209,10 @@ internal class WebGpuDrawPreparer(
         (request.material as? Material)
             ?.takeIf { request.drawsEdges(it.uniformFloatCount) }
             ?.let { renderer.pipelines.edges(request.mesh.format) }
+}
+
+/** A slot given back drops the groups its material built for the slot's buffers, so none outlives its draw (#1621). */
+private fun Renderer.dropMaterialGroups(material: Any, slot: Int) {
+    val textured = material as? Material ?: return
+    bufferPools.forEachUniformBufferAt(slot) { textured.dropDrawGroups(it) }
 }
