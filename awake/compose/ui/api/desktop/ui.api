@@ -1342,6 +1342,7 @@ public final class com/awakekt/awake/compose/ui/node/LayoutNode : com/awakekt/aw
 	public fun getRememberSlots ()Ljava/util/List;
 	public final fun getZIndex ()F
 	public final fun isModal ()Z
+	public final fun isPlaced ()Z
 	public fun maxIntrinsicHeight (I)I
 	public fun maxIntrinsicWidth (I)I
 	public fun measure-OScj_5o (J)Lcom/awakekt/awake/compose/ui/layout/Placeable;

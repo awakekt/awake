@@ -35,7 +35,7 @@ class AnchorPoint(surfaceWidth: Int = 0, surfaceHeight: Int = 0) {
     /** Pixels from the layout's top edge where the child's anchor sits. */
     var y: Float = 0f
 
-    /** Whether the child shows. A hidden child is measured at no size and draws nothing. */
+    /** Whether the child shows. A hidden child is not measured or placed, and draws nothing. */
     var visible: Boolean = true
 
     /** Which point of the child sits on ([x], [y]): 0 its left or top edge, 0.5 its centre, 1 its right or bottom edge. */
@@ -92,7 +92,7 @@ context(_: Composer)
  * follows something in the world.
  *
  * Culling, distance fade and ranking are the provider's to decide; a provider that says "not
- * visible" gets its child measured at zero size and drawn as nothing. Positions are rounded to
+ * visible" gets its child left unmeasured and unplaced: not drawn, hit or announced. Positions are rounded to
  * whole pixels, which keeps text crisp as an anchor drifts. The layout fills the space it is given.
 
  */
@@ -123,13 +123,13 @@ private class WorldAnchorPolicy : MeasurePolicy {
         val count = measurables.size
         if (placeables.size < count) placeables = arrayOfNulls(count)
         val free = Constraints.of(0, constraints.maxWidth, 0, constraints.maxHeight)
-        val hidden = Constraints.of(0, 0, 0, 0)
         val width = constraints.constrainWidth(constraints.maxWidth)
         val height = constraints.constrainHeight(constraints.maxHeight)
         val placeables = placeables
         for (i in 0 until count) {
             val shown = measurables[i].anchorData()?.shown
-            placeables[i] = measurables[i].measure(if (shown != null && !shown.on(width, height).value) hidden else free)
+            // A hidden child is neither measured nor placed, so nothing after layout walks it (#1512).
+            placeables[i] = if (shown != null && !shown.on(width, height).value) null else measurables[i].measure(free)
         }
         for (i in count until placeables.size) placeables[i] = null
         return layout(width, height) { place(measurables, count, width, height) }
@@ -151,21 +151,16 @@ private class WorldAnchorPolicy : MeasurePolicy {
         }
         point.reset(width, height)
         provider.anchor(point)
-        if (point.visible) {
-            placeable.placeAt(
-                (point.x - point.pivotX * placeable.width).roundToInt(),
-                (point.y - point.pivotY * placeable.height).roundToInt(),
-            )
-        } else {
-            placeable.placeAt(OFF_SCREEN, OFF_SCREEN)
-        }
+        // Hidden since it was measured: left unplaced, so it is not drawn, hit or announced.
+        if (!point.visible) return
+        placeable.placeAt(
+            (point.x - point.pivotX * placeable.width).roundToInt(),
+            (point.y - point.pivotY * placeable.height).roundToInt(),
+        )
     }
 
     private companion object {
         const val INITIAL = 16
-
-        /** Where a hidden child goes: far enough off any surface that nothing of it reaches one. */
-        const val OFF_SCREEN = -1_000_000
     }
 }
 

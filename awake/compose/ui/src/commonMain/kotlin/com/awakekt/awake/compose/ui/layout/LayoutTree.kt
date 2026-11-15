@@ -34,6 +34,7 @@ fun LayoutNode.layoutTree(viewport: Constraints) {
  * [PhaseReads.isInvalid] whether the next pass must measure.
  */
 internal fun LayoutNode.layoutTree(viewport: Constraints, measure: Boolean, reads: PhaseReads?) {
+    LayoutPasses.current++
     if (measure) {
         reads?.beginPass()
         if (reads == null) measure(viewport) else reads.recording { measure(viewport) }
@@ -70,6 +71,16 @@ private fun LayoutNode.layoutLayers(viewport: Constraints, measure: Boolean, rea
         layer.layoutLayers(viewport, measure, reads)
     }
     for (i in 0 until children.size) {
-        children[i].layoutLayers(viewport, measure, reads)
+        val child = children[i]
+        if (placesChild(child)) child.layoutLayers(viewport, measure, reads)
     }
+}
+
+/**
+ * Counts layout passes, so a node can tell whether its parent placed it in the latest one: see
+ * [LayoutNode.placesChild]. Only ever compared between a node and its parent, which one pass stamps
+ * alike, so hosts that lay out in turn do not disturb each other. Frame thread only.
+ */
+internal object LayoutPasses {
+    var current: Int = 0
 }

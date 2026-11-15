@@ -20,6 +20,8 @@ import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class FlowLayoutTest {
     @Test fun flowRowWrapsAtBoundedWidth() = assertEquals(listOf(0 to 0, 20 to 0, 0 to 10), positions { FlowRow(Modifier.size(40.dp, 40.dp)) { items() } })
@@ -122,15 +124,17 @@ class FlowLayoutTest {
     )
 
     @Test
-    fun flowRowCollapsesItemsPastItsMaximumLineCount() = assertEquals(
-        0,
-        taggedNodes {
+    fun flowRowCollapsesItemsPastItsMaximumLineCount() {
+        val nodes = taggedNodes {
             FlowRow(
                 modifier = Modifier.size(20.dp, 30.dp),
                 maxLines = 1,
             ) { items() }
-        }.getValue("item2").width,
-    )
+        }
+        // An item past the last line is not placed, so it is not drawn or announced (#1512).
+        assertFalse("item2" in nodes, "the clipped item is in the tree: ${nodes.keys}")
+        assertTrue("item0" in nodes, "the first line is: ${nodes.keys}")
+    }
 
     private fun positions(content: context(Composer) () -> Unit): List<Pair<Int, Int>> {
         val nodes = tagPositions(content)

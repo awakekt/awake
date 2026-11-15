@@ -109,13 +109,14 @@ class WorldAnchorPlacementOnlyTest {
 
         spots[1].visible = false
         frame(1)
-        assertEquals(measured + spots.size, content.measures, "hiding a child sizes it to nothing on that frame")
+        // The hidden child is not measured at all (#1512), so its siblings are the only measures.
+        assertEquals(measured + spots.size - 1, content.measures, "hiding a child measures its siblings, not it")
 
         frame(2)
-        assertEquals(measured + spots.size, content.measures, "nothing changed but position")
+        assertEquals(measured + spots.size - 1, content.measures, "nothing changed but position")
 
         spots[1].visible = true
         frame(3)
-        assertEquals(measured + 2 * spots.size, content.measures, "showing it measures it again")
+        assertEquals(measured + 2 * spots.size - 1, content.measures, "showing it measures it again")
     }
 }

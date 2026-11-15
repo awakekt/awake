@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.layout.AlignmentLine
 import com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable
 import com.awakekt.awake.compose.ui.layout.LayerPositionProvider
+import com.awakekt.awake.compose.ui.layout.LayoutPasses
 import com.awakekt.awake.compose.ui.layout.LayoutStats
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
@@ -333,10 +334,33 @@ class LayoutNode(
     override operator fun get(alignmentLine: AlignmentLine): Int =
         outermost?.get(alignmentLine) ?: AlignmentLine.Unspecified
 
+    /** The layout pass that last placed this node, compared by [placesChild]. */
+    internal var placedPass: Int = 0
+        private set
+
     /** Runs the placement the chain and the policy deferred. */
     override fun onPlaced() {
+        placedPass = LayoutPasses.current
         outermost?.placeAt(0, 0)
     }
+
+    /**
+     * Whether this node's placement placed [child] in the pass that placed this node (#1512).
+     *
+     * A layout may leave a child unplaced, as a world anchor leaves one that is off screen. An
+     * unplaced child keeps the size and position of the pass that last placed it, but nothing that
+     * walks the tree after layout reads them: it is not positioned, drawn, hit, focused or announced,
+     * and its layers are not laid out. A parent places its children while it is itself being placed,
+     * so a placed child carries the same pass as its parent.
+     */
+    internal fun placesChild(child: LayoutNode): Boolean = child.placedPass == placedPass
+
+    /**
+     * Whether this node was placed in the layout pass that placed its parent, so it is drawn, hit
+     * and announced; a layout may leave a child unplaced for a frame (#1512). A root is placed once
+     * any layout has placed it.
+     */
+    val isPlaced: Boolean get() = parent?.placesChild(this) ?: (placedPass != 0)
 
     /**
      * Turns the relative positions placement produced into tree-space coordinates.
@@ -363,7 +387,8 @@ class LayoutNode(
             placedNodes[i].onPlaced(absoluteX, absoluteY, width, height)
         }
         for (i in 0 until children.size) {
-            children[i].resolveAbsolutePositions(contentX, contentY)
+            val child = children[i]
+            if (placesChild(child)) child.resolveAbsolutePositions(contentX, contentY)
         }
         // Layers resolve against this node too -- an anchored popup needs its declaring node's
         // position -- but their size comes from the viewport, not from this node's constraints.

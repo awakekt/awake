@@ -242,7 +242,8 @@ class FocusOwner {
     private fun collectFocusable(node: LayoutNode, into: MutableList<LayoutNode>) {
         if (node.canTakeFocus()) into.add(node)
         for (i in 0 until node.children.size) {
-            collectFocusable(node.children[i], into)
+            val child = node.children[i]
+            if (node.placesChild(child)) collectFocusable(child, into)
         }
         // Layers last: a popup's contents come after the anchor that opened them, which is the
         // order a reader sees them in. Modal trapping -- a dialog bounding the ring rather than

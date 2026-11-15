@@ -16,7 +16,7 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 /** [WorldAnchorLayout] places each child where its [AnchorProvider] says, read as the frame is laid out. */
 class WorldAnchorLayoutTest {
@@ -73,12 +73,12 @@ class WorldAnchorLayoutTest {
     }
 
     @Test
-    fun aHiddenChildHasNoSizeAndIsNotPlacedOnTheSurface() {
+    fun aHiddenChildIsNeitherMeasuredNorPlaced() {
         val spot = Spot(100f, 50f, visible = false)
         val child = mount(spot)[0]
 
         assertEquals(0 to 0, child.width to child.height)
-        assertTrue(child.x < 0 && child.y < 0, "off any surface")
+        assertFalse(child.isPlaced, "left unplaced, so it is not drawn, hit or announced (#1512)")
 
         spot.visible = true
         layout()
