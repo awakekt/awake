@@ -8,7 +8,9 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.Entity
@@ -23,8 +25,12 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.sky.Skybox
+import com.awakekt.awake.scene.scene2d.SceneSprite
+import com.awakekt.awake.scene.scene2d.Sprite
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasView
@@ -87,6 +93,16 @@ class SceneCanvasViewsTest {
     }
 
     private val renderer = RecordingRenderer()
+
+    /** The portrait's glow texture, loading until [loaded]. */
+    private class LateTexture : SceneAssetResolver {
+        var loaded = false
+
+        override fun texture(name: String): SceneTextureLoad =
+            if (loaded) SceneTextureLoad.Loaded(TextureAsset(ByteArray(2 * 2 * 4), 2, 2)) else SceneTextureLoad.Loading
+    }
+
+    private val glowTexture = LateTexture()
     private val input = Input()
     private lateinit var portrait: CanvasElement
     private var portraitCamera: Entity? = null
@@ -97,7 +113,7 @@ class SceneCanvasViewsTest {
             systems = emptyList(),
             scenePopulationBlock = { populate() },
             renderableFactory = { error("no renderable requested in this test") },
-            assetLibraryFactory = null,
+            assetLibraryFactory = { SceneAssetLibrary(emptyMap(), emptyMap(), emptyMap(), dynamicResolvers = listOf(glowTexture)) },
             updateBlock = { _, _ -> },
             ui = null,
             onReadyBlock = {},
@@ -249,5 +265,68 @@ class SceneCanvasViewsTest {
         assertEquals(listOf("frame", "view 200x100", "ui [200x100]"), frame(), "back in the tree: a new target, drawn, never sampled empty")
 
         assertEquals(listOf("frame", "ui [200x100]"), frame(), "then kept again")
+    }
+
+    @Test
+    fun anOnRequestViewDrawsOnceWhenAModelAttachesInItsView() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        frame()
+        assertEquals(KEPT, frame())
+
+        // The portrait's character, whose model loaded two frames after the picture was first drawn.
+        runtime.noteRenderableAttached(runtime.world, attachedAt(50f, 1f, -5f))
+
+        assertEquals(DRAWN, frame(), "drawn again on the frame its model attached")
+        assertEquals(KEPT, frame(), "and only then")
+    }
+
+    @Test
+    fun modelsAttachingOutsideAnOnRequestViewNeverRedrawIt() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        frame()
+        frame()
+
+        var redraws = 0
+        repeat(OUTSIDE) { index ->
+            runtime.noteRenderableAttached(runtime.world, attachedAt(-50f - index, 0f, 0f))
+            if (frame() != KEPT) redraws += 1
+        }
+
+        assertEquals(0, redraws, "a town streaming in far from the portrait leaves its picture alone")
+    }
+
+    @Test
+    fun anOnRequestViewDrawsOnceWhenItsSpritesTextureLoadsAndOnceMoreWhenItIsForgotten() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        // A glow in front of the portrait camera, whose texture has not loaded.
+        runtime.world.create().also {
+            runtime.world.add(it, Transform(position = Vec3f(50f, 1f, -2f)).apply { worldMatrix = Mat4().translate(50f, 1f, -2f) })
+            runtime.world.add(it, Sprite(SceneSprite("glow.png")))
+        }
+        assertEquals(DRAWN, frame(), "drawn without its glow, which has not loaded")
+        repeat(LOAD_FRAMES) { assertEquals(KEPT, frame(), "kept while the texture loads") }
+
+        glowTexture.loaded = true
+
+        assertEquals(DRAWN, frame(), "drawn again on the frame the texture loaded")
+        assertEquals(KEPT, frame(), "and only then")
+        runtime.requireAssetLibrary().forgetTexture("glow.png")
+        assertEquals(DRAWN, frame(), "a forgotten texture, as a hot reload forgets it, draws it once more")
+        assertEquals(KEPT, frame())
+    }
+
+    private fun attachedAt(x: Float, y: Float, z: Float): Entity = runtime.world.create().also {
+        runtime.world.add(it, Transform(position = Vec3f(x, y, z)).apply { worldMatrix = Mat4().translate(x, y, z) })
+        runtime.world.add(it, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
+    }
+
+    private companion object {
+        val DRAWN = listOf("frame", "view 200x100", "ui [200x100]")
+        val KEPT = listOf("frame", "ui [200x100]")
+        const val OUTSIDE = 50
+        const val LOAD_FRAMES = 3
     }
 }

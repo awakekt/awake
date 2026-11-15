@@ -775,7 +775,13 @@ class SceneAppLifecycleRuntime internal constructor(
     // Every world's View pictures, made by the first canvas that asks for one.
     private var viewStore: SceneCanvasViews? = null
 
-    private fun views(): SceneCanvasViews = viewStore ?: SceneCanvasViews(renderer, ::planCapture).also { viewStore = it }
+    private fun views(): SceneCanvasViews = viewStore
+        ?: SceneCanvasViews(renderer, ::planCapture) { session.assetLibraryOrNull()?.pollTextureSettles() ?: 0 }.also { viewStore = it }
+
+    /** Tells the canvas Views that [entity] in [world] was given a renderer, so one that keeps its picture can draw it. */
+    internal fun noteRenderableAttached(world: World, entity: Entity) {
+        viewStore?.attachments?.record(world, entity)
+    }
 
     private val ownCanvasViews by lazy { views().forWorld(world) }
 
