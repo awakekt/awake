@@ -763,6 +763,9 @@ public abstract interface class com/awakekt/awake/scene/runtime/schedule/SceneSy
 	public static final field APP_UPDATE Ljava/lang/String;
 	public static final field Companion Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver$Companion;
 	public static final field UI_BUILD Ljava/lang/String;
+	public static final field UI_COMPOSE Ljava/lang/String;
+	public static final field UI_DRAW Ljava/lang/String;
+	public static final field UI_MEASURE Ljava/lang/String;
 	public static final field UI_STAGE Ljava/lang/String;
 	public static final field UI_WAIT Ljava/lang/String;
 	public abstract fun after (Ljava/lang/String;)V
@@ -772,6 +775,9 @@ public abstract interface class com/awakekt/awake/scene/runtime/schedule/SceneSy
 public final class com/awakekt/awake/scene/runtime/schedule/SceneSystemObserver$Companion {
 	public static final field APP_UPDATE Ljava/lang/String;
 	public static final field UI_BUILD Ljava/lang/String;
+	public static final field UI_COMPOSE Ljava/lang/String;
+	public static final field UI_DRAW Ljava/lang/String;
+	public static final field UI_MEASURE Ljava/lang/String;
 	public static final field UI_STAGE Ljava/lang/String;
 	public static final field UI_WAIT Ljava/lang/String;
 }

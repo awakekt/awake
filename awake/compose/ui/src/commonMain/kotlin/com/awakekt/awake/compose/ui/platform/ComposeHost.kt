@@ -224,6 +224,9 @@ class ComposeHost(
     private var placedOnce = false
     private var imeOwner: LayoutNode? = null
 
+    /** Told around each stage of [frame]; see [ComposeFrameStages]. Null, the default, calls nothing. */
+    var frameStages: ComposeFrameStages? = null
+
     // Reset per frame: "did the UI take this frame's wheel" is a per-frame answer.
     private var scrollConsumed = false
 
@@ -236,6 +239,7 @@ class ComposeHost(
      * just appeared can still take them.
      */
     fun frame(input: FrameInput, content: context(Composer) () -> Unit): FrameOutput {
+        val stages = frameStages
         scrollConsumed = false
         // Before input, as documented: a `FocusRequester.requestFocus()`/`freeFocus()` queued
         // since the last frame -- typically from outside composition entirely -- takes effect
@@ -245,25 +249,15 @@ class ComposeHost(
         // Before content, not after: an animation reads the clock as it is declared, so advancing
         // afterwards would paint every frame one step stale.
         frameClock.advance(input.deltaSeconds)
-        var composed = true
-        if (skipUnchangedComposition && !needsComposition(input)) {
-            if (verifySkippedCompositions) {
-                verifySkip(content, input)
-            } else {
-                composed = false
-                skippedCompositions++
-            }
-        } else if (compositionStats.enabled) {
-            val started = TimeSource.Monotonic.markNow()
-            compose(content, input)
-            compositionStats.recordComposition(started.elapsedNow().inWholeNanoseconds)
-        } else {
-            compose(content, input)
-        }
+        stages?.begin(ComposeFrameStage.Compose)
+        val composed = composeOrSkip(content, input)
+        stages?.end(ComposeFrameStage.Compose)
         // A node that this pass stopped declaring cannot keep focus, and a modal that just opened
         // takes it from whatever was behind it.
         focusOwner.revalidate(root)
+        stages?.begin(ComposeFrameStage.Measure)
         val measureSkipped = layout(input, composed)
+        stages?.end(ComposeFrameStage.Measure)
         if (measureSkipped) skippedMeasures++
         placedOnce = true
 
@@ -279,7 +273,9 @@ class ComposeHost(
         val passThroughKeys = focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys }
         val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
+        stages?.begin(ComposeFrameStage.Draw)
         val paint = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped)
+        stages?.end(ComposeFrameStage.Draw)
         return FrameOutput(
             primitives = paint.primitives,
             graphicsLayers = paint.layers,
@@ -350,6 +346,26 @@ class ComposeHost(
     /** Like [copyFocusedSelection], and removes the returned text from the field. */
     fun cutFocusedSelection(): String? = focusOwner.focused?.textInputs.orEmpty().firstNotNullOfOrNull {
         it.cutSelection()
+    }
+
+    /** Composes [content] for [input], or skips a composition nothing invalidated; whether it composed. */
+    private fun composeOrSkip(content: context(Composer) () -> Unit, input: FrameInput): Boolean {
+        var composed = true
+        if (skipUnchangedComposition && !needsComposition(input)) {
+            if (verifySkippedCompositions) {
+                verifySkip(content, input)
+            } else {
+                composed = false
+                skippedCompositions++
+            }
+        } else if (compositionStats.enabled) {
+            val started = TimeSource.Monotonic.markNow()
+            compose(content, input)
+            compositionStats.recordComposition(started.elapsedNow().inWholeNanoseconds)
+        } else {
+            compose(content, input)
+        }
+        return composed
     }
 
     private fun needsComposition(input: FrameInput): Boolean {

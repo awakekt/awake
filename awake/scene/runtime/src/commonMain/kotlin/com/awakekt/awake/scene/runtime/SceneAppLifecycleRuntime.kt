@@ -82,6 +82,7 @@ import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
+import com.awakekt.awake.scene.runtime.schedule.UiBuildStageMarks
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
@@ -387,6 +388,15 @@ class SceneAppLifecycleRuntime internal constructor(
      */
     var systemObserver: SceneSystemObserver? = null
 
+    // The UI host's compose, measure and draw stages, told to [systemObserver] while one is installed.
+    private val uiBuildStages = UiBuildStageMarks()
+
+    private fun installUiBuildStages() {
+        val observer = systemObserver
+        uiBuildStages.observer = observer
+        uiHost.frameStages = if (observer == null) null else uiBuildStages
+    }
+
     private var uiBuildMs = 0f
     private var uiWaitMs = 0f
     private var uiStageMs = 0f
@@ -503,6 +513,7 @@ class SceneAppLifecycleRuntime internal constructor(
                 platformSafeArea = frame.safeArea.toCanvasInsets()
             }
             platformDpi = frame.dpi
+            installUiBuildStages()
             timePhase(SceneSystemObserver.UI_BUILD, { uiBuildMs = it }) {
                 buildUiFrameGuarded(snapshot, delta, viewportWidth, viewportHeight)
             }.also { builtFrame ->
