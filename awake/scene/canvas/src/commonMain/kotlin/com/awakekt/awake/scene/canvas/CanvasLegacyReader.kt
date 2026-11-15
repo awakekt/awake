@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.document.SceneNodeView
 import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
@@ -105,8 +106,15 @@ fun SceneNode.canvasElementView(): SceneCanvasElement? {
             else -> Unit
         }
     }
-    return element ?: rect?.let { CanvasElementViews.of(this, foldView) }
+    return element ?: rect?.let { derived(CanvasElementView, foldView) }
 }
+
+/**
+ * The view a node in the component form folds from its rect and its other canvas components, a
+ * `copy()` of the element's 49 fields per component; kept on the node, so a HUD reading it every
+ * frame builds it once (#1621).
+ */
+private val CanvasElementView = SceneNodeView<SceneCanvasElement>()
 
 /** A node's view folded from its rect and its other canvas components; stored, so a read makes no closure. */
 private val foldView: (SceneNode) -> SceneCanvasElement = { node ->

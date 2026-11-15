@@ -16,6 +16,8 @@ import kotlin.test.assertTrue
  *
  * A node in the component form has its view folded from its components, a `copy()` of the
  * element's 49 fields each. A HUD reading it every frame for every slot built about 130 KB a frame.
+ * Each node keeps its own view, so any number of nodes read in turn build nothing after their first
+ * read, and a written (so new) node reads its own.
  */
 class CanvasElementViewAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -51,6 +53,25 @@ class CanvasElementViewAllocationTest {
     }
 
     @Test
+    fun manyNodesReadInRotationAllocateNothingOnceEachHasBeenRead() {
+        // More nodes than any fixed table would hold, read in turn, as a HUD with many slots reads them.
+        val nodes = List(NODES) { bar(it / NODES.toFloat()) }
+        val views = nodes.map { checkNotNull(it.canvasElementView()) }
+        val thread = Thread.currentThread().id
+        repeat(WARM_UP / NODES + 1) { nodes.forEach { it.canvasElementView() } }
+        val before = threads.getThreadAllocatedBytes(thread)
+        var same = 0
+        repeat(ROUNDS) {
+            for (index in 0 until NODES) if (nodes[index].canvasElementView() === views[index]) same++
+        }
+        val allocated = threads.getThreadAllocatedBytes(thread) - before
+
+        println("canvasElementView: $allocated B over $ROUNDS rounds of $NODES distinct nodes")
+        assertTrue(allocated < NOISE, "$ROUNDS rounds of $NODES nodes allocated $allocated B, over $NOISE B")
+        assertEquals(ROUNDS * NODES, same, "every node hands back its own first view")
+    }
+
+    @Test
     fun aChangedNodeReadsItsNewView() {
         val full = bar(1f)
         assertEquals(1f, full.canvasElementView()?.value)
@@ -64,5 +85,7 @@ class CanvasElementViewAllocationTest {
         const val WARM_UP = 1_000
         const val READS = 10_000
         const val NOISE = 4_096L
+        const val NODES = 500
+        const val ROUNDS = 20
     }
 }
