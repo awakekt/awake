@@ -1,0 +1,1 @@
+- `CookedTextureLoader` remembers a cooked `.ktx2` that is missing, so an image that was not cooked no longer asks for its `.ktx2` before every read: 9 reads of one image asked for the missing file 9 times, a failed fetch each on the web, and now ask once (#1621).

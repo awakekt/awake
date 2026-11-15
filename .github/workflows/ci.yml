@@ -262,6 +262,11 @@ jobs:
       - name: Mesh LOD tests
         run: ./gradlew :awake:asset:mesh-lod:desktopTest :awake:asset:gltf:desktopTest :awake:asset:mesh-optimizer:test :awake:core:lod:desktopTest :awake:scene:gltf:desktopTest
 
+      # Cooked KTX2 textures: picking the cooked file the device takes, a model's images read from
+      # their Basis Universal files, and a missing cooked file asked for once (#1211, #1621).
+      - name: Cooked texture loader tests
+        run: ./gradlew :awake:asset:texture-ktx-loader:desktopTest
+
       # The game UI canvas: its elements' input, drawing and zero-tolerance pixel baselines, in the
       # scene-free capability and its scene wrapper. Before this step it was only compiled here, so a
       # change to how it draws or routes a tap stayed green.
