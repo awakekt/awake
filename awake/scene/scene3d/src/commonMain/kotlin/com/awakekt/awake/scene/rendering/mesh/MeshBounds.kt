@@ -21,8 +21,9 @@ import kotlin.math.abs
  * passed to [com.awakekt.awake.render.renderer.Renderer.createMesh] via
  * `Aabb.fromPositions`. [RenderSystem3D]
  * reads it into that entity's [Transform][com.awakekt.awake.scene.core.transform.Transform]
- * to frustum-cull the entity when it can't possibly be visible -- an entity with no `MeshBounds`
- * is never culled (always drawn, same as before this component existed), same "system reads
+ * to frustum-cull the entity when it can't possibly be visible. A renderer added without one
+ * gets its mesh's [com.awakekt.awake.render.mesh.Mesh.localBounds] the first frame it is drawn;
+ * one whose mesh knows no bounds is never culled (always drawn), same "system reads
  * whatever's currently set, entity opts in by adding the component" shape [SkinnedPose]/
  * [PbrMaterial] already use. */
 data class MeshBounds(
