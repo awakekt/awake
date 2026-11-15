@@ -30,6 +30,7 @@ import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.spatial.SpatialIndexSystem
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -91,6 +92,39 @@ class TransparentDrawSourcesTest {
     }
 
     @Test
+    fun aPortraitFarFromTheTownDrawsNoneOfItsBillboardGlows() {
+        RenderDiagnostics.drawStatsEnabled = true
+        populate(billboards = true)
+        // In front of the portrait, so culling is not simply dropping every billboard.
+        val near = world.create()
+        world.add(near, Transform(position = Vec3f(-0.4f, 19_999.8f, -0.3f)))
+        world.add(near, MeshRenderer(mesh, material, transparent = true, additive = true, billboard = true))
+        world.add(near, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, 0f), Vec3f(0.5f, 0.5f, 0f))))
+        // The consumer's portrait lens on 0.51.0: orthographic, turned to face the sun, 19,900 above the town.
+        val portrait = Camera(
+            Lens(
+                eye = Vec3f(-2.163f, 19_997.465f, -1.280f),
+                center = Vec3f(1.384f, 20_002.220f, 1.467f),
+                up = Vec3f(-0.783f, 0.081f, 0.616f),
+                fovYRadians = 1f,
+                near = 0.1f,
+                far = 20f,
+            ).apply {
+                projection = Lens.Projection.Orthographic
+                orthoHalfHeight = 1.207f
+            },
+            isPrimary = false,
+        )
+        for (indexed in listOf(false, true)) {
+            if (indexed) SpatialIndexSystem().update(world, 1f / 60f)
+            frame()
+            system.planCapture(world, portrait, SIZE, SIZE)
+            assertEquals(1, RenderDiagnostics.captureTransparentSources.single().meshRenderers, "indexed=$indexed: the portrait only the one before it")
+            assertEquals(PROPS, checkNotNull(RenderDiagnostics.transparentSources).meshRenderers, "indexed=$indexed: the main view sees every glow in the town")
+        }
+    }
+
+    @Test
     fun aNewFrameStartsItsCapturesAfresh() {
         RenderDiagnostics.drawStatsEnabled = true
         populate()
@@ -113,11 +147,11 @@ class TransparentDrawSourcesTest {
         assertEquals(emptyList(), RenderDiagnostics.captureTransparentSources)
     }
 
-    private fun populate() {
+    private fun populate(billboards: Boolean = false) {
         repeat(PROPS) { index ->
             val prop = world.create()
             world.add(prop, Transform(position = Vec3f((index % ROW - ROW / 2) * 4f, 0f, (index / ROW) * 4f)))
-            world.add(prop, MeshRenderer(mesh, material, transparent = true, additive = true))
+            world.add(prop, MeshRenderer(mesh, material, transparent = true, additive = true, billboard = billboards))
             world.add(prop, MeshBounds(Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))))
         }
         world.add(world.create(), Camera(Lens(eye = Vec3f(0f, 30f, 60f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 400f)))
