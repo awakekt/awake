@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "health_bar",
+      "components": [
+        {
+          "component": "canvas_element",
+          "kind": "Bar",
+          "anchor": "TopLeft",
+          "width": 240.0,
+          "height": 16.0,
+          "value": 0.75,
+          "color": "#E5484D",
+          "background": "#00000080"
+        }
+      ]
+    },
+    {
+      "name": "score",
+      "components": [
+        {
+          "component": "canvas_element",
+          "kind": "Text",
+          "anchor": "TopRight",
+          "width": 160.0,
+          "text": "Score 0"
+        }
+      ]
+    },
+    {
+      "name": "jump_button",
+      "components": [
+        {
+          "component": "canvas_element",
+          "kind": "Button",
+          "anchor": "BottomRight",
+          "width": 120.0,
+          "height": 56.0,
+          "text": "Jump",
+          "action": "jump",
+          "background": "#2563EB"
+        }
+      ]
+    }
+  ]
+}

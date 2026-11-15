@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "name": "Harbor Town",
+  "nodes": [
+    {
+      "name": "dock",
+      "transform": {
+        "position": { "x": 0.0, "y": 0.0, "z": 4.0 },
+        "scale": { "x": 6.0, "y": 0.2, "z": 2.0 }
+      }
+    },
+    {
+      "name": "lighthouse",
+      "transform": {
+        "position": { "x": 3.0, "y": 0.0, "z": -2.0 }
+      },
+      "children": [
+        {
+          "name": "beacon",
+          "transform": {
+            "position": { "x": 0.0, "y": 6.0, "z": 0.0 }
+          },
+          "components": [
+            { "component": "spin_control", "speed": 0.5 }
+          ]
+        }
+      ]
+    }
+  ]
+}

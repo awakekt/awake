@@ -6945,7 +6945,7 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td><code>settings</code></td>
 <td>object</td>
 <td>none</td>
-<td>Camera-picture transparency and masking, as described below. Omitted keeps the opaque default.</td>
+<td>Camera-picture transparency, masking and refresh, as described below. Omitted keeps the opaque default, drawn every frame.</td>
 </tr>
 </tbody>
 </table>
@@ -6958,7 +6958,12 @@ need an alpha-blended pipeline in the host's render plan, as in any other scene.
 by the style's radius. These mask the camera picture, leaving the element's background and overlay
 children as authored. Explicit ancestor clips also constrain the picture. Target resolution follows
 the element's scaled pixel size; safe-area placement is unchanged.</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_view"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"settings"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"transparent"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"mask"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Circle"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<p><code>settings.refresh</code> defaults to <code>Always</code>: the picture is drawn every frame the element shows. <code>OnRequest</code>
+draws it when the element first shows, again when its box changes size or its coverage changes, and
+on the frame after the host calls <code>SceneAppLifecycleRuntime.invalidateCanvasViews(camera)</code>. Between
+those the element keeps its last picture and the camera costs nothing: no planning and no draws. Use
+it for a picture whose subject changes rarely, such as a HUD portrait, and invalidate when it changes.</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_view"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"settings"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"transparent"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"mask"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Circle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"refresh"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OnRequest"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <h2 id="canvas_follow_limit"><code>canvas_follow_limit</code></h2>
 <p>The most followers of one group the scene's canvas draws at once, keeping the most important: name

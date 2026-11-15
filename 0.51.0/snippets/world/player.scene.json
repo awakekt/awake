@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "floor",
+      "transform": { "position": { "x": 0.0, "y": -0.1, "z": 0.0 } },
+      "components": [
+        {
+          "component": "physics_body",
+          "shape": { "type": "box", "halfExtents": { "x": 10.0, "y": 0.1, "z": 10.0 } }
+        }
+      ]
+    },
+    {
+      "name": "player",
+      "transform": { "position": { "x": 0.0, "y": 2.0, "z": 0.0 } },
+      "components": [
+        { "component": "movement_control", "speed": 4.0 },
+        {
+          "component": "character_controller",
+          "radius": 0.4,
+          "halfHeight": 0.5,
+          "stepHeight": 0.3,
+          "jumpSpeed": 5.0
+        }
+      ]
+    }
+  ]
+}
