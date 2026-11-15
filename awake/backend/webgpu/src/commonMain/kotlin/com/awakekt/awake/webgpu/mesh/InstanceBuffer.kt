@@ -11,6 +11,7 @@ import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
+import com.awakekt.awake.webgpu.renderer.GpuBufferCreations
 import com.awakekt.awake.webgpu.renderer.sameBitsAs
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BufferDescriptor
@@ -35,6 +36,9 @@ class InstanceBuffer(
      * truncating) with a message naming this knob. */
     private val maxInstances: Int = DEFAULT_MAX_INSTANCES,
 ) {
+    /** Counts each buffer this creates after it is set, for the per-site creation gate (#1555). */
+    internal var creations: GpuBufferCreations? = null
+
     private var capacity = MIN_CAPACITY.coerceAtMost(maxInstances)
     private var buffer: GPUBuffer = createBuffer(capacity)
 
@@ -95,12 +99,15 @@ class InstanceBuffer(
     var binding: WebGpuBufferHandle = WebGpuBufferHandle(buffer)
         private set
 
-    private fun createBuffer(instances: Int): GPUBuffer = graphicsDevice.wgpuContext.device.createBuffer(
-        BufferDescriptor(
-            size = (instances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toULong(),
-            usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
-        ),
-    )
+    private fun createBuffer(instances: Int): GPUBuffer {
+        creations?.let { it.instanceBuffers += 1 }
+        return graphicsDevice.wgpuContext.device.createBuffer(
+            BufferDescriptor(
+                size = (instances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toULong(),
+                usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
+            ),
+        )
+    }
 
     /** Closes the current GPU buffer. Call once, after the last frame that draws with it. */
     fun destroy() {

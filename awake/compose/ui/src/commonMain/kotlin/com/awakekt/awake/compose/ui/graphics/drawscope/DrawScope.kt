@@ -497,7 +497,10 @@ internal class PaintScope :
     LayerDrawScope,
     RetainedMeshDrawScope {
     private val clips = ClipStackState()
-    private var output = mutableListOf<UiDrawPrimitive>()
+
+    /** The base output and what retained draw (#1512 stage e) keeps of the last paint's. */
+    val retained = RetainedOutput()
+    private var output = retained.current
     private val layers = mutableListOf<GraphicsLayerFrame>()
     private var nextLayerId = 0
     private var originX = 0f
@@ -536,7 +539,19 @@ internal class PaintScope :
 
     fun layers(): List<GraphicsLayerFrame> = layers
 
-    fun reset() {
+    /** Whether drawing goes into an offscreen layer now, not the base output. */
+    val insideLayer: Boolean get() = output !== retained.current
+
+    /** Writes what a node's output depends on above it -- alpha, transform, the active clip -- into [out]. */
+    fun writeContext(out: FloatArray) = clips.writeTop(out, transform.writeTo(out, alpha))
+
+    /**
+     * Starts a paint. [retaining] keeps the last paint's base output readable through
+     * [RetainedOutput.previous] for this one (#1512 stage e), instead of clearing it.
+     */
+    fun reset(retaining: Boolean = false) {
+        if (retaining) retained.swap()
+        output = retained.current
         output.clear()
         layers.clear()
         clips.reset()
@@ -559,6 +574,7 @@ internal class PaintScope :
         shape: Shape,
         drawContent: () -> Unit,
     ) {
+        retained.unretainable++
         val layerId = nextLayerId++
         val layerX = originX
         val layerY = originY
@@ -707,6 +723,7 @@ internal class PaintScope :
         blurRadius: Float,
         rotationDegrees: Float,
     ) {
+        retained.unretainable++
         val inset = kotlin.math.ceil(blurRadius).toInt().coerceAtLeast(0)
         val layerId = nextLayerId++
         layers += GraphicsLayerFrame(
@@ -739,10 +756,12 @@ internal class PaintScope :
         // Pivot is the node's own centre, in the untransformed coordinates `enter` resolved -- so a
         // nested scale pivots about where its node actually sits, not about where an outer scale
         // moved it to.
+        if (scaleX != 1f || scaleY != 1f) retained.placementBound++
         transform.withScale(scaleX, scaleY, originX + width / 2f, originY + height / 2f, block)
     }
 
     override fun translate(left: Float, top: Float, block: () -> Unit) {
+        if (left != 0f || top != 0f) retained.placementBound++
         transform.withTranslation(left, top, block)
     }
 
@@ -1146,10 +1165,12 @@ internal class PaintScope :
     }
 
     override fun unclipped(block: () -> Unit) {
+        if (clips.depth > 0) retained.unretainable++
         clips.unclipped(output, block)
     }
 
     override fun emit(primitive: UiDrawPrimitive) {
+        retained.placementBound++
         output += if (alpha >= 1f) primitive else primitive.dimmedBy(alpha)
     }
 }
@@ -1250,6 +1271,16 @@ private class DrawTransformState {
     private var translateX = 0f
     private var translateY = 0f
 
+    /** Writes [alpha], then scale and translation, into [out]: what a retained range was drawn under. Returns the next index. */
+    fun writeTo(out: FloatArray, alpha: Float): Int {
+        out[0] = alpha
+        out[1] = scaleX
+        out[2] = scaleY
+        out[3] = translateX
+        out[4] = translateY
+        return 5
+    }
+
     /** True when the transform only moves things by whole pixels, so nothing is resampled. */
     val isWholePixelTranslation: Boolean
         get() = scaleX == 1f && scaleY == 1f && translateX == floor(translateX) && translateY == floor(translateY)
@@ -1348,11 +1379,23 @@ private class ClipStackState {
     private val savedBoundsByDepth = ArrayList<ArrayList<Rectangle>>()
     private val savedCommandsByDepth = ArrayList<ArrayList<UiDrawPrimitive>>()
     private var unclippedDepth = 0
-    private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
+    private val fullClip = NoClipRect
 
     fun reset() {
         clipStack.clear()
         clipCommandStack.clear()
+    }
+
+    val depth: Int get() = clipStack.size
+
+    /** Writes the depth and the active clip rect (zeros when unclipped) into [out] from [offset]. */
+    fun writeTop(out: FloatArray, offset: Int) {
+        val top = clipStack.lastOrNull()
+        out[offset] = clipStack.size.toFloat()
+        out[offset + 1] = top?.x ?: 0f
+        out[offset + 2] = top?.y ?: 0f
+        out[offset + 3] = top?.width ?: 0f
+        out[offset + 4] = top?.height ?: 0f
     }
 
     fun isFullyOutside(x: Float, y: Float, w: Float, h: Float): Boolean {
@@ -1468,6 +1511,9 @@ private class ClipStackState {
  * size limit, the smallest a backend here guarantees.
  */
 private const val MAX_LAYER_TARGET_SIZE = 8192
+
+/** What a clip pop restores when nothing encloses it: every clip stack's "no clip", one instance. */
+internal val NoClipRect = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
 private const val HALF_CIRCLE_DEGREES = 180f
 private const val HALF_EXTENT = 0.5f
 
