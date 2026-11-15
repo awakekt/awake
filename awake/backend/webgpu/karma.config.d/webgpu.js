@@ -5,7 +5,8 @@
 config.customLaunchers = config.customLaunchers || {};
 config.customLaunchers.AwakeWebGpuHeadless = {
   base: 'Chrome',
-  flags: ['--headless=new', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader'],
+  // gc and a byte-exact heap size, for the frame budgets' heap measurement.
+  flags: ['--headless=new', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader', '--js-flags=--expose-gc', '--enable-precise-memory-info'],
 };
 config.browsers = ['AwakeWebGpuHeadless'];
 // A frame of a few thousand draws, timed over many frames, outlasts mocha's 2 s default.

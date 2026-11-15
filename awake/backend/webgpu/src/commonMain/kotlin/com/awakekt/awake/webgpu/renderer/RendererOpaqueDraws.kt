@@ -129,7 +129,7 @@ internal fun Renderer.prepareGpuDraw(
             ?.let {
                 bufferPools.sceneDepthBindingFor(pipeline, it)
             },
-        depthSortKey = cmd.depthSortKey(cameraEye),
+        depthSortKey = cmd.sortKeyFor(isTransparent, cameraEye),
         sortOrder = cmd.sortOrder,
         sortLayer = cmd.sortLayer,
         batchKey = cmd.batchKey(),
@@ -358,7 +358,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         instanceColorBuffer = particleColors,
         instanceFrameBuffer = particleFrames,
         transparent = isTransparent,
-        depthSortKey = cmd.depthSortKey(cameraEye),
+        depthSortKey = cmd.sortKeyFor(isTransparent, cameraEye),
         sortOrder = cmd.sortOrder,
         sortLayer = cmd.sortLayer,
         batchKey = cmd.batchKey(),
@@ -409,3 +409,8 @@ internal class WebGpuPreparedDraw(
     override val sortLayer: Int = 0,
     override val batchKey: Int = 0,
 ) : PreparedDraw
+
+/** [this] draw's distance to [cameraEye], read only to order transparent draws: an opaque draw's is
+ * 0, so a moving camera leaves its packet unchanged (#1555). */
+private fun GpuDrawRequest.sortKeyFor(transparent: Boolean, cameraEye: Vec3f): Float =
+    if (transparent) depthSortKey(cameraEye) else 0f

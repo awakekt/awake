@@ -47,6 +47,9 @@ internal class WebGpuDrawPreparer(
     private val frameInputs = FrameUniformInputs()
     private var frameVersion = NO_FRAME_VERSION
 
+    /** Each slot's last packet, handed back while its draw resolves the same (#1555). */
+    internal val resolvedDraws = ResolvedDrawCache()
+
     /** Instanced casters' shared depth groups, for this batch. */
     private val sharedDepth = SharedDepthBindings()
 
@@ -75,14 +78,19 @@ internal class WebGpuDrawPreparer(
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         if (edgePipeline != null) stageEdgeFrame(context)
         val primary = primaryBinding()
+        val instanced = request.instanceModels != null
+        val singleIndex = when {
+            edgePipeline != null -> edgeRuns++
+            instanced -> sourceIndex
+            else -> singleSlots.slotFor(request.mesh, request.material)
+        }
+        val instancedIndex = if (instanced) instancedSlots.slotFor(request.mesh, request.material) else sourceIndex
+        val kind = ResolvedDrawCache.kindOf(edges = edgePipeline != null, instanced = instanced)
+        val slot = if (instanced && edgePipeline == null) instancedIndex else singleIndex
         val draw = renderer.prepareGpuDraw(
             cmd = request,
-            singleIndex = when {
-                edgePipeline != null -> edgeRuns++
-                request.instanceModels != null -> sourceIndex
-                else -> singleSlots.slotFor(request.mesh, request.material)
-            },
-            instancedIndex = if (request.instanceModels != null) instancedSlots.slotFor(request.mesh, request.material) else sourceIndex,
+            singleIndex = singleIndex,
+            instancedIndex = instancedIndex,
             isTransparent = request.transparent,
             primary = primary,
             viewProjection = context.viewProjection,
@@ -98,12 +106,12 @@ internal class WebGpuDrawPreparer(
             frameVersion = frameVersion,
         ) ?: return null
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
-        if (edgePipeline != null) return draw.resolved()
+        if (edgePipeline != null) return resolvedDraws.resolve(kind, slot, draw)
         // A renderer may request camera-space depth, or a mask, without requesting shadow cascades.
         // The resolved packet still needs a depth pipeline and material binding for that pass; one
         // group serves every depth pass, whose group-0 layouts are the same.
         val depthFeature = renderer.depthPrePass ?: renderer.sceneDepthPass ?: renderer.maskPass
-        val format = draw.vertexFormat ?: return draw.resolved()
+        val format = draw.vertexFormat ?: return resolvedDraws.resolve(kind, slot, draw)
         val depthKey = request.depthRenderKey()
         val depthPipeline = depthFeature?.pipelineFor(depthKey, format)
         val sourceMaterial = request.material as? com.awakekt.awake.webgpu.material.Material
@@ -112,7 +120,7 @@ internal class WebGpuDrawPreparer(
         // A masked caster casts through its texture, so it needs one.
         val canCast = request.alphaMode != AlphaMode.Masked || sourceMaterial?.hasTexture == true
         if (depthPipeline == null || sourceMaterial == null || !canCast) {
-            return draw.resolved(depthRenderKey = depthKey)
+            return resolvedDraws.resolve(kind, slot, draw, depthRenderKey = depthKey)
         }
         val depthMaterial = depthMaterialBinding(request, draw, depthKey, depthFeature, depthPipeline, sourceMaterial)
         val depthPalette = if (depthKey.kind == DepthCasterKind.SkinnedInstanced) {
@@ -120,7 +128,10 @@ internal class WebGpuDrawPreparer(
         } else {
             null
         }
-        return draw.resolved(
+        return resolvedDraws.resolve(
+            kind,
+            slot,
+            draw,
             depthRenderKey = depthKey,
             alphaCutoff = request.alphaCutoff,
             depthPipeline = depthPipeline.handle,
