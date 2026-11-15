@@ -133,6 +133,7 @@ data class Transform(
         inheritRotation = true
         worldMatrix.identity()
         rebuildRequested = true
+        transformResets += 1
     }
 }
 
@@ -153,3 +154,11 @@ fun worldAxisStretch(matrix: Mat4, axis: Int): Float = when (axis) {
 }
 
 private fun length(x: Float, y: Float, z: Float): Float = sqrt(x * x + y * y + z * z)
+
+/**
+ * Transforms [Transform.reset] since the process started, so [TransformSystem] walks its built
+ * statics again only after one may have been reset. A lost increment between two threads resetting
+ * at once is caught by the next reset; worlds are stepped on their frame thread.
+ */
+@kotlin.concurrent.Volatile
+internal var transformResets: Int = 0

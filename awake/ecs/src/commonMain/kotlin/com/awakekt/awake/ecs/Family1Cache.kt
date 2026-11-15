@@ -31,6 +31,10 @@ internal class Family1Cache<A : Any>(
     /** Number of live dense entries. */
     val size: Int get() = count
 
+    /** Members joined or left, or components replaced; see [Family1.changes]. */
+    var changes: Int = 0
+        private set
+
     internal val hasMaterializedTagArray: Boolean
         get() = componentValues.hasMaterializedTagArray
 
@@ -102,6 +106,7 @@ internal class Family1Cache<A : Any>(
         if (index >= 0) {
             @Suppress("UNCHECKED_CAST")
             componentValues.replace(index, component as A)
+            changes += 1
         }
     }
 
@@ -115,6 +120,7 @@ internal class Family1Cache<A : Any>(
         entities[count] = entity.packed
         componentValues.insert(count, component, entities.size)
         count += 1
+        changes += 1
     }
 
     private fun removeAt(index: Int) {
@@ -128,6 +134,7 @@ internal class Family1Cache<A : Any>(
         }
         componentValues.remove(index, lastIndex)
         count -= 1
+        changes += 1
         sparse.remove(removedEntityId)
     }
 

@@ -8,6 +8,8 @@ package com.awakekt.awake.scene.core.transform
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.ecs.ComponentTypeId
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.Family
+import com.awakekt.awake.ecs.Family2
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 
@@ -26,7 +28,10 @@ import com.awakekt.awake.ecs.World
  * what is compared.
  *
  * An entity marked [StaticTransform] is built once and then skipped without reading its values, so
- * it is not even compared. It is built again only for a different or reset [Transform].
+ * it is not even compared. Its matrix stays as built until it is unmarked, whatever its children do:
+ * a child that moves composes with the parent's built matrix and never builds the parent again. It is built again only for a different or reset [Transform]. A frame in
+ * which no static joined, left, swapped its [Transform] or was reset does not visit the statics at
+ * all, so a still world of marked props costs nothing per prop.
  *
  * @param skipsStatic Whether [StaticTransform] entities are skipped once built. An editor that moves
  * them passes false, and every entity is compared each frame.
@@ -45,25 +50,58 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
     private var builtParentVersion = IntArray(0)
     private var builtInheritRotation = BooleanArray(0)
 
+    // The statics family and what it was when this system last walked it, and the family of the rest.
+    private var statics: Family2<Transform, StaticTransform>? = null
+    private var staticChanges = 0
+    private var staticResets = 0
+    private var moving: Family? = null
+
+    // The tag's raw id, -1 when statics are not skipped: a nullable id would be boxed each frame.
+    private var staticType = -1
+
     override fun update(world: World, delta: Float) {
         frameStamp += 1
-        val transformType = world.typeId(Transform::class)
-        // The world keeps each family up to date and returns the same one each time; this one also
-        // holds its transforms, so walking it looks nothing up.
+        val transformType = world.typeId(TRANSFORM)
+        // The world keeps each family up to date and returns the same one each time, until it is
+        // cleared; this one also holds its transforms, so walking it looks nothing up.
         val statics = world.family<Transform, StaticTransform>()
+        staticType = if (skipsStatic) world.typeId(STATIC).value else -1
         if (!skipsStatic || statics.size == 0) {
             world.queryEach<Transform> { entity, transform ->
                 propagate(world, transformType, entity, transform)
             }
             return
         }
-        statics.forEach { entity, transform, _ ->
-            if (!isBuilt(entity.id, transform)) propagate(world, transformType, entity, transform)
+        if (staticsMayHaveChanged(statics)) {
+            statics.forEach { entity, transform, _ ->
+                if (!isBuilt(entity.id, transform)) propagate(world, transformType, entity, transform)
+            }
         }
-        world.family { all(Transform::class).exclude(StaticTransform::class) }.forEach { entity ->
+        movingFamily(world, statics).forEach { entity ->
             world.get<Transform>(entity, transformType)?.let { propagate(world, transformType, entity, it) }
         }
     }
+
+    /** Whether a static may need building: a different family, a member joined, left or swapped, or a transform was reset. */
+    private fun staticsMayHaveChanged(family: Family2<Transform, StaticTransform>): Boolean {
+        val changed = family !== statics || family.changes != staticChanges || transformResets != staticResets
+        staticChanges = family.changes
+        staticResets = transformResets
+        staticWalks += if (changed) 1 else 0
+        return changed
+    }
+
+    /** The entities with a [Transform] and no [StaticTransform], kept while the world's families are. */
+    private fun movingFamily(world: World, family: Family2<Transform, StaticTransform>): Family {
+        val kept = moving
+        if (kept != null && family === statics) return kept
+        statics = family
+        return world.family { all(Transform::class).exclude(StaticTransform::class) }.also { moving = it }
+    }
+
+    /** Frames that walked the statics, for the gate that a still world does not. */
+    internal var staticWalks = 0
+        private set
 
     /** Whether [transform] is the one [id]'s matrix was last built from, and has not been reset since. */
     private fun isBuilt(id: Int, transform: Transform): Boolean =
@@ -73,6 +111,12 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         val id = entity.id
         ensureCapacity(id)
         if (visitedStamp[id] == frameStamp) return
+        // A built static is frozen until it is unmarked, whatever its children do: a child that
+        // moves composes with the matrix it was built with rather than building it again.
+        if (staticType >= 0 && isBuilt(id, transform) && world.has(entity, ComponentTypeId(staticType))) {
+            visitedStamp[id] = frameStamp
+            return
+        }
         check(visitingStamp[id] != frameStamp) { "Transform hierarchy contains a cycle at $entity." }
         visitingStamp[id] = frameStamp
 
@@ -152,5 +196,9 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         const val DEFAULT_CAPACITY = 16
         const val CAPACITY_GROWTH_FACTOR = 2
         const val TRS_FLOATS = 9
+
+        // Held, not written per frame: a `Transform::class` builds a new class reference each time.
+        val TRANSFORM = Transform::class
+        val STATIC = StaticTransform::class
     }
 }
