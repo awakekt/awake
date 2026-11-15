@@ -72,13 +72,24 @@ internal class InstanceBatcher(private val rule: FoldRule = SceneInstanceFold) {
         kept.clear().also { others.clear() }
         // Entities spawned together iterate together, so a draw usually joins the previous draw's group.
         var last: InstanceGroup? = null
+        var askedFormat: VertexFormat? = null
+        var askedCull = CullMode.None
+        var instances = false
+        var tinted = false
         for (index in 0 until drawCalls.size) {
             val draw = drawCalls[index]
-            if (!rule.folds(draw, canInstance)) {
+            val format = draw.mesh.format
+            if (format !== askedFormat || draw.cullMode != askedCull) {
+                askedFormat = format
+                askedCull = draw.cullMode
+                instances = canInstance(format, askedCull)
+                tinted = canTint(format, askedCull)
+            }
+            if (!rule.folds(draw, instances)) {
                 if (rule.keepsOthers) others.addSplitToCapacity(draw)
                 continue
             }
-            val tints = canTint(draw.mesh.format, draw.cullMode)
+            val tints = tinted
             val group = last?.takeIf { it.tints == tints && rule.alike(it.members[it.members.size - 1], draw, tints) } ?: groupOf(draw, tints)
             group.add(draw, index)
             last = group
