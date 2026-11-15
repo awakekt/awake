@@ -38,8 +38,9 @@ import kotlin.test.assertEquals
  * 3 times each, one read per stage of that one load. A game whose effects share sidecar files multiplies
  * that by the models sharing them.
  *
- * On the JVM: what it counts is the common loader's reads, and the browser test host serves no Basis
- * Universal transcoder, which changes how the image is read there, not how often the model loads.
+ * Frames wait on the real clock only until the prewarm is ready, while its load runs off the frame:
+ * a browser holds each repeated timer to 4 ms or more, so waiting on all of them ran past the test
+ * runner's 2 s limit there.
  */
 class HeldPrewarmReadsTest {
     private val reads = mutableListOf<String>()
@@ -82,7 +83,7 @@ class HeldPrewarmReadsTest {
         try {
             repeat(FRAMES) {
                 game.update(DELTA, WIDTH, HEIGHT)
-                withContext(Dispatchers.Default) { delay(1) }
+                if (prewarm?.isReady != true) withContext(Dispatchers.Default) { delay(1) }
             }
             game.requireService<SceneAppLifecycleRuntime>()
             val counts = lock.withLock { reads.groupingBy { it }.eachCount() }
