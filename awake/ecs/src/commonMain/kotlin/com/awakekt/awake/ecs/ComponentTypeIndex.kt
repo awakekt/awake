@@ -19,12 +19,12 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 internal expect fun componentTypeIndexOf(key: Any): Int
 
 /**
- * Whether [componentTypeIndexOf] is cheaper than hashing [key] into a world's own map. True on the
- * JVM, where a `ClassValue` holds the index on the class itself. Elsewhere the index is a map lookup
- * of its own, so a reified `World.get` keeps the world's map and only [ComponentType] handles,
- * which carry their index, read the array.
+ * [key]'s [componentTypeIndexOf] when the platform finds it without hashing a class, or -1. On the
+ * JVM a `ClassValue` holds the index on the class itself; on Kotlin/Wasm a reified lookup's key is
+ * a call-site token, found by identity. Elsewhere it is -1, so a lookup keeps the world's map and
+ * only [ComponentType] handles, which carry their index, read the array.
  */
-internal expect val componentTypeIndexIsCheap: Boolean
+internal expect fun cheapComponentTypeIndexOf(key: Any): Int
 
 /**
  * The shared form of [componentTypeIndexOf], for platforms with no per-class slot: a map from key to

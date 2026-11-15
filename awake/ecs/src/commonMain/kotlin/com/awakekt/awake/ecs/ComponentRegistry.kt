@@ -49,7 +49,11 @@ internal class ComponentRegistry {
     @PublishedApi
     internal fun pool(typeId: ComponentTypeId): ComponentPool<Any>? = pools.pool(typeId)
 
-    fun <T : Any> typeId(type: KClass<T>): ComponentTypeId = types.register(type).also { pools.bind(it, type) }
+    // Bound once, when the type is first registered: binding reads the pool map by class, and a
+    // `KClass` hashes by building its qualified name on Kotlin/Wasm. A pool made or registered
+    // later binds itself.
+    fun <T : Any> typeId(type: KClass<T>): ComponentTypeId =
+        types.typeIdOrNull(type) ?: types.register(type).also { pools.bind(it, type) }
 
     fun typeIdOrNull(type: KClass<out Any>): ComponentTypeId? = types.typeIdOrNull(type)
 

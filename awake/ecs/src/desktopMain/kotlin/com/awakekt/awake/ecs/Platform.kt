@@ -27,7 +27,7 @@ internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.ja
 
 internal actual fun componentTypeIndexOf(key: Any): Int = ComponentTypeIndexValue.get(key as Class<*>)
 
-internal actual val componentTypeIndexIsCheap: Boolean = true
+internal actual fun cheapComponentTypeIndexOf(key: Any): Int = componentTypeIndexOf(key)
 
 /**
  * Each component class's index, held by the class itself. A `ClassValue` read does not hash the

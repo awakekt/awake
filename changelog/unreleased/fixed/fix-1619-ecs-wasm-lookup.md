@@ -1,0 +1,1 @@
+- On Kotlin/Wasm a reified `World.get<T>`, `has<T>`, `add<T>` or `remove<T>` no longer allocates: it allocated 56 bytes a call, a new class wrapper for `T::class` plus an allocating name hash, and `World.typeId(KClass)` allocated 180 bytes a call. Each per-entity call now allocates nothing once warm (#1619).
