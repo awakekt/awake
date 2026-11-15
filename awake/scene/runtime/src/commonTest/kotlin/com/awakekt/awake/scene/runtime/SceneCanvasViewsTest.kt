@@ -28,6 +28,7 @@ import com.awakekt.awake.scene.rendering.sky.Skybox
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasView
+import com.awakekt.awake.ui.canvas.CanvasViewRefresh
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Test
@@ -201,5 +202,52 @@ class SceneCanvasViewsTest {
         runtime.dispose()
 
         assertTrue(renderer.live.isEmpty())
+    }
+
+    @Test
+    fun anOnRequestViewDrawsOnlyWhenFirstShownResizedOrAskedFor() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        val target = listOf("frame", "view 200x100", "ui [200x100]")
+        val kept = listOf("frame", "ui [200x100]")
+
+        assertEquals(target, frame(), "drawn the first frame it shows")
+        assertEquals(kept, frame(), "then kept: no plan, no draw, the UI samples the last picture")
+        assertEquals(kept, frame())
+        runtime.invalidateCanvasViews(portraitCamera!!)
+        assertEquals(target, frame(), "drawn again on the frame after it is asked for")
+        assertEquals(kept, frame())
+        portrait.width = 60f
+        assertEquals(listOf("frame", "view 120x100", "ui [120x100]"), frame(), "a new size is a new target, drawn once")
+        assertEquals(listOf("frame", "ui [120x100]"), frame())
+        portrait.view = CanvasView(transparent = true, refresh = CanvasViewRefresh.OnRequest)
+        assertEquals(listOf("frame", "view 120x100", "ui [120x100]"), frame(), "a change of coverage draws it again")
+    }
+
+    @Test
+    fun invalidatingAnotherCameraLeavesAnOnRequestViewAlone() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        frame()
+
+        runtime.invalidateCanvasViews(runtime.world.create())
+
+        assertEquals(listOf("frame", "ui [200x100]"), frame())
+    }
+
+    @Test
+    fun anOnRequestViewWhoseTargetIsRecreatedDrawsAgainByItself() = runTest {
+        runtime.ready(renderer)
+        portrait.view = CanvasView(refresh = CanvasViewRefresh.OnRequest)
+        frame()
+        frame()
+
+        portrait.visible = false
+        frame()
+        assertTrue(renderer.live.isEmpty(), "out of the tree for a frame: its target is freed")
+        portrait.visible = true
+        assertEquals(listOf("frame", "view 200x100", "ui [200x100]"), frame(), "back in the tree: a new target, drawn, never sampled empty")
+
+        assertEquals(listOf("frame", "ui [200x100]"), frame(), "then kept again")
     }
 }

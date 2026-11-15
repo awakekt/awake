@@ -16,6 +16,7 @@ import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.scene.canvas.CanvasViews
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasViewRefresh
 
 /**
  * Each View element's picture, whichever world it is in: a target the size of its box, kept while the
@@ -31,6 +32,13 @@ internal class SceneCanvasViews(
         val material: Material = renderer.createMaterial(renderTarget = target)
         var shown = true
         var transparent = false
+
+        /** The camera node this View shows, for [invalidate]. */
+        var cameraEntity: Entity? = null
+        var refresh = CanvasViewRefresh.Always
+
+        /** Whether the target lacks the picture asked for: true for a new target, and after [invalidate]. */
+        var stale = true
 
         // The plan's environment last seen, and its transparent form: a camera's sky and clear
         // rarely change, so a transparent View reuses one override rather than copying every frame.
@@ -68,8 +76,21 @@ internal class SceneCanvasViews(
         view.world = world
         view.camera = lens
         view.shown = true
-        view.transparent = element.view?.transparent == true
+        val settings = element.view
+        val transparent = settings?.transparent == true
+        if (transparent != view.transparent || camera != view.cameraEntity) view.stale = true
+        view.transparent = transparent
+        view.cameraEntity = camera
+        view.refresh = settings?.refresh ?: CanvasViewRefresh.Always
         return view.material
+    }
+
+    /**
+     * Draws [camera]'s pictures in [world] again on the next [render], for the Views that keep theirs
+     * ([CanvasViewRefresh.OnRequest]); an [CanvasViewRefresh.Always] View draws every frame anyway.
+     */
+    fun invalidate(world: World, camera: Entity) {
+        for (view in views.values) if (view.world === world && view.cameraEntity == camera) view.stale = true
     }
 
     /** Renders every view asked for since the last call and frees the others. */
@@ -78,8 +99,12 @@ internal class SceneCanvasViews(
         while (iterator.hasNext()) {
             val view = iterator.next()
             if (view.shown) {
-                // Not waited for: the frame that samples the target is submitted after it.
-                renderer.submitToTexture(view.target, view.picture(plan(view.world, view.camera, view.target.width, view.target.height)))
+                // An OnRequest View keeps its last picture: no plan, no draw, until it is asked for again (#1621).
+                if (view.refresh == CanvasViewRefresh.Always || view.stale) {
+                    // Not waited for: the frame that samples the target is submitted after it.
+                    renderer.submitToTexture(view.target, view.picture(plan(view.world, view.camera, view.target.width, view.target.height)))
+                    view.stale = false
+                }
                 view.shown = false
             } else {
                 view.destroy()
