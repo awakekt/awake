@@ -64,13 +64,37 @@ fun GpuDevice.createImageMaterial(
     filtering: TextureFiltering = TextureFiltering.Linear,
     uniformFloatCount: Int = GpuDevice.DEFAULT_UNIFORM_FLOAT_COUNT,
     pbrImages: PbrImageSet? = null,
-): Material = compressedMaterial(image, filtering, uniformFloatCount, pbrImages)
-    ?: capability(GpuImageUpload)?.createMaterial(image, filtering, uniformFloatCount, pbrImages)
-    ?: createMaterial(
+): Material = createImageMaterial(image, filtering, uniformFloatCount, pbrImages, label = null)
+
+/**
+ * [createImageMaterial], with [label] naming the image to [TextureUploads.observer], such as its
+ * project path, so an upload reported there says which texture it was.
+ */
+fun GpuDevice.createImageMaterial(
+    image: GpuImageSource,
+    filtering: TextureFiltering,
+    uniformFloatCount: Int,
+    pbrImages: PbrImageSet?,
+    label: String?,
+): Material {
+    val compressed = compressedMaterial(image, filtering, uniformFloatCount, pbrImages)
+    val copied = if (compressed == null) capability(GpuImageUpload)?.createMaterial(image, filtering, uniformFloatCount, pbrImages) else null
+    val material = compressed ?: copied ?: createMaterial(
         texture = image.toTextureAsset(filtering),
         uniformFloatCount = uniformFloatCount,
         pbrTextures = pbrImages?.readTextures(),
     )
+    TextureUploads.observer?.let { observer ->
+        val path = when {
+            compressed != null -> TextureUploadPath.BlockCompressed
+            copied != null -> TextureUploadPath.GpuCopy
+            else -> TextureUploadPath.CpuRgba8
+        }
+        val format = if (compressed != null) image.compressed?.format else null
+        observer.uploaded(TextureUpload(label, image.width, image.height, path, format, filtering))
+    }
+    return material
+}
 
 // A block-compressed image goes up as it is, when there are no PBR maps to bind beside it and the device takes its format.
 private fun GpuDevice.compressedMaterial(image: GpuImageSource, filtering: TextureFiltering, uniformFloatCount: Int, pbrImages: PbrImageSet?): Material? {

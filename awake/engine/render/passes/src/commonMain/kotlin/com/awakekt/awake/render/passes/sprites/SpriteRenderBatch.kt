@@ -204,7 +204,7 @@ class SpriteRenderBatch(
             ?: resolveTexture(input.texture)?.also { require(it.layerCount == 1 && !it.isCubemap) { "A sprite sheet must be a single 2D image." } }?.asGpuImageSource()
             ?: (if (input.texture.isEmpty()) DefaultWhiteSpriteTexture.asGpuImageSource() else null)
             ?: return null
-        val material = renderer.createImageMaterial(image, TextureFiltering.Nearest, SpriteUniformLayout.total)
+        val material = renderer.createImageMaterial(image, TextureFiltering.Nearest, SpriteUniformLayout.total, null, label = input.texture)
         return Sheet(image.width, image.height, material).also { sheets[input.texture] = it }
     }
 

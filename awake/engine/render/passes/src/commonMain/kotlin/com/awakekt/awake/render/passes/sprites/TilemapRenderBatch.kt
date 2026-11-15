@@ -136,7 +136,7 @@ class TilemapRenderBatch(
         val image = (resolveImage() ?: resolveTexture()?.also(::requireSingleImage)?.asGpuImageSource())?.takeIf(::fitsCells) ?: return null
         // The atlas checks the image's cells before the material is made, so a bad image leaves nothing to free.
         return TilemapAtlas(image.width, image.height, columns, rows, pixelsPerUnit).also {
-            material = renderer.createImageMaterial(image, TextureFiltering.Nearest, SpriteUniformLayout.total)
+            material = renderer.createImageMaterial(image, TextureFiltering.Nearest, SpriteUniformLayout.total, null, label = texture)
             atlas = it
         }
     }
