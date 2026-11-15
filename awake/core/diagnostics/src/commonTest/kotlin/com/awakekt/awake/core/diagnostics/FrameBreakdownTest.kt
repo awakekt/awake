@@ -14,7 +14,9 @@ class FrameBreakdownTest {
     @Test
     fun attributesMeasuredPhasesOutsideTimeDrawCountsAndSurfaceMegapixels() {
         val breakdown = FrameBreakdown(
-            sample = { FrameBreakdownSample(phases = PHASES, render = RENDER, uiUploads = UI_UPLOADS) },
+            sample = {
+                FrameBreakdownSample(phases = PHASES, render = RENDER, uiUploads = UI_UPLOADS, passes = PASSES, renderPasses = 9)
+            },
             surfaceMpx = { 2.1 },
         )
         repeat(10) { step ->
@@ -36,6 +38,13 @@ class FrameBreakdownTest {
         assertEquals(1_120.0, summaries.getValue(FrameBreakdown.KEY_UI_UPLOAD_BYTES).avg)
         assertEquals(2.0, summaries.getValue(FrameBreakdown.KEY_UI_UPLOAD_RUNS).avg)
         assertEquals(40.0, summaries.getValue(FrameBreakdown.KEY_UI_UPLOAD_TRIANGLES).avg)
+        assertEquals(120.0, summaries.getValue(FrameBreakdown.KEY_SCENE_OPAQUE_DRAWS).avg)
+        assertEquals(6.0, summaries.getValue(FrameBreakdown.KEY_SCENE_TRANSPARENT_DRAWS).avg)
+        assertEquals(40.0, summaries.getValue(FrameBreakdown.KEY_SHADOW_DRAWS).avg)
+        assertEquals(4.0, summaries.getValue(FrameBreakdown.KEY_SHADOW_PASSES).avg)
+        assertEquals(12.0, summaries.getValue(FrameBreakdown.KEY_UI_DRAWS).avg)
+        assertEquals(2.0, summaries.getValue(FrameBreakdown.KEY_OTHER_DRAWS).avg)
+        assertEquals(9.0, summaries.getValue(FrameBreakdown.KEY_RENDER_PASSES).avg)
         assertEquals(2.1, summaries.getValue(FrameBreakdown.KEY_SURFACE_MPX).avg)
         assertNull(summaries[FrameBreakdown.KEY_HEAP_MB])
     }
@@ -103,6 +112,14 @@ class FrameBreakdownTest {
             uiWaitMs = 1f,
         )
         val UI_UPLOADS = FrameUiUploadSample(bytes = 1_120, runs = 2, triangles = 40)
+        val PASSES = FramePassSample(
+            sceneOpaqueDraws = 120,
+            sceneTransparentDraws = 6,
+            shadowDraws = 40,
+            shadowPasses = 4,
+            uiDraws = 12,
+            otherDraws = 2,
+        )
         val RENDER = FrameRenderSample(
             drawCalls = 180,
             instances = 240,

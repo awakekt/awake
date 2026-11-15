@@ -57,6 +57,7 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.sprites.SpriteRenderBatch
 import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.RenderPassStats
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UiUploadStats
@@ -334,6 +335,14 @@ class SceneAppLifecycleRuntime internal constructor(
     /** UI mesh uploads of the renderer's last frame, or null before [ready] or when it does not count. */
     internal val rendererUiUploads: UiUploadStats?
         get() = if (::renderer.isInitialized) renderer.frameUiUploads else null
+
+    /** The renderer's last frame split by pass, or null before [ready] or when it does not count. */
+    internal val rendererPassStats: RenderPassStats?
+        get() = if (::renderer.isInitialized) renderer.framePassStats else null
+
+    /** Render passes the renderer's last frame began, or null before [ready] or when it does not count (0). */
+    internal val rendererRenderPasses: Int?
+        get() = if (::renderer.isInitialized) renderer.frameRenderPasses.takeIf { it > 0 } else null
 
     private fun recordFrameTime(deltaSeconds: Float) {
         recentFrames.update(deltaSeconds)

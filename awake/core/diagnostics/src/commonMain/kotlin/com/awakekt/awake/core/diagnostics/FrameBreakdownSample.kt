@@ -15,25 +15,45 @@ package com.awakekt.awake.core.diagnostics
  * @property phases Per-phase CPU durations for the frame; ignored until [FramePhaseSample.isMeasured].
  * @property render GPU timing and geometry submission counts for the frame, or `null` when uncounted.
  * @property uiUploads What the frame wrote into UI meshes, or `null` when the renderer does not count it.
+ * @property passes Where the frame's draws went, by part of the frame, or `null` when uncounted.
+ * @property renderPasses Render passes the frame began, offscreen passes included, or `null` when uncounted.
  */
 data class FrameBreakdownSample(
     val phases: FramePhaseSample = FramePhaseSample(),
     val render: FrameRenderSample? = null,
     val uiUploads: FrameUiUploadSample? = null,
+    val passes: FramePassSample? = null,
+    val renderPasses: Int? = null,
 ) {
     /** The constructor as released before [uiUploads], kept so compiled callers still link. */
     @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
     constructor(
         phases: FramePhaseSample = FramePhaseSample(),
         render: FrameRenderSample? = null,
-    ) : this(phases, render, null)
+    ) : this(phases, render, null, null, null)
+
+    /** The constructor as released before [passes] and [renderPasses], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        phases: FramePhaseSample = FramePhaseSample(),
+        render: FrameRenderSample? = null,
+        uiUploads: FrameUiUploadSample? = null,
+    ) : this(phases, render, uiUploads, null, null)
 
     /** [copy] as released before [uiUploads]. */
     @Deprecated("Use copy with uiUploads.", level = DeprecationLevel.HIDDEN)
     fun copy(
         phases: FramePhaseSample = this.phases,
         render: FrameRenderSample? = this.render,
-    ): FrameBreakdownSample = copy(phases, render, uiUploads)
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses)
+
+    /** [copy] as released before [passes] and [renderPasses]. */
+    @Deprecated("Use copy with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        phases: FramePhaseSample = this.phases,
+        render: FrameRenderSample? = this.render,
+        uiUploads: FrameUiUploadSample? = this.uiUploads,
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses)
 }
 
 /**
@@ -86,4 +106,24 @@ data class FrameUiUploadSample(
     val bytes: Long,
     val runs: Int,
     val triangles: Long,
+)
+
+/**
+ * Draws a single frame recorded, split by the part of the frame that recorded them; the parts add up
+ * to [FrameRenderSample.drawCalls]. It tells what culling left and what shadow cascades add.
+ *
+ * @property sceneOpaqueDraws Draws of the scene pass's opaque geometry.
+ * @property sceneTransparentDraws Blended draws of the scene pass.
+ * @property shadowDraws Draws across every shadow depth pass.
+ * @property shadowPasses Shadow depth passes drawn: directional cascades and point-shadow faces.
+ * @property uiDraws Draws of the UI pass.
+ * @property otherDraws Every other draw: the sky, debug lines, depth and mask passes, image passes.
+ */
+data class FramePassSample(
+    val sceneOpaqueDraws: Int,
+    val sceneTransparentDraws: Int,
+    val shadowDraws: Int,
+    val shadowPasses: Int,
+    val uiDraws: Int,
+    val otherDraws: Int,
 )

@@ -9,8 +9,8 @@ import kotlin.math.round
 
 /**
  * Rolling window aggregator that attributes each frame's wall time across simulation, rendering, UI,
- * external host/GPU wait (`outsideMs`), renderer draw counts, UI mesh uploads, drawable megapixels,
- * and heap growth or garbage-collection frequency.
+ * external host/GPU wait (`outsideMs`), renderer draw counts and where they went by pass, UI mesh
+ * uploads, drawable megapixels, and heap growth or garbage-collection frequency.
  *
  * Call [frame] once per rendered frame on the frame thread and [summaries] whenever a diagnostic
  * snapshot is requested. Parts without readings in the requested window are omitted rather than
@@ -65,6 +65,15 @@ class FrameBreakdown(
             series[Part.UiUploadRuns.ordinal].add(nowSeconds, uploads.runs.toDouble())
             series[Part.UiUploadTriangles.ordinal].add(nowSeconds, uploads.triangles.toDouble())
         }
+        current.passes?.let { passes ->
+            series[Part.SceneOpaqueDraws.ordinal].add(nowSeconds, passes.sceneOpaqueDraws.toDouble())
+            series[Part.SceneTransparentDraws.ordinal].add(nowSeconds, passes.sceneTransparentDraws.toDouble())
+            series[Part.ShadowDraws.ordinal].add(nowSeconds, passes.shadowDraws.toDouble())
+            series[Part.ShadowPasses.ordinal].add(nowSeconds, passes.shadowPasses.toDouble())
+            series[Part.UiDraws.ordinal].add(nowSeconds, passes.uiDraws.toDouble())
+            series[Part.OtherDraws.ordinal].add(nowSeconds, passes.otherDraws.toDouble())
+        }
+        current.renderPasses?.let { series[Part.RenderPasses.ordinal].add(nowSeconds, it.toDouble()) }
     }
 
     /**
@@ -135,6 +144,13 @@ class FrameBreakdown(
         DrawCalls(KEY_DRAW_CALLS),
         Instances(KEY_INSTANCES),
         Triangles(KEY_TRIANGLES),
+        SceneOpaqueDraws(KEY_SCENE_OPAQUE_DRAWS),
+        SceneTransparentDraws(KEY_SCENE_TRANSPARENT_DRAWS),
+        ShadowDraws(KEY_SHADOW_DRAWS),
+        ShadowPasses(KEY_SHADOW_PASSES),
+        UiDraws(KEY_UI_DRAWS),
+        OtherDraws(KEY_OTHER_DRAWS),
+        RenderPasses(KEY_RENDER_PASSES),
         UiUploadBytes(KEY_UI_UPLOAD_BYTES),
         UiUploadRuns(KEY_UI_UPLOAD_RUNS),
         UiUploadTriangles(KEY_UI_UPLOAD_TRIANGLES),
@@ -183,6 +199,27 @@ class FrameBreakdown(
 
         /** Summary key for submitted triangles per frame. */
         const val KEY_TRIANGLES: String = "triangles"
+
+        /** Summary key for opaque scene-pass draws per frame. */
+        const val KEY_SCENE_OPAQUE_DRAWS: String = "sceneOpaqueDraws"
+
+        /** Summary key for blended scene-pass draws per frame. */
+        const val KEY_SCENE_TRANSPARENT_DRAWS: String = "sceneTransparentDraws"
+
+        /** Summary key for draws across every shadow depth pass per frame. */
+        const val KEY_SHADOW_DRAWS: String = "shadowDraws"
+
+        /** Summary key for shadow depth passes per frame (cascades and point-shadow faces). */
+        const val KEY_SHADOW_PASSES: String = "shadowPasses"
+
+        /** Summary key for UI-pass draws per frame. */
+        const val KEY_UI_DRAWS: String = "uiDraws"
+
+        /** Summary key for draws outside the scene, shadow, and UI passes per frame. */
+        const val KEY_OTHER_DRAWS: String = "otherDraws"
+
+        /** Summary key for render passes begun per frame, offscreen passes included. */
+        const val KEY_RENDER_PASSES: String = "renderPasses"
 
         /** Summary key for UI mesh bytes uploaded per frame; a still UI reads zero. */
         const val KEY_UI_UPLOAD_BYTES: String = "uiUploadBytes"

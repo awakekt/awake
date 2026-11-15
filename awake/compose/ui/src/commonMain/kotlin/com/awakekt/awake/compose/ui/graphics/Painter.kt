@@ -40,6 +40,13 @@ class Painter {
     // allocated once per node per frame for a value that never changes.
     private val paintOrder = LayerKind.entries.toTypedArray()
 
+    // Made on the first paint that retains (#1512 stage e); `retained` is it while such a paint runs.
+    private var retainedDraw: RetainedDraw? = null
+    private var retained: RetainedDraw? = null
+
+    /** Subtrees whose last output a retaining paint replayed instead of drawing them. */
+    internal val retainedDraws: Int get() = retainedDraw?.replayed ?: 0
+
     /**
      * Paints [root] and returns only the base tree's primitives, dropping any offscreen layers.
      *
@@ -52,14 +59,47 @@ class Painter {
      *
      * Both lists are reused by the next paint on this painter, so copy them to keep them.
      */
-    fun paintOutput(root: LayoutNode): PaintOutput {
-        scope.reset()
+    fun paintOutput(root: LayoutNode): PaintOutput = paintOutput(root, retain = false, reuse = false)
+
+    /**
+     * Paints [root]; with [retain], records what each subtree drew and keeps this paint's base list
+     * for the next one, and with [reuse] as well, replays a subtree whose inputs did not change
+     * (#1512 stage e). [reuse] must be false on a frame that composed or measured.
+     */
+    internal fun paintOutput(root: LayoutNode, retain: Boolean, reuse: Boolean): PaintOutput {
+        val retaining = if (retain) retainedDraw ?: RetainedDraw(scope).also { retainedDraw = it } else null
+        retained = retaining
+        if (retaining == null) {
+            scope.reset()
+            retainedDraw?.skipPaint()
+        } else {
+            scope.reset(retaining = true)
+            retaining.beginPaint(reuse)
+        }
         paintNode(root)
         paintLayers(root)
+        retained = null
         return PaintOutput(scope.primitives(), scope.layers())
     }
 
     private fun paintNode(node: LayoutNode) {
+        val retaining = retained
+        if (retaining == null) {
+            paintNodeBody(node)
+            return
+        }
+        if (retaining.replay(node)) return
+        val recording = retaining.begin(node)
+        var complete = false
+        try {
+            paintNodeBody(node)
+            complete = true
+        } finally {
+            if (recording) retaining.end(node, complete)
+        }
+    }
+
+    private fun paintNodeBody(node: LayoutNode) {
         scope.enter(node)
         val chain = node.drawModifiers
         if (chain.isEmpty()) {
