@@ -33,6 +33,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(project(":awake:engine:render:testing"))
         }
     }
 }
