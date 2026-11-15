@@ -79,4 +79,27 @@ class StillStaticsTest {
 
         assertEquals(5f, fresh.worldMatrix.data[12])
     }
+
+    /** A static parent stays as built until unmarked; a moving child composes with it, never rebuilds it. */
+    @Test
+    fun aWrittenStaticParentKeepsItsMatrixWhetherOrNotAChildMoves() {
+        fun afterWrite(withChild: Boolean): Pair<Float, Float?> {
+            val world = World()
+            val system = TransformSystem()
+            val parent = Transform(position = Vec3f(1f, 0f, 0f))
+            val parentEntity = world.create().also { world.add(it, StaticTransform) }
+            world.add(parentEntity, parent)
+            val child = if (withChild) Transform(parent = parentEntity).also { world.add(world.create(), it) } else null
+            repeat(2) { system.update(world, 0f) }
+
+            parent.position.x = 9f
+            child?.position?.x = 3f
+            repeat(2) { system.update(world, 0f) }
+
+            return parent.worldMatrix.data[12] to child?.worldMatrix?.data?.get(12)
+        }
+
+        assertEquals(1f to null, afterWrite(withChild = false))
+        assertEquals(1f to 4f, afterWrite(withChild = true), "the parent as built, the child moved over it")
+    }
 }
