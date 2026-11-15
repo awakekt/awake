@@ -1454,6 +1454,20 @@ public abstract interface class com/awakekt/awake/compose/ui/node/ZIndexModifier
 	public abstract fun modifyZIndex (F)F
 }
 
+public final class com/awakekt/awake/compose/ui/platform/ComposeFrameStage : java/lang/Enum {
+	public static final field Compose Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
+	public static final field Draw Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
+	public static final field Measure Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
+	public static fun values ()[Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;
+}
+
+public abstract interface class com/awakekt/awake/compose/ui/platform/ComposeFrameStages {
+	public abstract fun begin (Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;)V
+	public abstract fun end (Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStage;)V
+}
+
 public final class com/awakekt/awake/compose/ui/platform/ComposeFrameStats {
 	public fun <init> ()V
 	public final fun getCompositionNanos ()J
@@ -1476,6 +1490,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getExternalChanges ()Lkotlin/jvm/functions/Function0;
 	public final fun getFocusOwner ()Lcom/awakekt/awake/compose/ui/focus/FocusOwner;
 	public final fun getFrameClock ()Lcom/awakekt/awake/compose/ui/platform/FrameClock;
+	public final fun getFrameStages ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStages;
 	public final fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;
 	public final fun getRetainUnchangedDraw ()Z
@@ -1491,6 +1506,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun invalidate ()V
 	public final fun setDensity (F)V
 	public final fun setExternalChanges (Lkotlin/jvm/functions/Function0;)V
+	public final fun setFrameStages (Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStages;)V
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
 	public final fun setOnStaleSkip (Lkotlin/jvm/functions/Function1;)V
 	public final fun setRetainUnchangedDraw (Z)V

@@ -20,8 +20,10 @@ package com.awakekt.awake.scene.runtime.schedule
  * - **the infrastructure systems** (transforms, scene extraction, recording), under
  *   `infrastructure:<class name>`; the transform pass run before pre-animation and frame systems is
  *   `infrastructure:pre-frame transforms`.
- * - **the app's update block and the UI host's phases**: [APP_UPDATE], [UI_BUILD] (composing,
- *   measuring and drawing the UI tree, one phase), [UI_WAIT] and [UI_STAGE].
+ * - **the app's update block and the UI host's phases**: [APP_UPDATE], [UI_BUILD], [UI_WAIT] and
+ *   [UI_STAGE]. The UI host's own stages, [UI_COMPOSE], [UI_MEASURE] and [UI_DRAW], are reported in
+ *   their own marks, and [UI_BUILD] is ended before each and begun again after it, so it holds only
+ *   what runs between them. No mark encloses another.
  *
  * Every name is a string built once, when the scene starts, so a name can be compared by identity
  * and a profile keyed by it allocates nothing to look it up. [before] and [after] come in pairs
@@ -40,8 +42,20 @@ interface SceneSystemObserver {
         /** The app's own `update { }` block, once a fixed step. */
         const val APP_UPDATE = "app:update"
 
-        /** Building the UI frame: compose, measure and draw of the UI tree. */
+        /**
+         * Building the UI frame, less its [UI_COMPOSE], [UI_MEASURE] and [UI_DRAW] stages: input
+         * dispatch, focus, semantics and the scene canvas around them.
+         */
         const val UI_BUILD = "ui:build"
+
+        /** Composing the UI tree, or skipping a composition nothing invalidated. */
+        const val UI_COMPOSE = "ui:compose"
+
+        /** Measuring and placing the UI tree, or reusing last frame's layout. */
+        const val UI_MEASURE = "ui:measure"
+
+        /** Painting the UI tree into the frame's primitives. */
+        const val UI_DRAW = "ui:draw"
 
         /** Waiting on the renderer's frame resources before the UI is staged. */
         const val UI_WAIT = "ui:wait"
