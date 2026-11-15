@@ -314,19 +314,10 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Backend-neutral 2D primitives staged by scene systems for this frame's UI composite. */
     private val stagedUiPrimitives = ArrayList<UiDrawPrimitive>()
 
-    // The frame's UI after what systems staged this frame: [primitives] itself when they staged
-    // nothing, so a frame without staged primitives copies no list (#1621). Built once a frame.
-    private var withStagedFrom: List<UiDrawPrimitive>? = null
-    private var withStagedList: List<UiDrawPrimitive> = emptyList()
+    // The frame's UI after what systems staged this frame, joined without a copy per frame.
+    private val uiJoin = UiPrimitiveJoin()
 
-    private fun withStaged(primitives: List<UiDrawPrimitive>): List<UiDrawPrimitive> {
-        if (stagedUiPrimitives.isEmpty()) return primitives
-        if (withStagedFrom !== primitives) {
-            withStagedFrom = primitives
-            withStagedList = stagedUiPrimitives + primitives
-        }
-        return withStagedList
-    }
+    private fun withStaged(primitives: List<UiDrawPrimitive>): List<UiDrawPrimitive> = uiJoin.join(stagedUiPrimitives, primitives)
 
     /**
      * Adds screen-space primitives to the current frame's UI overlay.
@@ -503,7 +494,7 @@ class SceneAppLifecycleRuntime internal constructor(
         if (snapshot.wasPressed(Key.F9)) cullingProbe?.let { it.frozen = !it.frozen }
 
         stagedUiPrimitives.clear()
-        withStagedFrom = null
+        uiJoin.reset()
 
         // 1. Simulation & infrastructure pump. Rendering systems stage the scene and any
         // backend-neutral 2D overlay before the runtime composites the frame below.
