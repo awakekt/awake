@@ -306,7 +306,11 @@ class SceneAppLifecycleRuntime internal constructor(
      */
     var drawsSceneCanvas: Boolean = true
 
-    /** Last frame's draw commands, for a test that has to assert on what was painted. */
+    /**
+     * Last frame's draw commands, for a test that has to assert on what was painted. A subtree that
+     * moved as a whole may be in a translate range here, its positions local to it: read positions
+     * through `uiPrimitives.flattened()`.
+     */
     var uiPrimitives: List<UiDrawPrimitive> = emptyList()
         private set
 

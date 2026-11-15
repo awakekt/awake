@@ -78,6 +78,7 @@ class Painter {
         }
         paintNode(root)
         paintLayers(root)
+        retaining?.endPaint()
         retained = null
         return PaintOutput(scope.primitives(), scope.layers())
     }
