@@ -40,6 +40,21 @@ interface DecodedImage : AutoCloseable {
  */
 expect suspend fun decodeImage(bytes: ByteArray): DecodedImage
 
+/**
+ * Whether [decodeImageBlocking] decodes on this platform. False in a browser, which only decodes
+ * asynchronously.
+ */
+expect val canDecodeImageBlocking: Boolean
+
+/**
+ * [decodeImage] on the calling thread, for a caller that cannot suspend, such as one that decodes an
+ * image again after letting its pixels go. It holds the thread for the whole decode, so a caller that
+ * can suspend uses [decodeImage].
+ *
+ * @throws UnsupportedOperationException where [canDecodeImageBlocking] is false.
+ */
+expect fun decodeImageBlocking(bytes: ByteArray): DecodedImage
+
 /** This bitmap as a [DecodedImage] with no platform image: the CPU path. */
 fun Bitmap.asDecodedImage(): DecodedImage = BitmapImage(this)
 
