@@ -19,6 +19,9 @@ internal class RetainedBundleStore(private val device: GPUDevice) {
     /** Passes with bundles kept: for tests. */
     val passCount: Int get() = passes.size
 
+    /** Every bundle this store's passes encoded, and every argument buffer they rewrote alone. */
+    val counts = BundleCounts()
+
     fun pass(key: Any, layout: BundleLayout): RetainedPassBundles {
         uses += 1
         if (uses % STALE_AFTER == 0L) evictStale()
@@ -27,7 +30,7 @@ internal class RetainedBundleStore(private val device: GPUDevice) {
             existing
         } else {
             existing?.destroy()
-            RetainedPassBundles(device, layout).also { passes[key] = it }
+            RetainedPassBundles(device, layout, counts).also { passes[key] = it }
         }
         pass.lastUse = uses
         return pass
