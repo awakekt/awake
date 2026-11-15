@@ -183,6 +183,7 @@ public final class com/awakekt/awake/ecs/Family1 {
 	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
 	public final fun forEachComponent (Lkotlin/jvm/functions/Function1;)V
 	public final fun getCache ()Lcom/awakekt/awake/ecs/Family1Cache;
+	public final fun getChanges ()I
 	public final fun getSize ()I
 }
 
@@ -194,6 +195,7 @@ public final class com/awakekt/awake/ecs/Family1Cache : com/awakekt/awake/ecs/Fa
 	public final fun components ()[Ljava/lang/Object;
 	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
 	public final fun forEachComponent (Lkotlin/jvm/functions/Function1;)V
+	public final fun getChanges ()I
 	public final fun getComponentValues ()Lcom/awakekt/awake/ecs/FamilyValueColumn;
 	public final fun getCount ()I
 	public final fun getEntities ()[J
@@ -215,6 +217,7 @@ public final class com/awakekt/awake/ecs/Family2 {
 	public final fun forEach (Lkotlin/jvm/functions/Function3;)V
 	public final fun forEachComponents (Lkotlin/jvm/functions/Function2;)V
 	public final fun getCache ()Lcom/awakekt/awake/ecs/Family2Cache;
+	public final fun getChanges ()I
 	public final fun getSize ()I
 }
 
@@ -228,6 +231,7 @@ public final class com/awakekt/awake/ecs/Family2Cache : com/awakekt/awake/ecs/Fa
 	public final fun componentsB ()[Ljava/lang/Object;
 	public final fun forEach (Lkotlin/jvm/functions/Function3;)V
 	public final fun forEachComponents (Lkotlin/jvm/functions/Function2;)V
+	public final fun getChanges ()I
 	public final fun getComponentValuesA ()Lcom/awakekt/awake/ecs/FamilyValueColumn;
 	public final fun getComponentValuesB ()Lcom/awakekt/awake/ecs/FamilyValueColumn;
 	public final fun getCount ()I

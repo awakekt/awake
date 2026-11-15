@@ -21,6 +21,13 @@ class Family1<A : Any> @PublishedApi internal constructor(
     val size: Int get() = cache.size
 
     /**
+     * Counts the changes to this family: an entity joining or leaving, or one of its components
+     * replaced by another instance. A system that derives work from the family's members can keep
+     * it while this holds. It never counts a write into a component's own fields.
+     */
+    val changes: Int get() = cache.changes
+
+    /**
      * Returns the cache's dense component array.
      *
      * Only indices in `0 until [size]` are live. For an [EcsTag], calling this compatibility
@@ -55,6 +62,13 @@ class Family2<A : Any, B : Any> @PublishedApi internal constructor(
 ) {
     /** Number of entities currently matching this family. */
     val size: Int get() = cache.size
+
+    /**
+     * Counts the changes to this family: an entity joining or leaving, or one of its components
+     * replaced by another instance. A system that derives work from the family's members can keep
+     * it while this holds. It never counts a write into a component's own fields.
+     */
+    val changes: Int get() = cache.changes
 
     /**
      * Returns the first dense component array.

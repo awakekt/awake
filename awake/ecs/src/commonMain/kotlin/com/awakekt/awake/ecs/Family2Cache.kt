@@ -38,6 +38,10 @@ internal class Family2Cache<A : Any, B : Any>(
     /** Number of live dense entries. */
     val size: Int get() = count
 
+    /** Members joined or left, or components replaced; see [Family1.changes]. */
+    var changes: Int = 0
+        private set
+
     internal val hasMaterializedTagArrayA: Boolean
         get() = componentValuesA.hasMaterializedTagArray
 
@@ -130,10 +134,12 @@ internal class Family2Cache<A : Any, B : Any>(
             // Safe: typeIdA == typeId check confirms component is of type A.
             @Suppress("UNCHECKED_CAST")
             componentValuesA.replace(index, component as A)
+            changes += 1
         } else if (typeIdB == typeId) {
             // Safe: typeIdB == typeId check confirms component is of type B.
             @Suppress("UNCHECKED_CAST")
             componentValuesB.replace(index, component as B)
+            changes += 1
         }
     }
 
@@ -148,6 +154,7 @@ internal class Family2Cache<A : Any, B : Any>(
         componentValuesA.insert(count, componentA, entities.size)
         componentValuesB.insert(count, componentB, entities.size)
         count += 1
+        changes += 1
     }
 
     private fun removeAt(index: Int) {
@@ -162,6 +169,7 @@ internal class Family2Cache<A : Any, B : Any>(
         componentValuesA.remove(index, lastIndex)
         componentValuesB.remove(index, lastIndex)
         count -= 1
+        changes += 1
         sparse.remove(removedEntityId)
     }
 
