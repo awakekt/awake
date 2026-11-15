@@ -6,6 +6,8 @@
 package com.awakekt.awake.render.texture
 
 import com.awakekt.awake.core.image.DecodedImage
+import com.awakekt.awake.core.image.canDecodeImageBlocking
+import com.awakekt.awake.core.image.decodeImageBlocking
 import com.awakekt.awake.core.image.toRgba8Bytes
 
 /**
@@ -61,6 +63,19 @@ interface GpuImageSource {
  */
 fun DecodedImage.asGpuImageSource(): GpuImageSource = DecodedImageSource(this)
 
+/**
+ * This decoded image, with the [encoded] file bytes it was decoded from, as a [GpuImageSource] that
+ * keeps no decoded pixels once they are uploaded. The first [GpuImageSource.readRgba8] hands the pixels
+ * over and lets the decoded image go; each later one decodes [encoded] again on the calling thread. So a
+ * holder that makes a material from it more than once keeps the file's bytes between uploads, not the
+ * four bytes a pixel they decode to, and pays a decode for every material after the first.
+ *
+ * An image with a platform image a backend copies on the GPU stays decoded, as does any image where
+ * the platform cannot decode on the calling thread: both are a browser, and get [asGpuImageSource].
+ */
+fun DecodedImage.asReleasingGpuImageSource(encoded: ByteArray): GpuImageSource =
+    if (platformImage == null && canDecodeImageBlocking) ReleasingImageSource(this, encoded) else asGpuImageSource()
+
 /** This single-layer 2D texture as a [GpuImageSource] with no platform image: it always takes the CPU path. */
 fun TextureAsset.asGpuImageSource(): GpuImageSource {
     require(layerCount == 1 && !isCubemap) { "Only a single 2D image is a GpuImageSource; this has $layerCount layer(s)." }
@@ -73,6 +88,21 @@ private class DecodedImageSource(private val image: DecodedImage) : GpuImageSour
     override val externalImage: Any? get() = image.platformImage
 
     override fun readRgba8(): ByteArray = image.toBitmap().toRgba8Bytes()
+}
+
+private class ReleasingImageSource(decoded: DecodedImage, private val encoded: ByteArray) : GpuImageSource {
+    override val width: Int = decoded.width
+    override val height: Int = decoded.height
+    override val externalImage: Any? get() = null
+
+    // Null once read: the pixels are the reader's from then on.
+    private var decoded: DecodedImage? = decoded
+
+    override fun readRgba8(): ByteArray {
+        val image = decoded ?: decodeImageBlocking(encoded)
+        decoded = null
+        return image.toBitmap().toRgba8Bytes()
+    }
 }
 
 private class AssetImageSource(private val asset: TextureAsset) : GpuImageSource {
