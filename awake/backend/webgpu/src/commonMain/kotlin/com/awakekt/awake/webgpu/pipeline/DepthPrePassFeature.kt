@@ -146,12 +146,14 @@ class DepthPrePassFeature(
 
     /**
      * Records only the requested subpasses, avoiding redundant passes over unused layers. Each one
-     * also draws the content casters that [environment] lets draw.
+     * also draws the content casters that [environment] lets draw. [view] is the view these
+     * cascades shadow (its target): each view keeps its own cascades' bundles (#1621).
      */
     fun recordCommands(
         encoder: GPUCommandEncoder,
         subPasses: List<GpuSubPass>,
         environment: GpuEnvironmentState,
+        view: Any? = null,
     ) {
         if (subPasses.isEmpty()) return
         val allPipelines = cascadePipelines
@@ -160,7 +162,7 @@ class DepthPrePassFeature(
             if (layer in 0 until depthTarget.layers) {
                 allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
                 if (countsShadowPasses) stats?.beginShadowPass()
-                recordCascade(encoder, subPass.resolvedDraws, layer, environment)
+                recordCascade(encoder, subPass.resolvedDraws, layer, environment, view)
                 stats?.countAs(RenderPassKind.Other)
             }
         }
@@ -168,7 +170,7 @@ class DepthPrePassFeature(
         for (cascade in 0 until minOf(4, depthTarget.layers)) {
             if (cascade !in activeLayers) {
                 allPipelines.forEach { it.writeCascade(cascade, Mat4()) }
-                recordCascade(encoder, emptyList(), cascade)
+                recordCascade(encoder, emptyList(), cascade, view = view)
             }
         }
     }
@@ -178,6 +180,7 @@ class DepthPrePassFeature(
         draws: List<PreparedDraw>,
         cascade: Int,
         content: GpuEnvironmentState? = null,
+        view: Any? = null,
     ) {
         encoder.beginRenderPass(
             RenderPassDescriptor(
@@ -190,7 +193,11 @@ class DepthPrePassFeature(
                 ),
             ),
         ) {
-            val retained = retainedBundles?.pass(depthTarget.viewFor(cascade), CASCADE_LAYOUT)
+            // Every view's cascades draw into the one shadow map: kept by its layer alone, two views
+            // a frame (a canvas view's portrait beside the main one) replaced each other's cells,
+            // and every cascade cell was encoded again every frame (#1621).
+            val key: Any = if (view == null) depthTarget.viewFor(cascade) else ViewCascade(view, cascade)
+            val retained = retainedBundles?.pass(key, CASCADE_LAYOUT)
             val recorder = WebGpuCommandRecorder(this, stats, retained)
             recorder.setScissor(0, 0, depthTarget.size, depthTarget.size)
             var boundPipeline: DepthOnlyPipeline? = null
@@ -310,6 +317,9 @@ private fun WebGpuCommandRecorder.recordContentCasters(
 
 /** The casters' retained region in a cascade's pass. */
 private const val CASTERS = "casters"
+
+/** One view's cascade, the key its kept bundles go by. */
+private data class ViewCascade(val view: Any, val cascade: Int)
 
 /** A cascade pass's attachments: depth only, one sample. */
 private val CASCADE_LAYOUT = BundleLayout(emptyList(), GPUTextureFormat.Depth32Float, sampleCount = 1)
