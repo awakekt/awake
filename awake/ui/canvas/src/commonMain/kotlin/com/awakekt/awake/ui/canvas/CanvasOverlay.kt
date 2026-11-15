@@ -128,9 +128,11 @@ fun CanvasOverlay(
     val followers = remember { FollowerPlans() }
     // Kept across frames: premultiplied copies of the particle sheets in images.
     val premultiplied = remember { PremultipliedImages() }
+    // Kept across frames: the hierarchy, rebuilt only when the items' structure changes.
+    val structure = remember { CanvasStructure() }
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
-    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers, premultiplied)
+    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers, premultiplied, structure)
     // Measured before its content is composed, so the scale fits the box, and followers are culled
     // and pinned against it, from the first frame.
     BoxWithConstraints(modifier.fillMaxSize()) {

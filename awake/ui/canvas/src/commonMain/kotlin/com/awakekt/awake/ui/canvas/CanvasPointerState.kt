@@ -149,6 +149,9 @@ class CanvasPointerState {
      */
     internal var raisedAt: Long = 0L
 
+    /** This element's index in the items of the canvas that last took them; see [CanvasStructure]. */
+    internal var treeSlot: Int = -1
+
     /** The key of a clicked `[[key|shown words]]` span, until [consumeLink] reads it; [CanvasOverlay] writes this. */
     internal var linkKey: String? = null
 

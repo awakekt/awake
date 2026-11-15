@@ -63,43 +63,6 @@ internal class CanvasBoxMetrics(
 }
 
 /**
- * Memoizes each [CanvasItem]'s effective layout density for the active [CanvasBoxMetrics] pass,
- * walking parent items when an item has no subtree [CanvasItem.scaler] of its own.
- */
-internal class CanvasSubtreeScales(private val items: List<CanvasItem>) {
-    var box: CanvasBoxMetrics = CanvasBoxMetrics()
-        private set
-
-    var canvasDensity: Float = 1f
-        private set
-
-    private val byElement = HashMap<CanvasElement, CanvasItem>(items.size * 2).apply {
-        for (item in items) put(item.element, item)
-    }
-    private val densities = HashMap<CanvasElement, Float>(items.size * 2)
-
-    fun measure(box: CanvasBoxMetrics, canvasDensity: Float) {
-        this.box = box
-        this.canvasDensity = canvasDensity
-        densities.clear()
-        for (item in items) resolve(item)
-    }
-
-    fun densityOf(element: CanvasElement): Float = densities[element] ?: canvasDensity
-
-    private fun resolve(item: CanvasItem): Float {
-        densities[item.element]?.let { return it }
-        // Seed before recursing so a caller-supplied parent cycle terminates cleanly.
-        densities[item.element] = canvasDensity
-        val resolved = item.scaler?.let(box::densityOf)
-            ?: item.parent?.let(byElement::get)?.let(::resolve)
-            ?: canvasDensity
-        densities[item.element] = resolved
-        return resolved
-    }
-}
-
-/**
  * What [CanvasOverlay] asks its host for: a [CanvasElement.follow]ed node's projected point or
  * bounds, a View's camera picture, and a [CanvasElement.bind]'s field text. Every member answers
  * null, so a host that implements none of what an element asks for still draws it, minus that one
@@ -157,13 +120,17 @@ internal class CanvasTree(
     val tooltips: CanvasTooltips = CanvasTooltips(),
     internal val followers: FollowerPlans = FollowerPlans(),
     internal val premultiplied: PremultipliedImages = PremultipliedImages(),
+    // Kept across frames by CanvasOverlay; a tree made on its own builds its own.
+    internal val structure: CanvasStructure = CanvasStructure(),
 ) {
-    private val hierarchy = CanvasHierarchy(items)
+    init {
+        structure.update(items)
+    }
 
-    val roots: List<CanvasItem> get() = hierarchy.roots
+    val roots: List<CanvasItem> get() = structure.roots
 
     /** The frame's [CanvasInput.moveHandle]s and the windows they move. */
-    internal val windows = CanvasWindows(items)
+    internal val windows: CanvasWindows get() = structure.windows
 
     init {
         // Cleared up front so an element not composed this frame -- hidden, or a follower with
@@ -178,7 +145,7 @@ internal class CanvasTree(
         }
     }
 
-    fun childrenOf(element: CanvasElement): List<CanvasItem> = hierarchy.childrenOf(element)
+    fun childrenOf(element: CanvasElement): List<CanvasItem> = structure.childrenOf(element)
 
     /**
      * Where each follower goes, as [planFollowers] last worked it out, kept per follower across frames
@@ -186,13 +153,11 @@ internal class CanvasTree(
      */
     internal val followerPlans: HashMap<CanvasElement, FollowerPlan> get() = followers.plans
 
-    internal val scales = CanvasSubtreeScales(items)
-
     /** The host box this pass was measured in, set before any element or follower is composed. */
-    internal val box: CanvasBoxMetrics get() = scales.box
+    internal val box: CanvasBoxMetrics get() = structure.box
 
     /** The whole canvas's pixels per dp this pass, before any subtree or follower scale. */
-    internal val canvasDensity: Float get() = scales.canvasDensity
+    internal val canvasDensity: Float get() = structure.canvasDensity
 
     fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
 
@@ -271,13 +236,13 @@ internal class CanvasTree(
 
 /** Records the host [box] and whole-canvas [canvasDensity], resolves every item's subtree density, and keeps windows on the canvas. */
 internal fun CanvasTree.measureBox(box: CanvasBoxMetrics, canvasDensity: Float) {
-    scales.measure(box, canvasDensity)
+    structure.measure(box, canvasDensity)
     // As soon as the box is known, so a window a resize left off the canvas is drawn back on this frame.
     keepWindowsOnCanvas()
 }
 
 /** The pixels per dp [element]'s subtree lays out at this pass. */
-internal fun CanvasTree.densityOf(element: CanvasElement): Float = scales.densityOf(element)
+internal fun CanvasTree.densityOf(element: CanvasElement): Float = structure.densityOf(element)
 
 private val keyLog = Logger("ui-canvas")
 
