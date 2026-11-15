@@ -116,12 +116,19 @@ class LayoutNode(
     var modifier: Modifier = Modifier
         set(value) {
             field = value
-            rebuildChain()
+            if (!chainInPlace.update(value)) rebuildChain()
         }
+
+    /** Re-sets a modifier of the same shape without rebuilding the chain; see [ModifierChainInPlace]. */
+    private val chainInPlace = ModifierChainInPlace(this)
+
+    /** Full chain rebuilds, for the gate that a modifier of the same shape keeps its chain. */
+    internal var chainRebuilds: Int = 0
+        private set
 
     /** Derived from the [ParentDataModifierNode]s in [modifier] -- `weight()`, `align()`. */
     override var parentData: Any? = null
-        private set
+        internal set
 
     /** Position in the tree's coordinate space, resolved by [resolveAbsolutePositions]. */
     var absoluteX: Int = 0
@@ -151,7 +158,7 @@ class LayoutNode(
         private set
 
     private var links: Array<ChainLink> = emptyArray()
-    private val retainedModifierNodes = ArrayList<RetainedModifierNode?>()
+    internal val retainedModifierNodes = ArrayList<RetainedModifierNode?>()
 
     private val layoutModifiers = ArrayList<LayoutModifierNode>()
     private val drawNodes = ArrayList<DrawModifierNode>()
@@ -229,7 +236,6 @@ class LayoutNode(
      * accepts a margin its node does not know about would never be reached.
      */
     internal var maxPointerHitMargin: Int = 0
-        private set
 
     /** Semantics links, outermost first. Rebuilt with the chain, never per frame. */
     internal var semanticsModifiers: List<SemanticsModifierNode> = emptyList()
@@ -267,11 +273,9 @@ class LayoutNode(
      * node makes one request, the last in its modifier chain, and an image request clears a shape one.
      */
     internal var pointerCursorImage: CursorImage? = null
-        private set
 
     /** How many layout links sit outside the link that asked for [pointerCursor] or [pointerCursorImage], as [pointerDepths] counts them. */
     internal var pointerCursorDepth: Int = 0
-        private set
 
     /** Key handlers on this node, in chain order. Routed by focus -- see [KeyInputNode]. */
     internal var keyInputs: List<KeyInputNode> = emptyList()
@@ -423,6 +427,7 @@ class LayoutNode(
     }
 
     private fun rebuildChain() {
+        chainRebuilds += 1
         // Cleared and refilled rather than reallocated: rebuildChain runs per node per frame and
         // is never reentrant, so one set of scratch lists per node is safe and four fewer objects.
         layoutModifiers.clear()
@@ -546,7 +551,7 @@ class LayoutNode(
         return node
     }
 
-    private data class RetainedModifierNode(
+    internal data class RetainedModifierNode(
         val elementClass: kotlin.reflect.KClass<out Modifier.Element>,
         val node: Modifier.Node,
     )
@@ -687,19 +692,19 @@ private fun List<Int>?.snapshotIntoOrEmpty(existing: IntArray): IntArray =
  * more branch tipped it over, and `LayoutNode` was at its function ceiling too. Both limits stay
  * doing their job instead of being raised for a two-line classification.
  */
-private fun Any.cursorOrKeep(current: PointerCursor?): PointerCursor? = when (this) {
+internal fun Any.cursorOrKeep(current: PointerCursor?): PointerCursor? = when (this) {
     is PointerCursorNode -> cursor
     is PointerCursorImageNode -> null // A later image request replaces an earlier shape one.
     else -> current
 }
 
 /** This element's cursor image request, or [current] when it makes none; a shape request clears it. */
-private fun Any.cursorImageOrKeep(current: CursorImage?): CursorImage? = when (this) {
+internal fun Any.cursorImageOrKeep(current: CursorImage?): CursorImage? = when (this) {
     is PointerCursorImageNode -> cursorImage
     is PointerCursorNode -> null
     else -> current
 }
 
 /** The layout links outside this element's cursor or cursor image request, or [current] when it makes none. */
-private fun Any.cursorDepthOrKeep(current: Int, outside: Int): Int =
+internal fun Any.cursorDepthOrKeep(current: Int, outside: Int): Int =
     if (this is PointerCursorNode || this is PointerCursorImageNode) outside else current
