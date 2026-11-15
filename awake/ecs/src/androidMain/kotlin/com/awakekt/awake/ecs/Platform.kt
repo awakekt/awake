@@ -27,7 +27,7 @@ internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.ja
 // shared map and a reified `World.get` keeps the world's own map, as before.
 internal actual fun componentTypeIndexOf(key: Any): Int = SharedComponentTypeIndex.indexOf(key)
 
-internal actual val componentTypeIndexIsCheap: Boolean = false
+internal actual fun cheapComponentTypeIndexOf(key: Any): Int = -1
 
 internal actual fun componentTypeKeyHash(key: Any): Int = key.hashCode()
 

@@ -40,8 +40,10 @@ internal class ComponentTypeCatalog(private val beforeRegister: () -> Unit = {})
 
     fun typeIdOrNull(type: KClass<out Any>): ComponentTypeId? = typeIdForKeyOrNull(componentTypeKeyOf(type))
 
-    fun typeIdForKeyOrNull(key: Any): ComponentTypeId? =
-        if (componentTypeIndexIsCheap) typeIdAtIndexOrNull(componentTypeIndexOf(key)) else typeIdsByKey[key]
+    fun typeIdForKeyOrNull(key: Any): ComponentTypeId? {
+        val index = cheapComponentTypeIndexOf(key)
+        return if (index >= 0) typeIdAtIndexOrNull(index) else typeIdsByKey[key]
+    }
 
     /** The ID of the class whose [componentTypeIndexOf] is [index], or `null` when this world has not registered it. */
     fun typeIdAtIndexOrNull(index: Int): ComponentTypeId? = if (index < typeIdsByIndex.size) typeIdsByIndex[index] else null
