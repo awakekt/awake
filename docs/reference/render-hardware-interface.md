@@ -217,7 +217,7 @@ the interface's default.
 | `RenderViewport` | Scissor rect — a hardware concept |
 | `RenderTarget` | Framebuffer attachment — hardware |
 | `TextureAsset`, `MipChain` | Texture data shapes |
-| `GpuImageSource`, `PbrImageSet`, `GpuImageUpload`, `createImageMaterial` | A decoded platform image a backend may copy on the GPU (a browser `ImageBitmap`, from `core:image`'s `decodeImage`), behind an optional capability with a CPU-pixel fallback (#1184); or a block-compressed image, uploaded as it is where the device takes its format (#1211) |
+| `GpuImageSource`, `PbrImageSet`, `GpuImageUpload`, `createImageMaterial` | A decoded platform image a backend may copy on the GPU (a browser `ImageBitmap`, from `core:image`'s `decodeImage`), behind an optional capability with a CPU-pixel fallback (#1184); or a block-compressed image, uploaded as it is where the device takes its format (#1211). `asReleasingGpuImageSource` is a source that lets its decoded pixels go once they are read and decodes the file again for the next upload (#1619) |
 | `Material` | Descriptor set + UBO handle |
 | `Mesh` | Vertex / index buffer handle |
 | `PipelineSpec`, `PipelineTable`, `PipelineRegistry`, `PipelineVariant` | Pipeline objects |

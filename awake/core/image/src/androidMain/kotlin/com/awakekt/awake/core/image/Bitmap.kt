@@ -32,7 +32,9 @@ class AndroidBitmap(
  * @param bytes The raw encoded image byte array.
  * @return A decoded [Bitmap] instance with Y-axis flipped for texture orientation.
  */
-actual suspend fun createBitmap(bytes: ByteArray): Bitmap {
+actual suspend fun createBitmap(bytes: ByteArray): Bitmap = decodeBitmap(bytes)
+
+private fun decodeBitmap(bytes: ByteArray): Bitmap {
     val matrix = Matrix()
     val bitmap =
         BitmapFactory
@@ -67,3 +69,9 @@ actual suspend fun createBitmap(bytes: ByteArray): Bitmap {
 
 /** The CPU decode: [createBitmap], with no platform image to copy. */
 actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = createBitmap(bytes).asDecodedImage()
+
+/** This platform decodes an image on the calling thread. */
+actual val canDecodeImageBlocking: Boolean = true
+
+/** [createBitmap]'s decode, which never suspends here. */
+actual fun decodeImageBlocking(bytes: ByteArray): DecodedImage = decodeBitmap(bytes).asDecodedImage()

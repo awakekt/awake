@@ -21,6 +21,9 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.test.runTest
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
@@ -71,6 +74,48 @@ class GltfAssetResolverTextureTest {
     }
 
     /**
+     * A material is made again for the same name once a scene has released the first, and gets the same
+     * pixels: the resolver decodes the image file again, having let the first decode go.
+     */
+    @Test
+    fun aMaterialMadeAgainForTheSameNameUploadsTheSamePixels() = runTest {
+        val path = "assets/painted-triangle.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preloadMaterials(path, texturedTriangleJson().encodeToByteArray())
+        val uploaded = mutableListOf<TextureAsset?>()
+        val renderer = recordingRenderer(uploaded)
+
+        assertNotNull(resolver.createMaterial(renderer, resolver.materialName(path)))
+        assertNotNull(resolver.createMaterial(renderer, resolver.materialName(path)))
+
+        val decoded = createBitmap(Base64.decode(PIXEL_PNG))
+        val pixels = TextureAsset(decoded.toRgba8Bytes(), decoded.width, decoded.height)
+        assertEquals(listOf<TextureAsset?>(pixels, pixels), uploaded)
+    }
+
+    /**
+     * The resolver keeps a model's image as its file bytes, not its decoded pixels, once the material
+     * is made (#1619): the 16 MB a 2048 x 2048 image decodes to is on the heap after the preload and
+     * gone after the upload, though the resolver still holds the model and can make the material again.
+     */
+    @Test
+    fun theDecodedPixelsLeaveTheHeapOnceTheMaterialIsMade() = runTest {
+        val path = "assets/painted-triangle.gltf"
+        val resolver = GltfAssetResolver()
+        val baseline = heapInUse()
+        resolver.preloadMaterials(path, texturedTriangleJson(image = Base64.encode(plainPng(LARGE_IMAGE_SIDE))).encodeToByteArray())
+        val preloaded = heapInUse() - baseline
+
+        assertNotNull(resolver.createMaterial(NoopRenderer(), resolver.materialName(path)))
+        val uploaded = heapInUse() - baseline
+
+        val decodedBytes = LARGE_IMAGE_SIDE.toLong() * LARGE_IMAGE_SIDE * 4
+        assertTrue(preloaded >= decodedBytes, "the preload holds the decoded image: $preloaded bytes")
+        assertTrue(uploaded < decodedBytes / 4, "the decoded image is released once uploaded: $uploaded bytes still held")
+        assertNotNull(resolver.createMaterial(NoopRenderer(), resolver.materialName(path)))
+    }
+
+    /**
      * An image that throws as its material is made, as a Basis Universal one whose transcode fails then
      * does (#1261), fails that material alone: it is made white, so a scene that draws it still loads,
      * and the model's other material keeps its own image.
@@ -108,6 +153,17 @@ class GltfAssetResolverTextureTest {
 
         assertEquals(listOf<TextureAsset?>(TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)), uploaded)
     }
+
+    // The heap in use once everything unreachable is collected, so two readings differ by what is retained.
+    private fun heapInUse(): Long {
+        val runtime = Runtime.getRuntime()
+        repeat(GC_PASSES) { System.gc() }
+        return runtime.totalMemory() - runtime.freeMemory()
+    }
+
+    private fun plainPng(side: Int): ByteArray = ByteArrayOutputStream().also { out ->
+        ImageIO.write(BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB), "png", out)
+    }.toByteArray()
 
     private fun recordingRenderer(uploaded: MutableList<TextureAsset?>) = object : NoopRenderer() {
         override fun createMaterial(texture: TextureAsset?, renderTarget: RenderTarget?, uniformFloatCount: Int, pbrTextures: PbrTextureSet?): Material {
@@ -433,9 +489,9 @@ class GltfAssetResolverTextureTest {
         primitiveCount: Int = 1,
         externalImage: Boolean = false,
         externalBuffer: Boolean = false,
+        image: String = PIXEL_PNG,
     ): String {
         val bytes = triangleBufferBytes()
-        val image = PIXEL_PNG
         val imageUri = if (externalImage) "paint.png" else "data:image/png;base64,$image"
         val bufferUri = if (externalBuffer) "triangle.bin" else "data:application/octet-stream;base64,${Base64.encode(bytes)}"
         val materials = List(primitiveCount) {
@@ -556,6 +612,8 @@ class GltfAssetResolverTextureTest {
     }
 
     private companion object {
+        const val LARGE_IMAGE_SIDE = 2048
+        const val GC_PASSES = 3
         const val PIXEL_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
     }
 }

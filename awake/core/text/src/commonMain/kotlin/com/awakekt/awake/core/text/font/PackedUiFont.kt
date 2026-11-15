@@ -115,7 +115,11 @@ class PackedUiFont internal constructor(
     override val textScaleStep: Float = data.textScaleStep
     override val atlasWidth: Int = maxOf(data.atlasWidth, data.effectAtlasWidth)
     override val atlasHeight: Int = data.atlasHeight + data.effectAtlasHeight
-    override val atlasPixelsRgba: ByteArray by lazy(::decodeAtlasPixels)
+    private val atlasPixels = ReleasableValue(::decodeAtlasPixels)
+    override val atlasPixelsRgba: ByteArray get() = atlasPixels.get()
+
+    /** Drops the decoded atlas; [atlasPixelsRgba] decodes it again from the font's data. */
+    override fun releaseAtlasPixels() = atlasPixels.release()
     override val distanceFieldRangePx: Float = data.distanceFieldRangePx
     override val effectFieldRangePx: Float = if (data.effectAtlasHeight > 0) data.effectFieldRangePx else 0f
     override val visibleTopEm: Float by lazy { computeVisibleBand().first }

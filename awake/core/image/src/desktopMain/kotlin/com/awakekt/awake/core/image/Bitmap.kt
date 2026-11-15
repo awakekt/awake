@@ -42,3 +42,9 @@ fun decodeBitmap(bytes: ByteArray): Bitmap {
 
 /** The CPU decode: [createBitmap], with no platform image to copy. */
 actual suspend fun decodeImage(bytes: ByteArray): DecodedImage = createBitmap(bytes).asDecodedImage()
+
+/** This platform decodes an image on the calling thread. */
+actual val canDecodeImageBlocking: Boolean = true
+
+/** [decodeBitmap], with no platform image to copy. */
+actual fun decodeImageBlocking(bytes: ByteArray): DecodedImage = decodeBitmap(bytes).asDecodedImage()

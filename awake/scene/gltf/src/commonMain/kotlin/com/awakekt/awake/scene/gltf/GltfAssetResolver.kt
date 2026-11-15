@@ -35,7 +35,7 @@ import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.render.texture.asGpuImageSource
+import com.awakekt.awake.render.texture.asReleasingGpuImageSource
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
@@ -117,7 +117,9 @@ class GltfAssetResolver(
     internal suspend fun readAsset(path: AssetPath): Result<ByteArray> = assetSource.read(path)
 
     // decodeImage, not createBitmap: nothing here reads the pixels, so a browser keeps them for the GPU.
-    private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource = imageDecoder?.invoke(bytes) ?: decodeImage(bytes).asGpuImageSource()
+    // Anywhere else the pixels go once a material is made from them, and are decoded again for the next.
+    private suspend fun decodeTexture(bytes: ByteArray): GpuImageSource =
+        imageDecoder?.invoke(bytes) ?: decodeImage(bytes).asReleasingGpuImageSource(bytes)
 
     /**
      * Preloads a glTF or GLB asset and its external dependencies using the configured asset source.
@@ -486,7 +488,9 @@ class GltfAssetResolver(
     /**
      * The material [name] resolves to, made through [renderer]: what [createMaterial] does with a scene
      * runtime's renderer. Its textures go through `createImageMaterial`, so a browser's WebGPU copies them
-     * on the GPU (awakekt/awake#1184) and every other renderer uploads their CPU pixels.
+     * on the GPU (awakekt/awake#1184) and every other renderer uploads their CPU pixels. Outside a
+     * browser the resolver lets those pixels go once they are uploaded and keeps the image file's bytes
+     * (#1619), so a material made again for the same [name] decodes its images again, on this thread.
      *
      * A static material with no base colour image resolves to the plain lit material its untextured
      * geometry draws with; its base colour is in that geometry's vertex colours, and [materialDefaults]
@@ -655,8 +659,9 @@ private fun LoadedScene.defaultCullMode(): CullMode? {
     return primitives.any { it.doubleSided }.toCullMode()
 }
 
-// The images stay decoded for as long as the resolver keeps the model: in a browser that is the
-// ImageBitmap a WebGPU material copies, where the CPU pixels a TextureAsset held used to be.
+// The images stay for as long as the resolver keeps the model. In a browser each is the decoded
+// ImageBitmap a WebGPU material copies. Anywhere else it is the image file's bytes, with the decoded
+// pixels beside them only until the first material is made (asReleasingGpuImageSource).
 private data class LoadedGltfMaterial(
     val texture: GpuImageSource,
     val pbrImages: PbrImageSet?,
