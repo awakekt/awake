@@ -26,6 +26,12 @@ The scene pass's opaque draws and each shadow cascade's casters are kept as rend
 replayed with one `executeBundles` a pass; a frame records again only the cells whose draws changed,
 and a change of instance counts alone rewrites indirect arguments (#1555).
 
+A cell is kept while it binds the same objects in the same order, so neither a moving camera nor a
+moved draw encodes a bundle: since the frame block split (#1611) the camera lives in the one frame
+uniform block, and a draw's own block is rewritten in the buffer its bundle already binds. A draw
+whose mesh, material or pipeline changed re-encodes its own cell in each pass it draws in.
+`WebGpuRenderBundleReuseTest` holds these counts exactly, from `RetainedBundleStore.counts`.
+
 **If a frame draws differently on some browser or GPU, turn this off first:**
 
 ```kotlin
