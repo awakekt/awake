@@ -1,0 +1,1 @@
+- On WebGPU, a prepared draw's packet is built once with its depth-pass fields instead of built and then copied, so a moving camera allocates a third less per draw (328 → 224 B at 1,000 shadowed draws, measured as Kotlin/Wasm runs) (#1555).
