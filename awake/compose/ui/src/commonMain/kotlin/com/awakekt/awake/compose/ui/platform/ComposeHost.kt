@@ -145,19 +145,25 @@ class ComposeHost(
     private val measureSkip = MeasureSkip()
 
     /**
-     * Also replays a subtree's last draw output instead of drawing it, on a frame whose composition and
-     * measure were both skipped, when nothing that subtree's draw read has changed (#1512 stage e). Off
-     * by default, and does nothing unless [skipUnchangedComposition] and [skipUnchangedMeasure] are on.
+     * Replays a subtree's last draw output instead of drawing it, **only on a frame that composed
+     * nothing and measured nothing**: one where [skipUnchangedComposition] and [skipUnchangedMeasure]
+     * both skipped their pass (#1512 stage e). Both skips are decided for the whole frame, so if any
+     * state the UI read changed (a timer, a bar, a moving mark), the frame composes, measures and paints
+     * everything, and this replays nothing. Without both skips on, it does nothing at all. Off by
+     * default.
      *
-     * What each node's draw links read is recorded as measure's reads are: a written
-     * [com.awakekt.awake.compose.runtime.State] or a changed polled state (the frame clock, for anything
-     * animating) repaints that node. A subtree also repaints when a node in it changed size, draw rect
-     * or offset from its parent, when what encloses it (alpha, a transform, a clip) differs, and always
-     * when it draws an offscreen layer (`graphicsLayer`) or escapes its clip (`unclipped`). A subtree
-     * that moved as a whole is copied, translated, wherever that copy equals a fresh paint bit for bit,
-     * and drawn afresh where it would not. A draw block that reads a plain `var` another frame changed
-     * would show its old drawing: keep that value in `mutableStateOf`, call [invalidate], or leave this
-     * off. [verifySkippedCompositions] compares a retained frame with a fresh paint.
+     * On such a frame, a subtree replays when nothing its draw read has changed. What each node's draw
+     * links read is recorded as measure's reads are: a written [com.awakekt.awake.compose.runtime.State]
+     * or a changed polled state (the frame clock, for anything animating) repaints that node. A subtree
+     * also repaints when a node in it changed size, draw rect or offset from its parent, when what
+     * encloses it (alpha, a transform, a clip) differs, and always when it draws an offscreen layer
+     * (`graphicsLayer`) or escapes its clip (`unclipped`). A subtree that moved as a whole replays its
+     * primitives unchanged inside a `TranslatePush` and `TranslatePop`, so [FrameOutput.primitives] may
+     * hold translate ranges: read positions through `flattened()`. Where a range cannot reproduce a
+     * fresh paint bit for bit, the subtree is copied translated, or drawn afresh. A draw block that
+     * reads a plain `var` another frame changed would show its old drawing: keep that value in
+     * `mutableStateOf`, call [invalidate], or leave this off. [verifySkippedCompositions] compares a
+     * retained frame with a fresh paint.
      *
      * The painter keeps the last frame's primitives to replay from, so while this is on,
      * [FrameOutput.primitives] stays unchanged until the frame after next.
