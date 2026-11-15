@@ -48,6 +48,47 @@ object RenderDiagnostics {
     var drawStats: SceneDrawStats? = null
         internal set
 
+    /**
+     * The main view's blended draws by source in the last frame planned while [drawStatsEnabled] was
+     * on: mesh renderers, particles and each render feature (#1621). Null while it is off.
+     */
+    var transparentSources: TransparentDrawSources? = null
+        internal set
+
+    private val captures = ArrayList<TransparentDrawSources>()
+    private var capturesThisFrame = 0
+
+    /**
+     * The same as [transparentSources] for each offscreen view planned since the main view, such as a
+     * canvas view's portrait, in the order they were planned. Empty while [drawStatsEnabled] is off.
+     */
+    val captureTransparentSources: List<TransparentDrawSources>
+        get() = if (drawStatsEnabled) captures.subList(0, capturesThisFrame).toList() else emptyList()
+
+    /** [transparentSources] to fill for the main view, starting a frame's captures afresh; null while off. */
+    internal fun transparentSourcesForMain(featureNames: List<String>): TransparentDrawSources? {
+        capturesThisFrame = 0
+        if (!drawStatsEnabled) {
+            transparentSources = null
+            captures.clear()
+            return null
+        }
+        return reused(transparentSources, featureNames).also { transparentSources = it }
+    }
+
+    /** The next capture's [TransparentDrawSources] this frame, kept for the next frame's; null while off. */
+    internal fun transparentSourcesForCapture(featureNames: List<String>): TransparentDrawSources? {
+        if (!drawStatsEnabled) return null
+        val index = capturesThisFrame++
+        val sources = reused(captures.getOrNull(index), featureNames)
+        if (index < captures.size) captures[index] = sources else captures += sources
+        return sources
+    }
+
+    /** [kept] while it names the same features, else a new one: another render system's planner names others. */
+    private fun reused(kept: TransparentDrawSources?, featureNames: List<String>): TransparentDrawSources =
+        kept?.takeIf { it.featureNames === featureNames } ?: TransparentDrawSources(featureNames)
+
     /** [drawStats] to fill this frame, made on first use, or null, and dropped, while they are off. */
     internal fun drawStatsForFrame(): SceneDrawStats? {
         if (!drawStatsEnabled) {
