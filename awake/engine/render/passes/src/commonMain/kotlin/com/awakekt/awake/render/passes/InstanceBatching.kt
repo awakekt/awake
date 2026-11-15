@@ -106,7 +106,7 @@ internal interface FoldRule {
     /** Whether a draw the rule does not fold is kept in the output as it is. */
     val keepsOthers: Boolean
 
-    fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean): Boolean
+    fun folds(draw: RenderDrawCommand, instances: Boolean): Boolean
 
     /** Whether [first] and [second] draw alike; with [tints], their tint and fade may differ. */
     fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean): Boolean
@@ -118,7 +118,8 @@ internal interface FoldRule {
 internal object SceneInstanceFold : FoldRule {
     override val keepsOthers = true
 
-    override fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean) = draw.foldsIntoInstances(canInstance)
+    override fun folds(draw: RenderDrawCommand, instances: Boolean) =
+        instances && draw.instanceModels == null && draw.instanceJointPalettes == null && !draw.transparent
 
     override fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean) = first.instancesWith(second, tints)
 

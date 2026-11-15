@@ -69,7 +69,7 @@ internal class ShadowCasterFolding {
 private object DepthCasterFold : FoldRule {
     override val keepsOthers = false
 
-    override fun folds(draw: RenderDrawCommand, canInstance: (VertexFormat, CullMode) -> Boolean): Boolean =
+    override fun folds(draw: RenderDrawCommand, instances: Boolean): Boolean =
         !draw.transparent &&
             draw.castsShadows &&
             draw.alphaMode == AlphaMode.Opaque &&
@@ -77,7 +77,7 @@ private object DepthCasterFold : FoldRule {
             draw.instanceColors == null &&
             draw.instanceFrames == null &&
             !draw.mesh.format.isSkinned &&
-            canInstance(draw.mesh.format, draw.cullMode)
+            instances
 
     override fun alike(first: RenderDrawCommand, second: RenderDrawCommand, tints: Boolean): Boolean =
         first.mesh === second.mesh &&
