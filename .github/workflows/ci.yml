@@ -280,6 +280,14 @@ jobs:
           ./gradlew :awake:core:text:desktopTest
           ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest --tests com.awakekt.awake.compose.testing.GradientBackgroundTest
 
+      # Retained draw replays what a fresh paint draws, moved subtrees in translate ranges, and the
+      # nameplate frame stays under its allocation ceilings (#1512).
+      - name: Retained draw and nameplate allocation gates
+        run: >-
+          ./gradlew
+          :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.RetainedDrawTest
+          :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
+
       # Committed browser measurements; CI needs neither Chromium nor Playwright.
       - name: CPU text layout conformance
         run: |

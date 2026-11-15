@@ -46,10 +46,12 @@ import kotlin.test.assertTrue
  * [MOVING_PLACEMENT_ONLY_CEILING_BYTES] is that plus the same 2.7% headroom.
  *
  * `ComposeHost.retainUnchangedDraw` (stage e) also replays each nameplate's last draw output on a
- * frame that composed and measured nothing. A moving nameplate is copied translated, one object per
- * primitive, and the draw scratch goes: 138,402 B against 190,906 B (-27.5%), identical in four runs,
- * about 199 of 200 nameplates replayed per frame (the rest crossed a float exponent and were drawn
- * afresh), and about 0.26 to 0.34 against 0.35 to 0.55 ms (time is not asserted).
+ * frame that composed and measured nothing. A moving nameplate replays its primitives as they were,
+ * inside a `TranslatePush` and `TranslatePop` that the UI staging applies: 6,138 B against 190,906 B,
+ * identical in three runs, about 199 of 200 nameplates replayed per frame (the rest crossed a float
+ * exponent and were drawn afresh), and about 0.27 ms (time is not asserted). Copying each primitive
+ * translated, before ranges, cost 138,402 B. What is left is mostly one `TranslatePush` per moved
+ * nameplate, about 24 B each, since its offset changes every frame.
  * [MOVING_RETAINED_DRAW_CEILING_BYTES] is that plus the same 2.7% headroom. Still, the whole tree
  * replays as it was: 426 B a frame, for which 2.7% is less than one object, so
  * [STILL_RETAINED_DRAW_CEILING_BYTES] is a flat 1,000 B.
@@ -198,7 +200,7 @@ class NameplateAllocationGateTest {
         const val CEILING_BYTES = 435_000
         const val STILL_SKIP_CEILING_BYTES = 227_500
         const val MOVING_PLACEMENT_ONLY_CEILING_BYTES = 196_000
-        const val MOVING_RETAINED_DRAW_CEILING_BYTES = 142_500
+        const val MOVING_RETAINED_DRAW_CEILING_BYTES = 6_300
         const val STILL_RETAINED_DRAW_CEILING_BYTES = 1_000
     }
 }

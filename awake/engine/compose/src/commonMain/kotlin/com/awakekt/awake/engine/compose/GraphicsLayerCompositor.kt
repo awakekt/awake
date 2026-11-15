@@ -12,6 +12,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.graphics2d.flattened
 import com.awakekt.awake.core.graphics2d.requiresDestinationSampling
 import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.text.font.UiFont
@@ -86,7 +87,9 @@ class GraphicsLayerCompositor {
             frameTargets = null
             return resolved
         }
-        return targetsFor(renderer, viewportWidth, viewportHeight).composite(renderer, resolved, font)
+        // Split at each blend that samples what is under it, with the clips around it replayed: on the
+        // drawn positions, so no translate range is cut in two or a clip met outside its range.
+        return targetsFor(renderer, viewportWidth, viewportHeight).composite(renderer, resolved.flattened(), font)
     }
 
     private fun targetsFor(renderer: Renderer, width: Int, height: Int): FrameTargets {

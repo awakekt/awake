@@ -8,6 +8,9 @@ package com.awakekt.awake.compose.ui.graphics
 import com.awakekt.awake.compose.runtime.PhaseReads
 import com.awakekt.awake.compose.ui.graphics.drawscope.PaintScope
 import com.awakekt.awake.compose.ui.node.LayoutNode
+import com.awakekt.awake.core.graphics2d.TranslateOffsets
+import com.awakekt.awake.core.graphics2d.TranslatePop
+import com.awakekt.awake.core.graphics2d.TranslatePush
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 
 /**
@@ -22,6 +25,10 @@ internal class RetainedDrawRecord {
     var end = 0
     var absX = 0
     var absY = 0
+
+    /** Where the node sat at its last paint or replay; its clip context is in that place. */
+    var atX = 0
+    var atY = 0
     var relX = 0
     var relY = 0
     var width = 0
@@ -29,6 +36,9 @@ internal class RetainedDrawRecord {
     var childCount = 0
     var cacheable = false
     var translatable = false
+
+    /** The range marker this record replayed in last, kept so a range that stays moved allocates nothing. */
+    var push: TranslatePush? = null
     var reads: PhaseReads? = null
     var recordingReads = false
     val context = FloatArray(CONTEXT_SIZE)
@@ -77,15 +87,28 @@ internal class RetainedDrawRecord {
  *
  * A subtree replays when the frame composed and measured nothing, its record is from the previous
  * paint, nothing any of its draw links read has changed, its nodes kept their sizes, draw rects and
- * offsets from one another, and what encloses it (alpha, transform, clip) is the same. Moved as a
- * whole, its primitives are copied translated, but only where the copy is bit-identical to a fresh
- * paint (see [shiftsExactly]); otherwise it paints, and its children decide for themselves.
+ * offsets from one another, and what encloses it (alpha, transform, clip) is the same.
+ *
+ * Moved as a whole, its primitives are replayed as they were inside a [TranslatePush] and
+ * [TranslatePop], which the UI staging applies as it builds the vertices, so nothing is copied. A
+ * record's `absX` and `absY` are where its primitives were painted, so a subtree that stays moved
+ * replays the same primitives every frame. Where a range cannot hold them (a texture), they are
+ * copied translated instead. Either is done only where the result stages bit-identically to a fresh
+ * paint (see [translatesExactly] and [shiftsExactly]); otherwise it paints, and its children decide
+ * for themselves.
  */
 internal class RetainedDraw(private val scope: PaintScope) {
     private var paint = 0
     private var reuse = false
     private val context = FloatArray(CONTEXT_SIZE)
     private val bounds = IntArray(4)
+    private val offsets = TranslateOffsets()
+
+    // Whether the subtree [replayable] just accepted replays inside a translate range.
+    private var ranged = false
+
+    // Translate ranges opened and not yet closed this paint; zero at its end (see [endPaint]).
+    private var openRanges = 0
 
     /** Subtrees replayed so far. */
     var replayed = 0
@@ -95,6 +118,12 @@ internal class RetainedDraw(private val scope: PaintScope) {
     fun beginPaint(reuse: Boolean) {
         paint++
         this.reuse = reuse
+        openRanges = 0
+    }
+
+    /** Ends a paint: every translate range it opened is closed, as each replay closes its own. */
+    fun endPaint() {
+        check(openRanges == 0) { "$openRanges translate range(s) left open by a retained replay" }
     }
 
     /** Starts a paint that neither records nor replays, so no record survives it. */
@@ -118,8 +147,10 @@ internal class RetainedDraw(private val scope: PaintScope) {
         val dy = (node.absoluteY - record.absY).toFloat()
         val moved = dx != 0f || dy != 0f
         val movable = !moved || (record.translatable && isPlainContext(context))
-        return context.contentEquals(record.context) && movable && unchanged(node) &&
-            (!moved || scope.retained.shiftsExactly(record.start, record.end, dx, dy))
+        val same = context.contentEquals(record.context) && movable && unchanged(node)
+        val move = if (same && moved) scope.retained.moveOf(record.start, record.end, dx, dy, offsets) else MOVE_NONE
+        ranged = move == MOVE_RANGED
+        return same && (!moved || move != MOVE_NONE)
     }
 
     private fun copy(node: LayoutNode, record: RetainedDrawRecord) {
@@ -127,12 +158,26 @@ internal class RetainedDraw(private val scope: PaintScope) {
         val dy = node.absoluteY - record.absY
         val moved = dx != 0 || dy != 0
         val output = scope.retained
+        if (moved && ranged) {
+            val push = translatePush(record.push, dx.toFloat(), dy.toFloat())
+            record.push = push
+            output.append(push)
+            openRanges++
+        }
+        val shifts = moved && !ranged
         val start = output.size
         for (i in record.start until record.end) {
             val primitive = output.previous(i)
-            output.append(if (moved) primitive.shifted(dx.toFloat(), dy.toFloat()) else primitive)
+            output.append(if (shifts) primitive.shifted(dx.toFloat(), dy.toFloat()) else primitive)
         }
-        rebase(node, start - record.start, dx, dy)
+        if (moved && ranged) {
+            output.append(TranslatePop)
+            openRanges--
+        }
+        // A range keeps the primitives where they were painted, so the records keep that place too.
+        val stepX = node.absoluteX - record.atX
+        val stepY = node.absoluteY - record.atY
+        if (shifts) rebase(node, start - record.start, dx, dy, stepX, stepY) else rebase(node, start - record.start, 0, 0, stepX, stepY)
         record.recordOffset(node)
         replayed++
     }
@@ -142,7 +187,7 @@ internal class RetainedDraw(private val scope: PaintScope) {
      * [shift] places and ([dx], [dy]) pixels, so a part of a replayed subtree can replay by itself next
      * frame instead of waiting a frame to be recorded again.
      */
-    private fun rebase(node: LayoutNode, shift: Int, dx: Int, dy: Int) {
+    private fun rebase(node: LayoutNode, shift: Int, dx: Int, dy: Int, clipDx: Int, clipDy: Int) {
         val record = node.retainedDraw ?: return
         if (record.paint != paint - 1) return
         record.start += shift
@@ -150,14 +195,16 @@ internal class RetainedDraw(private val scope: PaintScope) {
         record.paint = paint
         record.absX += dx
         record.absY += dy
+        record.atX += clipDx
+        record.atY += clipDy
         // A clip inside the subtree moved with it; nothing outside it can be, or it would not have moved.
         if (record.context[CLIP_DEPTH] > 0f) {
-            record.context[CLIP_DEPTH + 1] += dx
-            record.context[CLIP_DEPTH + 2] += dy
+            record.context[CLIP_DEPTH + 1] += clipDx
+            record.context[CLIP_DEPTH + 2] += clipDy
         }
         val children = node.children
         for (i in 0 until children.size) {
-            if (node.placesChild(children[i])) rebase(children[i], shift, dx, dy)
+            if (node.placesChild(children[i])) rebase(children[i], shift, dx, dy, clipDx, clipDy)
         }
     }
 
@@ -197,6 +244,8 @@ internal class RetainedDraw(private val scope: PaintScope) {
         record.translatable = scope.retained.placementBound == record.placementMark
         record.absX = node.absoluteX
         record.absY = node.absoluteY
+        record.atX = node.absoluteX
+        record.atY = node.absoluteY
         record.recordOffset(node)
         record.recordGeometry(node, bounds)
     }
