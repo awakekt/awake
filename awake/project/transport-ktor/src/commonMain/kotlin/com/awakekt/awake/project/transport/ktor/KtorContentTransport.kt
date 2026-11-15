@@ -11,9 +11,13 @@ import com.awakekt.awake.project.ContentTransport
 import com.awakekt.awake.project.TokenAuthorizedFetch
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
-import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.contentLength
+import io.ktor.utils.io.exhausted
+import io.ktor.utils.io.readAvailable
 
 /**
  * Sends [TokenAuthorizedFetch]'s requests through a Ktor [HttpClient], for desktop, Android and iOS
@@ -47,12 +51,38 @@ class KtorContentTransport(
         require(baseUrl == null || hasScheme(baseUrl)) { "baseUrl must be absolute, with a scheme" }
     }
 
-    override suspend fun send(request: ContentRequest): ContentResponse {
-        val response = client.get(baseUrl?.let { resolveUrl(it, request.url) } ?: request.url) {
+    override suspend fun send(request: ContentRequest): ContentResponse =
+        client.prepareGet(baseUrl?.let { resolveUrl(it, request.url) } ?: request.url) {
             expectSuccess = false
             headers { request.headers.forEach { (name, value) -> append(name, value) } }
+        }.execute { response ->
+            val headers = response.headers.entries().associate { (name, values) -> name to values.joinToString(", ") }
+            ContentResponse(response.status.value, response.readBody(), headers)
         }
-        val headers = response.headers.entries().associate { (name, values) -> name to values.joinToString(", ") }
-        return ContentResponse(response.status.value, response.bodyAsBytes(), headers)
-    }
 }
+
+/**
+ * The response's body, read from the connection straight into the array that is returned. `client.get`
+ * and `bodyAsBytes` would keep the whole body in the saved response and copy it out again, which for a
+ * content bundle is twice its size on the heap for each fetch in flight (#1619).
+ *
+ * `Content-Length` sizes the array when the server sends it; a body that turns out longer or shorter,
+ * as a decompressed one does, is still read whole.
+ */
+private suspend fun HttpResponse.readBody(): ByteArray {
+    val channel = bodyAsChannel()
+    val expected = contentLength()?.takeIf { it in 0..Int.MAX_VALUE }?.toInt()
+    var bytes = ByteArray(expected ?: UNSIZED_BODY_BYTES)
+    var size = 0
+    var read = 0
+    while (read >= 0) {
+        size += read
+        // Full: either the body ends here, or it is longer than the array was sized for.
+        if (size == bytes.size && !channel.exhausted()) bytes = bytes.copyOf(maxOf(bytes.size * 2, UNSIZED_BODY_BYTES))
+        read = if (size < bytes.size) channel.readAvailable(bytes, size, bytes.size - size) else -1
+    }
+    return if (size == bytes.size) bytes else bytes.copyOf(size)
+}
+
+// What a body with no Content-Length starts at, and grows by doubling from.
+private const val UNSIZED_BODY_BYTES = 64 * 1024
