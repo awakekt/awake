@@ -10,7 +10,7 @@ import kotlin.math.round
 /**
  * Rolling window aggregator that attributes each frame's wall time across simulation, rendering, UI,
  * external host/GPU wait (`outsideMs`), renderer draw counts and where they went by pass, UI mesh
- * uploads, drawable megapixels, and heap growth or garbage-collection frequency.
+ * uploads, GPU buffers created, drawable megapixels, and heap growth or garbage-collection frequency.
  *
  * Call [frame] once per rendered frame on the frame thread and [summaries] whenever a diagnostic
  * snapshot is requested. Parts without readings in the requested window are omitted rather than
@@ -74,6 +74,11 @@ class FrameBreakdown(
             series[Part.OtherDraws.ordinal].add(nowSeconds, passes.otherDraws.toDouble())
         }
         current.renderPasses?.let { series[Part.RenderPasses.ordinal].add(nowSeconds, it.toDouble()) }
+        current.bufferCreations?.let { created ->
+            series[Part.ArgumentBuffersCreated.ordinal].add(nowSeconds, created.argumentBuffers.toDouble())
+            series[Part.InstanceBuffersCreated.ordinal].add(nowSeconds, created.instanceBuffers.toDouble())
+            series[Part.UniformBuffersCreated.ordinal].add(nowSeconds, created.uniformBuffers.toDouble())
+        }
     }
 
     /**
@@ -154,6 +159,9 @@ class FrameBreakdown(
         UiUploadBytes(KEY_UI_UPLOAD_BYTES),
         UiUploadRuns(KEY_UI_UPLOAD_RUNS),
         UiUploadTriangles(KEY_UI_UPLOAD_TRIANGLES),
+        ArgumentBuffersCreated(KEY_ARGUMENT_BUFFERS_CREATED),
+        InstanceBuffersCreated(KEY_INSTANCE_BUFFERS_CREATED),
+        UniformBuffersCreated(KEY_UNIFORM_BUFFERS_CREATED),
         SurfaceMpx(KEY_SURFACE_MPX),
         HeapMb(KEY_HEAP_MB),
         AllocKbPerFrame(KEY_ALLOC_KB_PER_FRAME),
@@ -229,6 +237,15 @@ class FrameBreakdown(
 
         /** Summary key for triangles in the UI draw runs uploaded per frame. */
         const val KEY_UI_UPLOAD_TRIANGLES: String = "uiUploadTriangles"
+
+        /** Summary key for retained-bundle argument buffers created per frame; a warm frame reads zero. */
+        const val KEY_ARGUMENT_BUFFERS_CREATED: String = "argumentBuffersCreated"
+
+        /** Summary key for instanced draws' model buffers created per frame; a warm frame reads zero. */
+        const val KEY_INSTANCE_BUFFERS_CREATED: String = "instanceBuffersCreated"
+
+        /** Summary key for per-draw uniform buffers created per frame; a warm frame reads zero. */
+        const val KEY_UNIFORM_BUFFERS_CREATED: String = "uniformBuffersCreated"
 
         /** Summary key for drawable surface size in megapixels. */
         const val KEY_SURFACE_MPX: String = "surfaceMpx"

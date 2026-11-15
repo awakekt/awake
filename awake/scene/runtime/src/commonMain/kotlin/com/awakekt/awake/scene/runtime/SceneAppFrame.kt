@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.render.renderer.BufferCreationStats
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderPassStats
 import com.awakekt.awake.render.renderer.UiUploadStats
@@ -30,6 +31,9 @@ import kotlin.math.roundToInt
  * pass, UI, other), or `null` before a renderer is ready or when it does not count. See [RenderPassStats].
  * @property renderPasses Render passes the renderer's last frame began, offscreen passes included, or
  * `null` before a renderer is ready or when it does not count them.
+ * @property bufferCreations GPU buffers the draw path created during the renderer's last frame, by site,
+ * or `null` before a renderer is ready or when it does not count; a warm frame reads zero. See
+ * [BufferCreationStats].
  */
 data class SceneFrameStats(
     val frameTimeMs: Float,
@@ -44,6 +48,7 @@ data class SceneFrameStats(
     val uiUploads: UiUploadStats? = null,
     val passes: RenderPassStats? = null,
     val renderPasses: Int? = null,
+    val bufferCreations: BufferCreationStats? = null,
 ) {
     /** The constructor as released before [uiUploads], kept so compiled callers still link. */
     @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
@@ -59,7 +64,7 @@ data class SceneFrameStats(
         render: RenderFrameStats? = null,
     ) : this(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        null, null, null,
+        null, null, null, null,
     )
 
     /** The constructor as released before [passes] and [renderPasses], kept so compiled callers still link. */
@@ -77,7 +82,7 @@ data class SceneFrameStats(
         uiUploads: UiUploadStats? = null,
     ) : this(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads, null, null,
+        uiUploads, null, null, null,
     )
 
     /** [copy] as released before [uiUploads]. */
@@ -94,7 +99,7 @@ data class SceneFrameStats(
         render: RenderFrameStats? = this.render,
     ): SceneFrameStats = copy(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads, passes, renderPasses,
+        uiUploads, passes, renderPasses, bufferCreations,
     )
 
     /** [copy] as released before [passes] and [renderPasses]. */
@@ -112,7 +117,7 @@ data class SceneFrameStats(
         uiUploads: UiUploadStats? = this.uiUploads,
     ): SceneFrameStats = copy(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads, passes, renderPasses,
+        uiUploads, passes, renderPasses, bufferCreations,
     )
 
     /**
@@ -182,6 +187,7 @@ fun SceneAppLifecycleRuntime.frameStats(): SceneFrameStats {
         uiUploads = rendererUiUploads,
         passes = rendererPassStats,
         renderPasses = rendererRenderPasses,
+        bufferCreations = rendererBufferCreations,
     )
 }
 

@@ -14,6 +14,12 @@ import com.awakekt.awake.vulkan.utils.VkResultException
 
 /** Submits the recorded frame and presents it, including swapchain recovery. */
 internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
+    // Vulkan keeps no render bundles, so it creates no argument buffers.
+    statsCounter.bufferCreationTotals(
+        argumentBuffers = 0L,
+        instanceBuffers = graphicsDevice.instanceBuffersCreated,
+        uniformBuffers = graphicsDevice.uniformBuffersCreated,
+    )
     statsCounter.publish(gpuFrameTimer?.lastMs)
     // Headless: nothing signalled an image-available semaphore, because nothing acquired an
     // image -- so waiting on one would hang here rather than fail. Submit bare and return; the

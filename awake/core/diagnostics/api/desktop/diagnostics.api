@@ -258,11 +258,13 @@ public final class com/awakekt/awake/core/diagnostics/FrameBreakdown {
 	public static final field DEFAULT_CAPACITY I
 	public static final field DEFAULT_WINDOW_SECONDS D
 	public static final field KEY_ALLOC_KB_PER_FRAME Ljava/lang/String;
+	public static final field KEY_ARGUMENT_BUFFERS_CREATED Ljava/lang/String;
 	public static final field KEY_DRAW_CALLS Ljava/lang/String;
 	public static final field KEY_GC_PER_MINUTE Ljava/lang/String;
 	public static final field KEY_GPU_MS Ljava/lang/String;
 	public static final field KEY_HEAP_MB Ljava/lang/String;
 	public static final field KEY_INSTANCES Ljava/lang/String;
+	public static final field KEY_INSTANCE_BUFFERS_CREATED Ljava/lang/String;
 	public static final field KEY_OTHER_DRAWS Ljava/lang/String;
 	public static final field KEY_OUTSIDE_MS Ljava/lang/String;
 	public static final field KEY_RENDER_PASSES Ljava/lang/String;
@@ -282,6 +284,7 @@ public final class com/awakekt/awake/core/diagnostics/FrameBreakdown {
 	public static final field KEY_UI_UPLOAD_RUNS Ljava/lang/String;
 	public static final field KEY_UI_UPLOAD_TRIANGLES Ljava/lang/String;
 	public static final field KEY_UI_WAIT_MS Ljava/lang/String;
+	public static final field KEY_UNIFORM_BUFFERS_CREATED Ljava/lang/String;
 	public fun <init> ()V
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;I)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -301,25 +304,42 @@ public final class com/awakekt/awake/core/diagnostics/FrameBreakdownSample {
 	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
 	public final fun component2 ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
 	public final fun component3 ()Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
 	public final fun component4 ()Lcom/awakekt/awake/core/diagnostics/FramePassSample;
 	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;
 	public final synthetic fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public final synthetic fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
-	public final fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public final fun copy (Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;Lcom/awakekt/awake/core/diagnostics/FramePassSample;Ljava/lang/Integer;Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;ILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBufferCreations ()Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;
 	public final fun getPasses ()Lcom/awakekt/awake/core/diagnostics/FramePassSample;
 	public final fun getPhases ()Lcom/awakekt/awake/core/diagnostics/FramePhaseSample;
 	public final fun getRender ()Lcom/awakekt/awake/core/diagnostics/FrameRenderSample;
 	public final fun getRenderPasses ()Ljava/lang/Integer;
 	public final fun getUiUploads ()Lcom/awakekt/awake/core/diagnostics/FrameUiUploadSample;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/diagnostics/FrameBufferCreationSample {
+	public fun <init> (III)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (III)Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;IIIILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBufferCreationSample;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArgumentBuffers ()I
+	public final fun getInstanceBuffers ()I
+	public final fun getUniformBuffers ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

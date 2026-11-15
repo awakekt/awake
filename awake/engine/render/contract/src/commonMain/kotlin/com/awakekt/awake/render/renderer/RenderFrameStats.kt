@@ -43,6 +43,13 @@ class RenderStatsCounter {
     private var uiRuns = 0
     private var uiTriangles = 0L
     private val passes = RenderPassTally()
+    private var argumentBuffers = 0L
+    private var instanceBuffers = 0L
+    private var uniformBuffers = 0L
+    private var publishedArgumentBuffers = 0L
+    private var publishedInstanceBuffers = 0L
+    private var publishedUniformBuffers = 0L
+    private var countsBuffers = false
 
     /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
     var latestRenderPasses: Int = 0
@@ -50,6 +57,13 @@ class RenderStatsCounter {
 
     /** UI mesh writes of the last frame [publish] closed, or null before the first one. */
     var latestUiUploads: UiUploadStats? = null
+        private set
+
+    /**
+     * GPU buffers the draw path created during the last frame [publish] closed, or null before the
+     * first one and for a backend that never calls [bufferCreationTotals].
+     */
+    var latestBufferCreations: BufferCreationStats? = null
         private set
 
     /** The last frame [publish] closed split by the part of it that drew, or null before the first one. */
@@ -85,6 +99,18 @@ class RenderStatsCounter {
         uiTriangles += indexCount / TRIANGLE_VERTICES
     }
 
+    /**
+     * Sets how many GPU buffers the draw path has created so far, by site, over the renderer's life.
+     * [publish] reports the growth since the frame before, so a backend keeps one running count per
+     * site and calls this before each [publish].
+     */
+    fun bufferCreationTotals(argumentBuffers: Long, instanceBuffers: Long, uniformBuffers: Long) {
+        this.argumentBuffers = argumentBuffers
+        this.instanceBuffers = instanceBuffers
+        this.uniformBuffers = uniformBuffers
+        countsBuffers = true
+    }
+
     /** Counts one render pass begun. */
     fun recordPass() {
         renderPasses += 1
@@ -103,6 +129,18 @@ class RenderStatsCounter {
         uiBytes = 0L
         uiRuns = 0
         uiTriangles = 0L
+        if (countsBuffers) publishBufferCreations()
+    }
+
+    private fun publishBufferCreations() {
+        latestBufferCreations = BufferCreationStats(
+            argumentBuffers = (argumentBuffers - publishedArgumentBuffers).toInt(),
+            instanceBuffers = (instanceBuffers - publishedInstanceBuffers).toInt(),
+            uniformBuffers = (uniformBuffers - publishedUniformBuffers).toInt(),
+        )
+        publishedArgumentBuffers = argumentBuffers
+        publishedInstanceBuffers = instanceBuffers
+        publishedUniformBuffers = uniformBuffers
     }
 
     private companion object {

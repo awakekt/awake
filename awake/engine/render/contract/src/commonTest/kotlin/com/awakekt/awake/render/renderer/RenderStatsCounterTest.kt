@@ -51,6 +51,31 @@ class RenderStatsCounterTest {
     }
 
     @Test
+    fun bufferCreationsAreTheGrowthOfTheBackendsRunningCountsAndAWarmFrameReadsZero() {
+        val counter = RenderStatsCounter()
+        counter.bufferCreationTotals(argumentBuffers = 4, instanceBuffers = 2, uniformBuffers = 30)
+        counter.publish()
+        assertEquals(BufferCreationStats(argumentBuffers = 4, instanceBuffers = 2, uniformBuffers = 30), counter.latestBufferCreations)
+
+        counter.bufferCreationTotals(argumentBuffers = 5, instanceBuffers = 2, uniformBuffers = 33)
+        counter.publish()
+        assertEquals(BufferCreationStats(argumentBuffers = 1, instanceBuffers = 0, uniformBuffers = 3), counter.latestBufferCreations)
+        assertEquals(4, counter.latestBufferCreations?.total)
+
+        // A frame the backend reported no new totals for created nothing.
+        counter.publish()
+        assertEquals(BufferCreationStats(argumentBuffers = 0, instanceBuffers = 0, uniformBuffers = 0), counter.latestBufferCreations)
+    }
+
+    @Test
+    fun aBackendThatReportsNoBufferTotalsPublishesNone() {
+        val counter = RenderStatsCounter()
+        counter.publish()
+
+        assertNull(counter.latestBufferCreations, "not counted is not the same as created nothing")
+    }
+
+    @Test
     fun drawsCountTowardThePassTheBackendTaggedAndAddUpToTheFrame() {
         val counter = RenderStatsCounter()
         counter.recordDraw(elementCount = 3) // before any tag: other

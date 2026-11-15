@@ -56,6 +56,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.sprites.SpriteRenderBatch
+import com.awakekt.awake.render.renderer.BufferCreationStats
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderPassStats
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -343,6 +344,10 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Render passes the renderer's last frame began, or null before [ready] or when it does not count (0). */
     internal val rendererRenderPasses: Int?
         get() = if (::renderer.isInitialized) renderer.frameRenderPasses.takeIf { it > 0 } else null
+
+    /** GPU buffers the renderer's last frame created, or null before [ready] or when it does not count. */
+    internal val rendererBufferCreations: BufferCreationStats?
+        get() = if (::renderer.isInitialized) renderer.frameBufferCreations else null
 
     private fun recordFrameTime(deltaSeconds: Float) {
         recentFrames.update(deltaSeconds)
