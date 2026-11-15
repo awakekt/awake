@@ -762,6 +762,10 @@ public final class com/awakekt/awake/scene/runtime/schedule/SceneSchedule {
 public abstract interface class com/awakekt/awake/scene/runtime/schedule/SceneSystemObserver {
 	public static final field APP_UPDATE Ljava/lang/String;
 	public static final field Companion Lcom/awakekt/awake/scene/runtime/schedule/SceneSystemObserver$Companion;
+	public static final field RENDER_PREPARE Ljava/lang/String;
+	public static final field RENDER_RECORD Ljava/lang/String;
+	public static final field RENDER_SUBMIT Ljava/lang/String;
+	public static final field RENDER_UPLOAD Ljava/lang/String;
 	public static final field UI_BUILD Ljava/lang/String;
 	public static final field UI_COMPOSE Ljava/lang/String;
 	public static final field UI_DRAW Ljava/lang/String;
@@ -774,6 +778,10 @@ public abstract interface class com/awakekt/awake/scene/runtime/schedule/SceneSy
 
 public final class com/awakekt/awake/scene/runtime/schedule/SceneSystemObserver$Companion {
 	public static final field APP_UPDATE Ljava/lang/String;
+	public static final field RENDER_PREPARE Ljava/lang/String;
+	public static final field RENDER_RECORD Ljava/lang/String;
+	public static final field RENDER_SUBMIT Ljava/lang/String;
+	public static final field RENDER_UPLOAD Ljava/lang/String;
 	public static final field UI_BUILD Ljava/lang/String;
 	public static final field UI_COMPOSE Ljava/lang/String;
 	public static final field UI_DRAW Ljava/lang/String;

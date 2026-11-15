@@ -81,6 +81,7 @@ import com.awakekt.awake.scene.rendering.debug.CullingDebugSource
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
+import com.awakekt.awake.scene.runtime.schedule.RenderStageMarks
 import com.awakekt.awake.scene.runtime.schedule.SceneSystemObserver
 import com.awakekt.awake.scene.runtime.schedule.UiBuildStageMarks
 import com.awakekt.awake.scene.runtime.session.SceneSession
@@ -401,6 +402,21 @@ class SceneAppLifecycleRuntime internal constructor(
         uiHost.frameStages = if (observer == null) null else uiBuildStages
     }
 
+    // The renderer's draw stages, told to [systemObserver] while one is installed; handed to the
+    // renderer only when that changes, so a frame does not call into the backend for nothing.
+    private val renderStages = RenderStageMarks(session.schedule)
+    private var installedRenderStages: RenderStageMarks? = null
+
+    private fun installRenderStages() {
+        val observer = systemObserver
+        renderStages.observer = observer
+        val stages = if (observer == null) null else renderStages
+        if (stages !== installedRenderStages) {
+            renderer.observeDrawStages(stages)
+            installedRenderStages = stages
+        }
+    }
+
     private var uiBuildMs = 0f
     private var uiWaitMs = 0f
     private var uiStageMs = 0f
@@ -498,6 +514,7 @@ class SceneAppLifecycleRuntime internal constructor(
         // backend-neutral 2D overlay before the runtime composites the frame below.
         session.schedule.timed = perfStatsEnabled
         session.schedule.observer = systemObserver
+        installRenderStages()
         timePhase({ simRenderMs = it }) {
             session.advance(delta) { step ->
                 runUpdateBlock(step, snapshot)

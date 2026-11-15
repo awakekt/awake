@@ -23,7 +23,9 @@ package com.awakekt.awake.scene.runtime.schedule
  * - **the app's update block and the UI host's phases**: [APP_UPDATE], [UI_BUILD], [UI_WAIT] and
  *   [UI_STAGE]. The UI host's own stages, [UI_COMPOSE], [UI_MEASURE] and [UI_DRAW], are reported in
  *   their own marks, and [UI_BUILD] is ended before each and begun again after it, so it holds only
- *   what runs between them. No mark encloses another.
+ *   what runs between them. The renderer's own stages, [RENDER_PREPARE], [RENDER_UPLOAD],
+ *   [RENDER_RECORD] and [RENDER_SUBMIT], are reported the same way inside the system that draws, on
+ *   a backend that splits its draw. No mark encloses another.
  *
  * Every name is a string built once, when the scene starts, so a name can be compared by identity
  * and a profile keyed by it allocates nothing to look it up. [before] and [after] come in pairs
@@ -62,5 +64,17 @@ interface SceneSystemObserver {
 
         /** Staging the UI, the scene's canvas views included, for the renderer. */
         const val UI_STAGE = "ui:stage"
+
+        /** The renderer acquiring its surface and ordering the frame's draws. */
+        const val RENDER_PREPARE = "render:prepare"
+
+        /** The renderer writing the frame's uniforms and textures to the GPU. */
+        const val RENDER_UPLOAD = "render:upload"
+
+        /** The renderer encoding the frame's passes. */
+        const val RENDER_RECORD = "render:record"
+
+        /** The renderer handing the encoded frame to the GPU. */
+        const val RENDER_SUBMIT = "render:submit"
     }
 }

@@ -1965,6 +1965,21 @@ public final class com/awakekt/awake/render/renderer/LineSegment {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/RenderDrawStage : java/lang/Enum {
+	public static final field Prepare Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+	public static final field Record Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+	public static final field Submit Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+	public static final field Upload Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+}
+
+public abstract interface class com/awakekt/awake/render/renderer/RenderDrawStages {
+	public abstract fun begin (Lcom/awakekt/awake/render/renderer/RenderDrawStage;)V
+	public abstract fun end (Lcom/awakekt/awake/render/renderer/RenderDrawStage;)V
+}
+
 public final class com/awakekt/awake/render/renderer/RenderFrameStats {
 	public fun <init> (IIJLjava/lang/Float;)V
 	public synthetic fun <init> (IIJLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -2150,6 +2165,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public abstract fun getWireframe ()Z
 	public fun imagePassTargetContext (Lcom/awakekt/awake/render/texture/RenderTarget;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public static synthetic fun imagePassTargetContext$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
+	public fun observeDrawStages (Lcom/awakekt/awake/render/renderer/RenderDrawStages;)V
 	public fun presentWithoutScene ()V
 	public fun readFramebufferAttachment (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -2190,6 +2206,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getSurfaceWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun imagePassTargetContext (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public static synthetic fun imagePassTargetContext$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
+	public static fun observeDrawStages (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/RenderDrawStages;)V
 	public static fun presentWithoutScene (Lcom/awakekt/awake/render/renderer/Renderer;)V
 	public static fun readFramebufferAttachment (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun readPresentedPixels (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

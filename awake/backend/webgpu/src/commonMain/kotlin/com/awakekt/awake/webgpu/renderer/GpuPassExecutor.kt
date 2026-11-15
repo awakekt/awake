@@ -13,6 +13,8 @@ import com.awakekt.awake.render.command.allDraws
 import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.recordPassFeatures
+import com.awakekt.awake.render.renderer.RenderDrawStage
+import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.webgpu.pipeline.bundles.BundleLayout
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
@@ -30,6 +32,8 @@ internal class RendererGpuPassExecutor(
 ) : GpuPassExecutor {
     override fun draw(input: GpuPassInput) {
         with(renderer) {
+            val stages = drawStages
+            stages?.begin(RenderDrawStage.Prepare)
             swapchainManager.syncSurface()
             // Per frame, not per UI pass: a post or upscale step and a UI step sharing a shader would
             // otherwise share a uniform slot, and the last write of the frame wins for both.
@@ -43,15 +47,17 @@ internal class RendererGpuPassExecutor(
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
             val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
             val sceneInput = if (scaled == null) input else sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
-            graphicsDevice.frameUniforms.stage(uniformUploads, sceneInput)
-            flushUniformUploads()
             val sorted = input.drawsForRecording()
             val encoder = createRenderEncoder()
+            stages.next(RenderDrawStage.Prepare, RenderDrawStage.Upload)
+            graphicsDevice.frameUniforms.stage(uniformUploads, sceneInput)
+            flushUniformUploads()
             com.awakekt.awake.render.passes.prepareFrameResources(
                 renderFeatures,
                 0,
                 com.awakekt.awake.webgpu.texture.TextureUploads(graphicsDevice),
             )
+            stages.next(RenderDrawStage.Upload, RenderDrawStage.Record)
             val colorTexture = renderingContext.getCurrentTexture()
             val colorView = colorTexture.createView()
             recordDepthPasses(encoder, input, sorted, view = swapchainManager)
@@ -88,6 +94,7 @@ internal class RendererGpuPassExecutor(
             )
             // Staged UI is one frame's: a frame that stages none draws none, not the last one again.
             uiRuns = emptyList()
+            stages.next(RenderDrawStage.Record, RenderDrawStage.Submit)
             submitRenderCommands(encoder)
             colorView.close()
             presentedColor = PresentedColor(colorTexture, outputWidth, outputHeight, swapchainManager.imageFormatWebGpu)
@@ -98,6 +105,7 @@ internal class RendererGpuPassExecutor(
                 uniformBuffers = bufferPools.creations.uniformSlots,
             )
             statsCounter.publish(gpuFrameTimer?.lastMs)
+            stages?.end(RenderDrawStage.Submit)
         }
     }
 
@@ -304,4 +312,11 @@ private fun recordPostPasses(
     postPasses: List<com.awakekt.awake.render.command.GpuSubPass>,
 ) {
     if (postPasses.isEmpty()) return
+}
+
+/** Ends [done] and begins [following], when a profile is listening. */
+private fun RenderDrawStages?.next(done: RenderDrawStage, following: RenderDrawStage) {
+    if (this == null) return
+    end(done)
+    begin(following)
 }

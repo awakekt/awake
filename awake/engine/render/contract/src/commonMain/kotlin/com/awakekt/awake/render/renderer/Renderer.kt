@@ -279,6 +279,13 @@ interface Renderer : GpuDevice {
      */
     fun awaitFrameResources() = Unit
 
+    /**
+     * Tells [stages] around each [RenderDrawStage] of every later [draw], or stops telling anyone
+     * when null. A backend that does not split its draw ignores it, and a profile then sees the draw
+     * whole. Null, the default, must call nothing and allocate nothing.
+     */
+    fun observeDrawStages(stages: RenderDrawStages?) = Unit
+
     /** Renders UI into an offscreen target for compositing as one texture; [font] as in [drawUi]. */
     fun drawUiToTexture(
         target: RenderTarget,

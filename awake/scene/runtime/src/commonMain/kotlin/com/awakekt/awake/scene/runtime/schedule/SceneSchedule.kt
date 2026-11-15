@@ -64,6 +64,10 @@ class SceneSchedule internal constructor(
     /** Told around each system run, when installed; see [SceneSystemObserver]. Null calls nothing. */
     internal var observer: SceneSystemObserver? = null
 
+    /** The name [observer] was last told began and has not yet ended, or null between systems. */
+    internal var openMark: String? = null
+        private set
+
     /** Whether [advance] splits its time into [gameMs] and [renderMs]. Off, it reads no clock. */
     internal var timed = false
     private var gameNanos = 0L
@@ -222,7 +226,9 @@ class SceneSchedule internal constructor(
             return
         }
         observer.before(name)
+        openMark = name
         block()
+        openMark = null
         observer.after(name)
     }
 
