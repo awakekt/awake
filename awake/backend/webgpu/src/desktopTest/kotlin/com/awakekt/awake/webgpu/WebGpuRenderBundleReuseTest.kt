@@ -23,7 +23,6 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 /**
  * Kept render bundles survive a moving camera (#1555, #1452's WebGPU step): since #1611 a moved
@@ -34,6 +33,9 @@ import kotlin.test.assertTrue
  * Counted as [WebGpuStaticUniformReuseTest] counts uploads: exact figures per frame, so a change
  * that starts re-encoding on a camera move fails here. Every frame's pixels are checked against
  * the same frames recorded directly ([Renderer.keepsRenderBundles] off).
+ *
+ * Negative control, measured: with `RetainedCells` re-recording every cell each frame, each
+ * moving frame encoded all 8 cells again and all three tests failed on their encode counts.
  */
 class WebGpuRenderBundleReuseTest {
 
@@ -42,7 +44,7 @@ class WebGpuRenderBundleReuseTest {
         val renderer = session.renderer as Renderer
         val scene = Scene(renderer)
         val first = scene.frame(Pose(eyeX = 0f))
-        assertTrue(first.encoded > 0, "the first frame encodes the scene's and the cascades' cells")
+        assertEquals(FIRST_FRAME_CELLS, first.encoded, "the first frame encodes the scene's and the cascades' cells")
 
         val moving = MOVING.map { scene.frame(Pose(eyeX = it)) }
         moving.forEach { frame ->
@@ -82,9 +84,7 @@ class WebGpuRenderBundleReuseTest {
         val scene = Scene(renderer)
         val poses = listOf(Pose(eyeX = 0f), Pose(eyeX = 0.3f), Pose(eyeX = 0.3f, swapped = true), Pose(eyeX = 0.6f, swapped = true))
         val kept = poses.map(scene::frame)
-        val passes = renderer.retainedBundles.passCount
-
-        assertTrue(kept[2].encoded in 1..passes, "one cell per pass at most, not the ${kept[0].encoded} of the first frame: ${kept[2].encoded}")
+        assertEquals(SWAPPED_CELLS, kept[2].encoded, "the singles' cell in the scene pass and in each cascade, not all $FIRST_FRAME_CELLS")
         assertEquals(0, kept[3].encoded, "and once encoded, the next moving frame encodes nothing again")
         assertFalse(kept[1].pixels.contentEquals(kept[2].pixels), "the swapped mesh is drawn")
 
@@ -151,5 +151,11 @@ class WebGpuRenderBundleReuseTest {
         const val PROP_KINDS = 5
         const val COPIES = 8
         const val SINGLES = 3
+
+        /** Two pipelines (the singles' lit one and the props' instanced one) in the scene pass and in each of three cascades. */
+        const val FIRST_FRAME_CELLS = 8
+
+        /** The singles' cell, once in the scene pass and once in each cascade. */
+        const val SWAPPED_CELLS = 4
     }
 }
