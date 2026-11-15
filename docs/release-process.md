@@ -97,6 +97,11 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 1. Branch `release-cut/vX.Y.Z` from `main`, run the cut, push the branch, open
    `chore(release): cut vX.Y.Z` with the milestone, and squash-merge it once its **release
    rehearsal** is green (below).
+   **Main is frozen from the cut to the tag:** merge nothing else into `main` until the cut is merged
+   and tagged. A merge makes the cut's branch out of date, and bringing it up to date (a rebase onto
+   the new `main`) is a new head, which restarts the rehearsal, about an hour, and puts the merged
+   change into the release unrehearsed until it finishes. A fix that has to ship goes in before the
+   cut, or in the next release; open its PR meanwhile, but merge it after the tag.
 2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
    **Publish** run stages the Core family, its alignment BOM and build-logic's plugins in one folder
    and uploads them as one Central deployment (`scripts/central-bundle.sh`,
