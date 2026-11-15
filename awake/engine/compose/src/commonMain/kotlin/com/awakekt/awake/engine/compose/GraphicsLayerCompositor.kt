@@ -117,20 +117,52 @@ class GraphicsLayerCompositor {
         images.dispose()
     }
 
+    /**
+     * This list with each picture's layer placeholder or image resolved to the material it draws.
+     * A list with nothing to resolve, as most frames' are, is handed back itself, and one that has
+     * builds a single list: every primitive wrapped in its own list cost about 39 B per primitive
+     * per frame (#1621).
+     */
     private fun List<UiDrawPrimitive>.resolve(
         renderer: Renderer,
         materials: Map<Int, Material>,
         flat: Map<Int, GraphicsLayerFrame>,
-    ): List<UiDrawPrimitive> =
-        flatMap { primitive ->
-            if (primitive !is UiDrawPrimitive.Texture) return@flatMap listOf(primitive)
-            when (val slot = primitive.material) {
-                is GraphicsLayerPlaceholder -> flat[slot.id]?.drawnDirectly(primitive) { directMaterial(renderer, it) }
-                    ?: listOf(primitive.copy(material = materials.getValue(slot.id)))
-                is ImageBitmap -> listOf(primitive.copy(material = images.materialFor(renderer, slot, primitive.filterQuality)))
-                else -> listOf(primitive)
+    ): List<UiDrawPrimitive> {
+        if (!anyResolvable()) return this
+        val out = ArrayList<UiDrawPrimitive>(size)
+        for (i in indices) {
+            val primitive = this[i]
+            if (primitive is UiDrawPrimitive.Texture && primitive.material.isResolvable()) {
+                out.addAll(resolved(primitive, renderer, materials, flat))
+            } else {
+                out += primitive
             }
         }
+        return out
+    }
+
+    private fun resolved(
+        primitive: UiDrawPrimitive.Texture,
+        renderer: Renderer,
+        materials: Map<Int, Material>,
+        flat: Map<Int, GraphicsLayerFrame>,
+    ): List<UiDrawPrimitive> = when (val slot = primitive.material) {
+        is GraphicsLayerPlaceholder -> flat[slot.id]?.drawnDirectly(primitive) { directMaterial(renderer, it) }
+            ?: listOf(primitive.copy(material = materials.getValue(slot.id)))
+        is ImageBitmap -> listOf(primitive.copy(material = images.materialFor(renderer, slot, primitive.filterQuality)))
+        else -> listOf(primitive)
+    }
+
+    // Indexed: an iterator is an allocation where nothing removes it, as on wasm.
+    private fun List<UiDrawPrimitive>.anyResolvable(): Boolean {
+        for (i in indices) {
+            val primitive = this[i]
+            if (primitive is UiDrawPrimitive.Texture && primitive.material.isResolvable()) return true
+        }
+        return false
+    }
+
+    private fun Any.isResolvable(): Boolean = this is GraphicsLayerPlaceholder || this is ImageBitmap
 
     /**
      * What [picture], drawn straight into the parent, samples. The offscreen pass it replaces
