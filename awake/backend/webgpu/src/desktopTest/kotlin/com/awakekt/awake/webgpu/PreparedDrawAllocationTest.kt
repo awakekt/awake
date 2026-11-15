@@ -37,8 +37,9 @@ import kotlin.test.assertTrue
  *
  * About 760 B a draw before: three resolved draws, a pipeline binding, a depth key, a capturing
  * lambda and a pair per draw, besides the prepared draw itself. Then 328 B, of which a whole resolved
- * draw was built only to be copied with its depth-pass fields. 224 B now, built once; what is left
- * is the prepared and resolved draws the frame hands on.
+ * draw was built only to be copied with its depth-pass fields. Then 224 B, built once. 120 B now:
+ * a draw whose packet would come out the same is handed its last one, so what is left is the
+ * prepared draw itself.
  */
 class PreparedDrawAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -112,7 +113,7 @@ class PreparedDrawAllocationTest {
         const val WARM_UP = 20
         const val FRAMES = 20
 
-        /** 224 B a draw now: a little room, and under the 328 B a draw with the copied packet. */
-        const val PER_DRAW_BUDGET = 260L
+        /** 120 B a draw now: a little room, and under the 224 B a draw with a packet built every frame. */
+        const val PER_DRAW_BUDGET = 150L
     }
 }

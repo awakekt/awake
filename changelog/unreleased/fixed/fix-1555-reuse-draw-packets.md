@@ -1,0 +1,1 @@
+- On WebGPU, a draw whose packet would come out the same hands back its last one instead of building another, and an opaque draw's packet no longer carries its distance to the camera, which only transparent draws are ordered by. A moving camera now allocates about half as much per prepared draw (224 → 120 B at 1,000 shadowed draws, measured as Kotlin/Wasm runs) (#1555).
