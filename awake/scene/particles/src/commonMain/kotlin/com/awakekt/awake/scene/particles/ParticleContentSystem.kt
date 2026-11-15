@@ -25,6 +25,7 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.scene.core.transform.Transform
 
 /**
@@ -89,10 +90,10 @@ class ParticleContentSystem(
 
     // An image from loadParticleImages goes through createImageMaterial, on the GPU where it can.
     private fun materialFor(path: String): Material? = materials[path]
-        ?: images[path]?.let { image -> renderer.createImageMaterial(image, uniformFloatCount = ParticleUniformLayout.total) }?.also { materials[path] = it }
+        ?: images[path]?.let { image -> renderer.createImageMaterial(image, TextureFiltering.Linear, ParticleUniformLayout.total, null, label = path) }?.also { materials[path] = it }
         ?: sprites[path]?.let { sprite -> renderer.createMaterial(ParticleUniformLayout, texture = sprite).also { materials[path] = it } }
         ?: loaded(path)?.let { image ->
-            renderer.createImageMaterial(image, uniformFloatCount = ParticleUniformLayout.total).also { materials[path] = it }
+            renderer.createImageMaterial(image, TextureFiltering.Linear, ParticleUniformLayout.total, null, label = path).also { materials[path] = it }
         }
 
     // The image [loads] has decoded for [path], asking it to start when it has not.

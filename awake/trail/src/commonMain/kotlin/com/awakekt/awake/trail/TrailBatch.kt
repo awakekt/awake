@@ -19,6 +19,7 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 
 /**
  * Draws [TrailRenderer]s in the scene pass: one transparent draw each, unlit, depth tested and
@@ -83,7 +84,7 @@ class TrailBatch(private val renderer: Renderer) : AutoCloseable {
         uploads[trail]?.frame = frame
         if (dynamicMeshes == null || !culling.isVisible(trail.strip, placement, frustum)) return false
         val material = namedMaterials[textureName] ?: resolveTexture(textureName)?.let {
-            renderer.createImageMaterial(it, uniformFloatCount = TrailUniformLayout.total).also { material ->
+            renderer.createImageMaterial(it, TextureFiltering.Linear, TrailUniformLayout.total, null, label = textureName).also { material ->
                 namedMaterials[textureName] = material
             }
         }

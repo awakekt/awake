@@ -35,6 +35,7 @@ import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.asReleasingGpuImageSource
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -509,11 +510,11 @@ class GltfAssetResolver(
         name == "skinned-material" -> renderer.createMaterial(SkinnedUniformLayout)
         name.startsWith("gltf-material:") && name.removePrefix("gltf-material:") in skinnedPartTextures ->
             renderer.imageMaterialOrPlain(name, SkinnedUniformLayout.total) {
-                createImageMaterial(skinnedPartTextures.getValue(name.removePrefix("gltf-material:")), uniformFloatCount = SkinnedUniformLayout.total)
+                createImageMaterial(skinnedPartTextures.getValue(name.removePrefix("gltf-material:")), TextureFiltering.Linear, SkinnedUniformLayout.total, null, label = name)
             }
         name.startsWith("gltf-material:") -> loadedMaterials[name.removePrefix("gltf-material:")]?.let { loaded ->
             renderer.imageMaterialOrPlain(name, TexturedUniformLayout.total) {
-                createImageMaterial(loaded.texture, uniformFloatCount = TexturedUniformLayout.total, pbrImages = loaded.pbrImages)
+                createImageMaterial(loaded.texture, TextureFiltering.Linear, TexturedUniformLayout.total, loaded.pbrImages, label = name)
             }
         } ?: name.removePrefix("gltf-material:").takeIf { it in untexturedMaterials }?.let {
             renderer.createMaterial(LitShadowUniformLayout)
