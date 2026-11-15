@@ -94,10 +94,25 @@ fun SceneDocument.withCanvasComponents(): SceneDocument = copy(nodes = nodes.map
  * or `canvas_element`: what a tool written for the single component reads, such as an element's id
  * or kind. A node saved in the older form answers its own.
  */
-fun SceneNode.canvasElementView(): SceneCanvasElement? = components.firstNotNullOfOrNull { it as? SceneCanvasElement }
-    ?: components.firstNotNullOfOrNull { it as? SceneCanvasRect }?.let { rect ->
-        components.fold(rect.toLegacy()) { element, component -> element.with(component) }
+fun SceneNode.canvasElementView(): SceneCanvasElement? {
+    // By index, not an iterator: a HUD reads this every frame for every slot (#1621).
+    var element: SceneCanvasElement? = null
+    var rect: SceneCanvasRect? = null
+    for (index in 0 until components.size) {
+        when (val component = components[index]) {
+            is SceneCanvasElement -> if (element == null) element = component
+            is SceneCanvasRect -> if (rect == null) rect = component
+            else -> Unit
+        }
     }
+    return element ?: rect?.let { CanvasElementViews.of(this, foldView) }
+}
+
+/** A node's view folded from its rect and its other canvas components; stored, so a read makes no closure. */
+private val foldView: (SceneNode) -> SceneCanvasElement = { node ->
+    val rect = node.components.first { it is SceneCanvasRect } as SceneCanvasRect
+    node.components.fold(rect.toLegacy()) { element, component -> element.with(component) }
+}
 
 private fun SceneCanvasRect.toLegacy() = SceneCanvasElement(
     kind = CanvasElementKind.Panel, anchor = anchor, offsetX = offsetX, offsetY = offsetY, width = width, height = height,
