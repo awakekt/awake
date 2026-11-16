@@ -133,15 +133,14 @@ internal class DepthPrePassFeature(
     private var initializedLayers = BooleanArray(depthTarget.layers)
 
     /**
-     * Grows [depthTarget] to [layers] when it holds fewer, and forgets which layers were cleared: the
-     * new image's layers all start `UNDEFINED`. Whether it grew. The caller has waited for the device
-     * and has not begun recording a frame that binds the target (#1688).
+     * Reallocates [depthTarget] at [layers] of [size] texels, and forgets which layers were cleared:
+     * the new image's layers all start `UNDEFINED`. The caller has waited for the device and has not
+     * begun recording a frame that binds the target (#1688, #1698).
      */
-    internal fun ensureLayers(layers: Int): Boolean {
-        if (layers <= depthTarget.layers) return false
-        depthTarget.reallocate(layers, depthTarget.size)
+    internal fun resize(layers: Int, size: Int) {
+        if (layers == depthTarget.layers && size == depthTarget.size) return
+        depthTarget.reallocate(layers, size)
         initializedLayers = BooleanArray(layers)
-        return true
     }
 
     /** Records the generic packet's arbitrary layered depth resource. */

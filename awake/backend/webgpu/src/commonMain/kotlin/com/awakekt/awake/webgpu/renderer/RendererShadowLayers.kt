@@ -9,9 +9,11 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
 /**
- * Grows the shadow depth array to hold every layer [input]'s pre-passes draw (#1688): the cascades
- * in use, and six faces for each point light that casts. It starts at the default cascade count and
- * never shrinks, so a scene that gains a point shadow reallocates once.
+ * Sizes the shadow depth array before [input] is recorded, as [Renderer.shadowArraySizing] decides
+ * from the layers [input]'s pre-passes draw and the budget's map size (#1688, #1698): a one-texel
+ * placeholder until a light casts; then the layers drawn (the cascades, and six faces for each point
+ * light that casts) at the map size, growing while shadows are drawn; back to the placeholder once
+ * no shadow has been drawn for a while.
  *
  * The old texture is closed at once; WebGPU lets work already submitted against it finish. Bind
  * groups cannot be rewritten, so each cached shadow group is rebuilt in place over the new view:
@@ -22,8 +24,9 @@ internal fun Renderer.ensureShadowLayers(input: GpuPassInput) {
     val target = depthPrePass?.depthTarget ?: return
     var needed = 0
     for (index in input.prePasses.indices) needed = maxOf(needed, input.prePasses[index].targetLayer + 1)
-    if (needed <= target.layers) return
-    target.reallocate(needed)
+    if (!shadowArraySizing.update(needed, shadowBudget.mapSize)) return
+    if (target.layers == shadowArraySizing.layers && target.size == shadowArraySizing.size) return
+    target.reallocate(shadowArraySizing.layers, shadowArraySizing.size)
     val groups = bufferPools.shadowBindGroups[BindingSemantic.ShadowDepth].orEmpty()
     for ((pipeline, handle) in groups) {
         val slot = bufferPools.shadowBindGroupSlots[pipeline] ?: continue

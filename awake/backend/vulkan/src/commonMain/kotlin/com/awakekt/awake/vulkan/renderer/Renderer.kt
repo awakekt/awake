@@ -282,14 +282,19 @@ class Renderer internal constructor(
         get() = graphicsDevice.capabilities
 
     /**
-     * Its cascades are planned from the next frame (#1688). The shadow maps stay at
-     * [ShadowBudget.DEFAULT_MAP_SIZE] on this backend for now: reallocating them follows.
+     * The shadow depth array's device memory, as its allocation reported it (#1688): a placeholder's
+     * few bytes until a light casts, then the layers drawn at the budget's map size (#1698).
      */
-
-    /** The shadow depth array's device memory, as its allocation reported it (#1688). */
     override val shadowMapBytes: Long get() = depthTarget?.allocatedBytes ?: 0L
 
+    /**
+     * Its cascades are planned from the next frame (#1688), and its map size reallocates the shadow
+     * array before the next frame that draws shadows (#1698).
+     */
     override var shadowBudget: ShadowBudget = ShadowBudget.Default
+
+    /** What the shadow array should hold, frame by frame: see [ensureShadowLayers] (#1698). */
+    internal val shadowArraySizing = com.awakekt.awake.render.passes.ShadowArraySizing()
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary

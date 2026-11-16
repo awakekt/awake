@@ -28,6 +28,7 @@ import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
+import com.awakekt.awake.render.passes.ShadowArraySizing
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.BindingLayout
@@ -39,7 +40,6 @@ import com.awakekt.awake.render.pipeline.PipelineSet
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.ShaderSource
-import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -586,10 +586,12 @@ open class VulkanEngine(
             // descriptor set now, so no material layout depends on whether it exists.
             // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
             depthTarget = plan.depthPrePassShaderSet?.let {
-                // The cascades in use: a point light's faces are added the first frame one casts (#1688).
+                // A one-texel placeholder until a light casts; then the layers drawn, at the shadow
+                // budget's map size (#1688, #1698). See ensureShadowLayers.
                 DepthTarget(
                     graphicsDevice,
-                    layers = ShadowBudget.DEFAULT_CASCADES,
+                    size = ShadowArraySizing.PLACEHOLDER_SIZE,
+                    layers = ShadowArraySizing.PLACEHOLDER_LAYERS,
                     arrayed = true,
                     comparison = true,
                 )

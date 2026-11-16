@@ -42,8 +42,13 @@ import kotlinx.coroutines.runBlocking
  * wires it: a runtime pipeline gets the shadow map when its shader declares it, and a feature's
  * depth pipeline casts into the cascades.
  */
-internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false, layers: Int = MAX_SHADOW_TARGET_LAYERS): Pair<Renderer, () -> Unit> =
-    newShadowRenderer(size, presentable, layers, window = 0L, framesInFlight = MAX_FRAMES_IN_FLIGHT)
+internal fun newHeadlessShadowRenderer(
+    size: Int,
+    presentable: Boolean = false,
+    layers: Int = MAX_SHADOW_TARGET_LAYERS,
+    mapSize: Int = DepthTarget.DEFAULT_SIZE,
+): Pair<Renderer, () -> Unit> =
+    newShadowRenderer(size, presentable, layers, window = 0L, framesInFlight = MAX_FRAMES_IN_FLIGHT, mapSize = mapSize)
 
 /**
  * [newHeadlessShadowRenderer] presenting to a real GLFW [window] (#1688), with [framesInFlight]
@@ -53,10 +58,17 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false, 
 internal fun newWindowedShadowRenderer(window: Long, layers: Int, framesInFlight: Int): Pair<Renderer, () -> Unit> =
     newShadowRenderer(0, presentable = true, layers, window, framesInFlight)
 
-private fun newShadowRenderer(size: Int, presentable: Boolean, layers: Int, window: Long, framesInFlight: Int): Pair<Renderer, () -> Unit> {
+private fun newShadowRenderer(
+    size: Int,
+    presentable: Boolean,
+    layers: Int,
+    window: Long,
+    framesInFlight: Int,
+    mapSize: Int = DepthTarget.DEFAULT_SIZE,
+): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
     val swapchainManager = deviceAndSwapchain(graphicsDevice, size, presentable, window, framesInFlight)
-    val depthTarget = DepthTarget(graphicsDevice, layers = layers, arrayed = true, comparison = true)
+    val depthTarget = DepthTarget(graphicsDevice, size = mapSize, layers = layers, arrayed = true, comparison = true)
     val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
     val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
     val primary = RenderPipeline(
