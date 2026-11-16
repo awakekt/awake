@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.53.0] - 2026-11-16
+
+### Added
+
+- `ComposeHost.frameCounts` reports what the last frame did: whether it composed and measured, and how many nodes it composed, measured and drew afresh, and how many subtrees it replayed. A host can read what `skipUnchangedComposition`, `skipUnchangedMeasure` and `retainUnchangedDraw` save on its own UI without a profiler, and see that one changed label composes and measures the whole tree. Reading it allocates nothing. `Composer.emittedNodes` counts the nodes its passes declared (#1512).
+- `ComposeHost.explainMeasure` (off by default) records in `frameCounts` why a frame whose composition was skipped measured anyway: the first state written, polled value changed, subcomposition out of date or `invalidate()` since the last measure (`PhaseReadCause`), its source, and the layout node whose measure read it. `PhaseReads.explains` and `ReadOwner` are the general form. The `skipUnchangedMeasure` KDoc now says plainly that it does nothing unless `skipUnchangedComposition` is on.
+- `Renderer.frameDrawReuse` reports, for the last submitted frame, the draw packets built and reused and the render bundles encoded (`DrawReuseStats`); WebGPU counts them. Built only when read, so a host that never reads it pays nothing.
+- `RenderSystem3D.drawStages` reports the planning that runs before the renderer draws, as `RenderDrawStage.Collect` (features, extraction and culling) and `RenderDrawStage.Compile` (folding, sorting and each draw's GPU preparation), and a scene's `SceneSystemObserver` hears them as `render:collect` and `render:compile`, split out of `infrastructure:RenderSystem3D` like the renderer's own stages.
+- `Renderer.observeDrawStages` reports a draw's prepare, upload, record and submit stages, and the scene runtime's `SceneSystemObserver` hears them as `render:prepare`, `render:upload`, `render:record` and `render:submit`, split out of the system that draws. The WebGPU backend reports them; a backend that does not keeps reporting the draw whole.
+
+### Fixed
+
+- A still `CanvasOverlay` no longer defeats `skipUnchangedComposition` and `skipUnchangedMeasure`: it composes in composition rather than inside measure, and reads the frame clock only while a trail, held stepper, tooltip delay, state transition or particle is running. A draining Bar trail now advances in draw, so it repaints its bar alone. `ComposeHost` composes and lays out once more in a frame whose placement wrote state its composition read (counted in `placementRecompositions`), so a canvas sized from its placement draws its first frame and the frame of a resize at its own size (#1512).
+- A hung `awake` command-line or `awake render` test in CI now dumps its JVMs' threads into the build log after 6 minutes and fails at 8, and its step stops at 20, instead of holding the Vulkan job until its 45-minute timeout with no log.
+- WebGPU no longer rewrites every shadow cascade matrix to every depth pipeline each frame when the buffer already holds it: a still frame drawn again (600 shadowed draws) allocates 13.4 KB instead of 25.1 KB on the JVM, and a wasm build skips a typed array and a queue write per cascade per pipeline.
+- WebGPU preparing a frame's draws allocates nothing per draw: it filled a new prepared draw for every draw of every planned frame (96 B each on the JVM, 1,000 draws a frame in the gate), though only the packet copied from it is kept. One prepared draw per renderer is now filled again for each draw.
+- Measuring an unchanged UI allocates far less: 77.7 → 21.6 B a node on a HUD-shaped tree. Padding, size and fill modifiers keep one placement block per node instead of a new one per measure; Row, Column and Flow alignment and spacing no longer box their sizes; and a Box with no children allocates nothing.
+- Staging a UI frame no longer copies its primitive list twice. The graphics-layer compositor hands back a frame with nothing to resolve as it is, instead of wrapping each primitive in a list of its own: about 39 B per primitive per frame, 195,400 B at 5,000 primitives, now 160 B whatever the count. The frame's primitives and those systems staged are joined once a frame, and not at all when systems staged none (#1621).
+
 ## [0.52.0] - 2026-11-15
 
 ### Added

@@ -1,1 +1,0 @@
-- A hung `awake` command-line or `awake render` test in CI now dumps its JVMs' threads into the build log after 6 minutes and fails at 8, and its step stops at 20, instead of holding the Vulkan job until its 45-minute timeout with no log.
