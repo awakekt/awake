@@ -131,6 +131,7 @@ jobs:
           scripts/central-bundle.test.sh
           scripts/central-upload.test.sh
           scripts/maven-fallback-site.test.sh
+          scripts/maven-fallback-assemble.test.sh
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
