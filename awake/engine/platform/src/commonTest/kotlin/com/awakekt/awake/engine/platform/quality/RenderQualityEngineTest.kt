@@ -83,7 +83,7 @@ class RenderQualityEngineTest {
 
         assertEquals(RenderQuality.Auto, firstApp.service(RenderQualitySettings::class)?.quality?.value)
         assertEquals(RenderQuality.High, secondApp.service(RenderQualitySettings::class)?.quality?.value)
-        assertEquals(900f / 1170f, firstRenderer.renderScale)
+        assertEquals(720f / 1170f, firstRenderer.renderScale)
         assertEquals(1f, secondRenderer.renderScale)
     }
 
