@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.texture
 
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.mipChain
@@ -51,11 +52,46 @@ class Texture private constructor(
      * plain 2D view depending on how the texture was built.
      */
     val view: GPUTextureView,
-    val sampler: GPUSampler,
+    sampler: GPUSampler,
     override val width: Int,
     override val height: Int,
     override val layerCount: Int,
+    private val graphicsDevice: GraphicsDevice? = null,
+    private val filtering: TextureFiltering = TextureFiltering.Linear,
+    private val mipLevels: Int = 1,
 ) : com.awakekt.awake.render.texture.WritableTexture {
+    /** How this texture is sampled: made again by [resample] when the renderer's anisotropy changes. */
+    var sampler: GPUSampler = sampler
+        private set
+
+    /** The anisotropic samples [sampler] was made with: 1 unless [resample] raised it. */
+    internal var samplerAnisotropy = 1
+        private set
+
+    init {
+        if (graphicsDevice != null) {
+            graphicsDevice.sampledTextures += this
+            resample(graphicsDevice.anisotropy)
+        }
+    }
+
+    /**
+     * Makes [sampler] again for [anisotropy] samples when that changes how this texture samples, and
+     * closes the one it replaced: wgpu keeps a sampler alive while a bind group or a submitted pass
+     * still holds it, and every cached bind group is rebuilt from the new one before it is bound
+     * again (#1660). Whether it changed; a `Nearest`, `BaseLevelLinear` or single-level texture always
+     * samples at 1, as WebGPU allows `maxAnisotropy` only with linear filters.
+     */
+    internal fun resample(anisotropy: Int): Boolean {
+        val samples = if (mipLevels > 1) TextureSampling.anisotropyFor(filtering, anisotropy) else 1
+        val device = graphicsDevice?.takeIf { samples != samplerAnisotropy } ?: return false
+        val retired = sampler
+        sampler = createSampler(device, filtering, samples)
+        samplerAnisotropy = samples
+        retired.close()
+        return true
+    }
+
     constructor(
         graphicsDevice: GraphicsDevice,
         @Suppress("UNUSED_PARAMETER") runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
@@ -85,6 +121,9 @@ class Texture private constructor(
         width = filled.width,
         height = filled.height,
         layerCount = filled.layerCount,
+        graphicsDevice = graphicsDevice,
+        filtering = filtering,
+        mipLevels = filled.mipLevelCount,
     )
 
     /** A GPU texture whose levels are already written, and how to view it. */
@@ -147,7 +186,7 @@ class Texture private constructor(
             return FilledTexture(texture, width, height, mipLevels.size, layerCount, isCubemap)
         }
 
-        private fun createSampler(graphicsDevice: GraphicsDevice, filtering: TextureFiltering): GPUSampler =
+        private fun createSampler(graphicsDevice: GraphicsDevice, filtering: TextureFiltering, anisotropy: Int = 1): GPUSampler =
             graphicsDevice.wgpuContext.device.createSampler(
                 SamplerDescriptor(
                     addressModeU = GPUAddressMode.Repeat,
@@ -156,6 +195,7 @@ class Texture private constructor(
                     magFilter = if (filtering == TextureFiltering.Nearest) GPUFilterMode.Nearest else GPUFilterMode.Linear,
                     minFilter = if (filtering == TextureFiltering.Nearest) GPUFilterMode.Nearest else GPUFilterMode.Linear,
                     mipmapFilter = if (filtering == TextureFiltering.Nearest) GPUMipmapFilterMode.Nearest else GPUMipmapFilterMode.Linear,
+                    maxAnisotropy = anisotropy.toUShort(),
                 ),
             )
     }
@@ -163,6 +203,7 @@ class Texture private constructor(
     /** Closes [view] and [sampler], then the texture. A browser collects them anyway; wgpu-native
      * keeps each until it is released. */
     fun destroy() {
+        graphicsDevice?.sampledTextures?.remove(this)
         view.close()
         sampler.close()
         texture.close()

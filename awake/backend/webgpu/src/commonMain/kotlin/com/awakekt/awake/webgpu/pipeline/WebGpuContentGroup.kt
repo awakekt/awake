@@ -46,6 +46,9 @@ internal class WebGpuContentGroup(
     /** The pipeline [bindGroup] was built for; a swap gives the wrapper a new one. */
     private var builtFor = NOT_BUILT
 
+    /** The sampler generation [bindGroup] was built at. */
+    private var builtAt = -1
+
     init {
         // Built now, so a missing texture fails the attach rather than the first frame.
         var built = false
@@ -59,7 +62,9 @@ internal class WebGpuContentGroup(
 
     override fun binding(frameIndex: Int): MaterialBinding {
         val current = pipeline.graphicsPipeline[0]
-        bindGroup?.takeIf { builtFor == current }?.let { return it }
+        // Built again for a texture sampler made again for a new anisotropy (#1660), too.
+        val generation = graphicsDevice.samplerGeneration
+        bindGroup?.takeIf { builtFor == current && builtAt == generation }?.let { return it }
         bindGroup?.bindGroup?.close()
         val group = WebGpuBindGroupHandle(
             device.createBindGroupReleasingLayout(
@@ -71,6 +76,7 @@ internal class WebGpuContentGroup(
         )
         bindGroup = group
         builtFor = current
+        builtAt = generation
         return group
     }
 

@@ -31,6 +31,32 @@ import io.ygdrasil.webgpu.WGPUContext
  * fields need.
  */
 class GraphicsDevice {
+    /**
+     * Bumped each time a texture's sampler is made again for a new anisotropy (#1660): a bind group
+     * built at an older value holds a replaced sampler, so it is built again before it is bound.
+     */
+    internal var samplerGeneration = 0
+        private set
+
+    /**
+     * Every live texture this device samples, the renderer's and content features' alike, so a new
+     * anisotropy reaches a terrain layer as well as a material (#1660). A texture joins as it is
+     * created and leaves as it is destroyed.
+     */
+    internal val sampledTextures = LinkedHashSet<com.awakekt.awake.webgpu.texture.Texture>()
+
+    /** The anisotropic samples a texture created now samples with; see [applyAnisotropy]. */
+    internal var anisotropy = 1
+        private set
+
+    /** Makes every sampled texture's sampler again for [samples], bumping [samplerGeneration] if any changed. */
+    internal fun applyAnisotropy(samples: Int) {
+        anisotropy = samples
+        var changed = false
+        for (texture in sampledTextures) changed = texture.resample(samples) || changed
+        if (changed) samplerGeneration++
+    }
+
     /** Content-feature uniform blocks written to GPU buffers so far. For tests and probes. */
     internal var contentUniformWrites = 0L
 
