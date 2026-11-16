@@ -480,7 +480,7 @@ class SceneAppLifecycleRuntime internal constructor(
      * Reading this frame's input goes through [AppFrame.input] instead. Resolved once, not per
      * frame -- [services] is only set in [initialize], hence `lazy`. */
     private val input: Input by lazy { services.requireService(Input::class) }
-    private val renderQuality: RenderQualitySettings? by lazy { services.service(RenderQualitySettings::class) }
+    internal val renderQuality: RenderQualitySettings? by lazy { services.service(RenderQualitySettings::class) }
     private val appScope: AppCoroutineScope? by lazy { services.service(AppCoroutineScope::class) }
 
     /** Called at install time (see [SceneAppSpec.installInto]). */

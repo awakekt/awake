@@ -13,7 +13,7 @@
 # this repository after mavenCentral() resolves a release Central refused without other changes.
 set -euo pipefail
 
-usage="usage: maven-fallback-site.sh <site-dir> <bundle.zip>..."
+usage="usage: maven-fallback-site.sh <site-dir> <bundle.zip or directory>..."
 site="${1:?$usage}"
 shift
 [[ $# -gt 0 ]] || { echo "$usage" >&2; exit 1; }
@@ -21,7 +21,10 @@ url="${MAVEN_FALLBACK_URL:-https://awakekt.github.io/awake/}"
 
 rm -rf "$site"
 mkdir -p "$site"
-for bundle in "$@"; do unzip -q -o "$bundle" -d "$site"; done
+# A directory is a bundle already unpacked, or the part of one the fallback serves.
+for bundle in "$@"; do
+  if [[ -d "$bundle" ]]; then cp -R "$bundle"/. "$site"/; else unzip -q -o "$bundle" -d "$site"; fi
+done
 
 # One artifact directory per POM's grandparent: <group path>/<artifactId>/<version>/<file>.pom.
 updated="$(date -u +%Y%m%d%H%M%S)"

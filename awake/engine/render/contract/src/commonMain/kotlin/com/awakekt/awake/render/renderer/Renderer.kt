@@ -197,6 +197,13 @@ interface Renderer : GpuDevice {
         get() = 0L
 
     /**
+     * The depth format this renderer's shadow maps use (#1698): [ShadowDepthFormat.Default] unless
+     * the engine was started with another, and on a renderer that does not choose one.
+     */
+    val shadowDepthFormat: ShadowDepthFormat
+        get() = ShadowDepthFormat.Default
+
+    /**
      * Quality tier for multi-pass image effects rendered by this [Renderer].
      *
      * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at

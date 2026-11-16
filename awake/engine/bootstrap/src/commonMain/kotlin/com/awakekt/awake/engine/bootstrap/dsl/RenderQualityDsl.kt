@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.bootstrap.dsl
 
 import com.awakekt.awake.engine.platform.quality.RenderQualityPersistence
 import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
+import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
 
@@ -23,6 +24,13 @@ class RenderQualityDsl internal constructor() {
 
     /** The preset when nothing is saved. */
     var initial: RenderQuality = RenderQuality.Auto
+
+    /**
+     * How [RenderQuality.Auto] moves the resolution to hold a frame rate: on phones only by default,
+     * `DynamicResolution(...)` on every device, or `null` for a fixed budget everywhere. See
+     * [RenderQualitySettings.dynamicResolution].
+     */
+    var dynamicResolution: DynamicResolution? = DynamicResolution.Handhelds
 }
 
 /**
@@ -39,6 +47,7 @@ fun AppSpecDsl.renderQuality(block: RenderQualityDsl.() -> Unit = {}): RenderQua
     check(service(RenderQualitySettings::class) == null) { "renderQuality { } is already registered for this app." }
     val config = RenderQualityDsl().apply(block)
     val settings = RenderQualitySettings(config.persistence, config.budgets, config.initial)
+    settings.dynamicResolution = config.dynamicResolution
     service(RenderQualitySettings::class, settings)
     return settings
 }

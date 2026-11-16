@@ -372,13 +372,16 @@ public final class com/awakekt/awake/scene/runtime/SceneFrameStats {
 	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;)V
 	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;)V
+	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;)V
 	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;)V
+	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public final fun component11 ()Lcom/awakekt/awake/render/renderer/RenderPassStats;
 	public final fun component12 ()Ljava/lang/Integer;
 	public final fun component13 ()Lcom/awakekt/awake/render/renderer/BufferCreationStats;
+	public final fun component14 ()Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;
 	public final fun component2 ()F
 	public final fun component3 ()I
 	public final fun component4 ()I
@@ -389,10 +392,12 @@ public final class com/awakekt/awake/scene/runtime/SceneFrameStats {
 	public final fun component9 ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public final synthetic fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
 	public final synthetic fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
-	public final fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
+	public final synthetic fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
+	public final fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;Lcom/awakekt/awake/render/renderer/UiUploadStats;Lcom/awakekt/awake/render/renderer/RenderPassStats;Ljava/lang/Integer;Lcom/awakekt/awake/render/renderer/BufferCreationStats;Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBufferCreations ()Lcom/awakekt/awake/render/renderer/BufferCreationStats;
 	public final fun getFps ()F
@@ -403,6 +408,7 @@ public final class com/awakekt/awake/scene/runtime/SceneFrameStats {
 	public final fun getPhases ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
 	public final fun getRender ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public final fun getRenderPasses ()Ljava/lang/Integer;
+	public final fun getResolution ()Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;
 	public final fun getTextCacheHitRatePercent ()I
 	public final fun getTextCacheHits ()I
 	public final fun getTextCacheMisses ()I

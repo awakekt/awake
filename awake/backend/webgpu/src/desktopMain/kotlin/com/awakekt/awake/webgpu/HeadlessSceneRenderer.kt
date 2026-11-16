@@ -22,7 +22,6 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.pipeline.PipelineVariant
-import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.application.WebGpuContentFeatureGpu
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
@@ -232,7 +231,13 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
     )
     val depthPrePass = DepthPrePassFeature(
         // As WebGpuEngine builds it: the default cascades, grown to the layers a frame draws (#1688).
-        depthTarget = DepthTarget(graphicsDevice, layers = ShadowBudget.DEFAULT_CASCADES, arrayed = true, comparison = true),
+        depthTarget = DepthTarget(
+            graphicsDevice,
+            size = DepthTarget.DORMANT_SIZE,
+            layers = 1,
+            arrayed = true,
+            comparison = true,
+        ),
         depthOnlyPipeline = DepthOnlyPipeline(
             graphicsDevice = graphicsDevice,
             shaderCode = wgsl(PackShaderSets.ShadowDepth),

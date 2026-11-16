@@ -27,13 +27,16 @@ permissions:
   contents: read
 
 # What the site keeps, in one place. A deploy publishes the site whole, replacing the one before, so
-# these decide what stays served. GitHub Pages caps a site at 1 GB: a Core bundle is about 135 MB and a
-# Vulkan bundle about 55 MB, so 2 Core + 3 Vulkan is about 435 MB, and the Core releases those Vulkan
-# releases name (usually one or two more, about 135 MB each) keep it near 700 MB. SITE_LIMIT_MB stops
-# a deploy before Pages would refuse it.
+# these decide what stays served. GitHub Pages caps a site at 1 GB. Unpacked, a Core bundle is about
+# 180 MB and a Vulkan bundle about 75 MB, so 2 Core + 3 Vulkan served whole is about 590 MB. Of the
+# Core releases those Vulkan releases name, only the artifacts they name are served, not the bundle:
+# serving them whole made 7 bundles, 950 MB, before the wgpu4k mirror's 20 MB (#1694).
+# ASSEMBLE_LIMIT_MB stops the build, with each release's size, leaving room for the mirror;
+# SITE_LIMIT_MB stops a deploy before Pages would refuse it.
 env:
   CORE_RELEASES: 2
   VULKAN_RELEASES: 3
+  ASSEMBLE_LIMIT_MB: 900
   SITE_LIMIT_MB: 950
 
 jobs:
@@ -60,8 +63,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Fails, and so keeps the live site, when a served POM names a release with no bundle.
-          scripts/maven-fallback-assemble.sh build/maven-fallback "$CORE_RELEASES" "$VULKAN_RELEASES"
+          # Fails, and so keeps the live site, when a served POM names what no bundle holds, or over the limit.
+          scripts/maven-fallback-assemble.sh build/maven-fallback "$CORE_RELEASES" "$VULKAN_RELEASES" "$ASSEMBLE_LIMIT_MB"
           echo "count=$(find build/maven-fallback -name '*.pom' | wc -l)" >> "$GITHUB_OUTPUT"
 
       # Central's own files at Central's paths, maven-metadata.xml included, so they go in after the

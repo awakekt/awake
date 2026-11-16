@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.render.renderer.BufferCreationStats
+import com.awakekt.awake.render.renderer.DynamicResolutionStats
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderPassStats
 import com.awakekt.awake.render.renderer.UiUploadStats
@@ -34,6 +35,9 @@ import kotlin.math.roundToInt
  * @property bufferCreations GPU buffers the draw path created during the renderer's last frame, by site,
  * or `null` before a renderer is ready or when it does not count; a warm frame reads zero. See
  * [BufferCreationStats].
+ * @property resolution Where dynamic resolution stood after the frame: the short edge the scene was
+ * asked to draw at and the signal it read, or `null` while it does not run (#1688). See
+ * [DynamicResolutionStats].
  */
 data class SceneFrameStats(
     val frameTimeMs: Float,
@@ -49,7 +53,50 @@ data class SceneFrameStats(
     val passes: RenderPassStats? = null,
     val renderPasses: Int? = null,
     val bufferCreations: BufferCreationStats? = null,
+    val resolution: DynamicResolutionStats? = null,
 ) {
+    /** The constructor as released before [resolution], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with resolution.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        frameTimeMs: Float,
+        fps: Float,
+        trialPasses: Int,
+        textCacheHits: Int,
+        textCacheMisses: Int,
+        phases: ScenePhaseStats = ScenePhaseStats(),
+        p99FrameTimeMs: Float = 0f,
+        maxFrameTimeMs: Float = 0f,
+        render: RenderFrameStats? = null,
+        uiUploads: UiUploadStats? = null,
+        passes: RenderPassStats? = null,
+        renderPasses: Int? = null,
+        bufferCreations: BufferCreationStats? = null,
+    ) : this(
+        frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
+        uiUploads, passes, renderPasses, bufferCreations, null,
+    )
+
+    /** [copy] as released before [resolution]. */
+    @Deprecated("Use copy with resolution.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        frameTimeMs: Float = this.frameTimeMs,
+        fps: Float = this.fps,
+        trialPasses: Int = this.trialPasses,
+        textCacheHits: Int = this.textCacheHits,
+        textCacheMisses: Int = this.textCacheMisses,
+        phases: ScenePhaseStats = this.phases,
+        p99FrameTimeMs: Float = this.p99FrameTimeMs,
+        maxFrameTimeMs: Float = this.maxFrameTimeMs,
+        render: RenderFrameStats? = this.render,
+        uiUploads: UiUploadStats? = this.uiUploads,
+        passes: RenderPassStats? = this.passes,
+        renderPasses: Int? = this.renderPasses,
+        bufferCreations: BufferCreationStats? = this.bufferCreations,
+    ): SceneFrameStats = copy(
+        frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
+        uiUploads, passes, renderPasses, bufferCreations, resolution,
+    )
+
     /** The constructor as released before [uiUploads], kept so compiled callers still link. */
     @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -64,7 +111,7 @@ data class SceneFrameStats(
         render: RenderFrameStats? = null,
     ) : this(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        null, null, null, null,
+        null, null, null, null, null,
     )
 
     /** The constructor as released before [passes] and [renderPasses], kept so compiled callers still link. */
@@ -82,7 +129,7 @@ data class SceneFrameStats(
         uiUploads: UiUploadStats? = null,
     ) : this(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads, null, null, null,
+        uiUploads, null, null, null, null,
     )
 
     /** [copy] as released before [uiUploads]. */
@@ -99,7 +146,7 @@ data class SceneFrameStats(
         render: RenderFrameStats? = this.render,
     ): SceneFrameStats = copy(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads, passes, renderPasses, bufferCreations,
+        uiUploads, passes, renderPasses, bufferCreations, resolution,
     )
 
     /** [copy] as released before [passes] and [renderPasses]. */
@@ -117,7 +164,7 @@ data class SceneFrameStats(
         uiUploads: UiUploadStats? = this.uiUploads,
     ): SceneFrameStats = copy(
         frameTimeMs, fps, trialPasses, textCacheHits, textCacheMisses, phases, p99FrameTimeMs, maxFrameTimeMs, render,
-        uiUploads, passes, renderPasses, bufferCreations,
+        uiUploads, passes, renderPasses, bufferCreations, resolution,
     )
 
     /**
@@ -188,6 +235,7 @@ fun SceneAppLifecycleRuntime.frameStats(): SceneFrameStats {
         passes = rendererPassStats,
         renderPasses = rendererRenderPasses,
         bufferCreations = rendererBufferCreations,
+        resolution = renderQuality?.dynamicResolutionStats,
     )
 }
 

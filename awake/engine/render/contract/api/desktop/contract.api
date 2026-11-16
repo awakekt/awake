@@ -1967,6 +1967,69 @@ public final class com/awakekt/awake/render/renderer/DrawReuseStats {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/DynamicResolution {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/DynamicResolution$Companion;
+	public fun <init> ()V
+	public fun <init> (IILjava/lang/Integer;Ljava/util/Set;)V
+	public synthetic fun <init> (IILjava/lang/Integer;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun copy (IILjava/lang/Integer;Ljava/util/Set;)Lcom/awakekt/awake/render/renderer/DynamicResolution;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/DynamicResolution;IILjava/lang/Integer;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/DynamicResolution;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCeilingShortEdge ()Ljava/lang/Integer;
+	public final fun getFloorShortEdge ()I
+	public final fun getFrameBudgetMs ()F
+	public final fun getOnlyOn ()Ljava/util/Set;
+	public final fun getTargetFps ()I
+	public fun hashCode ()I
+	public final fun runsOn (Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/DynamicResolution$Companion {
+	public final fun getHandhelds ()Lcom/awakekt/awake/render/renderer/DynamicResolution;
+}
+
+public final class com/awakekt/awake/render/renderer/DynamicResolutionController {
+	public static final field DEAD_BAND F
+	public static final field GPU_COOLDOWN_FRAMES I
+	public static final field GPU_HEADROOM F
+	public static final field GPU_SMOOTHING F
+	public static final field MAX_STEP_DOWN F
+	public static final field MAX_STEP_UP F
+	public static final field MS_PER_SECOND F
+	public fun <init> (Lcom/awakekt/awake/render/renderer/DynamicResolution;I)V
+	public final fun getConfig ()Lcom/awakekt/awake/render/renderer/DynamicResolution;
+	public final fun getShortEdge ()F
+	public final fun getSignal ()Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+	public final fun scaleFor (I)F
+	public final fun update (FLjava/lang/Float;I)F
+}
+
+public final class com/awakekt/awake/render/renderer/DynamicResolutionSignal : java/lang/Enum {
+	public static final field GpuTime Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+	public static final field MissedFrames Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+}
+
+public final class com/awakekt/awake/render/renderer/DynamicResolutionStats {
+	public fun <init> (ILcom/awakekt/awake/render/renderer/DynamicResolutionSignal;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+	public final fun copy (ILcom/awakekt/awake/render/renderer/DynamicResolutionSignal;)Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;ILcom/awakekt/awake/render/renderer/DynamicResolutionSignal;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getShortEdge ()I
+	public final fun getSignal ()Lcom/awakekt/awake/render/renderer/DynamicResolutionSignal;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/renderer/GpuFrameTimeCounter {
 	public fun <init> ()V
 	public final fun beginSubmission ()J
@@ -1990,6 +2053,30 @@ public final class com/awakekt/awake/render/renderer/LineSegment {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/PresentIntervalTracker {
+	public static final field DEFAULT_WINDOW I
+	public static final field MAX_PERCENTILE I
+	public static final field NO_PRESENT J
+	public fun <init> ()V
+	public fun <init> (ILcom/awakekt/awake/render/renderer/PresentTiming;)V
+	public synthetic fun <init> (ILcom/awakekt/awake/render/renderer/PresentTiming;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCount ()I
+	public final fun getTiming ()Lcom/awakekt/awake/render/renderer/PresentTiming;
+	public final fun percentileNanos (I)Ljava/lang/Long;
+	public final fun recordInterval (J)V
+	public final fun recordPresent ()V
+	public final fun recordPresentAt (J)V
+	public final fun reset ()V
+}
+
+public final class com/awakekt/awake/render/renderer/PresentTiming : java/lang/Enum {
+	public static final field CpuPresent Lcom/awakekt/awake/render/renderer/PresentTiming;
+	public static final field DisplayTiming Lcom/awakekt/awake/render/renderer/PresentTiming;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/PresentTiming;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/PresentTiming;
+}
+
 public final class com/awakekt/awake/render/renderer/RenderDrawStage : java/lang/Enum {
 	public static final field Collect Lcom/awakekt/awake/render/renderer/RenderDrawStage;
 	public static final field Compile Lcom/awakekt/awake/render/renderer/RenderDrawStage;
@@ -2008,18 +2095,28 @@ public abstract interface class com/awakekt/awake/render/renderer/RenderDrawStag
 }
 
 public final class com/awakekt/awake/render/renderer/RenderFrameStats {
-	public fun <init> (IIJLjava/lang/Float;)V
+	public synthetic fun <init> (IIJLjava/lang/Float;)V
 	public synthetic fun <init> (IIJLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIJLjava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;Lcom/awakekt/awake/render/renderer/PresentTiming;)V
+	public synthetic fun <init> (IIJLjava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;Lcom/awakekt/awake/render/renderer/PresentTiming;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()J
 	public final fun component4 ()Ljava/lang/Float;
-	public final fun copy (IIJLjava/lang/Float;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Lcom/awakekt/awake/render/renderer/PresentTiming;
+	public final synthetic fun copy (IIJLjava/lang/Float;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun copy (IIJLjava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;Lcom/awakekt/awake/render/renderer/PresentTiming;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;Ljava/lang/Long;Ljava/lang/Long;Lcom/awakekt/awake/render/renderer/PresentTiming;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDrawCalls ()I
 	public final fun getGpuTimeMs ()Ljava/lang/Float;
 	public final fun getInstances ()I
+	public final fun getPresentIntervalP50Ns ()Ljava/lang/Long;
+	public final fun getPresentIntervalP95Ns ()Ljava/lang/Long;
+	public final fun getPresentTiming ()Lcom/awakekt/awake/render/renderer/PresentTiming;
 	public final fun getTriangles ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -2127,6 +2224,8 @@ public final class com/awakekt/awake/render/renderer/RenderScale {
 }
 
 public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
+	public static final field MEDIAN I
+	public static final field P95 I
 	public static final field TRIANGLE_VERTICES I
 	public fun <init> ()V
 	public final fun beginShadowPass ()V
@@ -2139,12 +2238,14 @@ public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
 	public final fun getLatestPasses ()Lcom/awakekt/awake/render/renderer/RenderPassStats;
 	public final fun getLatestRenderPasses ()I
 	public final fun getLatestUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
+	public final fun getPresentIntervals ()Lcom/awakekt/awake/render/renderer/PresentIntervalTracker;
 	public final fun publish (Ljava/lang/Float;)V
 	public static synthetic fun publish$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;Ljava/lang/Float;ILjava/lang/Object;)V
 	public final fun recordDraw (IIZ)V
 	public static synthetic fun recordDraw$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;IIZILjava/lang/Object;)V
 	public final fun recordPass ()V
 	public final fun recordUiUpload (II)V
+	public final fun setPresentIntervals (Lcom/awakekt/awake/render/renderer/PresentIntervalTracker;)V
 }
 
 public final class com/awakekt/awake/render/renderer/RenderViewport {
@@ -2193,6 +2294,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getOutputWidth ()I
 	public fun getRenderScale ()F
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
@@ -2246,6 +2348,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public static fun getShadowDepthFormat (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public static fun getShadowMapBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
@@ -2292,6 +2395,21 @@ public final class com/awakekt/awake/render/renderer/ShadowBudget {
 public final class com/awakekt/awake/render/renderer/ShadowBudget$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public final fun getReduced ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+}
+
+public final class com/awakekt/awake/render/renderer/ShadowDepthFormat : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/ShadowDepthFormat$Companion;
+	public static final field Depth16Unorm Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+	public static final field Depth32Float Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+	public final fun getBytesPerTexel ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun layerBytes (II)J
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+}
+
+public final class com/awakekt/awake/render/renderer/ShadowDepthFormat$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 }
 
 public final class com/awakekt/awake/render/renderer/TextureSampling {
