@@ -70,3 +70,20 @@ fun Mat4.squaredDistanceFrom(point: Vec3f): Float {
     val dz = m23 - point.z
     return dx * dx + dy * dy + dz * dz
 }
+
+/**
+ * Writes [values] at [offset] and returns the offset after them.
+ *
+ * A plain loop, not `copyInto`: on Kotlin/Wasm `FloatArray.copyInto` allocates on every call (84 bytes
+ * in a browser, measured by `PrepareHeapBreakdownBrowserTest`), which an instance packer pays once per
+ * instance, every frame (#1621). Copying a matrix or a short payload this way allocates nothing on any
+ * target, and costs the JVM nothing measurable at these sizes.
+ */
+fun FloatArray.putFloats(offset: Int, values: FloatArray): Int {
+    var index = 0
+    while (index < values.size) {
+        this[offset + index] = values[index]
+        index += 1
+    }
+    return offset + values.size
+}
