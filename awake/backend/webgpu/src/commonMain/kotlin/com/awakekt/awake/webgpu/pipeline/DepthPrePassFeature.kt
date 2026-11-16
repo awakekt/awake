@@ -142,7 +142,7 @@ class DepthPrePassFeature(
             stats?.countAs(RenderPassKind.Other)
         }
         for (layer in activeCount until minOf(4, depthTarget.layers)) {
-            allPipelines.forEach { it.writeCascade(layer, Mat4()) }
+            allPipelines.forEach { it.writeCascade(layer, UnusedCascade) }
             recordCascade(encoder, emptyList(), layer)
         }
     }
@@ -169,10 +169,9 @@ class DepthPrePassFeature(
                 stats?.countAs(RenderPassKind.Other)
             }
         }
-        val activeLayers = subPasses.map { it.targetLayer }.toSet()
         for (cascade in 0 until minOf(4, depthTarget.layers)) {
-            if (cascade !in activeLayers) {
-                allPipelines.forEach { it.writeCascade(cascade, Mat4()) }
+            if (!subPasses.rendersLayer(cascade)) {
+                allPipelines.forEach { it.writeCascade(cascade, UnusedCascade) }
                 recordCascade(encoder, emptyList(), cascade, view = view)
             }
         }
@@ -326,3 +325,12 @@ private data class ViewCascade(val view: Any, val cascade: Int)
 
 /** A cascade pass's attachments: depth only, one sample. */
 private val CASCADE_LAYOUT = BundleLayout(emptyList(), GPUTextureFormat.Depth32Float, sampleCount = 1)
+
+/** The matrix a layer no sub-pass renders keeps: one, never written to, not a new one a frame. */
+private val UnusedCascade = Mat4()
+
+// Indexed, as `none { }` over a list builds an iterator each call.
+private fun List<GpuSubPass>.rendersLayer(layer: Int): Boolean {
+    for (i in indices) if (this[i].targetLayer == layer) return true
+    return false
+}
