@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.platform.quality
 
 import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.DynamicResolutionController
+import com.awakekt.awake.render.renderer.DynamicResolutionStats
 import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
 import com.awakekt.awake.render.renderer.RenderQualityPolicy
@@ -66,11 +67,25 @@ class RenderQualitySettings(
 
     /**
      * How [RenderQuality.Auto] moves the scene's resolution to hold a frame rate (#1688), or `null` for
-     * Auto's fixed device-class budget. On by default, with Auto's budget as the ceiling: Auto never
-     * draws more than that budget, and draws less while frames run long. Read every frame; a new value
+     * Auto's fixed device-class budget everywhere. [DynamicResolution.Handhelds] by default: on phones
+     * only, with Auto's budget as the ceiling, so Auto never draws more than that budget there and
+     * draws less while frames run long; a desktop keeps its fixed budget. A desktop opts in with its
+     * own `DynamicResolution(...)`, which runs on every device class. Read every frame; a new value
      * restarts the controller at its ceiling.
      */
-    var dynamicResolution: DynamicResolution? = DynamicResolution()
+    var dynamicResolution: DynamicResolution? = DynamicResolution.Handhelds
+
+    /**
+     * Where dynamic resolution stood after the last frame: the short edge it asked for and the signal
+     * it read. Null while it does not run: another preset, a device class it is off for, or no frame yet.
+     */
+    val dynamicResolutionStats: DynamicResolutionStats?
+        get() = controller?.let { active ->
+            val edge = active.shortEdge.toInt()
+            DynamicResolutionStats(if (lastOutputShortEdge in 1 until edge) lastOutputShortEdge else edge, active.signal)
+        }
+
+    private var lastOutputShortEdge = 0
 
     private var controller: DynamicResolutionController? = null
     private var controllerConfig: DynamicResolution? = null
@@ -101,8 +116,8 @@ class RenderQualitySettings(
     fun applyTo(renderer: Renderer, applyScale: Boolean, frameSeconds: Float) {
         val current = state.value
         val device = renderer.deviceClass
-        val dynamic = dynamicResolution.takeIf { current == RenderQuality.Auto }
-        if (dynamic == null) controller = null
+        val dynamic = dynamicResolution?.takeIf { current == RenderQuality.Auto && it.runsOn(device) }
+        if (dynamic == null || !applyScale) controller = null
         if (applyScale) {
             renderer.renderScale = if (dynamic != null) {
                 dynamicScale(renderer, dynamic, frameSeconds)
@@ -118,6 +133,7 @@ class RenderQualitySettings(
 
     private fun dynamicScale(renderer: Renderer, config: DynamicResolution, frameSeconds: Float): Float {
         val outputShortEdge = minOf(renderer.outputWidth, renderer.outputHeight)
+        lastOutputShortEdge = outputShortEdge
         val ceiling = config.ceilingShortEdge
             ?: budgets.shortEdge(RenderQuality.Auto, renderer.deviceClass)
             ?: outputShortEdge

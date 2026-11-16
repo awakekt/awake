@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.render.renderer
 
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
+
 /**
  * How [RenderQuality.Auto] moves the scene's resolution to hold a frame rate (#1688), instead of
  * keeping one short-edge budget per device class.
@@ -18,11 +20,15 @@ package com.awakekt.awake.render.renderer
  * @property floorShortEdge The fewest physical pixels the short edge drops to.
  * @property ceilingShortEdge The most it rises to, or null for Auto's device-class budget. A value
  * above the surface's short edge means the full surface.
+ * @property onlyOn The device classes it runs on, or null for every class. [Handhelds], the default
+ * an app gets, runs on [GpuDeviceClass.Mobile] only: a desktop keeps Auto's fixed budget until the
+ * app opts in with its own `DynamicResolution(...)`.
  */
 data class DynamicResolution(
     val targetFps: Int = 60,
     val floorShortEdge: Int = 540,
     val ceilingShortEdge: Int? = null,
+    val onlyOn: Set<GpuDeviceClass>? = null,
 ) {
     init {
         require(targetFps > 0) { "targetFps must be positive: $targetFps" }
@@ -35,10 +41,43 @@ data class DynamicResolution(
     /** A frame's budget at [targetFps], in milliseconds. */
     val frameBudgetMs: Float get() = MS_PER_SECOND / targetFps
 
-    private companion object {
-        const val MS_PER_SECOND = 1000f
+    /** Whether it runs on a [deviceClass] device. */
+    fun runsOn(deviceClass: GpuDeviceClass): Boolean = onlyOn == null || deviceClass in onlyOn
+
+    /** The default an app gets. */
+    companion object {
+        private const val MS_PER_SECOND = 1000f
+
+        /**
+         * On phones and other handhelds only ([GpuDeviceClass.Mobile]), at 60 fps from 540 pixels up
+         * to Auto's budget. Nobody has run this controller on desktop hardware a consumer ships, so a
+         * desktop under Auto keeps the fixed budget it had.
+         */
+        val Handhelds: DynamicResolution = DynamicResolution(onlyOn = setOf(GpuDeviceClass.Mobile))
     }
 }
+
+/** Which signal dynamic resolution read last: see [DynamicResolutionController]. */
+enum class DynamicResolutionSignal {
+    /** The GPU's own time for the frame. */
+    GpuTime,
+
+    /** How long frames took, where the renderer does not time the GPU. */
+    MissedFrames,
+}
+
+/**
+ * Where dynamic resolution stands after a frame, for a performance report to show at what resolution
+ * a frame was drawn and why.
+ *
+ * @property shortEdge The scene's short edge, in physical pixels, the controller asks for. The
+ * surface's own short edge when that is smaller.
+ * @property signal The signal it read last.
+ */
+data class DynamicResolutionStats(
+    val shortEdge: Int,
+    val signal: DynamicResolutionSignal,
+)
 
 /**
  * Holds [DynamicResolution.targetFps] by moving a short edge between a floor and a ceiling, one frame
@@ -73,12 +112,22 @@ class DynamicResolutionController(
     var shortEdge: Float = ceiling
         private set
 
+    /** The signal the last [update] read. */
+    var signal: DynamicResolutionSignal = DynamicResolutionSignal.MissedFrames
+        private set
+
     /**
      * Takes a frame that took [frameSeconds] from start to start, with [gpuTimeMs] of GPU work when
      * measured, and returns the [Renderer.renderScale] for an [outputShortEdge]-pixel surface.
      */
     fun update(frameSeconds: Float, gpuTimeMs: Float?, outputShortEdge: Int): Float {
-        if (gpuTimeMs != null && gpuTimeMs > 0f) updateFromGpu(gpuTimeMs) else updateFromFrames(frameSeconds)
+        if (gpuTimeMs != null && gpuTimeMs > 0f) {
+            signal = DynamicResolutionSignal.GpuTime
+            updateFromGpu(gpuTimeMs)
+        } else {
+            signal = DynamicResolutionSignal.MissedFrames
+            updateFromFrames(frameSeconds)
+        }
         return scaleFor(outputShortEdge)
     }
 

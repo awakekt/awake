@@ -26,10 +26,11 @@ class RenderQualityDsl internal constructor() {
     var initial: RenderQuality = RenderQuality.Auto
 
     /**
-     * How [RenderQuality.Auto] moves the resolution to hold a frame rate, or `null` for a fixed
-     * budget. See [RenderQualitySettings.dynamicResolution].
+     * How [RenderQuality.Auto] moves the resolution to hold a frame rate: on phones only by default,
+     * `DynamicResolution(...)` on every device, or `null` for a fixed budget everywhere. See
+     * [RenderQualitySettings.dynamicResolution].
      */
-    var dynamicResolution: DynamicResolution? = DynamicResolution()
+    var dynamicResolution: DynamicResolution? = DynamicResolution.Handhelds
 }
 
 /**
