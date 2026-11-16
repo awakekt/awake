@@ -62,6 +62,7 @@ class ExternalImageMipSkipBrowserTest {
                 assertEquals(SIDE / 2, upload.uploadedWidth, "the observer sees the half-size copy")
                 println("ExternalImageMipSkip: $upload, ${upload.uploadedMipLevels} levels")
             }
+            println("ExternalImageMipSkip: ${engine.errors.size} WebGPU errors ${engine.errors.take(3)}")
             assertEquals(emptyList(), engine.errors, "WebGPU validation errors")
         } finally {
             engine.destroy()
