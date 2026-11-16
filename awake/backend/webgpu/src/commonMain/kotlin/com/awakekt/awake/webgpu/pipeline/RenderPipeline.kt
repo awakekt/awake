@@ -312,6 +312,9 @@ class RenderPipeline(
 
     private var contentBindGroup: WebGpuBindGroupHandle? = null
 
+    /** The sampler generation [contentBindGroup] was built at. */
+    private var contentBuiltAt = -1
+
     /** Invalidate cached bind groups built against this pipeline's group 0 layout. */
     internal fun invalidateUniformBlock() {
         contentBindGroup?.bindGroup?.close()
@@ -326,7 +329,11 @@ class RenderPipeline(
 
             // Recreated when invalidated, caching until the next pipeline swap.
             override fun binding(frameIndex: Int): MaterialBinding {
-                contentBindGroup?.let { return it }
+                // Built again for a texture sampler made again for a new anisotropy (#1660).
+                val generation = graphicsDevice.samplerGeneration
+                contentBindGroup?.takeIf { contentBuiltAt == generation }?.let { return it }
+                contentBindGroup?.bindGroup?.close()
+                contentBuiltAt = generation
                 bindGroupBuilt = true
                 val group = WebGpuBindGroupHandle(
                     device.createBindGroupReleasingLayout(

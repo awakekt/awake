@@ -1,1 +1,0 @@
-- `Renderer.observeDrawStages` reports a draw's prepare, upload, record and submit stages, and the scene runtime's `SceneSystemObserver` hears them as `render:prepare`, `render:upload`, `render:record` and `render:submit`, split out of the system that draws. The WebGPU backend reports them; a backend that does not keeps reporting the draw whole.
