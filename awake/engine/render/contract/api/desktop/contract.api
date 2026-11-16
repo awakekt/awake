@@ -1966,6 +1966,8 @@ public final class com/awakekt/awake/render/renderer/LineSegment {
 }
 
 public final class com/awakekt/awake/render/renderer/RenderDrawStage : java/lang/Enum {
+	public static final field Collect Lcom/awakekt/awake/render/renderer/RenderDrawStage;
+	public static final field Compile Lcom/awakekt/awake/render/renderer/RenderDrawStage;
 	public static final field Prepare Lcom/awakekt/awake/render/renderer/RenderDrawStage;
 	public static final field Record Lcom/awakekt/awake/render/renderer/RenderDrawStage;
 	public static final field Submit Lcom/awakekt/awake/render/renderer/RenderDrawStage;

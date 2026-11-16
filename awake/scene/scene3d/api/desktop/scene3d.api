@@ -42,6 +42,7 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/command/GpuDrawPreparer;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getCameraViewport ()Lcom/awakekt/awake/scene/rendering/camera/CameraViewport;
 	public final fun getCullingProbe ()Lcom/awakekt/awake/scene/rendering/debug/CullingProbe;
+	public final fun getDrawStages ()Lcom/awakekt/awake/render/renderer/RenderDrawStages;
 	public final fun getLastFramePlanned ()Z
 	public final fun getLastFrustumCulledCount ()I
 	public final fun getLastOccludedCount ()I
@@ -50,6 +51,7 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;II)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public final fun setCullingProbe (Lcom/awakekt/awake/scene/rendering/debug/CullingProbe;)V
+	public final fun setDrawStages (Lcom/awakekt/awake/render/renderer/RenderDrawStages;)V
 	public final fun setMinShadowCasterRatio (F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
