@@ -108,6 +108,14 @@ interface Renderer : GpuDevice {
         get() = null
 
     /**
+     * How much of the last submitted frame's draw work was reused from the frame before, or null for
+     * a renderer that does not count it; see [DrawReuseStats]. Built when read: a host that never
+     * reads it pays nothing for it.
+     */
+    val frameDrawReuse: DrawReuseStats?
+        get() = null
+
+    /**
      * [frameStats] split by pass: scene opaque, scene transparent, each shadow pass and UI. Null
      * for a renderer that does not count; see [RenderPassStats].
      */
