@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
-
 package com.awakekt.awake.scene.rendering
 
 import com.awakekt.awake.core.geometry.MeshGeometry
@@ -94,16 +92,7 @@ class PlanningHeapBreakdownBrowserTest {
             ", frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB"
     }
 
-    private fun bytesPerRenderer(pass: () -> Any?): Double {
-        repeat(WARMUP) { pass() }
-        val growth = DoubleArray(SAMPLES) {
-            val before = collectedHeap()
-            pass()
-            heapNow() - before
-        }
-        growth.sort()
-        return growth[SAMPLES / 2] / PROPS
-    }
+    private fun bytesPerRenderer(pass: () -> Any?): Double = medianGrowth(PROPS, WARMUP, SAMPLES, pass)
 
     /** The heap at the frame's collect and compile edges. */
     private class StageHeap : RenderDrawStages {
@@ -165,12 +154,3 @@ class PlanningHeapBreakdownBrowserTest {
         val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
     }
 }
-
-@JsFun("() => typeof globalThis.gc === 'function' && !!(performance.memory)")
-private external fun heapMeasurable(): Boolean
-
-@JsFun("() => { globalThis.gc(); return performance.memory.usedJSHeapSize; }")
-private external fun collectedHeap(): Double
-
-@JsFun("() => performance.memory.usedJSHeapSize")
-private external fun heapNow(): Double

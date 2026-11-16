@@ -791,7 +791,7 @@ jobs:
       # Where a replanned frame's heap goes on wasm, part by part (#1621). Filtered: scene3d's common
       # tests run on the JVM, and this step only wants the browser's own heap figure.
       - name: Scene planning heap breakdown (browser)
-        run: ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*"
+        run: ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*" --tests "*PlanningLoopHeap*"
 
       # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
       - name: Font loading browser tests
