@@ -34,7 +34,7 @@ class InstancePacker<T>(
     shape: GpuDataShape,
     private val label: String,
     repeat: Int = 1,
-    private val write: (out: FloatArray, offset: Int, item: T) -> Unit,
+    private val write: InstanceWriter<T>,
 ) {
     /** Floats one instance occupies -- derived from [shape], never hand-counted. */
     val floatsPerInstance: Int = shape.componentCount * repeat
@@ -48,10 +48,28 @@ class InstancePacker<T>(
      * @param maxInstances Capacity the caller's GPU buffer was allocated for.
      * @return The packed floats, or `null` when [items] is empty and there is nothing to upload.
      */
-    fun pack(items: List<T>, maxInstances: Int): FloatArray? = pack(items.size, maxInstances, items::get)
+    fun pack(items: List<T>, maxInstances: Int): FloatArray? {
+        val out = reserve(items.size, maxInstances) ?: return null
+        var index = 0
+        while (index < items.size) {
+            write.write(out, index * floatsPerInstance, items[index])
+            index += 1
+        }
+        return out
+    }
 
     /** Indexed form, allowing a default value without allocating a list for every draw. */
-    fun pack(instanceCount: Int, maxInstances: Int, itemAt: (Int) -> T): FloatArray? {
+    fun pack(instanceCount: Int, maxInstances: Int, itemAt: InstanceSource<T>): FloatArray? {
+        val out = reserve(instanceCount, maxInstances) ?: return null
+        var index = 0
+        while (index < instanceCount) {
+            write.write(out, index * floatsPerInstance, itemAt.at(index))
+            index += 1
+        }
+        return out
+    }
+
+    private fun reserve(instanceCount: Int, maxInstances: Int): FloatArray? {
         require(instanceCount in 0..maxInstances) {
             "Instance count ($instanceCount) exceeds $label capacity ($maxInstances) -- " +
                 "raise maxInstances or draw fewer instances."
@@ -59,11 +77,25 @@ class InstancePacker<T>(
         if (instanceCount == 0) return null
         val needed = instanceCount * floatsPerInstance
         if (packed.size != needed) packed = FloatArray(needed)
-        var index = 0
-        while (index < instanceCount) {
-            write(packed, index * floatsPerInstance, itemAt(index))
-            index += 1
-        }
         return packed
     }
+}
+
+/**
+ * Writes one instance's floats into `out` at `offset`, for [InstancePacker].
+ *
+ * An interface with a primitive `offset`, not a function type: a generic `(FloatArray, Int, T) -> Unit`
+ * is invoked through `Function3.invoke(Any?, Any?, Any?)`, which boxes the offset on every call,
+ * and wasm has no small-integer cache, so a frame of instanced draws allocated a box per instance
+ * (#1621). A lambda still converts to it.
+ */
+fun interface InstanceWriter<in T> {
+    /** Writes [item]'s floats into [out] from [offset]. */
+    fun write(out: FloatArray, offset: Int, item: T)
+}
+
+/** The instance at an index, for [InstancePacker]'s indexed `pack`; a primitive index, as [InstanceWriter]'s offset. */
+fun interface InstanceSource<out T> {
+    /** The instance at [index]. */
+    fun at(index: Int): T
 }
