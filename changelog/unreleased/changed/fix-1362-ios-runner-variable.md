@@ -1,0 +1,1 @@
+- CI's `Physics (iOS)` job takes its runner label from the repository variable `CORE_IOS_RUNNER`, and runs on `macos-15` when it is unset (#1362). A larger or self-hosted macOS arm64 runner can take the job without a workflow change, when hosted `macos-15` runners are held by Publish.
