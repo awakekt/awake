@@ -9,6 +9,7 @@ package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -75,7 +76,8 @@ class PrepareHeapBreakdownBrowserTest {
             val floats = FloatArray(count * MAT4_FLOATS) { it.toFloat() }
             val models = List(count) { Mat4().translate(it.toFloat(), 0f, 0f) }
             val oneMore = models + Mat4()
-            val packer = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { out, offset, model -> model.data.copyInto(out, offset) })
+            // The writer InstanceBuffer uses, so "pack" below is what a moving frame pays.
+            val packer = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { out, offset, model -> out.putFloats(offset, model.data) })
             val device = renderer.graphicsDevice.wgpuContext.device
             val buffer = device.createBuffer(
                 BufferDescriptor(size = ((count + 1) * MAT4_FLOATS * Float.SIZE_BYTES).toULong(), usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst),
@@ -88,14 +90,26 @@ class PrepareHeapBreakdownBrowserTest {
                 packer.pack(if (flip) models else oneMore, MAX_INSTANCES)
             }
             val packSame = perCall { packer.pack(models, MAX_INSTANCES) }
+            // The same-count pack, split (#1621): with a writer that writes nothing, the instance
+            // loop alone; with a hand-written float loop, the writer without `copyInto`; and
+            // `copyInto` called directly, without the packer.
+            val silent = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { _, _, _ -> })
+            val byHand = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { out, offset, model -> model.data.writeTo(out, offset) })
+            val packSilent = perCall { silent.pack(models, MAX_INSTANCES) }
+            val packByHand = perCall { byHand.pack(models, MAX_INSTANCES) }
+            val copyIntoAlone = perCall { for (index in models.indices) models[index].data.copyInto(floats, index * MAT4_FLOATS) }
             val resident = perCall { floats.copyOf() }
             buffer.close()
             println(
                 "PrepareHeapBreakdown: $draws draws a frame, $count instances a draw, $uploads instance uploads a frame; " +
                     "upload copy $copy B, write $write B, pack (count changed) $packChanged B, pack (same count) $packSame B, " +
-                    "resident copy $resident B, a call",
+                    "resident copy $resident B, a call; same-count pack split: no-op writer $packSilent B, hand-copied writer $packByHand B, " +
+                    "copyInto alone $copyIntoAlone B",
             )
             assertTrue(draws > 0, "the preparer is asked for the frame's draws")
+            // #1621: `copyInto` cost 1260 of the 1680 bytes a same-count pack allocated; InstanceBuffer's
+            // writer now copies with a plain loop, which allocates nothing.
+            assertTrue(packSame <= SAME_COUNT_PACK_BUDGET, "a same-count pack allocates $packSame B; budget $SAME_COUNT_PACK_BUDGET B")
             assertTrue(engine.errors.isEmpty(), "WebGPU validation errors: ${engine.errors}")
         } finally {
             engine.destroy()
@@ -113,10 +127,19 @@ class PrepareHeapBreakdownBrowserTest {
         return windows.sortedArray()[WINDOWS / 2].toInt()
     }
 
+    private fun FloatArray.writeTo(out: FloatArray, offset: Int) {
+        var index = 0
+        while (index < size) {
+            out[offset + index] = this[index]
+            index += 1
+        }
+    }
+
     private companion object {
         const val MAT4_FLOATS = 16
         const val MAX_INSTANCES = 4096
         const val CALLS = 200
         const val WINDOWS = 7
+        const val SAME_COUNT_PACK_BUDGET = 600
     }
 }
