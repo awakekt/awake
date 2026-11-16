@@ -95,6 +95,13 @@ Measures retained Compose layout pass execution time across deep row/column tree
 
 ---
 
+### Kotlin/Wasm allocation
+
+The browser has no escape analysis, so a call shape that allocates nothing on the JVM can cost 28 B
+on every call there: a defaulted call with four or more parameters, a `Comparator`, or a lambda
+converted to a `fun interface`. See [kotlin-wasm-allocation.md](kotlin-wasm-allocation.md) for the
+shapes, the browser gates and what they fixed (#1621).
+
 ## 3. Execution & Verification Strategy
 
 Awake uses a 3-tier strategy to maintain high performance without slowing down daily development:
