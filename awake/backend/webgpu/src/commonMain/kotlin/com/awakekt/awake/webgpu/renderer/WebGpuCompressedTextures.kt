@@ -27,7 +27,7 @@ internal class WebGpuCompressedTextures(private val renderer: Renderer) : GpuCom
     override fun createMaterial(image: CompressedTextureImage, filtering: TextureFiltering, uniformFloatCount: Int): RenderMaterial? {
         if (image.format !in formats || !canUploadCompressed(image)) return null
         val device = renderer.graphicsDevice
-        val texture = renderer.textureResources.register(Texture.fromFilled(device, device.uploadCompressed(image), filtering))
+        val texture = renderer.textureResources.register(Texture.fromFilled(device, device.uploadCompressed(image, filtering), filtering))
         return renderer.createTexturedMaterial(texture, uniformFloatCount, List(PBR_MAPS) { null })
     }
 

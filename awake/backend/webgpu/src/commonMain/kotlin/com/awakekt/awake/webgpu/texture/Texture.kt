@@ -59,7 +59,18 @@ class Texture private constructor(
     private val graphicsDevice: GraphicsDevice? = null,
     private val filtering: TextureFiltering = TextureFiltering.Linear,
     private val mipLevels: Int = 1,
+    /**
+     * The GPU image's own width: [width] unless [com.awakekt.awake.render.renderer.Renderer.textureMipSkip]
+     * left top levels out of it at upload (#1660). [width] stays the source size, which anything that
+     * turns pixel rects into UVs divides by; memory accounting reads this one.
+     */
+    val uploadedWidth: Int = width,
+    /** The GPU image's own height; see [uploadedWidth]. */
+    val uploadedHeight: Int = height,
 ) : com.awakekt.awake.render.texture.WritableTexture {
+    /** Mip levels the GPU image holds, fewer than the source's chain by any levels mip skip left out. */
+    val uploadedMipLevels: Int get() = mipLevels
+
     /** How this texture is sampled: made again by [resample] when the renderer's anisotropy changes. */
     var sampler: GPUSampler = sampler
         private set
@@ -124,6 +135,8 @@ class Texture private constructor(
         graphicsDevice = graphicsDevice,
         filtering = filtering,
         mipLevels = filled.mipLevelCount,
+        uploadedWidth = filled.uploadedWidth,
+        uploadedHeight = filled.uploadedHeight,
     )
 
     /** A GPU texture whose levels are already written, and how to view it. */
@@ -134,6 +147,9 @@ class Texture private constructor(
         val mipLevelCount: Int,
         val layerCount: Int = 1,
         val isCubemap: Boolean = false,
+        /** The size of the level uploaded as the base: [width] x [height] unless mip skip left levels out. */
+        val uploadedWidth: Int = width,
+        val uploadedHeight: Int = height,
     )
 
     internal companion object {
@@ -141,7 +157,15 @@ class Texture private constructor(
         fun fromFilled(graphicsDevice: GraphicsDevice, filled: FilledTexture, filtering: TextureFiltering): Texture =
             Texture(graphicsDevice, filled, filtering)
 
-        private fun uploadBytes(graphicsDevice: GraphicsDevice, asset: TextureAsset, filtering: TextureFiltering): FilledTexture {
+        /**
+         * [asset] uploaded without the top levels [GraphicsDevice.mipSkip] leaves out: for a texture
+         * only ever sampled by UV and never written after upload, as a material's or a terrain
+         * layer's is. UI images, glyph atlases and written textures use the constructor and upload whole.
+         */
+        fun skippingMips(graphicsDevice: GraphicsDevice, asset: TextureAsset): Texture =
+            Texture(graphicsDevice, uploadBytes(graphicsDevice, asset, asset.filtering, graphicsDevice.mipSkip), asset.filtering)
+
+        private fun uploadBytes(graphicsDevice: GraphicsDevice, asset: TextureAsset, filtering: TextureFiltering, mipSkip: Int = 0): FilledTexture {
             val device = graphicsDevice.wgpuContext.device
             val width = asset.width
             val height = asset.height
@@ -149,12 +173,14 @@ class Texture private constructor(
             val isCubemap = asset.isCubemap
             // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
             // without one. Cubemaps stay single-level; the sky samples its base level only.
-            val mipLevels = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
+            val chain = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
+            val mipLevels = chain.drop(TextureSampling.levelsToSkip(filtering, chain.size, mipSkip))
+            val base = mipLevels.first()
             val texture = device.createTexture(
                 TextureDescriptor(
                     size = Extent3D(
-                        width = width.toUInt(),
-                        height = height.toUInt(),
+                        width = base.width.toUInt(),
+                        height = base.height.toUInt(),
                         depthOrArrayLayers = layerCount.toUInt(),
                     ),
                     format = GPUTextureFormat.RGBA8Unorm,
@@ -183,7 +209,7 @@ class Texture private constructor(
                     ),
                 )
             }
-            return FilledTexture(texture, width, height, mipLevels.size, layerCount, isCubemap)
+            return FilledTexture(texture, width, height, mipLevels.size, layerCount, isCubemap, base.width, base.height)
         }
 
         private fun createSampler(graphicsDevice: GraphicsDevice, filtering: TextureFiltering, anisotropy: Int = 1): GPUSampler =

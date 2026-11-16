@@ -5,8 +5,10 @@
  */
 package com.awakekt.awake.webgpu.texture
 
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.CompressedTextureImage
+import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import io.ygdrasil.webgpu.Extent3D
@@ -29,31 +31,41 @@ internal fun canUploadCompressed(image: CompressedTextureImage): Boolean =
  * format's unorm variant even when the colour is sRGB, as an RGBA8 texture is, since Awake's
  * shaders decode sRGB themselves. Call only after [canUploadCompressed] said yes.
  */
-internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage): Texture.FilledTexture {
+internal fun GraphicsDevice.uploadCompressed(image: CompressedTextureImage, filtering: TextureFiltering = TextureFiltering.Linear): Texture.FilledTexture {
     val device = wgpuContext.device
     val format = image.format
+    // The top levels mip skip leaves out, as for an RGBA texture, while the new base is whole blocks (#1660).
+    val skip = TextureSampling.levelsToSkip(image, filtering, mipSkip)
     val texture = device.createTexture(
         TextureDescriptor(
-            size = Extent3D(width = image.width.toUInt(), height = image.height.toUInt()),
+            size = Extent3D(width = image.levelWidth(skip).toUInt(), height = image.levelHeight(skip).toUInt()),
             format = gpuFormat(format),
             usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst,
             dimension = GPUTextureDimension.TwoD,
-            mipLevelCount = image.levels.size.toUInt(),
+            mipLevelCount = (image.levels.size - skip).toUInt(),
         ),
     )
     image.levels.forEachIndexed { level, bytes ->
+        if (level < skip) return@forEachIndexed
         val blocksWide = (image.levelWidth(level) + format.blockWidth - 1) / format.blockWidth
         val blocksHigh = (image.levelHeight(level) + format.blockHeight - 1) / format.blockHeight
         // A copy of a block format covers whole blocks, so a level smaller than a block is written
         // as the one block it takes.
         device.queue.writeTexture(
-            destination = TexelCopyTextureInfo(texture = texture, mipLevel = level.toUInt()),
+            destination = TexelCopyTextureInfo(texture = texture, mipLevel = (level - skip).toUInt()),
             data = fastArrayBufferOf(bytes),
             dataLayout = TexelCopyBufferLayout(bytesPerRow = (blocksWide * format.blockBytes).toUInt(), rowsPerImage = blocksHigh.toUInt()),
             size = Extent3D(width = (blocksWide * format.blockWidth).toUInt(), height = (blocksHigh * format.blockHeight).toUInt()),
         )
     }
-    return Texture.FilledTexture(texture, image.width, image.height, mipLevelCount = image.levels.size)
+    return Texture.FilledTexture(
+        texture,
+        image.width,
+        image.height,
+        mipLevelCount = image.levels.size - skip,
+        uploadedWidth = image.levelWidth(skip),
+        uploadedHeight = image.levelHeight(skip),
+    )
 }
 
 /** The unorm `GPUTextureFormat` of [format]. */
