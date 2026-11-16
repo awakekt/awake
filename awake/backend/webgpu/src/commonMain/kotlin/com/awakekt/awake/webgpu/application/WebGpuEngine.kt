@@ -157,12 +157,13 @@ open class WebGpuEngine(
             casterDepthPass(
                 graphicsDevice = graphicsDevice,
                 plan = plan,
-                // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow. It
-                // starts at the default cascades and grows to the layers a frame draws (#1688); the
-                // pipelines keep a slot for every layer it can reach.
+                // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow. A
+                // one-texel placeholder until a light casts, then the layers a frame draws at the
+                // budget's map size (#1688, #1698); the pipelines keep a slot for every layer it can reach.
                 target = com.awakekt.awake.webgpu.texture.DepthTarget(
                     graphicsDevice,
-                    layers = com.awakekt.awake.render.renderer.ShadowBudget.DEFAULT_CASCADES,
+                    size = com.awakekt.awake.webgpu.texture.DepthTarget.DORMANT_SIZE,
+                    layers = 1,
                     arrayed = true,
                     comparison = true,
                 ),

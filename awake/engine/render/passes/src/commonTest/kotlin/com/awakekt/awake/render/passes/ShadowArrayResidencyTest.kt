@@ -54,6 +54,20 @@ class ShadowArrayResidencyTest {
         assertEquals(listOf(3, 3, 3, 3, 3, 3, 0, 0), held)
     }
 
+    /** A light that casts three frames in six, faster than the window: allocated once, never thrashed. */
+    @Test
+    fun aLightTogglingFasterThanTheWindowAllocatesOnce() {
+        val residency = ShadowArrayResidency(releaseAfterFrames = 4)
+        var resident = 0
+        var changes = 0
+        repeat(600) { frame ->
+            val next = residency.frame(needed = if (frame % 6 < 3) 3 else 0, resident = resident)
+            if (next != resident) changes++
+            resident = next
+        }
+        assertEquals(1, changes, "allocated once, never released, never reallocated")
+    }
+
     @Test
     fun aWindowThatUsedFewerLayersShrinksToItsPeak() {
         val residency = ShadowArrayResidency(releaseAfterFrames = 2)
