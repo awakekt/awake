@@ -22,9 +22,13 @@ internal object WebGpuUncapturedErrors {
 
     /** Records [error] and prints it with [MARKER]. */
     fun report(error: Any?) {
-        val message = "$error"
-        println("$MARKER: $message")
-        synchronized(reported) { reported += message }
+        println("$MARKER: $error")
+        record(error)
+    }
+
+    /** Records [error] without printing it: for a test that provokes an error on purpose. */
+    fun record(error: Any?) {
+        synchronized(reported) { reported += "$error" }
     }
 
     /** Everything reported since the last call, cleared. */

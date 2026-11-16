@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaders.ShaderStage
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
@@ -38,11 +39,13 @@ class WebGpuShadowBindingTest {
 
     @Test
     fun litShadowCompilesAndItsDepthBindGroupValidates() = runBlocking {
+        WebGpuUncapturedErrors.drain()
         val context = glfwContextRenderer(
             width = 1,
             height = 1,
             title = "awake-shadow-binding",
-            onUncapturedError = { failure: Any? -> error("WGPU UNCAPTURED: $failure") },
+            // Thrown on the callback's thread, an error never failed this test; collected, it does.
+            onUncapturedError = { failure: Any? -> WebGpuUncapturedErrors.report(failure) },
         )
         val graphicsDevice = GraphicsDevice()
         graphicsDevice.create(context.wgpuContext)
@@ -69,7 +72,9 @@ class WebGpuShadowBindingTest {
         )
         // Comparison, as the renderer builds it: lit_shadow declares `sampler_comparison`, and
         // the auto layout derived from that declaration rejects a plain sampler at bind time.
-        val depthTarget = DepthTarget(graphicsDevice, comparison = true)
+        // Arrayed, as the renderer builds it: lit_shadow declares `texture_depth_2d_array`, and a
+        // plain 2D view fails its layout -- which this test once only printed (#1592).
+        val depthTarget = DepthTarget(graphicsDevice, arrayed = true, comparison = true)
 
         // The binding the renderer builds per shadowed draw. An invalid layout/resource pair
         // raises a WebGPU validation error rather than returning null, which the uncaptured
@@ -109,6 +114,9 @@ class WebGpuShadowBindingTest {
             VertexFormat.PositionNormalColorSkin,
             "vertexMain",
             "fragmentMain",
+            // Instanced, as the renderer builds it: the model matrix arrives per instance, so a
+            // per-vertex layout leaves the shader's location 5 unfed and the pipeline invalid.
+            variant = PipelineVariant.Instanced,
             bindingsByGroup = PackShaderSets.SkinnedInstanced.webGpu.bindingsByGroup,
             bindingsMetadataAvailable = PackShaderSets.SkinnedInstanced.webGpu.bindingsMetadataAvailable,
         )
@@ -129,5 +137,6 @@ class WebGpuShadowBindingTest {
         pipeline.destroy()
         swapchainManager.destroy()
         graphicsDevice.destroy()
+        WebGpuUncapturedErrors.failIfAny("litShadowCompilesAndItsDepthBindGroupValidates")
     }
 }

@@ -40,6 +40,7 @@ import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
+import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -340,7 +341,7 @@ class WebGpuHeadlessShaderReplacementTest {
                     width = 1,
                     height = 1,
                     title = "awake-shader-replacement",
-                    onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
+                    onUncapturedError = { error -> WebGpuUncapturedErrors.report(error) },
                 )
                 val graphicsDevice = GraphicsDevice().apply { create(context.wgpuContext) }
                 val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT).apply { create() }
@@ -360,9 +361,11 @@ class WebGpuHeadlessShaderReplacementTest {
                     DescriptorSetLayoutHandle(0),
                     EngineShaderSets.DebugLine.webGpu.wgslBytes(),
                     ByteArray(0),
-                    VertexFormat.None,
-                    bindingsByGroup = emptyMap(),
-                    bindingsMetadataAvailable = true,
+                    // The shader's own vertex layout and bindings: declaring none built an invalid
+                    // pipeline, whose validation errors this test only printed (#1592).
+                    DebugLineLayout.Format,
+                    bindingsByGroup = EngineShaderSets.DebugLine.webGpu.bindingsByGroup,
+                    bindingsMetadataAvailable = EngineShaderSets.DebugLine.webGpu.bindingsMetadataAvailable,
                 )
                 val renderer = buildTestRenderer(
                     graphicsDevice,
