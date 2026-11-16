@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.55.0] - 2026-11-16
+
+### Added
+
+- Frame pacing groundwork (#1699): `FramePacing` and `FramePacer` decide, per frame-rate mode, whether
+  a frame is slept out, paced at present, or left to vsync, and give the swap interval and display period
+  a cap needs. A cap is never paced twice. `AndroidFrameLoop.frameRateOverride` changes the mode while the
+  app runs, as `DesktopFrameLoop`'s does, and the Android surface reads its mode every frame.
+  `RenderFrameStats` gains `presentIntervalP50Ns`, `presentIntervalP95Ns` and `presentTiming`: the
+  time between presented frames, which Vulkan measures at each present (`PresentTiming.CpuPresent`).
+- `Renderer.deviceName`, `Renderer.vendorId` and `Renderer.driverVersion` (on `GpuDevice`) name the GPU a game is running on, for a quality tier that `deviceClass` is too coarse to pick and for a performance report (#1700). On Vulkan they come from `VkPhysicalDeviceProperties`, and lavapipe reports `llvmpipe (LLVM …)`. On WebGPU the name comes from the adapter's info, `device` else `description`. A browser may hide both, leaving it null, and WebGPU reports no vendor id or driver version. All three are null by default for other renderers.
+
+### Changed
+
+- On phones, `RenderQuality.Auto` now moves the scene's resolution to hold 60 fps (#1688). Desktops are
+  unchanged.
+  - `RenderQualitySettings.dynamicResolution` defaults to `DynamicResolution.Handhelds`, which runs only
+    on `GpuDeviceClass.Mobile` devices. There it moves the scene's short edge between 540 pixels and
+    Auto's device-class budget, so a phone never draws more than before, only less while frames run long.
+  - Discrete, integrated and software devices keep Auto's fixed budget. A desktop app opts in with its
+    own `DynamicResolution(targetFps, floorShortEdge, ceilingShortEdge)`, set on the settings or in
+    `app { renderQuality { dynamicResolution = ... } }`. Setting `null` turns it off everywhere.
+  - How it decides: it reads GPU time where the renderer measures it. Elsewhere it counts missed frames,
+    probes up with back-off, and gives its steps back when a lower resolution does not shorten frames,
+    as on a display capped below the target.
+  - `SceneFrameStats.resolution` (`DynamicResolutionStats`: `shortEdge`, and `signal`, `GpuTime` or
+    `MissedFrames`) reports where it stood after each frame. It is null while it does not run.
+  - On simulated frames from a 1080-pixel panel at a 60 fps target, with the ceiling at the full panel:
+    - A GPU taking 30 ms at full resolution settles at 717 pixels within 12 frames and holds.
+    - Without GPU timing, 28 ms frames settle at 868 pixels and 18.1 ms, with 9 probes up in 320
+      windows rather than 80.
+    - A 30 Hz display dips two steps, to 875 pixels, for about a second, then returns to the full panel.
+- **WebGPU holds no shadow array while no light casts, as Vulkan does since #1703 (#1698).** WebGPU's shadow depth array now follows the same `ShadowArrayResidency` policy as Vulkan:
+  - A 1x1 stand-in until the first presented frame a light casts.
+  - Then the layers that frame draws, at `ShadowBudget.mapSize`. `ShadowBudget.Reduced`'s 1024 texels now take effect on WebGPU: 12 MiB for three cascades instead of 48 MiB.
+  - Released after a 120-frame window with no casting light.
+  - An offscreen render grows the array but never frees it.
+
+  Before, WebGPU held the three 2048-texel cascades (48 MiB) from start, whether or not anything cast. The default map size is unchanged, so a consumer that never sets a budget draws the same shadows. `Renderer.shadowMapBytes` reports the bytes held: 4 B unlit, 48 MiB lit, 12 MiB at 1024, 4 B released.
+
+### Fixed
+
+- A moving camera's scene compile allocates 26 B a draw in the browser, down from 284 B (#1621). Its draws were sorted through a `Comparator`, and on Kotlin/Wasm each `compare` call allocated 28 B, about 36,000 calls a frame for 3,000 draws. `StableListSort.sortWith` now takes the comparison inline, and the sort allocates nothing. The WebGPU draw path also stops leaving `DrawUniformInputs`' `kind` to its default on every draw, which cost 28 B a call on Kotlin/Wasm. Browser gates in the Web CI job hold the compile at 48 B a draw, and `docs/reference/kotlin-wasm-allocation.md` lists the call shapes that allocate on Kotlin/Wasm but not on the JVM:
+  - a defaulted call to a function of four or more parameters;
+  - a `Comparator`;
+  - a lambda converted to a `fun interface`.
+- A 3D frame's collect stage no longer allocates per renderer on Kotlin/Wasm (#1621). Collect over 3,000 renderers fell from 669 KB a frame to 13 KB in the browser, with a still camera and with a moving one. `SceneDrawCollector` filled each renderer's draw command through two calls that left parameters to their defaults. On Kotlin/Wasm such a call goes through the default-argument bridge, which allocated 140 B a call; the same call with every argument passed allocates nothing. The JVM never showed it, because the cost is wasm-only. A consumer replans every frame by default: `isRealtimeProvider` defaults to true, so reusing a still frame's plan, as earlier changelogs describe it, applies only to a host that passes false. That is why this cost was paid on every frame, still or not.
+- The Maven fallback site at `https://awakekt.github.io/awake/` keeps every release its served POMs name (#1694). It used to serve only the newest two Core and newest two Vulkan releases, and each deploy replaces the whole site. So Vulkan 0.1.58, still the version consumers pinned, imported `bom-0.51.0` and depended on Core 0.51.0 artifacts the site no longer had, and a build resolving through it failed. The site now serves the newest 2 Core and newest 3 Vulkan releases, plus the Core release each served Vulkan release names, which brings Core 0.51.0 back. A deploy now fails rather than publish a POM whose BOM or dependencies are missing. It checks after deploying that every one resolves from the live site, and refuses a site over 950 MB (Pages allows 1 GB). Retention is set in one place, at the top of `.github/workflows/maven-fallback.yml`. List Maven Central first; this site only covers recent releases.
+- The Maven fallback site fits again (#1694). Its first deploy under the keep-by-reference rule stopped
+  at 970 MB, over its 950 MB limit, because the Core releases its Vulkan releases name (0.50.0 and 0.51.0)
+  were served whole. Now only the artifacts a served POM or Gradle module names are served from such a
+  release: 163 artifacts, 76 MB, instead of the 141 MB bundle. On the v0.54.0 releases the site is
+  716 MB rather than 950 MB, before the wgpu4k mirror. The size is checked when the site is assembled,
+  printing what each release adds, as well as before deploying. A BOM's managed versions no longer count
+  as artifacts the site must hold; only its import does.
+- **Vulkan holds no shadow array while no light casts.** The shadow depth array is now allocated the first frame a light casts, sized to the layers that frame draws at `ShadowBudget.mapSize`, and released again after a 120-frame window with no casting light, so a "no shadows" tier no longer keeps tens to hundreds of MiB resident. `VulkanEngine.shadowDepthFormat` offers `ShadowDepthFormat.Depth16Unorm` for mobile tiers (32-bit float stays the default), and `Renderer.shadowDepthFormat` and `Renderer.shadowMapBytes` report what is resident (#1698).
+- The source-layering checks run in CI again (#1709). `verifyBackendLayering`, `verifyUiOwnership`, `verifyRenderExtensibility`, `verifyUiAuthoredUnits` and `verifyUiTestLifecycle` in each module, and the root's `verifyRenderUniforms`, `verifyRenderContractBoundary`, `verifyClipSpaceUsage` and `verifyCapabilityBoundaries`, hung off `check`, which no workflow runs. So `:awake:backend:webgpu:verifyBackendLayering` failed on main from v0.54.0 with CI green. `awakeVerify`, which the Verify workflow runs on every PR, now runs them all. The WebGPU UI's `UploadShadow`, the CPU copy of what a mesh buffer holds, is renamed `UploadMirror`, so the backend declares no content vocabulary.
+
 ## [0.54.0] - 2026-11-16
 
 ### Added
