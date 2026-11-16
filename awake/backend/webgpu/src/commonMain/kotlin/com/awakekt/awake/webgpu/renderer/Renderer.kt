@@ -271,7 +271,9 @@ class Renderer internal constructor(
      * content-feature textures that are never written after upload take it as they are uploaded;
      * textures already uploaded keep their levels. UI images, glyph atlases, written textures, render
      * targets and `Nearest` textures always upload whole, and a texture's `width` and `height` stay its
-     * source size, so pixel rects map to the same UVs (#1660).
+     * source size, so pixel rects map to the same UVs (#1660). An image copied on the GPU in a browser
+     * is drawn at full size before its kept levels are copied out, so its upload still peaks at full
+     * size; only the memory it holds afterwards drops.
      */
     override var textureMipSkip: Int = 0
         set(value) {

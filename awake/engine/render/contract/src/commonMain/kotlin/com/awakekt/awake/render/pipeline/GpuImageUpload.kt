@@ -95,7 +95,7 @@ fun GpuDevice.createImageMaterial(
             else -> TextureUploadPath.CpuRgba8
         }
         val format = if (compressed != null) cooked?.format else null
-        val uploaded = uploadedLevels(image, if (compressed != null) cooked else null, path, filtering)
+        val uploaded = uploadedLevels(image, if (compressed != null) cooked else null, filtering)
         observer.uploaded(TextureUpload(label, image.width, image.height, path, format, filtering, uploaded.width, uploaded.height, uploaded.levels))
     }
     return material
@@ -106,16 +106,16 @@ private class UploadedLevels(val width: Int, val height: Int, val levels: Int)
 /**
  * The GPU image [createImageMaterial] made: what [Renderer.textureMipSkip] left of [image]'s chain, by
  * the rule both backends apply ([TextureSampling.levelsToSkip]). A block-compressed image goes up as
- * it is when there are no PBR maps beside it and the device takes its format; a GPU copy keeps its whole
- * chain until that path skips too.
+ * it is when there are no PBR maps beside it and the device takes its format; a GPU copy and a CPU upload
+ * both drop the same top levels of a full chain.
  */
-private fun GpuDevice.uploadedLevels(image: GpuImageSource, cooked: CompressedTextureImage?, path: TextureUploadPath, filtering: TextureFiltering): UploadedLevels {
+private fun GpuDevice.uploadedLevels(image: GpuImageSource, cooked: CompressedTextureImage?, filtering: TextureFiltering): UploadedLevels {
     val mipSkip = (this as? Renderer)?.textureMipSkip ?: 0
     if (cooked != null) {
         val skip = TextureSampling.levelsToSkip(cooked, filtering, mipSkip)
         return UploadedLevels(cooked.levelWidth(skip), cooked.levelHeight(skip), cooked.levels.size - skip)
     }
     val chain = if (filtering == TextureFiltering.Linear) TextureUpload.fullChain(image.width, image.height) else 1
-    val skip = if (path == TextureUploadPath.CpuRgba8) TextureSampling.levelsToSkip(filtering, chain, mipSkip) else 0
+    val skip = TextureSampling.levelsToSkip(filtering, chain, mipSkip)
     return UploadedLevels(maxOf(1, image.width shr skip), maxOf(1, image.height shr skip), chain - skip)
 }
