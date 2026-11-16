@@ -438,6 +438,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getOutputWidth ()I
 	public final fun getRedrawsStillFrames ()Z
 	public fun getRenderScale ()F
+	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
@@ -455,6 +456,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun setMaxAnisotropy (I)V
 	public final fun setRedrawsStillFrames (Z)V
 	public fun setRenderScale (F)V
+	public fun setShadowBudget (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 	public fun setTextureMipSkip (I)V
 	public fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V

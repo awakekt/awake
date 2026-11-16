@@ -11,6 +11,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.renderer.RenderQuality
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.testing.NoopRenderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,6 +34,20 @@ class RenderQualityEngineTest {
 
         assertEquals(listOf(1440f / 2160f, 540f / 2160f, 540f / 720f), scales, "the app's frame sees this frame's scale")
         assertEquals(EffectQuality.Low, renderer.effectQuality)
+        assertEquals(ShadowBudget.Reduced, renderer.shadowBudget, "Performance draws two cascades of 1024")
+    }
+
+    @Test
+    fun aPhoneUnderAutoDrawsReducedShadowsUnlessTheAppKeepsItsOwn() {
+        val settings = RenderQualitySettings()
+        val phone = SurfaceRenderer(2400, 1080, GpuDeviceClass.Mobile)
+        val engine = engineFor(app(settings), phone)
+        engine.update(0f)
+        assertEquals(ShadowBudget.Reduced, phone.shadowBudget)
+
+        settings.shadowBudgetOverride = ShadowBudget.Default
+        engine.update(0f)
+        assertEquals(ShadowBudget.Default, phone.shadowBudget, "the override keeps the shadows drawn before #1688")
     }
 
     @Test
@@ -127,6 +142,7 @@ class RenderQualityEngineTest {
         override val deviceClass: GpuDeviceClass,
     ) : NoopRenderer() {
         override var renderScale: Float = 1f
+        override var shadowBudget: ShadowBudget = ShadowBudget.Default
     }
 
     private class MemoryPersistence(var saved: RenderQuality?) : RenderQualityPersistence {

@@ -180,6 +180,16 @@ interface Renderer : GpuDevice {
     var wireframe: Boolean
 
     /**
+     * What a directional light's shadows cost: cascades planned per frame and each cascade's depth
+     * map size (#1688). Defaults to [ShadowBudget.Default], what every renderer drew before budgets;
+     * setting the value it already has does nothing. On a renderer that does not implement it, it
+     * stays [ShadowBudget.Default].
+     */
+    var shadowBudget: ShadowBudget
+        get() = ShadowBudget.Default
+        set(_) {}
+
+    /**
      * Quality tier for multi-pass image effects rendered by this [Renderer].
      *
      * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at

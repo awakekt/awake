@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.firstOrNull
 import com.awakekt.awake.ecs.singleOrNull
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.directionalShadowBox
 import com.awakekt.awake.render.passes.pointShadowMatrices
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
@@ -43,6 +44,8 @@ import kotlin.math.sin
  */
 internal class SceneLightingCompiler(
     private val clipSpace: ClipSpace,
+    /** Cascades to split a directional light's shadow into: the renderer's `shadowBudget` (#1688). */
+    private val shadowCascades: () -> Int = { DEFAULT_SHADOW_CASCADES },
 ) {
     private val pointLights = ArrayList<PointLight>()
     private val pointShadows = ArrayList<PointShadowLight>()
@@ -192,7 +195,7 @@ internal class SceneLightingCompiler(
         val cascades = if (boxOnly) {
             null
         } else {
-            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, shadowDistance = shadowDistance, shadowFade = shadowFade)
+            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, shadowCascades(), shadowDistance, shadowFade)
         }
         if (cascades == null) {
             return base.copy(

@@ -46,6 +46,7 @@ import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
@@ -279,6 +280,12 @@ class Renderer internal constructor(
     /** Hardware capabilities, negotiated Vulkan version, and enabled features for this device. */
     val capabilities: DeviceCapabilities
         get() = graphicsDevice.capabilities
+
+    /**
+     * Its cascades are planned from the next frame (#1688). The shadow maps stay at
+     * [ShadowBudget.DEFAULT_MAP_SIZE] on this backend for now: reallocating them follows.
+     */
+    override var shadowBudget: ShadowBudget = ShadowBudget.Default
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary

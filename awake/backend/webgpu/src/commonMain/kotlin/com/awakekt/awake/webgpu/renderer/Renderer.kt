@@ -31,6 +31,7 @@ import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderFrameStats
@@ -297,6 +298,12 @@ class Renderer internal constructor(
 
     override val deviceClass: GpuDeviceClass
         get() = graphicsDevice.deviceClass
+
+    /**
+     * Its cascades are planned from the next frame (#1688). The shadow maps stay at
+     * [ShadowBudget.DEFAULT_MAP_SIZE] on this backend for now: reallocating them follows.
+     */
+    override var shadowBudget: ShadowBudget = ShadowBudget.Default
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
 

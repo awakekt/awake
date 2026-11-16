@@ -112,4 +112,19 @@ object RenderQualityPolicy {
         RenderQuality.Balanced -> EffectQuality.Medium
         RenderQuality.Performance -> EffectQuality.Low
     }
+
+    /**
+     * The [ShadowBudget] for [quality] on a [deviceClass] device (#1688): [ShadowBudget.Default] for
+     * [RenderQuality.High] and [RenderQuality.Balanced], [ShadowBudget.Reduced] for
+     * [RenderQuality.Performance], and under [RenderQuality.Auto] reduced on a mobile or software
+     * device only, so a desktop keeps what it drew before.
+     */
+    fun shadowBudget(quality: RenderQuality, deviceClass: GpuDeviceClass): ShadowBudget = when (quality) {
+        RenderQuality.High, RenderQuality.Balanced -> ShadowBudget.Default
+        RenderQuality.Performance -> ShadowBudget.Reduced
+        RenderQuality.Auto -> when (deviceClass) {
+            GpuDeviceClass.Mobile, GpuDeviceClass.Software -> ShadowBudget.Reduced
+            else -> ShadowBudget.Default
+        }
+    }
 }

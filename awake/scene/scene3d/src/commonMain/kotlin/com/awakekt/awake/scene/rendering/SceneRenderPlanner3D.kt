@@ -12,6 +12,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.SceneDrawStats
 import com.awakekt.awake.render.passes.ScenePassCompiler
@@ -36,6 +37,8 @@ internal class SceneRenderPlanner3D(
     private val rendererClipSpace: ClipSpace,
     drawPreparer: GpuDrawPreparer?,
     features: List<RenderFeature3D> = emptyList(),
+    /** Cascades each frame plans a directional shadow with: the renderer's `shadowBudget` (#1688). */
+    shadowCascades: () -> Int = { DEFAULT_SHADOW_CASCADES },
 ) {
     private val drawPreparer = RejectionCountingPreparer(
         requireNotNull(drawPreparer) {
@@ -43,7 +46,7 @@ internal class SceneRenderPlanner3D(
         },
     )
     private val geometryFeature = SceneGeometryFeature3D(rendererClipSpace)
-    private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features)
+    private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features, shadowCascades)
     private val drawCalls = ArrayList<RenderDrawCommand>()
     private val shadowCasters = ShadowCasterVolume()
     private val passScratch = ScenePassScratch()
