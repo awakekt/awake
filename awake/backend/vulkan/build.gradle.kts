@@ -220,7 +220,7 @@ mavenPublishing {
 // desktopTest leaves the class out.
 tasks.register<Test>("desktopSyncValidationTest") {
     group = "verification"
-    description = "Run the scene pass's depth hazard test and the shadow array's growth under Vulkan synchronization validation (#1676, #1688)."
+    description = "Run the scene pass's depth hazard test and the shadow array's growth and release under Vulkan synchronization validation (#1676, #1688, #1698)."
     val desktopTestTask = tasks.named<Test>("desktopTest").get()
     testClassesDirs = desktopTestTask.testClassesDirs
     classpath = desktopTestTask.classpath
@@ -228,6 +228,7 @@ tasks.register<Test>("desktopSyncValidationTest") {
         includeTestsMatching("*ScenePassDepthHazardTest")
         // #1688: the array reallocated mid-run, freed after the frames that used it drained.
         includeTestsMatching("*RendererShadowLayersTest")
+        includeTestsMatching("*RendererLazyShadowArrayTest")
     }
     requireExclusiveGpu(this)
     dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
