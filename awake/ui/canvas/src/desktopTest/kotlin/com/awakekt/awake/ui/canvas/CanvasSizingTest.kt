@@ -90,14 +90,19 @@ class CanvasSizingTest {
     @Test
     fun twoCanvasesSideBySideEachDrawTheirFirstFrameAtTheirOwnSize() {
         val left = listOf(CanvasItem(CORNER, corner))
-        val right = listOf(CanvasItem(OTHER_CORNER, CanvasElement().apply {
-            kind = CanvasElementKind.Panel
-            anchor = CanvasAnchor.BottomRight
-            offsetX = 0f
-            offsetY = 0f
-            width = 20f
-            height = 20f
-        }))
+        val right = listOf(
+            CanvasItem(
+                OTHER_CORNER,
+                CanvasElement().apply {
+                    kind = CanvasElementKind.Panel
+                    anchor = CanvasAnchor.BottomRight
+                    offsetX = 0f
+                    offsetY = 0f
+                    width = 20f
+                    height = 20f
+                },
+            ),
+        )
         val out = ComposeHost().frame(FrameInput(400, 100)) {
             Row {
                 Box(Modifier.size(200.dp, 100.dp)) { CanvasOverlay(left, scaler = scaler) }

@@ -24,12 +24,15 @@ class CanvasSkipGateTest {
         retainUnchangedDraw = true
     }
 
-    private val label = CanvasItem(1, CanvasElement().apply {
-        kind = CanvasElementKind.Text
-        text = "Harbor Town"
-        width = 120f
-        height = 20f
-    })
+    private val label = CanvasItem(
+        1,
+        CanvasElement().apply {
+            kind = CanvasElementKind.Text
+            text = "Harbor Town"
+            width = 120f
+            height = 20f
+        },
+    )
 
     private val bar = CanvasElement().apply {
         kind = CanvasElementKind.Bar

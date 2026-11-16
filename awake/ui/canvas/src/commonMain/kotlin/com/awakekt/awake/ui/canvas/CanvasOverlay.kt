@@ -7,8 +7,6 @@
 
 package com.awakekt.awake.ui.canvas
 
-import com.awakekt.awake.compose.runtime.mutableStateOf
-import com.awakekt.awake.compose.ui.platform.LocalViewportSize
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.gestures.onWheel
 import com.awakekt.awake.compose.foundation.hoverable
@@ -32,6 +30,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
@@ -52,6 +51,7 @@ import com.awakekt.awake.compose.ui.layout.onSizeChanged
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
+import com.awakekt.awake.compose.ui.platform.LocalViewportSize
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color

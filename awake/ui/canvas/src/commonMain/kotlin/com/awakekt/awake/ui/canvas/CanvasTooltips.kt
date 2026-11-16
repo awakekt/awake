@@ -72,6 +72,7 @@ internal class CanvasTooltips {
      * Decides this frame's tooltip: [hovered] is the element the pointer is over that has one, or null,
      * and [now] is the frame clock's time. Returns the element whose tooltip is showing, or null.
      */
+
     /** The time [update] was last given. */
     var lastNow = 0f
         private set

@@ -7,7 +7,6 @@
 
 package com.awakekt.awake.ui.canvas
 
-import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.runtime.Composer
@@ -19,6 +18,7 @@ import com.awakekt.awake.compose.ui.graphics.BlendMode
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
+import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.FilterQuality
