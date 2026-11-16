@@ -48,6 +48,7 @@ import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
 import com.awakekt.awake.compose.ui.layout.onPlaced
+import com.awakekt.awake.compose.ui.layout.onSizeChanged
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
@@ -135,15 +136,16 @@ fun CanvasOverlay(
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
     val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers, premultiplied, structure)
-    // The box's size comes from its last placement, or the viewport's before the first: composed in
-    // composition, not inside measure, so a still canvas skips both (#1512). A box of a new size
-    // composes once more, with it.
+    // The box's size comes from its placement, or the viewport's before the first: composed in
+    // composition, not inside measure, so a still canvas skips both (#1512). A box placed at a new
+    // size -- the first placement, a resize -- writes it, and the host composes and lays out again
+    // in the same frame (ComposeHost.placementRecompositions), so no frame draws at a stale size.
     val size = remember { CanvasBoxSize() }
     val viewport = LocalViewportSize.current
-    Box(modifier.fillMaxSize().onPlaced { _, _, placedWidth, placedHeight -> size.place(placedWidth, placedHeight) }) {
+    Box(modifier.fillMaxSize().onSizeChanged { placedWidth, placedHeight -> size.place(placedWidth, placedHeight) }) {
         val density = LocalDensity.current
-        val width = (if (size.placed) size.width else viewport.width) / density
-        val height = (if (size.placed) size.height else viewport.height) / density
+        val width = size.composedWidth(viewport.width) / density
+        val height = size.composedHeight(viewport.height) / density
         val effectiveDpi = if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH
         val drawnScale = scaler?.scaleFor(width, height, density, effectiveDpi) ?: scale
         val box = CanvasBoxMetrics(width, height, density, effectiveDpi, safeArea)
@@ -452,21 +454,28 @@ internal val CanvasAnchor.alignment: Alignment
     }
 
 /**
- * The size a canvas's box was last placed at, in pixels: state, so a box placed at a new size
- * composes again at it, and only then.
+ * The size a canvas's box is composed at, in pixels: the viewport's until a placement differs from
+ * it, then the placed size, as state. Placement writes only a size composition did not use, so a
+ * canvas that fills the viewport never composes twice, and one placed at another size -- inside a
+ * smaller box, or resized -- composes again at it in the same frame (`ComposeHost.placementRecompositions`).
  */
 internal class CanvasBoxSize {
-    private val widthState = mutableStateOf(0)
-    private val heightState = mutableStateOf(0)
-    private val placedState = mutableStateOf(false)
+    private val widthState = mutableStateOf(UNPLACED)
+    private val heightState = mutableStateOf(UNPLACED)
+    private var usedWidth = UNPLACED
+    private var usedHeight = UNPLACED
 
-    val width: Int get() = widthState.value
-    val height: Int get() = heightState.value
-    val placed: Boolean get() = placedState.value
+    fun composedWidth(viewportWidth: Int): Int = widthState.value.let { if (it == UNPLACED) viewportWidth else it }.also { usedWidth = it }
+
+    fun composedHeight(viewportHeight: Int): Int = heightState.value.let { if (it == UNPLACED) viewportHeight else it }.also { usedHeight = it }
 
     fun place(width: Int, height: Int) {
+        if (width == usedWidth && height == usedHeight) return
         widthState.value = width
         heightState.value = height
-        placedState.value = true
+    }
+
+    private companion object {
+        const val UNPLACED = -1
     }
 }
