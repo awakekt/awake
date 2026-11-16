@@ -78,7 +78,10 @@ class Texture internal constructor(
     private val samplerInfo = uploaded.samplerInfo
     private val filtering = uploaded.filtering
     private val mipLevels = uploaded.mipLevels
-    private var samplerAnisotropy = 1
+
+    /** The anisotropic samples [sampler] was made with: 1 unless [resample] raised it. */
+    internal var samplerAnisotropy = 1
+        private set
 
     /**
      * Makes [sampler] again for [anisotropy] samples, when that changes how this texture samples, and

@@ -211,10 +211,15 @@ internal class PerFrameUniformSlots(
             if (samplerIndex < slot.samplers.size && slot.samplers[samplerIndex] != handle) {
                 writeSampler(slot, entry.binding, handle)
                 slot.samplers[samplerIndex] = handle
+                samplerRewrites++
             }
             samplerIndex++
         }
     }
+
+    /** Sampler bindings [refreshSamplers] rewrote for a texture's new sampler, for tests. */
+    internal var samplerRewrites = 0
+        private set
 
     private fun samplerFor(binding: Int, textures: Map<Int, Texture>, samplerTextures: Map<Int, Int>, shared: Texture?): Long {
         val own = samplerTextures[binding]

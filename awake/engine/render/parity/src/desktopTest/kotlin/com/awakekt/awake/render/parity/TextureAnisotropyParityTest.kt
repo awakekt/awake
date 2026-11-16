@@ -26,23 +26,23 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Anisotropic filtering on Vulkan (#1660): a striped ground seen at a grazing angle samples
- * differently at 8 samples than at 1, a `Nearest` texture does not change at all, and switching it
- * back and forth while a scene keeps drawing raises no validation error -- each material set takes
- * the new sampler before its frame binds it, and the old one is destroyed only after the frames in
- * flight that used it. Nothing here sets anisotropy for any other parity test: the renderer's
- * default is 1, so every baseline renders as before.
+ * Anisotropic filtering on Vulkan through the real scene path (#1660): a `Nearest` texture samples
+ * exactly as before at any setting, switching it back and forth while a scene keeps drawing raises no
+ * validation error -- each material set takes the new sampler before its frame binds it, and the old
+ * one is destroyed only after the frames in flight that used it -- and a request beyond the device is
+ * clamped. Nothing here sets anisotropy for any other parity test: the renderer's default is 1, so
+ * every baseline renders as before.
+ *
+ * That a linear texture filters differently is proved in `RendererAnisotropyTest`, not here: the PBR
+ * textured shader samples with `textureSampleGrad`, and lavapipe ignores sampler anisotropy for
+ * explicit gradients (a standalone Vulkan probe on this lavapipe: 0 of 16,384 pixels change between
+ * 1x and 16x through `textureGrad`, all of them through `texture`). A real GPU applies it to both; that
+ * pixel proof is a line on #1660.
  */
 class TextureAnisotropyParityTest {
     @Test
-    fun aGrazingGroundSamplesDifferentlyWithAnisotropyAndPixelArtDoesNot() = withVulkan { renderer ->
+    fun pixelArtSamplesTheSameAtAnySetting() = withVulkan { renderer ->
         assertTrue(renderer.maxSupportedAnisotropy >= SAMPLES, "lavapipe offers samplerAnisotropy up to ${renderer.maxSupportedAnisotropy}")
-        val off = renderer.grazingGround(TextureFiltering.Linear, anisotropy = 1)
-        val on = renderer.grazingGround(TextureFiltering.Linear, anisotropy = SAMPLES)
-        val changed = off.indices.step(4).count { off.channelDelta(on, it) > TOLERANCE }
-        println("TextureAnisotropy: $changed pixels changed between 1 and $SAMPLES samples")
-        assertTrue(changed > MIN_CHANGED, "the far ground resolves its stripes at $SAMPLES samples: $changed pixels changed")
-
         val nearestOff = renderer.grazingGround(TextureFiltering.Nearest, anisotropy = 1)
         val nearestOn = renderer.grazingGround(TextureFiltering.Nearest, anisotropy = SAMPLES)
         assertEquals(0, nearestOff.indices.step(4).count { nearestOff.channelDelta(nearestOn, it) > 0 }, "pixel art samples as before")
@@ -114,8 +114,6 @@ class TextureAnisotropyParityTest {
         const val TEXELS = 256
         const val REPEAT = 2f
         const val STRIPE = 8
-        const val TOLERANCE = 8
-        const val MIN_CHANGED = 200
         const val TOGGLES = 6
         const val FRAMES_PER_TOGGLE = 3
 

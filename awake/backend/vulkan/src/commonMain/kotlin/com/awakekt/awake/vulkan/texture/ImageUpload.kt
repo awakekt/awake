@@ -93,8 +93,13 @@ internal object ImageUpload {
             runOneTimeCommands { commandBuffer -> copy(commandBuffer, stagingBuffer, image, regions) }
             view = view(graphicsDevice, image, format, mipLevels, layerCount, isCubemap)
             uploaded = UploadedImage(
-                image, memory, view, sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels),
-                samplerCreateInfo, filtering, mipLevels,
+                image,
+                memory,
+                view,
+                sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels),
+                samplerCreateInfo,
+                filtering,
+                mipLevels,
             )
             return uploaded
         } finally {

@@ -134,6 +134,10 @@ class Material(
         createResources(texture.sampler.handle, texture.imageView.handle, pbr)
     }
 
+    /** Slot sets [uniformSlot] rewrote for the texture's new sampler, for tests. */
+    internal var samplerRewrites = 0
+        private set
+
     /** The texture whose sampler this material's sets bind, when it was made from one; see [uniformSlot]. */
     private var texture: Texture? = null
 
@@ -225,6 +229,7 @@ class Material(
                 VkDescriptorImageInfo(sampler = current, imageView = 0L),
             )
             slot.sampler = current
+            samplerRewrites++
         }
         if (frameIndex == 0 && drawSlotIndex == 0) {
             descriptorPool = slot.descriptorPool
@@ -385,6 +390,7 @@ class Material(
         /** A bare MVP matrix -- every material before skinning existed. A skinned material
          * requests `16 + 16 * jointCount` (MVP + joint palette) instead, see
          * `Renderer.createMaterial`'s own `uniformFloatCount` parameter. */
+
         /** One MVP matrix -- a plain-colored mesh's whole uniform block. */
         private val DEFAULT_UNIFORM_FLOAT_COUNT = UniformFields.DefaultMaterial.total
 

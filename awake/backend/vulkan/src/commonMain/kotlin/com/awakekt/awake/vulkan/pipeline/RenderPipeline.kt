@@ -215,6 +215,9 @@ class RenderPipeline(
 
     internal val contentFrameSlotCount: Int get() = checkNotNull(uniformSlots).size
 
+    /** Content sampler bindings rewritten for a texture's new sampler (#1660), for tests. */
+    internal val contentSamplerRewrites: Int get() = uniformSlots?.samplerRewrites ?: 0
+
     override val uniformBlock: UniformBlock? = uniformSlots?.uniformBlock(requireNotNull(uniforms))
 
     // destroy() is zero-handle-tolerant, so calling it on a partial-construction failure is
