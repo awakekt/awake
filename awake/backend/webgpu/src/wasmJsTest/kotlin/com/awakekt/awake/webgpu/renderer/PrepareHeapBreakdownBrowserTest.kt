@@ -88,12 +88,21 @@ class PrepareHeapBreakdownBrowserTest {
                 packer.pack(if (flip) models else oneMore, MAX_INSTANCES)
             }
             val packSame = perCall { packer.pack(models, MAX_INSTANCES) }
+            // The same-count pack, split (#1621): with a writer that writes nothing, the instance
+            // loop alone; with a hand-written float loop, the writer without `copyInto`; and
+            // `copyInto` called directly, without the packer.
+            val silent = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { _, _, _ -> })
+            val byHand = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { out, offset, model -> model.data.writeTo(out, offset) })
+            val packSilent = perCall { silent.pack(models, MAX_INSTANCES) }
+            val packByHand = perCall { byHand.pack(models, MAX_INSTANCES) }
+            val copyIntoAlone = perCall { for (index in models.indices) models[index].data.copyInto(floats, index * MAT4_FLOATS) }
             val resident = perCall { floats.copyOf() }
             buffer.close()
             println(
                 "PrepareHeapBreakdown: $draws draws a frame, $count instances a draw, $uploads instance uploads a frame; " +
                     "upload copy $copy B, write $write B, pack (count changed) $packChanged B, pack (same count) $packSame B, " +
-                    "resident copy $resident B, a call",
+                    "resident copy $resident B, a call; same-count pack split: no-op writer $packSilent B, hand-copied writer $packByHand B, " +
+                    "copyInto alone $copyIntoAlone B",
             )
             assertTrue(draws > 0, "the preparer is asked for the frame's draws")
             assertTrue(engine.errors.isEmpty(), "WebGPU validation errors: ${engine.errors}")
@@ -111,6 +120,14 @@ class PrepareHeapBreakdownBrowserTest {
             (heapNow() - before) / CALLS
         }
         return windows.sortedArray()[WINDOWS / 2].toInt()
+    }
+
+    private fun FloatArray.writeTo(out: FloatArray, offset: Int) {
+        var index = 0
+        while (index < size) {
+            out[offset + index] = this[index]
+            index += 1
+        }
     }
 
     private companion object {
