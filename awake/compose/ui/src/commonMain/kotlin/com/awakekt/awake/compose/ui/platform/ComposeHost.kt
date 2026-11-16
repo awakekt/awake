@@ -289,6 +289,11 @@ class ComposeHost(
         // afterwards would paint every frame one step stale.
         frameClock.advance(input.deltaSeconds)
         var composed = composeAndLayout(stages, input) { composeOrSkip(content, input) }
+        // Why this frame measured: the first layout's cause. A second pass below always composes, so
+        // its own cause is None and would hide why a skipped composition measured.
+        frameCounts.measureCause = measureSkip.cause
+        frameCounts.measureCauseSource = measureSkip.causeSource
+        frameCounts.measureCauseOwner = measureSkip.causeOwner
         // A size composition read and placement wrote (`onSizeChanged` into state, as a canvas sizes
         // its content) composes and lays out once more in this frame, so nothing is drawn a frame late
         // at its old size, or on the first frame at a guessed one (#1512). Once, so a write every
@@ -300,9 +305,6 @@ class ComposeHost(
         val measureSkipped = lastMeasureSkipped
         frameCounts.composed = composed
         frameCounts.measured = !measureSkipped
-        frameCounts.measureCause = measureSkip.cause
-        frameCounts.measureCauseSource = measureSkip.causeSource
-        frameCounts.measureCauseOwner = measureSkip.causeOwner
         frameCounts.nodesMeasured = LayoutStats.nodeMeasures - measuresBefore
         if (measureSkipped) skippedMeasures++
         placedOnce = true
