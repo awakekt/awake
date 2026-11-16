@@ -100,7 +100,7 @@ class DepthTarget(
         comparison: Boolean = false,
     ) : this(graphicsDevice, size, layers, arrayed, comparison, ShadowDepthFormat.Depth32Float)
 
-    private val vkFormat: VkFormat = format.toVkFormat()
+    private val vkFormat: VkFormat = vkDepthFormat(format)
 
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -302,17 +302,9 @@ class DepthTarget(
 
     /**
      * Whether the image is the shadow array a light renders into rather than the 1x1 [DORMANT_SIZE]
-     * stand-in [release] leaves bound (#1698).
+     * stand-in `release` leaves bound (#1698).
      */
     internal val resident: Boolean get() = size != DORMANT_SIZE
-
-    /**
-     * Shrinks the image to one [DORMANT_SIZE] layer, which the descriptor set keeps binding, so a
-     * shader that declares the array still samples something valid while no light casts (#1698).
-     * The caller waits for the device first, as for [reallocate], and clears the new layer before
-     * it is sampled.
-     */
-    internal fun release() = reallocate(layers = 1, size = DORMANT_SIZE)
 
     private fun releaseImage() {
         framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
@@ -489,7 +481,15 @@ class DepthTarget(
 }
 
 /** The Vulkan format a [ShadowDepthFormat] stores its texels in. */
-internal fun ShadowDepthFormat.toVkFormat(): VkFormat = when (this) {
+internal fun vkDepthFormat(format: ShadowDepthFormat): VkFormat = when (format) {
     ShadowDepthFormat.Depth32Float -> VkFormat.VK_FORMAT_D32_SFLOAT
     ShadowDepthFormat.Depth16Unorm -> VkFormat.VK_FORMAT_D16_UNORM
 }
+
+/**
+ * Shrinks the image to one [DepthTarget.DORMANT_SIZE] layer, which the descriptor set keeps binding,
+ * so a shader that declares the array still samples something valid while no light casts (#1698).
+ * The caller waits for the device first, as for [DepthTarget.reallocate], and clears the new layer
+ * before it is sampled.
+ */
+internal fun DepthTarget.release() = reallocate(layers = 1, size = DepthTarget.DORMANT_SIZE)

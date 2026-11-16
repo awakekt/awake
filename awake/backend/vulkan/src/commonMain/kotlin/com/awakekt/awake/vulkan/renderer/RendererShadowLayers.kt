@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.passes.shadowLayersNeeded
 
 /**
  * Sizes the shadow depth array before a presented frame's [input] is recorded (#1688, #1698): it
@@ -15,7 +16,7 @@ import com.awakekt.awake.render.command.GpuPassInput
  */
 internal fun Renderer.settleShadowArray(input: GpuPassInput) {
     if (depthPrePass == null) return
-    applyShadowLayers(shadowResidency.frame(shadowLayersNeeded(input), residentShadowLayers()))
+    applyShadowLayers(shadowResidency.frame(depthLayersDrawn(input), residentShadowLayers()))
 }
 
 /**
@@ -24,11 +25,11 @@ internal fun Renderer.settleShadowArray(input: GpuPassInput) {
  */
 internal fun Renderer.ensureShadowLayers(input: GpuPassInput) {
     if (depthPrePass == null) return
-    applyShadowLayers(shadowResidency.layersFor(shadowLayersNeeded(input), residentShadowLayers()))
+    applyShadowLayers(shadowResidency.layersFor(depthLayersDrawn(input), residentShadowLayers()))
 }
 
 /** The array layers [input] draws into: none while its environment turns shadows off. */
-private fun shadowLayersNeeded(input: GpuPassInput): Int =
+private fun depthLayersDrawn(input: GpuPassInput): Int =
     if (input.environment.shadowsEnabled) shadowLayersNeeded(input.prePasses) else 0
 
 private fun Renderer.residentShadowLayers(): Int {

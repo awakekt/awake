@@ -32,6 +32,7 @@ import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.texture.DepthTarget
+import com.awakekt.awake.vulkan.texture.release
 
 /**
  * Renders the frame's draws a second time, depth only, into [depthTarget].

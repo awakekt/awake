@@ -12,6 +12,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.passes.ShadowArrayResidency
 import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.render.renderer.createMaterial
@@ -22,7 +23,6 @@ import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.vulkan.renderer.Renderer
-import com.awakekt.awake.vulkan.renderer.ShadowArrayResidency
 import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -58,15 +58,13 @@ class RendererLazyShadowArrayTest {
         repeat(FRAMES) { renderer.frame(world) }
         val shadowed = renderer.pixels()
         assertTrue(shadowed.brightness() < unshadowed.brightness(), "the cube shadows the floor")
+        val allocated = "${target.layers} layers of ${target.size}, ${renderer.shadowMapBytes / MIB} MiB"
 
         world.setSunShadows(sun, false)
         repeat(RELEASE_FRAMES) { renderer.frame(world) }
         assertNotResident(renderer, "a residency window after the light stopped casting")
         assertContentEquals(unshadowed, renderer.pixels(), "the released frame draws as it did before allocation")
-        println(
-            "RendererLazyShadowArray: off ${renderer.shadowMapBytes} B; on ${target.layers} layers " +
-                "of ${target.size}, ${ShadowDepthFormat.Depth32Float.layerBytes(target.size, target.layers) / MIB} MiB",
-        )
+        println("RendererLazyShadowArray: off ${renderer.shadowMapBytes} B; on $allocated")
     }
 
     @Test

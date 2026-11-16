@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan.renderer
+package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.render.command.GpuSubPass
 
@@ -16,15 +16,15 @@ import com.awakekt.awake.render.command.GpuSubPass
  * cascades holds three layers, and one with a casting point light holds the cascade block and six
  * layers per point light.
  */
-internal fun shadowLayersNeeded(prePasses: List<GpuSubPass>): Int {
+fun shadowLayersNeeded(prePasses: List<GpuSubPass>): Int {
     var needed = 0
     for (index in prePasses.indices) needed = maxOf(needed, prePasses[index].targetLayer + 1)
     return needed
 }
 
 /**
- * How many shadow array layers stay resident, frame by frame (#1698). Pure bookkeeping: the renderer
- * reallocates when the answer changes.
+ * How many shadow array layers stay resident, frame by frame (#1698). Pure bookkeeping, shared by
+ * the backends: a renderer reallocates its array when the answer changes.
  *
  * Grows at once, the first frame a light needs more layers, so turning shadows on costs one frame.
  * Shrinks to the most any frame used in the last window of [releaseAfterFrames] frames, and to none
@@ -34,7 +34,7 @@ internal fun shadowLayersNeeded(prePasses: List<GpuSubPass>): Int {
  *
  * @property releaseAfterFrames Frames a layer must go unused before it is released.
  */
-internal class ShadowArrayResidency(val releaseAfterFrames: Int = DEFAULT_RELEASE_AFTER_FRAMES) {
+class ShadowArrayResidency(val releaseAfterFrames: Int = DEFAULT_RELEASE_AFTER_FRAMES) {
     init {
         require(releaseAfterFrames > 0) { "A residency window is at least one frame; was $releaseAfterFrames." }
     }

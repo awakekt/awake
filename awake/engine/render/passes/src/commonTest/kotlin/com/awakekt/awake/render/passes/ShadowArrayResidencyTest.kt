@@ -3,14 +3,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan.renderer
+package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
-import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes.uniforms.POINT_SHADOW_FACE_COUNT
+import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import kotlin.test.Test
 import kotlin.test.assertEquals

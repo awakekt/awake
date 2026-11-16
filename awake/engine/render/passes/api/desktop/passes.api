@@ -344,6 +344,24 @@ public final class com/awakekt/awake/render/passes/SceneUpscale {
 	public final fun chain (Lcom/awakekt/awake/render/texture/RenderTarget;II)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
 }
 
+public final class com/awakekt/awake/render/passes/ShadowArrayResidency {
+	public static final field Companion Lcom/awakekt/awake/render/passes/ShadowArrayResidency$Companion;
+	public static final field DEFAULT_RELEASE_AFTER_FRAMES I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun frame (II)I
+	public final fun getReleaseAfterFrames ()I
+	public final fun layersFor (II)I
+}
+
+public final class com/awakekt/awake/render/passes/ShadowArrayResidency$Companion {
+}
+
+public final class com/awakekt/awake/render/passes/ShadowArrayResidencyKt {
+	public static final fun shadowLayersNeeded (Ljava/util/List;)I
+}
+
 public final class com/awakekt/awake/render/passes/ShadowCascadesKt {
 	public static final fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;I)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public static synthetic fun shadowCascadeUniforms$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;

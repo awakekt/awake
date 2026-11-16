@@ -29,6 +29,7 @@ import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
+import com.awakekt.awake.render.passes.ShadowArrayResidency
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.recordPassFeatures

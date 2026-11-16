@@ -2187,6 +2187,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getOutputWidth ()I
 	public fun getRenderScale ()F
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
@@ -2238,6 +2239,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public static fun getShadowDepthFormat (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public static fun getShadowMapBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
@@ -2283,6 +2285,21 @@ public final class com/awakekt/awake/render/renderer/ShadowBudget {
 public final class com/awakekt/awake/render/renderer/ShadowBudget$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public final fun getReduced ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+}
+
+public final class com/awakekt/awake/render/renderer/ShadowDepthFormat : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/ShadowDepthFormat$Companion;
+	public static final field Depth16Unorm Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+	public static final field Depth32Float Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+	public final fun getBytesPerTexel ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun layerBytes (II)J
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
+}
+
+public final class com/awakekt/awake/render/renderer/ShadowDepthFormat$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 }
 
 public final class com/awakekt/awake/render/renderer/TextureSampling {
