@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.mesh
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.putFloats
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
@@ -55,7 +56,7 @@ class InstanceBuffer(
         GpuDataShape.Mat4,
         "InstanceBuffer",
         write = InstanceWriter { out, offset, model ->
-            model.data.copyInto(out, offset)
+            out.putFloats(offset, model.data)
         },
     )
 

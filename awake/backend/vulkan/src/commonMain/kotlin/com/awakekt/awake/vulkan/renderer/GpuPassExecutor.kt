@@ -31,6 +31,11 @@ internal class RendererGpuPassExecutor(
         val currentFrame = renderer.swapchainManager.currentFrame
         val imageIndex = renderer.acquireSwapchainImage(currentFrame) ?: return
         check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }
+        // An offscreen View submitted earlier in this frame was prepared against this slot and may
+        // still read its camera, light and shadow blocks on the GPU. Preparing a draw waits for it
+        // (VulkanDrawPreparer.startBatch), but a frame whose camera prepared none, or one presented
+        // without a scene, never got there (#1687). Free when nothing is outstanding or it already waited.
+        renderer.awaitSubmittedOffscreenCommandsFor(currentFrame)
         renderer.graphicsDevice.frameUniforms.write(currentFrame, input)
         val resolvedDraws = input.resolvedDraws
         val depthDraws = renderer.prepareDepthDraws(input)
