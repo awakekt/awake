@@ -807,7 +807,7 @@ jobs:
       # and a re-recording bundle creating no buffer (#1621).
       # Only these classes: the backend's draw-preparation benchmark is too long for this job.
       - name: GPU texture upload and render bundle browser tests
-        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*"
+        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*" --tests "*PlanningStageHeap*"
 
       - name: Upload the browser render tests' results
         if: always()
