@@ -50,6 +50,7 @@ import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.renderer.UiUploadStats
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -399,7 +400,33 @@ class Renderer internal constructor(
     // texture/glyph pipelines above.
     internal var uiRoundedQuadRenderPipeline: UiRenderPipeline? = null
 
-    internal val textureResources = TextureResourceManager<Texture>(Texture::destroy)
+    /** Samplers replaced for a new [maxAnisotropy], destroyed once no frame in flight can use them. */
+    internal val retiredSamplers = RetiredSamplers(graphicsDevice)
+
+    internal val textureResources = TextureResourceManager<Texture>(
+        onRegister = { texture -> retiredSamplers.retire(texture.resample(maxAnisotropy)) },
+        destroyResource = Texture::destroy,
+    )
+
+    override val maxSupportedAnisotropy: Int get() = graphicsDevice.maxSamplerAnisotropy
+
+    /**
+     * Clamped to the device; a change makes every registered texture's sampler again where it
+     * changes how it samples, and each material or content set takes the new sampler before its
+     * frame binds it (#1660). Textures uploaded later take it as they register.
+     *
+     * Setting the value it already has does nothing. Each change costs one `vkCreateSampler` per
+     * linear, mipmapped texture on the frame it is set, and one descriptor write per material or
+     * content slot the next time each is drawn; a slider dragged through 1, 2, 4, 8 and 16 pays that
+     * four times, and its replaced samplers are destroyed once the frames in flight have drained.
+     */
+    override var maxAnisotropy: Int = 1
+        set(value) {
+            val clamped = TextureSampling.anisotropy(value, maxSupportedAnisotropy)
+            if (clamped == field) return
+            field = clamped
+            textureResources.forEachTexture { retiredSamplers.retire(it.resample(clamped)) }
+        }
     internal val createdRenderTargets = mutableListOf<OffscreenRenderTarget>()
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice, maxFramesInFlight)
@@ -678,6 +705,7 @@ class Renderer internal constructor(
         imagePassExecutor.destroy()
         imagePassTextures.clear()
         textureResources.destroy()
+        retiredSamplers.destroyAll()
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()
         if (offscreenFence != 0L) Vulkan.vkDestroyFence(device, offscreenFence)
