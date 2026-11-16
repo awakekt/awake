@@ -70,7 +70,10 @@ class PlanningLoopHeapBrowserTest {
         ) + commandParts(family, scratch)
         val costs = parts.map { (name, pass) -> name to medianGrowth(PROPS, pass = pass) }
         println("PlanningLoopHeap: $PROPS renderers, bytes a renderer: " + costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } + " ($sink)")
-        assertTrue(costs.isNotEmpty())
+        // The fix's mechanism: the same fill with every argument passed allocates nothing, where
+        // leaving defaults to the bridge allocates (commandSet, kept to show it).
+        val everyArgument = costs.first { it.first == "setEveryArgument" }.second
+        assertTrue(everyArgument < 1.0, "a fill passing every argument took $everyArgument B")
     }
 
     /** Filling a pooled command per renderer, as the collector does, split into its parts. */

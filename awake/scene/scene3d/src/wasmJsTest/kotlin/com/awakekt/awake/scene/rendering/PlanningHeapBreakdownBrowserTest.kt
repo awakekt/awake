@@ -79,6 +79,8 @@ class PlanningHeapBreakdownBrowserTest {
             "frame" to { system.update(world, DELTA) },
         )
         val costs = parts.map { (name, pass) -> name to bytesPerRenderer(pass) }
+        val beforeParticles = costs.first { it.first == "beforeParticles" }.second
+        assertTrue(beforeParticles <= BEFORE_PARTICLES_BUDGET, "the draw loop took $beforeParticles B a renderer")
         return costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +
             ", frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB"
     }
@@ -141,6 +143,9 @@ class PlanningHeapBreakdownBrowserTest {
         const val WARMUP = 10
         const val SAMPLES = 9
         const val KB = 1024.0
+
+        /** The draw loop, bytes a renderer: 224 (157 over versioned transforms) before #1696, 0 after. */
+        const val BEFORE_PARTICLES_BUDGET = 8.0
         val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
     }
 }
