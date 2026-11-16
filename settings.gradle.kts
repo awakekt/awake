@@ -146,7 +146,8 @@ pluginManagement {
     includeBuild("build-logic")
     repositories {
         gradlePluginPortal()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        // Google before any other repository: AGP's plugin markers are only there, and a repository
+        // listed before it that fails to answer (rather than answering 404) stops the search there.
         google()
     }
 }
@@ -159,7 +160,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         mavenLocal()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         // io.ygdrasil stays off the snapshot repos: its pinned builds are served by the mirror below, and
         // a cached module recorded as coming from Sonatype is searched only there (awakekt/awake#826).
         maven("https://oss.sonatype.org/content/repositories/snapshots/") { content { excludeGroup("io.ygdrasil") } }
