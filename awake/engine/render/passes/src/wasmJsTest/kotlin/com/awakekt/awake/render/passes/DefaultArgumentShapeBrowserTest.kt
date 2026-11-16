@@ -41,6 +41,10 @@ class DefaultArgumentShapeBrowserTest {
             "twoIntsAllPassed" to medianGrowth(CALLS) { repeat(CALLS) { twoInts(it, 1) } },
             "objectDefault" to medianGrowth(CALLS) { repeat(CALLS) { objectDefault(it) } },
             "lambdaDefault" to medianGrowth(CALLS) { repeat(CALLS) { lambdaDefault(it) } },
+            "fourParams" to medianGrowth(CALLS) { repeat(CALLS) { four(it, it) } },
+            "sixParams" to medianGrowth(CALLS) { repeat(CALLS) { six(it, it, it, it) } },
+            "eightParams" to medianGrowth(CALLS) { repeat(CALLS) { eight(it, it, it, it, it, it) } },
+            "eightParamsOneDefault" to medianGrowth(CALLS) { repeat(CALLS) { eight(it, it, it, it, it, it, it) } },
             "manyParams" to medianGrowth(CALLS) { repeat(CALLS) { many(it, it, it, it, it, it, it, it, it, it) } },
             "manyParamsAllPassed" to medianGrowth(CALLS) { repeat(CALLS) { many(it, it, it, it, it, it, it, it, it, it, 0, 0) } },
             "memberMany" to medianGrowth(CALLS) { repeat(CALLS) { Holder.many(it, it, it, it, it, it, it, it, it, it) } },
@@ -62,6 +66,15 @@ class DefaultArgumentShapeBrowserTest {
         mesh, material, model, EMPTY_FLOATS, vertexAnimation, 0f, null, null, null, null, CullMode.Back, AlphaMode.Opaque, 0.5f,
         false, false, null, false, 0, 0, 0, true, false,
     )
+
+    private fun four(a: Int, b: Int, c: Int = 0, d: Int = 0) { sink[0] += a + b + c + d }
+
+    private fun six(a: Int, b: Int, c: Int, d: Int, e: Int = 0, f: Int = 0) { sink[0] += a + b + c + d + e + f }
+
+    @Suppress("LongParameterList")
+    private fun eight(a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int = 0, h: Int = 0) {
+        sink[0] += a + b + c + d + e + f + g + h
+    }
 
     private fun twoInts(a: Int, b: Int = 0) { sink[0] += a + b }
 

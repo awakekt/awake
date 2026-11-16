@@ -91,6 +91,8 @@ class CompileHeapBreakdownBrowserTest {
         val context = GpuDrawPreparationContext(viewProjection = lens.viewProjectionMatrix(1f, ClipSpace.WebGpu), cameraEye = lens.eye)
         val cascades = shadowCascadeData(light, environment)?.viewProjections.orEmpty()
         val batched = scratch.batcher.batch(requests, canInstance, canTint)
+        val sorter = StableListSort()
+        val sortable = ArrayList<GpuResolvedDraw>(DRAWS)
         val figures = linkedMapOf(
             "preparerOnly" to medianGrowth(DRAWS) { for (i in requests.indices) preparer.prepare(requests[i], i, context) },
             "signature" to medianGrowth(DRAWS) { scratch.signature.record(moved(), requests, light, environment, ClipSpace.WebGpu, 1f, null, emptyList(), ImagePassChain.Empty) },
@@ -106,11 +108,25 @@ class CompileHeapBreakdownBrowserTest {
                 prepare(scratch, batched, context)
                 scratch.draws.maskSubPasses(context.viewProjection)
             },
+            "sortTransparent" to medianGrowth(DRAWS) { sortCopy(sorter, sortable, com.awakekt.awake.render.command.TransparentOrder) },
+            "sortBatchKey" to medianGrowth(DRAWS) { sortCopy(sorter, sortable, BatchKeyOrder) },
+            "inIndices" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) if ((i and 7) in maskLayers.indices) sink++ },
+            "compareFloats" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) sink += resolved[i].depthSortKey.compareTo(resolved[DRAWS - 1 - i].depthSortKey) },
             "compileMoving" to medianGrowth(DRAWS) { compile(scratch, null) },
             "compileMovingWithStats" to medianGrowth(DRAWS) { compile(scratch, stats) },
         )
         val line = figures.entries.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" }
         println("CompileHeapBreakdown: $DRAWS draws, bytes a draw: $line")
+    }
+
+    private var sink = 0
+    private val maskLayers = List(3) { FloatArray(4) }
+
+    /** Refills [into] from the draws in their made order, then sorts it as preparation does. */
+    private fun sortCopy(sorter: StableListSort, into: ArrayList<GpuResolvedDraw>, order: Comparator<in GpuResolvedDraw>) {
+        into.clear()
+        into.addAll(resolved)
+        sorter.sort(into, order)
     }
 
     private fun moved(): Lens = lens.also { it.eye = Vec3f(step++ * 0.01f, 30f, 60f) }
@@ -137,6 +153,7 @@ class CompileHeapBreakdownBrowserTest {
     )
 
     private companion object {
+        val BatchKeyOrder: Comparator<GpuResolvedDraw> = Comparator { a, b -> a.batchKey.compareTo(b.batchKey) }
         const val DRAWS = 3_000
         const val MESHES = 190
         const val PIPELINES = 8
