@@ -164,7 +164,7 @@ abstract class GraphicsEngine(
 
     final override fun update(delta: Float) {
         if (!isReady || deviceLoss != null) return
-        applyRenderQuality()
+        applyRenderQuality(delta)
         val (width, height) = viewportSize()
         appLifecycle.update(
             AppFrame(
@@ -276,11 +276,14 @@ abstract class GraphicsEngine(
         renderer.drawDebugLines(lines)
     }
 
-    /** Sets this frame's render scale and effect quality from the host override and the app's setting. */
-    private fun applyRenderQuality() {
+    /**
+     * Sets this frame's render scale and effect quality from the host override and the app's setting;
+     * [delta], the frame's seconds, is what Auto's dynamic resolution reads without GPU timing.
+     */
+    private fun applyRenderQuality(delta: Float) {
         val override = renderScaleOverride
         if (override != null) renderer.renderScale = override()
-        renderQuality?.applyTo(renderer, applyScale = override == null)
+        renderQuality?.applyTo(renderer, applyScale = override == null, frameSeconds = delta)
         textureSettings?.applyTo(renderer)
     }
 

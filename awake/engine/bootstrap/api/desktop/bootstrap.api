@@ -66,9 +66,11 @@ public abstract interface annotation class com/awakekt/awake/engine/bootstrap/ds
 
 public final class com/awakekt/awake/engine/bootstrap/dsl/RenderQualityDsl {
 	public final fun getBudgets ()Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
+	public final fun getDynamicResolution ()Lcom/awakekt/awake/render/renderer/DynamicResolution;
 	public final fun getInitial ()Lcom/awakekt/awake/render/renderer/RenderQuality;
 	public final fun getPersistence ()Lcom/awakekt/awake/engine/platform/quality/RenderQualityPersistence;
 	public final fun setBudgets (Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;)V
+	public final fun setDynamicResolution (Lcom/awakekt/awake/render/renderer/DynamicResolution;)V
 	public final fun setInitial (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
 	public final fun setPersistence (Lcom/awakekt/awake/engine/platform/quality/RenderQualityPersistence;)V
 }
