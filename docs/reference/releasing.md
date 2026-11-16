@@ -86,12 +86,15 @@ deploy chose (#1694):
 
 - the newest `CORE_RELEASES` Core releases and the newest `VULKAN_RELEASES` Vulkan releases (2 and 3,
   set at the top of `.github/workflows/maven-fallback.yml`);
-- every release those releases' POMs name: a Vulkan release imports the Core BOM, and depends on Core
-  artifacts, of the Core release it was built against, so that release stays served for as long as
-  the Vulkan release does.
+- from any other release, only the artifacts those releases' POMs and Gradle modules name: a Vulkan
+  release imports the Core BOM, and depends on Core artifacts, of the Core release it was built
+  against, so that BOM and those artifacts, with their platform variants, stay served for as long as
+  the Vulkan release does. Not the rest of that Core release: 163 of its artifacts, 76 MB, rather than
+  the whole 141 MB bundle.
 
 An older release drops off the site once nothing it serves names it. GitHub Pages caps a site at 1 GB,
-which rules out keeping every release. **List Maven Central as well, first, never this site alone:**
+which rules out keeping every release: the site is about 720 MB, and a build over `ASSEMBLE_LIMIT_MB`
+fails before deploying, printing what each release adds. **List Maven Central as well, first, never this site alone:**
 Central keeps every release, and this site only covers the recent ones while Central refuses or
 rate-limits them. A deploy fails, and leaves the live site as it was, when a served POM names a
 release it cannot hold, and checks after deploying that every one it names resolves from the site.
