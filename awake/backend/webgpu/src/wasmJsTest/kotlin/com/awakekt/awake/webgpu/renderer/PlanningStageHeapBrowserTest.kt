@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.renderer.RenderDrawStage
 import com.awakekt.awake.render.renderer.RenderDrawStages
@@ -25,6 +26,7 @@ import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
+import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 
 /**
  * What [RenderSystem3D]'s own collect and compile stages allocate on wasm, a frame at a time, with a
@@ -88,7 +90,7 @@ class PlanningStageHeapBrowserTest {
         world.add(world.create(), camera)
         world.add(world.create(), Light(direction = Vec3f(0.4f, 1f, 0.3f)))
         val heap = StageHeap()
-        val system = RenderSystem3D(renderer).apply { drawStages = heap }
+        val system = RenderSystem3D(Offscreen(renderer), drawPreparer = renderer.gpuDrawPreparer).apply { drawStages = heap }
         var frame = 0
         fun step() {
             if (cameraMoves) camera.lens.eye = Vec3f(0.05f * (frame % 200), 30f, 60f)
@@ -105,6 +107,16 @@ class PlanningStageHeapBrowserTest {
             compile[i] = heap.compile
         }
         return median(collect) / KB to median(compile) / KB
+    }
+
+    /**
+     * [renderer], drawing each frame into an offscreen target: the test page's canvas is never
+     * configured for presenting, and only the planning before the draw is measured.
+     */
+    private class Offscreen(private val renderer: Renderer) : RenderRenderer by renderer {
+        private val target = renderer.createRenderTarget(BundleBrowserEngine.SIZE, BundleBrowserEngine.SIZE)
+
+        override fun draw(input: GpuPassInput) = renderer.renderToTexture(target, input)
     }
 
     /** The JVM probe's town: [PROPS] props on a 4 m grid, cycling through [MESHES] meshes and materials. */
