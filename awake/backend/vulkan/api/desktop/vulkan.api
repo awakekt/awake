@@ -439,6 +439,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public final fun getRedrawsStillFrames ()Z
 	public fun getRenderScale ()F
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public fun getShadowMapBytes ()J
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
@@ -531,6 +532,7 @@ public final class com/awakekt/awake/vulkan/texture/DepthTarget {
 	public final fun clearToFar (J)V
 	public final fun destroy ()V
 	public final fun framebufferFor (I)J
+	public final fun getAllocatedBytes ()J
 	public final fun getArrayed ()Z
 	public final fun getDescriptorSetLayout ()J
 	public final fun getFramebuffer ()J

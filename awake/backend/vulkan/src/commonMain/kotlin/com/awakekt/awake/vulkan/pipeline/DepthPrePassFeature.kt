@@ -130,7 +130,19 @@ internal class DepthPrePassFeature(
         cascades: GpuShadowCascadeData,
     ) = recordCommands(commandBuffer, frameIndex, drawCalls, castFormat, cascades.viewProjections)
 
-    private val initializedLayers = BooleanArray(depthTarget.layers)
+    private var initializedLayers = BooleanArray(depthTarget.layers)
+
+    /**
+     * Grows [depthTarget] to [layers] when it holds fewer, and forgets which layers were cleared: the
+     * new image's layers all start `UNDEFINED`. Whether it grew. The caller has waited for the device
+     * and has not begun recording a frame that binds the target (#1688).
+     */
+    internal fun ensureLayers(layers: Int): Boolean {
+        if (layers <= depthTarget.layers) return false
+        depthTarget.reallocate(layers, depthTarget.size)
+        initializedLayers = BooleanArray(layers)
+        return true
+    }
 
     /** Records the generic packet's arbitrary layered depth resource. */
     fun recordCommands(

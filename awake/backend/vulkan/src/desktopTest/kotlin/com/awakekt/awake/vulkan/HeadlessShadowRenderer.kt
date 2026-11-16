@@ -42,12 +42,21 @@ import kotlinx.coroutines.runBlocking
  * wires it: a runtime pipeline gets the shadow map when its shader declares it, and a feature's
  * depth pipeline casts into the cascades.
  */
-internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false): Pair<Renderer, () -> Unit> {
+internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false, layers: Int = MAX_SHADOW_TARGET_LAYERS): Pair<Renderer, () -> Unit> =
+    newShadowRenderer(size, presentable, layers, window = 0L, framesInFlight = MAX_FRAMES_IN_FLIGHT)
+
+/**
+ * [newHeadlessShadowRenderer] presenting to a real GLFW [window] (#1688), with [framesInFlight]
+ * frames in flight, so a frame is still on the GPU while the next one records -- what a headless
+ * swapchain with one frame in flight never shows.
+ */
+internal fun newWindowedShadowRenderer(window: Long, layers: Int, framesInFlight: Int): Pair<Renderer, () -> Unit> =
+    newShadowRenderer(0, presentable = true, layers, window, framesInFlight)
+
+private fun newShadowRenderer(size: Int, presentable: Boolean, layers: Int, window: Long, framesInFlight: Int): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
-    graphicsDevice.createHeadless()
-    val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
-    if (presentable) swapchainManager.createHeadlessPresentable(size, size) else swapchainManager.createHeadless(size, size)
-    val depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true)
+    val swapchainManager = deviceAndSwapchain(graphicsDevice, size, presentable, window, framesInFlight)
+    val depthTarget = DepthTarget(graphicsDevice, layers = layers, arrayed = true, comparison = true)
     val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
     val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
     val primary = RenderPipeline(
@@ -62,10 +71,10 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
     val transferContext = TransferContext(graphicsDevice)
-    val registry = contentPipelines(graphicsDevice, swapchainManager, sceneRenderPass, descriptorSetLayout, depthTarget)
-    val depthPass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout)
+    val registry = contentPipelines(graphicsDevice, swapchainManager, sceneRenderPass, descriptorSetLayout, depthTarget, framesInFlight)
+    val depthPass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout, framesInFlight)
     val attacher = ContentFeatureAttacher(
-        VulkanContentFeatureGpu(graphicsDevice, transferContext, registry, depthPass, MAX_FRAMES_IN_FLIGHT, ::spirvPair),
+        VulkanContentFeatureGpu(graphicsDevice, transferContext, registry, depthPass, framesInFlight, ::spirvPair),
     )
     val cleanup = headlessCleanup(
         graphicsDevice,
@@ -79,7 +88,7 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         swapchainManager = swapchainManager,
         pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionNormalColor),
         renderFeatures = listOf(
-            lineFeature(graphicsDevice, swapchainManager, sceneRenderPass),
+            lineFeature(graphicsDevice, swapchainManager, sceneRenderPass, framesInFlight),
             attacher.beforeGeometry,
             attacher.afterGeometry,
             UiRenderFeature(VulkanUiPass()),
@@ -87,7 +96,7 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         depthPrePass = depthPass,
         transferContext = transferContext,
         uiShaderPairs = runBlocking { defaultUiShaderPairs() },
-        maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
+        maxFramesInFlight = framesInFlight,
     )
     renderer.contentFeatureHost = attacher
     if (presentable) swapchainManager.createSyncObjects()
@@ -102,8 +111,22 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
     }
 }
 
+/** Creates [graphicsDevice] for [window], or headless when it is `0`, and its swapchain. */
+private fun deviceAndSwapchain(graphicsDevice: GraphicsDevice, size: Int, presentable: Boolean, window: Long, framesInFlight: Int) =
+    if (window != 0L) {
+        // A windowed device only prints validation errors unless told otherwise.
+        graphicsDevice.failOnValidationError = true
+        graphicsDevice.create(window)
+        SwapchainManager(graphicsDevice, framesInFlight, surfaceExtentProvider = { surfaceFramebufferExtent(window) }).also { it.create() }
+    } else {
+        graphicsDevice.createHeadless()
+        SwapchainManager(graphicsDevice, framesInFlight).also {
+            if (presentable) it.createHeadlessPresentable(size, size) else it.createHeadless(size, size)
+        }
+    }
+
 /** Debug lines, drawn with the opaque geometry. */
-private fun lineFeature(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, sceneRenderPass: Long) =
+private fun lineFeature(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, sceneRenderPass: Long, framesInFlight: Int) =
     OpaqueRenderFeature(
         VulkanLinePass(
             LineRenderPipeline(
@@ -111,7 +134,7 @@ private fun lineFeature(graphicsDevice: GraphicsDevice, swapchainManager: Swapch
                 swapchainManager,
                 sceneRenderPass,
                 runBlocking { packShaderPair("debug_line") },
-                MAX_FRAMES_IN_FLIGHT,
+                framesInFlight,
             ),
         ),
     )
@@ -123,13 +146,14 @@ private fun contentPipelines(
     sceneRenderPass: Long,
     descriptorSetLayout: DescriptorSetLayoutHandle,
     depthTarget: DepthTarget,
+    framesInFlight: Int,
 ) = PipelineRegistry(
     VulkanPipelineFactory(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
         renderPass = sceneRenderPass,
         descriptorSetLayout = descriptorSetLayout,
-        framesInFlight = MAX_FRAMES_IN_FLIGHT,
+        framesInFlight = framesInFlight,
         declaredEngineSetLayouts = mapOf(BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
         loadShaders = ::spirvPair,
     ),
@@ -140,6 +164,7 @@ private fun depthPrePass(
     graphicsDevice: GraphicsDevice,
     depthTarget: DepthTarget,
     descriptorSetLayout: DescriptorSetLayoutHandle,
+    framesInFlight: Int,
 ) = DepthPrePassFeature(
     depthTarget,
     DepthOnlyPipeline(
@@ -149,8 +174,8 @@ private fun depthPrePass(
         runBlocking { packShaderPair("shadow_depth") },
         VertexFormat.PositionNormalColor,
         depthTarget.size,
-        cascadeCount = depthTarget.layers,
-        framesInFlight = MAX_FRAMES_IN_FLIGHT,
+        cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+        framesInFlight = framesInFlight,
     ),
 )
 

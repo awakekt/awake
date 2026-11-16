@@ -29,11 +29,9 @@ import io.ygdrasil.webgpu.TextureViewDescriptor
  * rendered offscreen. A shadow map is the one use today.
  */
 class DepthTarget(
-    graphicsDevice: GraphicsDevice,
-    /** Edge length, in texels, of the square depth texture. */
-    val size: Int = DEFAULT_SIZE,
-    /** One layer per shadow cascade -- Vulkan's `DepthTarget.layers`, same reasoning. */
-    val layers: Int = 1,
+    private val graphicsDevice: GraphicsDevice,
+    size: Int = DEFAULT_SIZE,
+    layers: Int = 1,
     /** Whether [depthView] is an array view; see Vulkan's `DepthTarget.arrayed` for why this is
      * declared rather than derived from [layers]. */
     val arrayed: Boolean = false,
@@ -45,11 +43,48 @@ class DepthTarget(
      */
     comparison: Boolean = false,
 ) {
+    /** Edge length, in texels, of the square depth texture. */
+    var size: Int = size
+        private set
+
+    /** One layer per shadow cascade -- Vulkan's `DepthTarget.layers`, same reasoning. Grows when a
+     * frame draws more layers than it holds; see [reallocate]. */
+    var layers: Int = layers
+        private set
+
+    /** The texture's bytes: [layers] of [size] squared 32-bit depth. */
+    val allocatedBytes: Long get() = size.toLong() * size * Float.SIZE_BYTES * layers
+
     /**
      * The `Depth32Float` texture, with [layers] array layers. It is both a render attachment and
-     * bindable for sampling.
+     * bindable for sampling. Replaced by [reallocate].
      */
-    val depthTexture: GPUTexture = graphicsDevice.wgpuContext.device.createTexture(
+    var depthTexture: GPUTexture = createTexture()
+        private set
+
+    /** What a shader samples: the whole array when [arrayed], layer 0 otherwise. */
+    var depthView: GPUTextureView = createSampledView()
+        private set
+
+    /** One per layer: a render pass attaches a single layer, so a cascade renders through its
+     * own view. */
+    private var layerViews: List<GPUTextureView> = createLayerViews()
+
+    /**
+     * A new texture of [layers] layers of [size] texels, its views with it; the old ones are closed.
+     * Work already submitted against them still completes, as WebGPU defines a texture's destroy.
+     * Anything built over [depthView] -- a bind group -- is the caller's to rebuild.
+     */
+    internal fun reallocate(layers: Int, size: Int = this.size) {
+        releaseTexture()
+        this.layers = layers
+        this.size = size
+        depthTexture = createTexture()
+        depthView = createSampledView()
+        layerViews = createLayerViews()
+    }
+
+    private fun createTexture(): GPUTexture = graphicsDevice.wgpuContext.device.createTexture(
         TextureDescriptor(
             size = Extent3D(
                 width = size.toUInt(),
@@ -62,8 +97,7 @@ class DepthTarget(
         ),
     )
 
-    /** What a shader samples: the whole array when [arrayed], layer 0 otherwise. */
-    val depthView: GPUTextureView = depthTexture.createView(
+    private fun createSampledView(): GPUTextureView = depthTexture.createView(
         TextureViewDescriptor(
             dimension = if (arrayed) GPUTextureViewDimension.TwoDArray else GPUTextureViewDimension.TwoD,
             baseArrayLayer = 0u,
@@ -71,9 +105,7 @@ class DepthTarget(
         ),
     )
 
-    /** One per layer: a render pass attaches a single layer, so a cascade renders through its
-     * own view. */
-    private val layerViews: List<GPUTextureView> = List(layers) { layer ->
+    private fun createLayerViews(): List<GPUTextureView> = List(layers) { layer ->
         depthTexture.createView(
             TextureViewDescriptor(
                 dimension = GPUTextureViewDimension.TwoD,
@@ -118,9 +150,13 @@ class DepthTarget(
 
     /** Closes the views and the sampler derived from [depthTexture], then the texture itself. */
     fun destroy() {
+        releaseTexture()
+        sampler.close()
+    }
+
+    private fun releaseTexture() {
         layerViews.forEach(GPUTextureView::close)
         depthView.close()
-        sampler.close()
         depthTexture.close()
     }
 
