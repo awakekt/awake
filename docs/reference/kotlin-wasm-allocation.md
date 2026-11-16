@@ -59,6 +59,12 @@ None of this matters on the JVM, where the same code runs without allocating, so
 
 ## Still open
 
-The scene planning test's compile, run over its town's own draws, measures 172 B a renderer
-(130 with transforms built). Synthetic frames of the same shape compile at 12–26 B a draw. It is
+The scene planning test's compile over its town's own draws measures 172 B a renderer (132 with
+transforms built). The same draws, copied into fresh commands carrying only mesh, material, model,
+bounds, `transparent` and `shadowsOnly`, compile at 15 B (17). Synthetic frames of the same shape
+compile at 12–26 B a draw.
+
+What has been ruled out: the light (165 without it), the environment (172 with the default), and the
+preparer (0 on its own). The cost follows a field the scene sets and the copies leave at its default,
+such as the extras, vertex animation, time, cull mode, alpha mode, shadow casting or mask layer. It is
 tracked on #1621.
