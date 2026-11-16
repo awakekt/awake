@@ -1,0 +1,1 @@
+- `Renderer.frameDrawReuse` reports, for the last submitted frame, the draw packets built and reused and the render bundles encoded (`DrawReuseStats`); WebGPU counts them. Built only when read, so a host that never reads it pays nothing.

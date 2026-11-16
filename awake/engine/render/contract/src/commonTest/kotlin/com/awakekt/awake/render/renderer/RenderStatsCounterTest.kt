@@ -125,4 +125,19 @@ class RenderStatsCounterTest {
     fun aShadowPassIsBegunNotTagged() {
         assertFailsWith<IllegalArgumentException> { RenderStatsCounter().countAs(RenderPassKind.Shadow) }
     }
+
+    @Test
+    fun drawReuseIsEachFramesGrowthOfTheBackendsTotals() {
+        val counter = RenderStatsCounter()
+        counter.publish()
+        assertEquals(null, counter.latestDrawReuse, "a backend that never reports reuse publishes none")
+
+        counter.drawReuseTotals(packetsBuilt = 40, packetsReused = 0, bundlesEncoded = 6)
+        counter.publish()
+        assertEquals(DrawReuseStats(packetsBuilt = 40, packetsReused = 0, bundlesEncoded = 6), counter.latestDrawReuse)
+
+        counter.drawReuseTotals(packetsBuilt = 41, packetsReused = 39, bundlesEncoded = 6)
+        counter.publish()
+        assertEquals(DrawReuseStats(packetsBuilt = 1, packetsReused = 39, bundlesEncoded = 0), counter.latestDrawReuse)
+    }
 }
