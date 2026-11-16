@@ -49,6 +49,9 @@ class GraphicsDevice {
     internal var anisotropy = 1
         private set
 
+    /** Top mip levels a texture uploaded with [com.awakekt.awake.webgpu.texture.Texture.skippingMips] leaves out (#1660). */
+    internal var mipSkip = 0
+
     /** Makes every sampled texture's sampler again for [samples], bumping [samplerGeneration] if any changed. */
     internal fun applyAnisotropy(samples: Int) {
         anisotropy = samples

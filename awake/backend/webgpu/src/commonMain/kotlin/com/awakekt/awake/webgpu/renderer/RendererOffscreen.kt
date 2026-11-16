@@ -69,16 +69,7 @@ private fun Renderer.createPbrResources(material: Material, base: Texture, maps:
 }
 
 internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =
-    Texture(
-        graphicsDevice,
-        {},
-        asset.data,
-        asset.width,
-        asset.height,
-        layerCount = asset.layerCount,
-        isCubemap = asset.isCubemap,
-        filtering = asset.filtering,
-    ).let(textureResources::register)
+    Texture.skippingMips(graphicsDevice, asset).let(textureResources::register)
 
 internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): RenderTarget {
     lateinit var target: OffscreenRenderTarget

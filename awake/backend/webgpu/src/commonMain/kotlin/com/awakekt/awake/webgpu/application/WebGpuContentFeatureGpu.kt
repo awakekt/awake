@@ -73,10 +73,18 @@ internal class WebGpuContentFeatureGpu(
         )
     }
 
-    private fun uploadTextures(feature: ContentFeature): Map<Int, Texture> =
-        feature.textures.mapValues { (_, asset) ->
-            Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
+    // A binding written after upload keeps every level, at the size its writes are in; the rest are
+    // only sampled by UV and leave out the top levels mip skip asks for (#1660).
+    private fun uploadTextures(feature: ContentFeature): Map<Int, Texture> {
+        val written = feature.textureUpdates?.bindings.orEmpty()
+        return feature.textures.mapValues { (binding, asset) ->
+            if (binding in written) {
+                Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
+            } else {
+                Texture.skippingMips(graphicsDevice, asset)
+            }
         } + feature.images.mapValues { (_, image) -> uploadImage(image) }
+    }
 
     /** [feature]'s geometry, and what frees it with [textures]. */
     private fun uploadGeometry(feature: ContentFeature, textures: Map<Int, Texture>): ContentUpload {
@@ -116,8 +124,7 @@ internal class WebGpuContentFeatureGpu(
             }
         }
         // A refused copy lands here too.
-        val asset = image.toTextureAsset()
-        return Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, filtering = asset.filtering)
+        return Texture.skippingMips(graphicsDevice, image.toTextureAsset())
     }
 
     override suspend fun addDepthCaster(pipeline: RenderPipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload? {

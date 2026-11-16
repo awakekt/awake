@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.renderer
 
+import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.TextureFiltering
 
 /**
@@ -35,4 +36,18 @@ object TextureSampling {
      */
     fun levelsToSkip(filtering: TextureFiltering, levels: Int, mipSkip: Int): Int =
         if (filtering == TextureFiltering.Nearest || levels <= 1) 0 else mipSkip(mipSkip).coerceAtMost(levels - 1)
+
+    /**
+     * Top levels to leave out of a block-compressed [image]'s own chain at [mipSkip], as
+     * [levelsToSkip] for its level count, and fewer where the level that would become the base is not
+     * whole blocks: a GPU sizes a block-compressed image in whole blocks. One level skips nothing.
+     */
+    fun levelsToSkip(image: CompressedTextureImage, filtering: TextureFiltering, mipSkip: Int): Int {
+        var skip = levelsToSkip(filtering, image.levels.size, mipSkip)
+        while (skip > 0 && !image.wholeBlocksAt(skip)) skip--
+        return skip
+    }
+
+    private fun CompressedTextureImage.wholeBlocksAt(level: Int): Boolean =
+        levelWidth(level) % format.blockWidth == 0 && levelHeight(level) % format.blockHeight == 0
 }

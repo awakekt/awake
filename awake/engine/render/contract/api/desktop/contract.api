@@ -2253,6 +2253,7 @@ public final class com/awakekt/awake/render/renderer/TextureSampling {
 	public static final field MAX_MIP_SKIP I
 	public final fun anisotropy (II)I
 	public final fun anisotropyFor (Lcom/awakekt/awake/render/texture/TextureFiltering;I)I
+	public final fun levelsToSkip (Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/TextureFiltering;I)I
 	public final fun levelsToSkip (Lcom/awakekt/awake/render/texture/TextureFiltering;II)I
 	public final fun mipSkip (I)I
 }
