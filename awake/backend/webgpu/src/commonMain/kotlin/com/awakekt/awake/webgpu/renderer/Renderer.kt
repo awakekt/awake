@@ -36,6 +36,7 @@ import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.renderer.UiUploadStats
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -246,6 +247,25 @@ class Renderer internal constructor(
             field = RenderScale.coerce(value)
         }
 
+    /** WebGPU's own ceiling: every adapter accepts `maxAnisotropy` up to 16 and clamps it below that. */
+    override val maxSupportedAnisotropy: Int get() = MAX_WEBGPU_ANISOTROPY
+
+    /**
+     * Clamped to 16; a change makes the sampler of every linear, mipmapped texture on the device
+     * again -- content features' included -- and bumps its sampler generation, so each cached bind
+     * group is built again before it is next bound (#1660). Setting the value it already has does
+     * nothing; a change costs one `createSampler` per such texture on the frame it is set, and one
+     * bind group per material or content group the next time each is drawn. Textures created later
+     * take the current value.
+     */
+    override var maxAnisotropy: Int = 1
+        set(value) {
+            val clamped = TextureSampling.anisotropy(value, maxSupportedAnisotropy)
+            if (clamped == field) return
+            field = clamped
+            graphicsDevice.applyAnisotropy(clamped)
+        }
+
     /** The target the scene renders into below full [renderScale]; see [SceneScaleTarget]. */
     internal val sceneScale = SceneScaleTarget(graphicsDevice) { renderPipeline.multisample.count }
 
@@ -450,6 +470,9 @@ class Renderer internal constructor(
      * API.
      */
     companion object {
+        /** WebGPU's largest `maxAnisotropy`: implementations clamp anything above it. */
+        internal const val MAX_WEBGPU_ANISOTROPY = 16
+
         /** Matches the Vulkan backend's own batching budget; see its MAX_UI_QUADS. */
         internal const val MAX_UI_QUADS = 256
 
