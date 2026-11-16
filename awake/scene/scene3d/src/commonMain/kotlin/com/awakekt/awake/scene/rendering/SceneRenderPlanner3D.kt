@@ -18,6 +18,8 @@ import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.ScenePassScratch
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.renderer.RenderDrawStage
+import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.TransparentDrawSources
@@ -67,6 +69,9 @@ internal class SceneRenderPlanner3D(
             geometryFeature.minShadowCasterRatio = value
         }
 
+    /** Told around [plan]'s collect and compile stages while set; [RenderSystem3D] sets it for its own frame only. */
+    var stages: RenderDrawStages? = null
+
     /** Plans [camera]'s view at [aspect], into [viewport] when it fills only part of the target. */
     fun plan(
         world: World,
@@ -80,6 +85,8 @@ internal class SceneRenderPlanner3D(
         drawStats: SceneDrawStats? = null,
         transparentSources: TransparentDrawSources? = null,
     ): PlannedFrame {
+        val stages = stages
+        stages?.begin(RenderDrawStage.Collect)
         drawCalls.clear()
         transparentSources?.reset()
         // Features first, though their draws go after the opaque geometry: the light they settle
@@ -114,6 +121,8 @@ internal class SceneRenderPlanner3D(
             com.awakekt.awake.render.imagepass.ImagePassChain.Empty
         }
 
+        stages?.end(RenderDrawStage.Collect)
+        stages?.begin(RenderDrawStage.Compile)
         val rejectedBefore = drawPreparer.rejected
         drawPreparer.rejected = 0
         val passInput = ScenePassCompiler.compile(
@@ -130,6 +139,7 @@ internal class SceneRenderPlanner3D(
             drawStats = drawStats,
             scratch = passScratch,
         )
+        stages?.end(RenderDrawStage.Compile)
         return PlannedFrame(
             passInput = passInput,
             submittedDrawCalls = drawCalls.size,

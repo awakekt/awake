@@ -72,6 +72,28 @@ class ResolvedDrawReuseTest {
         assertNotEquals(near, far, "a transparent draw is ordered by its distance, so its packet carries the new one")
     }
 
+    @Test
+    fun aKeptPacketKeepsItsDrawAfterLaterDrawsArePrepared() = withScene { scene ->
+        // The preparer fills one prepared draw again for each draw (#1621). A packet a frame still
+        // reads must be a copy of it, not it: here a later frame's draws differ in every field a
+        // packet carries, and the first frame's packet must still describe its own draw.
+        val first = scene.frame(listOf(scene.prop(x = 0f)), eyeX = 0f).single()
+        val binding = first.materialBinding
+        val vertices = first.vertexBuffer
+        val count = first.elementCount
+        val pipeline = first.pipeline
+
+        val later = scene.frame(listOf(scene.prop(x = 4f, transparent = true, material = scene.other)), eyeX = 6f).single()
+
+        assertTrue(later !== first, "a different draw is a different packet")
+        assertNotEquals(binding, later.materialBinding, "the later draw binds its own material")
+        assertEquals(binding, first.materialBinding, "the kept packet still binds its own material")
+        assertEquals(vertices, first.vertexBuffer)
+        assertEquals(count, first.elementCount)
+        assertEquals(pipeline, first.pipeline, "nor did its pipeline change under it")
+        assertEquals(false, first.transparent)
+    }
+
     private fun <T> withScene(block: (Scene) -> T): T = webGpuHeadlessScene().use { session -> Scene(session.renderer).use(block) }
 
     /** Collects the packets a frame resolves. */
@@ -86,15 +108,16 @@ class ResolvedDrawReuseTest {
         private val target = renderer.createRenderTarget(SIZE, SIZE)
         private val mesh = renderer.createMesh(triangle())
         private val lit = renderer.createMaterial(uniformFloatCount = MaterialUniformLayouts.LitShadow.total)
+        val other = renderer.createMaterial(uniformFloatCount = MaterialUniformLayouts.LitShadow.total)
         private val webGpu = (renderer as GpuDrawPreparationSource).gpuDrawPreparer as WebGpuDrawPreparer
         private val preparer = Collecting(webGpu)
         private val sun = SceneLight(direction = Vec3f(0.4f, 1f, 0.3f), color = Vec3f(1f, 1f, 1f))
         private val scratch = ScenePassScratch()
         val cache get() = webGpu.resolvedDraws
 
-        fun prop(x: Float, transparent: Boolean = false) = RenderDrawCommand(
+        fun prop(x: Float, transparent: Boolean = false, material: com.awakekt.awake.render.material.Material = lit) = RenderDrawCommand(
             mesh,
-            lit,
+            material,
             model = Mat4().translate(x, 0f, 0f),
             worldBounds = Aabb(Vec3f(x - 1f, -1f, -1f), Vec3f(x + 1f, 1f, 1f)),
             transparent = transparent,
@@ -116,6 +139,7 @@ class ResolvedDrawReuseTest {
         override fun close() {
             mesh.destroy()
             lit.destroy()
+            other.destroy()
             target.destroy()
         }
     }

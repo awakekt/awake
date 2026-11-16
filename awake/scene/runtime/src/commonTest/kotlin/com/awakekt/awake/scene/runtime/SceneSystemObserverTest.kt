@@ -82,17 +82,14 @@ class SceneSystemObserverTest {
         val drawing = scene.marks.dropWhile { it.second != "infrastructure:Extraction" }
         val extraction = "infrastructure:Extraction"
         assertEquals(
-            listOf(
-                "before" to extraction, "after" to extraction,
-                "before" to SceneSystemObserver.RENDER_PREPARE, "after" to SceneSystemObserver.RENDER_PREPARE,
-                "before" to extraction, "after" to extraction,
-                "before" to SceneSystemObserver.RENDER_UPLOAD, "after" to SceneSystemObserver.RENDER_UPLOAD,
-                "before" to extraction, "after" to extraction,
-                "before" to SceneSystemObserver.RENDER_RECORD, "after" to SceneSystemObserver.RENDER_RECORD,
-                "before" to extraction, "after" to extraction,
-                "before" to SceneSystemObserver.RENDER_SUBMIT, "after" to SceneSystemObserver.RENDER_SUBMIT,
-                "before" to extraction, "after" to extraction,
-            ),
+            listOf("before" to extraction, "after" to extraction) + listOf(
+                SceneSystemObserver.RENDER_COLLECT,
+                SceneSystemObserver.RENDER_COMPILE,
+                SceneSystemObserver.RENDER_PREPARE,
+                SceneSystemObserver.RENDER_UPLOAD,
+                SceneSystemObserver.RENDER_RECORD,
+                SceneSystemObserver.RENDER_SUBMIT,
+            ).flatMap { stage -> listOf("before" to stage, "after" to stage, "before" to extraction, "after" to extraction) },
             drawing,
             "no mark encloses another: the system's mark is ended around each stage",
         )
