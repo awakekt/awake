@@ -110,6 +110,16 @@ class CompileHeapBreakdownBrowserTest {
             },
             "sortTransparent" to medianGrowth(DRAWS) { sortCopy(sorter, sortable, com.awakekt.awake.render.command.TransparentOrder) },
             "sortBatchKey" to medianGrowth(DRAWS) { sortCopy(sorter, sortable, BatchKeyOrder) },
+            "sortInline" to medianGrowth(DRAWS) {
+                sortable.clear()
+                sortable.addAll(resolved)
+                sorter.sortWith(sortable) { a, b -> com.awakekt.awake.render.command.compareTransparent(a, b) }
+            },
+            "refillOnly" to medianGrowth(DRAWS) {
+                sortable.clear()
+                sortable.addAll(resolved)
+            },
+            "comparatorCalls" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) sink += BatchKeyOrder.compare(resolved[i], resolved[DRAWS - 1 - i]) },
             "inIndices" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) if ((i and 7) in maskLayers.indices) sink++ },
             "compareFloats" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) sink += resolved[i].depthSortKey.compareTo(resolved[DRAWS - 1 - i].depthSortKey) },
             "compileMoving" to medianGrowth(DRAWS) { compile(scratch, null) },
