@@ -352,6 +352,9 @@ class GraphicsDevice {
     /** The anisotropic samples a texture created on this device samples with; see [sampledTextures]. */
     internal var anisotropy: Int = 1
 
+    /** Top mip levels a texture uploaded with [Texture.skippingMips] leaves out (#1660). */
+    internal var mipSkip: Int = 0
+
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!
         val physicalDeviceProperties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)

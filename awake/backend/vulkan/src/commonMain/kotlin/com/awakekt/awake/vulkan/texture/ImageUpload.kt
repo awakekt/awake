@@ -42,6 +42,9 @@ internal class UploadedImage(
     val samplerInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
     val filtering: TextureFiltering = TextureFiltering.Linear,
     val mipLevels: Int = 1,
+    /** The base level's size as uploaded: smaller than the source when mip skip left levels out (#1660). */
+    val width: Int = 0,
+    val height: Int = 0,
 )
 
 /**
@@ -100,6 +103,8 @@ internal object ImageUpload {
                 samplerCreateInfo,
                 filtering,
                 mipLevels,
+                width,
+                height,
             )
             return uploaded
         } finally {
