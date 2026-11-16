@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.sameFloats
 import com.awakekt.awake.render.pipeline.CullMode
 
 /**
@@ -86,7 +87,7 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Bo
 
 /** Equal extras; with [tints], equal but for the tint a tinting pipeline carries per instance. */
 private fun RenderDrawCommand.extrasAlike(other: RenderDrawCommand, tints: Boolean): Boolean =
-    if (tints) InstanceTints.sameBesidesTint(extraUniformFloats, other.extraUniformFloats) else extraUniformFloats.contentEquals(other.extraUniformFloats)
+    if (tints) InstanceTints.sameBesidesTint(extraUniformFloats, other.extraUniformFloats) else extraUniformFloats.sameFloats(other.extraUniformFloats)
 
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */
 internal class InstanceKey(private val draw: RenderDrawCommand, private val tints: Boolean = false) {

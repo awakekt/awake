@@ -87,3 +87,21 @@ fun FloatArray.putFloats(offset: Int, values: FloatArray): Int {
     }
     return offset + values.size
 }
+
+/**
+ * Whether this array and [other] hold the same floats, by the same rule as `contentEquals`: compared
+ * bit for bit, so `NaN` equals `NaN` and `0f` does not equal `-0f`.
+ *
+ * A plain loop over raw bits, not `contentEquals`: on Kotlin/Wasm that compares element by element
+ * through `Float.equals`, which boxes, so checking a 16-float matrix allocated about 224 bytes in a
+ * browser (`PlanningHeapBreakdownBrowserTest`). A renderer's bounds pay it every frame (#1621).
+ */
+fun FloatArray.sameFloats(other: FloatArray): Boolean {
+    var same = size == other.size
+    var index = 0
+    while (same && index < size) {
+        same = this[index].toBits() == other[index].toBits()
+        index += 1
+    }
+    return same
+}
