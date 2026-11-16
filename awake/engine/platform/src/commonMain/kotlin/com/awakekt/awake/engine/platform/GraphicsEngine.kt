@@ -16,6 +16,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
+import com.awakekt.awake.engine.platform.quality.TextureSettings
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
@@ -87,6 +88,7 @@ abstract class GraphicsEngine(
 
     // Looked up once the app is ready: services are fixed when the app is built.
     private var renderQuality: RenderQualitySettings? = null
+    private var textureSettings: TextureSettings? = null
 
     /** Populated by [createBackendResources] -- `protected` (not `private`) so each
      * backend's [destroyBackend] override can still reach it for teardown. */
@@ -279,6 +281,7 @@ abstract class GraphicsEngine(
         val override = renderScaleOverride
         if (override != null) renderer.renderScale = override()
         renderQuality?.applyTo(renderer, applyScale = override == null)
+        textureSettings?.applyTo(renderer)
     }
 
     private suspend fun setupCommon(window: Any) {
@@ -287,6 +290,7 @@ abstract class GraphicsEngine(
         viewportSize = backend.viewportSize
         density = backend.density
         renderQuality = appLifecycle.service(RenderQualitySettings::class)
+        textureSettings = appLifecycle.service(TextureSettings::class)
 
         appLifecycle.ready(renderer)
 

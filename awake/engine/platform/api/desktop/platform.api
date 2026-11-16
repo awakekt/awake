@@ -386,3 +386,49 @@ public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettin
 	public final fun select (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
 }
 
+public final class com/awakekt/awake/engine/platform/quality/TextureAnisotropy : java/lang/Enum {
+	public static final field Off Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public static final field X16 Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public static final field X2 Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public static final field X4 Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public static final field X8 Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getSamples ()I
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public static fun values ()[Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+}
+
+public final class com/awakekt/awake/engine/platform/quality/TextureQuality : java/lang/Enum {
+	public static final field High Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+	public static final field Low Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+	public static final field Medium Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getMipSkip ()I
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+	public static fun values ()[Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+}
+
+public final class com/awakekt/awake/engine/platform/quality/TextureSettings {
+	public static final field Companion Lcom/awakekt/awake/engine/platform/quality/TextureSettings$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/engine/platform/quality/TextureSettingsPersistence;Lcom/awakekt/awake/engine/platform/quality/TextureQuality;Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/engine/platform/quality/TextureSettingsPersistence;Lcom/awakekt/awake/engine/platform/quality/TextureQuality;Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun applyTo (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public final fun getAnisotropy ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getQuality ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun select (Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;)V
+	public final fun select (Lcom/awakekt/awake/engine/platform/quality/TextureQuality;)V
+}
+
+public final class com/awakekt/awake/engine/platform/quality/TextureSettings$Companion {
+	public final fun defaultAnisotropy (Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;)Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public final fun defaultQuality (Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;)Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+}
+
+public abstract interface class com/awakekt/awake/engine/platform/quality/TextureSettingsPersistence {
+	public abstract fun loadAnisotropy ()Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;
+	public abstract fun loadQuality ()Lcom/awakekt/awake/engine/platform/quality/TextureQuality;
+	public abstract fun saveAnisotropy (Lcom/awakekt/awake/engine/platform/quality/TextureAnisotropy;)V
+	public abstract fun saveQuality (Lcom/awakekt/awake/engine/platform/quality/TextureQuality;)V
+}
+
