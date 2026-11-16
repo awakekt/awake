@@ -81,5 +81,8 @@ tasks.named<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>("wasmJs
     testLogging {
         events("passed", "skipped", "failed")
         showStandardStreams = true
+        // A failure names its assertion in the log: CI uploads no browser test results here.
+        showExceptions = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
