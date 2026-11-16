@@ -15,11 +15,9 @@ import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.command.PipelineHandle
-import com.awakekt.awake.render.command.TransparentOrder
+import com.awakekt.awake.render.command.compareTransparent
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Working draw lists [ScenePassScratch] keeps from frame to frame (#1555).
@@ -96,10 +94,11 @@ internal class ScenePassDraws {
         casters.prepare(preparer, requests.size, context) { draw, bounds ->
             shadowOnly += caster(draw, bounds, true)
         }
-        sorter.sort(transparent, TransparentOrder)
+        // Comparisons inlined: on Kotlin/Wasm each call to a Comparator allocated (#1621).
+        sorter.sortWith(transparent) { a, b -> compareTransparent(a, b) }
         for (groupIndex in 0 until pipelineCount) {
             val group = pipelineGroups[groupIndex].casters
-            sorter.sort(group, CasterBatchKeyOrder)
+            sorter.sortWith(group) { a, b -> a.draw.batchKey.compareTo(b.draw.batchKey) }
             for (index in 0 until group.size) {
                 val item = group[index]
                 opaque += item.draw
@@ -232,10 +231,6 @@ private class PipelineGroup {
     val casters = ArrayList<Caster>()
 }
 
-private val CasterBatchKeyOrder: Comparator<Caster> = Comparator { a, b ->
-    a.draw.batchKey.compareTo(b.draw.batchKey)
-}
-
 /** The draws each mask layer names, gathered into kept per-layer lists as they are prepared. */
 private class MaskedDraws {
     private var layers: List<FloatArray> = emptyList()
@@ -278,79 +273,3 @@ private class MaskedDraws {
 
 /** [COVERING_EXEMPT_MASK_LAYER]'s sub-pass uniforms: nothing reads a style from it. */
 private val NO_LAYER_UNIFORMS = FloatArray(0)
-
-/**
- * Sorts an [ArrayList] in place, stably, using one kept scratch array so neither the JVM (with
- * escape analysis off) nor Kotlin/Wasm allocates a merge buffer or copy per frame (#1555).
- */
-internal class StableListSort {
-    private var scratch = arrayOfNulls<Any>(INITIAL_SCRATCH)
-
-    fun <T : Any> sort(list: ArrayList<T>, comparator: Comparator<in T>) {
-        val size = list.size
-        if (size <= 1) return
-        var start = 0
-        while (start < size) {
-            insertionSort(list, start, min(start + RUN, size), comparator)
-            start += RUN
-        }
-        if (size <= RUN) return
-        var width = RUN
-        var used = 0
-        while (width < size) {
-            var left = 0
-            while (left + width < size) {
-                val mid = left + width
-                val right = min(mid + width, size)
-                if (comparator.compare(list[mid - 1], list[mid]) > 0) {
-                    used = max(used, mid - left)
-                    merge(list, left, mid, right, comparator)
-                }
-                left = right
-            }
-            width *= 2
-        }
-        if (used > 0) scratch.fill(null, 0, used)
-    }
-
-    private fun <T : Any> insertionSort(list: ArrayList<T>, start: Int, end: Int, comparator: Comparator<in T>) {
-        for (index in start + 1 until end) {
-            val moving = list[index]
-            var at = index - 1
-            while (at >= start && comparator.compare(list[at], moving) > 0) {
-                list[at + 1] = list[at]
-                at--
-            }
-            list[at + 1] = moving
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : Any> merge(list: ArrayList<T>, left: Int, mid: Int, right: Int, comparator: Comparator<in T>) {
-        val leftSize = mid - left
-        if (scratch.size < leftSize) scratch = arrayOfNulls(max(leftSize, scratch.size * 2))
-        for (index in 0 until leftSize) scratch[index] = list[left + index]
-        var i = 0
-        var j = mid
-        var out = left
-        while (i < leftSize && j < right) {
-            val fromLeft = scratch[i] as T
-            val fromRight = list[j]
-            if (comparator.compare(fromLeft, fromRight) <= 0) {
-                list[out++] = fromLeft
-                i++
-            } else {
-                list[out++] = fromRight
-                j++
-            }
-        }
-        while (i < leftSize) {
-            list[out++] = scratch[i++] as T
-        }
-    }
-
-    private companion object {
-        const val RUN = 16
-        const val INITIAL_SCRATCH = 128
-    }
-}

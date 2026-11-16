@@ -69,6 +69,41 @@ class PlanningHeapBreakdownBrowserTest {
         shadows.set(contributions.light, contributions.environment)
         val frame = culling.prepare(world, camera, 1f, shadows)
 
+        // The compile on its own, over this frame's draws: the caching preparer alone, then the whole
+        // compile with it, to tell the scene's compile cost from the passes' own (#1621).
+        val draws = ArrayList(collector.collectBeforeParticles(world, frame, 0f))
+        val preparer = CachingPreparer()
+        val scratch = com.awakekt.awake.render.passes.ScenePassScratch()
+        val context = GpuDrawPreparationContext(viewProjection = camera.lens.viewProjectionMatrix(1f, ClipSpace.WebGpu), cameraEye = camera.lens.eye)
+        // The same draws as fresh commands carrying only the fields the synthetic frame sets.
+        val copies = draws.map { draw ->
+            com.awakekt.awake.render.passes.RenderDrawCommand(
+                draw.mesh,
+                draw.material,
+                model = com.awakekt.awake.core.math.Mat4().set(draw.model),
+                worldBounds = draw.worldBounds?.let { Aabb(Vec3f(it.min.x, it.min.y, it.min.z), Vec3f(it.max.x, it.max.y, it.max.z)) },
+                transparent = draw.transparent,
+                shadowsOnly = draw.shadowsOnly,
+            )
+        }
+        fun compileWith(drawn: List<com.awakekt.awake.render.passes.RenderDrawCommand>, light: com.awakekt.awake.render.passes.uniforms.SceneLight?, environment: com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms) =
+            com.awakekt.awake.render.passes.ScenePassCompiler.compile(
+                camera.lens, drawn, light, environment, ClipSpace.WebGpu, 1f, null, preparer,
+                emptyList(), com.awakekt.awake.render.imagepass.ImagePassChain.Empty, null, scratch,
+            )
+        val compileParts = listOf(
+            "compileNoLight" to { compileWith(draws, null, contributions.environment) },
+            "compileDefaultEnvironment" to { compileWith(draws, contributions.light, com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms.Default) },
+            "compileCopiedDraws" to { compileWith(copies, contributions.light, contributions.environment) },
+            "compilePreparerOnly" to { for (i in draws.indices) preparer.prepare(draws[i], i, context) },
+            "compileSceneDraws" to {
+                com.awakekt.awake.render.passes.ScenePassCompiler.compile(
+                    camera.lens, draws, contributions.light, contributions.environment, ClipSpace.WebGpu, 1f, null, preparer,
+                    emptyList(), com.awakekt.awake.render.imagepass.ImagePassChain.Empty, null, scratch,
+                )
+            },
+        )
+
         val stages = StageHeap()
         val system = RenderSystem3D(renderer, drawPreparer = CachingPreparer()).apply { drawStages = stages }
         val parts = listOf(
@@ -78,7 +113,7 @@ class PlanningHeapBreakdownBrowserTest {
             "afterParticles" to { collector.collectAfterParticles(world, frame, camera) },
             "frame" to { system.update(world, DELTA) },
         )
-        val costs = parts.map { (name, pass) -> name to bytesPerRenderer(pass) }
+        val costs = (parts + compileParts).map { (name, pass) -> name to bytesPerRenderer(pass) }
         val beforeParticles = costs.first { it.first == "beforeParticles" }.second
         assertTrue(beforeParticles <= BEFORE_PARTICLES_BUDGET, "the draw loop took $beforeParticles B a renderer")
         return costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +

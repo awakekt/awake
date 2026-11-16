@@ -58,12 +58,13 @@ fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
  * rather than the list reversed, which would allocate a second list every frame; compared as
  * primitives, not through `compareBy`, which boxed every key.
  */
-internal val TransparentOrder: Comparator<PreparedDraw> = Comparator { a, b ->
-    when {
-        a.sortLayer != b.sortLayer -> a.sortLayer.compareTo(b.sortLayer)
-        a.sortOrder != b.sortOrder -> a.sortOrder.compareTo(b.sortOrder)
-        else -> b.depthSortKey.compareTo(a.depthSortKey)
-    }
+internal val TransparentOrder: Comparator<PreparedDraw> = Comparator { a, b -> compareTransparent(a, b) }
+
+/** [TransparentOrder] as a plain function, for a sort that inlines its comparison instead of calling a [Comparator]. */
+internal fun compareTransparent(a: PreparedDraw, b: PreparedDraw): Int = when {
+    a.sortLayer != b.sortLayer -> a.sortLayer.compareTo(b.sortLayer)
+    a.sortOrder != b.sortOrder -> a.sortOrder.compareTo(b.sortOrder)
+    else -> b.depthSortKey.compareTo(a.depthSortKey)
 }
 
 /**

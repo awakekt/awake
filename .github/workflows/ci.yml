@@ -816,6 +816,11 @@ jobs:
       - name: GPU texture upload and render bundle browser tests
         run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*" --tests "*PlanningStageHeap*"
 
+      # A 3,000-draw frame's compile in the browser, each step on its own, and what a call that
+      # leaves parameters to their defaults allocates, by parameter shape (#1621).
+      - name: Compile heap breakdown (browser)
+        run: ./gradlew :awake:engine:render:passes:wasmJsBrowserTest --tests "*CompileHeapBreakdown*" --tests "*InstancedCompileHeap*" --tests "*CompileShapeHeap*" --tests "*DefaultArgumentShape*"
+
       - name: Upload the browser render tests' results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

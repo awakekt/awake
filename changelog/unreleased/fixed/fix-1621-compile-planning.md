@@ -1,0 +1,4 @@
+- A moving camera's scene compile allocates 26 B a draw in the browser, down from 284 B (#1621). Its draws were sorted through a `Comparator`, and on Kotlin/Wasm each `compare` call allocated 28 B, about 36,000 calls a frame for 3,000 draws. `StableListSort.sortWith` now takes the comparison inline, and the sort allocates nothing. The WebGPU draw path also stops leaving `DrawUniformInputs`' `kind` to its default on every draw, which cost 28 B a call on Kotlin/Wasm. Browser gates in the Web CI job hold the compile at 48 B a draw, and `docs/reference/kotlin-wasm-allocation.md` lists the call shapes that allocate on Kotlin/Wasm but not on the JVM:
+  - a defaulted call to a function of four or more parameters;
+  - a `Comparator`;
+  - a lambda converted to a `fun interface`.
