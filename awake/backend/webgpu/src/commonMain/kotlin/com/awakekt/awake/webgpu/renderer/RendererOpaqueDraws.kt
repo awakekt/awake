@@ -106,7 +106,7 @@ internal fun Renderer.prepareGpuDraw(
             )
         }
     }
-    return WebGpuPreparedDraw(
+    return preparedDraw.fill(
         pipeline = pipeline,
         materialBinding = when {
             slot == null -> EmptyWebGpuMaterialBinding
@@ -336,7 +336,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     } else {
         null
     }
-    return WebGpuPreparedDraw(
+    return preparedDraw.fill(
         pipeline = pipeline,
         materialBinding = materialBinding,
         vertexBuffer = mesh.vertexBinding,
@@ -385,30 +385,104 @@ internal class PrimaryPipelineBinding(
     val wireframe: Boolean,
 )
 
-/** Backend-owned prepared draw consumed by the shared recording feature. */
-internal class WebGpuPreparedDraw(
-    override val pipeline: PipelineHandle,
-    override val materialBinding: com.awakekt.awake.render.command.MaterialBinding,
-    override val vertexBuffer: BufferHandle?,
-    override val indexBuffer: BufferHandle?,
-    override val elementCount: Int,
-    override val instances: Int = 1,
-    override val instanceVertexBuffer: BufferHandle? = null,
-    override val jointPaletteBinding: com.awakekt.awake.render.command.MaterialBinding? = null,
-    override val shadowBinding: com.awakekt.awake.render.command.MaterialBinding? = null,
-    override val sceneDepthBinding: com.awakekt.awake.render.command.MaterialBinding? = null,
-    internal val uniformBuffer: GPUBuffer? = null,
-    internal val instanceVertexGpuBuffer: GPUBuffer? = null,
-    internal val jointPaletteGpuBuffer: GPUBuffer? = null,
-    override val vertexFormat: VertexFormat? = null,
-    override val instanceColorBuffer: BufferHandle? = null,
-    override val instanceFrameBuffer: BufferHandle? = null,
-    override val transparent: Boolean = false,
-    override val depthSortKey: Float = 0f,
-    override val sortOrder: Int = 0,
-    override val sortLayer: Int = 0,
-    override val batchKey: Int = 0,
-) : PreparedDraw
+/**
+ * A draw as the preparer has just worked it out, read by [ResolvedDrawCache.resolve] and copied into
+ * a packet there. One per renderer, filled again for each draw: nothing keeps it past the
+ * preparation, so a new one a draw a frame was only garbage (#1621).
+ */
+internal class WebGpuPreparedDraw : PreparedDraw {
+    override lateinit var pipeline: PipelineHandle
+        private set
+    override var materialBinding: com.awakekt.awake.render.command.MaterialBinding = EmptyWebGpuMaterialBinding
+        private set
+    override var vertexBuffer: BufferHandle? = null
+        private set
+    override var indexBuffer: BufferHandle? = null
+        private set
+    override var elementCount: Int = 0
+        private set
+    override var instances: Int = 1
+        private set
+    override var instanceVertexBuffer: BufferHandle? = null
+        private set
+    override var jointPaletteBinding: com.awakekt.awake.render.command.MaterialBinding? = null
+        private set
+    override var shadowBinding: com.awakekt.awake.render.command.MaterialBinding? = null
+        private set
+    override var sceneDepthBinding: com.awakekt.awake.render.command.MaterialBinding? = null
+        private set
+    internal var uniformBuffer: GPUBuffer? = null
+        private set
+    internal var instanceVertexGpuBuffer: GPUBuffer? = null
+        private set
+    internal var jointPaletteGpuBuffer: GPUBuffer? = null
+        private set
+    override var vertexFormat: VertexFormat? = null
+        private set
+    override var instanceColorBuffer: BufferHandle? = null
+        private set
+    override var instanceFrameBuffer: BufferHandle? = null
+        private set
+    override var transparent: Boolean = false
+        private set
+    override var depthSortKey: Float = 0f
+        private set
+    override var sortOrder: Int = 0
+        private set
+    override var sortLayer: Int = 0
+        private set
+    override var batchKey: Int = 0
+        private set
+
+    /** Fills every field for the next draw, each one not given going back to its default. */
+    @Suppress("LongParameterList")
+    fun fill(
+        pipeline: PipelineHandle,
+        materialBinding: com.awakekt.awake.render.command.MaterialBinding,
+        vertexBuffer: BufferHandle?,
+        indexBuffer: BufferHandle?,
+        elementCount: Int,
+        instances: Int = 1,
+        instanceVertexBuffer: BufferHandle? = null,
+        jointPaletteBinding: com.awakekt.awake.render.command.MaterialBinding? = null,
+        shadowBinding: com.awakekt.awake.render.command.MaterialBinding? = null,
+        sceneDepthBinding: com.awakekt.awake.render.command.MaterialBinding? = null,
+        uniformBuffer: GPUBuffer? = null,
+        instanceVertexGpuBuffer: GPUBuffer? = null,
+        jointPaletteGpuBuffer: GPUBuffer? = null,
+        vertexFormat: VertexFormat? = null,
+        instanceColorBuffer: BufferHandle? = null,
+        instanceFrameBuffer: BufferHandle? = null,
+        transparent: Boolean = false,
+        depthSortKey: Float = 0f,
+        sortOrder: Int = 0,
+        sortLayer: Int = 0,
+        batchKey: Int = 0,
+    ): WebGpuPreparedDraw {
+        this.pipeline = pipeline
+        this.materialBinding = materialBinding
+        this.vertexBuffer = vertexBuffer
+        this.indexBuffer = indexBuffer
+        this.elementCount = elementCount
+        this.instances = instances
+        this.instanceVertexBuffer = instanceVertexBuffer
+        this.jointPaletteBinding = jointPaletteBinding
+        this.shadowBinding = shadowBinding
+        this.sceneDepthBinding = sceneDepthBinding
+        this.uniformBuffer = uniformBuffer
+        this.instanceVertexGpuBuffer = instanceVertexGpuBuffer
+        this.jointPaletteGpuBuffer = jointPaletteGpuBuffer
+        this.vertexFormat = vertexFormat
+        this.instanceColorBuffer = instanceColorBuffer
+        this.instanceFrameBuffer = instanceFrameBuffer
+        this.transparent = transparent
+        this.depthSortKey = depthSortKey
+        this.sortOrder = sortOrder
+        this.sortLayer = sortLayer
+        this.batchKey = batchKey
+        return this
+    }
+}
 
 /** [this] draw's distance to [cameraEye], read only to order transparent draws: an opaque draw's is
  * 0, so a moving camera leaves its packet unchanged (#1555). */
