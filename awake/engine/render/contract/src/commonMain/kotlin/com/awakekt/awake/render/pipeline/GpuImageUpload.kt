@@ -6,6 +6,9 @@
 package com.awakekt.awake.render.pipeline
 
 import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.TextureSampling
+import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureAsset
@@ -77,7 +80,8 @@ fun GpuDevice.createImageMaterial(
     pbrImages: PbrImageSet?,
     label: String?,
 ): Material {
-    val compressed = compressedMaterial(image, filtering, uniformFloatCount, pbrImages)
+    val cooked = image.takeIf { pbrImages == null }?.compressed(compressedTextureFormats)
+    val compressed = cooked?.let { capability(GpuCompressedTextures)?.createMaterial(it, filtering, uniformFloatCount) }
     val copied = if (compressed == null) capability(GpuImageUpload)?.createMaterial(image, filtering, uniformFloatCount, pbrImages) else null
     val material = compressed ?: copied ?: createMaterial(
         texture = image.toTextureAsset(filtering),
@@ -90,14 +94,28 @@ fun GpuDevice.createImageMaterial(
             copied != null -> TextureUploadPath.GpuCopy
             else -> TextureUploadPath.CpuRgba8
         }
-        val format = if (compressed != null) image.compressed?.format else null
-        observer.uploaded(TextureUpload(label, image.width, image.height, path, format, filtering))
+        val format = if (compressed != null) cooked?.format else null
+        val uploaded = uploadedLevels(image, if (compressed != null) cooked else null, path, filtering)
+        observer.uploaded(TextureUpload(label, image.width, image.height, path, format, filtering, uploaded.width, uploaded.height, uploaded.levels))
     }
     return material
 }
 
-// A block-compressed image goes up as it is, when there are no PBR maps to bind beside it and the device takes its format.
-private fun GpuDevice.compressedMaterial(image: GpuImageSource, filtering: TextureFiltering, uniformFloatCount: Int, pbrImages: PbrImageSet?): Material? {
-    val compressed = image.takeIf { pbrImages == null }?.compressed(compressedTextureFormats) ?: return null
-    return capability(GpuCompressedTextures)?.createMaterial(compressed, filtering, uniformFloatCount)
+private class UploadedLevels(val width: Int, val height: Int, val levels: Int)
+
+/**
+ * The GPU image [createImageMaterial] made: what [Renderer.textureMipSkip] left of [image]'s chain, by
+ * the rule both backends apply ([TextureSampling.levelsToSkip]). A block-compressed image goes up as
+ * it is when there are no PBR maps beside it and the device takes its format; a GPU copy keeps its whole
+ * chain until that path skips too.
+ */
+private fun GpuDevice.uploadedLevels(image: GpuImageSource, cooked: CompressedTextureImage?, path: TextureUploadPath, filtering: TextureFiltering): UploadedLevels {
+    val mipSkip = (this as? Renderer)?.textureMipSkip ?: 0
+    if (cooked != null) {
+        val skip = TextureSampling.levelsToSkip(cooked, filtering, mipSkip)
+        return UploadedLevels(cooked.levelWidth(skip), cooked.levelHeight(skip), cooked.levels.size - skip)
+    }
+    val chain = if (filtering == TextureFiltering.Linear) TextureUpload.fullChain(image.width, image.height) else 1
+    val skip = if (path == TextureUploadPath.CpuRgba8) TextureSampling.levelsToSkip(filtering, chain, mipSkip) else 0
+    return UploadedLevels(maxOf(1, image.width shr skip), maxOf(1, image.height shr skip), chain - skip)
 }

@@ -1842,11 +1842,15 @@ public final class com/awakekt/awake/render/pipeline/TextureSampleType : java/la
 
 public final class com/awakekt/awake/render/pipeline/TextureUpload {
 	public fun <init> (Ljava/lang/String;IILcom/awakekt/awake/render/pipeline/TextureUploadPath;Lcom/awakekt/awake/render/texture/CompressedTextureFormat;Lcom/awakekt/awake/render/texture/TextureFiltering;)V
+	public fun <init> (Ljava/lang/String;IILcom/awakekt/awake/render/pipeline/TextureUploadPath;Lcom/awakekt/awake/render/texture/CompressedTextureFormat;Lcom/awakekt/awake/render/texture/TextureFiltering;III)V
 	public final fun getFiltering ()Lcom/awakekt/awake/render/texture/TextureFiltering;
 	public final fun getFormat ()Lcom/awakekt/awake/render/texture/CompressedTextureFormat;
 	public final fun getHeight ()I
 	public final fun getLabel ()Ljava/lang/String;
 	public final fun getPath ()Lcom/awakekt/awake/render/pipeline/TextureUploadPath;
+	public final fun getUploadedHeight ()I
+	public final fun getUploadedMipLevels ()I
+	public final fun getUploadedWidth ()I
 	public final fun getWidth ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -2284,6 +2288,7 @@ public final class com/awakekt/awake/render/renderer/TextureSampling {
 	public static final field MAX_MIP_SKIP I
 	public final fun anisotropy (II)I
 	public final fun anisotropyFor (Lcom/awakekt/awake/render/texture/TextureFiltering;I)I
+	public final fun levelsToSkip (Lcom/awakekt/awake/render/texture/CompressedTextureImage;Lcom/awakekt/awake/render/texture/TextureFiltering;I)I
 	public final fun levelsToSkip (Lcom/awakekt/awake/render/texture/TextureFiltering;II)I
 	public final fun mipSkip (I)I
 }
