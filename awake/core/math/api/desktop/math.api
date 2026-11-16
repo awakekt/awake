@@ -799,6 +799,7 @@ public final class com/awakekt/awake/core/math/Vec4 {
 
 public final class com/awakekt/awake/core/math/VectorPackingKt {
 	public static final fun putFloat ([FIF)I
+	public static final fun putFloats ([FI[F)I
 	public static final fun putVec3 ([FILcom/awakekt/awake/core/math/Vec3f;)I
 	public static final fun putVec4 ([FILcom/awakekt/awake/core/math/Vec3f;F)I
 	public static final fun putVec4 ([FILcom/awakekt/awake/core/math/Vec4;)I
