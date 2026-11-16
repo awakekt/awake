@@ -51,6 +51,7 @@ import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.ShadowBudget
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.renderer.UiUploadStats
@@ -281,15 +282,22 @@ class Renderer internal constructor(
     val capabilities: DeviceCapabilities
         get() = graphicsDevice.capabilities
 
-    /**
-     * Its cascades are planned from the next frame (#1688). The shadow maps stay at
-     * [ShadowBudget.DEFAULT_MAP_SIZE] on this backend for now: reallocating them follows.
-     */
-
-    /** The shadow depth array's device memory, as its allocation reported it (#1688). */
+    /** The shadow depth array's device memory, as its allocation reported it (#1688): a 1x1 stand-in's
+     * few bytes while no light casts, since the array is released then (#1698). */
     override val shadowMapBytes: Long get() = depthTarget?.allocatedBytes ?: 0L
 
+    /** The format the engine built the shadow depth pass for (#1698). */
+    override val shadowDepthFormat: ShadowDepthFormat
+        get() = depthTarget?.format ?: ShadowDepthFormat.Default
+
+    /**
+     * Its cascades are planned from the next frame (#1688); its map size is the shadow array's from
+     * the next frame that draws a shadow, which reallocates it once (#1698).
+     */
     override var shadowBudget: ShadowBudget = ShadowBudget.Default
+
+    /** When the shadow array is allocated and released (#1698). */
+    internal val shadowResidency = ShadowArrayResidency()
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary

@@ -133,14 +133,17 @@ internal class DepthPrePassFeature(
     private var initializedLayers = BooleanArray(depthTarget.layers)
 
     /**
-     * Grows [depthTarget] to [layers] when it holds fewer, and forgets which layers were cleared: the
-     * new image's layers all start `UNDEFINED`. Whether it grew. The caller has waited for the device
-     * and has not begun recording a frame that binds the target (#1688).
+     * Holds [layers] at [size] in [depthTarget], or releases it to its 1x1 stand-in when [layers] is
+     * 0, and forgets which layers were cleared: the new image's layers all start `UNDEFINED`, and
+     * [initializeLayers] clears them before anything samples them. Whether the image changed. The
+     * caller has waited for the device and has not begun recording a frame that binds the target
+     * (#1688, #1698).
      */
-    internal fun ensureLayers(layers: Int): Boolean {
-        if (layers <= depthTarget.layers) return false
-        depthTarget.reallocate(layers, depthTarget.size)
-        initializedLayers = BooleanArray(layers)
+    internal fun resize(layers: Int, size: Int): Boolean {
+        val resident = if (depthTarget.resident) depthTarget.layers else 0
+        if (layers == resident && (layers == 0 || size == depthTarget.size)) return false
+        if (layers == 0) depthTarget.release() else depthTarget.reallocate(layers, size)
+        initializedLayers = BooleanArray(depthTarget.layers)
         return true
     }
 

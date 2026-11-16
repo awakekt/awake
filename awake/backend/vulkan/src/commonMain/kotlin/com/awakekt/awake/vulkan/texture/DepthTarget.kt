@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.texture
 
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -87,7 +88,20 @@ class DepthTarget(
      * depth, which a comparison sampler cannot produce.
      */
     private val comparison: Boolean = false,
+    /** The image's depth format: [ShadowDepthFormat.Depth32Float] unless a mobile tier asked for less (#1698). */
+    val format: ShadowDepthFormat,
 ) {
+    /** A [ShadowDepthFormat.Depth32Float] target, as every depth target was before formats (#1698). */
+    constructor(
+        graphicsDevice: GraphicsDevice,
+        size: Int = DEFAULT_SIZE,
+        layers: Int = 1,
+        arrayed: Boolean = false,
+        comparison: Boolean = false,
+    ) : this(graphicsDevice, size, layers, arrayed, comparison, ShadowDepthFormat.Depth32Float)
+
+    private val vkFormat: VkFormat = format.toVkFormat()
+
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
 
@@ -119,7 +133,7 @@ class DepthTarget(
     var renderPass: Long = 0
         private set
 
-    /** The `Depth32` image, with [layers] array layers. */
+    /** The [format] image, with [layers] array layers. */
     var image: Long = 0
         private set
     private var imageMemory: Long = 0
@@ -188,7 +202,7 @@ class DepthTarget(
             VkImageCreateInfo(
                 width = size,
                 height = size,
-                format = DEPTH_FORMAT.value,
+                format = vkFormat.value,
                 arrayLayers = layers,
                 usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT or
                     VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -220,7 +234,7 @@ class DepthTarget(
                 } else {
                     VkImageViewType.VK_IMAGE_VIEW_TYPE_2D
                 },
-                format = DEPTH_FORMAT,
+                format = vkFormat,
                 subresourceRange = VkImageSubresourceRange(
                     aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT.value,
                     baseMipLevel = 0,
@@ -239,7 +253,7 @@ class DepthTarget(
                 VkImageViewCreateInfo(
                     image = image,
                     viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
-                    format = DEPTH_FORMAT,
+                    format = vkFormat,
                     subresourceRange = VkImageSubresourceRange(
                         aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT.value,
                         baseMipLevel = 0,
@@ -285,6 +299,20 @@ class DepthTarget(
         allocateImage()
         writeImageDescriptor()
     }
+
+    /**
+     * Whether the image is the shadow array a light renders into rather than the 1x1 [DORMANT_SIZE]
+     * stand-in [release] leaves bound (#1698).
+     */
+    internal val resident: Boolean get() = size != DORMANT_SIZE
+
+    /**
+     * Shrinks the image to one [DORMANT_SIZE] layer, which the descriptor set keeps binding, so a
+     * shader that declares the array still samples something valid while no light casts (#1698).
+     * The caller waits for the device first, as for [reallocate], and clears the new layer before
+     * it is sampled.
+     */
+    internal fun release() = reallocate(layers = 1, size = DORMANT_SIZE)
 
     private fun releaseImage() {
         framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
@@ -349,7 +377,7 @@ class DepthTarget(
         VkRenderPassCreateInfo(
             pAttachments = arrayOf(
                 VkAttachmentDescription(
-                    format = DEPTH_FORMAT,
+                    format = vkFormat,
                     storeOp = VkAttachmentStoreOp.STORE,
                     initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
                     // Vulkan performs the DEPTH_STENCIL_ATTACHMENT_OPTIMAL -> SHADER_READ_ONLY
@@ -445,14 +473,23 @@ class DepthTarget(
          * @param runOneTimeCommands Records and submits the clear, e.g. `TransferContext::runOneTimeCommands`.
          */
         fun placeholder(graphicsDevice: GraphicsDevice, runOneTimeCommands: ((Long) -> Unit) -> Unit): DepthTarget =
-            DepthTarget(graphicsDevice, size = 1, layers = 1, arrayed = true, comparison = true)
+            DepthTarget(graphicsDevice, size = DORMANT_SIZE, layers = 1, arrayed = true, comparison = true)
                 .also { target -> runOneTimeCommands(target::clearToFar) }
 
         /** 2048x2048 -- enough resolution for this demo's grid-sized scene without being a
          * real memory/bandwidth cost (a single D32 depth image, ~16MB). */
         const val DEFAULT_SIZE = 2048
 
-        /** Format of the depth image: `VK_FORMAT_D32_SFLOAT`. */
+        /** The edge of a target that holds no shadow array: one texel, cleared to the far plane (#1698). */
+        internal const val DORMANT_SIZE = 1
+
+        /** Format of a [ShadowDepthFormat.Depth32Float] depth image: `VK_FORMAT_D32_SFLOAT`. */
         val DEPTH_FORMAT = VkFormat.VK_FORMAT_D32_SFLOAT
     }
+}
+
+/** The Vulkan format a [ShadowDepthFormat] stores its texels in. */
+internal fun ShadowDepthFormat.toVkFormat(): VkFormat = when (this) {
+    ShadowDepthFormat.Depth32Float -> VkFormat.VK_FORMAT_D32_SFLOAT
+    ShadowDepthFormat.Depth16Unorm -> VkFormat.VK_FORMAT_D16_UNORM
 }

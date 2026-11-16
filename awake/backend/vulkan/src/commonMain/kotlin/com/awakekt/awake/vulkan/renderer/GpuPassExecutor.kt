@@ -36,7 +36,7 @@ internal class RendererGpuPassExecutor(
         // (VulkanDrawPreparer.startBatch), but a frame whose camera prepared none, or one presented
         // without a scene, never got there (#1687). Free when nothing is outstanding or it already waited.
         renderer.awaitSubmittedOffscreenCommandsFor(currentFrame)
-        renderer.ensureShadowLayers(input)
+        renderer.settleShadowArray(input)
         renderer.graphicsDevice.frameUniforms.write(currentFrame, input)
         val resolvedDraws = input.resolvedDraws
         val depthDraws = renderer.prepareDepthDraws(input)

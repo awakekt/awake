@@ -12,6 +12,7 @@ import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineRegistry
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -42,8 +43,21 @@ import kotlinx.coroutines.runBlocking
  * wires it: a runtime pipeline gets the shadow map when its shader declares it, and a feature's
  * depth pipeline casts into the cascades.
  */
-internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false, layers: Int = MAX_SHADOW_TARGET_LAYERS): Pair<Renderer, () -> Unit> =
-    newShadowRenderer(size, presentable, layers, window = 0L, framesInFlight = MAX_FRAMES_IN_FLIGHT)
+internal fun newHeadlessShadowRenderer(
+    size: Int,
+    presentable: Boolean = false,
+    layers: Int = MAX_SHADOW_TARGET_LAYERS,
+    mapSize: Int = DepthTarget.DEFAULT_SIZE,
+    format: ShadowDepthFormat = ShadowDepthFormat.Default,
+): Pair<Renderer, () -> Unit> =
+    newShadowRenderer(size, presentable, layers, window = 0L, framesInFlight = MAX_FRAMES_IN_FLIGHT, mapSize, format)
+
+/**
+ * [newHeadlessShadowRenderer] with no shadow array, as `VulkanEngine` starts one (#1698): a 1x1
+ * stand-in in [format] until a light casts.
+ */
+internal fun newDormantShadowRenderer(size: Int, format: ShadowDepthFormat = ShadowDepthFormat.Default): Pair<Renderer, () -> Unit> =
+    newHeadlessShadowRenderer(size, presentable = true, layers = 1, mapSize = DepthTarget.DORMANT_SIZE, format = format)
 
 /**
  * [newHeadlessShadowRenderer] presenting to a real GLFW [window] (#1688), with [framesInFlight]
@@ -53,10 +67,18 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false, 
 internal fun newWindowedShadowRenderer(window: Long, layers: Int, framesInFlight: Int): Pair<Renderer, () -> Unit> =
     newShadowRenderer(0, presentable = true, layers, window, framesInFlight)
 
-private fun newShadowRenderer(size: Int, presentable: Boolean, layers: Int, window: Long, framesInFlight: Int): Pair<Renderer, () -> Unit> {
+private fun newShadowRenderer(
+    size: Int,
+    presentable: Boolean,
+    layers: Int,
+    window: Long,
+    framesInFlight: Int,
+    mapSize: Int = DepthTarget.DEFAULT_SIZE,
+    format: ShadowDepthFormat = ShadowDepthFormat.Default,
+): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
     val swapchainManager = deviceAndSwapchain(graphicsDevice, size, presentable, window, framesInFlight)
-    val depthTarget = DepthTarget(graphicsDevice, layers = layers, arrayed = true, comparison = true)
+    val depthTarget = DepthTarget(graphicsDevice, size = mapSize, layers = layers, arrayed = true, comparison = true, format = format)
     val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
     val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
     val primary = RenderPipeline(
