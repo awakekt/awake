@@ -217,10 +217,23 @@ class DepthOnlyPipeline(
     /** [cascade]'s bind group, to bind at group 1 while rendering it. */
     fun cascadeBinding(cascade: Int): MaterialBinding = cascadeBindGroups[cascade]
 
-    /** Writes [viewProjection] as the matrix [cascade] renders with; a no-op without a block. */
+    // What each cascade's buffer holds, so a matrix it already holds is not written again.
+    private val cascadeWritten = Array(cascadeBuffers.size) { FloatArray(MATRIX_FLOATS) }
+    private val cascadeHolds = BooleanArray(cascadeBuffers.size)
+
+    /**
+     * Writes [viewProjection] as the matrix [cascade] renders with; a no-op without a block, and when
+     * the buffer already holds it. A still frame draws its cascades with the matrices of the last
+     * one, and each write builds a staging buffer: every cascade of every depth pipeline, every frame.
+     */
     fun writeCascade(cascade: Int, viewProjection: Mat4) {
         val buffer = cascadeBuffers.getOrNull(cascade) ?: return
-        device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(viewProjection.data))
+        val data = viewProjection.data
+        val written = cascadeWritten[cascade]
+        if (cascadeHolds[cascade] && data.contentEquals(written)) return
+        data.copyInto(written)
+        cascadeHolds[cascade] = true
+        device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(data))
     }
 
     init {
@@ -362,3 +375,5 @@ private fun Map<Int, GroupBindings>.withFrameBlockInMaterialGroup(): Map<Int, Gr
     )
     return this + (0 to GroupBindings(material.entries + frame))
 }
+
+private const val MATRIX_FLOATS = 16
