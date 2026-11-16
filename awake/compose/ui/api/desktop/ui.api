@@ -1508,6 +1508,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getFrameStages ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStages;
 	public final fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public final fun getOnStaleSkip ()Lkotlin/jvm/functions/Function1;
+	public final fun getPlacementRecompositions ()I
 	public final fun getRetainUnchangedDraw ()Z
 	public final fun getRetainedDraws ()I
 	public final fun getRoot ()Lcom/awakekt/awake/compose/ui/node/LayoutNode;

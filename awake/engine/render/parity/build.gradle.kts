@@ -206,3 +206,27 @@ tasks.register<JavaExec>("captureTextClipEvidence") {
 kotlin.sourceSets.getByName("desktopTest").dependencies {
     implementation(project(":awake:asset:mesh-lod"))
 }
+
+// #1676: the scene with an offscreen camera View under Vulkan synchronization validation, failing on
+// any SYNC-HAZARD. Its own task, because the layer and its synchronization validation are switched on
+// through the environment, which a test cannot set for itself; desktopTest leaves the class out.
+val desktopSyncValidationTest = tasks.register<Test>("desktopSyncValidationTest") {
+    group = "verification"
+    description = "Run the offscreen View scene under Vulkan synchronization validation (#1676)."
+    val desktopTestTask = tasks.named<Test>("desktopTest").get()
+    testClassesDirs = desktopTestTask.testClassesDirs
+    classpath = desktopTestTask.classpath
+    filter { includeTestsMatching("*OffscreenViewSyncHazardTest") }
+    requireExclusiveGpu(this)
+    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    useNagaShaderCompiler(this)
+    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    environment(desktopVulkanEnv)
+    environment("AWAKE_VULKAN_VALIDATION", "1")
+    environment("VK_KHRONOS_VALIDATION_VALIDATE_SYNC", "true")
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
+tasks.named<Test>("desktopTest") { filter { excludeTestsMatching("*OffscreenViewSyncHazardTest") } }

@@ -142,6 +142,13 @@ class ComposeHost(
     var skipUnchangedMeasure: Boolean = false
 
     /**
+     * How many frames composed a second time because their placement wrote state the composition
+     * read, such as a size from `onSizeChanged`: the frame is drawn at that size, not a frame late.
+     */
+    var placementRecompositions: Int = 0
+        private set
+
+    /**
      * Records, in [frameCounts]'s `measureCause`, `measureCauseSource` and `measureCauseOwner`, why a
      * frame whose composition was skipped measured anyway: the first state written, polled value
      * changed, subcomposition out of date or `invalidate()` since the last measure, and the layout
@@ -281,20 +288,23 @@ class ComposeHost(
         // Before content, not after: an animation reads the clock as it is declared, so advancing
         // afterwards would paint every frame one step stale.
         frameClock.advance(input.deltaSeconds)
-        stages?.begin(ComposeFrameStage.Compose)
-        val composed = composeOrSkip(content, input)
-        stages?.end(ComposeFrameStage.Compose)
-        // A node that this pass stopped declaring cannot keep focus, and a modal that just opened
-        // takes it from whatever was behind it.
-        focusOwner.revalidate(root)
-        stages?.begin(ComposeFrameStage.Measure)
-        val measureSkipped = layout(input, composed)
-        stages?.end(ComposeFrameStage.Measure)
-        frameCounts.composed = composed
-        frameCounts.measured = !measureSkipped
+        var composed = composeAndLayout(stages, input) { composeOrSkip(content, input) }
+        // Why this frame measured: the first layout's cause. A second pass below always composes, so
+        // its own cause is None and would hide why a skipped composition measured.
         frameCounts.measureCause = measureSkip.cause
         frameCounts.measureCauseSource = measureSkip.causeSource
         frameCounts.measureCauseOwner = measureSkip.causeOwner
+        // A size composition read and placement wrote (`onSizeChanged` into state, as a canvas sizes
+        // its content) composes and lays out once more in this frame, so nothing is drawn a frame late
+        // at its old size, or on the first frame at a guessed one (#1512). Once, so a write every
+        // placement cannot loop; a frame where placement wrote nothing pays one poll.
+        if (placementInvalidated) {
+            composed = composeAndLayout(stages, input) { compose(content, input).let { true } }
+            placementRecompositions++
+        }
+        val measureSkipped = lastMeasureSkipped
+        frameCounts.composed = composed
+        frameCounts.measured = !measureSkipped
         frameCounts.nodesMeasured = LayoutStats.nodeMeasures - measuresBefore
         if (measureSkipped) skippedMeasures++
         placedOnce = true
@@ -386,6 +396,28 @@ class ComposeHost(
     /** Like [copyFocusedSelection], and removes the returned text from the field. */
     fun cutFocusedSelection(): String? = focusOwner.focused?.textInputs.orEmpty().firstNotNullOfOrNull {
         it.cutSelection()
+    }
+
+    private var placementInvalidated = false
+    private var lastMeasureSkipped = false
+
+    /**
+     * Runs [composeStep] and lays the tree out after it; whether it composed. Notes in
+     * [placementInvalidated] whether placement invalidated a composition that was valid before it.
+     */
+    private inline fun composeAndLayout(stages: ComposeFrameStages?, input: FrameInput, composeStep: () -> Boolean): Boolean {
+        stages?.begin(ComposeFrameStage.Compose)
+        val composed = composeStep()
+        stages?.end(ComposeFrameStage.Compose)
+        // A node that this pass stopped declaring cannot keep focus, and a modal that just opened
+        // takes it from whatever was behind it.
+        focusOwner.revalidate(root)
+        val validBeforeLayout = !composition.isInvalid
+        stages?.begin(ComposeFrameStage.Measure)
+        lastMeasureSkipped = layout(input, composed)
+        stages?.end(ComposeFrameStage.Measure)
+        placementInvalidated = validBeforeLayout && composition.isInvalid
+        return composed
     }
 
     /** Composes [content] for [input], or skips a composition nothing invalidated; whether it composed. */

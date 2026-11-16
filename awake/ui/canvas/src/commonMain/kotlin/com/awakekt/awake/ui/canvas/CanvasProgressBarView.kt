@@ -20,6 +20,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
+import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawShape
@@ -51,17 +52,29 @@ internal fun ProgressBarView(element: CanvasElement, styled: Modifier, textStyle
     val settings = element.bar ?: CanvasBar.Default
     val fill = colorOf(element.color, Color.White)
     val value = tree.valueOf(element)
-    val trail = trailOf(element, settings, value, LocalFrameClock.current.deltaSeconds)
+    // The trail advances in draw, by the clock read only while it holds or drains: a settled bar reads
+    // none, and a draining one repaints itself alone, composing and measuring nothing (#1512).
+    val clock = LocalFrameClock.current
     val picture = element.style.fillImage?.fill(tree.images)
     Box(styled, contentAlignment = Alignment.Center) {
         if (settings.direction == CanvasBarDirection.Radial) {
             val sweep = CanvasSweep(thickness = settings.thickness, track = settings.track)
-            if (trail > value) SweepFill(trail, colorOf(settings.trailColor, Color.Transparent), null, sweep, DrawShape.Circle, colorOf(settings.track, Color.Transparent))
-            val track = if (trail > value) Color.Transparent else colorOf(settings.track, Color.Transparent)
-            SweepFill(value, fill, picture, sweep, DrawShape.Circle, track)
+            val trackColor = colorOf(settings.track, Color.Transparent)
+            val trailColor = colorOf(settings.trailColor, Color.Transparent)
+            Box(
+                Modifier.fillMaxSize().drawBehind {
+                    val trail = trailOf(element, settings, value, clock)
+                    if (trail > value) drawSweepFill(trail, trailColor, null, sweep, DrawShape.Circle, trackColor)
+                    drawSweepFill(value, fill, picture, sweep, DrawShape.Circle, if (trail > value) Color.Transparent else trackColor)
+                },
+            )
         } else {
             val radius = element.style.cornerRadius ?: 0f
-            Box(Modifier.fillMaxSize().drawBehind { drawStraightBar(element, settings, value, trail, fill, picture, radius * density) })
+            Box(
+                Modifier.fillMaxSize().drawBehind {
+                    drawStraightBar(element, settings, value, trailOf(element, settings, value, clock), fill, picture, radius * density)
+                },
+            )
         }
         // The element's colour is the fill, so the label is white over it unless the style says otherwise.
         val labelStyle = if (element.style.textColor == null) textStyle.copy(color = Color.White) else textStyle
@@ -70,14 +83,25 @@ internal fun ProgressBarView(element: CanvasElement, styled: Modifier, textStyle
     }
 }
 
-/** Where [element]'s trail is this frame: on the value the first time, then trailing it as [settings] say; the value without a trail colour. */
-private fun trailOf(element: CanvasElement, settings: CanvasBar, value: Float, deltaSeconds: Float): Float {
+/**
+ * Where [element]'s trail is this frame: on the value the first time, then trailing it as [settings]
+ * say, advanced once a frame; the value without a trail colour. Reads [clock] only while the trail is
+ * above the value.
+ */
+private fun trailOf(element: CanvasElement, settings: CanvasBar, value: Float, clock: FrameClock): Float {
     if (settings.trailColor == null) return value
     if (!element.trailStarted) {
         element.trail.snapTo(value)
         element.trailStarted = true
     }
-    return element.trail.advance(value, deltaSeconds, settings.trailDelay, settings.trailSpeed)
+    // A frame drawn twice advances the trail once: the second draw finds its stamp and moves no time.
+    var delta = 0f
+    if (element.trail.value > value) {
+        val stamp = clock.totalSeconds.toRawBits().toLong()
+        if (stamp != element.trailStamp) delta = clock.deltaSeconds
+        element.trailStamp = stamp
+    }
+    return element.trail.advance(value, delta, settings.trailDelay, settings.trailSpeed)
 }
 
 /** A straight Bar's track, trail, fill and ticks, from the edge its direction names. */

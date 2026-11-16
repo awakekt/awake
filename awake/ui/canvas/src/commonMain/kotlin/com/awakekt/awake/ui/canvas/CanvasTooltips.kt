@@ -72,7 +72,17 @@ internal class CanvasTooltips {
      * Decides this frame's tooltip: [hovered] is the element the pointer is over that has one, or null,
      * and [now] is the frame clock's time. Returns the element whose tooltip is showing, or null.
      */
+
+    /** The time [update] was last given. */
+    var lastNow = 0f
+        private set
+
+    /** Whether [update] needs the time for [hovered]: a new hover, or one still waiting out its delay. */
+    fun waits(hovered: CanvasElement?): Boolean =
+        hovered !== target || (target != null && lastNow - since < CanvasElement.TOOLTIP_DELAY_SECONDS)
+
     fun update(hovered: CanvasElement?, now: Float): CanvasElement? {
+        lastNow = now
         if (hovered !== target) {
             target = hovered
             since = now
@@ -147,7 +157,9 @@ context(_: Composer)
 internal fun Tooltip(tree: CanvasTree) {
     val tooltips = tree.tooltips
     val hovered = tree.items.lastOrNull { item -> tree.shows(item.element) && item.element.tooltip.isNotEmpty() && item.element.isHovered }
-    val shown = tooltips.update(hovered?.element, LocalFrameClock.current.totalSeconds) ?: return
+    // The clock only while a hover is new or waiting out its delay: no hover reads none (#1512).
+    val now = if (tooltips.waits(hovered?.element)) LocalFrameClock.current.totalSeconds else tooltips.lastNow
+    val shown = tooltips.update(hovered?.element, now) ?: return
     val words = tree.tooltipOf(shown)
     if (words.isEmpty()) return
     val bubble = TextStyle(color = TOOLTIP_TEXT, size = TOOLTIP_FONT_SIZE.sp, font = tree.fontOf(shown))

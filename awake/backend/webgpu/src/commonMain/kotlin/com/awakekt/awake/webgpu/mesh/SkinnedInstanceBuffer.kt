@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.render.passes.InstanceTintPacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.SkinnedInstanceLayout
@@ -69,12 +70,13 @@ class SkinnedInstanceBuffer(
         GpuDataShape.Mat4,
         "SkinnedInstanceBuffer",
         repeat = MAX_JOINTS,
-    ) { out, offset, palette ->
-        require(palette.size <= MAX_JOINTS * GpuDataShape.Mat4.componentCount) {
-            "Joint palette ${palette.size} floats exceeds MAX_JOINTS ($MAX_JOINTS) * 16."
-        }
-        palette.copyInto(out, offset)
-    }
+        write = InstanceWriter { out, offset, palette ->
+            require(palette.size <= MAX_JOINTS * GpuDataShape.Mat4.componentCount) {
+                "Joint palette ${palette.size} floats exceeds MAX_JOINTS ($MAX_JOINTS) * 16."
+            }
+            palette.copyInto(out, offset)
+        },
+    )
 
     /**
      * Uploads this frame's joint palettes with every tint set to opaque white.
