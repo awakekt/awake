@@ -315,6 +315,14 @@ class Renderer internal constructor(
         get() = graphicsDevice.deviceClass
 
     /**
+     * The adapter's `GPUAdapterInfo.device`, else its `description` (#1700). wgpu-native puts the GPU's
+     * name in `device` (`llvmpipe (LLVM 20.1.2, 256 bits)`) and the driver's in `description`; a
+     * browser may leave both empty to avoid fingerprinting, and often does, and this is then null.
+     */
+    override val deviceName: String?
+        get() = graphicsDevice.adapterReport?.let { report -> report.device.ifBlank { report.description } }?.takeIf { it.isNotBlank() }
+
+    /**
      * Its cascades are planned from the next frame (#1688). The shadow maps stay at
      * [ShadowBudget.DEFAULT_MAP_SIZE] on this backend for now: reallocating them follows.
      */

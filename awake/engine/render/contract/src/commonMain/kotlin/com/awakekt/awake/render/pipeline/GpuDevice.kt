@@ -60,6 +60,31 @@ interface GpuDevice {
     val deviceClass: GpuDeviceClass
         get() = GpuDeviceClass.Unknown
 
+    /**
+     * The GPU's name as its driver reports it, such as `Mali-G78`, `Adreno (TM) 660` or
+     * `llvmpipe (LLVM 17.0.6, 256 bits)`: for a quality tier [deviceClass] is too coarse to pick (a
+     * low-end and a high-end phone GPU are both [GpuDeviceClass.Mobile]), and to name the GPU in a
+     * performance report. Null where the platform gives no name: a browser may hide it, or report
+     * only its vendor (#1700).
+     */
+    val deviceName: String?
+        get() = null
+
+    /**
+     * The GPU vendor's PCI id, such as `0x10DE` (NVIDIA), `0x1002` (AMD), `0x8086` (Intel), `0x13B5`
+     * (Arm) or `0x5143` (Qualcomm). Null where the platform reports none, as WebGPU, which names the
+     * vendor instead of numbering it (#1700).
+     */
+    val vendorId: Int?
+        get() = null
+
+    /**
+     * The GPU driver's version, encoded as its vendor encodes it: comparable between two readings
+     * from the same vendor, not across vendors. Null where the platform reports none (#1700).
+     */
+    val driverVersion: Long?
+        get() = null
+
     /** Uploads [geometry] as a GPU mesh. The caller owns the result and destroys it. */
     fun createMesh(geometry: MeshGeometry): Mesh
 

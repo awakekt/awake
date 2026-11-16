@@ -424,6 +424,8 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
 	public fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public fun getDeviceName ()Ljava/lang/String;
+	public fun getDriverVersion ()Ljava/lang/Long;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public fun getFrameBufferCreations ()Lcom/awakekt/awake/render/renderer/BufferCreationStats;
 	public fun getFrameDrawReuse ()Lcom/awakekt/awake/render/renderer/DrawReuseStats;
@@ -444,6 +446,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
 	public fun getTextureMipSkip ()I
+	public fun getVendorId ()Ljava/lang/Integer;
 	public fun getWireframe ()Z
 	public fun imagePassTargetContext (Lcom/awakekt/awake/render/texture/RenderTarget;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public fun observeDrawStages (Lcom/awakekt/awake/render/renderer/RenderDrawStages;)V

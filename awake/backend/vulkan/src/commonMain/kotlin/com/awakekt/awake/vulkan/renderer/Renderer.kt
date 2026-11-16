@@ -277,6 +277,18 @@ class Renderer internal constructor(
     override val deviceClass: GpuDeviceClass
         get() = graphicsDevice.deviceClass
 
+    /** `VkPhysicalDeviceProperties.deviceName`; null before the device exists (#1700). */
+    override val deviceName: String?
+        get() = graphicsDevice.capabilities.takeIf { it !== DeviceCapabilities.Uninitialized }?.deviceName?.takeIf { it.isNotBlank() }
+
+    /** `VkPhysicalDeviceProperties.vendorID` (#1700). */
+    override val vendorId: Int?
+        get() = graphicsDevice.vendorId.takeIf { it != 0 }
+
+    /** `VkPhysicalDeviceProperties.driverVersion`, read unsigned (#1700). */
+    override val driverVersion: Long?
+        get() = graphicsDevice.capabilities.takeIf { it !== DeviceCapabilities.Uninitialized }?.driverVersion?.toUInt()?.toLong()
+
     /** Hardware capabilities, negotiated Vulkan version, and enabled features for this device. */
     val capabilities: DeviceCapabilities
         get() = graphicsDevice.capabilities
