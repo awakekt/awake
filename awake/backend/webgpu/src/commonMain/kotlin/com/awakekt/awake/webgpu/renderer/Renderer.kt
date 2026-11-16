@@ -205,6 +205,9 @@ class Renderer internal constructor(
     internal fun retainedPass(key: Any, layout: com.awakekt.awake.webgpu.pipeline.bundles.BundleLayout) =
         if (keepsRenderBundles) retainedBundles.pass(key, layout) else null
 
+    /** The draw being prepared, filled again for each one; see [WebGpuPreparedDraw]. */
+    internal val preparedDraw = WebGpuPreparedDraw()
+
     /** The latest main-pass colour, valid until the host returns this surface texture. */
     internal var presentedColor: PresentedColor? = null
     internal val gpuFrameTimer = backgroundScope?.let { GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device, it) }

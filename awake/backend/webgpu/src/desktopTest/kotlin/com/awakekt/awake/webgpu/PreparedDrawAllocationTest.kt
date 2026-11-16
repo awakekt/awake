@@ -37,35 +37,41 @@ import kotlin.test.assertTrue
  *
  * About 760 B a draw before: three resolved draws, a pipeline binding, a depth key, a capturing
  * lambda and a pair per draw, besides the prepared draw itself. Then 328 B, of which a whole resolved
- * draw was built only to be copied with its depth-pass fields. Then 224 B, built once. 120 B now:
- * a draw whose packet would come out the same is handed its last one, so what is left is the
- * prepared draw itself.
+ * draw was built only to be copied with its depth-pass fields. Then 224 B, built once. Then 120 B:
+ * a draw whose packet would come out the same is handed its last one, which left the prepared draw
+ * itself. None now (#1621): the prepared draw is only read while its packet is resolved, so one is
+ * filled again for each draw.
  */
 class PreparedDrawAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
 
-    private class MeasuringPreparer(private val delegate: GpuDrawPreparer, private val bytes: () -> Long) : GpuDrawPreparer by delegate {
+    // A `() -> Long` clock would box a Long on every read and count it as the draw's.
+    private class MeasuringPreparer(
+        private val delegate: GpuDrawPreparer,
+        private val threads: com.sun.management.ThreadMXBean,
+        private val thread: Long,
+    ) : GpuDrawPreparer by delegate {
         var prepared = 0L
         var draws = 0
 
         override fun prepare(request: GpuDrawRequest, sourceIndex: Int, context: GpuDrawPreparationContext): GpuResolvedDraw? {
-            val before = bytes()
+            val before = threads.getThreadAllocatedBytes(thread)
             return delegate.prepare(request, sourceIndex, context).also {
-                prepared += bytes() - before
+                prepared += threads.getThreadAllocatedBytes(thread) - before
                 draws++
             }
         }
     }
 
     @Test
-    fun aPreparedDrawAllocatesLittleBesidesWhatItHandsOn() = webGpuHeadlessScene().use { session ->
+    fun aPreparedDrawAllocatesNothing() = webGpuHeadlessScene().use { session ->
         val diagnostics = ManagementFactory.getPlatformMXBean(com.sun.management.HotSpotDiagnosticMXBean::class.java)
         assertEquals("false", diagnostics.getVMOption("DoEscapeAnalysis").value, "this gate needs -XX:-DoEscapeAnalysis")
         val renderer = session.renderer
         val meshes = List(MESHES) { renderer.createMesh(triangle()) }
         val materials = List(MESHES) { renderer.createMaterial(uniformFloatCount = MaterialUniformLayouts.LitShadow.total) }
         val thread = Thread.currentThread().id
-        val preparer = MeasuringPreparer((renderer as GpuDrawPreparationSource).gpuDrawPreparer!!) { threads.getThreadAllocatedBytes(thread) }
+        val preparer = MeasuringPreparer((renderer as GpuDrawPreparationSource).gpuDrawPreparer!!, threads, thread)
         val draws = List(DRAWS) { index ->
             val x = (index % ROW - ROW / 2) * SPACING
             val z = (index / ROW - ROW / 2) * SPACING
@@ -113,7 +119,7 @@ class PreparedDrawAllocationTest {
         const val WARM_UP = 20
         const val FRAMES = 20
 
-        /** 120 B a draw now: a little room, and under the 224 B a draw with a packet built every frame. */
-        const val PER_DRAW_BUDGET = 150L
+        /** Nothing a draw now: under the smallest object, which a new prepared draw a draw would exceed. */
+        const val PER_DRAW_BUDGET = 8L
     }
 }
