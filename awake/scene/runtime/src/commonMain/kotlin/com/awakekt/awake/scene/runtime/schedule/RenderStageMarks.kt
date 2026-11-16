@@ -32,6 +32,8 @@ internal class RenderStageMarks(private val schedule: SceneSchedule) : RenderDra
     }
 
     private fun nameOf(stage: RenderDrawStage): String = when (stage) {
+        RenderDrawStage.Collect -> SceneSystemObserver.RENDER_COLLECT
+        RenderDrawStage.Compile -> SceneSystemObserver.RENDER_COMPILE
         RenderDrawStage.Prepare -> SceneSystemObserver.RENDER_PREPARE
         RenderDrawStage.Upload -> SceneSystemObserver.RENDER_UPLOAD
         RenderDrawStage.Record -> SceneSystemObserver.RENDER_RECORD

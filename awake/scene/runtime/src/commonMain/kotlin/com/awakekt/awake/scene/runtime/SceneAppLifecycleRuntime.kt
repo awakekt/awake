@@ -416,6 +416,8 @@ class SceneAppLifecycleRuntime internal constructor(
         val observer = systemObserver
         renderStages.observer = observer
         val stages = if (observer == null) null else renderStages
+        // The planning half is told by the scene's own render system, the drawing half by the renderer.
+        session.schedule.renderSystem?.drawStages = stages
         if (stages !== installedRenderStages) {
             renderer.observeDrawStages(stages)
             installedRenderStages = stages

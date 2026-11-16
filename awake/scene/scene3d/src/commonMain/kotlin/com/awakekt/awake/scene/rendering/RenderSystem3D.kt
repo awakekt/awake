@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.camera.Camera
@@ -135,6 +136,12 @@ class RenderSystem3D(
             planner.cullingProbe = value
         }
 
+    /**
+     * Told around the collect and compile stages of the frame [update] plans, but not of a capture,
+     * which runs inside another phase's mark. Null, the default, calls nothing.
+     */
+    var drawStages: RenderDrawStages? = null
+
     /** Whether the previous frame triggered a full scene plan or reused a clean frame. */
     var lastFramePlanned: Boolean = false
         private set
@@ -205,9 +212,13 @@ class RenderSystem3D(
         val plannedFrame = if (isDirty) {
             recordCameraState(camera, currentViewport, currentAspect)
             lastFramePlanned = true
-            planFrame(renderWorld, cameraEntity, camera, currentViewport, currentAspect).also {
-                lastPlannedFrame = it
-            }
+            // The frame's own planning only: a capture plans inside another phase's mark.
+            planner.stages = drawStages
+            try {
+                planFrame(renderWorld, cameraEntity, camera, currentViewport, currentAspect)
+            } finally {
+                planner.stages = null
+            }.also { lastPlannedFrame = it }
         } else {
             lastFramePlanned = false
             checkNotNull(lastPlannedFrame)
