@@ -80,6 +80,21 @@ class SceneCompilerTest {
         assertEquals(DEFAULT_SHADOW_DISTANCE, farSplit(1000f, sun), 0.01f, "An unset distance keeps today's reach.")
     }
 
+    /** The renderer's shadow budget sets how many cascades, each a depth pass, a frame plans (#1688). */
+    @Test
+    fun theShadowBudgetsCascadeCountIsWhatAFramePlans() {
+        val world = World()
+        world.add(world.create(), Light(type = Light.Type.Directional, shadowDistance = 400f))
+        val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 1000f))
+        for (count in 1..3) {
+            val cascades = requireNotNull(SceneLightingCompiler(ClipSpace.WebGpu) { count }.sceneLight(world, camera, viewportAspect = 1f).cascades)
+            assertEquals(count, cascades.viewProjections.size, "$count cascades planned")
+            assertEquals(400f, cascades.splitDistances.last(), 0.01f, "$count cascades still reach the shadow distance")
+        }
+        val byDefault = requireNotNull(SceneLightingCompiler(ClipSpace.WebGpu).sceneLight(world, camera, viewportAspect = 1f).cascades)
+        assertEquals(3, byDefault.viewProjections.size, "with no budget, what every frame planned before")
+    }
+
     @Test
     fun aCameraWhoseNearPlaneIsPastTheShadowDistanceDrawsNoShadow() {
         val world = World()

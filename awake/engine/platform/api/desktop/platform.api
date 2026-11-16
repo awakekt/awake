@@ -383,7 +383,9 @@ public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettin
 	public static synthetic fun applyTo$default (Lcom/awakekt/awake/engine/platform/quality/RenderQualitySettings;Lcom/awakekt/awake/render/renderer/Renderer;ZILjava/lang/Object;)V
 	public final fun getBudgets ()Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
 	public final fun getQuality ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getShadowBudgetOverride ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public final fun select (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
+	public final fun setShadowBudgetOverride (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 }
 
 public final class com/awakekt/awake/engine/platform/quality/TextureAnisotropy : java/lang/Enum {

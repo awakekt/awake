@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering
 
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
@@ -16,8 +17,9 @@ import com.awakekt.awake.scene.rendering.debug.TransparentDrawSources
 internal class SceneFeatureCollector3D(
     clipSpace: ClipSpace,
     private val features: List<RenderFeature3D>,
+    shadowCascades: () -> Int = { DEFAULT_SHADOW_CASCADES },
 ) {
-    private val lightingFeature = SceneLightingFeature3D(SceneLightingCompiler(clipSpace))
+    private val lightingFeature = SceneLightingFeature3D(SceneLightingCompiler(clipSpace, shadowCascades))
     private val particleFeature = SceneParticleFeature3D(ParticleDrawAdapter())
 
     /** Each feature's name for [TransparentDrawSources], built once: its class's, or its place in the list. */

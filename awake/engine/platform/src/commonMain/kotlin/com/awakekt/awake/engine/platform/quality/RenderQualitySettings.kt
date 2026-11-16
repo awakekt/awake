@@ -9,6 +9,7 @@ import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
 import com.awakekt.awake.render.renderer.RenderQualityPolicy
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.ShadowBudget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,6 +54,13 @@ class RenderQualitySettings(
     /** The selected preset. */
     val quality: StateFlow<RenderQuality> = state.asStateFlow()
 
+    /**
+     * The shadow budget [applyTo] sets instead of the preset's, or `null` (the default) for
+     * [RenderQualityPolicy.shadowBudget]'s. `ShadowBudget.Default` keeps what every preset drew before
+     * shadow budgets (#1688).
+     */
+    var shadowBudgetOverride: ShadowBudget? = null
+
     /** Selects [quality], saving it through the persistence callback when it changed. */
     fun select(quality: RenderQuality) {
         val previous = state.getAndUpdate { quality }
@@ -61,7 +69,8 @@ class RenderQualitySettings(
 
     /**
      * Resolves the selected preset against [renderer]'s presented surface and device, and sets its
-     * [Renderer.renderScale] and [Renderer.effectQuality]. Allocation free; called once per frame.
+     * [Renderer.renderScale], [Renderer.effectQuality] and [Renderer.shadowBudget]. Allocation free;
+     * called once per frame.
      *
      * @param renderer The renderer this frame draws with.
      * @param applyScale `false` leaves [Renderer.renderScale] to a host override.
@@ -80,5 +89,7 @@ class RenderQualitySettings(
         }
         val effects = RenderQualityPolicy.effectQuality(current, device)
         if (renderer.effectQuality != effects) renderer.effectQuality = effects
+        val shadows = shadowBudgetOverride ?: RenderQualityPolicy.shadowBudget(current, device)
+        if (renderer.shadowBudget != shadows) renderer.shadowBudget = shadows
     }
 }
