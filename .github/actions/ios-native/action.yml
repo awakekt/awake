@@ -133,20 +133,18 @@ runs:
                   :awake:backend:jolt:buildJoltCIosSimulatorArm64
 
     # The -L paths and library names awake/backend/jolt/build.gradle.kts writes into the JoltC .def,
-    # each an arm64 archive for its own platform: Mach-O platform 2 is iOS, 7 the iOS simulator. A
-    # restored half-build or a swapped slice would otherwise fail later, inside the link.
+    # each a non-empty arm64 archive. A restored half-build would otherwise fail later, inside the
+    # link. The slice is not checked by Mach-O platform: JoltPhysics' objects carry no
+    # LC_BUILD_VERSION, so there is no platform to read (found on this action's first run, #1714).
     - name: Verify the JoltC libraries for both slices
       shell: bash
       run: |
-        for entry in iosArm64:2 iosSimulatorArm64:7; do
-          target=${entry%%:*} platform=${entry##*:}
+        for target in iosArm64 iosSimulatorArm64; do
           for lib in "libjoltc.a" "JoltPhysics/Build/libJolt.a"; do
             path="awake/backend/jolt/build/joltc-native/$target/$lib"
             test -s "$path" || { echo "::error::$path missing -- JoltC build incomplete"; exit 1; }
             archs=$(lipo -archs "$path")
             [[ "$archs" == arm64 ]] || { echo "::error::$path is $archs, not arm64"; exit 1; }
-            found=$(otool -l "$path" | awk '$1 == "cmd" && $2 == "LC_BUILD_VERSION" { b = 1 } b && $1 == "platform" { print $2; exit }')
-            [[ "$found" == "$platform" ]] || { echo "::error::$path is for Mach-O platform ${found:-unknown}, not $platform"; exit 1; }
           done
         done
 
