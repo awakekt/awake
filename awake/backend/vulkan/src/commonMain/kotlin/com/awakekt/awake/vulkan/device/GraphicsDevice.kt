@@ -334,6 +334,14 @@ class GraphicsDevice {
     internal var compressedTextureFormats: Set<CompressedTextureFormat> = emptySet()
         private set
 
+    /**
+     * The most anisotropic samples a sampler on this device can take: the device limit when it offers
+     * `samplerAnisotropy`, which [createLogicalDevice] enables with every other feature it reports,
+     * and 1 when it does not (#1660).
+     */
+    internal var maxSamplerAnisotropy: Int = 1
+        private set
+
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!
         val physicalDeviceProperties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)
@@ -357,6 +365,7 @@ class GraphicsDevice {
         // Every supported feature is enabled below, so supported here means usable.
         depthClamp = features.depthClamp
         compressedTextureFormats = compressedFormats(features)
+        maxSamplerAnisotropy = if (features.samplerAnisotropy) maxOf(1, physicalDeviceProperties.limits.maxSamplerAnisotropy.toInt()) else 1
         val availableDeviceExtensions =
             Vulkan.vkEnumerateDeviceExtensionProperties(physicalDevice)
                 .map { it.extensionName }

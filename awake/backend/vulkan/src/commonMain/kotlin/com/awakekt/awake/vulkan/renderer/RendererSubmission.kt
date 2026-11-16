@@ -31,6 +31,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
             swapchainManager.inFlightFences[currentFrame],
         )
         bufferPools.frameSubmitted(currentFrame)
+        retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
         return
     }
@@ -52,6 +53,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         swapchainManager.inFlightFences[currentFrame],
     )
     bufferPools.frameSubmitted(currentFrame)
+    retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
 
     val presentInfo = VkPresentInfoKHR(
         pWaitSemaphores = signalSemaphores,

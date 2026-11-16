@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.asset.shaders.AttachedContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
@@ -399,7 +400,27 @@ class Renderer internal constructor(
     // texture/glyph pipelines above.
     internal var uiRoundedQuadRenderPipeline: UiRenderPipeline? = null
 
-    internal val textureResources = TextureResourceManager<Texture>(Texture::destroy)
+    /** Samplers replaced for a new [maxAnisotropy], destroyed once no frame in flight can use them. */
+    internal val retiredSamplers = RetiredSamplers(graphicsDevice)
+
+    internal val textureResources = TextureResourceManager<Texture>(Texture::destroy) { texture ->
+        retiredSamplers.retire(texture.resample(maxAnisotropy))
+    }
+
+    override val maxSupportedAnisotropy: Int get() = graphicsDevice.maxSamplerAnisotropy
+
+    /**
+     * Clamped to the device; a change makes every registered texture's sampler again where it
+     * changes how it samples, and each material or content set takes the new sampler before its
+     * frame binds it (#1660). Textures uploaded later take it as they register.
+     */
+    override var maxAnisotropy: Int = 1
+        set(value) {
+            val clamped = TextureSampling.anisotropy(value, maxSupportedAnisotropy)
+            if (clamped == field) return
+            field = clamped
+            textureResources.forEachTexture { retiredSamplers.retire(it.resample(clamped)) }
+        }
     internal val createdRenderTargets = mutableListOf<OffscreenRenderTarget>()
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice, maxFramesInFlight)
@@ -678,6 +699,7 @@ class Renderer internal constructor(
         imagePassExecutor.destroy()
         imagePassTextures.clear()
         textureResources.destroy()
+        retiredSamplers.destroyAll()
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()
         if (offscreenFence != 0L) Vulkan.vkDestroyFence(device, offscreenFence)

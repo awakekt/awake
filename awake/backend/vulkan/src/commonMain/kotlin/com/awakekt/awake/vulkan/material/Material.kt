@@ -130,8 +130,12 @@ class Material(
      * both [uniformBuffer] and [texture]'s sampler/view). Must be called once, after a real
      * [Texture] exists. [pbr] fills bindings 5-8 -- see [PbrImageViews]. */
     fun createResources(texture: Texture, pbr: PbrImageViews) {
+        this.texture = texture
         createResources(texture.sampler.handle, texture.imageView.handle, pbr)
     }
+
+    /** The texture whose sampler this material's sets bind, when it was made from one; see [uniformSlot]. */
+    private var texture: Texture? = null
 
     /** Same as [createResources] but binds an
      * [com.awakekt.awake.vulkan.texture.OffscreenRenderTarget]'s color
@@ -182,7 +186,7 @@ class Material(
                 descriptorSetLayout = descriptorSetLayout.handle,
                 uniformBuffer = rawUniformBuffer,
                 uniformFloatCount = uniformFloatCount,
-                sampler = samplerHandle,
+                sampler = texture?.sampler?.handle ?: samplerHandle,
                 imageView = imageViewHandle,
                 pbr = requireNotNull(pbrImageViews),
             ),
@@ -194,7 +198,7 @@ class Material(
             block = block,
             indexInBlock = indexInBlock,
             uniformFloatCount = uniformFloatCount,
-        )
+        ).also { it.sampler = texture?.sampler?.handle ?: samplerHandle }
     }
 
     /** Whether this material's set declares the frame block beside the draw's own. */
@@ -208,6 +212,20 @@ class Material(
         val frameSlots = uniformSlotsByFrame[frameIndex]
         while (frameSlots.size <= drawSlotIndex) frameSlots += createUniformSlot(frameIndex)
         val slot = frameSlots[drawSlotIndex]
+        // A texture whose sampler was made again for a new anisotropy (Renderer.maxAnisotropy) has
+        // a new handle: this frame's set takes it before it is bound. Only this frame's slot, which
+        // no frame in flight still reads; a frame with no change compares one handle (#1660).
+        val current = texture?.sampler?.handle ?: 0L
+        if (current != 0L && slot.sampler != current) {
+            VulkanDescriptors.vkUpdateDescriptorSetImage(
+                device,
+                slot.descriptorSet.handle,
+                SAMPLER_BINDING,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
+                VkDescriptorImageInfo(sampler = current, imageView = 0L),
+            )
+            slot.sampler = current
+        }
         if (frameIndex == 0 && drawSlotIndex == 0) {
             descriptorPool = slot.descriptorPool
             descriptorSet = slot.descriptorSet
@@ -331,6 +349,9 @@ class Material(
         val memoryOffset: Long = indexInBlock * block.stride
         override val descriptorSetHandle: Long get() = descriptorSet.handle
 
+        /** The sampler [descriptorSet]'s binding 2 holds. */
+        var sampler: Long = 0L
+
         /** The frame block [descriptorSet] binds: the identity one until a draw asks for another. */
         var frameBlock: FrameBlockKind = FrameBlockKind.Identity
 
@@ -358,6 +379,9 @@ class Material(
      * materials and pipelines.
      */
     companion object {
+        /** The binding of the sampler every texture of the set is sampled through. */
+        internal const val SAMPLER_BINDING = 2
+
         /** A bare MVP matrix -- every material before skinning existed. A skinned material
          * requests `16 + 16 * jointCount` (MVP + joint palette) instead, see
          * `Renderer.createMaterial`'s own `uniformFloatCount` parameter. */

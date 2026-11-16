@@ -65,6 +65,16 @@ internal class PerFrameUniformSlots(
         override val descriptorSetHandle: Long get() = descriptorSet
         internal var lastWritten: FloatArray? = null
 
+        /** The textures [writeTextures] wrote here, so a sampler made again can reach the set; see [get]. */
+        internal var textures: Map<Int, Texture>? = null
+        internal var samplerTextures: Map<Int, Int> = emptyMap()
+
+        /** The texture a sampler binding with no texture of its own takes: the lowest-numbered one. */
+        internal var sharedTexture: Texture? = null
+
+        /** The sampler each `Sampler` binding holds, in declaration order. */
+        internal var samplers: LongArray = LongArray(0)
+
         internal fun matchesLastWritten(floats: FloatArray): Boolean {
             val prev = lastWritten ?: return false
             return prev.size == floats.size &&
@@ -182,8 +192,43 @@ internal class PerFrameUniformSlots(
         require(frameIndex in slots.indices) {
             "PerFrameUniformSlots frame index $frameIndex is outside 0..${slots.lastIndex}."
         }
-        return slots[frameIndex]
+        return slots[frameIndex].also(::refreshSamplers)
     }
+
+    /**
+     * Writes into [slot] any texture sampler made again since it was written, for a new anisotropy
+     * (`Renderer.maxAnisotropy`, #1660), before the set is bound. Only this frame's slot, which no
+     * frame in flight still reads; with no change it compares one handle per sampler binding.
+     */
+    private fun refreshSamplers(slot: Slot) {
+        val textures = slot.textures ?: return
+        val declared = bindings?.entries ?: return
+        var samplerIndex = 0
+        for (index in declared.indices) {
+            val entry = declared[index]
+            if (entry.kind != ResourceKind.Sampler) continue
+            val handle = samplerFor(entry.binding, textures, slot.samplerTextures, slot.sharedTexture)
+            if (samplerIndex < slot.samplers.size && slot.samplers[samplerIndex] != handle) {
+                writeSampler(slot, entry.binding, handle)
+                slot.samplers[samplerIndex] = handle
+            }
+            samplerIndex++
+        }
+    }
+
+    private fun samplerFor(binding: Int, textures: Map<Int, Texture>, samplerTextures: Map<Int, Int>, shared: Texture?): Long {
+        val own = samplerTextures[binding]
+        val texture = if (own != null) textures.getValue(own) else shared
+        return texture?.sampler?.handle ?: 0L
+    }
+
+    private fun writeSampler(slot: Slot, binding: Int, sampler: Long) = VulkanDescriptors.vkUpdateDescriptorSetImage(
+        device,
+        slot.descriptorSet,
+        binding,
+        VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
+        VkDescriptorImageInfo(sampler = sampler, imageView = 0L),
+    )
 
     fun write(frameIndex: Int, floats: FloatArray) {
         writeChanged(frameIndex, floats)
@@ -223,9 +268,14 @@ internal class PerFrameUniformSlots(
     fun writeTextures(textures: Map<Int, Texture>, frameIndex: Int? = null, samplerTextures: Map<Int, Int> = emptyMap()) {
         val declared = bindings ?: return
         if (textures.isEmpty()) return
-        val sharedSampler = textures.entries.minBy { it.key }.value.sampler.handle
+        val samplerCount = declared.entries.count { it.kind == ResourceKind.Sampler }
         slots.forEachIndexed { index, slot ->
             if (frameIndex != null && index != frameIndex) return@forEachIndexed
+            slot.textures = textures
+            slot.samplerTextures = samplerTextures
+            slot.sharedTexture = textures.getValue(textures.keys.min())
+            slot.samplers = LongArray(samplerCount)
+            var samplerIndex = 0
             declared.entries.forEach { entry ->
                 when (entry.kind) {
                     ResourceKind.SampledTexture -> {
@@ -238,13 +288,11 @@ internal class PerFrameUniformSlots(
                             VkDescriptorImageInfo(sampler = 0L, imageView = texture.imageView.handle),
                         )
                     }
-                    ResourceKind.Sampler -> VulkanDescriptors.vkUpdateDescriptorSetImage(
-                        device,
-                        slot.descriptorSet,
-                        entry.binding,
-                        VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-                        VkDescriptorImageInfo(sampler = samplerTextures[entry.binding]?.let { textures.getValue(it).sampler.handle } ?: sharedSampler, imageView = 0L),
-                    )
+                    ResourceKind.Sampler -> {
+                        val sampler = samplerFor(entry.binding, textures, samplerTextures, slot.sharedTexture)
+                        writeSampler(slot, entry.binding, sampler)
+                        slot.samplers[samplerIndex++] = sampler
+                    }
                     // The uniform buffer is written at slot creation; a storage buffer has no
                     // source here, and ContentFeature rejects one before it reaches this point.
                     ResourceKind.UniformBuffer, ResourceKind.StorageBuffer -> Unit
