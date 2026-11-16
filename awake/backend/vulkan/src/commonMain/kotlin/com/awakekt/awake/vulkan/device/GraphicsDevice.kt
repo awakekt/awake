@@ -27,6 +27,7 @@ import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineCacheCreateInfo
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
+import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.vulkan.utils.QueueFamilyIndices
 import com.awakekt.awake.vulkan.utils.VkResultException
 import com.awakekt.awake.vulkan.utils.findQueueFamilies
@@ -341,6 +342,15 @@ class GraphicsDevice {
      */
     internal var maxSamplerAnisotropy: Int = 1
         private set
+
+    /**
+     * Every live mipmapped [Texture] on this device, renderer-owned or a content feature's, so a new
+     * [com.awakekt.awake.vulkan.renderer.Renderer.maxAnisotropy] reaches them all (#1660).
+     */
+    internal val sampledTextures = LinkedHashSet<Texture>()
+
+    /** The anisotropic samples a texture created on this device samples with; see [sampledTextures]. */
+    internal var anisotropy: Int = 1
 
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!

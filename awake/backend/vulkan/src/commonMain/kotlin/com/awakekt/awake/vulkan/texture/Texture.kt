@@ -83,6 +83,15 @@ class Texture internal constructor(
     internal var samplerAnisotropy = 1
         private set
 
+    init {
+        // Unused yet, so the sampler it replaces can go at once.
+        if (mipLevels > 1) {
+            graphicsDevice.sampledTextures += this
+            val unused = resample(graphicsDevice.anisotropy)
+            if (unused != 0L) VulkanImages.vkDestroySampler(device, unused)
+        }
+    }
+
     /**
      * Makes [sampler] again for [anisotropy] samples, when that changes how this texture samples, and
      * returns the sampler it replaced for the caller to destroy once no frame in flight still uses it;
@@ -102,6 +111,7 @@ class Texture internal constructor(
      * with the texture.
      */
     fun destroy() {
+        graphicsDevice.sampledTextures -= this
         VulkanImages.vkDestroySampler(device, sampler.handle)
         Vulkan.vkDestroyImageView(device, imageView.handle)
         VulkanImages.vkDestroyImage(device, image.handle)

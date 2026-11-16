@@ -46,6 +46,7 @@ import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.renderer.uploadTexture
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
+import com.awakekt.awake.vulkan.texture.Texture
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -70,8 +71,14 @@ class RendererAnisotropyTest {
         val off = renderer.frame()
         assertEquals(1, texture.samplerAnisotropy)
 
+        // A content feature's own texture, created as VulkanContentFeatureGpu does, outside the renderer's registry.
+        val own = { Texture(renderer.graphicsDevice, renderer.transferContext::runOneTimeCommands, stripes().data, TEXELS, TEXELS) }
+        val before = own()
         renderer.maxAnisotropy = SAMPLES
         assertEquals(SAMPLES, texture.samplerAnisotropy, "the texture's sampler was made again at $SAMPLES")
+        assertEquals(SAMPLES, before.samplerAnisotropy, "a content feature's texture took it through the device")
+        own().also { assertEquals(SAMPLES, it.samplerAnisotropy, "one created later starts at it") }.destroy()
+        before.destroy()
         val on = renderer.frame()
         assertTrue(probe.contentSamplerRewrites >= 1, "the content set took the new sampler before it drew")
         val changed = off.indices.step(4).count { kotlin.math.abs((off[it].toInt() and 0xFF) - (on[it].toInt() and 0xFF)) > 2 }

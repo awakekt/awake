@@ -8,23 +8,11 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.render.texture.TextureAsset
 
 /** Owns renderer-created sampled textures and the small set of cached asset textures. */
-internal class TextureResourceManager<T>(
-    /** Run on each texture as it is registered: how a new texture takes the renderer's current settings. */
-    private val onRegister: (T) -> Unit = {},
-    private val destroyResource: (T) -> Unit,
-) {
+internal class TextureResourceManager<T>(private val destroyResource: (T) -> Unit) {
     private val textures = mutableListOf<T>()
     private val neutralTextures = mutableMapOf<TextureAsset, T>()
 
-    fun register(texture: T): T = texture.also {
-        textures += it
-        onRegister(it)
-    }
-
-    /** Runs [action] on every registered texture, neutral ones included. */
-    fun forEachTexture(action: (T) -> Unit) {
-        for (index in textures.indices) action(textures[index])
-    }
+    fun register(texture: T): T = texture.also { textures += it }
 
     fun release(texture: T) {
         if (textures.remove(texture)) destroyResource(texture)
