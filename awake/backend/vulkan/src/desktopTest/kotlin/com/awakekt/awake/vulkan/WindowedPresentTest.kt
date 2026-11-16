@@ -74,6 +74,8 @@ class WindowedPresentTest {
 
     private fun withWindowRenderer(window: Long, block: (Renderer, SwapchainManager) -> Unit) {
         val device = GraphicsDevice()
+        // A windowed device only prints validation errors unless told otherwise.
+        device.failOnValidationError = true
         device.create(window)
         try {
             val swapchain = SwapchainManager(device, FRAMES_IN_FLIGHT, surfaceExtentProvider = { surfaceFramebufferExtent(window) })

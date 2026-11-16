@@ -14,6 +14,7 @@ import com.awakekt.awake.asset.shaders.toRequests
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -53,7 +54,8 @@ import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
  *
  * `lit_shadow` with a real depth pre-pass, layered and arrayed at [DEFAULT_SHADOW_CASCADES]: the
  * shader declares `texture_depth_2d_array`, so a single-layer view is a validation error rather
- * than a dimmer picture. Content features attach through the renderer's `ContentFeatureHost`.
+ * than a dimmer picture. The array grows to the layers a frame draws (#1688), so the pipelines keep
+ * a slot for each of [MAX_SHADOW_TARGET_LAYERS]. Content features attach through the renderer's `ContentFeatureHost`.
  */
 fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
     val graphicsDevice = GraphicsDevice()
@@ -221,7 +223,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             depthTarget.size,
             vertexEntryPoint = "vertexMain",
             fragmentEntryPoint = "fragmentMain",
-            cascadeCount = depthTarget.layers,
+            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
             framesInFlight = FRAMES_IN_FLIGHT,
         ),
         // As VulkanEngine builds it when a render plan opts particles into shadows.
@@ -235,7 +237,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
                 variant = PipelineVariant.AlphaBlendedParticle,
             ),
@@ -251,7 +253,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
             // As VulkanEngine builds a skinned pipeline that names its depth shader.
@@ -264,7 +266,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
         ),
@@ -278,7 +280,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
             DepthRenderKey(DepthCasterKind.Skinned, AlphaMode.Masked) to DepthOnlyPipeline(
@@ -290,7 +292,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
             // As a project plan declares it: folded copies of cut-out foliage cast through their alpha.
@@ -303,7 +305,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
                 variant = PipelineVariant.Instanced,
             ),
@@ -318,7 +320,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
-                cascadeCount = depthTarget.layers,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 framesInFlight = FRAMES_IN_FLIGHT,
                 variant = PipelineVariant.Instanced,
             ),

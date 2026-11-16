@@ -70,6 +70,9 @@ internal class GpuBufferPoolManager(
      * key would let the second overwrite the first. */
     internal val shadowBindGroups =
         mutableMapOf<BindingSemantic, MutableMap<GPURenderPipeline, WebGpuBindGroupHandle>>()
+
+    /** The group slot each cached depth group was built at, so a reallocated target rebuilds them. */
+    internal val shadowBindGroupSlots = mutableMapOf<GPURenderPipeline, Int>()
     private val uniformSlotPools = mutableMapOf<GPURenderPipeline, MutableList<UniformSlot>>()
 
     private val skinnedInstancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
@@ -201,6 +204,7 @@ internal class GpuBufferPoolManager(
         uniformSlotPools.remove(pipeline)?.forEach(UniformSlot::close)
         skinnedInstancedUniformResources.remove(pipeline)?.close()
         shadowBindGroups.values.forEach { groups -> groups.remove(pipeline)?.bindGroup?.close() }
+        shadowBindGroupSlots.remove(pipeline)
     }
 
     fun destroy() {
@@ -219,6 +223,7 @@ internal class GpuBufferPoolManager(
         skinnedInstancedUniformResources.clear()
         shadowBindGroups.values.forEach { groups -> groups.values.forEach { it.bindGroup.close() } }
         shadowBindGroups.clear()
+        shadowBindGroupSlots.clear()
     }
 }
 
@@ -281,18 +286,22 @@ private fun GpuBufferPoolManager.depthBindingFor(
     semantic: BindingSemantic,
     depthTarget: com.awakekt.awake.webgpu.texture.DepthTarget,
 ): MaterialBinding = shadowBindGroups.getOrPut(semantic) { mutableMapOf() }.getOrPut(pipeline.pipeline) {
-    val device = graphicsDevice.wgpuContext.device
-    WebGpuBindGroupHandle(
-        device.createBindGroupReleasingLayout(
-            BindGroupDescriptor(
-                layout = pipeline.pipeline.getBindGroupLayout(
-                    pipeline.bindingLayout.slot(semantic).toUInt(),
-                ),
-                entries = listOf(
-                    BindGroupEntry(binding = 0u, resource = depthTarget.depthView),
-                    BindGroupEntry(binding = 1u, resource = depthTarget.sampler),
-                ),
-            ),
-        ),
-    )
+    val slot = pipeline.bindingLayout.slot(semantic)
+    if (semantic == BindingSemantic.ShadowDepth) shadowBindGroupSlots[pipeline.pipeline] = slot
+    WebGpuBindGroupHandle(depthBindGroup(pipeline.pipeline, slot, depthTarget))
 }
+
+/** [depthTarget]'s view and sampler as group [slot] of [pipeline]. */
+internal fun GpuBufferPoolManager.depthBindGroup(
+    pipeline: GPURenderPipeline,
+    slot: Int,
+    depthTarget: com.awakekt.awake.webgpu.texture.DepthTarget,
+) = graphicsDevice.wgpuContext.device.createBindGroupReleasingLayout(
+    BindGroupDescriptor(
+        layout = pipeline.getBindGroupLayout(slot.toUInt()),
+        entries = listOf(
+            BindGroupEntry(binding = 0u, resource = depthTarget.depthView),
+            BindGroupEntry(binding = 1u, resource = depthTarget.sampler),
+        ),
+    ),
+)

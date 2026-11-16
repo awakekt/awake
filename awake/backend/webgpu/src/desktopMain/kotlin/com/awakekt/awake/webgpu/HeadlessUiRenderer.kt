@@ -39,11 +39,14 @@ internal const val FRAMES_IN_FLIGHT = 1
  * **This is wgpu-native, not a browser.** Canvas sizing, JS interop and wasm memory stay uncovered,
  * so a parity pass here does not promise the web build looks the same.
  *
- * [onUncapturedError] hears every WebGPU validation error; by default they are only printed.
+ * [onUncapturedError] hears every WebGPU validation error. By default each one is printed and fails
+ * the test that opened this session when it closes (#1592); a caller passing its own handler checks
+ * the errors itself.
  */
 fun webGpuHeadlessUi(
-    onUncapturedError: (String) -> Unit = { println("WGPU UNCAPTURED: $it") },
+    onUncapturedError: (String) -> Unit = WebGpuUncapturedErrors::report,
 ): HeadlessRenderSession = runBlocking {
+    WebGpuUncapturedErrors.drain()
     val context = glfwContextRenderer(
         width = 1,
         height = 1,
@@ -96,6 +99,7 @@ fun webGpuHeadlessUi(
         override fun close() {
             renderer.destroy()
             graphicsDevice.destroy()
+            WebGpuUncapturedErrors.failIfAny("webGpuHeadlessUi's session")
         }
     }
 }

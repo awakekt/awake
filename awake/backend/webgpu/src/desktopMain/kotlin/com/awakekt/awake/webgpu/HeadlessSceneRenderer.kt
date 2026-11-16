@@ -22,6 +22,7 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.application.WebGpuContentFeatureGpu
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
@@ -47,21 +48,24 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  * A WebGPU renderer over wgpu-native that can draw a lit, shadowed scene.
  *
  * [webGpuHeadlessUi]'s sibling. Built the same way `WebGpuEngine` builds its own: `lit_shadow` as
- * the scene pipeline, and a depth pre-pass whose target is layered and arrayed at
- * [MAX_SHADOW_TARGET_LAYERS], because the shader declares `texture_depth_2d_array`. Content
+ * the scene pipeline, and a depth pre-pass whose target is layered and arrayed, because the shader
+ * declares `texture_depth_2d_array`: it starts at the default cascades and grows to the layers a
+ * frame draws, up to [MAX_SHADOW_TARGET_LAYERS]. Content
  * features attach through the renderer's `ContentFeatureHost`.
  *
  * **This is wgpu-native, not a browser** -- see [webGpuHeadlessUi] for what that leaves uncovered.
  */
 fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
+    // Errors from before this session are not its own; the build's backstop has their tests.
+    WebGpuUncapturedErrors.drain()
     val context = glfwContextRenderer(
         width = 1,
         height = 1,
         title = "awake-render-parity-scene",
-        onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
+        onUncapturedError = { error -> WebGpuUncapturedErrors.report(error) },
     )
     val graphicsDevice = GraphicsDevice()
-    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") })
+    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> WebGpuUncapturedErrors.report(error) })
     val swapchainManager = SwapchainManager(graphicsDevice, FRAMES_IN_FLIGHT)
     swapchainManager.create()
     val scenePipeline = RenderPipeline(
@@ -227,7 +231,8 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsMetadataAvailable = PackShaderSets.Particle.webGpu.bindingsMetadataAvailable,
     )
     val depthPrePass = DepthPrePassFeature(
-        depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true),
+        // As WebGpuEngine builds it: the default cascades, grown to the layers a frame draws (#1688).
+        depthTarget = DepthTarget(graphicsDevice, layers = ShadowBudget.DEFAULT_CASCADES, arrayed = true, comparison = true),
         depthOnlyPipeline = DepthOnlyPipeline(
             graphicsDevice = graphicsDevice,
             shaderCode = wgsl(PackShaderSets.ShadowDepth),
@@ -381,6 +386,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             contentPipelines.destroyAll { it.destroy() }
             attacher.releaseAll()
             graphicsDevice.destroy()
+            WebGpuUncapturedErrors.failIfAny("webGpuHeadlessScene's session")
         }
     }
 }

@@ -39,6 +39,7 @@ import com.awakekt.awake.render.pipeline.PipelineSet
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.ShaderSource
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -268,7 +269,8 @@ open class VulkanEngine(
             map.size,
             shaders.vulkan.entryPoint(ShaderStage.VERTEX),
             shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
-            cascadeCount = map.layers,
+            // Every layer the array can grow to: the image starts with the cascades in use (#1688).
+            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
             framesInFlight = MAX_FRAMES_IN_FLIGHT,
             variant = variant,
             extraDescriptorSetLayouts = extraLayouts,
@@ -584,9 +586,10 @@ open class VulkanEngine(
             // descriptor set now, so no material layout depends on whether it exists.
             // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
             depthTarget = plan.depthPrePassShaderSet?.let {
+                // The cascades in use: a point light's faces are added the first frame one casts (#1688).
                 DepthTarget(
                     graphicsDevice,
-                    layers = MAX_SHADOW_TARGET_LAYERS,
+                    layers = ShadowBudget.DEFAULT_CASCADES,
                     arrayed = true,
                     comparison = true,
                 )

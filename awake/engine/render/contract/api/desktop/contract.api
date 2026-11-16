@@ -2187,6 +2187,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getOutputWidth ()I
 	public fun getRenderScale ()F
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public fun getShadowMapBytes ()J
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
@@ -2237,6 +2238,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public static fun getShadowMapBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getSurfaceWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I

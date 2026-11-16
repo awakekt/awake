@@ -214,16 +214,21 @@ mavenPublishing {
     }
 }
 
-// #1676: the scene pass's depth hazard test, under Vulkan synchronization validation. Its own task,
+// #1676: the scene pass's depth hazard test, under Vulkan synchronization validation, and #1688's
+// shadow-array growth with it. Its own task,
 // because the layer reads that setting from the environment, which a test cannot set for itself;
 // desktopTest leaves the class out.
 tasks.register<Test>("desktopSyncValidationTest") {
     group = "verification"
-    description = "Run the scene pass's depth hazard test under Vulkan synchronization validation (#1676)."
+    description = "Run the scene pass's depth hazard test and the shadow array's growth under Vulkan synchronization validation (#1676, #1688)."
     val desktopTestTask = tasks.named<Test>("desktopTest").get()
     testClassesDirs = desktopTestTask.testClassesDirs
     classpath = desktopTestTask.classpath
-    filter { includeTestsMatching("*ScenePassDepthHazardTest") }
+    filter {
+        includeTestsMatching("*ScenePassDepthHazardTest")
+        // #1688: the array reallocated mid-run, freed after the frames that used it drained.
+        includeTestsMatching("*RendererShadowLayersTest")
+    }
     requireExclusiveGpu(this)
     dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
     jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
@@ -238,16 +243,26 @@ tasks.named<Test>("desktopTest") { filter { excludeTestsMatching("*ScenePassDept
 // the process's first thread, so it is its own task and desktopTest leaves it out.
 tasks.register<Test>("desktopWindowedTest") {
     group = "verification"
-    description = "Present through a real window and swapchain, and rebuild it on a resize, under xvfb (#1688)."
+    description = "Present through a real window and swapchain under xvfb and synchronization validation: a resize rebuild, and the shadow array grown mid-run (#1688)."
     val desktopTestTask = tasks.named<Test>("desktopTest").get()
     testClassesDirs = desktopTestTask.testClassesDirs
     classpath = desktopTestTask.classpath
-    filter { includeTestsMatching("*WindowedPresentTest") }
+    filter {
+        includeTestsMatching("*WindowedPresentTest")
+        // #1688: the shadow array grown while frames are in flight, under synchronization validation.
+        includeTestsMatching("*WindowedShadowGrowthTest")
+    }
     requireExclusiveGpu(this)
     dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative", ":awake:engine:window:buildDesktopNative")
     val windowLibDir = project(":awake:engine:window").layout.buildDirectory.dir("desktop-native-libs")
     jvmArgs("-Djava.library.path=${listOf(desktopNativeLibDir, windowLibDir).joinToString(File.pathSeparator) { it.get().asFile.absolutePath }}")
     environment(desktopVulkanEnv)
+    environment("VK_KHRONOS_VALIDATION_VALIDATE_SYNC", "true")
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
-tasks.named<Test>("desktopTest") { filter { excludeTestsMatching("*WindowedPresentTest") } }
+tasks.named<Test>("desktopTest") {
+    filter {
+        excludeTestsMatching("*WindowedPresentTest")
+        excludeTestsMatching("*WindowedShadowGrowthTest")
+    }
+}

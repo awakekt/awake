@@ -36,6 +36,7 @@ internal class RendererGpuPassExecutor(
         // (VulkanDrawPreparer.startBatch), but a frame whose camera prepared none, or one presented
         // without a scene, never got there (#1687). Free when nothing is outstanding or it already waited.
         renderer.awaitSubmittedOffscreenCommandsFor(currentFrame)
+        renderer.ensureShadowLayers(input)
         renderer.graphicsDevice.frameUniforms.write(currentFrame, input)
         val resolvedDraws = input.resolvedDraws
         val depthDraws = renderer.prepareDepthDraws(input)
@@ -65,6 +66,7 @@ internal class RendererGpuPassExecutor(
 
 /** The commands that render [input] into offscreen [target], for either offscreen runner. */
 private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput): (Long) -> Unit {
+    ensureShadowLayers(input)
     val offscreen = target as OffscreenRenderTarget
     val sceneRect = input.viewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
     check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }

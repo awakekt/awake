@@ -45,10 +45,10 @@ class HeadlessWebGpuEngine(
             width = surface.width,
             height = surface.height,
             title = "awake-headless-webgpu",
-            onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
+            onUncapturedError = { error -> WebGpuUncapturedErrors.report(error) },
         )
         instance = context.instance
-        val gpu = context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") }
+        val gpu = context.wgpuContext.withGpuTiming { error -> WebGpuUncapturedErrors.report(error) }
             .withDisplayEncodedColorFormat()
         // Offscreen probes did not acquire the surface. Full-frame probes do, so configure the
         // same display-encoded format the engine adopts before its first acquire.
@@ -131,12 +131,14 @@ fun webGpuHeadlessPlan(
     lifecycle: AwakeAppLifecycle = defaultHeadlessLifecycle(),
     surface: HeadlessSurface = HeadlessSurface(1, 1),
 ): HeadlessRenderSession = runBlocking {
+    WebGpuUncapturedErrors.drain()
     val engine = HeadlessWebGpuEngine(lifecycle, plan)
     val renderer = engine.boot(surface)
     object : HeadlessRenderSession {
         override val renderer: Renderer = renderer
         override fun close() {
             engine.destroy()
+            WebGpuUncapturedErrors.failIfAny("the headless WebGPU engine's session")
         }
     }
 }
