@@ -15,6 +15,7 @@ import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.testing.NoopRenderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RenderQualityEngineTest {
 
@@ -48,6 +49,35 @@ class RenderQualityEngineTest {
         settings.shadowBudgetOverride = ShadowBudget.Default
         engine.update(0f)
         assertEquals(ShadowBudget.Default, phone.shadowBudget, "the override keeps the shadows drawn before #1688")
+    }
+
+    /** #1688: a phone whose frames run long under Auto draws fewer pixels; a fixed preset does not move. */
+    @Test
+    fun autoLowersThePhonesResolutionWhileFramesRunLong() {
+        val settings = RenderQualitySettings()
+        val phone = SurfaceRenderer(2400, 1080, GpuDeviceClass.Mobile)
+        val engine = engineFor(app(settings), phone)
+        engine.update(0.016f)
+        assertEquals(720f / 1080f, phone.renderScale, "it starts at Auto's budget")
+
+        // 25 fps at Auto's budget, with frame time following the pixels drawn.
+        val gpuBound = { 0.04f * (phone.renderScale * 1080f / 720f) * (phone.renderScale * 1080f / 720f) }
+        repeat(120) { engine.update(gpuBound()) }
+        assertTrue(phone.renderScale < 720f / 1080f, "25 fps against 60 lowers it: ${phone.renderScale}")
+        assertTrue(phone.renderScale >= 540f / 1080f, "never below the floor")
+
+        settings.select(RenderQuality.Balanced)
+        repeat(120) { engine.update(0.04f) }
+        assertEquals(720f / 1080f, phone.renderScale, "a preset is a fixed budget")
+    }
+
+    @Test
+    fun withoutDynamicResolutionAutoKeepsItsBudget() {
+        val settings = RenderQualitySettings().apply { dynamicResolution = null }
+        val phone = SurfaceRenderer(2400, 1080, GpuDeviceClass.Mobile)
+        val engine = engineFor(app(settings), phone)
+        repeat(120) { engine.update(0.04f) }
+        assertEquals(720f / 1080f, phone.renderScale)
     }
 
     @Test
