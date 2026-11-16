@@ -47,13 +47,26 @@ class OffscreenViewSyncHazardTest {
     @Test
     fun theMainSceneAloneRunsFramesWithNoSynchronizationHazard() = assertNoHazards("main scene alone", withView = false)
 
-    private fun assertNoHazards(label: String, withView: Boolean) {
+    /**
+     * Below full render scale the main scene renders into one scaled target that every frame in
+     * flight draws from its own command buffer, with nothing on the CPU between them: the path #1676
+     * reports. Only the scene pass's own subpass dependencies order the frames' depth writes.
+     */
+    @Test
+    fun aSceneBelowFullRenderScaleRunsFramesWithNoSynchronizationHazard() =
+        assertNoHazards("main scene and offscreen View at render scale 0.5", withView = true, renderScale = 0.5f)
+
+    @Test
+    fun theMainSceneAloneBelowFullRenderScaleRunsFramesWithNoSynchronizationHazard() =
+        assertNoHazards("main scene alone at render scale 0.5", withView = false, renderScale = 0.5f)
+
+    private fun assertNoHazards(label: String, withView: Boolean, renderScale: Float = 1f) {
         assertEquals("true", System.getenv(SYNC_VALIDATION_ENV), "run through desktopSyncValidationTest, which enables synchronization validation")
         val output = ByteArrayOutputStream()
         val original = System.out
         System.setOut(PrintStream(TeeStream(original, output), true))
         try {
-            runScene(FRAMES, withView)
+            runScene(FRAMES, withView, renderScale)
         } finally {
             System.setOut(original)
         }
@@ -63,7 +76,7 @@ class OffscreenViewSyncHazardTest {
         assertEquals(0, hazards.size, "$label, synchronization hazards:\n${hazards.take(3).joinToString("\n\n")}")
     }
 
-    private fun runScene(frames: Int, withView: Boolean) = runBlocking {
+    private fun runScene(frames: Int, withView: Boolean, renderScale: Float) = runBlocking {
         lateinit var runtime: SceneAppLifecycleRuntime
         val game = app {
             window { size(SIZE, SIZE) }
@@ -79,6 +92,7 @@ class OffscreenViewSyncHazardTest {
         openRuntimeSession(HeadlessUiBackend.Vulkan, game, SIZE, SIZE).use { session ->
             try {
                 game.ready(session.renderer)
+                session.renderer.renderScale = renderScale
                 repeat(frames) { game.update(1f / 60f, SIZE.toFloat(), SIZE.toFloat()) }
             } finally {
                 session.renderer.waitIdle()

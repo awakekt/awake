@@ -545,6 +545,13 @@ jobs:
       - name: Desktop Vulkan smoke test (real vkCreateInstance via lavapipe)
         run: ./gradlew :awake:backend:vulkan:desktopTest
 
+      # #1676: the scene pass drawn into one target from two command buffers, and a scene with an
+      # offscreen View and a scaled main target, under the validation layer's synchronization
+      # validation (vulkan-validationlayers, installed above). Any SYNC-HAZARD fails it.
+      - name: Vulkan synchronization validation (lavapipe)
+        if: ${{ !cancelled() }}
+        run: ./gradlew :awake:backend:vulkan:desktopSyncValidationTest :awake:engine:render:parity:desktopSyncValidationTest --stacktrace
+
       # wgpu-native needs a GLFW surface to select its adapter, even when rendering offscreen.
       # Xvfb supplies the display; Mesa's lavapipe executes both backends on the hosted runner.
       # Includes WebGpuProductionPlanTest: boots the showcase's real plan via WebGpuEngine,
