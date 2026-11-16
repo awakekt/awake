@@ -432,6 +432,8 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getFrameUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
+	public fun getMaxAnisotropy ()I
+	public fun getMaxSupportedAnisotropy ()I
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
 	public final fun getRedrawsStillFrames ()Z
@@ -439,6 +441,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
+	public fun getTextureMipSkip ()I
 	public fun getWireframe ()Z
 	public fun imagePassTargetContext (Lcom/awakekt/awake/render/texture/RenderTarget;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public fun observeDrawStages (Lcom/awakekt/awake/render/renderer/RenderDrawStages;)V
@@ -449,8 +452,10 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setEffectQuality (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
+	public fun setMaxAnisotropy (I)V
 	public final fun setRedrawsStillFrames (Z)V
 	public fun setRenderScale (F)V
+	public fun setTextureMipSkip (I)V
 	public fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun waitIdle ()V
