@@ -38,6 +38,8 @@ internal class CompileFrame(
     transparentEvery: Int = TRANSPARENT_EVERY,
     /** Every this-many-th draw only casts, as one outside the camera but inside a cascade does; 0 for none. */
     shadowsOnlyEvery: Int = 0,
+    /** Every draw at the origin, as the scene test's unversioned town is: its transforms are never built. */
+    atOrigin: Boolean = false,
 ) {
     private val pipelines = List(PIPELINES) { object : PipelineHandle {} }
     private val handle = object : MaterialBinding, BufferHandle {}
@@ -91,8 +93,8 @@ internal class CompileFrame(
 
     /** The frame's draws. */
     val requests = List(DRAWS) { index ->
-        val x = (index % ROW - ROW / 2) * SPACING
-        val z = (index / ROW - ROW / 2) * SPACING
+        val x = if (atOrigin) 0f else (index % ROW - ROW / 2) * SPACING
+        val z = if (atOrigin) 0f else (index / ROW - ROW / 2) * SPACING
         RenderDrawCommand(
             meshes[index % MESHES],
             materials[index % MESHES % materials.size],
