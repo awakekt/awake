@@ -31,12 +31,12 @@ import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
-import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.renderer.UiUploadStats
