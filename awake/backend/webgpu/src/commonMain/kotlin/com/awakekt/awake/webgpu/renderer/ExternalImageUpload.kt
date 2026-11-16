@@ -107,6 +107,11 @@ internal class ExternalImageUpload(private val renderer: Renderer) :
  * into level 0, then [TextureFiltering.Linear]'s mips drawn by [mipmaps]. The caller owns it. Call it only
  * after [canCopyExternalImage] said yes for [image]. Null, with the texture released, when the browser
  * refused the copy: the caller uploads the image's CPU pixels instead.
+ *
+ * With [GraphicsDevice.mipSkip] above 0 the texture returned is half or quarter size: the chain is still
+ * drawn at full size first, and only the levels kept are copied into it. So only the steady-state GPU
+ * memory drops; each upload's peak, while its full-size chain exists, is what it was without the skip,
+ * which matters on a low-memory device that loads many images at once (#1660).
  */
 internal fun GraphicsDevice.copyExternalImage(mipmaps: GpuMipmaps, image: Any, width: Int, height: Int, filtering: TextureFiltering): Texture? {
     val device = wgpuContext.device
