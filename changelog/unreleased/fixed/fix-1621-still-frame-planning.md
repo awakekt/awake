@@ -1,0 +1,1 @@
+- A replanned 3D frame allocates less in `RenderSystem3D`'s collect and compile stages, measured on wasm with a still and a moving camera (#1621). A consumer replans every frame by default: `isRealtimeProvider` defaults to true, so reusing a still frame's plan only applies to a host that opts out, and a still camera still pays for planning.
