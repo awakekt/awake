@@ -104,11 +104,32 @@ gradle.projectsEvaluated {
     verifyHeadlessRuntime.configure { projectDependencies.set(declared) }
 }
 
+/**
+ * Source checks that hang off `check`, the root's and each module's. No workflow runs `check`, so
+ * until [awakeVerify] ran them they ran nowhere: `:awake:backend:webgpu:verifyBackendLayering` failed
+ * on main from v0.54.0 with CI green (#1709).
+ */
+val rootSourceChecks = listOf(
+    ":verifyRenderUniforms",
+    ":verifyRenderContractBoundary",
+    ":verifyClipSpaceUsage",
+    ":verifyCapabilityBoundaries",
+)
+val moduleSourceChecks = setOf(
+    "verifyBackendLayering",
+    "verifyUiOwnership",
+    "verifyRenderExtensibility",
+    "verifyUiAuthoredUnits",
+    "verifyUiTestLifecycle",
+)
+
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
-    description = "Run Awake's repository, documentation, publication, and ownership gates."
+    description = "Run Awake's repository, documentation, publication, ownership and source-layering gates."
     dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
+    dependsOn(rootSourceChecks)
+    dependsOn(subprojects.map { module -> module.tasks.matching { it.name in moduleSourceChecks } })
 }
 
 val verifyPublishedArtifacts = tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {

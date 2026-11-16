@@ -51,9 +51,9 @@ class DynamicMesh(
     internal var uploadedInts: Long = 0L
         private set
 
-    /** What each buffer holds, to write only the span of an upload that differs; see [UploadShadow]. */
-    private val vertexShadow = UploadShadow()
-    private val indexShadow = UploadShadow()
+    /** What each buffer holds, to write only the span of an upload that differs; see [UploadMirror]. */
+    private val vertexMirror = UploadMirror()
+    private val indexMirror = UploadMirror()
 
     /** Reallocations so far. Steady state is zero; see the Vulkan DynamicMesh for why. */
     var growthCount: Int = 0
@@ -115,19 +115,19 @@ class DynamicMesh(
         // native buffer grown once. The retained-run skip above means a stable run writes nothing.
         // A pooled run (forced: same arrays, new contents) writes only the span that differs from
         // what the buffer holds: one copy and one `writeBuffer` per buffer. A retained run's new
-        // arrays are new content, written whole, and the shadow is released: only runs that keep
+        // arrays are new content, written whole, and the mirror is released: only runs that keep
         // changing pay for a CPU copy of their buffer.
         val queue = graphicsDevice.wgpuContext.device.queue
         if (!forceUpload) {
-            vertexShadow.release()
-            indexShadow.release()
+            vertexMirror.release()
+            indexMirror.release()
         }
-        val vertexRange = if (forceUpload) vertexShadow.changedFloats(vertices) else UploadShadow.range(0, vertices.size)
-        val indexRange = if (forceUpload) indexShadow.changedInts(indices) else UploadShadow.range(0, indices.size)
-        val floats = UploadShadow.count(vertexRange)
-        val ints = UploadShadow.count(indexRange)
-        if (floats > 0) queue.writeMeshFloatRange(vertexBuffer, vertices, UploadShadow.first(vertexRange), floats, staging)
-        if (ints > 0) queue.writeMeshIntRange(indexBuffer, indices, UploadShadow.first(indexRange), ints, staging)
+        val vertexRange = if (forceUpload) vertexMirror.changedFloats(vertices) else UploadMirror.range(0, vertices.size)
+        val indexRange = if (forceUpload) indexMirror.changedInts(indices) else UploadMirror.range(0, indices.size)
+        val floats = UploadMirror.count(vertexRange)
+        val ints = UploadMirror.count(indexRange)
+        if (floats > 0) queue.writeMeshFloatRange(vertexBuffer, vertices, UploadMirror.first(vertexRange), floats, staging)
+        if (ints > 0) queue.writeMeshIntRange(indexBuffer, indices, UploadMirror.first(indexRange), ints, staging)
         if (floats + ints > 0) uploadCount += 1
         uploadedFloats += floats
         uploadedInts += ints
@@ -155,8 +155,8 @@ class DynamicMesh(
         indexBuffer.close()
         lastUploadedVertices = null
         lastUploadedIndices = null
-        vertexShadow.invalidate()
-        indexShadow.invalidate()
+        vertexMirror.invalidate()
+        indexMirror.invalidate()
         vertexBuffer = device.createBuffer(
             BufferDescriptor(
                 size = vertexBufferByteSize(maxVertices),
