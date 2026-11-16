@@ -19,7 +19,7 @@ package com.awakekt.awake.webgpu.ui
  * [changedFloats] and [changedInts] return the range as `first` in the high 32 bits and the
  * exclusive end in the low 32, from [range]; an empty range (first == end) means nothing to write.
  */
-internal class UploadShadow {
+internal class UploadMirror {
     private var floats = NO_FLOATS
     private var floatCount = 0
     private var ints = NO_INTS
