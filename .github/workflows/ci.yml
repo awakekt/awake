@@ -115,6 +115,9 @@ jobs:
       - name: Next release milestone
         run: scripts/next-milestone.test.sh
 
+      - name: Template versions handed to the template checks
+        run: scripts/template-versions.test.sh
+
       - name: iOS native builds cached only once verified
         run: scripts/ios-native-cache.test.sh
 
@@ -614,8 +617,12 @@ jobs:
     needs: platform-impact
     if: needs.platform-impact.outputs.ios == 'true'
     # Apple silicon, pinned like build-and-publish.yml. Nothing here needs Intel, whose pool is the
-    # scarcest and is being retired.
-    runs-on: macos-15
+    # scarcest and is being retired. The repository variable CORE_IOS_RUNNER moves the job to another
+    # macOS arm64 label, such as a larger or self-hosted runner, without a workflow change. Hosted
+    # macos-15 runners are shared with Publish, whose Consumer and Snapshot jobs hold one for an hour
+    # or more: on 16 Nov this job was cancelled three times after about 15 minutes in the queue,
+    # without a runner (#1362). Unset, it runs on macos-15 as before.
+    runs-on: ${{ vars.CORE_IOS_RUNNER || 'macos-15' }}
     timeout-minutes: 45
 
     steps:
