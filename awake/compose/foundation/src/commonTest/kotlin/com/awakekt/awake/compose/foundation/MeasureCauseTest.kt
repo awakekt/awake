@@ -10,8 +10,10 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.PhaseReadCause
 import com.awakekt.awake.compose.runtime.PolledState
 import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
+import com.awakekt.awake.compose.ui.layout.onSizeChanged
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
@@ -91,6 +93,35 @@ class MeasureCauseTest {
 
         assertFalse(host.frameCounts.measured)
         assertEquals(PhaseReadCause.None, host.frameCounts.measureCause)
+    }
+
+    /**
+     * A measure that resizes a node whose size composition reads composes and lays out a second time
+     * in the frame (`ComposeHost.placementRecompositions`). The cause is still the first layout's:
+     * the second always composes, and would report none.
+     */
+    @Test
+    fun aFrameThatComposesAgainAfterPlacementKeepsTheFirstLayoutsCause() {
+        val placedWidth = mutableStateOf(0)
+        val resizing: context(Composer)
+        () -> Unit = {
+            Box(Modifier.onSizeChanged { w, _ -> placedWidth.value = w }) {
+                Layout(nodeType = ByState, measurePolicy = byState)
+            }
+            val seen = placedWidth.value
+            Layout(nodeType = ByPoll, measurePolicy = MeasurePolicy { _, _ -> layout(seen, 10) {} })
+        }
+        host.explainMeasure = true
+        repeat(3) { host.frame(input, resizing) }
+        val before = host.placementRecompositions
+
+        width.value = 50
+        host.frame(input, resizing)
+
+        val counts = host.frameCounts
+        assertEquals(before + 1, host.placementRecompositions, "placement wrote a size composition read: $counts")
+        assertEquals(PhaseReadCause.StateWritten, counts.measureCause, "the first layout's cause, not the second pass's: $counts")
+        assertSame(width, counts.measureCauseSource)
     }
 
     @Test

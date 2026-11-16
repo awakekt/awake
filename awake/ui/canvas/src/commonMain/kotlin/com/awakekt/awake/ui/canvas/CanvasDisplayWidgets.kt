@@ -38,6 +38,9 @@ class CanvasBarWidget : CanvasWidget {
 
     /** Whether [trail] has been put on the value it first drew at, so a bar does not trail in from full. */
     internal var trailStarted = false
+
+    /** The frame the trail last advanced in, so a frame drawn twice advances it once. */
+    internal var trailStamp = 0L
 }
 
 /**

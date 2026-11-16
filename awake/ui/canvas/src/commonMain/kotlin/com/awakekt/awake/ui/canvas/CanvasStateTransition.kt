@@ -34,7 +34,10 @@ internal fun rememberCanvasStyleState(
     val transition = remember { CanvasStyleTransition() }
     val target = style.resolveState(baseBack, baseText, state, isDisabled)
     val duration = style.transitionSeconds ?: themeTransitionSeconds ?: 0f
-    transition.advance(target, stateMask(state, isDisabled), duration, clock.deltaSeconds)
+    val mask = stateMask(state, isDisabled)
+    // The clock only while a transition runs or starts: a settled element reads none (#1512).
+    val delta = if (transition.moves(mask, duration)) clock.deltaSeconds else 0f
+    transition.advance(target, mask, duration, delta)
 }
 
 internal data class ResolvedCanvasState(
@@ -233,6 +236,10 @@ private class CanvasStyleTransition {
     private var current: ResolvedCanvasState? = null
     private var duration = 0f
     private var elapsed = 0f
+
+    /** Whether [advance] with [stateMask] and [durationSeconds] would move time: a transition runs, or starts. */
+    fun moves(stateMask: Int, durationSeconds: Float): Boolean =
+        initialized && (duration > 0f || (stateMask != mask && durationSeconds.isFinite() && durationSeconds > 0f))
 
     fun advance(target: ResolvedCanvasState, stateMask: Int, durationSeconds: Float, deltaSeconds: Float): ResolvedCanvasState {
         val cleanDuration = if (durationSeconds.isFinite() && durationSeconds > 0f) durationSeconds else 0f

@@ -30,6 +30,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
@@ -46,9 +47,11 @@ import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
 import com.awakekt.awake.compose.ui.layout.onPlaced
+import com.awakekt.awake.compose.ui.layout.onSizeChanged
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
+import com.awakekt.awake.compose.ui.platform.LocalViewportSize
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -133,12 +136,16 @@ fun CanvasOverlay(
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
     val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers, premultiplied, structure)
-    // Measured before its content is composed, so the scale fits the box, and followers are culled
-    // and pinned against it, from the first frame.
-    BoxWithConstraints(modifier.fillMaxSize()) {
+    // The box's size comes from its placement, or the viewport's before the first: composed in
+    // composition, not inside measure, so a still canvas skips both (#1512). A box placed at a new
+    // size -- the first placement, a resize -- writes it, and the host composes and lays out again
+    // in the same frame (ComposeHost.placementRecompositions), so no frame draws at a stale size.
+    val size = remember { CanvasBoxSize() }
+    val viewport = LocalViewportSize.current
+    Box(modifier.fillMaxSize().onSizeChanged { placedWidth, placedHeight -> size.place(placedWidth, placedHeight) }) {
         val density = LocalDensity.current
-        val width = if (constraints.hasBoundedWidth) constraints.maxWidth / density else 0f
-        val height = if (constraints.hasBoundedHeight) constraints.maxHeight / density else 0f
+        val width = size.composedWidth(viewport.width) / density
+        val height = size.composedHeight(viewport.height) / density
         val effectiveDpi = if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH
         val drawnScale = scaler?.scaleFor(width, height, density, effectiveDpi) ?: scale
         val box = CanvasBoxMetrics(width, height, density, effectiveDpi, safeArea)
@@ -161,8 +168,9 @@ private fun ScaledCanvas(
     limits: List<CanvasFollowLimit>,
 ) {
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
+    // Read only where a particle steps, in its draw: a canvas with none reads no clock at all.
     val particleClock = remember { CanvasParticlesClock() }
-    particleClock.advance(LocalFrameClock.current.deltaSeconds)
+    particleClock.frameClock = LocalFrameClock.current
     // The box the elements are placed in, inside any padding the host's modifier adds: where it
     // sits in the frame is what a follower's projected point is moved by.
     Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
@@ -444,3 +452,30 @@ internal val CanvasAnchor.alignment: Alignment
         CanvasAnchor.BottomCenter -> Alignment.BottomCenter
         CanvasAnchor.BottomRight -> Alignment.BottomEnd
     }
+
+/**
+ * The size a canvas's box is composed at, in pixels: the viewport's until a placement differs from
+ * it, then the placed size, as state. Placement writes only a size composition did not use, so a
+ * canvas that fills the viewport never composes twice, and one placed at another size -- inside a
+ * smaller box, or resized -- composes again at it in the same frame (`ComposeHost.placementRecompositions`).
+ */
+internal class CanvasBoxSize {
+    private val widthState = mutableStateOf(UNPLACED)
+    private val heightState = mutableStateOf(UNPLACED)
+    private var usedWidth = UNPLACED
+    private var usedHeight = UNPLACED
+
+    fun composedWidth(viewportWidth: Int): Int = widthState.value.let { if (it == UNPLACED) viewportWidth else it }.also { usedWidth = it }
+
+    fun composedHeight(viewportHeight: Int): Int = heightState.value.let { if (it == UNPLACED) viewportHeight else it }.also { usedHeight = it }
+
+    fun place(width: Int, height: Int) {
+        if (width == usedWidth && height == usedHeight) return
+        widthState.value = width
+        heightState.value = height
+    }
+
+    private companion object {
+        const val UNPLACED = -1
+    }
+}
