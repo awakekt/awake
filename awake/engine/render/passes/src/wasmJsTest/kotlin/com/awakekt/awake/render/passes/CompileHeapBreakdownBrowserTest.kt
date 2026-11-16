@@ -24,6 +24,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Where a 3,000-draw frame's compile allocates in the browser, step by step (#1621). On the JVM with
@@ -32,51 +33,12 @@ import kotlin.test.Test
  * same frame, with a preparer that hands back draws it made once.
  */
 class CompileHeapBreakdownBrowserTest {
-    private val pipelines = List(PIPELINES) { object : PipelineHandle {} }
-    private val handle = object : MaterialBinding, BufferHandle {}
-    private val meshes = List(MESHES) {
-        object : Mesh {
-            override val format = VertexFormat.PositionNormalColor
-            override val sizeBytes = 0L
-            override fun destroy() = Unit
-        }
-    }
-    private val material = object : Material {
-        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
-        override fun destroy() = Unit
-    }
-    private val resolved = List(DRAWS) { index ->
-        GpuResolvedDraw(
-            pipeline = pipelines[index % PIPELINES],
-            materialBinding = handle,
-            vertexBuffer = handle,
-            indexBuffer = null,
-            elementCount = 3,
-            batchKey = 1_000 + (index * 7919) % 100_003,
-            transparent = index % 10 == 0,
-            depthSortKey = (index % 13).toFloat(),
-        )
-    }
-    private val preparer = object : GpuDrawPreparer {
-        override fun prepare(request: GpuDrawRequest, sourceIndex: Int, context: GpuDrawPreparationContext): GpuResolvedDraw =
-            resolved[sourceIndex % resolved.size]
-    }
-    private val requests = List(DRAWS) { index ->
-        val x = (index % ROW - ROW / 2) * SPACING
-        val z = (index / ROW - ROW / 2) * SPACING
-        RenderDrawCommand(
-            meshes[index % MESHES],
-            material,
-            model = Mat4().translate(x, 0f, z),
-            worldBounds = Aabb(Vec3f(x - 1f, -1f, z - 1f), Vec3f(x + 1f, 1f, z + 1f)),
-            transparent = index % 10 == 0,
-        )
-    }
-    private val lens = Lens(eye = Vec3f(0f, 30f, 60f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 400f)
-    private val sun = SceneLight(direction = Vec3f(0.4f, 1f, 0.3f), color = Vec3f(1f, 1f, 1f))
-    private val light = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, ClipSpace.WebGpu))
-    private val environment = EnvironmentUniforms.Default
-    private var step = 0
+    private val frame = CompileFrame(instancing = false)
+    private val preparer = frame.preparer
+    private val resolved = frame.resolved
+    private val requests = frame.requests
+    private val light = frame.light
+    private val environment = frame.environment
 
     @Test
     fun compileHeapBreakdown() {
@@ -88,14 +50,14 @@ class CompileHeapBreakdownBrowserTest {
         val stats = SceneDrawStats()
         val canInstance = scratch.batcher.canInstanceWith(preparer)
         val canTint = scratch.batcher.canTintWith(preparer)
-        val context = GpuDrawPreparationContext(viewProjection = lens.viewProjectionMatrix(1f, ClipSpace.WebGpu), cameraEye = lens.eye)
+        val context = GpuDrawPreparationContext(viewProjection = frame.lens.viewProjectionMatrix(1f, ClipSpace.WebGpu), cameraEye = frame.lens.eye)
         val cascades = shadowCascadeData(light, environment)?.viewProjections.orEmpty()
         val batched = scratch.batcher.batch(requests, canInstance, canTint)
         val sorter = StableListSort()
         val sortable = ArrayList<GpuResolvedDraw>(DRAWS)
         val figures = linkedMapOf(
             "preparerOnly" to medianGrowth(DRAWS) { for (i in requests.indices) preparer.prepare(requests[i], i, context) },
-            "signature" to medianGrowth(DRAWS) { scratch.signature.record(moved(), requests, light, environment, ClipSpace.WebGpu, 1f, null, emptyList(), ImagePassChain.Empty) },
+            "signature" to medianGrowth(DRAWS) { scratch.signature.record(frame.moved(), requests, light, environment, ClipSpace.WebGpu, 1f, null, emptyList(), ImagePassChain.Empty) },
             "batch" to medianGrowth(DRAWS) { scratch.batcher.batch(requests, canInstance, canTint) },
             "diagnose" to medianGrowth(DRAWS) { diagnoseInstanceFolds(requests, canInstance, stats.also { it.reset() }, canTint) },
             "casterFold" to medianGrowth(DRAWS) { scratch.casters.fold(batched, true, canInstance) },
@@ -122,11 +84,13 @@ class CompileHeapBreakdownBrowserTest {
             "comparatorCalls" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) sink += BatchKeyOrder.compare(resolved[i], resolved[DRAWS - 1 - i]) },
             "inIndices" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) if ((i and 7) in maskLayers.indices) sink++ },
             "compareFloats" to medianGrowth(DRAWS) { for (i in 0 until DRAWS) sink += resolved[i].depthSortKey.compareTo(resolved[DRAWS - 1 - i].depthSortKey) },
-            "compileMoving" to medianGrowth(DRAWS) { compile(scratch, null) },
-            "compileMovingWithStats" to medianGrowth(DRAWS) { compile(scratch, stats) },
+            "compileMoving" to medianGrowth(DRAWS) { frame.compile(scratch, null) },
+            "compileMovingWithStats" to medianGrowth(DRAWS) { frame.compile(scratch, stats) },
         )
         val line = figures.entries.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" }
         println("CompileHeapBreakdown: $DRAWS draws, bytes a draw: $line")
+        val compile = figures.getValue("compileMoving")
+        assertTrue(compile <= COMPILE_BUDGET, "a moving camera's compile took $compile B a draw, over $COMPILE_BUDGET")
     }
 
     private var sink = 0
@@ -139,35 +103,17 @@ class CompileHeapBreakdownBrowserTest {
         sorter.sort(into, order)
     }
 
-    private fun moved(): Lens = lens.also { it.eye = Vec3f(step++ * 0.01f, 30f, 60f) }
-
     private fun prepare(scratch: ScenePassScratch, batched: List<RenderDrawCommand>, context: GpuDrawPreparationContext) {
         scratch.casters.fold(batched, true, scratch.batcher.canInstanceWith(preparer))
         scratch.draws.reset(emptyList())
         scratch.draws.prepare(batched, preparer, context, scratch.casters)
     }
 
-    private fun compile(scratch: ScenePassScratch, stats: SceneDrawStats?) = ScenePassCompiler.compile(
-        moved(),
-        requests,
-        light,
-        environment,
-        ClipSpace.WebGpu,
-        1f,
-        null,
-        preparer,
-        emptyList(),
-        ImagePassChain.Empty,
-        stats,
-        scratch,
-    )
-
     private companion object {
         val BatchKeyOrder: Comparator<GpuResolvedDraw> = Comparator { a, b -> a.batchKey.compareTo(b.batchKey) }
-        const val DRAWS = 3_000
-        const val MESHES = 190
-        const val PIPELINES = 8
-        const val ROW = 60
-        const val SPACING = 4f
+        const val DRAWS = CompileFrame.DRAWS
+
+        /** A moving camera's compile, bytes a draw: 284 before the sorts inlined their comparison, 26 after. */
+        const val COMPILE_BUDGET = 48.0
     }
 }
