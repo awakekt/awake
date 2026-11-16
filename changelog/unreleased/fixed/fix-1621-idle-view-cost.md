@@ -1,1 +1,0 @@
-- WebGPU no longer rewrites every shadow cascade matrix to every depth pipeline each frame when the buffer already holds it: a still frame drawn again (600 shadowed draws) allocates 13.4 KB instead of 25.1 KB on the JVM, and a wasm build skips a typed array and a queue write per cascade per pipeline.

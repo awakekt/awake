@@ -1,1 +1,0 @@
-- WebGPU preparing a frame's draws allocates nothing per draw: it filled a new prepared draw for every draw of every planned frame (96 B each on the JVM, 1,000 draws a frame in the gate), though only the packet copied from it is kept. One prepared draw per renderer is now filled again for each draw.
