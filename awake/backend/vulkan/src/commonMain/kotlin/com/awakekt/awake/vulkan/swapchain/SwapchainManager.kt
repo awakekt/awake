@@ -16,6 +16,7 @@ import com.awakekt.awake.vulkan.enums.VkImageAspectFlagBits
 import com.awakekt.awake.vulkan.enums.VkImageUsageFlagBits
 import com.awakekt.awake.vulkan.enums.VkImageViewType
 import com.awakekt.awake.vulkan.enums.VkPresentModeKHR
+import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.VkSharingMode
 import com.awakekt.awake.vulkan.enums.VkSurfaceTransformFlagBitsKHR
 import com.awakekt.awake.vulkan.enums.flags.VkFenceCreateFlagBits
@@ -158,6 +159,13 @@ class SwapchainManager(
      */
     internal var suboptimalAccepted: Boolean = false
 
+    /** Swapchains [create] has built on the surface, for tests that check a resize rebuilds once. */
+    internal var builds: Int = 0
+        private set
+
+    /** Presents by the result they answered, indexed by `VkResult.ordinal`, for tests. */
+    internal val presentResults = IntArray(VkResult.entries.size)
+
     /**
      * Whether a suboptimal present means the swapchain must be rebuilt. With the compositor
      * rotating for us, a rotated Android surface reports suboptimal on every present; rebuilding
@@ -181,6 +189,7 @@ class SwapchainManager(
      */
     @Suppress("LongMethod")
     fun create() {
+        builds++
         val (capabilities, formats, presentModes) = querySwapChainSupport(physicalDevice, surface)
         val (format, colorSpace) = chooseSwapSurfaceFormat(formats)
         val presentMode = chooseSwapPresentMode(presentModes, presentPreference)

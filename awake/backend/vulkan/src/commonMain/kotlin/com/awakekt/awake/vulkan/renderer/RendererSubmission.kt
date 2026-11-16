@@ -64,6 +64,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // swapchain is not pre-rotated presents suboptimally every frame. The surface is asked once per
     // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
     val result = Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo)
+    swapchainManager.presentResults[result.ordinal]++
     when (presentAction(result, swapchainManager.suboptimalAccepted) { swapchainManager.surfaceChangedSinceBuild }) {
         PresentAction.Recreate -> recreateSwapChain()
         PresentAction.AcceptSuboptimal -> swapchainManager.suboptimalAccepted = true
