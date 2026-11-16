@@ -282,6 +282,21 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         // unable to process void
     }
 
+    // vkQueuePresentKHR answering VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR instead of throwing
+    // them: a pre-rotated phone panel presents suboptimally every frame (#1688). Other errors throw.
+    jint
+    queuePresentKHRStatus(JNIEnv *env, jlong arg0, jobject arg1) {
+        auto queue = reinterpret_cast<VkQueue>(arg0);
+        VkPresentInfoKHR info{};
+        VkPresentInfoKHRAccessor(env, arg1).fromObject(info);
+        VkResult result = vkQueuePresentKHR(queue, &info);
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR) {
+            exception_utils::resultException(env, result,
+                                             "There was a problem executing vkQueuePresentKHR");
+        }
+        return static_cast<jint>(result);
+    }
+
     void
     destroyImageView(jlong arg0, jlong arg1) {
         // process parameter??

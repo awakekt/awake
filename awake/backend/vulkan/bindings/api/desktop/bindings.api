@@ -147,6 +147,7 @@ public final class com/awakekt/awake/vulkan/Vulkan {
 	public final fun vkGetPhysicalDeviceSurfaceSupportKHR (JIJ)Z
 	public final fun vkGetSwapchainImagesKHR (JJ)[J
 	public final fun vkQueuePresentKHR (JLcom/awakekt/awake/vulkan/models/info/VkPresentInfoKHR;)V
+	public final fun vkQueuePresentKHRStatus (JLcom/awakekt/awake/vulkan/models/info/VkPresentInfoKHR;)Lcom/awakekt/awake/vulkan/enums/VkResult;
 	public final fun vkQueueSubmit (J[Lcom/awakekt/awake/vulkan/models/info/VkSubmitInfo;J)V
 	public final fun vkResetCommandBuffer (JI)V
 	public final fun vkResetFences (J[J)V

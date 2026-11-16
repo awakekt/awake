@@ -232,3 +232,22 @@ tasks.register<Test>("desktopSyncValidationTest") {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
 tasks.named<Test>("desktopTest") { filter { excludeTestsMatching("*ScenePassDepthHazardTest") } }
+
+// #1688: presents through a real GLFW window, surface and swapchain, the path no headless test
+// reaches. It needs a display (CI runs it under xvfb-run on lavapipe), and on macOS a window needs
+// the process's first thread, so it is its own task and desktopTest leaves it out.
+tasks.register<Test>("desktopWindowedTest") {
+    group = "verification"
+    description = "Present through a real window and swapchain, and rebuild it on a resize, under xvfb (#1688)."
+    val desktopTestTask = tasks.named<Test>("desktopTest").get()
+    testClassesDirs = desktopTestTask.testClassesDirs
+    classpath = desktopTestTask.classpath
+    filter { includeTestsMatching("*WindowedPresentTest") }
+    requireExclusiveGpu(this)
+    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative", ":awake:engine:window:buildDesktopNative")
+    val windowLibDir = project(":awake:engine:window").layout.buildDirectory.dir("desktop-native-libs")
+    jvmArgs("-Djava.library.path=${listOf(desktopNativeLibDir, windowLibDir).joinToString(File.pathSeparator) { it.get().asFile.absolutePath }}")
+    environment(desktopVulkanEnv)
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
+tasks.named<Test>("desktopTest") { filter { excludeTestsMatching("*WindowedPresentTest") } }

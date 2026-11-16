@@ -551,6 +551,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./gradlew :awake:backend:vulkan:desktopSyncValidationTest :awake:engine:render:parity:desktopSyncValidationTest --stacktrace
 
+      # #1688: presents through a real GLFW window, VkSurfaceKHR and swapchain on lavapipe's X11 WSI,
+      # and rebuilds the swapchain on a resize: the present path no headless test reaches.
+      - name: Vulkan windowed present (lavapipe, xvfb)
+        if: ${{ !cancelled() }}
+        run: xvfb-run -a ./gradlew :awake:backend:vulkan:desktopWindowedTest --stacktrace
+
       # wgpu-native needs a GLFW surface to select its adapter, even when rendering offscreen.
       # Xvfb supplies the display; Mesa's lavapipe executes both backends on the hosted runner.
       # Includes WebGpuProductionPlanTest: boots the showcase's real plan via WebGpuEngine,

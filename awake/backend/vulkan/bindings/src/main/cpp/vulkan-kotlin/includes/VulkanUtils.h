@@ -81,6 +81,8 @@ namespace awake {
 
     void queuePresentKHR(JNIEnv *env, jlong arg0, jobject arg1);
 
+    jint queuePresentKHRStatus(JNIEnv *env, jlong arg0, jobject arg1);
+
     void destroyImageView(jlong arg0, jlong arg1);
 
     void queueSubmit(JNIEnv *env, jlong arg0, jobjectArray arg1, jlong arg2);
