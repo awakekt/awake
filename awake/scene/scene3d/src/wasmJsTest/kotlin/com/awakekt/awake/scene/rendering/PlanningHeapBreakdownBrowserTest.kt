@@ -113,6 +113,10 @@ class PlanningHeapBreakdownBrowserTest {
         val costs = (parts + compileParts).map { (name, pass) -> name to bytesPerRenderer(pass) }
         val beforeParticles = costs.first { it.first == "beforeParticles" }.second
         assertTrue(beforeParticles <= BEFORE_PARTICLES_BUDGET, "the draw loop took $beforeParticles B a renderer")
+        // The scene's own draws compile as copies of them do: each renderer's own animation vector once
+        // cost 157 B a renderer through Vec3f's data-class equals (#1621).
+        val compile = costs.first { it.first == "compileSceneDraws" }.second
+        assertTrue(compile <= COMPILE_BUDGET, "the compile of the scene's draws took $compile B a renderer")
         return costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +
             ", frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB"
     }
@@ -178,6 +182,9 @@ class PlanningHeapBreakdownBrowserTest {
 
         /** The draw loop, bytes a renderer: 224 (157 over versioned transforms) before #1696, 0 after. */
         const val BEFORE_PARTICLES_BUDGET = 8.0
+
+        /** The compile of the scene's draws, bytes a renderer: 172 (130 versioned) before #1716; plain copies of them, 15 (17). */
+        const val COMPILE_BUDGET = 48.0
         val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
     }
 }
