@@ -454,6 +454,14 @@ short macOS arm64 pool can cancel any of those jobs before it starts; Publish re
 re-runs them once. build-logic's tests run on macOS on any pull request that changes build-logic
 (`.github/workflows/build-logic-macos.yml`).
 
+CI's **Physics (iOS)** job is the pull-request side's one macOS job, and it competes with Publish
+for the same hosted `macos-15` pool. It reads its runner from `CORE_IOS_RUNNER`:
+`runs-on: ${{ vars.CORE_IOS_RUNNER || 'macos-15' }}`. Set the variable to another macOS arm64 label,
+such as a larger hosted runner or a self-hosted Mac, when Publish's hour-long Consumer and Snapshot
+jobs keep the job queued until it is cancelled. Delete it to return to `macos-15`. The job needs
+Xcode and an arm64 Mac whatever the label: it builds Naga, MoltenVK and JoltC and runs Kotlin/Native
+tests on the iOS simulator.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
