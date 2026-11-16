@@ -30,7 +30,15 @@ import com.awakekt.awake.render.passes.uniforms.SceneLight
  * back draws it made once. With [instancing] the preparer instances, as the scene's backends do, so
  * copies of a mesh fold into instanced draws; without it every draw stays its own.
  */
-internal class CompileFrame(instancing: Boolean) {
+internal class CompileFrame(
+    instancing: Boolean,
+    /** One material per mesh, as the scene's town has, rather than one shared by all. */
+    distinctMaterials: Boolean = false,
+    /** Every this-many-th draw is blended; 0 for none, as in the scene's town. */
+    transparentEvery: Int = TRANSPARENT_EVERY,
+    /** Every this-many-th draw only casts, as one outside the camera but inside a cascade does; 0 for none. */
+    shadowsOnlyEvery: Int = 0,
+) {
     private val pipelines = List(PIPELINES) { object : PipelineHandle {} }
     private val handle = object : MaterialBinding, BufferHandle {}
     private val meshes = List(MESHES) {
@@ -40,9 +48,11 @@ internal class CompileFrame(instancing: Boolean) {
             override fun destroy() = Unit
         }
     }
-    private val material = object : Material {
-        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
-        override fun destroy() = Unit
+    private val materials = List(if (distinctMaterials) MESHES else 1) {
+        object : Material {
+            override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+            override fun destroy() = Unit
+        }
     }
 
     /** One resolved draw per source index, made once. */
@@ -85,10 +95,11 @@ internal class CompileFrame(instancing: Boolean) {
         val z = (index / ROW - ROW / 2) * SPACING
         RenderDrawCommand(
             meshes[index % MESHES],
-            material,
+            materials[index % MESHES % materials.size],
             model = Mat4().translate(x, 0f, z),
             worldBounds = Aabb(Vec3f(x - 1f, -1f, z - 1f), Vec3f(x + 1f, 1f, z + 1f)),
-            transparent = index % 10 == 0,
+            transparent = transparentEvery > 0 && index % transparentEvery == 0,
+            shadowsOnly = shadowsOnlyEvery > 0 && index % shadowsOnlyEvery == 1,
         )
     }
 
@@ -130,5 +141,6 @@ internal class CompileFrame(instancing: Boolean) {
         private const val PIPELINES = 8
         private const val ROW = 60
         private const val SPACING = 4f
+        private const val TRANSPARENT_EVERY = 10
     }
 }
