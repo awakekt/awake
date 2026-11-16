@@ -27,6 +27,7 @@ import com.awakekt.awake.render.renderer.RenderDrawStage
 import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
@@ -48,8 +49,17 @@ class PlanningHeapBreakdownBrowserTest {
     @Test
     fun aStillFramesPlanningHeapIsNamedPartByPart() {
         assertTrue(heapMeasurable(), "needs the launcher's --js-flags=--expose-gc and --enable-precise-memory-info")
+        // Transforms with no version, as a host without a TransformSystem has; then built by one, as
+        // an app's are, so each renderer's bounds are cached by version rather than compared.
+        val unversioned = measure(builtByTransformSystem = false)
+        val versioned = measure(builtByTransformSystem = true)
+        println("PlanningHeapBreakdown: $PROPS renderers, bytes a renderer; unversioned: $unversioned; versioned: $versioned")
+    }
+
+    private fun measure(builtByTransformSystem: Boolean): String {
         val renderer = NoopRenderer()
         val world = town(renderer)
+        if (builtByTransformSystem) TransformSystem().update(world, 0f)
         val camera = Camera(Lens(eye = Vec3f(0f, 30f, 60f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 400f))
         world.add(world.create(), camera)
         world.add(world.create(), Light(direction = Vec3f(0.4f, 1f, 0.3f)))
@@ -77,13 +87,11 @@ class PlanningHeapBreakdownBrowserTest {
             "frame" to { system.update(world, DELTA) },
         )
         val costs = parts.map { (name, pass) -> name to bytesPerRenderer(pass) }
-        println(
-            "PlanningHeapBreakdown: $PROPS renderers, bytes a renderer: " + costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +
-                "; frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB",
-        )
         assertTrue(same > 0)
         val sameFloats = costs.first { it.first == "matrixSameFloats" }.second
         assertTrue(sameFloats < 1.0, "comparing a matrix allocated $sameFloats bytes")
+        return costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +
+            ", frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB"
     }
 
     private fun bytesPerRenderer(pass: () -> Any?): Double {
