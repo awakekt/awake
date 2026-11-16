@@ -81,6 +81,12 @@ internal var CanvasElement.trailStarted: Boolean
         barWidget.trailStarted = value
     }
 
+internal var CanvasElement.trailStamp: Long
+    get() = barWidget.trailStamp
+    set(value) {
+        barWidget.trailStamp = value
+    }
+
 private val CanvasElement.barWidget: CanvasBarWidget
     get() = checkNotNull(widget as? CanvasBarWidget) { "only a Bar has a trail" }
 

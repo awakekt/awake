@@ -7,6 +7,8 @@
 
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.compose.runtime.mutableStateOf
+import com.awakekt.awake.compose.ui.platform.LocalViewportSize
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.gestures.onWheel
 import com.awakekt.awake.compose.foundation.hoverable
@@ -133,12 +135,15 @@ fun CanvasOverlay(
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
     val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips, followers, premultiplied, structure)
-    // Measured before its content is composed, so the scale fits the box, and followers are culled
-    // and pinned against it, from the first frame.
-    BoxWithConstraints(modifier.fillMaxSize()) {
+    // The box's size comes from its last placement, or the viewport's before the first: composed in
+    // composition, not inside measure, so a still canvas skips both (#1512). A box of a new size
+    // composes once more, with it.
+    val size = remember { CanvasBoxSize() }
+    val viewport = LocalViewportSize.current
+    Box(modifier.fillMaxSize().onPlaced { _, _, placedWidth, placedHeight -> size.place(placedWidth, placedHeight) }) {
         val density = LocalDensity.current
-        val width = if (constraints.hasBoundedWidth) constraints.maxWidth / density else 0f
-        val height = if (constraints.hasBoundedHeight) constraints.maxHeight / density else 0f
+        val width = (if (size.placed) size.width else viewport.width) / density
+        val height = (if (size.placed) size.height else viewport.height) / density
         val effectiveDpi = if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH
         val drawnScale = scaler?.scaleFor(width, height, density, effectiveDpi) ?: scale
         val box = CanvasBoxMetrics(width, height, density, effectiveDpi, safeArea)
@@ -161,8 +166,9 @@ private fun ScaledCanvas(
     limits: List<CanvasFollowLimit>,
 ) {
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
+    // Read only where a particle steps, in its draw: a canvas with none reads no clock at all.
     val particleClock = remember { CanvasParticlesClock() }
-    particleClock.advance(LocalFrameClock.current.deltaSeconds)
+    particleClock.frameClock = LocalFrameClock.current
     // The box the elements are placed in, inside any padding the host's modifier adds: where it
     // sits in the frame is what a follower's projected point is moved by.
     Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
@@ -444,3 +450,23 @@ internal val CanvasAnchor.alignment: Alignment
         CanvasAnchor.BottomCenter -> Alignment.BottomCenter
         CanvasAnchor.BottomRight -> Alignment.BottomEnd
     }
+
+/**
+ * The size a canvas's box was last placed at, in pixels: state, so a box placed at a new size
+ * composes again at it, and only then.
+ */
+internal class CanvasBoxSize {
+    private val widthState = mutableStateOf(0)
+    private val heightState = mutableStateOf(0)
+    private val placedState = mutableStateOf(false)
+
+    val width: Int get() = widthState.value
+    val height: Int get() = heightState.value
+    val placed: Boolean get() = placedState.value
+
+    fun place(width: Int, height: Int) {
+        widthState.value = width
+        heightState.value = height
+        placedState.value = true
+    }
+}

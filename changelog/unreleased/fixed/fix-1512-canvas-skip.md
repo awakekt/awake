@@ -1,0 +1,1 @@
+- A still `CanvasOverlay` no longer defeats `skipUnchangedComposition` and `skipUnchangedMeasure`: it composes in composition rather than inside measure, and reads the frame clock only while a trail, held stepper, tooltip delay, state transition or particle is running. A draining Bar trail now advances in draw, so it repaints its bar alone (#1512).

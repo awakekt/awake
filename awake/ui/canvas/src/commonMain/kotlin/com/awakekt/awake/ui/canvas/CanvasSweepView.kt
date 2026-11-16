@@ -40,26 +40,37 @@ internal fun SweepFill(
 ) {
     val amount = if (value.isNaN()) 0f else value.coerceIn(0f, 1f)
     if (amount <= 0f && track.a <= 0f) return
-    Box(
-        Modifier.fillMaxSize().drawBehind {
-            val ring = sweep.thickness * density
-            // A full pie needs no wedge: its start and end would be the same point, and asking the
-            // arc tessellator to close exactly back onto it leaves a hairline, float-precision gap.
-            val bare = track.a <= 0f && mask == DrawShape.Rectangle
-            if (amount >= 1f && ring <= 0f && bare) {
-                if (picture == null) drawRect(color = color) else drawImageFill(picture)
-                return@drawBehind
-            }
-            val bounds = Rectangle(0f, 0f, width.toFloat(), height.toFloat())
-            masked(mask, bounds) {
-                if (track.a > 0f) sweepPath(bounds, 1f, thickness = ring)?.let { drawPath(it, track) }
-                val swept = sweepPath(bounds, amount, sweep.startAngle, sweep.clockwise, ring)
-                if (swept != null) {
-                    if (picture == null) drawPath(swept, color) else clippedPath(swept) { drawImageFill(picture) }
-                }
-            }
-        },
-    )
+    Box(Modifier.fillMaxSize().drawBehind { drawSweepFill(amount, color, picture, sweep, mask, track) })
+}
+
+/** [value] of a sweep drawn into this box, over its [track]: what [SweepFill] draws, for a caller already drawing. */
+@Suppress("LongParameterList")
+internal fun DrawScope.drawSweepFill(
+    value: Float,
+    color: Color,
+    picture: ImageFill?,
+    sweep: CanvasSweep = CanvasSweep.Default,
+    mask: DrawShape = DrawShape.Rectangle,
+    track: Color = Color.Transparent,
+) {
+    val amount = if (value.isNaN()) 0f else value.coerceIn(0f, 1f)
+    if (amount <= 0f && track.a <= 0f) return
+    val ring = sweep.thickness * density
+    // A full pie needs no wedge: its start and end would be the same point, and asking the
+    // arc tessellator to close exactly back onto it leaves a hairline, float-precision gap.
+    val bare = track.a <= 0f && mask == DrawShape.Rectangle
+    if (amount >= 1f && ring <= 0f && bare) {
+        if (picture == null) drawRect(color = color) else drawImageFill(picture)
+        return
+    }
+    val bounds = Rectangle(0f, 0f, width.toFloat(), height.toFloat())
+    masked(mask, bounds) {
+        if (track.a > 0f) sweepPath(bounds, 1f, thickness = ring)?.let { drawPath(it, track) }
+        val swept = sweepPath(bounds, amount, sweep.startAngle, sweep.clockwise, ring)
+        if (swept != null) {
+            if (picture == null) drawPath(swept, color) else clippedPath(swept) { drawImageFill(picture) }
+        }
+    }
 }
 
 /** [block] clipped to [mask] over [bounds]: the box itself as a plain clip, any other shape as its path. */

@@ -7,6 +7,7 @@
 
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.runtime.Composer
@@ -60,16 +61,21 @@ internal class PremultipliedImages {
 }
 
 internal class CanvasParticlesClock {
-    var stamp: Long = 0L
-        private set
+    /**
+     * The host's clock, read only when a particle steps -- in its draw, or for a follower drawn
+     * nowhere -- so a canvas with no particle reads no clock and a still one composes, measures and
+     * draws nothing again (#1512).
+     */
+    var frameClock: FrameClock? = null
 
-    var deltaSeconds: Float = 0f
-        private set
+    /** This frame, as the time the host's clock has reached: the same for every reader in a frame. */
+    val stamp: Long get() = frameClock?.totalSeconds?.toRawBits()?.toLong() ?: 0L
 
-    fun advance(deltaSeconds: Float) {
-        stamp += 1L
-        this.deltaSeconds = if (deltaSeconds.isFinite() && deltaSeconds > 0f) deltaSeconds else 0f
-    }
+    val deltaSeconds: Float
+        get() {
+            val delta = frameClock?.deltaSeconds ?: 0f
+            return if (delta.isFinite() && delta > 0f) delta else 0f
+        }
 }
 
 internal val LocalCanvasParticlesClock = compositionLocalOf { CanvasParticlesClock() }
