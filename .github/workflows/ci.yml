@@ -115,6 +115,9 @@ jobs:
       - name: Next release milestone
         run: scripts/next-milestone.test.sh
 
+      - name: Template versions handed to the template checks
+        run: scripts/template-versions.test.sh
+
       - name: Plugin repositories cannot hide Google's
         run: scripts/plugin-repositories.test.sh
 
