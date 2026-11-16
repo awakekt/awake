@@ -104,6 +104,8 @@ internal class RendererGpuPassExecutor(
                 instanceBuffers = bufferPools.creations.instanceBuffers,
                 uniformBuffers = bufferPools.creations.uniformSlots,
             )
+            val packets = (gpuDrawPreparer as WebGpuDrawPreparer).resolvedDraws
+            statsCounter.drawReuseTotals(packets.built, packets.reused, retainedBundles.counts.encoded)
             statsCounter.publish(gpuFrameTimer?.lastMs)
             stages?.end(RenderDrawStage.Submit)
         }
