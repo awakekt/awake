@@ -264,6 +264,10 @@ class DepthTarget(
         }
     }
 
+    /** How many times [reallocate] rebuilt the image: for tests that bound how often it waits. */
+    internal var reallocations = 0
+        private set
+
     /**
      * Rebuilds the image at [layers] and [size], keeping the render pass, sampler and descriptor set,
      * whose image binding is rewritten: everything that holds [binding] or [renderPass] stays valid
@@ -274,6 +278,7 @@ class DepthTarget(
      */
     internal fun reallocate(layers: Int, size: Int) {
         if (layers == this.layers && size == this.size) return
+        reallocations += 1
         releaseImage()
         this.layers = layers
         this.size = size

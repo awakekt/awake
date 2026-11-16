@@ -127,7 +127,12 @@ class GraphicsDevice {
     internal var sharedPipelineCache: Long = 0L
         private set
 
-    private var failOnValidationError = false
+    /**
+     * Whether [destroy] throws when the validation layer reported errors. Always on for a headless
+     * device; a test presenting through a window turns it on too, or its validation errors are only
+     * printed (#1688).
+     */
+    internal var failOnValidationError = false
     private val validationErrors = mutableListOf<String>()
 
     /** True only when the created instance actually enabled the Khronos validation layer. */

@@ -66,8 +66,8 @@ class RendererShadowLayersTest {
     /**
      * Presented frames, as an app draws them, so the growth runs inside `draw` between frames.
      * `desktopSyncValidationTest` runs this class too: the reallocation and the rewritten
-     * descriptor raise no hazard. Headless, frames do not overlap, so this cannot show the wait for
-     * frames in flight before the old array is freed is needed: removing it still passes here.
+     * descriptor raise no hazard. With one frame in flight nothing overlaps here, so the wait for
+     * frames in flight before the old array is freed is gated by `WindowedShadowGrowthTest`.
      */
     private fun Renderer.frame(world: World) = draw(RenderSystem3D(this).planCapture(world, camera, SIZE, SIZE))
 
