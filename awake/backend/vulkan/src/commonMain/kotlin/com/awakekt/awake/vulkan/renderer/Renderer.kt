@@ -403,17 +403,15 @@ class Renderer internal constructor(
     /** Samplers replaced for a new [maxAnisotropy], destroyed once no frame in flight can use them. */
     internal val retiredSamplers = RetiredSamplers(graphicsDevice)
 
-    internal val textureResources = TextureResourceManager<Texture>(
-        onRegister = { texture -> retiredSamplers.retire(texture.resample(maxAnisotropy)) },
-        destroyResource = Texture::destroy,
-    )
+    internal val textureResources = TextureResourceManager<Texture>(Texture::destroy)
 
     override val maxSupportedAnisotropy: Int get() = graphicsDevice.maxSamplerAnisotropy
 
     /**
-     * Clamped to the device; a change makes every registered texture's sampler again where it
-     * changes how it samples, and each material or content set takes the new sampler before its
-     * frame binds it (#1660). Textures uploaded later take it as they register.
+     * Clamped to the device; a change makes the sampler of every mipmapped texture on the device
+     * again, a content feature's included, where it changes how it samples, and each material or
+     * content set takes the new sampler before its frame binds it (#1660). Textures uploaded later
+     * are created with it.
      *
      * Setting the value it already has does nothing. Each change costs one `vkCreateSampler` per
      * linear, mipmapped texture on the frame it is set, and one descriptor write per material or
@@ -425,7 +423,8 @@ class Renderer internal constructor(
             val clamped = TextureSampling.anisotropy(value, maxSupportedAnisotropy)
             if (clamped == field) return
             field = clamped
-            textureResources.forEachTexture { retiredSamplers.retire(it.resample(clamped)) }
+            graphicsDevice.anisotropy = clamped
+            graphicsDevice.sampledTextures.forEach { retiredSamplers.retire(it.resample(clamped)) }
         }
     internal val createdRenderTargets = mutableListOf<OffscreenRenderTarget>()
 

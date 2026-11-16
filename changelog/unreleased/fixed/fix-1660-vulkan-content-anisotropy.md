@@ -1,0 +1,1 @@
+- Vulkan: `Renderer.maxAnisotropy` now reaches a content feature's own textures, terrain layers among them, which are created outside the renderer's texture registry; every mipmapped texture registers with the device and is created at the current setting (#1660).
