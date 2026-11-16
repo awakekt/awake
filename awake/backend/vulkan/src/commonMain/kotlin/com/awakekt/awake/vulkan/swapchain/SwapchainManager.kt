@@ -152,6 +152,13 @@ class SwapchainManager(
     var surfaceResized = false
 
     /**
+     * Whether a `VK_SUBOPTIMAL_KHR` present already found this swapchain's surface unchanged: a phone
+     * panel whose swapchain is not pre-rotated presents suboptimally every frame, and asking the
+     * surface again each time finds the same answer (#1688). Cleared when the swapchain is built.
+     */
+    internal var suboptimalAccepted: Boolean = false
+
+    /**
      * Whether a suboptimal present means the swapchain must be rebuilt. With the compositor
      * rotating for us, a rotated Android surface reports suboptimal on every present; rebuilding
      * each frame would only reproduce the same swapchain, so it happens only when the surface
@@ -232,6 +239,7 @@ class SwapchainManager(
         swapChain = Vulkan.vkCreateSwapchainKHR(device, createInfo)
         extent = chosenExtent
         builtTransform = capabilities.currentTransform
+        suboptimalAccepted = false
         builtSurfaceExtent = capabilities.currentExtent
         createImageViews()
         imagesInFlight = LongArray(imageViews.size)

@@ -10,7 +10,6 @@ import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkPresentInfoKHR
 import com.awakekt.awake.vulkan.models.info.VkSubmitInfo
-import com.awakekt.awake.vulkan.utils.VkResultException
 
 /** Submits the recorded frame and presents it, including swapchain recovery. */
 internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
@@ -61,14 +60,14 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         pImageIndices = intArrayOf(imageIndex),
         pResults = VkResult.values(),
     )
-    try {
-        Vulkan.vkQueuePresentKHR(presentQueue, presentInfo)
-    } catch (e: VkResultException) {
-        when (e.result) {
-            VkResult.VK_SUBOPTIMAL_KHR -> if (swapchainManager.surfaceChangedSinceBuild) recreateSwapChain()
-            VkResult.VK_ERROR_OUT_OF_DATE_KHR -> recreateSwapChain()
-            else -> throw e
-        }
+    // Suboptimal and out of date come back as results, not exceptions: a phone panel whose
+    // swapchain is not pre-rotated presents suboptimally every frame. The surface is asked once per
+    // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
+    val result = Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo)
+    when (presentAction(result, swapchainManager.suboptimalAccepted) { swapchainManager.surfaceChangedSinceBuild }) {
+        PresentAction.Recreate -> recreateSwapChain()
+        PresentAction.AcceptSuboptimal -> swapchainManager.suboptimalAccepted = true
+        PresentAction.None -> Unit
     }
     swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
 }

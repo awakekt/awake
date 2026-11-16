@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan
 
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.enums.VkPresentModeKHR
+import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.models.VkExtensionProperties
 import com.awakekt.awake.vulkan.models.VkLayerProperties
@@ -395,4 +396,12 @@ actual object Vulkan {
         @VkHandleRef("VkQueue") queue: Long,
         pPresentInfoKHR: VkPresentInfoKHR,
     )
+
+    /** Presents, answering `VK_SUBOPTIMAL_KHR` and `VK_ERROR_OUT_OF_DATE_KHR` instead of throwing them (#1688). */
+    actual fun vkQueuePresentKHRStatus(
+        @VkHandleRef("VkQueue") queue: Long,
+        pPresentInfoKHR: VkPresentInfoKHR,
+    ): VkResult = nativeQueuePresentStatus(queue, pPresentInfoKHR).let { code -> VkResult.entries.first { it.value == code } }
+
+    private external fun nativeQueuePresentStatus(queue: Long, pPresentInfoKHR: VkPresentInfoKHR): Int
 }

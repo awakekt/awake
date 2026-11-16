@@ -412,3 +412,10 @@ Java_com_awakekt_awake_vulkan_Vulkan_vkQueuePresentKHR(JNIEnv *env, jobject thiz
                                                                    jobject p_present_info_khr) {
     awake::queuePresentKHR(env, queue, p_present_info_khr);
 }
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_awakekt_awake_vulkan_Vulkan_nativeQueuePresentStatus(JNIEnv *env, jobject thiz,
+                                                               jlong queue,
+                                                               jobject p_present_info_khr) {
+    return awake::queuePresentKHRStatus(env, queue, p_present_info_khr);
+}

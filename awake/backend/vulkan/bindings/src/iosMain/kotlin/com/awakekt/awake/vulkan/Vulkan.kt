@@ -1678,7 +1678,19 @@ actual object Vulkan {
      * `VK_ERROR_OUT_OF_DATE_KHR`, so a caller that wants to rebuild its swapchain on those catches
      * the exception and reads its `result`.
      */
-    actual fun vkQueuePresentKHR(queue: Long, pPresentInfoKHR: VkPresentInfoKHR) = memScoped {
+    actual fun vkQueuePresentKHR(queue: Long, pPresentInfoKHR: VkPresentInfoKHR) {
+        throwOnVkFailure(presentNative(queue, pPresentInfoKHR), "vkQueuePresentKHR")
+    }
+
+    /** Presents, answering `VK_SUBOPTIMAL_KHR` and `VK_ERROR_OUT_OF_DATE_KHR` instead of throwing them (#1688). */
+    actual fun vkQueuePresentKHRStatus(queue: Long, pPresentInfoKHR: VkPresentInfoKHR): VkResult {
+        val result = presentNative(queue, pPresentInfoKHR)
+        val expected = result == VkResult.VK_SUBOPTIMAL_KHR.value || result == VkResult.VK_ERROR_OUT_OF_DATE_KHR.value
+        if (!expected) throwOnVkFailure(result, "vkQueuePresentKHR")
+        return VkResult.entries.first { it.value == result }
+    }
+
+    private fun presentNative(queue: Long, pPresentInfoKHR: VkPresentInfoKHR): Int = memScoped {
         val nativePresentInfo = alloc<NativeVkPresentInfoKHR>().apply {
             sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
             pNext = null
@@ -1697,9 +1709,7 @@ actual object Vulkan {
             }
             pResults = null
         }
-        val result = nativeVkQueuePresentKHR(queue.toCPointer<VkQueue_T>(), nativePresentInfo.ptr)
-        throwOnVkFailure(result, "vkQueuePresentKHR")
-        Unit
+        nativeVkQueuePresentKHR(queue.toCPointer<VkQueue_T>(), nativePresentInfo.ptr)
     }
 
     /**
