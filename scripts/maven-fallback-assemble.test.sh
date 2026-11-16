@@ -19,12 +19,14 @@ release() { # tag family version [core]
   local tag="$1" family="$2" version="$3" core="${4:-}" dir pom
   rm -rf content && mkdir -p "source/$tag"
   if [[ "$family" == core ]]; then
-    for artifact in bom core/math; do
+    for artifact in bom core/math core/math-desktop core/unused; do
       dir="content/com/awakekt/awake/$artifact/$version"
       mkdir -p "$dir"
       pom="$dir/$(basename "$artifact")-$version.pom"
       printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><groupId>g</groupId></project>\n' > "$pom"
     done
+    # A module nothing names, two megabytes of it, as most of a real Core bundle is.
+    head -c 2097152 /dev/urandom > "content/com/awakekt/awake/core/unused/$version/unused-$version.jar"
   else
     dir="content/com/awakekt/awake/backend/vulkan/$version"
     mkdir -p "$dir"
@@ -37,6 +39,11 @@ release() { # tag family version [core]
     <groupId>com.awakekt.awake.core</groupId><artifactId>math</artifactId><version>$core</version>
   </dependency></dependencies>
 </project>
+EOF
+    # Gradle resolves the module first: its desktop variant needs Core math's desktop artifact.
+    cat > "$dir/vulkan-$version.module" <<EOF
+{"variants": [{"name": "desktopApiElements", "dependencies": [
+  {"group": "com.awakekt.awake.core", "module": "math-desktop", "version": {"requires": "$core"}}]}]}
 EOF
   fi
   (cd content && zip -qr "../source/$tag/awake-$version-maven.zip" .)
@@ -67,6 +74,20 @@ else fail "dropped the first release: $(find site -name '*.pom' | sort)"; fi
 if served bom/0.11.0/bom-0.11.0.pom && served bom/0.10.0/bom-0.10.0.pom && served backend/vulkan/0.1.20/vulkan-0.1.20.pom; then
   pass "serves the newest Core releases and every kept Vulkan release"; else fail "newest: $(find site -name '*.pom' | sort)"; fi
 if grep -q 'named by a served POM' second.txt; then pass "says which releases it kept by reference"; else fail "reason: $(cat second.txt)"; fi
+if served core/math-desktop/0.9.0/math-desktop-0.9.0.pom; then pass "serves what a Gradle module names"; else
+  fail "module dependency: $(find site -name '*.pom' | sort)"; fi
+if ! served core/unused/0.9.0/unused-0.9.0.pom && served core/unused/0.11.0/unused-0.11.0.pom; then
+  pass "serves only the named artifacts of a release kept by reference, and newest releases whole"
+else fail "partial: $(find site -name '*.pom' | sort)"; fi
+if grep -q 'Serving v0.11.0 whole: ' second.txt && grep -q 'artifacts of v0.9.0 (named by a served POM): ' second.txt; then
+  pass "prints what each release adds"; else fail "sizes: $(cat second.txt)"; fi
+
+# Over the size limit it fails at assembly, with what each release adds, keeping the live site.
+if "$scripts/maven-fallback-assemble.sh" small 2 3 3 > small.txt 2>&1; then fail "served over the limit: $(cat small.txt)"; else
+  if grep -q 'over 3 MB' small.txt && grep -q 'Serving v0.10.0 whole: ' small.txt; then pass "fails over the size limit, naming each release's size"; else
+    fail "limit: $(cat small.txt)"; fi
+fi
+if "$scripts/maven-fallback-assemble.sh" roomy 2 3 50 > roomy.txt 2>&1; then pass "builds within the size limit"; else fail "roomy: $(cat roomy.txt)"; fi
 if [[ -z "$("$scripts/maven-fallback-closure.sh" site)" ]]; then pass "leaves nothing a served POM names unresolved"; else
   fail "unresolved: $("$scripts/maven-fallback-closure.sh" site)"; fi
 

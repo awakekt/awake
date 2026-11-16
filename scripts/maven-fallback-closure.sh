@@ -3,9 +3,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Prints what the fallback repository's own POMs name but it does not hold (#1694): each Awake
-# (com.awakekt.*) parent, imported BOM and versioned dependency, one `group:artifact:version` a line,
-# sorted. Prints nothing when every one resolves within the site.
+# Prints what the fallback repository's own POMs and Gradle modules name but it does not hold (#1694):
+# each Awake (com.awakekt.*) parent, imported BOM, versioned dependency and variant a Gradle module
+# serves elsewhere (`available-at`), one `group:artifact:version` a line, sorted. A BOM's managed
+# versions do not count: a build resolves only what it uses. Prints nothing when all resolve within
+# the site.
 #
 #   scripts/maven-fallback-closure.sh build/maven-fallback
 #   scripts/maven-fallback-closure.sh --live https://awakekt.github.io/awake/ build/maven-fallback
@@ -25,23 +27,32 @@ site="${1:?usage: maven-fallback-closure.sh [--live <url>] <site-dir>}"
 [[ -d "$site" ]] || { echo "No site at $site" >&2; exit 1; }
 
 named="$(
-  find "$site" -name '*.pom' -print0 | xargs -0 python3 -c '
-import sys, xml.etree.ElementTree as ET
+  find "$site" \( -name '*.pom' -o -name '*.module' \) -print0 | xargs -0 python3 -c '
+import json, sys, xml.etree.ElementTree as ET
 ns = {"m": "http://maven.apache.org/POM/4.0.0"}
 def text(node, tag):
     found = node.find("m:" + tag, ns)
     return found.text.strip() if found is not None and found.text else None
+def emit(group, artifact, version):
+    if group and artifact and version and group.startswith("com.awakekt") and "$" not in version:
+        print(f"{group}:{artifact}:{version}")
 for path in sys.argv[1:]:
+    if path.endswith(".module"):
+        # Gradle reads these first: a variant served elsewhere (available-at) and each dependency.
+        for variant in json.load(open(path)).get("variants", []):
+            at = variant.get("available-at")
+            if at:
+                emit(at.get("group"), at.get("module"), at.get("version"))
+            for dep in variant.get("dependencies", []):
+                emit(dep.get("group"), dep.get("module"), dep.get("version", {}).get("requires"))
+        continue
     root = ET.parse(path).getroot()
-    nodes = [root.find("m:parent", ns)]
-    nodes += root.findall("m:dependencyManagement/m:dependencies/m:dependency", ns)
-    nodes += root.findall("m:dependencies/m:dependency", ns)
+    nodes = [root.find("m:parent", ns)] + root.findall("m:dependencies/m:dependency", ns)
+    # Versions a BOM manages are only versions; an imported BOM itself must resolve.
+    nodes += [d for d in root.findall("m:dependencyManagement/m:dependencies/m:dependency", ns) if text(d, "scope") == "import"]
     for node in nodes:
-        if node is None:
-            continue
-        group, artifact, version = text(node, "groupId"), text(node, "artifactId"), text(node, "version")
-        if group and artifact and version and group.startswith("com.awakekt") and "$" not in version:
-            print(f"{group}:{artifact}:{version}")
+        if node is not None:
+            emit(text(node, "groupId"), text(node, "artifactId"), text(node, "version"))
 ' | sort -u
 )"
 
