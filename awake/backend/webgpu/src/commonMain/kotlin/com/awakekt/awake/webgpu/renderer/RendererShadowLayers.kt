@@ -24,8 +24,9 @@ internal fun Renderer.ensureShadowLayers(input: GpuPassInput) {
     val target = depthPrePass?.depthTarget ?: return
     var needed = 0
     for (index in input.prePasses.indices) needed = maxOf(needed, input.prePasses[index].targetLayer + 1)
-    if (!shadowArraySizing.update(needed, shadowBudget.mapSize)) return
-    if (target.layers == shadowArraySizing.layers && target.size == shadowArraySizing.size) return
+    val changed = shadowArraySizing.update(needed, shadowBudget.mapSize) &&
+        (target.layers != shadowArraySizing.layers || target.size != shadowArraySizing.size)
+    if (!changed) return
     target.reallocate(shadowArraySizing.layers, shadowArraySizing.size)
     val groups = bufferPools.shadowBindGroups[BindingSemantic.ShadowDepth].orEmpty()
     for ((pipeline, handle) in groups) {

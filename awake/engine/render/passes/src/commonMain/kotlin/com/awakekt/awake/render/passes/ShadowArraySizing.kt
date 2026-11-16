@@ -46,21 +46,25 @@ class ShadowArraySizing(
      * reallocated before the frame is recorded.
      */
     fun update(neededLayers: Int, mapSize: Int): Boolean {
+        val wantedLayers: Int
+        val wantedSize: Int
         if (neededLayers <= 0) {
             idleFrames += 1
-            if (isPlaceholder || idleFrames < releaseAfterFrames) return false
-            layers = PLACEHOLDER_LAYERS
-            size = PLACEHOLDER_SIZE
-            return true
+            val release = !isPlaceholder && idleFrames >= releaseAfterFrames
+            wantedLayers = if (release) PLACEHOLDER_LAYERS else layers
+            wantedSize = if (release) PLACEHOLDER_SIZE else size
+        } else {
+            idleFrames = 0
+            wantedLayers = if (isPlaceholder) neededLayers else maxOf(layers, neededLayers)
+            wantedSize = mapSize
         }
-        idleFrames = 0
-        val wantedLayers = if (isPlaceholder) neededLayers else maxOf(layers, neededLayers)
-        if (wantedLayers == layers && mapSize == size) return false
+        val changed = wantedLayers != layers || wantedSize != size
         layers = wantedLayers
-        size = mapSize
-        return true
+        size = wantedSize
+        return changed
     }
 
+    /** The placeholder's shape, and how long shadows may stay off before the array is freed. */
     companion object {
         /** The placeholder's layers: one, so an array view of it is valid. */
         const val PLACEHOLDER_LAYERS = 1

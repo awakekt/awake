@@ -39,10 +39,10 @@ import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
 import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
 import kotlinx.coroutines.runBlocking
+import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 /**
  * A windowless Vulkan renderer that can draw a lit, shadowed scene.
