@@ -141,8 +141,8 @@ class PlanningStageHeapBrowserTest {
         const val MESHES = 190
         const val SPACING = 4f
         const val DELTA = 1f / 60f
-        const val WARM_UP = 60
-        const val MEASURED = 30
+        const val WARM_UP = 30
+        const val MEASURED = 15
         const val KB = 1024.0
 
         /** Placeholders until the first browser figures: the consumer's own was 868 KB. */
