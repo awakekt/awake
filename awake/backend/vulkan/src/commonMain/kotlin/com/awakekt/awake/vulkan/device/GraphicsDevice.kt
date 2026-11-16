@@ -87,6 +87,10 @@ class GraphicsDevice {
     var capabilities: DeviceCapabilities = DeviceCapabilities.Uninitialized
         private set
 
+    /** The physical device's PCI vendor id, or 0 before [create]: `Renderer.vendorId` (#1700). */
+    internal var vendorId: Int = 0
+        private set
+
     /**
      * The `VkSurfaceKHR` presented to. It stays 0 for a headless device, and after [replaceSurface]
      * released it.
@@ -426,6 +430,7 @@ class GraphicsDevice {
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
 
+        vendorId = physicalDeviceProperties.vendorID
         val deviceApiVersion = Version.fromVkVersion(physicalDeviceProperties.apiVersion)
         capabilities = deriveDeviceCapabilities(
             deviceApiVersion = deviceApiVersion,

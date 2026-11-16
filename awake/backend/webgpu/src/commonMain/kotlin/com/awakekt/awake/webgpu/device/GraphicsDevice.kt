@@ -107,6 +107,10 @@ class GraphicsDevice {
      */
     var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
 
+    /** What the adapter said about itself at [create], or null where it could not say (#1700). */
+    internal var adapterReport: WebGpuAdapterReport? = null
+        private set
+
     internal lateinit var wgpuContext: WGPUContext
         private set
 
@@ -155,7 +159,9 @@ class GraphicsDevice {
         // Before anything reads the format: every pipeline and target is built with it.
         wgpuContext = context.withDisplayEncodedColorFormat()
         device = WebGpuHandles.register(wgpuContext.device)
-        deviceClass = classifyWebGpuDevice(wgpuContext.adapter.report(), hostMobileHint())
+        val report = wgpuContext.adapter.report()
+        adapterReport = report
+        deviceClass = classifyWebGpuDevice(report, hostMobileHint())
     }
 
     /**

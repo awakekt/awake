@@ -66,10 +66,10 @@ for private Pro packages and credentials.
 ## Fallback repository
 
 Each Core release and each Vulkan release also attaches its bundle, the signed files staged for
-Central, to its GitHub Release, and the **Maven fallback** workflow serves the newest two of each
-family from GitHub Pages. A build that
-needs a release Central refused under its publishing limits adds the repository after Maven Central;
-the coordinates are the same, so nothing else changes:
+Central, to its GitHub Release, and the **Maven fallback** workflow serves recent releases from
+GitHub Pages, at `https://awakekt.github.io/awake/`. A build that needs a release Central refused
+under its publishing limits, or that Central is rate-limiting, adds the repository after Maven
+Central; the coordinates are the same, so nothing else changes:
 
 ```kotlin
 repositories {
@@ -80,3 +80,18 @@ repositories {
 
 For Gradle plugins, add the same line to `pluginManagement.repositories`. The fallback holds the Core
 family, build-logic's plugins and the Vulkan family.
+
+**What it serves.** Every deploy publishes the site whole, so the site holds only what the latest
+deploy chose (#1694):
+
+- the newest `CORE_RELEASES` Core releases and the newest `VULKAN_RELEASES` Vulkan releases (2 and 3,
+  set at the top of `.github/workflows/maven-fallback.yml`);
+- every release those releases' POMs name: a Vulkan release imports the Core BOM, and depends on Core
+  artifacts, of the Core release it was built against, so that release stays served for as long as
+  the Vulkan release does.
+
+An older release drops off the site once nothing it serves names it. GitHub Pages caps a site at 1 GB,
+which rules out keeping every release. **List Maven Central as well, first, never this site alone:**
+Central keeps every release, and this site only covers the recent ones while Central refuses or
+rate-limits them. A deploy fails, and leaves the live site as it was, when a served POM names a
+release it cannot hold, and checks after deploying that every one it names resolves from the site.

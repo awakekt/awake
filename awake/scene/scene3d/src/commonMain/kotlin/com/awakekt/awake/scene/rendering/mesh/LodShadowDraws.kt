@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.core.pool.ScratchPool
+import com.awakekt.awake.render.command.NO_MASK_LAYER
 import com.awakekt.awake.render.material.GpuMaterial
 import com.awakekt.awake.render.mesh.GpuMesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -18,7 +19,7 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 internal fun ScratchPool<RenderDrawCommand>.shadowTwin(
     source: RenderDrawCommand,
     mesh: GpuMesh,
-    material: GpuMaterial = source.material,
+    material: GpuMaterial,
 ): RenderDrawCommand = obtain().set(
     mesh = mesh,
     material = material,
@@ -26,10 +27,20 @@ internal fun ScratchPool<RenderDrawCommand>.shadowTwin(
     extraUniformFloats = source.extraUniformFloats,
     vertexAnimation = source.vertexAnimation,
     timeSeconds = source.timeSeconds,
+    instanceModels = null,
+    instanceJointPalettes = null,
+    instanceColors = null,
+    instanceFrames = null,
     cullMode = source.cullMode,
     alphaMode = source.alphaMode,
     alphaCutoff = source.alphaCutoff,
+    transparent = false,
     shadowsOnly = true,
     worldBounds = source.worldBounds,
+    additive = false,
+    sortOrder = 0,
+    maskLayer = NO_MASK_LAYER,
+    sortLayer = 0,
     castsShadows = true,
+    exemptFromCoverings = false,
 )

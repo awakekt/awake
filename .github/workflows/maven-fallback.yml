@@ -1,8 +1,10 @@
 name: Maven fallback
 
-# Serves the newest two Core releases and the newest two Vulkan releases as a static Maven
-# repository on GitHub Pages, https://awakekt.github.io/awake/, for a release Maven Central refuses
-# under its publishing limits. It also serves the io.ygdrasil (wgpu4k) snapshot builds the WebGPU
+# Serves recent Core and Vulkan releases as a static Maven repository on GitHub Pages,
+# https://awakekt.github.io/awake/, for a release Maven Central refuses under its publishing limits:
+# the newest CORE_RELEASES Core and VULKAN_RELEASES Vulkan releases, plus every release their POMs
+# name (#1694). A Vulkan release imports the Core BOM, and depends on Core artifacts, of the Core
+# release it was built against, so that release is kept for as long as the Vulkan release is. It also serves the io.ygdrasil (wgpu4k) snapshot builds the WebGPU
 # backend pins, from the mirror-io.ygdrasil-* releases, once Central's snapshot cleanup removes them.
 # The files are the ones the release job signed and staged for Central and attached to each GitHub
 # Release, so they keep Central's coordinates and a build adds this repository after mavenCentral().
@@ -24,6 +26,16 @@ concurrency:
 permissions:
   contents: read
 
+# What the site keeps, in one place. A deploy publishes the site whole, replacing the one before, so
+# these decide what stays served. GitHub Pages caps a site at 1 GB: a Core bundle is about 135 MB and a
+# Vulkan bundle about 55 MB, so 2 Core + 3 Vulkan is about 435 MB, and the Core releases those Vulkan
+# releases name (usually one or two more, about 135 MB each) keep it near 700 MB. SITE_LIMIT_MB stops
+# a deploy before Pages would refuse it.
+env:
+  CORE_RELEASES: 2
+  VULKAN_RELEASES: 3
+  SITE_LIMIT_MB: 950
+
 jobs:
   deploy:
     name: Deploy
@@ -43,29 +55,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Download the newest two bundles of each family
+      - name: Build the repository from the newest releases and every release they name
         id: bundles
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Core releases (v*) and Vulkan releases (vulkan-v*) version independently, so each keeps
-          # its own newest two. A release from before the fallback existed has no bundle and is skipped.
-          tags="$(gh release list --limit 100 --json tagName,isDraft --jq '.[] | select(.isDraft | not) | .tagName')"
-          fetch() { # family tag-regex asset-glob
-            mkdir -p "build/bundles/$1"
-            for tag in $(grep -E "$2" <<< "$tags"); do
-              gh release download "$tag" --pattern "$3" --dir "build/bundles/$1" 2> /dev/null || continue
-              echo "Serving $tag"
-              if [ "$(ls "build/bundles/$1" | wc -l)" -ge 2 ]; then break; fi
-            done
-          }
-          fetch core '^v[0-9]' 'awake-[0-9]*-maven.zip'
-          fetch vulkan '^vulkan-v[0-9]' 'awake-vulkan-*-maven.zip'
-          echo "count=$(find build/bundles -name '*.zip' | wc -l)" >> "$GITHUB_OUTPUT"
-
-      - name: Build the repository
-        if: steps.bundles.outputs.count != '0'
-        run: scripts/maven-fallback-site.sh build/maven-fallback $(find build/bundles -name '*.zip' | sort)
+          # Fails, and so keeps the live site, when a served POM names a release with no bundle.
+          scripts/maven-fallback-assemble.sh build/maven-fallback "$CORE_RELEASES" "$VULKAN_RELEASES"
+          echo "count=$(find build/maven-fallback -name '*.pom' | wc -l)" >> "$GITHUB_OUTPUT"
 
       # Central's own files at Central's paths, maven-metadata.xml included, so they go in after the
       # site is built: the site script would write release metadata over a snapshot's.
@@ -88,6 +85,16 @@ jobs:
           # Fails the deploy, and so keeps the live site, if the site would lose a pinned build.
           scripts/check-ygdrasil-mirror.sh build/maven-fallback
 
+      - name: Check the site's size
+        if: steps.bundles.outputs.count != '0'
+        run: |
+          size="$(du -sm build/maven-fallback | cut -f 1)"
+          echo "The site is $size MB (limit $SITE_LIMIT_MB MB)."
+          if [ "$size" -gt "$SITE_LIMIT_MB" ]; then
+            echo "::error::The site would be $size MB, over $SITE_LIMIT_MB MB; lower CORE_RELEASES or VULKAN_RELEASES."
+            exit 1
+          fi
+
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: steps.bundles.outputs.count != '0'
         with:
@@ -96,3 +103,14 @@ jobs:
       - id: deploy
         if: steps.bundles.outputs.count != '0'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      # What the site now serves, from its own URL: every POM a served POM names must resolve there.
+      - name: Check the deployed site resolves what it serves
+        if: steps.bundles.outputs.count != '0'
+        run: |
+          missing="$(scripts/maven-fallback-closure.sh --live "${{ steps.deploy.outputs.page_url }}" build/maven-fallback)"
+          if [ -n "$missing" ]; then
+            echo "::error::The deployed site does not serve what its POMs name:"
+            echo "$missing"
+            exit 1
+          fi

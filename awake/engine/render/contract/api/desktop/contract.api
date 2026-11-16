@@ -1184,6 +1184,9 @@ public abstract interface class com/awakekt/awake/render/pipeline/GpuDevice {
 	public abstract fun destroy ()V
 	public abstract fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
 	public fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public fun getDeviceName ()Ljava/lang/String;
+	public fun getDriverVersion ()Ljava/lang/Long;
+	public fun getVendorId ()Ljava/lang/Integer;
 	public fun waitIdle ()V
 }
 
@@ -1196,6 +1199,9 @@ public final class com/awakekt/awake/render/pipeline/GpuDevice$DefaultImpls {
 	public static synthetic fun createMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
 	public static fun createMeshSharingVertices (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public static fun getDeviceName (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/lang/String;
+	public static fun getDriverVersion (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/lang/Long;
+	public static fun getVendorId (Lcom/awakekt/awake/render/pipeline/GpuDevice;)Ljava/lang/Integer;
 	public static fun waitIdle (Lcom/awakekt/awake/render/pipeline/GpuDevice;)V
 }
 
@@ -2225,6 +2231,8 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public static fun getDeviceName (Lcom/awakekt/awake/render/renderer/Renderer;)Ljava/lang/String;
+	public static fun getDriverVersion (Lcom/awakekt/awake/render/renderer/Renderer;)Ljava/lang/Long;
 	public static fun getEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public static fun getFrameBufferCreations (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/BufferCreationStats;
 	public static fun getFrameDrawReuse (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/DrawReuseStats;
@@ -2243,6 +2251,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getSurfaceWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getTextureMipSkip (Lcom/awakekt/awake/render/renderer/Renderer;)I
+	public static fun getVendorId (Lcom/awakekt/awake/render/renderer/Renderer;)Ljava/lang/Integer;
 	public static fun imagePassTargetContext (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public static synthetic fun imagePassTargetContext$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public static fun observeDrawStages (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/RenderDrawStages;)V
