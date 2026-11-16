@@ -168,8 +168,11 @@ public final class com/awakekt/awake/render/passes/InstanceFoldMiss : java/lang/
 public final class com/awakekt/awake/render/passes/InstancePacker {
 	public fun <init> (Lcom/awakekt/awake/core/geometry/GpuDataShape;Ljava/lang/String;ILcom/awakekt/awake/render/passes/InstanceWriter;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/geometry/GpuDataShape;Ljava/lang/String;ILcom/awakekt/awake/render/passes/InstanceWriter;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/geometry/GpuDataShape;Ljava/lang/String;ILkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/geometry/GpuDataShape;Ljava/lang/String;ILkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getFloatsPerInstance ()I
 	public final fun pack (IILcom/awakekt/awake/render/passes/InstanceSource;)[F
+	public final fun pack (IILkotlin/jvm/functions/Function1;)[F
 	public final fun pack (Ljava/util/List;I)[F
 }
 

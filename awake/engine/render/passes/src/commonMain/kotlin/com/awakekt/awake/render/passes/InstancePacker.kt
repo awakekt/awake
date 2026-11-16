@@ -36,6 +36,18 @@ class InstancePacker<T>(
     repeat: Int = 1,
     private val write: InstanceWriter<T>,
 ) {
+    /** The released constructor, kept so code compiled against it still links; its writer is called through [InstanceWriter]. */
+    @Deprecated(
+        "Pass an InstanceWriter: a function type boxes each instance's offset on wasm (#1621).",
+        ReplaceWith("InstancePacker(shape, label, repeat, InstanceWriter(write))"),
+    )
+    constructor(
+        shape: GpuDataShape,
+        label: String,
+        repeat: Int = 1,
+        write: (out: FloatArray, offset: Int, item: T) -> Unit,
+    ) : this(shape, label, repeat, InstanceWriter(write))
+
     /** Floats one instance occupies -- derived from [shape], never hand-counted. */
     val floatsPerInstance: Int = shape.componentCount * repeat
 
@@ -68,6 +80,14 @@ class InstancePacker<T>(
         }
         return out
     }
+
+    /** The released indexed form, kept so code compiled against it still links. */
+    @Deprecated(
+        "Pass an InstanceSource: a function type boxes each index on wasm (#1621).",
+        ReplaceWith("pack(instanceCount, maxInstances, InstanceSource(itemAt))"),
+    )
+    fun pack(instanceCount: Int, maxInstances: Int, itemAt: (Int) -> T): FloatArray? =
+        pack(instanceCount, maxInstances, InstanceSource(itemAt))
 
     private fun reserve(instanceCount: Int, maxInstances: Int): FloatArray? {
         require(instanceCount in 0..maxInstances) {

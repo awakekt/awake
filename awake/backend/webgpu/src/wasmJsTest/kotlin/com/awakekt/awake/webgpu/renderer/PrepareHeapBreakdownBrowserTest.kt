@@ -14,6 +14,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BufferDescriptor
@@ -74,7 +75,7 @@ class PrepareHeapBreakdownBrowserTest {
             val floats = FloatArray(count * MAT4_FLOATS) { it.toFloat() }
             val models = List(count) { Mat4().translate(it.toFloat(), 0f, 0f) }
             val oneMore = models + Mat4()
-            val packer = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe") { out, offset, model -> model.data.copyInto(out, offset) }
+            val packer = InstancePacker<Mat4>(GpuDataShape.Mat4, "probe", write = InstanceWriter { out, offset, model -> model.data.copyInto(out, offset) })
             val device = renderer.graphicsDevice.wgpuContext.device
             val buffer = device.createBuffer(
                 BufferDescriptor(size = ((count + 1) * MAT4_FLOATS * Float.SIZE_BYTES).toULong(), usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst),

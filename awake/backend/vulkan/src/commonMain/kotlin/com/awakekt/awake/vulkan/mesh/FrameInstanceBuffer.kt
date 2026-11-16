@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.mesh
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -47,9 +48,13 @@ class FrameInstanceBuffer(
         FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory))
     }
 
-    private val packer = InstancePacker<Float>(GpuDataShape.Float, "FrameInstanceBuffer") { out, offset, frame ->
-        out[offset] = frame
-    }
+    private val packer = InstancePacker<Float>(
+        GpuDataShape.Float,
+        "FrameInstanceBuffer",
+        write = InstanceWriter { out, offset, frame ->
+            out[offset] = frame
+        },
+    )
 
     /**
      * Writes one sprite-strip frame index per instance into [frameIndex]'s buffer, in the same
