@@ -798,6 +798,17 @@ jobs:
       - name: Scene planning heap breakdown (browser)
         run: ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*" --tests "*PlanningLoopHeap*"
 
+      # The log names a failed browser test; its result file holds why, with the browser's own output.
+      - name: Upload the planning heap tests' results
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scene3d-browser-test-results
+          path: |
+            awake/scene/scene3d/build/test-results/wasmJsBrowserTest/
+            awake/scene/scene3d/build/reports/tests/wasmJsBrowserTest/
+          if-no-files-found: warn
+
       # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest
