@@ -12,9 +12,17 @@ import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-/** [level] of [texture] read back as tightly packed RGBA8, bottom row first as uploaded. */
-internal suspend fun Renderer.readLevel(texture: Texture, level: Int): TextureAsset =
-    readColorPixels(texture.texture, (texture.width shr level).coerceAtLeast(1), (texture.height shr level).coerceAtLeast(1), GPUTextureFormat.RGBA8Unorm, level)
+/**
+ * [level] of [texture]'s GPU image read back as tightly packed RGBA8, bottom row first as uploaded. The
+ * level is sized from the GPU image, which mip skip can make smaller than the source (#1660).
+ */
+internal suspend fun Renderer.readLevel(texture: Texture, level: Int): TextureAsset = readColorPixels(
+    texture.texture,
+    (texture.uploadedWidth shr level).coerceAtLeast(1),
+    (texture.uploadedHeight shr level).coerceAtLeast(1),
+    GPUTextureFormat.RGBA8Unorm,
+    level,
+)
 
 /**
  * Fails at the first texel of [got] whose channel is more than [tolerance] from [want]'s, naming where:

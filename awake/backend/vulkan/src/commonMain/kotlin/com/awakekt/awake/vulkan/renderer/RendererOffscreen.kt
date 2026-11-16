@@ -61,16 +61,8 @@ internal fun Renderer.performCreateMaterial(
     return material
 }
 
-internal fun Renderer.uploadTexture(asset: TextureAsset): Texture = Texture(
-    graphicsDevice,
-    transferContext::runOneTimeCommands,
-    asset.data,
-    asset.width,
-    asset.height,
-    layerCount = asset.layerCount,
-    isCubemap = asset.isCubemap,
-    filtering = asset.filtering,
-).let(textureResources::register)
+internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =
+    Texture.skippingMips(graphicsDevice, transferContext::runOneTimeCommands, asset).let(textureResources::register)
 
 /**
  * The frame the on-screen path just drew, when there is no screen.

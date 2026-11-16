@@ -83,9 +83,13 @@ internal class VulkanContentFeatureGpu(
                 isCubemap = asset.isCubemap,
                 filtering = asset.filtering,
             )
+        // A binding written after upload keeps every level, at the size its writes are in; the rest are
+        // only sampled by UV and leave out the top levels mip skip asks for (#1660).
+        val written = feature.textureUpdates?.bindings.orEmpty()
+        fun sampled(asset: TextureAsset): Texture = Texture.skippingMips(graphicsDevice, transferContext::runOneTimeCommands, asset)
         // Images take the CPU path here: Vulkan has no platform image to copy (awakekt/awake#1184).
-        val textures = feature.textures.mapValues { (_, asset) -> create(asset) } +
-            feature.images.mapValues { (_, image) -> create(image.toTextureAsset()) }
+        val textures = feature.textures.mapValues { (binding, asset) -> if (binding in written) create(asset) else sampled(asset) } +
+            feature.images.mapValues { (_, image) -> sampled(image.toTextureAsset()) }
         // After the registry compiled the pipeline, because the layout comes from a spec and the
         // pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
         // Held on its own: the upload outlives this call, and must not keep the feature's pixels with it (#1619).

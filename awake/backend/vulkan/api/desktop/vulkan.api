@@ -574,6 +574,9 @@ public final class com/awakekt/awake/vulkan/texture/Texture : com/awakekt/awake/
 	public final fun getImageView-iA5-nqo ()J
 	public fun getLayerCount ()I
 	public final fun getSampler-xS1HWjI ()J
+	public final fun getUploadedHeight ()I
+	public final fun getUploadedMipLevels ()I
+	public final fun getUploadedWidth ()I
 	public fun getWidth ()I
 	public final fun setImage-S2sD3j0 (J)V
 	public final fun setImageMemory-9GMUqMc (J)V
