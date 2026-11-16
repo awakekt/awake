@@ -115,6 +115,9 @@ jobs:
       - name: Next release milestone
         run: scripts/next-milestone.test.sh
 
+      - name: Template versions handed to the template checks
+        run: scripts/template-versions.test.sh
+
       # Before 1.0 a released public signature stays as a hidden overload, so a consumer built against
       # the last stable release still links. Compares the api dumps with that tag's, modifiers aside.
       - name: Released JVM signatures kept
