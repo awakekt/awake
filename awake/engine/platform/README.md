@@ -49,8 +49,10 @@ scene-specific state here: the composed application root installs those optional
   the renderer's physical output size and sets `renderScale` and `effectQuality` before every frame.
   A host's `GraphicsEngine.renderScaleOverride` wins over its scale. Persistence is the app's
   `RenderQualityPersistence` callback; Core stores nothing. Under `RenderQuality.Auto`, its
-  `dynamicResolution` (on by default) moves the scene's short edge between a floor (540) and Auto's
-  device-class budget to hold a target frame rate. It reads GPU time where the renderer measures it.
+  `dynamicResolution` moves the scene's short edge between a floor (540) and Auto's device-class budget
+  to hold a target frame rate. By default it runs on phones only (`DynamicResolution.Handhelds`); a
+  desktop opts in with its own `DynamicResolution(...)`. `SceneFrameStats.resolution` reports the edge
+  it asked for and the signal it read. It reads GPU time where the renderer measures it.
   Without GPU timing it counts missed frames, probes up cautiously and backs off, and leaves the
   resolution alone when frames are held by something else, such as a display capped below the target.
   Set `ceilingShortEdge` to let it rise above the class budget, or `dynamicResolution = null` for the
