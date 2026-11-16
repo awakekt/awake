@@ -95,8 +95,9 @@ class AwakeSurfaceView(
         }
         running = true
         renderThread = Thread({
-            val mode = lifecycle.windowConfig?.frameRateMode ?: FrameRateMode.Auto
             while (running) {
+                // Read every frame: AndroidFrameLoop.frameRateOverride may change it live, as on desktop.
+                val mode = lifecycle.windowConfig?.frameRateMode ?: FrameRateMode.Auto
                 AndroidFrameLoop.tick(mode) { deltaTime ->
                     lifecycle.update(deltaTime.toFloat())
                     post {

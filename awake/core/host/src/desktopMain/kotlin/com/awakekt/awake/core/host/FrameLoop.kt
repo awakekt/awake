@@ -49,20 +49,10 @@ object DesktopFrameLoop : FrameLoop {
             baseMode
         }
 
-        val frameWorkNanos = System.nanoTime() - currentFrameTime
-        when (effectiveMode) {
-            is FrameRateMode.Auto, FrameRateMode.Unlimited -> {
-                // No artificial sleep throttling; display presentation / vsync controls cadence.
-            }
-            is FrameRateMode.Capped -> {
-                val desiredFrameTimeNanos = 1_000_000_000L / effectiveMode.targetFps
-                val sleepNanos = desiredFrameTimeNanos - frameWorkNanos
-                if (sleepNanos > 0) {
-                    val sleepMillis = sleepNanos / 1_000_000L
-                    val sleepNanosRemainder = (sleepNanos % 1_000_000L).toInt()
-                    Thread.sleep(sleepMillis, sleepNanosRemainder)
-                }
-            }
+        val pacer = FramePacing.pacer(effectiveMode, presentPacing = false)
+        val sleepNanos = FramePacing.sleepNanos(effectiveMode, pacer, System.nanoTime() - currentFrameTime)
+        if (sleepNanos > 0) {
+            Thread.sleep(sleepNanos / NANOS_PER_MILLI, (sleepNanos % NANOS_PER_MILLI).toInt())
         }
     }
 
@@ -76,4 +66,6 @@ object DesktopFrameLoop : FrameLoop {
         frameRateOverride = null
         previousFrameTime = System.nanoTime()
     }
+
+    private const val NANOS_PER_MILLI = 1_000_000L
 }

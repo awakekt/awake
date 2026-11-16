@@ -65,6 +65,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
     val result = Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo)
     swapchainManager.presentResults[result.ordinal]++
+    presentIntervals.recordPresent()
     when (presentAction(result, swapchainManager.suboptimalAccepted) { swapchainManager.surfaceChangedSinceBuild }) {
         PresentAction.Recreate -> recreateSwapChain()
         PresentAction.AcceptSuboptimal -> swapchainManager.suboptimalAccepted = true

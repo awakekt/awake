@@ -65,6 +65,25 @@ public final class com/awakekt/awake/core/host/FrameLoopKt {
 	public static final fun clampFrameDelta (D)D
 }
 
+public final class com/awakekt/awake/core/host/FramePacer : java/lang/Enum {
+	public static final field None Lcom/awakekt/awake/core/host/FramePacer;
+	public static final field Present Lcom/awakekt/awake/core/host/FramePacer;
+	public static final field Sleep Lcom/awakekt/awake/core/host/FramePacer;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/host/FramePacer;
+	public static fun values ()[Lcom/awakekt/awake/core/host/FramePacer;
+}
+
+public final class com/awakekt/awake/core/host/FramePacing {
+	public static final field INSTANCE Lcom/awakekt/awake/core/host/FramePacing;
+	public static final field ROUNDING_NANOS J
+	public final fun displayPeriodNanos (I[J)Ljava/lang/Long;
+	public final fun frameNanos (I)J
+	public final fun pacer (Lcom/awakekt/awake/core/host/FrameRateMode;Z)Lcom/awakekt/awake/core/host/FramePacer;
+	public final fun sleepNanos (Lcom/awakekt/awake/core/host/FrameRateMode;Lcom/awakekt/awake/core/host/FramePacer;J)J
+	public final fun swapIntervalNanos (IJ)J
+}
+
 public abstract interface class com/awakekt/awake/core/host/FrameRateMode {
 }
 

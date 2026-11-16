@@ -26,7 +26,31 @@ data class RenderFrameStats(
      * WebGPU sums pass durations; browser timestamp precision may be reduced by the implementation.
      */
     val gpuTimeMs: Float? = null,
-)
+    /**
+     * The median time between presented frames over the renderer's recent window, in nanoseconds, or
+     * null when this backend does not measure presents or before its second present. See
+     * [PresentIntervalTracker].
+     */
+    val presentIntervalP50Ns: Long? = null,
+    /** The 95th-percentile time between presented frames, in nanoseconds; null as for [presentIntervalP50Ns]. */
+    val presentIntervalP95Ns: Long? = null,
+    /** Where [presentIntervalP50Ns] and [presentIntervalP95Ns] were measured, or null when they are. */
+    val presentTiming: PresentTiming? = null,
+) {
+    /** The constructor as released before the present intervals, kept so compiled callers still link. */
+    @Deprecated("Use the constructor with the present intervals.", level = DeprecationLevel.HIDDEN)
+    constructor(drawCalls: Int, instances: Int, triangles: Long, gpuTimeMs: Float? = null) :
+        this(drawCalls, instances, triangles, gpuTimeMs, null, null, null)
+
+    /** [copy] as released before the present intervals. */
+    @Deprecated("Use copy with the present intervals.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        drawCalls: Int = this.drawCalls,
+        instances: Int = this.instances,
+        triangles: Long = this.triangles,
+        gpuTimeMs: Float? = this.gpuTimeMs,
+    ): RenderFrameStats = copy(drawCalls, instances, triangles, gpuTimeMs, presentIntervalP50Ns, presentIntervalP95Ns, presentTiming)
+}
 
 /**
  * Accumulates the draws a backend records until it submits a frame, then publishes them.
@@ -61,6 +85,12 @@ class RenderStatsCounter {
     private var frameEncoded = 0
     private var countsReuse = false
     private var reusePublished = false
+
+    /**
+     * The backend's present intervals, carried into each frame [publish] closes, or null for a backend
+     * that does not measure its presents.
+     */
+    var presentIntervals: PresentIntervalTracker? = null
 
     /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
     var latestRenderPasses: Int = 0
@@ -149,7 +179,16 @@ class RenderStatsCounter {
 
     /** Closes the frame being recorded and starts counting the next one. */
     fun publish(gpuTimeMs: Float? = null) {
-        latest = RenderFrameStats(drawCalls, instances, triangles, gpuTimeMs)
+        val presents = presentIntervals
+        latest = RenderFrameStats(
+            drawCalls,
+            instances,
+            triangles,
+            gpuTimeMs,
+            presents?.percentileNanos(MEDIAN),
+            presents?.percentileNanos(P95),
+            presents?.timing?.takeIf { presents.count > 0 },
+        )
         latestPasses = passes.publish()
         drawCalls = 0
         instances = 0
@@ -187,5 +226,7 @@ class RenderStatsCounter {
 
     private companion object {
         const val TRIANGLE_VERTICES = 3
+        const val MEDIAN = 50
+        const val P95 = 95
     }
 }

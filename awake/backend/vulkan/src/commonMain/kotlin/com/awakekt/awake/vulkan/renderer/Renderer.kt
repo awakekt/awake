@@ -47,6 +47,7 @@ import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.PresentIntervalTracker
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
@@ -195,8 +196,11 @@ class Renderer internal constructor(
     /** Block-compressed textures, in the families this device enabled. */
     private val compressedTextures = VulkanCompressedTextures(this)
 
+    /** The time between presented frames, measured at each present call's return (#1699). */
+    internal val presentIntervals = PresentIntervalTracker()
+
     /** Counts every draw this renderer records; published once per submitted frame. */
-    internal val statsCounter = RenderStatsCounter()
+    internal val statsCounter = RenderStatsCounter().also { it.presentIntervals = presentIntervals }
 
     /** Null when the device's graphics queue cannot write timestamps. */
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice, maxFramesInFlight)
