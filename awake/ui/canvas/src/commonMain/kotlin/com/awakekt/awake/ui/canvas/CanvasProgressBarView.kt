@@ -94,11 +94,14 @@ private fun trailOf(element: CanvasElement, settings: CanvasBar, value: Float, c
         element.trail.snapTo(value)
         element.trailStarted = true
     }
-    if (element.trail.value <= value) return element.trail.advance(value, 0f, settings.trailDelay, settings.trailSpeed)
-    val stamp = clock.totalSeconds.toRawBits().toLong()
-    if (stamp == element.trailStamp) return element.trail.value
-    element.trailStamp = stamp
-    return element.trail.advance(value, clock.deltaSeconds, settings.trailDelay, settings.trailSpeed)
+    // A frame drawn twice advances the trail once: the second draw finds its stamp and moves no time.
+    var delta = 0f
+    if (element.trail.value > value) {
+        val stamp = clock.totalSeconds.toRawBits().toLong()
+        if (stamp != element.trailStamp) delta = clock.deltaSeconds
+        element.trailStamp = stamp
+    }
+    return element.trail.advance(value, delta, settings.trailDelay, settings.trailSpeed)
 }
 
 /** A straight Bar's track, trail, fill and ticks, from the edge its direction names. */
