@@ -65,7 +65,7 @@ class Material(
 
     /** The sampler paired with [previewTextureView], with the same lifetime and `null` rules. */
     var previewSampler: GPUSampler? = null
-        private set
+        internal set
 
     /** The render target [previewTextureView] shows, if this material was built from one. */
     internal var sourceTarget: OffscreenRenderTarget? = null
@@ -77,13 +77,14 @@ class Material(
     internal val isSampleable: Boolean
         get() = previewTextureView != null && sourceTarget?.isDestroyed != true
 
-    private var texture: Texture? = null
+    internal var texture: Texture? = null
+        private set
     private var pbrTextures: List<Texture> = emptyList()
     private var uniformBuffer: GPUBuffer? = null
 
     /** Bind-group layouts belong to one concrete pipeline object; a material may be drawn
      * through several pipeline variants, so each variant needs its own compatible bind group. */
-    private val bindGroups = HashMap<GPURenderPipeline, GPUBindGroup>()
+    internal val bindGroups = HashMap<GPURenderPipeline, GPUBindGroup>()
     internal val drawBindGroups = HashMap<GPURenderPipeline, MutableMap<GPUBuffer, GPUBindGroup>>()
 
     /** Per-draw groups this material created, over its life: a warm frame creates none (#1621). */
@@ -120,6 +121,15 @@ class Material(
         )
     }
 
+    /** The sampler generation the cached groups were built at; see [refreshSamplers]. */
+    internal var samplerGeneration = graphicsDevice.samplerGeneration
+
+    /** Times [refreshSamplers] dropped the cached groups, for tests. */
+    internal var samplerRebuilds = 0
+
+    /** The device whose sampler generation [refreshSamplers] reads. */
+    internal val samplerDevice: GraphicsDevice get() = graphicsDevice
+
     /** The base colour texture, then the four PBR maps, once [createResources] has run: for parity tests. */
     internal val sampledTextures: List<Texture> get() = listOfNotNull(texture) + pbrTextures
 
@@ -135,13 +145,15 @@ class Material(
      * WebGPU validates entries against the shader-derived layout, so a declaration that does not
      * match the shader fails here rather than rendering something wrong.
      */
-    fun bindGroupFor(pipeline: GPURenderPipeline, pipelineBindings: GroupBindings = bindings): GPUBindGroup = bindGroups.getOrPut(pipeline) {
-        device.createBindGroupReleasingLayout(
-            BindGroupDescriptor(
-                layout = pipeline.getBindGroupLayout(0u),
-                entries = bindGroupEntries(pipelineBindings),
-            ),
-        )
+    fun bindGroupFor(pipeline: GPURenderPipeline, pipelineBindings: GroupBindings = bindings): GPUBindGroup = refreshSamplers().let {
+        bindGroups.getOrPut(pipeline) {
+            device.createBindGroupReleasingLayout(
+                BindGroupDescriptor(
+                    layout = pipeline.getBindGroupLayout(0u),
+                    entries = bindGroupEntries(pipelineBindings),
+                ),
+            )
+        }
     }
 
     /** Builds a pipeline-compatible material group using a caller-owned per-draw uniform buffer.
@@ -159,7 +171,7 @@ class Material(
         uniformBuffer: GPUBuffer,
         pipelineBindings: GroupBindings,
         edges: Boolean,
-    ): GPUBindGroup = drawBindGroups.getOrPut(pipeline) { HashMap() }.getOrPut(uniformBuffer) {
+    ): GPUBindGroup = refreshSamplers().let { drawBindGroups.getOrPut(pipeline) { HashMap() } }.getOrPut(uniformBuffer) {
         drawGroupsCreated += 1
         device.createBindGroupReleasingLayout(
             BindGroupDescriptor(

@@ -1,0 +1,207 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.webgpu
+
+import com.awakekt.awake.asset.shaderdsl.fieldsFrom
+import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
+import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.plus
+import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.texture2d
+import com.awakekt.awake.asset.shaderdsl.textureSample
+import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.vec2
+import com.awakekt.awake.asset.shaderdsl.vec4
+import com.awakekt.awake.asset.shaderdsl.x
+import com.awakekt.awake.asset.shaderdsl.y
+import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
+import com.awakekt.awake.asset.shaders.ContentFeatureSource
+import com.awakekt.awake.asset.shaders.EngineShaderSets
+import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.shaders.ShaderStage
+import com.awakekt.awake.asset.shaders.aslShaderSet
+import com.awakekt.awake.asset.shaders.resolveBytes
+import com.awakekt.awake.asset.shaders.spec
+import com.awakekt.awake.core.geometry.GpuDataShape
+import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.command.PipelineHandle
+import com.awakekt.awake.render.command.UniformBlock
+import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.RenderFeature
+import com.awakekt.awake.render.passes.RenderFrameContext
+import com.awakekt.awake.render.passes.RenderPassSlot
+import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.GroupBindings
+import com.awakekt.awake.render.pipeline.PipelineRegistry
+import com.awakekt.awake.render.pipeline.PipelineTable
+import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.renderer.UniformField
+import com.awakekt.awake.render.renderer.UniformLayout
+import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.webgpu.application.WebGpuContentFeatureGpu
+import com.awakekt.awake.webgpu.debug.LineRenderPipeline
+import com.awakekt.awake.webgpu.device.GraphicsDevice
+import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
+import com.awakekt.awake.webgpu.pipeline.RenderPipeline
+import com.awakekt.awake.webgpu.pipeline.UiShaderSources
+import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineFactory
+import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
+import com.awakekt.awake.webgpu.renderer.Renderer
+import com.awakekt.awake.webgpu.swapchain.SwapchainManager
+import io.ygdrasil.webgpu.glfwContextRenderer
+import kotlinx.coroutines.runBlocking
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+/**
+ * `Renderer.maxAnisotropy` on WebGPU (#1660), through a content feature attached as a terrain layer
+ * is: its texture is the feature's own, which reaches the setting through the device's set of sampled
+ * textures, not the renderer's. Its probe samples 8-texel stripes with a footprint 8 times longer along
+ * one axis through `textureSample` with implicit derivatives, which lavapipe filters anisotropically;
+ * it ignores anisotropy for `textureSampleGrad`, so the PBR textured shader's change shows only on a
+ * real GPU -- recorded on #1660.
+ */
+class WebGpuAnisotropyTest {
+    @Test
+    fun aChangedAnisotropyRebuildsTheContentGroupAndResolvesTheStripes() = withRenderer { renderer, device, frame ->
+        val off = frame()
+        val texture = device.sampledTextures.single { it.width == TEXELS }
+        assertEquals(1, texture.samplerAnisotropy)
+
+        renderer.maxAnisotropy = SAMPLES
+        assertEquals(SAMPLES, texture.samplerAnisotropy, "the content feature's texture took the setting")
+        val generation = device.samplerGeneration
+        val on = frame()
+        val changed = off.indices.step(4).count { kotlin.math.abs((off[it].toInt() and 0xFF) - (on[it].toInt() and 0xFF)) > 2 }
+        println("WebGpuAnisotropy: $changed of ${SIZE * SIZE} pixels changed between 1 and $SAMPLES samples")
+        assertTrue(changed > SIZE * SIZE / 2, "stripes resolve along the long axis at $SAMPLES samples: $changed changed")
+
+        renderer.maxAnisotropy = SAMPLES
+        assertEquals(generation, device.samplerGeneration, "the same value again makes nothing")
+        renderer.maxAnisotropy = 1
+        assertContentEquals(off, frame(), "back at 1, the frame is the first one again")
+        assertEquals(16, renderer.maxSupportedAnisotropy)
+    }
+
+    private class ProbeFeature(private val pipeline: PipelineHandle, private val uniforms: UniformBlock) : RenderFeature<RenderFrameContext> {
+        override val pass = RenderPassSlot.Scene
+
+        override fun recordCommands(context: RenderFrameContext) {
+            uniforms.write(context.frameIndex) { put(Tint, 1f, 1f, 1f, 1f) }
+            context.recorder.bindPipeline(pipeline)
+            context.recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(context.frameIndex))
+            context.recorder.draw(3, 1)
+        }
+
+        override fun destroy() = Unit
+    }
+
+    private fun withRenderer(block: (Renderer, GraphicsDevice, () -> ByteArray) -> Unit) = runBlocking {
+        val errors = mutableListOf<String>()
+        val context = glfwContextRenderer(width = 1, height = 1, title = "awake-anisotropy", onUncapturedError = { errors += it.toString() })
+        val device = GraphicsDevice().apply { create(context.wgpuContext) }
+        val swapchain = SwapchainManager(device, 1).apply { create() }
+        val registry = PipelineRegistry(WebGpuPipelineFactory(device, swapchain, WebGpuShaderResolver()))
+        val attacher = ContentFeatureAttacher(WebGpuContentFeatureGpu(device, registry))
+        val linePipeline = LineRenderPipeline(device, swapchain, wgsl(EngineShaderSets.DebugLine))
+        val primary = RenderPipeline(
+            device,
+            swapchain,
+            DescriptorSetLayoutHandle(0),
+            readResourceBytes("assets/shader/webgpu/pixel_probe.wgsl"),
+            ByteArray(0),
+            VertexFormat.PositionColorUv,
+            "vertexMain",
+            "fragmentMain",
+            bindingsByGroup = mapOf(0 to GroupBindings.UniformOnlyMaterial),
+            bindingsMetadataAvailable = true,
+        )
+        val renderer = Renderer(
+            graphicsDevice = device,
+            swapchainManager = swapchain,
+            pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionColorUv),
+            lineRenderPipeline = linePipeline,
+            uiShaderSources = UiShaderSources(
+                quad = wgsl(EngineShaderSets.UiQuad),
+                glyph = wgsl(EngineShaderSets.UiGlyph),
+                texture = wgsl(EngineShaderSets.UiTexture),
+                roundedQuad = wgsl(EngineShaderSets.UiRoundedQuad),
+                targetComposite = wgsl(EngineShaderSets.UiTargetComposite),
+            ),
+            maxFramesInFlight = 1,
+            renderFeatures = listOf(attacher.beforeGeometry, attacher.afterGeometry),
+        ).also { it.contentFeatureHost = attacher }
+        attacher.attachContentFeature(probe())
+        val target = renderer.createRenderTarget(SIZE, SIZE)
+        try {
+            block(renderer, device) {
+                renderer.renderSceneToTexture(target, Lens(eye = Vec3f(0f, 0f, 3f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f), emptyList())
+                runBlocking { renderer.readPixels(target) }.data
+            }
+            assertTrue(errors.isEmpty(), "WebGPU validation errors: $errors")
+        } finally {
+            target.destroy()
+            renderer.destroy()
+            registry.destroyAll { it.destroy() }
+            attacher.releaseAll()
+            primary.destroy()
+            linePipeline.destroy()
+            swapchain.destroy()
+            device.destroy()
+        }
+    }
+
+    private companion object {
+        const val SIZE = 64
+        const val SAMPLES = 8
+        const val TEXELS = 256
+        const val STRIPE = 8
+
+        val Tint = UniformField("tint", GpuDataShape.Vec4)
+        val Layout = UniformLayout(Tint)
+
+        suspend fun wgsl(set: ShaderSet): ByteArray = checkNotNull(set.webGpu[ShaderStage.VERTEX]).resolveBytes()
+
+        fun probe() = ContentFeatureSource {
+            val stages = aslShaderSet(
+                shader("anisotropy_probe") {
+                    val group = BindingLayout.Standard.slot(BindingSemantic.Material)
+                    val tint = uniformBlock("Uniforms", group = group, binding = 0).fieldsFrom(Layout).value("tint")
+                    val probeTexture by texture2d(group = group, binding = 1)
+                    val probeSampler by sampler(group = group, binding = 2)
+                    val out = varyings("VertexOutput")
+                    val uv by out.varying(GpuDataShape.Vec2, location = 0)
+                    vertex {
+                        val corner = fullScreenTriangleCorner()
+                        out.position set vec4(corner, 0f.lit, 1f.lit)
+                        uv set vec2((corner.x + 1f.lit) * 0.5f.lit, (corner.y + 1f.lit) * 0.5f.lit)
+                    }
+                    fragment {
+                        colorOutput(textureSample(probeTexture, probeSampler, vec2(uv.x * 1f.lit, uv.y * 8f.lit)) * tint)
+                    }
+                },
+            ).webGpu
+            ContentFeature(
+                name = "anisotropy-probe",
+                spec = stages.spec(vertexFormat = VertexFormat.None, variant = PipelineVariant.Overlay, uniforms = Layout),
+                textures = mapOf(1 to stripes()),
+            ) { pipeline, uniforms, _ -> ProbeFeature(pipeline, uniforms) }
+        }
+
+        fun stripes() = TextureAsset(
+            data = ByteArray(TEXELS * TEXELS * 4) { index -> if (index % 4 == 3 || ((index / 4) % TEXELS / STRIPE) % 2 == 0) -1 else 0 },
+            width = TEXELS,
+            height = TEXELS,
+        )
+    }
+}

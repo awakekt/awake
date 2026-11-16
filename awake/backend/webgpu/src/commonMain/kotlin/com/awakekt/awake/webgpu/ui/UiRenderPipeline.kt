@@ -18,6 +18,7 @@ import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.material.Material
+import com.awakekt.awake.webgpu.material.refreshSamplers
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.createBindGroupReleasingLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
@@ -101,6 +102,9 @@ class UiRenderPipeline(
 
     private val device = graphicsDevice.wgpuContext.device
 
+    /** Where the sampler generation is read; see [bindGroupFor]. */
+    private val samplerDevice = graphicsDevice
+
     /**
      * The current `GPURenderPipeline`. It is replaced when the shader is rebuilt, so read it per
      * draw rather than caching it.
@@ -119,6 +123,9 @@ class UiRenderPipeline(
     /** Alias of [bindGroup], named for the uniform it carries. */
     val screenSizeBindGroup: GPUBindGroup get() = bindGroup
     internal val materialBindGroups = HashMap<Material, GPUBindGroup>()
+
+    /** The sampler generation [materialBindGroups] were built at. */
+    private var materialSamplerGeneration = samplerDevice.samplerGeneration
 
     /** One font's atlas, its own uniform block, and the bind group over both. */
     internal class FontBinding(
@@ -297,6 +304,15 @@ class UiRenderPipeline(
 
     /** Builds (once) and returns the bind group for [material]'s `previewTextureView`/`previewSampler`. */
     fun bindGroupFor(material: Material): GPUBindGroup {
+        // A sampler made again for a new anisotropy (#1660) replaces the one a cached group holds;
+        // with no change this compares one integer.
+        val generation = samplerDevice.samplerGeneration
+        if (generation != materialSamplerGeneration) {
+            materialSamplerGeneration = generation
+            materialBindGroups.values.forEach(GPUBindGroup::close)
+            materialBindGroups.clear()
+        }
+        material.refreshSamplers()
         // Graphics-layer slots replace their render-target material on resize. Material.destroy()
         // clears both preview handles; prune those dead keys before adding a live one so this
         // pipeline never retains a retired layer and its backend resources.
