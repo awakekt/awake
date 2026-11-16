@@ -87,6 +87,20 @@ class PlanningLoopHeapBrowserTest {
                     )
                 }
             },
+            "obtainOnly" to {
+                commands.reset()
+                family.forEach { _, _, _ -> if (commands.obtain().timeSeconds < 0f) sink++ }
+            },
+            "setEveryArgument" to {
+                commands.reset()
+                family.forEach { _, transform, mesh ->
+                    commands.obtain().set(
+                        mesh.mesh, mesh.material, transform.worldMatrix, EMPTY_EXTRAS, NO_ANIMATION, 0f,
+                        null, null, null, null, mesh.cullMode, com.awakekt.awake.render.pipeline.AlphaMode.Opaque, 0.5f,
+                        mesh.transparent, false, scratch, false, 0, -1, 0, true, false,
+                    )
+                }
+            },
         )
         val costs = parts.map { (name, pass) -> name to medianGrowth(PROPS, pass = pass) }
         println("PlanningLoopHeap: $PROPS renderers, bytes a renderer: " + costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } + " ($sink)")
@@ -118,5 +132,6 @@ class PlanningLoopHeapBrowserTest {
         const val SPACING = 4f
         val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
         val NO_ANIMATION = Vec3f(0f, 0f, 0f)
+        val EMPTY_EXTRAS = FloatArray(0)
     }
 }
