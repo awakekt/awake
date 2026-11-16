@@ -12,6 +12,8 @@ import com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
+import com.awakekt.awake.compose.ui.layout.Placeable
+import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.node.LayoutModifierNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
@@ -108,6 +110,14 @@ private class PaddingNode :
     var top: Dp = 0.dp
     var end: Dp = 0.dp
     var bottom: Dp = 0.dp
+
+    // What the last measure placed, for a placement block made once: a block capturing locals is a
+    // new object every measure.
+    private var placeable: Placeable? = null
+    private var placeX = 0
+    private var placeY = 0
+    private val place: PlacementScope.() -> Unit = { placeable?.placeAt(placeX, placeY) }
+
     override fun MeasureScope.measure(
         measurable: Measurable,
         constraints: Constraints,
@@ -117,12 +127,14 @@ private class PaddingNode :
         val horizontal = startPx + end.roundToPx()
         val vertical = topPx + bottom.roundToPx()
         val placeable = measurable.measure(constraints.offset(-horizontal, -vertical))
+        this@PaddingNode.placeable = placeable
+        placeX = startPx
+        placeY = topPx
         return layout(
             constraints.constrainWidth(placeable.width + horizontal),
             constraints.constrainHeight(placeable.height + vertical),
-        ) {
-            placeable.placeAt(startPx, topPx)
-        }
+            place = place,
+        )
     }
 
     // Padding adds to whatever the content asks for. Without these an intrinsic query walks past
@@ -159,23 +171,30 @@ private class SizeNode :
     LayoutModifierNode {
     var width: Dp? = null
     var height: Dp? = null
+    private val place = PlaceAtOrigin()
+
     override fun MeasureScope.measure(
         measurable: Measurable,
         constraints: Constraints,
     ): MeasureResult {
         // A requested size is still bounded by what the parent offers -- asking for 500dp inside a
-        // 100px parent yields 100, not an overflow.
-        val w = width?.roundToPx()?.coerceIn(constraints.minWidth, constraints.maxWidth)
-        val h = height?.roundToPx()?.coerceIn(constraints.minHeight, constraints.maxHeight)
+        // 100px parent yields 100, not an overflow. Plain ints, not `Int?`, which boxes a size over 127.
+        val width = width
+        val height = height
+        val hasWidth = width != null
+        val hasHeight = height != null
+        val w = if (width != null) width.roundToPx().coerceIn(constraints.minWidth, constraints.maxWidth) else 0
+        val h = if (height != null) height.roundToPx().coerceIn(constraints.minHeight, constraints.maxHeight) else 0
         val placeable = measurable.measure(
             Constraints.of(
-                minWidth = w ?: constraints.minWidth,
-                maxWidth = w ?: constraints.maxWidth,
-                minHeight = h ?: constraints.minHeight,
-                maxHeight = h ?: constraints.maxHeight,
+                minWidth = if (hasWidth) w else constraints.minWidth,
+                maxWidth = if (hasWidth) w else constraints.maxWidth,
+                minHeight = if (hasHeight) h else constraints.minHeight,
+                maxHeight = if (hasHeight) h else constraints.maxHeight,
             ),
         )
-        return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
+        place.placeable = placeable
+        return layout(placeable.width, placeable.height, place = place.block)
     }
 
     // A fixed size is the answer, whatever the content would have wanted.
@@ -216,26 +235,31 @@ private class FillNode :
     LayoutModifierNode {
     var widthFraction: Float? = null
     var heightFraction: Float? = null
+    private val place = PlaceAtOrigin()
+
     override fun MeasureScope.measure(
         measurable: Measurable,
         constraints: Constraints,
     ): MeasureResult {
         // Compose's rule: filling an unbounded axis is a no-op. Without it the child would adopt
         // whatever sentinel stands in for "no bound" as a real size -- the bug class `ui-core`'s
-        // UNBOUNDED_MAIN_AXIS produced.
-        val targetWidth = widthFraction?.takeIf { constraints.hasBoundedWidth }
-            ?.let { constraints.constrainWidth((constraints.maxWidth * it).roundToInt()) }
-        val targetHeight = heightFraction?.takeIf { constraints.hasBoundedHeight }
-            ?.let { constraints.constrainHeight((constraints.maxHeight * it).roundToInt()) }
+        // UNBOUNDED_MAIN_AXIS produced. Plain ints, not `Int?`, which boxes a size over 127.
+        val widthFraction = widthFraction
+        val heightFraction = heightFraction
+        val fillsWidth = widthFraction != null && constraints.hasBoundedWidth
+        val fillsHeight = heightFraction != null && constraints.hasBoundedHeight
+        val targetWidth = if (fillsWidth) constraints.constrainWidth((constraints.maxWidth * widthFraction!!).roundToInt()) else 0
+        val targetHeight = if (fillsHeight) constraints.constrainHeight((constraints.maxHeight * heightFraction!!).roundToInt()) else 0
         val placeable = measurable.measure(
             constraints.copy(
-                minWidth = targetWidth ?: constraints.minWidth,
-                maxWidth = targetWidth ?: constraints.maxWidth,
-                minHeight = targetHeight ?: constraints.minHeight,
-                maxHeight = targetHeight ?: constraints.maxHeight,
+                minWidth = if (fillsWidth) targetWidth else constraints.minWidth,
+                maxWidth = if (fillsWidth) targetWidth else constraints.maxWidth,
+                minHeight = if (fillsHeight) targetHeight else constraints.minHeight,
+                maxHeight = if (fillsHeight) targetHeight else constraints.maxHeight,
             ),
         )
-        return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
+        place.placeable = placeable
+        return layout(placeable.width, placeable.height, place = place.block)
     }
 
     override fun toString(): String = "fillMax(width=$widthFraction, height=$heightFraction)"
@@ -287,4 +311,13 @@ private class WrapContentNode :
             )
         }
     }
+}
+
+/**
+ * Places what a modifier node last measured at its own origin, with one block made per node rather
+ * than a block capturing the placeable on every measure.
+ */
+private class PlaceAtOrigin {
+    var placeable: Placeable? = null
+    val block: PlacementScope.() -> Unit = { placeable?.placeAt(0, 0) }
 }

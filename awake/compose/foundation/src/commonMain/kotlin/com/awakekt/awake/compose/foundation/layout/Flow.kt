@@ -177,7 +177,7 @@ fun FlowRow(
             verticalArrangement,
             maxItemsInEachRow,
             maxLines,
-            itemVerticalAlignment::align,
+            CrossAxisAlign(itemVerticalAlignment::align),
         ),
         content = { content(composer, RowScopeInstance) },
     )
@@ -214,7 +214,7 @@ fun FlowColumn(
             horizontalArrangement,
             maxItemsInEachColumn,
             maxLines,
-            itemHorizontalAlignment::align,
+            CrossAxisAlign(itemHorizontalAlignment::align),
         ),
         content = { content(composer, ColumnScopeInstance) },
     )
@@ -292,7 +292,7 @@ private class FlowRowMeasurePolicy(
                     val offset = if (alignmentPosition != AlignmentLine.Unspecified) {
                         lineAlignmentExtents[index].before - alignmentPosition
                     } else {
-                        (data?.crossAxisAlign ?: itemVerticalAlignment)(placeable.height, lineHeights[index])
+                        (data?.crossAxisAlign ?: itemVerticalAlignment).align(placeable.height, lineHeights[index])
                     }
                     placeable.placeRelativeAt(x, y + offset)
                     x += placeable.width + horizontalGap + horizontalExtra
@@ -374,7 +374,7 @@ private class FlowColumnMeasurePolicy(
                     val offset = if (alignmentPosition != AlignmentLine.Unspecified) {
                         columnAlignmentExtents[index].before - alignmentPosition
                     } else {
-                        (data?.crossAxisAlign ?: itemHorizontalAlignment)(placeable.width, columnWidths[index])
+                        (data?.crossAxisAlign ?: itemHorizontalAlignment).align(placeable.width, columnWidths[index])
                     }
                     placeable.placeRelativeAt(x + offset, y)
                     y += placeable.height + verticalGap + verticalExtra

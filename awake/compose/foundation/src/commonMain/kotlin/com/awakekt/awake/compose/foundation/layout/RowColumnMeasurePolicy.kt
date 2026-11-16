@@ -60,8 +60,20 @@ internal enum class LayoutOrientation {
         }
 }
 
-/** Where a child sits on the cross axis: `(childSize, containerSize) -> offset`. */
-internal typealias CrossAxisAlign = (Int, Int) -> Int
+/**
+ * Where a child sits on the cross axis. An interface of `Int`s rather than an `(Int, Int) -> Int`,
+ * whose generic call boxes every size and offset it passes: an `Integer` or two per child a measure.
+ */
+internal fun interface CrossAxisAlign {
+    fun align(size: Int, space: Int): Int
+}
+
+/** Main-axis space from `(free, count)`: before the first child, or between two. Unboxed, as [CrossAxisAlign]. */
+internal fun interface MainAxisSpace {
+    fun of(free: Int, count: Int): Int
+}
+
+private val NoSpace = MainAxisSpace { _, _ -> 0 }
 
 internal class RowColumnParentData(
     var weight: Float = 0f,
@@ -111,7 +123,7 @@ internal class VerticalAlignNode(
     ParentDataModifierNode {
     override fun modifyParentData(current: Any?): Any =
         ((current as? RowColumnParentData) ?: RowColumnParentData()).also {
-            it.crossAxisAlign = alignment::align
+            it.crossAxisAlign = CrossAxisAlign(alignment::align)
         }
 }
 
@@ -130,7 +142,7 @@ internal class HorizontalAlignNode(
     ParentDataModifierNode {
     override fun modifyParentData(current: Any?): Any =
         ((current as? RowColumnParentData) ?: RowColumnParentData()).also {
-            it.crossAxisAlign = alignment::align
+            it.crossAxisAlign = CrossAxisAlign(alignment::align)
         }
 }
 
@@ -171,9 +183,9 @@ internal class RowColumnMeasurePolicy(
     private val spacing: Dp,
     private val crossAxisAlign: CrossAxisAlign,
     /** Where leftover main-axis space goes: `(free, count) -> before the first child`. */
-    private val leading: (Int, Int) -> Int = { _, _ -> 0 },
+    private val leading: MainAxisSpace = NoSpace,
     /** Extra space between each pair, on top of [spacing]. */
-    private val between: (Int, Int) -> Int = { _, _ -> 0 },
+    private val between: MainAxisSpace = NoSpace,
 ) : MeasurePolicy {
 
     private val isVertical = orientation == LayoutOrientation.Vertical
@@ -222,7 +234,7 @@ internal class RowColumnMeasurePolicy(
         // distributing arrangement divides up. A packing one leaves it alone.
         val mainSpace = if (isVertical) height else width
         val free = (mainSpace - main).coerceAtLeast(0)
-        val extra = between(free, count)
+        val extra = between.of(free, count)
 
         val alignmentLines = if (!isVertical && maxBeforeLine > 0) {
             mapOf<AlignmentLine, Int>(FirstBaseline to maxBeforeLine, LastBaseline to maxBeforeLine)
@@ -230,19 +242,21 @@ internal class RowColumnMeasurePolicy(
             emptyMap()
         }
 
+        // A `val` for the block: a captured `var` is boxed in a `Ref.IntRef` on every measure.
+        val baseline = maxBeforeLine
         return layout(width, height, alignmentLines) {
-            var cursor = leading(free, count)
+            var cursor = leading.of(free, count)
             for (i in placeables.indices) {
                 val placeable = placeables[i] ?: continue
                 val data = measurables[i].rowColumnParentData()
                 val line = data?.alignmentLine
                 val linePos = if (line != null) placeable[line] else AlignmentLine.Unspecified
                 val crossOffset = if (linePos != AlignmentLine.Unspecified) {
-                    maxBeforeLine - linePos
+                    baseline - linePos
                 } else if (data?.crossAxisAlign != null) {
-                    data.crossAxisAlign!!(orientation.crossAxisSize(placeable), crossSpace)
+                    data.crossAxisAlign!!.align(orientation.crossAxisSize(placeable), crossSpace)
                 } else {
-                    crossAxisAlign(orientation.crossAxisSize(placeable), crossSpace)
+                    crossAxisAlign.align(orientation.crossAxisSize(placeable), crossSpace)
                 }
                 if (isVertical) {
                     placeable.placeRelativeAt(crossOffset, cursor)

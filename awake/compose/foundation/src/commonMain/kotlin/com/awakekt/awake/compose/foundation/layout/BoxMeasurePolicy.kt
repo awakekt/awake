@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.layout.Placeable
+import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.IntOffset
 import com.awakekt.awake.compose.ui.unit.IntSize
@@ -42,6 +43,9 @@ class BoxMeasurePolicy(
         constraints: Constraints,
     ): MeasureResult {
         val count = measurables.size
+        // A leaf box -- an icon, a swatch, a spacer -- has nothing to place, and needs neither the
+        // array nor a placement block, each of which would be a new object every measure.
+        if (count == 0) return layout(constraints.minWidth, constraints.minHeight, place = PlaceNothing)
         val placeables = arrayOfNulls<Placeable>(count)
         // Children never inherit the box's own minimum -- a Box with a minimum size must not force
         // every child to match it. Only the box itself honours the minimum, below.
@@ -90,3 +94,5 @@ class BoxMeasurePolicy(
         }
     }
 }
+
+private val PlaceNothing: PlacementScope.() -> Unit = {}
