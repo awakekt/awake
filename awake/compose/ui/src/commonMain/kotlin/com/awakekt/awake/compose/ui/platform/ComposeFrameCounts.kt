@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.compose.ui.platform
 
+import com.awakekt.awake.compose.runtime.PhaseReadCause
+
 /**
  * What the last [ComposeHost.frame] did, for a host that wants to see what each of the host's skips
  * saves without a profiler (#1512). One object per host, rewritten each frame, so reading it
@@ -39,7 +41,28 @@ class ComposeFrameCounts internal constructor() {
     var subtreesReplayed: Int = 0
         internal set
 
+    /**
+     * Why a frame whose composition was skipped measured anyway, while [ComposeHost.explainMeasure]
+     * is on: the first change found since the last measure. [PhaseReadCause.None] on a frame that
+     * composed (composing always measures), on one that skipped measuring, or while not explaining.
+     */
+    var measureCause: PhaseReadCause = PhaseReadCause.None
+        internal set
+
+    /** The state or polled source behind [measureCause], if it has one. */
+    var measureCauseSource: Any? = null
+        internal set
+
+    /**
+     * The layout node whose measure read what changed, if [measureCause] came from a read: its
+     * [com.awakekt.awake.compose.ui.node.LayoutNode.measurePolicy] and modifier chain say which
+     * composable declared it.
+     */
+    var measureCauseOwner: Any? = null
+        internal set
+
     override fun toString(): String =
         "ComposeFrameCounts(composed=$composed, measured=$measured, nodesComposed=$nodesComposed, " +
-            "nodesMeasured=$nodesMeasured, nodesDrawn=$nodesDrawn, subtreesReplayed=$subtreesReplayed)"
+            "nodesMeasured=$nodesMeasured, nodesDrawn=$nodesDrawn, subtreesReplayed=$subtreesReplayed, " +
+            "measureCause=$measureCause)"
 }

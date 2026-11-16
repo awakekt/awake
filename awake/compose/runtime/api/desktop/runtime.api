@@ -65,14 +65,31 @@ public final class com/awakekt/awake/compose/runtime/MutableState$DefaultImpls {
 	public static fun component2 (Lcom/awakekt/awake/compose/runtime/MutableState;)Lkotlin/jvm/functions/Function1;
 }
 
+public final class com/awakekt/awake/compose/runtime/PhaseReadCause : java/lang/Enum {
+	public static final field CompositionInvalid Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static final field Invalidated Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static final field NoPass Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static final field None Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static final field PolledChanged Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static final field StateWritten Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public static fun values ()[Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+}
+
 public final class com/awakekt/awake/compose/runtime/PhaseReads {
 	public fun <init> ()V
 	public final fun beginPass ()V
 	public final fun forget ()V
+	public final fun getCause ()Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public final fun getCauseOwner ()Ljava/lang/Object;
+	public final fun getCauseSource ()Ljava/lang/Object;
+	public final fun getExplains ()Z
 	public final fun invalidate ()V
 	public final fun isInvalid ()Z
 	public final fun pause ()V
 	public final fun resume ()V
+	public final fun setExplains (Z)V
 }
 
 public final class com/awakekt/awake/compose/runtime/PhaseReadsKt {
@@ -95,6 +112,13 @@ public final class com/awakekt/awake/compose/runtime/ProvidedLocals {
 }
 
 public final class com/awakekt/awake/compose/runtime/ProvidedValue {
+}
+
+public final class com/awakekt/awake/compose/runtime/ReadOwner {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/runtime/ReadOwner;
+	public final fun getCurrent ()Ljava/lang/Object;
+	public final fun getWanted ()Z
+	public final fun setCurrent (Ljava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/runtime/ReadTrackingKt {

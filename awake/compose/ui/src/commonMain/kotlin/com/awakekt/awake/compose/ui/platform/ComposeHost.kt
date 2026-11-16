@@ -124,8 +124,10 @@ class ComposeHost(
 
     /**
      * Also skips measuring, on a frame whose composition [skipUnchangedComposition] skipped, when
-     * nothing the last measure read has changed (#1512, the placement-only path). Off by default,
-     * and does nothing while [skipUnchangedComposition] is off.
+     * nothing the last measure read has changed (#1512, the placement-only path). Off by default.
+     * **It does nothing unless [skipUnchangedComposition] is on too**: a frame that composes always
+     * measures, every node of it, and there is no per-node measure skip. [explainMeasure] says why a
+     * frame whose composition was skipped measured anyway.
      *
      * Placement, position resolution, paint, input, focus and semantics still run every frame, so a
      * value read while placing or drawing -- `Modifier.offset { }`, `Modifier.graphicsLayer { }`, a
@@ -138,6 +140,19 @@ class ComposeHost(
      * off. [verifySkippedCompositions] compares a skipped frame with a measured one and finds such reads.
      */
     var skipUnchangedMeasure: Boolean = false
+
+    /**
+     * Records, in [frameCounts]'s `measureCause`, `measureCauseSource` and `measureCauseOwner`, why a
+     * frame whose composition was skipped measured anyway: the first state written, polled value
+     * changed, subcomposition out of date or `invalidate()` since the last measure, and the layout
+     * node whose measure read it (#1512). A debug aid, off by default; while off it records nothing
+     * and allocates nothing.
+     */
+    var explainMeasure: Boolean
+        get() = measureSkip.explains
+        set(value) {
+            measureSkip.explains = value
+        }
 
     /** How many frames [skipUnchangedMeasure] placed without measuring. */
     var skippedMeasures: Int = 0
@@ -277,6 +292,9 @@ class ComposeHost(
         stages?.end(ComposeFrameStage.Measure)
         frameCounts.composed = composed
         frameCounts.measured = !measureSkipped
+        frameCounts.measureCause = measureSkip.cause
+        frameCounts.measureCauseSource = measureSkip.causeSource
+        frameCounts.measureCauseOwner = measureSkip.causeOwner
         frameCounts.nodesMeasured = LayoutStats.nodeMeasures - measuresBefore
         if (measureSkipped) skippedMeasures++
         placedOnce = true

@@ -56,7 +56,7 @@ class SnapshotMutableState<T>(
         set(value) {
             if (current != value) {
                 current = value
-                readers?.invalidate()
+                readers?.invalidate(this)
             }
         }
 
