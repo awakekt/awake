@@ -39,7 +39,7 @@ data class RenderFrameStats(
 ) {
     /** The constructor as released before the present intervals, kept so compiled callers still link. */
     @Deprecated("Use the constructor with the present intervals.", level = DeprecationLevel.HIDDEN)
-    constructor(drawCalls: Int, instances: Int, triangles: Long, gpuTimeMs: Float?) :
+    constructor(drawCalls: Int, instances: Int, triangles: Long, gpuTimeMs: Float? = null) :
         this(drawCalls, instances, triangles, gpuTimeMs, null, null, null)
 
     /** [copy] as released before the present intervals. */
