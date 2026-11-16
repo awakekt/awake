@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.compose.ui.node
 
+import com.awakekt.awake.compose.runtime.ReadOwner
 import com.awakekt.awake.compose.runtime.RememberHolder
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
@@ -326,10 +327,13 @@ class LayoutNode(
 
     override fun measure(constraints: Constraints): Placeable {
         LayoutStats.nodeMeasures++
-        val outer = if (links.isEmpty()) {
-            contentMeasurable.measure(constraints)
-        } else {
-            links[0].measure(constraints)
+        // Who reads, for a host explaining why it measured (#1512); untouched while none does.
+        val explaining = ReadOwner.wanted
+        val enclosingOwner = if (explaining) ReadOwner.current.also { ReadOwner.current = this } else null
+        val outer = try {
+            if (links.isEmpty()) contentMeasurable.measure(constraints) else links[0].measure(constraints)
+        } finally {
+            if (explaining) ReadOwner.current = enclosingOwner
         }
         outermost = outer
         setMeasuredSize(outer.width, outer.height)

@@ -22,11 +22,42 @@ internal class ReadObserver {
     /** Set by a write to a state the latest pass read, or by [Composition.invalidate]. */
     var invalid = true
 
+    /** Whether the first change that put this pass out of date is kept, in [cause]; see [PhaseReads.explains]. */
+    var explains = false
+
+    /** The first change found since the pass, while [explains]; [PhaseReadCause.None] otherwise. */
+    var cause = PhaseReadCause.None
+        private set
+    var causeSource: Any? = null
+        private set
+    var causeOwner: Any? = null
+        private set
+
+    /** Marks the pass out of date, keeping why if it was not already and [explains] is on. */
+    fun markInvalid(why: PhaseReadCause, source: Any? = null, owner: Any? = null) {
+        if (explains && !invalid) explain(why, source, owner)
+        invalid = true
+    }
+
+    private fun explain(why: PhaseReadCause, source: Any?, owner: Any?) {
+        if (cause != PhaseReadCause.None) return
+        cause = why
+        causeSource = source
+        causeOwner = owner
+    }
+
+    private fun forgetCause() {
+        cause = PhaseReadCause.None
+        causeSource = null
+        causeOwner = null
+    }
+
     /** Whether the pass wants reads of plain holders reported to it. See [readsAreTracked]. */
     var tracksChanges = false
 
     private var polled = arrayOfNulls<PolledState<*>>(INITIAL_READS)
     private var polledSeen = arrayOfNulls<Any?>(INITIAL_READS)
+    private var polledOwner = arrayOfNulls<Any?>(INITIAL_READS)
     private var polledCount = 0
 
     /**
@@ -37,12 +68,14 @@ internal class ReadObserver {
     var collectsNested = false
 
     private var nested = arrayOfNulls<ReadObserver>(0)
+    private var nestedOwner = arrayOfNulls<Any?>(0)
     private var nestedCount = 0
 
     /** Starts a pass: older read stamps go stale and the polled reads are forgotten. */
     fun beginPass() {
         pass++
         invalid = false
+        forgetCause()
         clearPolled()
     }
 
@@ -50,6 +83,8 @@ internal class ReadObserver {
     fun forget() {
         pass++
         invalid = true
+        forgetCause()
+        if (explains) explain(PhaseReadCause.NoPass, null, null)
         clearPolled()
     }
 
@@ -57,7 +92,11 @@ internal class ReadObserver {
     fun recordNested(observer: ReadObserver) {
         if (!collectsNested) return
         for (i in 0 until nestedCount) if (nested[i] === observer) return
-        if (nestedCount == nested.size) nested = nested.copyOf(maxOf(INITIAL_READS, nestedCount * 2))
+        if (nestedCount == nested.size) {
+            nested = nested.copyOf(maxOf(INITIAL_READS, nestedCount * 2))
+            nestedOwner = nestedOwner.copyOf(nested.size)
+        }
+        nestedOwner[nestedCount] = if (explains) ReadOwner.current else null
         nested[nestedCount++] = observer
     }
 
@@ -79,9 +118,11 @@ internal class ReadObserver {
         if (polledCount == polled.size) {
             polled = polled.copyOf(polledCount * 2)
             polledSeen = polledSeen.copyOf(polledCount * 2)
+            polledOwner = polledOwner.copyOf(polledCount * 2)
         }
         polled[polledCount] = source
         polledSeen[polledCount] = seen
+        polledOwner[polledCount] = if (explains) ReadOwner.current else null
         source.markRecorded(this, polledCount)
         polledCount++
     }
@@ -95,11 +136,13 @@ internal class ReadObserver {
         var i = 0
         while (!changed && i < polledCount) {
             changed = polled[i]?.poll() != polledSeen[i]
+            if (changed && explains) explain(PhaseReadCause.PolledChanged, polled[i], polledOwner[i])
             i++
         }
         i = 0
         while (!changed && i < nestedCount) {
             changed = nested[i]?.isInvalid() == true
+            if (changed && explains) explain(PhaseReadCause.CompositionInvalid, null, nestedOwner[i])
             i++
         }
         return changed
@@ -109,9 +152,13 @@ internal class ReadObserver {
         for (i in 0 until polledCount) {
             polled[i] = null
             polledSeen[i] = null
+            polledOwner[i] = null
         }
         polledCount = 0
-        for (i in 0 until nestedCount) nested[i] = null
+        for (i in 0 until nestedCount) {
+            nested[i] = null
+            nestedOwner[i] = null
+        }
         nestedCount = 0
     }
 
@@ -143,12 +190,14 @@ internal object ReadTracking {
 internal class StateReaders {
     private var observers = arrayOfNulls<ReadObserver>(INITIAL_READERS)
     private var stamps = IntArray(INITIAL_READERS)
+    private var owners = arrayOfNulls<Any?>(INITIAL_READERS)
     private var count = 0
 
     fun record(observer: ReadObserver) {
         for (i in 0 until count) {
             if (observers[i] === observer) {
                 stamps[i] = observer.pass
+                owners[i] = if (observer.explains) ReadOwner.current else null
                 return
             }
         }
@@ -158,27 +207,33 @@ internal class StateReaders {
         if (count == observers.size) {
             observers = observers.copyOf(count * 2)
             stamps = stamps.copyOf(count * 2)
+            owners = owners.copyOf(count * 2)
         }
         observers[count] = observer
         stamps[count] = observer.pass
+        owners[count] = if (observer.explains) ReadOwner.current else null
         count++
     }
 
-    /** Invalidates every observer whose latest pass read the state, and drops the rest. */
-    fun invalidate() = retainCurrent(invalidate = true)
+    /** Invalidates every observer whose latest pass read the state, [source], and drops the rest. */
+    fun invalidate(source: Any?) = retainCurrent(invalidate = true, source)
 
-    private fun retainCurrent(invalidate: Boolean) {
+    private fun retainCurrent(invalidate: Boolean, source: Any? = null) {
         var kept = 0
         for (i in 0 until count) {
             val observer = observers[i]
             if (observer != null && stamps[i] == observer.pass) {
-                if (invalidate) observer.invalid = true
+                if (invalidate) observer.markInvalid(PhaseReadCause.StateWritten, source, owners[i])
                 observers[kept] = observer
                 stamps[kept] = stamps[i]
+                owners[kept] = owners[i]
                 kept++
             }
         }
-        for (i in kept until count) observers[i] = null
+        for (i in kept until count) {
+            observers[i] = null
+            owners[i] = null
+        }
         count = kept
     }
 
