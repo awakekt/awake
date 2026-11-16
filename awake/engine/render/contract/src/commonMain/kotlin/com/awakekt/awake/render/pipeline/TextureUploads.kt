@@ -30,6 +30,10 @@ enum class TextureUploadPath {
  * @property path How it went up.
  * @property format The block format, for [TextureUploadPath.BlockCompressed]; null otherwise.
  * @property filtering The filtering it was uploaded for.
+ * @property uploadedWidth The GPU image's base width: [width] unless `Renderer.textureMipSkip` left top
+ *   levels out of it (#1660). An observer totalling GPU texture memory reads this, not [width].
+ * @property uploadedHeight The GPU image's base height; see [uploadedWidth].
+ * @property uploadedMipLevels Mip levels the GPU image holds.
  */
 class TextureUpload(
     val label: String?,
@@ -38,9 +42,33 @@ class TextureUpload(
     val path: TextureUploadPath,
     val format: CompressedTextureFormat?,
     val filtering: TextureFiltering,
+    val uploadedWidth: Int,
+    val uploadedHeight: Int,
+    val uploadedMipLevels: Int,
 ) {
-    override fun toString(): String =
-        "${label ?: "unnamed image"}: ${width}x$height, ${format?.let { "$path $it" } ?: path}, $filtering"
+    /** The released form, which knew no mip skip: the GPU image is taken to be the source's whole chain. */
+    @Deprecated(
+        "Pass the uploaded size and levels: mip skip can make the GPU image smaller than the source (#1660).",
+        ReplaceWith("TextureUpload(label, width, height, path, format, filtering, width, height, uploadedMipLevels)"),
+    )
+    constructor(
+        label: String?,
+        width: Int,
+        height: Int,
+        path: TextureUploadPath,
+        format: CompressedTextureFormat?,
+        filtering: TextureFiltering,
+    ) : this(label, width, height, path, format, filtering, width, height, if (filtering == TextureFiltering.Linear) fullChain(width, height) else 1)
+
+    override fun toString(): String {
+        val uploaded = if (uploadedWidth != width || uploadedHeight != height) " (uploaded ${uploadedWidth}x$uploadedHeight)" else ""
+        return "${label ?: "unnamed image"}: ${width}x$height$uploaded, ${format?.let { "$path $it" } ?: path}, $filtering"
+    }
+
+    internal companion object {
+        /** Levels of a full chain from [width] x [height] down to 1 x 1. */
+        fun fullChain(width: Int, height: Int): Int = Int.SIZE_BITS - maxOf(1, width, height).countLeadingZeroBits()
+    }
 }
 
 /** Told about each [TextureUpload]; see [TextureUploads.observer]. */

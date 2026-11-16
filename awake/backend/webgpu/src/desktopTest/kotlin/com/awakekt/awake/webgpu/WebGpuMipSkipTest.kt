@@ -5,8 +5,14 @@
  */
 package com.awakekt.awake.webgpu
 
+import com.awakekt.awake.render.pipeline.GpuDevice
+import com.awakekt.awake.render.pipeline.TextureUpload
+import com.awakekt.awake.render.pipeline.TextureUploadObserver
+import com.awakekt.awake.render.pipeline.TextureUploads
+import com.awakekt.awake.render.pipeline.createImageMaterial
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import com.awakekt.awake.render.texture.asGpuImageSource
 import com.awakekt.awake.webgpu.renderer.uploadTexture
 import com.awakekt.awake.webgpu.texture.Texture
 import kotlin.math.abs
@@ -51,6 +57,25 @@ class WebGpuMipSkipTest {
         assertEquals(TEXELS, ui.uploadedWidth, "a UI image uploads whole")
         assertEquals(LEVELS, ui.uploadedMipLevels)
         ui.destroy()
+    }
+
+    /** The upload observer a consumer totals GPU texture memory with sees the half-size image at skip 1. */
+    @Test
+    fun theUploadObserverReportsTheUploadedSize() = withContentProbe(gradient(), scale = 1f to 1f) { renderer, _, _ ->
+        val seen = mutableListOf<TextureUpload>()
+        TextureUploads.observer = TextureUploadObserver { seen += it }
+        try {
+            renderer.textureMipSkip = 1
+            renderer.createImageMaterial(gradient().asGpuImageSource(), TextureFiltering.Linear, GpuDevice.DEFAULT_UNIFORM_FLOAT_COUNT, null, label = "ground").destroy()
+        } finally {
+            TextureUploads.observer = null
+        }
+        val upload = seen.single()
+        assertEquals(TEXELS, upload.width, "the source size")
+        assertEquals(TEXELS / 2, upload.uploadedWidth, "the GPU image, at skip 1")
+        assertEquals(TEXELS / 2, upload.uploadedHeight)
+        assertEquals(LEVELS - 1, upload.uploadedMipLevels)
+        println("WebGpuMipSkip: observer saw $upload")
     }
 
     /**
