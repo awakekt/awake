@@ -75,7 +75,26 @@ class PlanningHeapBreakdownBrowserTest {
         val preparer = CachingPreparer()
         val scratch = com.awakekt.awake.render.passes.ScenePassScratch()
         val context = GpuDrawPreparationContext(viewProjection = camera.lens.viewProjectionMatrix(1f, ClipSpace.WebGpu), cameraEye = camera.lens.eye)
+        // The same draws as fresh commands carrying only the fields the synthetic frame sets.
+        val copies = draws.map { draw ->
+            com.awakekt.awake.render.passes.RenderDrawCommand(
+                draw.mesh,
+                draw.material,
+                model = com.awakekt.awake.core.math.Mat4().set(draw.model),
+                worldBounds = draw.worldBounds?.let { Aabb(Vec3f(it.min.x, it.min.y, it.min.z), Vec3f(it.max.x, it.max.y, it.max.z)) },
+                transparent = draw.transparent,
+                shadowsOnly = draw.shadowsOnly,
+            )
+        }
+        fun compileWith(drawn: List<com.awakekt.awake.render.passes.RenderDrawCommand>, light: com.awakekt.awake.render.passes.uniforms.SceneLight?, environment: com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms) =
+            com.awakekt.awake.render.passes.ScenePassCompiler.compile(
+                camera.lens, drawn, light, environment, ClipSpace.WebGpu, 1f, null, preparer,
+                emptyList(), com.awakekt.awake.render.imagepass.ImagePassChain.Empty, null, scratch,
+            )
         val compileParts = listOf(
+            "compileNoLight" to { compileWith(draws, null, contributions.environment) },
+            "compileDefaultEnvironment" to { compileWith(draws, contributions.light, com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms.Default) },
+            "compileCopiedDraws" to { compileWith(copies, contributions.light, contributions.environment) },
             "compilePreparerOnly" to { for (i in draws.indices) preparer.prepare(draws[i], i, context) },
             "compileSceneDraws" to {
                 com.awakekt.awake.render.passes.ScenePassCompiler.compile(
