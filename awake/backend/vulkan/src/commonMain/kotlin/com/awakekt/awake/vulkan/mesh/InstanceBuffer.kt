@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.mesh
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -71,9 +72,13 @@ class InstanceBuffer(
     /** Packs [models] into this frame slot's buffer. `Mat4.data` is already column-major, which
      * is the order `instanced.wgsl`'s 4 `vec4` attributes reassemble into a `mat4x4` -- so this
      * is a straight copy, no transpose. */
-    private val packer = InstancePacker<Mat4>(GpuDataShape.Mat4, "InstanceBuffer") { out, offset, model ->
-        model.data.copyInto(out, offset)
-    }
+    private val packer = InstancePacker<Mat4>(
+        GpuDataShape.Mat4,
+        "InstanceBuffer",
+        write = InstanceWriter { out, offset, model ->
+            model.data.copyInto(out, offset)
+        },
+    )
 
     /**
      * Writes one model matrix per instance into [frameIndex]'s buffer, growing that slot's buffer

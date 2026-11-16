@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.mesh
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
@@ -33,9 +34,13 @@ class FrameInstanceBuffer(
         ),
     )
 
-    private val packer = InstancePacker<Float>(GpuDataShape.Float, "FrameInstanceBuffer") { out, offset, frame ->
-        out[offset] = frame
-    }
+    private val packer = InstancePacker<Float>(
+        GpuDataShape.Float,
+        "FrameInstanceBuffer",
+        write = InstanceWriter { out, offset, frame ->
+            out[offset] = frame
+        },
+    )
 
     /**
      * Uploads one sprite-strip frame index per instance for this frame, in the same order as the

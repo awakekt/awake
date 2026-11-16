@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.mesh
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -55,12 +56,16 @@ class AlphaInstanceBuffer(
     // Reused across frames so a steady instance count allocates nothing per frame -- same
     // "resize only when the count actually changes" shape InstanceBuffer's own `packed` uses.
 
-    private val packer = InstancePacker<Vec4>(GpuDataShape.Vec4, "AlphaInstanceBuffer") { out, offset, color ->
-        out[offset] = color.x
-        out[offset + 1] = color.y
-        out[offset + 2] = color.z
-        out[offset + 3] = color.w
-    }
+    private val packer = InstancePacker<Vec4>(
+        GpuDataShape.Vec4,
+        "AlphaInstanceBuffer",
+        write = InstanceWriter { out, offset, color ->
+            out[offset] = color.x
+            out[offset + 1] = color.y
+            out[offset + 2] = color.z
+            out[offset + 3] = color.w
+        },
+    )
 
     /**
      * Writes one RGBA tint per instance into [frameIndex]'s buffer, in the same order as the

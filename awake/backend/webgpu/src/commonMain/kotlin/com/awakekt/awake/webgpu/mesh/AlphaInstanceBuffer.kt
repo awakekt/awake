@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.mesh
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
@@ -35,12 +36,16 @@ class AlphaInstanceBuffer(
         ),
     )
 
-    private val packer = InstancePacker<Vec4>(GpuDataShape.Vec4, "AlphaInstanceBuffer") { out, offset, color ->
-        out[offset] = color.x
-        out[offset + 1] = color.y
-        out[offset + 2] = color.z
-        out[offset + 3] = color.w
-    }
+    private val packer = InstancePacker<Vec4>(
+        GpuDataShape.Vec4,
+        "AlphaInstanceBuffer",
+        write = InstanceWriter { out, offset, color ->
+            out[offset] = color.x
+            out[offset + 1] = color.y
+            out[offset + 2] = color.z
+            out[offset + 3] = color.w
+        },
+    )
 
     /**
      * Uploads one RGBA tint per instance for this frame, in the same order as the instance
