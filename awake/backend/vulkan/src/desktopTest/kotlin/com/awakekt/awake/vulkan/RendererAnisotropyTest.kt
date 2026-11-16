@@ -5,49 +5,11 @@
  */
 package com.awakekt.awake.vulkan
 
-import com.awakekt.awake.asset.shadercompiler.NagaShaderCompiler
-import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
-import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
-import com.awakekt.awake.asset.shaderdsl.fieldsFrom
-import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
-import com.awakekt.awake.asset.shaderdsl.lit
-import com.awakekt.awake.asset.shaderdsl.plus
-import com.awakekt.awake.asset.shaderdsl.sampler
-import com.awakekt.awake.asset.shaderdsl.shader
-import com.awakekt.awake.asset.shaderdsl.texture2d
-import com.awakekt.awake.asset.shaderdsl.textureSample
-import com.awakekt.awake.asset.shaderdsl.times
-import com.awakekt.awake.asset.shaderdsl.vec2
-import com.awakekt.awake.asset.shaderdsl.vec4
-import com.awakekt.awake.asset.shaderdsl.x
-import com.awakekt.awake.asset.shaderdsl.y
-import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.core.geometry.GpuDataShape
-import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.core.math.Lens
-import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.passes.RenderFeature
-import com.awakekt.awake.render.passes.RenderFrameContext
-import com.awakekt.awake.render.passes.RenderPassSlot
-import com.awakekt.awake.render.pipeline.BindingLayout
-import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.pipeline.PipelineVariant
-import com.awakekt.awake.render.renderer.UniformField
-import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.vulkan.commands.TransferContext
-import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.pipeline.PipelineTable
-import com.awakekt.awake.vulkan.pipeline.RenderPipeline
-import com.awakekt.awake.vulkan.pipeline.ShaderPair
-import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
-import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.renderer.uploadTexture
-import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.Texture
-import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -66,7 +28,8 @@ import kotlin.test.assertTrue
  */
 class RendererAnisotropyTest {
     @Test
-    fun aChangedAnisotropyRemakesTheSamplerAndTheContentSetTakesItBeforeDrawing() = withRenderer { renderer, probe ->
+    fun aChangedAnisotropyRemakesTheSamplerAndTheContentSetTakesItBeforeDrawing() = withProbeRenderer(scale = 1f to 8f) { renderer, probe ->
+        assertTrue(renderer.maxSupportedAnisotropy >= SAMPLES, "this device offers samplerAnisotropy up to ${renderer.maxSupportedAnisotropy}")
         val texture = renderer.uploadTexture(stripes()).also { probe.writeContentTextures(mapOf(1 to it)) }
         val off = renderer.frame()
         assertEquals(1, texture.samplerAnisotropy)
@@ -90,7 +53,7 @@ class RendererAnisotropyTest {
     }
 
     @Test
-    fun theSameValueAgainCreatesNothingAndAPendingSamplerOutlivesItsTexture() = withRenderer { renderer, probe ->
+    fun theSameValueAgainCreatesNothingAndAPendingSamplerOutlivesItsTexture() = withProbeRenderer(scale = 1f to 8f) { renderer, probe ->
         val texture = renderer.uploadTexture(stripes()).also { probe.writeContentTextures(mapOf(1 to it)) }
         renderer.maxAnisotropy = SAMPLES
         val sampler = texture.sampler.handle
@@ -112,7 +75,7 @@ class RendererAnisotropyTest {
      * up, as each draw binds them, without allocating -- one handle compared per slot.
      */
     @Test
-    fun anUnchangedSettingAllocatesNothingWhereASlotIsBound() = withRenderer { renderer, probe ->
+    fun anUnchangedSettingAllocatesNothingWhereASlotIsBound() = withProbeRenderer(scale = 1f to 8f) { renderer, probe ->
         val texture = renderer.uploadTexture(stripes()).also { probe.writeContentTextures(mapOf(1 to it)) }
         renderer.maxAnisotropy = SAMPLES
         val material = renderer.createMaterial(texture = stripes()) as Material
@@ -138,106 +101,15 @@ class RendererAnisotropyTest {
         material.destroy()
     }
 
-    private fun Renderer.frame(): ByteArray {
-        val target = createRenderTarget(SIZE, SIZE)
-        return try {
-            renderToTexture(target, Lens(eye = Vec3f(0f, 0f, 3f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f), emptyList())
-            runBlocking { readPixels(target) }.data
-        } finally {
-            target.destroy()
-        }
-    }
-
-    private class ProbeFeature(private val pipeline: RenderPipeline) : RenderFeature<RenderFrameContext> {
-        override val pass = RenderPassSlot.Scene
-
-        override fun recordCommands(context: RenderFrameContext) {
-            val block = checkNotNull(pipeline.uniformBlock)
-            block.write(context.frameIndex) { put(TINT_FIELD, Color.White) }
-            context.recorder.bindPipeline(pipeline)
-            context.recorder.bindMaterial(BindingSemantic.Material, block.binding(context.frameIndex))
-            context.recorder.draw(TRIANGLE_VERTICES, 1)
-        }
-
-        override fun destroy() = pipeline.destroy()
-    }
-
-    private fun withRenderer(block: (Renderer, RenderPipeline) -> Unit) {
-        val device = GraphicsDevice().apply { createHeadless() }
-        try {
-            val swapchain = SwapchainManager(device, FRAMES_IN_FLIGHT).apply { createHeadless(SIZE, SIZE) }
-            val layoutMaterial = Material(device)
-            val renderPass = createSceneRenderPass(device, swapchain)
-            val transfer = TransferContext(device)
-            val primary = RenderPipeline(
-                device,
-                swapchain,
-                renderPass,
-                layoutMaterial.descriptorSetLayout,
-                runBlocking { packShaderPair("triangle") },
-                VertexFormat.PositionColorUv,
-                vertexEntryPoint = "vertexMain",
-                fragmentEntryPoint = "fragmentMain",
-            )
-            val spirv = NagaShaderCompiler.wgslToSpirv(ProbeShader.emitWgsl())
-            val probe = RenderPipeline(
-                device, swapchain, renderPass, layoutMaterial.descriptorSetLayout, ShaderPair(spirv, spirv), VertexFormat.None,
-                vertexEntryPoint = "vertexMain", fragmentEntryPoint = "fragmentMain", variant = PipelineVariant.Background,
-                uniforms = PROBE_LAYOUT, framesInFlight = FRAMES_IN_FLIGHT, materialBindings = checkNotNull(ProbeShader.bindingsForGroup(MATERIAL_GROUP)),
-            )
-            val cleanup = headlessCleanup(device, transfer, renderPass, layoutMaterial.descriptorSetLayout, primary)
-            val renderer = Renderer(
-                graphicsDevice = device,
-                swapchainManager = swapchain,
-                pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionColorUv),
-                uiShaderPairs = runBlocking { defaultUiShaderPairs() },
-                transferContext = transfer,
-                renderFeatures = listOf(ProbeFeature(probe)),
-                maxFramesInFlight = FRAMES_IN_FLIGHT,
-            )
-            try {
-                assertTrue(renderer.maxSupportedAnisotropy >= SAMPLES, "this device offers samplerAnisotropy up to ${renderer.maxSupportedAnisotropy}")
-                block(renderer, probe)
-            } finally {
-                renderer.destroy()
-                cleanup()
-            }
-        } finally {
-            device.destroy()
-        }
-    }
-
     private companion object {
-        const val SIZE = 64
+        const val SIZE = PROBE_SIZE
         const val SAMPLES = 8
-        const val FRAMES_IN_FLIGHT = 2
-        const val TRIANGLE_VERTICES = 3
+        const val FRAMES_IN_FLIGHT = PROBE_FRAMES_IN_FLIGHT
         const val TEXELS = 256
         const val STRIPE = 8
         const val WARM_UP = 2_000
         const val BINDS = 10_000
         const val WINDOWS = 5
-
-        val MATERIAL_GROUP = BindingLayout.Standard.slot(BindingSemantic.Material)
-        val TINT_FIELD = UniformField("tint", GpuDataShape.Vec4)
-        val PROBE_LAYOUT = UniformLayout(TINT_FIELD)
-
-        /** Stripes across u, sampled once across and 8 times along v over the frame: an anisotropic footprint. */
-        val ProbeShader: AslShaderDefinition = shader("anisotropy_probe") {
-            val tint = uniformBlock("Uniforms", group = MATERIAL_GROUP, binding = 0).fieldsFrom(PROBE_LAYOUT).value("tint")
-            val probeTexture by texture2d(group = MATERIAL_GROUP, binding = 1)
-            val probeSampler by sampler(group = MATERIAL_GROUP, binding = 2)
-            val out = varyings("VertexOutput")
-            val uv by out.varying(GpuDataShape.Vec2, location = 0)
-            vertex {
-                val corner = fullScreenTriangleCorner()
-                out.position set vec4(corner, 0f.lit, 1f.lit)
-                uv set vec2((corner.x + 1f.lit) * 0.5f.lit, (corner.y + 1f.lit) * 0.5f.lit)
-            }
-            fragment {
-                colorOutput(textureSample(probeTexture, probeSampler, vec2(uv.x * 1f.lit, uv.y * 8f.lit)) * tint)
-            }
-        }
 
         fun stripes() = TextureAsset(
             data = ByteArray(TEXELS * TEXELS * 4) { index -> if (index % 4 == 3 || ((index / 4) % TEXELS / STRIPE) % 2 == 0) -1 else 0 },

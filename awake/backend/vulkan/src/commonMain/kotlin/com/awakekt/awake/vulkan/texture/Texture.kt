@@ -79,6 +79,19 @@ class Texture internal constructor(
     private val filtering = uploaded.filtering
     private val mipLevels = uploaded.mipLevels
 
+    /**
+     * The GPU image's own width: [width] unless [com.awakekt.awake.vulkan.renderer.Renderer.textureMipSkip]
+     * left top levels out of it at upload (#1660). [width] stays the source size, which anything that
+     * turns pixel rects into UVs divides by; memory accounting reads this one.
+     */
+    val uploadedWidth: Int = uploaded.width.takeIf { it > 0 } ?: width
+
+    /** The GPU image's own height; see [uploadedWidth]. */
+    val uploadedHeight: Int = uploaded.height.takeIf { it > 0 } ?: height
+
+    /** Mip levels the GPU image holds, fewer than the source's chain by any levels mip skip left out. */
+    val uploadedMipLevels: Int get() = mipLevels
+
     /** The anisotropic samples [sampler] was made with: 1 unless [resample] raised it. */
     internal var samplerAnisotropy = 1
         private set
@@ -130,19 +143,22 @@ class Texture internal constructor(
             image: CompressedTextureImage,
             filtering: TextureFiltering,
         ): Texture {
+            // The top levels mip skip leaves out, while the new base is whole blocks (#1660).
+            val skip = TextureSampling.levelsToSkip(image, filtering, graphicsDevice.mipSkip)
+            val levels = image.levels.drop(skip)
             var offset = 0L
-            val regions = image.levels.mapIndexed { level, bytes ->
-                ImageUpload.Region(image.levelWidth(level), image.levelHeight(level), offset, level).also { offset += bytes.size }
+            val regions = levels.mapIndexed { level, bytes ->
+                ImageUpload.Region(image.levelWidth(level + skip), image.levelHeight(level + skip), offset, level).also { offset += bytes.size }
             }
             val data = ByteArray(offset.toInt())
             var at = 0
-            image.levels.forEach { bytes ->
+            levels.forEach { bytes ->
                 bytes.copyInto(data, at)
                 at += bytes.size
             }
             val uploaded = ImageUpload.upload(
-                graphicsDevice, runOneTimeCommands, vkFormat(image.format), image.width, image.height,
-                mipLevels = image.levels.size, layerCount = 1, isCubemap = false,
+                graphicsDevice, runOneTimeCommands, vkFormat(image.format), image.levelWidth(skip), image.levelHeight(skip),
+                mipLevels = levels.size, layerCount = 1, isCubemap = false,
                 data = data, regions = regions, samplerCreateInfo = VkSamplerCreateInfo(), filtering = filtering,
             )
             return Texture(graphicsDevice, uploaded, image.width, image.height, layerCount = 1, blockCompressed = true)
@@ -160,14 +176,35 @@ class Texture internal constructor(
         // Neither backend generates mips on the GPU, so the whole chain is box-filtered on the CPU once,
         // at load, and every level uploaded. Arrays get a full chain: tiled terrain layers shimmer
         // without one. Cubemaps stay one level; the sky samples its base only. See MipChain.kt.
+
+        /**
+         * [asset] uploaded without the top levels [GraphicsDevice.mipSkip] leaves out: for a texture
+         * only ever sampled by UV and never written after upload, as a material's or a terrain
+         * layer's is. UI images, glyph atlases and written textures use the constructor and upload whole.
+         */
+        fun skippingMips(
+            graphicsDevice: GraphicsDevice,
+            runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
+            asset: TextureAsset,
+        ): Texture = Texture(
+            graphicsDevice,
+            uploadRgba(graphicsDevice, runOneTimeCommands, asset, VkSamplerCreateInfo(), asset.filtering, graphicsDevice.mipSkip),
+            asset.width,
+            asset.height,
+            asset.layerCount,
+            blockCompressed = false,
+        )
+
         private fun uploadRgba(
             graphicsDevice: GraphicsDevice,
             runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
             asset: TextureAsset,
             samplerCreateInfo: VkSamplerCreateInfo,
             filtering: TextureFiltering,
+            mipSkip: Int = 0,
         ): UploadedImage {
-            val levels = if (asset.isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
+            val chain = if (asset.isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
+            val levels = chain.drop(TextureSampling.levelsToSkip(filtering, chain.size, mipSkip))
             val data = ByteArray(levels.sumOf { it.data.size })
             val regions = mutableListOf<ImageUpload.Region>()
             var offset = 0
@@ -180,7 +217,7 @@ class Texture internal constructor(
                 offset += level.data.size
             }
             return ImageUpload.upload(
-                graphicsDevice, runOneTimeCommands, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, asset.width, asset.height,
+                graphicsDevice, runOneTimeCommands, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, levels.first().width, levels.first().height,
                 mipLevels = levels.size, layerCount = asset.layerCount, isCubemap = asset.isCubemap,
                 data = data, regions = regions, samplerCreateInfo = samplerCreateInfo, filtering = filtering,
             )

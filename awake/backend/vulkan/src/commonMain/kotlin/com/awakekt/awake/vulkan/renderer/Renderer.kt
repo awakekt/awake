@@ -426,6 +426,19 @@ class Renderer internal constructor(
             graphicsDevice.anisotropy = clamped
             graphicsDevice.sampledTextures.forEach { retiredSamplers.retire(it.resample(clamped)) }
         }
+
+    /**
+     * Clamped by [TextureSampling.mipSkip]. Material textures, PBR maps, compressed material images and
+     * content-feature textures that are never written after upload take it as they are uploaded;
+     * textures already uploaded keep their levels. UI images, glyph atlases, written textures, render
+     * targets and `Nearest` textures always upload whole, and a texture's `width` and `height` stay its
+     * source size, so pixel rects map to the same UVs (#1660).
+     */
+    override var textureMipSkip: Int = 0
+        set(value) {
+            field = TextureSampling.mipSkip(value)
+            graphicsDevice.mipSkip = field
+        }
     internal val createdRenderTargets = mutableListOf<OffscreenRenderTarget>()
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice, maxFramesInFlight)
