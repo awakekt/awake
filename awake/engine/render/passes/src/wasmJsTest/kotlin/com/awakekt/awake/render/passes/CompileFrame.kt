@@ -68,8 +68,16 @@ internal class CompileFrame(instancing: Boolean) {
             override fun canInstance(format: VertexFormat): Boolean = true
         }
     } else {
-        GpuDrawPreparer { _, sourceIndex, _ -> resolved[sourceIndex % resolved.size] }
+        // An object, not a SAM-converted lambda: on Kotlin/Wasm each call through a lambda converted
+        // to a fun interface allocated 28 B, which would be measured here as the compile's own cost.
+        object : GpuDrawPreparer {
+            override fun prepare(request: GpuDrawRequest, sourceIndex: Int, context: GpuDrawPreparationContext) =
+                resolved[sourceIndex % resolved.size]
+        }
     }
+
+    /** The same preparer as a lambda converted to the fun interface, to measure what that conversion costs a call. */
+    val lambdaPreparer = GpuDrawPreparer { _, sourceIndex, _ -> resolved[sourceIndex % resolved.size] }
 
     /** The frame's draws. */
     val requests = List(DRAWS) { index ->

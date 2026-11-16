@@ -57,6 +57,7 @@ class CompileHeapBreakdownBrowserTest {
         val sortable = ArrayList<GpuResolvedDraw>(DRAWS)
         val figures = linkedMapOf(
             "preparerOnly" to medianGrowth(DRAWS) { for (i in requests.indices) preparer.prepare(requests[i], i, context) },
+            "lambdaPreparerOnly" to medianGrowth(DRAWS) { for (i in requests.indices) frame.lambdaPreparer.prepare(requests[i], i, context) },
             "signature" to medianGrowth(DRAWS) { scratch.signature.record(frame.moved(), requests, light, environment, ClipSpace.WebGpu, 1f, null, emptyList(), ImagePassChain.Empty) },
             "batch" to medianGrowth(DRAWS) { scratch.batcher.batch(requests, canInstance, canTint) },
             "diagnose" to medianGrowth(DRAWS) { diagnoseInstanceFolds(requests, canInstance, stats.also { it.reset() }, canTint) },
