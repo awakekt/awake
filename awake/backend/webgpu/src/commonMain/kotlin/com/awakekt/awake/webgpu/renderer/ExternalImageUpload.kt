@@ -6,20 +6,24 @@
 package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.render.pipeline.GpuImageUpload
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.GpuImageSource
 import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.toTextureAsset
 import com.awakekt.awake.webgpu.device.GraphicsDevice
+import com.awakekt.awake.webgpu.device.submitAndRelease
 import com.awakekt.awake.webgpu.texture.GpuMipmaps
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.texture.mipLevelCount
 import io.ygdrasil.webgpu.Extent3D
+import io.ygdrasil.webgpu.GPUDevice
 import io.ygdrasil.webgpu.GPUQueue
 import io.ygdrasil.webgpu.GPUTexture
 import io.ygdrasil.webgpu.GPUTextureDimension
 import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.GPUTextureUsage
+import io.ygdrasil.webgpu.TexelCopyTextureInfo
 import io.ygdrasil.webgpu.TextureDescriptor
 import com.awakekt.awake.render.material.Material as RenderMaterial
 
@@ -123,5 +127,37 @@ internal fun GraphicsDevice.copyExternalImage(mipmaps: GpuMipmaps, image: Any, w
         return null
     }
     mipmaps.generate(texture, levels)
-    return Texture.fromFilled(this, Texture.FilledTexture(texture, width, height, mipLevelCount = levels), filtering)
+    // Mip skip (#1660): the chain is drawn whole, then the levels it keeps are copied into a smaller
+    // texture, and the full-size one goes once that copy is submitted.
+    val skip = TextureSampling.levelsToSkip(filtering, levels, mipSkip)
+    val kept = if (skip == 0) texture else wgpuContext.device.dropTopLevels(texture, width, height, levels, skip)
+    return Texture.fromFilled(
+        this,
+        Texture.FilledTexture(kept, width, height, mipLevelCount = levels - skip, uploadedWidth = maxOf(1, width shr skip), uploadedHeight = maxOf(1, height shr skip)),
+        filtering,
+    )
+}
+
+/** A texture holding [source]'s levels from [skip] down, copied on the GPU; [source] is released. */
+private fun GPUDevice.dropTopLevels(source: GPUTexture, width: Int, height: Int, levels: Int, skip: Int): GPUTexture {
+    val kept = createTexture(
+        TextureDescriptor(
+            size = Extent3D(width = maxOf(1, width shr skip).toUInt(), height = maxOf(1, height shr skip).toUInt()),
+            format = GPUTextureFormat.RGBA8Unorm,
+            usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst or GPUTextureUsage.CopySrc,
+            dimension = GPUTextureDimension.TwoD,
+            mipLevelCount = (levels - skip).toUInt(),
+        ),
+    )
+    val encoder = createCommandEncoder()
+    for (level in skip until levels) {
+        encoder.copyTextureToTexture(
+            source = TexelCopyTextureInfo(texture = source, mipLevel = level.toUInt()),
+            destination = TexelCopyTextureInfo(texture = kept, mipLevel = (level - skip).toUInt()),
+            copySize = Extent3D(width = maxOf(1, width shr level).toUInt(), height = maxOf(1, height shr level).toUInt()),
+        )
+    }
+    queue.submitAndRelease(encoder)
+    source.close()
+    return kept
 }
