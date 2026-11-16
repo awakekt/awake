@@ -61,8 +61,29 @@ class PhaseReads {
 
     /** Marks the latest pass out of date, for a change no tracked state carries. */
     fun invalidate() {
-        reads.invalid = true
+        reads.markInvalid(PhaseReadCause.Invalidated)
     }
+
+    /**
+     * Whether the first change that puts a pass out of date is kept, for [cause] (#1512): a debug aid
+     * for a host that wants to say why a phase it hoped to skip ran. Off by default, and while off
+     * nothing is kept and nothing is allocated. While on, each read also keeps [ReadOwner.current].
+     */
+    var explains: Boolean
+        get() = reads.explains
+        set(value) {
+            reads.explains = value
+        }
+
+    /** What first put the latest pass out of date, while [explains]; read it after [isInvalid]. */
+    val cause: PhaseReadCause
+        get() = if (reads.cause == PhaseReadCause.None && reads.pass == 0 && reads.invalid) PhaseReadCause.NoPass else reads.cause
+
+    /** The state, polled source or composition behind [cause], if it has one. */
+    val causeSource: Any? get() = reads.causeSource
+
+    /** The [ReadOwner.current] of the read behind [cause]: who read what changed. */
+    val causeOwner: Any? get() = reads.causeOwner
 
     /** Forgets every read and marks the record out of date, as before the first pass. */
     fun forget() {
