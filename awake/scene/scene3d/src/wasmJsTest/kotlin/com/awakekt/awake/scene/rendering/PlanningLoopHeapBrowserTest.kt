@@ -49,9 +49,6 @@ class PlanningLoopHeapBrowserTest {
         val family = world.family<Transform, MeshRenderer>()
         val boundsType = world.typeId(MeshBounds::class)
         val scratch = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
-        val commands = ScratchPool { RenderDrawCommand(mesh = it0, material = it1, model = com.awakekt.awake.core.math.Mat4()) }
-        val drawn = ArrayList<RenderDrawCommand>(PROPS)
-        var sink = 0
         val parts = listOf<Pair<String, () -> Unit>>(
             "iterate" to { family.forEach { _, _, _ -> sink++ } },
             "boundsGet" to {
@@ -70,6 +67,17 @@ class PlanningLoopHeapBrowserTest {
                 val store = world.componentStore<MeshBounds>(boundsType)
                 family.forEach { entity, transform, _ -> store?.get(entity)?.writeWorldBounds(transform, scratch) }
             },
+        ) + commandParts(family, scratch)
+        val costs = parts.map { (name, pass) -> name to medianGrowth(PROPS, pass = pass) }
+        println("PlanningLoopHeap: $PROPS renderers, bytes a renderer: " + costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } + " ($sink)")
+        assertTrue(costs.isNotEmpty())
+    }
+
+    /** Filling a pooled command per renderer, as the collector does, split into its parts. */
+    private fun commandParts(family: com.awakekt.awake.ecs.Family2<Transform, MeshRenderer>, scratch: Aabb): List<Pair<String, () -> Unit>> {
+        val commands = ScratchPool { RenderDrawCommand(mesh = it0, material = it1, model = com.awakekt.awake.core.math.Mat4()) }
+        val drawn = ArrayList<RenderDrawCommand>(PROPS)
+        return listOf(
             "commandSet" to {
                 commands.reset()
                 drawn.clear()
@@ -102,10 +110,9 @@ class PlanningLoopHeapBrowserTest {
                 }
             },
         )
-        val costs = parts.map { (name, pass) -> name to medianGrowth(PROPS, pass = pass) }
-        println("PlanningLoopHeap: $PROPS renderers, bytes a renderer: " + costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } + " ($sink)")
-        assertTrue(costs.isNotEmpty())
     }
+
+    private var sink = 0
 
     private fun town(renderer: NoopRenderer): World {
         val world = World()

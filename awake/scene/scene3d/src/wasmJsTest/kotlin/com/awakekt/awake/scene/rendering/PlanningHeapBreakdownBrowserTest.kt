@@ -11,7 +11,6 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.core.math.sameFloats
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.BufferHandle
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
@@ -72,12 +71,7 @@ class PlanningHeapBreakdownBrowserTest {
 
         val stages = StageHeap()
         val system = RenderSystem3D(renderer, drawPreparer = CachingPreparer()).apply { drawStages = stages }
-        val left = FloatArray(MATRIX_FLOATS) { it.toFloat() }
-        val right = FloatArray(MATRIX_FLOATS) { it.toFloat() }
-        var same = 0
         val parts = listOf(
-            "matrixContentEquals" to { repeat(PROPS) { if (left.contentEquals(right)) same++ } },
-            "matrixSameFloats" to { repeat(PROPS) { if (left.sameFloats(right)) same++ } },
             "features" to { features.collect(world, camera, 0f, 1f) },
             "culling" to { culling.prepare(world, camera, 1f, shadows) },
             "beforeParticles" to { collector.collectBeforeParticles(world, frame, 0f) },
@@ -85,9 +79,6 @@ class PlanningHeapBreakdownBrowserTest {
             "frame" to { system.update(world, DELTA) },
         )
         val costs = parts.map { (name, pass) -> name to bytesPerRenderer(pass) }
-        assertTrue(same > 0)
-        val sameFloats = costs.first { it.first == "matrixSameFloats" }.second
-        assertTrue(sameFloats < 1.0, "comparing a matrix allocated $sameFloats bytes")
         return costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +
             ", frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB"
     }
@@ -147,7 +138,6 @@ class PlanningHeapBreakdownBrowserTest {
         const val MESHES = 190
         const val SPACING = 4f
         const val DELTA = 1f / 60f
-        const val MATRIX_FLOATS = 16
         const val WARMUP = 10
         const val SAMPLES = 9
         const val KB = 1024.0

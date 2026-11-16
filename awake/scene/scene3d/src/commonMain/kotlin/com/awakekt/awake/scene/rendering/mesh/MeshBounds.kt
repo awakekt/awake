@@ -10,7 +10,6 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Plane
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.intersects
-import com.awakekt.awake.core.math.sameFloats
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.RenderSystem3D
@@ -121,7 +120,7 @@ data class MeshBounds(
 
     private fun refreshFromMatrix(worldMatrix: Mat4) {
         val previous = cachedMatrix
-        if (matrixCached && previous != null && previous.sameFloats(worldMatrix.data)) {
+        if (matrixCached && previous != null && previous.contentEquals(worldMatrix.data)) {
             heldStill = true
             return
         }

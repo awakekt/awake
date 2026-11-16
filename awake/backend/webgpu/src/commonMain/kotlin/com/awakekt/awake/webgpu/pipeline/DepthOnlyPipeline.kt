@@ -7,7 +7,6 @@ package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.core.math.sameFloats
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.passes.SHADOW_DEPTH_BIAS_CONSTANT
 import com.awakekt.awake.render.passes.SHADOW_DEPTH_BIAS_SLOPE
@@ -231,7 +230,7 @@ class DepthOnlyPipeline(
         val buffer = cascadeBuffers.getOrNull(cascade) ?: return
         val data = viewProjection.data
         val written = cascadeWritten[cascade]
-        if (cascadeHolds[cascade] && data.sameFloats(written)) return
+        if (cascadeHolds[cascade] && data.contentEquals(written)) return
         data.copyInto(written)
         cascadeHolds[cascade] = true
         device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(data))

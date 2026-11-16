@@ -804,7 +804,6 @@ public final class com/awakekt/awake/core/math/VectorPackingKt {
 	public static final fun putVec4 ([FILcom/awakekt/awake/core/math/Vec3f;F)I
 	public static final fun putVec4 ([FILcom/awakekt/awake/core/math/Vec4;)I
 	public static synthetic fun putVec4$default ([FILcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)I
-	public static final fun sameFloats ([F[F)Z
 	public static final fun squaredDistanceFrom (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;)F
 }
 
