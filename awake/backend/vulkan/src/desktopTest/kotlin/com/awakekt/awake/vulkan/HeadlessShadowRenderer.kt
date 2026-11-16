@@ -42,12 +42,12 @@ import kotlinx.coroutines.runBlocking
  * wires it: a runtime pipeline gets the shadow map when its shader declares it, and a feature's
  * depth pipeline casts into the cascades.
  */
-internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false): Pair<Renderer, () -> Unit> {
+internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false, layers: Int = MAX_SHADOW_TARGET_LAYERS): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
     graphicsDevice.createHeadless()
     val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
     if (presentable) swapchainManager.createHeadlessPresentable(size, size) else swapchainManager.createHeadless(size, size)
-    val depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true)
+    val depthTarget = DepthTarget(graphicsDevice, layers = layers, arrayed = true, comparison = true)
     val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
     val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
     val primary = RenderPipeline(
@@ -149,7 +149,7 @@ private fun depthPrePass(
         runBlocking { packShaderPair("shadow_depth") },
         VertexFormat.PositionNormalColor,
         depthTarget.size,
-        cascadeCount = depthTarget.layers,
+        cascadeCount = MAX_SHADOW_TARGET_LAYERS,
         framesInFlight = MAX_FRAMES_IN_FLIGHT,
     ),
 )

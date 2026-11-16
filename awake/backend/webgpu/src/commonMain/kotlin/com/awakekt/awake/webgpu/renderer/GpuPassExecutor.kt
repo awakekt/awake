@@ -45,6 +45,7 @@ internal class RendererGpuPassExecutor(
             val activeRenderPipeline = if (useWireframe) wireframeRenderPipeline!! else renderPipeline
             val primary = PrimaryPipelineBinding(activeRenderPipeline.handle, useWireframe)
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
+            ensureShadowLayers(input)
             val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
             val sceneInput = if (scaled == null) input else sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
             val sorted = input.drawsForRecording()
@@ -114,6 +115,7 @@ internal class RendererGpuPassExecutor(
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
         val renderer = this.renderer
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
+        renderer.ensureShadowLayers(input)
         renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, input)
         renderer.flushUniformUploads()
         renderer.imagePassExecutor.beginPass()

@@ -214,16 +214,21 @@ mavenPublishing {
     }
 }
 
-// #1676: the scene pass's depth hazard test, under Vulkan synchronization validation. Its own task,
+// #1676: the scene pass's depth hazard test, under Vulkan synchronization validation, and #1688's
+// shadow-array growth with it. Its own task,
 // because the layer reads that setting from the environment, which a test cannot set for itself;
 // desktopTest leaves the class out.
 tasks.register<Test>("desktopSyncValidationTest") {
     group = "verification"
-    description = "Run the scene pass's depth hazard test under Vulkan synchronization validation (#1676)."
+    description = "Run the scene pass's depth hazard test and the shadow array's growth under Vulkan synchronization validation (#1676, #1688)."
     val desktopTestTask = tasks.named<Test>("desktopTest").get()
     testClassesDirs = desktopTestTask.testClassesDirs
     classpath = desktopTestTask.classpath
-    filter { includeTestsMatching("*ScenePassDepthHazardTest") }
+    filter {
+        includeTestsMatching("*ScenePassDepthHazardTest")
+        // #1688: the array reallocated mid-run, freed after the frames that used it drained.
+        includeTestsMatching("*RendererShadowLayersTest")
+    }
     requireExclusiveGpu(this)
     dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
     jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")

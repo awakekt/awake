@@ -70,17 +70,8 @@ import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
  */
 class DepthTarget(
     graphicsDevice: GraphicsDevice,
-    /** Edge length, in texels, of the square depth image. */
-    val size: Int = DEFAULT_SIZE,
-    /**
-     * How many layers the image holds -- one shadow cascade each.
-     *
-     * Rendering targets ONE layer at a time ([framebufferFor]) while sampling reads the whole
-     * array through [imageView]. That split is the reason cascades are layers rather than tiles
-     * of one big map: a tile needs gutters and UV arithmetic to stop filtering bleeding between
-     * neighbours, and a layer cannot bleed into another by construction.
-     */
-    val layers: Int = 1,
+    size: Int = DEFAULT_SIZE,
+    layers: Int = 1,
     /**
      * Whether [imageView] is an ARRAY view.
      *
@@ -99,6 +90,26 @@ class DepthTarget(
 ) {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
+
+    /** Edge length, in texels, of the square depth image; changed only by [reallocate]. */
+    var size: Int = size
+        private set
+
+    /**
+     * How many layers the image holds -- one shadow cascade, or one point-light face, each; changed
+     * only by [reallocate].
+     *
+     * Rendering targets ONE layer at a time ([framebufferFor]) while sampling reads the whole
+     * array through [imageView]. That split is the reason cascades are layers rather than tiles
+     * of one big map: a tile needs gutters and UV arithmetic to stop filtering bleeding between
+     * neighbours, and a layer cannot bleed into another by construction.
+     */
+    var layers: Int = layers
+        private set
+
+    /** Device memory the image holds, as the driver reported it: what [layers] and [size] cost (#1688). */
+    var allocatedBytes: Long = 0
+        private set
 
     /**
      * The depth-only render pass that renders into this target. Its final layout is
@@ -154,6 +165,24 @@ class DepthTarget(
 
     init {
         renderPass = createRenderPass()
+        sampler = VulkanImages.vkCreateSampler(
+            device,
+            VkSamplerCreateInfo(
+                magFilter = if (comparison) VkFilter.VK_FILTER_LINEAR else VkFilter.VK_FILTER_NEAREST,
+                minFilter = if (comparison) VkFilter.VK_FILTER_LINEAR else VkFilter.VK_FILTER_NEAREST,
+                addressModeU = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                addressModeV = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                addressModeW = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                compareEnable = comparison,
+                compareOp = VkCompareOp2.VK_COMPARE_OP_LESS_OR_EQUAL,
+            ),
+        )
+        allocateImage()
+        createDescriptorSet()
+    }
+
+    /** The image, its memory, its views and one framebuffer per layer, at [layers] and [size]. */
+    private fun allocateImage() {
         image = VulkanImages.vkCreateImage(
             device,
             VkImageCreateInfo(
@@ -175,7 +204,13 @@ class DepthTarget(
             device,
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
+        allocatedBytes = requirements.size
         VulkanImages.vkBindImageMemory(device, image, imageMemory, 0)
+        createViews()
+    }
+
+    /** [imageView] over every layer, and one view and framebuffer per layer. */
+    private fun createViews() {
         imageView = Vulkan.vkCreateImageView(
             device,
             VkImageViewCreateInfo(
@@ -193,18 +228,6 @@ class DepthTarget(
                     baseArrayLayer = 0,
                     layerCount = layers,
                 ),
-            ),
-        )
-        sampler = VulkanImages.vkCreateSampler(
-            device,
-            VkSamplerCreateInfo(
-                magFilter = if (comparison) VkFilter.VK_FILTER_LINEAR else VkFilter.VK_FILTER_NEAREST,
-                minFilter = if (comparison) VkFilter.VK_FILTER_LINEAR else VkFilter.VK_FILTER_NEAREST,
-                addressModeU = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                addressModeV = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                addressModeW = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                compareEnable = comparison,
-                compareOp = VkCompareOp2.VK_COMPARE_OP_LESS_OR_EQUAL,
             ),
         )
         // A framebuffer attaches ONE layer, so each cascade needs its own view and its own
@@ -239,8 +262,40 @@ class DepthTarget(
                 ),
             )
         }
-        createDescriptorSet()
     }
+
+    /**
+     * Rebuilds the image at [layers] and [size], keeping the render pass, sampler and descriptor set,
+     * whose image binding is rewritten: everything that holds [binding] or [renderPass] stays valid
+     * (#1688). The new layers start `UNDEFINED`, as a new target's do.
+     *
+     * The caller makes sure the GPU no longer uses the old image, and that no command buffer being
+     * recorded has bound [binding] yet: the renderer waits for the device first.
+     */
+    internal fun reallocate(layers: Int, size: Int) {
+        if (layers == this.layers && size == this.size) return
+        releaseImage()
+        this.layers = layers
+        this.size = size
+        allocateImage()
+        writeImageDescriptor()
+    }
+
+    private fun releaseImage() {
+        framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        layerViews.forEach { Vulkan.vkDestroyImageView(device, it) }
+        Vulkan.vkDestroyImageView(device, imageView)
+        VulkanImages.vkDestroyImage(device, image)
+        VulkanBuffers.vkFreeMemory(device, imageMemory)
+    }
+
+    private fun writeImageDescriptor() = VulkanDescriptors.vkUpdateDescriptorSetImage(
+        device,
+        descriptorSet,
+        0,
+        VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        VkDescriptorImageInfo(sampler = 0L, imageView = imageView),
+    )
 
     /** Set 1's layout and its single set: the depth image and its sampler, written once. */
     private fun createDescriptorSet() {
@@ -274,13 +329,7 @@ class DepthTarget(
         descriptorSet = VulkanDescriptors.vkAllocateDescriptorSet(device, descriptorPool, descriptorSetLayout)
         // Two writes, image and sampler separately -- WGSL has no combined-sampler type, so naga
         // always emits the pair. Same split Material's own bindings 1/2 use.
-        VulkanDescriptors.vkUpdateDescriptorSetImage(
-            device,
-            descriptorSet,
-            0,
-            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            VkDescriptorImageInfo(sampler = 0L, imageView = imageView),
-        )
+        writeImageDescriptor()
         VulkanDescriptors.vkUpdateDescriptorSetImage(
             device,
             descriptorSet,
@@ -374,12 +423,8 @@ class DepthTarget(
      * render pass. Call once, after the GPU has finished with the target.
      */
     fun destroy() {
-        framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
-        layerViews.forEach { Vulkan.vkDestroyImageView(device, it) }
+        releaseImage()
         VulkanImages.vkDestroySampler(device, sampler)
-        Vulkan.vkDestroyImageView(device, imageView)
-        VulkanImages.vkDestroyImage(device, image)
-        VulkanBuffers.vkFreeMemory(device, imageMemory)
         VulkanDescriptors.vkDestroyDescriptorPool(device, descriptorPool)
         VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout)
         Vulkan.vkDestroyRenderPass(device, renderPass)

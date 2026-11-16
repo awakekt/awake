@@ -14,6 +14,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.texture.TextureAsset
@@ -146,7 +147,8 @@ internal class VulkanContentFeatureGpu(
             target.size,
             depth.vertexEntryPoint,
             depth.fragmentEntryPoint,
-            cascadeCount = target.layers,
+            // Every layer the array can grow to, not the layers it holds now (#1688).
+            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
             framesInFlight = framesInFlight,
             frontFace = depth.frontFace,
         )

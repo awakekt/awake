@@ -172,13 +172,17 @@ fun WebGpuPipelineHandle.uniformByteSize(group: Int = 0, binding: Int = 0): Long
     return 0L
 }
 
-/**
- * A `GPUBindGroup` as the shared render layer's opaque [MaterialBinding].
- *
- * @property bindGroup The wrapped bind group, set on the render pass encoder when this binding is
- * recorded. Bind groups are immutable and tied to the pipeline layout they were built against.
- */
-class WebGpuBindGroupHandle(val bindGroup: GPUBindGroup) : MaterialBinding
+/** A `GPUBindGroup` as the shared render layer's opaque [MaterialBinding]. */
+class WebGpuBindGroupHandle(bindGroup: GPUBindGroup) : MaterialBinding {
+    /**
+     * The wrapped bind group, set on the render pass encoder when this binding is recorded. Bind
+     * groups are immutable and tied to the pipeline layout they were built against, so this is
+     * replaced in place only when the texture it names is reallocated (a grown shadow array): draws
+     * already prepared against this handle then bind the new group.
+     */
+    var bindGroup: GPUBindGroup = bindGroup
+        internal set
+}
 
 /**
  * A `GPUBuffer` as the shared render layer's opaque [RenderBufferHandle], used for both vertex and

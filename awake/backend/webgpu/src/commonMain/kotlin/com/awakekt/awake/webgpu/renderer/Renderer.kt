@@ -318,6 +318,9 @@ class Renderer internal constructor(
      */
     override var shadowBudget: ShadowBudget = ShadowBudget.Default
 
+    /** The shadow depth array's bytes as allocated now; it grows with the layers a frame draws. */
+    override val shadowMapBytes: Long get() = depthPrePass?.depthTarget?.allocatedBytes ?: 0L
+
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
 
     /** Stateless; the one implementation of "record all opaque draws, grouped by pipeline",

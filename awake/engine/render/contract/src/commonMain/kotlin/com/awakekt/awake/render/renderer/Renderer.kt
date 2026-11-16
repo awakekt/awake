@@ -190,6 +190,13 @@ interface Renderer : GpuDevice {
         set(_) {}
 
     /**
+     * Device memory the shadow depth maps hold, in bytes, as the backend allocated them; 0 on a
+     * renderer that draws no shadows or does not count them (#1688).
+     */
+    val shadowMapBytes: Long
+        get() = 0L
+
+    /**
      * Quality tier for multi-pass image effects rendered by this [Renderer].
      *
      * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at
