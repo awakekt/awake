@@ -170,7 +170,9 @@ private fun Renderer.stageDrawBlock(
     debugView: GpuDebugView,
     exposure: Float,
 ) {
-    if (slot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage)) return
+    // `kind` passed, not left to its default: on Kotlin/Wasm a call leaving a default off a function
+    // of four or more parameters allocated 28 B, on every draw of every frame here (#1621).
+    if (slot.inputs.matches(cmd, frameVersion, materialUniformFloatCount, coverage, MONOLITHIC_KIND)) return
     val uniformFloats = cmd.uniformFloats(
         materialUniformFloatCount = materialUniformFloatCount,
         viewProjection = viewProjection,
@@ -186,8 +188,11 @@ private fun Renderer.stageDrawBlock(
     )
     uniformUploads.packedBlocks += 1
     uniformUploads.stageChanged(slot, uniformFloats)
-    slot.inputs.record(cmd, frameVersion, materialUniformFloatCount, coverage)
+    slot.inputs.record(cmd, frameVersion, materialUniformFloatCount, coverage, MONOLITHIC_KIND)
 }
+
+/** The kind [com.awakekt.awake.render.passes.DrawUniformInputs] records a monolithic block under: its default. */
+private const val MONOLITHIC_KIND = 0
 
 /**
  * Stages [cmd]'s own block for a pipeline that reads the frame block beside it, unless [slot]
