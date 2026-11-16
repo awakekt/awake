@@ -33,7 +33,8 @@ import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
  * @param features Optional list of modular [RenderFeature3D] extensions.
  * @param viewportProvider Provider supplying the optional active sub-viewport bounds.
  * @param renderWorldProvider Provider selecting the target ECS world to extract rendering components from.
- * @param isRealtimeProvider Provider indicating whether continuous real-time rendering is active.
+ * @param isRealtimeProvider Whether continuous real-time rendering is active. True by default, so a consumer
+ *   replans every frame; reusing a still frame's plan only applies to a host that passes false (#1621).
  * @param isDirtyProvider Provider indicating whether scene contents or viewports require re-planning.
  */
 class RenderSystem3D(
@@ -54,7 +55,9 @@ class RenderSystem3D(
      */
     private val renderWorldProvider: (World) -> World = { it },
     /**
-     * Whether the 3D scene renders continuously in real time.
+     * Whether the 3D scene renders continuously in real time. True by default, and every host in
+     * this repository leaves it so: a consumer replans every frame, still camera or not, and reusing
+     * a still frame's plan only applies to a host that passes false (#1621).
      * When false, scene re-planning is bypassed unless the camera, viewport, or scene is dirty.
      */
     private val isRealtimeProvider: () -> Boolean = { true },

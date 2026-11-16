@@ -789,6 +789,11 @@ jobs:
       - name: ECS and sprite browser tests
         run: ./gradlew :awake:ecs:wasmJsBrowserTest :awake:asset:sprite:wasmJsBrowserTest :awake:scene:scene2d:wasmJsBrowserTest
 
+      # Where a replanned frame's heap goes on wasm, part by part (#1621). Filtered: scene3d's common
+      # tests run on the JVM, and this step only wants the browser's own heap figure.
+      - name: Scene planning heap breakdown (browser)
+        run: ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*" --tests "*PlanningLoopHeap*"
+
       # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest
@@ -808,7 +813,7 @@ jobs:
       # and a re-recording bundle creating no buffer (#1621).
       # Only these classes: the backend's draw-preparation benchmark is too long for this job.
       - name: GPU texture upload and render bundle browser tests
-        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*"
+        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*" --tests "*PlanningStageHeap*"
 
       - name: Upload the browser render tests' results
         if: always()
