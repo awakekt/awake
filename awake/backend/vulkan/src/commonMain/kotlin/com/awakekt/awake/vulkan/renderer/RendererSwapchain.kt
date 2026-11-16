@@ -204,6 +204,8 @@ internal fun Renderer.destroyDepthResources() {
  * `.extent` every frame -- only the UI pipelines' screen-size uniform buffers (used for
  * their vertex shaders' pixel-to-NDC math, not dynamic state) need rewriting here. */
 internal fun Renderer.recreateSwapChain() {
+    // The rebuild's wait is not a presented interval.
+    presentIntervals.reset()
     // GLFW reports a 0x0 framebuffer while minimized, and CAMetalLayer can do the same while
     // it has no drawable. Keep the still-valid old swapchain until a later frame has an extent
     // the driver can actually create.
