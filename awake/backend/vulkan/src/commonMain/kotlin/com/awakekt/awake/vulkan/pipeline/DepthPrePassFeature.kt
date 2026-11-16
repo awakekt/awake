@@ -32,6 +32,7 @@ import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.texture.DepthTarget
+import com.awakekt.awake.vulkan.texture.release
 
 /**
  * Renders the frame's draws a second time, depth only, into [depthTarget].
@@ -133,14 +134,18 @@ internal class DepthPrePassFeature(
     private var initializedLayers = BooleanArray(depthTarget.layers)
 
     /**
-     * Reallocates [depthTarget] at [layers] of [size] texels, and forgets which layers were cleared:
-     * the new image's layers all start `UNDEFINED`. The caller has waited for the device and has not
-     * begun recording a frame that binds the target (#1688, #1698).
+     * Holds [layers] at [size] in [depthTarget], or releases it to its 1x1 stand-in when [layers] is
+     * 0, and forgets which layers were cleared: the new image's layers all start `UNDEFINED`, and
+     * [initializeLayers] clears them before anything samples them. Whether the image changed. The
+     * caller has waited for the device and has not begun recording a frame that binds the target
+     * (#1688, #1698).
      */
-    internal fun resize(layers: Int, size: Int) {
-        if (layers == depthTarget.layers && size == depthTarget.size) return
-        depthTarget.reallocate(layers, size)
-        initializedLayers = BooleanArray(layers)
+    internal fun resize(layers: Int, size: Int): Boolean {
+        val resident = if (depthTarget.resident) depthTarget.layers else 0
+        if (layers == resident && (layers == 0 || size == depthTarget.size)) return false
+        if (layers == 0) depthTarget.release() else depthTarget.reallocate(layers, size)
+        initializedLayers = BooleanArray(depthTarget.layers)
+        return true
     }
 
     /** Records the generic packet's arbitrary layered depth resource. */

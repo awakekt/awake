@@ -6,26 +6,51 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.passes.shadowLayersNeeded
 
 /**
- * Sizes the shadow depth array before [input] is recorded, as [Renderer.shadowArraySizing] decides
- * from the layers [input]'s depth passes draw and the budget's map size (#1688, #1698): a one-texel
- * placeholder until a light casts; then the layers drawn, at the map size, growing while shadows are
- * drawn (a point light's six faces the first frame it casts); back to the placeholder once no
- * shadow has been drawn for a while.
- *
- * Each change waits for the device to go idle first (`vkDeviceWaitIdle`): the frames still in flight
- * may read the old image, and the target's descriptor set is rewritten in place, which no submitted
- * or recording command buffer may hold. The cost is a one-off hitch on the frame that changes it:
- * the frames in flight drain, then the new image is allocated. It is never paid per frame: a scene
- * whose shadows come and go returns here before the wait; `WindowedShadowGrowthTest` toggles a point
- * shadow and counts its reallocations.
+ * Sizes the shadow depth array before a presented frame's [input] is recorded (#1688, #1698): it
+ * holds no array until a light casts, grows to the layers the frame's depth passes target, takes the
+ * budget's map size, and is released again once a residency window passes with no light casting.
+ * See [ShadowArrayResidency] for when it shrinks.
+ */
+internal fun Renderer.settleShadowArray(input: GpuPassInput) {
+    if (depthPrePass == null) return
+    applyShadowLayers(shadowResidency.frame(depthLayersDrawn(input), residentShadowLayers()))
+}
+
+/**
+ * Grows the shadow depth array for an offscreen render of [input], as [settleShadowArray] does, but
+ * never shrinks it: an offscreen view that draws no shadow says nothing about the presented frames.
  */
 internal fun Renderer.ensureShadowLayers(input: GpuPassInput) {
+    if (depthPrePass == null) return
+    applyShadowLayers(shadowResidency.layersFor(depthLayersDrawn(input), residentShadowLayers()))
+}
+
+/** The array layers [input] draws into: none while its environment turns shadows off. */
+private fun depthLayersDrawn(input: GpuPassInput): Int =
+    if (input.environment.shadowsEnabled) shadowLayersNeeded(input.prePasses) else 0
+
+private fun Renderer.residentShadowLayers(): Int {
+    val target = depthPrePass?.depthTarget ?: return 0
+    return if (target.resident) target.layers else 0
+}
+
+/**
+ * Reallocates the array to [layers] at the budget's map size when that differs from what it holds.
+ *
+ * It waits for the device to go idle first (`vkDeviceWaitIdle`): the frames still in flight may read
+ * the old image, and the target's descriptor set is rewritten in place, which no submitted or
+ * recording command buffer may hold. The cost is a one-off hitch on the frame the array grows,
+ * shrinks or changes size, never one per frame.
+ */
+private fun Renderer.applyShadowLayers(layers: Int) {
     val pass = depthPrePass ?: return
-    var needed = 0
-    for (index in input.prePasses.indices) needed = maxOf(needed, input.prePasses[index].targetLayer + 1)
-    if (!shadowArraySizing.update(needed, shadowBudget.mapSize)) return
+    val target = pass.depthTarget
+    val size = shadowBudget.mapSize
+    val unchanged = if (layers == 0) !target.resident else target.resident && layers == target.layers && size == target.size
+    if (unchanged) return
     waitIdle()
-    pass.resize(shadowArraySizing.layers, shadowArraySizing.size)
+    pass.resize(layers, size)
 }

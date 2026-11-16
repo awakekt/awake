@@ -45,7 +45,7 @@ internal class RendererGpuPassExecutor(
             val activeRenderPipeline = if (useWireframe) wireframeRenderPipeline!! else renderPipeline
             val primary = PrimaryPipelineBinding(activeRenderPipeline.handle, useWireframe)
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
-            ensureShadowLayers(input)
+            settleShadowArray(input)
             val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
             val sceneInput = if (scaled == null) input else sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
             val sorted = input.drawsForRecording()

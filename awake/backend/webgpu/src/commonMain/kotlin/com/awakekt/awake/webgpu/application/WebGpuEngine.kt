@@ -162,8 +162,8 @@ open class WebGpuEngine(
                 // budget's map size (#1688, #1698); the pipelines keep a slot for every layer it can reach.
                 target = com.awakekt.awake.webgpu.texture.DepthTarget(
                     graphicsDevice,
-                    size = com.awakekt.awake.render.passes.ShadowArraySizing.PLACEHOLDER_SIZE,
-                    layers = com.awakekt.awake.render.passes.ShadowArraySizing.PLACEHOLDER_LAYERS,
+                    size = com.awakekt.awake.webgpu.texture.DepthTarget.DORMANT_SIZE,
+                    layers = 1,
                     arrayed = true,
                     comparison = true,
                 ),

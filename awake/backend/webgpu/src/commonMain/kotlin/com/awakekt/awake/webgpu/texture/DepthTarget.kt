@@ -56,6 +56,12 @@ class DepthTarget(
     val allocatedBytes: Long get() = size.toLong() * size * Float.SIZE_BYTES * layers
 
     /**
+     * Whether the texture is the shadow array a light renders into rather than the 1x1 [DORMANT_SIZE]
+     * stand-in a shadow bind group points at while none casts (#1698), as on Vulkan.
+     */
+    internal val resident: Boolean get() = size != DORMANT_SIZE
+
+    /**
      * The `Depth32Float` texture, with [layers] array layers. It is both a render attachment and
      * bindable for sampling. Replaced by [reallocate].
      */
@@ -164,5 +170,8 @@ class DepthTarget(
     companion object {
         /** Default edge length of a depth target: 2048 texels, the same as the Vulkan backend's. */
         const val DEFAULT_SIZE = 2048
+
+        /** The stand-in's edge while no light casts: one texel, one layer, as on Vulkan (#1698). */
+        internal const val DORMANT_SIZE = 1
     }
 }

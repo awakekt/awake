@@ -328,8 +328,8 @@ class Renderer internal constructor(
      */
     override var shadowBudget: ShadowBudget = ShadowBudget.Default
 
-    /** What the shadow array should hold, frame by frame: see [ensureShadowLayers] (#1698). */
-    internal val shadowArraySizing = com.awakekt.awake.render.passes.ShadowArraySizing()
+    /** How many shadow array layers stay resident, frame by frame: see [settleShadowArray] (#1698). */
+    internal val shadowResidency = com.awakekt.awake.render.passes.ShadowArrayResidency()
 
     /** The shadow depth array's bytes as allocated now; it grows with the layers a frame draws. */
     override val shadowMapBytes: Long get() = depthPrePass?.depthTarget?.allocatedBytes ?: 0L

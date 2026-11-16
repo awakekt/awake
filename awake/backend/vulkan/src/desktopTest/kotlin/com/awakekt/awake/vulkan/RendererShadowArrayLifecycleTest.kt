@@ -12,7 +12,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.render.passes.ShadowArraySizing
+import com.awakekt.awake.render.passes.ShadowArrayResidency
 import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.scene.core.transform.Transform
@@ -27,10 +27,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The shadow array's life on Vulkan (#1698), from an engine-built renderer's one-texel placeholder:
- * nothing resident while no light casts, the cascades at the budget's map size from the first frame
- * that draws a shadow, a budget change reallocating at once, and the array freed once no shadow has
- * been drawn for [ShadowArraySizing.DEFAULT_RELEASE_AFTER_FRAMES] frames. The device fails on any
+ * The shadow array's life on Vulkan (#1698), from an engine-built renderer's dormant stand-in, beyond
+ * what [RendererLazyShadowArrayTest] covers: a budget change reallocating at once, and the array kept
+ * for at least one residency window after shadows go off, then freed within two
+ * ([ShadowArrayResidency.DEFAULT_RELEASE_AFTER_FRAMES] frames each). The device fails on any
  * validation error when it is destroyed.
  */
 class RendererShadowArrayLifecycleTest {
@@ -38,12 +38,7 @@ class RendererShadowArrayLifecycleTest {
 
     @Test
     fun theArrayIsHeldOnlyWhileAShadowIsDrawn() {
-        val (renderer, release) = newHeadlessShadowRenderer(
-            SIZE,
-            presentable = true,
-            layers = ShadowArraySizing.PLACEHOLDER_LAYERS,
-            mapSize = ShadowArraySizing.PLACEHOLDER_SIZE,
-        )
+        val (renderer, release) = newDormantShadowRenderer(SIZE)
         try {
             val world = scene(renderer)
             repeat(FRAMES) { renderer.frame(world) }
@@ -62,12 +57,13 @@ class RendererShadowArrayLifecycleTest {
             assertEquals(REDUCED_SIZE, renderer.depthTarget?.size, "a map-size change reallocates at once")
 
             world.remove<Light>(sun)
-            repeat(ShadowArraySizing.DEFAULT_RELEASE_AFTER_FRAMES - 1) { renderer.frame(world) }
+            val window = ShadowArrayResidency.DEFAULT_RELEASE_AFTER_FRAMES
+            repeat(window - 1) { renderer.frame(world) }
             assertEquals(reduced, renderer.shadowMapBytes, "kept while a scene may switch its shadows back on")
-            renderer.frame(world)
+            repeat(window + 1) { renderer.frame(world) }
             val released = renderer.shadowMapBytes
             println("ShadowArrayLifecycle: unlit $unlit B; lit ${lit / MIB} MiB; at $REDUCED_SIZE ${reduced / MIB} MiB; released $released B")
-            assertTrue(released < PLACEHOLDER_MAX_BYTES, "freed after the idle frames: $released B")
+            assertTrue(released < PLACEHOLDER_MAX_BYTES, "freed within two windows: $released B")
         } finally {
             renderer.waitIdle()
             owned.forEach { it() }

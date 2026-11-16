@@ -11,7 +11,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.RenderDrawCommand
-import com.awakekt.awake.render.passes.ShadowArraySizing
+import com.awakekt.awake.render.passes.ShadowArrayResidency
 import com.awakekt.awake.render.passes.pointShadowMatrices
 import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.PointLight
@@ -61,9 +61,10 @@ class WebGpuShadowLayersTest {
     }
 
     /**
-     * The array's life from the engine's one-texel placeholder (#1698): nothing resident while no
-     * light casts, the cascades at the budget's map size from the first shadowed frame, a map-size
-     * change reallocating at once, and the array freed after the idle frames.
+     * The array's life from the dormant 1x1 stand-in (#1698), with Vulkan's policy: nothing resident
+     * while no light casts, the cascades at the budget's map size from the first shadowed frame, a
+     * map-size change reallocating at once, kept for a residency window after shadows go off and
+     * freed within two. An offscreen render grows the array but never frees it.
      */
     @Test
     fun theArrayIsHeldOnlyWhileAShadowIsDrawn() = webGpuHeadlessScene().use { session ->
@@ -74,20 +75,27 @@ class WebGpuShadowLayersTest {
         try {
             val draws = listOf(RenderDrawCommand(ground, material))
             val sunLit = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, renderer.clipSpace))
-            repeat(FRAMES) { renderer.renderSceneToTexture(target, lens, draws, sun) }
+            repeat(FRAMES) { renderer.presentScene(target, lens, draws, sun) }
             val unlit = renderer.shadowMapBytes
-            repeat(FRAMES) { renderer.renderSceneToTexture(target, lens, draws, sunLit) }
+            repeat(FRAMES) { renderer.presentScene(target, lens, draws, sunLit) }
             val lit = renderer.shadowMapBytes
             renderer.shadowBudget = ShadowBudget(cascades = ShadowBudget.DEFAULT_CASCADES, mapSize = REDUCED_SIZE)
-            repeat(FRAMES) { renderer.renderSceneToTexture(target, lens, draws, sunLit) }
+            repeat(FRAMES) { renderer.presentScene(target, lens, draws, sunLit) }
             val reduced = renderer.shadowMapBytes
-            repeat(ShadowArraySizing.DEFAULT_RELEASE_AFTER_FRAMES) { renderer.renderSceneToTexture(target, lens, draws, sun) }
+            val window = ShadowArrayResidency.DEFAULT_RELEASE_AFTER_FRAMES
+            repeat(window) { renderer.renderSceneToTexture(target, lens, draws, sun) }
+            val afterOffscreen = renderer.shadowMapBytes
+            repeat(window - 1) { renderer.presentScene(target, lens, draws, sun) }
+            val kept = renderer.shadowMapBytes
+            repeat(window + 1) { renderer.presentScene(target, lens, draws, sun) }
             val released = renderer.shadowMapBytes
             println("WebGpuShadowArrayLifecycle: unlit $unlit B; lit ${lit / MIB} MiB; at $REDUCED_SIZE ${reduced / MIB} MiB; released $released B")
-            assertEquals(PLACEHOLDER_BYTES, unlit, "no casting light, only the one-texel placeholder")
+            assertEquals(DORMANT_BYTES, unlit, "no casting light, only the 1x1 stand-in")
             assertEquals(LAYER_BYTES * ShadowBudget.DEFAULT_CASCADES, lit)
             assertEquals(REDUCED_LAYER_BYTES * ShadowBudget.DEFAULT_CASCADES, reduced, "a map-size change reallocates at once")
-            assertEquals(PLACEHOLDER_BYTES, released, "freed after the idle frames")
+            assertEquals(reduced, afterOffscreen, "offscreen renders never free it")
+            assertEquals(reduced, kept, "kept while a scene may switch its shadows back on")
+            assertEquals(DORMANT_BYTES, released, "freed within two windows")
         } finally {
             ground.destroy()
             material.destroy()
@@ -117,7 +125,7 @@ class WebGpuShadowLayersTest {
         const val LAYER_BYTES = 2048L * 2048L * 4L
         const val REDUCED_SIZE = 1024
         const val REDUCED_LAYER_BYTES = 1024L * 1024L * 4L
-        const val PLACEHOLDER_BYTES = 4L
+        const val DORMANT_BYTES = 4L
         val sun = SceneLight(direction = Vec3f(-1f, 1f, 0f), color = Vec3f(1f, 1f, 1f))
         val lens = Lens(eye = Vec3f(0f, 8f, 8f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 100f)
     }

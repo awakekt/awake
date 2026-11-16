@@ -12,8 +12,8 @@ import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.toRequests
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
-import com.awakekt.awake.render.passes.ShadowArraySizing
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.AlphaMode
@@ -52,7 +52,7 @@ import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
  * can see neither backend's internals. The shadow lookup being mirrored on WebGPU for as long as it
  * was is what a cross-backend scene capture exists to prevent.
  *
- * `lit_shadow` with a real depth pre-pass, layered and arrayed, sized as [ShadowArraySizing] decides: the
+ * `lit_shadow` with a real depth pre-pass, layered and arrayed at [DEFAULT_SHADOW_CASCADES]: the
  * shader declares `texture_depth_2d_array`, so a single-layer view is a validation error rather
  * than a dimmer picture. The array grows to the layers a frame draws (#1688), so the pipelines keep
  * a slot for each of [MAX_SHADOW_TARGET_LAYERS]. Content features attach through the renderer's `ContentFeatureHost`.
@@ -64,8 +64,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
     swapchainManager.createHeadless(width, height)
     val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
     val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
-    // As VulkanEngine builds it: a placeholder until a light casts (#1698).
-    val depthTarget = DepthTarget(graphicsDevice, size = ShadowArraySizing.PLACEHOLDER_SIZE, layers = ShadowArraySizing.PLACEHOLDER_LAYERS, arrayed = true, comparison = true)
+    val depthTarget = DepthTarget(graphicsDevice, layers = DEFAULT_SHADOW_CASCADES, arrayed = true, comparison = true)
     val scenePipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,

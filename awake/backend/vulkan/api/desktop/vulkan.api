@@ -30,9 +30,11 @@ public class com/awakekt/awake/vulkan/application/VulkanEngine : com/awakekt/awa
 	public fun <init> (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/asset/shaders/RenderPlan;)V
 	protected fun createBackendResources (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun destroyBackend ()V
+	public final fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	protected fun releaseBackendSurface ()V
 	protected fun resizeBackend ()V
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
+	public final fun setShadowDepthFormat (Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;)V
 }
 
 public final class com/awakekt/awake/vulkan/application/VulkanHeadlessPlayKt {
@@ -441,6 +443,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public final fun getRedrawsStillFrames ()Z
 	public fun getRenderScale ()F
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
@@ -531,6 +534,8 @@ public final class com/awakekt/awake/vulkan/texture/DepthTarget {
 	public static final field DEFAULT_SIZE I
 	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;IIZZ)V
 	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;IIZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;IIZZLcom/awakekt/awake/render/renderer/ShadowDepthFormat;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;IIZZLcom/awakekt/awake/render/renderer/ShadowDepthFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun binding ()Lcom/awakekt/awake/vulkan/pipeline/VulkanMaterialBinding;
 	public final fun clearToFar (J)V
 	public final fun destroy ()V
@@ -538,6 +543,7 @@ public final class com/awakekt/awake/vulkan/texture/DepthTarget {
 	public final fun getAllocatedBytes ()J
 	public final fun getArrayed ()Z
 	public final fun getDescriptorSetLayout ()J
+	public final fun getFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public final fun getFramebuffer ()J
 	public final fun getImage ()J
 	public final fun getImageView ()J

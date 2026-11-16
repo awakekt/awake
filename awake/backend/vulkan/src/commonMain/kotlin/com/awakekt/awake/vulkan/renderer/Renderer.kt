@@ -29,6 +29,7 @@ import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.mesh.GpuDynamicMeshes
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
+import com.awakekt.awake.render.passes.ShadowArrayResidency
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.recordPassFeatures
@@ -47,10 +48,12 @@ import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.PresentIntervalTracker
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.ShadowBudget
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.renderer.UiUploadStats
@@ -195,8 +198,11 @@ class Renderer internal constructor(
     /** Block-compressed textures, in the families this device enabled. */
     private val compressedTextures = VulkanCompressedTextures(this)
 
+    /** The time between presented frames, measured at each present call's return (#1699). */
+    internal val presentIntervals = PresentIntervalTracker()
+
     /** Counts every draw this renderer records; published once per submitted frame. */
-    internal val statsCounter = RenderStatsCounter()
+    internal val statsCounter = RenderStatsCounter().also { it.presentIntervals = presentIntervals }
 
     /** Null when the device's graphics queue cannot write timestamps. */
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice, maxFramesInFlight)
@@ -293,20 +299,22 @@ class Renderer internal constructor(
     val capabilities: DeviceCapabilities
         get() = graphicsDevice.capabilities
 
-    /**
-     * The shadow depth array's device memory, as its allocation reported it (#1688): a placeholder's
-     * few bytes until a light casts, then the layers drawn at the budget's map size (#1698).
-     */
+    /** The shadow depth array's device memory, as its allocation reported it (#1688): a 1x1 stand-in's
+     * few bytes while no light casts, since the array is released then (#1698). */
     override val shadowMapBytes: Long get() = depthTarget?.allocatedBytes ?: 0L
 
+    /** The format the engine built the shadow depth pass for (#1698). */
+    override val shadowDepthFormat: ShadowDepthFormat
+        get() = depthTarget?.format ?: ShadowDepthFormat.Default
+
     /**
-     * Its cascades are planned from the next frame (#1688), and its map size reallocates the shadow
-     * array before the next frame that draws shadows (#1698).
+     * Its cascades are planned from the next frame (#1688); its map size is the shadow array's from
+     * the next frame that draws a shadow, which reallocates it once (#1698).
      */
     override var shadowBudget: ShadowBudget = ShadowBudget.Default
 
-    /** What the shadow array should hold, frame by frame: see [ensureShadowLayers] (#1698). */
-    internal val shadowArraySizing = com.awakekt.awake.render.passes.ShadowArraySizing()
+    /** When the shadow array is allocated and released (#1698). */
+    internal val shadowResidency = ShadowArrayResidency()
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary

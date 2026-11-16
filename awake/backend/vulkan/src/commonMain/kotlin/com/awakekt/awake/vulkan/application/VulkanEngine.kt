@@ -28,7 +28,6 @@ import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
-import com.awakekt.awake.render.passes.ShadowArraySizing
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.BindingLayout
@@ -40,6 +39,7 @@ import com.awakekt.awake.render.pipeline.PipelineSet
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.ShaderSource
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -95,6 +95,14 @@ open class VulkanEngine(
      */
     private val plan: RenderPlan,
 ) : GraphicsEngine(appLifecycle) {
+
+    /**
+     * The depth format of the shadow maps (#1698): [ShadowDepthFormat.Depth32Float] by default,
+     * [ShadowDepthFormat.Depth16Unorm] to halve their memory on a mobile tier. Read once, when the
+     * engine builds its GPU resources: set it before the engine starts. The map size is
+     * [com.awakekt.awake.render.renderer.ShadowBudget.mapSize], which may change at any time.
+     */
+    var shadowDepthFormat: ShadowDepthFormat = ShadowDepthFormat.Default
 
     /** [primary]'s own format -- the key `Renderer` resolves a mesh's pipeline by. */
     private val vertexFormat: VertexFormat get() = plan.primary.vertexFormat
@@ -269,7 +277,7 @@ open class VulkanEngine(
             map.size,
             shaders.vulkan.entryPoint(ShaderStage.VERTEX),
             shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
-            // Every layer the array can grow to: the image starts with the cascades in use (#1688).
+            // Every layer the array can grow to: it holds none until a light casts (#1688, #1698).
             cascadeCount = MAX_SHADOW_TARGET_LAYERS,
             framesInFlight = MAX_FRAMES_IN_FLIGHT,
             variant = variant,
@@ -586,14 +594,15 @@ open class VulkanEngine(
             // descriptor set now, so no material layout depends on whether it exists.
             // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
             depthTarget = plan.depthPrePassShaderSet?.let {
-                // A one-texel placeholder until a light casts; then the layers drawn, at the shadow
-                // budget's map size (#1688, #1698). See ensureShadowLayers.
+                // No array until a light casts: the renderer allocates the layers a frame draws
+                // the first time one does, and releases them again when none has for a while (#1698).
                 DepthTarget(
                     graphicsDevice,
-                    size = ShadowArraySizing.PLACEHOLDER_SIZE,
-                    layers = ShadowArraySizing.PLACEHOLDER_LAYERS,
+                    size = DepthTarget.DORMANT_SIZE,
+                    layers = 1,
                     arrayed = true,
                     comparison = true,
+                    format = shadowDepthFormat,
                 )
             }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }

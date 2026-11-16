@@ -13,7 +13,6 @@ import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.toRequests
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
-import com.awakekt.awake.render.passes.ShadowArraySizing
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.AlphaMode
@@ -234,8 +233,8 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         // As WebGpuEngine builds it: the default cascades, grown to the layers a frame draws (#1688).
         depthTarget = DepthTarget(
             graphicsDevice,
-            size = ShadowArraySizing.PLACEHOLDER_SIZE,
-            layers = ShadowArraySizing.PLACEHOLDER_LAYERS,
+            size = DepthTarget.DORMANT_SIZE,
+            layers = 1,
             arrayed = true,
             comparison = true,
         ),
