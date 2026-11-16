@@ -102,7 +102,20 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    the new `main`) is a new head, which restarts the rehearsal, about an hour, and puts the merged
    change into the release unrehearsed until it finishes. A fix that has to ship goes in before the
    cut, or in the next release; open its PR meanwhile, but merge it after the tag.
-2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
+2. **Before tagging, check that `main`'s Consumer has saved its cache for the commit the cut
+   branched from.** A tag run is read-only on the Actions cache: its Consumer can only reuse a
+   Gradle home and build cache that a `main` run saved. The `main` Publish run of the commit before
+   the cut starts when that commit merges, beside the rehearsal, so it has usually saved by the time
+   the cut merges, and waiting for it costs nothing. Its cache is one commit behind the tag, and the
+   cut changes only the version and the changelog, so most compiles come from it. Tagged before it
+   saves, the tag's Consumer falls back to another job's cache and builds everything again. On
+   v0.54.0 the tag's Consumer started 54 minutes before that save: it took 0 of 118 desktop compiles
+   from the cache and ran 76 minutes. The next `main` Consumer, which did restore a fresh Consumer
+   entry, built the same publish in 8 minutes instead of about 30 (#1592). The check is that run's
+   Consumer job showing as completed. Don't wait for the cut commit's own `main` run:
+   that delays the tag by a whole Consumer. If the run you would wait for was cancelled in the queue,
+   tag anyway and expect the longer Consumer.
+3. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
    **Publish** run stages the Core family, its alignment BOM and build-logic's plugins in one folder
    and uploads them as one Central deployment (`scripts/central-bundle.sh`,
    `scripts/central-upload.sh`), which publishes whole or not at all. The **Stage release** job
@@ -116,7 +129,7 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version. Its **WebGPU release
    pin** job then publishes `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` once Core is on
    repo1; wait for that job too.
-3. **Vulkan:** a Vulkan release pins the Core release it was built with, and
+4. **Vulkan:** a Vulkan release pins the Core release it was built with, and
    [the Core alignment BOM](#core-alignment-bom) lifts those Core edges to any newer Core in a
    consumer's graph. So a new Core release does not by itself need a new Vulkan release. It does
    when either of two scripts reports an impact since the last `vulkan-v*` tag:
@@ -147,14 +160,14 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    the failed number stays a gap. The scripts refuse when the carried tag is on Central, and when
    Central cannot say. Without the tick they never replace a tag, since a tag is also missing from
    Central while its own Publish run is still uploading.
-4. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
+5. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
    starter template repositories (awake-template, awake-project-template, awake-plugin-template)
    need no bump PR: their sources live in Core, under `templates/game`, `templates/project` and
    `templates/plugin`, and once this release and its WebGPU release pin both succeed, the
    **Publish templates** job stamps and pushes each of them on its own. See "Template publishing"
    below.
    Re-record moved baselines only after stating which ones should move and why.
-5. Close the milestone.
+6. Close the milestone.
 
 **The release rehearsal.** A `release-cut/*` pull request runs the **Publish** workflow itself,
 as a rehearsal that uploads nothing (#1285): Verify, Consumer, which builds the starter templates

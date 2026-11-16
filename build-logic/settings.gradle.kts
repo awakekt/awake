@@ -11,7 +11,6 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
 
@@ -20,7 +19,6 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
     versionCatalogs {
         create("libs") {
