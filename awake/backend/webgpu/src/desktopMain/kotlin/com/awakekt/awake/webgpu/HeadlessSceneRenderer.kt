@@ -56,14 +56,16 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  * **This is wgpu-native, not a browser** -- see [webGpuHeadlessUi] for what that leaves uncovered.
  */
 fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
+    // Errors from before this session are not its own; the build's backstop has their tests.
+    WebGpuUncapturedErrors.drain()
     val context = glfwContextRenderer(
         width = 1,
         height = 1,
         title = "awake-render-parity-scene",
-        onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
+        onUncapturedError = { error -> WebGpuUncapturedErrors.report(error) },
     )
     val graphicsDevice = GraphicsDevice()
-    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") })
+    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> WebGpuUncapturedErrors.report(error) })
     val swapchainManager = SwapchainManager(graphicsDevice, FRAMES_IN_FLIGHT)
     swapchainManager.create()
     val scenePipeline = RenderPipeline(
@@ -384,6 +386,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             contentPipelines.destroyAll { it.destroy() }
             attacher.releaseAll()
             graphicsDevice.destroy()
+            WebGpuUncapturedErrors.failIfAny("webGpuHeadlessScene's session")
         }
     }
 }

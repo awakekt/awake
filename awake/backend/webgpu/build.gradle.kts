@@ -68,6 +68,9 @@ kotlin {
     // to open while running beside these.
     tasks.withType<Test>().configureEach {
         requireExclusiveGpu(this)
+        // A WebGPU validation error arrives through a callback, so a test that only printed one
+        // passed. Fail the run on any, naming the tests that printed them (#1592).
+        failOnUncapturedWebGpuErrors(this)
         // The allocation gates count what a frame's preparation allocates. With escape analysis on,
         // the JVM removes the short-lived temporaries Kotlin/Wasm really allocates (#1555).
         jvmArgs("-XX:-DoEscapeAnalysis")
