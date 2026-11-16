@@ -213,3 +213,22 @@ mavenPublishing {
         description.set("The Vulkan renderer: swapchain, pipelines, descriptors and draw recording for desktop, Android and iOS")
     }
 }
+
+// #1676: the scene pass's depth hazard test, under Vulkan synchronization validation. Its own task,
+// because the layer reads that setting from the environment, which a test cannot set for itself;
+// desktopTest leaves the class out.
+tasks.register<Test>("desktopSyncValidationTest") {
+    group = "verification"
+    description = "Run the scene pass's depth hazard test under Vulkan synchronization validation (#1676)."
+    val desktopTestTask = tasks.named<Test>("desktopTest").get()
+    testClassesDirs = desktopTestTask.testClassesDirs
+    classpath = desktopTestTask.classpath
+    filter { includeTestsMatching("*ScenePassDepthHazardTest") }
+    requireExclusiveGpu(this)
+    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    environment(desktopVulkanEnv)
+    environment("VK_KHRONOS_VALIDATION_VALIDATE_SYNC", "true")
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
+tasks.named<Test>("desktopTest") { filter { excludeTestsMatching("*ScenePassDepthHazardTest") } }

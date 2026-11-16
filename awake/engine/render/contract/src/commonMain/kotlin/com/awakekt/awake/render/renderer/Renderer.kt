@@ -79,6 +79,41 @@ interface Renderer : GpuDevice {
         set(_) {}
 
     /**
+     * The most samples anisotropic filtering takes for a mipmapped, linearly filtered texture: 1 is
+     * off, the default, so a host that sets nothing renders as before. Clamped to
+     * [maxSupportedAnisotropy] by [TextureSampling.anisotropy]; `Nearest` and `BaseLevelLinear`
+     * textures, UI textures and render targets always sample at 1 (#1660).
+     *
+     * A backend that implements it applies a new value from the next frame, to textures already
+     * loaded too. On one that does not, the getter stays 1 and setting it does nothing.
+     */
+    var maxAnisotropy: Int
+        get() = 1
+        set(_) {}
+
+    /**
+     * The most anisotropic samples this device can take: the Vulkan device limit when it offers
+     * `samplerAnisotropy`, 16 on WebGPU, and 1 where it is not implemented. A settings screen can
+     * offer only the levels up to it; [maxAnisotropy] is clamped to it.
+     */
+    val maxSupportedAnisotropy: Int
+        get() = 1
+
+    /**
+     * Top mip levels left out when a mipmapped texture is uploaded: 0 (the default) uploads the full
+     * chain, 1 starts at half size, 2 at quarter size, and never past the smallest level of at least
+     * 1 x 1. Clamped by [TextureSampling.mipSkip].
+     *
+     * It saves GPU memory, not decode memory: an image still decodes at full size before its top
+     * levels are dropped. It applies to textures uploaded after it changes; a host that wants it now
+     * reloads its content. `Nearest`, UI and font-atlas textures, and textures with no mip chain,
+     * always upload whole (#1660). On a backend that does not implement it, it stays 0.
+     */
+    var textureMipSkip: Int
+        get() = 0
+        set(_) {}
+
+    /**
      * Draws, instances and triangles of the last submitted frame, plus GPU time where the device
      * can measure it. Null for a renderer that does not count, so "not counted" never reads as
      * "drew nothing".

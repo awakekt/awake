@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.mesh
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceWriter
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
@@ -50,9 +51,13 @@ class InstanceBuffer(
     /** Packs [models] into this buffer. `Mat4.data` is already column-major, which is the order
      * `instanced.wgsl`'s 4 `vec4` attributes reassemble into a `mat4x4` -- a straight copy, no
      * transpose. */
-    private val packer = InstancePacker<Mat4>(GpuDataShape.Mat4, "InstanceBuffer") { out, offset, model ->
-        model.data.copyInto(out, offset)
-    }
+    private val packer = InstancePacker<Mat4>(
+        GpuDataShape.Mat4,
+        "InstanceBuffer",
+        write = InstanceWriter { out, offset, model ->
+            model.data.copyInto(out, offset)
+        },
+    )
 
     /** Uploads [update] made, for tests: one a frame whose models changed, none for one whose held. */
     internal var uploads = 0L

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.texture
 
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -32,7 +33,16 @@ import com.awakekt.awake.vulkan.models.info.VkSamplerMipmapMode
 import com.awakekt.awake.vulkan.models.info.VkSharingMode2
 
 /** A sampled image [ImageUpload.upload] made: the raw handles a [Texture] holds. */
-internal class UploadedImage(val image: Long, val memory: Long, val view: Long, val sampler: Long)
+internal class UploadedImage(
+    val image: Long,
+    val memory: Long,
+    val view: Long,
+    val sampler: Long,
+    /** What [sampler] was made from, so it can be made again at another anisotropy (#1660). */
+    val samplerInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
+    val filtering: TextureFiltering = TextureFiltering.Linear,
+    val mipLevels: Int = 1,
+)
 
 /**
  * Uploading a sampled image of any format with its mips, whether RGBA8 or block-compressed: a
@@ -82,7 +92,15 @@ internal object ImageUpload {
             VulkanImages.vkBindImageMemory(device, image, memory, 0)
             runOneTimeCommands { commandBuffer -> copy(commandBuffer, stagingBuffer, image, regions) }
             view = view(graphicsDevice, image, format, mipLevels, layerCount, isCubemap)
-            uploaded = UploadedImage(image, memory, view, sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels))
+            uploaded = UploadedImage(
+                image,
+                memory,
+                view,
+                sampler(graphicsDevice, samplerCreateInfo, filtering, mipLevels),
+                samplerCreateInfo,
+                filtering,
+                mipLevels,
+            )
             return uploaded
         } finally {
             VulkanBuffers.vkDestroyBuffer(device, stagingBuffer)
@@ -212,9 +230,17 @@ internal object ImageUpload {
         )
 
     // minLod and maxLod are the image's own levels, whatever the caller passed: it can't know the
-    // chain's length in advance.
-    private fun sampler(graphicsDevice: GraphicsDevice, info: VkSamplerCreateInfo, filtering: TextureFiltering, mipLevels: Int): Long {
+    // chain's length in advance. Anisotropy above 1 reaches only a fully linear, mipmapped texture,
+    // as TextureSampling decides for every backend (#1660).
+    internal fun sampler(
+        graphicsDevice: GraphicsDevice,
+        info: VkSamplerCreateInfo,
+        filtering: TextureFiltering,
+        mipLevels: Int,
+        anisotropy: Int = 1,
+    ): Long {
         val nearest = filtering == TextureFiltering.Nearest
+        val samples = if (mipLevels > 1) TextureSampling.anisotropyFor(filtering, anisotropy) else 1
         return VulkanImages.vkCreateSampler(
             graphicsDevice.device,
             VkSamplerCreateInfo(
@@ -223,8 +249,8 @@ internal object ImageUpload {
                 addressModeU = info.addressModeU,
                 addressModeV = info.addressModeV,
                 addressModeW = info.addressModeW,
-                anisotropyEnable = info.anisotropyEnable,
-                maxAnisotropy = info.maxAnisotropy,
+                anisotropyEnable = if (samples > 1) true else info.anisotropyEnable,
+                maxAnisotropy = if (samples > 1) samples.toFloat() else info.maxAnisotropy,
                 borderColor = info.borderColor,
                 unnormalizedCoordinates = info.unnormalizedCoordinates,
                 mipmapMode = if (nearest) VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST else info.mipmapMode,

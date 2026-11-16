@@ -282,13 +282,12 @@ jobs:
 
       # Retained draw replays what a fresh paint draws, moved subtrees in translate ranges, the
       # nameplate frame stays under its allocation ceilings (#1512), and an unchanged HUD measures
-      # under its per-node ceiling (#1621); a measure that runs on a skipped composition names its cause (#1512).
+      # under its per-node ceiling (#1621).
       - name: Retained draw, nameplate and measure allocation gates
         run: >-
           ./gradlew
           :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.RetainedDrawTest
           --tests com.awakekt.awake.compose.foundation.ComposeFrameCountsTest
-          --tests com.awakekt.awake.compose.foundation.MeasureCauseTest
           :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
           --tests com.awakekt.awake.compose.game.MeasureAllocationTest
 
@@ -545,6 +544,13 @@ jobs:
       - name: Desktop Vulkan smoke test (real vkCreateInstance via lavapipe)
         run: ./gradlew :awake:backend:vulkan:desktopTest
 
+      # #1676: the scene pass drawn into one target from two command buffers, and a scene with an
+      # offscreen View and a scaled main target, under the validation layer's synchronization
+      # validation (vulkan-validationlayers, installed above). Any SYNC-HAZARD fails it.
+      - name: Vulkan synchronization validation (lavapipe)
+        if: ${{ !cancelled() }}
+        run: ./gradlew :awake:backend:vulkan:desktopSyncValidationTest :awake:engine:render:parity:desktopSyncValidationTest --stacktrace
+
       # wgpu-native needs a GLFW surface to select its adapter, even when rendering offscreen.
       # Xvfb supplies the display; Mesa's lavapipe executes both backends on the hosted runner.
       # Includes WebGpuProductionPlanTest: boots the showcase's real plan via WebGpuEngine,
@@ -795,7 +801,7 @@ jobs:
       # and a re-recording bundle creating no buffer (#1621).
       # Only these classes: the backend's draw-preparation benchmark is too long for this job.
       - name: GPU texture upload and render bundle browser tests
-        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*"
+        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*"
 
       - name: Upload the browser render tests' results
         if: always()

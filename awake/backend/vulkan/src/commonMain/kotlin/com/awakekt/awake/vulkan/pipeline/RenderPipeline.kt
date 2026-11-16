@@ -215,6 +215,9 @@ class RenderPipeline(
 
     internal val contentFrameSlotCount: Int get() = checkNotNull(uniformSlots).size
 
+    /** Content sampler bindings rewritten for a texture's new sampler (#1660), for tests. */
+    internal val contentSamplerRewrites: Int get() = uniformSlots?.samplerRewrites ?: 0
+
     override val uniformBlock: UniformBlock? = uniformSlots?.uniformBlock(requireNotNull(uniforms))
 
     // destroy() is zero-handle-tolerant, so calling it on a partial-construction failure is
@@ -369,22 +372,48 @@ fun createSceneRenderPass(graphicsDevice: GraphicsDevice, swapchainManager: Swap
                     },
                 ),
             ),
-            pDependencies = arrayOf(
-                VkSubpassDependency(
-                    srcSubpass = VK_SUBPASS_EXTERNAL,
-                    dstSubpass = 0,
-                    srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
-                    srcAccessMask = 0,
-                    dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
-                    dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
-                        VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value or
-                        VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
-                ),
-            ),
+            pDependencies = sceneDependencies(),
         ),
     )
+
+/**
+ * The scene pass's external dependencies (#1676). One depth attachment can be drawn by this pass from
+ * two command buffers with nothing else ordering them -- an offscreen target two frames in flight
+ * both render, say -- so the pass orders itself: in, its layout transition and clear wait for an
+ * earlier pass's depth and colour writes at both fragment-test stages; out, its own depth writes are
+ * made available to the next pass that tests against or clears the attachment. Before, the way in
+ * waited on EARLY_FRAGMENT_TESTS alone with no access, and a depth write at LATE_FRAGMENT_TESTS raced
+ * the next pass's layout transition: SYNC-HAZARD-WRITE-AFTER-WRITE under synchronization validation.
+ */
+private fun sceneDependencies(): Array<VkSubpassDependency> {
+    val attachmentStages = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
+        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
+        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value
+    val depthStages = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
+        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value
+    val attachmentWrites = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value or
+        VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value
+    val depthAccess = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT.value or
+        VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value
+    return arrayOf(
+        VkSubpassDependency(
+            srcSubpass = VK_SUBPASS_EXTERNAL,
+            dstSubpass = 0,
+            srcStageMask = attachmentStages,
+            srcAccessMask = attachmentWrites,
+            dstStageMask = attachmentStages,
+            dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or attachmentWrites or depthAccess,
+        ),
+        VkSubpassDependency(
+            srcSubpass = 0,
+            dstSubpass = VK_SUBPASS_EXTERNAL,
+            srcStageMask = depthStages,
+            srcAccessMask = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
+            dstStageMask = depthStages,
+            dstAccessMask = depthAccess,
+        ),
+    )
+}
 
 private fun sceneAttachments(swapchainManager: SwapchainManager, sampleCount: Int): Array<VkAttachmentDescription> =
     arrayOf(

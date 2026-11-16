@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.texture
 
+import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.render.texture.CompressedTextureImage
 import com.awakekt.awake.render.texture.TextureAsset
@@ -36,7 +37,7 @@ import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
  * `VkDescriptorImageInfo`.
  */
 class Texture internal constructor(
-    graphicsDevice: GraphicsDevice,
+    private val graphicsDevice: GraphicsDevice,
     uploaded: UploadedImage,
     override val width: Int,
     override val height: Int,
@@ -44,7 +45,7 @@ class Texture internal constructor(
     /** Whether the image is in a GPU block format, which [TextureUploads] can't write regions into. */
     internal val blockCompressed: Boolean,
 ) : com.awakekt.awake.render.texture.WritableTexture {
-    private val device = graphicsDevice.device
+    private val device get() = graphicsDevice.device
 
     constructor(
         graphicsDevice: GraphicsDevice,
@@ -74,11 +75,43 @@ class Texture internal constructor(
     var imageView: ImageViewHandle = ImageViewHandle(uploaded.view)
     var sampler: SamplerHandle = SamplerHandle(uploaded.sampler)
 
+    private val samplerInfo = uploaded.samplerInfo
+    private val filtering = uploaded.filtering
+    private val mipLevels = uploaded.mipLevels
+
+    /** The anisotropic samples [sampler] was made with: 1 unless [resample] raised it. */
+    internal var samplerAnisotropy = 1
+        private set
+
+    init {
+        // Unused yet, so the sampler it replaces can go at once.
+        if (mipLevels > 1) {
+            graphicsDevice.sampledTextures += this
+            val unused = resample(graphicsDevice.anisotropy)
+            if (unused != 0L) VulkanImages.vkDestroySampler(device, unused)
+        }
+    }
+
+    /**
+     * Makes [sampler] again for [anisotropy] samples, when that changes how this texture samples, and
+     * returns the sampler it replaced for the caller to destroy once no frame in flight still uses it;
+     * 0 when nothing changed. A `Nearest` or single-level texture always samples at 1 (#1660).
+     */
+    internal fun resample(anisotropy: Int): Long {
+        val samples = if (mipLevels > 1) TextureSampling.anisotropyFor(filtering, anisotropy) else 1
+        if (samples == samplerAnisotropy) return 0L
+        val retired = sampler.handle
+        sampler = SamplerHandle(ImageUpload.sampler(graphicsDevice, samplerInfo, filtering, mipLevels, samples))
+        samplerAnisotropy = samples
+        return retired
+    }
+
     /**
      * Destroys the sampler, image view, image and its memory. Call once, after the GPU has finished
      * with the texture.
      */
     fun destroy() {
+        graphicsDevice.sampledTextures -= this
         VulkanImages.vkDestroySampler(device, sampler.handle)
         Vulkan.vkDestroyImageView(device, imageView.handle)
         VulkanImages.vkDestroyImage(device, image.handle)

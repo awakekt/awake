@@ -1,0 +1,1 @@
+- `InstancePacker` no longer boxes each instance's offset on wasm: its writer is now the `InstanceWriter` fun interface, and its indexed source `InstanceSource`, with primitive `Int` parameters, where a generic function type boxed an `Int` per instance per frame (#1621). Lambdas still convert; code compiled against the function-type constructor must be rebuilt.
