@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.compose.ui.platform
 
+import com.awakekt.awake.compose.runtime.PhaseReadCause
 import com.awakekt.awake.compose.runtime.PhaseReads
 import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
@@ -22,6 +23,21 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 internal class MeasureSkip {
     private val reads = PhaseReads()
 
+    /** Whether [cause] and its source and owner are kept; see [PhaseReads.explains]. */
+    var explains: Boolean
+        get() = reads.explains
+        set(value) {
+            reads.explains = value
+        }
+
+    /** Why the last [layout] measured although its composition was skipped, while [explains]. */
+    var cause: PhaseReadCause = PhaseReadCause.None
+        private set
+    var causeSource: Any? = null
+        private set
+    var causeOwner: Any? = null
+        private set
+
     /**
      * Lays [root] out for [viewport] and returns whether it skipped measuring. With [enabled] off it
      * always measures and records nothing, so the next recorded pass starts out of date.
@@ -33,6 +49,10 @@ internal class MeasureSkip {
             return false
         }
         val measure = composed || reads.isInvalid
+        // Read before the pass below starts another and forgets it.
+        cause = if (composed) PhaseReadCause.None else reads.cause
+        causeSource = if (composed) null else reads.causeSource
+        causeOwner = if (composed) null else reads.causeOwner
         root.layoutTree(viewport, measure = measure, reads = reads)
         return !measure
     }

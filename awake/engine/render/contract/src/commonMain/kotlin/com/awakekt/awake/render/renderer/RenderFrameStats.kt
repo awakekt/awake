@@ -50,6 +50,17 @@ class RenderStatsCounter {
     private var publishedInstanceBuffers = 0L
     private var publishedUniformBuffers = 0L
     private var countsBuffers = false
+    private var packetsBuilt = 0L
+    private var packetsReused = 0L
+    private var bundlesEncoded = 0L
+    private var publishedPacketsBuilt = 0L
+    private var publishedPacketsReused = 0L
+    private var publishedBundlesEncoded = 0L
+    private var frameBuilt = 0
+    private var frameReused = 0
+    private var frameEncoded = 0
+    private var countsReuse = false
+    private var reusePublished = false
 
     /** Render passes the last frame [publish] closed began, offscreen blur and layer passes included; 0 before the first. */
     var latestRenderPasses: Int = 0
@@ -65,6 +76,14 @@ class RenderStatsCounter {
      */
     var latestBufferCreations: BufferCreationStats? = null
         private set
+
+    /**
+     * Draw work the last frame [publish] closed reused from the one before, or null before the first
+     * one and for a backend that never calls [drawReuseTotals]. Built when read, from counts kept as
+     * plain numbers, so a frame nobody reads allocates nothing for it.
+     */
+    val latestDrawReuse: DrawReuseStats?
+        get() = if (reusePublished) DrawReuseStats(frameBuilt, frameReused, frameEncoded) else null
 
     /** The last frame [publish] closed split by the part of it that drew, or null before the first one. */
     var latestPasses: RenderPassStats? = null
@@ -111,6 +130,18 @@ class RenderStatsCounter {
         countsBuffers = true
     }
 
+    /**
+     * Sets how many draw packets the backend has built and reused, and how many bundles it has
+     * encoded, over its life. [publish] reports the growth since the frame before, as
+     * [bufferCreationTotals] does.
+     */
+    fun drawReuseTotals(packetsBuilt: Long, packetsReused: Long, bundlesEncoded: Long) {
+        this.packetsBuilt = packetsBuilt
+        this.packetsReused = packetsReused
+        this.bundlesEncoded = bundlesEncoded
+        countsReuse = true
+    }
+
     /** Counts one render pass begun. */
     fun recordPass() {
         renderPasses += 1
@@ -130,6 +161,17 @@ class RenderStatsCounter {
         uiRuns = 0
         uiTriangles = 0L
         if (countsBuffers) publishBufferCreations()
+        if (countsReuse) publishDrawReuse()
+    }
+
+    private fun publishDrawReuse() {
+        frameBuilt = (packetsBuilt - publishedPacketsBuilt).toInt()
+        frameReused = (packetsReused - publishedPacketsReused).toInt()
+        frameEncoded = (bundlesEncoded - publishedBundlesEncoded).toInt()
+        publishedPacketsBuilt = packetsBuilt
+        publishedPacketsReused = packetsReused
+        publishedBundlesEncoded = bundlesEncoded
+        reusePublished = true
     }
 
     private fun publishBufferCreations() {
