@@ -1,1 +1,0 @@
-- WebGPU on wasm: packing instance matrices and skinned joint palettes no longer allocates on every instance. `FloatArray.copyInto` allocates on each call in Kotlin/Wasm (84 bytes in a browser), so the instance writers copy with the new `FloatArray.putFloats`, a plain loop; a same-count pack of 15 matrices drops from 1680 to about 420 bytes (#1621).
