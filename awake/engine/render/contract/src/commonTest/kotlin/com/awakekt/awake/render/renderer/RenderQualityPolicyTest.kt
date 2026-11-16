@@ -40,8 +40,8 @@ class RenderQualityPolicyTest {
     fun aHighDpiPhoneRendersFromItsPhysicalPixelsNotItsCssPixels() {
         // 844 by 390 CSS pixels at dpr 3: a 2532 by 1170 physical buffer.
         val scale = RenderQualityPolicy.renderScale(RenderQuality.Auto, 2532, 1170, GpuDeviceClass.Mobile)
-        assertEquals(900, RenderScale.sceneExtent(1170, scale))
-        assertEquals(1948, RenderScale.sceneExtent(2532, scale))
+        assertEquals(720, RenderScale.sceneExtent(1170, scale))
+        assertEquals(1558, RenderScale.sceneExtent(2532, scale))
         // Naive 1 / dpr would have rendered the scene 390 pixels tall.
         assertEquals(true, RenderScale.sceneExtent(1170, scale) > 390)
     }

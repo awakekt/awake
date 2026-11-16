@@ -19,8 +19,9 @@ package com.awakekt.awake.engine.platform.config
  */
 enum class PresentMode {
     /**
-     * Prefer [LowLatency], fall back to [Vsync]. The engine's default and its historical
-     * behaviour.
+     * The engine's default: [Vsync] (`VK_PRESENT_MODE_FIFO_KHR` on Vulkan), so the frame loop is paced
+     * by the display without a sleep of its own, and every implementation supports it. Ask for
+     * [LowLatency] to opt into mailbox.
      */
     Auto,
 

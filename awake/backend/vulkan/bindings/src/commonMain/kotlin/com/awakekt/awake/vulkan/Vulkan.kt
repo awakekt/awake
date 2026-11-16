@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan
 
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.enums.VkPresentModeKHR
+import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.models.VkExtensionProperties
 import com.awakekt.awake.vulkan.models.VkLayerProperties
@@ -716,6 +717,21 @@ expect object Vulkan {
         @VkHandleRef("VkQueue") queue: Long,
         pPresentInfoKHR: VkPresentInfoKHR,
     )
+
+    /**
+     * [vkQueuePresentKHR], answering `VK_SUCCESS`, `VK_SUBOPTIMAL_KHR` and `VK_ERROR_OUT_OF_DATE_KHR`
+     * instead of throwing the last two: a phone panel whose swapchain is not pre-rotated presents
+     * suboptimally on every frame, and an exception a frame is a cost for no news (#1688). Any other
+     * result still throws a [com.awakekt.awake.vulkan.utils.VkResultException].
+     *
+     * @param queue The queue to present on.
+     * @param pPresentInfoKHR The swapchains, image indices and wait semaphores.
+     * @return How the present went: one of the three results above.
+     */
+    fun vkQueuePresentKHRStatus(
+        @VkHandleRef("VkQueue") queue: Long,
+        pPresentInfoKHR: VkPresentInfoKHR,
+    ): VkResult
 
     // Debug messenger
 

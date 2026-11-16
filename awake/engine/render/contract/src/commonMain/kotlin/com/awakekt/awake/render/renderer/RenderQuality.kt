@@ -43,7 +43,7 @@ data class RenderQualityBudgets(
     val autoShortEdge: Map<GpuDeviceClass, Int> = mapOf(
         GpuDeviceClass.Discrete to 1440,
         GpuDeviceClass.Integrated to 1080,
-        GpuDeviceClass.Mobile to 900,
+        GpuDeviceClass.Mobile to 720,
         GpuDeviceClass.Software to 540,
         GpuDeviceClass.Unknown to 1080,
     ),
@@ -78,7 +78,7 @@ data class RenderQualityBudgets(
  * The scale comes from the physical buffer ([Renderer.outputWidth] by [Renderer.outputHeight]), never
  * from `1 / devicePixelRatio`: a phone whose 844 by 390 CSS-pixel viewport has a device pixel ratio of
  * 3 presents a 2532 by 1170 buffer, so [RenderQuality.Auto] on a [GpuDeviceClass.Mobile] device
- * renders its scene about 900 pixels tall, not 390. The scale never upsamples: a surface already
+ * renders its scene 720 pixels tall, not 390. The scale never upsamples: a surface already
  * within its budget renders at [RenderScale.FULL].
  *
  * Pure and allocation free, so a host can call it every frame.

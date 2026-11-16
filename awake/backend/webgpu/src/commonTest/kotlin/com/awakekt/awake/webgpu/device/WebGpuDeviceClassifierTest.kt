@@ -84,7 +84,7 @@ class WebGpuDeviceClassifierTest {
         val deviceClass = classifyWebGpuDevice(PHONE_GPU, PHONE)
         // An 844 by 390 CSS-pixel viewport at a device pixel ratio of 3.
         val scale = RenderQualityPolicy.renderScale(RenderQuality.Auto, 2532, 1170, deviceClass)
-        assertEquals(900, RenderScale.sceneExtent(1170, scale), "the scene's short edge on a phone")
+        assertEquals(720, RenderScale.sceneExtent(1170, scale), "the scene's short edge on a phone")
         // Unclassified, the same phone rendered at the Unknown budget: 1080 tall.
         val unknown = RenderQualityPolicy.renderScale(RenderQuality.Auto, 2532, 1170, GpuDeviceClass.Unknown)
         assertEquals(1080, RenderScale.sceneExtent(1170, unknown))
