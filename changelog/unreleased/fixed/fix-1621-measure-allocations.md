@@ -1,1 +1,0 @@
-- Measuring an unchanged UI allocates far less: 77.7 → 21.6 B a node on a HUD-shaped tree. Padding, size and fill modifiers keep one placement block per node instead of a new one per measure; Row, Column and Flow alignment and spacing no longer box their sizes; and a Box with no children allocates nothing.
