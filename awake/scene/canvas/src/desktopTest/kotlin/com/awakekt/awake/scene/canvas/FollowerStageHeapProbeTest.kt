@@ -25,6 +25,12 @@ class FollowerStageHeapProbeTest {
         val unfollowed = FollowerStageHeap(::allocated).measure(moving = false, WARM_UP, FRAMES, {}, FollowerParts.All.copy(follow = false))
         val boxes = PlainOffsetBoxes(PLAIN_BOXES)
         val plain = FollowerStageHeap(::allocated).measure(WARM_UP, FRAMES, {}) { boxes.frame(it) }
+        val perLink = PlainOffsetBoxes.Links.entries.joinToString("; ") { links ->
+            val kind = PlainOffsetBoxes(PLAIN_BOXES, links)
+            val placement = FollowerStageHeap(::allocated).measure(WARM_UP, FRAMES, {}) { kind.frame(it) }[1]
+            "$links ${((placement * 10).toInt() / 10.0)}"
+        }
+        println("FollowerStageHeap (JVM), still, $PLAIN_BOXES plain boxes, KB allocated in placement by link: $perLink")
         println(
             "FollowerStageHeap (JVM), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
                 "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",

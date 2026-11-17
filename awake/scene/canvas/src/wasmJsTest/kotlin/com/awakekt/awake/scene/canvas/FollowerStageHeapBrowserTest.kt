@@ -40,6 +40,12 @@ class FollowerStageHeapBrowserTest {
         val unfollowed = run(moving = false, FollowerParts.All.copy(follow = false))
         val boxes = PlainOffsetBoxes(PLAIN_BOXES)
         val plain = smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> boxes.frame(host) } }
+        val perLink = PlainOffsetBoxes.Links.entries.joinToString("; ") { links ->
+            val kind = PlainOffsetBoxes(PLAIN_BOXES, links)
+            val placement = smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> kind.frame(host) } }[1]
+            "$links ${((placement * 10).toInt() / 10.0)}"
+        }
+        println("FollowerStageHeap (browser), still, $PLAIN_BOXES plain boxes, KB of heap in placement by link: $perLink")
         println(
             "FollowerStageHeap (browser), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
                 "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",
