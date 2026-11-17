@@ -48,6 +48,15 @@ public abstract interface class com/awakekt/awake/core/camera/CameraObstruction 
 	public abstract fun clearFraction (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FI)F
 }
 
+public final class com/awakekt/awake/core/camera/CameraOrbitButtons : java/lang/Enum {
+	public static final field PrimaryOrSecondary Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
+	public static final field SecondaryOnly Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
+	public final fun allows (ZZZ)Z
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
+	public static fun values ()[Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
+}
+
 public final class com/awakekt/awake/core/camera/OccluderFade {
 	public static final field Companion Lcom/awakekt/awake/core/camera/OccluderFade$Companion;
 	public static final field DEFAULT_FADE_SECONDS F
