@@ -31,13 +31,19 @@ import kotlin.reflect.KClass
  * - a node's parent or sibling place changing, through [order];
  * - the [images] and [fonts] gaining entries, and the [locale] the text is shown in.
  *
+ * - a field a shown element's `bind` reads, written in place by a game, through [bound]: each poll
+ *   reads those fields and is a change only when one's value differs (#1512).
+ *
  * Some elements show what changes with no write at all, so while one shows, every poll is a change
- * and the canvas composes each frame, as it does with skipping off: one that reads a binding (game
- * state), or is being held, dragged, moved or typed into. [refresh] finds them, on each frame the
- * canvas composes. A follower is not one: the canvas plans and places followers while placing, which
+ * and the canvas composes each frame, as it does with skipping off: one that is being held, dragged,
+ * moved or typed into. [refresh] finds them, and the bound fields, on each frame the canvas composes. A follower is not one: the canvas plans and places followers while placing, which
  * a skipped frame still does, and a camera's picture repaints its own view each frame.
  */
-internal class SceneCanvasChanges(private val world: World, private val order: CanvasItemOrder) : PolledState<Any>() {
+internal class SceneCanvasChanges(
+    private val world: World,
+    private val order: CanvasItemOrder,
+    private val bound: BoundFields,
+) : PolledState<Any>() {
     private val stores: Array<ComponentStore<Any>> = Array(WATCHED_TYPES.size) { world.store(WATCHED_TYPES[it]) }
     private val storeRevisions = IntArray(stores.size) { -1 }
     private var counter = world.canvasChanges()
@@ -59,10 +65,14 @@ internal class SceneCanvasChanges(private val world: World, private val order: C
     fun refresh() {
         counter = world.canvasChanges()
         var found = false
+        bound.begin()
         world.family<CanvasElement>().forEach { _, element ->
             if (element.changes !== counter) element.changes = counter
             if (!found && volatile(element)) found = true
+            val bind = element.bind
+            if (bind != null && element.visible) bound.add(bind)
         }
+        bound.end()
         volatile = found
     }
 
@@ -84,13 +94,14 @@ internal class SceneCanvasChanges(private val world: World, private val order: C
         imageCount = images.size
         fontCount = fonts.size
         seenLocale = locale
+        if (bound.changed()) changed = true
         return changed
     }
 
     /** Whether [element], while it shows, changes what it draws with no write to it. */
     private fun volatile(element: CanvasElement): Boolean {
         if (!element.visible) return false
-        return element.bind != null || element.isHeld || element.pointer.dragging || element.moving || element.focused
+        return element.isHeld || element.pointer.dragging || element.moving || element.focused
     }
 
     private companion object {

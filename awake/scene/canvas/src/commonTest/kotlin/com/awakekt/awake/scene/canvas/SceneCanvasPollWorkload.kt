@@ -18,7 +18,7 @@ import com.awakekt.awake.ui.canvas.CanvasElementKind
 internal class SceneCanvasPollWorkload(val elements: Int) {
     private val world = World()
     private val order = CanvasItemOrder(world)
-    private val changes = SceneCanvasChanges(world, order)
+    private val changes = SceneCanvasChanges(world, order, BoundFields(CanvasNodeNames(world), CanvasFieldReader(world, null)))
     private val kinds = arrayOf(CanvasElementKind.Text, CanvasElementKind.Bar, CanvasElementKind.Button)
 
     init {
