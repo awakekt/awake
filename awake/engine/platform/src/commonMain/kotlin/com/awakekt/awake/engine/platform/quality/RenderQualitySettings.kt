@@ -14,6 +14,7 @@ import com.awakekt.awake.render.renderer.RenderQualityPolicy
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.ShadowBudget
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +65,15 @@ class RenderQualitySettings(
      * shadow budgets (#1688).
      */
     var shadowBudgetOverride: ShadowBudget? = null
+
+    /**
+     * The depth format the engine builds its shadow maps in, or `null` (the default) for the engine's
+     * own: [ShadowDepthFormat.Depth16Unorm] halves their memory on a mobile tier (#1698, #1709). Read
+     * once, when the engine builds its GPU resources, so set it in `renderQuality { }`; a later change
+     * waits for the next start. A backend that cannot honour a format keeps
+     * [ShadowDepthFormat.Default], and [Renderer.shadowDepthFormat] says which it used.
+     */
+    var shadowDepthFormat: ShadowDepthFormat? = null
 
     /**
      * How [RenderQuality.Auto] moves the scene's resolution to hold a frame rate (#1688), or `null` for

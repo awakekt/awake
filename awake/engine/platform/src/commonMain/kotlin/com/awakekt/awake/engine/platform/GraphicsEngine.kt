@@ -19,6 +19,7 @@ import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.engine.platform.quality.TextureSettings
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -286,6 +287,14 @@ abstract class GraphicsEngine(
         renderQuality?.applyTo(renderer, applyScale = override == null, frameSeconds = delta)
         textureSettings?.applyTo(renderer)
     }
+
+    /**
+     * The depth format to build the shadow maps in: the app's `renderQuality { shadowDepthFormat }`
+     * when it set one, else [engineDefault], the engine's own setting (#1709). A backend reads it once,
+     * as it builds its GPU resources.
+     */
+    protected fun shadowDepthFormatFor(engineDefault: ShadowDepthFormat): ShadowDepthFormat =
+        appLifecycle.service(RenderQualitySettings::class)?.shadowDepthFormat ?: engineDefault
 
     private suspend fun setupCommon(window: Any) {
         val backend = createBackendResources(window)
