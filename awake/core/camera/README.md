@@ -1,7 +1,7 @@
 # `awake:core:camera`
 
-Camera collision for a follow camera, with no scene, physics or renderer dependency: where the eye
-may stand once the world is in the way.
+Camera collision for a follow camera, and which pointer button orbits it, with no scene, physics or
+renderer dependency.
 
 ```kotlin
 implementation(project(":awake:core:camera"))
@@ -17,5 +17,9 @@ implementation(project(":awake:core:camera"))
 - `CameraCollisionSolver` holds one camera's eased distance and writes the allowed eye. It allocates
   nothing, so it runs every frame.
 
-`awake:scene:controls` binds it to the third-person `CameraRig` (`camera_rig.collision`), and a
+- `CameraOrbitButtons` says which held pointer button orbits: `PrimaryOrSecondary`, the default, or
+  `SecondaryOnly`, for a client whose primary button walks and steers. One finger on a touch screen
+  orbits under either, since a phone has no secondary button. `allows` answers it for one frame.
+
+`awake:scene:controls` binds them to the third-person `CameraRig` (`camera_rig.collision` and `camera_rig.orbitButtons`), and a
 played project answers the ground from its terrains and the obstacle layers from its physics world.

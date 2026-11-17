@@ -111,7 +111,8 @@ fun SceneCanvas(
     val named = remember(world) { CanvasNodeNames(world) }
     named.nextFrame()
     // Read, so a host that skips unchanged frames composes this again when anything drawn here changes (#1512).
-    val changes = remember(world) { SceneCanvasChanges(world, order) }
+    val fields = remember(world, bindings) { CanvasFieldReader(world, bindings) }
+    val changes = remember(world, fields) { SceneCanvasChanges(world, order, BoundFields(named, fields)) }
     changes.ordered = siblingOrder == null
     changes.images = images
     changes.fonts = fonts
@@ -124,7 +125,7 @@ fun SceneCanvas(
         showTouchControls,
         images,
         scale,
-        SceneCanvasResolver(world, projector, views, bindings, named),
+        SceneCanvasResolver(world, projector, views, bindings, named, fields),
         fonts,
         strings,
         safeArea,
