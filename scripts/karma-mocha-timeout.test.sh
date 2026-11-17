@@ -3,8 +3,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Checks that Mocha's timeout for the wasmJs browser tests is set in one place, the browser-tests
-# convention (build-logic), and reaches every project of the Core build that runs tests in a browser.
+# Checks that Mocha's timeout and the logging for the wasmJs browser tests are set in one place, the
+# browser-tests convention (build-logic), and reach every project of the Core build that runs tests in
+# a browser.
 # Seven modules had grown their own karma.config.d copy, each after a finished test went red with
 # "Timeout of 2000ms exceeded" (#1592); a module without one was still exposed.
 set -euo pipefail
@@ -16,6 +17,16 @@ fail() { echo "FAIL $1"; failures=$((failures + 1)); }
 own="$(cd "$root" && { git grep -ln 'client\.mocha' -- '*karma.config.d/*.js' || true; })"
 if [[ -n "$own" ]]; then fail "a module sets Mocha's options in its own karma.config.d:"; echo "$own"
 else echo "ok   no module's karma.config.d sets Mocha's options"; fi
+
+# The convention also sets what a browser test run logs: each test named as it passes, its output and
+# its full assertion. Five modules had their own copy; a module without one ran in silence (#1512).
+plugin="$root/build-logic/src/main/kotlin/com.awakekt.awake.plugin.browser-tests.gradle.kts"
+grep -qF 'showStandardStreams = true' "$plugin" || fail "the browser-tests convention does not show the tests' output"
+# A block spans lines, so each build file is read whole.
+own_logging="$(cd "$root" && git ls-files -- '*.gradle.kts' ':!build-logic' \
+  | xargs perl -0777 -ne 'print "$ARGV\n" if /"wasmJsBrowserTest"\)\s*\{[^}]*testLogging/s')"
+if [[ -n "$own_logging" ]]; then fail "a module sets its own wasmJsBrowserTest logging:"; echo "$own_logging"
+else echo "ok   no module sets its own browser test logging"; fi
 
 conventions=(library application)
 for convention in "${conventions[@]}"; do

@@ -14,6 +14,12 @@
 // Kotlin's Karma DSL has no Mocha setting, so this writes a karma.config.d snippet before the browser
 // tests run, as com.awakekt.awake.plugin.test-resources does. The snippet is generated and gitignored.
 // The library and application conventions apply this plugin; a module on neither applies it itself.
+//
+// It also sets what a browser test run logs. CI keeps only the log for most browser tests, and many of
+// them print the figure they assert on (a frame's heap, a poll's bytes). So each test is named as it
+// passes, its output is shown, and a failure prints its assertion in full: a run proves which tests ran
+// and keeps their numbers. Five modules had their own copy of this block, and a module without one
+// ran its tests in silence (#1512).
 
 val mochaTimeoutMillis = 120_000
 
@@ -36,4 +42,13 @@ val generateAwakeKarmaMochaTimeout = tasks.register("generateAwakeKarmaMochaTime
 
 tasks.matching { it.name == "wasmJsBrowserTest" }.configureEach {
     dependsOn(generateAwakeKarmaMochaTimeout)
+}
+
+tasks.withType<AbstractTestTask>().matching { it.name == "wasmJsBrowserTest" }.configureEach {
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+        showExceptions = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
