@@ -179,6 +179,24 @@ them. These checks used to run first on the tag, where a failure cost the versio
 merged.** The rehearsal is not a required check, so wait for its **Publish** run rather than for
 the required ones alone, and fix a red one on the pull request.
 
+**The tag reuses the rehearsal's Consumer** (#1592, B1). Consumer is the tag run's longest job, 67 to
+76 minutes. A **Consumer reuse** job decides first, and Consumer is skipped, with Release taking the
+rehearsal's result, only when all of these hold:
+
+- A **Publish** run of `release-cut/<tag>` has a **Consumer** job that succeeded. The run is found
+  through the Actions API, never through a file in the tree.
+- That run's `consumer-rehearsal` record names exactly the tag's git tree. The tree covers every file,
+  the workflow included, so the rehearsal ran what the tag would run.
+- Central still answers what the rehearsal built the templates against: its latest Vulkan release is
+  the one the record names.
+- The repository variable `AWAKE_FULL_CONSUMER` is not `true`. Set it to force a full run.
+
+Anything else runs Consumer in full, as before, a missing record or an API error included. The run's
+summary says which happened, and why. `scripts/consumer-reuse.test.sh` covers the decision in CI.
+**Merging into `main` during a cut changes the tree, so it defeats the reuse:** one more reason the
+freeze above holds. The gap it leaves is narrow: anything else the templates resolve from Central,
+besides the Vulkan release, could change between the rehearsal and the tag unseen.
+
 **A dry run of the release path.** To exercise the release jobs without a tag, dispatch the **Publish**
 workflow by hand from a branch (*Run workflow*, or `gh workflow run build-and-publish.yml --ref <branch>
 -f dry_run=true`). It runs Verify, Consumer, the natives, **Stage release** and **Release** with a
