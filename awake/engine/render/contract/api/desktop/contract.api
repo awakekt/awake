@@ -2572,6 +2572,8 @@ public final class com/awakekt/awake/render/texture/GpuImageSourceKt {
 	public static final fun asGpuImageSource (Lcom/awakekt/awake/core/image/DecodedImage;)Lcom/awakekt/awake/render/texture/GpuImageSource;
 	public static final fun asGpuImageSource (Lcom/awakekt/awake/render/texture/TextureAsset;)Lcom/awakekt/awake/render/texture/GpuImageSource;
 	public static final fun asReleasingGpuImageSource (Lcom/awakekt/awake/core/image/DecodedImage;[B)Lcom/awakekt/awake/render/texture/GpuImageSource;
+	public static final fun decodeAhead (Lcom/awakekt/awake/render/texture/GpuImageSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun getNeedsDecode (Lcom/awakekt/awake/render/texture/GpuImageSource;)Z
 }
 
 public final class com/awakekt/awake/render/texture/MipChainKt {

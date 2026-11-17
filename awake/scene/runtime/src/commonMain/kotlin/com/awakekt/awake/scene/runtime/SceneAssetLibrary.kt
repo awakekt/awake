@@ -288,6 +288,18 @@ class SceneAssetLibrary(
             dynamicResolvers.firstOrNull { it.canResolveMesh(name) }?.loadMesh(name, scope)
         }
 
+    /**
+     * The load material [name] needs before it can be made without blocking the frame, started in
+     * [scope]; null when it can be made now: one registered or already made, or one its resolver has
+     * nothing to load for.
+     */
+    internal fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? =
+        if (name in materialFactories || name in materials) {
+            null
+        } else {
+            dynamicResolvers.firstOrNull { it.canResolveMaterial(name) }?.loadMaterial(name, scope)
+        }
+
     /** Whether [key] draws through a renderer factory of its own, so it holds nothing to prewarm. */
     internal fun hasCustomRenderer(key: SceneRenderableKey): Boolean = key in rendererFactories
 

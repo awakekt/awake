@@ -92,10 +92,15 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
 
     /**
      * Whether [key]'s mesh has to be loaded by its resolver before it can be built, such as a glTF model
-     * not preloaded yet; if so, [prewarm] waits for that load, which costs the frame nothing.
+     * not preloaded yet, or then its material, such as images to decode again (#1619); if so, [prewarm]
+     * waits for that load, which costs the frame nothing.
      */
     private fun startedLoading(prewarm: ScenePrewarm, key: SceneRenderableKey): Boolean {
-        val load = if (library.hasCustomRenderer(key)) null else library.loadMesh(key.mesh, prewarm.scope)
+        val load = if (library.hasCustomRenderer(key)) {
+            null
+        } else {
+            library.loadMesh(key.mesh, prewarm.scope) ?: library.loadMaterial(key.material, prewarm.scope)
+        }
         if (load != null) prewarm.loadingModels += key to load
         return load != null
     }
@@ -117,7 +122,7 @@ internal class ScenePrewarmQueue(private val library: SceneAssetLibrary) {
                 prewarm.pendingRenderables.addFirst(key)
             } else {
                 val label = "${key.mesh} + ${key.material}"
-                log.error(failure) { "Can't prewarm $label: its model failed to load (${failure.message})." }
+                log.error(failure) { "Can't prewarm $label: what it loads first failed (${failure.message})." }
                 prewarm.settle(label, failure)
             }
         }
