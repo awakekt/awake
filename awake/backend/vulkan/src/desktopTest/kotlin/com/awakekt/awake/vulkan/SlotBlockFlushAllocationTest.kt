@@ -39,12 +39,15 @@ class SlotBlockFlushAllocationTest {
             dirtyBlocks.forEach { it.flush(device.device) }
             dirtyBlocks.clear()
 
+            // Every slot is in the first block; flushed directly, so the set's iterator isn't counted.
+            val block = material.uniformSlot(0, 0).block
             var flushedBytes = 0L
             repeat(WARM_UP + FRAMES) { frame ->
                 val values = frames[(frame + 1) % 2]
                 for (slot in FIRST_DIRTY..LAST_DIRTY) material.stageUniformBuffer(0, slot, values[slot], dirtyBlocks)
+                check(dirtyBlocks.size == 1 && block in dirtyBlocks) { "the dirty slots share one block" }
                 val before = threads.currentThreadAllocatedBytes
-                for (block in dirtyBlocks) block.flush(device.device)
+                block.flush(device.device)
                 if (frame >= WARM_UP) flushedBytes += threads.currentThreadAllocatedBytes - before
                 dirtyBlocks.clear()
             }
@@ -56,7 +59,6 @@ class SlotBlockFlushAllocationTest {
 
             val last = frames[(WARM_UP + FRAMES) % 2]
             val expected = List(SLOTS) { slot -> if (slot in FIRST_DIRTY..LAST_DIRTY) last[slot] else frames[0][slot] }
-            val block = material.uniformSlot(0, 0).block
             expected.forEachIndexed { slot, floats -> assertEquals(floats.toList(), readSlot(device, block, slot), "slot $slot") }
         }
     }
