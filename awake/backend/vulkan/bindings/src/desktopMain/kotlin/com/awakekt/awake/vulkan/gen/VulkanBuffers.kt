@@ -65,6 +65,19 @@ actual object VulkanBuffers {
     actual external fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray)
 
     /**
+     * Maps [memory], copies [count] floats of [data] from [dataOffset] into it at [offset], and
+     * unmaps it again: part of an array written in place, with no copy of the range first.
+     */
+    actual fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int) {
+        requireFloatRange(data.size, dataOffset, count)
+        writeBufferMemoryFloatRange(device, memory, offset, data, dataOffset, count)
+    }
+
+    // Its own JNI name: an overloaded native method would resolve to the short symbol of the
+    // four-argument one, and the JVM would call it with the wrong arguments.
+    private external fun writeBufferMemoryFloatRange(device: Long, memory: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int)
+
+    /**
      * Same map->memcpy->unmap pattern as [writeBufferMemoryFloats], for raw byte data (e.g. texture
      * pixels) instead of float uniform/vertex data.
      */
