@@ -118,6 +118,9 @@ jobs:
       - name: Template versions handed to the template checks
         run: scripts/template-versions.test.sh
 
+      - name: iOS native builds cached only once verified
+        run: scripts/ios-native-cache.test.sh
+
       - name: Plugin repositories cannot hide Google's
         run: scripts/plugin-repositories.test.sh
 
