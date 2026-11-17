@@ -36,4 +36,3 @@ class DrawBlockWriters {
     /** A lit-shadow draw's material payload, likewise. */
     internal val pbrPayload = FloatArray(MaterialUniformLayouts.PbrMaterial.total)
 }
-
