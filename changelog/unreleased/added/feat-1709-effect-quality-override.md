@@ -1,3 +1,0 @@
-- `RenderQualitySettings.effectQualityOverride` pins the effect quality the preset would choose (#1709).
-  - With `shadowBudgetOverride`, an app can keep `RenderQuality.Auto` and its dynamic resolution while its own effects and shadows hold.
-  - On a phone, Auto otherwise draws Low effects and two 1024 shadow cascades.
