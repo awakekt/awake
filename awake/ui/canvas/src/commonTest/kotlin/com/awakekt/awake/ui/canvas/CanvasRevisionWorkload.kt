@@ -29,6 +29,17 @@ internal class CanvasRevisionWorkload {
 
     /** One frame of writes and reads; [frame] picks the values, so frames alternate between change and no change. */
     fun frame(frame: Int) {
+        writes(frame)
+        reads()
+    }
+
+    /** Every element's [CanvasElementBase.contentRevision], read as a skipping host's check reads it. */
+    fun reads() {
+        for (index in elements.indices) seen += elements[index].contentRevision
+    }
+
+    /** One frame's writes alone. */
+    fun writes(frame: Int) {
         val moving = frame % 2 == 0
         for (index in elements.indices) {
             val element = elements[index]
@@ -41,7 +52,6 @@ internal class CanvasRevisionWorkload {
             element.text = labels[if (still) 0 else frame % labels.size]
             element.enabled = true
             element.charges = if (still) 0 else frame % MAX_CHARGES
-            seen += element.contentRevision
         }
     }
 
