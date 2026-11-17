@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
  * [CanvasElementWidgetFields], split only to keep each file short.
  */
 @Suppress("TooManyFunctions") // A small helper for each component the flat properties add.
-sealed class CanvasElementBase {
+sealed class CanvasElementBase : CanvasRevised() {
     /** Where the element sits and how big it is. */
     var rect: CanvasRect = CanvasRect()
         private set
@@ -36,7 +36,8 @@ sealed class CanvasElementBase {
     internal var particlesPart: CanvasParticles? = null
 
     /**
-     * Bumped each time a component is set or removed through this element, so a host that keeps the
+     * Bumped each time a component is set or removed through this element (a [layout], [cluster],
+     * [bind] or [particles] write of the instance already there is no change), so a host that keeps the
      * same components elsewhere, as a scene's entity does, can tell its own copy is out of date.
      */
     var componentsVersion: Int = 0
@@ -159,7 +160,13 @@ sealed class CanvasElementBase {
 
     // Fields two widgets share, held while the element has neither, so either can take them.
     internal var looseValue = 1f
+        set(value) {
+            field = revised(field, value)
+        }
     internal var looseAction = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     internal fun looseShared(previous: CanvasWidget?) {
         previous?.sharedValue?.let { looseValue = it }
@@ -194,22 +201,22 @@ sealed class CanvasElementBase {
     /** How the element places its children itself, in rows or columns; null anchors each child by hand. */
     var layout: CanvasLayout? = null
         set(value) {
+            if (field !== value) componentsVersion++
             field = value
-            componentsVersion++
         }
 
     /** Places the element's children as a button cluster, in place of [layout]; null places them as [layout] says. */
     var cluster: CanvasCluster? = null
         set(value) {
+            if (field !== value) componentsVersion++
             field = value
-            componentsVersion++
         }
 
     /** Game state the element shows without code; while it reads, it stands in for [value], [text] and [textArgs]. */
     var bind: CanvasBinding? = null
         set(value) {
+            if (field !== value) componentsVersion++
             field = value
-            componentsVersion++
         }
 
     /** Particles emitted from or over this element; null when it has none. */
@@ -221,8 +228,8 @@ sealed class CanvasElementBase {
                 if (previous != null && previous.owner === this) previous.owner = null
                 if (value != null && this is CanvasElement) value.owner = this
             }
+            if (previous !== value) componentsVersion++
             particlesPart = value
-            componentsVersion++
         }
 }
 

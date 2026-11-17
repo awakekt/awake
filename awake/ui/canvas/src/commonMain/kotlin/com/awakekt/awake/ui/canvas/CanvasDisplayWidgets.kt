@@ -24,14 +24,22 @@ sealed interface CanvasWidget {
  * A progress bar filled to [value]: across from the left, or as its [settings] say, up, down,
  * around as a ring, segmented, trailed or labelled.
  */
-class CanvasBarWidget : CanvasWidget {
+class CanvasBarWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.Bar
 
     /** The fill, from 0 to 1; a [CanvasBinding.value] field takes its place while it reads. */
     var value: Float = 1f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** How the bar draws: its direction, trail, segments, ticks and label; null fills across from the left. */
     var settings: CanvasBar? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** The bar's trailing fill, advanced each frame it is drawn. */
     internal val trail = TrailingValue(value)
@@ -47,28 +55,46 @@ class CanvasBarWidget : CanvasWidget {
  * A radial sweep: a pie or ring filled to [value] of a full turn, as its [settings] say, for a
  * cooldown, a timer or a charge.
  */
-class CanvasSweepWidget : CanvasWidget {
+class CanvasSweepWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.Sweep
 
     /** The share of a full turn filled, from 0 to 1; a [CanvasBinding.value] field takes its place while it reads. */
     var value: Float = 1f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** How the sweep turns: its start, direction, mask, ring and track; null is [CanvasSweep.Default]. */
     var settings: CanvasSweep? = null
+        set(value) {
+            field = revised(field, value)
+        }
 }
 
 /** What a camera sees: the scene from the camera on the node [camera] names, under the element's children. */
-class CanvasViewWidget : CanvasWidget {
+class CanvasViewWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.View
 
     /** The name of a node with a camera, whose picture the view shows; empty shows none. */
     var camera: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** How the picture clears and is clipped; null keeps an opaque, styled box. */
     var settings: CanvasView? = null
+        set(value) {
+            field = revised(field, value)
+        }
 }
 
 /** A picture: its element's [CanvasAppearance.style] image. A [CanvasInput.pressable] one takes taps. */
-class CanvasImageWidget : CanvasWidget {
+class CanvasImageWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.Image
 }

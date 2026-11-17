@@ -46,7 +46,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("canvas_rect")
-@SceneBinding(CanvasRect::class, runtimeOnly = ["screenBounds"])
+@SceneBinding(CanvasRect::class, runtimeOnly = ["revision", "screenBounds"])
 data class SceneCanvasRect(
     val anchor: CanvasAnchor = CanvasAnchor.TopLeft,
     val offsetX: Float = CanvasRect.DEFAULT_INSET,
@@ -89,7 +89,7 @@ data class SceneCanvasRect(
  */
 @Serializable
 @SerialName("canvas_text")
-@SceneBinding(CanvasText::class)
+@SceneBinding(CanvasText::class, runtimeOnly = ["revision"])
 data class SceneCanvasText(
     val text: String = "",
     val textKey: String = "",
@@ -155,7 +155,7 @@ data class SceneCanvasText(
  */
 @Serializable
 @SerialName("canvas_appearance")
-@SceneBinding(CanvasAppearance::class, runtimeOnly = ["previewState"])
+@SceneBinding(CanvasAppearance::class, runtimeOnly = ["revision", "previewState"])
 data class SceneCanvasAppearance(
     val color: String = CanvasAppearance.DEFAULT_COLOR,
     val background: String = CanvasAppearance.DEFAULT_BACKGROUND,

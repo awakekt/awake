@@ -25,7 +25,7 @@ import kotlin.time.TimeSource
  * reader that must not take from another reads [presses].
  */
 @Suppress("TooManyFunctions") // One small reader per input an element reports.
-class CanvasPointerState {
+class CanvasPointerState : CanvasRevised() {
     /** What times presses; a test swaps it for a `TestTimeSource`. */
     internal var clock: TimeSource = TimeSource.Monotonic
 
@@ -179,7 +179,7 @@ class CanvasPointerState {
      */
     var focused: Boolean = false
         set(value) {
-            field = value
+            field = revised(field, value)
             if (value) focusRequester.requestFocus() else focusRequester.freeFocus()
         }
 
