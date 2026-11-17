@@ -6,13 +6,11 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuShadowCascadeData
-import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.instancedUniformFloats
 import com.awakekt.awake.render.passes.uniformFloats
 import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
@@ -26,10 +24,6 @@ import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.material.SlotBlock
 import com.awakekt.awake.vulkan.material.stageUniformBuffer
-import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
-import com.awakekt.awake.vulkan.mesh.FrameInstanceBuffer
-import com.awakekt.awake.vulkan.mesh.InstanceBuffer
-import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.mesh.sceneBuffers
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkOffset2D
@@ -37,7 +31,6 @@ import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.UNKNOWN_DRAW_BLOCK
-import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import kotlin.collections.getOrNull
 import kotlin.math.ceil
@@ -115,6 +108,9 @@ internal fun VulkanRenderer.prepareGpuDraw(
     exposure: Float = 1f,
     edgePipeline: RenderPipeline? = null,
     explicitUniformSlotIndex: Int = -1,
+    // Filled in place. A caller that copies the draw out before preparing the next one passes one
+    // it keeps; the default is a fresh draw, for a caller that keeps every draw it prepares.
+    into: PreparedDrawCall = PreparedDrawCall(),
 ): PreparedDrawCall? {
     val mesh = cmd.mesh as RenderMesh
     val buffers = mesh.sceneBuffers(frameIndex)
@@ -146,7 +142,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         } else {
             null
         }
-        return PreparedDrawCall(
+        return into.set(
             mesh = mesh,
             vertexBuffer = buffers.vertexBinding,
             indexBuffer = buffers.indexBinding,
@@ -177,7 +173,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         viewProjection, cameraPosition, cameraForward, lightUniforms, shadowCascades, fogColor, fogDensity, debugView, exposure,
         dirtyUniformBlocks,
     )
-    return PreparedDrawCall(
+    return into.set(
         mesh = mesh,
         vertexBuffer = buffers.vertexBinding,
         indexBuffer = buffers.indexBinding,
@@ -340,64 +336,6 @@ internal fun VulkanRenderer.waitForCurrentFrameResourceSlot() {
     if (fence != null && fence != 0L) Vulkan.vkWaitForFences(device, longArrayOf(fence), true, Long.MAX_VALUE)
     // Without a fence nothing of this slot is in flight; either way the slot is idle now.
     bufferPools.frameSlotIdle(currentFrame)
-}
-
-/**
- * Also this backend's [PreparedDraw]: the port's members are computed off the fields already
- * here, so the shared opaque feature iterates these directly instead of a second per-draw object
- * being built for it every frame. Every getter resolves to an object created at
- * resource-creation time (a material's uniform slot, a mesh's buffer binding), so reading one
- * allocates nothing.
- */
-internal data class PreparedDrawCall(
-    val mesh: RenderMesh,
-    /** The mesh's vertex buffer this frame: a dynamic mesh's is its frame slot's. */
-    override val vertexBuffer: VulkanBufferBinding,
-    override val indexBuffer: VulkanBufferBinding,
-    /** How many indices a draw submits: a dynamic mesh's drawn count, else every index. */
-    override val elementCount: Int,
-    val isTransparent: Boolean,
-    override val pipeline: RenderPipeline,
-    val material: Material,
-    val frameIndex: Int,
-    val uniformSlotIndex: Int,
-    /** The descriptor set `prepareDrawCalls` just wrote this draw's uniforms into. */
-    override val materialBinding: VulkanMaterialBinding,
-    /** Non-null only for an instanced draw resolved to an instanced pipeline --
-     * [recordDrawCalls] then binds it and issues one `drawInstanced` instead of `draw`. */
-    val instanceBuffer: InstanceBuffer? = null,
-    val instanceCount: Int = 0,
-    /** Non-null only for an ANIMATED instanced draw, where it
-     * accompanies [instanceBuffer] -- per-instance model matrices still come through that. */
-    val jointPaletteBuffer: SkinnedInstanceBuffer? = null,
-    /** Non-null only for a billboard-particle instanced draw,
-     * bound at binding 2 alongside [instanceBuffer]'s binding 1. */
-    val alphaInstanceBuffer: AlphaInstanceBuffer? = null,
-    /** Non-null only for a billboard-particle instanced draw, bound
-     * at binding 3 alongside [alphaInstanceBuffer]'s binding 2. */
-    val frameInstanceBuffer: FrameInstanceBuffer? = null,
-    /** Squared distance to the camera eye, computed once at preparation rather than inside the
-     * sort comparator. Last in the list on purpose: one construction site below is positional. */
-    override val depthSortKey: Float = 0f,
-    override val sortOrder: Int = 0,
-    override val sortLayer: Int = 0,
-) : PreparedDraw {
-    override val transparent: Boolean get() = isTransparent
-    override val vertexFormat: VertexFormat get() = mesh.format
-
-    /** Mesh identity -- clusters draws sharing a mesh so consecutive calls reuse its vertex and
-     * index buffer bindings. */
-    override val batchKey: Int get() = mesh.hashCode()
-
-    /** [instanceCount] is 0 for a non-instanced draw; the port's count is the real one Vulkan
-     * issues, which is 1 there. */
-    override val instances get() = if (instanceBuffer == null) 1 else instanceCount
-    override val instanceVertexBuffer get() = instanceBuffer?.binding(frameIndex)
-    override val jointPaletteBinding get() = jointPaletteBuffer?.binding(frameIndex)
-    override val instanceColorBuffer get() = alphaInstanceBuffer?.binding(frameIndex)
-    override val instanceFrameBuffer get() = frameInstanceBuffer?.binding(frameIndex)
-    override val depthMaterialBinding get() = materialBinding
-    override val depthJointPaletteBinding get() = jointPaletteBinding
 }
 
 /** The uniform slot a draw writes: the caller's, or the next one counted for [material], or 0 when nothing counts. */
