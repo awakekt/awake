@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.terrain
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
@@ -22,7 +23,9 @@ import kotlinx.serialization.encoding.Encoder
  * each. It reads like any list, compares equal to a list of the same floats, and boxes only a value
  * that is read out of it one at a time.
  */
-internal class TerrainSampleList(private val values: FloatArray) : AbstractList<Float>(), RandomAccess {
+internal class TerrainSampleList(private val values: FloatArray) :
+    AbstractList<Float>(),
+    RandomAccess {
     override val size: Int get() = values.size
 
     override fun get(index: Int): Float = values[index]
@@ -46,6 +49,8 @@ internal fun terrainSamples(samples: FloatArray): List<Float> = TerrainSampleLis
  * The descriptor is the one a `List<Float>` has, so a scene's JSON and its exported schema are the
  * same as before; only the decoded value differs, a [TerrainSampleList] instead of boxed floats.
  */
+// decodeSequentially: the fast path a binary format takes; JSON reads element by element.
+@OptIn(ExperimentalSerializationApi::class)
 internal object TerrainSamplesSerializer : KSerializer<List<Float>> {
     override val descriptor: SerialDescriptor = ListSerializer(Float.serializer()).descriptor
 
