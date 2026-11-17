@@ -16,11 +16,11 @@ import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.graphics.Brush
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.shadow.Shadow
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.unit.DpOffset
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.compose.ui.platform.FrameStep
 
 context(_: Composer)
 internal fun rememberCanvasStyleState(

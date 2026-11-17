@@ -8,12 +8,12 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.ui.focus.FocusRequester
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.core.input.HeldStep
 import com.awakekt.awake.core.math2d.Vec2
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
-import com.awakekt.awake.compose.ui.platform.FrameStep
 
 /**
  * What the player is doing to one canvas element right now: its taps, hover, drag and drop, wheel,
