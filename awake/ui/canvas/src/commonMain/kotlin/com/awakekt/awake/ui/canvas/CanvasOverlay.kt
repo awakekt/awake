@@ -180,7 +180,11 @@ private fun ScaledCanvas(
         planFollowersOnce(frameClock.frame, box.width / uiScale, box.height / uiScale, canvasDensity, limits, particleClock)
     }
     val planned = Modifier.planningFollowers(tree, planning)
-    Box(Modifier.fillMaxSize().onPlaced(OnPlacedListener { x, y, _, _ -> origin.place(x, y) }).then(planned)) {
+    // Objects, not SAM lambdas: Kotlin/Wasm's SAM wrapper boxes all four Ints on every call (#1512).
+    val atOrigin = object : OnPlacedListener {
+        override fun onPlaced(x: Int, y: Int, width: Int, height: Int) = origin.place(x, y)
+    }
+    Box(Modifier.fillMaxSize().onPlaced(atOrigin).then(planned)) {
         val screen = this
         // A denser dp scales every size, offset, font and image corner beneath it in one place. The
         // host's text style is not the scene's: an element's text looks only as its own data says.
@@ -348,12 +352,14 @@ internal fun CanvasElementView(
     val units = LocalCanvasDensity.current.takeIf { it > 0f } ?: density
     val origin = tree.origin
     // Unboxed, and a box that did not move keeps its Rectangle: hundreds of elements are placed on
-    // every frame, skipped or not (#1512).
+    // every frame, skipped or not (#1512). An object, since Kotlin/Wasm's SAM wrapper boxes each Int.
     val placed = modifier.onPlaced(
-        OnPlacedListener { x, y, w, h ->
-            val bounds = element.placedBounds.orAt((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
-            element.screenBounds = bounds
-            element.placedBounds = bounds
+        object : OnPlacedListener {
+            override fun onPlaced(x: Int, y: Int, width: Int, height: Int) {
+                val bounds = element.placedBounds.orAt((x - origin.x) / units, (y - origin.y) / units, width / units, height / units)
+                element.screenBounds = bounds
+                element.placedBounds = bounds
+            }
         },
     )
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,

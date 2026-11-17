@@ -43,7 +43,7 @@ internal class FollowerHud(val plates: Int, val parts: FollowerParts = FollowerP
             world.add(mover, transform)
             world.add(mover, Name("Mover $index"))
             if (!parts.plates) return@repeat
-            val plate = node(null, CanvasElement().apply { kind = CanvasElementKind.Panel; follow = "Mover $index"; width = 70f; height = 20f })
+            val plate = node(null, CanvasElement().apply { kind = CanvasElementKind.Panel; if (parts.follow) follow = "Mover $index" else offsetX = (index % COLUMNS) * SPACING; width = 70f; height = 20f })
             if (parts.bar) node(plate, CanvasElement().apply { kind = CanvasElementKind.Bar; width = 70f; height = 4f; value = 0.8f })
             if (parts.text) node(plate, CanvasElement().apply { kind = CanvasElementKind.Text; text = "Player $index"; offsetY = 6f })
         }
@@ -81,7 +81,14 @@ internal class FollowerHud(val plates: Int, val parts: FollowerParts = FollowerP
 }
 
 /** Which parts of a [FollowerHud] are made: its plates, each plate's bar and text, and the minimap view. */
-internal data class FollowerParts(val plates: Boolean, val bar: Boolean, val text: Boolean, val view: Boolean) {
+internal data class FollowerParts(
+    val plates: Boolean,
+    val bar: Boolean,
+    val text: Boolean,
+    val view: Boolean,
+    /** Whether each plate follows a moving node; otherwise it sits at a fixed spot on the canvas. */
+    val follow: Boolean = true,
+) {
     companion object {
         val All = FollowerParts(plates = true, bar = true, text = true, view = true)
 

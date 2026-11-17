@@ -123,12 +123,7 @@ fun Box(
 ) {
     Box(
         modifier = modifier,
-        contentAlignment = Alignment { size, space, layoutDirection ->
-            com.awakekt.awake.compose.ui.unit.IntOffset(
-                horizontalAlignment.align(size.width, space.width, layoutDirection),
-                verticalAlignment.align(size.height, space.height),
-            )
-        },
+        contentAlignment = AxisAlignment(horizontalAlignment, verticalAlignment),
         content = content,
     )
 }

@@ -37,83 +37,109 @@ fun interface Alignment {
     /**
      * The standard alignments.
      *
+     * Each is an object that implements `align` itself, not a lambda through the interface's SAM
+     * constructor: Kotlin/Wasm wraps such a lambda in a generic function, which boxes both `IntSize`
+     * arguments and the `IntOffset` result on every call. `Box` aligns every child it places, so a
+     * still frame of 600 boxed children grew the browser heap by 56 KB in placement alone (#1512).
+     *
      * Start and end variants swap sides under [LayoutDirection.Rtl]. Centring truncates, so an odd
      * leftover pixel falls on the end or bottom side.
      */
     companion object {
         /** Top edge, start side. */
-        val TopStart: Alignment = Alignment { size, space, layoutDirection ->
-            val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
-            IntOffset(x, 0)
+        val TopStart: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
+                val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
+                return IntOffset(x, 0)
+            }
         }
 
         /** Top edge, centred horizontally. */
-        val TopCenter: Alignment = Alignment { size, space, _ ->
-            IntOffset((space.width - size.width) / 2, 0)
+        val TopCenter: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset = IntOffset((space.width - size.width) / 2, 0)
         }
 
         /** Top edge, end side. */
-        val TopEnd: Alignment = Alignment { size, space, layoutDirection ->
-            val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
-            IntOffset(x, 0)
+        val TopEnd: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
+                val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
+                return IntOffset(x, 0)
+            }
         }
 
         /** Centred vertically, start side. */
-        val CenterStart: Alignment = Alignment { size, space, layoutDirection ->
-            val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
-            IntOffset(x, (space.height - size.height) / 2)
+        val CenterStart: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
+                val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
+                return IntOffset(x, (space.height - size.height) / 2)
+            }
         }
 
         /** Centred on both axes. */
-        val Center: Alignment = Alignment { size, space, _ ->
-            IntOffset((space.width - size.width) / 2, (space.height - size.height) / 2)
+        val Center: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset = IntOffset((space.width - size.width) / 2, (space.height - size.height) / 2)
         }
 
         /** Centred vertically, end side. */
-        val CenterEnd: Alignment = Alignment { size, space, layoutDirection ->
-            val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
-            IntOffset(x, (space.height - size.height) / 2)
+        val CenterEnd: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
+                val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
+                return IntOffset(x, (space.height - size.height) / 2)
+            }
         }
 
         /** Bottom edge, start side. */
-        val BottomStart: Alignment = Alignment { size, space, layoutDirection ->
-            val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
-            IntOffset(x, space.height - size.height)
+        val BottomStart: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
+                val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
+                return IntOffset(x, space.height - size.height)
+            }
         }
 
         /** Bottom edge, centred horizontally. */
-        val BottomCenter: Alignment = Alignment { size, space, _ ->
-            IntOffset((space.width - size.width) / 2, space.height - size.height)
+        val BottomCenter: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset = IntOffset((space.width - size.width) / 2, space.height - size.height)
         }
 
         /** Bottom edge, end side. */
-        val BottomEnd: Alignment = Alignment { size, space, layoutDirection ->
-            val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
-            IntOffset(x, space.height - size.height)
+        val BottomEnd: Alignment = object : Alignment {
+            override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
+                val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
+                return IntOffset(x, space.height - size.height)
+            }
         }
 
         /** The start edge: left under [LayoutDirection.Ltr], right under [LayoutDirection.Rtl]. */
-        val Start: Horizontal = Horizontal { size, space, layoutDirection ->
-            if (layoutDirection == LayoutDirection.Ltr) 0 else space - size
+        val Start: Horizontal = object : Horizontal {
+            override fun align(size: Int, space: Int, layoutDirection: LayoutDirection): Int =
+                if (layoutDirection == LayoutDirection.Ltr) 0 else space - size
         }
 
         /** Centred along the horizontal axis. */
-        val CenterHorizontally: Horizontal = Horizontal { size, space, _ ->
-            (space - size) / 2
+        val CenterHorizontally: Horizontal = object : Horizontal {
+            override fun align(size: Int, space: Int, layoutDirection: LayoutDirection): Int =
+                (space - size) / 2
         }
 
         /** The end edge: right under [LayoutDirection.Ltr], left under [LayoutDirection.Rtl]. */
-        val End: Horizontal = Horizontal { size, space, layoutDirection ->
-            if (layoutDirection == LayoutDirection.Ltr) space - size else 0
+        val End: Horizontal = object : Horizontal {
+            override fun align(size: Int, space: Int, layoutDirection: LayoutDirection): Int =
+                if (layoutDirection == LayoutDirection.Ltr) space - size else 0
         }
 
         /** The top edge. */
-        val Top: Vertical = Vertical { _, _ -> 0 }
+        val Top: Vertical = object : Vertical {
+            override fun align(size: Int, space: Int): Int = 0
+        }
 
         /** Centred along the vertical axis. */
-        val CenterVertically: Vertical = Vertical { size, space -> (space - size) / 2 }
+        val CenterVertically: Vertical = object : Vertical {
+            override fun align(size: Int, space: Int): Int = (space - size) / 2
+        }
 
         /** The bottom edge. */
-        val Bottom: Vertical = Vertical { size, space -> space - size }
+        val Bottom: Vertical = object : Vertical {
+            override fun align(size: Int, space: Int): Int = space - size
+        }
     }
 }
