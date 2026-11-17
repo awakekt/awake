@@ -1,0 +1,1 @@
+- CI's Web job has 45 minutes, like the other test jobs, where it had 20 (#1592). With the browser heap tests in it, a run that starts from a cold Gradle home was cut off at 20 minutes with every step so far passing, which showed as a cancelled check.
