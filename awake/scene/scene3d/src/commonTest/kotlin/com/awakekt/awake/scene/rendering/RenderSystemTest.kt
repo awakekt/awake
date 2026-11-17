@@ -110,9 +110,8 @@ class RenderSystemTest {
             lastViewport = input.viewport
             lastViewProjection = input.viewProjection
             val directional = input.passUniforms
-            val cascades = input.prePasses
-                .filter { it.targetLayer < com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES }
-                .map { it.viewProjection }
+            // What the input says it drew as cascades; a point light's faces follow them (#1709).
+            val cascades = input.shadowCascadeData?.viewProjections.orEmpty()
             val points = pointLightsFrom(directional)
             lastLight = SceneLight(
                 direction = Vec3f(directional.getOrElse(0) { 0f }, directional.getOrElse(1) { 0f }, directional.getOrElse(2) { 0f }),

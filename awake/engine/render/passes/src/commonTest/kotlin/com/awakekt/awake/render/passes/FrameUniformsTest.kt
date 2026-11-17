@@ -188,6 +188,19 @@ class FrameUniformsTest {
         assertEquals(1f, identity.field(MaterialUniformLayouts.Frame, UniformFields.LightColor)[0])
     }
 
+    /**
+     * The engine's own input says which cascades it drew: a casting point light's faces start at
+     * layer 0 in a frame with none (#1709), and must not be read as cascades by their layers.
+     */
+    @Test
+    fun aResolvedInputsPointFacesAtLowLayersAreNotReadAsCascades() {
+        val pointFaces = List(6) { face -> GpuSubPass(target = null, targetLayer = face, viewProjection = VIEW_PROJECTION) }
+        fun packed(faces: List<GpuSubPass>) = FrameUniformBlock().pack(
+            GpuPassInput(viewProjection = VIEW_PROJECTION, cameraEye = EYE, passUniforms = LIGHT, prePasses = faces, resolvedPath = true),
+        )
+        assertContentEquals(packed(emptyList()), packed(pointFaces), "packed as a frame with no cascades")
+    }
+
     private fun RenderDrawCommand.whole(count: Int): FloatArray = uniformFloats(
         materialUniformFloatCount = count,
         viewProjection = VIEW_PROJECTION,
