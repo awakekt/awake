@@ -19,7 +19,16 @@ data class StaleSkip(
     val primitiveIndex: Int,
     val skipped: UiDrawPrimitive?,
     val composed: UiDrawPrimitive?,
-)
+) {
+    /**
+     * The layout node that draws the differing primitive, as composing drew it (#1512): its
+     * [com.awakekt.awake.compose.ui.node.LayoutNode.measurePolicy] and modifier chain say which
+     * composable declared it, as [ComposeFrameCounts.measureCauseOwner] does for a measure. Null when
+     * the composed frame ended before it, as when the stale frame drew more than composing did.
+     */
+    var owner: Any? = null
+        internal set
+}
 
 /** The first index at which [a] and [b] differ, or -1 when they are equal. */
 internal fun firstDifference(a: List<UiDrawPrimitive>, b: List<UiDrawPrimitive>): Int {

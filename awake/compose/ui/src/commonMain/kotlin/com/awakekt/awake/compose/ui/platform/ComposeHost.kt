@@ -477,7 +477,10 @@ class ComposeHost(
         val index = firstDifference(skipped, composed)
         if (index >= 0) {
             staleSkips++
-            onStaleSkip?.invoke(StaleSkip(index, skipped.getOrNull(index), composed.getOrNull(index)))
+            val stale = StaleSkip(index, skipped.getOrNull(index), composed.getOrNull(index))
+            // Named only when someone listens: finding it paints the composed tree once more.
+            if (onStaleSkip != null && index < composed.size) stale.owner = painter.ownerOf(root, index)
+            onStaleSkip?.invoke(stale)
         }
     }
 
