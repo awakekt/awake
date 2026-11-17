@@ -2523,7 +2523,11 @@ public final class com/awakekt/awake/render/renderer/UniformWriter {
 	public final fun put (Lcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun put (Lcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun put (Lcom/awakekt/awake/render/renderer/UniformField;Ljava/util/List;)Lcom/awakekt/awake/render/renderer/UniformWriter;
+	public final fun put ([FILcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
+	public final fun put ([FILcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun put ([FI[Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
+	public final fun put ([FLcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
+	public final fun put ([FLcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun put ([F[Lcom/awakekt/awake/render/renderer/UniformField;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public static synthetic fun put$default (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/renderer/UniformField;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 	public final fun putPadded (Lcom/awakekt/awake/render/renderer/UniformField;[F)Lcom/awakekt/awake/render/renderer/UniformWriter;

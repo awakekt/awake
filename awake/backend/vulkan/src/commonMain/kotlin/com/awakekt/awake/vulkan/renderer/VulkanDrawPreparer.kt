@@ -40,6 +40,9 @@ internal class VulkanDrawPreparer(
     /** Whether this batch's wireframe-overlay edges have their frame block written yet. */
     private var edgeFrameWritten = false
 
+    /** Each draw is prepared into this and copied out into its [GpuResolvedDraw] before the next. */
+    private val scratch = PreparedDrawCall()
+
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelinesByFormat
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
@@ -87,6 +90,7 @@ internal class VulkanDrawPreparer(
                 instanced = request.instanceModels != null,
                 edges = edgePipeline != null,
             ),
+            into = scratch,
         ) ?: return null
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
         if (edgePipeline != null) return prepared.toGpuResolvedDraw()
