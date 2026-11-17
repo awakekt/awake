@@ -183,6 +183,13 @@ public final class com/awakekt/awake/asset/terrain/TerrainPageLayout {
 	public final fun validate (Lcom/awakekt/awake/asset/terrain/Heightmap;)V
 }
 
+public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapColliderSamplesKt {
+	public static final field DEFAULT_MAX_COLLIDER_SIDE I
+	public static final fun clipmapColliderFactor (Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;I)I
+	public static synthetic fun clipmapColliderFactor$default (Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;IILjava/lang/Object;)I
+	public static final fun upsampledSamples (Lcom/awakekt/awake/asset/terrain/Heightmap;I)[F
+}
+
 public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapRingState {
 	public fun <init> (IFLcom/awakekt/awake/core/math/Vec3f;F)V
 	public final fun component1 ()I
