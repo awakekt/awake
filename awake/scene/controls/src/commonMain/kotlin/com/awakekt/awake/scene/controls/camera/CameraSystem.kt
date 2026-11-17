@@ -104,6 +104,9 @@ class CameraSystem(
 
     /** The drag held this frame. A drag must start over the scene, but may leave it once started. */
     private fun currentDrag(input: GameplayInput, inViewport: Boolean): Drag? {
+        // Two fingers pinch, and the first still drives the pointer: moving it must zoom, not orbit or pan.
+        // With no drag on those frames, the finger left down after the pinch starts a fresh one, without a jump.
+        if (input.isMultiTouch) return null
         val held = when {
             gesturePolicy.isPanDragging.isDragging(input) -> Drag.Pan
             gesturePolicy.isOrbitDragging.isDragging(input) -> Drag.Orbit

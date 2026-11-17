@@ -516,6 +516,7 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public fun isDown (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public final fun isMultiTouch ()Z
 	public fun toString ()Ljava/lang/String;
 	public fun wasPressed (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
@@ -789,6 +790,12 @@ public final class com/awakekt/awake/core/input/TextEditAction : java/lang/Enum 
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/TextEditAction;
 	public static fun values ()[Lcom/awakekt/awake/core/input/TextEditAction;
+}
+
+public final class com/awakekt/awake/core/input/TouchPinch {
+	public fun <init> ()V
+	public final fun end ()V
+	public final fun track (Lcom/awakekt/awake/core/input/Input;JFFJFF)V
 }
 
 public final class com/awakekt/awake/core/input/TouchPoint {

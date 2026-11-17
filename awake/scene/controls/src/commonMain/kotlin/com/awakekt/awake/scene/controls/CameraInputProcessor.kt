@@ -40,7 +40,8 @@ class CameraInputProcessor {
     ): Boolean {
         var changed = false
 
-        val isPrimary = input.pointerDown
+        // Two fingers pinch, and the first still drives the pointer: moving it must zoom, not orbit or pan.
+        val isPrimary = input.pointerDown && !input.isMultiTouch
         val isSecondary = input.secondaryPointerDown
         val isShift = Key.Shift in input.keysDown
 

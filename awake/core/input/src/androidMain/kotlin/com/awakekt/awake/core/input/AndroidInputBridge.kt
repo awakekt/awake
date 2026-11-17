@@ -63,9 +63,30 @@ internal inline fun syncAndroidTouches(
         MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> ALL_LIFTED
         else -> return false
     }
+    // Android reports no pinch: the first two fingers still down give it, about their midpoint.
+    var first = -1
+    var second = -1
     for (index in 0 until count) {
         val down = lifted != ALL_LIFTED && index != lifted
         input.setTouch(id(index).toLong(), x(index), y(index), down)
+        if (down && first < 0) {
+            first = index
+        } else if (down && second < 0) {
+            second = index
+        }
+    }
+    if (second < 0) {
+        input.touchPinch.end()
+    } else {
+        input.touchPinch.track(
+            input,
+            id(first).toLong(),
+            x(first),
+            y(first),
+            id(second).toLong(),
+            x(second),
+            y(second),
+        )
     }
     return true
 }
