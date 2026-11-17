@@ -83,6 +83,11 @@ namespace awake {
 
     jint queuePresentKHRStatus(JNIEnv *env, jlong arg0, jobject arg1);
 
+    // What presents in queuePresentKHRStatus's place while it is set: Swappy's paced present on
+    // Android (#1699). Null, the default, presents through vkQueuePresentKHR.
+    using PresentHook = VkResult (*)(VkQueue, const VkPresentInfoKHR *);
+    void setPresentHook(PresentHook hook);
+
     void destroyImageView(jlong arg0, jlong arg1);
 
     void queueSubmit(JNIEnv *env, jlong arg0, jobjectArray arg1, jlong arg2);

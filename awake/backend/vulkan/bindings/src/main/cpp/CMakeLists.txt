@@ -61,3 +61,25 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         vulkan_kotlin
         android
         log)
+
+# Swappy, Android's frame pacer (#1699), linked from games-frame-pacing's static library without
+# prefab: prefab refuses a library built for c++_shared in a c++_static build, and Swappy's API is
+# C, so no C++ runtime type crosses between the two. android-native's extractSwappy task unpacks
+# the pinned AAR and passes its directory here; scripts/swappy-symbols.sh checks the result.
+if(ANDROID)
+    if(NOT AWAKE_SWAPPY_DIR)
+        message(FATAL_ERROR "AWAKE_SWAPPY_DIR is not set: run android-native's extractSwappy task")
+    endif()
+    set(SWAPPY_LIBRARY ${AWAKE_SWAPPY_DIR}/libs/android.${ANDROID_ABI}/libswappy_static.a)
+    if(NOT EXISTS ${SWAPPY_LIBRARY})
+        message(FATAL_ERROR "No Swappy library for ${ANDROID_ABI} at ${SWAPPY_LIBRARY}")
+    endif()
+    add_library(swappy_static STATIC IMPORTED)
+    set_target_properties(swappy_static PROPERTIES IMPORTED_LOCATION ${SWAPPY_LIBRARY})
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE SwappyVk_native.cpp)
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${AWAKE_SWAPPY_DIR}/include)
+    target_link_libraries(${CMAKE_PROJECT_NAME} swappy_static)
+    # Swappy's symbols stay inside this library: exported, they could bind to another copy an app
+    # loads (games-frame-pacing's own libswappy.so), or it to ours.
+    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "-Wl,--exclude-libs,libswappy_static.a")
+endif()

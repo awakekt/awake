@@ -5,6 +5,8 @@
 
 #include <includes/VulkanUtils.h>
 
+#include <atomic>
+
 namespace awake {
 jobjectArray
 getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
@@ -282,6 +284,14 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         // unable to process void
     }
 
+    // Null until Swappy is switched on; read on the presenting thread, set from another (#1699).
+    static std::atomic<PresentHook> presentHook{nullptr};
+
+    void
+    setPresentHook(PresentHook hook) {
+        presentHook.store(hook, std::memory_order_release);
+    }
+
     // vkQueuePresentKHR answering VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR instead of throwing
     // them: a pre-rotated phone panel presents suboptimally every frame (#1688). Other errors throw.
     jint
@@ -289,7 +299,8 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         auto queue = reinterpret_cast<VkQueue>(arg0);
         VkPresentInfoKHR info{};
         VkPresentInfoKHRAccessor(env, arg1).fromObject(info);
-        VkResult result = vkQueuePresentKHR(queue, &info);
+        PresentHook hook = presentHook.load(std::memory_order_acquire);
+        VkResult result = hook != nullptr ? hook(queue, &info) : vkQueuePresentKHR(queue, &info);
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR) {
             exception_utils::resultException(env, result,
                                              "There was a problem executing vkQueuePresentKHR");
