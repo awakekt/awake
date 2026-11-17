@@ -133,7 +133,9 @@ internal fun bindWindowPointerInput(
     }
     // Without this the browser's own context menu covers the app's.
     window.addEventListener("contextmenu") { event -> event.preventDefault() }
-    bindWindowTouchInput(input, canvas)
+    // One pinch for both: Safari's gesture events for two fingers are the touches' pinch again.
+    val pinch = BrowserPinch(input)
+    bindWindowTouchInput(input, canvas, pinch)
     val wheelModifiers = WheelModifiers(input, afterFrame)
     // Non-passive: a browser treats a wheel listener on the window as passive unless told otherwise,
     // and ignores preventDefault in a passive one.
@@ -151,7 +153,7 @@ internal fun bindWindowPointerInput(
         if (canvas.box().contains(wheel.clientX.toDouble(), wheel.clientY.toDouble())) wheel.preventDefault()
     }
     // The same pinch again, typed: InputSnapshot.pinch, and Safari's gesture events.
-    bindWindowPinchInput(input, canvas)
+    bindWindowPinchInput(input, canvas, pinch)
 }
 
 /** Binds browser window keyboard keydown, keyup, and blur events to engine [input]. */

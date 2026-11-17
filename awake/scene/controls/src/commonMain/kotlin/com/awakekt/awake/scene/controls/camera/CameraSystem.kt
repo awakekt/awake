@@ -110,6 +110,9 @@ class CameraSystem(
      * orbit needs both the policy and the active rig's [CameraRig.orbitButtons] to allow it.
      */
     private fun currentDrag(input: GameplayInput, inViewport: Boolean, orbitButtons: CameraOrbitButtons): Drag? {
+        // Two fingers pinch, and the first still drives the pointer: moving it must zoom, not orbit or pan.
+        // With no drag on those frames, the finger left down after the pinch starts a fresh one, without a jump.
+        if (input.isMultiTouch) return null
         val held = when {
             gesturePolicy.isPanDragging.isDragging(input) -> Drag.Pan
             gesturePolicy.isOrbitDragging.isDragging(input) && orbitButtons.allowsDrag(input) -> Drag.Orbit

@@ -78,6 +78,9 @@ class GameplayInput(
      */
     val pinch: PinchGesture? get() = if (claimed.isCaptured || claimed.isModalOpen) null else snapshot.pinch
 
+    /** Two or more fingers are down, a pinch: see [InputSnapshot.isMultiTouch]. No camera drags then. */
+    val isMultiTouch: Boolean get() = snapshot.isMultiTouch
+
     /**
      * Whether [button] is held for the world, gated by the same capture and modal rules as [pointerDown].
      *

@@ -74,6 +74,7 @@ public final class com/awakekt/awake/scene/controls/GameplayInput : com/awakekt/
 	public fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public final fun isModalOpen ()Z
+	public final fun isMultiTouch ()Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z

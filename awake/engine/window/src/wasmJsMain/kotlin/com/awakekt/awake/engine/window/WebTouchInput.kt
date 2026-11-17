@@ -17,10 +17,12 @@ import org.w3c.dom.events.Event
  * Passes every finger on a touch screen to [input] as a touch, so the UI sees multi-finger gestures;
  * the first finger also drives the primary pointer (see [Input.setTouch]).
  *
+ * After each event, [pinch] reads the fingers still down, so two of them pinch.
+ *
  * Each event is cancelled. Otherwise the browser follows a tap with emulated mouse events, which
  * would press the UI a second time, and pinches zoom the page instead of reaching the app.
  */
-internal fun bindWindowTouchInput(input: Input, canvas: HTMLCanvasElement) {
+internal fun bindWindowTouchInput(input: Input, canvas: HTMLCanvasElement, pinch: BrowserPinch) {
     fun pass(list: TouchList, down: Boolean) {
         val box = canvas.box()
         for (i in 0 until list.length) {
@@ -34,6 +36,7 @@ internal fun bindWindowTouchInput(input: Input, canvas: HTMLCanvasElement) {
         val touches = event as TouchEvent
         // A lift reports the fingers that left; the rest stay where they were.
         if (lifts) pass(touches.changedTouches, down = false) else pass(touches.touches, down = true)
+        pinch.touch(touches.touches.length)
         event.preventDefault()
     }
     listen("touchstart", lifts = false)
