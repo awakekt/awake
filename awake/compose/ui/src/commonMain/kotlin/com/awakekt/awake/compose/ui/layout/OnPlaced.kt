@@ -14,17 +14,31 @@ import com.awakekt.awake.compose.ui.node.OnPlacedModifierNode
  *
  * Fires on every pass, not only on change: a caller that wants change-detection can compare, and a
  * modifier that silently skipped a call would be the harder bug to find.
+ *
+ * A function type boxes its four `Int`s on each call. A node placed every frame, such as one of a
+ * HUD's hundreds of elements, passes an [OnPlacedListener] instead, which takes them unboxed (#1512).
  */
 fun Modifier.onPlaced(onPlaced: (x: Int, y: Int, width: Int, height: Int) -> Unit): Modifier =
-    this then OnPlacedElement(onPlaced)
+    this then OnPlacedElement(onPlaced, null)
+
+/** [onPlaced] with a [listener] that takes the bounds unboxed: nothing is allocated per pass. */
+fun Modifier.onPlaced(listener: OnPlacedListener): Modifier = this then OnPlacedElement(null, listener)
+
+/** Takes a node's tree-space bounds after each layout pass, as [Modifier.onPlaced] reports them. */
+fun interface OnPlacedListener {
+    /** Called after each layout pass with the node's tree-space position and resolved size. */
+    fun onPlaced(x: Int, y: Int, width: Int, height: Int)
+}
 
 private class OnPlacedElement(
-    private val callback: (Int, Int, Int, Int) -> Unit,
+    private val callback: ((Int, Int, Int, Int) -> Unit)?,
+    private val listener: OnPlacedListener?,
 ) : ModifierNodeElement<OnPlacedNode>() {
     override fun create(): OnPlacedNode = OnPlacedNode()
 
     override fun update(node: OnPlacedNode) {
         node.callback = callback
+        node.listener = listener
     }
     override fun toString(): String = "onPlaced()"
 }
@@ -32,8 +46,13 @@ private class OnPlacedElement(
 private class OnPlacedNode :
     Modifier.Node(),
     OnPlacedModifierNode {
-    lateinit var callback: (Int, Int, Int, Int) -> Unit
-    override fun onPlaced(x: Int, y: Int, width: Int, height: Int) = callback.invoke(x, y, width, height)
+    var callback: ((Int, Int, Int, Int) -> Unit)? = null
+    var listener: OnPlacedListener? = null
+
+    override fun onPlaced(x: Int, y: Int, width: Int, height: Int) {
+        val unboxed = listener
+        if (unboxed != null) unboxed.onPlaced(x, y, width, height) else callback?.invoke(x, y, width, height)
+    }
 
     override fun toString(): String = "onPlaced()"
 }

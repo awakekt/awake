@@ -132,7 +132,14 @@ interface PointerInputNode {
 
 /** A modifier link that contributes semantics. */
 interface SemanticsModifierNode {
-    /** The semantics this link contributes to its node. */
+    /**
+     * The semantics this link contributes to its node.
+     *
+     * Treat it as a value: to change what the link reports, return a different configuration, as
+     * `Modifier.semantics` does each time it composes; don't mutate one already returned. The
+     * semantics tree builder keeps its last tree while every link returns the same configurations,
+     * so a configuration changed in place would go unreported (#1512).
+     */
     val semanticsConfiguration: SemanticsConfiguration
 }
 

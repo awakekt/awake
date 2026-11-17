@@ -53,26 +53,59 @@ class SemanticsNode(
  * Run after layout: bounds come from resolved positions, so this cannot run mid-measure.
  */
 class SemanticsTreeBuilder {
+    private val trace = SemanticsTrace()
+    private var last: List<SemanticsNode> = emptyList()
+
+    /** The merged configurations of [last]'s nodes, in the order [collect] made them. */
+    private val merged = ArrayList<SemanticsConfiguration>()
+    private var reuse = false
+
+    /** Whether the last [build] handed back its earlier tree, or kept its merged configurations. */
+    internal var reusedLast = false
+        private set
+    private var mergedCursor = 0
 
     /**
      * Builds the semantics nodes for the placed tree under [root], including its layers.
      *
      * A layout node that declares no semantics adds no entry: its semantics descendants appear under
      * the nearest ancestor that declares some, or at the top level of the result.
+     *
+     * When nothing the last tree was built from has changed, it returns that tree again, allocating
+     * nothing; when only bounds moved, it builds new nodes around the same merged configurations
+     * (#1512). A frame that composed and measured nothing pays one walk of the placed tree.
      */
     fun build(root: LayoutNode): List<SemanticsNode> {
+        when (trace.compare(root)) {
+            SemanticsTrace.SAME -> {
+                reusedLast = true
+                return last
+            }
+            SemanticsTrace.MOVED -> {
+                reuse = true
+                mergedCursor = 0
+            }
+            else -> {
+                reuse = false
+                merged.clear()
+            }
+        }
+        reusedLast = reuse
+        trace.clear()
         val out = mutableListOf<SemanticsNode>()
-        collect(root, out)
+        collect(root, out, depth = 0)
+        last = out
         return out
     }
 
     /** Appends every semantics node in this subtree that is not absorbed by a merging ancestor. */
-    private fun collect(node: LayoutNode, out: MutableList<SemanticsNode>) {
-        val config = node.semanticsConfiguration()
-        if (config == null) {
-            forEachChild(node) { collect(it, out) }
+    private fun collect(node: LayoutNode, out: MutableList<SemanticsNode>, depth: Int) {
+        if (node.semanticsModifiers.isEmpty()) {
+            forEachChild(node) { collect(it, out, depth) }
             return
         }
+        trace.record(node, depth, absorbed = false)
+        val config = if (reuse) merged[mergedCursor++] else node.semanticsConfiguration()!!.also { merged += it }
         out += if (config.isMergingDescendants) {
             // The subtree collapses into this one node: a button reports as a button, not as a
             // button containing a text containing nothing.
@@ -80,20 +113,26 @@ class SemanticsTreeBuilder {
             // Clearing skips the absorb: `clearAndSetSemantics` replaces what is beneath it rather
             // than filling its own gaps from it, which is how a chart of a hundred labelled bars
             // reports "revenue by month" instead of a hundred bars.
-            if (!config.isClearingDescendants) absorbDescendants(node, config)
+            if (!config.isClearingDescendants) absorbDescendants(node, config, depth + 1)
             SemanticsNode(config, node.absoluteX, node.absoluteY, node.width, node.height, emptyList())
         } else {
             val children = mutableListOf<SemanticsNode>()
-            forEachChild(node) { collect(it, children) }
+            forEachChild(node) { collect(it, children, depth + 1) }
             SemanticsNode(config, node.absoluteX, node.absoluteY, node.width, node.height, children)
         }
     }
 
-    /** Folds descendants' properties into [config] without letting them overwrite it. */
-    private fun absorbDescendants(node: LayoutNode, config: SemanticsConfiguration) {
+    /**
+     * Folds descendants' properties into [config] without letting them overwrite it. A reused
+     * [config] already holds them, so only the trace is recorded.
+     */
+    private fun absorbDescendants(node: LayoutNode, config: SemanticsConfiguration, depth: Int) {
         forEachChild(node) { child ->
-            child.semanticsConfiguration()?.let { config.mergeFrom(it) }
-            absorbDescendants(child, config)
+            if (child.semanticsModifiers.isNotEmpty()) {
+                trace.record(child, depth, absorbed = true)
+                if (!reuse) child.semanticsConfiguration()?.let { config.mergeFrom(it) }
+            }
+            absorbDescendants(child, config, depth)
         }
     }
 
@@ -128,3 +167,16 @@ private fun LayoutNode.semanticsConfiguration(): SemanticsConfiguration? {
     }
     return merged
 }
+
+/**
+ * Whether these trees report the same nodes, bounds and property values, node by node: what
+ * `ComposeHost.verifySkippedCompositions` compares a reused tree with a fresh build by (#1512).
+ */
+internal fun List<SemanticsNode>.sameSemanticsAs(other: List<SemanticsNode>): Boolean =
+    size == other.size && indices.all { i ->
+        val a = this[i]
+        val b = other[i]
+        a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height &&
+            a.config.keys == b.config.keys && a.config.keys.all { a.config[it] == b.config[it] } &&
+            a.children.sameSemanticsAs(b.children)
+    }

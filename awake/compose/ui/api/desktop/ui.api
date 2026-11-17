@@ -1192,8 +1192,13 @@ public final class com/awakekt/awake/compose/ui/layout/MeasureScope$DefaultImpls
 }
 
 public final class com/awakekt/awake/compose/ui/layout/OnPlacedKt {
+	public static final fun onPlaced (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/layout/OnPlacedListener;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun onPlaced (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function4;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun onSizeChanged (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
+public abstract interface class com/awakekt/awake/compose/ui/layout/OnPlacedListener {
+	public abstract fun onPlaced (IIII)V
 }
 
 public abstract class com/awakekt/awake/compose/ui/layout/Placeable {
@@ -1516,6 +1521,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getSkipUnchangedMeasure ()Z
 	public final fun getSkippedCompositions ()I
 	public final fun getSkippedMeasures ()I
+	public final fun getStaleSemantics ()I
 	public final fun getStaleSkips ()I
 	public final fun getVerifySkippedCompositions ()Z
 	public final fun getWindowInsets ()Lcom/awakekt/awake/compose/ui/platform/WindowInsets;

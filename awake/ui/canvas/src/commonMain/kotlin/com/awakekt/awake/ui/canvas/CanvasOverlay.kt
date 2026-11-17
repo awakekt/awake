@@ -46,6 +46,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
+import com.awakekt.awake.compose.ui.layout.OnPlacedListener
 import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.layout.onSizeChanged
 import com.awakekt.awake.compose.ui.platform.LocalDensity
@@ -179,7 +180,7 @@ private fun ScaledCanvas(
         planFollowersOnce(frameClock.frame, box.width / uiScale, box.height / uiScale, canvasDensity, limits, particleClock)
     }
     val planned = Modifier.planningFollowers(tree, planning)
-    Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }.then(planned)) {
+    Box(Modifier.fillMaxSize().onPlaced(OnPlacedListener { x, y, _, _ -> origin.place(x, y) }).then(planned)) {
         val screen = this
         // A denser dp scales every size, offset, font and image corner beneath it in one place. The
         // host's text style is not the scene's: an element's text looks only as its own data says.
@@ -346,11 +347,15 @@ internal fun CanvasElementView(
     // canvas's own units.
     val units = LocalCanvasDensity.current.takeIf { it > 0f } ?: density
     val origin = tree.origin
-    val placed = modifier.onPlaced { x, y, w, h ->
-        val bounds = Rectangle((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
-        element.screenBounds = bounds
-        element.placedBounds = bounds
-    }
+    // Unboxed, and a box that did not move keeps its Rectangle: hundreds of elements are placed on
+    // every frame, skipped or not (#1512).
+    val placed = modifier.onPlaced(
+        OnPlacedListener { x, y, w, h ->
+            val bounds = element.placedBounds.orAt((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
+            element.screenBounds = bounds
+            element.placedBounds = bounds
+        },
+    )
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
@@ -488,3 +493,7 @@ internal class CanvasBoxSize {
         const val UNPLACED = -1
     }
 }
+
+/** This rectangle when it already has these bounds, or a new one: a box that did not move keeps its own. */
+private fun Rectangle?.orAt(x: Float, y: Float, width: Float, height: Float): Rectangle =
+    this?.takeIf { it.x == x && it.y == y && it.width == width && it.height == height } ?: Rectangle(x, y, width, height)
