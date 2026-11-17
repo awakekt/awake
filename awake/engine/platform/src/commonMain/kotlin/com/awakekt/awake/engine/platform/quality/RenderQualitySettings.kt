@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.platform.quality
 
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.DynamicResolutionController
 import com.awakekt.awake.render.renderer.DynamicResolutionStats
@@ -65,6 +66,16 @@ class RenderQualitySettings(
      * shadow budgets (#1688).
      */
     var shadowBudgetOverride: ShadowBudget? = null
+
+    /**
+     * The effect quality [applyTo] sets instead of the preset's, or `null` (the default) for
+     * [RenderQualityPolicy.effectQuality]'s. It lets an app keep [RenderQuality.Auto], and with it
+     * [dynamicResolution], without Auto's choice of effects: on a phone Auto draws [EffectQuality.Low].
+     * With [shadowBudgetOverride], resolution adapts while effects and shadows stay as the app chose
+     * (#1709). Read every frame. Setting [Renderer.effectQuality] directly does not hold, because
+     * [applyTo] writes it each frame.
+     */
+    var effectQualityOverride: EffectQuality? = null
 
     /**
      * The depth format the engine builds its shadow maps in, or `null` (the default) for the engine's
@@ -135,7 +146,7 @@ class RenderQualitySettings(
                 RenderQualityPolicy.renderScale(current, renderer.outputWidth, renderer.outputHeight, device, budgets)
             }
         }
-        val effects = RenderQualityPolicy.effectQuality(current, device)
+        val effects = effectQualityOverride ?: RenderQualityPolicy.effectQuality(current, device)
         if (renderer.effectQuality != effects) renderer.effectQuality = effects
         val shadows = shadowBudgetOverride ?: RenderQualityPolicy.shadowBudget(current, device)
         if (renderer.shadowBudget != shadows) renderer.shadowBudget = shadows
