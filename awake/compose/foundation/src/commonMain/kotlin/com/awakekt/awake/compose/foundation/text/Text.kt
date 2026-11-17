@@ -17,6 +17,7 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.platform.LocalFont
+import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.UiFont
@@ -64,6 +65,8 @@ fun Text(
             maxLines = maxLines,
         )
         policy.cache = state.cache
+        // Read for its frame number, which nothing observes: the motion's holds count frames (#1764).
+        state.motion.clock = LocalFrameClock.current
         policy.motion = state.motion
         Layout(
             nodeType = TextNodeType,

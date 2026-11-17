@@ -8,6 +8,7 @@ package com.awakekt.awake.compose.foundation.text
 import com.awakekt.awake.compose.runtime.MutableState
 import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.compose.runtime.readsAreTracked
+import com.awakekt.awake.compose.ui.platform.FrameClock
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -48,6 +49,23 @@ internal class TextMotionState {
     private var scaleHoldFrames = 0
     private val paintOffsetTracker = SubpixelOffsetTracker()
 
+    /**
+     * The composition's clock, so each hold counts frames rather than passes (#1764). A frame can
+     * measure and paint a node more than once: a placement write composes and lays out again, and
+     * `ComposeHost.verifySkippedCompositions` measures and paints a skipped frame a second time to
+     * compare. Counting per pass settled a run faster than [SETTLE_FRAMES] frames on such frames, and
+     * the verifier's second pass could cross from the distance field to pixel glyphs that the first
+     * had not, a stale skip that was not there. Null outside a host: every pass then counts.
+     */
+    var clock: FrameClock? = null
+    private var measuredFrame = NO_FRAME
+    private var paintedFrame = NO_FRAME
+    private var lastPaint: TextPaintMotion? = null
+    private var lastScaled = false
+    private var lastAligned = false
+    private var lastOffsetX = 0f
+    private var lastOffsetY = 0f
+
     // A settling run changes on its next pass although nothing tracked changed: the holds count down
     // per pass. A host that skips an unchanged measure or replays an unchanged draw (#1512) would
     // freeze it mid-settle, so while it settles each recorded pass reads and flips this flag, which
@@ -73,6 +91,12 @@ internal class TextMotionState {
      * other size. The first pass has nothing to compare against, so it is always at rest.
      */
     fun onMeasure(rawEmPx: Float, styleScale: Float): Boolean {
+        val frame = clock?.frame ?: NO_FRAME
+        if (frame != NO_FRAME && frame == measuredFrame && rawEmPx == lastRawEmPx && styleScale == lastStyleScale) {
+            runAgainWhile(sizeHoldFrames > 0)
+            return smoothSizing
+        }
+        measuredFrame = frame
         if (!measureInitialized) {
             measureInitialized = true
             lastRawEmPx = rawEmPx
@@ -102,6 +126,23 @@ internal class TextMotionState {
      * outline ring passes so every pass of one decorated run agrees on the same motion state.
      */
     fun resolvePaint(isScopeScaled: Boolean, isScopeAligned: Boolean, offsetX: Float, offsetY: Float): TextPaintMotion {
+        val frame = clock?.frame ?: NO_FRAME
+        val repeated = lastPaint
+        val sameInputs = isScopeScaled == lastScaled && isScopeAligned == lastAligned &&
+            offsetX == lastOffsetX && offsetY == lastOffsetY
+        if (frame != NO_FRAME && frame == paintedFrame && sameInputs && repeated != null) {
+            runAgainWhile(scaleHoldFrames > 0 || sizeHoldFrames > 0 || paintOffsetTracker.isSettling)
+            return repeated
+        }
+        paintedFrame = frame
+        lastScaled = isScopeScaled
+        lastAligned = isScopeAligned
+        lastOffsetX = offsetX
+        lastOffsetY = offsetY
+        return resolveNewPaint(isScopeScaled, isScopeAligned, offsetX, offsetY).also { lastPaint = it }
+    }
+
+    private fun resolveNewPaint(isScopeScaled: Boolean, isScopeAligned: Boolean, offsetX: Float, offsetY: Float): TextPaintMotion {
         if (isScopeScaled) {
             scaleHoldFrames = SETTLE_FRAMES
         } else if (scaleHoldFrames > 0) {
@@ -138,6 +179,9 @@ internal class TextMotionState {
         private const val SCALE_EPSILON = 1e-4f
         private const val RESIDUAL_EPSILON = 1e-4f
         internal const val SETTLE_FRAMES = 8
+
+        /** No frame yet: [FrameClock.frame] counts from 1. */
+        private const val NO_FRAME = -1L
     }
 }
 
