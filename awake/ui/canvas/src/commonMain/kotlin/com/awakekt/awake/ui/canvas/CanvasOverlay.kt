@@ -351,14 +351,7 @@ internal fun CanvasElementView(
     // every frame, skipped or not (#1512).
     val placed = modifier.onPlaced(
         OnPlacedListener { x, y, w, h ->
-            val bx = (x - origin.x) / units
-            val by = (y - origin.y) / units
-            val last = element.placedBounds
-            val bounds = if (last != null && last.x == bx && last.y == by && last.width == w / units && last.height == h / units) {
-                last
-            } else {
-                Rectangle(bx, by, w / units, h / units)
-            }
+            val bounds = element.placedBounds.orAt((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
             element.screenBounds = bounds
             element.placedBounds = bounds
         },
@@ -500,3 +493,7 @@ internal class CanvasBoxSize {
         const val UNPLACED = -1
     }
 }
+
+/** This rectangle when it already has these bounds, or a new one: a box that did not move keeps its own. */
+private fun Rectangle?.orAt(x: Float, y: Float, width: Float, height: Float): Rectangle =
+    this?.takeIf { it.x == x && it.y == y && it.width == width && it.height == height } ?: Rectangle(x, y, width, height)
