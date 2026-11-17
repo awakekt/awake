@@ -8,6 +8,7 @@
 package com.awakekt.awake.scene.canvas
 
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @JsFun("() => { globalThis.gc(); }")
 private external fun collectGarbage()
@@ -19,7 +20,8 @@ private external fun usedHeapBytes(): Double
  * [FollowerStageHeap] in a browser (#1512): the heap a skipped follower frame grows by in each stage
  * of `ComposeHost.frame`. A still frame allocates about 0.5 KB per element here and none on the JVM,
  * so the stage whose figure stands above [FollowerStageHeapProbeTest]'s holds the Wasm-only part.
- * Each case keeps the smaller of two runs.
+ * Each case keeps the smaller of two runs, and 600 boxes with no modifier but their size must place
+ * within [PLACEMENT_BUDGET_KB] a still frame.
  */
 class FollowerStageHeapBrowserTest {
     private fun smaller(run: (FollowerStageHeap) -> DoubleArray): DoubleArray {
@@ -40,11 +42,11 @@ class FollowerStageHeapBrowserTest {
         val unfollowed = run(moving = false, FollowerParts.All.copy(follow = false))
         val boxes = PlainOffsetBoxes(PLAIN_BOXES)
         val plain = smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> boxes.frame(host) } }
-        val perLink = PlainOffsetBoxes.Links.entries.joinToString("; ") { links ->
+        val placements = PlainOffsetBoxes.Links.entries.associateWith { links ->
             val kind = PlainOffsetBoxes(PLAIN_BOXES, links)
-            val placement = smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> kind.frame(host) } }[1]
-            "$links ${((placement * 10).toInt() / 10.0)}"
+            smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> kind.frame(host) } }[1]
         }
+        val perLink = placements.entries.joinToString("; ") { (links, kb) -> "$links ${((kb * 10).toInt() / 10.0)}" }
         println("FollowerStageHeap (browser), still, $PLAIN_BOXES plain boxes, KB of heap in placement by link: $perLink")
         val raw = listOf("sized" to PlainLayouts(PLAIN_BOXES, leaves = false), "leaves" to PlainLayouts(PLAIN_BOXES, leaves = true))
             .joinToString("; ") { (name, kind) ->
@@ -56,11 +58,16 @@ class FollowerStageHeapBrowserTest {
             "FollowerStageHeap (browser), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
                 "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",
         )
+        // Box placed each child through Alignment's SAM wrapper, which boxed two IntSizes and an
+        // IntOffset per child here and nothing on the JVM: 56 KB a still frame for these boxes.
+        val unmodified = placements.getValue(PlainOffsetBoxes.Links.None)
+        assertTrue(unmodified < PLACEMENT_BUDGET_KB, "$PLAIN_BOXES unmodified boxes placed in $unmodified KB a still frame")
     }
 
     private companion object {
         const val WARM_UP = 60
         const val FRAMES = 30
         const val PLAIN_BOXES = 600
+        const val PLACEMENT_BUDGET_KB = 8.0
     }
 }

@@ -15,6 +15,7 @@ import com.awakekt.awake.compose.ui.layout.PlacementScope
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.IntOffset
 import com.awakekt.awake.compose.ui.unit.IntSize
+import com.awakekt.awake.compose.ui.unit.LayoutDirection
 
 /**
  * Stacks children on top of each other, sized to the largest.
@@ -29,14 +30,7 @@ class BoxMeasurePolicy(
     constructor(
         horizontalAlignment: Alignment.Horizontal,
         verticalAlignment: Alignment.Vertical,
-    ) : this(
-        Alignment { size, space, layoutDirection ->
-            IntOffset(
-                horizontalAlignment.align(size.width, space.width, layoutDirection),
-                verticalAlignment.align(size.height, space.height),
-            )
-        },
-    )
+    ) : this(AxisAlignment(horizontalAlignment, verticalAlignment))
 
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
@@ -96,3 +90,13 @@ class BoxMeasurePolicy(
 }
 
 private val PlaceNothing: PlacementScope.() -> Unit = {}
+
+/**
+ * [horizontal] and [vertical] as one [Alignment]. A class rather than a lambda through `Alignment`'s
+ * SAM constructor, which Kotlin/Wasm wraps in a generic function that boxes its `IntSize` arguments
+ * and `IntOffset` result on every child placed (#1512).
+ */
+internal class AxisAlignment(private val horizontal: Alignment.Horizontal, private val vertical: Alignment.Vertical) : Alignment {
+    override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset =
+        IntOffset(horizontal.align(size.width, space.width, layoutDirection), vertical.align(size.height, space.height))
+}
