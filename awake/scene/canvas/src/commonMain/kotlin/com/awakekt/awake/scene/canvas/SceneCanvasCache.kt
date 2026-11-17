@@ -116,6 +116,15 @@ internal class CanvasItemOrder(private val world: World) {
         return items
     }
 
+    /**
+     * Whether the last [items] still holds: the same elements in the same order, the same nodes on
+     * their paths with the same parents, and no sibling moved. False before the first [items].
+     */
+    fun isCurrent(): Boolean {
+        takeStores()
+        return unchanged()
+    }
+
     private fun takeStores() {
         if (typesGeneration != world.generation) {
             transformType = world.typeId(Transform::class)

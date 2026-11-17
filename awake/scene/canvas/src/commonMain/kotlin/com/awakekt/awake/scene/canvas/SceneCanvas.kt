@@ -110,6 +110,13 @@ fun SceneCanvas(
     val order = remember(world) { CanvasItemOrder(world) }
     val named = remember(world) { CanvasNodeNames(world) }
     named.nextFrame()
+    // Read, so a host that skips unchanged frames composes this again when anything drawn here changes (#1512).
+    val changes = remember(world) { SceneCanvasChanges(world, order) }
+    changes.ordered = siblingOrder == null
+    changes.images = images
+    changes.fonts = fonts
+    changes.locale = strings?.locale?.value
+    changes.value
     CanvasOverlay(
         if (siblingOrder == null) order.items() else world.canvasItems(siblingOrder),
         modifier,
