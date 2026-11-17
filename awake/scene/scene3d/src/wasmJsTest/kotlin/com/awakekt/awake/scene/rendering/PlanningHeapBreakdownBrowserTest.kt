@@ -75,17 +75,11 @@ class PlanningHeapBreakdownBrowserTest {
         val preparer = CachingPreparer()
         val scratch = com.awakekt.awake.render.passes.ScenePassScratch()
         val context = GpuDrawPreparationContext(viewProjection = camera.lens.viewProjectionMatrix(1f, ClipSpace.WebGpu), cameraEye = camera.lens.eye)
-        // The same draws as fresh commands carrying only the fields the synthetic frame sets.
-        val copies = draws.map { draw ->
-            com.awakekt.awake.render.passes.RenderDrawCommand(
-                draw.mesh,
-                draw.material,
-                model = com.awakekt.awake.core.math.Mat4().set(draw.model),
-                worldBounds = draw.worldBounds?.let { Aabb(Vec3f(it.min.x, it.min.y, it.min.z), Vec3f(it.max.x, it.max.y, it.max.z)) },
-                transparent = draw.transparent,
-                shadowsOnly = draw.shadowsOnly,
-            )
-        }
+        // The same draws as fresh commands carrying only the fields the synthetic frame sets, then
+        // with one more of the scene's fields each, to find the one the compile pays for (#1621).
+        val copies = CompileFieldCopies.plain(draws)
+        val allFields = CompileFieldCopies.all(draws)
+        val byField = CompileFieldCopies.byField(draws)
         fun compileWith(drawn: List<com.awakekt.awake.render.passes.RenderDrawCommand>, light: com.awakekt.awake.render.passes.uniforms.SceneLight?, environment: com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms) =
             com.awakekt.awake.render.passes.ScenePassCompiler.compile(
                 camera.lens, drawn, light, environment, ClipSpace.WebGpu, 1f, null, preparer,
@@ -95,6 +89,7 @@ class PlanningHeapBreakdownBrowserTest {
             "compileNoLight" to { compileWith(draws, null, contributions.environment) },
             "compileDefaultEnvironment" to { compileWith(draws, contributions.light, com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms.Default) },
             "compileCopiedDraws" to { compileWith(copies, contributions.light, contributions.environment) },
+            "compileAllFields" to { compileWith(allFields, contributions.light, contributions.environment) },
             "compilePreparerOnly" to { for (i in draws.indices) preparer.prepare(draws[i], i, context) },
             "compileSceneDraws" to {
                 com.awakekt.awake.render.passes.ScenePassCompiler.compile(
@@ -102,7 +97,9 @@ class PlanningHeapBreakdownBrowserTest {
                     emptyList(), com.awakekt.awake.render.imagepass.ImagePassChain.Empty, null, scratch,
                 )
             },
-        )
+        ) + byField.map { (field, drawn) ->
+            "compileWith_$field" to { compileWith(drawn, contributions.light, contributions.environment) }
+        }
 
         val stages = StageHeap()
         val system = RenderSystem3D(renderer, drawPreparer = CachingPreparer()).apply { drawStages = stages }
@@ -116,6 +113,10 @@ class PlanningHeapBreakdownBrowserTest {
         val costs = (parts + compileParts).map { (name, pass) -> name to bytesPerRenderer(pass) }
         val beforeParticles = costs.first { it.first == "beforeParticles" }.second
         assertTrue(beforeParticles <= BEFORE_PARTICLES_BUDGET, "the draw loop took $beforeParticles B a renderer")
+        // The scene's own draws compile as copies of them do: each renderer's own animation vector once
+        // cost 157 B a renderer through Vec3f's data-class equals (#1621).
+        val compile = costs.first { it.first == "compileSceneDraws" }.second
+        assertTrue(compile <= COMPILE_BUDGET, "the compile of the scene's draws took $compile B a renderer")
         return costs.joinToString { (name, bytes) -> "$name=${bytes.toInt()}" } +
             ", frame stages collect ${(stages.collect / KB).toInt()} KB, compile ${(stages.compile / KB).toInt()} KB"
     }
@@ -181,6 +182,9 @@ class PlanningHeapBreakdownBrowserTest {
 
         /** The draw loop, bytes a renderer: 224 (157 over versioned transforms) before #1696, 0 after. */
         const val BEFORE_PARTICLES_BUDGET = 8.0
+
+        /** The compile of the scene's draws, bytes a renderer: 172 (130 versioned) before #1716; plain copies of them, 15 (17). */
+        const val COMPILE_BUDGET = 48.0
         val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
     }
 }

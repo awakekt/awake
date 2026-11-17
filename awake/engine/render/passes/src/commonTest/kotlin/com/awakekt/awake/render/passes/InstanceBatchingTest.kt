@@ -35,6 +35,19 @@ class InstanceBatchingTest {
     }
 
     @Test
+    fun drawsWithEqualAnimationsInTheirOwnVectorsFoldTogether() {
+        // As a scene's renderers have them: one vector each, equal in value (#1621).
+        val draws = (0 until 3).map {
+            RenderDrawCommand(mesh, material, model = at(it.toFloat()), vertexAnimation = Vec3f(0.2f, 1f, 0f))
+        }
+        val different = RenderDrawCommand(mesh, material, model = at(9f), vertexAnimation = Vec3f(0.3f, 1f, 0f))
+
+        val batched = batchInstances(draws + different) { _, _ -> true }
+
+        assertEquals(listOf(3, 1), batched.map { it.instanceModels?.size ?: 1 })
+    }
+
+    @Test
     fun drawsThatDifferInMoreThanPlacementStayApart() {
         val base = RenderDrawCommand(mesh, material, extraUniformFloats = floatArrayOf(1f))
         val draws = listOf(

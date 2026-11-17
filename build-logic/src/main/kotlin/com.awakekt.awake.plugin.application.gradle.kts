@@ -7,6 +7,7 @@ import com.awakekt.awake.build.extension.AwakeExtension
 
 plugins {
     id("com.awakekt.awake.plugin.test-resources")
+    id("com.awakekt.awake.plugin.browser-tests")
 }
 
 extensions.create("awake", AwakeExtension::class.java, project)
