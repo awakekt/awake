@@ -7,7 +7,8 @@
 # miss, verify what is there either way, then save only a verified miss. A save before the
 # verification, or a build that ignores the restore, is the mistake this catches. JoltC's device and
 # simulator slices are cached apart, each under a key and a path naming only its own slice, so a
-# restore cannot put one slice's library where the other's link reads it.
+# restore cannot put one slice's library where the other's link reads it. JoltC's keys also carry the
+# Xcode version, so a runner image with a new SDK rebuilds rather than links older archives.
 set -euo pipefail
 
 action="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.github/actions/ios-native/action.yml"
@@ -48,7 +49,7 @@ check() { # name restore build verify save cache-id must-contain... [-- must-not
 
 check MoltenVK "Restore the MoltenVK build" "Build MoltenVK for iOS" "Verify the xcframework carries both slices" \
   "Save the verified MoltenVK build" moltenvk-cache 'runner.arch' 'steps.pins.outputs.moltenvk'
-recipe=('steps.pins.outputs.joltc' 'awake/backend/jolt/build.gradle.kts' 'NativeCMake.kt' 'runner.arch')
+recipe=('steps.pins.outputs.joltc' 'steps.pins.outputs.xcode' 'awake/backend/jolt/build.gradle.kts' 'NativeCMake.kt' 'runner.arch')
 check "JoltC device" "Restore the JoltC device build" "Build JoltC for iOS" "Verify the JoltC libraries for both slices" \
   "Save the verified JoltC device build" joltc-device "${recipe[@]}" iosArm64 -- iosSimulatorArm64 'joltc-native/*'
 check "JoltC simulator" "Restore the JoltC simulator build" "Build JoltC for iOS" "Verify the JoltC libraries for both slices" \

@@ -20,6 +20,11 @@ runs:
       run: |
         echo "moltenvk=$(git rev-parse HEAD:awake/backend/vulkan/bindings/ios-native/MoltenVK)" >> "$GITHUB_OUTPUT"
         echo "joltc=$(git rev-parse HEAD:awake/backend/jolt/ios-native/JoltC)" >> "$GITHUB_OUTPUT"
+        # The SDK JoltC is compiled against: a runner image with a new Xcode rebuilds it rather than
+        # linking archives made by an older one. "Xcode 16.4" and "Build version 16F6" become 16.4-16F6.
+        xcode=$(xcodebuild -version | awk '$1 == "Xcode" { v = $2 } $1 == "Build" { b = $3 } END { print v "-" b }')
+        test "$xcode" != "-" || { echo "::error::Could not read the Xcode version"; exit 1; }
+        echo "xcode=$xcode" >> "$GITHUB_OUTPUT"
 
     - name: Restore the MoltenVK build
       id: moltenvk-cache
@@ -112,10 +117,11 @@ runs:
 
     # JoltC and JoltPhysics are pinned like MoltenVK, but their CMake recipe (defines such as
     # USE_ASSERTS, the sysroots, the deployment target) lives in the module's build script and the
-    # shared CMake helper, so those are part of the key too. Only the static libraries cinterop links
-    # are kept, not CMake's object files: they are all a later link reads (#1592). Each slice has its
-    # own key and its own directory, so a restore can only put a device library where the device
-    # build expects it, and a simulator library where the simulator build does.
+    # shared CMake helper, so those are part of the key too, as is the Xcode it was built with. Only
+    # the static libraries cinterop links are kept, not CMake's object files: they are all a later link
+    # reads (#1592). Each slice has its own key and its own directory, so a restore can only put a
+    # device library where the device build expects it, and a simulator library where the simulator
+    # build does.
     - name: Restore the JoltC device build
       id: joltc-device
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -123,7 +129,7 @@ runs:
         path: |
           awake/backend/jolt/build/joltc-native/iosArm64/libjoltc.a
           awake/backend/jolt/build/joltc-native/iosArm64/JoltPhysics/Build/libJolt.a
-        key: joltc-ios-v2-${{ runner.os }}-${{ runner.arch }}-iosArm64-${{ steps.pins.outputs.joltc }}-${{ hashFiles('awake/backend/jolt/build.gradle.kts', 'build-logic/src/main/kotlin/com/awakekt/awake/build/extension/NativeCMake.kt') }}
+        key: joltc-ios-v3-${{ runner.os }}-${{ runner.arch }}-iosArm64-xcode${{ steps.pins.outputs.xcode }}-${{ steps.pins.outputs.joltc }}-${{ hashFiles('awake/backend/jolt/build.gradle.kts', 'build-logic/src/main/kotlin/com/awakekt/awake/build/extension/NativeCMake.kt') }}
 
     - name: Restore the JoltC simulator build
       id: joltc-simulator
@@ -132,7 +138,7 @@ runs:
         path: |
           awake/backend/jolt/build/joltc-native/iosSimulatorArm64/libjoltc.a
           awake/backend/jolt/build/joltc-native/iosSimulatorArm64/JoltPhysics/Build/libJolt.a
-        key: joltc-ios-v2-${{ runner.os }}-${{ runner.arch }}-iosSimulatorArm64-${{ steps.pins.outputs.joltc }}-${{ hashFiles('awake/backend/jolt/build.gradle.kts', 'build-logic/src/main/kotlin/com/awakekt/awake/build/extension/NativeCMake.kt') }}
+        key: joltc-ios-v3-${{ runner.os }}-${{ runner.arch }}-iosSimulatorArm64-xcode${{ steps.pins.outputs.xcode }}-${{ steps.pins.outputs.joltc }}-${{ hashFiles('awake/backend/jolt/build.gradle.kts', 'build-logic/src/main/kotlin/com/awakekt/awake/build/extension/NativeCMake.kt') }}
 
     # The module owns the CMake invocation, so there is no recipe to duplicate here: run its tasks,
     # for the slices that missed. cinterop does not depend on them, so skipping one on a hit leaves
