@@ -22,6 +22,7 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.application.WebGpuContentFeatureGpu
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
@@ -38,6 +39,7 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.DepthTarget
+import com.awakekt.awake.webgpu.texture.webGpuDepthFormat
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
@@ -54,7 +56,14 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  *
  * **This is wgpu-native, not a browser** -- see [webGpuHeadlessUi] for what that leaves uncovered.
  */
-fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
+fun webGpuHeadlessScene(): HeadlessRenderSession = webGpuHeadlessScene(ShadowDepthFormat.Default)
+
+/**
+ * [webGpuHeadlessScene] with its shadow array, and every caster pipeline drawing into it, in
+ * [shadowDepthFormat], as `WebGpuEngine.shadowDepthFormat` builds them (#1709).
+ */
+fun webGpuHeadlessScene(shadowDepthFormat: ShadowDepthFormat): HeadlessRenderSession = runBlocking {
+    val shadowTextureFormat = webGpuDepthFormat(shadowDepthFormat)
     // Errors from before this session are not its own; the build's backstop has their tests.
     WebGpuUncapturedErrors.drain()
     val context = glfwContextRenderer(
@@ -237,12 +246,14 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             layers = 1,
             arrayed = true,
             comparison = true,
+            format = shadowDepthFormat,
         ),
         depthOnlyPipeline = DepthOnlyPipeline(
             graphicsDevice = graphicsDevice,
             shaderCode = wgsl(PackShaderSets.ShadowDepth),
             vertexFormat = VertexFormat.PositionNormalColor,
             cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+            depthFormat = shadowTextureFormat,
             bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
             bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
         ),
@@ -253,6 +264,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.ParticleShadowDepth),
                 vertexFormat = VertexFormat.PositionUv,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 variant = PipelineVariant.AlphaBlendedParticle,
                 bindingsByGroup = PackShaderSets.ParticleShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.ParticleShadowDepth.webGpu.bindingsMetadataAvailable,
@@ -265,6 +277,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.ShadowDepth),
                 vertexFormat = VertexFormat.PositionNormalColorUv,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
@@ -274,6 +287,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.SkinnedTexturedShadowDepth),
                 vertexFormat = VertexFormat.PositionNormalColorUvSkin,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 bindingsByGroup = PackShaderSets.SkinnedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.SkinnedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
@@ -284,6 +298,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.MaskedTexturedShadowDepth),
                 vertexFormat = VertexFormat.PositionNormalColorUv,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 bindingsByGroup = PackShaderSets.MaskedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.MaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
@@ -292,6 +307,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.SkinnedMaskedTexturedShadowDepth),
                 vertexFormat = VertexFormat.PositionNormalColorUvSkin,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 bindingsByGroup = PackShaderSets.SkinnedMaskedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.SkinnedMaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
@@ -301,6 +317,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.InstancedMaskedTexturedShadowDepth),
                 vertexFormat = VertexFormat.PositionNormalColorUv,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 variant = PipelineVariant.Instanced,
                 bindingsByGroup = PackShaderSets.InstancedMaskedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.InstancedMaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
@@ -312,6 +329,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 shaderCode = wgsl(PackShaderSets.InstancedTexturedShadowDepth),
                 vertexFormat = VertexFormat.PositionNormalColorUv,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                depthFormat = shadowTextureFormat,
                 variant = PipelineVariant.Instanced,
                 bindingsByGroup = PackShaderSets.InstancedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.InstancedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,

@@ -31,6 +31,7 @@ import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSet
 import com.awakekt.awake.render.pipeline.entryPoint
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
@@ -100,6 +101,13 @@ open class WebGpuEngine(
     private lateinit var lineRenderPipeline: LineRenderPipeline
 
     /**
+     * The depth format of the shadow maps (#1709), as on Vulkan: [ShadowDepthFormat.Depth32Float] by
+     * default, [ShadowDepthFormat.Depth16Unorm] to halve their memory on a mobile tier. Read once,
+     * when the engine builds its GPU resources: set it before the engine starts.
+     */
+    var shadowDepthFormat: ShadowDepthFormat = ShadowDepthFormat.Default
+
+    /**
      * Called once when the browser reports this engine's device lost, after the loss has gone to the
      * app's `AppErrorHandler` and before the next animation frame, which the host no longer draws.
      * Set it before `launchWebGpuGame` creates the device, in the factory that builds the engine.
@@ -166,6 +174,7 @@ open class WebGpuEngine(
                     layers = 1,
                     arrayed = true,
                     comparison = true,
+                    format = shadowDepthFormat,
                 ),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
@@ -176,6 +185,7 @@ open class WebGpuEngine(
                     cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                     bindingsByGroup = shadowShaders.webGpu.bindingsByGroup,
                     bindingsMetadataAvailable = shadowShaders.webGpu.bindingsMetadataAvailable,
+                    depthFormat = com.awakekt.awake.webgpu.texture.webGpuDepthFormat(shadowDepthFormat),
                 ),
                 primaryFormat = vertexFormat,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
@@ -324,6 +334,7 @@ open class WebGpuEngine(
                     layers = 1,
                     arrayed = true,
                     comparison = true,
+                    format = shadowDepthFormat,
                 )
             }
         }

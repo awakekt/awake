@@ -60,6 +60,7 @@ internal suspend fun casterDepthPass(
             bindingsByGroup = shaders.webGpu.bindingsByGroup,
             bindingsMetadataAvailable = shaders.webGpu.bindingsMetadataAvailable,
             shadowBias = shadowBias,
+            depthFormat = target.textureFormat,
         )
 
     val variants = plan.depthPrePassVariants

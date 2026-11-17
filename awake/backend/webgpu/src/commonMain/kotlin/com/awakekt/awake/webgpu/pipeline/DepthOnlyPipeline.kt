@@ -51,7 +51,7 @@ import io.ygdrasil.webgpu.VertexState
 
 /**
  * Colorless graphics pipeline for rendering into a `DepthTarget`: no fragment output, no color
- * attachment, `Depth32Float` only. Takes the caller's shader and vertex layout, so what it
+ * attachment, a [depthFormat] depth attachment only. Takes the caller's shader and vertex layout, so what it
  * renders and from which viewpoint are the caller's business.
  */
 class DepthOnlyPipeline(
@@ -85,6 +85,9 @@ class DepthOnlyPipeline(
      * pass places its casters by a pass matrix too, but feeds raw depth to depth fog: it passes false.
      */
     shadowBias: Boolean = true,
+    /** The depth format of the target this pipeline draws into: its `DepthTarget.textureFormat`.
+     * WebGPU rejects a pass whose attachment differs from the pipeline's (#1709). */
+    val depthFormat: GPUTextureFormat = GPUTextureFormat.Depth32Float,
 ) {
     /**
      * What this pipeline binds, group by group. A scene caster's material group always holds the
@@ -96,7 +99,7 @@ class DepthOnlyPipeline(
     private val groups: Map<Int, GroupBindings> =
         if (groupZeroLayout == null) bindingsByGroup.withFrameBlockInMaterialGroup() else bindingsByGroup
 
-    /** The colorless `Depth32Float` render pipeline built from the caller's shader. */
+    /** The colorless [depthFormat] render pipeline built from the caller's shader. */
     val pipeline: GPURenderPipeline
 
     /**
@@ -331,7 +334,7 @@ class DepthOnlyPipeline(
                     // Bias only the cascade (light-space) pass -- same reasoning and constants as
                     // Vulkan's twin: the scene-depth pass feeds depth_fog, which reads raw depth.
                     depthStencil = DepthStencilState(
-                        format = GPUTextureFormat.Depth32Float,
+                        format = depthFormat,
                         depthWriteEnabled = true,
                         depthCompare = GPUCompareFunction.LessEqual,
                         stencilFront = StencilFaceState(),

@@ -25,7 +25,6 @@ import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPULoadOp
 import io.ygdrasil.webgpu.GPUStoreOp
-import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.RenderPassDepthStencilAttachment
 import io.ygdrasil.webgpu.RenderPassDescriptor
 import io.ygdrasil.webgpu.beginRenderPass
@@ -53,6 +52,9 @@ class DepthPrePassFeature(
 
     /** Whether each pass this records counts as a shadow pass: true for the light's cascades, not the camera's depth. */
     internal var countsShadowPasses = false
+
+    /** What a cascade's retained bundle declares: no colour, [depthTarget]'s own depth format. */
+    private val cascadeLayout = BundleLayout(emptyList(), depthTarget.textureFormat, sampleCount = 1)
 
     /** A content feature's depth pipeline, over that feature's own group 0, and what hands it a
      * draw each frame. Its pipeline is the caller's to destroy, once removed from `contentCasters`. */
@@ -199,7 +201,7 @@ class DepthPrePassFeature(
             // a frame (a canvas view's portrait beside the main one) replaced each other's cells,
             // and every cascade cell was encoded again every frame (#1621).
             val key: Any = if (view == null) depthTarget.viewFor(cascade) else ViewCascade(view, cascade)
-            val retained = retainedBundles?.pass(key, CASCADE_LAYOUT)
+            val retained = retainedBundles?.pass(key, cascadeLayout)
             val recorder = WebGpuCommandRecorder(this, stats, retained)
             recorder.setScissor(0, 0, depthTarget.size, depthTarget.size)
             var boundPipeline: DepthOnlyPipeline? = null
@@ -324,7 +326,6 @@ private const val CASTERS = "casters"
 private data class ViewCascade(val view: Any, val cascade: Int)
 
 /** A cascade pass's attachments: depth only, one sample. */
-private val CASCADE_LAYOUT = BundleLayout(emptyList(), GPUTextureFormat.Depth32Float, sampleCount = 1)
 
 /** The matrix a layer no sub-pass renders keeps: one, never written to, not a new one a frame. */
 private val UnusedCascade = Mat4()
