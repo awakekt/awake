@@ -107,6 +107,8 @@ class Painter {
 
     private fun paintNodeBody(node: LayoutNode) {
         nodesPainted++
+        val owners = owners
+        owners?.enter(scope.retained.current.size, node)
         scope.enter(node)
         val chain = node.drawModifiers
         if (chain.isEmpty()) {
@@ -116,6 +118,25 @@ class Painter {
             // lands underneath; an overlay calls it first.
             paintChainLink(node, chain, 0)
         }
+        owners?.exit(scope.retained.current.size)
+    }
+
+    /** Set while [ownerOf] paints: where each node's output starts and ends. */
+    private var owners: PaintOwners? = null
+
+    /**
+     * The layout node that draws primitive [index] of [root]'s paint, or null past its end (#1512).
+     * Paints [root] afresh, replaying nothing, so the next paint records what it draws again.
+     */
+    internal fun ownerOf(root: LayoutNode, index: Int): LayoutNode? {
+        val marks = PaintOwners()
+        owners = marks
+        try {
+            paintOutput(root, retain = false, reuse = false)
+        } finally {
+            owners = null
+        }
+        return marks.ownerOf(index)
     }
 
     private fun paintChainLink(node: LayoutNode, chain: List<DrawModifierNode>, index: Int) {

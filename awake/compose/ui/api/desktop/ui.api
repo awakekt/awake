@@ -1748,6 +1748,7 @@ public final class com/awakekt/awake/compose/ui/platform/StaleSkip {
 	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/StaleSkip;ILcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/StaleSkip;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getComposed ()Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;
+	public final fun getOwner ()Ljava/lang/Object;
 	public final fun getPrimitiveIndex ()I
 	public final fun getSkipped ()Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;
 	public fun hashCode ()I
