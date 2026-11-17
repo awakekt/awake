@@ -46,6 +46,12 @@ class FollowerStageHeapBrowserTest {
             "$links ${((placement * 10).toInt() / 10.0)}"
         }
         println("FollowerStageHeap (browser), still, $PLAIN_BOXES plain boxes, KB of heap in placement by link: $perLink")
+        val raw = listOf("sized" to PlainLayouts(PLAIN_BOXES, leaves = false), "leaves" to PlainLayouts(PLAIN_BOXES, leaves = true))
+            .joinToString("; ") { (name, kind) ->
+                val placement = smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> kind.frame(host) } }[1]
+                "$name ${((placement * 10).toInt() / 10.0)}"
+            }
+        println("FollowerStageHeap (browser), still, $PLAIN_BOXES children of a parent that places them itself, KB in placement: $raw")
         println(
             "FollowerStageHeap (browser), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
                 "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",

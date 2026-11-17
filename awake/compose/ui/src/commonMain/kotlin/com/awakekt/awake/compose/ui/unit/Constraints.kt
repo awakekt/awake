@@ -41,8 +41,12 @@ value class Constraints private constructor(private val packed: Long) {
 
     private fun unpack(shift: Int): Int = ((packed ushr shift) and FIELD_MASK).toInt()
 
-    private fun unpackMax(shift: Int): Int =
-        unpack(shift).let { if (it == RESERVED_INFINITY) Infinity else it }
+    // A local and an `if`, not `let`: Kotlin/Wasm boxed the Int through `let` twice on every
+    // maxWidth or maxHeight read, which the JVM never showed (#1512).
+    private fun unpackMax(shift: Int): Int {
+        val field = unpack(shift)
+        return if (field == RESERVED_INFINITY) Infinity else field
+    }
 
     /** Returns these constraints with the given fields replaced, validated the same way as [of]. */
     fun copy(

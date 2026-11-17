@@ -31,6 +31,12 @@ class FollowerStageHeapProbeTest {
             "$links ${((placement * 10).toInt() / 10.0)}"
         }
         println("FollowerStageHeap (JVM), still, $PLAIN_BOXES plain boxes, KB allocated in placement by link: $perLink")
+        val raw = listOf("sized" to PlainLayouts(PLAIN_BOXES, leaves = false), "leaves" to PlainLayouts(PLAIN_BOXES, leaves = true))
+            .joinToString("; ") { (name, kind) ->
+                val placement = FollowerStageHeap(::allocated).measure(WARM_UP, FRAMES, {}) { kind.frame(it) }[1]
+                "$name ${((placement * 10).toInt() / 10.0)}"
+            }
+        println("FollowerStageHeap (JVM), still, $PLAIN_BOXES children of a parent that places them itself, KB in placement: $raw")
         println(
             "FollowerStageHeap (JVM), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
                 "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",
