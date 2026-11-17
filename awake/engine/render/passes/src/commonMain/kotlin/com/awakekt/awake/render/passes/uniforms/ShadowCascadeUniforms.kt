@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_MAP_SIZE
 import com.awakekt.awake.render.passes.cascadeBlendStartDistances
 import com.awakekt.awake.render.passes.cascadeShadowBoxes
 import com.awakekt.awake.render.passes.cascadeSplitDistances
@@ -30,13 +31,16 @@ fun shadowCascadeUniforms(
     count: Int = DEFAULT_SHADOW_CASCADES,
     shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
     shadowFade: Float = 0f,
+    mapSize: Int = DEFAULT_SHADOW_MAP_SIZE,
 ): ShadowCascadeUniforms {
     // Cascades stop at the shadow distance, not at the camera's far plane. Fitting to the far
     // plane spends the whole map on ground nobody can resolve: a 1000m view gave a 5m-wide scene
     // cascades 329m, 676m and 2338m across -- texels of 16cm to 114cm, on which a 2m box is six
     // texels wide and every artefact downstream of that is unfixable by bias.
     val splits = cascadeSplitDistances(camera.near, minOf(camera.far, shadowDistance), count)
-    val boxes = cascadeShadowBoxes(camera, aspect, light.direction, clipSpace, splits)
+    // Snapped to whole texels of the map the backend draws, not of the default size: a 1024 map
+    // snapped on a 2048 grid moves by half texels as the camera moves, and shimmers (#1709).
+    val boxes = cascadeShadowBoxes(camera, aspect, light.direction, clipSpace, splits, mapSize)
     return ShadowCascadeUniforms(
         viewProjections = boxes.map { it.viewProjection },
         splitDistances = splits,
@@ -50,6 +54,18 @@ fun shadowCascadeUniforms(
     ).also { it.shadowFade = shadowFade }
 }
 
+/** [shadowCascadeUniforms] as released before `mapSize`, kept so compiled callers still link. */
+@Deprecated("Use the overload with mapSize.", level = DeprecationLevel.HIDDEN)
+fun shadowCascadeUniforms(
+    light: SceneLight,
+    camera: com.awakekt.awake.core.math.Lens,
+    aspect: Float,
+    clipSpace: com.awakekt.awake.core.math.ClipSpace,
+    count: Int = DEFAULT_SHADOW_CASCADES,
+    shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+    shadowFade: Float = 0f,
+): ShadowCascadeUniforms = shadowCascadeUniforms(light, camera, aspect, clipSpace, count, shadowDistance, shadowFade, DEFAULT_SHADOW_MAP_SIZE)
+
 /** [shadowCascadeUniforms] as released before [shadowFade], kept so compiled callers still link. */
 @Deprecated("Use the overload with shadowFade.", level = DeprecationLevel.HIDDEN)
 fun shadowCascadeUniforms(
@@ -59,7 +75,7 @@ fun shadowCascadeUniforms(
     clipSpace: com.awakekt.awake.core.math.ClipSpace,
     count: Int = DEFAULT_SHADOW_CASCADES,
     shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
-): ShadowCascadeUniforms = shadowCascadeUniforms(light, camera, aspect, clipSpace, count, shadowDistance, 0f)
+): ShadowCascadeUniforms = shadowCascadeUniforms(light, camera, aspect, clipSpace, count, shadowDistance, 0f, DEFAULT_SHADOW_MAP_SIZE)
 
 /**
  * The depth pass's own tiny block: which cascade it is rendering right now.

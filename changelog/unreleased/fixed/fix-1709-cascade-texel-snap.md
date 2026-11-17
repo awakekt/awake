@@ -1,0 +1,1 @@
+- A directional shadow under a reduced shadow budget no longer shimmers as the camera moves: each cascade is snapped to whole texels of the budget's own map size (a 1024 map under `ShadowBudget.Reduced`), not of the default 2048, where a static point moved by half texels (#1709). `shadowCascadeUniforms` takes the map size as `mapSize`.

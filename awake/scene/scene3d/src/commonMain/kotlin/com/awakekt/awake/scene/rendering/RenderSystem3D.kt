@@ -70,7 +70,7 @@ class RenderSystem3D(
         rendererClipSpace = renderer.clipSpace,
         drawPreparer = drawPreparer,
         features = features,
-        shadowCascades = { renderer.shadowBudget.cascades },
+        shadowBudget = { renderer.shadowBudget },
     )
     private var elapsedTimeSeconds = 0f
     private var lastPlannedFrame: SceneRenderPlanner3D.PlannedFrame? = null
