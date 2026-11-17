@@ -14,6 +14,8 @@ import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.ParticleDrawLayout
 import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
+import com.awakekt.awake.render.renderer.SkinnedDrawLayout
+import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,7 +33,7 @@ class DrawBlockWritersAllocationTest {
     fun packingWithWritersGivesTheSameFloats() {
         val writers = DrawBlockWriters()
         for (case in cases) {
-            for (draw in draws) {
+            for (draw in case.draws) {
                 val fresh = draw.drawBlockFloats(case.floats, alphaToCoverageEnabled = true, instancedKind = case.kind)
                 val kept = draw.drawBlockFloats(case.floats, alphaToCoverageEnabled = true, instancedKind = case.kind, writers = writers)
                 assertEquals(fresh.toList(), kept.toList(), "${case.name}: the writers pack the same block")
@@ -45,15 +47,15 @@ class DrawBlockWritersAllocationTest {
         assertEquals("false", diagnostics.getVMOption("DoEscapeAnalysis").value, "this gate needs -XX:-DoEscapeAnalysis")
         val writers = DrawBlockWriters()
         for (case in cases) {
-            val fresh = bytesPerPack { draw -> draw.drawBlockFloats(case.floats, true, case.kind).size }
-            val kept = bytesPerPack { draw -> draw.drawBlockFloats(case.floats, true, case.kind, writers).size }
+            val fresh = bytesPerPack(case.draws) { draw -> draw.drawBlockFloats(case.floats, true, case.kind).size }
+            val kept = bytesPerPack(case.draws) { draw -> draw.drawBlockFloats(case.floats, true, case.kind, writers).size }
             println("${case.name} draw block: $fresh B a pack without writers, $kept B with")
             // At the least the block's own float array is gone; the writer and any payload copy with it.
             assertTrue(kept + floatArrayBytes(case.floats) <= fresh, "${case.name}: $kept B with writers against $fresh B without")
         }
     }
 
-    private inline fun bytesPerPack(pack: (RenderDrawCommand) -> Int): Long {
+    private inline fun bytesPerPack(draws: List<RenderDrawCommand>, pack: (RenderDrawCommand) -> Int): Long {
         var sink = 0
         repeat(WARM_UP) { sink += pack(draws[it % draws.size]) }
         val before = threads.currentThreadAllocatedBytes
@@ -66,22 +68,15 @@ class DrawBlockWritersAllocationTest {
     /** A float array's header and its floats, rounded to the JVM's 8-byte alignment. */
     private fun floatArrayBytes(floats: Int): Long = (ARRAY_HEADER + floats * Float.SIZE_BYTES + 7L) / 8 * 8
 
-    private class Case(val name: String, val floats: Int, val kind: InstancedDrawKind?)
+    private class Case(val name: String, val floats: Int, val kind: InstancedDrawKind?, val draws: List<RenderDrawCommand> = litDraws)
 
     private companion object {
         const val PACKS = 20_000
         const val WARM_UP = 2_000
         const val ARRAY_HEADER = 16L
 
-        val cases = listOf(
-            Case("textured", MaterialUniformLayouts.PbrTexturedDraw.total, null),
-            Case("lit", MaterialUniformLayouts.LitDraw.total, null),
-            Case("lit shadow", MaterialUniformLayouts.LitShadowDraw.total, null),
-            Case("particle", ParticleDrawLayout.total, InstancedDrawKind.Particle),
-        )
-
-        val mesh = object : Mesh {
-            override val format = VertexFormat.PositionNormalColor
+        fun mesh(vertexFormat: VertexFormat) = object : Mesh {
+            override val format = vertexFormat
             override val sizeBytes = 0L
             override fun destroy() = Unit
         }
@@ -92,13 +87,30 @@ class DrawBlockWritersAllocationTest {
         }
 
         /** Draws in different places with a full payload, built once so packing them allocates nothing of the test's. */
-        val draws = List(8) { index ->
-            RenderDrawCommand(
-                mesh,
-                material,
-                model = Mat4().translate(index.toFloat(), 0f, -index.toFloat()),
-                extraUniformFloats = FloatArray(MaterialUniformLayouts.PbrTexturedMaterial.total) { 0.01f * (it + index) },
-            )
+        val litDraws = draws(VertexFormat.PositionNormalColor, MaterialUniformLayouts.PbrTexturedMaterial.total)
+
+        /** Skinned draws carrying a joint palette and their factors. */
+        val skinnedDraws = draws(VertexFormat.PositionNormalColorSkin, SkinnedMaterialLayout.total)
+
+        fun draws(format: VertexFormat, payloadFloats: Int): List<RenderDrawCommand> {
+            val mesh = mesh(format)
+            return List(8) { index ->
+                RenderDrawCommand(
+                    mesh,
+                    material,
+                    model = Mat4().translate(index.toFloat(), 0f, -index.toFloat()),
+                    extraUniformFloats = FloatArray(payloadFloats) { 0.01f * (it + index) },
+                )
+            }
         }
+
+        val cases = listOf(
+            Case("textured", MaterialUniformLayouts.PbrTexturedDraw.total, null),
+            Case("lit", MaterialUniformLayouts.LitDraw.total, null),
+            Case("lit shadow", MaterialUniformLayouts.LitShadowDraw.total, null),
+            Case("particle", ParticleDrawLayout.total, InstancedDrawKind.Particle),
+            // The path a populated scene's measurement led through: a skinned draw's own block.
+            Case("skinned", SkinnedDrawLayout.total, null, skinnedDraws),
+        )
     }
 }
