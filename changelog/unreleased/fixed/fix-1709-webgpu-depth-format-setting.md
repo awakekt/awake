@@ -1,1 +1,0 @@
-- WebGPU builds its shadow maps in the format an app picks with `renderQuality { shadowDepthFormat }`, as Vulkan does, over `WebGpuEngine.shadowDepthFormat` (#1709). Until now the app's choice reached only Vulkan.

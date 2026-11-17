@@ -1,1 +1,0 @@
-- An anchored canvas element that eases onto whole pixels after a subpixel move steps its ease once per frame, however many times the frame draws, and repaints while it eases on a host that replays unchanged drawings, so a skipped frame no longer shows it a step behind or frozen mid-settle (#1721).
