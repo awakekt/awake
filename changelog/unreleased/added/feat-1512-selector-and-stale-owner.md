@@ -1,4 +1,0 @@
-- `StateFlow.collectAsState { … }` and `Store.collectAsState { … }` read one part of a flow's state (#1512).
-  - A composition that read the part is invalidated only when that part changes.
-  - A frame whose flow did not change costs one identity check, and allocates nothing.
-- `StaleSkip.owner` names the layout node that draws the first primitive a stale skipped frame got wrong, as `measureCauseOwner` does for a measure (#1512).

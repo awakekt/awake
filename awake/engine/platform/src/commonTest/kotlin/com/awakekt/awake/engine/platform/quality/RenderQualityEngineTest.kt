@@ -53,6 +53,28 @@ class RenderQualityEngineTest {
         assertEquals(ShadowBudget.Default, phone.shadowBudget, "the override keeps the shadows drawn before #1688")
     }
 
+    /**
+     * #1709: an app's own mid-tier choice of effects and shadows, kept under Auto, so the phone's
+     * resolution still adapts. Without the overrides, Auto draws Low effects and two cascades of 1024.
+     */
+    @Test
+    fun autoKeepsTheAppsEffectsAndShadowsWhileItsResolutionAdapts() {
+        val settings = RenderQualitySettings().apply {
+            effectQualityOverride = EffectQuality.Medium
+            shadowBudgetOverride = ShadowBudget(cascades = 3, mapSize = 2048)
+        }
+        val phone = SurfaceRenderer(2400, 1080, GpuDeviceClass.Mobile)
+        val engine = engineFor(app(settings), phone)
+        repeat(120) { engine.update(0.04f * (phone.renderScale * 1.5f) * (phone.renderScale * 1.5f)) }
+        assertTrue(phone.renderScale < 720f / 1080f, "dynamic resolution still lowers it: ${phone.renderScale}")
+        assertEquals(EffectQuality.Medium, phone.effectQuality, "the app's effects hold every frame")
+        assertEquals(ShadowBudget(cascades = 3, mapSize = 2048), phone.shadowBudget)
+
+        settings.effectQualityOverride = null
+        engine.update(0.016f)
+        assertEquals(EffectQuality.Low, phone.effectQuality, "without the override, Auto's own choice returns")
+    }
+
     /** #1688: a phone whose frames run long under Auto draws fewer pixels; a fixed preset does not move. */
     @Test
     fun autoLowersThePhonesResolutionWhileFramesRunLong() {

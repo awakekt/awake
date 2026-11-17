@@ -74,15 +74,3 @@ mavenPublishing {
 tasks.named<Test>("desktopTest") {
     jvmArgs("-XX:-DoEscapeAnalysis")
 }
-
-// The compile heap breakdown's figures are printed, and CI keeps only the log: each test is named
-// as it passes and its output shown, so a run proves the test ran and keeps its numbers (#1621).
-tasks.named<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>("wasmJsBrowserTest") {
-    testLogging {
-        events("passed", "skipped", "failed")
-        showStandardStreams = true
-        // A failure names its assertion in the log: CI uploads no browser test results here.
-        showExceptions = true
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-    }
-}

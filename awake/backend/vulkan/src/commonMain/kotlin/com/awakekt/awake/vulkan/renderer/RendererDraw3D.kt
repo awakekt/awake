@@ -102,7 +102,8 @@ internal fun VulkanRenderer.prepareGpuDraw(
     frameIndex: Int,
     instancedIndex: Int,
     isTransparent: Boolean,
-    materialUsage: MutableMap<RenderMaterial, Int> = mutableMapOf(),
+    // Null unless the caller counts slots itself: a default map was built on every call, per draw per frame.
+    materialUsage: MutableMap<RenderMaterial, Int>? = null,
     viewProjection: Mat4,
     cameraPosition: Vec3f,
     cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
@@ -126,7 +127,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         val instanceBuffer = instanceBufferForRun(instancedIndex).also {
             it.update(frameIndex, instanceModels)
         }
-        val uniformSlotIndex = if (explicitUniformSlotIndex >= 0) explicitUniformSlotIndex else materialUsage.nextSlot(material)
+        val uniformSlotIndex = materialUsage.slotFor(material, explicitUniformSlotIndex)
         val coverage = instancedPipeline.multisample.alphaToCoverageEnabled
         val split = instancedPipeline.drawBlockFloatsFor(cmd, material, kind, shadowCascades != null)
         val binding = material.writeBlock(
@@ -168,7 +169,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     }
     // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
     val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive, cmd.depthWrite) ?: return null
-    val uniformSlotIndex = if (explicitUniformSlotIndex >= 0) explicitUniformSlotIndex else materialUsage.nextSlot(material)
+    val uniformSlotIndex = materialUsage.slotFor(material, explicitUniformSlotIndex)
     val coverage = pipeline.multisample.alphaToCoverageEnabled
     val split = pipeline.drawBlockFloatsFor(cmd, material, null, shadowCascades != null)
     val binding = material.writeBlock(
@@ -399,7 +400,9 @@ internal data class PreparedDrawCall(
     override val depthJointPaletteBinding get() = jointPaletteBinding
 }
 
-private fun MutableMap<RenderMaterial, Int>.nextSlot(material: RenderMaterial): Int {
+/** The uniform slot a draw writes: the caller's, or the next one counted for [material], or 0 when nothing counts. */
+private fun MutableMap<RenderMaterial, Int>?.slotFor(material: RenderMaterial, explicit: Int): Int {
+    if (explicit >= 0 || this == null) return explicit.coerceAtLeast(0)
     val slot = this[material] ?: 0
     this[material] = slot + 1
     return slot

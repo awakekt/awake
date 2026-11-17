@@ -26,6 +26,7 @@ kotlin {
             api(project(":awake:scene:binding"))
             implementation(project(":awake:scene:scene-core"))
             api(project(":awake:compose:runtime"))
+            implementation(project(":awake:compose:state"))
             api(project(":awake:compose:ui"))
             // EntityAnchor returns the AnchorProvider a WorldAnchorLayout reads.
             api(project(":awake:compose:game"))
@@ -74,15 +75,4 @@ tasks.named<Test>("desktopTest") {
     // objects such as a class reference made for one read, hiding garbage Android's runtime, which
     // has no escape analysis, does make (#1169), and moving the count between JVMs (#945).
     jvmArgs("-XX:-DoEscapeAnalysis")
-}
-
-// The SceneCanvas poll test's figures are printed, and CI keeps only the log: each test is named as
-// it passes and its output shown, so a run proves the test ran and keeps its numbers (#1512).
-tasks.named<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>("wasmJsBrowserTest") {
-    testLogging {
-        events("passed", "skipped", "failed")
-        showStandardStreams = true
-        showExceptions = true
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-    }
 }

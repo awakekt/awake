@@ -1,1 +1,0 @@
-- `ComposeHost.verifySkippedCompositions` no longer reports a stale skip for a subtree a retained draw moved inside a translate range, which it compared by its spelling rather than where it lands, nor for a frame whose placement invalidates its composition, which the host composes again in that frame (#1512).
