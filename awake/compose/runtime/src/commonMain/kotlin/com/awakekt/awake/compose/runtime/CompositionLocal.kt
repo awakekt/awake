@@ -63,17 +63,20 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
         val source = from?.entries
         if (source == null) {
             entries.clear()
-            return
+        } else if (!sameAs(source)) {
+            entries.clear()
+            entries.addAll(source)
         }
-        if (sameAs(source)) return
-        entries.clear()
-        entries.addAll(source)
     }
 
     private fun sameAs(other: List<Any?>): Boolean {
-        if (other.size != entries.size) return false
-        for (i in 0 until entries.size) if (entries[i] != other[i]) return false
-        return true
+        var same = other.size == entries.size
+        var i = 0
+        while (same && i < entries.size) {
+            same = entries[i] == other[i]
+            i++
+        }
+        return same
     }
 
     /** Opens [local] = [value] for [content], and closes it when [content] returns or throws. */
