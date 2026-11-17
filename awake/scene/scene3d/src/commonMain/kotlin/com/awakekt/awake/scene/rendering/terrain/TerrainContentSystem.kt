@@ -60,25 +60,19 @@ class TerrainContentSystem(
     private val resolved = Channel<Resolved>(Channel.UNLIMITED)
     private val attached = Channel<Attached>(Channel.UNLIMITED)
 
-    /** The world [trackNew] reads, set for the length of one [update]. */
-    private var frameWorld: World? = null
-
-    /** A field rather than a lambda in [update], so querying allocates nothing per frame. */
-    private val trackNew: (Entity, TerrainComponent) -> Unit = { entity, terrain ->
-        if (find(entity) == null) {
-            val reference = frameWorld?.get<TerrainSurfaceReference>(entity)
-            if (reference != null || !surfacedOnly) track(entity, terrain, reference)
-        }
-    }
-
     override fun update(world: World, delta: Float) {
         releaseRemoved(world)
         place(world)
         applyAttached()
         applyResolved()
-        frameWorld = world
-        world.queryEach(TerrainComponent::class, trackNew)
-        frameWorld = null
+        // A lambda here, not a stored function: `queryEach` is inline, so this one is inlined into
+        // its loop, where a stored function's generic `invoke` boxed every Entity, each frame (#1742).
+        world.queryEach(TerrainComponent::class) { entity, terrain ->
+            if (find(entity) == null) {
+                val reference = world.get<TerrainSurfaceReference>(entity)
+                if (reference != null || !surfacedOnly) track(entity, terrain, reference)
+            }
+        }
     }
 
     /** Detaches every terrain this system attached and cancels what is still resolving. */
