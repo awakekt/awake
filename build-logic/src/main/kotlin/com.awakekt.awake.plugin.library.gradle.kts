@@ -6,6 +6,7 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.kotlin.multiplatform.library")
+    id("com.awakekt.awake.plugin.browser-tests")
 }
 
 kotlin {

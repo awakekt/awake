@@ -4,8 +4,8 @@
 
 name: Build the iOS native dependencies
 description: >
-  Builds MoltenVK and JoltC for iOS device and simulator, so Kotlin/Native cinterop can find
-  their headers and static libraries. Any job that touches an iOS target needs this --
+  Builds MoltenVK and JoltC for iOS device and simulator, or restores a verified earlier build of
+  the same pinned sources, so Kotlin/Native cinterop can find their headers and static libraries. Any job that touches an iOS target needs this --
   cinterop, the iOS tests and publishing all pull it into the task graph.
 
 runs:
@@ -20,6 +20,11 @@ runs:
       run: |
         echo "moltenvk=$(git rev-parse HEAD:awake/backend/vulkan/bindings/ios-native/MoltenVK)" >> "$GITHUB_OUTPUT"
         echo "joltc=$(git rev-parse HEAD:awake/backend/jolt/ios-native/JoltC)" >> "$GITHUB_OUTPUT"
+        # The SDK JoltC is compiled against: a runner image with a new Xcode rebuilds it rather than
+        # linking archives made by an older one. "Xcode 16.4" and "Build version 16F6" become 16.4-16F6.
+        xcode=$(xcodebuild -version | awk '$1 == "Xcode" { v = $2 } $1 == "Build" { b = $3 } END { print v "-" b }')
+        test "$xcode" != "-" || { echo "::error::Could not read the Xcode version"; exit 1; }
+        echo "xcode=$xcode" >> "$GITHUB_OUTPUT"
 
     - name: Restore the MoltenVK build
       id: moltenvk-cache
@@ -110,10 +115,88 @@ runs:
         path: ${{ steps.ndk.outputs.path }}
         key: ${{ steps.ndk-cache.outputs.cache-primary-key }}
 
-    # Cheap next to MoltenVK, and the module already owns the CMake invocation, so there is no
-    # recipe to duplicate here -- just run the tasks.
+    # JoltC and JoltPhysics are pinned like MoltenVK, but their CMake recipe (defines such as
+    # USE_ASSERTS, the sysroots, the deployment target) lives in the module's build script and the
+    # shared CMake helper, so those are part of the key too, as is the Xcode it was built with. Only
+    # the static libraries cinterop links are kept, not CMake's object files: they are all a later link
+    # reads (#1592). Each slice has its own key and its own directory, so a restore can only put a
+    # device library where the device build expects it, and a simulator library where the simulator
+    # build does.
+    - name: Restore the JoltC device build
+      id: joltc-device
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          awake/backend/jolt/build/joltc-native/iosArm64/libjoltc.a
+          awake/backend/jolt/build/joltc-native/iosArm64/JoltPhysics/Build/libJolt.a
+        key: joltc-ios-v3-${{ runner.os }}-${{ runner.arch }}-iosArm64-xcode${{ steps.pins.outputs.xcode }}-${{ steps.pins.outputs.joltc }}-${{ hashFiles('awake/backend/jolt/build.gradle.kts', 'build-logic/src/main/kotlin/com/awakekt/awake/build/extension/NativeCMake.kt') }}
+
+    - name: Restore the JoltC simulator build
+      id: joltc-simulator
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          awake/backend/jolt/build/joltc-native/iosSimulatorArm64/libjoltc.a
+          awake/backend/jolt/build/joltc-native/iosSimulatorArm64/JoltPhysics/Build/libJolt.a
+        key: joltc-ios-v3-${{ runner.os }}-${{ runner.arch }}-iosSimulatorArm64-xcode${{ steps.pins.outputs.xcode }}-${{ steps.pins.outputs.joltc }}-${{ hashFiles('awake/backend/jolt/build.gradle.kts', 'build-logic/src/main/kotlin/com/awakekt/awake/build/extension/NativeCMake.kt') }}
+
+    # The module owns the CMake invocation, so there is no recipe to duplicate here: run its tasks,
+    # for the slices that missed. cinterop does not depend on them, so skipping one on a hit leaves
+    # nothing stale.
     - name: Build JoltC for iOS
+      if: steps.joltc-device.outputs.cache-hit != 'true' || steps.joltc-simulator.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        DEVICE_HIT: ${{ steps.joltc-device.outputs.cache-hit }}
+        SIMULATOR_HIT: ${{ steps.joltc-simulator.outputs.cache-hit }}
+      run: |
+        tasks=()
+        [[ "$DEVICE_HIT" == true ]] || tasks+=(:awake:backend:jolt:buildJoltCIosArm64)
+        [[ "$SIMULATOR_HIT" == true ]] || tasks+=(:awake:backend:jolt:buildJoltCIosSimulatorArm64)
+        ./gradlew "${tasks[@]}"
+
+    # The -L paths and library names awake/backend/jolt/build.gradle.kts writes into the JoltC .def,
+    # each a non-empty arm64 archive, so a restored half-build fails here and not inside the link.
+    # Where an archive's objects name their platform (LC_BUILD_VERSION: 2 iOS, 7 the simulator;
+    # LC_VERSION_MIN_IPHONEOS: iOS), every one must be its slice's. An archive that names none is kept
+    # to its slice by its own key and path only: on this action's first run (#1714) JoltPhysics'
+    # libJolt.a carried no LC_BUILD_VERSION.
+    - name: Verify the JoltC libraries for both slices
       shell: bash
       run: |
-        ./gradlew :awake:backend:jolt:buildJoltCIosArm64 \
-                  :awake:backend:jolt:buildJoltCIosSimulatorArm64
+        for entry in iosArm64:2 iosSimulatorArm64:7; do
+          target=${entry%%:*} expected=${entry##*:}
+          for lib in "libjoltc.a" "JoltPhysics/Build/libJolt.a"; do
+            path="awake/backend/jolt/build/joltc-native/$target/$lib"
+            test -s "$path" || { echo "::error::$path missing -- JoltC build incomplete"; exit 1; }
+            archs=$(lipo -archs "$path")
+            [[ "$archs" == arm64 ]] || { echo "::error::$path is $archs, not arm64"; exit 1; }
+            platforms=$(otool -l "$path" | awk '
+              $1 == "cmd" { cmd = $2; if (cmd == "LC_VERSION_MIN_IPHONEOS") seen[2] = 1 }
+              cmd == "LC_BUILD_VERSION" && $1 == "platform" { seen[$2] = 1 }
+              END { for (p in seen) printf "%s ", p }')
+            if [[ -z "$platforms" ]]; then
+              echo "::notice::$path names no platform; it is kept to its slice by its cache key and path"
+            elif [[ "$platforms" != "$expected " ]]; then
+              echo "::error::$path holds objects for Mach-O platform(s) ${platforms% }, not $expected"; exit 1
+            fi
+          done
+        done
+
+    - name: Save the verified JoltC device build
+      if: steps.joltc-device.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          awake/backend/jolt/build/joltc-native/iosArm64/libjoltc.a
+          awake/backend/jolt/build/joltc-native/iosArm64/JoltPhysics/Build/libJolt.a
+        key: ${{ steps.joltc-device.outputs.cache-primary-key }}
+
+    - name: Save the verified JoltC simulator build
+      if: steps.joltc-simulator.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          awake/backend/jolt/build/joltc-native/iosSimulatorArm64/libjoltc.a
+          awake/backend/jolt/build/joltc-native/iosSimulatorArm64/JoltPhysics/Build/libJolt.a
+        key: ${{ steps.joltc-simulator.outputs.cache-primary-key }}
