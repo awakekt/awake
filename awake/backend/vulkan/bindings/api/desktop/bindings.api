@@ -2340,6 +2340,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanBuffers {
 	public final fun vkGetBufferMemoryRequirements (JJ)Lcom/awakekt/awake/vulkan/models/VkMemoryRequirements;
 	public final fun writeBufferMemoryBytes (JJJ[B)V
 	public final fun writeBufferMemoryFloats (JJJ[F)V
+	public final fun writeBufferMemoryFloats (JJJ[FII)V
 }
 
 public final class com/awakekt/awake/vulkan/gen/VulkanDescriptors {

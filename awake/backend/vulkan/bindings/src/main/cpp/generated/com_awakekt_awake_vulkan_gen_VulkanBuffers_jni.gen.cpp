@@ -462,6 +462,54 @@ Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_writeBufferMemoryFloats(
 }
 
 
+// Hand-written: writeBufferMemoryFloats(device, memory, offset, data, dataOffset, count) reaches
+// this through its own name, because an overloaded native method would bind to the short symbol
+// above. Same one-copy form as writeBufferMemoryFloats: GetFloatArrayRegion writes floats
+// [dataOffset, dataOffset + count) straight into the mapped pointer, so a caller that stages many
+// slots in one array writes the dirty range without copying it into an array of its own first.
+// The Kotlin side has already checked the range lies inside the array.
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_writeBufferMemoryFloatRange(
+        JNIEnv* env,
+        jclass clazz,
+        jlong device,
+        jlong memory,
+        jlong offset,
+        jfloatArray data,
+        jint dataOffset,
+        jint count) {
+    void* device_ptr = reinterpret_cast<void*>(device);
+    void* memory_ptr = reinterpret_cast<void*>(memory);
+    if (!device_ptr) {
+        throw_illegal_state(env, "writeBufferMemoryFloats: device not initialized");
+        return;
+    }
+    if (!memory_ptr) {
+        throw_illegal_state(env, "writeBufferMemoryFloats: memory not initialized");
+        return;
+    }
+    // vkMapMemory rejects a zero size, and an empty write has nothing to do anyway.
+    if (count <= 0) return;
+
+    void* mapped = nullptr;
+    VkDeviceSize sizeBytes = static_cast<VkDeviceSize>(count) * sizeof(float);
+    VkResult result = vkMapMemory(
+        reinterpret_cast<VkDevice>(device_ptr),
+        reinterpret_cast<VkDeviceMemory>(memory_ptr),
+        static_cast<VkDeviceSize>(offset),
+        sizeBytes,
+        0,
+        &mapped);
+    if (result != VK_SUCCESS) {
+        exception_utils::resultException(env, result,
+            "There was a problem executing vkMapMemory");
+        return;
+    }
+    env->GetFloatArrayRegion(data, dataOffset, count, reinterpret_cast<jfloat*>(mapped));
+    vkUnmapMemory(reinterpret_cast<VkDevice>(device_ptr), reinterpret_cast<VkDeviceMemory>(memory_ptr));
+}
+
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_awakekt_awake_vulkan_gen_VulkanBuffers_writeBufferMemoryBytes(
         JNIEnv* env,
