@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.ui.platform
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
+import com.awakekt.awake.compose.runtime.PhaseReadCause
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.focus.FocusOwner
 import com.awakekt.awake.compose.ui.focus.applyPendingFocusRequests
@@ -164,6 +165,18 @@ class ComposeHost(
             measureSkip.explains = value
         }
 
+    /**
+     * Records, in [frameCounts]'s `placementCause`, `placementCauseSource` and `placementCauseOwner`,
+     * what placement changed that composition read on a frame that therefore composed twice
+     * ([placementRecompositions]): the state written or polled source that changed (#1512). A debug
+     * aid, off by default; while off it records nothing and allocates nothing.
+     */
+    var explainPlacement: Boolean
+        get() = composition.explains
+        set(value) {
+            composition.explains = value
+        }
+
     /** How many frames [skipUnchangedMeasure] placed without measuring. */
     var skippedMeasures: Int = 0
         private set
@@ -292,6 +305,7 @@ class ComposeHost(
         val paintedBefore = painter.nodesPainted
         val replayedBefore = painter.retainedDraws
         frameCounts.nodesComposed = 0
+        frameCounts.placementCaused(PhaseReadCause.None, null, null)
         scrollConsumed = false
         // Before input, as documented: a `FocusRequester.requestFocus()`/`freeFocus()` queued
         // since the last frame -- typically from outside composition entirely -- takes effect
@@ -438,6 +452,10 @@ class ComposeHost(
         lastMeasureSkipped = layout(input, composed)
         stages?.end(ComposeFrameStage.Measure)
         placementInvalidated = validBeforeLayout && composition.isInvalid
+        // Before the second composition below starts a pass and forgets it.
+        if (placementInvalidated && explainPlacement && frameCounts.placementCause == PhaseReadCause.None) {
+            frameCounts.placementCaused(composition.cause, composition.causeSource, composition.causeOwner)
+        }
         return composed
     }
 

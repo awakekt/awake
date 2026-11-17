@@ -9,6 +9,7 @@ package com.awakekt.awake.compose.ui.layout
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.Composition
+import com.awakekt.awake.compose.runtime.PhaseReadCause
 import com.awakekt.awake.compose.runtime.Slot
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.node
@@ -184,6 +185,22 @@ class LayoutComposition(root: LayoutNode) {
 
     /** Marks the latest pass out of date, for a change no tracked state carries. */
     fun invalidate() = composition.invalidate()
+
+    /** See [Composition.explains]. */
+    var explains: Boolean
+        get() = composition.explains
+        set(value) {
+            composition.explains = value
+        }
+
+    /** See [Composition.cause]. */
+    val cause: PhaseReadCause get() = composition.cause
+
+    /** See [Composition.causeSource]. */
+    val causeSource: Any? get() = composition.causeSource
+
+    /** See [Composition.causeOwner]. */
+    val causeOwner: Any? get() = composition.causeOwner
 
     /** See [Composition.tracksChanges]. */
     var tracksChanges: Boolean

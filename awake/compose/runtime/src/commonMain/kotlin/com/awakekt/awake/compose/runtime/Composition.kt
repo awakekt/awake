@@ -53,8 +53,28 @@ class Composition(
 
     /** Marks the latest pass out of date, for a change no tracked [State] carries. */
     fun invalidate() {
-        reads.invalid = true
+        reads.markInvalid(PhaseReadCause.Invalidated)
     }
+
+    /**
+     * Whether the first change that puts the latest pass out of date is kept, for [cause] (#1512): a
+     * debug aid for a host that wants to say what invalidated a composition, as [PhaseReads.explains]
+     * does for measure. Off by default; while off nothing is kept and nothing is allocated.
+     */
+    var explains: Boolean
+        get() = reads.explains
+        set(value) {
+            reads.explains = value
+        }
+
+    /** What first put the latest pass out of date, while [explains]; read it after [isInvalid]. */
+    val cause: PhaseReadCause get() = reads.cause
+
+    /** The state or polled source behind [cause], if it has one. */
+    val causeSource: Any? get() = reads.causeSource
+
+    /** The [ReadOwner.current] of the read behind [cause], if one was set while it was read. */
+    val causeOwner: Any? get() = reads.causeOwner
 
     /**
      * Runs one root pass of [content] against the retained tree: reuses what matches, creates what is
