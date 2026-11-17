@@ -30,6 +30,9 @@ import kotlin.test.assertTrue
  *
  * The shadow depth pass then bound each caster's vertex buffers with a new offsets array, once per
  * draw per cascade. Every buffer here binds at offset 0, so the pass shares one.
+ *
+ * And each draw's uniform packers wrote their fields through `UniformWriter.put`'s vararg, which
+ * built an array of fields for every call: one- and two-field writes now have overloads of their own.
  */
 class PreparedDrawAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -81,10 +84,11 @@ class PreparedDrawAllocationTest {
         const val FRAMES = 200
 
         /**
-         * 463 B a further draw while each built a `PreparedDrawCall`, 375 B once it did not, and
-         * 303 B since the depth pass shares its offsets. What remains is the draw's
-         * `GpuResolvedDraw`, which the pass keeps, and its share of compiling the pass.
+         * 463 B a further draw while each built a `PreparedDrawCall`, 375 B once it did not, 303 B
+         * once the depth pass shared its offsets, and 254 B since a one- or two-field uniform write
+         * builds no array. What remains is the draw's `GpuResolvedDraw`, which the pass keeps, and
+         * its share of compiling the pass.
          */
-        const val PER_DRAW_BUDGET = 340L
+        const val PER_DRAW_BUDGET = 285L
     }
 }

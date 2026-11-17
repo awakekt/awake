@@ -71,31 +71,60 @@ class UniformWriter(private val layout: UniformLayout) {
      */
     fun put(values: FloatArray, vararg fields: UniformField): UniformWriter = put(values, 0, *fields)
 
+    /** [put] of one field. Kotlin picks it over the vararg form, so a one-field write builds no
+     * array of fields: packers make several a draw, every frame (#1742). */
+    fun put(values: FloatArray, field: UniformField): UniformWriter = put(values, 0, field)
+
+    /** [put] of two fields, the other common shape (a light's direction and colour), without an array. */
+    fun put(values: FloatArray, first: UniformField, second: UniformField): UniformWriter = put(values, 0, first, second)
+
     /** Writes fields from [values] starting at [start]. The range is checked against the fields
      * before copying, so callers can pass a packed superset (for example the frame light block)
      * without slicing it into a per-draw allocation. */
     fun put(values: FloatArray, start: Int, vararg fields: UniformField): UniformWriter {
-        require(start >= 0 && start <= values.size) { "Invalid uniform source start: $start." }
-        require(nextField + fields.size <= layout.fields.size) {
-            "Writing ${fields.joinToString { it.name }} past the end of the layout " +
-                "(${layout.fields.size} fields, already wrote $nextField)."
-        }
+        checkRoom(fields.size) { fields.joinToString { it.name } }
         var expected = 0
-        fields.forEachIndexed { index, field ->
-            val declared = layout.fields[nextField + index]
-            require(declared === field) {
-                "Layout field ${nextField + index} is '${declared.name}', but '${field.name}' was " +
-                    "written there -- the buffer would be the right size and the wrong shape."
-            }
-            expected += field.floats
+        fields.forEachIndexed { index, field -> expected += declared(index, field) }
+        return copy(values, start, expected, fields.size) { fields.joinToString { it.name } }
+    }
+
+    /** [put] from [start] of one field, without an array of fields. */
+    fun put(values: FloatArray, start: Int, field: UniformField): UniformWriter {
+        checkRoom(1) { field.name }
+        return copy(values, start, declared(0, field), 1) { field.name }
+    }
+
+    /** [put] from [start] of two fields, without an array of fields. */
+    fun put(values: FloatArray, start: Int, first: UniformField, second: UniformField): UniformWriter {
+        checkRoom(2) { "${first.name}, ${second.name}" }
+        val expected = declared(0, first) + declared(1, second)
+        return copy(values, start, expected, 2) { "${first.name}, ${second.name}" }
+    }
+
+    private inline fun checkRoom(count: Int, names: () -> String) {
+        require(nextField + count <= layout.fields.size) {
+            "Writing ${names()} past the end of the layout (${layout.fields.size} fields, already wrote $nextField)."
         }
+    }
+
+    /** [field]'s float count, once it is checked to be the layout's field [index] places past the last written. */
+    private fun declared(index: Int, field: UniformField): Int {
+        val declared = layout.fields[nextField + index]
+        require(declared === field) {
+            "Layout field ${nextField + index} is '${declared.name}', but '${field.name}' was " +
+                "written there -- the buffer would be the right size and the wrong shape."
+        }
+        return field.floats
+    }
+
+    private inline fun copy(values: FloatArray, start: Int, expected: Int, fields: Int, names: () -> String): UniformWriter {
+        require(start >= 0 && start <= values.size) { "Invalid uniform source start: $start." }
         require(values.size - start >= expected) {
-            "'${fields.joinToString { it.name }}' declares $expected floats, got " +
-                "${values.size - start} from source index $start."
+            "'${names()}' declares $expected floats, got ${values.size - start} from source index $start."
         }
         values.copyInto(out, offset, start, start + expected)
         offset += expected
-        nextField += fields.size
+        nextField += fields
         return this
     }
 

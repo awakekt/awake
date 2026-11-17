@@ -1,0 +1,1 @@
+- `UniformWriter.put` writes one or two fields without allocating (#1742). Its `vararg` built an array of fields on every call, several times a draw on every frame; one- and two-field writes now have overloads of their own, which Kotlin picks with no change at the call site. Each further moving, shadowed draw on Vulkan adds 254 B to a frame's garbage on the JVM instead of 303 B.
