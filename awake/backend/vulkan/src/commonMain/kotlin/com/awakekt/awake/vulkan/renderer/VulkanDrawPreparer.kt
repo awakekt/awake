@@ -94,17 +94,17 @@ internal class VulkanDrawPreparer(
         val depthFeature = renderer.depthPrePassFeature ?: renderer.sceneDepthPassFeature
         val depthKey = request.depthRenderKey()
         // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
-        // drawing its whole card.
-        val resolved = prepared.toGpuResolvedDraw().copy(depthRenderKey = depthKey)
-        val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return resolved
+        // drawing its whole card. Each return builds the draw once: building it and then copying it
+        // with the depth fields set made two or three of them per draw per frame.
+        val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return prepared.toGpuResolvedDraw(depthRenderKey = depthKey)
         val sourceMaterial = request.material as? com.awakekt.awake.vulkan.material.Material
-            ?: return resolved
+            ?: return prepared.toGpuResolvedDraw(depthRenderKey = depthKey)
         if (request.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked &&
             !sourceMaterial.hasTexture
         ) {
-            return resolved
+            return prepared.toGpuResolvedDraw(depthRenderKey = depthKey)
         }
-        return resolved.copy(
+        return prepared.toGpuResolvedDraw(
             depthRenderKey = depthKey,
             alphaCutoff = request.alphaCutoff,
             depthPipeline = depthPipeline,
