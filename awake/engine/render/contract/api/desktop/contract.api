@@ -609,6 +609,8 @@ public final class com/awakekt/awake/render/command/PreparedDraw$DefaultImpls {
 
 public final class com/awakekt/awake/render/command/PreparedDrawResolutionKt {
 	public static final fun toGpuResolvedDraw (Lcom/awakekt/awake/render/command/PreparedDraw;)Lcom/awakekt/awake/render/command/GpuResolvedDraw;
+	public static final fun toGpuResolvedDraw (Lcom/awakekt/awake/render/command/PreparedDraw;Lcom/awakekt/awake/render/pipeline/DepthRenderKey;FLcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/MaterialBinding;Lcom/awakekt/awake/render/command/MaterialBinding;)Lcom/awakekt/awake/render/command/GpuResolvedDraw;
+	public static synthetic fun toGpuResolvedDraw$default (Lcom/awakekt/awake/render/command/PreparedDraw;Lcom/awakekt/awake/render/pipeline/DepthRenderKey;FLcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/MaterialBinding;Lcom/awakekt/awake/render/command/MaterialBinding;ILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuResolvedDraw;
 }
 
 public final class com/awakekt/awake/render/font/UiFontSamplingInfo {
