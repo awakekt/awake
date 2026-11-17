@@ -793,7 +793,10 @@ jobs:
     # On Blacksmith, like Build (JVM/Native). Set `CORE_WEB_RUNNER` to `ubuntu-latest` to move it
     # back (see "Build runner" in docs/release-process.md).
     runs-on: ${{ vars.CORE_WEB_RUNNER || (github.repository_owner == 'awakekt' && 'blacksmith-8vcpu-ubuntu-2404') || 'ubuntu-latest' }}
-    timeout-minutes: 20
+    # 45 minutes, like the other test jobs. At 20 the job was cut off mid-run, with every step so far
+    # passing, once the browser heap tests joined it: a cold Gradle home on a hosted runner takes
+    # about 19 minutes before the last browser steps start.
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
