@@ -705,6 +705,21 @@ class Input {
         }
     }
 
+    /** Steps [pinch] from the first two fingers down, in the order they touched down; see [TouchPinch.update]. */
+    internal fun stepTouchPinch(pinch: TouchPinch) {
+        var first: Finger? = null
+        for (finger in fingers.values) {
+            if (!finger.down) continue
+            if (first == null) {
+                first = finger
+            } else {
+                pinch.track(this, first.id, first.x, first.y, finger.id, finger.x, finger.y)
+                return
+            }
+        }
+        pinch.end()
+    }
+
     private class Finger(val id: Long) {
         var x = 0f
         var y = 0f

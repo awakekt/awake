@@ -12,9 +12,12 @@ import kotlin.math.hypot
  * reports fingers but no pinch.
  *
  * After each platform touch event the bridge passes the first two fingers still down to [track], or
- * calls [end] when fewer than two are down. Each step's scale is the fingers' distance now over their
- * distance at the last event, about their midpoint, in the same pixels as [Input.setTouch]. The steps
- * of one pinch multiply, so the frame's [PinchGesture] lands where the fingers say at any event rate.
+ * calls [end] when fewer than two are down. A bridge whose platform reports only the fingers that
+ * changed, such as UIKit's, calls [update] instead, which reads every finger [Input.setTouch] holds.
+ *
+ * Each step's scale is the fingers' distance now over their distance at the last event, about their
+ * midpoint, in the same pixels as [Input.setTouch]. The steps of one pinch multiply, so the frame's
+ * [PinchGesture] lands where the fingers say at any event rate.
  *
  * A new pair (a finger put down or lifted, so the two first fingers change) only sets the baseline:
  * it gives no step, so the pinch never jumps. Fingers that do not change their distance give none either.
@@ -44,6 +47,14 @@ class TouchPinch {
         this.firstId = firstId
         this.secondId = secondId
         lastSpan = span
+    }
+
+    /**
+     * Takes the first two fingers down in [input], in the order they touched down, after a touch
+     * event's [Input.setTouch] calls; ends the pinch when fewer than two are down.
+     */
+    fun update(input: Input) {
+        input.stepTouchPinch(this)
     }
 
     /** Fewer than two fingers are down: the pinch, if there was one, is over. */

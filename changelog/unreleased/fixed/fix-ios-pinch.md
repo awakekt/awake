@@ -1,0 +1,1 @@
+- Two fingers on an iOS touch screen now pinch: `AwakeMetalView` reads the first two fingers down after each touch event through the new `TouchPinch.update(Input)`, which takes them from the fingers `Input` already holds, since UIKit reports only the fingers that changed. `InputSnapshot.pinch` is set and the built-in cameras zoom, as on Android.
