@@ -25,6 +25,7 @@ import com.awakekt.awake.render.passes.uniforms.PointShadowLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.shadowCascadeUniforms
 import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
@@ -44,8 +45,11 @@ import kotlin.math.sin
  */
 internal class SceneLightingCompiler(
     private val clipSpace: ClipSpace,
-    /** Cascades to split a directional light's shadow into: the renderer's `shadowBudget` (#1688). */
-    private val shadowCascades: () -> Int = { DEFAULT_SHADOW_CASCADES },
+    /**
+     * The cascades to split a directional light's shadow into, and the map size each is snapped to
+     * whole texels of: the renderer's `shadowBudget` (#1688, #1709).
+     */
+    private val shadowBudget: () -> ShadowBudget = { ShadowBudget.Default },
 ) {
     private val pointLights = ArrayList<PointLight>()
     private val pointShadows = ArrayList<PointShadowLight>()
@@ -195,7 +199,8 @@ internal class SceneLightingCompiler(
         val cascades = if (boxOnly) {
             null
         } else {
-            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, shadowCascades(), shadowDistance, shadowFade)
+            val budget = shadowBudget()
+            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, budget.cascades, shadowDistance, shadowFade, budget.mapSize)
         }
         if (cascades == null) {
             return base.copy(

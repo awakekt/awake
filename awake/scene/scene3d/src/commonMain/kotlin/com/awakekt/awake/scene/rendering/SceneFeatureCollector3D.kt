@@ -11,15 +11,16 @@ import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.scene.rendering.debug.TransparentDrawSources
 
 /** Collects built-in and authored feature output without knowing how a frame is submitted. */
 internal class SceneFeatureCollector3D(
     clipSpace: ClipSpace,
     private val features: List<RenderFeature3D>,
-    shadowCascades: () -> Int = { DEFAULT_SHADOW_CASCADES },
+    shadowBudget: () -> ShadowBudget = { ShadowBudget.Default },
 ) {
-    private val lightingFeature = SceneLightingFeature3D(SceneLightingCompiler(clipSpace, shadowCascades))
+    private val lightingFeature = SceneLightingFeature3D(SceneLightingCompiler(clipSpace, shadowBudget))
     private val particleFeature = SceneParticleFeature3D(ParticleDrawAdapter())
 
     /** Each feature's name for [TransparentDrawSources], built once: its class's, or its place in the list. */

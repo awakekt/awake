@@ -22,6 +22,7 @@ import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderDrawStage
 import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderViewport
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.scene.rendering.debug.CullingProbe
 import com.awakekt.awake.scene.rendering.debug.TransparentDrawSources
 import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
@@ -37,8 +38,8 @@ internal class SceneRenderPlanner3D(
     private val rendererClipSpace: ClipSpace,
     drawPreparer: GpuDrawPreparer?,
     features: List<RenderFeature3D> = emptyList(),
-    /** Cascades each frame plans a directional shadow with: the renderer's `shadowBudget` (#1688). */
-    shadowCascades: () -> Int = { DEFAULT_SHADOW_CASCADES },
+    /** The cascades and map size each frame plans a directional shadow with: the renderer's `shadowBudget` (#1688). */
+    shadowBudget: () -> ShadowBudget = { ShadowBudget.Default },
 ) {
     private val drawPreparer = RejectionCountingPreparer(
         requireNotNull(drawPreparer) {
@@ -46,7 +47,7 @@ internal class SceneRenderPlanner3D(
         },
     )
     private val geometryFeature = SceneGeometryFeature3D(rendererClipSpace)
-    private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features, shadowCascades)
+    private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features, shadowBudget)
     private val drawCalls = ArrayList<RenderDrawCommand>()
     private val shadowCasters = ShadowCasterVolume()
     private val passScratch = ScenePassScratch()

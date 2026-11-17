@@ -852,7 +852,9 @@ public final class com/awakekt/awake/render/passes/uniforms/ShadowCascadeUniform
 	public static final fun getSHADOW_CASCADE_PASS_GROUP ()I
 	public static final fun getUNSHADOWED_CASCADES ()Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public static final synthetic fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IF)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
-	public static final fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFF)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static final synthetic fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFF)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static final fun shadowCascadeUniforms (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFFI)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
+	public static synthetic fun shadowCascadeUniforms$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFFIILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public static synthetic fun shadowCascadeUniforms$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFFILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public static synthetic fun shadowCascadeUniforms$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/ClipSpace;IFILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 }
