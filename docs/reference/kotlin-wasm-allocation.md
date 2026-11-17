@@ -57,14 +57,18 @@ None of this matters on the JVM, where the same code runs without allocating, so
 | Filling a draw command per renderer (`SceneDrawCollector`, #1696) | 140 B a renderer | 0 |
 | WebGPU monolithic draw path: `DrawUniformInputs.matches` and `record` with `kind` left out | 28 B each, per draw | 0 |
 
-## Still open
+## Data-class `equals` on a hot path
 
-The scene planning test's compile over its town's own draws measures 172 B a renderer (132 with
-transforms built). The same draws, copied into fresh commands carrying only mesh, material, model,
-bounds, `transparent` and `shadowsOnly`, compile at 15 B (17). Synthetic frames of the same shape
-compile at 12–26 B a draw.
+`==` on two data-class instances calls the generated `equals`. Measured on Kotlin/Wasm, `==` on two
+distinct `Vec3f`s holding the same values allocates on every comparison; the likely cause is the
+generated `equals` comparing each `Float` property as an object. Two references to one instance stop
+at the identity check and allocate nothing.
 
-What has been ruled out: the light (165 without it), the environment (172 with the default), and the
-preparer (0 on its own). The cost follows a field the scene sets and the copies leave at its default,
-such as the extras, vertex animation, time, cull mode, alpha mode, shadow casting or mask layer. It is
-tracked on #1621.
+This was the scene compile's remaining cost. A scene gives each renderer its own vertex-animation
+vector, and instance folding compared them draw against draw: 172 B a renderer (130 with
+transforms built), against 15 (17) for copies of the same draws that shared the default vector.
+The fix compares the components instead (`Vec3f.sameAnimation`: the same instance, or equal `x`, `y`
+and `z` as primitive floats). `PlanningHeapBreakdownBrowserTest` gates the scene's compile at 48 B a renderer (#1716).
+
+- **On a hot path, compare a data class's fields yourself** rather than with `==`, at least the
+  `Float` and `Double` ones.
