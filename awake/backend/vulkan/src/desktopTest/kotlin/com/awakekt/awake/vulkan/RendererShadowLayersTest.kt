@@ -48,6 +48,10 @@ class RendererShadowLayersTest {
                 world.add(it, Transform(position = Vec3f(0f, 3f, 0f)))
                 world.add(it, Light(type = Light.Type.Point, range = 10f, shadowsEnabled = true))
             }
+            // The packed layout itself (#1709): the cascades on layers 0 to 2, then the point light's
+            // six faces on 3 to 8, with no unused cascade slot between them.
+            val layers = RenderSystem3D(renderer).planCapture(world, camera, SIZE, SIZE).prePasses.map { it.targetLayer }.distinct().sorted()
+            assertEquals((0 until POINT_LAYERS).toList(), layers, "three cascades, then the point light's six faces from layer 3")
             repeat(FRAMES) { renderer.frame(world) }
             val withPoint = renderer.shadowMapBytes
             println("RendererShadowLayers: cascades only ${cascadesOnly / MIB} MiB; with a point shadow ${withPoint / MIB} MiB; all 28 layers ${LAYER_BYTES * 28 / MIB} MiB")
