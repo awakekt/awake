@@ -125,12 +125,11 @@ internal class CanvasItemOrder(private val world: World) {
             val element = checkNotNull(elements[index])
             val parent = canvasParent(index)
             val scaler = subtreeScaler(index)
-            val previous = if (position < last.size) last[position] else null
-            val same = previous != null && previous.id == id && previous.element === element &&
-                previous.parent === parent && previous.scaler === scaler
-            if (same && fresh == null) continue
+            val previous = last.getOrNull(position)
+            val holds = previous.holds(id, element, parent, scaler)
+            if (holds && fresh == null) continue
             if (fresh == null) fresh = ArrayList<CanvasItem>(count).also { for (at in 0 until position) it += last[at] }
-            fresh += if (same) checkNotNull(previous) else CanvasItem(id, element, parent, scaler)
+            fresh += if (holds) checkNotNull(previous) else CanvasItem(id, element, parent, scaler)
         }
         return (fresh ?: last).also { lastItems = it }
     }
@@ -265,6 +264,10 @@ internal class CanvasItemOrder(private val world: World) {
         return null
     }
 }
+
+/** Whether this item is still the one for [id] with [element], [parent] and [scaler]: false for none. */
+private fun CanvasItem?.holds(id: Int, element: CanvasElement, parent: CanvasElement?, scaler: CanvasScaler?): Boolean =
+    this != null && this.id == id && this.element === element && this.parent === parent && this.scaler === scaler
 
 /**
  * Returns a map of live [CanvasElement]s keyed by their entity [Name.value], filtered to names
