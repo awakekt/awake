@@ -540,11 +540,15 @@ class GltfAssetResolver(
      */
     override fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? {
         val key = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:") ?: return null
-        if (key in releases.releasedMaterials) return loadModel(materialModelPath(key), scope)
         val loaded = loadedMaterials[key]
         val images = listOfNotNull(skinnedPartTextures[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
         val pending = images.filter { it.needsDecode }
-        return if (pending.isEmpty()) null else GltfImageDecodeLoad(pending, scope)
+        return when {
+            // Let go of once uploaded: the model is read again, which brings its images back.
+            key in releases.releasedMaterials -> loadModel(materialModelPath(key), scope)
+            pending.isEmpty() -> null
+            else -> GltfImageDecodeLoad(pending, scope)
+        }
     }
 
     override fun canResolveMaterial(name: String): Boolean =

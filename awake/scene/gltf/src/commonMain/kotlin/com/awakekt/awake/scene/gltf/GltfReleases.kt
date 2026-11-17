@@ -12,7 +12,7 @@ package com.awakekt.awake.scene.gltf
  * consumer measured, most of it never made twice.
  *
  * A model is releasable when it was loaded through the async load path, which a scene makes its
- * meshes through, or marked so; [kept] models never are, for a host that reads their geometry or
+ * meshes through, or marked so; a model marked [keep] never is, for a host that reads its geometry or
  * images itself, such as for picking, collision, or a re-upload after the GPU device is lost. What a
  * releasable model let go of comes back through the same async load: the mesh's or material's load
  * reads the model again before it is made.
