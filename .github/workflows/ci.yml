@@ -396,6 +396,12 @@ jobs:
       - name: Build Android demo APK (Vulkan JNI regression gate)
         run: ./gradlew :samples:engine-showcase:androidApp:assembleDebug
 
+      # Swappy (#1699) is linked from its static library into the Vulkan JNI library built just
+      # above, for both ABIs: its entry points exported, Swappy's own symbols hidden, and no C++
+      # runtime type taken from another library.
+      - name: Swappy stays inside the Vulkan JNI library
+        run: scripts/swappy-symbols.sh awake/backend/vulkan/bindings/android-native/build/intermediates/cxx
+
       - name: Build desktop demo
         run: ./gradlew :samples:ui-showcase:desktopJar
 

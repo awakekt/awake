@@ -63,6 +63,8 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // Suboptimal and out of date come back as results, not exceptions: a phone panel whose
     // swapchain is not pre-rotated presents suboptimally every frame. The surface is asked once per
     // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
+    // A change of pacer or of frame-rate mode applies here, between frames, on the thread that presents.
+    graphicsDevice.swapchainPacer?.beforePresent()
     val result = Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo)
     swapchainManager.presentResults[result.ordinal]++
     presentIntervals.recordPresent()

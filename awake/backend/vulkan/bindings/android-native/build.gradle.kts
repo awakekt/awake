@@ -8,6 +8,8 @@
 // validation layers. Split out of :awake-vulkan because AGP 9's
 // com.android.kotlin.multiplatform.library plugin does not support
 // externalNativeBuild; :awake-vulkan's androidMain depends on this module.
+import java.security.MessageDigest
+
 plugins {
     id("com.awakekt.awake.plugin.android-library")
     // No com.awakekt.awake.plugin.dokka here: this module has no Kotlin plugin at all (pure
@@ -20,6 +22,47 @@ plugins {
     id("com.awakekt.awake.plugin.spotless")
 }
 
+// Swappy (#1699): games-frame-pacing's static library and headers, unpacked from the AAR at a
+// pinned version and checksum. Resolved through a configuration of its own, so the published
+// AAR and its POM gain no dependency: the library is linked into libawake-vulkan.so.
+val swappyVersion = "2.1.3"
+val swappySha256 = "a9f83e0cf47d694ed2cea0ae995d5cf7411060d9d4b680610430d03d6b20ea27"
+// The ABIs this module builds (see abiFilters), each needing its Swappy library.
+val nativeAbis = listOf("arm64-v8a", "x86_64")
+val swappyDir = layout.buildDirectory.dir("swappy")
+val swappyAar: Configuration = configurations.create("swappyAar") {
+    isCanBeConsumed = false
+    isTransitive = false
+}
+dependencies { swappyAar("androidx.games:games-frame-pacing:$swappyVersion@aar") }
+
+val extractSwappy = tasks.register<Sync>("extractSwappy") {
+    group = "awake native"
+    description = "Unpack Swappy's static library and headers from games-frame-pacing $swappyVersion"
+    val aar = swappyAar
+    inputs.property("sha256", swappySha256)
+    from({ zipTree(aar.singleFile) }) {
+        include("prefab/modules/swappy_static/**")
+        eachFile { path = path.removePrefix("prefab/modules/swappy_static/") }
+        includeEmptyDirs = false
+    }
+    into(swappyDir)
+    doFirst {
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(aar.singleFile.readBytes()).joinToString("") { "%02x".format(it) }
+        check(digest == swappySha256) {
+            "games-frame-pacing $swappyVersion has SHA-256 $digest, expected $swappySha256: update both together"
+        }
+    }
+    doLast {
+        val root = swappyDir.get().asFile
+        val expected = nativeAbis.map { "libs/android.$it/libswappy_static.a" } + "include/swappy/swappyVk.h"
+        val missing = expected.filterNot { root.resolve(it).isFile }
+        check(missing.isEmpty()) { "games-frame-pacing $swappyVersion changed layout; missing $missing" }
+    }
+}
+tasks.matching { it.name.startsWith("configureCMake") }.configureEach { dependsOn(extractSwappy) }
+
 android {
     namespace = "com.awakekt.awake.vulkan.jni"
     ndkVersion = "26.1.10909125"
@@ -29,9 +72,13 @@ android {
             cmake {
                 // 64-bit only: the generated JNI marshalling code assumes pointer-sized
                 // Vulkan handles, which 32-bit ABIs (uint64_t handles) don't satisfy
-                abiFilters += listOf("arm64-v8a", "x86_64")
+                abiFilters += nativeAbis
                 cppFlags += listOf("-DVK_USE_PLATFORM_ANDROID_KHR", "-lvulkan")
-                arguments += listOf("-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static")
+                arguments += listOf(
+                    "-DANDROID_TOOLCHAIN=clang",
+                    "-DANDROID_STL=c++_static",
+                    "-DAWAKE_SWAPPY_DIR=${swappyDir.get().asFile.absolutePath}",
+                )
             }
         }
     }

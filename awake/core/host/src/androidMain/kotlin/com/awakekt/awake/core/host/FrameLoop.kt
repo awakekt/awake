@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.core.host
 
+import android.app.Activity
+import java.lang.ref.WeakReference
+
 /**
  * Android implementation of [FrameLoop] using `System.nanoTime()` and thread sleeping.
  *
@@ -25,6 +28,20 @@ object AndroidFrameLoop : FrameLoop {
      */
     @Volatile
     var presentPacing: Boolean = false
+
+    /**
+     * Which pacer an app asks for (#1699), [AndroidFramePacing.Sleep] by default. Read while the app
+     * runs, so a settings screen can switch it live; [presentPacing] says whether Swappy took over.
+     */
+    @Volatile
+    var framePacing: AndroidFramePacing = AndroidFramePacing.Sleep
+
+    /**
+     * The activity showing the frames, which Swappy needs to read the display; set by the view that
+     * hosts the frames. Held weakly: the loop outlives any one activity.
+     */
+    @Volatile
+    var pacingActivity: WeakReference<Activity>? = null
 
     private var previousFrameTime = System.nanoTime()
 
