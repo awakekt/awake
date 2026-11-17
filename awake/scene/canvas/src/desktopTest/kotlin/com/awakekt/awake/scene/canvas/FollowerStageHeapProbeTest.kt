@@ -19,13 +19,21 @@ class FollowerStageHeapProbeTest {
 
     @Test
     fun aSkippedFollowerFramesAllocationIsNamedStageByStage() {
-        val moving = FollowerStageHeap(::allocated).measure(moving = true, WARM_UP, FRAMES) {}
-        val still = FollowerStageHeap(::allocated).measure(moving = false, WARM_UP, FRAMES) {}
+        val moving = FollowerStageHeap(::allocated).measure(moving = true, WARM_UP, FRAMES, {})
+        val still = FollowerStageHeap(::allocated).measure(moving = false, WARM_UP, FRAMES, {})
         println("FollowerStageHeap (JVM): ${FollowerStageHeap.PLATES} plates, KB allocated a skipped frame: ${FollowerStageHeap.line(moving, still)}")
+        val unfollowed = FollowerStageHeap(::allocated).measure(moving = false, WARM_UP, FRAMES, {}, FollowerParts.All.copy(follow = false))
+        val boxes = PlainOffsetBoxes(PLAIN_BOXES)
+        val plain = FollowerStageHeap(::allocated).measure(WARM_UP, FRAMES, {}) { boxes.frame(it) }
+        println(
+            "FollowerStageHeap (JVM), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
+                "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",
+        )
     }
 
     private companion object {
         const val WARM_UP = 200
         const val FRAMES = 100
+        const val PLAIN_BOXES = 600
     }
 }

@@ -31,23 +31,28 @@ internal class FollowerStageHeap(private val heapBytes: () -> Double) : ComposeF
     }
 
     /**
-     * KB per skipped frame for each stage of a 200-plate HUD, and for the rest of the frame, over
-     * [frames] frames after [warmUp], with its nodes [moving] or still. [collect] runs once before
-     * the measured window, where the platform can collect garbage.
+     * KB per skipped frame for each stage of a 200-plate HUD made of [parts], and for the rest of the
+     * frame, over [frames] frames after [warmUp], with its nodes [moving] or still. [collect] runs once
+     * before the measured window, where the platform can collect garbage.
      */
-    fun measure(moving: Boolean, warmUp: Int, frames: Int, collect: () -> Unit): DoubleArray {
-        val hud = FollowerHud(PLATES)
+    fun measure(moving: Boolean, warmUp: Int, frames: Int, collect: () -> Unit, parts: FollowerParts = FollowerParts.All): DoubleArray {
+        val hud = FollowerHud(PLATES, parts)
+        return measure(warmUp, frames, collect) { hud.frame(it, moving) }
+    }
+
+    /** [measure] for any content [frame] draws into a skipping host. */
+    fun measure(warmUp: Int, frames: Int, collect: () -> Unit, frame: (ComposeHost) -> Unit): DoubleArray {
         val host = ComposeHost().apply {
             skipUnchangedComposition = true
             skipUnchangedMeasure = true
             retainUnchangedDraw = true
         }
-        repeat(warmUp) { hud.frame(host, moving) }
+        repeat(warmUp) { frame(host) }
         host.frameStages = this
         sums.fill(0.0)
         collect()
         val before = heapBytes()
-        repeat(frames) { hud.frame(host, moving) }
+        repeat(frames) { frame(host) }
         val total = heapBytes() - before
         host.frameStages = null
         var staged = 0.0
@@ -63,6 +68,9 @@ internal class FollowerStageHeap(private val heapBytes: () -> Double) : ComposeF
 
         /** The stages [measure] reports, in its order. */
         val Names: List<String> = ComposeFrameStage.entries.map { it.name.lowercase() } + "rest"
+
+        /** One line naming each stage's KB per frame for one still case. */
+        fun line(still: DoubleArray): String = Names.indices.joinToString(", ") { i -> "${Names[i]}=${still[i].tenths()}" }
 
         /** One line naming each stage's KB per frame, moving and still. */
         fun line(moving: DoubleArray, still: DoubleArray): String = Names.indices.joinToString(", ") { i ->

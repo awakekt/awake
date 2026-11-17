@@ -22,20 +22,33 @@ private external fun usedHeapBytes(): Double
  * Each case keeps the smaller of two runs.
  */
 class FollowerStageHeapBrowserTest {
-    private fun run(moving: Boolean): DoubleArray {
-        val first = FollowerStageHeap(::usedHeapBytes).measure(moving, WARM_UP, FRAMES, ::collectGarbage)
-        val second = FollowerStageHeap(::usedHeapBytes).measure(moving, WARM_UP, FRAMES, ::collectGarbage)
+    private fun smaller(run: (FollowerStageHeap) -> DoubleArray): DoubleArray {
+        val first = run(FollowerStageHeap(::usedHeapBytes))
+        val second = run(FollowerStageHeap(::usedHeapBytes))
         return DoubleArray(first.size) { minOf(first[it], second[it]) }
     }
+
+    private fun run(moving: Boolean, parts: FollowerParts = FollowerParts.All) =
+        smaller { it.measure(moving, WARM_UP, FRAMES, ::collectGarbage, parts) }
 
     @Test
     fun aSkippedFollowerFramesHeapIsNamedStageByStage() {
         val line = FollowerStageHeap.line(run(moving = true), run(moving = false))
         println("FollowerStageHeap (browser): ${FollowerStageHeap.PLATES} plates, KB of heap a skipped frame: $line")
+        // Still, without following, and with no canvas at all: is the Wasm-only heap the canvas's
+        // follower placement, or core placement (#1512)?
+        val unfollowed = run(moving = false, FollowerParts.All.copy(follow = false))
+        val boxes = PlainOffsetBoxes(PLAIN_BOXES)
+        val plain = smaller { it.measure(WARM_UP, FRAMES, ::collectGarbage) { host -> boxes.frame(host) } }
+        println(
+            "FollowerStageHeap (browser), still: plates not following ${FollowerStageHeap.line(unfollowed)}; " +
+                "$PLAIN_BOXES plain offset boxes ${FollowerStageHeap.line(plain)}",
+        )
     }
 
     private companion object {
         const val WARM_UP = 60
         const val FRAMES = 30
+        const val PLAIN_BOXES = 600
     }
 }
