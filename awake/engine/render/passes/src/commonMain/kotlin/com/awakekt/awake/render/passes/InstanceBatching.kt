@@ -89,6 +89,9 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Bo
  * The same vertex animation: the same object, or equal components. Not `==`: `Vec3f` is a data class,
  * and on Kotlin/Wasm `==` on two distinct instances allocated on every call. A scene gives each
  * renderer its own animation vector, so folding 3,000 of them cost 157 B a renderer (#1621).
+ *
+ * Unlike data-class `equals`, the components compare as IEEE floats: a NaN component never matches
+ * another vector's (only the same instance folds), and `-0f` matches `0f`.
  */
 internal fun Vec3f.sameAnimation(other: Vec3f): Boolean = this === other || (x == other.x && y == other.y && z == other.z)
 
