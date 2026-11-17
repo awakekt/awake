@@ -26,7 +26,9 @@ import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.node.activeEscapeDismissLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
+import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.compose.ui.semantics.SemanticsTreeBuilder
+import com.awakekt.awake.compose.ui.semantics.sameSemanticsAs
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.core.graphics2d.flattened
 import com.awakekt.awake.core.input.ClipboardCommand
@@ -229,6 +231,16 @@ class ComposeHost(
     var staleSkips: Int = 0
         private set
 
+    /**
+     * Frames whose semantics tree, handed back or rebuilt around kept configurations because nothing
+     * it was built from seemed to change, differed from a fresh build (#1512). Counted only while
+     * [verifySkippedCompositions] is on, which then builds the tree a second time on such frames. A
+     * count above zero means a semantics link changed a configuration in place instead of returning
+     * a new one, which `SemanticsModifierNode` forbids, so taps and accessibility read stale values.
+     */
+    var staleSemantics: Int = 0
+        private set
+
     private var externallyInvalid = false
 
     /**
@@ -330,7 +342,7 @@ class ComposeHost(
         return FrameOutput(
             primitives = paint.primitives,
             graphicsLayers = paint.layers,
-            semantics = semanticsBuilder.build(root),
+            semantics = semanticsBuilder.build(root).also(::verifySemantics),
             ownership = InputOwnership(
                 isCaptured = dispatcher.hasCapture,
                 isOverScrollable = dispatcher.isOverScrollable,
@@ -350,6 +362,14 @@ class ComposeHost(
                 clipboardText = clipboardText,
             ),
         )
+    }
+
+    private fun verifySemantics(semantics: List<SemanticsNode>) {
+        if (verifySkippedCompositions && semanticsBuilder.reusedLast &&
+            !semantics.sameSemanticsAs(SemanticsTreeBuilder().build(root))
+        ) {
+            staleSemantics++
+        }
     }
 
     /**

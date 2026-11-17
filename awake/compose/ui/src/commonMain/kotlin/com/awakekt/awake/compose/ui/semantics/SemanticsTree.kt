@@ -59,6 +59,10 @@ class SemanticsTreeBuilder {
     /** The merged configurations of [last]'s nodes, in the order [collect] made them. */
     private val merged = ArrayList<SemanticsConfiguration>()
     private var reuse = false
+
+    /** Whether the last [build] handed back its earlier tree, or kept its merged configurations. */
+    internal var reusedLast = false
+        private set
     private var mergedCursor = 0
 
     /**
@@ -73,7 +77,10 @@ class SemanticsTreeBuilder {
      */
     fun build(root: LayoutNode): List<SemanticsNode> {
         when (trace.compare(root)) {
-            SemanticsTrace.SAME -> return last
+            SemanticsTrace.SAME -> {
+                reusedLast = true
+                return last
+            }
             SemanticsTrace.MOVED -> {
                 reuse = true
                 mergedCursor = 0
@@ -83,6 +90,7 @@ class SemanticsTreeBuilder {
                 merged.clear()
             }
         }
+        reusedLast = reuse
         trace.clear()
         val out = mutableListOf<SemanticsNode>()
         collect(root, out, depth = 0)
@@ -159,3 +167,16 @@ private fun LayoutNode.semanticsConfiguration(): SemanticsConfiguration? {
     }
     return merged
 }
+
+/**
+ * Whether these trees report the same nodes, bounds and property values, node by node: what
+ * `ComposeHost.verifySkippedCompositions` compares a reused tree with a fresh build by (#1512).
+ */
+internal fun List<SemanticsNode>.sameSemanticsAs(other: List<SemanticsNode>): Boolean =
+    size == other.size && indices.all { i ->
+        val a = this[i]
+        val b = other[i]
+        a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height &&
+            a.config.keys == b.config.keys && a.config.keys.all { a.config[it] == b.config[it] } &&
+            a.children.sameSemanticsAs(b.children)
+    }

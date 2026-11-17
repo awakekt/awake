@@ -1516,6 +1516,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getSkipUnchangedMeasure ()Z
 	public final fun getSkippedCompositions ()I
 	public final fun getSkippedMeasures ()I
+	public final fun getStaleSemantics ()I
 	public final fun getStaleSkips ()I
 	public final fun getVerifySkippedCompositions ()Z
 	public final fun getWindowInsets ()Lcom/awakekt/awake/compose/ui/platform/WindowInsets;
