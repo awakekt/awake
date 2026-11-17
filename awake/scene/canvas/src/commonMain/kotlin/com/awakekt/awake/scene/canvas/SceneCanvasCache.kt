@@ -104,15 +104,35 @@ internal class CanvasItemOrder(private val world: World) {
     /** The [CanvasSiblingIndex] store's revision at the last sort: a content block moved a node when it differs. */
     private var siblingRevision = -1
 
-    /** This frame's items, in hierarchy order. */
+    /** The list the last [items] returned. Never changed once returned: a frame that differs gets a new one. */
+    private var lastItems: List<CanvasItem> = emptyList()
+
+    /**
+     * This frame's items, in hierarchy order.
+     *
+     * A frame whose items are the last frame's, the same element, parent and scaler at each position,
+     * gets the last frame's list back and allocates nothing; building a list and an item per element
+     * every frame was most of a large canvas's per-frame garbage. Otherwise a new list is returned, and
+     * the items that did not change are reused in it.
+     */
     fun items(): List<CanvasItem> {
         if (!isCurrent()) sort()
-        val items = ArrayList<CanvasItem>(count)
+        val last = lastItems
+        var fresh: ArrayList<CanvasItem>? = if (last.size == count) null else ArrayList(count)
         for (position in 0 until count) {
             val index = sorted[position]
-            items += CanvasItem(Entity(entities[index]).id, checkNotNull(elements[index]), canvasParent(index), subtreeScaler(index))
+            val id = Entity(entities[index]).id
+            val element = checkNotNull(elements[index])
+            val parent = canvasParent(index)
+            val scaler = subtreeScaler(index)
+            val previous = if (position < last.size) last[position] else null
+            val same = previous != null && previous.id == id && previous.element === element &&
+                previous.parent === parent && previous.scaler === scaler
+            if (same && fresh == null) continue
+            if (fresh == null) fresh = ArrayList<CanvasItem>(count).also { for (at in 0 until position) it += last[at] }
+            fresh += if (same) checkNotNull(previous) else CanvasItem(id, element, parent, scaler)
         }
-        return items
+        return (fresh ?: last).also { lastItems = it }
     }
 
     private fun takeStores() {
