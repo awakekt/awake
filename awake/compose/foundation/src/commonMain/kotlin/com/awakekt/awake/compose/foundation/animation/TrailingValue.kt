@@ -9,8 +9,8 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
-import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.FrameStep
+import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 
 /**
  * A value that trails behind the one it follows, as a health bar's second fill shows damage just

@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math2d.Vec2
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+import com.awakekt.awake.compose.ui.platform.FrameStep
 
 /**
  * What the player is doing to one canvas element right now: its taps, hover, drag and drop, wheel,
@@ -251,6 +252,9 @@ class CanvasPointerState : CanvasRevised() {
     internal val plusPress = InteractionSource()
     internal val minusHold = HeldStep()
     internal val plusHold = HeldStep()
+
+    /** The stepper's repeat advances once a frame, however many times the frame composes it (#1764). */
+    internal val stepperFrames = FrameStep()
 
     /** Each skin slot's fade between states, by slot name. */
     internal val slotTransitions = HashMap<String, SlotTransition>()

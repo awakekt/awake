@@ -81,6 +81,7 @@ class ShadcnToastState {
      * frame's delta is already known by then, and waiting a frame to apply it would show every toast
      * one frame longer than it asked for.
      */
+
     /** Once a frame, however many times the frame composes the toaster (#1764). */
     internal val step = FrameStep()
 

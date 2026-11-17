@@ -41,7 +41,7 @@ internal fun StepperView(element: CanvasElement, styled: Modifier, textStyle: Te
     readStepperNumber(element, tree)
     // The clock only while a button is held, for its repeat: an idle stepper reads none.
     val held = element.plusPress.isPressed || element.minusPress.isPressed
-    val delta = if (held) LocalFrameClock.current.deltaSeconds else 0f
+    val delta = if (held) element.stepperFrames.delta(LocalFrameClock.current) else 0f
     val steps = element.plusHold.advance(element.plusPress.isPressed, delta, settings.repeatDelay, settings.repeatInterval) -
         element.minusHold.advance(element.minusPress.isPressed, delta, settings.repeatDelay, settings.repeatInterval)
     element.stepBy(steps)
