@@ -53,6 +53,29 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
     /** A copy of the providers open now, for a composition that starts here, such as a subcomposition. */
     fun snapshot(): ProvidedLocals = ProvidedLocals(entries)
 
+    /**
+     * Makes these the providers [from] holds, or none for null, when they differ (#1774): a
+     * composition started from its parent's locals takes the parent's current ones before each pass.
+     * Equal providers are left as they are, so an unchanged pass copies and allocates nothing. Call it
+     * only between passes, while nothing is open here.
+     */
+    internal fun resetTo(from: ProvidedLocals?) {
+        val source = from?.entries
+        if (source == null) {
+            entries.clear()
+            return
+        }
+        if (sameAs(source)) return
+        entries.clear()
+        entries.addAll(source)
+    }
+
+    private fun sameAs(other: List<Any?>): Boolean {
+        if (other.size != entries.size) return false
+        for (i in 0 until entries.size) if (entries[i] != other[i]) return false
+        return true
+    }
+
     /** Opens [local] = [value] for [content], and closes it when [content] returns or throws. */
     fun <T> provide(local: CompositionLocal<T>, value: T, content: () -> Unit) {
         entries.add(local)
