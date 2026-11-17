@@ -83,7 +83,7 @@ private object DepthCasterFold : FoldRule {
         first.mesh === second.mesh &&
             first.material === second.material &&
             first.cullMode == second.cullMode &&
-            first.vertexAnimation == second.vertexAnimation &&
+            first.vertexAnimation.sameAnimation(second.vertexAnimation) &&
             first.timeSeconds == second.timeSeconds
 
     override fun hash(draw: RenderDrawCommand): Int = draw.mesh.hashCode() * 31 + draw.material.hashCode()

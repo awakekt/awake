@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.pipeline.CullMode
 
 /**
@@ -73,7 +74,7 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Bo
     mesh === other.mesh &&
         material === other.material &&
         extrasAlike(other, tints) &&
-        vertexAnimation == other.vertexAnimation &&
+        vertexAnimation.sameAnimation(other.vertexAnimation) &&
         timeSeconds == other.timeSeconds &&
         alphaMode == other.alphaMode &&
         alphaCutoff == other.alphaCutoff &&
@@ -83,6 +84,16 @@ internal fun RenderDrawCommand.instancesWith(other: RenderDrawCommand, tints: Bo
         exemptFromCoverings == other.exemptFromCoverings &&
         (tints || fadeOpacity == other.fadeOpacity) &&
         cullMode == other.cullMode
+
+/**
+ * The same vertex animation: the same object, or equal components. Not `==`: `Vec3f` is a data class,
+ * and on Kotlin/Wasm `==` on two distinct instances allocated on every call. A scene gives each
+ * renderer its own animation vector, so folding 3,000 of them cost 157 B a renderer (#1621).
+ *
+ * Unlike data-class `equals`, the components compare as IEEE floats: a NaN component never matches
+ * another vector's (only the same instance folds), and `-0f` matches `0f`.
+ */
+internal fun Vec3f.sameAnimation(other: Vec3f): Boolean = this === other || (x == other.x && y == other.y && z == other.z)
 
 /** Equal extras; with [tints], equal but for the tint a tinting pipeline carries per instance. */
 private fun RenderDrawCommand.extrasAlike(other: RenderDrawCommand, tints: Boolean): Boolean =

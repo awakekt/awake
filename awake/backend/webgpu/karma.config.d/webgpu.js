@@ -9,6 +9,3 @@ config.customLaunchers.AwakeWebGpuHeadless = {
   flags: ['--headless=new', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader', '--js-flags=--expose-gc', '--enable-precise-memory-info'],
 };
 config.browsers = ['AwakeWebGpuHeadless'];
-// A frame of a few thousand draws, timed over many frames, outlasts mocha's 2 s default.
-config.client = config.client || {};
-config.client.mocha = Object.assign({}, config.client.mocha, { timeout: 120000 });
