@@ -334,6 +334,10 @@ class Renderer internal constructor(
     /** The shadow depth array's bytes as allocated now; it grows with the layers a frame draws. */
     override val shadowMapBytes: Long get() = depthPrePass?.depthTarget?.allocatedBytes ?: 0L
 
+    /** The shadow array's own depth format, chosen when the engine started (#1709). */
+    override val shadowDepthFormat: com.awakekt.awake.render.renderer.ShadowDepthFormat
+        get() = depthPrePass?.depthTarget?.format ?: com.awakekt.awake.render.renderer.ShadowDepthFormat.Default
+
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
 
     /** Stateless; the one implementation of "record all opaque draws, grouped by pipeline",

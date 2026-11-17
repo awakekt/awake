@@ -154,6 +154,7 @@ internal class WebGpuContentFeatureGpu(
                 bindingsByGroup = depth.bindingsByGroup,
                 bindingsMetadataAvailable = depth.bindingsMetadataAvailable,
                 groupZeroLayout = groupZero,
+                depthFormat = pass.depthTarget.textureFormat,
             )
         }
         return object : ContentDepthCaster {

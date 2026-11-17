@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.texture
 
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import io.ygdrasil.webgpu.Extent3D
 import io.ygdrasil.webgpu.GPUAddressMode
@@ -23,7 +24,7 @@ import io.ygdrasil.webgpu.TextureViewDescriptor
 
 /**
  * A square depth-only render target a feature can render into and then sample. Mirrors Vulkan's
- * `DepthTarget` (2048x2048 Depth32Float).
+ * `DepthTarget` (2048x2048, [ShadowDepthFormat.Depth32Float] unless built with another [format]).
  *
  * Hardware only: it knows a depth format and a size, and nothing about why a caller wants depth
  * rendered offscreen. A shadow map is the one use today.
@@ -42,7 +43,15 @@ class DepthTarget(
      * from that declaration rejects a comparison sampler at bind time.
      */
     comparison: Boolean = false,
+    /** The texture's depth format: [ShadowDepthFormat.Depth32Float] unless a mobile tier asked for
+     * less, as on Vulkan (#1709). A pipeline drawing into this target must be built for the same
+     * [textureFormat]. */
+    val format: ShadowDepthFormat = ShadowDepthFormat.Depth32Float,
 ) {
+    /** The WebGPU texture format [format] names: what a pipeline and a render bundle drawing into
+     * this target declare as their depth attachment. */
+    val textureFormat: GPUTextureFormat = webGpuDepthFormat(format)
+
     /** Edge length, in texels, of the square depth texture. */
     var size: Int = size
         private set
@@ -52,8 +61,8 @@ class DepthTarget(
     var layers: Int = layers
         private set
 
-    /** The texture's bytes: [layers] of [size] squared 32-bit depth. */
-    val allocatedBytes: Long get() = size.toLong() * size * Float.SIZE_BYTES * layers
+    /** The texture's bytes: [layers] of [size] squared texels of [format]. */
+    val allocatedBytes: Long get() = format.layerBytes(size, layers)
 
     /**
      * Whether the texture is the shadow array a light renders into rather than the 1x1 [DORMANT_SIZE]
@@ -62,7 +71,7 @@ class DepthTarget(
     internal val resident: Boolean get() = size != DORMANT_SIZE
 
     /**
-     * The `Depth32Float` texture, with [layers] array layers. It is both a render attachment and
+     * The [textureFormat] texture, with [layers] array layers. It is both a render attachment and
      * bindable for sampling. Replaced by [reallocate].
      */
     var depthTexture: GPUTexture = createTexture()
@@ -97,7 +106,7 @@ class DepthTarget(
                 height = size.toUInt(),
                 depthOrArrayLayers = layers.toUInt(),
             ),
-            format = GPUTextureFormat.Depth32Float,
+            format = textureFormat,
             usage = GPUTextureUsage.RenderAttachment or GPUTextureUsage.TextureBinding,
             dimension = GPUTextureDimension.TwoD,
         ),
@@ -174,4 +183,10 @@ class DepthTarget(
         /** The stand-in's edge while no light casts: one texel, one layer, as on Vulkan (#1698). */
         internal const val DORMANT_SIZE = 1
     }
+}
+
+/** The WebGPU texture format a [ShadowDepthFormat] stores its texels in. */
+fun webGpuDepthFormat(format: ShadowDepthFormat): GPUTextureFormat = when (format) {
+    ShadowDepthFormat.Depth32Float -> GPUTextureFormat.Depth32Float
+    ShadowDepthFormat.Depth16Unorm -> GPUTextureFormat.Depth16Unorm
 }
