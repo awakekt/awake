@@ -173,6 +173,29 @@ actual object VulkanBuffers {
     }
 
     /**
+     * Maps [memory], copies [count] floats of [data] from [dataOffset] into it at [offset], and
+     * unmaps it again: part of an array written in place, with no copy of the range first.
+     */
+    actual fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int) {
+        requireFloatRange(data.size, dataOffset, count)
+        // vkMapMemory rejects a zero size, and an empty write has nothing to do anyway.
+        if (count == 0) return
+        memScoped {
+            val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
+            val nativeDevice = device.toCPointer<VkDevice_T>()
+            val nativeMemory = memory.toCPointer<VkDeviceMemory_T>()
+            val byteSize = (count * Float.SIZE_BYTES).toULong()
+            val result = nativeVkMapMemory(nativeDevice, nativeMemory, offset.toULong(), byteSize, 0u, dataVar.ptr)
+            check(result == VK_SUCCESS) { "vkMapMemory failed: $result" }
+            val dst = dataVar.value!!.reinterpret<kotlinx.cinterop.FloatVar>()
+            for (i in 0 until count) {
+                dst[i] = data[dataOffset + i]
+            }
+            nativeVkUnmapMemory(nativeDevice, nativeMemory)
+        }
+    }
+
+    /**
      * Same map->memcpy->unmap pattern as [writeBufferMemoryFloats], for raw byte data (e.g. texture
      * pixels) instead of float uniform/vertex data.
      */

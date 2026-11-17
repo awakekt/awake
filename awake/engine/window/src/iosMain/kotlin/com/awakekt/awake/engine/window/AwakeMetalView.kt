@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.TouchPinch
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import kotlinx.cinterop.COpaquePointer
@@ -73,6 +74,7 @@ class AwakeMetalView(
     private var textInputWasFocused = false
     private var textInputWasSecure = false
     private val keyboardInset = IosKeyboardInset(this) { onKeyboard(it) }
+    private val touchPinch = TouchPinch()
 
     init {
         contentScaleFactor = UIScreen.mainScreen.scale
@@ -218,21 +220,28 @@ class AwakeMetalView(
 
     override fun touchesBegan(touches: Set<*>, withEvent: UIEvent?) {
         super.touchesBegan(touches, withEvent)
-        syncAwakePointerInput(touches, down = true, input = input)
+        syncTouches(touches, down = true)
     }
 
     override fun touchesMoved(touches: Set<*>, withEvent: UIEvent?) {
         super.touchesMoved(touches, withEvent)
-        syncAwakePointerInput(touches, down = true, input = input)
+        syncTouches(touches, down = true)
     }
 
     override fun touchesEnded(touches: Set<*>, withEvent: UIEvent?) {
         super.touchesEnded(touches, withEvent)
-        syncAwakePointerInput(touches, down = false, input = input)
+        syncTouches(touches, down = false)
     }
 
     override fun touchesCancelled(touches: Set<*>, withEvent: UIEvent?) {
         super.touchesCancelled(touches, withEvent)
-        syncAwakePointerInput(touches, down = false, input = input)
+        syncTouches(touches, down = false)
+    }
+
+    // UIKit reports no pinch, and only the fingers that changed: the first two of every finger
+    // down give it, about their midpoint, in the same pixels as the touches.
+    private fun syncTouches(touches: Set<*>, down: Boolean) {
+        syncAwakePointerInput(touches, down, input)
+        touchPinch.update(input)
     }
 }

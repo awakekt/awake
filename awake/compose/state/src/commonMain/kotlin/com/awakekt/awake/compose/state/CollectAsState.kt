@@ -45,6 +45,67 @@ fun <T> StateFlow<T>.collectAsState(): State<T> {
     return state
 }
 
+/**
+ * One part of a [StateFlow]'s value, [select]ed from it. Kept until the flow holds a different object:
+ * a poll of an unchanged flow is one identity check and returns the same instance, with no [select]
+ * call, no boxing and no `equals` on the whole state. When the flow's object changes, [select] runs
+ * once, and the part already held is kept when the new one equals it.
+ */
+private class SelectedState<S, T> : PolledState<T>() {
+    lateinit var flow: StateFlow<S>
+    lateinit var select: (S) -> T
+    private var source: Any? = UNREAD
+    private var selected: T? = null
+
+    @Suppress("UNCHECKED_CAST") // [selected] holds a T from [select] once [source] is no longer UNREAD.
+    override fun read(): T {
+        val state = flow.value
+        if (state !== source) {
+            val next = select(state)
+            if (source === UNREAD || next != selected) selected = next
+            source = state
+        }
+        return selected as T
+    }
+
+    private companion object {
+        val UNREAD = Any()
+    }
+}
+
+context(composer: Composer)
+/**
+ * The part of the flow's value [select] picks, as a [State] tracked by the composition that reads it
+ * (#1512): a pass that read it is invalid once the selected part differs, and only then. A flow
+ * whose value changes elsewhere, a field another composable shows, leaves this one valid.
+ *
+ * [select] runs only when the flow holds a new object, and the part is compared with `equals` only
+ * then: a frame whose flow did not change costs one identity check. Keep [select] cheap and free of
+ * side effects; a new lambda on each pass is fine.
+ *
+ * ```kotlin
+ * val hp by store.state.collectAsState { it.player.hp }
+ * ```
+ */
+fun <S, T> StateFlow<S>.collectAsState(select: (S) -> T): State<T> {
+    @Suppress("UNCHECKED_CAST")
+    val state = remember<SelectedState<*, *>>(this) { SelectedState<Any?, Any?>() } as SelectedState<S, T>
+    state.flow = this
+    state.select = select
+    return state
+}
+
+context(composer: Composer)
+/**
+ * The part of the store's state [select] picks, as a [State] tracked as [StateFlow.collectAsState]
+ * with a selector tracks [Store.state].
+ *
+ * ```kotlin
+ * val hp by useStore<HudState>().collectAsState { it.hp }
+ * ```
+ */
+fun <S, T> Store<S>.collectAsState(select: (S) -> T): State<T> = state.collectAsState(select)
+
 context(composer: Composer)
 /**
  * The store's current state as a [State], tracked as [StateFlow.collectAsState] tracks

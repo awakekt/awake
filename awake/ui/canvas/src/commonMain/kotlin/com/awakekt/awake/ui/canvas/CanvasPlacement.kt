@@ -25,11 +25,12 @@ import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.node.LayoutModifierNode
+import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.ui.platform.LocalDensity
+import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -43,12 +44,14 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
     val inside = if (element.safeArea) safeArea else CanvasInsets.None
     val view = Modifier.size(element.width.dp, element.height.dp).testTag(tag)
     val adjust = tree.controls.playerLayout.adjustOf(element)
+    // The clock object, not its time: reading it is untracked, and draw reads only its frame count.
+    val clock = LocalFrameClock.current
     // The inset wraps the element rather than sitting in its modifier chain, so the element's own
     // bounds (hit area, editor picking) are exactly its size.
     if (adjust == null) {
         val placed = Modifier
             .align(element.anchor.alignment)
-            .then(AnchoredSubpixelElement(element.anchor, element.offsetX, element.offsetY, inside))
+            .then(AnchoredSubpixelElement(element.anchor, element.offsetX, element.offsetY, inside, clock))
             .anchorInset(element.anchor, element.offsetX, element.offsetY, inside)
             .ownSize(element.anchor, onCanvas)
         Box(placed) {
@@ -61,7 +64,7 @@ internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree:
     val y = element.offsetY + adjust.offsetY * if (element.anchor.row == 2) -1f else 1f
     var placed = Modifier
         .align(element.anchor.alignment)
-        .then(AnchoredSubpixelElement(element.anchor, x, y, inside))
+        .then(AnchoredSubpixelElement(element.anchor, x, y, inside, clock))
         .anchorInset(element.anchor, x, y, inside)
         .ownSize(element.anchor, onCanvas)
     if (adjust.opacity < 1f) placed = placed.alpha(adjust.opacity)
@@ -93,6 +96,7 @@ private class AnchoredSubpixelElement(
     private val x: Float,
     private val y: Float,
     private val safeArea: CanvasInsets,
+    private val clock: FrameClock,
 ) : ModifierNodeElement<AnchoredSubpixelNode>() {
     override fun create(): AnchoredSubpixelNode = AnchoredSubpixelNode()
     override fun update(node: AnchoredSubpixelNode) {
@@ -100,6 +104,7 @@ private class AnchoredSubpixelElement(
         node.x = x
         node.y = y
         node.safeArea = safeArea
+        node.clock = clock
     }
 }
 
@@ -115,6 +120,7 @@ private class AnchoredSubpixelNode :
     var x: Float = 0f
     var y: Float = 0f
     var safeArea: CanvasInsets = CanvasInsets.None
+    var clock: FrameClock? = null
 
     private var continuousX = 0f
     private var continuousY = 0f
@@ -204,7 +210,11 @@ private class AnchoredSubpixelNode :
     }
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        subpixel.step(continuousX, continuousY, placedIntX, placedIntY)
+        val clock = clock
+        subpixel.step(clock?.frame ?: 0L, continuousX, continuousY, placedIntX, placedIntY)
+        // While it eases, the next frame differs with no write: reading the time makes a host that
+        // replays unchanged drawings repaint this one each frame until it settles (#1512).
+        if (subpixel.easing) clock?.deltaSeconds
         val dx = subpixel.residualX
         val dy = subpixel.residualY
         if (dx != 0f || dy != 0f) {
@@ -212,138 +222,5 @@ private class AnchoredSubpixelNode :
         } else {
             drawContent()
         }
-    }
-}
-
-private class CanvasSubpixelTracker {
-    private var initialized = false
-    private var lastPxX = 0f
-    private var lastPxY = 0f
-    private var lastRenderedX = 0f
-    private var lastRenderedY = 0f
-    private var active = false
-    private var settleFrames = 0
-    private var leadInErrorX = 0f
-    private var leadInErrorY = 0f
-    private var leadInFrames = 0
-
-    var residualX: Float = 0f
-        private set
-
-    var residualY: Float = 0f
-        private set
-
-    fun step(pxX: Float, pxY: Float, intX: Int, intY: Int) {
-        val rawResX = pxX - intX
-        val rawResY = pxY - intY
-        if (!initialized) {
-            initializeAt(pxX, pxY, intX, intY)
-            return
-        }
-        val prevPxX = lastPxX
-        val prevPxY = lastPxY
-        val dx = pxX - prevPxX
-        val dy = pxY - prevPxY
-        lastPxX = pxX
-        lastPxY = pxY
-
-        val moved = abs(dx) > MOTION_EPSILON || abs(dy) > MOTION_EPSILON
-        val hasResidual = abs(rawResX) > FRACTION_EPSILON || abs(rawResY) > FRACTION_EPSILON
-        if (moved) {
-            advanceMoving(prevPxX, prevPxY, dx, dy, hasResidual)
-        } else if (active) {
-            advanceStationary(hasResidual)
-        }
-        computeResiduals(rawResX, rawResY)
-        lastRenderedX = intX + residualX
-        lastRenderedY = intY + residualY
-    }
-
-    private fun initializeAt(pxX: Float, pxY: Float, intX: Int, intY: Int) {
-        initialized = true
-        lastPxX = pxX
-        lastPxY = pxY
-        lastRenderedX = intX.toFloat()
-        lastRenderedY = intY.toFloat()
-        residualX = 0f
-        residualY = 0f
-    }
-
-    private fun advanceMoving(prevPxX: Float, prevPxY: Float, dx: Float, dy: Float, hasResidual: Boolean) {
-        val fractionalDelta = abs(dx - dx.roundToInt()) > FRACTION_EPSILON ||
-            abs(dy - dy.roundToInt()) > FRACTION_EPSILON
-        when {
-            fractionalDelta -> {
-                if (!active) {
-                    startLeadIn(prevPxX, prevPxY)
-                } else if (leadInFrames in 1..SETTLE_FRAMES) {
-                    leadInFrames += 1
-                }
-                settleFrames = 0
-            }
-            active && hasResidual -> {
-                settleFrames = 0
-                if (leadInFrames in 1..SETTLE_FRAMES) leadInFrames += 1
-            }
-            !hasResidual -> leadInFrames = 0
-        }
-    }
-
-    private fun startLeadIn(prevPxX: Float, prevPxY: Float) {
-        leadInErrorX = lastRenderedX - prevPxX
-        leadInErrorY = lastRenderedY - prevPxY
-        val hasLeadError = abs(leadInErrorX) > FRACTION_EPSILON || abs(leadInErrorY) > FRACTION_EPSILON
-        leadInFrames = if (hasLeadError) 1 else 0
-        active = true
-    }
-
-    private fun advanceStationary(hasResidual: Boolean) {
-        if (!hasResidual) {
-            clearActiveMotion()
-            return
-        }
-        settleFrames += 1
-        if (settleFrames >= SETTLE_FRAMES) {
-            clearActiveMotion()
-        }
-    }
-
-    private fun clearActiveMotion() {
-        active = false
-        settleFrames = 0
-        leadInFrames = 0
-    }
-
-    private fun computeResiduals(rawResX: Float, rawResY: Float) {
-        if (!active) {
-            residualX = 0f
-            residualY = 0f
-            return
-        }
-        val leadFactor = if (leadInFrames in 1 until SETTLE_FRAMES) {
-            1f - smoothStep(leadInFrames.toFloat() / SETTLE_FRAMES)
-        } else {
-            0f
-        }
-        val baseX = rawResX + leadInErrorX * leadFactor
-        val baseY = rawResY + leadInErrorY * leadFactor
-        val settleFactor = if (settleFrames > 0) {
-            1f - smoothStep(settleFrames.toFloat() / SETTLE_FRAMES)
-        } else {
-            1f
-        }
-        residualX = baseX * settleFactor
-        residualY = baseY * settleFactor
-    }
-
-    private fun smoothStep(t: Float): Float {
-        val c = t.coerceIn(0f, 1f)
-        return c * c * (3f - 2f * c)
-    }
-
-    companion object {
-        private const val MOTION_EPSILON = 1e-4f
-        private const val FRACTION_EPSILON = 1e-3f
-        private const val SETTLE_FRAMES = 8
     }
 }

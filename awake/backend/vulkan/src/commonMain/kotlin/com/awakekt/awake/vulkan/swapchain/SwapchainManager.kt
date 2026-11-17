@@ -246,6 +246,7 @@ class SwapchainManager(
         imageFormat = format
         sampleable = canSampleSwapchain
         swapChain = Vulkan.vkCreateSwapchainKHR(device, createInfo)
+        graphicsDevice.swapchainPacer?.swapchainCreated(swapChain)
         extent = chosenExtent
         builtTransform = capabilities.currentTransform
         suboptimalAccepted = false
@@ -456,6 +457,8 @@ class SwapchainManager(
         imageViews = emptyList()
         sampleable = false
         // Headless owns no swapchain, and its device need not load the entry point at all.
+        // The pacer forgets it first: Swappy must let go of a swapchain before it is destroyed (#1699).
+        if (swapChain != 0L) graphicsDevice.swapchainPacer?.swapchainDestroying(swapChain)
         if (swapChain != 0L) Vulkan.vkDestroySwapchainKHR(device, swapChain)
         swapChain = 0
     }

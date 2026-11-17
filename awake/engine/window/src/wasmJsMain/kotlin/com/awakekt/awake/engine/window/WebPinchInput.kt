@@ -15,15 +15,15 @@ import org.w3c.dom.events.KeyboardEvent
 import org.w3c.dom.events.WheelEvent
 
 /**
- * Binds a trackpad pinch to [input] as a typed [Input.addPinch], through [BrowserPinch].
+ * Binds a trackpad pinch to [pinch]'s [Input] as a typed [Input.addPinch]. The touch bridge feeds the
+ * same [pinch] the fingers, so Safari's gesture for them is not a second pinch.
  *
  * Beside the wheel listener in [bindWindowPointerInput], not in place of it: that one still delivers
  * a pinch's `wheel` as Ctrl held plus its scroll, and cancels it so the page does not zoom. This
  * listener only reads the same event, so it can be passive. Safari's gesture events are cancelled
  * here, non-passive, or Safari zooms the page.
  */
-internal fun bindWindowPinchInput(input: Input, canvas: HTMLCanvasElement) {
-    val pinch = BrowserPinch(input)
+internal fun bindWindowPinchInput(input: Input, canvas: HTMLCanvasElement, pinch: BrowserPinch) {
     fun point(clientX: Double, clientY: Double): Pair<Float, Float> =
         canvas.box().bufferPoint(clientX, clientY, canvas.width, canvas.height)
 

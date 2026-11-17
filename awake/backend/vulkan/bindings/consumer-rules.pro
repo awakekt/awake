@@ -11,6 +11,9 @@
 -keep class com.awakekt.awake.vulkan.models.** { *; }
 -keep class com.awakekt.awake.vulkan.utils.** { *; }
 
+# Swappy's entry points (#1699): JNI binds them by class and method name.
+-keep class com.awakekt.awake.vulkan.swappy.** { *; }
+
 # The Kotlin type of VkDebugUtilsMessengerCreateInfoEXT.pfnUserCallback, whose invoke the native
 # debug messenger calls.
 -keep interface kotlin.jvm.functions.Function4 { *; }

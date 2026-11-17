@@ -114,6 +114,24 @@ expect object VulkanBuffers {
      */
     fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray)
 
+    /**
+     * Maps [memory], copies [count] floats of [data] from [dataOffset] into it at [offset], and
+     * unmaps it again.
+     *
+     * Writes part of an array in place, so a caller that stages several blocks in one array writes
+     * the changed range without first copying it into an array of its own, which would allocate one
+     * every frame. A [count] of 0 writes nothing.
+     *
+     * @param device The logical device that owns the memory.
+     * @param memory The host-visible memory to write.
+     * @param offset Byte offset into [memory] to start writing at.
+     * @param data The array holding the floats, written in native byte order.
+     * @param dataOffset Index in [data] of the first float to write.
+     * @param count How many floats to write; `dataOffset + count` is at most `data.size`.
+     * @throws IllegalArgumentException when the range is not inside [data].
+     */
+    fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray, dataOffset: Int, count: Int)
+
     /** Same map->memcpy->unmap pattern as [writeBufferMemoryFloats], for raw byte data
      * (e.g. texture pixels) instead of float uniform/vertex data. */
     fun writeBufferMemoryBytes(device: Long, memory: Long, offset: Long, data: ByteArray)
@@ -164,4 +182,14 @@ expect object VulkanBuffers {
      * without racing the GPU's read of the previous frame -- a deliberate simplification;
      * see the MVP-matrix uniform buffer usage in the demo for the full rationale. */
     fun vkDeviceWaitIdle(device: Long)
+}
+
+/**
+ * Checks that [count] floats from [dataOffset] lie inside an array of [size] floats, before a
+ * range write maps memory for them.
+ */
+internal fun requireFloatRange(size: Int, dataOffset: Int, count: Int) {
+    require(dataOffset >= 0 && count >= 0 && count <= size - dataOffset) {
+        "A write of $count floats from index $dataOffset is outside an array of $size."
+    }
 }

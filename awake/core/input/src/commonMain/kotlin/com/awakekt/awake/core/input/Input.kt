@@ -415,6 +415,17 @@ data class InputSnapshot(
     /** Went up this frame (in the previous frame's [gamepadButtonsDown], absent now). */
     val gamepadButtonsReleased: Set<GamepadButton> = emptySet(),
 ) : ActionInputSource {
+    /**
+     * True while two or more fingers touch the screen: a pinch, which a camera zooms by [pinch] and
+     * must not also read as a drag of the primary pointer, which the first finger still drives.
+     */
+    val isMultiTouch: Boolean
+        get() {
+            var down = 0
+            for (index in touches.indices) if (touches[index].down && ++down == 2) return true
+            return false
+        }
+
     /** True if the specified pointer [button] is currently held down. */
     override fun isDown(button: PointerButton): Boolean = button in buttonsDown
 
@@ -479,6 +490,9 @@ class Input {
     private var pendingPinchScale = 1f
     private var pendingPinchX = 0f
     private var pendingPinchY = 0f
+
+    /** Derives a pinch from two fingers for a bridge whose platform reports none, such as Android's. */
+    internal val touchPinch = TouchPinch()
 
     /**
      * Adds one step of a trackpad pinch: zoom by the factor [scale] about ([focusX], [focusY]), in the
@@ -689,6 +703,21 @@ class Input {
             movePointer(down, x, y)
             if (!down) primaryFinger = null
         }
+    }
+
+    /** Steps [pinch] from the first two fingers down, in the order they touched down; see [TouchPinch.update]. */
+    internal fun stepTouchPinch(pinch: TouchPinch) {
+        var first: Finger? = null
+        for (finger in fingers.values) {
+            if (!finger.down) continue
+            if (first == null) {
+                first = finger
+            } else {
+                pinch.track(this, first.id, first.x, first.y, finger.id, finger.x, finger.y)
+                return
+            }
+        }
+        pinch.end()
     }
 
     private class Finger(val id: Long) {

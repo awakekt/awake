@@ -72,6 +72,7 @@ import com.awakekt.awake.vulkan.renderer.rebuildSwapchainResources
 import com.awakekt.awake.vulkan.renderer.releaseSwapchainResources
 import com.awakekt.awake.vulkan.surfaceFramebufferExtent
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
+import com.awakekt.awake.vulkan.swapchain.platformSwapchainPacer
 import com.awakekt.awake.vulkan.texture.DepthTarget
 import com.awakekt.awake.vulkan.windowLogicalExtent
 import kotlin.coroutines.cancellation.CancellationException
@@ -566,7 +567,13 @@ open class VulkanEngine(
         try {
             val headless = window as? HeadlessSurface
             graphicsDevice = GraphicsDevice()
-            if (headless == null) graphicsDevice.create(window) else graphicsDevice.createHeadless()
+            if (headless == null) {
+                // Swappy on Android when the app picks it (#1699); nothing elsewhere.
+                graphicsDevice.swapchainPacer = platformSwapchainPacer(window) { appLifecycle.windowConfig.frameRateMode }
+                graphicsDevice.create(window)
+            } else {
+                graphicsDevice.createHeadless()
+            }
             val rasterState = plan.multisample.supportedBy(graphicsDevice.framebufferSampleCounts()) {
                 println("Awake/Vulkan: $it")
             }
