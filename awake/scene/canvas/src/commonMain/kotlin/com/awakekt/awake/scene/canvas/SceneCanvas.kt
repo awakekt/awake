@@ -116,6 +116,7 @@ fun SceneCanvas(
     changes.images = images
     changes.fonts = fonts
     changes.locale = strings?.locale?.value
+    changes.refresh()
     changes.value
     CanvasOverlay(
         if (siblingOrder == null) order.items() else world.canvasItems(siblingOrder),

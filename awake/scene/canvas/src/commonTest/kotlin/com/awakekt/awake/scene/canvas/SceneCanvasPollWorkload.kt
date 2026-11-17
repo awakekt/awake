@@ -35,6 +35,7 @@ internal class SceneCanvasPollWorkload(val elements: Int) {
         }
         world.syncActiveCanvasElements()
         order.items()
+        changes.refresh()
         changes.value
     }
 
