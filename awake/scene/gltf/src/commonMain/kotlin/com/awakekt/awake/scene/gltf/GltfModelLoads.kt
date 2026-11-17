@@ -59,7 +59,7 @@ internal class GltfModelLoads(
             finished = true
             if (inFlight[path] === this) inFlight.remove(path)
             val result = staged.load() ?: Result.failure(CancellationException("The load of $path was cancelled."))
-            result.fold(onSuccess = { model -> resolver.adopt(path, model) }, onFailure = { failure = it })
+            result.fold(onSuccess = { model -> resolver.adoptLoaded(path, model) }, onFailure = { failure = it })
         }
 
         fun leave() {
