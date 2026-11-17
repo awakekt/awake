@@ -20,8 +20,9 @@ import com.awakekt.awake.ui.canvas.CanvasElementKind
 /**
  * A world canvas that is mostly followers, for measuring its frame (#1512): [plates] name plates, a
  * panel with a bar and a line of text each, over nodes [frame] moves when asked, and a minimap view.
+ * [parts] leaves parts out, so a breakdown can name what each one costs.
  */
-internal class FollowerHud(val plates: Int) {
+internal class FollowerHud(val plates: Int, val parts: FollowerParts = FollowerParts.All) {
     private val world = World()
     private val movers = ArrayList<Transform>()
     private val matrices = ArrayList<Mat4>()
@@ -41,11 +42,12 @@ internal class FollowerHud(val plates: Int) {
             matrices += Mat4()
             world.add(mover, transform)
             world.add(mover, Name("Mover $index"))
+            if (!parts.plates) return@repeat
             val plate = node(null, CanvasElement().apply { kind = CanvasElementKind.Panel; follow = "Mover $index"; width = 70f; height = 20f })
-            node(plate, CanvasElement().apply { kind = CanvasElementKind.Bar; width = 70f; height = 4f; value = 0.8f })
-            node(plate, CanvasElement().apply { kind = CanvasElementKind.Text; text = "Player $index"; offsetY = 6f })
+            if (parts.bar) node(plate, CanvasElement().apply { kind = CanvasElementKind.Bar; width = 70f; height = 4f; value = 0.8f })
+            if (parts.text) node(plate, CanvasElement().apply { kind = CanvasElementKind.Text; text = "Player $index"; offsetY = 6f })
         }
-        node(null, CanvasElement().apply { kind = CanvasElementKind.View; camera = "minimap"; width = 160f; height = 160f })
+        if (parts.view) node(null, CanvasElement().apply { kind = CanvasElementKind.View; camera = "minimap"; width = 160f; height = 160f })
         place()
     }
 
@@ -75,5 +77,22 @@ internal class FollowerHud(val plates: Int) {
         const val SWAY = 30
         const val WIDTH = 1280
         const val HEIGHT = 720
+    }
+}
+
+/** Which parts of a [FollowerHud] are made: its plates, each plate's bar and text, and the minimap view. */
+internal data class FollowerParts(val plates: Boolean, val bar: Boolean, val text: Boolean, val view: Boolean) {
+    companion object {
+        val All = FollowerParts(plates = true, bar = true, text = true, view = true)
+
+        /** The cases a heap breakdown measures, each named, from an empty canvas to the whole HUD. */
+        val Breakdown: List<Pair<String, FollowerParts>> = listOf(
+            "empty" to FollowerParts(plates = false, bar = false, text = false, view = false),
+            "view" to FollowerParts(plates = false, bar = false, text = false, view = true),
+            "panels" to FollowerParts(plates = true, bar = false, text = false, view = false),
+            "panels+bar" to FollowerParts(plates = true, bar = true, text = false, view = false),
+            "panels+text" to FollowerParts(plates = true, bar = false, text = true, view = false),
+            "all" to All,
+        )
     }
 }
