@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.TouchPinch
 import kotlin.math.exp
 
 /**
@@ -20,6 +21,10 @@ import kotlin.math.exp
  * Safari sends `gesturestart`, `gesturechange` and `gestureend` instead, with the pinch's scale
  * since it began, and those arrive as the typed pinch only.
  *
+ * Two fingers on a touch screen pinch through [touch], which the touch bridge calls after each touch
+ * event. Safari on a touch screen also sends its gesture events for those same fingers; a gesture
+ * that has two fingers down is left to the touches, so the pinch is not counted twice.
+ *
  * Kept off the DOM types so it is tested in `commonTest`; the browser bridge feeds it the event fields.
  */
 internal class BrowserPinch(private val input: Input) {
@@ -28,6 +33,18 @@ internal class BrowserPinch(private val input: Input) {
 
     private var gestureActive = false
     private var gestureScale = 1.0
+
+    private val touchPinch = TouchPinch()
+    private var fingersDown = 0
+
+    // The current Safari gesture is the touch pinch's fingers again, so the touches report it.
+    private var gestureFromTouch = false
+
+    /** After a touch event whose fingers [Input.setTouch] has: [down] fingers still touch the screen. */
+    fun touch(down: Int) {
+        fingersDown = down
+        touchPinch.update(input)
+    }
 
     /** Takes one `wheel` event at ([x], [y]): a pinch if it has [ctrlKey] and Control is not held. */
     fun wheel(deltaY: Double, deltaMode: Int, ctrlKey: Boolean, x: Float, y: Float) {
@@ -39,20 +56,23 @@ internal class BrowserPinch(private val input: Input) {
     fun gestureStart() {
         gestureActive = true
         gestureScale = 1.0
+        gestureFromTouch = fingersDown >= 2
     }
 
     /** Safari's `gesturechange`: [scale] is the pinch's whole scale since it began, at ([x], [y]). */
     fun gestureChange(scale: Double, x: Float, y: Float) {
         if (!gestureActive) gestureStart()
-        if (!scale.isFinite() || scale <= 0.0) return
+        if (fingersDown >= 2) gestureFromTouch = true
+        if (gestureFromTouch || !scale.isFinite() || scale <= 0.0) return
         input.addPinch((scale / gestureScale).toFloat(), x, y)
         gestureScale = scale
     }
 
     /** Safari's `gestureend`, whose [scale] is the pinch's final one. */
     fun gestureEnd(scale: Double, x: Float, y: Float) {
-        if (gestureActive) gestureChange(scale, x, y)
+        if (gestureActive && !gestureFromTouch) gestureChange(scale, x, y)
         gestureActive = false
+        gestureFromTouch = false
     }
 }
 
