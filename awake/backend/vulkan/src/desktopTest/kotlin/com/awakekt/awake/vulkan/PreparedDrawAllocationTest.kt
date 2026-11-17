@@ -33,6 +33,7 @@ import kotlin.test.assertTrue
  *
  * And each draw's uniform packers wrote their fields through `UniformWriter.put`'s vararg, which
  * built an array of fields for every call: one- and two-field writes now have overloads of their own.
+ * A plain material's draw packed its default factors with a new writer every time; they are packed once.
  */
 class PreparedDrawAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -85,10 +86,10 @@ class PreparedDrawAllocationTest {
 
         /**
          * 463 B a further draw while each built a `PreparedDrawCall`, 375 B once it did not, 303 B
-         * once the depth pass shared its offsets, and 254 B since a one- or two-field uniform write
-         * builds no array. What remains is the draw's `GpuResolvedDraw`, which the pass keeps, and
-         * its share of compiling the pass.
+         * once the depth pass shared its offsets, 254 B once a one- or two-field uniform write built
+         * no array, and 222 B since a plain material's default factors are packed once. What remains
+         * is the draw's `GpuResolvedDraw`, which the pass keeps, and its share of compiling the pass.
          */
-        const val PER_DRAW_BUDGET = 285L
+        const val PER_DRAW_BUDGET = 240L
     }
 }

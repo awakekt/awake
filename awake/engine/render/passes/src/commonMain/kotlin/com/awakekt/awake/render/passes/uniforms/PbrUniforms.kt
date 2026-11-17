@@ -309,11 +309,16 @@ private fun pbrMaterialPayload(values: FloatArray, into: FloatArray? = null): Fl
     if (values.size >= layout.total) {
         return if (into != null) values.copyInto(into, 0, 0, layout.total) else values.copyOf(layout.total)
     }
-    val defaults = UniformWriter(layout)
-        .put(UniformFields.PbrFactors, DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
-        .build()
-    return if (into != null) defaults.copyInto(into) else defaults
+    return if (into != null) DEFAULT_PBR_MATERIAL.copyInto(into) else DEFAULT_PBR_MATERIAL.copyOf()
 }
+
+/**
+ * A material that declares no factors: packed once, not by a new writer for every draw that has none,
+ * which is every lit draw of a plain material, every frame (#1742). Only ever copied out.
+ */
+private val DEFAULT_PBR_MATERIAL = UniformWriter(MaterialUniformLayouts.PbrMaterial)
+    .put(UniformFields.PbrFactors, DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
+    .build()
 
 /**
  * The scene state every draw in a frame shares: lighting, where the eye is, the fog and the
