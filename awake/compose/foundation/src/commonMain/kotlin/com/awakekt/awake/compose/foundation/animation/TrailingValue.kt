@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
+import com.awakekt.awake.compose.ui.platform.FrameStep
 
 /**
  * A value that trails behind the one it follows, as a health bar's second fill shows damage just
@@ -74,7 +75,9 @@ fun animateTrailing(
 ): Float = rememberGroup(AnimateTrailingGroup) {
     val clock = LocalFrameClock.current
     val trail = remember { TrailingValue(target) }
-    trail.advance(target, clock.deltaSeconds, holdSeconds, drainPerSecond)
+    // Once a frame, however many times the frame composes this (#1764).
+    val step = remember { FrameStep() }
+    trail.advance(target, step.delta(clock), holdSeconds, drainPerSecond)
 }
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
