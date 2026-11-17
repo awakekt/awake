@@ -61,6 +61,24 @@ class ComposeFrameCounts internal constructor() {
     var measureCauseOwner: Any? = null
         internal set
 
+    /**
+     * What placement changed that the frame's composition read, while [ComposeHost.explainPlacement]
+     * is on: the first state written, polled value changed or `invalidate()` during this frame's
+     * layout, on a frame whose composition was current before it. Such a frame composes and lays out
+     * a second time ([ComposeHost.placementRecompositions]). [PhaseReadCause.None] on a frame where
+     * placement changed nothing composition read, or while not explaining.
+     */
+    var placementCause: PhaseReadCause = PhaseReadCause.None
+        internal set
+
+    /** The state or polled source behind [placementCause], if it has one: what placement wrote. */
+    var placementCauseSource: Any? = null
+        internal set
+
+    /** Who read [placementCauseSource] in composition, if the host named a reader while composing. */
+    var placementCauseOwner: Any? = null
+        internal set
+
     override fun toString(): String =
         "ComposeFrameCounts(composed=$composed, measured=$measured, nodesComposed=$nodesComposed, " +
             "nodesMeasured=$nodesMeasured, nodesDrawn=$nodesDrawn, subtreesReplayed=$subtreesReplayed, " +

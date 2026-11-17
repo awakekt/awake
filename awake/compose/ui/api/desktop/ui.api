@@ -1109,9 +1109,14 @@ public final class com/awakekt/awake/compose/ui/layout/LayoutComposition {
 	public fun <init> (Lcom/awakekt/awake/compose/ui/node/LayoutNode;)V
 	public final fun compose (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
 	public final fun dispose ()V
+	public final fun getCause ()Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public final fun getCauseOwner ()Ljava/lang/Object;
+	public final fun getCauseSource ()Ljava/lang/Object;
+	public final fun getExplains ()Z
 	public final fun getTracksChanges ()Z
 	public final fun invalidate ()V
 	public final fun isInvalid ()Z
+	public final fun setExplains (Z)V
 	public final fun setTracksChanges (Z)V
 }
 
@@ -1468,6 +1473,9 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeFrameCounts {
 	public final fun getNodesComposed ()I
 	public final fun getNodesDrawn ()I
 	public final fun getNodesMeasured ()I
+	public final fun getPlacementCause ()Lcom/awakekt/awake/compose/runtime/PhaseReadCause;
+	public final fun getPlacementCauseOwner ()Ljava/lang/Object;
+	public final fun getPlacementCauseSource ()Ljava/lang/Object;
 	public final fun getSubtreesReplayed ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1506,6 +1514,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun getCompositionStats ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStats;
 	public final fun getDensity ()F
 	public final fun getExplainMeasure ()Z
+	public final fun getExplainPlacement ()Z
 	public final fun getExternalChanges ()Lkotlin/jvm/functions/Function0;
 	public final fun getFocusOwner ()Lcom/awakekt/awake/compose/ui/focus/FocusOwner;
 	public final fun getFrameClock ()Lcom/awakekt/awake/compose/ui/platform/FrameClock;
@@ -1528,6 +1537,7 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public final fun invalidate ()V
 	public final fun setDensity (F)V
 	public final fun setExplainMeasure (Z)V
+	public final fun setExplainPlacement (Z)V
 	public final fun setExternalChanges (Lkotlin/jvm/functions/Function0;)V
 	public final fun setFrameStages (Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStages;)V
 	public final fun setLayoutDirection (Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
