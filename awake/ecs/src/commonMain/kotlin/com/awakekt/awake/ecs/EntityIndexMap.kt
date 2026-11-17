@@ -28,11 +28,11 @@ internal class EntityIndexMap {
      * every call, which profiling showed as the single largest cost (36% of CPU samples) in
      * family-cache churn, since this runs on every add/remove. */
     fun get(id: Int): Int {
-        if (id < 0) return ABSENT
+        // A negative id's page is past every page: `ushr` makes it at least 2^26.
         val page = id ushr PAGE_SHIFT
-        if (page >= pages.size) return ABSENT
-        val slots = pages[page] ?: return ABSENT
-        return slots[id and PAGE_MASK]
+        val slots = if (page < pages.size) pages[page] else null
+        // Not `slots?.get(..) ?: ABSENT`, which boxes the index as an `Int?`.
+        return if (slots == null) ABSENT else slots[id and PAGE_MASK]
     }
 
     /** Records that [id] now lives at [denseIndex] in the caller's dense storage. */
@@ -42,7 +42,6 @@ internal class EntityIndexMap {
 
     /** Clears any dense index recorded for [id]. */
     fun remove(id: Int) {
-        if (id < 0) return
         val page = id ushr PAGE_SHIFT
         if (page < pages.size) pages[page]?.set(id and PAGE_MASK, ABSENT)
     }
