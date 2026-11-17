@@ -22,6 +22,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.input.key.KeyEvent
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
 import com.awakekt.awake.compose.ui.input.key.onPreviewKeyEvent
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.core.input.HeldStep
@@ -62,7 +63,7 @@ fun ShadcnNumberStepper(
     rememberGroup(ShadcnNumberStepperGroup) {
         val state = remember { StepperState() }
         val current = NumberStepping.clamp(value, min, max)
-        val next = state.resolve(current, StepperRange(min, max, step), enabled, LocalFrameClock.current.deltaSeconds)
+        val next = state.resolve(current, StepperRange(min, max, step), enabled, state.step.delta(LocalFrameClock.current))
         if (next != current) onValueChange(next)
         state.show(next, current, decimals)
 
@@ -113,6 +114,9 @@ private class StepperState {
     val plusPress = InteractionSource()
     val minus = HeldStep()
     val plus = HeldStep()
+
+    /** Once a frame, however many times the frame composes the stepper (#1764). */
+    val step = FrameStep()
     var pendingSteps = 0
     var pendingBound = 0
 

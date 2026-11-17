@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 
 context(_: Composer)
@@ -30,7 +31,7 @@ fun rememberLoopingPhase(durationSeconds: Float): Float = rememberGroup(Remember
     require(durationSeconds > 0f) { "durationSeconds must be positive, was $durationSeconds" }
     val clock = LocalFrameClock.current
     val phase = remember { Phase() }
-    phase.advance(clock.deltaSeconds / durationSeconds)
+    phase.advance(phase.step.delta(clock) / durationSeconds)
 }
 
 context(_: Composer)
@@ -47,7 +48,7 @@ context(_: Composer)
 fun animateFloat(target: Float, durationSeconds: Float = DEFAULT_DURATION_SECONDS): Float = rememberGroup(AnimateFloatGroup) {
     val clock = LocalFrameClock.current
     val animation = remember { AnimatedFloat(target) }
-    animation.advance(target, durationSeconds, clock.deltaSeconds)
+    animation.advance(target, durationSeconds, animation.step.delta(clock))
 }
 
 /** 200 ms, the shadcn transition default and close enough to Compose's own short tween. */
@@ -56,6 +57,9 @@ const val DEFAULT_DURATION_SECONDS: Float = 0.2f
 /** Node-local, because it is created through `remember` and dies with the node. */
 private class Phase {
     private var value = 0f
+
+    /** Once a frame, however many times the frame composes this (#1764). */
+    val step = FrameStep()
 
     fun advance(step: Float): Float {
         // `% 1f` after adding, not `coerce`: the point is to wrap, and a step larger than one whole
@@ -66,6 +70,9 @@ private class Phase {
 }
 
 private class AnimatedFloat(initial: Float) {
+    /** Once a frame, however many times the frame composes this (#1764). */
+    val step = FrameStep()
+
     private var from = initial
     private var to = initial
     private var duration = 0f

@@ -16,6 +16,7 @@ import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.graphics.Brush
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.shadow.Shadow
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.unit.DpOffset
 import com.awakekt.awake.compose.ui.unit.dp
@@ -32,11 +33,13 @@ internal fun rememberCanvasStyleState(
 ): ResolvedCanvasState = rememberGroup(CanvasStyleStateGroup) {
     val clock = LocalFrameClock.current
     val transition = remember { CanvasStyleTransition() }
+    // Once a frame, however many times the frame composes this (#1764).
+    val step = remember { FrameStep() }
     val target = style.resolveState(baseBack, baseText, state, isDisabled)
     val duration = style.transitionSeconds ?: themeTransitionSeconds ?: 0f
     val mask = stateMask(state, isDisabled)
     // The clock only while a transition runs or starts: a settled element reads none (#1512).
-    val delta = if (transition.moves(mask, duration)) clock.deltaSeconds else 0f
+    val delta = if (transition.moves(mask, duration)) step.delta(clock) else 0f
     transition.advance(target, mask, duration, delta)
 }
 

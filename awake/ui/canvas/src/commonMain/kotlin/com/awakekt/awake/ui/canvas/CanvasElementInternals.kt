@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.foundation.animation.TrailingValue
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.ui.focus.FocusRequester
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.core.input.HeldStep
 import com.awakekt.awake.core.math2d.Vec2
 import kotlin.time.TimeSource
@@ -103,6 +104,7 @@ internal val CanvasElement.plusPress: InteractionSource get() = pointer.plusPres
 internal val CanvasElement.minusHold: HeldStep get() = pointer.minusHold
 
 internal val CanvasElement.plusHold: HeldStep get() = pointer.plusHold
+internal val CanvasElement.stepperFrames: FrameStep get() = pointer.stepperFrames
 
 internal val CanvasElement.slotTransitions: HashMap<String, SlotTransition> get() = pointer.slotTransitions
 

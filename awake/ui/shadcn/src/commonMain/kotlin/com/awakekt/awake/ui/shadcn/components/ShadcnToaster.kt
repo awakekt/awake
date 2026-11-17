@@ -21,6 +21,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.layout.Layer
 import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.layout.LayerPosition
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.semantics
@@ -80,6 +81,10 @@ class ShadcnToastState {
      * frame's delta is already known by then, and waiting a frame to apply it would show every toast
      * one frame longer than it asked for.
      */
+
+    /** Once a frame, however many times the frame composes the toaster (#1764). */
+    internal val step = FrameStep()
+
     internal fun advance(deltaSeconds: Float) {
         if (deltaSeconds <= 0f) return
         for (entry in entries) entry.remainingSeconds -= deltaSeconds
@@ -105,7 +110,7 @@ fun ShadcnToaster(
     modifier: Modifier = Modifier,
     id: String? = null,
 ) {
-    state.advance(LocalFrameClock.current.deltaSeconds)
+    state.advance(state.step.delta(LocalFrameClock.current))
     val toasts = state.visible
     if (toasts.isEmpty()) return
 

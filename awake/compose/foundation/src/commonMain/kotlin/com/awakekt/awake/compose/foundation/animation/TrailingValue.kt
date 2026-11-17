@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
+import com.awakekt.awake.compose.ui.platform.FrameStep
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 
 /**
@@ -74,7 +75,9 @@ fun animateTrailing(
 ): Float = rememberGroup(AnimateTrailingGroup) {
     val clock = LocalFrameClock.current
     val trail = remember { TrailingValue(target) }
-    trail.advance(target, clock.deltaSeconds, holdSeconds, drainPerSecond)
+    // Once a frame, however many times the frame composes this (#1764).
+    val step = remember { FrameStep() }
+    trail.advance(target, step.delta(clock), holdSeconds, drainPerSecond)
 }
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
