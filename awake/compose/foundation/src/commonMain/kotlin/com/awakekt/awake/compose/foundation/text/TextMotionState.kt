@@ -92,11 +92,16 @@ internal class TextMotionState {
      */
     fun onMeasure(rawEmPx: Float, styleScale: Float): Boolean {
         val frame = clock?.frame ?: NO_FRAME
-        if (frame != NO_FRAME && frame == measuredFrame && rawEmPx == lastRawEmPx && styleScale == lastStyleScale) {
+        val sameSize = rawEmPx == lastRawEmPx && styleScale == lastStyleScale
+        if (isRepeat(frame, measuredFrame) && sameSize) {
             runAgainWhile(sizeHoldFrames > 0)
             return smoothSizing
         }
         measuredFrame = frame
+        return measureNewPass(rawEmPx, styleScale)
+    }
+
+    private fun measureNewPass(rawEmPx: Float, styleScale: Float): Boolean {
         if (!measureInitialized) {
             measureInitialized = true
             lastRawEmPx = rawEmPx
@@ -130,7 +135,7 @@ internal class TextMotionState {
         val repeated = lastPaint
         val sameInputs = isScopeScaled == lastScaled && isScopeAligned == lastAligned &&
             offsetX == lastOffsetX && offsetY == lastOffsetY
-        if (frame != NO_FRAME && frame == paintedFrame && sameInputs && repeated != null) {
+        if (isRepeat(frame, paintedFrame) && sameInputs && repeated != null) {
             runAgainWhile(scaleHoldFrames > 0 || sizeHoldFrames > 0 || paintOffsetTracker.isSettling)
             return repeated
         }
@@ -141,6 +146,9 @@ internal class TextMotionState {
         lastOffsetY = offsetY
         return resolveNewPaint(isScopeScaled, isScopeAligned, offsetX, offsetY).also { lastPaint = it }
     }
+
+    /** Whether [frame] is a known frame that already ran [last], so its pass repeats that decision. */
+    private fun isRepeat(frame: Long, last: Long): Boolean = frame != NO_FRAME && frame == last
 
     private fun resolveNewPaint(isScopeScaled: Boolean, isScopeAligned: Boolean, offsetX: Float, offsetY: Float): TextPaintMotion {
         if (isScopeScaled) {

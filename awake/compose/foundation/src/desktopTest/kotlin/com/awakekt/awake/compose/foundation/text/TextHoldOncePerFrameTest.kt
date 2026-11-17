@@ -55,23 +55,25 @@ class TextHoldOncePerFrameTest {
 
     @Test
     fun aSizeChangeSettlesWithoutAStaleSkip() {
-        for (measureSkip in listOf(false, true)) for (retain in listOf(false, true)) {
-            large.value = false
-            val found = mutableListOf<StaleSkip>()
-            val host = ComposeHost().apply {
-                skipUnchangedComposition = true
-                skipUnchangedMeasure = measureSkip
-                retainUnchangedDraw = retain
-                verifySkippedCompositions = true
-                onStaleSkip = { found += it }
+        for (measureSkip in listOf(false, true)) {
+            for (retain in listOf(false, true)) {
+                large.value = false
+                val found = mutableListOf<StaleSkip>()
+                val host = ComposeHost().apply {
+                    skipUnchangedComposition = true
+                    skipUnchangedMeasure = measureSkip
+                    retainUnchangedDraw = retain
+                    verifySkippedCompositions = true
+                    onStaleSkip = { found += it }
+                }
+                repeat(FRAMES) {
+                    frame = it + 1
+                    if (it == GROW_AT) large.value = true
+                    if (it == SHRINK_AT) large.value = false
+                    host.frame(input) { Label(writeOnPlacement = false) }
+                }
+                assertEquals(emptyList(), found, "measure skip $measureSkip, retained draw $retain")
             }
-            repeat(FRAMES) {
-                frame = it + 1
-                if (it == GROW_AT) large.value = true
-                if (it == SHRINK_AT) large.value = false
-                host.frame(input) { Label(writeOnPlacement = false) }
-            }
-            assertEquals(emptyList(), found, "measure skip $measureSkip, retained draw $retain")
         }
     }
 
