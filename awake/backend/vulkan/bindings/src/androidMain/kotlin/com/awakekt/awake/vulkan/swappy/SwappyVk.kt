@@ -46,6 +46,9 @@ object SwappyVk {
     /** Makes Swappy forget [swapchain], before the swapchain itself is destroyed. */
     external fun destroySwapchain(device: Long, swapchain: Long)
 
+    /** Makes Swappy forget [device], before the device itself is destroyed. */
+    external fun destroyDevice(device: Long)
+
     /**
      * Whether a present goes through `SwappyVk_queuePresent` rather than `vkQueuePresentKHR`. Its
      * result is read as before: suboptimal and out-of-date are answered, other errors throw.

@@ -27,6 +27,7 @@ import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineCacheCreateInfo
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
+import com.awakekt.awake.vulkan.swapchain.SwapchainPacer
 import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.vulkan.utils.QueueFamilyIndices
 import com.awakekt.awake.vulkan.utils.VkResultException
@@ -97,6 +98,12 @@ class GraphicsDevice {
      */
     var surface: Long = 0
 
+    /**
+     * What paces presents beside the frame loop (#1699), set before [create]: told about the device's
+     * extensions, its creation and destruction, the window, and every swapchain built on it.
+     */
+    internal var swapchainPacer: SwapchainPacer? = null
+
     /** The `VkPhysicalDevice` handle of the GPU picked by [create], or 0 before that. */
     var physicalDevice: Long = 0
 
@@ -149,6 +156,7 @@ class GraphicsDevice {
         createInstance()
         setupDebugMessenger()
         surface = createSurface(instance, window)
+        swapchainPacer?.windowChanged(window)
         pickPhysicalDevice()
         val indices = findQueueFamilies(physicalDevice, surface)
         if (!indices.isComplete()) {
@@ -166,6 +174,7 @@ class GraphicsDevice {
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
         surface = 0L
         if (window != null) surface = createSurface(instance, window)
+        swapchainPacer?.windowChanged(window)
     }
 
     /** Desktop-only headless variant of [create] for pure offscreen rendering (no window, no
@@ -412,6 +421,10 @@ class GraphicsDevice {
             if ("VK_KHR_portability_subset" in availableDeviceExtensions) {
                 add("VK_KHR_portability_subset")
             }
+            // What the pacer asks for, of what the device has (#1699).
+            swapchainPacer?.deviceExtensions(physicalDevice, availableDeviceExtensions)
+                ?.filter { it in availableDeviceExtensions && it !in this }
+                ?.let(::addAll)
         }
         val missingDeviceExtensions = requiredDeviceExtensions.filterNot(availableDeviceExtensions::contains)
         require(missingDeviceExtensions.isEmpty()) {
@@ -429,6 +442,7 @@ class GraphicsDevice {
 
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
+        swapchainPacer?.deviceCreated(physicalDevice, device, presentQueue, indices.presentFamily!!)
 
         vendorId = physicalDeviceProperties.vendorID
         val deviceApiVersion = Version.fromVkVersion(physicalDeviceProperties.apiVersion)
@@ -456,6 +470,7 @@ class GraphicsDevice {
             Vulkan.vkDestroyPipelineCache(device, sharedPipelineCache)
             sharedPipelineCache = 0L
         }
+        if (device != 0L) swapchainPacer?.deviceDestroying()
         if (device != 0L) Vulkan.vkDestroyDevice(device)
         if (debugUtilsMessenger != 0L) Vulkan.vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessenger)
         if (instance != 0L) Vulkan.vkDestroyInstance(instance)
