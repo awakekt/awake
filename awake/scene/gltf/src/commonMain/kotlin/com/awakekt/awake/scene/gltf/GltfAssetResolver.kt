@@ -38,6 +38,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.asReleasingGpuImageSource
 import com.awakekt.awake.render.texture.needsDecode
+import com.awakekt.awake.render.texture.releaseImageData
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
@@ -86,6 +87,7 @@ class GltfAssetResolver(
     }
     private var imageDecoder: (suspend (ByteArray) -> GpuImageSource?)? = null
     private val loads = GltfModelLoads(this, ::staging)
+    private val releases = GltfReleases()
 
     /**
      * Retrieves a previously loaded skinned scene by its path.
@@ -209,6 +211,35 @@ class GltfAssetResolver(
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
+        releases.forget(path)
+    }
+
+    /**
+     * Lets go of model [path]'s CPU copies once they are on the GPU: a static mesh's geometry once its
+     * mesh is made, and a material's images once it is made. A mesh or material made again afterwards
+     * reads the model again first, through [loadMesh] or [loadMaterial], as a scene's meshes are made;
+     * making one with no such load first fails, saying so. A model with levels of detail keeps its
+     * geometry, which its levels share. Models loaded with [loadModel] are released this way already.
+     */
+    fun releaseAfterUpload(path: String) = releases.release(path)
+
+    /**
+     * Keeps model [path]'s CPU geometry and images for as long as this resolver holds it, as before
+     * [releaseAfterUpload]: for a host that reads them itself, such as for picking, collision, or a
+     * re-upload after the GPU device is lost.
+     */
+    fun keepAfterUpload(path: String) = releases.keep(path)
+
+    /** [adopt] for a model the async load path read, which is releasable, putting back what was let go of. */
+    internal fun adoptLoaded(path: String, from: GltfAssetResolver) {
+        adopt(path, from)
+        for (key in releases.droppedMeshesOf(path)) if (key in loadedStaticMeshes) releases.droppedMeshes -= key
+        for (key in releases.releasedMaterialsOf(path)) {
+            from.loadedMaterials[key]?.let { loadedMaterials[key] = it }
+            from.skinnedPartTextures[key]?.let { skinnedPartTextures[key] = it }
+            releases.releasedMaterials -= key
+        }
+        releases.release(path)
     }
 
     // Everything a preload makes is here, so preloading it again reads nothing: not the file, not its sidecars.
@@ -263,7 +294,7 @@ class GltfAssetResolver(
 
     /** [loadModel] for the model [name] is drawn from, when this resolves it and hasn't loaded that model. */
     override fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? =
-        modelPath(name).takeIf { canResolveMesh(name) && !isPreloaded(it) }?.let { loadModel(it, scope) }
+        modelPath(name).takeIf { canResolveMesh(name) && (!isPreloaded(it) || name in releases.droppedMeshes) }?.let { loadModel(it, scope) }
 
     // A resolver like this one, for a load to read a model into off the frame thread.
     private fun staging(): GltfAssetResolver = GltfAssetResolver(bundledResourceReader).also { staged ->
@@ -471,16 +502,31 @@ class GltfAssetResolver(
                     format = VertexFormat.PositionNormalColorSkin,
                 )
             } ?: loadedStaticMeshes[name] ?: error(
-            "glTF asset '$name' has not been preloaded. Ensure the scene or plugin preloaded it.",
+            if (name in releases.droppedMeshes) {
+                "glTF mesh '$name' let go of its CPU copy once uploaded; load it again with loadMesh before making it."
+            } else {
+                "glTF asset '$name' has not been preloaded. Ensure the scene or plugin preloaded it."
+            },
         )
         meshBoundsRegistrar(name, geometry)
         // A level differs from its full mesh only in its triangles: it draws the full mesh's vertex buffer.
         val level = lodLevels.isLevelKey(name)
         val base = if (level) levelBases[lodLevels.baseKey(name)] else null
-        return if (base != null) {
+        val mesh = if (base != null) {
             runtime.renderer.createMeshSharingVertices(base, geometry)
         } else {
             runtime.renderer.createMesh(geometry).also { mesh -> if (!level && meshLevels(name) != null) levelBases[name] = mesh }
+        }
+        dropUploadedGeometry(name, geometry, level)
+        return mesh
+    }
+
+    // Only a static mesh with no levels: its levels share its vertices, and a skinned or part mesh is built per call.
+    private fun dropUploadedGeometry(name: String, geometry: MeshGeometry, level: Boolean) {
+        if (level || meshLevels(name) != null || !releases.isReleasable(modelPath(name))) return
+        if (loadedStaticMeshes[name] === geometry) {
+            loadedStaticMeshes.remove(name)
+            releases.droppedMeshes += name
         }
     }
 
@@ -497,7 +543,12 @@ class GltfAssetResolver(
         val loaded = loadedMaterials[key]
         val images = listOfNotNull(skinnedPartTextures[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
         val pending = images.filter { it.needsDecode }
-        return if (pending.isEmpty()) null else GltfImageDecodeLoad(pending, scope)
+        return when {
+            // Let go of once uploaded: the model is read again, which brings its images back.
+            key in releases.releasedMaterials -> loadModel(materialModelPath(key), scope)
+            pending.isEmpty() -> null
+            else -> GltfImageDecodeLoad(pending, scope)
+        }
     }
 
     override fun canResolveMaterial(name: String): Boolean =
@@ -510,7 +561,10 @@ class GltfAssetResolver(
      * runtime's renderer. Its textures go through `createImageMaterial`, so a browser's WebGPU copies them
      * on the GPU (awakekt/awake#1184) and every other renderer uploads their CPU pixels. Outside a
      * browser the resolver lets those pixels go once they are uploaded and keeps the image file's bytes
-     * (#1619), so a material made again for the same [name] decodes its images again, on this thread.
+     * (#1619), so a material made again for the same [name] decodes its images again, on this thread. A
+     * model marked [releaseAfterUpload], or read by [loadModel], lets go of the images' file bytes too:
+     * [loadMaterial] reads the model again before the material is made again, and one made with no such
+     * load first draws untextured.
      *
      * A static material with no base colour image resolves to the plain lit material its untextured
      * geometry draws with; its base colour is in that geometry's vertex colours, and [materialDefaults]
@@ -520,7 +574,21 @@ class GltfAssetResolver(
      * there (#1261), fails that material alone: it draws plain white under the model's own factors, as a
      * model whose images fail to load draws untextured, and the model's other materials keep theirs.
      */
-    fun createMaterial(renderer: Renderer, name: String): Material? = when {
+    fun createMaterial(renderer: Renderer, name: String): Material? = makeMaterial(renderer, name)?.also { releaseUploadedImages(name) }
+
+    // A releasable model's images go once a material is made from them; loadMaterial reads the model again first.
+    private fun releaseUploadedImages(name: String) {
+        val key = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:") ?: return
+        if (!releases.isReleasable(materialModelPath(key))) return
+        val loaded = loadedMaterials[key]
+        val images = listOfNotNull(skinnedPartTextures[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
+        // Every image, not only the first: `any` would stop at the first one it let go of.
+        var released = false
+        for (image in images) released = image.releaseImageData() || released
+        if (released) releases.releasedMaterials += key
+    }
+
+    private fun makeMaterial(renderer: Renderer, name: String): Material? = when {
         name == "skinned-material" -> renderer.createMaterial(SkinnedUniformLayout)
         name.startsWith("gltf-material:") && name.removePrefix("gltf-material:") in skinnedPartTextures ->
             renderer.imageMaterialOrPlain(name, SkinnedUniformLayout.total) {
@@ -586,7 +654,7 @@ class GltfAssetResolver(
 
 private val log = Logger("scene.gltf")
 
-private const val PRIMITIVE_MESH_PREFIX = "gltf-primitive:"
+internal const val PRIMITIVE_MESH_PREFIX = "gltf-primitive:"
 private const val UNTEXTURED_MATERIAL = "lit-shadow"
 
 // What a material whose image fails to upload draws: white, so the model's base colour factor shows as it is.

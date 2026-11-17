@@ -15,6 +15,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public fun forgetTextures ()V
 	public final fun getLoadedScene (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 	public final fun isPreloaded (Ljava/lang/String;)Z
+	public final fun keepAfterUpload (Ljava/lang/String;)V
 	public fun loadMaterial (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun loadMesh (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public final fun loadModel (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
@@ -29,6 +30,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun preload (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun preloadBytes (Ljava/lang/String;[B)V
 	public final fun preloadMaterials (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun releaseAfterUpload (Ljava/lang/String;)V
 	public final fun setAssetSource (Lcom/awakekt/awake/core/io/AssetSource;)V
 	public final fun setImageDecoder (Lkotlin/jvm/functions/Function2;)V
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
