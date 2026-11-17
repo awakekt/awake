@@ -24,12 +24,18 @@ val CanvasElementBase.contentRevision: Int
         var hash = revision * REVISION_MIX + componentsVersion
         hash = hash * REVISION_MIX + rect.revision
         hash = hash * REVISION_MIX + pointer.revision
-        hash = hash * REVISION_MIX + (textPart?.revision ?: ABSENT)
-        hash = hash * REVISION_MIX + (appearancePart?.revision ?: ABSENT)
-        hash = hash * REVISION_MIX + (followPart?.revision ?: ABSENT)
-        hash = hash * REVISION_MIX + (arrowPart?.revision ?: ABSENT)
-        hash = hash * REVISION_MIX + (inputPart?.revision ?: ABSENT)
-        hash = hash * REVISION_MIX + (tooltipPart?.revision ?: ABSENT)
-        hash = hash * REVISION_MIX + (particlesPart?.revision ?: ABSENT)
-        return hash * REVISION_MIX + ((widget as? CanvasRevised)?.revision ?: ABSENT)
+        hash = hash * REVISION_MIX + revisionOf(textPart)
+        hash = hash * REVISION_MIX + revisionOf(appearancePart)
+        hash = hash * REVISION_MIX + revisionOf(followPart)
+        hash = hash * REVISION_MIX + revisionOf(arrowPart)
+        hash = hash * REVISION_MIX + revisionOf(inputPart)
+        hash = hash * REVISION_MIX + revisionOf(tooltipPart)
+        hash = hash * REVISION_MIX + revisionOf(particlesPart)
+        return hash * REVISION_MIX + revisionOf(widget as? CanvasRevised)
     }
+
+/**
+ * [part]'s revision, or [ABSENT] for none. Not `part?.revision ?: ABSENT`: on Kotlin/Wasm that boxes
+ * the `Int?` between the two, an allocation for each part of each element a check reads (#1512).
+ */
+private fun revisionOf(part: CanvasRevised?): Int = if (part == null) ABSENT else part.revision

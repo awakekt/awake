@@ -47,8 +47,25 @@ class CanvasRevisionHeapBrowserTest {
         }
         growth.sort()
         val perElementFrame = growth[SAMPLES / 2] / (FRAMES_PER_SAMPLE * CanvasRevisionWorkload.ELEMENTS)
-        println("CanvasRevisionHeap: ${growth.joinToString { it.toInt().toString() }} bytes per $FRAMES_PER_SAMPLE frames; median $perElementFrame B an element a frame")
+        // Each half on its own, so a failure names the half that allocates.
+        val writes = perElementFrame { workload.writes(frame++) }
+        val reads = perElementFrame { workload.reads() }
+        println(
+            "CanvasRevisionHeap: ${growth.joinToString { it.toInt().toString() }} bytes per $FRAMES_PER_SAMPLE frames; " +
+                "median $perElementFrame B an element a frame (writes $writes, reads $reads)",
+        )
         assertTrue(perElementFrame <= BUDGET, "a frame grew the heap by $perElementFrame B an element")
+    }
+
+    /** The median heap growth of [FRAMES_PER_SAMPLE] runs of [pass], in bytes an element. */
+    private fun perElementFrame(pass: () -> Unit): Double {
+        val growth = DoubleArray(SAMPLES) {
+            val before = collectedHeap()
+            repeat(FRAMES_PER_SAMPLE) { pass() }
+            heapNow() - before
+        }
+        growth.sort()
+        return growth[SAMPLES / 2] / (FRAMES_PER_SAMPLE * CanvasRevisionWorkload.ELEMENTS)
     }
 
     @Test
