@@ -57,6 +57,23 @@ public final class com/awakekt/awake/core/camera/CameraOrbitButtons : java/lang/
 	public static fun values ()[Lcom/awakekt/awake/core/camera/CameraOrbitButtons;
 }
 
+public final class com/awakekt/awake/core/camera/CameraPose {
+	public static final field INSTANCE Lcom/awakekt/awake/core/camera/CameraPose;
+	public static final field PITCH_LIMIT F
+	public final fun flyDirection (FFFFFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun forward (FFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun orbitEye (Lcom/awakekt/awake/core/math/Vec3f;FFFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun panShift (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun pinchedDistance (FF)F
+	public final fun scrolledDistance (FFFF)F
+	public static synthetic fun scrolledDistance$default (Lcom/awakekt/awake/core/camera/CameraPose;FFFFILjava/lang/Object;)F
+	public final fun turnedPitch (FFFZ)F
+	public static synthetic fun turnedPitch$default (Lcom/awakekt/awake/core/camera/CameraPose;FFFZILjava/lang/Object;)F
+	public final fun turnedYaw (FFFZ)F
+	public static synthetic fun turnedYaw$default (Lcom/awakekt/awake/core/camera/CameraPose;FFFZILjava/lang/Object;)F
+	public final fun viewAxes (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+}
+
 public final class com/awakekt/awake/core/camera/OccluderFade {
 	public static final field Companion Lcom/awakekt/awake/core/camera/OccluderFade$Companion;
 	public static final field DEFAULT_FADE_SECONDS F

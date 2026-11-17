@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.scene.controls.camera
 
+import com.awakekt.awake.core.camera.CameraPose
 import com.awakekt.awake.core.math.Vec3f
-import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.max
@@ -15,7 +15,7 @@ import kotlin.math.sqrt
 /**
  * Points an orbit rig at an already-composed shot, so turning the rig on does not move the camera.
  *
- * The exact inverse of the forward vector [CameraSystem] builds from `yaw` and `pitch`, and it
+ * The exact inverse of the forward vector [CameraPose.forward] builds from `yaw` and `pitch`, and it
  * lives here so the two cannot drift apart. Deriving it by hand at a call site is easy to get
  * subtly wrong and hard to see: `CameraSystem` places the eye *behind* the pivot
  * (`eye = center - forward * distance`), so the vector from centre to eye is the **negation** of
@@ -56,14 +56,14 @@ fun CameraRig.zoomBy(factor: Float) {
 }
 
 /**
- * The steepest a rig will look, matching what `CameraSystem` clamps a drag to.
+ * The steepest a rig will look, [CameraPose.PITCH_LIMIT], which `CameraSystem` clamps a drag to.
  *
  * Clamped here as well as there, because a shot authored steeper than this would otherwise sit at
  * an angle the rig cannot hold: the first drag would snap it to the limit, which is a jump the
  * viewer did not ask for at the moment they touched the mouse. Reframing at the limit up front is
  * the smaller surprise.
  */
-private val PITCH_LIMIT = (85.0 * PI / 180.0).toFloat()
+private val PITCH_LIMIT = CameraPose.PITCH_LIMIT
 
 /** Guards the degenerate case: an eye sitting exactly on its pivot has no direction to derive. */
 private const val MINIMUM_DISTANCE = 0.0001f
