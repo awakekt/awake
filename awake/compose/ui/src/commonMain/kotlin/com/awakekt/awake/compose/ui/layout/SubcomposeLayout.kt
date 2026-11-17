@@ -94,6 +94,8 @@ class SubcomposeLayoutState(
             record.rootNode.density = density
             record.rootNode.fontScale = fontScale
             record.rootNode.layoutDirection = layoutDirection
+            // The parent's locals as they are now, not as they were when the slot was made (#1774).
+            record.composition.updateParentLocals(parentLocals)
         }
         record.composition.reconcile(content)
         return record.rootNode.children.asList()

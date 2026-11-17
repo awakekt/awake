@@ -44,6 +44,7 @@ public final class com/awakekt/awake/compose/runtime/Composition {
 	public final fun reconcile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
 	public final fun setExplains (Z)V
 	public final fun setTracksChanges (Z)V
+	public final fun updateParentLocals (Lcom/awakekt/awake/compose/runtime/ProvidedLocals;)V
 }
 
 public final class com/awakekt/awake/compose/runtime/CompositionLocal {

@@ -41,6 +41,16 @@ class Composition(
             reads.tracksChanges = value
         }
 
+    /**
+     * Takes [locals] as the composition locals this composition starts from, in place of those it was
+     * created with (#1774). A subcomposition calls it before each pass with its parent's locals as
+     * they are now, so a provided value that changed since the subcomposition was made reaches what
+     * it composes. Unchanged locals cost nothing.
+     */
+    fun updateParentLocals(locals: ProvidedLocals?) {
+        composer.locals.resetTo(locals)
+    }
+
     /** Marks the latest pass out of date, for a change no tracked [State] carries. */
     fun invalidate() {
         reads.markInvalid(PhaseReadCause.Invalidated)
