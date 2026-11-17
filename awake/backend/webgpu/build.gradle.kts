@@ -89,18 +89,6 @@ kotlin {
     // detekt's compiler frontend tops out at JVM target 22, and this module's toolchain is 25
     // (see jvmToolchain above). The target only affects detekt's own analysis, not the bytecode
     // this module produces, so pinning it back is safe.
-    // The browser tests' figures (a frame's heap, by stage) are printed, and CI keeps only the log:
-    // each test is named as it passes and its output shown, so a run proves which tests ran (#1621).
-    tasks.named<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>("wasmJsBrowserTest") {
-        testLogging {
-            events("passed", "skipped", "failed")
-            showStandardStreams = true
-            // A failure names its assertion in the log: CI uploads no browser test results here.
-            showExceptions = true
-            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        }
-    }
-
     tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
         jvmTarget.set("22")
     }
