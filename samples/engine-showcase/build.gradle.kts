@@ -104,6 +104,10 @@ kotlin {
             implementation(project(":awake:compose:ui-testing"))
             implementation(project(":awake:core:config"))
             implementation(project(":awake:core:settings"))
+            // The settings and debug-tools guides read LaunchParameters. Declared here, not borrowed:
+            // desktop and wasm reached it through webgpu's api, but Android and iOS reach only
+            // Vulkan's implementation, so their test compilations could not see it.
+            implementation(project(":awake:engine:window"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:render:testing"))
