@@ -19,7 +19,6 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
-import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.core.transform.Transform
@@ -62,7 +61,8 @@ class ViewPointLightCullingTest {
     private val system = RenderSystem3D(renderer, drawPreparer = preparer)
     private val transforms = TransformSystem()
 
-    private fun pointFaces(pass: GpuPassInput) = pass.prePasses.count { it.targetLayer >= MAX_SHADOW_CASCADES }
+    // Every pre-pass that is not one of the cascades the input says it drew (#1709).
+    private fun pointFaces(pass: GpuPassInput) = pass.prePasses.size - (pass.shadowCascadeData?.count ?: 0)
 
     @Test
     fun aViewFarFromALampPlansNoneOfItsShadowFacesAndTheMainViewKeepsThem() {

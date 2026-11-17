@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
  * four point lights' faces -- of 2048-texel 32-bit depth, about 448 MiB, whatever the scene drew.
  *
  * A sun-lit scene runs on an array that starts at three layers and stays there; then a shadowed point
- * light appears and the array grows once, to ten layers, and frames go on rendering. The device
+ * light appears and the array grows once, to nine layers (three cascades, then a point light's six faces packed right after them, #1709), and frames go on rendering. The device
  * fails on any validation error when it is destroyed.
  */
 class RendererShadowLayersTest {
@@ -48,10 +48,14 @@ class RendererShadowLayersTest {
                 world.add(it, Transform(position = Vec3f(0f, 3f, 0f)))
                 world.add(it, Light(type = Light.Type.Point, range = 10f, shadowsEnabled = true))
             }
+            // The packed layout itself (#1709): the cascades on layers 0 to 2, then the point light's
+            // six faces on 3 to 8, with no unused cascade slot between them.
+            val layers = RenderSystem3D(renderer).planCapture(world, camera, SIZE, SIZE).prePasses.map { it.targetLayer }.distinct().sorted()
+            assertEquals((0 until POINT_LAYERS).toList(), layers, "three cascades, then the point light's six faces from layer 3")
             repeat(FRAMES) { renderer.frame(world) }
             val withPoint = renderer.shadowMapBytes
             println("RendererShadowLayers: cascades only ${cascadesOnly / MIB} MiB; with a point shadow ${withPoint / MIB} MiB; all 28 layers ${LAYER_BYTES * 28 / MIB} MiB")
-            assertEquals(POINT_LAYERS, renderer.depthTarget?.layers, "four cascade slots and one point light's six faces")
+            assertEquals(POINT_LAYERS, renderer.depthTarget?.layers, "the three cascades in use, then one point light's six faces right after them (#1709)")
             assertTrue(withPoint >= LAYER_BYTES * POINT_LAYERS && withPoint < LAYER_BYTES * 28, "the grown array's bytes: $withPoint")
         } finally {
             renderer.waitIdle()
@@ -94,7 +98,7 @@ class RendererShadowLayersTest {
     private companion object {
         const val SIZE = 64
         const val FRAMES = 3
-        const val POINT_LAYERS = 10
+        const val POINT_LAYERS = 9
         const val MIB = 1024L * 1024L
         const val LAYER_BYTES = 2048L * 2048L * 4L
         val camera = Camera(Lens(eye = Vec3f(0f, 8f, 8f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 100f))
