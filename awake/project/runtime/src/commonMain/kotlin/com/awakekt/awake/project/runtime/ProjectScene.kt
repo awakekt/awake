@@ -205,7 +205,12 @@ internal suspend fun projectSceneOf(
             .filter(models::canResolveMesh)
             .map(models::modelPath)
             .distinct()
-            .forEach { models.preload(it) }
+            .forEach {
+                models.preload(it)
+                // A played scene makes its meshes and materials through the async load path, so the
+                // CPU copies can go once they are uploaded; one made again reads its model again (#1753).
+                models.releaseAfterUpload(it)
+            }
     }
     // Every file is read before the physics world exists, so a missing model, or a load cancelled
     // part way, leaves no world behind that nothing would destroy.

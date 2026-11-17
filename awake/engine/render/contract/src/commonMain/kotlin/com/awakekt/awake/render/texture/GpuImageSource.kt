@@ -92,7 +92,7 @@ private class DecodedImageSource(private val image: DecodedImage) : GpuImageSour
     override fun readRgba8(): ByteArray = image.toBitmap().toRgba8Bytes()
 }
 
-private class ReleasingImageSource(decoded: DecodedImage, private val encoded: ByteArray) : GpuImageSource {
+private class ReleasingImageSource(decoded: DecodedImage, encoded: ByteArray) : GpuImageSource {
     override val width: Int = decoded.width
     override val height: Int = decoded.height
     override val externalImage: Any? get() = null
@@ -102,18 +102,48 @@ private class ReleasingImageSource(decoded: DecodedImage, private val encoded: B
     @Volatile
     private var decoded: DecodedImage? = decoded
 
-    val needsDecode: Boolean get() = decoded == null
+    // Null once released: nothing of the image is kept, and making another material needs it read again.
+    @Volatile
+    private var encoded: ByteArray? = encoded
+
+    val needsDecode: Boolean get() = decoded == null && encoded != null
+
+    val released: Boolean get() = decoded == null && encoded == null
 
     suspend fun decodeAhead() {
-        if (decoded == null) decoded = decodeImage(encoded)
+        val bytes = encoded ?: return
+        if (decoded == null) decoded = decodeImage(bytes)
+    }
+
+    fun release(): Boolean {
+        val held = decoded != null || encoded != null
+        decoded = null
+        encoded = null
+        return held
     }
 
     override fun readRgba8(): ByteArray {
-        val image = decoded ?: decodeImageBlocking(encoded)
+        val image = decoded ?: decodeImageBlocking(
+            checkNotNull(encoded) { "This image was released once uploaded; read its file again to make another material from it." },
+        )
         decoded = null
         return image.toBitmap().toRgba8Bytes()
     }
 }
+
+/**
+ * Lets go of everything this image keeps once a material is made from it: its decoded pixels, and the
+ * file bytes kept to decode them again. Afterwards it [isReleased], and making another material from
+ * it fails; the holder reads the image's file again instead. For an image that holds memory the
+ * caller can't get back, such as a texture loaded once for a scene that streams its content, and only
+ * an image from [asReleasingGpuImageSource] keeps anything to let go of.
+ *
+ * @return Whether it held anything to let go of.
+ */
+fun GpuImageSource.releaseImageData(): Boolean = (this as? ReleasingImageSource)?.release() ?: false
+
+/** Whether [releaseImageData] let this image go, so nothing can be made from it until its file is read again. */
+val GpuImageSource.isReleased: Boolean get() = (this as? ReleasingImageSource)?.released == true
 
 /**
  * Whether reading this image's pixels would decode them first, on the reading thread: an image whose
