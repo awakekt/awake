@@ -162,18 +162,30 @@ data class CanvasFollowLimit(
  * node, where on it, and how it behaves with many on screen. [CanvasOverlay] writes back what it
  * worked out as it drew, [pinned], [pinAngle] and [distance], which are never saved.
  */
-class CanvasFollow {
+class CanvasFollow : CanvasRevised() {
     /** The name of the node the element follows; empty follows none. */
     var node: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** A world-space offset from the followed node, such as above its head. */
     var offset: Vec3f = Vec3f(0f, 0f, 0f)
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Whether the element covers the screen rectangle of the followed node's meshes instead of standing at its point. */
     var bounds: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** How far, in dp, a [bounds] box reaches past the node's rectangle on each side; negative pulls it in. */
     var outset: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * How the follower behaves with many on screen: culling, ranking against a [CanvasFollowLimit],
@@ -181,12 +193,18 @@ class CanvasFollow {
      * [CanvasFollowRules.Default]: culled off screen and hidden behind the camera.
      */
     var rules: CanvasFollowRules? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * How important this follower is right now, set from code each frame, for a [CanvasFollowLimit]
      * that ranks by [CanvasFollowRank.Score]: higher stays.
      */
     var score: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Whether the follower was last drawn held to the screen's edge, its target off screen or behind the camera. */
     var pinned: Boolean = false
@@ -207,7 +225,7 @@ class CanvasFollow {
  * point at it, its picture pointing right before it turns. Its `style.rotation` adds to the turn,
  * so art that points up takes 90.
  */
-class CanvasFollowArrow {
+class CanvasFollowArrow : CanvasRevised() {
     /** The arrow's turn from its follower's [CanvasFollow.pinAngle]; [CanvasOverlay] sets it as it draws the arrow. */
     internal var angle: Float = 0f
 }

@@ -12,9 +12,12 @@ import com.awakekt.awake.core.text.font.FontNumerals
  * TextField, and the font any of them draws in. An element with words but no widget component is a
  * Text. Its colour is the element's [CanvasAppearance.color].
  */
-class CanvasText {
+class CanvasText : CanvasRevised() {
     /** The words shown while [textKey] is empty: a Text's content, a Button's label, a TextField's typed line. */
     var text: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * The key of the words in the project's string tables, such as `hud.greeting`; empty shows
@@ -23,6 +26,9 @@ class CanvasText {
      * locale does. A key no table has shows as the key and is logged once.
      */
     var textKey: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Values for [textKey]'s `{name}`, `plural` and `select` placeholders, and for a TextField's
@@ -31,9 +37,15 @@ class CanvasText {
      * [CanvasBinding.textArgs], takes the place of the value of the same name here.
      */
     var textArgs: Map<String, String> = emptyMap()
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Font size in scale-independent pixels. */
     var fontSize: Float = DEFAULT_FONT_SIZE
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * The font the words draw in: a project `.ttf` or `.otf` file that [CanvasOverlay] was given, or
@@ -41,9 +53,15 @@ class CanvasText {
      * neither draws in the default font.
      */
     var font: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Where the words sit in the element; null keeps the widget's own, top-left or centred. */
     var textAlign: CanvasAnchor? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether `[[key|shown words]]` spans draw as links.
@@ -52,12 +70,18 @@ class CanvasText {
      * never report a key, so a player cannot make their own line clickable.
      */
     var links: Boolean = true
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Digit width spacing (`Tabular` or `Proportional` through OpenType `tnum`/`pnum`); null keeps
      * the font's default digits.
      */
     var numerals: FontNumerals? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Default text metrics. */
     companion object {

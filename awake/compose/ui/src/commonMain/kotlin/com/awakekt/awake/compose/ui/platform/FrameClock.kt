@@ -36,6 +36,15 @@ class FrameClock {
     /** Bumped by an [advance] that moves time, so a pass that read the clock is out of date. */
     private var revision = 0
 
+    private var frames = 0L
+
+    /**
+     * How many frames the host has run, this one included: the same for every pass in one frame,
+     * however many times it composes, measures or places. Not tracked, unlike the time: code that
+     * runs while placing reads it to tell a second pass in one frame from the next frame (#1512).
+     */
+    val frame: Long get() = frames
+
     private val time = object : PolledState<Int>() {
         override fun read(): Int = revision
     }
@@ -68,6 +77,7 @@ class FrameClock {
      * dropped frame should look like a dropped frame, not like a seek.
      */
     internal fun advance(delta: Float) {
+        frames++
         val step = delta.coerceIn(0f, MAX_DELTA_SECONDS)
         // A run of still frames (step 0 after step 0) leaves the clock where it was.
         if (step != 0f || this.delta != 0f) revision++

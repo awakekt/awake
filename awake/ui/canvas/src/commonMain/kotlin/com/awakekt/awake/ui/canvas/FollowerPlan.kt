@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.compose.runtime.mutableStateOf
 import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.math.PI
 import kotlin.math.abs
@@ -43,6 +44,10 @@ internal class FollowerPlan(val element: CanvasElement) {
     internal var snapping: Boolean = true
     internal var plannedFrame: Long = 0L
 
+    /** What this follower's composition was built from, and whether it is drawn and how faded, for a retained draw. */
+    internal val composed = FollowerComposed()
+    internal val look = FollowerLook()
+
     fun place(left: Float, top: Float, boxWidth: Float, boxHeight: Float) {
         x = left
         y = top
@@ -77,6 +82,12 @@ internal class FollowerPlans {
     val canvas = FollowerCanvas()
     val itemCanvas = FollowerCanvas()
     var frame = 0L
+
+    /** Moved while placing when a follower needs composing again; composition reads it, so the host composes again in that frame. */
+    val composeRevision = mutableStateOf(0)
+
+    /** The frame and canvas the plans were last made for. */
+    val plannedFor = FollowerPlanKey()
 }
 
 /** The canvas a frame's followers are placed on: [width] by [height] dp, 0 when unknown, at [density] pixels a dp. */

@@ -225,7 +225,7 @@ data class CanvasParticleBurstCycle(
 class CanvasParticles(
     val maxParticles: Int = DEFAULT_CANVAS_PARTICLE_CAPACITY,
     random: Random = Random.Default,
-) {
+) : CanvasRevised() {
     /**
      * Backing structure-of-arrays simulation pool in [ParticlePlane.XY]. Internal because
      * [syncToSimulation] rewrites its configuration from this emitter's own fields on every step and
@@ -247,15 +247,27 @@ class CanvasParticles(
 
     /** Anchor on the owning element's `width × height` box where particles spawn (`Center` by default). */
     var anchor: CanvasAnchor = CanvasAnchor.Center
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Signed horizontal offset from [anchor] in `dp` (`+` right, `-` left). */
     var offsetX: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Signed vertical offset from [anchor] in `dp` (`+` down, `-` up). */
     var offsetY: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Paint layer relative to the owning element's background, widget, and text (`OverContent` by default). */
     var placement: CanvasParticlePlacement = CanvasParticlePlacement.OverContent
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * When `true` (default), honours enclosing clips and element masks; when `false`, draws inside
@@ -263,36 +275,63 @@ class CanvasParticles(
      * render target (never escaping an ancestor offscreen `graphicsLayer` target).
      */
     var clipped: Boolean = true
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * When `true` (default), particles stay attached to the element as it moves; when `false`,
      * spawned particles trail in root canvas `dp` space.
      */
     var localSpace: Boolean = true
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** When `true`, draws particles with `BlendMode.Plus` instead of premultiplied `BlendMode.SourceOver`. */
     var additive: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Key in `CanvasOverlay`'s `images` map, or `""` for untextured solid-tinted quads. */
     var texture: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Sprite-sheet columns when [texture] is non-empty (`>= 1`). */
     var columns: Int = 1
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Sprite-sheet rows when [texture] is non-empty (`>= 1`). */
     var rows: Int = 1
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Animated cells cycled in reading order from `0` (`1..columns*rows`). */
     var frameCount: Int = 1
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Sprite-sheet playback rate in frames per second (`>= 0`). */
     var frameRate: Float = DEFAULT_CANVAS_SHEET_FPS
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether [CanvasOverlay] steps and draws this emitter: authored state, saved with the scene.
      * A finished [burstCount] does not turn it off; it sets [isFinished] instead.
      */
     var enabled: Boolean = true
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Runtime state, never saved: `true` once every particle of a used-up [burstCount] has died. A
@@ -303,75 +342,144 @@ class CanvasParticles(
 
     /** Continuous emission rate in particles per second (`>= 0`). */
     var spawnRate: Float = DEFAULT_CANVAS_SPAWN_RATE
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Minimum particle lifetime in seconds (`> 0`). */
     var lifetime: Float = DEFAULT_CANVAS_LIFETIME
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Optional upper bound on random particle lifetime (`>= lifetime`). */
     var maxLifetime: Float? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Particle quad height in `dp` at birth (`> 0`); width preserves cell aspect ratio. */
     var size: Float = DEFAULT_CANVAS_SIZE_DP
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Optional particle quad height in `dp` interpolated to at death (`>= 0`). */
     var endSize: Float? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Opacity at birth (`0..1`). */
     var startAlpha: Float = 1f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Optional fade-in / hold / fade-out envelope over normalized lifetime. */
     var alphaCurve: CanvasParticleAlphaCurve? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Straight-alpha colour multiplier at birth. */
     var tint: Color = Color.White
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Optional straight-alpha colour multiplier interpolated to at death. */
     var endTint: Color? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Spatial spawn distribution in `dp` around the resolved anchor. */
     var shape: CanvasParticleShape = CanvasParticleShape()
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Launch speed in `dp` per second (`>= 0`). */
     var speed: Float = DEFAULT_CANVAS_SPEED_DP
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Optional upper bound on random launch speed (`>= speed`). */
     var maxSpeed: Float? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Base launch angle in degrees (`0` = right, `-90` = up on screen, `90` = down on screen). */
     var directionDegrees: Float = DEFAULT_CANVAS_DIRECTION_DEGREES
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Fan angle in degrees around [directionDegrees] (`0` = beam, `360` = full circle). */
     var spreadDegrees: Float = FULL_CANVAS_SPREAD_DEGREES
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Outward speed in `dp/s` added away from the spawn origin. */
     var radialSpeed: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Sends spawned particles inward toward the spawn origin at launch speed. */
     var convergeToOrigin: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Constant X acceleration in `dp/s²`. */
     var gravityX: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Constant Y acceleration in `dp/s²` (positive pulls downward on screen). */
     var gravityY: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Linear velocity damping per second (`0` disables drag). */
     var drag: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Smooth sine flow-field perturbation strength (`0` disables turbulence). */
     var turbulence: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Spatial frequency of the turbulence flow field (`>= 0`). */
     var turbulenceFrequency: Float = 1f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Optional per-particle angular velocity range in degrees per second. */
     var spin: CanvasParticleSpin? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Optional lifetime spawn cap; [isFinished] turns `true` once all spawned particles expire. `0`
      * or a negative count spawns nothing.
      */
     var burstCount: Int? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Optional repeating pulsed emission schedule replacing continuous [spawnRate].
@@ -385,7 +493,7 @@ class CanvasParticles(
                 val problems = value.problems()
                 require(problems.isEmpty()) { problems.joinToString("; ") }
             }
-            field = value
+            field = revised(field, value)
         }
 
     /**
@@ -394,6 +502,9 @@ class CanvasParticles(
      * the rate, and not once a [burstCount] is used up. A `fun interface`, so asking allocates nothing.
      */
     var dynamicSpawnRate: ParticleSpawnRate? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Optional listener told where each aged-out particle dies, right before its slot is cleared.
@@ -402,6 +513,9 @@ class CanvasParticles(
      * allocates nothing.
      */
     var onParticleDeath: ParticleDeathListener? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     internal var owner: CanvasElement? = null
     internal var pooledForBurst: Boolean = false

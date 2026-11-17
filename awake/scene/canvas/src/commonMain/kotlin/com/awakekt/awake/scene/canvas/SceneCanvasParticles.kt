@@ -86,7 +86,7 @@ private const val FULL_CANVAS_SPREAD_DEGREES_SCENE: Float = 360f
     converters = [SceneColorConverter::class],
     hooks = CanvasParticlesGravity::class,
     runtimeOnly = [
-        "random", "gravityX", "gravityY", "dynamicSpawnRate", "onParticleDeath", "isFinished", "liveParticleCount",
+        "revision", "random", "gravityX", "gravityY", "dynamicSpawnRate", "onParticleDeath", "isFinished", "liveParticleCount",
         "droppedParticleCount",
     ],
 )
