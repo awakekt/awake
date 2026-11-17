@@ -134,14 +134,26 @@ private val TextShortcutKeys = setOf(
  * neither learns the text nor offers suggestions for it -- what `android:inputType="textPassword"`
  * gives a real `EditText`.
  *
+ * The keyboard is asked not to open its full-screen extract editor, which in landscape covers the
+ * app entirely while a field has focus: a game stays drawn above the keyboard, and lays itself out
+ * around it from the IME inset. A host that wants the extract editor sets
+ * [Input.textInputExtractEditor].
+ *
  * @param outAttrs Attributes describing the editor configuration.
  * @param input Target Awake [Input] accumulator receiving text events.
  * @return An [InputConnection] bound to this view and the input accumulator.
  */
 fun View.createAwakeInputConnection(outAttrs: EditorInfo, input: Input): InputConnection {
     outAttrs.inputType = awakeInputType(password = input.textInputPassword)
-    outAttrs.imeOptions = EditorInfo.IME_ACTION_DONE
+    outAttrs.imeOptions = awakeImeOptions(extractEditor = input.textInputExtractEditor)
     return AwakeInputConnection(this, input)
+}
+
+/** The `EditorInfo.imeOptions`: a Done action, and no extract editor unless [extractEditor]. */
+internal fun awakeImeOptions(extractEditor: Boolean): Int = if (extractEditor) {
+    EditorInfo.IME_ACTION_DONE
+} else {
+    EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
 }
 
 /** The `EditorInfo.inputType` for a plain or a password field. */

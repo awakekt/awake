@@ -536,6 +536,16 @@ class Input {
     var textInputPassword: Boolean = false
 
     /**
+     * Whether a platform's keyboard may replace the app with its full-screen extract editor while a
+     * text field has focus, as Android's does in landscape. Off by default, so the app stays drawn
+     * above the keyboard; a host that wants the extract editor sets it.
+     *
+     * Read when the keyboard connects to a field, so a change reaches it the next time one gains
+     * focus. A bridge whose platform has no extract editor ignores it.
+     */
+    var textInputExtractEditor: Boolean = false
+
+    /**
      * Text the UI answered a [ClipboardCommand] with, waiting for the platform bridge to put it on
      * the system clipboard. Set by the UI pass; a bridge takes it with [takeClipboardWrite].
      */

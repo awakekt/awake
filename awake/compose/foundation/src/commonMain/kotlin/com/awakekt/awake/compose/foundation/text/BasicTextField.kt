@@ -156,6 +156,7 @@ fun BasicTextField(
         val displayedText = { fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " } }
         val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
         policy.cache = textState.cache
+        textState.motion.clock = clock
         policy.motion = textState.motion
         // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
         val color = { resolveFieldColor(state, resolved.color, placeholder, placeholderColor) }

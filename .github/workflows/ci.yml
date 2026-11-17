@@ -298,14 +298,16 @@ jobs:
           ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest --tests com.awakekt.awake.compose.testing.GradientBackgroundTest
 
       # Retained draw replays what a fresh paint draws, moved subtrees in translate ranges, the
-      # nameplate frame stays under its allocation ceilings (#1512), and an unchanged HUD measures
-      # under its per-node ceiling (#1621), and a host can name what placement wrote that made a
-      # frame compose twice (#1512).
+      # nameplate frame stays under its allocation ceilings (#1512), an unchanged HUD measures
+      # under its per-node ceiling (#1621), a text run's settle counts frames, not passes, so a
+      # verified skip reports no stale glyphs (#1764), and a host can name what placement wrote
+      # that made a frame compose twice (#1512).
       - name: Retained draw, nameplate and measure allocation gates
         run: >-
           ./gradlew
           :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.RetainedDrawTest
           --tests com.awakekt.awake.compose.foundation.ComposeFrameCountsTest
+          --tests com.awakekt.awake.compose.foundation.text.TextHoldOncePerFrameTest
           --tests com.awakekt.awake.compose.foundation.PlacementCauseTest
           :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
           --tests com.awakekt.awake.compose.game.MeasureAllocationTest

@@ -300,6 +300,7 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun getScrollDeltaY ()F
 	public final fun getScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
 	public final fun getSecondaryPointerDown ()Z
+	public final fun getTextInputExtractEditor ()Z
 	public final fun getTextInputFocused ()Z
 	public final fun getTextInputPassword ()Z
 	public final fun isKeyDown (Lcom/awakekt/awake/core/input/Key;)Z
@@ -316,6 +317,7 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun setScrollDeltaY (F)V
 	public final fun setScrollSource (Lcom/awakekt/awake/core/input/ScrollSource;)V
 	public final fun setSecondaryPointer (Z)V
+	public final fun setTextInputExtractEditor (Z)V
 	public final fun setTextInputFocused (Z)V
 	public final fun setTextInputPassword (Z)V
 	public final fun setTouch (JFFZ)V
