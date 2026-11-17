@@ -1,0 +1,1 @@
+- `CameraPose` in `awake:core:camera`: the allocation-free pose math a yaw-and-pitch camera runs every frame (view direction, orbit eye, look turn, scroll and pinch zoom, view-plane pan, free-fly direction), usable without a scene. `CameraSystem` in `awake:scene:controls` now runs it, with the same results as before.

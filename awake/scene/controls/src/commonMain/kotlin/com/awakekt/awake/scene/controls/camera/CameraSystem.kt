@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls.camera
 
 import com.awakekt.awake.core.camera.CameraOrbitButtons
+import com.awakekt.awake.core.camera.CameraPose
 import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.math.Vec3f
@@ -22,8 +23,6 @@ import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * Drives the [ActiveCamera]'s pose from its [CameraRig].
@@ -128,21 +127,20 @@ class CameraSystem(
         dy: Float,
         inViewport: Boolean,
     ) {
-        val yawSign = if (gesturePolicy.invertYaw) -1f else 1f
-        val pitchSign = if (gesturePolicy.invertPitch) -1f else 1f
         if (config.mode.usesYaw) {
-            config.yaw += dx * gesturePolicy.lookSensitivity * yawSign
+            config.yaw = CameraPose.turnedYaw(config.yaw, dx, gesturePolicy.lookSensitivity, gesturePolicy.invertYaw)
         }
         if (config.mode.usesPitch) {
-            config.pitch = (config.pitch - dy * gesturePolicy.lookSensitivity * pitchSign)
-                .coerceIn(-PITCH_LIMIT, PITCH_LIMIT)
+            config.pitch = CameraPose.turnedPitch(config.pitch, dy, gesturePolicy.lookSensitivity, gesturePolicy.invertPitch)
         }
         if (config.mode.usesZoom && inViewport) {
-            val step = gesturePolicy.zoomSensitivity + config.distance * gesturePolicy.zoomProportion
-            // A pinch is already a factor: spreading the fingers 1.5x brings the camera 1.5x closer.
-            // Its frame's scroll is the same pinch again as Ctrl+wheel, so that is not added too.
+            // A pinch's frame's scroll is the same pinch again as Ctrl+wheel, so that is not added too.
             val pinch = input.pinch
-            val zoomed = if (pinch != null) config.distance / pinch.scale else config.distance - input.scrollDeltaY * step
+            val zoomed = if (pinch != null) {
+                CameraPose.pinchedDistance(config.distance, pinch.scale)
+            } else {
+                CameraPose.scrolledDistance(config.distance, input.scrollDeltaY, gesturePolicy.zoomSensitivity, gesturePolicy.zoomProportion)
+            }
             config.distance = zoomed.coerceIn(config.minDistance, config.maxDistance)
         }
     }
@@ -154,9 +152,9 @@ class CameraSystem(
             CameraMode.FreeFly -> camera.lens.eye
             CameraMode.FirstPerson, CameraMode.Cinematic -> return
         }
-        viewAxes(camera)
+        CameraPose.viewAxes(camera.lens.eye, camera.lens.center, right, up, forward)
         val scale = gesturePolicy.panSensitivity * config.distance.coerceAtLeast(1f)
-        val shift = up.scale(dy * scale).add(right.scale(-dx * scale))
+        val shift = CameraPose.panShift(right, up, dx, dy, scale, desiredEye)
         moving.add(shift)
         // The third-person eye eases toward its pose; a pan carries it along instead.
         if (moving !== camera.lens.eye) {
@@ -169,22 +167,9 @@ class CameraSystem(
     private fun fly(config: CameraRig, camera: Camera, input: GameplayInput, delta: Float) {
         flyInput.read(input)
         if (!flyInput.moving) return
-        forwardFrom(config.yaw, config.pitch, forward)
-        right.set(cos(config.yaw), 0f, sin(config.yaw))
-        desiredEye.set(forward.scale(flyInput.ahead)).add(right.scale(flyInput.across)).add(up.set(0f, flyInput.rise, 0f)).normalize()
+        CameraPose.flyDirection(config.yaw, config.pitch, flyInput.ahead, flyInput.across, flyInput.rise, desiredEye)
         val speed = config.flySpeed * if (flyInput.fast) FAST_FLY else 1f
         camera.lens.eye.add(desiredEye.scale(speed * delta))
-    }
-
-    /** Fills [right] and [up] from the lens, so every mode pans in the plane it shows. */
-    private fun viewAxes(camera: Camera) {
-        forward.set(camera.lens.center).sub(camera.lens.eye).normalize()
-        right.set(-forward.z, 0f, forward.x).normalize()
-        up.set(
-            right.y * forward.z - right.z * forward.y,
-            right.z * forward.x - right.x * forward.z,
-            right.x * forward.y - right.y * forward.x,
-        )
     }
 
     private fun resetCameraForMode(config: CameraRig, camera: Camera, target: Transform?) {
@@ -247,14 +232,12 @@ class CameraSystem(
                 if (targetPos != null) {
                     core.eye.set(targetPos).add(config.offsetPosition)
                 }
-                forwardFrom(config.yaw, config.pitch, forward)
-                core.center.set(core.eye).add(forward)
+                core.center.set(core.eye).add(CameraPose.forward(config.yaw, config.pitch, forward))
             }
 
             CameraMode.ThirdPerson -> {
                 core.center.set(pivot)
-                forwardFrom(config.yaw, config.pitch, forward)
-                desiredEye.set(core.center).sub(forward.scale(config.distance))
+                CameraPose.orbitEye(core.center, config.yaw, config.pitch, config.distance, desiredEye)
                 val collision = config.collision
                 if (collision == null) {
                     core.eye.damp(desiredEye, SMOOTHING_HALF_LIFE, delta)
@@ -264,8 +247,7 @@ class CameraSystem(
             }
 
             CameraMode.FreeFly -> {
-                forwardFrom(config.yaw, config.pitch, forward)
-                core.center.set(core.eye).add(forward)
+                core.center.set(core.eye).add(CameraPose.forward(config.yaw, config.pitch, forward))
             }
 
             CameraMode.Cinematic -> {
@@ -275,11 +257,8 @@ class CameraSystem(
             }
 
             CameraMode.TopDown -> {
-                run {
-                    core.center.set(pivot)
-                    forwardFrom(config.yaw, TOP_DOWN_PITCH, forward)
-                    core.eye.set(core.center).sub(forward.scale(config.distance))
-                }
+                core.center.set(pivot)
+                CameraPose.orbitEye(core.center, config.yaw, TOP_DOWN_PITCH, config.distance, core.eye)
             }
         }
     }
@@ -291,16 +270,12 @@ class CameraSystem(
             target.position
         }
 
-    private fun forwardFrom(yaw: Float, pitch: Float, out: Vec3f) {
-        val cp = cos(pitch)
-        out.set(sin(yaw) * cp, sin(pitch), -cos(yaw) * cp)
-    }
-
     private companion object {
+        // Unused here now, but listed in the released api dump as fields of this class, so kept.
         const val LOOK_SENSITIVITY = 0.005f
         const val ZOOM_SENSITIVITY = 0.5f
+        const val PITCH_LIMIT = CameraPose.PITCH_LIMIT
 
-        const val PITCH_LIMIT = (85.0 * PI / 180.0).toFloat()
         const val TOP_DOWN_PITCH = (-60.0 * PI / 180.0).toFloat()
 
         const val THIRD_PERSON_PITCH = -0.4f
