@@ -87,6 +87,20 @@ data class CanvasBinding(
 }
 
 /**
+ * Every `component.field` path this binding reads from its [CanvasBinding.node]: [CanvasBinding.value],
+ * [CanvasBinding.max] and [CanvasBinding.cooldownMax] when they are not plain numbers, each placeholder in
+ * [CanvasBinding.text], each [CanvasBinding.textArgs] value, [CanvasBinding.cooldown],
+ * [CanvasBinding.charges] and [CanvasBinding.enabled]. A host that watches for changes reads these (#1512).
+ */
+fun CanvasBinding.fieldPaths(): Set<String> = buildSet {
+    for (path in listOf(value, max, cooldown, cooldownMax, charges, enabled)) {
+        if (FIELD_PATH.matches(path)) add(path)
+    }
+    for (placeholder in PLACEHOLDER.findAll(text)) add(placeholder.groupValues[1])
+    for (path in textArgs.values) if (FIELD_PATH.matches(path)) add(path)
+}
+
+/**
  * A Bar's fill or a Text's filled-in template, read through a [CanvasResolver]'s raw field text
  * rather than a world: the scene side turns a component's field into that text, so this side never
  * needs to know what a component or a binding is.

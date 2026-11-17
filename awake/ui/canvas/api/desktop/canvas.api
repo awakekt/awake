@@ -294,6 +294,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasBinding$Companion {
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasBindingKt {
+	public static final fun fieldPaths (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)Ljava/util/Set;
 	public static final fun numberField (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Float;
 	public static final fun textField (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }

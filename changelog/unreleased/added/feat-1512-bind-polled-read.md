@@ -1,0 +1,4 @@
+- A canvas whose elements read game state through `bind` no longer composes every frame under `skipUnchangedComposition` (#1512).
+  - Each field a shown bound element reads is polled for its value, and the canvas composes only when one changed.
+  - Bound fields are read through each component's scene binding without building JSON. A poll costs 2.4 KB and about 40 µs a frame on the JVM for 100 bound elements, where the JSON export cost 126 KB and 186 µs.
+  - `CanvasBinding.fieldPaths()` lists the fields a binding reads.
