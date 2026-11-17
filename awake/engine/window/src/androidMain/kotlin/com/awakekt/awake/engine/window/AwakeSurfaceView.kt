@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.window
 
+import android.app.Activity
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.hardware.input.InputManager
@@ -31,6 +32,7 @@ import com.awakekt.awake.core.input.syncAwakeTextShortcut
 import com.awakekt.awake.ecs.FrameThreadGuard
 import com.awakekt.awake.engine.platform.WindowLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import java.lang.ref.WeakReference
 
 /**
  * The Android window: a [SurfaceView] whose render thread drives [lifecycle] and whose touch, key,
@@ -73,6 +75,8 @@ class AwakeSurfaceView(
         // A debuggable app, as a debug build is, checks frame-thread-only state from the scene's first
         // frame; a release app leaves the checks off and pays one field read per check.
         if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) FrameThreadGuard.enabled = true
+        // Swappy reads the display through the activity, when an app picks it (#1699).
+        (context as? Activity)?.let { AndroidFrameLoop.pacingActivity = WeakReference(it) }
         holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true

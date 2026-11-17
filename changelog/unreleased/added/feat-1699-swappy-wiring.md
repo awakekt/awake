@@ -1,0 +1,10 @@
+- An Android app can pace a frame-rate cap with Swappy instead of sleeping: `AndroidFrameLoop.framePacing = AndroidFramePacing.Swappy` (#1699). `AndroidFramePacing.Sleep` stays the default, and with it no Swappy call is made.
+  - With Swappy chosen, the Vulkan backend wires each step into it:
+    - Swappy's device extensions;
+    - its queue, the activity, the window, and each swapchain;
+    - the swap interval for the frame-rate mode;
+    - presents through `SwappyVk_queuePresent`;
+    - the window's fixed frame rate for a cap.
+  - It sets `AndroidFrameLoop.presentPacing`, so the loop never sleeps a frame Swappy already paces.
+  - The choice can change while the app runs, without a new swapchain.
+  - Whether frames are evenly paced is still to be measured on a device.

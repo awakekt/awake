@@ -116,6 +116,11 @@ Java_com_awakekt_awake_vulkan_swappy_SwappyVk_destroySwapchain(
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_swappy_SwappyVk_destroyDevice(JNIEnv *, jobject, jlong device) {
+    SwappyVk_destroyDevice(handle<VkDevice>(device));
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_awakekt_awake_vulkan_swappy_SwappyVk_setPresentsThroughSwappy(
         JNIEnv *, jobject, jboolean enabled) {
     awake::setPresentHook(enabled ? &SwappyVk_queuePresent : nullptr);
