@@ -166,15 +166,34 @@ fun RenderDrawCommand.drawBlockFloats(
     drawBlockFloats: Int,
     alphaToCoverageEnabled: Boolean,
     instancedKind: InstancedDrawKind?,
+): FloatArray = packDrawBlock(drawBlockFloats, alphaToCoverageEnabled, instancedKind, writers = null)
+
+/**
+ * This draw's own block beside the frame's, packed into [writers]' arrays rather than new ones: the
+ * same floats as the overload without them, allocating nothing per draw. The array returned is
+ * [writers]' and is overwritten by the next pack with the same layout; see [DrawBlockWriters].
+ */
+fun RenderDrawCommand.drawBlockFloats(
+    drawBlockFloats: Int,
+    alphaToCoverageEnabled: Boolean,
+    instancedKind: InstancedDrawKind?,
+    writers: DrawBlockWriters,
+): FloatArray = packDrawBlock(drawBlockFloats, alphaToCoverageEnabled, instancedKind, writers)
+
+private fun RenderDrawCommand.packDrawBlock(
+    drawBlockFloats: Int,
+    alphaToCoverageEnabled: Boolean,
+    instancedKind: InstancedDrawKind?,
+    writers: DrawBlockWriters?,
 ): FloatArray {
     if (instancedKind == InstancedDrawKind.Particle && drawBlockFloats in 1..ParticleDrawLayout.total) {
-        return UniformWriter(ParticleDrawLayout)
+        return (writers?.particle?.reset() ?: UniformWriter(ParticleDrawLayout))
             .put(extraUniformFloats, *ParticleDrawLayout.fields)
             .build()
     }
     val fade = if (fadeOpacity < 1f) 1f - fadeOpacity.coerceIn(0f, 1f) else 0f
-    return (if (instancedKind == null) singlePlanDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, fade) else null)
-        ?: sharedLayoutDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, instancedKind, fade)
+    return (if (instancedKind == null) singlePlanDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, fade, writers) else null)
+        ?: sharedLayoutDrawBlockFloats(drawBlockFloats, alphaToCoverageEnabled, instancedKind, fade, writers)
 }
 
 private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
@@ -182,15 +201,22 @@ private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
     alphaToCoverageEnabled: Boolean,
     instancedKind: InstancedDrawKind?,
     fade: Float,
+    writers: DrawBlockWriters?,
 ): FloatArray {
     val transform = if (instancedKind != null) IDENTITY else model
     return when {
         drawBlockFloats == MaterialUniformLayouts.PbrTexturedDraw.total ->
-            UniformWriter(MaterialUniformLayouts.PbrTexturedDraw)
+            (writers?.pbrTextured?.reset() ?: UniformWriter(MaterialUniformLayouts.PbrTexturedDraw))
                 .put(transform.data, UniformFields.Model)
                 .put(UniformFields.VertexAnimation, 0f, 0f, 0f, 0f)
                 .put(
-                    texturedMaterialPayload(extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), blendsAdditively, timeSeconds),
+                    texturedMaterialPayload(
+                        extraUniformFloats,
+                        sceneCoverageCutoff(alphaToCoverageEnabled),
+                        blendsAdditively,
+                        timeSeconds,
+                        into = writers?.texturedPayload,
+                    ),
                     UniformFields.PbrFactors,
                     UniformFields.BaseColorFactor,
                     UniformFields.EmissiveFactor,
@@ -200,17 +226,17 @@ private fun RenderDrawCommand.sharedLayoutDrawBlockFloats(
                 .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
                 .build()
         drawBlockFloats == MaterialUniformLayouts.LitDraw.total ->
-            UniformWriter(MaterialUniformLayouts.LitDraw)
+            (writers?.lit?.reset() ?: UniformWriter(MaterialUniformLayouts.LitDraw))
                 .put(transform.data, UniformFields.Model)
                 .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
                 .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
                 .build()
         // A shader that declares only the leading fields, as a depth shader does, reads them from this one.
         drawBlockFloats in 1..MaterialUniformLayouts.LitShadowDraw.total ->
-            UniformWriter(MaterialUniformLayouts.LitShadowDraw)
+            (writers?.litShadow?.reset() ?: UniformWriter(MaterialUniformLayouts.LitShadowDraw))
                 .put(transform.data, UniformFields.Model)
                 .put(UniformFields.VertexAnimation, vertexAnimation, vertexAnimationClock(vertexAnimation, timeSeconds))
-                .put(pbrMaterialFloats(extraUniformFloats), UniformFields.Material)
+                .put(pbrMaterialFloats(extraUniformFloats, into = writers?.pbrPayload), UniformFields.Material)
                 .put(UniformFields.DrawFade, fade, 0f, 0f, 0f)
                 .build()
         else -> error("No draw block holds $drawBlockFloats floats beside the frame block.")
@@ -221,32 +247,33 @@ private fun RenderDrawCommand.singlePlanDrawBlockFloats(
     drawBlockFloats: Int,
     alphaToCoverageEnabled: Boolean,
     fade: Float,
+    writers: DrawBlockWriters?,
 ): FloatArray? = when (drawUniformPlan(mesh.format, materialUniformFloatCount = drawBlockFloats, hasShadowCascades = false)) {
     DrawUniformPlan.Skinned -> if (drawBlockFloats in 1..SkinnedDrawLayout.total) {
-        skinnedDrawBlockFloats(sceneCoverageCutoff(alphaToCoverageEnabled), fade)
+        skinnedDrawBlockFloats(sceneCoverageCutoff(alphaToCoverageEnabled), fade, writers)
     } else {
         null
     }
     DrawUniformPlan.Sprite -> if (drawBlockFloats == SpriteDrawLayout.total) {
-        UniformWriter(SpriteDrawLayout).put(model.data, UniformFields.Model).put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint).build()
+        (writers?.sprite?.reset() ?: UniformWriter(SpriteDrawLayout)).put(model.data, UniformFields.Model).put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint).build()
     } else {
         null
     }
     DrawUniformPlan.WorldText -> if (drawBlockFloats == WorldTextDrawLayout.total) {
-        UniformWriter(WorldTextDrawLayout).put(model.data, UniformFields.Model).put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field).build()
+        (writers?.worldText?.reset() ?: UniformWriter(WorldTextDrawLayout)).put(model.data, UniformFields.Model).put(extraUniformFloats, WorldTextFields.Tint, WorldTextFields.Field).build()
     } else {
         null
     }
     DrawUniformPlan.Trail -> if (drawBlockFloats == TrailDrawLayout.total) {
-        UniformWriter(TrailDrawLayout).put(model.data, UniformFields.Model).put(extraUniformFloats, TrailFields.Tint).build()
+        (writers?.trail?.reset() ?: UniformWriter(TrailDrawLayout)).put(model.data, UniformFields.Model).put(extraUniformFloats, TrailFields.Tint).build()
     } else {
         null
     }
     else -> null
 }
 
-private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: Float): FloatArray {
-    val writer = UniformWriter(SkinnedDrawLayout)
+private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: Float, writers: DrawBlockWriters?): FloatArray {
+    val writer = writers?.skinned?.reset() ?: UniformWriter(SkinnedDrawLayout)
     val unlit = if (extraUniformFloats.size == SkinnedMaterialLayout.total) {
         writer
             .put(extraUniformFloats, 0, SkinnedFields.JointPalette)

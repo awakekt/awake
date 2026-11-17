@@ -209,7 +209,7 @@ private fun Renderer.stageSplitDrawBlock(
     val kind = if (instancedKind != null) SPLIT_INSTANCED_INPUTS + instancedKind.ordinal else SPLIT_INPUTS
     if (slot.inputs.matches(cmd, SPLIT_FRAME_VERSION, drawBlockFloats, coverage, kind)) return
     uniformUploads.packedBlocks += 1
-    uniformUploads.stageChanged(slot, cmd.drawBlockFloats(drawBlockFloats, coverage, instancedKind))
+    uniformUploads.stageChanged(slot, cmd.drawBlockFloats(drawBlockFloats, coverage, instancedKind, drawBlockWriters))
     slot.inputs.record(cmd, SPLIT_FRAME_VERSION, drawBlockFloats, coverage, kind)
 }
 

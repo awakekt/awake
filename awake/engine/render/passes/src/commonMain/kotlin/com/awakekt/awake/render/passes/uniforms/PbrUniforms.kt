@@ -167,8 +167,11 @@ private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): Unif
     )
     .put(UniformFields.TextureScroll, animation.scrollU, animation.scrollV, 0f, animation.firstFrame.toFloat())
 
-/** Same typed defaulting for backend source adapters that carry only the raw extra payload. */
-internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayload(values)
+/**
+ * Same typed defaulting for backend source adapters that carry only the raw extra payload, written
+ * into [into] when given (an array of the layout's size, refilled per draw) instead of a new array.
+ */
+internal fun pbrMaterialFloats(values: FloatArray, into: FloatArray? = null): FloatArray = pbrMaterialPayload(values, into)
 
 /**
  * How a textured draw meets what is behind it: the code the shared packer writes in the textured
@@ -235,24 +238,33 @@ internal val RenderDrawCommand.blendsAdditively: Boolean
  * The textured material block for [values], stamped with the draw's [alphaCutoff], its
  * [TexturedBlend] (from whether it blends [additive]ly and whether [values] asks to stay lit), and
  * [timeSeconds]. A payload of only the three factor fields (from before texture animation) keeps
- * its factors and plays no animation.
+ * its factors and plays no animation. Written into [into] when given, an array of the layout's
+ * size that the caller refills per draw, rather than a new array.
  */
-internal fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, additive: Boolean, timeSeconds: Float): FloatArray {
+internal fun texturedMaterialPayload(
+    values: FloatArray,
+    alphaCutoff: Float,
+    additive: Boolean,
+    timeSeconds: Float,
+    into: FloatArray? = null,
+): FloatArray {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
     val output = when {
-        values.size >= layout.total -> values.copyOf(layout.total)
+        values.size >= layout.total -> if (into != null) values.copyInto(into, 0, 0, layout.total) else values.copyOf(layout.total)
         values.size >= FACTOR_FLOATS -> UniformWriter(layout)
             .put(values, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
             .put(values, layout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
             .put(values, layout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
             .putTextureAnimation(TextureAnimation.None)
             .build()
+            .let { if (into != null) it.copyInto(into) else it }
         else -> UniformWriter(layout)
             .put(UniformFields.PbrFactors, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f, 0f)
             .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
             .putTextureAnimation(TextureAnimation.None)
             .build()
+            .let { if (into != null) it.copyInto(into) else it }
     }
     val factors = layout.readVec4(output, UniformFields.PbrFactors)
     val flags = (factors.w + FLAG_ROUNDING).toInt()
@@ -292,12 +304,15 @@ private const val SKINNED_UNLIT = 1f
 private val FACTOR_FLOATS =
     UniformFields.PbrFactors.floats + UniformFields.BaseColorFactor.floats + UniformFields.EmissiveFactor.floats
 
-private fun pbrMaterialPayload(values: FloatArray): FloatArray {
+private fun pbrMaterialPayload(values: FloatArray, into: FloatArray? = null): FloatArray {
     val layout = MaterialUniformLayouts.PbrMaterial
-    if (values.size >= layout.total) return values.copyOf(layout.total)
-    return UniformWriter(layout)
+    if (values.size >= layout.total) {
+        return if (into != null) values.copyInto(into, 0, 0, layout.total) else values.copyOf(layout.total)
+    }
+    val defaults = UniformWriter(layout)
         .put(UniformFields.PbrFactors, DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
         .build()
+    return if (into != null) defaults.copyInto(into) else defaults
 }
 
 /**
