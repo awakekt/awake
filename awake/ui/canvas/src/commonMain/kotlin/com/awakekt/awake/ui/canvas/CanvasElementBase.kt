@@ -17,23 +17,33 @@ import kotlin.reflect.KClass
 sealed class CanvasElementBase : CanvasRevised() {
     /** Where the element sits and how big it is. */
     var rect: CanvasRect = CanvasRect()
-        private set
+        private set(value) { field = adopt(field, value) }
 
     /** What the player is doing to the element right now; runtime only, never saved. */
     var pointer: CanvasPointerState = CanvasPointerState()
-        private set
+        private set(value) { field = adopt(field, value) }
 
     /** The control the element is, or null for a Text or a Panel. */
     var widget: CanvasWidget? = null
-        internal set
+        internal set(value) {
+            adopt(field as? CanvasRevised, value as? CanvasRevised)
+            field = value
+        }
 
     internal var textPart: CanvasText? = CanvasText()
+        set(value) { field = adopt(field, value) }
     internal var appearancePart: CanvasAppearance? = null
+        set(value) { field = adopt(field, value) }
     internal var followPart: CanvasFollow? = null
+        set(value) { field = adopt(field, value) }
     internal var arrowPart: CanvasFollowArrow? = null
+        set(value) { field = adopt(field, value) }
     internal var inputPart: CanvasInput? = null
+        set(value) { field = adopt(field, value) }
     internal var tooltipPart: CanvasTooltip? = null
+        set(value) { field = adopt(field, value) }
     internal var particlesPart: CanvasParticles? = null
+        set(value) { field = adopt(field, value) }
 
     /**
      * Bumped each time a component is set or removed through this element (a [layout], [cluster],
@@ -41,7 +51,23 @@ sealed class CanvasElementBase : CanvasRevised() {
      * same components elsewhere, as a scene's entity does, can tell its own copy is out of date.
      */
     var componentsVersion: Int = 0
-        internal set
+        internal set(value) {
+            field = value
+            revise()
+        }
+
+    /** Where this element reports every change [contentRevision] shows, or null for nowhere. */
+    var changes: CanvasChanges?
+        get() = reportsTo as? CanvasChanges
+        set(value) {
+            reportsTo = value
+        }
+
+    init {
+        adopt(null, rect)
+        adopt(null, pointer)
+        adopt(null, textPart)
+    }
 
     /**
      * The element's component of [type], or null when it has none; [CanvasRect] and [CanvasPointerState] always answer.

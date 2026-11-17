@@ -62,6 +62,26 @@ class CanvasRevisionTest {
     }
 
     @Test
+    fun aCanvasCounterSeesEveryElementThatReportsToIt() {
+        val changes = CanvasChanges()
+        val elements = List(3) { CanvasElement().apply { kind = CanvasElementKind.Bar; this.changes = changes } }
+        val start = changes.revision
+        elements[1].rect.offsetX = elements[1].rect.offsetX
+        assertEquals(start, changes.revision, "an equal write")
+        elements[1].rect.offsetX += 1f
+        assertNotEquals(start, changes.revision, "a write straight to a component")
+        val moved = changes.revision
+        val detached = elements[2].rect
+        elements[2].set(CanvasRect())
+        val replaced = changes.revision
+        assertNotEquals(moved, replaced, "a component replaced")
+        detached.offsetX += 1f
+        assertEquals(replaced, changes.revision, "a component no longer held reports nothing")
+        (elements[0].widget as CanvasBarWidget).value = 0.3f
+        assertNotEquals(replaced, changes.revision, "a widget")
+    }
+
+    @Test
     fun aRevisionIsCountedOnceForEachChange() {
         val rect = CanvasRect()
         rect.width = rect.width
