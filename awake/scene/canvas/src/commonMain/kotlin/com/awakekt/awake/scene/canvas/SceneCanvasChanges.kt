@@ -13,7 +13,6 @@ import com.awakekt.awake.ui.canvas.CanvasControls
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasFollowLimit
 import com.awakekt.awake.ui.canvas.CanvasScaler
-import com.awakekt.awake.ui.canvas.CanvasViewWidget
 import kotlin.reflect.KClass
 
 /**
@@ -33,9 +32,10 @@ import kotlin.reflect.KClass
  * - the [images] and [fonts] gaining entries, and the [locale] the text is shown in.
  *
  * Some elements show what changes with no write at all, so while one shows, every poll is a change
- * and the canvas composes each frame, as it does with skipping off: one that follows a node (the
- * camera moves it), reads a binding (game state), shows a camera's picture, or is being held,
- * dragged, moved or typed into. [refresh] finds them, on each frame the canvas composes.
+ * and the canvas composes each frame, as it does with skipping off: one that reads a binding (game
+ * state), or is being held, dragged, moved or typed into. [refresh] finds them, on each frame the
+ * canvas composes. A follower is not one: the canvas plans and places followers while placing, which
+ * a skipped frame still does, and a camera's picture repaints its own view each frame.
  */
 internal class SceneCanvasChanges(private val world: World, private val order: CanvasItemOrder) : PolledState<Any>() {
     private val stores: Array<ComponentStore<Any>> = Array(WATCHED_TYPES.size) { world.store(WATCHED_TYPES[it]) }
@@ -90,10 +90,7 @@ internal class SceneCanvasChanges(private val world: World, private val order: C
     /** Whether [element], while it shows, changes what it draws with no write to it. */
     private fun volatile(element: CanvasElement): Boolean {
         if (!element.visible) return false
-        // Not `?.camera?.isNotEmpty() == true`: a Boolean? that Kotlin/Wasm can box.
-        val view = element.widget as? CanvasViewWidget
-        return element.follow.isNotEmpty() || element.bind != null || (view != null && view.camera.isNotEmpty()) ||
-            element.isHeld || element.pointer.dragging || element.moving || element.focused
+        return element.bind != null || element.isHeld || element.pointer.dragging || element.moving || element.focused
     }
 
     private companion object {

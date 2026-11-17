@@ -10,11 +10,13 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
+import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawShape
@@ -40,9 +42,12 @@ internal fun CameraView(
     val settings = element.view ?: CanvasView.Default
     val radius = element.style.cornerRadius ?: 0f
     val mask = rememberGroup(CameraViewGroup) { remember { PictureMask() } }
+    val clock = LocalFrameClock.current
     Box(modifier) {
         Box(
             Modifier.fillMaxSize().drawBehind {
+                // The frame's time, read so a retained draw asks for the camera's picture each frame (#1512).
+                if (camera.isNotEmpty()) clock.totalSeconds
                 val picture = if (camera.isNotEmpty()) tree.resolver.texture(element, camera, width, height) else null
                 if (picture != null) {
                     mask.clip(this, settings.mask, radius) {
