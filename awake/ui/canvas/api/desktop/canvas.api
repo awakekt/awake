@@ -436,6 +436,10 @@ public final class com/awakekt/awake/ui/canvas/CanvasButtonWidget : com/awakekt/
 	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasButton;)V
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasChanges : com/awakekt/awake/ui/canvas/CanvasRevised {
+	public fun <init> ()V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasCluster {
 	public static final field DEFAULT_RADIUS F
 	public static final field DEFAULT_SPACING F
@@ -772,6 +776,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase : com/awakek
 	public final fun components ()Ljava/util/List;
 	public final fun get (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun getBind ()Lcom/awakekt/awake/ui/canvas/CanvasBinding;
+	public final fun getChanges ()Lcom/awakekt/awake/ui/canvas/CanvasChanges;
 	public final fun getCluster ()Lcom/awakekt/awake/ui/canvas/CanvasCluster;
 	public final fun getComponentsVersion ()I
 	public final fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
@@ -783,6 +788,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase : com/awakek
 	public final fun remove (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun set (Ljava/lang/Object;)V
 	public final fun setBind (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)V
+	public final fun setChanges (Lcom/awakekt/awake/ui/canvas/CanvasChanges;)V
 	public final fun setCluster (Lcom/awakekt/awake/ui/canvas/CanvasCluster;)V
 	public final fun setKind (Lcom/awakekt/awake/ui/canvas/CanvasElementKind;)V
 	public final fun setLayout (Lcom/awakekt/awake/ui/canvas/CanvasLayout;)V
@@ -2006,6 +2012,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasResolver$DefaultImpls {
 }
 
 public abstract class com/awakekt/awake/ui/canvas/CanvasRevised {
+	public static final field MAX_HOPS I
 	public fun <init> ()V
 	public final fun getRevision ()I
 	protected final fun revise ()V

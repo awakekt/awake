@@ -34,7 +34,11 @@ class CanvasRevisionCoverageTest {
         val checked = CanvasElementKind.entries.sumOf { kind ->
             check({ CanvasElement().apply { this.kind = kind } }) { it.contentRevision }
         }
-        println("CanvasRevisionCoverage: $checked element properties over every kind")
+        val counted = CanvasElementKind.entries.sumOf { kind ->
+            check({ CanvasElement().apply { this.kind = kind; changes = CanvasChanges() } }) { checkNotNull(it.changes).revision }
+        }
+        assertEquals(checked, counted, "the canvas counter saw what contentRevision saw")
+        println("CanvasRevisionCoverage: $checked element properties over every kind, through contentRevision and the canvas counter")
         assertTrue(checked >= MIN_ELEMENT_PROPERTIES, "only $checked element properties were checked")
     }
 

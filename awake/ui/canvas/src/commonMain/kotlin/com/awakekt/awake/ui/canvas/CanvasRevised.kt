@@ -25,44 +25,79 @@ abstract class CanvasRevised {
 
     private var count = 0
 
+    /**
+     * The part this one reports its changes to: a component's element, and an element's
+     * [CanvasChanges]. A change here counts there too, so a host reads one counter, not every part.
+     */
+    internal var reportsTo: CanvasRevised? = null
+
+    /** Makes this part the one [part] reports to, after [previous], which it held there before, stops. */
+    internal fun <P : CanvasRevised?> adopt(previous: CanvasRevised?, part: P): P {
+        if (previous !== part && previous?.reportsTo === this) previous.reportsTo = null
+        part?.reportsTo = this
+        return part
+    }
+
+    /** Counts a change here and in every part above, by [reportsTo]. */
+    private fun changed() {
+        var part: CanvasRevised? = this
+        // A loop, not recursion: a link made into a cycle by mistake still ends after a few hops.
+        var hops = 0
+        while (part != null && hops++ < MAX_HOPS) {
+            part.count++
+            part = part.reportsTo
+        }
+    }
+
     /** Returns [new], counting a revision when it differs from [old]. */
     protected fun revised(old: Float, new: Float): Float {
-        if (old != new) count++
+        if (old != new) changed()
         return new
     }
 
     /** Returns [new], counting a revision when it differs from [old]. */
     protected fun revised(old: Int, new: Int): Int {
-        if (old != new) count++
+        if (old != new) changed()
         return new
     }
 
     /** Returns [new], counting a revision when it differs from [old]. */
     protected fun revised(old: Long, new: Long): Long {
-        if (old != new) count++
+        if (old != new) changed()
         return new
     }
 
     /** Returns [new], counting a revision when it differs from [old]. */
     protected fun revised(old: Double, new: Double): Double {
-        if (old != new) count++
+        if (old != new) changed()
         return new
     }
 
     /** Returns [new], counting a revision when it differs from [old]. */
     protected fun revised(old: Boolean, new: Boolean): Boolean {
-        if (old != new) count++
+        if (old != new) changed()
         return new
     }
 
     /** Returns [new], counting a revision when it is neither the same object as [old] nor equal to it. */
     protected fun <T> revised(old: T, new: T): T {
-        if (old !== new && old != new) count++
+        if (old !== new && old != new) changed()
         return new
     }
 
     /** Counts a revision for a change the part makes other than through a property setter, such as filling a list in place. */
     protected fun revise() {
-        count++
+        changed()
+    }
+
+    private companion object {
+        /** Part, element, canvas: more hops than that is a cycle. */
+        const val MAX_HOPS = 4
     }
 }
+
+/**
+ * Counts every change to the elements that report to it, through [CanvasElementBase.changes]: one
+ * number a host that skips unchanged frames reads in place of walking every element (#1512).
+ */
+class CanvasChanges : CanvasRevised()
