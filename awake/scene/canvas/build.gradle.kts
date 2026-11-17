@@ -26,6 +26,7 @@ kotlin {
             api(project(":awake:scene:binding"))
             implementation(project(":awake:scene:scene-core"))
             api(project(":awake:compose:runtime"))
+            implementation(project(":awake:compose:state"))
             api(project(":awake:compose:ui"))
             // EntityAnchor returns the AnchorProvider a WorldAnchorLayout reads.
             api(project(":awake:compose:game"))

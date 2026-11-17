@@ -7,7 +7,7 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.Composition
-import com.awakekt.awake.compose.runtime.PolledState
+import com.awakekt.awake.compose.state.collectAsState
 import com.awakekt.awake.core.state.Store
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -41,10 +41,8 @@ import kotlinx.coroutines.flow.StateFlow
  * [button] and [element] calls and functions made of them.
  * @return The content, built for the state's current value; dispose it when it is no longer shown.
  */
-fun <S> canvasContent(world: World, root: Entity, state: StateFlow<S>, content: context(Composer) (S) -> Unit): CanvasContent {
-    val source = CanvasStateSource(state)
-    return canvasContent(world, root) { content(source.value) }
-}
+fun <S> canvasContent(world: World, root: Entity, state: StateFlow<S>, content: context(Composer) (S) -> Unit): CanvasContent =
+    canvasContent(world, root) { content(state.collectAsState().value) }
 
 /** [canvasContent] for a [Store]: the block is a function of its [Store.state]. */
 fun <S> canvasContent(world: World, root: Entity, store: Store<S>, content: context(Composer) (S) -> Unit): CanvasContent =
@@ -117,9 +115,4 @@ class CanvasContent internal constructor(
         world.get<CanvasContents>(applier.root.entity)?.remove(this)
         composition.dispose()
     }
-}
-
-/** A [StateFlow] read as tracked state: a pass that read it is invalid once it holds a new value. */
-internal class CanvasStateSource<S>(private val state: StateFlow<S>) : PolledState<S>() {
-    override fun read(): S = state.value
 }
