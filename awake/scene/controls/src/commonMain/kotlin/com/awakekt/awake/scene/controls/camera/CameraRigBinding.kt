@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.controls.camera
 
+import com.awakekt.awake.core.camera.CameraOrbitButtons
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -37,6 +38,9 @@ import kotlin.reflect.KClass
  *   the default, leaves it free.
  * @property occluderFade Fades what stands between a third-person eye and its target; `null`, the
  *   default, fades nothing.
+ * @property orbitButtons Which held pointer button orbits the camera; one finger on a touch screen
+ *   always does. `PrimaryOrSecondary`, the default, orbits on either; `SecondaryOnly` leaves a primary
+ *   drag to the game, for a client whose primary button walks and steers.
  */
 @Serializable
 @SerialName("camera_rig")
@@ -52,6 +56,7 @@ data class SceneCameraRig(
     @PropertyRange(min = 0.0, exclusiveMin = true) val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
     val collision: SceneCameraCollision? = null,
     val occluderFade: SceneOccluderFade? = null,
+    val orbitButtons: CameraOrbitButtons = CameraOrbitButtons.PrimaryOrSecondary,
 ) : SceneComponent {
     /** [SceneCameraRig] as it was before `collision`: hidden, and kept so a consumer compiled against it still links. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -80,6 +85,38 @@ data class SceneCameraRig(
         offset: SceneVec3 = this.offset,
         flySpeed: Float = this.flySpeed,
     ): SceneCameraRig = copy(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, collision)
+
+    /** [SceneCameraRig] as it was before `orbitButtons`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        mode: CameraMode = CameraMode.ThirdPerson,
+        target: String? = null,
+        distance: Float = CameraRig.DEFAULT_DISTANCE,
+        minDistance: Float = CameraRig.DEFAULT_MIN_DISTANCE,
+        maxDistance: Float = CameraRig.DEFAULT_MAX_DISTANCE,
+        pitch: Float = 0f,
+        yaw: Float = 0f,
+        offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
+        flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
+        collision: SceneCameraCollision? = null,
+        occluderFade: SceneOccluderFade? = null,
+    ) : this(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, collision, occluderFade, CameraOrbitButtons.PrimaryOrSecondary)
+
+    /** [copy] as it was before `orbitButtons`: hidden, and kept so a consumer compiled against it still links. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        mode: CameraMode = this.mode,
+        target: String? = this.target,
+        distance: Float = this.distance,
+        minDistance: Float = this.minDistance,
+        maxDistance: Float = this.maxDistance,
+        pitch: Float = this.pitch,
+        yaw: Float = this.yaw,
+        offset: SceneVec3 = this.offset,
+        flySpeed: Float = this.flySpeed,
+        collision: SceneCameraCollision? = this.collision,
+        occluderFade: SceneOccluderFade? = this.occluderFade,
+    ): SceneCameraRig = copy(mode, target, distance, minDistance, maxDistance, pitch, yaw, offset, flySpeed, collision, occluderFade, orbitButtons)
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (minDistance < 0f || minDistance > maxDistance) {
@@ -120,6 +157,7 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
             flySpeed = component.flySpeed
             collision = component.collision?.toCameraCollision()
             occluderFade = component.occluderFade?.toOccluderFade()
+            orbitButtons = component.orbitButtons
             // The mode's reset would replace the authored angles and distance.
             needsReset = false
         }
@@ -143,5 +181,6 @@ object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
         flySpeed = component.flySpeed,
         collision = component.collision?.toScene(),
         occluderFade = component.occluderFade?.toScene(),
+        orbitButtons = component.orbitButtons,
     )
 }
