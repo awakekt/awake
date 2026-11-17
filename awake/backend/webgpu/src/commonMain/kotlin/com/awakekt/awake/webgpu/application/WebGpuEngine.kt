@@ -103,7 +103,8 @@ open class WebGpuEngine(
     /**
      * The depth format of the shadow maps (#1709), as on Vulkan: [ShadowDepthFormat.Depth32Float] by
      * default, [ShadowDepthFormat.Depth16Unorm] to halve their memory on a mobile tier. Read once,
-     * when the engine builds its GPU resources: set it before the engine starts.
+     * when the engine builds its GPU resources: set it before the engine starts. An app's
+     * `renderQuality { shadowDepthFormat }` wins over it when set, as on Vulkan.
      */
     var shadowDepthFormat: ShadowDepthFormat = ShadowDepthFormat.Default
 
@@ -140,6 +141,7 @@ open class WebGpuEngine(
     }
 
     override suspend fun createBackendResources(window: Any): BackendResources {
+        val shadowFormat = shadowDepthFormatFor(shadowDepthFormat)
         graphicsDevice = GraphicsDevice()
         graphicsDevice.create(window)
         val rasterState = plan.multisample.supportedBy(setOf(1, 4)) { println("Awake/WebGPU: $it") }
@@ -174,7 +176,7 @@ open class WebGpuEngine(
                     layers = 1,
                     arrayed = true,
                     comparison = true,
-                    format = shadowDepthFormat,
+                    format = shadowFormat,
                 ),
                 primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
@@ -185,7 +187,7 @@ open class WebGpuEngine(
                     cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                     bindingsByGroup = shadowShaders.webGpu.bindingsByGroup,
                     bindingsMetadataAvailable = shadowShaders.webGpu.bindingsMetadataAvailable,
-                    depthFormat = com.awakekt.awake.webgpu.texture.webGpuDepthFormat(shadowDepthFormat),
+                    depthFormat = com.awakekt.awake.webgpu.texture.webGpuDepthFormat(shadowFormat),
                 ),
                 primaryFormat = vertexFormat,
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
@@ -334,7 +336,7 @@ open class WebGpuEngine(
                     layers = 1,
                     arrayed = true,
                     comparison = true,
-                    format = shadowDepthFormat,
+                    format = shadowFormat,
                 )
             }
         }
