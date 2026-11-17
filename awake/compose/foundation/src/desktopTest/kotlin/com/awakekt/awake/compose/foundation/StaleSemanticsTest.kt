@@ -39,7 +39,9 @@ class StaleSemanticsTest {
         }
     }
 
-    private class InPlaceNode : Modifier.Node(), SemanticsModifierNode {
+    private class InPlaceNode :
+        Modifier.Node(),
+        SemanticsModifierNode {
         override lateinit var semanticsConfiguration: SemanticsConfiguration
     }
 
