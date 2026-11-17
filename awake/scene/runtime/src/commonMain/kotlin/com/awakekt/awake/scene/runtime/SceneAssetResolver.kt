@@ -113,6 +113,19 @@ interface SceneAssetResolver {
     fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? = null
 
     /**
+     * Starts what material [name] needs before [createMaterial] can make it without blocking the frame,
+     * such as decoding images whose pixels were let go once a material made from them was uploaded, and
+     * returns that load; null when [createMaterial] can make it now, the default. A prewarm calls it on
+     * the frame thread once the material's mesh can be built, polls the load each frame until it
+     * finishes, then makes the material (#1619). The load runs off the frame thread in [scope].
+     *
+     * @param name The name of the requested material.
+     * @param scope Where the load runs: the scene session's coroutine scope.
+     * @return The load, or `null` if nothing need load first.
+     */
+    fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? = null
+
+    /**
      * The texture a `sprite` or `tilemap` names [name] as it stands now, or null when this resolver
      * does not supply it. [SceneAssetLibrary.texture] asks on each frame something using it is drawn,
      * until it is [SceneTextureLoad.Loaded], and again once it is forgotten (see [forgetTexture]), so a resolver that loads it starts on the first ask and

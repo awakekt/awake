@@ -7,8 +7,10 @@ package com.awakekt.awake.render.texture
 
 import com.awakekt.awake.core.image.DecodedImage
 import com.awakekt.awake.core.image.canDecodeImageBlocking
+import com.awakekt.awake.core.image.decodeImage
 import com.awakekt.awake.core.image.decodeImageBlocking
 import com.awakekt.awake.core.image.toRgba8Bytes
+import kotlin.concurrent.Volatile
 
 /**
  * A decoded 2D image a backend may copy straight to a GPU texture, without the CPU pixels a
@@ -95,14 +97,38 @@ private class ReleasingImageSource(decoded: DecodedImage, private val encoded: B
     override val height: Int = decoded.height
     override val externalImage: Any? get() = null
 
-    // Null once read: the pixels are the reader's from then on.
+    // Null once read: the pixels are the reader's from then on. Set off the frame thread by
+    // decodeAhead, and read on it once the load that decoded it has finished.
+    @Volatile
     private var decoded: DecodedImage? = decoded
+
+    val needsDecode: Boolean get() = decoded == null
+
+    suspend fun decodeAhead() {
+        if (decoded == null) decoded = decodeImage(encoded)
+    }
 
     override fun readRgba8(): ByteArray {
         val image = decoded ?: decodeImageBlocking(encoded)
         decoded = null
         return image.toBitmap().toRgba8Bytes()
     }
+}
+
+/**
+ * Whether reading this image's pixels would decode them first, on the reading thread: an image whose
+ * decoded pixels were let go once uploaded ([asReleasingGpuImageSource]), read again for a material
+ * made again. [decodeAhead] decodes them off that thread first (#1619).
+ */
+val GpuImageSource.needsDecode: Boolean get() = (this as? ReleasingImageSource)?.needsDecode == true
+
+/**
+ * Decodes the pixels the next [GpuImageSource.readRgba8] reads, when [needsDecode]: run it off the
+ * frame thread, as a scene's material load does, so that read only converts them. Does nothing for
+ * any other image.
+ */
+suspend fun GpuImageSource.decodeAhead() {
+    (this as? ReleasingImageSource)?.decodeAhead()
 }
 
 private class AssetImageSource(private val asset: TextureAsset) : GpuImageSource {

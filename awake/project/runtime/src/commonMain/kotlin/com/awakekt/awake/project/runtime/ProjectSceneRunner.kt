@@ -497,6 +497,8 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
     override fun meshLevels(name: String): SceneMeshLevels? = target.meshLevels(name)
 
     override fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? = target.loadMesh(name, scope)
+
+    override fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? = target.loadMaterial(name, scope)
 }
 
 /**
