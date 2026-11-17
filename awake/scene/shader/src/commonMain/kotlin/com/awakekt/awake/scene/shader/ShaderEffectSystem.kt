@@ -91,11 +91,6 @@ class ShaderEffectSystem(
     private val attached = Channel<Attached>(Channel.UNLIMITED)
     private val model = Mat4()
 
-    /** A field rather than a lambda in [update], so querying allocates nothing per frame. */
-    private val trackNew: (Entity, ShaderEffectSource) -> Unit = { entity, source ->
-        if (tracked.none { it.entity == entity }) startAttach(Tracked(entity, source).also { tracked += it })
-    }
-
     override fun update(world: World, delta: Float) {
         if (host == null) {
             // Checked once, so a scene with no effects pays for the query only on its first frame.
@@ -113,7 +108,11 @@ class ShaderEffectSystem(
             reattachChangedAssets()
         }
         applyAttached()
-        world.queryEach(ShaderEffectSource::class, trackNew)
+        // A lambda here, not a stored function: `queryEach` is inline, so this one is inlined into
+        // its loop, where a stored function's generic `invoke` boxed every Entity, each frame (#1742).
+        world.queryEach(ShaderEffectSource::class) { entity, source ->
+            if (tracked.none { it.entity == entity }) startAttach(Tracked(entity, source).also { tracked += it })
+        }
         for (index in tracked.indices) advance(world, tracked[index], delta)
     }
 

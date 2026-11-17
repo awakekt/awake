@@ -50,13 +50,13 @@ internal object AudioFeature : SceneFeature {
 internal class CameraListenerSystem : System {
     private var listening: Entity? = null
 
-    /** A field rather than a lambda in [update], so finding the camera allocates nothing per frame. */
     private var active: Entity? = null
-    private val findActive: (Entity, ActiveCamera) -> Unit = { entity, _ -> if (active == null) active = entity }
 
     override fun update(world: World, delta: Float) {
         active = null
-        world.queryEach(ActiveCamera::class, findActive)
+        // A lambda here, not a stored function: `queryEach` is inline, so this one is inlined into
+        // its loop, where a stored function's generic `invoke` boxed every Entity, each frame (#1742).
+        world.queryEach(ActiveCamera::class) { entity, _ -> if (active == null) active = entity }
         val camera = active ?: return
         if (camera == listening && world.has(camera, AudioListener::class)) return
         listening?.takeIf(world::isAlive)?.let { world.remove(it, AudioListener::class) }

@@ -60,25 +60,19 @@ class TerrainContentSystem(
     private val resolved = Channel<Resolved>(Channel.UNLIMITED)
     private val attached = Channel<Attached>(Channel.UNLIMITED)
 
-    /** The world [trackNew] reads, set for the length of one [update]. */
-    private var frameWorld: World? = null
-
-    /** A field rather than a lambda in [update], so querying allocates nothing per frame. */
-    private val trackNew: (Entity, TerrainComponent) -> Unit = { entity, terrain ->
-        if (find(entity) == null) {
-            val reference = frameWorld?.get<TerrainSurfaceReference>(entity)
-            if (reference != null || !surfacedOnly) track(entity, terrain, reference)
-        }
-    }
-
     override fun update(world: World, delta: Float) {
         releaseRemoved(world)
         place(world)
         applyAttached()
         applyResolved()
-        frameWorld = world
-        world.queryEach(TerrainComponent::class, trackNew)
-        frameWorld = null
+        // A lambda here, not a stored function: `queryEach` is inline, so this one is inlined into
+        // its loop, where a stored function's generic `invoke` boxed every Entity, each frame (#1742).
+        world.queryEach(TerrainComponent::class) { entity, terrain ->
+            if (find(entity) == null) {
+                val reference = world.get<TerrainSurfaceReference>(entity)
+                if (reference != null || !surfacedOnly) track(world, entity, terrain, reference)
+            }
+        }
     }
 
     /** Detaches every terrain this system attached and cancels what is still resolving. */
@@ -132,9 +126,9 @@ class TerrainContentSystem(
 
     // TooGenericExceptionCaught: a provider that fails for any reason still leaves a drawn terrain.
     @Suppress("TooGenericExceptionCaught")
-    private fun track(entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
+    private fun track(world: World, entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
         val entry = Tracked(entity, terrain).also { tracked += it }
-        frameWorld?.let { place(it) }
+        place(world)
         val provider = reference?.let { providers[it.provider] }
         if (reference == null || provider == null) {
             if (reference != null) {

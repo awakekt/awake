@@ -102,6 +102,32 @@ on every call there: a defaulted call with four or more parameters, a `Comparato
 converted to a `fun interface`. See [kotlin-wasm-allocation.md](kotlin-wasm-allocation.md) for the
 shapes, the browser gates and what they fixed (#1621).
 
+### JVM allocation tests and escape analysis
+
+A desktop JVM's C2 compiler removes short-lived objects that never leave a method: escape analysis
+scalar-replaces them once the code is hot. Android's runtime does not, and neither does Kotlin/Wasm,
+so an allocation test that warms its code for thousands of frames can pass over garbage a phone
+collects every frame. A module whose `desktopTest` counts bytes therefore runs it with
+`-XX:-DoEscapeAnalysis`, as `render:passes`, `compose:ui`, `ui:canvas`, `scene:canvas` and
+`scene:scene3d` do.
+
+The case that showed it (#1742): `ShaderEffectSystem` handed `World.queryEach` a function kept in a
+field, under a comment saying that made the query allocate nothing. `queryEach` is inline, so a
+lambda written at the call is inlined and the `Entity` it receives stays a `Long`. A stored
+function is called through its generic `invoke`, which boxes every `Entity`. Measured over frames of
+50 and 200 effects:
+
+| Warm-up before measuring | Stored function | Lambda at the call |
+|---|---:|---:|
+| 2,000 frames (escape analysis has run) | 0 B an effect | 0 B an effect |
+| 5 frames | 55 B an effect | 31 B an effect |
+
+A count that depends on how warm the JIT is would be a flaky gate, so this rule is held at the
+source instead: `verifyInlinedQueries`, part of `awakeVerify`, fails when an ECS query is handed a
+function object. Every other JVM allocation test in the repository still passes with escape
+analysis off, except `net-demo`'s snapshot decode probe, which sees one 48-byte object in a window
+of 100,000 decodes: not a per-decode cost, but not the exact zero it asserts either.
+
 ## 3. Execution & Verification Strategy
 
 Awake uses a 3-tier strategy to maintain high performance without slowing down daily development:

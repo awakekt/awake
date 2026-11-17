@@ -24,10 +24,10 @@ import com.awakekt.awake.scene.physics.character.CharacterConfig
  */
 internal class CharacterSensorBodies : System {
     private val waiting = ArrayList<Entity>()
-    private val collect: (Entity, CharacterController) -> Unit = { entity, character -> if (!character.config.innerBody) waiting += entity }
 
     override fun update(world: World, delta: Float) {
-        world.queryEach(CHARACTER, collect)
+        // A lambda, not a stored function: inlined into the inline query, so no Entity is boxed (#1742).
+        world.queryEach(CHARACTER) { entity, character -> if (!character.config.innerBody) waiting += entity }
         // Nearly every step finds none, and returns without allocating.
         if (waiting.isEmpty()) return
         for (index in 0 until waiting.size) {
