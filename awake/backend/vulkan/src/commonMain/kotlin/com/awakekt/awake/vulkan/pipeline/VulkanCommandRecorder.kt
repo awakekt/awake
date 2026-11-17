@@ -123,13 +123,14 @@ internal class VulkanCommandRecorder(
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0)
         stats.recordDraw(indexCount, instanceCount, drawsTriangles)
     }
-
-    private companion object {
-        /** Every vertex buffer in this backend is bound at offset 0; shared so the bind path
-         * allocates nothing. */
-        val ZERO_OFFSET = longArrayOf(0L)
-    }
 }
+
+/**
+ * The offsets of one vertex buffer bound at offset 0, as every vertex buffer in this backend is.
+ * Shared, so a bind allocates nothing: the depth pass bound each caster's buffers with a new array,
+ * once per draw per cascade (#1742). Only ever read.
+ */
+internal val ZERO_OFFSET = longArrayOf(0L)
 
 /** A pipeline the shared layer can bind. Implemented by every real pipeline class here, which is
  * why the recorder above can cast unconditionally. */

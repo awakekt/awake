@@ -312,15 +312,15 @@ internal class DepthPrePassFeature(
                     commandBuffer,
                     0,
                     vertexBuffer.asArray,
-                    longArrayOf(0L),
+                    ZERO_OFFSET,
                 )
                 if (kind != DepthCasterKind.Ordinary && instanceBuffer != null) {
-                    VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 1, instanceBuffer.asArray, longArrayOf(0L))
+                    VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 1, instanceBuffer.asArray, ZERO_OFFSET)
                     (prepared.instanceColorBuffer as? VulkanBufferBinding)?.let {
-                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 2, it.asArray, longArrayOf(0L))
+                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 2, it.asArray, ZERO_OFFSET)
                     }
                     (prepared.instanceFrameBuffer as? VulkanBufferBinding)?.let {
-                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 3, it.asArray, longArrayOf(0L))
+                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 3, it.asArray, ZERO_OFFSET)
                     }
                 }
                 // Alike instanced casters share one set (#1555): bound once until the pipeline changes.
@@ -382,7 +382,7 @@ internal class DepthPrePassFeature(
                 BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
                 (draw.materialBinding as VulkanMaterialBinding).descriptorSetHandle,
             )
-            VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffer.asArray, longArrayOf(0L))
+            VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffer.asArray, ZERO_OFFSET)
             issueDraw(commandBuffer, draw, draw.indexBuffer as? VulkanBufferBinding)
         }
     }

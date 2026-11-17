@@ -1,0 +1,1 @@
+- The Vulkan shadow depth pass binds each caster's vertex buffers without allocating (#1742). It built a new offsets array for every draw in every cascade; every vertex buffer binds at offset 0, so the pass now shares one. Each further moving, shadowed draw adds 303 B to a frame's garbage on the JVM instead of 375 B, and a 500-draw frame 230 KB instead of 266 KB.

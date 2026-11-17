@@ -27,6 +27,9 @@ import kotlin.test.assertTrue
  * `prepareGpuDraw` built a `PreparedDrawCall` for every draw, only for `VulkanDrawPreparer` to copy
  * it into the draw's `GpuResolvedDraw` and drop it: one object per draw per frame, and the largest
  * Vulkan-backend share of a populated frame's garbage. The preparer now fills one in place.
+ *
+ * The shadow depth pass then bound each caster's vertex buffers with a new offsets array, once per
+ * draw per cascade. Every buffer here binds at offset 0, so the pass shares one.
  */
 class PreparedDrawAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -78,9 +81,10 @@ class PreparedDrawAllocationTest {
         const val FRAMES = 200
 
         /**
-         * 463 B a further draw while each built a `PreparedDrawCall`, 375 B since. What remains is
-         * the draw's `GpuResolvedDraw`, which the pass keeps, and its share of compiling the pass.
+         * 463 B a further draw while each built a `PreparedDrawCall`, 375 B once it did not, and
+         * 303 B since the depth pass shares its offsets. What remains is the draw's
+         * `GpuResolvedDraw`, which the pass keeps, and its share of compiling the pass.
          */
-        const val PER_DRAW_BUDGET = 420L
+        const val PER_DRAW_BUDGET = 340L
     }
 }
