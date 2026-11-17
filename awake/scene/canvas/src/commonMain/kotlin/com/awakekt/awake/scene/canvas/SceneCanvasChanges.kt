@@ -88,10 +88,13 @@ internal class SceneCanvasChanges(private val world: World, private val order: C
     }
 
     /** Whether [element], while it shows, changes what it draws with no write to it. */
-    private fun volatile(element: CanvasElement): Boolean = element.visible && (
-        element.follow.isNotEmpty() || element.bind != null || (element.widget as? CanvasViewWidget)?.camera?.isNotEmpty() == true ||
+    private fun volatile(element: CanvasElement): Boolean {
+        if (!element.visible) return false
+        // Not `?.camera?.isNotEmpty() == true`: a Boolean? that Kotlin/Wasm can box.
+        val view = element.widget as? CanvasViewWidget
+        return element.follow.isNotEmpty() || element.bind != null || (view != null && view.camera.isNotEmpty()) ||
             element.isHeld || element.pointer.dragging || element.moving || element.focused
-        )
+    }
 
     private companion object {
         /** Every store whose additions, replacements and removals change what the canvas draws. */

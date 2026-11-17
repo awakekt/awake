@@ -132,6 +132,7 @@ internal class CanvasItemOrder(private val world: World) {
     private fun <T : Any> ComponentStore<T>?.of(node: Entity): T? = if (this != null && world.isAlive(node)) get(node) else null
 
     /** Whether the elements, and every node on their paths and where it is stored, are as the last sort found them. */
+
     /**
      * Whether the last [items] still holds: the same elements in the same order, the same nodes on
      * their paths with the same parents, and no sibling moved. False before the first [items].
