@@ -109,7 +109,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasAnchor$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasAppearance {
+public final class com/awakekt/awake/ui/canvas/CanvasAppearance : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasAppearance$Companion;
 	public static final field DEFAULT_BACKGROUND Ljava/lang/String;
 	public static final field DEFAULT_COLOR Ljava/lang/String;
@@ -239,7 +239,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasBarDirection$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasBarWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasBarWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
 	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasBar;
@@ -294,6 +294,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasBinding$Companion {
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasBindingKt {
+	public static final fun fieldPaths (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)Ljava/util/Set;
 	public static final fun numberField (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Float;
 	public static final fun textField (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
@@ -414,7 +415,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasButtonTrigger$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasButtonWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasButtonWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun consumeReady ()Z
 	public final fun getAction ()Ljava/lang/String;
@@ -434,6 +435,10 @@ public final class com/awakekt/awake/ui/canvas/CanvasButtonWidget : com/awakekt/
 	public final fun setDoubleAction (Ljava/lang/String;)V
 	public final fun setEnabled (Z)V
 	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasButton;)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasChanges : com/awakekt/awake/ui/canvas/CanvasRevised {
+	public fun <init> ()V
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasCluster {
@@ -481,6 +486,10 @@ public final class com/awakekt/awake/ui/canvas/CanvasComposeContent {
 	public fun <init> (Lcom/awakekt/awake/compose/runtime/ProvidedLocals;Lkotlin/jvm/functions/Function2;)V
 	public final fun getContent ()Lkotlin/jvm/functions/Function2;
 	public final fun getLocals ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasContentRevisionKt {
+	public static final fun getContentRevision (Lcom/awakekt/awake/ui/canvas/CanvasElementBase;)I
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasControlAdjust {
@@ -764,10 +773,11 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement : com/awakekt/awake
 public final class com/awakekt/awake/ui/canvas/CanvasElement$Companion {
 }
 
-public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase {
+public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public final fun components ()Ljava/util/List;
 	public final fun get (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun getBind ()Lcom/awakekt/awake/ui/canvas/CanvasBinding;
+	public final fun getChanges ()Lcom/awakekt/awake/ui/canvas/CanvasChanges;
 	public final fun getCluster ()Lcom/awakekt/awake/ui/canvas/CanvasCluster;
 	public final fun getComponentsVersion ()I
 	public final fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
@@ -779,6 +789,7 @@ public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase {
 	public final fun remove (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun set (Ljava/lang/Object;)V
 	public final fun setBind (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)V
+	public final fun setChanges (Lcom/awakekt/awake/ui/canvas/CanvasChanges;)V
 	public final fun setCluster (Lcom/awakekt/awake/ui/canvas/CanvasCluster;)V
 	public final fun setKind (Lcom/awakekt/awake/ui/canvas/CanvasElementKind;)V
 	public final fun setLayout (Lcom/awakekt/awake/ui/canvas/CanvasLayout;)V
@@ -965,7 +976,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasFillImageMode$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasFollow {
+public final class com/awakekt/awake/ui/canvas/CanvasFollow : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public fun <init> ()V
 	public final fun getBounds ()Z
 	public final fun getDistance ()F
@@ -984,7 +995,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasFollow {
 	public final fun setScore (F)V
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasFollowArrow {
+public final class com/awakekt/awake/ui/canvas/CanvasFollowArrow : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public fun <init> ()V
 }
 
@@ -1218,12 +1229,12 @@ public final class com/awakekt/awake/ui/canvas/CanvasImage$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasImageWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasImageWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasInput {
+public final class com/awakekt/awake/ui/canvas/CanvasInput : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public fun <init> ()V
 	public final fun getDraggable ()Z
 	public final fun getDropTarget ()Z
@@ -1388,7 +1399,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasJoystickSkin$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasJoystickWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasJoystickWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun getAction ()Ljava/lang/String;
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
@@ -1497,7 +1508,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasLook$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasLookAreaWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasLookAreaWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun getAction ()Ljava/lang/String;
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
@@ -1763,7 +1774,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasParticleSpin$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasParticles {
+public final class com/awakekt/awake/ui/canvas/CanvasParticles : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public fun <init> ()V
 	public fun <init> (ILkotlin/random/Random;)V
 	public synthetic fun <init> (ILkotlin/random/Random;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -1894,7 +1905,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasPlayerLayout$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasPointerState {
+public final class com/awakekt/awake/ui/canvas/CanvasPointerState : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public fun <init> ()V
 	public final fun consumeAimCancel ()Z
 	public final fun consumeDoublePress ()Z
@@ -1942,7 +1953,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasProjection {
 	public final fun getY ()F
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasRect {
+public final class com/awakekt/awake/ui/canvas/CanvasRect : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasRect$Companion;
 	public static final field DEFAULT_HEIGHT F
 	public static final field DEFAULT_INSET F
@@ -1999,6 +2010,19 @@ public final class com/awakekt/awake/ui/canvas/CanvasResolver$DefaultImpls {
 	public static fun point (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math2d/Vec2;
 	public static fun project (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/ui/canvas/CanvasProjection;
 	public static fun texture (Lcom/awakekt/awake/ui/canvas/CanvasResolver;Lcom/awakekt/awake/ui/canvas/CanvasElement;Ljava/lang/String;II)Ljava/lang/Object;
+}
+
+public abstract class com/awakekt/awake/ui/canvas/CanvasRevised {
+	public static final field MAX_HOPS I
+	public fun <init> ()V
+	public final fun getRevision ()I
+	protected final fun revise ()V
+	protected final fun revised (DD)D
+	protected final fun revised (FF)F
+	protected final fun revised (II)I
+	protected final fun revised (JJ)J
+	protected final fun revised (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	protected final fun revised (ZZ)Z
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasScaleMode : java/lang/Enum {
@@ -2376,7 +2400,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasStepper$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasStepperWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasStepperWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun consumeChange ()Z
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
@@ -2533,7 +2557,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasSweep$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasSweepWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasSweepWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
 	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasSweep;
@@ -2542,7 +2566,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasSweepWidget : com/awakekt/a
 	public final fun setValue (F)V
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasText {
+public final class com/awakekt/awake/ui/canvas/CanvasText : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasText$Companion;
 	public static final field DEFAULT_FONT_SIZE F
 	public fun <init> ()V
@@ -2567,7 +2591,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasText {
 public final class com/awakekt/awake/ui/canvas/CanvasText$Companion {
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasTextFieldWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasTextFieldWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
 	public final fun getMask ()Ljava/lang/String;
@@ -2674,7 +2698,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasThemePresets {
 	public final fun skin (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;)Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasTooltip {
+public final class com/awakekt/awake/ui/canvas/CanvasTooltip : com/awakekt/awake/ui/canvas/CanvasRevised {
 	public fun <init> ()V
 	public final fun getText ()Ljava/lang/String;
 	public final fun getTextArgs ()Ljava/util/Map;
@@ -2749,7 +2773,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasViewRefresh$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasViewWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+public final class com/awakekt/awake/ui/canvas/CanvasViewWidget : com/awakekt/awake/ui/canvas/CanvasRevised, com/awakekt/awake/ui/canvas/CanvasWidget {
 	public fun <init> ()V
 	public final fun getCamera ()Ljava/lang/String;
 	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;

@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls.camera
 
 import com.awakekt.awake.core.camera.CameraCollision
+import com.awakekt.awake.core.camera.CameraOrbitButtons
 import com.awakekt.awake.core.camera.OccluderFade
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
@@ -73,6 +74,12 @@ class CameraRig : Poolable {
      */
     var occluderFade: OccluderFade? = null
 
+    /**
+     * Which held pointer button orbits this rig while it is the [ActiveCamera]; a finger on a touch
+     * screen always does. [CameraOrbitButtons.PrimaryOrSecondary], the default, orbits as before.
+     */
+    var orbitButtons: CameraOrbitButtons = CameraOrbitButtons.PrimaryOrSecondary
+
     /** The eased distance and free eye [collision] works from; started afresh when the mode changes. */
     internal val collisionState = CameraRigCollisionState()
 
@@ -89,6 +96,7 @@ class CameraRig : Poolable {
         flySpeed = DEFAULT_FLY_SPEED
         collision = null
         occluderFade = null
+        orbitButtons = CameraOrbitButtons.PrimaryOrSecondary
         collisionState.reset()
     }
 

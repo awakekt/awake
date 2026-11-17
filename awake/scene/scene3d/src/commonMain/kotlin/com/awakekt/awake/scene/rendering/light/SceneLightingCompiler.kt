@@ -24,7 +24,6 @@ import com.awakekt.awake.render.passes.uniforms.PointLight
 import com.awakekt.awake.render.passes.uniforms.PointShadowLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.shadowCascadeUniforms
-import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
@@ -84,21 +83,27 @@ internal class SceneLightingCompiler(
         // a canvas view's portrait far from the world drew every lamp's six faces (#1621).
         val view = Frustum.planes(camera.lens, viewportAspect)
         world.family<Light>().forEach { entity, light ->
-            when (light.type) {
-                Light.Type.Directional -> if (directional == null) {
-                    directional = light
-                    val transform = world.get<Transform>(entity)
-                    if (transform != null && (transform.rotation.x != 0f || transform.rotation.y != 0f || transform.rotation.z != 0f)) {
-                        val rot = transform.rotation
-                        val cp = cos(rot.x)
-                        val fwdX = sin(rot.y) * cp
-                        val fwdY = sin(rot.x)
-                        val fwdZ = -cos(rot.y) * cp
-                        // Light direction is the direction light shines FROM (-forward)
-                        scratchDirectionalDir.set(-fwdX, -fwdY, -fwdZ)
-                        directionalHasTransformRotation = true
-                    }
+            if (light.type == Light.Type.Directional && directional == null) {
+                directional = light
+                val transform = world.get<Transform>(entity)
+                if (transform != null && (transform.rotation.x != 0f || transform.rotation.y != 0f || transform.rotation.z != 0f)) {
+                    val rot = transform.rotation
+                    val cp = cos(rot.x)
+                    val fwdX = sin(rot.y) * cp
+                    val fwdY = sin(rot.x)
+                    val fwdZ = -cos(rot.y) * cp
+                    // Light direction is the direction light shines FROM (-forward)
+                    scratchDirectionalDir.set(-fwdX, -fwdY, -fwdZ)
+                    directionalHasTransformRotation = true
                 }
+            }
+        }
+        // A casting point light's six faces follow the layers the directional light draws, not
+        // the most it could: three cascades and a point light held an unused layer (#1709).
+        val firstPointLayer = directionalShadowLayers(world, camera, directional)
+        world.family<Light>().forEach { entity, light ->
+            when (light.type) {
+                Light.Type.Directional -> Unit
 
                 Light.Type.Point -> {
                     val transform = world.get<Transform>(entity) ?: return@forEach
@@ -109,7 +114,7 @@ internal class SceneLightingCompiler(
                         light.shadowsEnabled &&
                         light.range > POINT_SHADOW_NEAR
                     ) {
-                        MAX_SHADOW_CASCADES + pointShadows.size * POINT_SHADOW_FACE_COUNT
+                        firstPointLayer + pointShadows.size * POINT_SHADOW_FACE_COUNT
                     } else {
                         -1
                     }
@@ -171,6 +176,21 @@ internal class SceneLightingCompiler(
         // A camera whose near plane is past the shadow distance sees nothing the shadows reach.
         if (camera.lens.near >= minOf(camera.lens.far, sun.shadowDistance)) return base
         return shadowedLight(world, camera, base, viewportAspect, sun.shadowDistance, sun.shadowFade)
+    }
+
+    /**
+     * The shadow array layers [sun]'s shadow draws this frame, under the same conditions
+     * [sceneLight] casts it: none without a casting sun, one for the single fixed box, else the
+     * budget's cascades.
+     */
+    private fun directionalShadowLayers(world: World, camera: Camera, sun: Light?): Int {
+        val debug = world.debugSettingsOrNull()
+        return when {
+            sun == null || !sun.shadowsEnabled || debug?.shadowsEnabledOverride == false -> 0
+            camera.lens.near >= minOf(camera.lens.far, sun.shadowDistance) -> 0
+            debug?.cascadedShadows == false -> 1
+            else -> shadowBudget().cascades
+        }
     }
 
     /** [shadowedLight] as released before the fade, kept so compiled callers still link. */

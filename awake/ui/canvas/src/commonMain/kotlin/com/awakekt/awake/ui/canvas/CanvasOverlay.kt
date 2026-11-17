@@ -173,21 +173,29 @@ private fun ScaledCanvas(
     particleClock.frameClock = LocalFrameClock.current
     // The box the elements are placed in, inside any padding the host's modifier adds: where it
     // sits in the frame is what a follower's projected point is moved by.
-    Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
+    val canvasDensity = box.hostDensity * uiScale
+    val frameClock = LocalFrameClock.current
+    val planning: CanvasTree.() -> Unit = {
+        planFollowersOnce(frameClock.frame, box.width / uiScale, box.height / uiScale, canvasDensity, limits, particleClock)
+    }
+    val planned = Modifier.planningFollowers(tree, planning)
+    Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }.then(planned)) {
         val screen = this
         // A denser dp scales every size, offset, font and image corner beneath it in one place. The
         // host's text style is not the scene's: an element's text looks only as its own data says.
-        val canvasDensity = box.hostDensity * uiScale
         tree.measureBox(box, canvasDensity)
+        // Read, so a follower whose plan needs another composition composes again in the same frame.
+        tree.followers.composeRevision.value
         CompositionLocalProvider(
             LocalDensity provides canvasDensity,
             LocalCanvasDensity provides canvasDensity,
             LocalCanvasParticlesClock provides particleClock,
             LocalTextStyle provides TextStyle.Default,
         ) {
-            // Every follower at once, before any is composed: a limit ranks them all.
-            tree.planFollowers(box.width / uiScale, box.height / uiScale, canvasDensity, limits)
-            stepUncomposedVisibleFollowers(tree, particleClock)
+            // Every follower at once, before any is composed: a limit ranks them all. A frame whose
+            // composition is skipped plans them again while placing (#1512).
+            for (plan in tree.followerPlans.values) plan.composed.reset()
+            tree.planning()
             // The insets are the host's dp; under the scaled density they shrink by the scale.
             val inside = box.safeArea.scaledBy(1f / uiScale)
             screen.Elements(tree.roots, tree, inside)
@@ -287,6 +295,7 @@ private fun BoxScope.Elements(
             !tree.shows(element) -> Unit
             // An arrow is drawn only while what it sits in is held to the edge.
             element.followArrow && owner != null -> if (owner.pinned) key(element) { PinArrow(item, owner, tag, tree) }
+            // Planned while placing, by last frame's plans here: a change in which are drawn composes again in that frame (#1512).
             element.follow.isNotEmpty() -> tree.followerPlans[element]?.takeIf { it.drawn }?.let { plan -> key(element) { Follower(element, plan, tag, tree) } }
             else -> key(element) {
                 val scaler = item.scaler

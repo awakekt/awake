@@ -146,6 +146,9 @@ class CanvasElement : CanvasElementWidgetFields() {
      * components: it is never saved, and setting it changes no [componentsVersion].
      */
     var composeContent: CanvasComposeContent? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Default dimensions and styling metrics for canvas elements. */
     companion object {

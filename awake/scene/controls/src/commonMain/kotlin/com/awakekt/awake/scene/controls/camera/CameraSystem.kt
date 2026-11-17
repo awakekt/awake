@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.scene.controls.camera
 
+import com.awakekt.awake.core.camera.CameraOrbitButtons
+import com.awakekt.awake.core.input.InputDevice
+import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.damp
 import com.awakekt.awake.core.math.halfLifeForRate
@@ -70,7 +73,7 @@ class CameraSystem(
 
         val bounds = viewportBounds()
         val inViewport = bounds?.contains(input.pointerX, input.pointerY) ?: true
-        val drag = currentDrag(input, inViewport)
+        val drag = currentDrag(input, inViewport, world.activeOrbitButtons())
         val moved = drag != null && drag == activeDrag
         val dx = if (moved) input.pointerX - lastPointerX else 0f
         val dy = if (moved) input.pointerY - lastPointerY else 0f
@@ -102,14 +105,17 @@ class CameraSystem(
         }
     }
 
-    /** The drag held this frame. A drag must start over the scene, but may leave it once started. */
-    private fun currentDrag(input: GameplayInput, inViewport: Boolean): Drag? {
+    /**
+     * The drag held this frame. A drag must start over the scene, but may leave it once started. An
+     * orbit needs both the policy and the active rig's [CameraRig.orbitButtons] to allow it.
+     */
+    private fun currentDrag(input: GameplayInput, inViewport: Boolean, orbitButtons: CameraOrbitButtons): Drag? {
         // Two fingers pinch, and the first still drives the pointer: moving it must zoom, not orbit or pan.
         // With no drag on those frames, the finger left down after the pinch starts a fresh one, without a jump.
         if (input.isMultiTouch) return null
         val held = when {
             gesturePolicy.isPanDragging.isDragging(input) -> Drag.Pan
-            gesturePolicy.isOrbitDragging.isDragging(input) -> Drag.Orbit
+            gesturePolicy.isOrbitDragging.isDragging(input) && orbitButtons.allowsDrag(input) -> Drag.Orbit
             else -> null
         }
         return if (held == activeDrag || inViewport) held else null
@@ -311,3 +317,18 @@ class CameraSystem(
         const val FAST_FLY = 4f
     }
 }
+
+/** The [ActiveCamera]'s orbit buttons, or the default when there is none. */
+private fun World.activeOrbitButtons(): CameraOrbitButtons {
+    var buttons = CameraOrbitButtons.PrimaryOrSecondary
+    queryEach(CameraRig::class) { entity, rig -> if (has(entity, ActiveCamera::class)) buttons = rig.orbitButtons }
+    return buttons
+}
+
+/** Whether these buttons let [input]'s drag orbit; a finger on a touch screen counts as the primary pointer. */
+private fun CameraOrbitButtons.allowsDrag(input: GameplayInput): Boolean = this == CameraOrbitButtons.PrimaryOrSecondary ||
+    allows(
+        primaryDown = input.pointerDown,
+        secondaryDown = input.isDown(PointerButton.Secondary),
+        touch = input.hostState?.lastInputDevice == InputDevice.Touch,
+    )

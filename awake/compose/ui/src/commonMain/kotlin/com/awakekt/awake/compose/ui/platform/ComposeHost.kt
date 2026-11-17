@@ -28,6 +28,7 @@ import com.awakekt.awake.compose.ui.node.activeEscapeDismissLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
 import com.awakekt.awake.compose.ui.semantics.SemanticsTreeBuilder
 import com.awakekt.awake.compose.ui.unit.Constraints
+import com.awakekt.awake.core.graphics2d.flattened
 import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.Key
 import kotlin.time.TimeSource
@@ -460,10 +461,19 @@ class ComposeHost(
      */
     private fun verifySkip(content: context(Composer) () -> Unit, input: FrameInput) {
         val measureSkipped = layout(input, composed = false)
-        val skipped = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped).primitives.toList()
+        if (composition.isInvalid) {
+            // Placing wrote state the composition read, so the host would compose again in this
+            // frame: it is not a skipped frame, and there is nothing stale to find (#1512).
+            compose(content, input)
+            layout(input, composed = true)
+            return
+        }
+        // Flattened, so a subtree a retained draw replays inside a translate range compares by where
+        // it lands, as a fresh paint draws it, not by how the list spells it (#1512).
+        val skipped = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = measureSkipped).primitives.toList().flattened()
         compose(content, input)
         layout(input, composed = true)
-        val composed = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = false).primitives
+        val composed = painter.paintOutput(root, retain = retainUnchangedDraw, reuse = false).primitives.flattened()
         val index = firstDifference(skipped, composed)
         if (index >= 0) {
             staleSkips++

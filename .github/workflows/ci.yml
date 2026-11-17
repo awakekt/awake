@@ -826,6 +826,16 @@ jobs:
             awake/scene/scene3d/build/reports/tests/wasmJsBrowserTest/
           if-no-files-found: warn
 
+      # Counting a canvas element's changes, which a host that skips unchanged frames polls, grows no
+      # heap in a browser; the log keeps the figure and the poll's time for 1,000 elements (#1512).
+      - name: Canvas revision heap (browser)
+        run: ./gradlew :awake:ui:canvas:wasmJsBrowserTest --tests "*CanvasRevision*"
+
+      # What the check SceneCanvas gives a skipping host costs in a browser, at 300, 1,000 and 3,000
+      # elements; the log keeps the figures (#1512).
+      - name: SceneCanvas skip check (browser)
+        run: ./gradlew :awake:scene:canvas:wasmJsBrowserTest --tests "*SceneCanvasPoll*" --tests "*SceneCanvasBindPoll*" --tests "*FollowerHudBrowser*"
+
       # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest

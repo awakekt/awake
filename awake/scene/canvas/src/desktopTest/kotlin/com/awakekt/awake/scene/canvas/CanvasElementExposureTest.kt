@@ -53,6 +53,7 @@ class CanvasElementExposureTest {
         "previewState" to "an editor's preview of one state, never saved with the scene",
         "number" to "a Stepper's number right now, saved as its stepper.value, set by the player, game code or bind.value",
         "composeContent" to "Compose UI declared by code in canvas content's compose { }, a lambda, which data cannot hold",
+        "changes" to "the counter a host that skips unchanged frames reads, linked at run time, never saved",
     )
 
     /**

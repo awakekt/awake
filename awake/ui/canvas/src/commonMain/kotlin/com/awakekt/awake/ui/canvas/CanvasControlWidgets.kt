@@ -19,17 +19,28 @@ import kotlin.time.TimeSource
  * A button: tapped, or as its [settings] say an on-screen action button with a trigger, a long
  * press, a release, an aim and a cooldown. [action] names what it does for the game, such as `jump`.
  */
-class CanvasButtonWidget : CanvasWidget {
+class CanvasButtonWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.Button
 
     /** What the button does for the game when pressed, such as `jump`; the game or runtime decides what it means. */
     var action: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** What the button does when double-clicked: two presses within [CanvasElement.DOUBLE_CLICK_SECONDS]. */
     var doubleAction: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** How the button acts as an action button: when it fires, a long press, a release and a cooldown. Null is a plain button, tapped on release. */
     var settings: CanvasButton? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether the button can be pressed. A disabled one still takes a press, so it does not reach
@@ -38,7 +49,7 @@ class CanvasButtonWidget : CanvasWidget {
     var enabled: Boolean = true
         set(value) {
             val wasUsable = usable
-            field = value
+            field = revised(field, value)
             noteReady(wasUsable)
         }
 
@@ -49,7 +60,7 @@ class CanvasButtonWidget : CanvasWidget {
     var cooldown: Float = 0f
         set(value) {
             val wasUsable = usable
-            field = if (value.isNaN()) 0f else value.coerceIn(0f, 1f)
+            field = revised(field, if (value.isNaN()) 0f else value.coerceIn(0f, 1f))
             noteReady(wasUsable)
         }
 
@@ -61,7 +72,7 @@ class CanvasButtonWidget : CanvasWidget {
     var charges: Int = -1
         set(value) {
             val wasUsable = usable
-            field = value
+            field = revised(field, value)
             noteReady(wasUsable)
         }
 
@@ -70,6 +81,9 @@ class CanvasButtonWidget : CanvasWidget {
      * the one nearest the aimed line: the game knows its targets, so it answers. Null keeps the raw aim.
      */
     var aimLock: CanvasAimLock? = null
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Whether an action button is cooling down: [cooldown] above 0 and no [charges] left to spend. */
     val coolingDown: Boolean get() = cooldown > 0f && charges <= 0
@@ -100,32 +114,50 @@ class CanvasButtonWidget : CanvasWidget {
 }
 
 /** A virtual analog stick: a round pad whose knob is dragged within it, steering what [action] names, such as `move`. */
-class CanvasJoystickWidget : CanvasWidget {
+class CanvasJoystickWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.Joystick
 
     /** The axis action the stick steers, such as `move`. */
     var action: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * How the stick moves and what it reports: its mode, reach, dead zone, response, directions,
      * sprint and idle fade. Null behaves as [CanvasJoystick.Default].
      */
     var settings: CanvasJoystick? = null
+        set(value) {
+            field = revised(field, value)
+        }
 }
 
 /** A region where a swipe looks and a pinch zooms, such as the right half of the screen. */
-class CanvasLookAreaWidget : CanvasWidget {
+class CanvasLookAreaWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.LookArea
 
     /** The axis action the swipe is pushed to, such as `look`. */
     var action: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** How a swipe turns into a look and a pinch into a zoom; null behaves as [CanvasLook.Default]. */
     var settings: CanvasLook? = null
+        set(value) {
+            field = revised(field, value)
+        }
 }
 
 /** A single-line field the player types into; what is typed is its element's [CanvasText.text]. */
-class CanvasTextFieldWidget : CanvasWidget {
+class CanvasTextFieldWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.TextField
 
     /**
@@ -134,6 +166,9 @@ class CanvasTextFieldWidget : CanvasWidget {
      * platform keyboard.
      */
     var mask: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * The most the player may type, counted in [maxLengthUnit]; 0, the default, for no limit. Typing,
@@ -141,36 +176,53 @@ class CanvasTextFieldWidget : CanvasWidget {
      * is not limited.
      */
     var maxLength: Int = 0
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** What [maxLength] counts: the characters a player sees, or code points or UTF-8 bytes to match a server's limit. */
     var maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * The key of the hint shown while the field is empty and does not hold the keyboard, such as
      * `chat.hint`; empty shows none. It draws in the field's text colour at half strength.
      */
     var placeholder: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** The space between the field's edge and its text, in dp; it also keeps the room a glyph's overhang needs. */
     var padding: CanvasPadding = CanvasPadding()
+        set(value) {
+            field = revised(field, value)
+        }
 }
 
 /**
  * A number with minus and plus buttons, stepped as its [settings] say by a press, a held button,
  * the keyboard or [stepBy].
  */
-class CanvasStepperWidget : CanvasWidget {
+class CanvasStepperWidget :
+    CanvasRevised(),
+    CanvasWidget {
     override val kind: CanvasElementKind get() = CanvasElementKind.Stepper
 
     /** The range, step and repeat, and the number it starts at; null is [CanvasStepper.Default]. Setting it puts [number] at its value. */
     var settings: CanvasStepper? = null
         set(value) {
-            field = value
+            field = revised(field, value)
             number = (value ?: CanvasStepper.Default).value
         }
 
     /** The number right now: where [settings] start it, then moved by the player, by [stepBy], or by a bound `value` field. */
     var number: Float = CanvasStepper.Default.value
+        set(value) {
+            field = revised(field, value)
+        }
 
     private var numberChanged = false
 

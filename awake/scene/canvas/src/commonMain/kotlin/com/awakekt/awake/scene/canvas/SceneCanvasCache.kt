@@ -106,8 +106,7 @@ internal class CanvasItemOrder(private val world: World) {
 
     /** This frame's items, in hierarchy order. */
     fun items(): List<CanvasItem> {
-        takeStores()
-        if (!unchanged()) sort()
+        if (!isCurrent()) sort()
         val items = ArrayList<CanvasItem>(count)
         for (position in 0 until count) {
             val index = sorted[position]
@@ -133,7 +132,13 @@ internal class CanvasItemOrder(private val world: World) {
     private fun <T : Any> ComponentStore<T>?.of(node: Entity): T? = if (this != null && world.isAlive(node)) get(node) else null
 
     /** Whether the elements, and every node on their paths and where it is stored, are as the last sort found them. */
-    private fun unchanged(): Boolean {
+
+    /**
+     * Whether the last [items] still holds: the same elements in the same order, the same nodes on
+     * their paths with the same parents, and no sibling moved. False before the first [items].
+     */
+    fun isCurrent(): Boolean {
+        takeStores()
         val family = world.family<CanvasElement>()
         if (family.size != count || siblingRevision() != siblingRevision) return false
         if (elements.size < count) elements = arrayOfNulls(count)

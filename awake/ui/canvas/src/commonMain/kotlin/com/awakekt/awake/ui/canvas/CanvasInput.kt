@@ -11,13 +11,16 @@ package com.awakekt.awake.ui.canvas
  * takes the wheel. What the
  * pointer then did is in the element's [CanvasPointerState]. An element without one takes none of it.
  */
-class CanvasInput {
+class CanvasInput : CanvasRevised() {
     /**
      * Whether an Image or Panel takes a tap as a Button does: [CanvasPointerState.consumePress] and
      * [CanvasPointerState.presses] report it, and what is under it does not get it. False leaves it
      * watching only. A Button always takes taps.
      */
     var pressable: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether the element can be picked up and dragged onto a [dropTarget] element or the world: a
@@ -25,9 +28,15 @@ class CanvasInput {
      * still fires if the pointer never moves far enough to start a drag.
      */
     var draggable: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Whether a dragged element released over this one is reported here, through [CanvasPointerState.dropped]. */
     var dropTarget: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether the element takes the mouse wheel while the pointer is over it or its children, instead
@@ -35,6 +44,9 @@ class CanvasInput {
      * [CanvasPointerState.consumeWheel] reads what it collected.
      */
     var wheel: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether dragging the element moves the window it sits in, its nearest root element, by how
@@ -48,6 +60,9 @@ class CanvasInput {
      * roots of its [CanvasRect.order].
      */
     var moveHandle: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * How much of a [moveHandle]'s window, in the window's dp, stays on the canvas: that height of
@@ -55,6 +70,9 @@ class CanvasInput {
      * 0, the default, keeps the window's top down to the handle's bottom, the whole title bar.
      */
     var moveStrip: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 }
 
 /**
@@ -62,12 +80,15 @@ class CanvasInput {
  * [CanvasElement.TOOLTIP_DELAY_SECONDS]. It stays inside the canvas, and goes when the pointer leaves
  * the element or presses it; a press hides it until the pointer comes back.
  */
-class CanvasTooltip {
+class CanvasTooltip : CanvasRevised() {
     /**
      * The key of the hint in the string tables of the `Strings` [CanvasOverlay] was given, such as
      * `hud.inventory.tooltip`; empty shows none. A key no table has shows as the key and is logged once.
      */
     var text: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Values for the hint's placeholders, by name, when the element has no [CanvasText] of its own;
@@ -75,4 +96,7 @@ class CanvasTooltip {
      * of the value of the same name.
      */
     var textArgs: Map<String, String> = emptyMap()
+        set(value) {
+            field = revised(field, value)
+        }
 }

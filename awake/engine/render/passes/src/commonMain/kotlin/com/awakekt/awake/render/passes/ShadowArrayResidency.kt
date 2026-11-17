@@ -12,9 +12,8 @@ import com.awakekt.awake.render.command.GpuSubPass
  * render none (#1698).
  *
  * The cascades a directional light draws are layers `0 until cascades`; a casting point light's six
- * faces follow them from `MAX_SHADOW_CASCADES`, one block of six per light. So a scene of three
- * cascades holds three layers, and one with a casting point light holds the cascade block and six
- * layers per point light.
+ * faces follow right after them, one block of six per light (#1709). So a scene of three cascades
+ * holds three layers, and one with a casting point light nine.
  */
 fun shadowLayersNeeded(prePasses: List<GpuSubPass>): Int {
     var needed = 0

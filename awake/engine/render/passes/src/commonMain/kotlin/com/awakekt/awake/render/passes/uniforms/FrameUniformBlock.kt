@@ -69,7 +69,13 @@ class FrameUniformBlock {
     /** Packs [input]'s frame block, supplying default forward/light values for pass-only or offscreen inputs. */
     fun pack(input: GpuPassInput): FloatArray {
         val environment = input.environment
+        // The engine's own (resolved) input says which cascades it drew, or none. Only an input
+        // built by hand is read by layer, the cascades first: on the resolved path a casting point
+        // light's faces follow the cascades drawn, from layer 0 with none (#1709), so a layer says
+        // nothing there about what a pass is.
         val cascades = input.shadowCascadeData ?: input.prePasses
+            .takeUnless { input.resolvedPath }
+            .orEmpty()
             .filter { it.targetLayer < MAX_SHADOW_CASCADES }
             .takeIf { it.isNotEmpty() }
             ?.let { subs -> GpuShadowCascadeData(subs.map { it.viewProjection }, FloatArray(subs.size) { Float.MAX_VALUE }) }

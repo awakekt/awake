@@ -14,9 +14,12 @@ import com.awakekt.awake.core.math2d.Rectangle
  *
  * Sizes and offsets are in dp.
  */
-class CanvasRect {
+class CanvasRect : CanvasRevised() {
     /** The screen point, or the parent's, the element is pinned to; see [CanvasAnchor] for how a centred one rounds. */
     var anchor: CanvasAnchor = CanvasAnchor.TopLeft
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * How far, in dp, the element moves from its anchor along the X axis: inward from a left or
@@ -24,6 +27,9 @@ class CanvasRect {
      * axis, or left of it when negative.
      */
     var offsetX: Float = DEFAULT_INSET
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * How far, in dp, the element moves from its anchor along the Y axis: inward from a top or
@@ -31,24 +37,42 @@ class CanvasRect {
      * or above it when negative.
      */
     var offsetY: Float = DEFAULT_INSET
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Width in density-independent pixels. */
     var width: Float = DEFAULT_WIDTH
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Height in density-independent pixels. */
     var height: Float = DEFAULT_HEIGHT
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Z-ordering layer index for overlapping elements: a higher one draws over a lower one and takes
      * the pointer from it. Of the same order, a host's own order decides, for a scene its hierarchy.
      */
     var order: Int = 0
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** Whether this element is rendered. */
     var visible: Boolean = true
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** If true, the element is drawn only where touch controls are shown. */
     var touchOnly: Boolean = false
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Whether an anchored element on the canvas itself keeps inside the safe area [CanvasOverlay] is
@@ -57,9 +81,15 @@ class CanvasRect {
      * element inside another, or one that follows a node, is placed the same either way.
      */
     var safeArea: Boolean = true
+        set(value) {
+            field = revised(field, value)
+        }
 
     /** In a parent with a [CanvasLayout], this element's share of its line's leftover space. */
     var grow: Float = 0f
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * The stable id code finds this element by, such as `health-bar`; empty for none. Unlike a node's
@@ -67,12 +97,18 @@ class CanvasRect {
      * Letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`.
      */
     var elementId: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * The name a player's saved layout knows this control by, such as `move` or `skill-1`, for
      * [CanvasPlayerLayout.controls] to move, scale and fade it; empty for none.
      */
     var controlId: String = ""
+        set(value) {
+            field = revised(field, value)
+        }
 
     /**
      * Where this element was placed last frame, in the canvas's own units: a box from the canvas's
