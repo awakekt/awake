@@ -179,6 +179,7 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
 | `collision` | object | none | `ThirdPerson` camera collision; see below. Without it the eye goes wherever the rig puts it. |
 | `occluderFade` | object | none | Fades what stands between a `ThirdPerson` eye and its target; see below. Without it nothing fades. |
+| `orbitButtons` | `PrimaryOrSecondary` · `SecondaryOnly` | `PrimaryOrSecondary` | Which held pointer button orbits the camera. `SecondaryOnly` leaves a primary drag to the game, for a client whose primary button walks and steers. One finger on a touch screen orbits under either. |
 
 `collision` keeps a third-person eye above the ground and in front of the terrain. Props, trees
 and buildings don't pull it in unless their physics layer is listed in `obstacleLayers`. A played
