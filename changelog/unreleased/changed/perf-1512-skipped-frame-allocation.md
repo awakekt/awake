@@ -1,3 +1,0 @@
-- A skipped frame that moves nothing allocates almost nothing per element (#1512). On the JVM, a 200-plate follower HUD's skipped frame fell from 358 KB to 12 KB still, and from 378 KB to 102 KB moving.
-  - The semantics tree is handed back when nothing it was built from changed, and rebuilt around its kept configurations when only bounds moved. `ComposeHost.verifySkippedCompositions` checks the reused tree against a fresh build, and counts differences in `ComposeHost.staleSemantics`.
-  - `Modifier.onPlaced(OnPlacedListener)` reports bounds without boxing them. The canvas uses it, and keeps an unmoved element's bounds object.

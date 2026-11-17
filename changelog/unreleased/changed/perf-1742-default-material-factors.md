@@ -1,1 +1,0 @@
-- A lit draw of a material that declares no factors packs its uniforms without allocating (#1742). Its default metallic and roughness were packed by a new writer for every draw, every frame; they are packed once and copied. Each further moving, shadowed draw on Vulkan adds 222 B to a frame's garbage on the JVM instead of 254 B.
