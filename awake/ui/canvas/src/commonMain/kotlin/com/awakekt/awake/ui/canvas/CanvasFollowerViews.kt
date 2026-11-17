@@ -15,7 +15,6 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.Modifier
-import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
@@ -46,8 +45,9 @@ context(_: Composer)
 private fun PlacedFollower(element: CanvasElement, plan: FollowerPlan, tag: String, tree: CanvasTree, baseDensity: Float) {
     // Overlapping parts of one faded follower each fade, so where they overlap they show through
     // a little more than a layer would let them; a name plate's parts barely overlap.
-    val faded = if (plan.alpha < 1f) Modifier.alpha(plan.alpha) else Modifier
-    Box(Modifier.offset(plan.x.dp, plan.y.dp).then(faded)) {
+    plan.composed.record(plan)
+    // Placed and faded as the plan says each frame, by reads while placing and drawing (#1512).
+    Box(Modifier.followerPlaced(plan)) {
         if (plan.scale == 1f) {
             CanvasElementView(element, Modifier.size(plan.width.dp, plan.height.dp).testTag(tag), tree, tree.childrenOf(element))
         } else {

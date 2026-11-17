@@ -1573,6 +1573,7 @@ public final class com/awakekt/awake/compose/ui/platform/FrameClock {
 	public static final field MAX_DELTA_SECONDS F
 	public fun <init> ()V
 	public final fun getDeltaSeconds ()F
+	public final fun getFrame ()J
 	public final fun getTotalSeconds ()F
 }
 
