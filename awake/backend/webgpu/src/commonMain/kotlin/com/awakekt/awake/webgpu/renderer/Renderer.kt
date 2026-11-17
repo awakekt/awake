@@ -25,6 +25,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
+import com.awakekt.awake.render.passes.uniforms.DrawBlockWriters
 import com.awakekt.awake.render.passes2d.DynamicRunArrayPool
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.passes2d.UiRun
@@ -367,6 +368,9 @@ class Renderer internal constructor(
 
     /** This frame's per-draw uniform blocks, written before the frame records -- see [UniformUploads]. */
     internal val uniformUploads = UniformUploads()
+
+    /** The writers draws' own blocks are packed with, kept so a moving draw allocates no block per frame. */
+    internal val drawBlockWriters = DrawBlockWriters()
 
     internal fun instanceBufferForRun(index: Int): InstanceBuffer = bufferPools.instanceBufferForRun(index)
     internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = bufferPools.skinnedInstanceBufferForRun(index)

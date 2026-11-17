@@ -555,6 +555,10 @@ public final class com/awakekt/awake/render/passes/sprites/UndividedTextures {
 	public final fun forgetAll ()V
 }
 
+public final class com/awakekt/awake/render/passes/uniforms/DrawBlockWriters {
+	public fun <init> ()V
+}
+
 public final class com/awakekt/awake/render/passes/uniforms/DrawUniformPlan : java/lang/Enum {
 	public static final field Lit Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field LitShadow Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
@@ -627,6 +631,7 @@ public final class com/awakekt/awake/render/passes/uniforms/FrameUniformBlock {
 
 public final class com/awakekt/awake/render/passes/uniforms/FrameUniformBlockKt {
 	public static final fun drawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZLcom/awakekt/awake/render/pipeline/InstancedDrawKind;)[F
+	public static final fun drawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZLcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/render/passes/uniforms/DrawBlockWriters;)[F
 	public static final fun drawBlockFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZZ)[F
 	public static synthetic fun drawBlockFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;IZZILjava/lang/Object;)[F
 	public static final fun identityFrameBlock ()[F

@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.device
 
 import com.awakekt.awake.core.config.EnvSource
 import com.awakekt.awake.core.config.defaultPlatformEnvSource
+import com.awakekt.awake.render.passes.uniforms.DrawBlockWriters
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.texture.CompressedTextureFormat
 import com.awakekt.awake.vulkan.Version
@@ -48,6 +49,9 @@ class GraphicsDevice {
 
     /** Per-draw uniform blocks written to material slots so far. For tests and probes. */
     internal var drawBlockWrites = 0L
+
+    /** The writers draws' own blocks are packed with, kept so a moving draw allocates no block per frame. */
+    internal val drawBlockWriters = DrawBlockWriters()
 
     /** Instanced draws' model buffers created so far: one per frame slot, and one each time a slot's grows. */
     internal var instanceBuffersCreated = 0L
