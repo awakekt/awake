@@ -14,46 +14,60 @@ package com.awakekt.awake.ecs
  * whatever component payload(s) they're indexing) and are responsible for calling [set]
  * whenever they place or move an entity in their dense storage, mirroring their own
  * swap-remove logic.
+ *
+ * Paged: ids are held in pages of [PAGE_SIZE], made the first time an id in one is set, so a set
+ * holding a few entities of a large world holds the pages those ids fall in, not one slot for every
+ * id up to the highest. One array per set or family sized to the highest id held 13 MiB of a
+ * populated scene's live heap (#1753), most of it [ABSENT]. Reading an id costs one more array load.
  */
 internal class EntityIndexMap {
-    private var sparse = IntArray(0)
+    private var pages = arrayOfNulls<IntArray>(0)
 
     /** Returns the dense index for [id], or [ABSENT] if never set (or out of range).
-     * Deliberately not `sparse.getOrNull(id) ?: ABSENT` -- [IntArray.getOrNull] boxes to
-     * `Int?` on every call, which profiling showed as the single largest cost (36% of CPU
-     * samples) in family-cache churn, since this runs on every add/remove. */
-    fun get(id: Int): Int = if (id >= 0 && id < sparse.size) sparse[id] else ABSENT
+     * Deliberately not `getOrNull(id) ?: ABSENT` -- [IntArray.getOrNull] boxes to `Int?` on
+     * every call, which profiling showed as the single largest cost (36% of CPU samples) in
+     * family-cache churn, since this runs on every add/remove. */
+    fun get(id: Int): Int {
+        // A negative id's page is past every page: `ushr` makes it at least 2^26.
+        val page = id ushr PAGE_SHIFT
+        val slots = if (page < pages.size) pages[page] else null
+        // Not `slots?.get(..) ?: ABSENT`, which boxes the index as an `Int?`.
+        return if (slots == null) ABSENT else slots[id and PAGE_MASK]
+    }
 
     /** Records that [id] now lives at [denseIndex] in the caller's dense storage. */
     fun set(id: Int, denseIndex: Int) {
-        ensureCapacity(id)
-        sparse[id] = denseIndex
+        pageFor(id)[id and PAGE_MASK] = denseIndex
     }
 
     /** Clears any dense index recorded for [id]. */
     fun remove(id: Int) {
-        if (id >= 0 && id < sparse.size) {
-            sparse[id] = ABSENT
-        }
+        val page = id ushr PAGE_SHIFT
+        if (page < pages.size) pages[page]?.set(id and PAGE_MASK, ABSENT)
     }
 
     fun clear() {
-        sparse.fill(ABSENT)
+        for (slots in pages) slots?.fill(ABSENT)
     }
 
-    private fun ensureCapacity(id: Int) {
-        if (id < sparse.size) {
-            return
+    /** The page [id] falls in, made, and the page table grown, on first use. */
+    private fun pageFor(id: Int): IntArray {
+        val page = id ushr PAGE_SHIFT
+        if (page >= pages.size) pages = pages.copyOf(maxOf(page + 1, maxOf(DEFAULT_PAGES, pages.size * CAPACITY_GROWTH_FACTOR)))
+        return pages[page] ?: IntArray(PAGE_SIZE).also {
+            it.fill(ABSENT)
+            pages[page] = it
         }
-        val previousSize = sparse.size
-        val newSize = maxOf(id + 1, maxOf(DEFAULT_CAPACITY, previousSize * CAPACITY_GROWTH_FACTOR))
-        sparse = sparse.copyOf(newSize)
-        sparse.fill(ABSENT, fromIndex = previousSize, toIndex = newSize)
     }
 
     companion object {
         const val ABSENT = -1
-        private const val DEFAULT_CAPACITY = 16
+        private const val PAGE_SHIFT = 6
+
+        /** Ids a page holds: 256 bytes, so a few scattered entities cost a few small pages. */
+        internal const val PAGE_SIZE = 1 shl PAGE_SHIFT
+        private const val PAGE_MASK = PAGE_SIZE - 1
+        private const val DEFAULT_PAGES = 4
         private const val CAPACITY_GROWTH_FACTOR = 2
     }
 }
