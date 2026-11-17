@@ -37,6 +37,7 @@ import com.awakekt.awake.render.texture.PbrImageSet
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.asReleasingGpuImageSource
+import com.awakekt.awake.render.texture.needsDecode
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
@@ -485,6 +486,19 @@ class GltfAssetResolver(
 
     override fun meshLevels(name: String): SceneMeshLevels? =
         if (lodLevels.isLevelKey(name)) null else lodLevels.levels(name, modelPath(name))
+
+    /**
+     * Decodes off the frame thread, in [scope], the images material [name] is made from whose pixels
+     * were let go once a material made from them was uploaded, so making it again decodes nothing on
+     * the frame thread (#1619); null when none need it.
+     */
+    override fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? {
+        val key = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:") ?: return null
+        val loaded = loadedMaterials[key]
+        val images = listOfNotNull(skinnedPartTextures[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
+        val pending = images.filter { it.needsDecode }
+        return if (pending.isEmpty()) null else GltfImageDecodeLoad(pending, scope)
+    }
 
     override fun canResolveMaterial(name: String): Boolean =
         name == "skinned-material" || name.startsWith("gltf-material:")

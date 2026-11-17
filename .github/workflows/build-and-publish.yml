@@ -425,6 +425,54 @@ jobs:
   #
   # macOS because it is the only runner that can link the iOS framework, and iOS is otherwise
   # untested anywhere in this repository.
+  # B1 (#1592): a release tag reuses its release-cut rehearsal's Consumer result instead of spending
+  # another 70 minutes on it, when the tagged tree is exactly the tree a green rehearsal verified and
+  # Central still answers what the rehearsal built the templates against. The record is found through
+  # the Actions API, a Publish run of `release-cut/<tag>` whose Consumer job succeeded, never in the
+  # tree; anything missing, different or unreadable runs Consumer in full, as does the repository
+  # variable AWAKE_FULL_CONSUMER=true. The run summary says which, and why. Merging into `main` during
+  # a cut changes the tree, so it defeats the reuse (docs/release-process.md).
+  consumer-reuse:
+    name: Consumer reuse
+    if: >-
+      ${{
+        !cancelled() &&
+        github.event_name == 'push' &&
+        startsWith(github.ref, 'refs/tags/v') &&
+        needs.platform-impact.result == 'success'
+      }}
+    needs: [platform-impact]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      reuse: ${{ steps.decide.outputs.reuse }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Decide whether Consumer runs
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          FORCE: ${{ vars.AWAKE_FULL_CONSUMER == 'true' }}
+          VULKAN_PUBLISH: ${{ needs.platform-impact.outputs.vulkan_publish }}
+        run: |
+          tree=$(git rev-parse 'HEAD^{tree}')
+          record=$(scripts/consumer-reuse-find.sh "$REPO" "$TAG" "$tree" "$RUNNER_TEMP/rehearsals")
+          current=''
+          if [[ "$VULKAN_PUBLISH" != true ]]; then
+            current=$(curl -fsS https://repo.maven.apache.org/maven2/com/awakekt/awake/backend/vulkan/maven-metadata.xml \
+              | sed -n 's:.*<release>\(.*\)</release>.*:\1:p') || current=''
+          fi
+          decision=$(TAG_TREE="$tree" RECORD="$record" CURRENT_VULKAN="$current" scripts/consumer-reuse.sh)
+          echo "$decision" >> "$GITHUB_OUTPUT"
+          if [[ "$decision" == reuse=true* ]]; then verdict='Consumer was reused'; else verdict='Consumer runs in full'; fi
+          echo "$verdict: ${decision#*reason=}"
+          printf '### Consumer on %s\n\n%s: %s.\n' "$TAG" "$verdict" "${decision#*reason=}" >> "$GITHUB_STEP_SUMMARY"
+
   consumer:
     name: Consumer
     # `!cancelled()`, not `always()`: both let a skipped `natives` through, but a job gated by
@@ -436,9 +484,10 @@ jobs:
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.platform-impact.result == 'success' &&
         needs.naga-android.result == 'success' &&
-        (needs.natives.result == 'success' || needs.natives.result == 'skipped')
+        (needs.natives.result == 'success' || needs.natives.result == 'skipped') &&
+        needs.consumer-reuse.outputs.reuse != 'true'
       }}
-    needs: [platform-impact, natives, naga-android]
+    needs: [platform-impact, natives, naga-android, consumer-reuse]
     timeout-minutes: 120
     runs-on: macos-15
     steps:
@@ -533,6 +582,10 @@ jobs:
       - name: Publish the build plugins locally
         run: ./gradlew -p build-logic publishToMavenLocal --no-configuration-cache
 
+      # How much the local publication weighs, for the cache and disk budget (#1592).
+      - name: Size of the local publication
+        run: du -sh ~/.m2/repository/com/awakekt
+
       - name: Verify what was published
         env:
           VULKAN_PUBLISH: ${{ steps.versions.outputs.vulkan_publish }}
@@ -574,6 +627,29 @@ jobs:
           tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/consumer-project"
           tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/consumer-plugin"
           tools/check_scene_components_consumer.sh "$RUNNER_TEMP/consumer-scene-components"
+
+      # B1 (#1592): what this rehearsal verified, for its tag's run to reuse (the Consumer reuse job).
+      - name: Record what this rehearsal verified
+        if: github.event_name == 'pull_request'
+        env:
+          VULKAN_PUBLISH: ${{ steps.versions.outputs.vulkan_publish }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          {
+            echo "tree=$(git rev-parse 'HEAD^{tree}')"
+            echo "vulkan_publish=${VULKAN_PUBLISH:-false}"
+            echo "template_vulkan=${TEMPLATE_VULKAN_VERSION:-}"
+            echo "run=$RUN_ID"
+          } > "$RUNNER_TEMP/consumer-rehearsal.txt"
+          cat "$RUNNER_TEMP/consumer-rehearsal.txt"
+
+      - name: Keep the record for the tag
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: consumer-rehearsal
+          path: ${{ runner.temp }}/consumer-rehearsal.txt
+          retention-days: 30
 
   # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
   # the next push, so this path stays deliberately light.
@@ -931,13 +1007,13 @@ jobs:
           github.event_name == 'workflow_dispatch'
         ) &&
         needs.verify.result == 'success' &&
-        needs.consumer.result == 'success' &&
+        (needs.consumer.result == 'success' || needs.consumer-reuse.outputs.reuse == 'true') &&
         needs.release-stage.result == 'success' &&
         needs.naga-android.result == 'success' &&
         needs.naga-desktop.result == 'success' &&
         needs.window-natives.result == 'success'
       }}
-    needs: [verify, consumer, release-stage, naga-android, naga-desktop, window-natives]
+    needs: [verify, consumer, consumer-reuse, release-stage, naga-android, naga-desktop, window-natives]
     runs-on: ubuntu-latest
     # Creates the GitHub release and attaches its bundle.
     permissions:

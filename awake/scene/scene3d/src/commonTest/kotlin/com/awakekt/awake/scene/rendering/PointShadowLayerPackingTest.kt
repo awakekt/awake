@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.light.SceneLightingCompiler
@@ -33,7 +34,7 @@ class PointShadowLayerPackingTest {
     }
 
     private fun baseLayers(world: World, cascades: Int): List<Int> =
-        SceneLightingCompiler(ClipSpace.Vulkan) { cascades }.sceneLight(world, camera, viewportAspect = 1f).pointShadows.map { it.baseLayer }
+        SceneLightingCompiler(ClipSpace.Vulkan) { ShadowBudget(cascades = cascades) }.sceneLight(world, camera, viewportAspect = 1f).pointShadows.map { it.baseLayer }
 
     @Test
     fun aLampsFacesFollowTheCascadesDrawn() {

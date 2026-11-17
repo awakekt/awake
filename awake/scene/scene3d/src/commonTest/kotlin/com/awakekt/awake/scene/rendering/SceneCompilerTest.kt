@@ -17,6 +17,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_FADE
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
+import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.debug.debugSettings
 import com.awakekt.awake.scene.rendering.light.Light
@@ -87,7 +88,7 @@ class SceneCompilerTest {
         world.add(world.create(), Light(type = Light.Type.Directional, shadowDistance = 400f))
         val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 1000f))
         for (count in 1..3) {
-            val cascades = requireNotNull(SceneLightingCompiler(ClipSpace.WebGpu) { count }.sceneLight(world, camera, viewportAspect = 1f).cascades)
+            val cascades = requireNotNull(SceneLightingCompiler(ClipSpace.WebGpu) { ShadowBudget(cascades = count) }.sceneLight(world, camera, viewportAspect = 1f).cascades)
             assertEquals(count, cascades.viewProjections.size, "$count cascades planned")
             assertEquals(400f, cascades.splitDistances.last(), 0.01f, "$count cascades still reach the shadow distance")
         }

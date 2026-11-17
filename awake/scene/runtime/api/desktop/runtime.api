@@ -84,6 +84,7 @@ public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : 
 	public fun defaultCullMode (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/CullMode;
 	public fun forgetTexture (Ljava/lang/String;)V
 	public fun forgetTextures ()V
+	public fun loadMaterial (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun loadMesh (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
@@ -338,6 +339,7 @@ public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolv
 	public fun defaultCullMode (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/CullMode;
 	public fun forgetTexture (Ljava/lang/String;)V
 	public fun forgetTextures ()V
+	public fun loadMaterial (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun loadMesh (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
@@ -354,6 +356,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 	public static fun defaultCullMode (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/render/pipeline/CullMode;
 	public static fun forgetTexture (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)V
 	public static fun forgetTextures (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
+	public static fun loadMaterial (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public static fun loadMesh (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;
 	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;

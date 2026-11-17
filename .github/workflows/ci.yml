@@ -118,6 +118,10 @@ jobs:
       - name: Template versions handed to the template checks
         run: scripts/template-versions.test.sh
 
+      # B1 (#1592): a tag reuses its rehearsal's Consumer only on an exact, green, unforced match.
+      - name: Consumer reuse decision
+        run: scripts/consumer-reuse.test.sh
+
       - name: iOS native builds cached only once verified
         run: scripts/ios-native-cache.test.sh
 
