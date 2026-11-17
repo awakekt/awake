@@ -388,6 +388,12 @@ jobs:
       - name: Every wasmJs source set compiles
         run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
 
+      # The device tests run only on a schedule, on a device, so nothing on a PR compiled their
+      # source sets: two docs sample tests that read LaunchParameters failed to compile there
+      # from 14 Nov while every PR stayed green. This compiles each module's Android device tests.
+      - name: Every Android device-test source set compiles
+        run: ./gradlew compileAndroidDeviceTest
+
       # hello-cube (retired) had a dedicated :androidApp wrapper module producing a real
       # installable APK, uploaded below as a regression artifact. ui-showcase only has a KMP
       # `android {}` library target (no application-plugin wrapper module), so this currently
