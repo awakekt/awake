@@ -305,9 +305,7 @@ class ComposeHost(
         val paintedBefore = painter.nodesPainted
         val replayedBefore = painter.retainedDraws
         frameCounts.nodesComposed = 0
-        frameCounts.placementCause = PhaseReadCause.None
-        frameCounts.placementCauseSource = null
-        frameCounts.placementCauseOwner = null
+        frameCounts.placementCaused(PhaseReadCause.None, null, null)
         scrollConsumed = false
         // Before input, as documented: a `FocusRequester.requestFocus()`/`freeFocus()` queued
         // since the last frame -- typically from outside composition entirely -- takes effect
@@ -456,9 +454,7 @@ class ComposeHost(
         placementInvalidated = validBeforeLayout && composition.isInvalid
         // Before the second composition below starts a pass and forgets it.
         if (placementInvalidated && explainPlacement && frameCounts.placementCause == PhaseReadCause.None) {
-            frameCounts.placementCause = composition.cause
-            frameCounts.placementCauseSource = composition.causeSource
-            frameCounts.placementCauseOwner = composition.causeOwner
+            frameCounts.placementCaused(composition.cause, composition.causeSource, composition.causeOwner)
         }
         return composed
     }

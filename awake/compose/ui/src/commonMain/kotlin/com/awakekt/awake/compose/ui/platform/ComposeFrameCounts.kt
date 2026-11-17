@@ -79,6 +79,13 @@ class ComposeFrameCounts internal constructor() {
     var placementCauseOwner: Any? = null
         internal set
 
+    /** Records [cause], [source] and [owner] as this frame's placement cause; [PhaseReadCause.None] clears it. */
+    internal fun placementCaused(cause: PhaseReadCause, source: Any?, owner: Any?) {
+        placementCause = cause
+        placementCauseSource = source
+        placementCauseOwner = owner
+    }
+
     override fun toString(): String =
         "ComposeFrameCounts(composed=$composed, measured=$measured, nodesComposed=$nodesComposed, " +
             "nodesMeasured=$nodesMeasured, nodesDrawn=$nodesDrawn, subtreesReplayed=$subtreesReplayed, " +
