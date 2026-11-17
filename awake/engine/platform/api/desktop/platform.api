@@ -32,6 +32,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	public final fun setRenderScaleOverride (Lkotlin/jvm/functions/Function0;)V
 	public final fun setSafeArea (Lcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;)V
 	public final fun setSystemGestureInsets (Lcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;)V
+	protected final fun shadowDepthFormatFor (Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public final fun update (F)V
 }
 
@@ -387,9 +388,11 @@ public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettin
 	public final fun getDynamicResolutionStats ()Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;
 	public final fun getQuality ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getShadowBudgetOverride ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public final fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public final fun select (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
 	public final fun setDynamicResolution (Lcom/awakekt/awake/render/renderer/DynamicResolution;)V
 	public final fun setShadowBudgetOverride (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
+	public final fun setShadowDepthFormat (Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;)V
 }
 
 public final class com/awakekt/awake/engine/platform/quality/TextureAnisotropy : java/lang/Enum {

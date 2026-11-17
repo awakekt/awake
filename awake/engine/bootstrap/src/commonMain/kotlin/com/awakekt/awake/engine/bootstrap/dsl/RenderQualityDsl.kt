@@ -10,6 +10,7 @@ import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
+import com.awakekt.awake.render.renderer.ShadowDepthFormat
 
 /**
  * Configures the app's [RenderQualitySettings] in `app { renderQuality { ... } }`.
@@ -31,6 +32,12 @@ class RenderQualityDsl internal constructor() {
      * [RenderQualitySettings.dynamicResolution].
      */
     var dynamicResolution: DynamicResolution? = DynamicResolution.Handhelds
+
+    /**
+     * The shadow maps' depth format, or `null` for the engine's own; see
+     * [RenderQualitySettings.shadowDepthFormat]. Read once, when the engine starts.
+     */
+    var shadowDepthFormat: ShadowDepthFormat? = null
 }
 
 /**
@@ -48,6 +55,7 @@ fun AppSpecDsl.renderQuality(block: RenderQualityDsl.() -> Unit = {}): RenderQua
     val config = RenderQualityDsl().apply(block)
     val settings = RenderQualitySettings(config.persistence, config.budgets, config.initial)
     settings.dynamicResolution = config.dynamicResolution
+    settings.shadowDepthFormat = config.shadowDepthFormat
     service(RenderQualitySettings::class, settings)
     return settings
 }

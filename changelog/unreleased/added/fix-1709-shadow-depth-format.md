@@ -1,0 +1,1 @@
+- An app picks its shadow maps' depth format in `renderQuality { shadowDepthFormat = ShadowDepthFormat.Depth16Unorm }` (`RenderQualitySettings.shadowDepthFormat`), read once as the engine builds its GPU resources; it wins over `VulkanEngine.shadowDepthFormat`, which a host had to set before the engine started (#1709).

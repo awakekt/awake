@@ -99,7 +99,8 @@ open class VulkanEngine(
     /**
      * The depth format of the shadow maps (#1698): [ShadowDepthFormat.Depth32Float] by default,
      * [ShadowDepthFormat.Depth16Unorm] to halve their memory on a mobile tier. Read once, when the
-     * engine builds its GPU resources: set it before the engine starts. The map size is
+     * engine builds its GPU resources: set it before the engine starts. An app's
+     * `renderQuality { shadowDepthFormat }` wins over it when set (#1709). The map size is
      * [com.awakekt.awake.render.renderer.ShadowBudget.mapSize], which may change at any time.
      */
     var shadowDepthFormat: ShadowDepthFormat = ShadowDepthFormat.Default
@@ -602,7 +603,7 @@ open class VulkanEngine(
                     layers = 1,
                     arrayed = true,
                     comparison = true,
-                    format = shadowDepthFormat,
+                    format = shadowDepthFormatFor(shadowDepthFormat),
                 )
             }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
