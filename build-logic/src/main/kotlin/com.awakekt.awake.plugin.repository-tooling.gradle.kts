@@ -7,6 +7,7 @@ import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyFeatureLayeringTask
 import com.awakekt.awake.build.tasks.VerifyCoroutineScopesTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
+import com.awakekt.awake.build.tasks.VerifyInlinedQueriesTask
 import com.awakekt.awake.build.tasks.VerifyKeepRulesTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
 import com.awakekt.awake.build.tasks.WaitForCoreCentralTask
@@ -50,6 +51,20 @@ val verifyHeadlessRuntime = tasks.register<VerifyHeadlessRuntimeTask>("verifyHea
     // The ready-made content transports (transport-ktor, transport-browser) and any later sibling: the host
     // builds its own HTTP client and hands the transport to TokenAuthorizedFetch.
     forbiddenModuleNamePrefixes.set(listOf(":awake:project:transport-"))
+}
+
+// An ECS query handed a function object boxes every entity on Android and on nothing a warm JVM
+// test can measure, so this holds the rule at the source (#1742).
+val verifyInlinedQueries = tasks.register<VerifyInlinedQueriesTask>("verifyInlinedQueries") {
+    group = "awake verification"
+    description = "Reject an ECS query handed a function object, which boxes every Entity it visits."
+    rootPath.set(layout.projectDirectory.asFile.absolutePath)
+    mainSources.from(
+        fileTree(layout.projectDirectory) {
+            include("awake/**/src/*Main/**/*.kt", "samples/**/src/*Main/**/*.kt")
+            exclude("**/build/**")
+        },
+    )
 }
 
 val verifyCoroutineScopes = tasks.register<VerifyCoroutineScopesTask>("verifyCoroutineScopes") {
@@ -126,7 +141,7 @@ val moduleSourceChecks = setOf(
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, ownership and source-layering gates."
-    dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes)
+    dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes, verifyInlinedQueries)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
     dependsOn(rootSourceChecks)
     dependsOn(subprojects.map { module -> module.tasks.matching { it.name in moduleSourceChecks } })

@@ -70,7 +70,7 @@ class TerrainContentSystem(
         world.queryEach(TerrainComponent::class) { entity, terrain ->
             if (find(entity) == null) {
                 val reference = world.get<TerrainSurfaceReference>(entity)
-                if (reference != null || !surfacedOnly) track(entity, terrain, reference)
+                if (reference != null || !surfacedOnly) track(world, entity, terrain, reference)
             }
         }
     }
@@ -126,9 +126,9 @@ class TerrainContentSystem(
 
     // TooGenericExceptionCaught: a provider that fails for any reason still leaves a drawn terrain.
     @Suppress("TooGenericExceptionCaught")
-    private fun track(entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
+    private fun track(world: World, entity: Entity, terrain: TerrainComponent, reference: TerrainSurfaceReference?) {
         val entry = Tracked(entity, terrain).also { tracked += it }
-        frameWorld?.let { place(it) }
+        place(world)
         val provider = reference?.let { providers[it.provider] }
         if (reference == null || provider == null) {
             if (reference != null) {
