@@ -33,7 +33,8 @@ import kotlin.reflect.KClass
  * @property scaleX Horizontal grid spacing scale along the X axis.
  * @property scaleY Height elevation scaling factor along the Y axis.
  * @property scaleZ Horizontal grid spacing scale along the Z axis.
- * @property samples Row-major height elevation sample values.
+ * @property samples Row-major height elevation sample values. A decoded or exported terrain holds them
+ * as one `FloatArray`, not a float object each.
  * @property tilingScale Texture UV coordinate tiling frequency.
  * @property isVisible Whether this terrain is submitted for rendering.
  * @property surface Optional custom surface shading model descriptor.
@@ -47,7 +48,7 @@ data class SceneTerrain(
     @PropertyRange(min = 0.0, exclusiveMin = true) val scaleX: Float = 1f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val scaleY: Float = 1f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val scaleZ: Float = 1f,
-    val samples: List<Float>,
+    @Serializable(with = TerrainSamplesSerializer::class) val samples: List<Float>,
     val tilingScale: Float = 16f,
     val isVisible: Boolean = true,
     val surface: SceneTerrainSurface? = null,
@@ -61,7 +62,7 @@ data class SceneTerrain(
         if (samples.size.toLong() != width.toLong() * depth) {
             add(SceneValidationIssue(path, "terrain.samples holds ${samples.size} values for $width x $depth"))
         }
-        if (!samples.all(Float::isFinite)) add(SceneValidationIssue(path, "terrain.samples must be finite"))
+        if (!((samples as? TerrainSampleList)?.allFinite() ?: samples.all(Float::isFinite))) add(SceneValidationIssue(path, "terrain.samples must be finite"))
         if (listOf(scaleX, scaleY, scaleZ).any { !it.isFinite() || it <= 0f }) {
             add(SceneValidationIssue(path, "terrain scale must be finite and positive"))
         }
@@ -105,7 +106,7 @@ object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
             entity,
             TerrainComponent(
                 heightmap = Heightmap(
-                    samples = component.samples.toFloatArray(),
+                    samples = terrainFloats(component.samples),
                     width = component.width,
                     depth = component.depth,
                     scale = Vec3f(component.scaleX, component.scaleY, component.scaleZ),
@@ -127,7 +128,7 @@ object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
             scaleX = scale.x,
             scaleY = scale.y,
             scaleZ = scale.z,
-            samples = heightmap.copySamples().toList(),
+            samples = terrainSamples(heightmap.copySamples()),
             tilingScale = component.tilingScale,
             isVisible = component.isVisible,
             surface = world.get<TerrainSurfaceReference>(entity)?.let {
