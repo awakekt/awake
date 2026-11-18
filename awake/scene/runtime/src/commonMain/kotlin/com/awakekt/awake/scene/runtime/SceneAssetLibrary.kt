@@ -397,6 +397,15 @@ class SceneAssetLibrary(
     /** Whether [name] is released but still kept for reuse. */
     fun isMeshRetained(name: String): Boolean = name in retainedMeshes
 
+    /**
+     * Whether mesh [name] is built now, held by a renderer or retained, so a renderer can take it with
+     * nothing read first. A mesh that isn't built is made from its resolver's copy of the model.
+     */
+    fun isMeshBuilt(name: String): Boolean = name in meshes || name in retainedMeshes
+
+    /** Whether material [name] is built now, held by a renderer, so a renderer can take it with nothing read first. */
+    fun isMaterialBuilt(name: String): Boolean = name in materials
+
     /** [releaseMesh] for materials. */
     fun releaseMaterial(name: String): Boolean =
         release(name, materialHolders, materials) { it.destroy() }

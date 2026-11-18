@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.SceneAssetLibrary
 import com.awakekt.awake.scene.runtime.SceneMeshLoad
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.spawn
@@ -38,7 +39,8 @@ import kotlinx.coroutines.CoroutineScope
  */
 fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): SpawnedNode {
     val models = project.spawnedModels
-    val spawned = spawn(node, SceneComponentRegistry()) { request -> !models.mustLoad(request) }
+    val library = requireAssetLibrary()
+    val spawned = spawn(node, SceneComponentRegistry()) { request -> !models.mustLoad(request, library) }
     startSkinnedAnimations(project.models, spawned.entities.toSet())
     models.load(spawned, session.coroutineScope)
     project.playing.track(spawned, world)
@@ -58,10 +60,18 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
     private val waiting = mutableListOf<SpawnedNode>()
     private var closed = false
 
-    /** Whether [request] draws a glTF model that isn't loaded yet, so its renderer has to wait for it. */
-    fun mustLoad(request: SceneRenderableRequest): Boolean {
+    /**
+     * Whether [request] draws a glTF model that can't be drawn now, so its renderer has to wait for a load: one
+     * that isn't loaded yet, or one that was let go of once uploaded ([GltfAssetResolver.releaseAfterUpload]) whose
+     * mesh or material the [library] no longer holds, which is made again from a read of the model.
+     */
+    fun mustLoad(request: SceneRenderableRequest, library: SceneAssetLibrary): Boolean {
         val mesh = request.meshRenderer.mesh
-        return models.canResolveMesh(mesh) && !models.isPreloaded(models.modelPath(mesh))
+        if (!models.canResolveMesh(mesh)) return false
+        if (!models.isPreloaded(models.modelPath(mesh))) return true
+        val material = request.meshRenderer.material
+        return (models.isMeshLetGo(mesh) && !library.isMeshBuilt(mesh)) ||
+            (models.isMaterialLetGo(material) && !library.isMaterialBuilt(material))
     }
 
     /** Waits for the models [spawned] has no renderer for, starting, in [scope], each load not already under way. */

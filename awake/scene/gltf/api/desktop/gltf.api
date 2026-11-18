@@ -14,6 +14,8 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public fun forgetTexture (Ljava/lang/String;)V
 	public fun forgetTextures ()V
 	public final fun getLoadedScene (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun isMaterialLetGo (Ljava/lang/String;)Z
+	public final fun isMeshLetGo (Ljava/lang/String;)Z
 	public final fun isPreloaded (Ljava/lang/String;)Z
 	public final fun keepAfterUpload (Ljava/lang/String;)V
 	public fun loadMaterial (Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/scene/runtime/SceneMeshLoad;

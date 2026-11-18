@@ -283,6 +283,8 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public final fun dispose ()V
 	public final fun forgetTexture (Ljava/lang/String;)V
 	public final fun forgetTextures ()V
+	public final fun isMaterialBuilt (Ljava/lang/String;)Z
+	public final fun isMeshBuilt (Ljava/lang/String;)Z
 	public final fun isMeshRetained (Ljava/lang/String;)Z
 	public final fun materialHolderCount (Ljava/lang/String;)I
 	public final fun meshHolderCount (Ljava/lang/String;)I

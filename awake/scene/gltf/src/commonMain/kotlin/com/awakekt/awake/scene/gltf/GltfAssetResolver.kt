@@ -230,6 +230,19 @@ class GltfAssetResolver(
      */
     fun keepAfterUpload(path: String) = releases.keep(path)
 
+    /**
+     * Whether static mesh [name]'s geometry was let go of once uploaded and not read again since: making
+     * it now fails, and [loadMesh] reads its model again first.
+     */
+    fun isMeshLetGo(name: String): Boolean = name in releases.droppedMeshes
+
+    /**
+     * Whether material [name]'s images (a `gltf-material:` name) were let go of once uploaded and not read
+     * again since: made now, it draws untextured, and [loadMaterial] reads its model again first.
+     */
+    fun isMaterialLetGo(name: String): Boolean =
+        name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:")?.let { it in releases.releasedMaterials } == true
+
     /** [adopt] for a model the async load path read, which is releasable, putting back what was let go of. */
     internal fun adoptLoaded(path: String, from: GltfAssetResolver) {
         adopt(path, from)
