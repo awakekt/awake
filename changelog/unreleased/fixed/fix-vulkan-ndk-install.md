@@ -1,1 +1,0 @@
-- Retry the pinned Android NDK install before Linux Vulkan CI and release builds so a corrupt download can recover without restarting the job.

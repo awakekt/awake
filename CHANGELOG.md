@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.57.1] - 2026-11-18
+
+### Fixed
+
+- A subcomposition reads its parent's composition locals as they are now (#1774). `SubcomposeLayout`, and so `BoxWithConstraints`, gave each slot its parent's locals once, when the slot was made, so a provided value that changed later never reached what the slot composed: the soft keyboard's `LocalWindowInsets.ime` stayed 0 inside a `BoxWithConstraints` after the keyboard opened, as did a theme or palette that changes at run time. `Composition.updateParentLocals` lets a subcomposition take them before each pass, and copies nothing when they are unchanged.
+﻿- A model spawned again after its mesh left the asset library is read again and draws, instead of failing (#1753). A model let go of once uploaded (`releaseAfterUpload`, or read through `loadModel`) that a spawn named again, once its last renderer had despawned and the library had no retained budget to keep its mesh, threw `glTF mesh '...' let go of its CPU copy once uploaded` on the spawn's frame, because `SpawnedModels.mustLoad` only asked whether the model was loaded. It now also asks whether the mesh or material was let go of and the library no longer holds it, and then the spawn waits for a read of the model, as for a model not yet loaded. `GltfAssetResolver.isMeshLetGo` and `isMaterialLetGo`, and `SceneAssetLibrary.isMeshBuilt` and `isMaterialBuilt`, are new.
+- Retry the pinned Android NDK install before Linux Vulkan CI and release builds so a corrupt download can recover without restarting the job.
+
 ## [0.57.0] - 2026-11-17
 
 ### Added
