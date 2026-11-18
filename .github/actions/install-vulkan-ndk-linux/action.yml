@@ -1,0 +1,38 @@
+name: Install the Vulkan Android NDK on Linux
+description: Install the NDK pinned by the Vulkan Android bindings before configuring Gradle.
+
+runs:
+  using: composite
+  steps:
+    - name: Install the pinned Android NDK
+      shell: bash
+      run: |
+        build_file=awake/backend/vulkan/bindings/android-native/build.gradle.kts
+        version=$(sed -n 's/^ *ndkVersion = "\(.*\)"/\1/p' "$build_file")
+        if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::Expected one NDK version in $build_file"
+          exit 1
+        fi
+
+        sdk=${ANDROID_HOME:?ANDROID_HOME must point to the Android SDK}
+        ndk="$sdk/ndk/$version"
+        installed() {
+          test -f "$ndk/build/cmake/android.toolchain.cmake" &&
+            grep -Fxq "Pkg.Revision = $version" "$ndk/source.properties"
+        }
+        if installed; then
+          exit 0
+        fi
+
+        sdkmanager="$sdk/cmdline-tools/latest/bin/sdkmanager"
+        for attempt in 1 2; do
+          # A corrupt download can leave a partial installation in the pinned directory.
+          rm -rf -- "$ndk"
+          # sdkmanager may close stdin before yes exits. Only sdkmanager's status matters.
+          if (yes || true) | timeout --kill-after=15s 8m "$sdkmanager" --install "ndk;$version" > /dev/null && installed; then
+            exit 0
+          fi
+          echo "::warning::Android NDK $version install attempt $attempt failed"
+        done
+        echo "::error::Could not install Android NDK $version"
+        exit 1
