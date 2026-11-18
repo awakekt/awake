@@ -67,11 +67,12 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
      */
     fun mustLoad(request: SceneRenderableRequest, library: SceneAssetLibrary): Boolean {
         val mesh = request.meshRenderer.mesh
-        if (!models.canResolveMesh(mesh)) return false
-        if (!models.isPreloaded(models.modelPath(mesh))) return true
         val material = request.meshRenderer.material
-        return (models.isMeshLetGo(mesh) && !library.isMeshBuilt(mesh)) ||
-            (models.isMaterialLetGo(material) && !library.isMaterialBuilt(material))
+        return models.canResolveMesh(mesh) && (
+            !models.isPreloaded(models.modelPath(mesh)) ||
+                (models.isMeshLetGo(mesh) && !library.isMeshBuilt(mesh)) ||
+                (models.isMaterialLetGo(material) && !library.isMaterialBuilt(material))
+            )
     }
 
     /** Waits for the models [spawned] has no renderer for, starting, in [scope], each load not already under way. */
