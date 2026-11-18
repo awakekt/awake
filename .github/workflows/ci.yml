@@ -569,6 +569,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers xvfb
 
+      - name: Install the Android NDK
+        uses: ./.github/actions/install-vulkan-ndk-linux
+
       - name: Build desktop native Vulkan library
         run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
 

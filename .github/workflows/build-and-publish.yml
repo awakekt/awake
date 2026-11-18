@@ -223,6 +223,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
 
+      # Gradle configures the Android bindings even for this desktop task (#1592).
+      - name: Install the Android NDK (Linux)
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/install-vulkan-ndk-linux
+
       - name: Build the desktop native library
         run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
       - name: Check the Linux library's glibc
