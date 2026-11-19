@@ -30,10 +30,11 @@ import kotlin.test.assertTrue
  */
 class TextFocusBlocksGameplayTest {
     @Test
-    fun blocksGameplayKeysCoversPointerCaptureAndTextFocus() {
+    fun blocksGameplayKeysCoversTextFocusAndModalButNotPointerCapture() {
         assertFalse(InputOwnership().blocksGameplayKeys, "an idle UI must not block gameplay")
-        assertTrue(InputOwnership(isCaptured = true).blocksGameplayKeys)
+        assertFalse(InputOwnership(isCaptured = true).blocksGameplayKeys, "pointer capture must not stop keyboard movement")
         assertTrue(InputOwnership(isTextInputFocused = true).blocksGameplayKeys)
+        assertTrue(InputOwnership(isModalOpen = true).blocksGameplayKeys)
         assertTrue(
             InputOwnership(isCaptured = true, isTextInputFocused = true).blocksGameplayKeys,
         )
@@ -77,12 +78,12 @@ class TextFocusBlocksGameplayTest {
     }
 
     @Test
-    fun capturedPointerStillBlocksEveryKeyRegardlessOfTextInput() {
-        // Positive control: the blanket block is still in force for capture and modal, even though
-        // a focused text field now takes only the keys it uses.
-        val captured = GameplayInput(snapshotWith(Key.ArrowUp, Key.F1), InputOwnership(isCaptured = true))
-        assertFalse(captured.isDown(Key.ArrowUp), "pointer capture must still block a key no field uses")
-        assertFalse(captured.isDown(Key.F1), "pointer capture must still block every key")
+    fun modalBlocksEveryKeyWhilePointerCaptureKeepsWalking() {
+        val captured = GameplayInput(snapshotWith(Key.W, Key.ArrowUp, Key.F1), InputOwnership(isCaptured = true))
+        assertTrue(captured.isDown(Key.W), "dragging a panel must not block WASD movement")
+        assertTrue(captured.isDown(Key.ArrowUp), "pointer capture must let ArrowUp reach gameplay")
+        assertTrue(captured.isDown(Key.F1), "pointer capture must let hotkeys reach gameplay")
+        assertEquals(1f, moveZAfter(GameplayInput(snapshotWith(Key.W), InputOwnership(isCaptured = true))))
 
         val modal = GameplayInput(snapshotWith(Key.ArrowUp, Key.F1), InputOwnership(isModalOpen = true))
         assertFalse(modal.isDown(Key.ArrowUp), "a modal must still block a key no field uses")

@@ -15,8 +15,10 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ecs.firstOrNull
+import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -37,10 +39,12 @@ class SkyboxCubemapSystem(
     private val assets: AssetSource,
 ) : System {
     private val log = Logger("scene-sky")
+    private val decoded = Channel<Decoded>(Channel.UNLIMITED)
     private val loaded = Channel<Loaded>(Channel.UNLIMITED)
     private var wanted: Key? = null
     private var shown: Loaded? = null
     private var loading: Job? = null
+    private var attaching: Job? = null
 
     /**
      * Counts each time the sky on screen changes: a panorama attached, replaced or detached. Anything
@@ -50,6 +54,29 @@ class SkyboxCubemapSystem(
         private set
 
     override fun update(world: World, delta: Float) {
+        drainPendingResults()
+        val sky = world.firstOrNull<Skybox>()
+        val mode = (sky?.mode as? Skybox.Mode.Cubemap)?.takeIf { sky.enabled && it.pathAt(it.blendFrom).isNotEmpty() }
+        val key = mode?.let { Key(it.pathAt(it.blendFrom), it.pathAt(it.blendTo)) }
+        if (mode != null) shown?.let { it.look(mode) }
+        if (key == wanted) return
+        wanted = key
+        loading?.cancel()
+        attaching?.cancel()
+        if (key == null) {
+            if (shown != null) generation++
+            shown?.feature?.detach()
+            shown = null
+            return
+        }
+        loading = scope.launch { load(key, mode.exposure) }
+    }
+
+    private fun drainPendingResults() {
+        while (true) {
+            val item = decoded.tryReceive().getOrNull() ?: break
+            if (item.key == wanted) startAttach(item)
+        }
         while (true) {
             val result = loaded.tryReceive().getOrNull() ?: break
             if (result.key == wanted) {
@@ -60,20 +87,6 @@ class SkyboxCubemapSystem(
                 result.feature.detach()
             }
         }
-        val sky = world.firstOrNull<Skybox>()
-        val mode = (sky?.mode as? Skybox.Mode.Cubemap)?.takeIf { sky.enabled && it.pathAt(it.blendFrom).isNotEmpty() }
-        val key = mode?.let { Key(it.pathAt(it.blendFrom), it.pathAt(it.blendTo)) }
-        if (mode != null) shown?.let { it.look(mode) }
-        if (key == wanted) return
-        wanted = key
-        loading?.cancel()
-        if (key == null) {
-            if (shown != null) generation++
-            shown?.feature?.detach()
-            shown = null
-            return
-        }
-        loading = scope.launch { load(key, mode?.exposure ?: 1f) }
     }
 
     // TooGenericExceptionCaught: a strip that fails to read or decode for any reason keeps the old sky.
@@ -82,9 +95,7 @@ class SkyboxCubemapSystem(
         try {
             val from = decodeCubemapStrip(assets.read(AssetPath(key.from)).getOrThrow())
             val to = if (key.to == key.from) from else decodeCubemapStrip(assets.read(AssetPath(key.to)).getOrThrow())
-            val look = SkyboxCubemapLook(exposure)
-            val feature = host.attachContentFeature(skyboxCubemapContentFeature(from, exposure, blendTo = to, look = look))
-            loaded.trySend(Loaded(key, feature, look))
+            decoded.trySend(Decoded(key, from, to, exposure))
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (failure: Exception) {
@@ -92,7 +103,33 @@ class SkyboxCubemapSystem(
         }
     }
 
+    // TooGenericExceptionCaught: an attach that fails for any reason keeps the old sky.
+    @Suppress("TooGenericExceptionCaught")
+    private fun startAttach(item: Decoded) {
+        attaching?.cancel()
+        attaching = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                val look = SkyboxCubemapLook(item.exposure)
+                val feature = host.attachContentFeature(
+                    skyboxCubemapContentFeature(item.from, item.exposure, blendTo = item.to, look = look),
+                )
+                loaded.trySend(Loaded(item.key, feature, look))
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                log.warn { "Sky '${item.key.from}' could not attach: ${failure.message}" }
+            }
+        }
+    }
+
     private data class Key(val from: String, val to: String)
+
+    private class Decoded(
+        val key: Key,
+        val from: TextureAsset,
+        val to: TextureAsset,
+        val exposure: Float,
+    )
 
     /** A loaded sky and the [look] it draws with, for the panorama pair in [key]. */
     private class Loaded(val key: Key, val feature: AttachedContentFeature, val look: SkyboxCubemapLook) {

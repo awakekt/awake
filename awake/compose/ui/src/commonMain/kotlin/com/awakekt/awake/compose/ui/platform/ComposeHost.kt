@@ -339,13 +339,7 @@ class ComposeHost(
         // After layout, so a field that only just appeared can still take this frame's typing.
         dispatchText(input)
         dispatchKeys(input)
-        val focusedTextInputs = focusOwner.focused?.textInputs.orEmpty()
-        val textFocused = focusedTextInputs.isNotEmpty()
-        val passwordFocused = focusedTextInputs.any { it.isPassword }
-        // Blocked only if EVERY focused input is single-line: one multi-line field among them still
-        // needs Up/Down for its own caret.
-        val singleLineFocused = focusedTextInputs.all { it.isSingleLine }
-        val passThroughKeys = focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys }
+        val ownership = currentInputOwnership()
         val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
         stages?.begin(ComposeFrameStage.Draw)
@@ -357,24 +351,32 @@ class ComposeHost(
             primitives = paint.primitives,
             graphicsLayers = paint.layers,
             semantics = semanticsBuilder.build(root).also(::verifySemantics),
-            ownership = InputOwnership(
-                isCaptured = dispatcher.hasCapture,
-                isOverScrollable = dispatcher.isOverScrollable,
-                isScrollConsumed = scrollConsumed,
-                isTextInputFocused = textFocused,
-                isModalOpen = root.activeModalLayer() != null || dispatcher.isModalOpen,
-                isTextInputSingleLine = singleLineFocused,
-                textInputPassThroughKeys = passThroughKeys,
-            ),
+            ownership = ownership,
             // The platform raises a soft keyboard while a field holds focus; on desktop nothing
             // acts on it, which is why it is a request rather than a call.
             effects = PlatformEffects(
-                requestKeyboard = textFocused,
+                requestKeyboard = ownership.isTextInputFocused,
                 cursor = dispatcher.hoveredCursor,
                 cursorImage = dispatcher.hoveredCursorImage,
-                passwordKeyboard = passwordFocused,
+                passwordKeyboard = focusOwner.focused?.textInputs?.any { it.isPassword } == true,
                 clipboardText = clipboardText,
             ),
+        )
+    }
+
+    private fun currentInputOwnership(): InputOwnership {
+        val focusedTextInputs = focusOwner.focused?.textInputs.orEmpty()
+        return InputOwnership(
+            isCaptured = dispatcher.hasCapture,
+            isOverScrollable = dispatcher.isOverScrollable,
+            isScrollConsumed = scrollConsumed,
+            isTextInputFocused = focusedTextInputs.isNotEmpty(),
+            isModalOpen = root.activeModalLayer() != null || dispatcher.isModalOpen,
+            // Blocked only if EVERY focused input is single-line: one multi-line field among them still
+            // needs Up/Down for its own caret.
+            isTextInputSingleLine = focusedTextInputs.all { it.isSingleLine },
+            textInputPassThroughKeys = focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys },
+            capturedPointerIds = dispatcher.capturedPointerIds,
         )
     }
 

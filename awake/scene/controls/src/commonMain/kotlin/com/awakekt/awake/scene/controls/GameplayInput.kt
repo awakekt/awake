@@ -16,6 +16,7 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PinchGesture
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.input.ScrollSource
+import com.awakekt.awake.core.input.TouchPoint
 
 /**
  * This frame's input with whatever the UI claimed already taken out.
@@ -54,14 +55,58 @@ class GameplayInput(
     /** Input from a manually managed host that exposes no host-state service. */
     constructor(snapshot: InputSnapshot, claimed: InputOwnership) : this(snapshot, claimed, null)
 
-    /** False while the UI holds the pointer or a modal is open, so a click on a dialog or backdrop is not a world drag. */
-    val pointerDown: Boolean get() = snapshot.pointerDown && !claimed.isCaptured && !claimed.isModalOpen
+    /**
+     * True while UI owns every pointer: a modal is open, or [InputOwnership.isCaptured] was set
+     * manually without per-pointer ids.
+     */
+    private val blocksAllPointers: Boolean
+        get() = claimed.isModalOpen || (claimed.isCaptured && claimed.capturedPointerIds.isEmpty())
 
-    /** Current horizontal pointer coordinate in window pixels. */
-    val pointerX: Float get() = snapshot.pointerX
+    private val hasTouchContacts: Boolean
+        get() = snapshot.touches.isNotEmpty()
 
-    /** Current vertical pointer coordinate in window pixels. */
-    val pointerY: Float get() = snapshot.pointerY
+    private fun isTouchCaptured(touch: TouchPoint): Boolean =
+        (touch.id + TOUCH_POINTER_ID_OFFSET) in claimed.capturedPointerIds
+
+    internal fun hasCapturedTouchContact(): Boolean =
+        hasTouchContacts && snapshot.touches.any(::isTouchCaptured)
+
+    internal fun firstWorldTouch(): TouchPoint? {
+        for (i in snapshot.touches.indices) {
+            val touch = snapshot.touches[i]
+            if (touch.down && !isTouchCaptured(touch)) return touch
+        }
+        return null
+    }
+
+    internal fun secondWorldTouch(after: TouchPoint): TouchPoint? {
+        var passed = false
+        for (i in snapshot.touches.indices) {
+            val touch = snapshot.touches[i]
+            if (!passed) {
+                if (touch === after) passed = true
+            } else if (touch.down && !isTouchCaptured(touch)) {
+                return touch
+            }
+        }
+        return null
+    }
+
+    /** False while UI owns the world pointer (captured mouse, all touches captured, or modal open). */
+    val pointerDown: Boolean
+        get() = when {
+            blocksAllPointers -> false
+            hasTouchContacts -> firstWorldTouch() != null
+            else -> snapshot.pointerDown && MOUSE_POINTER_ID !in claimed.capturedPointerIds
+        }
+
+    /** Current horizontal pointer coordinate in window pixels, following the first uncaptured touch when touching. */
+    val pointerX: Float
+        get() = if (!blocksAllPointers && hasTouchContacts) firstWorldTouch()?.x ?: snapshot.pointerX else snapshot.pointerX
+
+    /** Current vertical pointer coordinate in window pixels, following the first uncaptured touch when touching. */
+    val pointerY: Float
+        get() = if (!blocksAllPointers && hasTouchContacts) firstWorldTouch()?.y ?: snapshot.pointerY else snapshot.pointerY
 
     /** Zero while a scrollable under the pointer took the wheel or a modal layer is open. */
     val scrollDeltaY: Float get() = if (claimed.isScrollConsumed || claimed.isModalOpen) 0f else snapshot.scrollDeltaY
@@ -73,26 +118,49 @@ class GameplayInput(
     val scrollSource: ScrollSource get() = snapshot.scrollSource
 
     /**
-     * This frame's trackpad pinch, or `null` while the UI holds the pointer or a modal is open. The
-     * UI takes no pinch of its own, so a pinch over a panel still reaches the world.
+     * This frame's pinch, or `null` while the UI holds the world pointer, a captured touch would
+     * mix with the platform's two-finger pinch, or a modal is open.
      */
-    val pinch: PinchGesture? get() = if (claimed.isCaptured || claimed.isModalOpen) null else snapshot.pinch
+    val pinch: PinchGesture?
+        get() = when {
+            blocksAllPointers -> null
+            hasCapturedTouchContact() -> null
+            !snapshot.pointerFromTouch && MOUSE_POINTER_ID in claimed.capturedPointerIds -> null
+            else -> snapshot.pinch
+        }
 
-    /** Two or more fingers are down, a pinch: see [InputSnapshot.isMultiTouch]. No camera drags then. */
-    val isMultiTouch: Boolean get() = snapshot.isMultiTouch
+    /** Two or more uncaptured fingers are down on the world: a pinch. No camera drags then. */
+    val isMultiTouch: Boolean
+        get() = when {
+            blocksAllPointers -> false
+            hasTouchContacts -> {
+                var down = 0
+                for (i in snapshot.touches.indices) {
+                    val touch = snapshot.touches[i]
+                    if (touch.down && !isTouchCaptured(touch) && ++down == 2) return true
+                }
+                false
+            }
+            else -> snapshot.isMultiTouch
+        }
 
     /**
-     * Whether [button] is held for the world, gated by the same capture and modal rules as [pointerDown].
-     *
-     * A middle-drag that began over a panel belongs to the panel, exactly as a left-drag does.
-     * Reading `snapshot.buttonsDown` directly would skip that and pan the camera from under a UI
-     * the user was interacting with.
+     * Whether [button] is held for the world, gated per-pointer against UI capture and modals.
      */
-    override fun isDown(button: PointerButton): Boolean = !claimed.isCaptured && !claimed.isModalOpen && snapshot.isDown(button)
+    override fun isDown(button: PointerButton): Boolean = when {
+        blocksAllPointers -> false
+        hasTouchContacts && button == PointerButton.Primary -> firstWorldTouch() != null
+        else -> MOUSE_POINTER_ID !in claimed.capturedPointerIds && snapshot.isDown(button)
+    }
 
     /** Whether [button] was pressed this frame for the world, gated like [isDown]. */
-    override fun wasPressed(button: PointerButton): Boolean =
-        !claimed.isCaptured && !claimed.isModalOpen && snapshot.wasPressed(button)
+    override fun wasPressed(button: PointerButton): Boolean = when {
+        blocksAllPointers -> false
+        hasTouchContacts && button == PointerButton.Primary -> {
+            snapshot.touches.any { it.down && it.pressed && !isTouchCaptured(it) }
+        }
+        else -> MOUSE_POINTER_ID !in claimed.capturedPointerIds && snapshot.wasPressed(button)
+    }
 
     /** Whether controller [button] is held; the UI never takes one. */
     override fun isDown(button: GamepadButton): Boolean = snapshot.isDown(button)
@@ -125,3 +193,6 @@ class GameplayInput(
     /** True when a modal layer is open. */
     val isModalOpen: Boolean get() = claimed.isModalOpen
 }
+
+private const val MOUSE_POINTER_ID = 0L
+private const val TOUCH_POINTER_ID_OFFSET = 1L

@@ -45,6 +45,13 @@ class PointerInputDispatcher(
     val hasCapture: Boolean get() = captures.isNotEmpty()
 
     /**
+     * Pointer ids currently captured by a UI node (`0L` for the mouse, `touchId + 1L` for touch).
+     * Empty when nothing holds a pointer, so idle frames allocate nothing.
+     */
+    val capturedPointerIds: Set<Long>
+        get() = if (captures.isEmpty()) emptySet() else captures.keys.toSet()
+
+    /**
      * True when something under the pointer could still take a scroll.
      *
      * Read from the hover path rather than the dispatch path, so it answers about where the pointer

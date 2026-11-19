@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.commands
 import com.awakekt.awake.render.command.GpuUploadLease
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.device.QueueLock
 import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
 import com.awakekt.awake.vulkan.enums.flags.VkCommandBufferUsageFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkCommandPoolCreateFlagBits
@@ -41,6 +42,7 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
     private val graphicsQueue get() = graphicsDevice.graphicsQueue
 
     var commandPool: CommandPoolHandle = CommandPoolHandle(0)
+    private val uploadLock = QueueLock()
     private var uploadCommandBuffer: Long = 0
     private var uploadFence: Long = 0
 
@@ -58,7 +60,7 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
     /** Runs [block] on one resettable upload command buffer. Uploads are synchronous here, so
      * the fence makes the buffer safe to reset and reuse on the next call without retaining one
      * command buffer for every mesh or texture loaded during the session. */
-    fun runOneTimeCommands(block: (Long) -> Unit) {
+    fun runOneTimeCommands(block: (Long) -> Unit) = uploadLock.withLock {
         ensureUploadResources()
         Vulkan.vkResetCommandBuffer(uploadCommandBuffer, 0)
         Vulkan.vkBeginCommandBuffer(
@@ -71,11 +73,13 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
         Vulkan.vkEndCommandBuffer(uploadCommandBuffer)
 
         Vulkan.vkResetFences(device, longArrayOf(uploadFence))
-        Vulkan.vkQueueSubmit(
-            graphicsQueue,
-            arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(uploadCommandBuffer))),
-            uploadFence,
-        )
+        graphicsDevice.queueLock.withLock {
+            Vulkan.vkQueueSubmit(
+                graphicsQueue,
+                arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(uploadCommandBuffer))),
+                uploadFence,
+            )
+        }
         Vulkan.vkWaitForFences(device, longArrayOf(uploadFence), true, Long.MAX_VALUE)
     }
 
