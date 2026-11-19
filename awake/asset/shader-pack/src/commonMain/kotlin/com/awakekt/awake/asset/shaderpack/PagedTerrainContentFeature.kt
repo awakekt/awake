@@ -15,6 +15,7 @@ import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapGeometry
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapTracker
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.terrain.PagedTerrain
 
@@ -41,6 +42,7 @@ fun pagedTerrainContentFeature(
             depth = depth.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Draw),
             textures = uploads.initialImages() + sharedTextures,
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
+            paint = ContentPaint.OpaqueGeometry,
             textureUpdates = uploads,
             samplerTextures = mapOf(2 to 1) + samplerTextures,
         ) { pipeline, uniforms, geometry ->

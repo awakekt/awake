@@ -381,6 +381,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         ),
         renderFeatures = listOf(
             attacher.beforeGeometry,
+            attacher.opaqueGeometry,
             OpaqueRenderFeature(VulkanLinePass(linePipeline)),
             attacher.afterGeometry,
             UiRenderFeature(VulkanUiPass()),

@@ -19,8 +19,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * [ContentFeatureHost] over one engine's [gpu]. The engine records [beforeGeometry] and
- * [afterGeometry] in its scene pass and calls [releaseAll] after destroying its pipelines.
+ * [ContentFeatureHost] over one engine's [gpu]. The engine records [beforeGeometry],
+ * [opaqueGeometry] and [afterGeometry] in its scene pass and calls [releaseAll] after destroying its pipelines.
  *
  * Features with the same pipeline spec share one registered pipeline, and one depth pipeline per
  * depth spec, counted by the features using them: the last to detach frees them. Each feature
@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeatureGpu<P>) : ContentFeatureHost {
     val beforeGeometry = AttachedContentSlot()
+    val opaqueGeometry = AttachedContentSlot()
     val afterGeometry = AttachedContentSlot()
     private val attached = mutableListOf<Attachment>()
     private val shared = HashMap<PipelineSpec, SharedPipeline>()
@@ -62,7 +63,11 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
                 uploads.forEach(ContentUpload::release)
             }
         }
-        val slot = if (feature.paint == ContentPaint.BeforeGeometry) beforeGeometry else afterGeometry
+        val slot = when (feature.paint) {
+            ContentPaint.BeforeGeometry -> beforeGeometry
+            ContentPaint.OpaqueGeometry -> opaqueGeometry
+            ContentPaint.AfterGeometry -> afterGeometry
+        }
         slot.add(built)
         Attachment(pipeline, built, slot, uploads).also { attached += it }
     }

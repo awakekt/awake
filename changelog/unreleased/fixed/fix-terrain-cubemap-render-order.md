@@ -1,0 +1,1 @@
+- Draw opaque terrain after backdrop features so a cubemap loaded during play cannot cover the ground.

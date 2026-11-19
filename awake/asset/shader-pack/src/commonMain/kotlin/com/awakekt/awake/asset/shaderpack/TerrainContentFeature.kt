@@ -22,6 +22,7 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
@@ -98,6 +99,7 @@ fun terrainContentFeature(
             ),
             textures = surfaceTextures + (HEIGHTMAP_BINDING to encoded.texture),
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
+            paint = ContentPaint.OpaqueGeometry,
         ) { pipeline, uniforms, geometry ->
             TerrainRenderFeature(
                 pipeline = pipeline,
