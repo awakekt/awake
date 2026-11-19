@@ -22,8 +22,8 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
-import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.ContentGeometry
+import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
