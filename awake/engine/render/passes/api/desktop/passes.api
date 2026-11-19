@@ -69,6 +69,7 @@ public final class com/awakekt/awake/render/passes/ContentGeometry {
 public final class com/awakekt/awake/render/passes/ContentPaint : java/lang/Enum {
 	public static final field AfterGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static final field BeforeGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
+	public static final field OpaqueGeometry Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static fun values ()[Lcom/awakekt/awake/render/passes/ContentPaint;

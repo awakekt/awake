@@ -193,8 +193,8 @@ private class ContentFeaturePassGate(
 }
 
 /**
- * Attached content features recorded at one paint position in the scene pass. An engine places
- * one before and one after its opaque geometry, so the renderer's own feature list never changes.
+ * Attached content features recorded at one paint position in the scene pass. The renderer's
+ * own feature list stays fixed when content features attach or detach.
  */
 class AttachedContentSlot : RenderFeature<RenderFrameContext> {
     private val features = ArrayList<RenderFeature<RenderFrameContext>>()

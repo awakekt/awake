@@ -408,6 +408,7 @@ class WebGpuHeadlessShaderReplacementTest {
                 maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
                 renderFeatures = listOf(
                     attacher.beforeGeometry,
+                    attacher.opaqueGeometry,
                     OpaqueRenderFeature(WebGpuLinePass(linePipeline)),
                     attacher.afterGeometry,
                     UiRenderFeature(WebGpuUiPass()),

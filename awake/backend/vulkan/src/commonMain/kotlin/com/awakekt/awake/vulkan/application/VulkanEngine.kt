@@ -403,6 +403,8 @@ open class VulkanEngine(
         return buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.beforeGeometry)
+            content[ContentPaint.OpaqueGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+            add(contentAttacher.opaqueGeometry)
             add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)))
             content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
             add(contentAttacher.afterGeometry)

@@ -174,9 +174,8 @@ class ContentFeature(
 /**
  * Where a [ContentFeature] sits in the scene pass's paint order.
  *
- * Two cases rather than an integer priority: the scene pass has exactly one thing to be ordered
- * against, and a number would let two features claim an order between themselves that neither
- * engine's feature list can honour anyway.
+ * Backdrops, opaque scene content and covering effects are recorded in that order. A feature
+ * that attaches later still records in its own phase.
  */
 enum class ContentPaint {
     /** Before the opaque geometry, which then paints over it -- a sky. */
@@ -184,6 +183,9 @@ enum class ContentPaint {
 
     /** After it, covering what it drew -- fog, and anything else reading the scene depth. */
     AfterGeometry,
+
+    /** After backdrops and before the scene's opaque and blended draws, for surfaces such as terrain. */
+    OpaqueGeometry,
 }
 
 /**
