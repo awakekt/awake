@@ -29,6 +29,6 @@ internal actual fun componentTypeIndexOf(key: Any): Int = SharedComponentTypeInd
 
 internal actual fun cheapComponentTypeIndexOf(key: Any): Int = -1
 
-internal actual fun componentTypeKeyHash(key: Any): Int = key.hashCode()
+internal actual fun componentTypeKeyHash(key: Any): Int = java.lang.System.identityHashCode(key)
 
 internal actual fun normalizedComponentTypeKey(key: Any): Any = key

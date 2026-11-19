@@ -47,15 +47,22 @@ inline fun <reified T : Any> componentType(): ComponentType<T> = componentType(T
 fun World.typeId(type: ComponentType<*>): ComponentTypeId = components.typeIdOrNull(type) ?: typeId(type.type)
 
 /** The [type] component of [entity], or `null` when it has none; like `get<T>` without resolving the class. */
-fun <T : Any> World.get(entity: Entity, type: ComponentType<T>): T? {
-    val typeId = components.typeIdOrNull(type) ?: return null
-    return getInternal(entity, typeId)
-}
+fun <T : Any> World.get(entity: Entity, type: ComponentType<T>): T? =
+    components.storeAtIndexOrNull(type)?.get(entity)
+
+/**
+ * The underlying [ComponentStore] for [type], or `null` when no entity in this world has carried it.
+ *
+ * Reads the store in a single array lookup using [type]'s process-wide index and remains valid across
+ * worlds and [World.clear] without tracking [World.generation].
+ */
+fun <T : Any> World.componentStore(type: ComponentType<T>): ComponentStore<T>? =
+    components.storeAtIndexOrNull(type)
 
 /** Whether [entity] has a [type] component; like `has<T>` without resolving the class. */
 fun World.has(entity: Entity, type: ComponentType<*>): Boolean {
-    val typeId = components.typeIdOrNull(type) ?: return false
-    return hasInternal(entity, typeId)
+    val id = components.typeIdValueOrAbsent(type)
+    return id >= 0 && hasInternal(entity, ComponentTypeId(id))
 }
 
 /** Adds [component] to [entity] as its [type] component, returning the one it replaced, if any. */

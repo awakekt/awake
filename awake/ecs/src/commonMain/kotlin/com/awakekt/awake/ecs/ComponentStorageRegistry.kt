@@ -10,19 +10,28 @@ import kotlin.reflect.KClass
 /** Component stores keyed by type ID; owns no type or pool policy. */
 internal class ComponentStorageRegistry {
     private var stores = arrayOfNulls<ComponentStore<Any>>(INITIAL_CAPACITY)
+    private var storesByIndex = arrayOfNulls<ComponentStore<Any>>(INITIAL_CAPACITY)
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> {
+    fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>, typeIndex: Int = -1): ComponentStore<T> {
         val id = typeId.value
         if (id < stores.size) stores[id]?.let { return it as ComponentStore<T> }
 
         ensureCapacity(id)
-        return ComponentStore(type).also { stores[id] = it as ComponentStore<Any> }
+        val created = ComponentStore(type)
+        val raw = created as ComponentStore<Any>
+        stores[id] = raw
+        if (typeIndex >= 0) indexStore(typeIndex, raw)
+        return created
     }
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> storeOrNull(typeId: ComponentTypeId): ComponentStore<T>? =
-        if (typeId.value < stores.size) stores[typeId.value] as? ComponentStore<T> else null
+        if (typeId.value < stores.size) stores[typeId.value] as ComponentStore<T>? else null
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> storeAtIndexOrNull(index: Int): ComponentStore<T>? =
+        if (index < storesByIndex.size) storesByIndex[index] as ComponentStore<T>? else null
 
     fun storageKind(typeId: ComponentTypeId): ComponentStorageKind =
         storeOrNull<Any>(typeId)?.storageKind ?: ComponentStorageKind.Uninitialized
@@ -46,6 +55,14 @@ internal class ComponentStorageRegistry {
     fun clear() {
         forEach { it.clear() }
         stores.fill(null)
+        storesByIndex.fill(null)
+    }
+
+    private fun indexStore(index: Int, store: ComponentStore<Any>) {
+        if (index >= storesByIndex.size) {
+            storesByIndex = storesByIndex.copyOf(maxOf(index + 1, storesByIndex.size * 2))
+        }
+        storesByIndex[index] = store
     }
 
     private fun ensureCapacity(id: Int) {

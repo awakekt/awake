@@ -34,11 +34,13 @@ public final class com/awakekt/awake/ecs/ComponentRegistry {
 	public final fun storageKind (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStorageKind;
 	public final fun store-2JZkb7c (ILkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun storeForKey-2JZkb7c (ILkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/ecs/ComponentStore;
+	public final fun storeForKeyOrNull (Ljava/lang/Object;)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun storeOrNull-1VG1NCY (I)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun typeId-RRRE7NQ (Lkotlin/reflect/KClass;)I
 	public final fun typeIdForKey-BVX5XLw (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)I
 	public final fun typeIdForKeyOrNull-zIr7gLw (Ljava/lang/Object;)Lcom/awakekt/awake/ecs/ComponentTypeId;
 	public final fun typeIdOrNull-zIr7gLw (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentTypeId;
+	public final fun typeIdValueForKeyOrAbsent (Ljava/lang/Object;)I
 }
 
 public final class com/awakekt/awake/ecs/ComponentStorageInfo {
@@ -103,6 +105,7 @@ public final class com/awakekt/awake/ecs/ComponentTypeId {
 
 public final class com/awakekt/awake/ecs/ComponentTypeKt {
 	public static final fun add-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ecs/ComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+	public static final fun componentStore (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;)Lcom/awakekt/awake/ecs/ComponentStore;
 	public static final fun componentType (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentType;
 	public static final fun family (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;)Lcom/awakekt/awake/ecs/Family1;
 	public static final fun family (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/ComponentType;Lcom/awakekt/awake/ecs/ComponentType;)Lcom/awakekt/awake/ecs/Family2;
@@ -154,6 +157,92 @@ public final class com/awakekt/awake/ecs/EntityBuilder {
 	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getEntity-LaMO_uA ()J
 	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+}
+
+public final class com/awakekt/awake/ecs/EntityList {
+	public static final field ABSENT I
+	public static final field DEFAULT_CAPACITY I
+	public static final field GROWTH_FACTOR I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add-H_EwOg4 (J)V
+	public final fun addAll (Lcom/awakekt/awake/ecs/EntityList;)V
+	public final fun addAll (Lcom/awakekt/awake/ecs/EntitySet;)V
+	public final fun addAll (Ljava/lang/Iterable;)V
+	public final fun all (Lkotlin/jvm/functions/Function1;)Z
+	public final fun any (Lkotlin/jvm/functions/Function1;)Z
+	public final fun clear ()V
+	public final fun contains-H_EwOg4 (J)Z
+	public final fun ensureCapacity (I)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun first-LaMO_uA ()J
+	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
+	public final fun forEachIndexed (Lkotlin/jvm/functions/Function2;)V
+	public final fun get-bssdaRw (I)J
+	public final fun getCount ()I
+	public final fun getElements ()[J
+	public final fun getIndices ()Lkotlin/ranges/IntRange;
+	public final fun getLastIndex ()I
+	public final fun getSize ()I
+	public fun hashCode ()I
+	public final fun indexOf-H_EwOg4 (J)I
+	public final fun isEmpty ()Z
+	public final fun isNotEmpty ()Z
+	public final fun last-LaMO_uA ()J
+	public final fun remove-H_EwOg4 (J)Z
+	public final fun removeAll (Lkotlin/jvm/functions/Function1;)Z
+	public final fun removeAt-bssdaRw (I)J
+	public final fun removeLast-LaMO_uA ()J
+	public final fun retainAll (Lkotlin/jvm/functions/Function1;)Z
+	public final fun set-YHY8-gA (IJ)J
+	public final fun setCount (I)V
+	public final fun setElements ([J)V
+	public final fun swapRemove-H_EwOg4 (J)Z
+	public final fun swapRemoveAt-bssdaRw (I)J
+	public final fun toList ()Ljava/util/List;
+	public final fun toLongArray ()[J
+	public fun toString ()Ljava/lang/String;
+	public final fun trimToSize ()V
+}
+
+public final class com/awakekt/awake/ecs/EntitySet {
+	public static final field DEFAULT_CAPACITY I
+	public static final field EMPTY I
+	public static final field GROWTH_FACTOR I
+	public static final field HASH_MIX_MULTIPLIER J
+	public static final field HASH_SHIFT I
+	public static final field MIN_TABLE_SIZE I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add-H_EwOg4 (J)Z
+	public final fun addAll (Lcom/awakekt/awake/ecs/EntityList;)Z
+	public final fun addAll (Lcom/awakekt/awake/ecs/EntitySet;)Z
+	public final fun addAll (Ljava/lang/Iterable;)Z
+	public final fun all (Lkotlin/jvm/functions/Function1;)Z
+	public final fun any (Lkotlin/jvm/functions/Function1;)Z
+	public final fun clear ()V
+	public final fun contains-H_EwOg4 (J)Z
+	public final fun ensureCapacity (I)V
+	public final fun entityAt-bssdaRw (I)J
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
+	public final fun getCount ()I
+	public final fun getDense ()[J
+	public final fun getSize ()I
+	public fun hashCode ()I
+	public final fun isEmpty ()Z
+	public final fun isNotEmpty ()Z
+	public final fun remove-H_EwOg4 (J)Z
+	public final fun removeAll (Lkotlin/jvm/functions/Function1;)Z
+	public final fun retainAll (Lkotlin/jvm/functions/Function1;)Z
+	public final fun setCount (I)V
+	public final fun setDense ([J)V
+	public final fun toList ()Ljava/util/List;
+	public final fun toLongArray ()[J
+	public final fun toSet ()Ljava/util/Set;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/ecs/EntityStorageInfo {
@@ -398,6 +487,7 @@ public final class com/awakekt/awake/ecs/WorldDiagnosticsKt {
 }
 
 public final class com/awakekt/awake/ecs/WorldExtensionsKt {
+	public static final fun componentStore (Lcom/awakekt/awake/ecs/World;Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStore;
 	public static final fun create (Lcom/awakekt/awake/ecs/World;Lkotlin/jvm/functions/Function1;)J
 	public static final fun destroy-smMvhPQ (JLcom/awakekt/awake/ecs/World;)Z
 }

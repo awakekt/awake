@@ -103,4 +103,35 @@ class ComponentTypeHandleTest {
         assertEquals(healthType, componentType(Health::class))
         assertNotEquals<ComponentType<*>>(healthType, speedType)
     }
+
+    @Test
+    fun componentStoreReturnsExistingStoreAndResetsOnClear() {
+        val world = World()
+        assertNull(world.componentStore<Health>())
+        assertNull(world.componentStore(Health::class))
+        assertNull(world.componentStore(healthType))
+
+        val entity = world.create()
+        world.add(entity, Health(42))
+
+        val byReified = world.componentStore<Health>()
+        val byClass = world.componentStore(Health::class)
+        val byHandle = world.componentStore(healthType)
+        assertSame(byReified, byClass)
+        assertSame(byReified, byHandle)
+        assertSame(byReified, world.store(Health::class))
+        assertEquals(Health(42), byReified?.get(entity))
+
+        world.clear()
+        assertNull(world.componentStore<Health>())
+        assertNull(world.componentStore(Health::class))
+        assertNull(world.componentStore(healthType))
+
+        val nextEntity = world.create()
+        world.add(nextEntity, Health(7))
+        val afterClear = world.componentStore(healthType)
+        assertSame(world.componentStore<Health>(), afterClear)
+        assertSame(world.componentStore(Health::class), afterClear)
+        assertEquals(Health(7), afterClear?.get(nextEntity))
+    }
 }
