@@ -1014,6 +1014,7 @@ public final class com/awakekt/awake/compose/ui/input/pointer/PointerInputDispat
 	public static synthetic fun advanceTime$default (Lcom/awakekt/awake/compose/ui/input/pointer/PointerInputDispatcher;Lcom/awakekt/awake/compose/ui/node/LayoutNode;IIFJILjava/lang/Object;)V
 	public final fun dispatch (Lcom/awakekt/awake/compose/ui/node/LayoutNode;Lcom/awakekt/awake/compose/ui/input/pointer/PointerEvent;IIII)Z
 	public static synthetic fun dispatch$default (Lcom/awakekt/awake/compose/ui/input/pointer/PointerInputDispatcher;Lcom/awakekt/awake/compose/ui/node/LayoutNode;Lcom/awakekt/awake/compose/ui/input/pointer/PointerEvent;IIIIILjava/lang/Object;)Z
+	public final fun getCapturedPointerIds ()Ljava/util/Set;
 	public final fun getFocusOwner ()Lcom/awakekt/awake/compose/ui/focus/FocusOwner;
 	public final fun getHasCapture ()Z
 	public final fun getHoveredCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
@@ -1683,8 +1684,10 @@ public final class com/awakekt/awake/compose/ui/platform/FrameStep {
 
 public final class com/awakekt/awake/compose/ui/platform/InputOwnership {
 	public fun <init> ()V
-	public fun <init> (ZZZZZZLjava/util/Set;)V
+	public synthetic fun <init> (ZZZZZZLjava/util/Set;)V
 	public synthetic fun <init> (ZZZZZZLjava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZZZZLjava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (ZZZZZZLjava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Z
 	public final fun component3 ()Z
@@ -1692,9 +1695,13 @@ public final class com/awakekt/awake/compose/ui/platform/InputOwnership {
 	public final fun component5 ()Z
 	public final fun component6 ()Z
 	public final fun component7 ()Ljava/util/Set;
-	public final fun copy (ZZZZZZLjava/util/Set;)Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
+	public final fun component8 ()Ljava/util/Set;
+	public final synthetic fun copy (ZZZZZZLjava/util/Set;)Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
+	public final fun copy (ZZZZZZLjava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;ZZZZZZLjava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;ZZZZZZLjava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapturedPointerIds ()Ljava/util/Set;
 	public final fun getTextInputPassThroughKeys ()Ljava/util/Set;
 	public fun hashCode ()I
 	public final fun isCaptured ()Z

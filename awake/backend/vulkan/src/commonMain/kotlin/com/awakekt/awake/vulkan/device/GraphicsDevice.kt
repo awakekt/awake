@@ -46,6 +46,9 @@ import com.awakekt.awake.vulkan.utils.getAppLayerProps
  * not a behavior change.
  */
 class GraphicsDevice {
+    /** Serializes host access to Vulkan queues (`vkQueueSubmit` / `vkQueuePresentKHR`) across threads. */
+    internal val queueLock = QueueLock()
+
     private var frameUniformBuffers: com.awakekt.awake.vulkan.renderer.FrameUniformBuffers? = null
 
     /** Per-draw uniform blocks written to material slots so far. For tests and probes. */

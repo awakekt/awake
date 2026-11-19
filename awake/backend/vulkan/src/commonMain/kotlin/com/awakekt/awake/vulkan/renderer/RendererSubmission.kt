@@ -24,11 +24,13 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // image -- so waiting on one would hang here rather than fail. Submit bare and return; the
     // fence this frame already owns is what a reader waits on.
     if (swapchainManager.isHeadlessPresentable) {
-        Vulkan.vkQueueSubmit(
-            graphicsQueue,
-            arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffers[currentFrame]))),
-            swapchainManager.inFlightFences[currentFrame],
-        )
+        graphicsDevice.queueLock.withLock {
+            Vulkan.vkQueueSubmit(
+                graphicsQueue,
+                arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffers[currentFrame]))),
+                swapchainManager.inFlightFences[currentFrame],
+            )
+        }
         bufferPools.frameSubmitted(currentFrame)
         retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
         swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
@@ -39,18 +41,20 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         intArrayOf(VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value)
     val signalSemaphores = arrayOf(swapchainManager.renderFinishedSemaphores[imageIndex])
 
-    Vulkan.vkQueueSubmit(
-        graphicsQueue,
-        arrayOf(
-            VkSubmitInfo(
-                pWaitSemaphores = waitSemaphores,
-                pWaitDstStageMask = waitStages,
-                pCommandBuffers = arrayOf(commandBuffers[currentFrame]),
-                pSignalSemaphores = signalSemaphores,
+    graphicsDevice.queueLock.withLock {
+        Vulkan.vkQueueSubmit(
+            graphicsQueue,
+            arrayOf(
+                VkSubmitInfo(
+                    pWaitSemaphores = waitSemaphores,
+                    pWaitDstStageMask = waitStages,
+                    pCommandBuffers = arrayOf(commandBuffers[currentFrame]),
+                    pSignalSemaphores = signalSemaphores,
+                ),
             ),
-        ),
-        swapchainManager.inFlightFences[currentFrame],
-    )
+            swapchainManager.inFlightFences[currentFrame],
+        )
+    }
     bufferPools.frameSubmitted(currentFrame)
     retiredSamplers.frameSubmitted(commandBuffers.size, ::awaitSubmittedOffscreenCommands)
 
@@ -65,7 +69,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
     // A change of pacer or of frame-rate mode applies here, between frames, on the thread that presents.
     graphicsDevice.swapchainPacer?.beforePresent()
-    val result = Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo)
+    val result = graphicsDevice.queueLock.withLock { Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo) }
     swapchainManager.presentResults[result.ordinal]++
     presentIntervals.recordPresent()
     when (presentAction(result, swapchainManager.suboptimalAccepted) { swapchainManager.surfaceChangedSinceBuild }) {

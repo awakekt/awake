@@ -133,17 +133,65 @@ data class InputOwnership(
      * [com.awakekt.awake.compose.ui.node.TextInputNode.passThroughKeys]. Empty when nothing is focused.
      */
     val textInputPassThroughKeys: Set<Key> = emptySet(),
-)
+    /**
+     * Specific pointer ids currently captured by a UI node (`0L` for mouse, `touch.id + 1L` for touch).
+     * Lets world input subtract only UI-captured pointers while allowing simultaneous uncaptured touches.
+     */
+    val capturedPointerIds: Set<Long> = emptySet(),
+) {
+    /** [InputOwnership] as it was before [capturedPointerIds]: kept so older compiled callers still link. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        isCaptured: Boolean = false,
+        isOverScrollable: Boolean = false,
+        isScrollConsumed: Boolean = false,
+        isTextInputFocused: Boolean = false,
+        isModalOpen: Boolean = false,
+        isTextInputSingleLine: Boolean = true,
+        textInputPassThroughKeys: Set<Key> = emptySet(),
+    ) : this(
+        isCaptured,
+        isOverScrollable,
+        isScrollConsumed,
+        isTextInputFocused,
+        isModalOpen,
+        isTextInputSingleLine,
+        textInputPassThroughKeys,
+        emptySet(),
+    )
+
+    /** `copy` as it was before [capturedPointerIds]: kept so older compiled callers still link. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        isCaptured: Boolean = this.isCaptured,
+        isOverScrollable: Boolean = this.isOverScrollable,
+        isScrollConsumed: Boolean = this.isScrollConsumed,
+        isTextInputFocused: Boolean = this.isTextInputFocused,
+        isModalOpen: Boolean = this.isModalOpen,
+        isTextInputSingleLine: Boolean = this.isTextInputSingleLine,
+        textInputPassThroughKeys: Set<Key> = this.textInputPassThroughKeys,
+    ): InputOwnership = InputOwnership(
+        isCaptured,
+        isOverScrollable,
+        isScrollConsumed,
+        isTextInputFocused,
+        isModalOpen,
+        isTextInputSingleLine,
+        textInputPassThroughKeys,
+        capturedPointerIds,
+    )
+}
 
 /**
- * Gameplay must ignore keys when the UI owns the pointer, is taking text, or a modal is open.
+ * Gameplay must ignore keys when the UI is taking text or a modal is open. Pointer capture on a
+ * non-modal panel (e.g. dragging an item or holding a touch control) leaves keyboard input free.
  *
  * While [isTextInputFocused] this is `true` even though a focused field only takes *some* keys --
  * see [blocksGameplayKey] for the per-key answer. Kept, rather than narrowed, because a caller that
  * only wants "is the keyboard partly spoken for" (clearing a held movement intent, say) still needs
  * one cheap boolean.
  */
-val InputOwnership.blocksGameplayKeys: Boolean get() = isCaptured || isTextInputFocused || isModalOpen
+val InputOwnership.blocksGameplayKeys: Boolean get() = isTextInputFocused || isModalOpen
 
 /**
  * Keys a focused text input of [isTextInputSingleLine] handles itself, before
@@ -183,14 +231,12 @@ private val MULTILINE_TEXT_INPUT_KEYS: Set<Key> = SINGLE_LINE_TEXT_INPUT_KEYS + 
 /**
  * Whether gameplay must ignore [key] specifically this frame.
  *
- * The per-key refinement of [blocksGameplayKeys]: pointer capture and a modal still take every key,
- * but a focused text field takes only the keys it uses (see [textInputUsedKeys]), minus whatever it
- * declared through [InputOwnership.textInputPassThroughKeys]. That is what lets a single-line chat
- * field's Up/Down reach a game system for stepping through sent lines while the field still keeps
- * letters and Backspace for itself.
+ * The per-key refinement of [blocksGameplayKeys]: a modal takes every key, a focused text field takes
+ * only the keys it uses (see [textInputUsedKeys]) minus whatever it declared through
+ * [InputOwnership.textInputPassThroughKeys], and pointer capture on a non-modal panel does not block keys.
  */
 fun InputOwnership.blocksGameplayKey(key: Key): Boolean = when {
-    isCaptured || isModalOpen -> true
+    isModalOpen -> true
     !isTextInputFocused -> false
     key in textInputPassThroughKeys -> false
     else -> key in textInputUsedKeys(isTextInputSingleLine)

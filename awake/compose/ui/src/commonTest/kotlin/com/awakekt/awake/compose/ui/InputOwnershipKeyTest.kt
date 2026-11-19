@@ -71,9 +71,11 @@ class InputOwnershipKeyTest {
     }
 
     @Test
-    fun captureAndModalStillBlockEveryKeyRegardlessOfTextInput() {
-        assertTrue(InputOwnership(isCaptured = true).blocksGameplayKey(Key.ArrowUp))
-        assertTrue(InputOwnership(isCaptured = true).blocksGameplayKey(Key.F1))
+    fun modalBlocksEveryKeyWhilePointerCaptureLetsKeysThrough() {
+        assertFalse(InputOwnership(isCaptured = true).blocksGameplayKey(Key.W))
+        assertFalse(InputOwnership(isCaptured = true).blocksGameplayKey(Key.ArrowUp))
+        assertFalse(InputOwnership(isCaptured = true).blocksGameplayKey(Key.F1))
+        assertTrue(InputOwnership(isModalOpen = true).blocksGameplayKey(Key.W))
         assertTrue(InputOwnership(isModalOpen = true).blocksGameplayKey(Key.ArrowUp))
         assertTrue(InputOwnership(isModalOpen = true).blocksGameplayKey(Key.F1))
     }

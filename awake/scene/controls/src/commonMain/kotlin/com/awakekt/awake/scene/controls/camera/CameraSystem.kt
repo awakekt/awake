@@ -23,6 +23,7 @@ import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.PI
+import kotlin.math.hypot
 
 /**
  * Drives the [ActiveCamera]'s pose from its [CameraRig].
@@ -55,6 +56,10 @@ class CameraSystem(
     private var lastPointerX = 0f
     private var lastPointerY = 0f
     private var activeDrag: Drag? = null
+    private var pinchTracking = false
+    private var pinchFirstId = 0L
+    private var pinchSecondId = 0L
+    private var pinchLastSpan = 0f
     private val flyInput = CameraFlyInput(gesturePolicy.flyActions)
 
     /** The point being orbited, when it is composed rather than taken straight from a rig. */
@@ -79,6 +84,7 @@ class CameraSystem(
         lastPointerX = input.pointerX
         lastPointerY = input.pointerY
         activeDrag = drag
+        val pinchScale = worldPinchScale(input)
         collisionProbes.prepare(world)
 
         world.queryEach(Camera::class, CameraRig::class) { entity, camera, config ->
@@ -95,7 +101,7 @@ class CameraSystem(
             if (drag == Drag.Pan) {
                 pan(config, camera, dx, dy)
             } else {
-                applyCameraRigInput(config, input, dx, dy, inViewport)
+                applyCameraRigInput(config, input, dx, dy, inViewport, pinchScale)
             }
             if (config.mode == CameraMode.FreeFly && gesturePolicy.canFly.isDragging(input)) {
                 fly(config, camera, input, delta)
@@ -126,6 +132,7 @@ class CameraSystem(
         dx: Float,
         dy: Float,
         inViewport: Boolean,
+        pinchScale: Float?,
     ) {
         if (config.mode.usesYaw) {
             config.yaw = CameraPose.turnedYaw(config.yaw, dx, gesturePolicy.lookSensitivity, gesturePolicy.invertYaw)
@@ -135,14 +142,31 @@ class CameraSystem(
         }
         if (config.mode.usesZoom && inViewport) {
             // A pinch's frame's scroll is the same pinch again as Ctrl+wheel, so that is not added too.
-            val pinch = input.pinch
-            val zoomed = if (pinch != null) {
-                CameraPose.pinchedDistance(config.distance, pinch.scale)
+            val zoomed = if (pinchScale != null) {
+                CameraPose.pinchedDistance(config.distance, pinchScale)
             } else {
                 CameraPose.scrolledDistance(config.distance, input.scrollDeltaY, gesturePolicy.zoomSensitivity, gesturePolicy.zoomProportion)
             }
             config.distance = zoomed.coerceIn(config.minDistance, config.maxDistance)
         }
+    }
+
+    private fun worldPinchScale(input: GameplayInput): Float? {
+        val capturedTouch = input.hasCapturedTouchContact()
+        val first = if (capturedTouch) input.firstWorldTouch() else null
+        val second = if (first != null) input.secondWorldTouch(first) else null
+        if (first == null || second == null) {
+            pinchTracking = false
+            return if (capturedTouch) null else input.pinch?.scale
+        }
+        val span = hypot(second.x - first.x, second.y - first.y)
+        val samePair = pinchTracking && first.id == pinchFirstId && second.id == pinchSecondId
+        val scale = if (samePair && pinchLastSpan >= MIN_PINCH_SPAN && span >= MIN_PINCH_SPAN) span / pinchLastSpan else null
+        pinchTracking = true
+        pinchFirstId = first.id
+        pinchSecondId = second.id
+        pinchLastSpan = span
+        return scale
     }
 
     /** Drags the scene with the pointer: moves the orbit point, or a free-fly eye, across the view. */
@@ -307,3 +331,5 @@ private fun CameraOrbitButtons.allowsDrag(input: GameplayInput): Boolean = this 
         secondaryDown = input.isDown(PointerButton.Secondary),
         touch = input.hostState?.lastInputDevice == InputDevice.Touch,
     )
+
+private const val MIN_PINCH_SPAN = 1f

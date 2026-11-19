@@ -85,10 +85,12 @@ private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, measureGp
     Vulkan.vkEndCommandBuffer(commandBuffer)
 
     Vulkan.vkResetFences(device, longArrayOf(fence))
-    Vulkan.vkQueueSubmit(
-        graphicsQueue,
-        arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffer))),
-        fence,
-    )
+    graphicsDevice.queueLock.withLock {
+        Vulkan.vkQueueSubmit(
+            graphicsQueue,
+            arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffer))),
+            fence,
+        )
+    }
     return timing
 }
