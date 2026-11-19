@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.58.0] - 2026-11-19
+
+### Fixed
+
+- Draw opaque terrain after backdrop features so a cubemap loaded during play cannot cover the ground.
+
 ## [0.57.2] - 2026-11-19
 
 ### Added
