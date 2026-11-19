@@ -13,6 +13,8 @@ class ComponentStore<T : Any>(
 ) {
     private val membership = SparseEntitySet()
     private var values: ComponentValueStorage<T>? = null
+    private var directValues: Array<Any?>? = null
+    private var singletonTag: T? = null
 
     /** Number of entities currently carrying this component. */
     val size: Int get() = membership.size
@@ -43,22 +45,35 @@ class ComponentStore<T : Any>(
      */
     fun add(entity: Entity, component: T): T? {
         revision++
-        val storage = values ?: selectStorage(component).also { values = it }
+        val storage = values ?: selectStorage(component).also { selected ->
+            values = selected
+            when (selected) {
+                is PayloadColumn -> directValues = selected.rawValues
+                is SingletonTagValue -> singletonTag = selected.valueForIteration()
+            }
+        }
         storage.validate(component)
         val existingIndex = membership.indexOf(entity)
         if (existingIndex >= 0) return storage.replace(existingIndex, component)
 
         val index = membership.addNew(entity)
         storage.insert(index, component)
+        if (storage is PayloadColumn) directValues = storage.rawValues
         return null
     }
 
     /**
      * Returns the component instance attached to the [entity], or null if absent.
      */
+    @Suppress("UNCHECKED_CAST")
     fun get(entity: Entity): T? {
         val index = membership.indexOf(entity)
-        return if (index >= 0) values?.valueAt(index) else null
+        val dense = directValues
+        return when {
+            index < 0 -> null
+            dense != null -> dense[index] as T
+            else -> singletonTag
+        }
     }
 
     /** Returns true if the [entity] is carrying this component. */

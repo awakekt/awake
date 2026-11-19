@@ -27,7 +27,10 @@ internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.ja
 
 internal actual fun componentTypeIndexOf(key: Any): Int = ComponentTypeIndexValue.get(key as Class<*>)
 
-internal actual fun cheapComponentTypeIndexOf(key: Any): Int = componentTypeIndexOf(key)
+// Probing the world's open-addressing TypeKeyTable by Class identity hash avoids ClassValue.get's
+// per-call table + version + boxed-Integer dereference on hot JVM loops, while ComponentType handles
+// continue to use componentTypeIndexOf's direct array slot.
+internal actual fun cheapComponentTypeIndexOf(key: Any): Int = -1
 
 /**
  * Each component class's index, held by the class itself. A `ClassValue` read does not hash the
@@ -40,6 +43,6 @@ private object ComponentTypeIndexValue : ClassValue<Int>() {
     override fun computeValue(type: Class<*>): Int = next.getAndIncrement()
 }
 
-internal actual fun componentTypeKeyHash(key: Any): Int = key.hashCode()
+internal actual fun componentTypeKeyHash(key: Any): Int = java.lang.System.identityHashCode(key)
 
 internal actual fun normalizedComponentTypeKey(key: Any): Any = key

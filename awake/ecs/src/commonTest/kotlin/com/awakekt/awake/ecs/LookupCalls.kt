@@ -22,12 +22,16 @@ internal class LookupCalls {
     private val positions = arrayOf(Position(), Position())
     private val positionType: KClass<Position> = Position::class
     private val velocityType: KClass<Velocity> = Velocity::class
+    private val positionHandle: ComponentType<Position> = componentType()
     var sink = 0f
         private set
 
     val calls: List<Pair<String, () -> Unit>> = listOf(
         "get<T>" to { for (e in entities) sink += world.get<Position>(e)!!.x },
         "get(KClass)" to { for (e in entities) sink += world.get(e, positionType)!!.x },
+        "get(ComponentType)" to { for (e in entities) sink += world.get(e, positionHandle)!!.x },
+        "componentStore<T>()" to { for (e in entities) sink += world.componentStore<Position>()!!.get(e)!!.x },
+        "componentStore(ComponentType)" to { for (e in entities) sink += world.componentStore(positionHandle)!!.get(e)!!.x },
         "has<T>" to { for (e in entities) if (world.has<Velocity>(e)) sink += 1f },
         "add<T> then remove<T>" to { for (e in entities) { world.add(e, health); world.remove<Health>(e) } },
         "add<T> replacing" to { for (i in entities.indices) world.add(entities[i], positions[i and 1]) },

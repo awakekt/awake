@@ -146,11 +146,11 @@ Each of these has four overloads. Pick by call frequency:
 | `world.add(entity, typeId, c)`     | hot loops, one world       | the above; resolve again after `World.clear`     |
 
 A `ComponentType<T>` handle (`componentType<Position>()`) carries its class's process-wide index,
-so `get`, `has`, `add`, `remove` and `family` with a handle read the world's id from an array
-instead of finding the class. It is valid in every world and across `World.clear`, so it can live
-in a top-level `val`. On the JVM the reified forms use the same index, held by the class in a
-`ClassValue`; on Android (below API 34), Kotlin/Native and Kotlin/Wasm they still look the class
-up in the world's map, and only a handle skips it.
+so `get`, `has`, `add`, `remove`, `componentStore` and `family` with a handle read the world's store
+or id straight from an array instead of probing the class table. It is valid in every world and
+across `World.clear`, so it can live in a top-level `val`. The reified and `KClass` forms probe
+the world's interleaved key/store table directly (`World.componentStore<T>()`, `World.componentStore(KClass)`,
+and `World.componentStore(ComponentType)` also let hot loops hoist a store reference cleanly).
 
 ```kotlin
 // Hot loop: hoist the ComponentTypeId once, outside the loop
@@ -269,10 +269,21 @@ keeps `System` small and scheduler-free, while higher layers such as `awake-scen
 can register systems into explicit phases such as fixed simulation steps or per-frame
 render/update passes.
 
-If a system keeps its own per-frame scratch state (buffers, visited-sets), reuse instance
-fields across `update()` calls instead of allocating fresh collections every frame — see
-`awake-scene`'s `TransformSystem` for a worked example (entity-id-indexed arrays instead of
-a `Map`/`Set` keyed by `Entity`, to avoid boxing the value class on every frame).
+If a system keeps its own per-frame scratch state (buffers, queues, visited sets), reuse
+`EntityList` and `EntitySet` instance fields across `update()` calls instead of allocating
+`ArrayList<Entity>` or `HashSet<Entity>` (which box the `Entity` value class on every insertion
+and iteration):
+
+```kotlin
+private val scratch = EntityList()
+private val visited = EntitySet()
+
+fun update(world: World) {
+    scratch.clear()
+    visited.clear()
+    // add / contains / forEach / remove without boxing Entity handles
+}
+```
 
 ## What this ECS deliberately doesn't do
 

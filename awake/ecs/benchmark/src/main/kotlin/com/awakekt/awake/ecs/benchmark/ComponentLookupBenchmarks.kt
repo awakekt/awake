@@ -8,6 +8,7 @@ package com.awakekt.awake.ecs.benchmark
 import com.awakekt.awake.ecs.ComponentType
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.componentStore
 import com.awakekt.awake.ecs.componentType
 import com.awakekt.awake.ecs.get
 import com.awakekt.awake.ecs.has
@@ -82,6 +83,52 @@ open class ComponentLookupBenchmarks {
         state.world.queryEach<LookupPosition> { _, position -> sum += position.x }
         return sum
     }
+
+    /** Multi-system tick simulation: 4 distinct `world.get<T>` lookups per entity without manual store caching. */
+    @Benchmark
+    fun multiTypeReifiedGet(state: ComponentLookupState): Int {
+        var sum = 0
+        val world = state.world
+        for (entity in state.entities) {
+            sum += world.get<LookupPosition>(entity)!!.x
+            sum += world.get<LookupVelocity>(entity)!!.vx
+            sum += world.get<LookupHealth>(entity)!!.hp
+            sum += world.get<LookupStats>(entity)!!.power
+        }
+        return sum
+    }
+
+    /** Multi-system tick simulation using [ComponentType] handles (direct index array, no per-world cache). */
+    @Benchmark
+    fun multiTypeHandleGet(state: ComponentLookupState): Int {
+        var sum = 0
+        val world = state.world
+        for (entity in state.entities) {
+            sum += world.get(entity, LOOKUP_POSITION)!!.x
+            sum += world.get(entity, LOOKUP_VELOCITY)!!.vx
+            sum += world.get(entity, LOOKUP_HEALTH)!!.hp
+            sum += world.get(entity, LOOKUP_STATS)!!.power
+        }
+        return sum
+    }
+
+    /** Multi-system tick simulation hoisting `world.componentStore<T>()` once per tick (upper bound). */
+    @Benchmark
+    fun multiTypeHoistedStoreGet(state: ComponentLookupState): Int {
+        var sum = 0
+        val world = state.world
+        val pos = world.componentStore<LookupPosition>()!!
+        val vel = world.componentStore<LookupVelocity>()!!
+        val hp = world.componentStore<LookupHealth>()!!
+        val stats = world.componentStore<LookupStats>()!!
+        for (entity in state.entities) {
+            sum += pos.get(entity)!!.x
+            sum += vel.get(entity)!!.vx
+            sum += hp.get(entity)!!.hp
+            sum += stats.get(entity)!!.power
+        }
+        return sum
+    }
 }
 
 @State(Scope.Thread)
@@ -99,6 +146,9 @@ open class ComponentLookupState {
         entities = Array(entityCount) { index ->
             world.create().also { entity ->
                 world.add(entity, LookupPosition(index))
+                world.add(entity, LookupVelocity(index + 1))
+                world.add(entity, LookupHealth(index + 2))
+                world.add(entity, LookupStats(index + 3))
                 if (index % 2 == 0) world.add(entity, LookupMarker)
                 FILLER_TYPES.forEach { filler -> filler.addTo(world, entity) }
             }
@@ -108,9 +158,18 @@ open class ComponentLookupState {
 
 class LookupPosition(val x: Int)
 
+class LookupVelocity(val vx: Int)
+
+class LookupHealth(val hp: Int)
+
+class LookupStats(val power: Int)
+
 data object LookupMarker
 
 private val LOOKUP_POSITION: ComponentType<LookupPosition> = componentType()
+private val LOOKUP_VELOCITY: ComponentType<LookupVelocity> = componentType()
+private val LOOKUP_HEALTH: ComponentType<LookupHealth> = componentType()
+private val LOOKUP_STATS: ComponentType<LookupStats> = componentType()
 private val LOOKUP_MARKER: ComponentType<LookupMarker> = componentType()
 
 private class LookupFiller<T : Any>(val type: KClass<T>, val instance: () -> T) {

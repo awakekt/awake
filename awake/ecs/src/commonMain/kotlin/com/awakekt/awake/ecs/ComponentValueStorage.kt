@@ -61,6 +61,8 @@ internal class PayloadColumn<T : Any>(type: KClass<T>) : ComponentValueStorage<T
 
     internal fun valuesForIteration(): Array<T> = typedValues
 
+    internal val rawValues: Array<Any?> get() = values
+
     private fun ensureCapacity(requiredCapacity: Int) {
         if (requiredCapacity > values.size) {
             values = values.copyOf(maxOf(requiredCapacity, values.size * CAPACITY_GROWTH_FACTOR))

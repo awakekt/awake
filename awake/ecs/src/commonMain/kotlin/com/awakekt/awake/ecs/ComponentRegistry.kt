@@ -62,8 +62,14 @@ internal class ComponentRegistry {
 
     fun typeIdForKeyOrNull(key: Any): ComponentTypeId? = types.typeIdForKeyOrNull(key)
 
+    /** The unboxed ID value for [key], or `-1` before anything registered it. */
+    fun typeIdValueForKeyOrAbsent(key: Any): Int = types.typeIdValueForKeyOrAbsent(key)
+
     /** The ID [type] has in this world, or `null` before anything registered it; reads an array. */
     internal fun typeIdOrNull(type: ComponentType<*>): ComponentTypeId? = types.typeIdAtIndexOrNull(type.index)
+
+    /** The unboxed ID value [type] has in this world, or `-1` before anything registered it; reads an array. */
+    internal fun typeIdValueOrAbsent(type: ComponentType<*>): Int = types.typeIdValueAtIndexOrAbsent(type.index)
 
     fun storageKind(type: KClass<out Any>): ComponentStorageKind {
         val typeId = types.typeIdOrNull(type) ?: return ComponentStorageKind.Unregistered
@@ -81,12 +87,29 @@ internal class ComponentRegistry {
         }
     }
 
-    fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> = storage.store(typeId, type)
+    fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> {
+        storage.storeOrNull<T>(typeId)?.let { return it }
+        val index = types.indexAt(typeId.value)
+        return storage.store(typeId, type, index).also { created ->
+            @Suppress("UNCHECKED_CAST")
+            types.bindStore(typeId.value, created as ComponentStore<Any>)
+        }
+    }
 
     fun <T : Any> storeOrNull(typeId: ComponentTypeId): ComponentStore<T>? = storage.storeOrNull(typeId)
 
+    /** The [ComponentStore] for [type] in a single array read, or `null` when absent. */
+    internal fun <T : Any> storeAtIndexOrNull(type: ComponentType<T>): ComponentStore<T>? =
+        storage.storeAtIndexOrNull(type.index)
+
+    /** The [ComponentStore] for [key] without going through [ComponentTypeId], or `null` when absent. */
+    fun <T : Any> storeForKeyOrNull(key: Any): ComponentStore<T>? {
+        val index = cheapComponentTypeIndexOf(key)
+        return if (index >= 0) storage.storeAtIndexOrNull(index) else types.storeForKeyOrNull(key)
+    }
+
     fun <T : Any> storeForKey(typeId: ComponentTypeId, type: () -> KClass<T>): ComponentStore<T> =
-        storage.storeOrNull(typeId) ?: storage.store(typeId, type())
+        storage.storeOrNull(typeId) ?: store(typeId, type())
 
     internal fun removeEntity(entity: Entity) {
         storage.forEach { store ->

@@ -163,18 +163,14 @@ class World {
     /**
      * Returns the component of type [T] attached to the entity, or null if absent.
      */
-    inline fun <reified T : Any> get(entity: Entity): T? {
-        val typeId = components.typeIdForKeyOrNull(componentTypeKey<T>()) ?: return null
-        return getInternal<T>(entity, typeId)
-    }
+    inline fun <reified T : Any> get(entity: Entity): T? =
+        components.storeForKeyOrNull<T>(componentTypeKey<T>())?.get(entity)
 
     /**
      * Returns the component of the specified [type] attached to the entity, or null if absent.
      */
-    fun <T : Any> get(entity: Entity, type: KClass<T>): T? {
-        val typeId = components.typeIdOrNull(type) ?: return null
-        return getInternal<T>(entity, typeId)
-    }
+    fun <T : Any> get(entity: Entity, type: KClass<T>): T? =
+        components.storeForKeyOrNull<T>(componentTypeKeyOf(type))?.get(entity)
 
     /**
      * Internal implementation for retrieving a component.
@@ -229,16 +225,16 @@ class World {
      * Returns true if the entity has a component of type [T].
      */
     inline fun <reified T : Any> has(entity: Entity): Boolean {
-        val typeId = components.typeIdForKeyOrNull(componentTypeKey<T>()) ?: return false
-        return hasInternal(entity, typeId)
+        val id = components.typeIdValueForKeyOrAbsent(componentTypeKey<T>())
+        return id >= 0 && hasInternal(entity, ComponentTypeId(id))
     }
 
     /**
      * Returns true if the entity has a component of the specified [type].
      */
     fun has(entity: Entity, type: KClass<out Any>): Boolean {
-        val typeId = components.typeIdOrNull(type) ?: return false
-        return hasInternal(entity, typeId)
+        val id = components.typeIdValueForKeyOrAbsent(componentTypeKeyOf(type))
+        return id >= 0 && hasInternal(entity, ComponentTypeId(id))
     }
 
     /**
@@ -458,7 +454,8 @@ class World {
     // returns ComponentStore<T> via its own generic signature. Kept here only because
     // this delegates into ComponentRegistry.store, whose real UNCHECKED_CAST this mirrors.
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> store(type: KClass<T>): ComponentStore<T> = components.store(typeId(type), type)
+    fun <T : Any> store(type: KClass<T>): ComponentStore<T> =
+        components.storeForKeyOrNull(componentTypeKeyOf(type)) ?: components.store(typeId(type), type)
 
     /**
      * Returns the raw [ComponentStore] for the specified [typeId].

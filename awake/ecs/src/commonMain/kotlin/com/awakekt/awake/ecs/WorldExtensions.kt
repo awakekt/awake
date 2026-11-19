@@ -16,6 +16,24 @@ import kotlin.reflect.KProperty
 // ---------------------------------------------------------------------------
 
 /**
+ * The underlying [ComponentStore] for [T], or `null` when no entity in this world has carried it.
+ *
+ * Useful for hoisting a store reference out of a tight per-entity loop without resolving a
+ * [ComponentTypeId] or tracking [World.generation].
+ */
+inline fun <reified T : Any> World.componentStore(): ComponentStore<T>? =
+    components.storeForKeyOrNull(componentTypeKey<T>())
+
+/**
+ * The underlying [ComponentStore] for [type], or `null` when no entity in this world has carried it.
+ *
+ * Useful for hoisting a store reference out of a tight per-entity loop without resolving a
+ * [ComponentTypeId] or tracking [World.generation].
+ */
+fun <T : Any> World.componentStore(type: KClass<T>): ComponentStore<T>? =
+    components.storeForKeyOrNull(componentTypeKeyOf(type))
+
+/**
  * Ensures the [entity] has a component of type [T]. If missing, [factory] is called
  * to create and add it. Returns the existing or new component instance.
  */
