@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.57.2] - 2026-11-19
+
+### Added
+
+- **Faster `World.get<T>` / store lookup and unboxed `EntityList` / `EntitySet` collections in `awake:ecs`.** Bound `ComponentStore` references directly in `TypeKeyTable` (with interleaved key/store slots and collision-avoiding multiplicative seeds) and per-index store arrays, added `World.componentStore<T>()`, `World.componentStore(KClass)`, and `World.componentStore(ComponentType)` overloads, and introduced zero-boxing `LongArray`-backed `EntityList` and `EntitySet` primitives for per-tick scratch buffers and membership sets (#1780).
+
+### Fixed
+
+- **UI pointer capture no longer blocks keyboard gameplay keys, touch controls share the screen with world orbit/pinch, and Vulkan queue submissions are serialized across threads.** `InputOwnership.blocksGameplayKeys` / `blocksGameplayKey` now block only on text focus or an open modal, `InputOwnership.capturedPointerIds` lets `GameplayInput` and `CameraSystem` isolate UI-captured touches from world orbit and two-finger pinch, and `GraphicsDevice.queueLock` / `TransferContext` plus frame-thread `SkyboxCubemapSystem` attachment protect `vkQueueSubmit` against concurrent uploads.
+
 ## [0.57.1] - 2026-11-18
 
 ### Fixed
