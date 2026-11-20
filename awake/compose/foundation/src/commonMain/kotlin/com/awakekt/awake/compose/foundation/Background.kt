@@ -25,7 +25,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.StrokeJoin
-import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.graphics2d.toPath
@@ -57,41 +56,6 @@ fun Modifier.background(brush: Brush, shape: Shape = RectangleShape): Modifier =
     is Brush.SolidColor -> background(brush.color, shape)
     is Brush.LinearGradient -> this then CornerGradientElement(brush.colors, shape)
     is com.awakekt.awake.compose.ui.graphics.LinearGradient -> this then GradientBackgroundElement(brush, shape)
-}
-
-private class CornerGradientElement(
-    private val gradient: UiLinearGradient,
-    private val shape: Shape,
-) : ModifierNodeElement<CornerGradientNode>() {
-    override fun create(): CornerGradientNode = CornerGradientNode()
-    override fun update(node: CornerGradientNode) {
-        node.gradient = gradient
-        node.shape = shape
-    }
-}
-
-private class CornerGradientNode :
-    Modifier.Node(),
-    DrawModifierNode {
-    lateinit var gradient: UiLinearGradient
-    lateinit var shape: Shape
-    private val outlines = ShapeOutlineCache()
-
-    override fun DrawScope.draw(drawContent: () -> Unit) {
-        drawGradient(gradient, outlines.outline(shape, width, height, density, layoutDirection))
-        drawContent()
-    }
-}
-
-// The renderer's rounded-quad shadow with no offset, spread or blur is a rounded rectangle whose
-// corners take the gradient's colours, with the same anti-aliased edge as a rounded background.
-private fun DrawScope.drawGradient(gradient: UiLinearGradient, outline: ShapeOutline) {
-    when (outline) {
-        is ShapeOutline.Rectangle -> drawShadow(color = gradient.topLeft, gradient = gradient)
-        is ShapeOutline.Rounded -> drawShadow(color = gradient.topLeft, radius = outline.radius, gradient = gradient)
-        is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
-        is ShapeOutline.Generic -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
-    }
 }
 
 /**

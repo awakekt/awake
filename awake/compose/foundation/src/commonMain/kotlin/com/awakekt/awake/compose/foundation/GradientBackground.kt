@@ -20,6 +20,7 @@ import com.awakekt.awake.core.graphics2d.ColoredVertex
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.DrawShape
+import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.clipToConvexPaths
 import com.awakekt.awake.core.graphics2d.merge
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
@@ -33,6 +34,41 @@ internal class GradientBackgroundElement(private val brush: LinearGradient, priv
     override fun update(node: GradientBackgroundNode) {
         node.brush = brush
         node.shape = shape
+    }
+}
+
+internal class CornerGradientElement(
+    private val gradient: UiLinearGradient,
+    private val shape: Shape,
+) : ModifierNodeElement<CornerGradientNode>() {
+    override fun create(): CornerGradientNode = CornerGradientNode()
+    override fun update(node: CornerGradientNode) {
+        node.gradient = gradient
+        node.shape = shape
+    }
+}
+
+internal class CornerGradientNode :
+    Modifier.Node(),
+    DrawModifierNode {
+    lateinit var gradient: UiLinearGradient
+    lateinit var shape: Shape
+    private val outlines = ShapeOutlineCache()
+
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        drawGradient(gradient, outlines.outline(shape, width, height, density, layoutDirection))
+        drawContent()
+    }
+}
+
+// The renderer's rounded-quad shadow with no offset, spread or blur is a rounded rectangle whose
+// corners take the gradient's colours, with the same anti-aliased edge as a rounded background.
+private fun DrawScope.drawGradient(gradient: UiLinearGradient, outline: ShapeOutline) {
+    when (outline) {
+        is ShapeOutline.Rectangle -> drawShadow(color = gradient.topLeft, gradient = gradient)
+        is ShapeOutline.Rounded -> drawShadow(color = gradient.topLeft, radius = outline.radius, gradient = gradient)
+        is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
+        is ShapeOutline.Generic -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
     }
 }
 
