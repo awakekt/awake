@@ -480,6 +480,25 @@ jobs keep the job queued until it is cancelled. Delete it to return to `macos-15
 Xcode and an arm64 Mac whatever the label: it builds Naga, MoltenVK and JoltC and runs Kotlin/Native
 tests on the iOS simulator.
 
+### Gradle User Home cache
+
+CI, Font atlas and Render evidence cache the Gradle User Home with `gradle/actions/setup-gradle`'s
+**basic** provider (`cache-provider: basic`); the iOS job keeps its own `actions/cache` entry.
+
+The enhanced provider was tried in #1790 and reverted the same day (#1592). In its first two hours,
+every WebGPU release pin job that restored one Gradle User Home entry failed on 26 `Could not find
+<jar>` errors for jars Central serves, on `main` and on every pull request. Two of its behaviours
+kept the failure going:
+- a failed job saves its Gradle User Home, and the next run of that job restores it first;
+- the jars sit in a separate entry keyed by content hash, which can be missing or not match the
+  Gradle User Home that was restored.
+
+Nothing invalidates an entry except deleting it. Before trying the enhanced provider again, all
+three must hold:
+- it can be told not to save from a failed job;
+- a workflow can delete cache entries;
+- it has been measured on a branch first.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
