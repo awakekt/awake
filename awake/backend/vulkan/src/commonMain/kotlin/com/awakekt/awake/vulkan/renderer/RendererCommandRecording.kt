@@ -155,7 +155,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
             flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
         ),
     )
-    val timer = gpuFrameTimer
+    val timer = gpuFrameTimer?.takeIf { presentedFrameTiming }
     timer?.begin(commandBuffer, frameIndex)
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)

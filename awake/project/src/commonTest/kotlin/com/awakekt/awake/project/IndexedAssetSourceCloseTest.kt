@@ -91,15 +91,14 @@ class IndexedAssetSourceCloseTest {
 
         val loaded = members.load(bundle.sha256)
         val takenFirst = members.read(firstEntry, firstEntry.key)
-        val unreadSecond = loaded.getValue(secondEntry.sha256)
 
         assertContentEquals(files.getValue("pack/first.bin"), takenFirst)
-        assertContentEquals(files.getValue("pack/second.bin"), unreadSecond)
+        assertContentEquals(files.getValue("pack/second.bin"), loaded.stored(secondEntry))
 
         members.close()
 
         assertContentEquals(files.getValue("pack/first.bin"), takenFirst)
-        assertTrue(unreadSecond.all { it == 0.toByte() }, "Uncached staged bytes must be zeroed on close")
+        assertTrue(loaded.stored(secondEntry).all { it == 0.toByte() }, "Uncached staged bytes must be zeroed on close")
         assertFailsWith<IllegalStateException> { members.read(secondEntry, secondEntry.key) }
         assertFailsWith<IllegalStateException> { members.load(bundle.sha256) }
     }
