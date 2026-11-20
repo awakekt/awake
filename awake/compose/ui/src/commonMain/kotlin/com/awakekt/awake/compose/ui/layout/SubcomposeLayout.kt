@@ -118,8 +118,11 @@ class SubcomposeLayoutState(
         while (iterator.hasNext()) {
             val entry = iterator.next()
             if (entry.key !in activeSlots && entry.key !in retained) {
+                // Read before removing: on Kotlin/Wasm a removed entry throws a
+                // ConcurrentModificationException when its value is read.
+                val record = entry.value
                 iterator.remove()
-                entry.value.composition.dispose()
+                record.composition.dispose()
             }
         }
         activeSlots.clear()
