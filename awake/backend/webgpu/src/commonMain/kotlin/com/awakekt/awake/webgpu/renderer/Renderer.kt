@@ -32,6 +32,7 @@ import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderFrameStats
@@ -114,6 +115,11 @@ class Renderer internal constructor(
     internal val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = emptyList(),
     /** The engine's scope, where GPU timestamps are read back; null, as for a headless renderer, times nothing. */
     backgroundScope: CoroutineScope? = null,
+    /** The anti-aliasing mode the engine built the scene pass for, after any fallback (#1791). */
+    override val antiAliasing: AntiAliasing = AntiAliasing.Off,
+    /** The anti-aliasing modes this device offers (#1791). */
+    override val supportedAntiAliasing: Set<AntiAliasing> =
+        setOf(AntiAliasing.Off),
 ) : RenderRenderer,
     GpuDrawPreparationSource,
     ContentFeatureHost {

@@ -144,7 +144,9 @@ open class WebGpuEngine(
         val shadowFormat = shadowDepthFormatFor(shadowDepthFormat)
         graphicsDevice = GraphicsDevice()
         graphicsDevice.create(window)
-        val rasterState = plan.multisample.supportedBy(setOf(1, 4)) { println("Awake/WebGPU: $it") }
+        // WebGPU's core sample counts: 1 and 4, on every adapter.
+        val antiAliasing = sceneAntiAliasing(plan.multisample, setOf(1, 4)) { println("Awake/WebGPU: $it") }
+        val rasterState = antiAliasing.rasterState
         swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT, rasterState.count)
         swapchainManager.create()
         val registry = PipelineRegistry(
@@ -311,6 +313,8 @@ open class WebGpuEngine(
             add(UiRenderFeature(WebGpuUiPass()))
         }
         val renderer = Renderer(
+            antiAliasing = antiAliasing.mode,
+            supportedAntiAliasing = antiAliasing.supported,
             graphicsDevice = graphicsDevice,
             swapchainManager = swapchainManager,
             pipelines = pipelineTable,

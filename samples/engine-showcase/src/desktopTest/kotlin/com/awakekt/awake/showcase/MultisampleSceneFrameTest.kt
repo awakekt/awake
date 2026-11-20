@@ -16,7 +16,9 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.text.font.BitmapFont
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.engine.bootstrap.dsl.appSpec
+import com.awakekt.awake.engine.bootstrap.dsl.renderQuality
 import com.awakekt.awake.engine.platform.HeadlessSurface
+import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -34,6 +36,7 @@ import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.render.passes.uniforms.sceneLightUniforms
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.MultisampleState
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
@@ -63,6 +66,34 @@ abstract class MultisampleSceneFrameProbe {
     protected fun unsupportedWebGpuCountsDowngradeWithoutUpscaling() = runBlocking {
         assertPixelsEqual(capture(1, RenderBackend.WebGpu), capture(2, RenderBackend.WebGpu), "WebGPU 2x downgrades to 1x")
         assertPixelsEqual(capture(4, RenderBackend.WebGpu), capture(8, RenderBackend.WebGpu), "WebGPU 8x downgrades to 4x")
+    }
+
+    /**
+     * `renderQuality { antiAliasing }` decides the scene pass's samples over the plan's (#1791): a
+     * single-sample plan set to 4x draws what a 4x plan draws, and the renderer names the mode in effect,
+     * after WebGPU's fallback for a count it lacks.
+     */
+    protected fun theSettingDrawsTheModeTheRendererReports() = runBlocking {
+        for (backend in RenderBackend.entries) {
+            var mode: AntiAliasing? = null
+            var offered: Set<AntiAliasing> = emptySet()
+            val set = capture(1, backend, setting = AntiAliasing.Msaa4x) {
+                mode = it.antiAliasing
+                offered = it.supportedAntiAliasing
+            }
+            assertPixelsEqual(capture(4, backend), set, "$backend draws the 4x setting as a 4x plan")
+            assertTrue(capture(1, backend).contentEquals(set).not(), "$backend's 4x setting must not draw one sample")
+            assertEquals(AntiAliasing.Msaa4x, mode, "$backend reports the mode it drew")
+            assertTrue(offered.containsAll(listOf(AntiAliasing.Off, AntiAliasing.Fxaa, AntiAliasing.Msaa4x)), "$backend offers $offered")
+        }
+        var webMode: AntiAliasing? = null
+        var webOffered: Set<AntiAliasing> = emptySet()
+        capture(1, RenderBackend.WebGpu, setting = AntiAliasing.Msaa2x) {
+            webMode = it.antiAliasing
+            webOffered = it.supportedAntiAliasing
+        }
+        assertEquals(AntiAliasing.Fxaa, webMode, "WebGPU has no 2x, so it falls back to the next cheaper mode")
+        assertEquals(setOf(AntiAliasing.Off, AntiAliasing.Fxaa, AntiAliasing.Msaa4x), webOffered)
     }
 
     protected fun maskedShadowMapKeepsItsSingleSampleHardCutout() = runBlocking {
@@ -168,12 +199,19 @@ abstract class MultisampleSceneFrameProbe {
         uiLayer: Boolean = false,
         shadowMap: Boolean = false,
         forceOpaque: Boolean = false,
+        setting: AntiAliasing? = null,
+        reported: (Renderer) -> Unit = {},
     ): ByteArray {
         val state = MultisampleState(samples, coverage)
-        val engine = if (backend == RenderBackend.Vulkan) CaptureEngine(state, width, height) else null
+        val lifecycle = appSpec {
+            window { size(width, height) }
+            if (setting != null) renderQuality { antiAliasing = setting }
+        }.createLifecycle()
+        val engine = if (backend == RenderBackend.Vulkan) CaptureEngine(lifecycle, state) else null
         val webSession = if (engine == null) {
             webGpuHeadlessPlan(
                 EngineShowcaseRenderPlan.copy(multisample = state),
+                lifecycle = lifecycle,
                 surface = HeadlessSurface(width, height),
             )
         } else {
@@ -190,6 +228,7 @@ abstract class MultisampleSceneFrameProbe {
                 }
             }
             val renderer = engine?.backend() ?: requireNotNull(webSession).renderer
+            reported(renderer)
             if (shadowMap) (renderer as com.awakekt.awake.asset.shaders.ContentFeatureHost).attachContentFeature(shadowMapViewContentFeature())
             val mesh = renderer.createMesh(
                 if (masked) {
@@ -271,11 +310,7 @@ abstract class MultisampleSceneFrameProbe {
         }
     }
 
-    private class CaptureEngine(state: MultisampleState, width: Int, height: Int) :
-        VulkanEngine(
-            appSpec { window { size(width, height) } }.createLifecycle(),
-            EngineShowcaseRenderPlan.copy(multisample = state),
-        ) {
+    private class CaptureEngine(lifecycle: AwakeAppLifecycle, state: MultisampleState) : VulkanEngine(lifecycle, EngineShowcaseRenderPlan.copy(multisample = state)) {
         fun backend(): Renderer = renderer
     }
 
@@ -356,6 +391,11 @@ class MultisampleSceneFrameUiLayersTest : MultisampleSceneFrameProbe() {
 class MultisampleSceneFrameFxaaTest : MultisampleSceneFrameProbe() {
     @Test
     fun verify() = offscreenResolvesBeforeExplicitFxaa()
+}
+
+class MultisampleSceneFrameSettingTest : MultisampleSceneFrameProbe() {
+    @Test
+    fun verify() = theSettingDrawsTheModeTheRendererReports()
 }
 
 class MultisampleSceneFrameShadowTest : MultisampleSceneFrameProbe() {

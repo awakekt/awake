@@ -16,6 +16,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
+import com.awakekt.awake.engine.platform.quality.SceneAntiAliasing
 import com.awakekt.awake.engine.platform.quality.TextureSettings
 import com.awakekt.awake.render.pipeline.MultisampleState
 import com.awakekt.awake.render.renderer.AntiAliasing
@@ -305,6 +306,13 @@ abstract class GraphicsEngine(
      */
     protected fun antiAliasingFor(plan: MultisampleState): AntiAliasing =
         appLifecycle.service(RenderQualitySettings::class)?.antiAliasing ?: AntiAliasing.forSampleCount(plan.count)
+
+    /**
+     * The scene pass's anti-aliasing on a device whose scene pass rasterizes at [sampleCounts]: the
+     * [antiAliasingFor] mode, resolved to one the device offers, with its raster state (#1791).
+     */
+    protected fun sceneAntiAliasing(plan: MultisampleState, sampleCounts: Set<Int>, report: (String) -> Unit): SceneAntiAliasing =
+        SceneAntiAliasing.of(antiAliasingFor(plan), plan, sampleCounts, report)
 
     private suspend fun setupCommon(window: Any) {
         val backend = createBackendResources(window)

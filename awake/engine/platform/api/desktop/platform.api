@@ -27,6 +27,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
 	public final fun restoreSurface (Ljava/lang/Object;)V
 	public final fun resume ()V
+	protected final fun sceneAntiAliasing (Lcom/awakekt/awake/render/pipeline/MultisampleState;Ljava/util/Set;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/quality/SceneAntiAliasing;
 	public final fun setDensity (F)V
 	public final fun setDpi (F)V
 	public final fun setImeInsets (Lcom/awakekt/awake/engine/platform/lifecycle/DisplayInsets;)V
@@ -398,6 +399,26 @@ public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettin
 	public final fun setEffectQualityOverride (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
 	public final fun setShadowBudgetOverride (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 	public final fun setShadowDepthFormat (Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;)V
+}
+
+public final class com/awakekt/awake/engine/platform/quality/SceneAntiAliasing {
+	public static final field Companion Lcom/awakekt/awake/engine/platform/quality/SceneAntiAliasing$Companion;
+	public fun <init> (Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lcom/awakekt/awake/render/pipeline/MultisampleState;)V
+	public final fun component1 ()Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public final fun copy (Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lcom/awakekt/awake/render/pipeline/MultisampleState;)Lcom/awakekt/awake/engine/platform/quality/SceneAntiAliasing;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/engine/platform/quality/SceneAntiAliasing;Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lcom/awakekt/awake/render/pipeline/MultisampleState;ILjava/lang/Object;)Lcom/awakekt/awake/engine/platform/quality/SceneAntiAliasing;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMode ()Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public final fun getRasterState ()Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public final fun getSupported ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/engine/platform/quality/SceneAntiAliasing$Companion {
+	public final fun of (Lcom/awakekt/awake/render/renderer/AntiAliasing;Lcom/awakekt/awake/render/pipeline/MultisampleState;Ljava/util/Set;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/quality/SceneAntiAliasing;
 }
 
 public final class com/awakekt/awake/engine/platform/quality/TextureAnisotropy : java/lang/Enum {
