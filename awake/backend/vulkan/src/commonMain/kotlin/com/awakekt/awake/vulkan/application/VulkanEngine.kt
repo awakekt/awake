@@ -576,9 +576,10 @@ open class VulkanEngine(
             } else {
                 graphicsDevice.createHeadless()
             }
-            val rasterState = plan.multisample.supportedBy(graphicsDevice.framebufferSampleCounts()) {
+            val antiAliasing = sceneAntiAliasing(plan.multisample, graphicsDevice.framebufferSampleCounts()) {
                 println("Awake/Vulkan: $it")
             }
+            val rasterState = antiAliasing.rasterState
             swapchainManager = SwapchainManager(
                 graphicsDevice,
                 MAX_FRAMES_IN_FLIGHT,
@@ -651,6 +652,8 @@ open class VulkanEngine(
             maskPass = buildMaskFeature()
             renderFeatures = buildRenderFeatures(depthPrePass)
             val renderer = Renderer(
+                antiAliasing = antiAliasing.mode,
+                supportedAntiAliasing = antiAliasing.supported,
                 graphicsDevice = graphicsDevice,
                 swapchainManager = swapchainManager,
                 pipelines = pipelineTable(),

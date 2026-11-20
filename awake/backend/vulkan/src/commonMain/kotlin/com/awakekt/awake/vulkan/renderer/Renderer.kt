@@ -47,6 +47,7 @@ import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.PresentIntervalTracker
 import com.awakekt.awake.render.renderer.RenderFrameStats
@@ -161,6 +162,11 @@ class Renderer internal constructor(
     /** The mask's pass, when the plan opted into one: scene depth's pipelines over the masked
      * draws, a layer per mask layer, recorded only on frames something is masked. */
     private val maskPass: DepthPrePassFeature? = null,
+    /** The anti-aliasing mode the engine built the scene pass for, after any fallback (#1791). */
+    override val antiAliasing: AntiAliasing = AntiAliasing.Off,
+    /** The anti-aliasing modes this device offers (#1791). */
+    override val supportedAntiAliasing: Set<AntiAliasing> =
+        setOf(AntiAliasing.Off),
 ) : RenderRenderer,
     GpuDrawPreparationSource,
     ContentFeatureHost {
