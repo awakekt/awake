@@ -28,7 +28,7 @@ class UiRepeatedTextureParityTest {
         val failures = mutableListOf<String>()
         for (backend in BACKENDS) {
             for (filtering in listOf(TextureFiltering.Nearest, TextureFiltering.Linear)) {
-                for (case in CASES) {
+                for (case in CASES.filter { filtering == TextureFiltering.Linear || !it.linearOnly }) {
                     val tiled = draw(backend, filtering, perRepeat(case))
                     val repeated = draw(backend, filtering, listOf(repeating(case)))
                     val differing = (tiled.indices).count { tiled[it] != repeated[it] }
@@ -88,7 +88,14 @@ class UiRepeatedTextureParityTest {
         }
 
     /** A quad [width] by [height] the region repeats in, one repeat [tileWidth] by [tileHeight]; a tile as big as the quad stretches. */
-    private data class Case(val name: String, val width: Float, val height: Float, val tileWidth: Float, val tileHeight: Float)
+    private data class Case(
+        val name: String,
+        val width: Float,
+        val height: Float,
+        val tileWidth: Float,
+        val tileHeight: Float,
+        val linearOnly: Boolean = false,
+    )
 
     private companion object {
         val BACKENDS = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)
@@ -108,8 +115,9 @@ class UiRepeatedTextureParityTest {
             // A centre: repeats both ways.
             Case("centre 1:1", 50f, 47f, 4f, 2f),
             Case("centre 3x", 55f, 50f, 12f, 6f),
-            // Minified, so a mipmapped image samples a smaller level: the wrap must not pick another one.
-            Case("centre half", 50f, 40f, 2f, 1f),
+            // Minified, so a mipmapped image samples a smaller level: the wrap must not pick another one. Linear only:
+            // at exactly 2:1 every pixel centre lands on a texel edge, where Nearest may take either texel.
+            Case("centre half", 50f, 40f, 2f, 1f, linearOnly = true),
         )
 
         /**
