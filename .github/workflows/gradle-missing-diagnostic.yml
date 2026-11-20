@@ -32,27 +32,28 @@ jobs:
     runs-on: ${{ vars.CORE_VULKAN_RUNNER || (github.repository_owner == 'awakekt' && 'blacksmith-8vcpu-ubuntu-2404') || 'ubuntu-latest' }}
     timeout-minutes: 45
     steps:
+      # main at bae1f629, before #1794 changed a build file: its build files hash to the basic key
+      # d8ea30a5 that every failing basic-provider job restored, so setup-gradle restores that entry
+      # exactly as they did (an actions/cache restore by key misses it: the entry's version differs).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: bae1f62979837bbc1192e1fc0005fee61f13429e
 
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Setup Gradle (no cache of its own)
+      - name: Setup Gradle (restores d8ea30a5, saves nothing)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-disabled: true
+          cache-provider: basic
+          cache-read-only: true
 
-      # The entry the failing jobs restored, by its exact key: main's build files have moved on,
-      # so setup-gradle's own key no longer names it. The path is setup-java's, string for string,
-      # so the entry's version matches.
-      - name: Restore the suspect basic entry (d8ea30a5)
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: /home/runner/.gradle/caches
-          key: setup-java-Linux-x64-gradle-d8ea30a5a7aedae8afd983e792fbb20c40963e4dd54f575db9623b8d787ef004
-          fail-on-cache-miss: true
+      - name: Check the restored entry is d8ea30a5
+        run: |
+          test -d "$HOME/.gradle/caches/modules-2" || { echo "::error::no Gradle User Home was restored"; exit 1; }
+          du -sh "$HOME/.gradle/caches/modules-2"
 
       - name: Install the Android NDK
         uses: ./.github/actions/install-vulkan-ndk-linux
