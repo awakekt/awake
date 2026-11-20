@@ -21,8 +21,8 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.theme.TextOutline
 import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.testing.allocation.readAllocation
 import com.sun.management.HotSpotDiagnosticMXBean
-import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,7 +37,6 @@ import kotlin.test.assertEquals
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */
 class TextCompositionAllocationProbe {
-    private val allocations = ManagementFactory.getThreadMXBean() as ThreadMXBean
     private val labels = List(MAX_LABELS) { "Label ${it + 1}" }
     private val cellModifier = Modifier.width(120.dp)
     private val ambient = TextStyle(color = Color.White, size = 13.sp)
@@ -80,9 +79,7 @@ class TextCompositionAllocationProbe {
             }
         }
         repeat(WARMUP_FRAMES) { frame() }
-        val before = allocations.currentThreadAllocatedBytes
-        repeat(MEASURED_FRAMES) { frame() }
-        return (allocations.currentThreadAllocatedBytes - before) / MEASURED_FRAMES
+        return readAllocation(MEASURED_FRAMES) { repeat(MEASURED_FRAMES) { frame() } }.perUnit
     }
 
     private fun escapeAnalysis(): String =
