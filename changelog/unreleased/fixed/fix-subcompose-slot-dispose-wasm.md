@@ -1,1 +1,0 @@
-- A `SubcomposeLayout` that stops subcomposing a slot no longer throws a `ConcurrentModificationException` in a browser: it read the slot's entry after removing it, which the JVM allows and Kotlin/Wasm does not. CI now runs the Compose UI runtime's common tests in a browser.

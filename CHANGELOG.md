@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.60.0] - 2026-11-20
+
+### Added
+
+- `Renderer.frameGpuTiming` splits a presented frame's GPU time by part (`GpuFramePart`: shadow depth, scene depth, mask, scene, post, upscale, UI) and reports how long the CPU waited on the GPU's fences and on the swapchain acquire. Vulkan fills it from timestamps written between the parts; `FrameBreakdownSample.gpu` and nine new `FrameBreakdown` summary keys (`gpuShadowDepthMs` … `gpuUiMs`, `frameResourceWaitMs`, `acquireWaitMs`) carry it to a frame report (#1709).
+- `FrameSpans` takes the `TimeSource` its spans read, the monotonic clock by default, so a test can time spans on a clock it drives (#1592).
+
+### Changed
+
+- **Outlined and shadowed text is as crisp as plain text at small sizes.** A text run with an outline or a shadow drew its fill from the distance field at every size, so at or under the pixel-glyph limit it came out softer than plain text of the same size: on Vulkan and WebGPU, 16% to 27% of plain text's solid pixels at 11 to 14 px. Its fill now comes from the same exact-size pixel glyphs a plain run draws, over its outline and shadow from the effect field, unchanged (#1061): one text node draws what took a fill-less decorated node with plain text over it, pixel for pixel, at one more glyph batch a run. Above the limit, and under a scale or size animation, a decorated run draws as before (#1808).
+
+### Fixed
+
+- `Row`, `Column`, `FlowRow`, `FlowColumn` and the `align` modifiers no longer box their sizes on Kotlin/Wasm: each child they placed went through a SAM-converted reference that boxed every `Int`, about 100 B a child each frame. A still 162-node HUD's layout stage allocates 8.7 KB a frame in a browser instead of 28.5 KB, and 0.1 KB instead of 16.6 KB when it only places (#1621).
+- `Modifier.background` keeps its resolved outline while its shape, size, density and direction stay the same, and `RoundedCornerShape` no longer builds a vararg array to fit its corners: a rounded background painted every frame allocates 88 B a frame instead of 225 B (JVM with escape analysis off, as Android allocates). Shapes other than `RectangleShape` and `RoundedCornerShape` resolve every paint, as before (#1742).
+- A border, a corner gradient background and a list gradient background keep their resolved outline and check their cached mesh field by field, so painting one no longer builds an outline or a key every frame, and a gradient drawn at full alpha is no longer copied. Each further one adds 88 B to a drawn frame (96 B for a corner gradient), down from 128 to 232 B (#1742).
+- A canvas element builds its `canvas-element-<id>` test tag once, not each time it is composed: on a host that composes every frame, the tag's string and semantics configuration cost about 310 B per element per frame (4,359 → 4,047 B for each further element of a composed canvas frame, on the JVM with escape analysis off, as Android allocates) (#1742).
+- A frame that composes its semantics again with the same values hands back the semantics tree it built before, instead of rebuilding and re-merging every node's configuration; a semantics configuration also stores its few properties in one small array rather than a hash map. A composed frame of 100 tagged nodes allocates 111 B a node for its semantics, down from 605 B (#1742).
+- Vulkan hands back the `GpuResolvedDraw` a draw resolved to last frame while it would resolve to the same one, as WebGPU does, and an opaque draw's sort key is 0, as on WebGPU: a moving, shadowed draw allocates 118 B a frame instead of 222 B (JVM with escape analysis off). No public API changes (#1742).
+- **Composing an unchanged `Text` allocates nothing.** Each composition of `Text` built a merged `TextStyle`, a measure policy, a paint element and a modifier chain, even when its text, style and parameters equalled the last composition's, and every `Layout` built a lambda to update its node: 128 B a plain `Text` and 216 B one with a merged style and a modifier from its caller, every frame a host composes. `Text` now hands back the last composition's style, policy, element and chain while their inputs are equal, and `Layout` sets its node between `Composer.startNode` and `Composer.endNode`, the halves `Composer.node` is now built from, rather than through a lambda: 0 B a `Text` on the JVM, with escape analysis on or off. Every other `Layout` node stops allocating its update lambda too (#1813).
+- A `SubcomposeLayout` that stops subcomposing a slot no longer throws a `ConcurrentModificationException` in a browser: it read the slot's entry after removing it, which the JVM allows and Kotlin/Wasm does not. CI now runs the Compose UI runtime's common tests in a browser.
+
 ## [0.59.0] - 2026-11-20
 
 ### Added
