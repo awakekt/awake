@@ -42,7 +42,11 @@ class UiRepeatedTextureParityTest {
 
     /** One quad covering [Case.width] by [Case.height], the region repeating in it. */
     private fun repeating(case: Case): UiDrawPrimitive = UiDrawPrimitive.Texture(
-        X, Y, case.width, case.height, MATERIAL,
+        X,
+        Y,
+        case.width,
+        case.height,
+        MATERIAL,
         region = REGION,
         repeatX = case.width / case.tileWidth,
         repeatY = case.height / case.tileHeight,

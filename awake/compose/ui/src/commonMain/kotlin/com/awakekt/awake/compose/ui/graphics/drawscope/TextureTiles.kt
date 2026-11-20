@@ -30,7 +30,7 @@ internal fun DrawScope.drawTextureTiles(
     tint: Color,
     filterQuality: FilterQuality,
 ) {
-    if (width <= 0f || height <= 0f || repeatX <= 0f || repeatY <= 0f) return
+    if (minOf(width, height, repeatX, repeatY) <= 0f) return
     val tileWidth = width / repeatX
     val tileHeight = height / repeatY
     val regionWidth = region.u1 - region.u0

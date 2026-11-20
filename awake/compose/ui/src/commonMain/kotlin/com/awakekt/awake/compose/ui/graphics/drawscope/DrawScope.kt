@@ -512,8 +512,9 @@ internal interface LayerDrawScope {
  */
 // Seven of the members below are `DrawScope` itself and four are the painter's own hooks, so the
 // count is the interface rather than a class doing too much. Splitting it would mean two objects
-// sharing one origin/alpha/transform triple, which is worse.
-@Suppress("TooManyFunctions")
+// sharing one origin/alpha/transform triple, which is worse. Its size is the same story: every
+// `DrawScope` draw call lands here, and the repeating texture (#1795) took it over the line.
+@Suppress("TooManyFunctions", "LargeClass")
 internal class PaintScope :
     DrawScope,
     LayerDrawScope,
@@ -846,21 +847,7 @@ internal class PaintScope :
         tint: Color,
         filterQuality: FilterQuality,
         premultiplied: Boolean,
-    ) {
-        drawTexture(
-            material = material,
-            x = x,
-            y = y,
-            width = width,
-            height = height,
-            region = region,
-            tint = tint,
-            filterQuality = filterQuality,
-            premultiplied = premultiplied,
-            rotationDegrees = 0f,
-            blendMode = BlendMode.SourceOver,
-        )
-    }
+    ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied, 0f, BlendMode.SourceOver, 1f, 1f)
 
     @Suppress("LongParameterList")
     override fun drawTexture(
@@ -875,27 +862,7 @@ internal class PaintScope :
         premultiplied: Boolean,
         rotationDegrees: Float,
         blendMode: BlendMode,
-    ) {
-        val px = transform.mapX(originX + x)
-        val py = transform.mapY(originY + y)
-        val pw = width * transform.scaleX
-        val ph = height * transform.scaleY
-        if (clips.isRotatedQuadOutside(px, py, pw, ph, rotationDegrees)) return
-        output += UiDrawPrimitive.Texture(
-            x = px,
-            y = py,
-            w = pw,
-            h = ph,
-            material = material,
-            alpha = alpha,
-            rotationDegrees = rotationDegrees,
-            blendMode = blendMode,
-            premultiplied = premultiplied,
-            region = region,
-            tint = tint,
-            filterQuality = filterQuality,
-        )
-    }
+    ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied, rotationDegrees, blendMode, 1f, 1f)
 
     @Suppress("LongParameterList")
     override fun drawTextureRepeated(
@@ -909,25 +876,32 @@ internal class PaintScope :
         repeatY: Float,
         tint: Color,
         filterQuality: FilterQuality,
+    ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, false, 0f, BlendMode.SourceOver, repeatX, repeatY)
+
+    /** One texture quad, [region] repeating [repeatX] by [repeatY] times in it (#1795). */
+    @Suppress("LongParameterList")
+    private fun emitTexture(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        tint: Color,
+        filterQuality: FilterQuality,
+        premultiplied: Boolean,
+        rotationDegrees: Float,
+        blendMode: BlendMode,
+        repeatX: Float,
+        repeatY: Float,
     ) {
-        if (width <= 0f || height <= 0f || repeatX <= 0f || repeatY <= 0f) return
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
-        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        if (repeatX <= 0f || repeatY <= 0f || clips.isRotatedQuadOutside(px, py, pw, ph, rotationDegrees)) return
         output += UiDrawPrimitive.Texture(
-            x = px,
-            y = py,
-            w = pw,
-            h = ph,
-            material = material,
-            alpha = alpha,
-            region = region,
-            tint = tint,
-            filterQuality = filterQuality,
-            repeatX = repeatX,
-            repeatY = repeatY,
+            px, py, pw, ph, material, alpha, rotationDegrees, blendMode, premultiplied, null, null, region, tint, filterQuality, repeatX, repeatY,
         )
     }
 

@@ -116,6 +116,7 @@ class DrawRunCoalescerTest {
 
         val run = DrawRunCoalescer.coalesce(listOf(texture)).filterIsInstance<StagedDrawRun.TextureRun>().single().primitives.single()
         val stride = run.vertices.size / 4
+
         // Position and uv, then the colour after the repeat rect (VertexFormats2D.Texture).
         fun vertex(index: Int) = run.vertices.copyOfRange(index * stride, index * stride + 4).toList() +
             run.vertices.copyOfRange(index * stride + 8, index * stride + 12).toList()
