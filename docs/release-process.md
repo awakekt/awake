@@ -509,6 +509,28 @@ delete it with the **Cache maintenance** workflow (`.github/workflows/cache-main
 Deleting a cache entry is always safe: the next job that misses it rebuilds from the network. The
 workflow runs no Gradle and restores no cache, so it can't be affected by what it deletes.
 
+### Dependency resolution retries
+
+Gradle retries a request that times out or gets a 408, 429 or 5xx six times, about a minute in all
+(`gradle.properties`). Central has throttled GitHub's runners for longer than that, and a 404 is not
+retried at all: Gradle records it as missing and trusts the record for 24 hours, a missing module
+indefinitely. So the pull request workflows run every Gradle command through
+`scripts/gradle-retry.sh`, which runs a failed command again when its output shows a resolution
+failure (#1592), up to three times, after 60, 180 and 300 s (`GRADLE_RETRY_PAUSES`). One retry
+after 60 s was not enough: on 20 Nov a Plugin Portal miss outlasted it. The retries run:
+- after a miss (`Could not find`, `was not found in any of the following sources`), with
+  `--refresh-dependencies`, which drops the missing records, kept on every later retry;
+- after an error (`Could not resolve`, a 429 or a 5xx), unchanged, so a throttling host gets no
+  extra requests.
+
+Any other failure fails as before, on whichever run it happens, and a green command runs once. A
+step that exhausts its retries has spent 9 minutes paused on top of four runs, so a step or job
+timeout shorter than that (the 20-minute CLI and render step in `ci.yml`, Font atlas's job) can end
+it first; that costs nothing a fourth failure wouldn't. `scripts/gradle-retry.test.sh`,
+in CI, checks the wrapper and fails a pull request workflow that calls `./gradlew` without it. The
+publish workflows don't use it: a step that has reached an upload is never run again (see "Cutting
+a Core release").
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap

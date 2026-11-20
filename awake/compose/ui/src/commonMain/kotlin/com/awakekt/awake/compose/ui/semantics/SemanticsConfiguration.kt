@@ -62,6 +62,10 @@ class SemanticsConfiguration {
         }
     }
 
+    /** Whether this declares nothing but [value] under [key]: no other property and neither flag. */
+    internal fun holdsOnly(key: SemanticsPropertyKey<*>, value: Any?): Boolean =
+        !isMergingDescendants && !isClearingDescendants && count == 1 && entries[0] === key && entries[1] == value
+
     /** Whether [other] declares the same flags and the same values under the same keys. */
     internal fun sameAs(other: SemanticsConfiguration): Boolean =
         isMergingDescendants == other.isMergingDescendants &&

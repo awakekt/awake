@@ -1,1 +1,0 @@
-- A canvas element builds its `canvas-element-<id>` test tag once, not each time it is composed: on a host that composes every frame, the tag's string and semantics configuration cost about 310 B per element per frame (4,359 → 4,047 B for each further element of a composed canvas frame, on the JVM with escape analysis off, as Android allocates) (#1742).

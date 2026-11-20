@@ -201,7 +201,7 @@ class Material(
                     if (entry.binding == BASE_COLOR_IMAGE_BINDING) {
                         requireTexture().view
                     } else {
-                        pbrTextures[declaredPbrBindings.indexOf(entry.binding)].view
+                        pbrTextures[pbrIndexOf(entry.binding, declaredPbrBindings)].view
                     }
                 // No material-side source for one yet -- a joint palette is a storage buffer, but
                 // it is bound at its own group, never here. See D28's plan doc.
@@ -279,6 +279,19 @@ class Material(
 /** Sampled textures past the base-color one at binding 1, in binding order. Extracted so the
  * positional mapping onto `createResources`' PBR list can be asserted without a GPU device --
  * it is the one part of the entry list that is not a one-to-one lookup. */
+
+/**
+ * Which of a material's four PBR textures [binding] samples: bindings 5 to 8 are metallic-roughness,
+ * normal, occlusion and emissive by number, as on Vulkan, so a shader may declare only the ones it
+ * samples, as skinned_textured declares only emissive (#1829). Any other sampled texture past the base
+ * colour, such as the celestial shader's second image, takes the next one in declared order.
+ */
+internal fun pbrIndexOf(binding: Int, declaredPbrBindings: List<Int>): Int =
+    if (binding in FIRST_PBR_BINDING until FIRST_PBR_BINDING + PBR_MAP_COUNT) binding - FIRST_PBR_BINDING else declaredPbrBindings.indexOf(binding)
+
+private const val FIRST_PBR_BINDING = 5
+private const val PBR_MAP_COUNT = 4
+
 internal fun materialPbrBindings(bindings: GroupBindings): List<Int> =
     bindings.entries
         .filter { it.kind == ResourceKind.SampledTexture && it.binding > 1 }

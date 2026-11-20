@@ -13,9 +13,9 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.unit.dp
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -43,13 +43,7 @@ class SemanticsComposedFrameTest {
         val host = ComposeHost()
         fun frame() = host.frame(input) { content(tagged, merging) }
         repeat(WARMUP) { frame() }
-        val bean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        val windows = LongArray(5) {
-            val start = bean.currentThreadAllocatedBytes
-            repeat(WINDOW) { frame() }
-            (bean.currentThreadAllocatedBytes - start) / WINDOW
-        }
-        return windows.sorted()[2]
+        return readAllocation(WINDOW) { repeat(WINDOW) { frame() } }.perUnit
     }
 
     context(_: Composer)
@@ -83,12 +77,25 @@ class SemanticsComposedFrameTest {
     }
 
     @Test
+    fun aRecomposedFrameReportsAChangedTag() {
+        val host = ComposeHost()
+        var tag = "before"
+        fun tags() = host.frame(input) {
+            Layout(ProbeType, modifier = Modifier.size(10.dp).testTag(tag), measurePolicy = column, content = null)
+        }.semantics.map { it.testTag }
+        assertEquals(listOf("before"), tags())
+        tag = "after"
+        assertEquals(listOf("after"), tags())
+    }
+
+    @Test
     fun semanticsCostAComposedFrameLittleMoreThanItsModifiers() {
         val plain = bytes(tagged = false, merging = false)
         for (merging in listOf(false, true)) {
             val perNode = (bytes(tagged = true, merging) - plain) / NODES
             println("PERF semantics composed frame merging=$merging: $perNode B a node over plain")
-            assertTrue(perNode <= NODE_CEILING_BYTES, "semantics cost $perNode B a node a composed frame (merging=$merging)")
+            val ceiling = if (merging) NODE_CEILING_BYTES else TEST_TAG_CEILING_BYTES
+            assertTrue(perNode <= ceiling, "semantics cost $perNode B a node a composed frame (merging=$merging)")
         }
     }
 
@@ -99,6 +106,10 @@ class SemanticsComposedFrameTest {
         // The configuration, its entries and the modifier element a composition builds: 112 B.
         // Rebuilding and re-merging the tree every frame cost 605 B a node.
         const val NODE_CEILING_BYTES = 160L
+
+        // A test tag's element and its link in the chain: 39 B. Building a configuration, its
+        // entries and a block for every tag at every composition cost 111 B.
+        const val TEST_TAG_CEILING_BYTES = 48L
         const val WARMUP = 300
         const val WINDOW = 50
         val TAGS = List(ITEMS) { "row$it" }
