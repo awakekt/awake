@@ -17,7 +17,6 @@ import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
-import com.awakekt.awake.asset.shaderdsl.exp
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.gt
@@ -416,12 +415,12 @@ private fun litShadow(
         )
     }
 
-    // Exponential distance fog; density 0 leaves the colour untouched.
+    // Exponential distance fog by density, or linear by range (#1807); density 0 with no range leaves the colour untouched.
     val applyFog = fn("applyFog", returns = AslType.Data(GpuDataShape.Vec3)) {
         val baseColor by param(GpuDataShape.Vec3)
         val pos by param(GpuDataShape.Vec3)
         val dist = let("dist", length(u.cameraPosition.xyz - pos))
-        val fogAmount = let("fogAmount", 1f.lit - exp(-u.fogColor!!.a * dist))
+        val fogAmount = let("fogAmount", fogAmount(dist, u.fogColor!!, u.fogRange!!))
         returnValue(mix(baseColor, u.fogColor.rgb, saturate(fogAmount)))
     }
 

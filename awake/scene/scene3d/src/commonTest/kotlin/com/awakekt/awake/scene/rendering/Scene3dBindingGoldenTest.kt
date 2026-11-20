@@ -32,9 +32,12 @@ import kotlin.test.assertEquals
 class Scene3dBindingGoldenTest {
     @Test
     fun fogSavesAndLoadsAsTheHandWrittenBindingDid() {
-        val json = """{"enabled":false,"density":0.125,"color":{"r":0.5,"g":0.25,"b":0.75,"a":0.5}}"""
+        val older = """{"enabled":false,"density":0.125,"color":{"r":0.5,"g":0.25,"b":0.75,"a":0.5}}"""
+        // #1807's mode, start and end are written at their defaults, as Light's shadowFade was.
+        val json = older.dropLast(1) + ""","mode":"Exponential","start":0.0,"end":1000.0}"""
         assertExports(json, FogBinding, Fog(enabled = false, density = 0.125f, color = Color(0.5f, 0.25f, 0.75f, 0.5f)))
         assertEquals(Fog(false, 0.125f, Color(0.5f, 0.25f, 0.75f, 0.5f)), assertRoundTrips(json, FogBinding))
+        assertEquals(Fog(false, 0.125f, Color(0.5f, 0.25f, 0.75f, 0.5f)), load(older, FogBinding), "a document from before #1807 loads as it did")
     }
 
     @Test
