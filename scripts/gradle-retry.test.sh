@@ -73,4 +73,27 @@ for workflow in "${workflows[@]}"; do
 done
 [[ $failures -gt 0 ]] || echo "ok   the pull request workflows run Gradle through the wrapper"
 
+# The wrapper is a bash script: in a job that can run on Windows, whose default shell is PowerShell,
+# a step that calls it must say `shell: bash`, or PowerShell opens the file and runs no Gradle.
+windows_steps="$(python3 - "$here/../.github/workflows" <<'PY'
+import glob, os, sys, yaml
+for path in sorted(glob.glob(os.path.join(sys.argv[1], "*.yml"))):
+    for name, job in (yaml.safe_load(open(path)).get("jobs") or {}).items():
+        runs_on, matrix = str(job.get("runs-on", "")), str((job.get("strategy") or {}).get("matrix", ""))
+        if "windows" not in runs_on and not ("matrix" in runs_on and "windows" in matrix):
+            continue
+        if (job.get("defaults") or {}).get("run", {}).get("shell"):
+            continue
+        for step in job.get("steps", []):
+            if "gradle-retry.sh" in (step.get("run") or "") and not step.get("shell"):
+                print(f"{os.path.basename(path)} {name}: {step.get('name')}")
+PY
+)"
+if [[ -n "$windows_steps" ]]; then
+  while IFS= read -r line; do echo "FAIL a step that can run on Windows calls the wrapper without shell: bash: $line"; done <<< "$windows_steps"
+  failures=$((failures + 1))
+else
+  echo "ok   a step that can run on Windows runs the wrapper in bash"
+fi
+
 [[ $failures -eq 0 ]] || { echo "$failures case(s) failed"; exit 1; }

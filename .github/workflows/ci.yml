@@ -540,6 +540,8 @@ jobs:
           target-path: awake/asset/shader-compiler/rust-native/target
 
       - name: Build libawake_naga for this host
+        # Bash on every host, Windows included, so the step runs Gradle through the retry wrapper (#1592).
+        shell: bash
         run: scripts/gradle-retry.sh ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
 
       - name: Verify the native library was packaged
