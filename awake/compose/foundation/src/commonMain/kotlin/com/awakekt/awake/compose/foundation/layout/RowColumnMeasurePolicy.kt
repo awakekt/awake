@@ -73,8 +73,6 @@ internal fun interface MainAxisSpace {
     fun of(free: Int, count: Int): Int
 }
 
-private val NoSpace = MainAxisSpace { _, _ -> 0 }
-
 internal class RowColumnParentData(
     var weight: Float = 0f,
     var fill: Boolean = true,
@@ -123,7 +121,7 @@ internal class VerticalAlignNode(
     ParentDataModifierNode {
     override fun modifyParentData(current: Any?): Any =
         ((current as? RowColumnParentData) ?: RowColumnParentData()).also {
-            it.crossAxisAlign = CrossAxisAlign(alignment::align)
+            it.crossAxisAlign = VerticalCrossAxisAlign(alignment)
         }
 }
 
@@ -142,7 +140,7 @@ internal class HorizontalAlignNode(
     ParentDataModifierNode {
     override fun modifyParentData(current: Any?): Any =
         ((current as? RowColumnParentData) ?: RowColumnParentData()).also {
-            it.crossAxisAlign = CrossAxisAlign(alignment::align)
+            it.crossAxisAlign = HorizontalCrossAxisAlign(alignment)
         }
 }
 
@@ -183,9 +181,9 @@ internal class RowColumnMeasurePolicy(
     private val spacing: Dp,
     private val crossAxisAlign: CrossAxisAlign,
     /** Where leftover main-axis space goes: `(free, count) -> before the first child`. */
-    private val leading: MainAxisSpace = NoSpace,
+    private val leading: MainAxisSpace = NoMainAxisSpace,
     /** Extra space between each pair, on top of [spacing]. */
-    private val between: MainAxisSpace = NoSpace,
+    private val between: MainAxisSpace = NoMainAxisSpace,
 ) : MeasurePolicy {
 
     private val isVertical = orientation == LayoutOrientation.Vertical
