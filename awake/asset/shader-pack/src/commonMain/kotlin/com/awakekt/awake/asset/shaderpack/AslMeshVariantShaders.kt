@@ -187,6 +187,11 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
         binding = 2,
     )
+    // The textured shader's emissive binding: a glTF emissiveTexture masks emissiveFactor (#1829).
+    val emissiveTexture by texture2d(
+        group = BindingLayout.Standard.slot(BindingSemantic.Material),
+        binding = 8,
+    )
 
     val out = varyings("VertexOutput")
     val color by out.varying(GpuDataShape.Vec3, location = 0)
@@ -224,6 +229,8 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     fragment {
         // Sampled before the light loop: implicit derivatives need uniform control flow.
         val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
+        // As stored, like the base colour: this shader lights display-referred colours and decodes them last.
+        val emissiveMask = let("emissiveMask", textureSample(emissiveTexture, baseColorSampler, uv).rgb)
         val n = let("n", normalize(normal))
         val l = let("l", normalize(frame.value("lightDirection").xyz))
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
@@ -233,7 +240,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         addPointLights(shade, ambientShare, n, debugVaryings.worldPosition, SkinnedPointLights(frame::array))
         // The material's factors tint it as glTF's do; untinted they are white and black.
         val stored = let("stored", texColor.rgb * color * tint.xyz)
-        val lit = stored * shade + glow.xyz
+        val lit = stored * shade + emissiveMask * glow.xyz
         val alpha = let("alpha", texColor.a * tint.w)
         val shaded = vec4(
             select(displayTransform.displayReferred(lit, exposure.x), displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit),
