@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Vec3f
@@ -32,6 +34,15 @@ class CanvasItem(
     val scaler: CanvasScaler? = null,
 ) {
     /** [CanvasItem] as it was before `scaler`: hidden, and kept so a consumer compiled against it still links. */
+    /**
+     * Its `canvas-element-<id>` test tag as a modifier, built once. Built each time the element was
+     * composed, it cost a string and a semantics configuration with its map, per element per frame on
+     * a host that composes every frame (#1742).
+     */
+    internal val tag: Modifier
+        get() = builtTag ?: Modifier.testTag("canvas-element-$id").also { builtTag = it }
+    private var builtTag: Modifier? = null
+
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(
         id: Int,

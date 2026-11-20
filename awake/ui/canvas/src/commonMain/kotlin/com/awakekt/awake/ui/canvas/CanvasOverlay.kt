@@ -53,7 +53,6 @@ import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.platform.LocalViewportSize
-import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.input.InputDevice
@@ -260,7 +259,7 @@ internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem
                 WithItemScaler(item, tree) {
                     CanvasElementView(
                         child,
-                        Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"),
+                        Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).then(item.tag),
                         tree,
                         tree.childrenOf(child),
                     )
@@ -295,7 +294,7 @@ private fun BoxScope.Elements(
 ) {
     for (item in entries) {
         val element = item.element
-        val tag = "canvas-element-${item.id}"
+        val tag = item.tag
         when {
             !tree.shows(element) -> Unit
             // An arrow is drawn only while what it sits in is held to the edge.
