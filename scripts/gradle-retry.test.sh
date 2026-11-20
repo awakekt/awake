@@ -90,6 +90,26 @@ else
   failures=$((failures + 1))
 fi
 
+# A daemon the command leaves running, holding its stdout and stderr, doesn't keep the wrapper from
+# returning: on Windows the Gradle and Kotlin daemons inherit the command's handles, and a pipe left
+# open by them hung every Windows step for its whole 45 minutes (#1831).
+cat > "$work/daemon-gradlew" <<'EOF2'
+#!/usr/bin/env bash
+echo out
+sleep 30 &
+EOF2
+chmod +x "$work/daemon-gradlew"
+started=$SECONDS
+status=0
+timeout 20 "$script" "$work/daemon-gradlew" > "$work/stdout" 2> "$work/stderr" || status=$?
+elapsed=$((SECONDS - started))
+if [[ $status -eq 0 && $elapsed -lt 10 && "$(cat "$work/stdout")" == out ]]; then
+  echo "ok   a daemon left holding the output doesn't hold the wrapper (${elapsed}s)"
+else
+  echo "FAIL a daemon left holding the output held the wrapper: exit $status after ${elapsed}s, stdout '$(cat "$work/stdout")'"
+  failures=$((failures + 1))
+fi
+
 # Every Gradle call in the pull request workflows goes through the wrapper. Allowed directly: the
 # daemon stop, which resolves nothing.
 workflows=(ci verify templates render-evidence obfuscated-templates font-atlas build-logic-macos)

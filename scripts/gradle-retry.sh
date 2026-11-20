@@ -39,17 +39,52 @@ set -uo pipefail
 mirror_first="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/central-mirror-first.init.gradle.kts"
 read -r -a pauses <<< "${GRADLE_RETRY_PAUSES:-60 180 300}"
 log="$(mktemp)"
-trap 'rm -f "$log"' EXIT
+out="$(mktemp)"
+err="$(mktemp)"
+trap 'rm -f "$log" "$out" "$err"' EXIT
 
 MISS='Could not find [^ ]|was not found in any of the following sources'
 FILE_MISS='Could not find [^ ]+ \([^)]+\)'
 ERROR="Could not resolve|status code 429|Received status code 5[0-9][0-9]"
 
-# Runs "$@" with each stream teed into $log and kept on its own descriptor, and exits with its status.
-run() (
-  : > "$log"
-  { { "$@" 2>&1 1>&4 | tee -a "$log" >&3; exit "${PIPESTATUS[0]}"; } 4>&1 | tee -a "$log"; exit "${PIPESTATUS[0]}"; } 3>&2
-)
+# Runs "$@" with stdout and stderr written to files, not pipes, and streamed from them to this
+# script's own stdout and stderr while it runs, then exits with its status. On Windows the Gradle and
+# Kotlin daemons inherit the command's handles and outlive it: through a pipe (tee), the reader then
+# never saw the end of the output, and every Windows step hung until its timeout (#1831). A file
+# can be held open by a daemon without holding anything up.
+run() {
+  : > "$out"
+  : > "$err"
+  "$@" > "$out" 2> "$err" &
+  local pid=$! status
+  trap 'kill "$pid" 2>/dev/null' TERM INT
+  sent_out=0
+  sent_err=0
+  while kill -0 "$pid" 2>/dev/null; do
+    drain "$out" sent_out 1
+    drain "$err" sent_err 2
+    # The system sleep, in a subshell so bash doesn't remember its path for the pauses below, whose
+    # sleep the tests replace on PATH to record them.
+    (command -p sleep 0.5)
+  done
+  wait "$pid"
+  status=$?
+  trap - TERM INT
+  drain "$out" sent_out 1
+  drain "$err" sent_err 2
+  cat "$out" "$err" > "$log"
+  return "$status"
+}
+
+# Writes what [file] $1 gained since the offset held in variable $2 to descriptor $3, and moves it on.
+drain() {
+  local size
+  size=$(wc -c < "$1")
+  if (( size > ${!2} )); then
+    tail -c +"$(( ${!2} + 1 ))" "$1" | head -c "$(( size - ${!2} ))" >&"$3"
+    printf -v "$2" '%s' "$size"
+  fi
+}
 
 refreshed=false
 verbose=false
