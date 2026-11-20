@@ -232,11 +232,11 @@ internal class TextRun(
         val originY = wholePixel(baseOffsetY) + wholePixel(extraY) + plan.residualY
         if (pixelGlyphs == null) {
             paintFieldLines(scope, color, originX, originY + glyphTopPx, effects)
-            return
+        } else {
+            // A decorated run slides its fill's pixel glyphs as a plain run does, over its decoration (#1808).
+            if (effects != null) paintFieldLines(scope, Color.Transparent, originX, originY + glyphTopPx, effects)
+            paintSubpixelPixelLines(scope, color, originX, originY)
         }
-        // A decorated run slides its fill's pixel glyphs as a plain run does, over its decoration (#1808).
-        if (effects != null) paintFieldLines(scope, Color.Transparent, originX, originY + glyphTopPx, effects)
-        paintSubpixelPixelLines(scope, color, originX, originY)
     }
 
     private fun paintSubpixelPixelLines(scope: DrawScope, color: Color, originX: Float, originY: Float) {

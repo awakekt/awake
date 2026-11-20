@@ -68,17 +68,28 @@ class UiTextEffectsParityTest {
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
-    /** One decorated glyph primitive a character, staged as one run of one quad a glyph. */
+    /**
+     * One decorated glyph primitive a character, staged as one run of one quad a glyph. Under the pixel-glyph limit the
+     * run's fill follows as one plain glyph run, the same as plain text's: one more batch for the run (#1808).
+     */
     @Test
     fun outlinedShadowedTextStagesOneQuadAGlyph() {
         val style = TextStyle(color = Color.White, outline = TextOutline(Color.Black, 2f), shadow = TextShadow(Color.Black, 1f, 1f, 2f))
-        val primitives = Case("count", 24, style, text = "Harbor Town").primitives
-        val glyphs = primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
-        assertEquals("Harbor Town".length, glyphs.size)
-        val runs = DrawRunCoalescer.coalesce(primitives).filterIsInstance<StagedDrawRun.GlyphRun>()
-        // The space has no ink to decorate, so it is a plain glyph of its own between the two words' runs.
-        assertEquals(listOf(true, false, true), runs.map { it.decorated })
-        assertEquals((glyphs.size - 1) * 6, runs.filter { it.decorated }.sumOf { it.indices.size }, "one quad a decorated glyph")
+        for (size in listOf(24, 48)) {
+            val primitives = Case("count", size, style, text = "Harbor Town").primitives
+            val decorated = primitives.filterIsInstance<UiDrawPrimitive.Glyph>().filter { it.decoration != null }
+            assertEquals("HarborTown".length, decorated.size, "at $size px")
+            val runs = DrawRunCoalescer.coalesce(primitives).filterIsInstance<StagedDrawRun.GlyphRun>()
+            val pixelFill = size <= UiFonts.default().pixelGlyphMaxSize
+            if (pixelFill) {
+                // The space has no ink to decorate, so it is a plain glyph of its own between the two words' runs.
+                assertEquals(listOf(true, false, true, false), runs.map { it.decorated }, "at $size px")
+            } else {
+                assertTrue(runs.all { it.decorated }, "at $size px the field draw fills, and nothing follows it")
+            }
+            assertEquals(decorated.size * 6, runs.filter { it.decorated }.sumOf { it.indices.size }, "at $size px: one quad a decorated glyph")
+            if (pixelFill) assertEquals(decorated.size * 6, runs.last().indices.size, "at $size px: the fill, one quad an inked glyph")
+        }
     }
 
     private fun failures(
@@ -104,7 +115,8 @@ class UiTextEffectsParityTest {
                     (quad.x + quad.w + grow).toInt(),
                     (quad.y + quad.h + grow).toInt(),
                 )
-                if (ring.gaps > 0 || ring.thinnest < maxOf(width - SCALLOP_PX, MIN_RING_PX)) add("$backend ${case.name}: $ring")
+                val floor = if (case.pixelFill) MIN_RING_OVER_PIXEL_FILL_PX else MIN_RING_PX
+                if (ring.gaps > 0 || ring.thinnest < maxOf(width - SCALLOP_PX, floor)) add("$backend ${case.name}: $ring")
             }
         }
     }
@@ -140,6 +152,7 @@ class UiTextEffectsParityTest {
     /** [text] at [size] px in [style], over a mid-grey ground. */
     private inner class Case(val name: String, size: Int, style: TextStyle, text: String = "OW8") {
         val outlineWidth: Float? = style.outline?.width?.takeIf { style.shadow == null }
+        val pixelFill: Boolean = size <= UiFonts.default().pixelGlyphMaxSize
         val primitives: List<UiDrawPrimitive> = ComposeHost().frame(FrameInput(WIDTH, HEIGHT)) {
             Box(Modifier.size(WIDTH.dp, HEIGHT.dp).background(GREY)) {
                 Text(text, Modifier.padding(PADDING.dp), style = style.copy(size = size.sp))
@@ -164,6 +177,7 @@ class UiTextEffectsParityTest {
         /** As `TextEffectsRasterTest`. */
         const val SCALLOP_PX = 0.95f
         const val MIN_RING_PX = 0.25f
+        const val MIN_RING_OVER_PIXEL_FILL_PX = 0.15f
 
         const val REPORT_DIR = "build/reports/render-parity/text-effects"
     }

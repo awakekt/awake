@@ -44,6 +44,17 @@ class UiDecoratedTextFillParityTest {
     private val outline = TextOutline(Color(0f, 0f, 1f, 1f), 1f)
     private val shadow = TextShadow(Color(0f, 1f, 0f, 1f), 1f, 1f)
 
+    /** One label size at one density, under one decoration. */
+    private class Case(val density: Float, val size: Float, val name: String, val style: (Color, Float) -> TextStyle) {
+        override fun toString() = "$name ${size.toInt()}sp at ${density.toInt()}x"
+    }
+
+    private val cases: List<Case> = DENSITIES.flatMap { density ->
+        SIZES.flatMap { size -> decorations().map { (name, style) -> Case(density, size, name, style) } }
+    }
+
+    private fun Case.pixelRun(): Boolean = size * density <= font.pixelGlyphMaxSize
+
     /** At or under the pixel-glyph limit the fill is plain text's to the level; above it, the field's as before. */
     @Test
     fun aDecoratedFillMatchesPlainTextAtSmallSizes() {
@@ -52,26 +63,20 @@ class UiDecoratedTextFillParityTest {
         for (backend in backends) {
             val rows = mutableListOf<List<Array<IntArray>>>()
             openHeadlessUi(backend, WIDTH).use { session ->
-                for (density in DENSITIES) {
-                    for (size in SIZES) {
-                        val pixelRun = size * density <= font.pixelGlyphMaxSize
-                        for ((name, decoration) in decorations()) {
-                            val plain = render(session.renderer, density) { Text(LABEL, style = TextStyle(color = fill, size = size.sp)) }
-                            val decorated = render(session.renderer, density) { Text(LABEL, style = decoration(fill, size)) }
-                            val bare = render(session.renderer, density) { Text(LABEL, style = decoration(Color.Transparent, size)) }
-                            val case = "$backend $name ${size.toInt()}sp at ${density.toInt()}x"
-                            val redDiff = maxDiff(plain, decorated, RED)
-                            val offFill = maxDiffOutside(plain, decorated, bare)
-                            val share = solid(decorated, RED).toFloat() / solid(plain, RED)
-                            report.appendLine(
-                                "$case (${if (pixelRun) "pixel glyphs" else "field"}): fill max diff $redDiff, " +
-                                    "decoration off the fill max diff $offFill, solid fill share ${"%.2f".format(share)}",
-                            )
-                            if (pixelRun && redDiff != 0) failures += "$case: the fill differs from plain text's by $redDiff"
-                            if (pixelRun && offFill != 0) failures += "$case: the decoration off the fill moved by $offFill"
-                            rows += listOf(plain, decorated, bare)
-                        }
-                    }
+                for (case in cases) {
+                    val plain = render(session.renderer, case.density) { Text(LABEL, style = TextStyle(color = fill, size = case.size.sp)) }
+                    val decorated = render(session.renderer, case.density) { Text(LABEL, style = case.style(fill, case.size)) }
+                    val bare = render(session.renderer, case.density) { Text(LABEL, style = case.style(Color.Transparent, case.size)) }
+                    val redDiff = maxDiff(plain, decorated, RED)
+                    val offFill = maxDiffOutside(plain, decorated, bare)
+                    val share = solid(decorated, RED).toFloat() / solid(plain, RED)
+                    report.appendLine(
+                        "$backend $case (${if (case.pixelRun()) "pixel glyphs" else "field"}): fill max diff $redDiff, " +
+                            "decoration off the fill max diff $offFill, solid fill share ${"%.2f".format(share)}",
+                    )
+                    if (case.pixelRun() && redDiff != 0) failures += "$backend $case: the fill differs from plain text's by $redDiff"
+                    if (case.pixelRun() && offFill != 0) failures += "$backend $case: the decoration off the fill moved by $offFill"
+                    rows += listOf(plain, decorated, bare)
                 }
             }
             writeComparison(backend, rows)
@@ -85,22 +90,16 @@ class UiDecoratedTextFillParityTest {
     fun oneDecoratedNodeDrawsWhatTheTwoNodeWorkaroundDrew() {
         for (backend in backends) {
             openHeadlessUi(backend, WIDTH).use { session ->
-                for (density in DENSITIES) {
-                    for (size in SIZES) {
-                        if (size * density > font.pixelGlyphMaxSize) continue
-                        for ((name, decoration) in decorations()) {
-                            val single = render(session.renderer, density) { Text(LABEL, style = decoration(fill, size)) }
-                            val workaround = render(session.renderer, density) {
-                                Box {
-                                    Text(LABEL, style = decoration(Color.Transparent, size))
-                                    Text(LABEL, style = TextStyle(color = fill, size = size.sp))
-                                }
-                            }
-                            for (channel in 0 until CHANNELS) {
-                                assertEquals(0, maxDiff(single, workaround, channel), "$backend $name ${size}sp at ${density}x: channel $channel")
-                            }
+                for (case in cases.filter { it.pixelRun() }) {
+                    val single = render(session.renderer, case.density) { Text(LABEL, style = case.style(fill, case.size)) }
+                    val workaround = render(session.renderer, case.density) {
+                        Box {
+                            Text(LABEL, style = case.style(Color.Transparent, case.size))
+                            Text(LABEL, style = TextStyle(color = fill, size = case.size.sp))
                         }
                     }
+                    val worst = (0 until CHANNELS).maxOf { maxDiff(single, workaround, it) }
+                    assertEquals(0, worst, "$backend $case: one node and the two-node workaround differ")
                 }
             }
         }
