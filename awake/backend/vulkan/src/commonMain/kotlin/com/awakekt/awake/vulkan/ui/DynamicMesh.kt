@@ -323,6 +323,9 @@ class DynamicMesh(
          */
         const val GLYPH_FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.GLYPH_FLOATS_PER_VERTEX
 
+        /** Floats per vertex of a textured image quad: a glyph's, plus the rect a repeating region wraps in (#1795). */
+        const val TEXTURE_FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+
         /** pos(vec2) + localPos(vec2) + halfSize(vec2) + radius(float) + smoothing(float) + color(vec4) +
          * transform(vec4) -- see `ui_rounded_quad.vert`. */
         const val ROUNDED_QUAD_FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX

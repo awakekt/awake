@@ -56,7 +56,7 @@ class DrawRunCoalescerTextureBatchTest {
         assertSame(sharedAtlas, batched.texture)
         assertEquals(BlendMode.SourceOver, batched.blendMode)
         assertEquals(true, batched.premultiplied)
-        assertEquals(500 * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX, batched.vertices.size)
+        assertEquals(500 * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX, batched.vertices.size)
         assertEquals(500 * VertexFormats2D.INDICES_PER_QUAD, batched.indices.size)
         assertEquals(499 * VertexFormats2D.VERTICES_PER_QUAD, batched.indices[499 * VertexFormats2D.INDICES_PER_QUAD])
     }

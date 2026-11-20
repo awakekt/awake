@@ -335,6 +335,8 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         tint: Color = Color.White,
         premultiplied: Boolean = false,
         blendMode: BlendMode = BlendMode.SourceOver,
+        repeatX: Float = 1f,
+        repeatY: Float = 1f,
     ) {
         if (w <= 0f || h <= 0f) return
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
@@ -344,7 +346,12 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         for (py in y0 until y1) {
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                val sampled = sampleImage(image, region, tint, alpha, (px + 0.5f - x) / w, (py + 0.5f - y) / h, premultiplied)
+                // A repeating region wraps where the quad's fraction, counted in repeats, does: as the UI texture shader does.
+                val unwrappedU = (px + 0.5f - x) / w * repeatX
+                val unwrappedV = (py + 0.5f - y) / h * repeatY
+                val u = if (repeatX == 1f) unwrappedU else unwrappedU - floor(unwrappedU)
+                val v = if (repeatY == 1f) unwrappedV else unwrappedV - floor(unwrappedV)
+                val sampled = sampleImage(image, region, tint, alpha, u, v, premultiplied)
                 blendWithMode(px, py, sampled, blendMode)
             }
         }
@@ -370,9 +377,11 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         tint: Color = Color.White,
         premultiplied: Boolean = false,
         blendMode: BlendMode = BlendMode.SourceOver,
+        repeatX: Float = 1f,
+        repeatY: Float = 1f,
     ) {
         if (rotationDegrees == 0f) {
-            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode)
+            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode, repeatX, repeatY)
             return
         }
         if (w <= 0f || h <= 0f) return
@@ -1072,6 +1081,8 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
                             primitive.tint,
                             primitive.premultiplied,
                             primitive.blendMode,
+                            primitive.repeatX,
+                            primitive.repeatY,
                         )
                         layerImage != null -> fillRotatedLayerImage(
                             x,

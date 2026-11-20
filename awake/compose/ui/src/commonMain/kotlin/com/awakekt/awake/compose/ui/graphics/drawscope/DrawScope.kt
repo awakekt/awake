@@ -351,6 +351,28 @@ interface DrawScope {
     ) = drawTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied)
 
     /**
+     * Draws [region] of [material] repeated [repeatX] times across [width] and [repeatY] times down
+     * [height], as one piece: 3.5 draws it three and a half times, the last one cut short, and 1
+     * stretches it once. However many times it repeats, it costs one quad (#1795).
+     *
+     * A [DrawScope] of its own draws the repeats one by one; the engine's draws them as one quad
+     * whose texture coordinates wrap inside [region].
+     */
+    @Suppress("LongParameterList")
+    fun drawTextureRepeated(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        repeatX: Float,
+        repeatY: Float,
+        tint: Color = Color.White,
+        filterQuality: FilterQuality = FilterQuality.Low,
+    ) = drawTextureTiles(material, x, y, width, height, region, repeatX, repeatY, tint, filterQuality)
+
+    /**
      * Draws a backdrop frosted-glass blur beneath this node's layout bounds.
      *
      * Coordinates are node-local. Applications should prefer `Modifier.backdropEffect`, whose
@@ -490,8 +512,9 @@ internal interface LayerDrawScope {
  */
 // Seven of the members below are `DrawScope` itself and four are the painter's own hooks, so the
 // count is the interface rather than a class doing too much. Splitting it would mean two objects
-// sharing one origin/alpha/transform triple, which is worse.
-@Suppress("TooManyFunctions")
+// sharing one origin/alpha/transform triple, which is worse. Its size is the same story: every
+// `DrawScope` draw call lands here, and the repeating texture (#1795) took it over the line.
+@Suppress("TooManyFunctions", "LargeClass")
 internal class PaintScope :
     DrawScope,
     LayerDrawScope,
@@ -824,21 +847,7 @@ internal class PaintScope :
         tint: Color,
         filterQuality: FilterQuality,
         premultiplied: Boolean,
-    ) {
-        drawTexture(
-            material = material,
-            x = x,
-            y = y,
-            width = width,
-            height = height,
-            region = region,
-            tint = tint,
-            filterQuality = filterQuality,
-            premultiplied = premultiplied,
-            rotationDegrees = 0f,
-            blendMode = BlendMode.SourceOver,
-        )
-    }
+    ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied, 0f, BlendMode.SourceOver, 1f, 1f)
 
     @Suppress("LongParameterList")
     override fun drawTexture(
@@ -853,25 +862,46 @@ internal class PaintScope :
         premultiplied: Boolean,
         rotationDegrees: Float,
         blendMode: BlendMode,
+    ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied, rotationDegrees, blendMode, 1f, 1f)
+
+    @Suppress("LongParameterList")
+    override fun drawTextureRepeated(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        repeatX: Float,
+        repeatY: Float,
+        tint: Color,
+        filterQuality: FilterQuality,
+    ) = emitTexture(material, x, y, width, height, region, tint, filterQuality, false, 0f, BlendMode.SourceOver, repeatX, repeatY)
+
+    /** One texture quad, [region] repeating [repeatX] by [repeatY] times in it (#1795). */
+    @Suppress("LongParameterList")
+    private fun emitTexture(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        tint: Color,
+        filterQuality: FilterQuality,
+        premultiplied: Boolean,
+        rotationDegrees: Float,
+        blendMode: BlendMode,
+        repeatX: Float,
+        repeatY: Float,
     ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
-        if (clips.isRotatedQuadOutside(px, py, pw, ph, rotationDegrees)) return
+        if (repeatX <= 0f || repeatY <= 0f || clips.isRotatedQuadOutside(px, py, pw, ph, rotationDegrees)) return
         output += UiDrawPrimitive.Texture(
-            x = px,
-            y = py,
-            w = pw,
-            h = ph,
-            material = material,
-            alpha = alpha,
-            rotationDegrees = rotationDegrees,
-            blendMode = blendMode,
-            premultiplied = premultiplied,
-            region = region,
-            tint = tint,
-            filterQuality = filterQuality,
+            px, py, pw, ph, material, alpha, rotationDegrees, blendMode, premultiplied, null, null, region, tint, filterQuality, repeatX, repeatY,
         )
     }
 

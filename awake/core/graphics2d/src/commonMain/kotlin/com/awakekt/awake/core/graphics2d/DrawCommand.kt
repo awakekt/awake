@@ -368,6 +368,10 @@ sealed class DrawCommand {
      * @property region The part of the texture drawn, in its UV space; the whole of it by default.
      * @property tint Multiplies each sampled texel's colour; white leaves it as it is.
      * @property filterQuality How an image's texels are sampled; a render target keeps its own.
+     * @property repeatX How many times [region] repeats across the quad's width: 1, the default,
+     * stretches it once over the quad, and 3.5 draws it three and a half times, the last one cut
+     * short. One quad however many times it repeats, so a tiled fill costs what a stretched one does.
+     * @property repeatY How many times [region] repeats down the quad's height.
      */
     data class Texture(
         val x: Float,
@@ -388,7 +392,56 @@ sealed class DrawCommand {
         val region: TextureRegion = TextureRegion.Whole,
         val tint: Color = Color.White,
         val filterQuality: FilterQuality = FilterQuality.Low,
-    ) : UiDrawPrimitive()
+        val repeatX: Float = 1f,
+        val repeatY: Float = 1f,
+    ) : UiDrawPrimitive() {
+        init {
+            require(repeatX > 0f && repeatY > 0f) { "A region repeats a positive number of times, not $repeatX x $repeatY." }
+        }
+
+        /** Whether [region] repeats along either axis rather than stretching once over the quad. */
+        val repeats: Boolean get() = repeatX != 1f || repeatY != 1f
+
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        constructor(
+            x: Float,
+            y: Float,
+            w: Float,
+            h: Float,
+            material: Any,
+            alpha: Float = 1f,
+            rotationDegrees: Float = 0f,
+            blendMode: BlendMode = BlendMode.SourceOver,
+            premultiplied: Boolean = false,
+            tokenId: String? = null,
+            transform: DrawTransform? = null,
+            region: TextureRegion = TextureRegion.Whole,
+            tint: Color = Color.White,
+            filterQuality: FilterQuality = FilterQuality.Low,
+        ) : this(x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality, 1f, 1f)
+
+        /** The `copy` from before [repeatX] and [repeatY], which keeps this one's repeats. */
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        fun copy(
+            x: Float = this.x,
+            y: Float = this.y,
+            w: Float = this.w,
+            h: Float = this.h,
+            material: Any = this.material,
+            alpha: Float = this.alpha,
+            rotationDegrees: Float = this.rotationDegrees,
+            blendMode: BlendMode = this.blendMode,
+            premultiplied: Boolean = this.premultiplied,
+            tokenId: String? = this.tokenId,
+            transform: DrawTransform? = this.transform,
+            region: TextureRegion = this.region,
+            tint: Color = this.tint,
+            filterQuality: FilterQuality = this.filterQuality,
+        ): Texture = Texture(
+            x, y, w, h, material, alpha, rotationDegrees, blendMode, premultiplied, tokenId, transform, region, tint, filterQuality,
+            repeatX, repeatY,
+        )
+    }
 
     /**
      * Drop-shadow primitive for elevation support.

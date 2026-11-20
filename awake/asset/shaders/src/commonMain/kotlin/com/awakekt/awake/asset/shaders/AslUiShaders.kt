@@ -13,7 +13,10 @@ import com.awakekt.awake.asset.shaderdsl.b
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.dpdx
+import com.awakekt.awake.asset.shaderdsl.dpdy
 import com.awakekt.awake.asset.shaderdsl.eq
+import com.awakekt.awake.asset.shaderdsl.fract
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
 import com.awakekt.awake.asset.shaderdsl.fwidth
 import com.awakekt.awake.asset.shaderdsl.g
@@ -38,6 +41,7 @@ import com.awakekt.awake.asset.shaderdsl.step
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
 import com.awakekt.awake.asset.shaderdsl.textureSample
+import com.awakekt.awake.asset.shaderdsl.textureSampleGrad
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
@@ -92,12 +96,14 @@ val UiTextureShader: AslShaderDefinition = shader("ui_texture") {
     val out = varyings("VertexOutput")
     val uv by out.varying(GpuDataShape.Vec2, location = 0)
     val color by out.varying(GpuDataShape.Vec4, location = 1)
+    val uvRect by out.varying(GpuDataShape.Vec4, location = 2)
 
     vertex {
         val inPos by input(GpuDataShape.Vec2, location = 0)
         val inUv by input(GpuDataShape.Vec2, location = 1)
-        val inColor by input(GpuDataShape.Vec4, location = 2)
-        val inTransform by input(GpuDataShape.Vec4, location = 3)
+        val inUvRect by input(GpuDataShape.Vec4, location = 2)
+        val inColor by input(GpuDataShape.Vec4, location = 3)
+        val inTransform by input(GpuDataShape.Vec4, location = 4)
 
         val scale = inTransform.xy
         val pivot = inTransform.zw
@@ -106,16 +112,28 @@ val UiTextureShader: AslShaderDefinition = shader("ui_texture") {
         out.position set vec4(ndc, 0f.lit, 1f.lit)
         uv set inUv
         color set inColor
+        uvRect set inUvRect
     }
 
     fragment {
-        val sampled = let("sampled", textureSample(previewTexture, previewSampler, uv))
+        // A repeating axis (#1795) wraps its uv, counted in repeats, into the region with fract. The wrap jumps inside
+        // the quad, so the sample takes the derivatives of the unwrapped uv scaled to the region, as a textured mesh's
+        // animated sheet does: a mip or filter footprint chosen from the jump would draw a seam at every repeat. An
+        // axis that does not repeat has a size of 0 and samples its uv as it is.
+        val size = let("size", uvRect.zw)
+        val repeats = let("repeats", step(vec2(REPEAT_EPSILON.lit), abs(size)))
+        val sampleUv = let("sampleUv", mix(uv, uvRect.xy + fract(uv) * size, repeats))
+        val uvScale = let("uvScale", mix(vec2(1f.lit), size, repeats))
+        val sampled = let("sampled", textureSampleGrad(previewTexture, previewSampler, sampleUv, dpdx(uv) * uvScale, dpdy(uv) * uvScale))
         // The vertex colour is the draw's tint and alpha: white leaves the texel as it is.
         val alpha = let("alpha", sampled.a * color.a)
         val rgb = let("rgb", sampled.rgb * color.rgb * color.a)
         colorOutput(vec4(rgb, alpha))
     }
 }
+
+/** Below this, a region's size along an axis is 0: that axis does not repeat. */
+private const val REPEAT_EPSILON = 1e-7f
 
 /** ASL definition for the UI font atlas shader, including coverage and MTSDF paths. */
 val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {

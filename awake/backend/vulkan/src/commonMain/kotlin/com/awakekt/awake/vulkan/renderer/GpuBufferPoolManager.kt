@@ -31,7 +31,7 @@ internal class GpuBufferPoolManager(
     private val retiredUiSlots = RetiredResources<UiMeshSlots>(maxFramesInFlight, UiMeshSlots::destroy)
 
     private val uiTextureMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.TEXTURE_PRIMITIVE_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
+        DynamicMesh(graphicsDevice, Renderer.TEXTURE_PRIMITIVE_QUADS, DynamicMesh.TEXTURE_FLOATS_PER_VERTEX, maxFramesInFlight)
     }
     private val imagePassMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, 1, DynamicMesh.IMAGE_PASS_FLOATS_PER_VERTEX, maxFramesInFlight)

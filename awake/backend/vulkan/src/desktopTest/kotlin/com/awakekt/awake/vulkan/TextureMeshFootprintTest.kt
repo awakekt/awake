@@ -63,7 +63,7 @@ class TextureMeshFootprintTest {
         }
     }
 
-    private fun vertices(quads: Int) = FloatArray(quads * VERTICES_PER_QUAD * DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
+    private fun vertices(quads: Int) = FloatArray(quads * VERTICES_PER_QUAD * DynamicMesh.TEXTURE_FLOATS_PER_VERTEX)
 
     /** Only the count drives capacity. */
     private fun indices(quads: Int) = IntArray(quads * INDICES_PER_QUAD)
