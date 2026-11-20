@@ -286,6 +286,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
                 failures += "docs/reference/source-provenance.json has an invalid schema"
             }
         }
+        failures += ProvenanceNameGate.failures(root)
         return failures
     }
 

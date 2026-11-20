@@ -89,9 +89,11 @@ class RenderQualitySettings(
 
     /**
      * The scene's anti-aliasing, or `null` (the default) for the render plan's own sample count
-     * (#1791). The engine reads it once, as it builds its GPU resources, so a settings screen says a
-     * change applies on the next start; [AntiAliasing.Fxaa] adds the post-processing stack's FXAA stage
-     * to every scene camera that has none. A mode the device lacks resolves
+     * (#1791). The engine builds its scene pass for it once, at start. Between [AntiAliasing.Off] and
+     * [AntiAliasing.Fxaa] on a single-sampled scene pass, [applyTo] switches the renderer from the next
+     * frame ([Renderer.switchAntiAliasing]); a change to or from a multisampled mode applies on the
+     * next start, so a settings screen says so for those. [AntiAliasing.Fxaa] adds the
+     * post-processing stack's FXAA stage to every scene camera that has none. A mode the device lacks resolves
      * to the nearest cheaper one ([AntiAliasing.resolve]); [Renderer.supportedAntiAliasing] lists what
      * it offers and [Renderer.antiAliasing] says which mode is in effect.
      */
@@ -161,6 +163,7 @@ class RenderQualitySettings(
         if (renderer.effectQuality != effects) renderer.effectQuality = effects
         val shadows = shadowBudgetOverride ?: RenderQualityPolicy.shadowBudget(current, device)
         if (renderer.shadowBudget != shadows) renderer.shadowBudget = shadows
+        antiAliasing?.let { if (renderer.antiAliasing != it) renderer.switchAntiAliasing(it) }
     }
 
     private fun dynamicScale(renderer: Renderer, config: DynamicResolution, frameSeconds: Float): Float {
