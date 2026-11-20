@@ -41,14 +41,24 @@ internal class GradientBackgroundNode :
     DrawModifierNode {
     lateinit var brush: LinearGradient
     lateinit var shape: Shape
-    private var key: GradientKey? = null
+    private var builtWidth = 0
+    private var builtHeight = 0
+    private var builtDensity = 0f
+    private var builtDirection = LayoutDirection.Ltr
+    private var builtBrush: LinearGradient? = null
+    private var builtShape: Shape? = null
     private var mesh: ColoredTriangleMesh? = null
     private var retentionKey: Any = Any()
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        val nextKey = GradientKey(width, height, density, layoutDirection, brush, shape)
-        if (key != nextKey) {
-            key = nextKey
+        // Checked field by field, so a frame that keeps the mesh allocates no key to compare (#1742).
+        if (mesh == null || !builtFrom()) {
+            builtWidth = width
+            builtHeight = height
+            builtDensity = density
+            builtDirection = layoutDirection
+            builtBrush = brush
+            builtShape = shape
             val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)
             mesh = gradientMesh(width.toFloat(), height.toFloat(), brush, outline)
             retentionKey = Any()
@@ -56,9 +66,22 @@ internal class GradientBackgroundNode :
         mesh?.let { drawRetainedMesh(it, retentionKey) }
         drawContent()
     }
+
+    private fun DrawScope.builtFrom(): Boolean =
+        width == builtWidth && height == builtHeight && density == builtDensity && layoutDirection == builtDirection &&
+            sameBrush(brush, builtBrush) && shape == builtShape
 }
 
-private data class GradientKey(val width: Int, val height: Int, val density: Float, val direction: LayoutDirection, val brush: LinearGradient, val shape: Shape)
+// A data class's equals compares the colour lists through an iterator; by index it allocates nothing.
+private fun sameBrush(a: LinearGradient, b: LinearGradient?): Boolean =
+    a === b || (b != null && a.horizontal == b.horizontal && sameColors(a.colors, b.colors))
+
+private fun sameColors(a: List<Color>, b: List<Color>): Boolean {
+    var same = a.size == b.size
+    var i = 0
+    while (same && i < a.size) same = a[i] == b[i++]
+    return same
+}
 
 private fun gradientMesh(width: Float, height: Float, brush: LinearGradient, outline: ShapeOutline): ColoredTriangleMesh {
     if (width <= 0f || height <= 0f) return ColoredTriangleMesh(emptyList(), IntArray(0))

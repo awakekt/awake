@@ -1264,13 +1264,17 @@ private fun overflowInset(reach: Float, size: Int): Int =
 private fun Color.dimmedBy(alpha: Float): Color =
     if (alpha >= 1f) this else Color(r, g, b, a * alpha)
 
-/** All four stops, so a dimmed gradient keeps its ramp instead of flattening. */
-private fun UiLinearGradient.dimmedBy(alpha: Float): UiLinearGradient = UiLinearGradient(
-    topLeft = topLeft.dimmedBy(alpha),
-    topRight = topRight.dimmedBy(alpha),
-    bottomRight = bottomRight.dimmedBy(alpha),
-    bottomLeft = bottomLeft.dimmedBy(alpha),
-)
+/** All four stops, so a dimmed gradient keeps its ramp instead of flattening; at full alpha, itself (#1742). */
+private fun UiLinearGradient.dimmedBy(alpha: Float): UiLinearGradient = if (alpha >= 1f) {
+    this
+} else {
+    UiLinearGradient(
+        topLeft = topLeft.dimmedBy(alpha),
+        topRight = topRight.dimmedBy(alpha),
+        bottomRight = bottomRight.dimmedBy(alpha),
+        bottomLeft = bottomLeft.dimmedBy(alpha),
+    )
+}
 
 private fun UiDrawPrimitive.dimmedBy(alpha: Float): UiDrawPrimitive = when (this) {
     is UiDrawPrimitive.Quad -> copy(color = color.dimmedBy(alpha))
