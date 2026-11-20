@@ -1,0 +1,1 @@
+- Gradle plugin resolution lists the Plugin Portal last, after Google and Maven Central, in the root and `build-logic` settings, so a Portal outage no longer fails builds whose plugins Central or Google serve: a repository that errors stops the search instead of falling through (#1592).
