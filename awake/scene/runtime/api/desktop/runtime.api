@@ -370,6 +370,7 @@ public final class com/awakekt/awake/scene/runtime/SceneFrameBreakdownKt {
 	public static final fun forScene (Lcom/awakekt/awake/core/diagnostics/FrameBreakdown$Companion;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;I)Lcom/awakekt/awake/core/diagnostics/FrameBreakdown;
 	public static synthetic fun forScene$default (Lcom/awakekt/awake/core/diagnostics/FrameBreakdown$Companion;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;IILjava/lang/Object;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdown;
 	public static final fun toBreakdownSample (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
+	public static final fun toBreakdownSample (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;Lcom/awakekt/awake/render/renderer/FrameGpuTiming;)Lcom/awakekt/awake/core/diagnostics/FrameBreakdownSample;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneFrameStats {

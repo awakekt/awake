@@ -16,6 +16,7 @@ import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes2d.DrawRun
+import com.awakekt.awake.render.renderer.GpuFramePart
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.vulkan.Vulkan
@@ -154,11 +155,15 @@ internal fun Renderer.recordResolvedCommandBuffer(
             flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
         ),
     )
-    gpuFrameTimer?.begin(commandBuffer, frameIndex)
+    val timer = gpuFrameTimer
+    timer?.begin(commandBuffer, frameIndex)
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
+    timer?.mark(commandBuffer, frameIndex, GpuFramePart.ShadowDepth)
     recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
+    timer?.mark(commandBuffer, frameIndex, GpuFramePart.SceneDepth)
     recordMaskPass(commandBuffer, frameIndex, passInput?.maskPasses.orEmpty(), environment)
+    timer?.mark(commandBuffer, frameIndex, GpuFramePart.Mask)
     val outputWidth = swapchainManager.extent.width
     val outputHeight = swapchainManager.extent.height
     val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
@@ -218,12 +223,14 @@ internal fun Renderer.recordResolvedCommandBuffer(
     bindDepthSets(commandBuffer)
     recordSharedPassFeatures(RenderPassSlot.Scene, context)
     Vulkan.vkCmdEndRenderPass(commandBuffer)
+    timer?.mark(commandBuffer, frameIndex, GpuFramePart.Scene)
 
     recordPostPasses(commandBuffer, postPasses)
     if (scaled != null) {
         if (scenePassInput != null) {
             recordPostPassesToTexture(commandBuffer, scaled, scenePassInput, frameIndex)
         }
+        timer?.mark(commandBuffer, frameIndex, GpuFramePart.Post)
         scaled.transitionToShaderReadOnly(commandBuffer)
         recordSwapchainPostPasses(
             commandBuffer = commandBuffer,
@@ -234,6 +241,8 @@ internal fun Renderer.recordResolvedCommandBuffer(
             environment = environment,
         )
     } else {
+        // Unscaled, the frame's image passes draw on the output: they are the upscale part's.
+        timer?.mark(commandBuffer, frameIndex, GpuFramePart.Post)
         recordSwapchainPostPasses(
             commandBuffer = commandBuffer,
             frameIndex = frameIndex,
@@ -241,6 +250,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
             chain = passInput?.postPassChain ?: ImagePassChain.Empty,
         )
     }
+    timer?.mark(commandBuffer, frameIndex, GpuFramePart.Upscale)
 
     recordUiOrPresentTransitionPass(
         commandBuffer = commandBuffer,
@@ -249,7 +259,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         scissor = scissor,
         context = context,
     )
-    gpuFrameTimer?.end(commandBuffer, frameIndex)
+    timer?.end(commandBuffer, frameIndex)
     Vulkan.vkEndCommandBuffer(commandBuffer)
 }
 
