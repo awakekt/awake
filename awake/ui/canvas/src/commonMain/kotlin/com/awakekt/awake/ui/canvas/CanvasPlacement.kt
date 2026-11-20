@@ -28,7 +28,6 @@ import com.awakekt.awake.compose.ui.node.LayoutModifierNode
 import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
-import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.math.roundToInt
@@ -40,9 +39,9 @@ import kotlin.math.roundToInt
  * a root, keeps its own size where it reaches past the canvas; a child is laid out in its parent.
  */
 context(_: Composer)
-internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: String, tree: CanvasTree, safeArea: CanvasInsets, onCanvas: Boolean) {
+internal fun BoxScope.AnchoredElement(element: CanvasElement, tag: Modifier, tree: CanvasTree, safeArea: CanvasInsets, onCanvas: Boolean) {
     val inside = if (element.safeArea) safeArea else CanvasInsets.None
-    val view = Modifier.size(element.width.dp, element.height.dp).testTag(tag)
+    val view = Modifier.size(element.width.dp, element.height.dp).then(tag)
     val adjust = tree.controls.playerLayout.adjustOf(element)
     // The clock object, not its time: reading it is untracked, and draw reads only its frame count.
     val clock = LocalFrameClock.current

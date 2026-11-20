@@ -16,7 +16,6 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.LocalDensity
-import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
@@ -91,7 +90,7 @@ internal fun BoxScope.ClusterChildren(element: CanvasElement, cluster: CanvasClu
         key(child) {
             Box(Modifier.offset(x.dp, y.dp)) {
                 WithItemScaler(item, tree) {
-                    CanvasElementView(child, Modifier.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"), tree, tree.childrenOf(child))
+                    CanvasElementView(child, Modifier.size(child.width.dp, child.height.dp).then(item.tag), tree, tree.childrenOf(child))
                 }
             }
         }

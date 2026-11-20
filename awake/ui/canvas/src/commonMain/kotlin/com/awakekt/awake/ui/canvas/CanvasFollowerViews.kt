@@ -16,7 +16,6 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.LocalDensity
-import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.abs
@@ -29,7 +28,7 @@ import kotlin.math.sin
  * draws rather than through a layer, which would cut whatever reaches past its box.
  */
 context(_: Composer)
-internal fun Follower(element: CanvasElement, plan: FollowerPlan, tag: String, tree: CanvasTree) {
+internal fun Follower(element: CanvasElement, plan: FollowerPlan, tag: Modifier, tree: CanvasTree) {
     val currentDensity = LocalDensity.current
     val baseDensity = plan.density.takeIf { it > 0f } ?: currentDensity
     if (baseDensity != currentDensity) {
@@ -42,18 +41,18 @@ internal fun Follower(element: CanvasElement, plan: FollowerPlan, tag: String, t
 }
 
 context(_: Composer)
-private fun PlacedFollower(element: CanvasElement, plan: FollowerPlan, tag: String, tree: CanvasTree, baseDensity: Float) {
+private fun PlacedFollower(element: CanvasElement, plan: FollowerPlan, tag: Modifier, tree: CanvasTree, baseDensity: Float) {
     // Overlapping parts of one faded follower each fade, so where they overlap they show through
     // a little more than a layer would let them; a name plate's parts barely overlap.
     plan.composed.record(plan)
     // Placed and faded as the plan says each frame, by reads while placing and drawing (#1512).
     Box(Modifier.followerPlaced(plan)) {
         if (plan.scale == 1f) {
-            CanvasElementView(element, Modifier.size(plan.width.dp, plan.height.dp).testTag(tag), tree, tree.childrenOf(element))
+            CanvasElementView(element, Modifier.size(plan.width.dp, plan.height.dp).then(tag), tree, tree.childrenOf(element))
         } else {
             // A denser dp scales its text, images and children with it; its box is already scaled.
             CompositionLocalProvider(LocalDensity provides baseDensity * plan.scale) {
-                CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(element))
+                CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).then(tag), tree, tree.childrenOf(element))
             }
         }
     }
@@ -64,7 +63,7 @@ private fun PlacedFollower(element: CanvasElement, plan: FollowerPlan, tag: Stri
  * leaves the owner's box, and turned to point that way.
  */
 context(_: Composer)
-internal fun PinArrow(item: CanvasItem, owner: CanvasElement, tag: String, tree: CanvasTree) {
+internal fun PinArrow(item: CanvasItem, owner: CanvasElement, tag: Modifier, tree: CanvasTree) {
     val arrow = item.element
     val parentDensity = LocalDensity.current
     val arrowDensity = item.scaler?.let(tree.box::densityOf) ?: parentDensity
@@ -82,7 +81,7 @@ internal fun PinArrow(item: CanvasItem, owner: CanvasElement, tag: String, tree:
     arrow.arrowAngle = owner.pinAngle
     Box(Modifier.offset(x.dp, y.dp)) {
         WithItemScaler(item, tree) {
-            CanvasElementView(arrow, Modifier.size(arrow.width.dp, arrow.height.dp).testTag(tag), tree, tree.childrenOf(arrow))
+            CanvasElementView(arrow, Modifier.size(arrow.width.dp, arrow.height.dp).then(tag), tree, tree.childrenOf(arrow))
         }
     }
 }
