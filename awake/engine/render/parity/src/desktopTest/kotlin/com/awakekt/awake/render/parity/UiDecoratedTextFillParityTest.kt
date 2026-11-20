@@ -33,8 +33,9 @@ import kotlin.test.assertTrue
  * then the fill's coverage alone, whatever lies under it, so a decorated run's red channel set against a plain run's
  * is its fill set against plain text's.
  *
- * Negative control, the code before this change (lavapipe, 1x): the decorated fill's solid red pixels were 41% to 73%
- * of a plain run's at 11 to 14 px, and its red channel differed from plain text's by up to 160 levels.
+ * Negative control, the code before this change, the same on both backends: at 11 to 14 sp at 1x the decorated fill had
+ * 16% to 27% of a plain run's solid pixels and its red channel differed from plain text's by 99 to 180 levels; at 11
+ * and 12 sp at 2x, 57% and 66%, by 198 and 87 levels. Every case above passes now, with a difference of 0.
  */
 class UiDecoratedTextFillParityTest {
     private val backends = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)
