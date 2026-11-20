@@ -73,14 +73,15 @@ data class SceneBloomEffect(
 ) : ScenePostEffect
 
 /**
- * Fast Approximate Anti-Aliasing (FXAA 3.11) post-processing pass on LDR scene colour.
+ * FXAA-style edge anti-aliasing on LDR scene colour (simplified: luma contrast test, edge
+ * orientation, subpixel blend; no end-of-edge search).
  */
 @Serializable
 @SerialName("fxaa")
 data class SceneFxaaEffect(
     /** Whether FXAA antialiasing is enabled. */
     override val enabled: Boolean = true,
-    /** FXAA quality tier. */
+    /** The contrast a pixel's neighbourhood needs before it is filtered: a lower tier filters fewer pixels. */
     val quality: EffectQuality = EffectQuality.High,
 ) : ScenePostEffect
 

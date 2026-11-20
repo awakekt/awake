@@ -1,3 +1,7 @@
+public final class com/awakekt/awake/render/effects/AntiAliasingEffectsKt {
+	public static final fun effectsForAntiAliasing (Ljava/util/List;Lcom/awakekt/awake/render/renderer/AntiAliasing;Lcom/awakekt/awake/render/pipeline/EffectQuality;)Ljava/util/List;
+}
+
 public final class com/awakekt/awake/render/effects/BackdropBlurEffect {
 	public static final field INSTANCE Lcom/awakekt/awake/render/effects/BackdropBlurEffect;
 	public final fun buildBlurChain (Lcom/awakekt/awake/render/effects/BlurChain;Lcom/awakekt/awake/render/effects/BackdropRegion;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;Lcom/awakekt/awake/render/imagepass/ImagePassSource;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
@@ -190,10 +194,12 @@ public abstract interface class com/awakekt/awake/render/effects/PostProcessingE
 
 public final class com/awakekt/awake/render/effects/PostProcessingShaders {
 	public static final field BLOOM_BRIGHT_PASS_SHADER_ID Ljava/lang/String;
+	public static final field FXAA_MIN_EDGE_THRESHOLD F
 	public static final field FXAA_SHADER_ID Ljava/lang/String;
 	public static final field INSTANCE Lcom/awakekt/awake/render/effects/PostProcessingShaders;
 	public static final field TONE_MAPPING_GRADE_BLOOM_SHADER_ID Ljava/lang/String;
 	public static final field TONE_MAPPING_GRADE_SHADER_ID Ljava/lang/String;
+	public final fun fxaaEdgeThreshold (I)F
 	public final fun getBloomBrightPassShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public final fun getBloomBrightPassSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
 	public final fun getBloomBrightPassUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;

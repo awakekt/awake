@@ -32,6 +32,22 @@ The pre-commit provenance gate requires a matching path and scope. Review checks
 the URL and revision must be immutable, the license must be compatible, and the reason must be
 specific. Missing licensing information means the code cannot be copied.
 
+### Origin unrecorded
+
+Code whose external source was never recorded, and which the owner can't trace, still gets an entry,
+so it is visible rather than presumed original. It uses the same fields, with `upstream`, `revision`,
+`copyright` and `license` set to `"unrecorded"`, and a `reason` that states:
+- the pull request that added it;
+- what is known of how it differs from the published algorithm it resembles;
+- which values it shares with a published source;
+- that it is not certified clean-room;
+- what replaces it, and when.
+
+The code itself carries no `SPDX-Snippet` markers, since no copyright holder is known, but a comment
+that points to its entry. Its documentation names it for what it does, never as an implementation
+of a published version. The FXAA-style stage in `PostProcessingShaders.kt` is the first such entry
+(#1791).
+
 ## Audits
 
 `reuse lint` checks declared per-file copyright/license metadata. ScanCode reports detected

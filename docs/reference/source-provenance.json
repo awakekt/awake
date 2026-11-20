@@ -63,6 +63,15 @@
       "copyright": "The Khronos Group Inc.",
       "license": "Apache-2.0",
       "reason": "Khronos' PBR Neutral tone curve, adapted from the reference GLSL into the scene shaders' display transform (ASL). The reference file carries no header of its own, so the repository's LICENSE.md, Apache-2.0, covers it; the folder's README.md, which describes the curve, is marked CC-BY-4.0. Both are satisfied by keeping Khronos' copyright on the snippet and attributing Khronos in NOTICE.md. Adapted, not depended on: the curve is a few lines that must run inside Awake's own shader DSL, and Khronos publishes no library to call."
+    },
+    {
+      "path": "awake/engine/render/effects/src/commonMain/kotlin/com/awakekt/awake/render/effects/PostProcessingShaders.kt",
+      "scope": "snippet",
+      "upstream": "unrecorded",
+      "revision": "unrecorded",
+      "copyright": "unrecorded",
+      "license": "unrecorded",
+      "reason": "FxaaShader, the post-processing stack's FXAA-style edge anti-aliasing (simplified: luma contrast test, edge orientation, subpixel blend; no end-of-edge search). Added in #970 with no recorded source, and the owner can't trace one (#1791). Its structure differs from NVIDIA's FXAA 3.11: it has no end-of-edge search and a different subpixel term. Its tuning constants (the 0.0833 minimum contrast and the 0.25, 0.166 and 0.125 relative thresholds) are the published FXAA values. It is not certified clean-room. It stays, labelled as what it is, because a second from-memory implementation would have no better provenance; it is to be replaced if a verifiably licensed FXAA or SMAA source is adopted (#1791)."
     }
   ]
 }

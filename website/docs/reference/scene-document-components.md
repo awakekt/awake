@@ -1157,7 +1157,10 @@ lists the valid combinations.
 | `gain` | array | `[1, 1, 1]` | Highlight multiplier, per channel. |
 
 `bloom`: `enabled`, `intensity` (`0.5`), `threshold` (`1`), `knee` (`0.5`, 0 to 1) and `radius`
-(`8`, in pixels). `fxaa`: `enabled` and `quality` (`Off` · `Low` · `Medium` · `High`, default `High`).
+(`8`, in pixels). `fxaa`: `enabled` and `quality` (`Off` · `Low` · `Medium` · `High`, default `High`),
+the contrast a pixel's neighbourhood needs before it is filtered: a lower tier filters fewer pixels.
+The stage is FXAA-style edge anti-aliasing (simplified: luma contrast test, edge orientation,
+subpixel blend; no end-of-edge search).
 `custom`: `enabled`, `shaderId` (a registered image-pass shader) and `parameters` (its floats).
 
 ## `prefab_link`

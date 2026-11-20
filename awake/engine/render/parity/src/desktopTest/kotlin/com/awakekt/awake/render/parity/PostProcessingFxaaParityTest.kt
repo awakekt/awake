@@ -74,6 +74,33 @@ class PostProcessingFxaaParityTest {
     }
 
     /**
+     * `FxaaEffect.quality` is a real tier (#1791): a lower tier needs more contrast before it treats
+     * a pixel as an edge, so it filters fewer edge pixels, and still filters some. Before #1791 the
+     * shader never read the tier, and every quality but Off changed the same pixels.
+     */
+    @Test
+    fun aLowerQualityTierFiltersFewerEdgePixelsOnBothBackends() {
+        val failures = mutableListOf<String>()
+        BACKEND_ORDER.forEach { backend ->
+            openHeadlessScene(backend).use { session ->
+                val renderer = session.renderer
+                renderer.effectQuality = EffectQuality.High
+                val plain = renderer.renderLdrScene(effects = null)
+                val edges = edgeMask(plain)
+                val changed = listOf(EffectQuality.Low, EffectQuality.Medium, EffectQuality.High).map { quality ->
+                    changedPixels(plain, renderer.renderLdrScene(listOf(FxaaEffect(quality))), edges, inside = true)
+                }
+                println("FXAA edge pixels changed, $backend: Low ${changed[0]}, Medium ${changed[1]}, High ${changed[2]}")
+                if (changed[0] <= 0) failures += "$backend: FXAA Low changed no edge pixel"
+                if (!(changed[0] < changed[1] && changed[1] < changed[2])) {
+                    failures += "$backend: Low, Medium and High changed $changed edge pixels, not fewer at each lower tier"
+                }
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    /**
      * The explicit combination renders as before: a listed [ToneMappingGradeEffect] still applies
      * the curve and the encode to whatever the target holds. This is also the negative control for
      * the test above: the same measurement on the same scene reports the shift (max 61/255 on

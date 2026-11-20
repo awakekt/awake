@@ -133,12 +133,16 @@ data class BloomEffect(
 }
 
 /**
- * Fast Approximate Anti-Aliasing (FXAA 3.11) stage, on display-referred LDR color.
+ * FXAA-style edge anti-aliasing stage, on display-referred LDR color (simplified: luma contrast
+ * test, edge orientation, subpixel blend; no end-of-edge search). Its origin is unrecorded; see its
+ * entry in docs/reference/source-provenance.json.
  *
  * It reads whatever display colour the chain has: a tone-mapping step's output when the chain has
  * one, otherwise the target's own colour as the scene drew it. It adds no tone-mapping step.
  *
- * @property quality Anti-aliasing quality preset.
+ * @property quality The contrast a pixel's neighbourhood needs before it is filtered: a lower tier
+ *   filters fewer pixels and runs the eight-tap path less often
+ *   ([PostProcessingShaders.fxaaEdgeThreshold]). [EffectQuality.Off] drops the stage.
  * @property enabled Whether FXAA is active.
  */
 data class FxaaEffect(

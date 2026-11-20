@@ -12,6 +12,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
+import com.awakekt.awake.render.effects.effectsForAntiAliasing
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.SceneDrawStats
@@ -19,6 +20,8 @@ import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.ScenePassScratch
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.pipeline.EffectQuality
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.RenderDrawStage
 import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -40,6 +43,10 @@ internal class SceneRenderPlanner3D(
     features: List<RenderFeature3D> = emptyList(),
     /** The cascades and map size each frame plans a directional shadow with: the renderer's `shadowBudget` (#1688). */
     shadowBudget: () -> ShadowBudget = { ShadowBudget.Default },
+    /** The renderer's anti-aliasing mode; [AntiAliasing.Fxaa] adds an FXAA stage to every camera (#1791). */
+    private val antiAliasing: () -> AntiAliasing = { AntiAliasing.Off },
+    /** The quality that FXAA stage runs at: the renderer's `effectQuality`. */
+    private val effectQuality: () -> EffectQuality = { EffectQuality.High },
 ) {
     private val drawPreparer = RejectionCountingPreparer(
         requireNotNull(drawPreparer) {
@@ -106,24 +113,7 @@ internal class SceneRenderPlanner3D(
         transparentSources?.addMeshRenderers(afterParticles)
         drawCalls.append(contributions.authoredDraws)
 
-        val postProcessing = cameraEntity?.let { world.get<com.awakekt.awake.scene.rendering.postprocessing.PostProcessing>(it) }
-        val hasPostEffects = postProcessing != null && postProcessing.enabled && postProcessing.effects.isNotEmpty()
-        val hasDimensions = targetWidth > 0 && targetHeight > 0
-        val postPassChain = if (hasPostEffects && hasDimensions) {
-            com.awakekt.awake.render.effects.PostProcessingStack.buildChain(
-                effects = postProcessing.effects,
-                targetContext = com.awakekt.awake.render.imagepass.ImagePassTargetContext(
-                    width = targetWidth,
-                    height = targetHeight,
-                    clipSpace = rendererClipSpace,
-                    // Every lit shader applies exposure, the tone curve and the encode itself, so
-                    // the camera's colour is display-ready; ScenePostProcessing.validate relies on it.
-                    colorEncoding = com.awakekt.awake.render.imagepass.ImagePassColorEncoding.DisplayReferred,
-                ),
-            )
-        } else {
-            com.awakekt.awake.render.imagepass.ImagePassChain.Empty
-        }
+        val postPassChain = postPassChain(world, cameraEntity, targetWidth, targetHeight)
 
         stages?.end(RenderDrawStage.Collect)
         stages?.begin(RenderDrawStage.Compile)
@@ -154,6 +144,37 @@ internal class SceneRenderPlanner3D(
             unresolved = if (passScratch.reusedLastFrame) rejectedBefore.also { drawPreparer.rejected = it } else drawPreparer.rejected,
             reused = passScratch.reusedLastFrame,
         )
+    }
+
+    /**
+     * The camera's post-processing chain: its own effects when its component is enabled, plus the
+     * FXAA stage the renderer's anti-aliasing mode adds (#1791), or none at a zero-sized target.
+     */
+    private fun postPassChain(
+        world: World,
+        cameraEntity: com.awakekt.awake.ecs.Entity?,
+        targetWidth: Int,
+        targetHeight: Int,
+    ): com.awakekt.awake.render.imagepass.ImagePassChain {
+        val postProcessing = cameraEntity?.let { world.get<com.awakekt.awake.scene.rendering.postprocessing.PostProcessing>(it) }
+        val cameraEffects = postProcessing?.takeIf { it.enabled }?.effects.orEmpty()
+        val postEffects = effectsForAntiAliasing(cameraEffects, antiAliasing(), effectQuality())
+        val hasDimensions = targetWidth > 0 && targetHeight > 0
+        return if (postEffects.isNotEmpty() && hasDimensions) {
+            com.awakekt.awake.render.effects.PostProcessingStack.buildChain(
+                effects = postEffects,
+                targetContext = com.awakekt.awake.render.imagepass.ImagePassTargetContext(
+                    width = targetWidth,
+                    height = targetHeight,
+                    clipSpace = rendererClipSpace,
+                    // Every lit shader applies exposure, the tone curve and the encode itself, so
+                    // the camera's colour is display-ready; ScenePostProcessing.validate relies on it.
+                    colorEncoding = com.awakekt.awake.render.imagepass.ImagePassColorEncoding.DisplayReferred,
+                ),
+            )
+        } else {
+            com.awakekt.awake.render.imagepass.ImagePassChain.Empty
+        }
     }
 
     /** This planner's feature names, as [TransparentDrawSources] lists them. */

@@ -71,6 +71,8 @@ class RenderSystem3D(
         drawPreparer = drawPreparer,
         features = features,
         shadowBudget = { renderer.shadowBudget },
+        antiAliasing = { renderer.antiAliasing },
+        effectQuality = { renderer.effectQuality },
     )
     private var elapsedTimeSeconds = 0f
     private var lastPlannedFrame: SceneRenderPlanner3D.PlannedFrame? = null
