@@ -6,7 +6,14 @@
 pluginManagement {
     repositories {
         mavenLocal()
-        google()
+        // Google only for its own groups: a Google error can then fail nothing it doesn't serve (#1592).
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -15,7 +22,14 @@ dependencyResolutionManagement {
     repositories {
         mavenLocal()
         mavenCentral()
-        google()
+        // Google only for its own groups: a Google error can then fail nothing it doesn't serve (#1592).
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
     }
 }
 rootProject.name = "scene-components-consumer"

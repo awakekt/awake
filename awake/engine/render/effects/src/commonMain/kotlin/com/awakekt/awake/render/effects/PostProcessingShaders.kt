@@ -123,6 +123,10 @@ object PostProcessingShaders {
         val luma = let("luma", dot(contrasted, vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit)))
         val saturated = let("saturated", max(mix(vec3(luma), contrasted, saturation), vec3(0f.lit)))
 
+        // SPDX-SnippetBegin
+        // SPDX-SnippetCopyrightText: 2024 The Khronos Group Inc.
+        // SPDX-License-Identifier: Apache-2.0
+        // Adapted from Khronos' PBR Neutral reference; see its entry in docs/reference/source-provenance.json.
         // 6. Khronos PBR Neutral Tone Curve
         val startCompression = 0.76f.lit
         val desaturation = 0.15f.lit
@@ -137,6 +141,7 @@ object PostProcessingShaders {
             "mapped",
             select(shifted, mix(shifted * (newPeak / peak), vec3(newPeak), fade), peak gt startCompression),
         )
+        // SPDX-SnippetEnd
 
         // 7. Gamma 2.2 encode; whiteBalance.z = 0 is ToneMappingMode.Passthrough, which keeps the
         // graded colour as it is: it was display-ready already.

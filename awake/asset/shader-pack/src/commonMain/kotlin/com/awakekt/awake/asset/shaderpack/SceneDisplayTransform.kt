@@ -99,6 +99,10 @@ fun AslShaderBuilder.sceneDisplayTransform(
         }
         return SceneDisplayTransform(toneMap = null, encode = null, decode = decode, isLinear = true)
     }
+    // SPDX-SnippetBegin
+    // SPDX-SnippetCopyrightText: 2024 The Khronos Group Inc.
+    // SPDX-License-Identifier: Apache-2.0
+    // Adapted from Khronos' PBR Neutral reference; see its entry in docs/reference/source-provenance.json.
     // The reference's `0.8 - 0.04`: where compression starts, after the toe's offset.
     val startCompression = const("TONE_MAP_START_COMPRESSION", 0.76f)
     val desaturation = const("TONE_MAP_DESATURATION", 0.15f)
@@ -116,6 +120,7 @@ fun AslShaderBuilder.sceneDisplayTransform(
         val fade = let("fade", 1f.lit - 1f.lit / (desaturation * (peak - newPeak) + 1f.lit))
         returnValue(mix(shifted * (newPeak / peak), vec3(newPeak), fade))
     }
+    // SPDX-SnippetEnd
     val encode = fn("linearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
         val linearParam by param(GpuDataShape.Vec3)
         returnValue(pow(max(linearParam, vec3(0f.lit)), vec3(invGamma)))
