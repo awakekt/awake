@@ -1,0 +1,1 @@
+- A border, a corner gradient background and a list gradient background keep their resolved outline and check their cached mesh field by field, so painting one no longer builds an outline or a key every frame, and a gradient drawn at full alpha is no longer copied. Each further one adds 88 B to a drawn frame (96 B for a corner gradient), down from 128 to 232 B (#1742).

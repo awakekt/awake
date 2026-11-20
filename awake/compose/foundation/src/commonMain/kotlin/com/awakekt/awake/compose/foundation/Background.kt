@@ -25,7 +25,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.StrokeJoin
-import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.graphics2d.toPath
@@ -55,19 +54,8 @@ fun Modifier.background(fill: ImageFill): Modifier = drawBehind { drawImageFill(
 /** Fills the node behind its content with [brush] in [shape]: a flat colour, or a gradient. */
 fun Modifier.background(brush: Brush, shape: Shape = RectangleShape): Modifier = when (brush) {
     is Brush.SolidColor -> background(brush.color, shape)
-    is Brush.LinearGradient -> drawBehind { drawGradient(brush.colors, shape) }
+    is Brush.LinearGradient -> this then CornerGradientElement(brush.colors, shape)
     is com.awakekt.awake.compose.ui.graphics.LinearGradient -> this then GradientBackgroundElement(brush, shape)
-}
-
-// The renderer's rounded-quad shadow with no offset, spread or blur is a rounded rectangle whose
-// corners take the gradient's colours, with the same anti-aliased edge as a rounded background.
-private fun DrawScope.drawGradient(gradient: UiLinearGradient, shape: Shape) {
-    when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
-        is ShapeOutline.Rectangle -> drawShadow(color = gradient.topLeft, gradient = gradient)
-        is ShapeOutline.Rounded -> drawShadow(color = gradient.topLeft, radius = outline.radius, gradient = gradient)
-        is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
-        is ShapeOutline.Generic -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
-    }
 }
 
 /**
@@ -186,8 +174,17 @@ private class BorderNode :
     // only when this node's size or paint does, so it is built then rather than every frame --
     // the same reason Compose's own BorderModifierNode caches through CacheDrawModifierNode. Held
     // on the node, which outlives the frame; see LayoutNode's retained modifier chain.
-    private var cachedKey: BorderKey? = null
+    // What the cached mesh was built from, held in fields so checking it allocates nothing (#1742).
+    private var builtWidth = 0
+    private var builtHeight = 0
+    private var builtStroke = 0f
+    private var builtColor: Color? = null
+    private var builtShape: Shape? = null
+    private var builtSides = BorderSides.All
+    private var builtDensity = 0f
+    private var builtDirection = LayoutDirection.Ltr
     private var cachedMesh: ColoredTriangleMesh? = null
+    private val outlines = ShapeOutlineCache()
     private var retainedMeshKey: Any = Any()
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
@@ -205,8 +202,7 @@ private class BorderNode :
             drawRoundedRectBorder(color = color, radius = roundedRadius, strokeWidth = stroke)
             return
         }
-        val key = BorderKey(width, height, stroke, color, shape, sides, density, layoutDirection)
-        cachedMesh?.let { if (cachedKey == key) return drawRetainedMesh(it, retainedMeshKey) }
+        cachedMesh?.let { if (builtFrom(stroke)) return drawRetainedMesh(it, retainedMeshKey) }
         // Centred on a box inset by half the stroke width, so the ring's solid band lands inside
         // this node's bounds -- the same "inside, not centred on the edge" contract the old
         // edge-strip draw had, but as one continuous stroked outline instead of four independent
@@ -229,15 +225,27 @@ private class BorderNode :
             ),
             color,
         )
-        cachedKey = key
+        builtWidth = width
+        builtHeight = height
+        builtStroke = stroke
+        builtColor = color
+        builtShape = shape
+        builtSides = sides
+        builtDensity = density
+        builtDirection = layoutDirection
         cachedMesh = mesh
         retainedMeshKey = Any()
         drawRetainedMesh(mesh, retainedMeshKey)
     }
 
     /** The radius of a uniformly rounded [shape] at this size, or 0 for any other outline. */
+    private fun DrawScope.builtFrom(stroke: Float): Boolean =
+        width == builtWidth && height == builtHeight && stroke == builtStroke && color == builtColor &&
+            shape == builtShape && sides == builtSides && density == builtDensity && layoutDirection == builtDirection
+
+    /** The radius of a uniformly rounded [shape] at this size, or 0 for any other outline. */
     private fun DrawScope.uniformRadius(): Float =
-        (shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection) as? ShapeOutline.Rounded)?.radius ?: 0f
+        (outlines.outline(shape, width, height, density, layoutDirection) as? ShapeOutline.Rounded)?.radius ?: 0f
 
     override fun toString(): String = "border($strokeWidth, $color, shape=$shape, sides=$sides)"
 }
@@ -274,18 +282,6 @@ private fun borderOutlinePath(
         }
     }
 }
-
-/** Everything the cached border mesh is built from -- change any of it and the mesh is rebuilt. */
-private data class BorderKey(
-    val width: Int,
-    val height: Int,
-    val stroke: Float,
-    val color: Color,
-    val shape: Shape,
-    val sides: BorderSides,
-    val density: Float,
-    val layoutDirection: LayoutDirection,
-)
 
 internal fun partialBorderPath(
     bounds: Rectangle,
