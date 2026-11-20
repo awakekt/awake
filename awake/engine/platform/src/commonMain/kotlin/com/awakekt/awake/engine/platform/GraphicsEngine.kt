@@ -17,6 +17,8 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.engine.platform.quality.TextureSettings
+import com.awakekt.awake.render.pipeline.MultisampleState
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.ShadowDepthFormat
@@ -295,6 +297,14 @@ abstract class GraphicsEngine(
      */
     protected fun shadowDepthFormatFor(engineDefault: ShadowDepthFormat): ShadowDepthFormat =
         appLifecycle.service(RenderQualitySettings::class)?.shadowDepthFormat ?: engineDefault
+
+    /**
+     * The anti-aliasing to build the scene pass for: the app's `renderQuality { antiAliasing }` when it
+     * set one, else the mode of [plan], the render plan's raster state (#1791). The backend resolves it
+     * against its device with [AntiAliasing.resolve], once, as it builds its GPU resources.
+     */
+    protected fun antiAliasingFor(plan: MultisampleState): AntiAliasing =
+        appLifecycle.service(RenderQualitySettings::class)?.antiAliasing ?: AntiAliasing.forSampleCount(plan.count)
 
     private suspend fun setupCommon(window: Any) {
         val backend = createBackendResources(window)

@@ -1938,6 +1938,28 @@ public final class com/awakekt/awake/render/pipeline/UiShaderSet {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/AntiAliasing : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/AntiAliasing$Companion;
+	public static final field Fxaa Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static final field Msaa2x Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static final field Msaa4x Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static final field Msaa8x Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static final field Off Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getSampleCount ()I
+	public final fun isMultisampled ()Z
+	public final fun rasterState (Lcom/awakekt/awake/render/pipeline/MultisampleState;)Lcom/awakekt/awake/render/pipeline/MultisampleState;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/AntiAliasing;
+}
+
+public final class com/awakekt/awake/render/renderer/AntiAliasing$Companion {
+	public final fun forSampleCount (I)Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public final fun resolve (Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public static synthetic fun resolve$default (Lcom/awakekt/awake/render/renderer/AntiAliasing$Companion;Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
+	public final fun supported (Ljava/util/Set;)Ljava/util/Set;
+}
+
 public final class com/awakekt/awake/render/renderer/BufferCreationStats {
 	public fun <init> (III)V
 	public final fun component1 ()I
@@ -2282,6 +2304,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
+	public fun getAntiAliasing ()Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public fun getFrameBufferCreations ()Lcom/awakekt/awake/render/renderer/BufferCreationStats;
@@ -2298,6 +2321,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
+	public fun getSupportedAntiAliasing ()Ljava/util/Set;
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
@@ -2334,6 +2358,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun drawUiToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
+	public static fun getAntiAliasing (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public static fun getDeviceClass (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public static fun getDeviceName (Lcom/awakekt/awake/render/renderer/Renderer;)Ljava/lang/String;
 	public static fun getDriverVersion (Lcom/awakekt/awake/render/renderer/Renderer;)Ljava/lang/Long;
@@ -2352,6 +2377,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public static fun getShadowDepthFormat (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public static fun getShadowMapBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
+	public static fun getSupportedAntiAliasing (Lcom/awakekt/awake/render/renderer/Renderer;)Ljava/util/Set;
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getSurfaceWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I

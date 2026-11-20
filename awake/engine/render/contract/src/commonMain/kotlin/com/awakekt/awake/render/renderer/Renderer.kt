@@ -204,6 +204,20 @@ interface Renderer : GpuDevice {
         get() = ShadowDepthFormat.Default
 
     /**
+     * The [AntiAliasing] modes this renderer's device offers, for a settings screen to list (#1791).
+     * [AntiAliasing.Off] alone on a renderer that does not report them.
+     */
+    val supportedAntiAliasing: Set<AntiAliasing>
+        get() = setOf(AntiAliasing.Off)
+
+    /**
+     * The [AntiAliasing] mode in effect: the requested mode after [AntiAliasing.resolve], which can
+     * be cheaper than the request on a device that lacks it (#1791).
+     */
+    val antiAliasing: AntiAliasing
+        get() = AntiAliasing.Off
+
+    /**
      * Quality tier for multi-pass image effects rendered by this [Renderer].
      *
      * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at
