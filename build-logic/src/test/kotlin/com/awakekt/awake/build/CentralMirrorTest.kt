@@ -81,6 +81,22 @@ class CentralMirrorTest {
         }
     }
 
+    @Test
+    fun theCiInitScriptPutsTheMirrorAfterCentralInABuildThatListsOnlyCentral() {
+        ProbePluginRepository.failing(NOT_FOUND).use { central ->
+            ProbePluginRepository.serving().use { mirror ->
+                // Named as `mavenCentral()` is, which is how the script finds Central.
+                val onlyCentral = central.declaration.replaceFirst("maven { ", "maven { name = \"MavenRepo\"; ")
+                val result = probeBuild(listOf(onlyCentral)) {
+                    it.withArguments("probe", "--init-script", File(root, INIT_SCRIPT).path, "-Pawake.centralMirror=${mirror.url}").build()
+                }
+
+                assertTrue("PROBE APPLIED" in result.output, result.output)
+                assertTrue(central.requests.get() > 0 && mirror.requests.get() > 0, "Central first, then the mirror")
+            }
+        }
+    }
+
     /** The build scripts of every build here: settings and build files, outside build output. */
     private fun buildScripts(): List<File> = root.walkTopDown()
         .onEnter { it == root || (it.name !in SKIPPED_DIRS && !it.name.startsWith(".")) }
@@ -91,6 +107,9 @@ class CentralMirrorTest {
         const val MIRROR = "https://maven-central.storage-download.googleapis.com/maven2/"
         const val MIRROR_ENTRY = """maven("$MIRROR") { name = "MavenCentralMirror" }"""
         const val NOT_FOUND = 404
+
+        /** What CI installs in the Plugins consumer job's Gradle User Home, for builds that don't list the mirror. */
+        const val INIT_SCRIPT = "scripts/central-mirror-after.init.gradle.kts"
 
         /** Root, build-logic, three templates and three tools, at least. */
         const val MIN_SCRIPTS = 9

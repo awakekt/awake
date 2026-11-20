@@ -497,6 +497,11 @@ marker that edge refuses is found in the mirror.
 - The mirror can't cure a file that 404s behind a POM Central served: Gradle asks for a file only
   from the repository that served its metadata. Measured with two local repositories, the first
   serving the POM and answering 404 for the jar: the build fails, with only the first searched.
+- A build whose settings don't list the mirror, such as the awake-plugins checkout the Plugins
+  consumer job builds, gets it from `scripts/central-mirror-after.init.gradle.kts`, which that job
+  copies into the Gradle User Home's `init.d`. It adds the mirror right after Central in every
+  build the job runs, unless one already lists it. It doesn't reach TestKit builds, which have a
+  Gradle User Home of their own, or a plugin in a settings script's own `plugins {}` block.
 - `CentralMirrorTest` fails when a build script, or a TestKit test that writes one, lists
   `mavenCentral()` without the mirror right after it, and resolves a plugin from a repository that
   answers 404 for it, followed by one that serves it.

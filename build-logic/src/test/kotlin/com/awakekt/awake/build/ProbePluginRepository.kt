@@ -43,9 +43,13 @@ internal class ProbePluginRepository private constructor(private val status: Int
         server.start()
     }
 
+    /** This repository's address. */
+    val url: String
+        get() = "http://127.0.0.1:${server.address.port}/"
+
     /** This repository as a `repositories {}` entry. */
     val declaration: String
-        get() = "maven { url = uri(\"http://127.0.0.1:${server.address.port}/\"); isAllowInsecureProtocol = true }"
+        get() = "maven { url = uri(\"$url\"); isAllowInsecureProtocol = true }"
 
     override fun close() = server.stop(0)
 

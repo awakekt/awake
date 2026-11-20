@@ -1138,6 +1138,15 @@ jobs:
         with:
           cache-provider: basic
 
+      # awake-plugins' own settings don't list Central's mirror; this lists it right after Central in
+      # every build this job runs (#1592). A Central edge has answered 404 for modules Central serves.
+      - name: List Central's mirror after Central in every build
+        if: steps.reach.outputs.run == 'true'
+        run: |
+          init_d="${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
+          mkdir -p "$init_d"
+          cp scripts/central-mirror-after.init.gradle.kts "$init_d/"
+
       # JVM and wasm only: the plugins' ABI dumps take the wasm klib. No natives, Android or iOS.
       - name: Publish this change's Core locally
         if: steps.reach.outputs.run == 'true'
