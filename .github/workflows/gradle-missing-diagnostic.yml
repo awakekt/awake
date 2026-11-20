@@ -39,11 +39,20 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Setup Gradle (restores the same basic entry, saves nothing)
+      - name: Setup Gradle (no cache of its own)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
-          cache-read-only: true
+          cache-disabled: true
+
+      # The entry the failing jobs restored, by its exact key: main's build files have moved on,
+      # so setup-gradle's own key no longer names it. The path is setup-java's, string for string,
+      # so the entry's version matches.
+      - name: Restore the suspect basic entry (d8ea30a5)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /home/runner/.gradle/caches
+          key: setup-java-Linux-x64-gradle-d8ea30a5a7aedae8afd983e792fbb20c40963e4dd54f575db9623b8d787ef004
+          fail-on-cache-miss: true
 
       - name: Install the Android NDK
         uses: ./.github/actions/install-vulkan-ndk-linux
