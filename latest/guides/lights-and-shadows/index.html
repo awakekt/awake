@@ -3492,7 +3492,10 @@ Standard WebGPU supports 1 and 4: a request for 2 falls back to 1, and 8 falls b
 logs the requested and selected counts. Falling back to 1 also disables alpha to coverage.</p>
 <p>The main colour and depth attachments use the chosen count. Colour resolves before the camera's
 post-processing chain. FXAA remains opt-in; adding an <code>fxaa</code> effect explicitly filters the resolved
-colour. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
+colour. An app can also turn FXAA on for every camera with <code>renderQuality { antiAliasing =
+AntiAliasing.Fxaa }</code>: each camera whose post-processing has no FXAA stage that runs gets one, last in
+its chain, at the renderer's <code>effectQuality</code> (<code>Low</code> when that is <code>Off</code>). A camera's own <code>fxaa</code> effect
+is kept as it is listed. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
 resolve and post-processing.</p>
 <p>With alpha to coverage enabled, built-in textured and skinned <code>AlphaMode.Mask</code> materials convert
 the filtered alpha edge around their cutoff into sample coverage. Opaque materials retain full

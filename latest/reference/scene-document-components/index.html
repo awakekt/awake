@@ -9072,7 +9072,10 @@ lists the valid combinations.</p>
 </tbody>
 </table>
 <p><code>bloom</code>: <code>enabled</code>, <code>intensity</code> (<code>0.5</code>), <code>threshold</code> (<code>1</code>), <code>knee</code> (<code>0.5</code>, 0 to 1) and <code>radius</code>
-(<code>8</code>, in pixels). <code>fxaa</code>: <code>enabled</code> and <code>quality</code> (<code>Off</code> · <code>Low</code> · <code>Medium</code> · <code>High</code>, default <code>High</code>).
+(<code>8</code>, in pixels). <code>fxaa</code>: <code>enabled</code> and <code>quality</code> (<code>Off</code> · <code>Low</code> · <code>Medium</code> · <code>High</code>, default <code>High</code>),
+the contrast a pixel's neighbourhood needs before it is filtered: a lower tier filters fewer pixels.
+The stage is FXAA-style edge anti-aliasing (simplified: luma contrast test, edge orientation,
+subpixel blend; no end-of-edge search).
 <code>custom</code>: <code>enabled</code>, <code>shaderId</code> (a registered image-pass shader) and <code>parameters</code> (its floats).</p>
 <h2 id="prefab_link"><code>prefab_link</code></h2>
 <p>Places a prefab file at this node. <code>SceneDocument.withPrefabs</code> (which <code>loadProject</code> runs)
