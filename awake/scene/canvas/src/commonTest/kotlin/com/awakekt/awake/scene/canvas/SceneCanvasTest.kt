@@ -517,12 +517,15 @@ class SceneCanvasTest {
 
         val glyphs = frame().glyphs()
 
-        // One draw a glyph (#1061): the text's colour, its outline and its shadow on the same primitive.
-        assertEquals(2, glyphs.size)
-        assertEquals(listOf(Color.White), glyphs.map { it.color }.distinct())
-        assertEquals(listOf(Color.fromHex("#000000")), glyphs.map { it.decoration?.outlineColor }.distinct())
-        assertEquals(listOf(2f), glyphs.map { it.decoration?.outlineWidth }.distinct())
-        assertEquals(listOf(Color.fromHex("#FF0000")), glyphs.map { it.decoration?.shadowColor }.distinct())
+        // One decoration a glyph, its outline and its shadow on the same primitive (#1061), then the text in its colour
+        // from the same pixel glyphs plain text of its size draws (#1808).
+        val (decorations, fill) = glyphs.partition { it.decoration != null }
+        assertEquals(2, decorations.size)
+        assertEquals(listOf(Color.fromHex("#000000")), decorations.map { it.decoration?.outlineColor }.distinct())
+        assertEquals(listOf(2f), decorations.map { it.decoration?.outlineWidth }.distinct())
+        assertEquals(listOf(Color.fromHex("#FF0000")), decorations.map { it.decoration?.shadowColor }.distinct())
+        assertEquals(listOf(Color.White), fill.map { it.color }.distinct())
+        assertEquals(decorations, glyphs.take(2), "the decoration draws under the text")
     }
 
     /** Ten pixels per world unit across and down, from the screen's corner; null behind z 0. */

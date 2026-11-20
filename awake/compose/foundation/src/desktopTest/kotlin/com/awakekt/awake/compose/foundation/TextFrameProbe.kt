@@ -74,14 +74,18 @@ class TextFrameProbe {
     }
 
     /**
-     * The same labels outlined and with a soft shadow (#1061): one decorated glyph a character, from the distance
-     * field at every size, where stamping drew ten. Held to the same ratchet as plain text: about 82,000 run alone,
-     * once each run kept its glyphs' decorations from frame to frame (160,000 when it built two a glyph a frame).
+     * The same labels outlined and with a soft shadow (#1061): one decorated glyph a character from the effect field,
+     * where stamping drew ten, about 82,000 run alone once each run kept its glyphs' decorations from frame to frame
+     * (160,000 when it built two a glyph a frame).
+     *
+     * Then, under the pixel-glyph limit, the fill as plain text draws it, over the decoration (#1808): one more glyph
+     * primitive a character, paint 57,360 to 86,952 and the frame 75,080 to 104,672 run alone, 106,592 inside the full
+     * desktopTest JVM. The fill pass costs what a plain run's paint does; the two text nodes it replaces cost both.
      */
     @Test
     fun unchangedOutlinedShadowedTextPerFrame() {
         val decorated = TextStyle(outline = TextOutline(Color.Black, 2f), shadow = TextShadow(Color.Black, 1f, 1f, blur = 2f))
-        probe("outlined and shadowed", decorated)
+        probe("outlined and shadowed", decorated, ceiling = DECORATED_CEILING_BYTES_PER_FRAME)
     }
 
     /**
@@ -110,7 +114,13 @@ class TextFrameProbe {
         )
     }
 
-    private fun probe(path: String, style: TextStyle?, labels: List<String> = plainLabels, cellWidth: Int = CELL_WIDTH): Long {
+    private fun probe(
+        path: String,
+        style: TextStyle?,
+        labels: List<String> = plainLabels,
+        cellWidth: Int = CELL_WIDTH,
+        ceiling: Long = CEILING_BYTES_PER_FRAME,
+    ): Long {
         this.style = style
         this.labels = labels
         this.cellWidthDp = cellWidth
@@ -137,7 +147,7 @@ class TextFrameProbe {
                 "(reconcile ${reconcile / PHASE_SAMPLES}, layout ${layout / PHASE_SAMPLES}, " +
                 "paint ${paint / PHASE_SAMPLES}); total ${elapsed.inWholeMilliseconds} ms over $MEASURED_FRAMES frames",
         )
-        assertTrue(perFrame < CEILING_BYTES_PER_FRAME, "$perFrame B/frame exceeds the $CEILING_BYTES_PER_FRAME B ratchet")
+        assertTrue(perFrame < ceiling, "$perFrame B/frame exceeds the $ceiling B ratchet")
         return layout / PHASE_SAMPLES
     }
 
@@ -195,5 +205,8 @@ class TextFrameProbe {
         // copying a GlyphRect and building a comparator for every glyph it resolves (#993); the distance-field
         // case has read 81,979 inside the full desktopTest JVM, so the ceiling sits above that.
         const val CEILING_BYTES_PER_FRAME = 100_000L
+
+        /** Decorated labels draw a glyph a character twice under the pixel-glyph limit (#1808); see that probe. */
+        const val DECORATED_CEILING_BYTES_PER_FRAME = 115_000L
     }
 }

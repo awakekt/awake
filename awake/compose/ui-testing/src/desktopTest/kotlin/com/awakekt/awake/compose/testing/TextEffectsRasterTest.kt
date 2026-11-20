@@ -40,7 +40,8 @@ class TextEffectsRasterTest {
                 for (width in WIDTHS) {
                     for (glyph in "OW8") {
                         val (primitives, map) = frame(glyph.toString(), size, TextStyle(color = Color.White, outline = TextOutline(Color.Black, width)))
-                        val quad = primitives.filterIsInstance<UiDrawPrimitive.Glyph>().last()
+                        // The decorated quad: under the pixel-glyph limit the fill draws after it, in a tighter quad of its own (#1808).
+                        val quad = primitives.filterIsInstance<UiDrawPrimitive.Glyph>().last { it.decoration != null }
                         val grow = (width + 2f).toInt()
                         val ring = map.outlineRing(
                             (quad.x - grow).toInt(),
@@ -49,7 +50,8 @@ class TextEffectsRasterTest {
                             (quad.y + quad.h + grow).toInt(),
                         )
                         // The fill's own antialiased edge covers up to about two thirds of a pixel of the ring's inside.
-                        val thinEnough = ring.thinnest >= maxOf(width - SCALLOP_PX, MIN_RING_PX)
+                        val floor = if (size <= UiFonts.default().pixelGlyphMaxSize) MIN_RING_OVER_PIXEL_FILL_PX else MIN_RING_PX
+                        val thinEnough = ring.thinnest >= maxOf(width - SCALLOP_PX, floor)
                         if (ring.rays < RAYS_MET || ring.gaps > 0 || !thinEnough) add("'$glyph' at $size px, $width dp: $ring")
                     }
                 }
@@ -115,15 +117,30 @@ class TextEffectsRasterTest {
         }
     }
 
-    /** Outlined, shadowed text is one glyph primitive a character; `UiTextEffectsParityTest` counts its staged quads. */
+    /**
+     * Outlined, shadowed text is one decorated glyph primitive a character; `UiTextEffectsParityTest` counts its staged
+     * quads. Under the pixel-glyph limit the plain run's own fill follows, every glyph of it after the decorations, so
+     * the run costs one more batch, not a second run (#1808); above the limit the decorated glyphs fill themselves.
+     */
     @Test
-    fun outlinedShadowedTextDrawsOnceAGlyph() {
+    fun outlinedShadowedTextDrawsOneDecorationAGlyphAndAtMostOneMoreBatch() {
         val label = "Harbor Town"
         val style = TextStyle(color = Color.White, outline = TextOutline(Color.Black, 2f), shadow = TextShadow(Color.Black, 1f, 1f, 2f))
-        val (primitives, _) = frame(label, 24f, style, width = 320)
-        val glyphs = primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
-        assertEquals(label.length, glyphs.size, "one primitive a glyph, its outline and shadow included")
-        assertTrue(glyphs.all { it.decoration != null || it.w == 0f }, "every inked glyph decorated")
+        for (size in listOf(24f, 48f)) {
+            val glyphs = frame(label, size, style, width = 640).first.filterIsInstance<UiDrawPrimitive.Glyph>()
+            // The decoration pass draws the space as an empty plain glyph, as it always has.
+            val pass = glyphs.take(glyphs.indexOfLast { it.decoration != null } + 1)
+            val decorated = pass.filter { it.decoration != null }
+            val fill = glyphs.drop(pass.size)
+            assertEquals(label.count { it != ' ' }, decorated.size, "at $size px: one decorated primitive an inked glyph")
+            assertTrue(pass.all { it.decoration != null || it.w == 0f }, "at $size px the decorations come first, then the fill: $glyphs")
+            if (size > UiFonts.default().pixelGlyphMaxSize) {
+                assertTrue(fill.isEmpty() && decorated.none { it.color.isTransparent() }, "at $size px the field draw fills")
+            } else {
+                assertEquals(label.count { it != ' ' }, fill.size, "at $size px one pixel-glyph fill a glyph")
+                assertTrue(decorated.all { it.color.isTransparent() }, "at $size px the decoration draws with no fill")
+            }
+        }
     }
 
     private fun frame(
@@ -188,5 +205,12 @@ class TextEffectsRasterTest {
 
         /** The least a 1 dp outline may read on any ray: about a third of a pixel shows past the fill's edge. */
         const val MIN_RING_PX = 0.25f
+
+        /**
+         * The same floor where the fill is plain text's hinted pixel glyphs (#1808), which reach a little further into
+         * the ring on a curve than the field's fill edge did. Measured at 12 px, 1 dp: `O` 0.18 px and `8` 0.21 px on
+         * their thinnest ray, every ray met and no gap, where the field-filled ring passed the 0.25 floor.
+         */
+        const val MIN_RING_OVER_PIXEL_FILL_PX = 0.15f
     }
 }

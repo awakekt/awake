@@ -165,9 +165,11 @@ internal class TextRun(
     private val effects: GlyphEffects? = GlyphEffects.of(style, density)
 
     /**
-     * [paint], under its style's shadow and outline. A font with an effect field draws each glyph once, its outline and
-     * shadow in the same draw, at every size from the distance field, so their weight is the same on both sides of the
-     * pixel-glyph limit (#1061), at rest, in a scale or size animation and moving by subpixel steps alike. A font
+     * [paint], under its style's shadow and outline. A font with an effect field draws each glyph's outline and shadow in
+     * one draw, at every size from the distance field, so their weight is the same on both sides of the pixel-glyph limit
+     * (#1061), at rest, in a scale or size animation and moving by subpixel steps alike. Its fill comes from wherever a
+     * plain run of its size takes it: the exact-size pixel glyphs, drawn over the decoration, at or under the limit and
+     * on the pixel grid or sliding between its pixels; the same field draw, filled, anywhere else (#1808). A font
      * without one stamps the run: in the shadow's colour moved by its offset, then in the outline's moved a step in
      * each of eight directions, then the text.
      */
@@ -228,10 +230,12 @@ internal class TextRun(
         // as one rigid unit without popping the 8-tap outline ring at integer pixel crossings.
         val originX = wholePixel(baseOffsetX) + wholePixel(extraX) + plan.residualX
         val originY = wholePixel(baseOffsetY) + wholePixel(extraY) + plan.residualY
-        if (pixelGlyphs != null && effects == null) {
-            paintSubpixelPixelLines(scope, color, originX, originY)
-        } else {
+        if (pixelGlyphs == null) {
             paintFieldLines(scope, color, originX, originY + glyphTopPx, effects)
+        } else {
+            // A decorated run slides its fill's pixel glyphs as a plain run does, over its decoration (#1808).
+            if (effects != null) paintFieldLines(scope, Color.Transparent, originX, originY + glyphTopPx, effects)
+            paintSubpixelPixelLines(scope, color, originX, originY)
         }
     }
 
@@ -249,26 +253,38 @@ internal class TextRun(
         // positions, or text under an animated scale would move in one-pixel steps.
         val scaled = scope.isScaled || forceDistanceField
         val aligned = scope.isDevicePixelAligned && !forceDistanceField
-        // Decorated text at rest draws from the distance field at every size (#1061), never the pixel glyphs here.
-        val pixelRun = pixelGlyphs != null && effects == null
-        if (!scaled && !aligned && pixelRun) {
-            paintSubpixelPixelLines(scope, color, offsetX, offsetY)
+        // Small text on the pixel grid, or at rest between its pixels, draws exact-size coverage glyphs.
+        // Anything scaled draws from the distance field, which is what scales.
+        val pixelFill = pixelGlyphs != null && (aligned || !scaled)
+        if (effects != null) {
+            // A decorated run's outline and shadow come from the effect field at every size, so their weight
+            // is the same either side of the pixel-glyph limit (#1061). Where a plain run of its size would
+            // draw pixel glyphs, its fill does too, over the decoration drawn with no fill: the same
+            // coverage as plain text, in one more draw for the run (#1808).
+            paintFieldAt(scope, if (pixelFill) Color.Transparent else color, offsetX, offsetY, aligned, effects)
+            if (pixelFill) paint(scope, color, offsetX, offsetY, null)
             return
         }
-        val snap = aligned
+        if (!pixelFill) {
+            paintFieldAt(scope, color, offsetX, offsetY, aligned, null)
+        } else if (aligned) {
+            val originX = wholePixel(offsetX)
+            val originY = wholePixel(offsetY) + glyphTopPx
+            for (i in lineLayouts.indices) {
+                paintPixelLine(lineLayouts[i].text, scope, color, originX, originY + i * lineHeightPx)
+            }
+        } else {
+            paintSubpixelPixelLines(scope, color, offsetX, offsetY)
+        }
+    }
+
+    /** The run from the field, its start and its top snapped to whole pixels when [snap] is set. */
+    @Suppress("LongParameterList")
+    private fun paintFieldAt(scope: DrawScope, color: Color, offsetX: Float, offsetY: Float, snap: Boolean, effects: GlyphEffects?) {
         val originX = if (snap) wholePixel(offsetX) else offsetX
         // The line advance and the baseline offset are whole pixels, so snapping the run's top once puts
         // every line's baseline on the grid, each the same distance below the last.
         val originY = (if (snap) wholePixel(offsetY) else offsetY) + glyphTopPx
-        // Small text on the pixel grid draws exact-size coverage glyphs 1:1. Anything scaled draws from
-        // the distance field, which is what scales.
-        val pixels = if (snap && pixelRun) pixelGlyphs else null
-        if (pixels != null) {
-            for (i in lineLayouts.indices) {
-                paintPixelLine(lineLayouts[i].text, scope, color, originX, originY + i * lineHeightPx)
-            }
-            return
-        }
         paintFieldLines(scope, color, originX, originY, effects)
     }
 
