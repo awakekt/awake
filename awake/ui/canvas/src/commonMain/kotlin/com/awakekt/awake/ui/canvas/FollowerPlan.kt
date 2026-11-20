@@ -84,7 +84,7 @@ internal class FollowerPlans {
     var frame = 0L
 
     /** Moved while placing when a follower needs composing again; composition reads it, so the host composes again in that frame. */
-    val composeRevision = mutableStateOf(0)
+    val composeRevision = mutableStateOf(0, "FollowerPlans.composeRevision")
 
     /** The frame and canvas the plans were last made for. */
     val plannedFor = FollowerPlanKey()
@@ -130,12 +130,14 @@ internal fun CanvasTree.planFollowers(width: Float, height: Float, density: Floa
     val candidates = store.candidates
     candidates.clear()
     val roots = roots
+    var planned = 0
     for (i in roots.indices) {
         val element = roots[i].element
         element.pinned = false
         if (element.follow.isEmpty() || !shows(element)) continue
         val plan = followerPlans.getOrPut(element) { FollowerPlan(element) }
         plan.plannedFrame = frame
+        planned++
         // Not takeIf: a nullable Float is boxed, once per follower per frame.
         val ownDensity = densityOf(element)
         val itemDensity = if (ownDensity > 0f) ownDensity else density
@@ -147,7 +149,11 @@ internal fun CanvasTree.planFollowers(width: Float, height: Float, density: Floa
         plan.drawn = plan(plan, itemCanvas)
         if (plan.drawn) candidates.add(plan)
     }
-    if (followerPlans.size > candidates.size + roots.size) followerPlans.values.removeAll { it.plannedFrame != frame }
+    // A plan this frame did not make is a follower that was hidden or left the canvas's roots. Kept, it
+    // still said "drawn" while no composition drew it, so it differed from the composed record on every
+    // placement and bumped composeRevision: a canvas that never skipped a frame (#1512). Only a frame
+    // where one went stale walks the plans.
+    if (followerPlans.size != planned) followerPlans.values.removeAll { it.plannedFrame != frame }
     for (i in limits.indices) if (limits[i].max > 0) applyLimit(limits[i], candidates, store.rankScratch)
     for (i in candidates.indices) {
         val plan = candidates[i]
