@@ -1,1 +1,0 @@
-- CI caches the Gradle User Home with `setup-gradle`'s enhanced provider in every job, so each job restores its own last entry instead of the first finisher's, and the Windows jobs save theirs; the licence terms are in "Gradle User Home cache" in `docs/release-process.md` (#1592).
