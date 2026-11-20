@@ -108,6 +108,26 @@ headGroup.follow = LodFollow(leader = body, levelOffset = -1)
 `LodGroup.minScreenCoverage` switches by size on screen, as cooked models do; without it, a group
 switches by each `LodLevel.maxDistance`.
 
+### Keep an entity at full detail
+
+Tag an entity `DetailPin` to keep it at full detail whatever its distance, such as the player's own
+character with a zoomed-out camera, the current target or a mount:
+
+```kotlin
+world.add(player, DetailPin)      // full detail from the next frame
+world.remove(player, DetailPin::class)  // back to the thresholds on the next frame
+```
+
+A scene document carries it as `{ "component": "detail_pin" }`. A pinned entity:
+- draws level 0 of its `LodGroup`, and so does every group that follows it, whatever their offsets;
+- is posed every frame by `AnimationSystem`, whatever its `AnimationUpdateRate` would hold it for;
+- passes the pin to what is attached to it: an entity whose enabled `SocketAttachmentComponent`
+  follows a pinned one, such as a weapon or a rider, is pinned too, up to four attachments deep.
+
+Unlike `LodPolicy(forcedLevel = 0)`, which pins one group's level and nothing else, the pin covers
+the followers, the attachments and the animation rate together. That lets a game tighten the bands
+for a crowd without the player's own character dropping detail with it.
+
 ### A graphics setting
 
 `SceneLod.quality` applies to every model:
