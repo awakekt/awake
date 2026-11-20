@@ -1,1 +1,0 @@
-- `FrameSpans` takes the `TimeSource` its spans read, the monotonic clock by default, so a test can time spans on a clock it drives (#1592).
