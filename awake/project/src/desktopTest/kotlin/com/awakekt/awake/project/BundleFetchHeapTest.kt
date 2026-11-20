@@ -5,6 +5,10 @@
  */
 package com.awakekt.awake.project
 
+import com.awakekt.awake.core.io.AssetPath
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
@@ -53,6 +57,25 @@ class BundleFetchHeapTest {
         assertTrue(peak <= bundle * 5 / 2, "four ${mib(bundle)} MiB bundles kept ${mib(peak)} MiB at once")
     }
 
+    /**
+     * A published game's shape: many small bundles and a few large (200 of them, 0.1 to 0.5 MiB and five of
+     * 12 to 15.5 MiB), every file read at once with no cache, as a world does on entry. Each read fetched
+     * its own bundle with nothing to limit them, so every bundle was held at once: 139 MiB here, the
+     * jump a phone showed on entering its world. The bundles fetched at once are now limited (#1619).
+     */
+    @Test
+    fun manySmallBundlesReadAtOnceAreFetchedAFewAtATime() = runTest {
+        val project = project(sizes = MANY_BUNDLES)
+        val baseline = retained()
+        var peak = 0L
+        val source = IndexedAssetSource(project.index, { url -> project.fetch(url).also { peak = maxOf(peak, retained() - baseline) } })
+        coroutineScope { project.index.files.map { file -> async { source.read(AssetPath(file.path)).getOrThrow().size } }.awaitAll() }
+        source.close()
+        val largest = project.bundleBytes.values.maxOf { it.size }
+        println("BundleFetchHeap: ${project.bundleBytes.size} bundles read at once, largest ${mib(largest)} MiB, peak retained ${mib(peak)} MiB")
+        assertTrue(peak <= MANY_BUNDLES_PEAK_BYTES, "${project.bundleBytes.size} bundles read at once kept ${mib(peak)} MiB")
+    }
+
     private class Project(val index: ProjectIndex, val bundleBytes: Map<String, ByteArray>, val keys: BundleKeyProvider?) {
         var inFlight = 0
         var maxInFlight = 0
@@ -67,11 +90,15 @@ class BundleFetchHeapTest {
         }
     }
 
-    private fun project(folders: Int, membersEach: Int, sealed: Boolean = false): Project {
+    private fun project(folders: Int, membersEach: Int, sealed: Boolean = false): Project =
+        project(List(folders) { List(membersEach) { MEMBER_BYTES } }, sealed)
+
+    /** A bundle per entry of [sizes], each a list of its members' sizes. */
+    private fun project(sizes: List<List<Int>>, sealed: Boolean = false): Project {
         val random = Random(SEED)
         val files = LinkedHashMap<String, ByteArray>()
-        repeat(folders) { folder ->
-            repeat(membersEach) { member -> files["region$folder/part$member.bin"] = random.nextBytes(MEMBER_BYTES) }
+        sizes.forEachIndexed { folder, members ->
+            members.forEachIndexed { member, size -> files["region$folder/part$member.bin"] = random.nextBytes(size) }
         }
         val bundles = LinkedHashMap<String, ByteArray>()
         val index = runSuspend {
@@ -116,6 +143,17 @@ class BundleFetchHeapTest {
         const val DOWNLOAD_MILLIS = 10L
         const val GC_PASSES = 3
         const val KEY_ID = "region-pack"
+        const val MANY_BUNDLES_PEAK_BYTES = 40L * 1024 * 1024
+
+        /** 195 bundles of 0.1 to 0.5 MiB in 4 to 23 members, and five of 12 to 15.5 MiB in 16. */
+        val MANY_BUNDLES: List<List<Int>> = Random(805).let { random ->
+            List(200) { bundle ->
+                val large = bundle % 40 == 7
+                val bytes = if (large) 12 * 1024 * 1024 + random.nextInt(3_600_000) else 100_000 + random.nextInt(400_000)
+                val members = if (large) 16 else 4 + random.nextInt(20)
+                List(members) { bytes / members }
+            }
+        }
         val KEY = ByteArray(BundleEncryptionKey.KEY_BYTES) { (it * 13 + 5).toByte() }
     }
 }
