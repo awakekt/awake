@@ -1,1 +1,0 @@
-- Vulkan hands back the `GpuResolvedDraw` a draw resolved to last frame while it would resolve to the same one, as WebGPU does, and an opaque draw's sort key is 0, as on WebGPU: a moving, shadowed draw allocates 118 B a frame instead of 222 B (JVM with escape analysis off). No public API changes (#1742).
