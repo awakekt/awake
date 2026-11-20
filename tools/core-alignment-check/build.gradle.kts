@@ -19,7 +19,7 @@ val core = providers.gradleProperty("core").get()
 val vulkan = providers.gradleProperty("vulkan").get()
 
 repositories {
-    if (providers.gradleProperty("mavenLocal").isPresent) mavenLocal()
+    if (providers.gradleProperty("mavenLocal").isPresent) mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
     mavenCentral()
     google()
 }

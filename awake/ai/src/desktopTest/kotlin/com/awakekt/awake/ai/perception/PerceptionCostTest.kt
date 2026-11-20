@@ -5,14 +5,17 @@
  */
 package com.awakekt.awake.ai.perception
 
+import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlin.time.TimeSource
 
 /**
  * Measures a crowd: 1,000 perceivers among 1,000 perceivable entities (the perceivers themselves),
  * looking 5 times a second at 60 updates a second, budgeted to 100 looks an update. The bound is
  * loose so a slow CI machine passes; the measured figure is printed.
+ *
+ * The budget is the updating thread's CPU time, not the wall clock (#1592): CI runs this suite beside
+ * 50 others in one Gradle invocation, where waiting for a shared core is no part of the update's cost.
  */
 class PerceptionCostTest {
     @Test
@@ -28,15 +31,17 @@ class PerceptionCostTest {
         val system = PerceptionSystem(scene, factions, maxSightUpdates = 100)
         repeat(120) { system.update(scene.world, 1f / 60f) }
 
+        val threads = ManagementFactory.getThreadMXBean()
+        assertTrue(threads.isCurrentThreadCpuTimeSupported, "this JVM measures no thread CPU time")
         val updates = 600
         var looks = 0
-        val mark = TimeSource.Monotonic.markNow()
+        val before = threads.currentThreadCpuTime
         repeat(updates) {
             system.update(scene.world, 1f / 60f)
             looks += system.sightUpdates
         }
-        val perUpdateMs = mark.elapsedNow().inWholeMicroseconds / 1000.0 / updates
-        println("Perception: ${"%.3f".format(perUpdateMs)} ms per update, ${looks / updates} looks per update, 1000 agents x 1000 targets")
+        val perUpdateMs = (threads.currentThreadCpuTime - before) / 1_000_000.0 / updates
+        println("Perception: ${"%.3f".format(perUpdateMs)} ms of CPU time per update, ${looks / updates} looks per update, 1000 agents x 1000 targets")
         assertTrue(looks / updates <= 100)
         assertTrue(perUpdateMs < 16.0, "$perUpdateMs ms per update")
     }
