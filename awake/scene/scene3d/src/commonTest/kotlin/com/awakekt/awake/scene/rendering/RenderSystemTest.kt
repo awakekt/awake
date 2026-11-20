@@ -22,6 +22,7 @@ import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -29,6 +30,7 @@ import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
@@ -73,6 +75,8 @@ class RenderSystemTest {
         var sceneSubmissionCount: Int = 0
         var gpuPassSubmissionCount: Int = 0
         var lastViewport: RenderViewport? = null
+        var lastPostPassChain: ImagePassChain = ImagePassChain.Empty
+        override var antiAliasing: AntiAliasing = AntiAliasing.Off
 
         override val gpuDrawPreparer = GpuDrawPreparer { command, sourceIndex, _ ->
             if (sourceIndex == 0) lastDrawCalls = emptyList()
@@ -108,6 +112,7 @@ class RenderSystemTest {
             }
             sceneSubmissionCount++
             lastViewport = input.viewport
+            lastPostPassChain = input.postPassChain
             lastViewProjection = input.viewProjection
             val directional = input.passUniforms
             // What the input says it drew as cascades; a point light's faces follow them (#1709).

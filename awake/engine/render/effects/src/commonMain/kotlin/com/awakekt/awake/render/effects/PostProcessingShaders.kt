@@ -46,6 +46,7 @@ import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.imagepass.ImagePassShaderSpec
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
@@ -55,7 +56,9 @@ import com.awakekt.awake.render.renderer.UniformWriter
  * Shaders and uniform layouts for post-processing stack image passes.
  * - Tone-mapping & colour grading (with optional bloom composite)
  * - Bright-pass threshold for bloom
- * - FXAA (Fast Approximate Anti-Aliasing)
+ * - FXAA-style edge anti-aliasing (simplified: luma contrast test, edge orientation, subpixel blend;
+ *   no end-of-edge search). Its origin is unrecorded; see its entry in
+ *   docs/reference/source-provenance.json.
  */
 object PostProcessingShaders {
     const val TONE_MAPPING_GRADE_SHADER_ID: String = "post_tone_mapping_grade"
@@ -243,6 +246,8 @@ object PostProcessingShaders {
         }
     }
 
+    // Origin unrecorded: FXAA-style, not a transcription of FXAA 3.11 (no end-of-edge search). See
+    // its entry in docs/reference/source-provenance.json and "Origin unrecorded" in source-provenance.md.
     val FxaaShader: AslShaderDefinition = shader(FXAA_SHADER_ID) {
         val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
         val fxaaParams by uniforms.field(GpuDataShape.Vec4)
@@ -279,7 +284,8 @@ object PostProcessingShaders {
             val rangeMax = let("rangeMax", max(lumaM, max(max(lumaN, lumaS), max(lumaW, lumaE))))
             val range = let("range", rangeMax - rangeMin)
 
-            val edgeThreshold = let("edgeThreshold", max(0.0833f.lit, rangeMax * 0.125f.lit))
+            // fxaaParams.z: the tier's contrast threshold, relative to the brightest neighbour.
+            val edgeThreshold = let("edgeThreshold", max(FXAA_MIN_EDGE_THRESHOLD.lit, rangeMax * fxaaParams.z))
             val colorResult = variable("colorResult", colorM)
 
             iff(range gt edgeThreshold) {
@@ -417,8 +423,10 @@ object PostProcessingShaders {
             .build()
 
     /**
-     * Packs FXAA's uniforms. [lumaInAlpha] says the source's alpha holds luma, as a tone-mapping
-     * step writes it; otherwise FXAA computes luma from the source's rgb.
+     * Packs FXAA's uniforms. [qualityTier] is an [EffectQuality] ordinal, and picks the contrast a
+     * pixel's neighbourhood needs before it is filtered ([fxaaEdgeThreshold]). [lumaInAlpha] says the
+     * source's alpha holds luma, as a tone-mapping step writes it; otherwise FXAA computes luma from
+     * the source's rgb.
      */
     fun packFxaaUniforms(width: Int, height: Int, qualityTier: Int = 1, lumaInAlpha: Boolean = true): FloatArray =
         UniformWriter(FxaaUniformLayout)
@@ -426,8 +434,24 @@ object PostProcessingShaders {
                 FxaaParamsField,
                 1f / width.coerceAtLeast(1).toFloat(),
                 1f / height.coerceAtLeast(1).toFloat(),
-                qualityTier.toFloat(),
+                fxaaEdgeThreshold(qualityTier),
                 if (lumaInAlpha) 1f else 0f,
             )
             .build()
+
+    /**
+     * The contrast, relative to the brightest of a pixel's four neighbours, that FXAA needs before it
+     * filters the pixel, for [EffectQuality] ordinal [qualityTier]. A lower tier needs more, so it
+     * filters fewer pixels and takes the eight-tap path less often: [EffectQuality.Low] 0.25,
+     * [EffectQuality.Medium] 0.166, [EffectQuality.High] 0.125 (#1791). Below
+     * [FXAA_MIN_EDGE_THRESHOLD] in absolute luma, no pixel is filtered at any tier.
+     */
+    fun fxaaEdgeThreshold(qualityTier: Int): Float = when {
+        qualityTier >= EffectQuality.High.ordinal -> 0.125f
+        qualityTier == EffectQuality.Medium.ordinal -> 0.166f
+        else -> 0.25f
+    }
+
+    /** The absolute luma range below which FXAA filters nothing, at every tier. */
+    const val FXAA_MIN_EDGE_THRESHOLD: Float = 0.0833f
 }

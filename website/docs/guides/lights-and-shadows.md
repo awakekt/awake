@@ -188,7 +188,10 @@ logs the requested and selected counts. Falling back to 1 also disables alpha to
 
 The main colour and depth attachments use the chosen count. Colour resolves before the camera's
 post-processing chain. FXAA remains opt-in; adding an `fxaa` effect explicitly filters the resolved
-colour. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
+colour. An app can also turn FXAA on for every camera with `renderQuality { antiAliasing =
+AntiAliasing.Fxaa }`: each camera whose post-processing has no FXAA stage that runs gets one, last in
+its chain, at the renderer's `effectQuality` (`Low` when that is `Off`). A camera's own `fxaa` effect
+is kept as it is listed. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
 resolve and post-processing.
 
 With alpha to coverage enabled, built-in textured and skinned `AlphaMode.Mask` materials convert
