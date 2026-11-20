@@ -306,6 +306,64 @@ jobs:
       - name: Compose UI and foundation suites
         run: ./gradlew :awake:compose:ui:desktopTest :awake:compose:foundation:desktopTest
 
+      # Every other module whose tests no step ran whole: 51 suites, about 2,050 tests and a minute of
+      # test time, all without a GPU (engine:window draws on this job's xvfb). A test class no step
+      # runs only compiles, so it stays red unseen; `verifyCiTestCoverage` gates each of these (#1592).
+      - name: Remaining module suites
+        run: >-
+          ./gradlew
+          :awake:compose:ui-testing:desktopTest
+          :awake:engine:window:desktopTest
+          :awake:ai:desktopTest
+          :awake:navigation:desktopTest
+          :awake:net:api:desktopTest
+          :awake:scene:authoring:desktopTest
+          :awake:core:input:desktopTest
+          :awake:net:server-ktor:desktopTest
+          :awake:engine:render:passes2d:desktopTest
+          :awake:asset:terrain:desktopTest
+          :awake:core:geometry:desktopTest
+          :awake:compose:runtime:desktopTest
+          :awake:scene:document:desktopTest
+          :awake:scene:world:desktopTest
+          :awake:asset:shader-dsl:desktopTest
+          :awake:asset:shaders:desktopTest
+          :awake:ai:behavior:desktopTest
+          :awake:net:prediction:desktopTest
+          :awake:core:graphics2d:desktopTest
+          :awake:core:expression:desktopTest
+          :awake:core:diagnostics:desktopTest
+          :awake:kit:terrain-layers:desktopTest
+          :awake:compose:state:desktopTest
+          :awake:physics:api:desktopTest
+          :awake:scene:net:desktopTest
+          :awake:engine:render:effects:desktopTest
+          :awake:compose:game:desktopTest
+          :awake:project:transport-ktor:desktopTest
+          :awake:core:pool:desktopTest
+          :awake:trail:desktopTest
+          :awake:net:client-browser:desktopTest
+          :awake:scene:trail:desktopTest
+          :awake:engine:render:testing:desktopTest
+          :awake:physics:ragdoll:desktopTest
+          :awake:core:schema:desktopTest
+          :awake:asset:texture-ktx:desktopTest
+          :awake:world:desktopTest
+          :awake:node-graph:desktopTest
+          :awake:blueprint:desktopTest
+          :awake:core:config:desktopTest
+          :awake:core:logging:desktopTest
+          :awake:core:state:desktopTest
+          :awake:net:client-ktor:desktopTest
+          :awake:ui:material3:desktopTest
+          :awake:compose:di:desktopTest
+          :awake:tailwind:desktopTest
+          :awake:terrain:desktopTest
+          :awake:core:settings:desktopTest
+          :awake:core:math2d:desktopTest
+          :awake:core:di:desktopTest
+          :awake:core:color:desktopTest
+
       # The nameplate frame stays under its allocation ceilings (#1512), an unchanged HUD measures
       # under its per-node ceiling (#1621), and unchanged parent locals copy nothing (#1774).
       - name: Nameplate, measure and locals allocation gates
