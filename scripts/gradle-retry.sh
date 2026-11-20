@@ -12,10 +12,14 @@
 # Two kinds of failure are retried, told apart by what Gradle printed:
 # - A miss ("Could not find", "was not found in any of the following sources").
 # - An error ("Could not resolve", "status code 429", a 5xx).
-# A retry is the same command: it never adds --refresh-dependencies. A Central edge has answered 404
-# for files Central serves, for longer than every pause here; a refresh turned each module the
-# previous run had resolved from the cache into a fresh request to that edge, so every retry failed
-# sooner and on more modules (#1592). What cures such a miss is a mirror listed after Central.
+# A retry is the same command, except after a missing file: "Could not find x-1.0.klib (g:x:1.0)", a
+# file 404 behind metadata a repository served. Gradle caches that miss and asks only the repository
+# that served the metadata, so the same command can never recover it; the retry adds
+# --refresh-dependencies, kept on every later retry. A missing module or plugin ("Could not find
+# g:x:1.0.") is asked again by the same command, so it is not refreshed: a refresh re-requests every
+# module the last run had cached, and on 20 Nov that sent each retry to a Central edge answering 404
+# for files Central serves, failing it sooner (#1592). Measured locally: see "Dependency resolution
+# retries" in docs/release-process.md.
 # Every retry runs with --info, so a failure that outlasts them leaves the host and HTTP status
 # Gradle met in the log; a command that passes first time is never verbose.
 #
@@ -32,6 +36,7 @@ log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
 
 MISS='Could not find [^ ]|was not found in any of the following sources'
+FILE_MISS='Could not find [^ ]+ \([^)]+\)'
 ERROR="Could not resolve|status code 429|Received status code 5[0-9][0-9]"
 
 # Runs "$@" with each stream teed into $log and kept on its own descriptor, and exits with its status.
@@ -40,6 +45,7 @@ run() (
   { { "$@" 2>&1 1>&4 | tee -a "$log" >&3; exit "${PIPESTATUS[0]}"; } 4>&1 | tee -a "$log"; exit "${PIPESTATUS[0]}"; } 3>&2
 )
 
+refreshed=false
 verbose=false
 attempt=0
 while true; do
@@ -50,6 +56,7 @@ while true; do
 
   if grep -qE "$MISS" "$log"; then
     kind="a missing dependency"
+    if ! $refreshed && grep -qE "$FILE_MISS" "$log"; then set -- "$@" --refresh-dependencies; refreshed=true; fi
   elif grep -qE "$ERROR" "$log"; then
     kind="a repository error"
   else

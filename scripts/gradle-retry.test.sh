@@ -59,11 +59,15 @@ throttled="> Could not resolve org.jetbrains.kotlin:kotlin-stdlib:2.4.20. Receiv
 
 retried="build --info"
 check "a green command runs once" 0 "" 0 "build" ""
-check "a miss retries the same command, never refreshed" 1 "$miss" 0 "build|$retried" "60"
+check "a missing module retries the same command, not refreshed" 1 "$miss" 0 "build|$retried" "60"
 check "a plugin miss retries the same command" 1 "Plugin [id: 'x'] was not found in any of the following sources:" 0 "build|$retried" "60"
 check "a 429 retries without refreshing" 1 "$throttled" 0 "build|build --info" "60"
 check "a 5xx retries without refreshing" 1 "Could not GET 'https://x'. Received status code 502 from server" 0 "build|build --info" "60"
-check "a miss that outlasts two retries never adds a refresh" 3 "$miss" 0 "build|$retried|$retried|$retried" "60 180 300"
+check "a missing module that outlasts two retries is never refreshed" 3 "$miss" 0 "build|$retried|$retried|$retried" "60 180 300"
+file_miss='> Could not find kotlinx-serialization-json-wasm-js-1.11.0.klib (org.jetbrains.kotlinx:kotlinx-serialization-json-wasm-js:1.11.0).'
+refreshed="build --refresh-dependencies --info"
+check "a missing file retries with refreshed dependencies" 1 "$file_miss" 0 "build|$refreshed" "60"
+check "a missing file refreshes once, then keeps it" 3 "$file_miss" 0 "build|$refreshed|$refreshed|$refreshed" "60 180 300"
 check "an outage that outlasts two retries passes on the third" 3 "$throttled" 0 "build|build --info|build --info|build --info" "60 180 300"
 check "a fourth failure is the result, after three retries" 4 "$throttled" 1 "build|build --info|build --info|build --info" "60 180 300"
 check "a test failure is not retried" 1 "> There were failing tests." 1 "build" ""

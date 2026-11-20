@@ -519,11 +519,18 @@ indefinitely. So the pull request workflows run every Gradle command through
 failure (#1592), up to three times, after 60, 180 and 300 s (`GRADLE_RETRY_PAUSES`). One retry
 after 60 s was not enough: on 20 Nov a Plugin Portal miss outlasted it. A retry follows a miss
 (`Could not find`, `was not found in any of the following sources`) or an error (`Could not
-resolve`, a 429 or a 5xx), and is the same command: it never adds `--refresh-dependencies`. On
-20 Nov a Central edge answered 404 for files Central serves, a klib and then a plugin marker, for
-all of the 9 minutes the retries span. With a refresh, each retry turned modules the first run had
-resolved from the cache into fresh requests to that edge, and failed within a second on one of
-them. A retry can't cure a 404 from such an edge; a mirror listed after Central can (#1592).
+resolve`, a 429 or a 5xx), and is the same command, with one exception. Measured locally against a
+repository that answered 404 and then served the file:
+
+| The first run missed | Same command again | With `--refresh-dependencies` |
+|---|---|---|
+| a module or plugin (`Could not find g:x:1.0.`) | resolves | resolves |
+| a file behind metadata the repository served (`Could not find x-1.0.klib (g:x:1.0)`) | fails again: Gradle keeps the miss, and asks only that repository | resolves |
+
+So only a missing file adds `--refresh-dependencies`, kept on every later retry. A refresh
+re-requests every module the last run had cached: on 20 Nov a Central edge answered 404 for files
+Central serves, a klib and then a plugin marker, for all of the 9 minutes the retries span, and
+with a refresh after the klib each retry failed within a second on the marker it had cached before.
 
 Every retry also runs with `--info`, so a failure that outlasts the retries leaves the host and HTTP
 status Gradle met in the log. A warm Gradle daemon keeps no answer between runs: reproduced locally,
