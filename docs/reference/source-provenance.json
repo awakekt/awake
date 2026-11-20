@@ -36,6 +36,33 @@
       "copyright": "Binomial LLC",
       "license": "Apache-2.0",
       "reason": "The official prebuilt Basis Universal transcoder's WebAssembly module, copied unchanged, so the browser can transcode KTX2 textures to the GPU's block format (#1211). BinomialLLC publishes no npm package, and the small Khronos transcoders handle UASTC only, not ETC1S. Its SHA-256 is checked at build time by the verifyBasisTranscoder task, which fails the build on a mismatch."
+    },
+    {
+      "path": "awake/engine/render/effects/src/commonMain/kotlin/com/awakekt/awake/render/effects/PostProcessingShaders.kt",
+      "scope": "snippet",
+      "upstream": "https://github.com/KhronosGroup/ToneMapping/blob/180b1a7bddec33f73fe41712a2963cc3ad8e5547/PBR_Neutral/pbrNeutral.glsl",
+      "revision": "180b1a7bddec33f73fe41712a2963cc3ad8e5547",
+      "copyright": "The Khronos Group Inc.",
+      "license": "Apache-2.0",
+      "reason": "Khronos' PBR Neutral tone curve, adapted from the reference GLSL into the post-processing stack's tone-mapping stage (ASL). The reference file carries no header of its own, so the repository's LICENSE.md, Apache-2.0, covers it; the folder's README.md, which describes the curve, is marked CC-BY-4.0. Both are satisfied by keeping Khronos' copyright on the snippet and attributing Khronos in NOTICE.md. Adapted, not depended on: the curve is a few lines that must run inside Awake's own shader DSL, and Khronos publishes no library to call."
+    },
+    {
+      "path": "awake/engine/render/effects/src/commonMain/kotlin/com/awakekt/awake/render/effects/PostProcessingStack.kt",
+      "scope": "snippet",
+      "upstream": "https://github.com/KhronosGroup/ToneMapping/blob/180b1a7bddec33f73fe41712a2963cc3ad8e5547/PBR_Neutral/pbrNeutral.glsl",
+      "revision": "180b1a7bddec33f73fe41712a2963cc3ad8e5547",
+      "copyright": "The Khronos Group Inc.",
+      "license": "Apache-2.0",
+      "reason": "Khronos' PBR Neutral tone curve, adapted from the reference GLSL into the CPU twin the stack's tests compare that stage against. The reference file carries no header of its own, so the repository's LICENSE.md, Apache-2.0, covers it; the folder's README.md, which describes the curve, is marked CC-BY-4.0. Both are satisfied by keeping Khronos' copyright on the snippet and attributing Khronos in NOTICE.md. Adapted, not depended on: the curve is a few lines that must run inside Awake's own shader DSL, and its CPU twin must match the shader step for step, and Khronos publishes no library to call."
+    },
+    {
+      "path": "awake/asset/shader-pack/src/commonMain/kotlin/com/awakekt/awake/asset/shaderpack/SceneDisplayTransform.kt",
+      "scope": "snippet",
+      "upstream": "https://github.com/KhronosGroup/ToneMapping/blob/180b1a7bddec33f73fe41712a2963cc3ad8e5547/PBR_Neutral/pbrNeutral.glsl",
+      "revision": "180b1a7bddec33f73fe41712a2963cc3ad8e5547",
+      "copyright": "The Khronos Group Inc.",
+      "license": "Apache-2.0",
+      "reason": "Khronos' PBR Neutral tone curve, adapted from the reference GLSL into the scene shaders' display transform (ASL). The reference file carries no header of its own, so the repository's LICENSE.md, Apache-2.0, covers it; the folder's README.md, which describes the curve, is marked CC-BY-4.0. Both are satisfied by keeping Khronos' copyright on the snippet and attributing Khronos in NOTICE.md. Adapted, not depended on: the curve is a few lines that must run inside Awake's own shader DSL, and Khronos publishes no library to call."
     }
   ]
 }
