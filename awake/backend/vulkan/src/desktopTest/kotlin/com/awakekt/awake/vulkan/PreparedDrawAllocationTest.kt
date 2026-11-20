@@ -34,6 +34,10 @@ import kotlin.test.assertTrue
  * And each draw's uniform packers wrote their fields through `UniformWriter.put`'s vararg, which
  * built an array of fields for every call: one- and two-field writes now have overloads of their own.
  * A plain material's draw packed its default factors with a new writer every time; they are packed once.
+ *
+ * And every draw built its `GpuResolvedDraw`, about 100 bytes, although what moves a draw is in its
+ * uniforms, not its packet: the preparer hands back the packet a draw resolved to last while it would
+ * resolve to the same one, an opaque draw's sort key now 0 as on WebGPU. 222 → 118 B (#1742).
  */
 class PreparedDrawAllocationTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -90,6 +94,6 @@ class PreparedDrawAllocationTest {
          * no array, and 222 B since a plain material's default factors are packed once. What remains
          * is the draw's `GpuResolvedDraw`, which the pass keeps, and its share of compiling the pass.
          */
-        const val PER_DRAW_BUDGET = 240L
+        const val PER_DRAW_BUDGET = 150L
     }
 }
