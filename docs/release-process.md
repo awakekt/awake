@@ -480,6 +480,28 @@ jobs keep the job queued until it is cancelled. Delete it to return to `macos-15
 Xcode and an arm64 Mac whatever the label: it builds Naga, MoltenVK and JoltC and runs Kotlin/Native
 tests on the iOS simulator.
 
+### Gradle User Home cache
+
+Every workflow that runs Gradle caches the Gradle User Home through `gradle/actions/setup-gradle`'s
+**enhanced** provider, its default. CI, Font atlas and Render evidence name it with
+`cache-provider: enhanced`; the others leave the input out. Enhanced caching:
+- keeps an entry per job, keyed by OS, job, workflow, matrix and commit;
+- restores the job's newest entry, or else the newest from the same OS;
+- stops the Gradle daemon before saving, which the Windows jobs need (the basic provider failed
+  every Windows save on a locked `fileContent.lock`).
+
+Entries are written from `main` only; a pull request reads `main`'s.
+No workflow writes a Gradle User Home cache step of its own.
+
+The provider's licence is the reason to revisit this. Enhanced caching is the proprietary
+`gradle-actions-caching` library, under the Gradle Technologies Terms of Use, not the action's MIT
+licence. Its `DISTRIBUTION.md` makes it free for public repositories and a free preview, with
+pricing planned, for private ones. If this repository goes private, or the terms change, decide
+again. `cache-provider: basic` is the MIT alternative, at the cost measured on #1592:
+- a single shared entry per OS, which the first job to finish writes;
+- no restore keys;
+- no saves from Windows.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap

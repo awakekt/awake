@@ -77,3 +77,12 @@ This project includes third-party software components and compiled binaries unde
 * **License**: Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 * **Version**: v2_50 (`9bebe16726b3a61c8c213eeee3b7cffb462ef34e`)
 * **Location**: `awake/asset/texture-ktx-loader/src/wasmJsMain/resources/basis/` (unchanged from upstream `webgl/transcoder/build/`)
+
+---
+
+### Khronos PBR Neutral tone mapper
+* **Description**: The PBR Neutral tone curve, adapted from Khronos' reference GLSL into the post-processing stack's tone-mapping stage, its CPU twin, and the scene shaders' display transform.
+* **Copyright**: Copyright 2024 The Khronos Group Inc.
+* **License**: Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0), the repository's `LICENSE.md`. The folder's `README.md` describing the curve is under Creative Commons Attribution 4.0 (CC-BY-4.0), which this attribution satisfies.
+* **Version**: `180b1a7bddec33f73fe41712a2963cc3ad8e5547` (https://github.com/KhronosGroup/ToneMapping/tree/180b1a7bddec33f73fe41712a2963cc3ad8e5547/PBR_Neutral)
+* **Location**: the `SPDX-Snippet` blocks in `awake/engine/render/effects/.../PostProcessingShaders.kt`, `PostProcessingStack.kt` and `awake/asset/shader-pack/.../SceneDisplayTransform.kt`
