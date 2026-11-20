@@ -23,6 +23,11 @@
 # Every retry runs with --info, so a failure that outlasts them leaves the host and HTTP status
 # Gradle met in the log; a command that passes first time is never verbose.
 #
+# The last retry also passes scripts/central-mirror-first.init.gradle.kts, which lists Google's mirror of
+# Maven Central ahead of every repository: a file a Central edge answers 404 for, behind a POM it
+# served, is asked only of Central, so a mirror listed after Central can't serve it; first, it serves
+# the POM and the file both. Earlier tries keep the builds' own order, Central first.
+#
 # Anything else fails as it did, on whichever run it happens. stdout and stderr stay separate
 # streams, so a command substitution of `-q` output still captures only stdout.
 # GRADLE_RETRY_PAUSES lists the pauses in seconds, one per retry (default "60 180 300": Central has
@@ -31,6 +36,7 @@ set -uo pipefail
 
 [[ $# -gt 0 ]] || { echo "usage: $0 <command> [args...]" >&2; exit 64; }
 
+mirror_first="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/central-mirror-first.init.gradle.kts"
 read -r -a pauses <<< "${GRADLE_RETRY_PAUSES:-60 180 300}"
 log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
@@ -66,6 +72,7 @@ while true; do
 
   pause="${pauses[$attempt]}"
   attempt=$((attempt + 1))
+  [[ $attempt -eq ${#pauses[@]} ]] && set -- "$@" --init-script "$mirror_first"
   echo "::warning title=Dependency resolution retried::The command failed on $kind; retry $attempt of ${#pauses[@]} in ${pause}s: $*" >&2
   sleep "$pause"
 done

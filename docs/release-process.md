@@ -532,6 +532,14 @@ re-requests every module the last run had cached: on 20 Nov a Central edge answe
 Central serves, a klib and then a plugin marker, for all of the 9 minutes the retries span, and
 with a refresh after the klib each retry failed within a second on the marker it had cached before.
 
+A refresh can't help when Central serves the POM and answers 404 for the file again, because Gradle
+asks for a file only from the repository that served its POM. So the last retry also passes
+`scripts/central-mirror-first.init.gradle.kts`, which lists Google's mirror of Maven Central ahead
+of every repository the builds declare, included builds and projects with their own repositories
+too, and the POM and the file both come from the mirror. It is CI-only and that run's alone: the
+settings, the default order and published metadata are unchanged, and every earlier try asks
+Central first.
+
 Every retry also runs with `--info`, so a failure that outlasts the retries leaves the host and HTTP
 status Gradle met in the log. A warm Gradle daemon keeps no answer between runs: reproduced locally,
 a retry on the same daemon recovers as soon as the repository answers again, with or without

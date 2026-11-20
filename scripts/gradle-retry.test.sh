@@ -44,7 +44,7 @@ check() { # name fails message expected-status expected-calls expected-pauses
   PATH="$work/bin:$PATH" FAKE_CALLS="$calls" FAKE_SLEEPS="$sleeps" FAKE_FAILS="$2" FAKE_MESSAGE="$3" \
     "$script" "$work/gradlew" build > "$work/stdout" 2> "$work/stderr" || status=$?
   local actual waited
-  actual="$(paste -sd'|' "$calls")"
+  actual="$(sed "s|$here/central-mirror-first.init.gradle.kts|MIRROR|" "$calls" | paste -sd'|')"
   waited="$(paste -sd' ' "$sleeps")"
   if [[ $status -eq $4 && "$actual" == "$5" && "$waited" == "$6" ]]; then
     echo "ok   $1"
@@ -58,22 +58,27 @@ miss='> Could not find org.jetbrains.kotlin:kotlin-stdlib:2.4.20.'
 throttled="> Could not resolve org.jetbrains.kotlin:kotlin-stdlib:2.4.20. Received status code 429 from server: Too Many Requests"
 
 retried="build --info"
+# Only the last retry lists the mirror first.
+last="build --info --init-script MIRROR"
 check "a green command runs once" 0 "" 0 "build" ""
 check "a missing module retries the same command, not refreshed" 1 "$miss" 0 "build|$retried" "60"
 check "a plugin miss retries the same command" 1 "Plugin [id: 'x'] was not found in any of the following sources:" 0 "build|$retried" "60"
 check "a 429 retries without refreshing" 1 "$throttled" 0 "build|build --info" "60"
 check "a 5xx retries without refreshing" 1 "Could not GET 'https://x'. Received status code 502 from server" 0 "build|build --info" "60"
-check "a missing module that outlasts two retries is never refreshed" 3 "$miss" 0 "build|$retried|$retried|$retried" "60 180 300"
+check "a missing module that outlasts two retries is never refreshed" 3 "$miss" 0 "build|$retried|$retried|$last" "60 180 300"
 file_miss='> Could not find kotlinx-serialization-json-wasm-js-1.11.0.klib (org.jetbrains.kotlinx:kotlinx-serialization-json-wasm-js:1.11.0).'
 refreshed="build --refresh-dependencies --info"
 check "a missing file retries with refreshed dependencies" 1 "$file_miss" 0 "build|$refreshed" "60"
-check "a missing file refreshes once, then keeps it" 3 "$file_miss" 0 "build|$refreshed|$refreshed|$refreshed" "60 180 300"
-check "an outage that outlasts two retries passes on the third" 3 "$throttled" 0 "build|build --info|build --info|build --info" "60 180 300"
-check "a fourth failure is the result, after three retries" 4 "$throttled" 1 "build|build --info|build --info|build --info" "60 180 300"
+check "a missing file refreshes once, then keeps it" 3 "$file_miss" 0 "build|$refreshed|$refreshed|$refreshed --init-script MIRROR" "60 180 300"
+check "an outage that outlasts two retries passes on the third, the mirror first" 3 "$throttled" 0 "build|build --info|build --info|$last" "60 180 300"
+check "a fourth failure is the result, after three retries" 4 "$throttled" 1 "build|build --info|build --info|$last" "60 180 300"
 check "a test failure is not retried" 1 "> There were failing tests." 1 "build" ""
 FAKE_THEN_AT=2 FAKE_THEN="> There were failing tests." \
   check "a test failure after a retry is the result" 3 "$throttled" 1 "build|build --info" "60"
-GRADLE_RETRY_PAUSES="5" check "GRADLE_RETRY_PAUSES sets the retries and their pauses" 2 "$throttled" 1 "build|build --info" "5"
+GRADLE_RETRY_PAUSES="5" check "GRADLE_RETRY_PAUSES sets the retries and their pauses" 2 "$throttled" 1 "build|$last" "5"
+
+if [[ -f "$here/central-mirror-first.init.gradle.kts" ]]; then echo "ok   the init script the last retry passes exists"; else
+  echo "FAIL the last retry passes $here/central-mirror-first.init.gradle.kts, which doesn't exist"; failures=$((failures + 1)); fi
 
 # The streams stay apart, so `$(... -q ...)` captures stdout only.
 : > "$work/calls"
