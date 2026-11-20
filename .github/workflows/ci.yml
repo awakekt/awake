@@ -180,10 +180,13 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
+      # Enhanced caching keeps a Gradle User Home entry per job and restores the closest one when its
+      # own is missing, and stops the daemon before saving. It is setup-gradle's proprietary provider,
+      # free for public repositories only: see "Gradle User Home cache" in docs/release-process.md.
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - uses: ./.github/actions/cache-naga
         with:
@@ -370,6 +373,7 @@ jobs:
         run: >-
           ./gradlew
           :awake:compose:runtime:desktopTest --tests com.awakekt.awake.compose.runtime.ParentLocalsAllocationTest
+          --tests com.awakekt.awake.compose.runtime.StateLabelTest
           :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
           --tests com.awakekt.awake.compose.game.MeasureAllocationTest
 
@@ -528,7 +532,7 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - uses: ./.github/actions/cache-naga
         with:
@@ -566,7 +570,7 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - uses: ./.github/actions/install-vulkan-sdk-windows
 
@@ -609,7 +613,7 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - uses: ./.github/actions/cache-naga
         with:
@@ -725,26 +729,13 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      # This job keeps its own Gradle User Home cache. The basic provider restores only an exact
-      # hash of every build file, so any PR touching a build.gradle.kts started from an empty
-      # home: 21 of 46 iOS jobs measured on #1362, a first Gradle start of ~4.6 min instead of
-      # ~45 s, and ~17 min jobs instead of ~10. The restore-keys prefix falls back to the newest
-      # entry instead; Gradle re-resolves whatever changed. Saved from pushes to main only, as
-      # ~/.konan is below.
+      # The basic provider restored only an exact hash of every build file, so any PR touching a
+      # build.gradle.kts started from an empty home (21 of 46 iOS jobs on #1362, ~17 min jobs instead
+      # of ~10). Enhanced caching restores this job's newest entry instead, written from main only.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-disabled: true
-
-      - name: Restore Gradle User Home
-        id: gradle-home-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-home-ios-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/*.versions.toml') }}
-          restore-keys: gradle-home-ios-v1-${{ runner.os }}-${{ runner.arch }}-
+          cache-provider: enhanced
 
       # Kotlin/Native keeps its compiler, LLVM and its compiled caches of the standard and
       # platform libraries under ~/.konan. A fresh runner downloads the first and rebuilds the
@@ -825,25 +816,6 @@ jobs:
           path: ~/.konan
           key: ${{ steps.konan-cache.outputs.cache-primary-key }}
 
-      # A daemon still running holds locks on, and can still write to, ~/.gradle/caches.
-      - name: Stop the Gradle daemon
-        if: >-
-          steps.gradle-home-cache.outputs.cache-hit != 'true' &&
-          github.event_name == 'push' && github.ref == 'refs/heads/main'
-        shell: bash
-        run: ./gradlew --stop
-
-      - name: Save Gradle User Home
-        if: >-
-          steps.gradle-home-cache.outputs.cache-hit != 'true' &&
-          github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ steps.gradle-home-cache.outputs.cache-primary-key }}
-
       - name: Upload iOS physics test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -885,7 +857,7 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
         run: ./gradlew :awake:core:audio:wasmJsBrowserTest :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
@@ -1021,7 +993,7 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - name: Tag this commit as the next release, locally
         id: release
@@ -1124,7 +1096,7 @@ jobs:
         if: steps.reach.outputs.run == 'true'
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       # JVM and wasm only: the plugins' ABI dumps take the wasm klib. No natives, Android or iOS.
       - name: Publish this change's Core locally
