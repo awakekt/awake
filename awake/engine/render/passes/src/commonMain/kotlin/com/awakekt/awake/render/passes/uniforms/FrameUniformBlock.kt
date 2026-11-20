@@ -50,6 +50,8 @@ class FrameUniformBlock {
         fogDensity: Float,
         debugView: GpuDebugView,
         exposure: Float,
+        fogStart: Float = 0f,
+        fogEnd: Float = 0f,
     ): FloatArray {
         val cascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED
         fillCascades(cascades)
@@ -63,8 +65,28 @@ class FrameUniformBlock {
             .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
             .putDebugView(debugView, cameraForward)
             .put(UniformFields.Exposure, exposure, debugView.layer.toFloat(), 0f, 0f)
+            .putFogRange(fogStart, fogEnd)
             .build()
     }
+
+    /** [pack] as released before `fogStart` and `fogEnd`, kept so compiled callers still link. */
+    @Deprecated("Use pack with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
+    @Suppress("LongParameterList")
+    fun pack(
+        viewProjection: Mat4,
+        cameraEye: Vec3f,
+        cameraForward: Vec3f,
+        lightPayload: FloatArray,
+        shadowCascades: GpuShadowCascadeData?,
+        fogColor: Color,
+        fogDensity: Float,
+        debugView: GpuDebugView,
+        exposure: Float,
+    ): FloatArray = pack(viewProjection, cameraEye, cameraForward, lightPayload, shadowCascades, fogColor, fogDensity, debugView, exposure, 0f, 0f)
+
+    // Zeros for exponential fog, which the shaders then fog by density as before; z = 1 is linear.
+    private fun UniformWriter.putFogRange(start: Float, end: Float): UniformWriter =
+        if (end > start) put(UniformFields.FogRange, start, end, 1f, 0f) else put(UniformFields.FogRange, 0f, 0f, 0f, 0f)
 
     /** Packs [input]'s frame block, supplying default forward/light values for pass-only or offscreen inputs. */
     fun pack(input: GpuPassInput): FloatArray {
@@ -89,6 +111,8 @@ class FrameUniformBlock {
             fogDensity = environment.fogDensity,
             debugView = environment.debugView,
             exposure = environment.exposure,
+            fogStart = environment.fogStart,
+            fogEnd = environment.fogEnd,
         )
     }
 

@@ -128,6 +128,8 @@ object MaterialUniformLayouts {
         UniformFields.FogColor,
         UniformFields.DebugView,
         UniformFields.Exposure,
+        // Last, so every field before it keeps its offset (#1807).
+        UniformFields.FogRange,
     )
 
     /**
