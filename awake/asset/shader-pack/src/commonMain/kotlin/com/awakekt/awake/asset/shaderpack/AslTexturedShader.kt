@@ -19,7 +19,6 @@ import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.dpdx
 import com.awakekt.awake.asset.shaderdsl.dpdy
 import com.awakekt.awake.asset.shaderdsl.eq
-import com.awakekt.awake.asset.shaderdsl.exp
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.fract
@@ -119,6 +118,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
         val textureFrames = handles.value("textureFrames")
         val textureScroll = handles.value("textureScroll")
         val fogColor = frame.value("fogColor")
+        val fogRange = frame.value("fogRange")
         val debugView = frame.value("debugView")
         val exposure = exposureAndFade(frame, handles)
         val cascadeInputs = CascadeShadowInputs(
@@ -245,7 +245,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false, tinted: B
             val pos by param(GpuDataShape.Vec3)
             val fogTarget by param(GpuDataShape.Vec3)
             val dist = let("dist", length(cameraPosition.xyz - pos))
-            val fogAmount = let("fogAmount", 1f.lit - exp(-fogColor.a * dist))
+            val fogAmount = let("fogAmount", fogAmount(dist, fogColor, fogRange))
             returnValue(mix(baseColor, fogTarget, saturate(fogAmount)))
         }
 

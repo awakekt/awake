@@ -190,6 +190,12 @@ object UniformFields {
     /** Atmospheric distance fog color uniform field. */
     val FogColor = UniformField("fogColor", GpuDataShape.Vec4)
 
+    /**
+     * Linear distance fog's range (#1807): x = start and y = end in metres from the eye, z = 1 for
+     * linear fog, 0 for exponential fog by [FogColor]'s density.
+     */
+    val FogRange = UniformField("fogRange", GpuDataShape.Vec4)
+
     /** PBR surface roughness and metallic parameters uniform field. */
     val PbrFactors = UniformField("pbrFactors", GpuDataShape.Vec4)
 

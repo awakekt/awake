@@ -847,21 +847,34 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 
 public final class com/awakekt/awake/scene/rendering/fog/Fog {
 	public fun <init> ()V
-	public fun <init> (ZFLcom/awakekt/awake/core/color/Color;)V
+	public synthetic fun <init> (ZFLcom/awakekt/awake/core/color/Color;)V
 	public synthetic fun <init> (ZFLcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FF)V
+	public synthetic fun <init> (ZFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
-	public final fun copy (ZFLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/scene/rendering/fog/Fog;
+	public final fun component4 ()Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final synthetic fun copy (ZFLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/scene/rendering/fog/Fog;
+	public final fun copy (ZFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FF)Lcom/awakekt/awake/scene/rendering/fog/Fog;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/fog/Fog;ZFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/fog/Fog;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/fog/Fog;ZFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/fog/Fog;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getDensity ()F
 	public final fun getEnabled ()Z
+	public final fun getEnd ()F
+	public final fun getMode ()Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public final fun getStart ()F
 	public fun hashCode ()I
 	public final fun setColor (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setDensity (F)V
 	public final fun setEnabled (Z)V
+	public final fun setEnd (F)V
+	public final fun setMode (Lcom/awakekt/awake/scene/rendering/fog/FogMode;)V
+	public final fun setStart (F)V
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -883,22 +896,44 @@ public final class com/awakekt/awake/scene/rendering/fog/FogBinding : com/awakek
 }
 
 public final class com/awakekt/awake/scene/rendering/fog/FogKt {
+	public static final field DEFAULT_FOG_END F
+	public static final field DEFAULT_FOG_START F
 	public static final fun getDefaultFogColor ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public final class com/awakekt/awake/scene/rendering/fog/FogMode : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/fog/FogMode$Companion;
+	public static final field Exponential Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public static final field Linear Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+}
+
+public final class com/awakekt/awake/scene/rendering/fog/FogMode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/rendering/fog/SceneFog : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/fog/SceneFog$Companion;
 	public fun <init> ()V
-	public fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)V
 	public synthetic fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FF)V
+	public synthetic fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun component4 ()Ljava/lang/Float;
 	public final fun component5 ()Ljava/lang/Float;
 	public final fun component6 ()Ljava/lang/Float;
-	public final fun copy (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/scene/rendering/fog/SceneFog;
+	public final fun component7 ()Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public final fun component8 ()F
+	public final fun component9 ()F
+	public final synthetic fun copy (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/scene/rendering/fog/SceneFog;
+	public final fun copy (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FF)Lcom/awakekt/awake/scene/rendering/fog/SceneFog;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/fog/SceneFog;ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/fog/SceneFog;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/fog/SceneFog;ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Lcom/awakekt/awake/scene/rendering/fog/FogMode;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/fog/SceneFog;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneColor;
@@ -907,6 +942,9 @@ public final class com/awakekt/awake/scene/rendering/fog/SceneFog : com/awakekt/
 	public final fun getColorR ()Ljava/lang/Float;
 	public final fun getDensity ()F
 	public final fun getEnabled ()Z
+	public final fun getEnd ()F
+	public final fun getMode ()Lcom/awakekt/awake/scene/rendering/fog/FogMode;
+	public final fun getStart ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;

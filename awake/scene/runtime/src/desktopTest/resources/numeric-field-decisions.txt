@@ -176,6 +176,7 @@ free fog.colorB | A colour channel: every value is accepted; nothing validates i
 free fog.colorG | A colour channel: every value is accepted; nothing validates it.
 free fog.colorR | A colour channel: every value is accepted; nothing validates it.
 free fog.density | No validate() limits it; every value is accepted today.
+free fog.end | Relational: it must exceed fog.start, which validate() enforces; no fixed limit says that.
 free keyframe_animation.alpha[].time | Relational element in list: time within 0..duration in ascending order, enforced by validate().
 free keyframe_animation.alpha[].value | Element in list: any alpha value is valid.
 free keyframe_animation.position[].time | Relational element in list: time within 0..duration in ascending order, enforced by validate().
