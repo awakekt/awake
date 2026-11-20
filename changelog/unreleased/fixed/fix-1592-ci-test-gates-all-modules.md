@@ -1,1 +1,0 @@
-- CI runs the whole test suite of 51 more modules (about 2,050 tests) that it never ran, and `verifyCiTestCoverage` now fails a test class of any of them that no step runs (#1592).

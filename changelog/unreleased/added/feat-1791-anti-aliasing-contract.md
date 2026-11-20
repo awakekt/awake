@@ -1,1 +1,0 @@
-- `AntiAliasing` (Off, FXAA, MSAA 2x, 4x, 8x), the scene's anti-aliasing as a graphics setting: `renderQuality { antiAliasing }` picks it, `Renderer.supportedAntiAliasing` lists what the device offers and `Renderer.antiAliasing` names the mode in effect, and `AntiAliasing.resolve` falls a missing mode back to the nearest cheaper one the device has (#1791).

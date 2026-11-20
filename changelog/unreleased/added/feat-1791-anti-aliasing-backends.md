@@ -1,1 +1,0 @@
-- Vulkan and WebGPU build the scene pass for `renderQuality { antiAliasing }` when the app sets it, resolving a mode the device lacks to the nearest cheaper one, and their renderers report `supportedAntiAliasing` and the `antiAliasing` in effect (#1791).

@@ -1,1 +1,0 @@
-- CI caches the Gradle User Home with `setup-gradle`'s basic provider again. The enhanced provider kept restoring a Gradle User Home that failed every WebGPU release pin job on jars Central serves; why, and when to try it again, is in "Gradle User Home cache" in `docs/release-process.md` (#1592).
