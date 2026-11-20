@@ -176,11 +176,10 @@ class RoundedCornerShape(
         val requestedTopRight = radius(physicalTopRight)
         val requestedBottomRight = radius(physicalBottomRight)
         val requestedBottomLeft = radius(physicalBottomLeft)
+        // Pairwise: `minOf` of five is a vararg, a float array on every paint of every shape (#1742).
         val fit = minOf(
-            1f,
-            sideFit(bounds.width, requestedTopLeft + requestedTopRight),
-            sideFit(bounds.height, requestedTopRight + requestedBottomRight),
-            sideFit(bounds.width, requestedBottomRight + requestedBottomLeft),
+            minOf(1f, sideFit(bounds.width, requestedTopLeft + requestedTopRight)),
+            minOf(sideFit(bounds.height, requestedTopRight + requestedBottomRight), sideFit(bounds.width, requestedBottomRight + requestedBottomLeft)),
             sideFit(bounds.height, requestedBottomLeft + requestedTopLeft),
         )
         val topLeft = requestedTopLeft * fit

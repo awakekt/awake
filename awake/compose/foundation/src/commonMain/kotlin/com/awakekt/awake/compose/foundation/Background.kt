@@ -143,8 +143,9 @@ private class BackgroundNode :
     DrawModifierNode {
     lateinit var color: Color
     lateinit var shape: Shape
+    private val outlines = ShapeOutlineCache()
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
+        when (val outline = outlines.outline(shape, width, height, density, layoutDirection)) {
             is ShapeOutline.Rectangle -> drawRect(color = color)
             is ShapeOutline.Rounded -> drawRoundedRect(color = color, radius = outline.radius)
             is ShapeOutline.RoundedCorners -> drawPath(outline.path, color)
