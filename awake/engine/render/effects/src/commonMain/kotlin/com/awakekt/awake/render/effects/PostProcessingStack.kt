@@ -475,6 +475,10 @@ object PostProcessingStack {
             return floatArrayOf(r, g, b, r * 0.2126f + g * 0.7152f + b * 0.0722f)
         }
 
+        // SPDX-SnippetBegin
+        // SPDX-SnippetCopyrightText: 2024 The Khronos Group Inc.
+        // SPDX-License-Identifier: Apache-2.0
+        // Adapted from Khronos' PBR Neutral reference; see its entry in docs/reference/source-provenance.json.
         // 6. Khronos PBR Neutral curve
         val startCompression = 0.76f
         val desaturation = 0.15f
@@ -493,6 +497,7 @@ object PostProcessingStack {
             sg = sg * factor * (1f - fade) + newPeak * fade
             sb = sb * factor * (1f - fade) + newPeak * fade
         }
+        // SPDX-SnippetEnd
 
         // 7. Gamma 2.2 encode
         val encR = max(sr, 0f).pow(1f / 2.2f)
