@@ -1,0 +1,54 @@
+# Temporary measurement for #1592, never merged: does Google's mirror of Maven Central error less
+# than Central from GitHub-hosted runners, and how often does the Gradle Plugin Portal error?
+# Each job requests this repository's dependency files from each host, in a shuffled order with
+# 8 at a time, and counts every answer that is not a 200.
+name: Registry probe
+
+on:
+  push:
+    branches: [test/1592-registry-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe ${{ matrix.run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        run: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/probe
+
+      - name: Request every file from each host
+        run: |
+          central=https://repo.maven.apache.org/maven2
+          google=https://maven-central.storage-download.googleapis.com/maven2
+          portal=https://plugins.gradle.org/m2
+          {
+            sed "s|^|central $central/|" .github/probe/central-paths.txt
+            sed "s|^|google $google/|" .github/probe/central-paths.txt
+            for _ in 1 2 3 4 5 6 7 8 9 10; do sed "s|^|portal $portal/|" .github/probe/portal-paths.txt; done
+          } | shuf > requests.txt
+          # A jar is asked with HEAD and metadata with GET, as Gradle checks a cached jar and reads metadata.
+          probe() {
+            local host="$1" url="$2" method=GET
+            [[ "$url" == *.jar || "$url" == *.klib ]] && method=HEAD
+            printf '%s %s %s\n' "$host" "$(curl -s -o /dev/null -X "$method" -L --max-time 30 \
+              -w '%{http_code} %{time_total}' "$url" || echo "000 30")" "$url"
+          }
+          export -f probe
+          xargs -P 8 -L 1 bash -c 'probe "$0" "$1"' < requests.txt > results.txt
+          echo "RUNNER $RUNNER_NAME $(curl -s --max-time 10 https://api.ipify.org || echo unknown)"
+          for host in central google portal; do
+            awk -v h="$host" '$1 == h { n++; c[$2]++; t += $3 } END {
+              printf "SUMMARY %s requests=%d mean_s=%.3f", h, n, t / n
+              for (k in c) printf " %s=%d", k, c[k]
+              printf "\n" }' results.txt
+          done
+          awk '$2 != "200" { print "NON200", $0 }' results.txt | sort | head -200
