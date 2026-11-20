@@ -60,7 +60,9 @@ interface ContentCache {
  * other members then read with no request. Reads of one bundle running at once share one fetch. A
  * bundle that doesn't match fails every read waiting on it, and its message names each damaged
  * member's path (or opaque id). With no [cache], the members not yet read are kept in memory, up to
- * 64 MiB, and each is dropped once read. With [rangeFetch], a [read] fetches just its member's bytes
+ * [limits]' `stagedMemberBytes` (64 MiB by default), and each is dropped once read. A bundle is held
+ * once, its members copied out one at a time as they're kept or read, and at most [limits]'
+ * `concurrentBundleFetches` bundles (one by default) are fetched at once. With [rangeFetch], a [read] fetches just its member's bytes
  * instead of the whole bundle, while [prefetch] still downloads whole bundles. In an index with
  * [ProjectIndex.pathIds], a path is looked up by its opaque id.
  *
@@ -89,6 +91,8 @@ interface ContentCache {
  * an HTTP `Range` request, for reading one bundle member without its whole bundle; see
  * [TokenAuthorizedFetch.fetchRange].
  * @param keys Answers the master key of an encrypted index; required for one, unused otherwise.
+ * @param limits How many bundles are fetched at once and, with no [cache], how many bytes of members
+ * are kept for the reads still to come.
  */
 class IndexedAssetSource(
     private val index: ProjectIndex,
@@ -96,6 +100,7 @@ class IndexedAssetSource(
     private val cache: ContentCache? = null,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
     private val keys: BundleKeyProvider? = null,
+    private val limits: BundleMemoryLimits = BundleMemoryLimits(),
 ) : PrefetchableAssetSource,
     AutoCloseable {
     private val entries: Map<String, ProjectIndexEntry>
@@ -113,6 +118,15 @@ class IndexedAssetSource(
         rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
     ) : this(index, fetch, cache, rangeFetch, null)
 
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        index: ProjectIndex,
+        fetch: suspend (url: String) -> ByteArray,
+        cache: ContentCache? = null,
+        rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
+        keys: BundleKeyProvider? = null,
+    ) : this(index, fetch, cache, rangeFetch, keys, BundleMemoryLimits())
+
     init {
         if (index.formatVersion > ProjectIndex.ENCRYPTED_FORMAT_VERSION) {
             throw ContentFormatTooNewException("content index", index.formatVersion, ProjectIndex.ENCRYPTED_FORMAT_VERSION)
@@ -124,7 +138,7 @@ class IndexedAssetSource(
         }
         entries = index.files.associateBy { it.key }
         seals = index.encryption?.let { MemberSeals(index, keys!!) }
-        members = BundleMembers(index, fetch, cache, rangeFetch, seals)
+        members = BundleMembers(index, fetch, cache, rangeFetch, seals, limits)
     }
 
     /**
@@ -155,7 +169,7 @@ class IndexedAssetSource(
 
     /**
      * Reads every one of [paths] ahead of play, so the files are cached before a scene asks for them,
-     * fetching and verifying up to six files or bundles at once. Paths whose files share a SHA-256
+     * fetching and verifying up to six files at once, of which as many bundles as [limits] allows. Paths whose files share a SHA-256
      * download once, and bundle members download as whole bundles, once per bundle, skipping a bundle
      * whose chosen members are all cached already. As each download finishes, [onProgress] gets the
      * bytes done of the bytes [paths] add up to. Throws before fetching anything if a path isn't in
@@ -283,6 +297,7 @@ class IndexedAssetSource(
          * @param rangeFetch Optional loader of `length` bytes from `offset` of an entry URL, for
          * reading one bundle member without its whole bundle.
          * @param keys Answers the master key of an encrypted index; required for one.
+         * @param limits How much of the content bundles the source holds on the heap at once.
          * @return A validated [IndexedAssetSource] backed by the fetched index and [cache].
          */
         suspend fun open(
@@ -292,6 +307,7 @@ class IndexedAssetSource(
             retainCachedOnly: Boolean = true,
             rangeFetch: (suspend (AssetPath, offset: Long, length: Long) -> ByteArray)? = null,
             keys: BundleKeyProvider? = null,
+            limits: BundleMemoryLimits = BundleMemoryLimits(),
         ): IndexedAssetSource {
             val rawIndex = fetch(indexPath).decodeToString()
             val decodedIndex = indexJson.decodeFromString(ProjectIndex.serializer(), rawIndex)
@@ -304,8 +320,20 @@ class IndexedAssetSource(
                 cache = cache,
                 rangeFetch = rangeFetch?.let { range -> { url, offset, length -> range(AssetPath(url), offset, length) } },
                 keys = keys,
+                limits = limits,
             )
         }
+
+        /** The [open] that predates `limits`, kept for binary compatibility. */
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        suspend fun open(
+            indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
+            fetch: suspend (AssetPath) -> ByteArray,
+            cache: ContentCache? = null,
+            retainCachedOnly: Boolean = true,
+            rangeFetch: (suspend (AssetPath, offset: Long, length: Long) -> ByteArray)? = null,
+            keys: BundleKeyProvider? = null,
+        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeFetch, keys, BundleMemoryLimits())
 
         /** The [open] that predates `keys`, kept for binary compatibility. */
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -315,7 +343,7 @@ class IndexedAssetSource(
             cache: ContentCache? = null,
             retainCachedOnly: Boolean = true,
             rangeFetch: (suspend (AssetPath, offset: Long, length: Long) -> ByteArray)? = null,
-        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeFetch, keys = null)
+        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeFetch, keys = null, limits = BundleMemoryLimits())
 
         /**
          * Like the other [open], reading the index at [indexPath] and then every file and bundle
@@ -329,6 +357,7 @@ class IndexedAssetSource(
          * @param rangeReads Whether a read of one bundle member asks for just its bytes, with
          * [TokenAuthorizedFetch.fetchRange], instead of fetching its whole bundle.
          * @param keys Answers the master key of an encrypted index; required for one.
+         * @param limits How much of the content bundles the source holds on the heap at once.
          * @return A validated [IndexedAssetSource] backed by the fetched index and [cache].
          * @throws ContentFetchException when the index can't be read; see [TokenAuthorizedFetch.fetch].
          */
@@ -339,6 +368,7 @@ class IndexedAssetSource(
             retainCachedOnly: Boolean = true,
             rangeReads: Boolean = false,
             keys: BundleKeyProvider? = null,
+            limits: BundleMemoryLimits = BundleMemoryLimits(),
         ): IndexedAssetSource {
             val ranges: suspend (AssetPath, Long, Long) -> ByteArray = { path, offset, length -> fetch.fetchRange(path.value, offset, length) }
             return open(
@@ -348,8 +378,20 @@ class IndexedAssetSource(
                 retainCachedOnly = retainCachedOnly,
                 rangeFetch = ranges.takeIf { rangeReads },
                 keys = keys,
+                limits = limits,
             )
         }
+
+        /** The [open] that predates `limits`, kept for binary compatibility. */
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        suspend fun open(
+            indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
+            fetch: TokenAuthorizedFetch,
+            cache: ContentCache? = null,
+            retainCachedOnly: Boolean = true,
+            rangeReads: Boolean = false,
+            keys: BundleKeyProvider? = null,
+        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeReads, keys, BundleMemoryLimits())
 
         /** The [open] that predates `keys`, kept for binary compatibility. */
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -359,6 +401,6 @@ class IndexedAssetSource(
             cache: ContentCache? = null,
             retainCachedOnly: Boolean = true,
             rangeReads: Boolean = false,
-        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeReads, keys = null)
+        ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeReads, keys = null, limits = BundleMemoryLimits())
     }
 }
