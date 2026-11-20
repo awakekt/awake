@@ -1,0 +1,121 @@
+# TEMPORARY (#1592): reverted once it has answered. CI jobs fail on "Could not find <jar or pom>"
+# for files Maven Central serves, under both setup-gradle providers. Gradle 9.6.1 records a 404 (and
+# only a 404) as "missing": a missing artifact is trusted for 24 hours and a missing module until
+# --refresh-dependencies, so one 404 can be saved in a cache and restored. This job separates:
+#   (A) Central answering this runner 404, from
+#   (B) a restored Gradle User Home carrying "missing" records from an earlier run,
+# by resolving the failing configurations twice in one job, with the restored home and with a fresh
+# one, at --debug, beside curl's answer for the same URLs from the same runner. It saves no cache.
+name: Gradle missing-artifact diagnostic
+
+on:
+  pull_request:
+    paths: [.github/workflows/gradle-missing-diagnostic.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: '17'
+  PROJECTS: ':awake:core:color :awake:backend:vulkan:bindings :awake:backend:vulkan :awake:engine:render:parity'
+  URLS: >-
+    https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.20/kotlin-build-tools-impl-2.4.20.pom
+    https://repo.maven.apache.org/maven2/org/jetbrains/annotations/23.0.0/annotations-23.0.0.jar
+    https://repo.maven.apache.org/maven2/org/jetbrains/annotations/23.0.0/annotations-23.0.0.pom
+  PATTERN: 'kotlin-build-tools-impl|annotations-23\.0\.0|annotations/23\.0\.0'
+
+jobs:
+  diagnose:
+    name: Gradle missing-artifact diagnostic
+    # The runner the failing Vulkan (Linux) job uses, so the network path and cache backend match.
+    runs-on: ${{ vars.CORE_VULKAN_RUNNER || (github.repository_owner == 'awakekt' && 'blacksmith-8vcpu-ubuntu-2404') || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (restores the same basic entry, saves nothing)
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+          cache-read-only: true
+
+      - name: Install the Android NDK
+        uses: ./.github/actions/install-vulkan-ndk-linux
+
+      - name: Write the resolve-everything init script
+        run: |
+          cat > "$RUNNER_TEMP/diag.init.gradle" <<'EOF'
+          allprojects {
+            tasks.register('diagnosticResolve') {
+              notCompatibleWithConfigurationCache('reads configurations at execution')
+              doLast {
+                project.configurations.findAll { it.canBeResolved }.each { c ->
+                  try {
+                    c.incoming.resolutionResult.allDependencies.findAll {
+                      it instanceof org.gradle.api.artifacts.result.UnresolvedDependencyResult
+                    }.each { println "DIAG-UNRESOLVED ${project.path}:${c.name}: ${it.failure.message}" }
+                    c.incoming.artifactView { lenient(true) }.artifacts.failures.each {
+                      println "DIAG-ARTIFACT ${project.path}:${c.name}: ${it.message}"
+                    }
+                  } catch (Exception e) {
+                    println "DIAG-ERROR ${project.path}:${c.name}: ${e.message}"
+                  }
+                }
+              }
+            }
+          }
+          EOF
+
+      - name: What the restored home holds for the failing modules (no Gradle)
+        run: |
+          home="$HOME/.gradle/caches/modules-2"
+          echo "files-2.1 entries:"; find "$home/files-2.1" -path '*kotlin-build-tools-impl/2.4.20*' -o -path '*org.jetbrains/annotations/23.0.0*' 2>/dev/null | head -20 || true
+          echo "metadata files naming them:"; grep -rlaE "$PATTERN" "$home"/metadata-* 2>/dev/null | head -20 || true
+
+      - name: What Central answers this runner (curl, 3 times each)
+        run: |
+          for url in $URLS; do
+            for i in 1 2 3; do
+              curl -sSI --max-time 30 "$url" | grep -iE '^(HTTP/|x-cache|x-served-by|age|content-length|retry-after)' | tr '\r\n' '  ' || true
+              echo " <- $url"
+            done
+          done
+
+      - name: Resolve with the restored home
+        run: ./gradlew $(for p in $PROJECTS; do echo "$p:diagnosticResolve"; done) --init-script "$RUNNER_TEMP/diag.init.gradle" --no-configuration-cache --continue --debug > restored.log 2>&1 || true
+
+      - name: Resolve with a fresh home
+        run: |
+          ./gradlew --stop || true
+          export GRADLE_USER_HOME="$RUNNER_TEMP/fresh-home"
+          ./gradlew $(for p in $PROJECTS; do echo "$p:diagnosticResolve"; done) --init-script "$RUNNER_TEMP/diag.init.gradle" --no-configuration-cache --continue --debug > fresh.log 2>&1 || true
+
+      - name: Summary
+        if: always()
+        run: |
+          for run in restored fresh; do
+            {
+              echo "### $run home"
+              echo "DIAG lines: $(grep -c '^DIAG-' $run.log || true)"
+              echo '```'
+              grep -E '^DIAG-' $run.log | grep -E "$PATTERN|Could not find" | head -20 || true
+              echo '--- Gradle on the two modules (missing / HTTP / cache):'
+              grep -E "$PATTERN" $run.log | grep -iE 'missing|non-existence|HTTP|status|404|403|429|cache' | sed 's/^.*\] //' | head -40 || true
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+          cat "$GITHUB_STEP_SUMMARY"
+          gzip -k restored.log fresh.log
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: gradle-missing-diagnostic
+          path: '*.log.gz'
+          retention-days: 7
