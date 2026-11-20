@@ -14,18 +14,6 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /**
- * Retained per-node layout cache and motion state for [Text] and [BasicTextField].
- *
- * Kept in composition slots rather than on a `Modifier.Node`, so a conditional modifier ahead of
- * text in the chain (such as `Modifier.scale(1f)` eliding its element as an animation passes
- * through unit scale) never resets either the layout cache or the active motion state.
- */
-internal class TextNodeState {
-    val cache = TextLayoutCache()
-    val motion = TextMotionState()
-}
-
-/**
  * Tracks frame-to-frame scale, em-size, and subpixel-offset motion for one text node so moving or
  * scaling runs neither re-hint per frame nor switch between exact-size pixel glyphs and the
  * distance field mid-animation.

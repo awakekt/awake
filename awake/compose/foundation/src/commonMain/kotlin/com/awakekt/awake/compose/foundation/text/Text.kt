@@ -12,10 +12,7 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
-import com.awakekt.awake.compose.ui.ModifierNodeElement
-import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.layout.Layout
-import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.platform.LocalFont
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
@@ -41,8 +38,9 @@ context(_: Composer)
  * line where nobody is looking.
  *
  * Unchanged text is not re-shaped: the node's remembered [TextNodeState] keeps the last measurement,
- * glyph run, and motion state across frames and hands them to each frame's new policy, surviving
- * modifier chain changes ahead of the text node.
+ * glyph run, and motion state across frames, surviving modifier chain changes ahead of the text node.
+ * Nor is it rebuilt: a composition that passes the same text, style and parameters as the last one
+ * gets the last one's merged style, measure policy and modifier chain back, and allocates nothing.
  */
 fun Text(
     text: String,
@@ -54,58 +52,19 @@ fun Text(
 ) {
     rememberGroup(TextStateGroup) {
         val state = remember { TextNodeState() }
-        val resolved = LocalTextStyle.current then style
-        val font = resolved.resolveFont(LocalFont.current)
-        val policy = TextMeasurePolicy(
-            text = text,
-            style = resolved,
-            font = font,
-            overflow = overflow,
-            softWrap = softWrap,
-            maxLines = maxLines,
-        )
-        policy.cache = state.cache
+        // Each of these is the last composition's own while its inputs are equal, so an unchanged node allocates
+        // nothing here (#1813).
+        val resolved = state.resolve(LocalTextStyle.current, style)
+        val policy = state.policyFor(text, resolved, LocalFont.current, overflow, softWrap, maxLines)
         // Read for its frame number, which nothing observes: the motion's holds count frames (#1764).
         state.motion.clock = LocalFrameClock.current
-        policy.motion = state.motion
         Layout(
             nodeType = TextNodeType,
-            modifier = modifier.then(TextPaintElement(policy, resolved.color ?: DefaultTextColor, state.motion)),
+            modifier = state.modifierFor(modifier, policy, resolved.color ?: DefaultTextColor),
             measurePolicy = policy,
+            content = null,
         )
     }
-}
-
-/** Paints a [Text] run using the node's remembered [TextMotionState]. */
-private class TextPaintElement(
-    private val policy: TextMeasurePolicy,
-    private val color: Color,
-    private val motion: TextMotionState,
-) : ModifierNodeElement<TextPaintNode>() {
-    override fun create(): TextPaintNode = TextPaintNode()
-
-    override fun update(node: TextPaintNode) {
-        node.policy = policy
-        node.color = color
-        node.motion = motion
-    }
-
-    override fun toString(): String = "text()"
-}
-
-private class TextPaintNode :
-    Modifier.Node(),
-    DrawModifierNode {
-    lateinit var policy: TextMeasurePolicy
-    lateinit var color: Color
-    lateinit var motion: TextMotionState
-
-    override fun DrawScope.draw(drawContent: () -> Unit) {
-        policy.runFor(density, policy.measuredFontScale).paintDecorated(this, color, motion = motion)
-        drawContent()
-    }
-
-    override fun toString(): String = "text()"
 }
 
 /** Used when nothing in the chain provided one. Mid grey reads on both light and dark. */
