@@ -5,6 +5,7 @@
  */
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyFeatureLayeringTask
+import com.awakekt.awake.build.tasks.VerifyCiTestCoverageTask
 import com.awakekt.awake.build.tasks.VerifyCoroutineScopesTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
 import com.awakekt.awake.build.tasks.VerifyInlinedQueriesTask
@@ -64,6 +65,20 @@ val verifyInlinedQueries = tasks.register<VerifyInlinedQueriesTask>("verifyInlin
             include("awake/**/src/*Main/**/*.kt", "samples/**/src/*Main/**/*.kt")
             exclude("**/build/**")
         },
+    )
+}
+
+// A test class CI never runs only compiles, so a red test stays unseen on main (#1592).
+val verifyCiTestCoverage = tasks.register<VerifyCiTestCoverageTask>("verifyCiTestCoverage") {
+    group = "awake verification"
+    description = "Reject a test class of a gated module that no CI step runs."
+    rootPath.set(layout.projectDirectory.asFile.absolutePath)
+    workflows.from(fileTree(layout.projectDirectory.dir(".github/workflows")) { include("*.yml") })
+    gatedModules.set(
+        mapOf(
+            ":awake:compose:ui:desktopTest" to "awake/compose/ui",
+            ":awake:compose:foundation:desktopTest" to "awake/compose/foundation",
+        ),
     )
 }
 
@@ -142,6 +157,7 @@ tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, ownership and source-layering gates."
     dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes, verifyInlinedQueries)
+    dependsOn(verifyCiTestCoverage)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
     dependsOn(rootSourceChecks)
     dependsOn(subprojects.map { module -> module.tasks.matching { it.name in moduleSourceChecks } })

@@ -6,7 +6,10 @@
 package com.awakekt.awake.compose.foundation.text
 
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.BoxWithConstraints
 import com.awakekt.awake.compose.foundation.layout.Column
+import com.awakekt.awake.compose.foundation.layout.Row
+import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
@@ -93,10 +96,46 @@ class TextHoldOncePerFrameTest {
         assertEquals(TextMotionState.SETTLE_FRAMES, distanceFieldFrames, "frames drawn from the distance field")
     }
 
+    /**
+     * The same hold reached through a resize: a label inside a subcomposition whose size follows its
+     * constraints, as a private consumer pack's 1 px shift after the viewport grew (#1764, case B). On
+     * `main` before the fix it reported a stale skip three frames after the resize.
+     */
+    @Test
+    fun aSizeThatFollowsASubcompositionsWidthSettlesWithoutAStaleSkip() {
+        for (measureSkip in listOf(false, true)) {
+            for (retain in listOf(false, true)) {
+                val found = mutableListOf<StaleSkip>()
+                val host = ComposeHost().apply {
+                    skipUnchangedComposition = true
+                    skipUnchangedMeasure = measureSkip
+                    retainUnchangedDraw = retain
+                    verifySkippedCompositions = true
+                    onStaleSkip = { found += it }
+                }
+                repeat(RESIZE_FRAMES) {
+                    host.frame(FrameInput(if (it < RESIZE_AT) NARROW else WIDE, 360, deltaSeconds = 0.016f)) {
+                        BoxWithConstraints(Modifier.fillMaxSize()) {
+                            val wide = maxWidth > THRESHOLD.dp
+                            Row { Box { Text("Label", style = TextStyle(size = if (wide) 12.sp else 10.sp)) } }
+                        }
+                    }
+                }
+                assertEquals(emptyList(), found, "measure skip $measureSkip, retained draw $retain")
+                host.dispose()
+            }
+        }
+    }
+
     private companion object {
         val input = FrameInput(400, 300, deltaSeconds = 0.016f)
         const val FRAMES = 40
         const val GROW_AT = 5
         const val SHRINK_AT = 25
+        const val RESIZE_FRAMES = 16
+        const val RESIZE_AT = 4
+        const val NARROW = 640
+        const val WIDE = 780
+        const val THRESHOLD = 700
     }
 }

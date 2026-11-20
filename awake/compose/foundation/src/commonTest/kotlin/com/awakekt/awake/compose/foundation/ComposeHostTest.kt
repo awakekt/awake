@@ -280,8 +280,12 @@ class PointerEdgeTest {
         val let = host.frame(at(5, 5, down = false), content)
 
         assertTrue(held.ownership.isCaptured)
-        assertTrue(held.ownership.blocksGameplayKeys, "gameplay kept reading the mouse mid-click")
+        // Since #1781 a capture claims its pointer, not the keyboard: gameplay stops reading the mouse
+        // mid-click through capturedPointerIds (the mouse is 0), and keeps its keys on a non-modal panel.
+        assertEquals(setOf(0L), held.ownership.capturedPointerIds, "gameplay kept reading the mouse mid-click")
+        assertFalse(held.ownership.blocksGameplayKeys, "a capture on a non-modal panel took the keyboard")
         assertFalse(let.ownership.isCaptured)
+        assertEquals(emptySet(), let.ownership.capturedPointerIds)
     }
 
     @Test
