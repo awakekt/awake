@@ -1,1 +1,0 @@
-- Asking a scene's image map for its size allocates nothing (#1742). A scene canvas with an asset source reads it on every poll, which a skip-enabled host makes every frame, and each read built a map of every loaded image: 344 B a read with two images loaded, 0 now. `AssetImages` counts its loaded images by walking the entries it was asked for.
