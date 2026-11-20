@@ -158,3 +158,13 @@ tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().conf
         !isMarkerPublication || publication.name.removeSuffix("PluginMarkerMaven") in publicPluginIds
     }
 }
+
+// A failed test prints its whole exception. A TestKit test's UnexpectedBuildFailure carries the
+// nested build's output, so a dependency it could not resolve shows in the log, where
+// scripts/gradle-retry.sh can see it, not only in the HTML report (#1592).
+tasks.test {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
