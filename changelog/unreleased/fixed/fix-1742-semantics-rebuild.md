@@ -1,1 +1,0 @@
-- A frame that composes its semantics again with the same values hands back the semantics tree it built before, instead of rebuilding and re-merging every node's configuration; a semantics configuration also stores its few properties in one small array rather than a hash map. A composed frame of 100 tagged nodes allocates 111 B a node for its semantics, down from 605 B (#1742).

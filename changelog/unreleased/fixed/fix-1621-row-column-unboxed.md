@@ -1,1 +1,0 @@
-- `Row`, `Column`, `FlowRow`, `FlowColumn` and the `align` modifiers no longer box their sizes on Kotlin/Wasm: each child they placed went through a SAM-converted reference that boxed every `Int`, about 100 B a child each frame. A still 162-node HUD's layout stage allocates 8.7 KB a frame in a browser instead of 28.5 KB, and 0.1 KB instead of 16.6 KB when it only places (#1621).
