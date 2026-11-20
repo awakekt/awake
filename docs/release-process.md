@@ -499,17 +499,12 @@ three must hold:
 - a workflow can delete cache entries;
 - it has been measured on a branch first.
 
-No cache key includes a settings or build file, so a cache entry outlives a change to the
-repositories it was resolved against. On 20 Nov one deduplicated entry,
-`gradle-dependencies-v2-c4cf91…`, failed every job that restored it with "Could not find <jar>" for
-jars Maven Central serves: 10 failures out of 10 restores, while every job that restored another
-entry passed (#1592). When failures follow one cache entry like that, delete it with the **Cache
-maintenance** workflow (`.github/workflows/cache-maintenance.yml`):
-- run it from the Actions tab with a substring of the key, such as `c4cf91`, of at least 6
-  characters, and leave **dry-run** on to list the matching entries (key, ref, created, size) in the
-  run's summary;
-- run it again with **dry-run** off to delete them. Delete the home entries that point at the bad
-  entry as well, by their commit substring, so no restore reaches it.
+When failures follow a cache entry, every job that restores it failing and every other job passing,
+delete it with the **Cache maintenance** workflow (`.github/workflows/cache-maintenance.yml`):
+- run it from the Actions tab with a substring of the key, of at least 6 characters (a commit or
+  content hash, or a prefix such as `gradle-home-v2`), and leave **dry-run** on to list the matching
+  entries (key, ref, created, size) in the run's summary;
+- run it again with **dry-run** off to delete them, including any entry that restores the bad one.
 
 Deleting a cache entry is always safe: the next job that misses it rebuilds from the network. The
 workflow runs no Gradle and restores no cache, so it can't be affected by what it deletes.

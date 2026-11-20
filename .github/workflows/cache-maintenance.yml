@@ -1,6 +1,6 @@
 # Lists, and on request deletes, GitHub Actions cache entries whose key contains a substring (#1592).
-# For a cache entry that poisons the jobs restoring it, as gradle-dependencies-v2-c4cf91… did on
-# 20 Nov: jobs failed on "Could not find <jar>" for jars Central serves, every time they restored it.
+# For a cache entry that fails the jobs restoring it, as the WebGPU release pin's Gradle User Home
+# entries did on 20 Nov: "Could not find <jar>" for jars Central serves, on every restore.
 # Deleting a cache entry is always safe: the next job that misses it rebuilds from the network.
 #
 # It runs no Gradle and restores no cache, so the entries it manages can't affect it. See
