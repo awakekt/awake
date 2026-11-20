@@ -23,15 +23,16 @@ class HudMeasureScopeBrowserTest {
     fun aFrameMeasuresTheWholeHudUnlessNothingItReadChanged() {
         assertTrue(heapMeasurable(), "needs the launcher's --js-flags=--expose-gc and --enable-precise-memory-info")
         val scope = HudMeasureScope { heapNow() }
-        val readings = HudMeasureScope.Cases.associateWith { (skipping, ticking) ->
-            scope.read(skipping, ticking, warmUp = WARMUP, windows = WINDOWS, frames = FRAMES, collect = { collectedHeap() })
+        val readings = HudMeasureScope.Cases.associateWith { (skips, ticking) ->
+            scope.read(skips, ticking, warmUp = WARMUP, windows = WINDOWS, frames = FRAMES, collect = { collectedHeap() })
         }
-        readings.forEach { (case, reading) -> println("PERF HudMeasureScope wasm skipping=${case.first} ticking=${case.second}: $reading") }
+        readings.forEach { (case, reading) -> println("PERF HudMeasureScope wasm skips=${case.first} ticking=${case.second}: $reading") }
 
-        val nodes = readings.getValue(false to false).nodesMeasured
+        val nodes = readings.getValue(HudMeasureScope.Skips.Off to false).nodesMeasured
         assertTrue(nodes > HudMeasureScope.ROWS * 4, "the HUD has $nodes nodes")
-        assertEquals(0, readings.getValue(true to false).nodesMeasured, "a still frame with skipping on measures nothing")
-        assertEquals(nodes, readings.getValue(true to true).nodesMeasured, "one changed value measures the whole tree again")
+        assertEquals(0, readings.getValue(HudMeasureScope.Skips.All to false).nodesMeasured, "a still frame with skipping on measures nothing")
+        assertEquals(nodes, readings.getValue(HudMeasureScope.Skips.DrawOnly to false).nodesMeasured, "with only draw retained, a still frame measures all")
+        assertEquals(nodes, readings.getValue(HudMeasureScope.Skips.All to true).nodesMeasured, "one changed value measures the whole tree again")
     }
 
     private companion object {

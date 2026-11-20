@@ -55,16 +55,28 @@ internal class HudMeasureScope(private val heapBytes: () -> Double) : ComposeFra
                 (if (nodesMeasured == 0) "-" else tenths(measureBytes / nodesMeasured)) + " B a measured node"
     }
 
+    /** Which of [ComposeHost]'s three opt-in skips a case turns on. */
+    enum class Skips(val composition: Boolean, val measure: Boolean, val draw: Boolean) {
+        /** None, the host's default. */
+        Off(false, false, false),
+
+        /** Only [ComposeHost.retainUnchangedDraw]: the consumer's released builds (20 Nov). */
+        DrawOnly(false, false, true),
+
+        /** All three. */
+        All(true, true, true),
+    }
+
     /**
-     * The quietest of [windows] windows of [frames] frames, after [warmUp], on a host whose three skips
-     * are [skipping], with one value changing every frame when [ticking]. [collect] runs before each
-     * window, where the platform can collect garbage.
+     * The quietest of [windows] windows of [frames] frames, after [warmUp], on a host with [skips], with
+     * one value changing every frame when [ticking]. [collect] runs before each window, where the
+     * platform can collect garbage.
      */
-    fun read(skipping: Boolean, ticking: Boolean, warmUp: Int, windows: Int, frames: Int, collect: () -> Unit): Reading {
+    fun read(skips: Skips, ticking: Boolean, warmUp: Int, windows: Int, frames: Int, collect: () -> Unit): Reading {
         val host = ComposeHost().apply {
-            skipUnchangedComposition = skipping
-            skipUnchangedMeasure = skipping
-            retainUnchangedDraw = skipping
+            skipUnchangedComposition = skips.composition
+            skipUnchangedMeasure = skips.measure
+            retainUnchangedDraw = skips.draw
         }
         val input = FrameInput(viewportWidth = WIDTH, viewportHeight = HEIGHT)
         fun frame() {
@@ -114,8 +126,8 @@ internal class HudMeasureScope(private val heapBytes: () -> Double) : ComposeFra
         private const val HEIGHT = 1200
         private val STAGES = ComposeFrameStage.entries.size
 
-        /** The four cases, as skipping to ticking, in the order a report lists them. */
-        val Cases: List<Pair<Boolean, Boolean>> = listOf(false to false, false to true, true to false, true to true)
+        /** The cases, as skips to ticking, in the order a report lists them. */
+        val Cases: List<Pair<Skips, Boolean>> = Skips.entries.flatMap { skips -> listOf(skips to false, skips to true) }
 
         private fun kb(bytes: Double): String = tenths(bytes / 1024)
 
