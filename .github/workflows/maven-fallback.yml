@@ -50,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read     # lists this run's artifacts, to wait for the site's before deploying it
       pages: write      # deploy-pages publishes the site
       id-token: write   # deploy-pages proves the run's identity to Pages
     environment:
@@ -98,14 +99,36 @@ jobs:
             exit 1
           fi
 
+      # One artifact name per attempt: a re-run uploads its own, and deploy-pages refuses a run that
+      # holds two of one name, so under the default name a failed deploy could never be re-run
+      # (run 44811365365, attempt 2: "Multiple artifacts named github-pages").
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: steps.bundles.outputs.count != '0'
         with:
           path: build/maven-fallback
+          name: github-pages-${{ github.run_attempt }}
+
+      # deploy-pages looks the artifact up once, at once. GitHub can list it a moment after its upload
+      # is finalized: run 44811365365's first attempt asked 0.4 s later and found none.
+      - name: Wait until the site's artifact is listed
+        if: steps.bundles.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: github-pages-${{ github.run_attempt }}
+        run: |
+          for _ in $(seq 1 30); do
+            count="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$ARTIFACT" --jq '.total_count' || echo 0)"
+            [ "$count" -ge 1 ] && { echo "$ARTIFACT is listed."; exit 0; }
+            sleep 2
+          done
+          echo "::error::$ARTIFACT was not listed 60 s after its upload."
+          exit 1
 
       - id: deploy
         if: steps.bundles.outputs.count != '0'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
 
       # What the site now serves, from its own URL: every POM a served POM names must resolve there.
       - name: Check the deployed site resolves what it serves
