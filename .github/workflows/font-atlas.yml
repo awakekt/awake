@@ -54,7 +54,7 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
-          cache-provider: basic
+          cache-provider: enhanced
 
       - name: Install msdfgen's build dependencies
         run: |
