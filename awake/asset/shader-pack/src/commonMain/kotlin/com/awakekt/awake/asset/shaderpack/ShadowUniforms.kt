@@ -73,6 +73,8 @@ class ShadowUniforms internal constructor(
     val material: AslExpr?,
     /** rgb = fog colour, a = fog DENSITY (not alpha); density 0 makes applyFog a no-op. */
     val fogColor: AslExpr?,
+    /** `UniformFields.FogRange`: a linear fog's start and end, or zeros for exponential fog. */
+    val fogRange: AslExpr?,
     /** `UniformFields.DebugView`; see [debugViewColor]. */
     val debugView: AslExpr?,
     /** `x` = the exposure [SceneDisplayTransform.display] applies, from the frame block; `y` =
@@ -109,6 +111,7 @@ fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
         cameraForward = if (includeLitTail) frame.value("cameraForward") else null,
         material = if (includeLitTail) draw.value("material") else null,
         fogColor = if (includeLitTail) frame.value("fogColor") else null,
+        fogRange = if (includeLitTail) frame.value("fogRange") else null,
         debugView = if (includeLitTail) frame.value("debugView") else null,
         exposure = if (includeLitTail) exposureAndFade(frame, draw) else null,
     )

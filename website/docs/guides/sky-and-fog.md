@@ -159,6 +159,9 @@ next pair as the day moves on.
 | `enabled` | boolean | `true` | Whether fog applies. |
 | `density` | number | `0.001` | How fast fog thickens with distance. `0` is no fog. |
 | `color` | color | `(0.55, 0.62, 0.70)` | The colour distant surfaces fade to. |
+| `mode` | `Exponential` or `Linear` | `Exponential` | How fog grows with distance: by `density`, or evenly from `start` to `end`. |
+| `start` | number | `0` | `Linear` only. Metres from the camera where fog begins. At least 0. |
+| `end` | number | `1000` | `Linear` only. Metres from the camera where surfaces are wholly fog colour. Beyond `start`. |
 
 A color is an object (`{ "r": …, "g": …, "b": … }`), an array, or a hex string such as `"#C8D2DC"`.
 In the scene DSL, `skybox(Skybox(...))` and `fog(Fog(...))` attach them to the current entity;
@@ -169,9 +172,16 @@ In the scene DSL, `skybox(Skybox(...))` and `fog(Fog(...))` attach them to the c
 The renderer reads the first `Skybox` and the first `Fog` in the world. With no `Skybox`, no sky is
 drawn. With no `Fog`, there is no fog.
 
-Fog is exponential distance fog, computed per pixel in the lit and textured shaders: a surface
-`d` units from the camera shows `1 − e^(−density × d)` of the fog colour. Surfaces drawn by shaders
-that do not read fog, such as your own, are not fogged.
+Fog is distance fog, computed per pixel in the lit and textured shaders. Exponential fog, the
+default, shows `1 − e^(−density × d)` of the fog colour on a surface `d` units from the camera, so
+it thickens forever and never quite hides anything. Linear fog shows none nearer than `start`, then
+`(d − start) / (end − start)` of it, and all of it from `end` on: use it when the far edge of the
+world, or a draw distance, must vanish completely. Surfaces drawn by shaders that do not read fog,
+such as your own, are not fogged.
+
+Every `Fog` field may be changed while the scene runs; the next frame fogs with the new values, so a
+system can pull `end` in as a storm arrives. A linear range the shaders cannot ramp across, a
+negative `start` or an `end` at or before it, fails the document's validation, and `Fog` refuses it.
 
 `SolidColor` uses `horizonColor` for the whole sky. The cubemap sky draws over the gradient sky when
 the plan has both.

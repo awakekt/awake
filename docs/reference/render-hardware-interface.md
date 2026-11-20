@@ -470,7 +470,7 @@ A lit scene shader reads two uniform blocks, both in the material group
 | Binding | Block | Layout (`MaterialUniformLayouts`) | Written |
 |---|---|---|---|
 | `0` | The draw's own (`Uniforms`) | `LitShadowDraw`: `model`, `vertexAnimation`, `material`, `drawFade`. `PbrTexturedDraw`: `model`, `vertexAnimation`, the PBR factors and texture animation, `drawFade` | When the draw's own inputs change |
-| `FRAME_UNIFORM_BINDING` (`9`) | The frame's (`FrameUniforms`) | `Frame`: `viewProjection`, the directional light, the point-light slots, the cascade matrices and scales, `cameraPosition`, `cameraForward`, `fogColor`, `debugView`, `exposure` | Once per batch, when it changed |
+| `FRAME_UNIFORM_BINDING` (`9`) | The frame's (`FrameUniforms`) | `Frame`: `viewProjection`, the directional light, the point-light slots, the cascade matrices and scales, `cameraPosition`, `cameraForward`, `fogColor`, `debugView`, `exposure`, `fogRange` (a linear fog's start and end, zero for exponential fog) | Once per batch, when it changed |
 
 The shader computes clip position as `viewProjection * (model * position)`; no block carries an
 MVP. Nothing in a draw's block is the camera's, the light's or the cascades', so a camera that
