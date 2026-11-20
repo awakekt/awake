@@ -128,7 +128,24 @@ fun Modifier.semantics(
 }
 
 /** The handle a test uses to find this node. */
-fun Modifier.testTag(tag: String): Modifier = semantics { this[SemanticsProperties.TestTag] = tag }
+fun Modifier.testTag(tag: String): Modifier = this then TestTagElement(tag)
+
+/**
+ * [testTag]'s element: just the tag. The configuration is built only when the node has none or holds
+ * another, so a recomposition with the same tag allocates no configuration, entries or block, which
+ * a `semantics { }` call builds every time (#1742).
+ */
+private class TestTagElement(private val tag: String) : ModifierNodeElement<SemanticsModifierNodeImpl>() {
+    override fun create(): SemanticsModifierNodeImpl = SemanticsModifierNodeImpl()
+
+    override fun update(node: SemanticsModifierNodeImpl) {
+        if (!node.isConfigured || !node.semanticsConfiguration.holdsOnly(SemanticsProperties.TestTag, tag)) {
+            node.semanticsConfiguration = SemanticsConfiguration().also { it[SemanticsProperties.TestTag] = tag }
+        }
+    }
+
+    override fun toString(): String = "semantics([${SemanticsProperties.TestTag}])"
+}
 
 private class SemanticsNodeElement(
     private val semanticsConfiguration: SemanticsConfiguration,
