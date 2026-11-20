@@ -12,11 +12,14 @@ import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.time.TimeSource
 
 /**
- * Desktop-only: wall-clock budgets and `currentThreadAllocatedBytes` are JVM measurements. The route
- * itself is common code and the same on every target; these only put numbers on its cost.
+ * Desktop-only: the query thread's CPU time and `currentThreadAllocatedBytes` are JVM measurements.
+ * The route itself is common code and the same on every target; these only put numbers on its cost.
+ *
+ * The time budget is the thread's CPU time, not the wall clock (#1592): CI runs this suite beside
+ * 50 others in one Gradle invocation, and a query waiting for a core it shares with other test
+ * workers went over 150 ms of wall clock while its own work stayed the same.
  */
 class NavPathQueryBudgetTest {
     private val agent = NavAgent()
@@ -38,6 +41,8 @@ class NavPathQueryBudgetTest {
 
     @Test
     fun aRouteAcrossAKilometreOfTownStaysInsideItsTimeBudget() {
+        val threads = ManagementFactory.getThreadMXBean()
+        assertTrue(threads.isCurrentThreadCpuTimeSupported, "this JVM measures no thread CPU time")
         val query = NavPathQuery(town, flat)
         val path = NavPath()
         val from = Vec3f(-495f, 0f, -495f)
@@ -46,16 +51,16 @@ class NavPathQueryBudgetTest {
 
         val timings = LongArray(MEASURED_QUERIES)
         for (index in timings.indices) {
-            val mark = TimeSource.Monotonic.markNow()
+            val before = threads.currentThreadCpuTime
             query.findPath(from, to, agent, path)
-            timings[index] = mark.elapsedNow().inWholeMicroseconds
+            timings[index] = (threads.currentThreadCpuTime - before) / NANOS_PER_MICRO
         }
         timings.sort()
         val medianMillis = timings[timings.size / 2] / MICROS_PER_MILLI
 
         assertEquals(NavPathStatus.Complete, path.status)
-        println("1 km town route: ${path.size} waypoints, ${query.lastExpandedNodes} nodes, median $medianMillis ms")
-        assertTrue(medianMillis < BUDGET_MILLIS, "median $medianMillis ms is over the $BUDGET_MILLIS ms budget")
+        println("1 km town route: ${path.size} waypoints, ${query.lastExpandedNodes} nodes, median $medianMillis ms of CPU time")
+        assertTrue(medianMillis < BUDGET_MILLIS, "median $medianMillis ms of CPU time is over the $BUDGET_MILLIS ms budget")
     }
 
     @Test
@@ -95,9 +100,10 @@ class NavPathQueryBudgetTest {
         const val MEASURED_QUERIES = 15
         const val MEASURED_WINDOWS = 15
         const val MICROS_PER_MILLI = 1000.0
+        const val NANOS_PER_MICRO = 1000L
 
         /**
-         * About 50 ms on a developer machine for ~120,000 expansions around 256 buildings; the gate
+         * About 50 ms of CPU time on a developer machine for ~120,000 expansions around 256 buildings; the gate
          * leaves room for a slower CI runner without letting a per-node regression through.
          */
         const val BUDGET_MILLIS = 150.0
