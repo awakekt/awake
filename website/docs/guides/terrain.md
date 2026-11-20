@@ -54,8 +54,11 @@ A 4 × 4 sample hill, 2 m between samples. Both forms below build the same compo
 | `tilingScale` | number | `16` | How often surface textures repeat across the terrain. |
 | `isVisible` | boolean | `true` | Whether the terrain is drawn. |
 | `surface` | object or none | none | Names a surface provider and its data; see [How it works](#how-it-works). |
+| `clipmapRings` | integer | `6` | Levels of the geometry clipmap, the core and its rings, 2 to 8. Each ring is twice as coarse as the one inside. See [Clipmap detail and cost](#clipmap-detail-and-cost). |
+| `clipmapRingResolution` | integer | `64` | Grid cells along one side of each level, an even count from 16 to 256. |
+| `clipmapBaseSpacing` | number | `2` | Metres between the finest level's vertices. Above 0. |
 
-`TerrainComponent` also has `splatMap` and `clipmapConfig`, which only Kotlin can set.
+A terrain that leaves the clipmap fields out draws exactly as it did before they existed. `TerrainComponent` also has `splatMap`, which only Kotlin can set.
 
 ## Work with a heightmap
 
@@ -106,7 +109,30 @@ about twice as much per pixel, so only terrains that need it pay for it.
 
 For large terrains, `TerrainClipmapSystem` keeps concentric rings of geometry centred on the primary
 camera, so memory stays constant however far the camera travels. `TerrainClipmapConfig` sets how many
-rings there are and how fine they start.
+rings there are and how fine they start; a scene sets it with the `clipmap*` fields above.
+
+### Clipmap detail and cost
+
+Level 0 is a square of `clipmapRingResolution` cells, `clipmapBaseSpacing` metres apart, around the
+camera. Each ring around it has the same number of cells at twice the spacing, so it reaches twice as
+far. The whole clipmap is one draw, whatever the setting. Each level adds `(clipmapRingResolution + 1)²`
+vertices: 4,225 at 64 cells, 16,641 at 128 and 66,049 at 256.
+
+| Rings | Cells a side | Base spacing | Vertices | Triangles | Reach from the camera | Vertex spacing 1 km out |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| 6 (default) | 64 (default) | 2 m (default) | 25,350 | 41,312 | 2,048 m | 32 m |
+| 8 | 64 | 2 m | 33,800 | 54,560 | 8,192 m | 32 m |
+| 6 | 128 | 2 m | 99,846 | 160,608 | 4,096 m | 16 m |
+| 8 | 128 | 2 m | 133,128 | 211,744 | 16,384 m | 16 m |
+| 6 | 256 | 2 m | 396,294 | 632,672 | 8,192 m | 8 m |
+| 8 | 256 | 2 m | 528,392 | 833,312 | 32,768 m | 8 m |
+
+More rings reach farther without changing the detail at any distance already covered. A finer grid
+halves the spacing at every distance and roughly quadruples the vertex count. Past the outermost ring
+the terrain is not drawn. To keep the mesh as fine as the source data at a distance, take the source's
+sample spacing, double it once per ring that reaches that distance, and choose a grid that keeps up.
+The vertex shader samples the heightmap once per vertex, so the vertex count is the cost to watch on a
+phone.
 
 !!! warning "One terrain per shader set"
     A content host accepts one terrain per shader set. A second terrain with the same shaders is
