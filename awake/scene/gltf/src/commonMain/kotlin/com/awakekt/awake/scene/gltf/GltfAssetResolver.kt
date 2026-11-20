@@ -75,6 +75,9 @@ class GltfAssetResolver(
     /** The factors of each static material with no base colour image, by the key `gltf-material:` names it with. */
     private val untexturedMaterials = mutableMapOf<String, GltfMaterialParameters>()
     private val skinnedPartTextures = mutableMapOf<String, GpuImageSource>()
+
+    /** Each textured skinned part's emissive image, when it has one, by the key [skinnedPartTextures] uses (#1829). */
+    private val skinnedPartEmissive = mutableMapOf<String, GpuImageSource>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private val loadedParts = mutableMapOf<String, List<GltfPart>>()
     private val loadedCullModes = mutableMapOf<String, CullMode>()
@@ -211,6 +214,7 @@ class GltfAssetResolver(
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
+        skinnedPartEmissive.keys.removeAll { it.startsWith("$path#") }
         releases.forget(path)
     }
 
@@ -250,6 +254,7 @@ class GltfAssetResolver(
         for (key in releases.releasedMaterialsOf(path)) {
             from.loadedMaterials[key]?.let { loadedMaterials[key] = it }
             from.skinnedPartTextures[key]?.let { skinnedPartTextures[key] = it }
+            from.skinnedPartEmissive[key]?.let { skinnedPartEmissive[key] = it }
             releases.releasedMaterials -= key
         }
         releases.release(path)
@@ -285,6 +290,7 @@ class GltfAssetResolver(
         loadedMaterials.adoptModel(from.loadedMaterials, path)
         untexturedMaterials.adoptModel(from.untexturedMaterials, path)
         skinnedPartTextures.adoptModel(from.skinnedPartTextures, path)
+        skinnedPartEmissive.adoptModel(from.skinnedPartEmissive, path)
         from.loadedCullModes.forEach { (key, mode) ->
             if (isModelCullKey(key, path)) loadedCullModes.getOrPut(key) { mode }
         }
@@ -399,6 +405,7 @@ class GltfAssetResolver(
                 is GltfPart.Skinned -> {
                     val mesh = part.mesh
                     mesh.baseColorImageBytes?.takeIf { mesh.isTextured }?.let { skinnedPartTextures[key] = decodeTexture(it) }
+                    mesh.emissiveImageBytes?.takeIf { mesh.isTextured }?.let { skinnedPartEmissive[key] = decodeTexture(it) }
                     val meshKey = "$PRIMITIVE_MESH_PREFIX$key"
                     loadedCullModes[meshKey] = mesh.doubleSided.toCullMode()
                     GltfMaterialSlot(
@@ -554,7 +561,7 @@ class GltfAssetResolver(
     override fun loadMaterial(name: String, scope: CoroutineScope): SceneMeshLoad? {
         val key = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:") ?: return null
         val loaded = loadedMaterials[key]
-        val images = listOfNotNull(skinnedPartTextures[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
+        val images = listOfNotNull(skinnedPartTextures[key], skinnedPartEmissive[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
         val pending = images.filter { it.needsDecode }
         return when {
             // Let go of once uploaded: the model is read again, which brings its images back.
@@ -594,7 +601,7 @@ class GltfAssetResolver(
         val key = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:") ?: return
         if (!releases.isReleasable(materialModelPath(key))) return
         val loaded = loadedMaterials[key]
-        val images = listOfNotNull(skinnedPartTextures[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
+        val images = listOfNotNull(skinnedPartTextures[key], skinnedPartEmissive[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
         // Every image, not only the first: `any` would stop at the first one it let go of.
         var released = false
         for (image in images) released = image.releaseImageData() || released
@@ -604,8 +611,11 @@ class GltfAssetResolver(
     private fun makeMaterial(renderer: Renderer, name: String): Material? = when {
         name == "skinned-material" -> renderer.createMaterial(SkinnedUniformLayout)
         name.startsWith("gltf-material:") && name.removePrefix("gltf-material:") in skinnedPartTextures ->
-            renderer.imageMaterialOrPlain(name, SkinnedUniformLayout.total) {
-                createImageMaterial(skinnedPartTextures.getValue(name.removePrefix("gltf-material:")), TextureFiltering.Linear, SkinnedUniformLayout.total, null, label = name)
+            name.removePrefix("gltf-material:").let { key ->
+                renderer.imageMaterialOrPlain(name, SkinnedUniformLayout.total) {
+                    val emissive = skinnedPartEmissive[key]?.let { PbrImageSet(emissive = it) }
+                    createImageMaterial(skinnedPartTextures.getValue(key), TextureFiltering.Linear, SkinnedUniformLayout.total, emissive, label = name)
+                }
             }
         name.startsWith("gltf-material:") -> loadedMaterials[name.removePrefix("gltf-material:")]?.let { loaded ->
             renderer.imageMaterialOrPlain(name, TexturedUniformLayout.total) {
