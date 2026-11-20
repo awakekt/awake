@@ -51,9 +51,13 @@ class CentralMirrorTest {
                     google()
                 }
             }
+            repositories { mavenCentral() }
         """.trimIndent()
 
-        assertEquals(listOf("repositories block 2: mavenCentral()"), centralWithoutMirror(source))
+        assertEquals(
+            listOf("one-line block: repositories { mavenCentral() }", "repositories block 2: mavenCentral()"),
+            centralWithoutMirror(source),
+        )
     }
 
     @Test
@@ -99,14 +103,21 @@ class CentralMirrorTest {
             "awake/project/cli/src/test/kotlin/com/awakekt/awake/project/cli/ProjectBundleTest.kt",
         )
 
+        /** A `repositories { … }` block on one line, whose entries [repositoryEntries] does not see. */
+        val ONE_LINE_BLOCK = Regex("""\brepositories\s*\{[^\n]*\bmavenCentral\b[^\n]*}""")
+
         /** Each `mavenCentral` entry of [source] not followed directly by the mirror. */
-        fun centralWithoutMirror(source: String): List<String> =
-            repositoryEntries(source).flatMapIndexed { block, entries ->
+        fun centralWithoutMirror(source: String): List<String> {
+            val oneLine = ONE_LINE_BLOCK.findAll(source).map { it.value }.filterNot { "maven(\"$MIRROR\")" in it }
+            val multiLine = repositoryEntries(source).flatMapIndexed { block, entries ->
                 entries.withIndex()
-                    .filter { (index, entry) ->
-                        entry.first == "mavenCentral" && entries.getOrNull(index + 1)?.second?.startsWith("""maven("$MIRROR")""") != true
-                    }
+                    .filter { (index, entry) -> entry.first == "mavenCentral" && !entries.followedByMirror(index) }
                     .map { (_, entry) -> "repositories block ${block + 1}: ${entry.second.lineSequence().first()}" }
             }
+            return oneLine.map { "one-line block: $it" }.toList() + multiLine
+        }
+
+        private fun List<Pair<String, String>>.followedByMirror(index: Int): Boolean =
+            getOrNull(index + 1)?.second?.startsWith("""maven("$MIRROR")""") == true
     }
 }
