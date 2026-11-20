@@ -1362,6 +1362,9 @@ A heightmap terrain. At most one per node. `SceneTerrain`.
 | `isVisible` | boolean | `true` | Whether the terrain is drawn. |
 | `surface` | [terrain surface](#terrain-surface) | none | Surface model, read by a terrain surface provider. |
 | `collider` | boolean | `false` | Whether the terrain is solid ground when physics runs, as a static heightfield. Needs a square terrain of at least 4 samples a side. |
+| `clipmapRings` | integer | `6` | Levels of the geometry clipmap that draws it, 2 to 8, each twice as coarse as the one inside. |
+| `clipmapRingResolution` | integer | `64` | Grid cells along one side of each clipmap level: an even count from 16 to 256. |
+| `clipmapBaseSpacing` | number | `2` | Metres between the finest clipmap level's vertices. Above 0. |
 
 ### Terrain surface
 
