@@ -17,7 +17,8 @@ import com.awakekt.awake.core.math2d.Size2D
  * same. Resolving a shape on every paint built its bounds and its outline per node per frame (#1742).
  *
  * Only shapes known to be immutable are kept: [RectangleShape] and [RoundedCornerShape]. Any other
- * [Shape] may read state of its own, so it is resolved every time, as before.
+ * [Shape] may read state of its own, so it is resolved every time, as before. A rounded shape is
+ * compared by its corners, so one written inline, a new instance at every composition, still hits.
  */
 internal class ShapeOutlineCache {
     private var shape: Shape? = null
@@ -44,7 +45,13 @@ internal class ShapeOutlineCache {
     }
 
     private fun keeps(shape: Shape, size: Long, density: Float, direction: LayoutDirection): Boolean =
-        shape === this.shape && size == this.size && sameMetrics(density, direction)
+        sameShape(shape, this.shape) && size == this.size && sameMetrics(density, direction)
+
+    private fun sameShape(shape: Shape, kept: Shape?): Boolean =
+        shape === kept || (shape is RoundedCornerShape && kept is RoundedCornerShape && sameCorners(shape, kept))
+
+    private fun sameCorners(a: RoundedCornerShape, b: RoundedCornerShape): Boolean =
+        a.topStart == b.topStart && a.topEnd == b.topEnd && a.bottomEnd == b.bottomEnd && a.bottomStart == b.bottomStart
 
     private fun sameMetrics(density: Float, direction: LayoutDirection): Boolean =
         density == this.density && direction == this.direction

@@ -30,7 +30,8 @@ import kotlin.test.assertTrue
  * Each background resolved its shape against its size on every paint: a rectangle, the outline, and
  * `minOf`'s vararg array of the four sides' fits, 225 B for each further background. The node keeps
  * its outline while nothing it was resolved from changes, 88 B; what is left is the frame's record of
- * the draw itself. This module's test task turns escape analysis off, so what Android pays is counted.
+ * the draw itself. The shape is written inline, a new one at every composition, as a HUD often
+ * writes it. This module's test task turns escape analysis off, so what Android pays is counted.
  */
 class BackgroundDrawAllocationTest : ComposeFrameStages {
     private val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
@@ -58,7 +59,7 @@ class BackgroundDrawAllocationTest : ComposeFrameStages {
         val host = ComposeHost()
         fun frame() = host.frame(INPUT) {
             Column {
-                repeat(boxes) { Box(Modifier.size(8.dp).background(Color.White, SHAPE)) }
+                repeat(boxes) { Box(Modifier.size(8.dp).background(Color.White, RoundedCornerShape(3.dp))) }
             }
         }
         repeat(WARM_UP) { frame() }
@@ -75,7 +76,6 @@ class BackgroundDrawAllocationTest : ComposeFrameStages {
         const val WARM_UP = 100
         const val FRAMES = 100
         const val PER_BOX_BUDGET = 120L
-        val SHAPE = RoundedCornerShape(3.dp)
         val INPUT = FrameInput(400, 4000)
     }
 }
