@@ -1,1 +1,0 @@
-- `Modifier.testTag` builds its semantics configuration only when the node's tag changes, not at every composition, so a recomposed frame of tagged nodes allocates 39 B a node for their tags, down from 111 B (#1742).
