@@ -47,6 +47,18 @@ class SnapshotMutableState<T>(
     private var current: T = value
     private var readers: StateReaders? = null
 
+    /**
+     * What this state is, for a diagnostic that names it: `ComposeHost.explainPlacement` reports the
+     * state placement wrote, and a bare `MutableState(value=272)` cannot be traced to its owner (#1512).
+     */
+    var label: String? = null
+        private set
+
+    /** A state labelled [label], which [toString] and so every diagnostic that prints it shows. */
+    constructor(value: T, label: String) : this(value) {
+        this.label = label
+    }
+
     override var value: T
         get() {
             val observer = ReadTracking.current
@@ -60,7 +72,7 @@ class SnapshotMutableState<T>(
             }
         }
 
-    override fun toString(): String = "MutableState(value=$current)"
+    override fun toString(): String = label?.let { "MutableState($it, value=$current)" } ?: "MutableState(value=$current)"
 }
 
 /**
@@ -72,6 +84,9 @@ class SnapshotMutableState<T>(
  * ```
  */
 fun <T> mutableStateOf(value: T): MutableState<T> = SnapshotMutableState(value)
+
+/** Creates a new [MutableState] initialized with [value], named [label] in diagnostics (#1512). */
+fun <T> mutableStateOf(value: T, label: String): MutableState<T> = SnapshotMutableState(value, label)
 
 /**
  * Permits using [State] as a property delegate.
