@@ -19,7 +19,6 @@ import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.measureTime
 
 /**
  * A game's HUD as it plays: [WINDOWS] windows of [PER_WINDOW] elements, all but [OPEN] closed, over a
@@ -75,7 +74,7 @@ class LargeCanvasFrameTest {
         val host = ComposeHost()
         fun frame() = host.frame(FrameInput(WIDTH, HEIGHT)) { SceneCanvas(world, projector = projector) }
         repeat(WARM_UP) { frame() }
-        val time = measureTime { repeat(MEASURED) { frame() } }
+        val time = cpuTime { repeat(MEASURED) { frame() } }
         val mean = time / MEASURED
         println("LargeCanvasFrameTest: ${WINDOWS * PER_WINDOW + WINDOWS + FOLLOWERS} elements, $NAMED named nodes, mean frame $mean")
         assertTrue(mean < FRAME_BUDGET, "mean frame $mean over $FRAME_BUDGET")

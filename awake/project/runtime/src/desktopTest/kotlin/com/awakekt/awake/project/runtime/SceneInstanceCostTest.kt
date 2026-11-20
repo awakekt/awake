@@ -12,8 +12,10 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
+import com.sun.management.ThreadMXBean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runTest
+import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.TimeSource
@@ -24,10 +26,13 @@ import kotlin.time.TimeSource
  * physics world. The map is a [CELLS] by [CELLS] collision mesh with a navigation grid the same size
  * and a few crates, a small instanced area.
  *
- * It prints the median time per copy and the JVM heap [COPIES] live copies retain, so a change's cost
- * shows in the log. The heap is the real check: an instance holds only its world and systems, while a
- * reload holds a document, collision mesh and grid of its own. Native physics memory is the same for
- * both, a world per copy, and the JVM heap doesn't see it. Times aren't asserted on a shared CI machine.
+ * It prints the median time and the median bytes this thread allocates per copy, so a change's cost
+ * shows in the log. The bytes are the check: an instance builds only its world and systems, while a
+ * reload decodes a document, collision mesh and grid of its own. Loading runs on this thread here, so
+ * the thread's own count sees all of it, and no other test's or collector's work moves it: the live
+ * heap this read before swung by tens of MiB with the machine's load (#1592). Native physics memory is
+ * the same for both, a world per copy, and the JVM doesn't see it. Times aren't asserted on a shared
+ * CI machine.
  */
 class SceneInstanceCostTest {
     private val idle = { GameplayInput(Input().currentSnapshot, InputOwnership()) }
@@ -42,15 +47,17 @@ class SceneInstanceCostTest {
 
         val reloadTimes = timed { reload(files, backgroundScope) }
         val instanceTimes = timed { instance(project, backgroundScope) }
-        val reloadHeap = retained { reload(files, backgroundScope) }
-        val instanceHeap = retained { instance(project, backgroundScope) }
+        val reloadBytes = allocated { reload(files, backgroundScope) }.median()
+        val instanceBytes = allocated { instance(project, backgroundScope) }.median()
 
         println(
             "scene instance cost ($COPIES copies of a ${CELLS}x$CELLS map): " +
-                "reload ${reloadTimes.median()} ms and ${reloadHeap / KIB} KiB, " +
-                "instance ${instanceTimes.median()} ms and ${instanceHeap / KIB} KiB",
+                "reload ${reloadTimes.median()} ms and ${reloadBytes / KIB} KiB allocated, " +
+                "instance ${instanceTimes.median()} ms and ${instanceBytes / KIB} KiB allocated",
         )
-        assertTrue(instanceHeap < reloadHeap, "an instance shares the map's data; instance $instanceHeap B, reload $reloadHeap B")
+        // A tenth apart at least: two reloads differ by a few percent, so a bare comparison could pass
+        // an instance that copies the map. Sharing it, an instance allocates about 70% of a reload.
+        assertTrue(instanceBytes < reloadBytes * 9 / 10, "an instance shares the map's data; instance $instanceBytes B, reload $reloadBytes B")
         project.close()
     }
 
@@ -83,43 +90,16 @@ class SceneInstanceCostTest {
         elapsed
     }
 
-    /**
-     * The heap [COPIES] live copies hold, over what is in use once they are closed. A reading taken before
-     * they are made would still count memory an earlier phase's closed copies haven't released, and could
-     * come out larger than the live one. The list is emptied before the second reading, so the closed
-     * copies aren't still reachable from this function's frame.
-     */
-    private suspend fun retained(copy: suspend () -> AutoCloseable): Long {
-        val copies = MutableList(COPIES) { copy() }
-        val live = usedHeap()
-        copies.forEach(AutoCloseable::close)
-        copies.clear()
-        return live - usedHeap()
+    /** The bytes this thread allocates making each of [COPIES] copies, each closed before the next. */
+    private suspend fun allocated(copy: suspend () -> AutoCloseable): List<Long> = List(COPIES) {
+        val before = threads.currentThreadAllocatedBytes
+        val made = copy()
+        val bytes = threads.currentThreadAllocatedBytes - before
+        made.close()
+        bytes
     }
 
-    /**
-     * The heap in use once collection has stopped freeing anything for [QUIET_PASSES] passes in a
-     * row. The copies' garbage goes a layer per collection, their cleaners releasing what the next
-     * pass frees: measured, the heap fell 98, 97, 97, 96, 93, 84, 50, 12 then 9.6 MiB over nine
-     * passes. Three fixed passes read it partway down, so a reading swung by tens of MiB either way
-     * and a reload's eight live copies once measured -13 MiB.
-     */
-    @Suppress("ExplicitGarbageCollectionCall") // Collecting until the heap settles is the measurement.
-    private fun usedHeap(): Long {
-        val runtime = Runtime.getRuntime()
-        var lowest = Long.MAX_VALUE
-        var quiet = 0
-        var passes = 0
-        while (quiet < QUIET_PASSES && passes < MAX_GC_PASSES) {
-            System.gc()
-            Thread.sleep(GC_PAUSE_MS)
-            val used = runtime.totalMemory() - runtime.freeMemory()
-            quiet = if (used > lowest - SETTLED_BYTES) quiet + 1 else 0
-            lowest = minOf(lowest, used)
-            passes += 1
-        }
-        return lowest
-    }
+    private val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
 
     private fun List<Long>.median(): Long = sorted()[size / 2]
 
@@ -196,12 +176,6 @@ class SceneInstanceCostTest {
         const val COPIES = 8
         const val CELLS = 160
         const val CRATES = 8
-        const val MAX_GC_PASSES = 60
-        const val QUIET_PASSES = 3
-
-        /** A pass that frees less than this has settled the heap. */
-        const val SETTLED_BYTES = 64L * 1024
-        const val GC_PAUSE_MS = 50L
         const val KIB = 1024
         const val GLB_MAGIC = 0x46546C67
         const val JSON_CHUNK = 0x4E4F534A

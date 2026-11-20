@@ -75,8 +75,11 @@ class JoltStepBudgetTest {
             // in would describe start-up rather than steady state.
             repeat(WARMUP_STEPS) { world.step(STEP) }
 
-            val elapsed = measureNanoTime { repeat(MEASURED_STEPS) { world.step(STEP) } }
-            val perStepMillis = elapsed / MEASURED_STEPS / 1_000_000.0
+            // The quietest of several windows: Jolt steps on its worker pool, so no one thread's CPU
+            // time holds a step, and a loaded machine only ever lengthens a window, never shortens one
+            // (CI's loaded suite step, #1592). A step that got slower is slower in every window.
+            val elapsed = LongArray(WINDOWS) { measureNanoTime { repeat(MEASURED_STEPS / WINDOWS) { world.step(STEP) } } }.min()
+            val perStepMillis = elapsed / (MEASURED_STEPS / WINDOWS) / 1_000_000.0
 
             println(
                 "JoltStepBudget: $BODY_COUNT dynamic bodies on a ${SAMPLES}x$SAMPLES heightfield " +
@@ -97,6 +100,7 @@ class JoltStepBudgetTest {
         const val STEP = 1f / 60f
         const val WARMUP_STEPS = 60
         const val MEASURED_STEPS = 240
+        const val WINDOWS = 6
 
         /**
          * Half a frame at sixty, which is loose on purpose.

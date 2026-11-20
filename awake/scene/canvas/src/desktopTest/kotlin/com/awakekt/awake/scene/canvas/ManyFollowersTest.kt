@@ -28,7 +28,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.measureTime
 
 /**
  * A crowd: [FOLLOWERS] name plates from a [CanvasFollowerPool], half of them off screen, under a
@@ -97,7 +96,7 @@ class ManyFollowersTest {
 
         projections = 0
         var drawn = 0
-        val time: Duration = measureTime {
+        val time: Duration = cpuTime {
             repeat(MEASURED) { drawn = frame(host).semantics.countTagged() }
         }
 
