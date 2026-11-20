@@ -18,6 +18,8 @@ package com.awakekt.awake.core.diagnostics
  * @property passes Where the frame's draws went, by part of the frame, or `null` when uncounted.
  * @property renderPasses Render passes the frame began, offscreen passes included, or `null` when uncounted.
  * @property bufferCreations GPU buffers the frame's draw path created, by site, or `null` when uncounted.
+ * @property gpu The frame's GPU time by part, and the CPU's waits for the GPU and the swapchain, or `null`
+ * when the renderer does not time them. See [FrameGpuSample].
  */
 data class FrameBreakdownSample(
     val phases: FramePhaseSample = FramePhaseSample(),
@@ -26,13 +28,36 @@ data class FrameBreakdownSample(
     val passes: FramePassSample? = null,
     val renderPasses: Int? = null,
     val bufferCreations: FrameBufferCreationSample? = null,
+    val gpu: FrameGpuSample? = null,
 ) {
+    /** The constructor as released before [gpu], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with gpu.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        phases: FramePhaseSample = FramePhaseSample(),
+        render: FrameRenderSample? = null,
+        uiUploads: FrameUiUploadSample? = null,
+        passes: FramePassSample? = null,
+        renderPasses: Int? = null,
+        bufferCreations: FrameBufferCreationSample? = null,
+    ) : this(phases, render, uiUploads, passes, renderPasses, bufferCreations, null)
+
+    /** [copy] as released before [gpu]. */
+    @Deprecated("Use copy with gpu.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        phases: FramePhaseSample = this.phases,
+        render: FrameRenderSample? = this.render,
+        uiUploads: FrameUiUploadSample? = this.uiUploads,
+        passes: FramePassSample? = this.passes,
+        renderPasses: Int? = this.renderPasses,
+        bufferCreations: FrameBufferCreationSample? = this.bufferCreations,
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations, gpu)
+
     /** The constructor as released before [uiUploads], kept so compiled callers still link. */
     @Deprecated("Use the constructor with uiUploads.", level = DeprecationLevel.HIDDEN)
     constructor(
         phases: FramePhaseSample = FramePhaseSample(),
         render: FrameRenderSample? = null,
-    ) : this(phases, render, null, null, null, null)
+    ) : this(phases, render, null, null, null, null, null)
 
     /** The constructor as released before [passes] and [renderPasses], kept so compiled callers still link. */
     @Deprecated("Use the constructor with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
@@ -40,14 +65,14 @@ data class FrameBreakdownSample(
         phases: FramePhaseSample = FramePhaseSample(),
         render: FrameRenderSample? = null,
         uiUploads: FrameUiUploadSample? = null,
-    ) : this(phases, render, uiUploads, null, null, null)
+    ) : this(phases, render, uiUploads, null, null, null, null)
 
     /** [copy] as released before [uiUploads]. */
     @Deprecated("Use copy with uiUploads.", level = DeprecationLevel.HIDDEN)
     fun copy(
         phases: FramePhaseSample = this.phases,
         render: FrameRenderSample? = this.render,
-    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations)
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations, gpu)
 
     /** [copy] as released before [passes] and [renderPasses]. */
     @Deprecated("Use copy with passes and renderPasses.", level = DeprecationLevel.HIDDEN)
@@ -55,7 +80,7 @@ data class FrameBreakdownSample(
         phases: FramePhaseSample = this.phases,
         render: FrameRenderSample? = this.render,
         uiUploads: FrameUiUploadSample? = this.uiUploads,
-    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations)
+    ): FrameBreakdownSample = copy(phases, render, uiUploads, passes, renderPasses, bufferCreations, gpu)
 }
 
 /**

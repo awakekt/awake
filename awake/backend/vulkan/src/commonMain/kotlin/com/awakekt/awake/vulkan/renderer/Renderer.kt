@@ -213,6 +213,17 @@ class Renderer internal constructor(
     /** Null when the device's graphics queue cannot write timestamps. */
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice, maxFramesInFlight)
 
+    /** What the recording thread waited on this frame: the GPU's fences and the swapchain (#1709). */
+    internal val frameWaits = FrameWaits()
+
+    /** Built when read, from the timer's last parts and the waits: a host that never reads it pays nothing. */
+    override val frameGpuTiming: com.awakekt.awake.render.renderer.FrameGpuTiming
+        get() = com.awakekt.awake.render.renderer.FrameGpuTiming(
+            partMs = gpuFrameTimer?.lastPartMs?.copyOf() ?: FloatArray(com.awakekt.awake.render.renderer.GpuFramePart.entries.size) { Float.NaN },
+            frameResourceWaitMs = frameWaits.lastFenceMs,
+            acquireWaitMs = frameWaits.lastAcquireMs,
+        )
+
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
 

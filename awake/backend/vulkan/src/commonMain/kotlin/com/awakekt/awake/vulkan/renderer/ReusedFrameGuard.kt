@@ -48,5 +48,5 @@ internal class ReusedFrameGuard {
 /** Waits until no frame slot is referenced by the GPU: a reused frame may read any of them. */
 internal fun Renderer.waitForAllFrameResourceSlots() {
     val fences = swapchainManager.inFlightFences.filter { it != 0L }
-    if (fences.isNotEmpty()) Vulkan.vkWaitForFences(device, fences.toLongArray(), true, Long.MAX_VALUE)
+    if (fences.isNotEmpty()) frameWaits.fence { Vulkan.vkWaitForFences(device, fences.toLongArray(), true, Long.MAX_VALUE) }
 }

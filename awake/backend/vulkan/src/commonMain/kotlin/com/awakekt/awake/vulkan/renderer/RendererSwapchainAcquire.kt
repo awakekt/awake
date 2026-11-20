@@ -17,12 +17,14 @@ import com.awakekt.awake.vulkan.utils.VkResultException
  * its own file to keep both detekt's method-length limit and that file's function-count
  * limit. */
 internal fun Renderer.acquireSwapchainImage(currentFrame: Int): Int? {
-    Vulkan.vkWaitForFences(
-        device,
-        longArrayOf(swapchainManager.inFlightFences[currentFrame]),
-        true,
-        Long.MAX_VALUE,
-    )
+    frameWaits.fence {
+        Vulkan.vkWaitForFences(
+            device,
+            longArrayOf(swapchainManager.inFlightFences[currentFrame]),
+            true,
+            Long.MAX_VALUE,
+        )
+    }
     return if (swapchainManager.isHeadlessPresentable) {
         headlessImageIndex(currentFrame)
     } else {
@@ -42,13 +44,15 @@ private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
     // vkWaitForFences on this same frame-in-flight slot indefinitely.
     val imageIndex: Int
     try {
-        imageIndex = Vulkan.vkAcquireNextImageKHR(
-            device,
-            swapchainManager.swapChain,
-            Int.MAX_VALUE.toLong(),
-            swapchainManager.imageAvailableSemaphores[currentFrame],
-            0,
-        )
+        imageIndex = frameWaits.acquire {
+            Vulkan.vkAcquireNextImageKHR(
+                device,
+                swapchainManager.swapChain,
+                Int.MAX_VALUE.toLong(),
+                swapchainManager.imageAvailableSemaphores[currentFrame],
+                0,
+            )
+        }
     } catch (e: VkResultException) {
         when (e.result) {
             // A resized/minimized/moved-to-another-display window makes the swapchain
@@ -65,7 +69,7 @@ private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
     }
     val imageFence = swapchainManager.imagesInFlight[imageIndex]
     if (imageFence != 0L) {
-        Vulkan.vkWaitForFences(device, longArrayOf(imageFence), true, Long.MAX_VALUE)
+        frameWaits.fence { Vulkan.vkWaitForFences(device, longArrayOf(imageFence), true, Long.MAX_VALUE) }
     }
     swapchainManager.imagesInFlight[imageIndex] = swapchainManager.inFlightFences[currentFrame]
     Vulkan.vkResetFences(device, longArrayOf(swapchainManager.inFlightFences[currentFrame]))
@@ -83,7 +87,7 @@ private fun Renderer.headlessImageIndex(currentFrame: Int): Int {
     val index = currentFrame % swapchainManager.imageViews.size
     swapchainManager.lastHeadlessImage = index
     val pending = swapchainManager.imagesInFlight[index]
-    if (pending != 0L) Vulkan.vkWaitForFences(device, longArrayOf(pending), true, Long.MAX_VALUE)
+    if (pending != 0L) frameWaits.fence { Vulkan.vkWaitForFences(device, longArrayOf(pending), true, Long.MAX_VALUE) }
     swapchainManager.imagesInFlight[index] = swapchainManager.inFlightFences[currentFrame]
     Vulkan.vkResetFences(device, longArrayOf(swapchainManager.inFlightFences[currentFrame]))
     return index
