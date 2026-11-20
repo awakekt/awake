@@ -491,6 +491,10 @@ marker that edge refuses is found in the mirror.
 
 - Central stays first. The mirror is asked only for what Central answered 404, and a repository is
   not part of a published POM or module file, so publishing is unchanged.
+- The mirror doesn't carry Awake's own releases: on 20 Nov it answered 404 for
+  `com.awakekt.awake:ai` 0.60.0 and 0.61.0, which Central serves, while it served
+  `kotlin-stdlib` 2.4.20. It protects third-party dependencies and plugins only; a consumer asking
+  for Core still depends on Central, or on the Maven fallback site.
 - A Central error (a 429, a 5xx, a timeout) still stops the search there, as any repository's
   error does. Gradle's request retries (`gradle.properties`) and the step retries of #1831 cover
   those.
