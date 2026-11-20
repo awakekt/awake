@@ -103,25 +103,27 @@ class TextHoldOncePerFrameTest {
      */
     @Test
     fun aSizeThatFollowsASubcompositionsWidthSettlesWithoutAStaleSkip() {
-        for (measureSkip in listOf(false, true)) for (retain in listOf(false, true)) {
-            val found = mutableListOf<StaleSkip>()
-            val host = ComposeHost().apply {
-                skipUnchangedComposition = true
-                skipUnchangedMeasure = measureSkip
-                retainUnchangedDraw = retain
-                verifySkippedCompositions = true
-                onStaleSkip = { found += it }
-            }
-            repeat(RESIZE_FRAMES) {
-                host.frame(FrameInput(if (it < RESIZE_AT) NARROW else WIDE, 360, deltaSeconds = 0.016f)) {
-                    BoxWithConstraints(Modifier.fillMaxSize()) {
-                        val wide = maxWidth > THRESHOLD.dp
-                        Row { Box { Text("Label", style = TextStyle(size = if (wide) 12.sp else 10.sp)) } }
+        for (measureSkip in listOf(false, true)) {
+            for (retain in listOf(false, true)) {
+                val found = mutableListOf<StaleSkip>()
+                val host = ComposeHost().apply {
+                    skipUnchangedComposition = true
+                    skipUnchangedMeasure = measureSkip
+                    retainUnchangedDraw = retain
+                    verifySkippedCompositions = true
+                    onStaleSkip = { found += it }
+                }
+                repeat(RESIZE_FRAMES) {
+                    host.frame(FrameInput(if (it < RESIZE_AT) NARROW else WIDE, 360, deltaSeconds = 0.016f)) {
+                        BoxWithConstraints(Modifier.fillMaxSize()) {
+                            val wide = maxWidth > THRESHOLD.dp
+                            Row { Box { Text("Label", style = TextStyle(size = if (wide) 12.sp else 10.sp)) } }
+                        }
                     }
                 }
+                assertEquals(emptyList(), found, "measure skip $measureSkip, retained draw $retain")
+                host.dispose()
             }
-            assertEquals(emptyList(), found, "measure skip $measureSkip, retained draw $retain")
-            host.dispose()
         }
     }
 
