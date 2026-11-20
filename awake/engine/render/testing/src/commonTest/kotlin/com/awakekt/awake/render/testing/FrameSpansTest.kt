@@ -10,6 +10,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
 
 /** Deliberately un-eliminable float work: the result is asserted on, so no compiler/JIT is free
  * to delete the loop and make the timing assertions below pass vacuously. */
@@ -54,12 +56,16 @@ class FrameSpansTest {
     @Test
     fun meanIsIndependentOfSampleCount() {
         // The property that lets a harness change its own loop length without invalidating a
-        // checked-in baseline.
-        val few = FrameSpans().also { spans -> repeat(4) { spans.span("work") { busyWork(EXPENSIVE_ITERATIONS) } } }
-        val many = FrameSpans().also { spans -> repeat(12) { spans.span("work") { busyWork(EXPENSIVE_ITERATIONS) } } }
+        // checked-in baseline. Read on a clock the test drives, the same span every time: the wall
+        // clock made it a property of the machine's load, and it failed in CI's loaded suite step.
+        fun spans(samples: Int) = TestTimeSource().let { clock ->
+            FrameSpans(clock).also { spans -> repeat(samples) { spans.span("work") { clock += SPAN } } }
+        }
+        val few = spans(4)
+        val many = spans(12)
 
         assertTrue(many.totalMs("work") > few.totalMs("work"), "12 samples must cost more in total than 4")
-        val result = compareTimings(actual = many.meansMs(), baseline = few.meansMs(), toleranceRatio = 1.0)
+        val result = compareTimings(actual = many.meansMs(), baseline = few.meansMs(), toleranceRatio = 0.0)
         assertTrue(result.matches, "means drifted with sample count: ${result.summary}")
     }
 
@@ -99,6 +105,7 @@ class FrameSpansTest {
 
     private companion object {
         const val SAMPLES = 5
+        val SPAN = 3.milliseconds
         const val CHEAP_ITERATIONS = 1
 
         // Big enough that one span clears even a browser's coarsened performance.now() resolution

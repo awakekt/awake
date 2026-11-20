@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.testing
 
+import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /**
@@ -29,13 +30,15 @@ import kotlin.time.TimeSource
  * *recording*, not the GPU's execution of it -- for real GPU-side cost a span has to bracket a
  * point the backend actually synchronizes at (`readPixels`, a fence wait), which is exactly what
  * the two headless harnesses above already do.
+ *
+ * [timeSource] is the clock spans read, the monotonic wall clock unless a test drives its own.
  */
-class FrameSpans {
+class FrameSpans(private val timeSource: TimeSource = TimeSource.Monotonic) {
     // LinkedHashMap (what mutableMapOf returns): first-seen order, so an un-sorted dump reads in
     // pass order rather than hash order.
     private val totalNanos = mutableMapOf<String, Long>()
     private val sampleCounts = mutableMapOf<String, Int>()
-    private val openMarks = mutableMapOf<String, TimeSource.Monotonic.ValueTimeMark>()
+    private val openMarks = mutableMapOf<String, TimeMark>()
 
     /** Labels recorded so far, in first-seen order. */
     val labels: Set<String> get() = totalNanos.keys
@@ -47,7 +50,7 @@ class FrameSpans {
      * @throws IllegalStateException If a span with the same label is already started and not yet stopped.
      */
     fun start(label: String) {
-        val previous = openMarks.put(label, TimeSource.Monotonic.markNow())
+        val previous = openMarks.put(label, timeSource.markNow())
         check(previous == null) {
             "span '$label' was started twice without a stop -- spans of the same label can't nest"
         }
