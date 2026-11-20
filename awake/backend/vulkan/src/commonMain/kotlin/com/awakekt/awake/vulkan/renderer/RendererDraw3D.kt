@@ -332,7 +332,7 @@ internal fun VulkanRenderer.recordDrawCalls(commandBuffer: Long, drawCalls: List
 internal fun VulkanRenderer.waitForCurrentFrameResourceSlot() {
     val currentFrame = swapchainManager.currentFrame
     val fence = swapchainManager.inFlightFences.getOrNull(currentFrame)
-    if (fence != null && fence != 0L) Vulkan.vkWaitForFences(device, longArrayOf(fence), true, Long.MAX_VALUE)
+    if (fence != null && fence != 0L) frameWaits.fence { Vulkan.vkWaitForFences(device, longArrayOf(fence), true, Long.MAX_VALUE) }
     // Without a fence nothing of this slot is in flight; either way the slot is idle now.
     bufferPools.frameSlotIdle(currentFrame)
 }

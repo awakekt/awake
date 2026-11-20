@@ -157,6 +157,13 @@ interface Renderer : GpuDevice {
     val framePassStats: RenderPassStats?
         get() = null
 
+    /**
+     * The last presented frame's GPU time by part, and the CPU's waits for the GPU and the swapchain,
+     * or null for a renderer that does not time them; see [FrameGpuTiming].
+     */
+    val frameGpuTiming: FrameGpuTiming?
+        get() = null
+
     /** RGBA (each `0f..1f`) color the 3D render pass clears to before every frame's
      * [draw] call -- defaults to opaque black on every backend, so any app that never sets
      * this sees exactly what it always did. A game with real 3D content whose camera can see

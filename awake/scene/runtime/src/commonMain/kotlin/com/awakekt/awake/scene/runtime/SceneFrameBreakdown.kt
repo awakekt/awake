@@ -8,10 +8,13 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.diagnostics.FrameBreakdown
 import com.awakekt.awake.core.diagnostics.FrameBreakdownSample
 import com.awakekt.awake.core.diagnostics.FrameBufferCreationSample
+import com.awakekt.awake.core.diagnostics.FrameGpuSample
 import com.awakekt.awake.core.diagnostics.FramePassSample
 import com.awakekt.awake.core.diagnostics.FramePhaseSample
 import com.awakekt.awake.core.diagnostics.FrameRenderSample
 import com.awakekt.awake.core.diagnostics.FrameUiUploadSample
+import com.awakekt.awake.render.renderer.FrameGpuTiming
+import com.awakekt.awake.render.renderer.GpuFramePart
 import com.awakekt.awake.render.renderer.Renderer
 
 private const val PIXELS_PER_MEGAPIXEL = 1_000_000.0
@@ -21,7 +24,13 @@ private const val PIXELS_PER_MEGAPIXEL = 1_000_000.0
  *
  * @return Phase, render submission, per-pass, UI upload, and buffer creation readings ready for [FrameBreakdown].
  */
-fun SceneFrameStats.toBreakdownSample(): FrameBreakdownSample =
+fun SceneFrameStats.toBreakdownSample(): FrameBreakdownSample = toBreakdownSample(gpu = null)
+
+/**
+ * [toBreakdownSample], with [gpu]'s split of the frame's GPU time and the CPU's waits, as a renderer's
+ * [Renderer.frameGpuTiming] reads (#1709).
+ */
+fun SceneFrameStats.toBreakdownSample(gpu: FrameGpuTiming?): FrameBreakdownSample =
     FrameBreakdownSample(
         phases = FramePhaseSample(
             simMs = phases.gameMs,
@@ -54,7 +63,20 @@ fun SceneFrameStats.toBreakdownSample(): FrameBreakdownSample =
         bufferCreations = bufferCreations?.let {
             FrameBufferCreationSample(it.argumentBuffers, it.instanceBuffers, it.uniformBuffers)
         },
+        gpu = gpu?.toSample(),
     )
+
+private fun FrameGpuTiming.toSample(): FrameGpuSample = FrameGpuSample(
+    shadowDepthMs = partMs(GpuFramePart.ShadowDepth),
+    sceneDepthMs = partMs(GpuFramePart.SceneDepth),
+    maskMs = partMs(GpuFramePart.Mask),
+    sceneMs = partMs(GpuFramePart.Scene),
+    postMs = partMs(GpuFramePart.Post),
+    upscaleMs = partMs(GpuFramePart.Upscale),
+    uiMs = partMs(GpuFramePart.Ui),
+    frameResourceWaitMs = frameResourceWaitMs,
+    acquireWaitMs = acquireWaitMs,
+)
 
 /**
  * Creates a [FrameBreakdown] wired to the active [SceneAppLifecycleRuntime] and optional [renderer].
@@ -80,7 +102,7 @@ fun FrameBreakdown.Companion.forScene(
                 if (!scene.perfStatsEnabled) {
                     scene.perfStatsEnabled = true
                 }
-                scene.frameStats().toBreakdownSample()
+                scene.frameStats().toBreakdownSample(renderer?.frameGpuTiming)
             }
         },
         heapBytes = heapBytes,
