@@ -899,6 +899,11 @@ jobs:
       - name: Scene planning heap breakdown (browser)
         run: ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*" --tests "*PlanningLoopHeap*"
 
+      # How much of a HUD a wasm frame measures, composes and draws, stage by stage (#1621), against
+      # HudMeasureScopeTest's JVM figures. Filtered: compose:game's common tests run on the JVM too.
+      - name: HUD measure scope (browser)
+        run: ./gradlew :awake:compose:game:wasmJsBrowserTest --tests "*HudMeasureScope*"
+
       # The log names a failed browser test; its result file holds why, with the browser's own output.
       - name: Upload the planning heap tests' results
         if: failure()
