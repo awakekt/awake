@@ -48,6 +48,13 @@ class Composer internal constructor(
      */
     val localsSnapshot: ProvidedLocals get() = locals.snapshot()
 
+    // The node [startNode] opened, until [endNode] closes it. One at a time: a node's content is declared inside
+    // [endNode], so a caller never opens the next node before ending this one.
+    private var openSlot: Slot = Slot.Children
+    private var openIndex = -1
+    private var openExisting = -1
+    private var openInstance: Any? = null
+
     /**
      * Declares a node, reusing the one at this position if it matches.
      *
@@ -60,6 +67,17 @@ class Composer internal constructor(
         update: (Any) -> Unit = {},
         content: (() -> Unit)? = null,
     ) {
+        update(startNode(type, slot))
+        endNode(content)
+    }
+
+    /**
+     * [node] in two halves, as Compose's own `Composer` declares a node: this finds or creates the node at this
+     * position and returns it, the caller sets what changed on it, then calls [endNode] with its content. A caller
+     * that sets the node's properties itself builds no `update` lambda, which [node] needs a capturing one for on
+     * every call of every pass (#1813).
+     */
+    fun startNode(type: Any, slot: Slot): Any {
         val index = cursor(slot)
         // Not consumed: a `key(x) { }` block scopes every sibling declared inside it, the way
         // Compose's key group does -- not just the first one.
@@ -72,8 +90,20 @@ class Composer internal constructor(
             existing != index -> applier.moveTo(slot, existing, index)
         }
         val instance = applier.nodeAt(slot, index)
-        update(instance)
+        openSlot = slot
+        openIndex = index
+        openExisting = existing
+        openInstance = instance
+        return instance
+    }
 
+    /** Ends the node [startNode] opened, composing [content] into it, or emptying it when there is none. */
+    fun endNode(content: (() -> Unit)?) {
+        val instance = checkNotNull(openInstance) { "endNode without a startNode" }
+        val slot = openSlot
+        val index = openIndex
+        val existing = openExisting
+        openInstance = null
         if (content != null) {
             applier.down(slot, index)
             openSlots(instance)

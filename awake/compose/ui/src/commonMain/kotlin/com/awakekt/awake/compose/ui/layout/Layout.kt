@@ -45,18 +45,15 @@ fun Layout(
     val density = LocalDensity.current
     val fontScale = LocalFontScale.current
     val layoutDirection = com.awakekt.awake.compose.ui.unit.LocalLayoutDirection.current
-    composer.node(
-        type = nodeType,
-        update = { node ->
-            node as LayoutNode
-            node.measurePolicy = measurePolicy
-            node.modifier = modifier
-            node.density = density
-            node.fontScale = fontScale
-            node.layoutDirection = layoutDirection
-        },
-        content = content?.let { { it(composer) } },
-    )
+    // Set between the node's two halves rather than in an `update` lambda, which would capture all five of these on
+    // every call of every pass (#1813).
+    val node = composer.startNode(nodeType, Slot.Children) as LayoutNode
+    node.measurePolicy = measurePolicy
+    node.modifier = modifier
+    node.density = density
+    node.fontScale = fontScale
+    node.layoutDirection = layoutDirection
+    composer.endNode(content?.let { { it(composer) } })
 }
 
 context(composer: Composer)
