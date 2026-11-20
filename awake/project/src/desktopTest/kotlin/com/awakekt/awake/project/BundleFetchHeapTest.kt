@@ -41,7 +41,7 @@ class BundleFetchHeapTest {
     }
 
     @Test
-    fun fourBundlesPrefetchedTogetherAreFetchedOneAtATime() = runTest {
+    fun fourBundlesPrefetchedTogetherAreFetchedTwoAtATime() = runTest {
         val project = project(folders = 4, membersEach = 16)
         val peak = peakRetained(project)
         val bundle = project.bundleBytes.values.first().size
@@ -49,8 +49,8 @@ class BundleFetchHeapTest {
             "BundleFetchHeap: four ${mib(bundle)} MiB bundles, peak retained ${mib(peak)} MiB, " +
                 "${project.maxInFlight} fetched at once",
         )
-        assertTrue(project.maxInFlight == 1, "${project.maxInFlight} bundles were fetched at once")
-        assertTrue(peak <= bundle * 3 / 2, "four ${mib(bundle)} MiB bundles kept ${mib(peak)} MiB at once")
+        assertTrue(project.maxInFlight == BundleMemoryLimits.DEFAULT_CONCURRENT_BUNDLE_FETCHES, "${project.maxInFlight} bundles were fetched at once")
+        assertTrue(peak <= bundle * 5 / 2, "four ${mib(bundle)} MiB bundles kept ${mib(peak)} MiB at once")
     }
 
     private class Project(val index: ProjectIndex, val bundleBytes: Map<String, ByteArray>, val keys: BundleKeyProvider?) {

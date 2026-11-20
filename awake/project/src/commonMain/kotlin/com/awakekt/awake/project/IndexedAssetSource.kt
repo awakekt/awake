@@ -62,7 +62,7 @@ interface ContentCache {
  * member's path (or opaque id). With no [cache], the members not yet read are kept in memory, up to
  * [limits]' `stagedMemberBytes` (64 MiB by default), and each is dropped once read. A bundle is held
  * once, its members copied out one at a time as they're kept or read, and at most [limits]'
- * `concurrentBundleFetches` bundles (one by default) are fetched at once. With [rangeFetch], a [read] fetches just its member's bytes
+ * `concurrentBundleFetches` bundles (two by default) are fetched at once. With [rangeFetch], a [read] fetches just its member's bytes
  * instead of the whole bundle, while [prefetch] still downloads whole bundles. In an index with
  * [ProjectIndex.pathIds], a path is looked up by its opaque id.
  *
