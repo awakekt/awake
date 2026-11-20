@@ -1,1 +1,0 @@
-- Core's build resolves its dependencies from Google (its own groups), Maven Central and the `io.ygdrasil` mirror only: Maven Local and three snapshot repositories, two of them retired hosts, served it nothing and added a lookup, and a host that could fail one, to every missing module. The templates and `tools/` consumer builds ask Maven Local for Core's own group only (#1592).

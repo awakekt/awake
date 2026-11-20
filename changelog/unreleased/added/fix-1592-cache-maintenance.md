@@ -1,1 +1,0 @@
-- A manual `Cache maintenance` workflow lists the GitHub Actions cache entries whose key contains a substring and deletes them unless it is a dry run, so a cache entry that breaks the jobs restoring it can be removed without the web interface; see "Gradle User Home cache" in `docs/release-process.md` (#1592).

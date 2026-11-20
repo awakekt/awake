@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-11-20
+
+### Added
+
+- Vulkan and WebGPU build the scene pass for `renderQuality { antiAliasing }` when the app sets it, resolving a mode the device lacks to the nearest cheaper one, and their renderers report `supportedAntiAliasing` and the `antiAliasing` in effect (#1791).
+- `AntiAliasing` (Off, FXAA, MSAA 2x, 4x, 8x), the scene's anti-aliasing as a graphics setting: `renderQuality { antiAliasing }` picks it, `Renderer.supportedAntiAliasing` lists what the device offers and `Renderer.antiAliasing` names the mode in effect, and `AntiAliasing.resolve` falls a missing mode back to the nearest cheaper one the device has (#1791).
+- `renderQuality { antiAliasing = AntiAliasing.Fxaa }` turns on FXAA for every scene camera: each camera whose post-processing has no FXAA stage that runs gets one, last in its chain, at the renderer's `effectQuality` (`effectsForAntiAliasing`). `FxaaEffect.quality` is now a real tier, the contrast a pixel needs before it is filtered (Low 0.25, Medium 0.166, High 0.125, unchanged), where before every tier but Off filtered the same pixels. The stage is documented as what it is, FXAA-style edge anti-aliasing with no end-of-edge search rather than FXAA 3.11, with an "origin unrecorded" provenance entry (#1791).
+- A manual `Cache maintenance` workflow lists the GitHub Actions cache entries whose key contains a substring and deletes them unless it is a dry run, so a cache entry that breaks the jobs restoring it can be removed without the web interface; see "Gradle User Home cache" in `docs/release-process.md` (#1592).
+
+### Changed
+
+- Asking a scene's image map for its size allocates nothing (#1742). A scene canvas with an asset source reads it on every poll, which a skip-enabled host makes every frame, and each read built a map of every loaded image: 344 B a read with two images loaded, 0 now. `AssetImages` counts its loaded images by walking the entries it was asked for.
+- A tiled `ImageFill` draws each repeating slice as one quad instead of one quad per tile (#1795). The UI texture shader wraps a repeating region inside its atlas sub-rect with `fract` and samples with the unwrapped derivatives, so mips and filtering do not seam at the wrap, on Vulkan and WebGPU alike; the pixels are the same. A tiled frame's allocation no longer grows with its tile count. New: `DrawScope.drawTextureRepeated`, `UiDrawPrimitive.Texture.repeatX`/`repeatY`, and the 16-float `VertexFormats2D.Texture` layout the texture pipeline now draws through.
+
+### Fixed
+
+- A scene canvas with followers skips its still frames again after a follower is hidden or leaves the canvas (#1512). The hidden follower's plan still said "drawn" while no composition drew it, so every placement bumped the followers' composition revision and the host composed and laid out twice on every frame, never skipping one. Plans a frame did not make are dropped. `mutableStateOf(value, label)` names a state in diagnostics, and the canvas's own states carry labels, so `ComposeHost.explainPlacement` reports `MutableState(FollowerPlans.composeRevision, value=…)` rather than a bare value.
+- CI runs the whole test suite of 51 more modules (about 2,050 tests) that it never ran, and `verifyCiTestCoverage` now fails a test class of any of them that no step runs (#1592).
+- CI runs every `compose:ui` and `compose:foundation` test, and `verifyCiTestCoverage` (in `awakeVerify`) fails when a test class of those modules runs in no CI step (#1592). CI named their tests one class at a time, so 116 of 123 test classes only ever compiled: #1765's gates ran nowhere, and `ComposeHostTest` stayed red on `main` after #1781 stopped a pointer capture from taking the keyboard. That test now holds #1781's contract: a capture claims its pointer, and a non-modal panel leaves the keys to gameplay.
+- Core's build resolves its dependencies from Google (its own groups), Maven Central and the `io.ygdrasil` mirror only: Maven Local and three snapshot repositories, two of them retired hosts, served it nothing and added a lookup, and a host that could fail one, to every missing module. The templates and `tools/` consumer builds ask Maven Local for Core's own group only (#1592).
+- Gradle plugin resolution lists the Plugin Portal last, after Google and Maven Central, in the root and `build-logic` settings, so a Portal outage no longer fails builds whose plugins Central or Google serve: a repository that errors stops the search instead of falling through (#1592).
+- Plugin and dependency resolution no longer fails on another repository's error for what that repository doesn't serve: Google is asked only for its own groups (`androidx`, `com.android`, `com.google`) in every build, and Google and Maven Central exclude the plugins only the Gradle Plugin Portal serves (`kotlin-dsl`, foojay's resolver, kotlinx-benchmark, and the templates' ktor and jib), an exposure listing the Portal last opened (#1592).
+- CI caches the Gradle User Home with `setup-gradle`'s basic provider again. The enhanced provider kept restoring a Gradle User Home that failed every WebGPU release pin job on jars Central serves; why, and when to try it again, is in "Gradle User Home cache" in `docs/release-process.md` (#1592).
+
 ## [0.58.0] - 2026-11-19
 
 ### Fixed
