@@ -160,7 +160,16 @@ pluginManagement {
         // Plugin Portal listed first failed builds whose plugins Maven Central or Google serve (#1592).
         // So Google (AGP's markers are only there) and Central first, and the Portal last, for the
         // plugins only it serves, such as foojay's.
-        google { content { excludePortalOnly() } }
+        // Google only for its own groups (AGP's markers, androidx, com.google): a Google error can then
+        // fail no plugin it doesn't serve, as one listed before Central would (#1592).
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+                excludePortalOnly()
+            }
+        }
         mavenCentral { content { excludePortalOnly() } }
         gradlePluginPortal()
     }
@@ -171,7 +180,14 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
-        google()
+        // Google only for its own groups: a Google error can then fail no dependency it doesn't serve (#1592).
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
         mavenLocal()
         // io.ygdrasil stays off the snapshot repos: its pinned builds are served by the mirror below, and

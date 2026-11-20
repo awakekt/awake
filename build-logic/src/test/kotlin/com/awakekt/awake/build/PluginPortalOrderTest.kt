@@ -52,6 +52,16 @@ class PluginPortalOrderTest {
     }
 
     @Test
+    fun everyGoogleEntryServesOnlyGooglesGroups() {
+        val unfiltered = SETTINGS.flatMap { path ->
+            repositoryEntries(File(root, path).readText()).flatten()
+                .filter { (name, text) -> name == "google" && GOOGLE_GROUPS.any { "includeGroupAndSubgroups(\"$it\")" !in text } }
+                .map { (_, text) -> "$path: ${text.lineSequence().first()}" }
+        }
+        assertEquals(emptyList(), unfiltered, "a Google entry is asked for groups it doesn't serve")
+    }
+
+    @Test
     fun theCheckReadsTheExclusionsAndEachRepositorysFilter() {
         val source = """
             pluginManagement {
@@ -122,29 +132,33 @@ class PluginPortalOrderTest {
     }
 
     /** `pluginManagement`'s `repositories` entries, each as its name and its whole text. */
-    private fun pluginRepositoryEntries(source: String): List<Pair<String, String>> {
+    private fun pluginRepositoryEntries(source: String): List<Pair<String, String>> =
+        repositoryEntries(source.substring(source.indexOf("pluginManagement"))).firstOrNull().orEmpty()
+
+    /** Every `repositories` block's entries, in order, each as its name and its whole text. */
+    private fun repositoryEntries(source: String): List<List<Pair<String, String>>> {
         val code = source.lineSequence().filterNot { it.trimStart().startsWith("//") }.joinToString("\n")
-        val management = code.substring(code.indexOf("pluginManagement"))
-        val open = Regex("""\brepositories\s*\{""").find(management) ?: return emptyList()
-        val entries = mutableListOf<Pair<String, String>>()
-        var depth = 1
-        var i = open.range.last + 1
-        var start = -1
-        while (i < management.length && depth > 0) {
-            val c = management[i]
-            if (depth == 1 && start < 0 && c.isLetter()) start = i
-            when (c) {
-                '{', '(' -> depth++
-                '}', ')' -> depth--
-                '\n' -> if (depth == 1 && start >= 0) {
-                    val text = management.substring(start, i).trim()
-                    entries += Regex("""[A-Za-z]+""").find(text)!!.value to text
-                    start = -1
+        return Regex("""\brepositories\s*\{""").findAll(code).map { open ->
+            val entries = mutableListOf<Pair<String, String>>()
+            var depth = 1
+            var i = open.range.last + 1
+            var start = -1
+            while (i < code.length && depth > 0) {
+                val c = code[i]
+                if (depth == 1 && start < 0 && c.isLetter()) start = i
+                when (c) {
+                    '{', '(' -> depth++
+                    '}', ')' -> depth--
+                    '\n' -> if (depth == 1 && start >= 0) {
+                        val text = code.substring(start, i).trim()
+                        entries += Regex("""[A-Za-z]+""").find(text)!!.value to text
+                        start = -1
+                    }
                 }
+                i++
             }
-            i++
-        }
-        return entries
+            entries.toList()
+        }.toList()
     }
 
     private companion object {
@@ -166,6 +180,9 @@ class PluginPortalOrderTest {
             "io.ktor.plugin:plugin",
             "com.google.cloud.tools:jib-gradle-plugin",
         )
+
+        /** The groups Google serves Core: AGP and its markers, androidx, and com.google's. */
+        val GOOGLE_GROUPS = listOf("androidx", "com.android", "com.google")
 
         /** Repositories asked over the network before the Portal, which must exclude its modules. */
         val NETWORK_REPOSITORIES = setOf("google", "mavenCentral")

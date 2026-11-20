@@ -7,11 +7,14 @@ package com.awakekt.awake.build
 
 import com.awakekt.awake.build.probe.PortalProbePlugin
 import com.sun.net.httpserver.HttpServer
+import org.gradle.testkit.runner.GradleRunner
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
+import kotlin.io.path.createTempDirectory
 
 /**
  * A local Maven repository for the plugin-resolution tests (#1592): it either serves the probe
@@ -97,5 +100,28 @@ internal class ProbePluginRepository private constructor(private val status: Int
             }
             return out.toByteArray()
         }
+    }
+}
+
+/**
+ * Runs [run] on a build in a fresh directory that applies the probe plugin, resolving it from
+ * [repositories] (each a `repositories {}` entry), and deletes the directory afterwards: each TestKit
+ * directory holds its own Gradle API jar, about 180 MB.
+ */
+internal fun <T> probeBuild(repositories: List<String>, run: (GradleRunner) -> T): T {
+    val dir = createTempDirectory("probe-plugin-build").toFile()
+    try {
+        File(dir, "settings.gradle.kts").writeText(
+            "pluginManagement { repositories {\n${repositories.joinToString("\n")}\n} }\nrootProject.name = \"probe\"\n",
+        )
+        File(dir, "build.gradle.kts").writeText(
+            "plugins { id(\"${ProbePluginRepository.PLUGIN_ID}\") version \"${ProbePluginRepository.VERSION}\" }\n",
+        )
+        return run(
+            GradleRunner.create().withProjectDir(dir).withTestKitDir(File(dir, "testkit"))
+                .withArguments("probe", "--refresh-dependencies"),
+        )
+    } finally {
+        dir.deleteRecursively()
     }
 }

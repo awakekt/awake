@@ -7,11 +7,7 @@ package com.awakekt.awake.build
 
 import com.awakekt.awake.build.ProbePluginRepository.Companion.MARKER_GROUP
 import com.awakekt.awake.build.ProbePluginRepository.Companion.MARKER_MODULE
-import com.awakekt.awake.build.ProbePluginRepository.Companion.PLUGIN_ID
 import com.awakekt.awake.build.ProbePluginRepository.Companion.VERSION
-import org.gradle.testkit.runner.GradleRunner
-import java.io.File
-import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -33,7 +29,7 @@ class PortalOnlyPluginTest {
     fun aRateLimitedCentralBeforeThePortalFailsAPortalOnlyPlugin() {
         ProbePluginRepository.failing(TOO_MANY_REQUESTS).use { central ->
             ProbePluginRepository.serving().use { portal ->
-                val result = build(listOf(central.declaration, portal.declaration)).buildAndFail()
+                val result = probeBuild(listOf(central.declaration, portal.declaration)) { it.buildAndFail() }
                 assertTrue("could not resolve plugin artifact '$MARKER_GROUP:$MARKER_MODULE:$VERSION'" in result.output, result.output)
                 assertEquals(0, portal.requests.get(), "The Portal was asked although Central, listed before it, failed")
             }
@@ -44,7 +40,7 @@ class PortalOnlyPluginTest {
     fun theSamePluginResolvesWhenTheRepositoriesBeforeThePortalExcludeIt() {
         ProbePluginRepository.failing(TOO_MANY_REQUESTS).use { central ->
             ProbePluginRepository.serving().use { portal ->
-                val result = build(listOf(excluding(central), portal.declaration)).build()
+                val result = probeBuild(listOf(excluding(central), portal.declaration)) { it.build() }
                 assertTrue("PROBE APPLIED" in result.output, result.output)
                 assertEquals(0, central.requests.get(), "Central was asked for a plugin it excludes")
             }
@@ -55,7 +51,7 @@ class PortalOnlyPluginTest {
     fun withBothHealthyTheExcludedPluginComesFromThePortalAlone() {
         ProbePluginRepository.failing(NOT_FOUND).use { central ->
             ProbePluginRepository.serving().use { portal ->
-                val result = build(listOf(excluding(central), portal.declaration)).build()
+                val result = probeBuild(listOf(excluding(central), portal.declaration)) { it.build() }
                 assertTrue("PROBE APPLIED" in result.output, result.output)
                 assertEquals(0, central.requests.get(), "Central was asked for a plugin it excludes")
             }
@@ -66,16 +62,6 @@ class PortalOnlyPluginTest {
     private fun excluding(repository: ProbePluginRepository) =
         repository.declaration.removeSuffix(" }") +
             "; content { excludeModule(\"$MARKER_GROUP\", \"$MARKER_MODULE\"); excludeModule(\"com.example\", \"probe\") } }"
-
-    private fun build(repositories: List<String>): GradleRunner {
-        val dir = createTempDirectory("portal-only-plugin").toFile()
-        File(dir, "settings.gradle.kts").writeText(
-            "pluginManagement { repositories {\n${repositories.joinToString("\n")}\n} }\nrootProject.name = \"portal-only\"\n",
-        )
-        File(dir, "build.gradle.kts").writeText("plugins { id(\"$PLUGIN_ID\") version \"$VERSION\" }\n")
-        return GradleRunner.create().withProjectDir(dir).withTestKitDir(File(dir, "testkit"))
-            .withArguments("probe", "--refresh-dependencies")
-    }
 
     private companion object {
         const val TOO_MANY_REQUESTS = 429

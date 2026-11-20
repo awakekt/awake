@@ -20,7 +20,16 @@ pluginManagement {
     // failed builds whose plugins Maven Central serves, vanniktech's among them (#1592). It stays for
     // what only it serves, such as `kotlin-dsl`.
     repositories {
-        google { content { excludePortalOnly() } }
+        // Google only for its own groups (AGP's markers, androidx, com.google): a Google error can then
+        // fail no plugin it doesn't serve, as one listed before Central would (#1592).
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+                excludePortalOnly()
+            }
+        }
         mavenCentral { content { excludePortalOnly() } }
         gradlePluginPortal()
     }
@@ -28,7 +37,14 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        google()
+        // Google only for its own groups: a Google error can then fail no dependency it doesn't serve (#1592).
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
         gradlePluginPortal()
     }
