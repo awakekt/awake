@@ -79,6 +79,19 @@ class FrameBreakdown(
             series[Part.InstanceBuffersCreated.ordinal].add(nowSeconds, created.instanceBuffers.toDouble())
             series[Part.UniformBuffersCreated.ordinal].add(nowSeconds, created.uniformBuffers.toDouble())
         }
+        current.gpu?.let { recordGpu(nowSeconds, it) }
+    }
+
+    private fun recordGpu(nowSeconds: Double, gpu: FrameGpuSample) {
+        gpu.shadowDepthMs?.let { series[Part.GpuShadowDepth.ordinal].add(nowSeconds, it.toDouble()) }
+        gpu.sceneDepthMs?.let { series[Part.GpuSceneDepth.ordinal].add(nowSeconds, it.toDouble()) }
+        gpu.maskMs?.let { series[Part.GpuMask.ordinal].add(nowSeconds, it.toDouble()) }
+        gpu.sceneMs?.let { series[Part.GpuScene.ordinal].add(nowSeconds, it.toDouble()) }
+        gpu.postMs?.let { series[Part.GpuPost.ordinal].add(nowSeconds, it.toDouble()) }
+        gpu.upscaleMs?.let { series[Part.GpuUpscale.ordinal].add(nowSeconds, it.toDouble()) }
+        gpu.uiMs?.let { series[Part.GpuUi.ordinal].add(nowSeconds, it.toDouble()) }
+        series[Part.FrameResourceWait.ordinal].add(nowSeconds, gpu.frameResourceWaitMs.toDouble())
+        series[Part.AcquireWait.ordinal].add(nowSeconds, gpu.acquireWaitMs.toDouble())
     }
 
     /**
@@ -162,6 +175,15 @@ class FrameBreakdown(
         ArgumentBuffersCreated(KEY_ARGUMENT_BUFFERS_CREATED),
         InstanceBuffersCreated(KEY_INSTANCE_BUFFERS_CREATED),
         UniformBuffersCreated(KEY_UNIFORM_BUFFERS_CREATED),
+        GpuShadowDepth(KEY_GPU_SHADOW_DEPTH_MS),
+        GpuSceneDepth(KEY_GPU_SCENE_DEPTH_MS),
+        GpuMask(KEY_GPU_MASK_MS),
+        GpuScene(KEY_GPU_SCENE_MS),
+        GpuPost(KEY_GPU_POST_MS),
+        GpuUpscale(KEY_GPU_UPSCALE_MS),
+        GpuUi(KEY_GPU_UI_MS),
+        FrameResourceWait(KEY_FRAME_RESOURCE_WAIT_MS),
+        AcquireWait(KEY_ACQUIRE_WAIT_MS),
         SurfaceMpx(KEY_SURFACE_MPX),
         HeapMb(KEY_HEAP_MB),
         AllocKbPerFrame(KEY_ALLOC_KB_PER_FRAME),
@@ -246,6 +268,33 @@ class FrameBreakdown(
 
         /** Summary key for per-draw uniform buffers created per frame; a warm frame reads zero. */
         const val KEY_UNIFORM_BUFFERS_CREATED: String = "uniformBuffersCreated"
+
+        /** Summary key for GPU milliseconds of the shadow cascades' depth passes per frame (#1709). */
+        const val KEY_GPU_SHADOW_DEPTH_MS: String = "gpuShadowDepthMs"
+
+        /** Summary key for GPU milliseconds of the camera's own depth pass per frame. */
+        const val KEY_GPU_SCENE_DEPTH_MS: String = "gpuSceneDepthMs"
+
+        /** Summary key for GPU milliseconds of the mask passes per frame. */
+        const val KEY_GPU_MASK_MS: String = "gpuMaskMs"
+
+        /** Summary key for GPU milliseconds of the scene pass per frame, at the render scale. */
+        const val KEY_GPU_SCENE_MS: String = "gpuSceneMs"
+
+        /** Summary key for GPU milliseconds of image passes on the scene before it is scaled. */
+        const val KEY_GPU_POST_MS: String = "gpuPostMs"
+
+        /** Summary key for GPU milliseconds of scaling the scene to the output and its image passes there. */
+        const val KEY_GPU_UPSCALE_MS: String = "gpuUpscaleMs"
+
+        /** Summary key for GPU milliseconds of the UI pass per frame. */
+        const val KEY_GPU_UI_MS: String = "gpuUiMs"
+
+        /** Summary key for CPU milliseconds blocked on fences for the GPU's earlier work per frame. */
+        const val KEY_FRAME_RESOURCE_WAIT_MS: String = "frameResourceWaitMs"
+
+        /** Summary key for CPU milliseconds blocked acquiring the next swapchain image per frame. */
+        const val KEY_ACQUIRE_WAIT_MS: String = "acquireWaitMs"
 
         /** Summary key for drawable surface size in megapixels. */
         const val KEY_SURFACE_MPX: String = "surfaceMpx"
