@@ -704,6 +704,9 @@ Distance fog. `SceneFog`.
 | `colorR` | number | none | Legacy red channel. When `colorR`, `colorG` and `colorB` are all set, they replace `color`. |
 | `colorG` | number | none | Legacy green channel. |
 | `colorB` | number | none | Legacy blue channel. |
+| `mode` | `Exponential` or `Linear` | `Exponential` | How fog grows with distance: by `density`, or evenly from `start` to `end`. |
+| `start` | number | `0` | Where a linear fog starts, in metres from the eye. At least 0. |
+| `end` | number | `1000` | Where a linear fog reaches `color`, in metres from the eye. Beyond `start`. |
 
 ## `input_actions`
 
@@ -1370,6 +1373,9 @@ A heightmap terrain. At most one per node. `SceneTerrain`.
 | `isVisible` | boolean | `true` | Whether the terrain is drawn. |
 | `surface` | [terrain surface](#terrain-surface) | none | Surface model, read by a terrain surface provider. |
 | `collider` | boolean | `false` | Whether the terrain is solid ground when physics runs, as a static heightfield. Needs a square terrain of at least 4 samples a side. |
+| `clipmapRings` | integer | `6` | Levels of the geometry clipmap that draws it, 2 to 8, each twice as coarse as the one inside. |
+| `clipmapRingResolution` | integer | `64` | Grid cells along one side of each clipmap level: an even count from 16 to 256. |
+| `clipmapBaseSpacing` | number | `2` | Metres between the finest clipmap level's vertices. Above 0. |
 
 ### Terrain surface
 

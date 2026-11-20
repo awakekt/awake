@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.terrain
 
 import com.awakekt.awake.asset.terrain.Heightmap
+import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
@@ -39,6 +40,10 @@ import kotlin.reflect.KClass
  * @property isVisible Whether this terrain is submitted for rendering.
  * @property surface Optional custom surface shading model descriptor.
  * @property collider Whether the terrain generates a static physics heightfield collider.
+ * @property clipmapRings Levels of the geometry clipmap that draws it, the core and its rings, each
+ * twice as coarse as the one inside (#1809).
+ * @property clipmapRingResolution Grid cells along one side of each clipmap level, an even count.
+ * @property clipmapBaseSpacing Metres between the finest level's vertices; each ring doubles it.
  */
 @Serializable
 @SerialName("terrain")
@@ -53,7 +58,49 @@ data class SceneTerrain(
     val isVisible: Boolean = true,
     val surface: SceneTerrainSurface? = null,
     val collider: Boolean = false,
+    @PropertyRange(min = MIN_CLIPMAP_RINGS.toDouble(), max = MAX_CLIPMAP_RINGS.toDouble())
+    val clipmapRings: Int = DEFAULT_CLIPMAP_RINGS,
+    @PropertyRange(min = MIN_CLIPMAP_RING_RESOLUTION.toDouble(), max = MAX_CLIPMAP_RING_RESOLUTION.toDouble())
+    val clipmapRingResolution: Int = DEFAULT_CLIPMAP_RING_RESOLUTION,
+    @PropertyRange(min = 0.0, exclusiveMin = true)
+    val clipmapBaseSpacing: Float = DEFAULT_CLIPMAP_BASE_SPACING,
 ) : SceneComponent {
+    /** The constructor as released before the clipmap fields, kept so compiled callers still link. */
+    @Deprecated("Use the constructor with the clipmap fields.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        width: Int,
+        depth: Int,
+        scaleX: Float = 1f,
+        scaleY: Float = 1f,
+        scaleZ: Float = 1f,
+        samples: List<Float>,
+        tilingScale: Float = 16f,
+        isVisible: Boolean = true,
+        surface: SceneTerrainSurface? = null,
+        collider: Boolean = false,
+    ) : this(width, depth, scaleX, scaleY, scaleZ, samples, tilingScale, isVisible, surface, collider, DEFAULT_CLIPMAP_RINGS)
+
+    /** [copy] as released before the clipmap fields. */
+    @Deprecated("Use copy with the clipmap fields.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        width: Int = this.width,
+        depth: Int = this.depth,
+        scaleX: Float = this.scaleX,
+        scaleY: Float = this.scaleY,
+        scaleZ: Float = this.scaleZ,
+        samples: List<Float> = this.samples,
+        tilingScale: Float = this.tilingScale,
+        isVisible: Boolean = this.isVisible,
+        surface: SceneTerrainSurface? = this.surface,
+        collider: Boolean = this.collider,
+    ): SceneTerrain = copy(
+        width, depth, scaleX, scaleY, scaleZ, samples, tilingScale, isVisible, surface, collider,
+        clipmapRings, clipmapRingResolution, clipmapBaseSpacing,
+    )
+
+    /** The geometry clipmap these fields describe. Call only on a terrain that passed [validate]. */
+    fun clipmapConfig(): TerrainClipmapConfig = TerrainClipmapConfig(clipmapRings, clipmapRingResolution, clipmapBaseSpacing)
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     /** The checks [Heightmap] enforces, reported here so a bad scene fails validation, not loading. */
@@ -69,6 +116,7 @@ data class SceneTerrain(
         if (collider && (width != depth || width < MIN_COLLIDER_SAMPLES)) {
             add(SceneValidationIssue(path, "terrain.collider needs a square terrain of at least $MIN_COLLIDER_SAMPLES samples a side"))
         }
+        addAll(clipmapIssues(path, clipmapRings, clipmapRingResolution, clipmapBaseSpacing))
     }
 }
 
@@ -114,6 +162,7 @@ object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
                 tilingScale = component.tilingScale,
                 isVisible = component.isVisible,
                 collider = component.collider,
+                clipmapConfig = component.clipmapConfig(),
             ),
         )
         component.surface?.let { world.add(entity, TerrainSurfaceReference(it.provider, it.version, it.payload)) }
@@ -135,6 +184,9 @@ object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
                 SceneTerrainSurface(it.provider, it.version, it.payload)
             },
             collider = component.collider,
+            clipmapRings = component.clipmapConfig.ringCount,
+            clipmapRingResolution = component.clipmapConfig.ringResolution,
+            clipmapBaseSpacing = component.clipmapConfig.baseSpacing,
         )
     }
 }

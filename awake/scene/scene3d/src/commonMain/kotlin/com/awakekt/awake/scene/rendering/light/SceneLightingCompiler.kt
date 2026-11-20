@@ -30,6 +30,8 @@ import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
 import com.awakekt.awake.scene.rendering.debug.debugSettingsOrNull
 import com.awakekt.awake.scene.rendering.fog.Fog
+import com.awakekt.awake.scene.rendering.fog.FogMode
+import com.awakekt.awake.scene.rendering.fog.requireFogRange
 import com.awakekt.awake.scene.rendering.sky.Skybox
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import kotlin.math.cos
@@ -268,7 +270,22 @@ internal class SceneLightingCompiler(
             shadowsEnabled = shadows,
             exposure = exposure(world),
             skyBodies = skybox?.drawsCelestials != true,
+            fogStart = fog.linearStart(debug),
+            fogEnd = fog.linearEnd(debug),
         ).withDebugView(debug)
+    }
+
+    /** A linear fog's start for the frame, or 0 for exponential fog, as [EnvironmentUniforms.fogStart] reads it. */
+    private fun Fog?.linearStart(debug: WorldDebugSettings?): Float = if (this != null && fogsLinearly(debug)) start else 0f
+
+    /** A linear fog's end for the frame, or 0 for exponential fog. */
+    private fun Fog?.linearEnd(debug: WorldDebugSettings?): Float = if (this != null && fogsLinearly(debug)) end else 0f
+
+    /** Whether this fog fogs linearly: on, [FogMode.Linear], and no debug density override in force. */
+    private fun Fog.fogsLinearly(debug: WorldDebugSettings?): Boolean {
+        if (!enabled || mode != FogMode.Linear || debug?.fogDensityOverride != null) return false
+        requireFogRange(start, end)
+        return true
     }
 
     private fun exposure(world: World): Float =

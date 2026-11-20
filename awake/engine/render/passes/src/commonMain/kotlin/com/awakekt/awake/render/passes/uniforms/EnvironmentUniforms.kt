@@ -52,7 +52,56 @@ data class EnvironmentUniforms(
     val wireframe: Boolean = false,
     /** Whether the built-in sky draws its own sun and moon discs; false when a scene draws them over the sky. */
     val skyBodies: Boolean = true,
+    /**
+     * Where linear fog starts, in metres from the eye. Fog is linear, from here to [fogEnd], only
+     * while [fogEnd] is beyond it; otherwise it is exponential by [fogDensity], as before (#1807).
+     */
+    val fogStart: Float = 0f,
+    /** Where linear fog reaches [fogColor], in metres from the eye; see [fogStart]. */
+    val fogEnd: Float = 0f,
 ) {
+    /** The constructor as released before [fogStart], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        showSky: Boolean = false,
+        horizonColor: Color = DEFAULT_HORIZON_COLOR,
+        zenithColor: Color = DEFAULT_ZENITH_COLOR,
+        fogDensity: Float = 0f,
+        fogColor: Color = DEFAULT_FOG_COLOR,
+        shadowsEnabled: Boolean = true,
+        debugView: RenderDebugView = RenderDebugView.Off,
+        debugLayer: Int = 0,
+        exposure: Float = 1f,
+        contentFeatures: Boolean = true,
+        clearColor: Color? = null,
+        wireframe: Boolean = false,
+        skyBodies: Boolean = true,
+    ) : this(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
+        contentFeatures, clearColor, wireframe, skyBodies, 0f, 0f,
+    )
+
+    /** [copy] as released before [fogStart]. */
+    @Deprecated("Use copy with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        showSky: Boolean = this.showSky,
+        horizonColor: Color = this.horizonColor,
+        zenithColor: Color = this.zenithColor,
+        fogDensity: Float = this.fogDensity,
+        fogColor: Color = this.fogColor,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        debugView: RenderDebugView = this.debugView,
+        debugLayer: Int = this.debugLayer,
+        exposure: Float = this.exposure,
+        contentFeatures: Boolean = this.contentFeatures,
+        clearColor: Color? = this.clearColor,
+        wireframe: Boolean = this.wireframe,
+        skyBodies: Boolean = this.skyBodies,
+    ): EnvironmentUniforms = copy(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
+        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd,
+    )
+
     /** The constructor as released before [skyBodies], kept so compiled callers still link. */
     @Deprecated("Use the constructor with skyBodies.", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -70,7 +119,7 @@ data class EnvironmentUniforms(
         wireframe: Boolean = false,
     ) : this(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
-        contentFeatures, clearColor, wireframe, true,
+        contentFeatures, clearColor, wireframe, true, 0f, 0f,
     )
 
     /** [copy] as released before [skyBodies]. */
@@ -90,7 +139,7 @@ data class EnvironmentUniforms(
         wireframe: Boolean = this.wireframe,
     ): EnvironmentUniforms = copy(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, debugLayer, exposure,
-        contentFeatures, clearColor, wireframe, skyBodies,
+        contentFeatures, clearColor, wireframe, skyBodies, fogStart, fogEnd,
     )
 
     init {
@@ -126,5 +175,7 @@ data class EnvironmentUniforms(
         contentFeatures = contentFeatures,
         clearColor = clearColor,
         skyBodies = skyBodies,
+        fogStart = fogStart,
+        fogEnd = fogEnd,
     )
 }

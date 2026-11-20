@@ -344,6 +344,7 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
 	public final fun getDebugView ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getExposure ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getFogColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getFogRange ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLightColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLightDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getMaterial ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

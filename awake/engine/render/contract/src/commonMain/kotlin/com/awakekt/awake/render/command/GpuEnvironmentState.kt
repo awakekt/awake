@@ -43,7 +43,52 @@ data class GpuEnvironmentState(
      * itself, over any sky, so they are not drawn twice.
      */
     val skyBodies: Boolean = true,
+    /**
+     * Where linear fog starts, in metres from the eye. Fog is linear, from here to [fogEnd], only
+     * while [fogEnd] is beyond it; otherwise it is exponential by [fogDensity], as before (#1807).
+     */
+    val fogStart: Float = 0f,
+    /** Where linear fog reaches [fogColor], in metres from the eye; see [fogStart]. */
+    val fogEnd: Float = 0f,
 ) {
+    /** The constructor as released before [fogStart], kept so compiled callers still link. */
+    @Deprecated("Use the constructor with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        showSky: Boolean = false,
+        horizonColor: Color = Color.Black,
+        zenithColor: Color = Color.Black,
+        fogDensity: Float = 0f,
+        fogColor: Color = Color.Black,
+        shadowsEnabled: Boolean = true,
+        debugView: GpuDebugView = GpuDebugView.Off,
+        exposure: Float = 1f,
+        contentFeatures: Boolean = true,
+        clearColor: Color? = null,
+        skyBodies: Boolean = true,
+    ) : this(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
+        clearColor, skyBodies, 0f, 0f,
+    )
+
+    /** [copy] as released before [fogStart]. */
+    @Deprecated("Use copy with fogStart and fogEnd.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        showSky: Boolean = this.showSky,
+        horizonColor: Color = this.horizonColor,
+        zenithColor: Color = this.zenithColor,
+        fogDensity: Float = this.fogDensity,
+        fogColor: Color = this.fogColor,
+        shadowsEnabled: Boolean = this.shadowsEnabled,
+        debugView: GpuDebugView = this.debugView,
+        exposure: Float = this.exposure,
+        contentFeatures: Boolean = this.contentFeatures,
+        clearColor: Color? = this.clearColor,
+        skyBodies: Boolean = this.skyBodies,
+    ): GpuEnvironmentState = copy(
+        showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
+        clearColor, skyBodies, fogStart, fogEnd,
+    )
+
     /** The constructor as released before [skyBodies], kept so compiled callers still link. */
     @Deprecated("Use the constructor with skyBodies.", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -59,7 +104,7 @@ data class GpuEnvironmentState(
         clearColor: Color? = null,
     ) : this(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
-        clearColor, true,
+        clearColor, true, 0f, 0f,
     )
 
     /** [copy] as released before [skyBodies]. */
@@ -77,8 +122,11 @@ data class GpuEnvironmentState(
         clearColor: Color? = this.clearColor,
     ): GpuEnvironmentState = copy(
         showSky, horizonColor, zenithColor, fogDensity, fogColor, shadowsEnabled, debugView, exposure, contentFeatures,
-        clearColor, skyBodies,
+        clearColor, skyBodies, fogStart, fogEnd,
     )
+
+    /** Whether this pass fogs linearly, from [fogStart] to [fogEnd]. */
+    val linearFog: Boolean get() = fogEnd > fogStart
 
     /** The colour this pass clears to: [clearColor] when it sets one, else [default]. */
     fun clearColorOr(default: Color): Color = clearColor ?: default
