@@ -482,25 +482,22 @@ tests on the iOS simulator.
 
 ### Gradle User Home cache
 
-Every workflow that runs Gradle caches the Gradle User Home through `gradle/actions/setup-gradle`'s
-**enhanced** provider, its default. CI, Font atlas and Render evidence name it with
-`cache-provider: enhanced`; the others leave the input out. Enhanced caching:
-- keeps an entry per job, keyed by OS, job, workflow, matrix and commit;
-- restores the job's newest entry, or else the newest from the same OS;
-- stops the Gradle daemon before saving, which the Windows jobs need (the basic provider failed
-  every Windows save on a locked `fileContent.lock`).
+CI, Font atlas and Render evidence cache the Gradle User Home with `gradle/actions/setup-gradle`'s
+**basic** provider (`cache-provider: basic`); the iOS job keeps its own `actions/cache` entry.
 
-Entries are written from `main` only; a pull request reads `main`'s.
-No workflow writes a Gradle User Home cache step of its own.
+The enhanced provider was tried in #1790 and reverted the same day (#1592). In its first two hours,
+every WebGPU release pin job that restored one Gradle User Home entry failed on 26 `Could not find
+<jar>` errors for jars Central serves, on `main` and on every pull request. Two of its behaviours
+kept the failure going:
+- a failed job saves its Gradle User Home, and the next run of that job restores it first;
+- the jars sit in a separate entry keyed by content hash, which can be missing or not match the
+  Gradle User Home that was restored.
 
-The provider's licence is the reason to revisit this. Enhanced caching is the proprietary
-`gradle-actions-caching` library, under the Gradle Technologies Terms of Use, not the action's MIT
-licence. Its `DISTRIBUTION.md` makes it free for public repositories and a free preview, with
-pricing planned, for private ones. If this repository goes private, or the terms change, decide
-again. `cache-provider: basic` is the MIT alternative, at the cost measured on #1592:
-- a single shared entry per OS, which the first job to finish writes;
-- no restore keys;
-- no saves from Windows.
+Nothing invalidates an entry except deleting it. Before trying the enhanced provider again, all
+three must hold:
+- it can be told not to save from a failed job;
+- a workflow can delete cache entries;
+- it has been measured on a branch first.
 
 No cache key includes a settings or build file, so a cache entry outlives a change to the
 repositories it was resolved against. On 20 Nov one deduplicated entry,
