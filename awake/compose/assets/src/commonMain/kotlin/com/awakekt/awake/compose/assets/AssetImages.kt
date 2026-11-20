@@ -42,6 +42,10 @@ class AssetImages(
     // Read and written on the frame thread only; a load writes to its own entry.
     private val entries = HashMap<String, AssetImage>()
 
+    // The same entries in the order they were asked for, so counting the loaded ones walks a list by
+    // index and allocates nothing: a scene canvas asks for the count on every frame it polls (#1742).
+    private val asked = ArrayList<AssetImage>()
+
     /** How many paths have been asked for or seeded since the last [reset], loaded or not. */
     val size: Int get() = entries.size
 
@@ -63,8 +67,17 @@ class AssetImages(
      */
     fun state(path: String): AssetImage = entries[path] ?: AssetImage(path).also { entry ->
         entries[path] = entry
+        asked += entry
         entry.job = scope.launch { load(entry) }
     }
+
+    /** How many images have decoded since the last [reset]: [asMap]'s size. Call it on the frame thread. */
+    internal val loadedCount: Int
+        get() {
+            var count = 0
+            for (i in 0 until asked.size) if (asked[i].image != null) count++
+            return count
+        }
 
     /**
      * Why the image at [path] could not load, or null when it loaded, is still loading, or was never
@@ -98,7 +111,12 @@ class AssetImages(
     fun reset(seed: Map<String, ImageBitmap> = emptyMap()) {
         for (entry in entries.values) entry.job?.cancel()
         entries.clear()
-        for ((path, image) in seed) entries[path] = AssetImage(path).also { it.image = image }
+        asked.clear()
+        for ((path, image) in seed) {
+            val entry = AssetImage(path).also { it.image = image }
+            entries[path] = entry
+            asked += entry
+        }
     }
 
     // A file's reader and each platform's decoder fail with exceptions of their own.

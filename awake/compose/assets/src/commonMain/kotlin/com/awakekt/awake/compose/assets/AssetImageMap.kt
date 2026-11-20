@@ -23,4 +23,8 @@ internal class AssetImageMap(private val images: AssetImages) : AbstractMap<Stri
 
     override val entries: Set<Map.Entry<String, ImageBitmap>>
         get() = images.loaded().entries
+
+    // Counted, not `entries.size`, which builds a map of every loaded image: a scene canvas reads the
+    // size on every poll, so that map was a frame's garbage, still or not (#1742).
+    override val size: Int get() = images.loadedCount
 }
