@@ -523,6 +523,12 @@ after 60 s was not enough: on 20 Nov a Plugin Portal miss outlasted it. The retr
 - after an error (`Could not resolve`, a 429 or a 5xx), unchanged, so a throttling host gets no
   extra requests.
 
+Every retry also runs with `--info`, so a failure that outlasts the retries leaves the host and HTTP
+status Gradle met in the log. A warm Gradle daemon keeps no answer between runs: reproduced locally,
+a retry on the same daemon recovers as soon as the repository answers again, with or without
+`--refresh-dependencies`. A retry that fails within a second is a repository that is still refusing,
+not a stale result, so the wrapper does not stop the daemon between tries.
+
 Any other failure fails as before, on whichever run it happens, and a green command runs once. A
 step that exhausts its retries has spent 9 minutes paused on top of four runs, so a step or job
 timeout shorter than that (the 20-minute CLI and render step in `ci.yml`, Font atlas's job) can end

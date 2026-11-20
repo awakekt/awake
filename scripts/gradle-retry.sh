@@ -15,7 +15,9 @@
 #   --refresh-dependencies, which drops those records. It re-checks every module's metadata.
 # - An error ("Could not resolve", "status code 429"). Gradle records no miss for it, so the retry
 #   is the same command. It does not refresh, which would send a throttling host more requests.
-# Once a miss has added --refresh-dependencies, every later run keeps it.
+# Once a miss has added --refresh-dependencies, every later run keeps it. Every retry also runs with
+# --info, so a failure that outlasts them leaves the host and HTTP status Gradle met in the log; a
+# command that passes first time is never verbose.
 #
 # Anything else fails as it did, on whichever run it happens. stdout and stderr stay separate
 # streams, so a command substitution of `-q` output still captures only stdout.
@@ -39,6 +41,7 @@ run() (
 )
 
 refreshed=false
+verbose=false
 attempt=0
 while true; do
   run "$@"
@@ -54,6 +57,7 @@ while true; do
   else
     exit "$status"
   fi
+  if ! $verbose; then set -- "$@" --info; verbose=true; fi
 
   pause="${pauses[$attempt]}"
   attempt=$((attempt + 1))
