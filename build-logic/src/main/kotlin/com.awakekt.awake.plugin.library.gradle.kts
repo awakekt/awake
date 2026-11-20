@@ -38,6 +38,12 @@ kotlin {
             browser()
         }
     }
+
+    // Every allocation gate reads the calling thread's bytes through one helper, as the median of
+    // several windows (#1592); verifyAllocationGates holds that no other test reads the counter.
+    sourceSets.named("desktopTest") {
+        kotlin.srcDir(rootProject.layout.projectDirectory.dir("test-support/allocation"))
+    }
 }
 
 // A module whose native code finds its classes by name keeps those names in consumer-rules.pro, and

@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.ecs
 
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -20,15 +20,12 @@ class ReifiedGetAllocationTest {
     fun aReifiedGetAllocatesNothing() {
         val world = World()
         val entities = List(COUNT) { world.create().also { e -> world.add(e, Health(it)); world.add(e, Speed(1f)) } }
-        val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
         var sum = 0L
         fun pass() = entities.forEach { sum += world.get<Health>(it)!!.value + (world.get<Speed>(it)?.value?.toLong() ?: 0L) }
         repeat(WARMUP) { pass() }
-        val start = threads.currentThreadAllocatedBytes
-        repeat(PASSES) { pass() }
-        val perGet = (threads.currentThreadAllocatedBytes - start).toDouble() / (PASSES * COUNT * 2)
-        println("PERF reified World.get bytes per get=$perGet ($sum)")
-        assertEquals(0L, (threads.currentThreadAllocatedBytes - start) / (PASSES * COUNT * 2), "a get allocates")
+        val reading = readAllocation(PASSES.toLong() * COUNT * 2) { repeat(PASSES) { pass() } }
+        println("PERF reified World.get: $reading ($sum)")
+        assertAllocatesNothing(reading, "a reified get")
     }
 
     private companion object {

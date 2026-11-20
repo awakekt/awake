@@ -8,8 +8,8 @@ package com.awakekt.awake.core.animation
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -43,14 +43,8 @@ class PoseAllocationTest {
         player.play("idle")
         frames(WARMUP_FRAMES)
 
-        val before = threadBean.currentThreadAllocatedBytes
-        frames(MEASURED_FRAMES)
-        val perFrame = (threadBean.currentThreadAllocatedBytes - before) / MEASURED_FRAMES
-
-        assertEquals(0L, perFrame, "bytes allocated per posed frame")
+        assertAllocatesNothing(readAllocation(MEASURED_FRAMES) { frames(MEASURED_FRAMES) }, "a posed frame")
     }
-
-    private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
 
     private companion object {
         const val WARMUP_FRAMES = 2_000

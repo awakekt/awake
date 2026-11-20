@@ -5,6 +5,7 @@
  */
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyFeatureLayeringTask
+import com.awakekt.awake.build.tasks.VerifyAllocationGatesTask
 import com.awakekt.awake.build.tasks.VerifyCiTestCoverageTask
 import com.awakekt.awake.build.tasks.VerifyCoroutineScopesTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
@@ -66,6 +67,21 @@ val verifyInlinedQueries = tasks.register<VerifyInlinedQueriesTask>("verifyInlin
             exclude("**/build/**")
         },
     )
+}
+
+// An allocation gate reads the median of several windows through readAllocation: one that read a
+// single window failed whenever the test thread allocated once inside it (#1592).
+val verifyAllocationGates = tasks.register<VerifyAllocationGatesTask>("verifyAllocationGates") {
+    group = "awake verification"
+    description = "Reject a test that reads the thread's allocated bytes itself instead of through readAllocation."
+    rootPath.set(layout.projectDirectory.asFile.absolutePath)
+    testSources.from(
+        fileTree(layout.projectDirectory) {
+            include("awake/**/src/*Test/**/*.kt", "samples/**/src/*Test/**/*.kt")
+            exclude("**/build/**")
+        },
+    )
+    recordedReaders.set(layout.projectDirectory.file("test-support/allocation/direct-readers.txt"))
 }
 
 // A test class CI never runs only compiles, so a red test stays unseen on main (#1592).
@@ -209,7 +225,7 @@ tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, ownership and source-layering gates."
     dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes, verifyInlinedQueries)
-    dependsOn(verifyCiTestCoverage)
+    dependsOn(verifyCiTestCoverage, verifyAllocationGates)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
     dependsOn(rootSourceChecks)
     dependsOn(subprojects.map { module -> module.tasks.matching { it.name in moduleSourceChecks } })

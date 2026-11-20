@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.ecs
 
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,16 +17,13 @@ import kotlin.test.assertEquals
 class LookupAllocationTest {
     @Test
     fun aComponentCallAllocatesNothingOnceWarm() {
-        val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
         val lookups = LookupCalls()
         val costs = lookups.calls.map { (name, pass) ->
             repeat(WARMUP) { pass() }
-            val start = threads.currentThreadAllocatedBytes
-            repeat(PASSES) { pass() }
-            name to (threads.currentThreadAllocatedBytes - start) / (PASSES.toLong() * LookupCalls.ENTITIES)
+            name to readAllocation(PASSES.toLong() * LookupCalls.ENTITIES) { repeat(PASSES) { pass() } }
         }
-        println("PERF jvm bytes per call: " + costs.joinToString { (name, bytes) -> "$name=$bytes" } + " (${lookups.sink})")
-        costs.forEach { (name, bytes) -> assertEquals(0L, bytes, "$name allocates") }
+        println("PERF jvm bytes per call: " + costs.joinToString { (name, reading) -> "$name=${reading.perUnit}" } + " (${lookups.sink})")
+        costs.forEach { (name, reading) -> assertAllocatesNothing(reading, name) }
     }
 
     private companion object {

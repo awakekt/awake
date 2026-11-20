@@ -5,8 +5,9 @@
  */
 package com.awakekt.awake.blueprint
 
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.AllocationReading
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -51,19 +52,19 @@ class BlueprintAllocationProbe {
     @Test
     fun anIdleTickAllocatesNothing() {
         val instance = BlueprintInstance(chain).also(interpreter::start)
-        assertEquals(0L, bytesPer { interpreter.tick(instance, TICK) })
+        assertAllocatesNothing(bytesPer { interpreter.tick(instance, TICK) }, "a tick")
     }
 
     @Test
     fun aTickWithAWaitPendingAllocatesNothing() {
         val instance = BlueprintInstance(waiting).also(interpreter::start)
-        assertEquals(0L, bytesPer { interpreter.tick(instance, TICK) })
+        assertAllocatesNothing(bytesPer { interpreter.tick(instance, TICK) }, "a tick")
     }
 
     @Test
     fun firingAChainAllocatesNothing() {
         val instance = BlueprintInstance(chain)
-        assertEquals(0L, bytesPer { interpreter.start(instance) })
+        assertAllocatesNothing(bytesPer { interpreter.start(instance) }, "firing a chain")
         assertEquals(3f, instance.variable("copy"))
     }
 
@@ -81,18 +82,14 @@ class BlueprintAllocationProbe {
         val instance = BlueprintInstance(program)
         val onlyPlay = EventFilter { it.string("target") == "play" }
 
-        assertEquals(0L, bytesPer { interpreter.fire(instance, "test.called", null, onlyPlay) })
+        assertAllocatesNothing(bytesPer { interpreter.fire(instance, "test.called", null, onlyPlay) }, "firing a filtered event")
         assertEquals(1f, instance.variable("played"))
     }
 
-    private fun bytesPer(block: () -> Unit): Long {
+    private fun bytesPer(block: () -> Unit): AllocationReading {
         repeat(WARMUP) { block() }
-        val before = allocated()
-        repeat(MEASURED) { block() }
-        return (allocated() - before) / MEASURED
+        return readAllocation(MEASURED) { repeat(MEASURED) { block() } }
     }
-
-    private fun allocated(): Long = (ManagementFactory.getThreadMXBean() as ThreadMXBean).currentThreadAllocatedBytes
 
     private companion object {
         const val TICK = 1f / 60f

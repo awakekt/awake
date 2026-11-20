@@ -17,9 +17,9 @@ import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.render.texture.TextureUploadRecorder
-import com.sun.management.ThreadMXBean
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlinx.coroutines.runBlocking
-import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -39,10 +39,7 @@ class SharedContentFrameAllocationProbeTest {
         val slot = attacher.beforeGeometry
         frames(slot, WARMUP_FRAMES)
 
-        val start = allocated()
-        frames(slot, MEASURED_FRAMES)
-
-        assertEquals(0L, (allocated() - start) / MEASURED_FRAMES, "bytes per frame")
+        assertAllocatesNothing(readAllocation(MEASURED_FRAMES) { frames(slot, MEASURED_FRAMES) }, "a frame")
     }
 
     /** A plain loop: a lambda taking the frame index would box it, and count that. */
@@ -77,10 +74,6 @@ class SharedContentFrameAllocationProbeTest {
 
         override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) = Unit
     }
-
-    private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-
-    private fun allocated(): Long = threadBean.currentThreadAllocatedBytes
 
     private companion object {
         const val FEATURES = 3

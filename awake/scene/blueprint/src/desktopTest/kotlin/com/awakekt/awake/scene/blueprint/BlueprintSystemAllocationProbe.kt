@@ -6,10 +6,10 @@
 package com.awakekt.awake.scene.blueprint
 
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -42,13 +42,8 @@ class BlueprintSystemAllocationProbe {
         }
 
         repeat(WARMUP) { system.update(world, STEP) }
-        val before = allocated()
-        repeat(MEASURED) { system.update(world, STEP) }
-
-        assertEquals(0L, (allocated() - before) / MEASURED)
+        assertAllocatesNothing(readAllocation(MEASURED) { repeat(MEASURED) { system.update(world, STEP) } }, "a blueprint system update")
     }
-
-    private fun allocated(): Long = (ManagementFactory.getThreadMXBean() as ThreadMXBean).currentThreadAllocatedBytes
 
     private companion object {
         const val BLUEPRINTS = 100

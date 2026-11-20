@@ -7,7 +7,8 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesAtMost
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -94,16 +95,13 @@ class SceneCanvasBindSkipGateTest {
         bound.begin()
         repeat(100) { bound.add(com.awakekt.awake.ui.canvas.CanvasBinding("Unit$it", value = "health.current", max = "health.max")) }
         bound.end()
-        val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
-        val thread = Thread.currentThread().id
         repeat(WARMUP) { named.nextFrame(); bound.changed() }
-        val before = threads.getThreadAllocatedBytes(thread)
         val start = System.nanoTime()
         repeat(MEASURED) { named.nextFrame(); bound.changed() }
-        val bytes = (threads.getThreadAllocatedBytes(thread) - before) / MEASURED
         val micros = (System.nanoTime() - start) / MEASURED / 1000
-        println("SceneCanvasBindPoll: 100 bound elements, 2 fields each: $bytes B and $micros us a frame")
-        assertTrue(bytes <= MAX_POLL_BYTES, "a poll allocates $bytes B a frame, over $MAX_POLL_BYTES")
+        val reading = readAllocation(MEASURED) { repeat(MEASURED) { named.nextFrame(); bound.changed() } }
+        println("SceneCanvasBindPoll: 100 bound elements, 2 fields each: $reading and $micros us a frame")
+        assertAllocatesAtMost(reading, MAX_POLL_BYTES, "a poll of 100 bound elements")
     }
 
     private companion object {

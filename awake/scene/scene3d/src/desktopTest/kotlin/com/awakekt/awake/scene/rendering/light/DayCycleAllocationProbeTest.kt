@@ -9,6 +9,8 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.rendering.fog.Fog
 import com.awakekt.awake.scene.rendering.sky.Skybox
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
@@ -29,10 +31,7 @@ class DayCycleAllocationProbeTest {
         val scene = scene(dayLengthSeconds = 0f)
         repeat(WARMUP_FRAMES) { scene.frame() }
 
-        val start = allocated()
-        repeat(MEASURED_FRAMES) { scene.frame() }
-
-        assertEquals(0L, (allocated() - start) / MEASURED_FRAMES, "bytes per frame")
+        assertAllocatesNothing(readAllocation(MEASURED_FRAMES) { repeat(MEASURED_FRAMES) { scene.frame() } }, "a frame")
     }
 
     @Test

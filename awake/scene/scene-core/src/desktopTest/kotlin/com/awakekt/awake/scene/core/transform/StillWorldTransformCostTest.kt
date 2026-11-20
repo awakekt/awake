@@ -7,8 +7,8 @@ package com.awakekt.awake.scene.core.transform
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,7 +19,6 @@ import kotlin.test.assertEquals
  * allocates nothing. Run with escape analysis off, so allocation the JIT would hide still counts.
  */
 class StillWorldTransformCostTest {
-    private val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
 
     private class Town(props: Int) {
         val world = World()
@@ -47,14 +46,13 @@ class StillWorldTransformCostTest {
             val town = Town(props)
             repeat(WARMUP) { town.frame(it) }
             val walks = town.system.staticWalks
-            val bytes = threads.currentThreadAllocatedBytes
             val start = System.nanoTime()
             repeat(FRAMES) { town.frame(it) }
             val nanos = (System.nanoTime() - start) / FRAMES
-            val perFrame = (threads.currentThreadAllocatedBytes - bytes) / FRAMES
-            println("PERF still town of $props props, $MOVERS moving: $nanos ns and $perFrame B a frame")
+            val allocation = readAllocation(FRAMES) { repeat(FRAMES) { town.frame(it) } }
+            println("PERF still town of $props props, $MOVERS moving: $nanos ns and $allocation")
             assertEquals(walks, town.system.staticWalks, "a still frame visited the statics")
-            assertEquals(0L, perFrame, "a still frame allocates")
+            assertAllocatesNothing(allocation, "a still frame")
             nanos
         }
         println("PERF still town: ${costs[1].toDouble() / costs[0]}x the time at ${LARGE / SMALL}x the props")

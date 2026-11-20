@@ -9,8 +9,7 @@ import com.awakekt.awake.compose.ui.platform.keyEvents
 import com.awakekt.awake.compose.ui.platform.toFrameInput
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -103,16 +102,9 @@ class InputAdapterAllocationProbe {
     private fun measure(block: () -> Any?): Long {
         var sink: Any? = null
         repeat(WARMUP) { sink = block() }
-        val before = allocatedBytes()
-        repeat(ITERATIONS) { sink = block() }
-        val bytes = allocatedBytes() - before
+        val reading = readAllocation(ITERATIONS) { repeat(ITERATIONS) { sink = block() } }
         check(sink != null || sink == null)
-        return bytes / ITERATIONS
-    }
-
-    private fun allocatedBytes(): Long {
-        val bean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        return bean.getCurrentThreadAllocatedBytes()
+        return reading.perUnit
     }
 
     private companion object {
