@@ -104,7 +104,8 @@ internal class GlyphEffects private constructor(
         if (outlineWidth > 0f && !outlineColor.isTransparent()) {
             for (i in OUTLINE_X.indices) stamp(outlineColor, OUTLINE_X[i] * outlineWidth, OUTLINE_Y[i] * outlineWidth)
         }
-        stamp(color, 0f, 0f)
+        // A run whose fill comes from its pixel glyphs (#1808) asks for its decoration with no fill.
+        if (!color.isTransparent()) stamp(color, 0f, 0f)
     }
 
     companion object {
