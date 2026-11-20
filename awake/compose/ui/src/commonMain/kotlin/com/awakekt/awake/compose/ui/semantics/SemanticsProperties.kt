@@ -116,54 +116,6 @@ object SemanticsProperties {
     val CornerRadius = SemanticsPropertyKey<Float>("CornerRadius")
 }
 
-/**
- * The properties one node declares.
- *
- * [isMergingDescendants] is the answer to "a button with a text child should be one node, not two".
- * A merging node absorbs its descendants' properties and they stop appearing separately -- every
- * `ui-headless` control has that shape, so the decision had to land before any of them are ported.
- */
-class SemanticsConfiguration {
-    private val values = mutableMapOf<SemanticsPropertyKey<*>, Any?>()
-
-    var isMergingDescendants: Boolean = false
-
-    /**
-     * Drops descendants' semantics rather than absorbing them.
-     *
-     * Implies [isMergingDescendants]: a node that replaces what is beneath it is by definition the
-     * only node reported for that subtree.
-     */
-    var isClearingDescendants: Boolean = false
-
-    /** The keys that have a value set. */
-    val keys: Set<SemanticsPropertyKey<*>> get() = values.keys
-
-    /** Stores [value] under [key], replacing any earlier value. */
-    operator fun <T> set(key: SemanticsPropertyKey<T>, value: T) {
-        values[key] = value
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    /** Returns the value stored under [key], or `null` when none has been set. */
-    operator fun <T> get(key: SemanticsPropertyKey<T>): T? = values[key] as T?
-
-    /** Whether a value has been set for [key]. */
-    operator fun contains(key: SemanticsPropertyKey<*>): Boolean = values.containsKey(key)
-
-    /**
-     * Copies [other]'s properties in without overwriting what is already here.
-     *
-     * The merging node wins: a button labelled "Save" that contains a text reading "Save now"
-     * reports "Save". An ancestor states intent; a descendant only fills gaps.
-     */
-    fun mergeFrom(other: SemanticsConfiguration) {
-        for (key in other.keys) {
-            if (key !in this) values[key] = other.values[key]
-        }
-    }
-}
-
 /** Declares semantics for this node, optionally absorbing everything beneath it into one node. */
 fun Modifier.semantics(
     mergeDescendants: Boolean = false,
@@ -182,8 +134,13 @@ private class SemanticsNodeElement(
     private val semanticsConfiguration: SemanticsConfiguration,
 ) : ModifierNodeElement<SemanticsModifierNodeImpl>() {
     override fun create(): SemanticsModifierNodeImpl = SemanticsModifierNodeImpl()
+
+    // A recomposition builds an equal configuration anew. Keeping the node's own one lets the
+    // semantics tree see the node as unchanged and hand back what it built before (#1742).
     override fun update(node: SemanticsModifierNodeImpl) {
-        node.semanticsConfiguration = semanticsConfiguration
+        if (!node.isConfigured || !node.semanticsConfiguration.sameAs(semanticsConfiguration)) {
+            node.semanticsConfiguration = semanticsConfiguration
+        }
     }
     override fun toString(): String = "semantics(${semanticsConfiguration.keys})"
 }
@@ -192,6 +149,8 @@ private class SemanticsModifierNodeImpl :
     Modifier.Node(),
     SemanticsModifierNode {
     override lateinit var semanticsConfiguration: SemanticsConfiguration
+
+    val isConfigured: Boolean get() = ::semanticsConfiguration.isInitialized
 }
 
 /**
