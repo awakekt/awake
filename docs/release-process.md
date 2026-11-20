@@ -509,6 +509,24 @@ delete it with the **Cache maintenance** workflow (`.github/workflows/cache-main
 Deleting a cache entry is always safe: the next job that misses it rebuilds from the network. The
 workflow runs no Gradle and restores no cache, so it can't be affected by what it deletes.
 
+### Dependency resolution retries
+
+Gradle retries a request that times out or gets a 408, 429 or 5xx six times, about a minute in all
+(`gradle.properties`). Central has throttled GitHub's runners for longer than that, and a 404 is not
+retried at all: Gradle records it as missing and trusts the record for 24 hours, a missing module
+indefinitely. So the pull request workflows run every Gradle command through
+`scripts/gradle-retry.sh`, which runs a failed command once more, after 60 s, when its output shows
+a resolution failure (#1592):
+- after a miss (`Could not find`, `was not found in any of the following sources`), with
+  `--refresh-dependencies`, which drops the missing records;
+- after an error (`Could not resolve`, a 429 or a 5xx), unchanged, so a throttling host gets no
+  extra requests.
+
+Any other failure fails as before, and a green command runs once. `scripts/gradle-retry.test.sh`,
+in CI, checks the wrapper and fails a pull request workflow that calls `./gradlew` without it. The
+publish workflows don't use it: a step that has reached an upload is never run again (see "Cutting
+a Core release").
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap

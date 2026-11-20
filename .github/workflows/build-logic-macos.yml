@@ -43,4 +43,4 @@ jobs:
 
       # `-p build-logic` configures build-logic alone, so neither the NDK nor the iOS toolchain is needed.
       - name: Test build logic
-        run: ./gradlew -p build-logic test --no-configuration-cache
+        run: scripts/gradle-retry.sh ./gradlew -p build-logic test --no-configuration-cache

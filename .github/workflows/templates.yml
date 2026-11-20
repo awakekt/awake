@@ -70,16 +70,16 @@ jobs:
       # A version no release uses, so the templates resolve exactly what this run publishes.
       - name: Name the local version
         run: |
-          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
+          version=$(scripts/gradle-retry.sh ./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
           echo "LOCAL_VERSION=${version%-SNAPSHOT}-templates" | tee -a "$GITHUB_ENV"
 
       # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
       - name: Publish this pull request's Core locally
         id: publish
         run: |
-          ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
-          ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
-          ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+          scripts/gradle-retry.sh ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
+          scripts/gradle-retry.sh ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+          scripts/gradle-retry.sh ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
 
       - name: Build the templates against it
         env:
@@ -131,7 +131,7 @@ jobs:
             # TEMPLATE_PREPARE_ONLY: copy the template and stamp Core and Vulkan into it, then stop.
             tools/check_template_consumer.sh "templates/$template" "$work"
             echo "==> templates/$template desktop app against Core $TEMPLATE_CORE_VERSION and Vulkan $TEMPLATE_VULKAN_VERSION"
-            (cd "$work/awake-template" && ./gradlew :app:desktopApp:compileKotlin --no-configuration-cache --console=plain) \
+            (cd "$work/awake-template" && "$GITHUB_WORKSPACE/scripts/gradle-retry.sh" ./gradlew :app:desktopApp:compileKotlin --no-configuration-cache --console=plain) \
               || failed+=("templates/$template")
           done
           for template in "${failed[@]}"; do
@@ -162,14 +162,14 @@ jobs:
       # It reaches no renderer, native interop, window or content transport backend.
       - name: Publish the scene binding toolchain locally
         run: |
-          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2 }')
+          version=$(scripts/gradle-retry.sh ./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2 }')
           local_version="${version%-SNAPSHOT}-scene-components"
           echo "TEMPLATE_CORE_VERSION=$local_version" >> "$GITHUB_ENV"
           modules=(core:math2d core:math core:color core:logging core:host core:io core:schema ecs scene:document scene:binding scene:binding:processor bom)
           tasks=()
           for module in "${modules[@]}"; do tasks+=(":awake:$module:publishToMavenLocal"); done
-          ./gradlew "${tasks[@]}" -Pawake.version="$local_version" --no-configuration-cache --max-workers=2
-          ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$local_version" --no-configuration-cache --max-workers=2
+          scripts/gradle-retry.sh ./gradlew "${tasks[@]}" -Pawake.version="$local_version" --no-configuration-cache --max-workers=2
+          scripts/gradle-retry.sh ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$local_version" --no-configuration-cache --max-workers=2
 
       - name: Test the external consumer on every target
         run: tools/check_scene_components_consumer.sh "$RUNNER_TEMP/scene-components-native"

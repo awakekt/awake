@@ -131,6 +131,9 @@ jobs:
       - name: One Mocha timeout for every browser test
         run: scripts/karma-mocha-timeout.test.sh
 
+      - name: Gradle steps retried once after a resolution failure
+        run: scripts/gradle-retry.test.sh
+
       # Before 1.0 a released public signature stays as a hidden overload, so a consumer built against
       # the last stable release still links. Compares the api dumps with that tag's, modifiers aside.
       - name: Released JVM signatures kept
@@ -203,7 +206,7 @@ jobs:
       - name: No ponytail comment tags
         run: "! git grep -nIE 'ponytai[l]:' -- ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md'"
       - name: Detekt (all modules, baselined)
-        run: ./gradlew detekt
+        run: scripts/gradle-retry.sh ./gradlew detekt
 
       # Every step below this one names a specific module, so a module nobody names is never
       # built. These two name none: Gradle runs the task in every project that has it, so a new
@@ -216,26 +219,26 @@ jobs:
       # constructor that no longer existed; `:awake:engine:app` had been broken for weeks. All
       # three looked exactly like passing, because nothing built them.
       - name: Every desktop test source set compiles
-        run: ./gradlew compileTestKotlinDesktop
+        run: scripts/gradle-retry.sh ./gradlew compileTestKotlinDesktop
 
       # detekt's type-resolved rules, such as SuspendFunSwallowedCancellation, which the plain
       # `detekt` above skips. After the compile step, so it reuses the desktop classes it resolves
       # against. Only the rules config/detekt/detekt-type-resolved.yml turns on run here.
       - name: Detekt type-resolved rules (all modules, baselined)
-        run: ./gradlew detektMainDesktop
+        run: scripts/gradle-retry.sh ./gradlew detektMainDesktop
 
       # This deterministic geometry-cost ratchet protects the CPU-side UI upload workload; it is
       # not a real-device FPS measurement.
       # Keep it as an explicit PR check so the test cannot silently regress to compile-only.
       - name: Core UI frame-cost ratchet (FPS proxy)
         run: >-
-          ./gradlew :awake:ui:shadcn:desktopTest
+          scripts/gradle-retry.sh ./gradlew :awake:ui:shadcn:desktopTest
           --tests com.awakekt.awake.ui.shadcn.UiFrameCostRatchetTest
           --no-daemon --stacktrace
 
       # Includes the pixel-exact CPU baselines and the JVM allocation ratchets.
       - name: Node graph canvas visual and allocation checks
-        run: ./gradlew :awake:ui:node-graph-canvas:desktopTest --no-daemon --stacktrace
+        run: scripts/gradle-retry.sh ./gradlew :awake:ui:node-graph-canvas:desktopTest --no-daemon --stacktrace
 
       - name: Upload node graph test measurements and failures
         if: always()
@@ -261,41 +264,41 @@ jobs:
       # shader effects), and its physics tests need the same Jolt natives as the two suites above.
       # The compile step only built it, so a broken play path stayed green.
       - name: Jolt desktop physics and project runtime tests
-        run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest :awake:project:runtime:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest :awake:project:runtime:desktopTest
 
       # Plugin manifests, archives and their signature checks on the JDK provider, desktop and
       # Android host, plus the editor contract's deprecated forwards to them.
       - name: Plugin archive and editor contract tests
-        run: ./gradlew :awake:plugin-archive:desktopTest :awake:plugin-archive:testAndroidHostTest :awake:editor:contract:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:plugin-archive:desktopTest :awake:plugin-archive:testAndroidHostTest :awake:editor:contract:desktopTest
 
       # Scene document loading, export and the component reference page. The reference test fails
       # when a registered component or field has no row; it drifted while nothing ran it.
       - name: Sprite metadata, animation and scene runtime tests
-        run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
       # Mesh LOD: the attribute-aware simplifier, the MSFT_lod cooker and its round trip through the
       # glTF importer, the cookLods tool, the scene-free level selection, and the glTF scene path's
       # levels (#1185).
       - name: Mesh LOD tests
-        run: ./gradlew :awake:asset:mesh-lod:desktopTest :awake:asset:gltf:desktopTest :awake:asset:mesh-optimizer:test :awake:core:lod:desktopTest :awake:scene:gltf:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:asset:mesh-lod:desktopTest :awake:asset:gltf:desktopTest :awake:asset:mesh-optimizer:test :awake:core:lod:desktopTest :awake:scene:gltf:desktopTest
 
       # Cooked KTX2 textures: picking the cooked file the device takes, a model's images read from
       # their Basis Universal files, and a missing cooked file asked for once (#1211, #1621).
       - name: Cooked texture loader tests
-        run: ./gradlew :awake:asset:texture-ktx-loader:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:asset:texture-ktx-loader:desktopTest
 
       # The game UI canvas: its elements' input, drawing and zero-tolerance pixel baselines, in the
       # scene-free capability and its scene wrapper. Before this step it was only compiled here, so a
       # change to how it draws or routes a tap stayed green.
       - name: Game UI canvas tests
-        run: ./gradlew :awake:ui:canvas:desktopTest :awake:scene:canvas:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:ui:canvas:desktopTest :awake:scene:canvas:desktopTest
 
       # The committed font atlases and the run-time TTF/OTF loader, held against them: metrics,
       # layout, the distance field, a CFF fixture, corrupt input, and the same text drawn both ways.
       - name: Text and run-time font loading tests
         run: |
-          ./gradlew :awake:core:text:desktopTest
-          ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest --tests com.awakekt.awake.compose.testing.GradientBackgroundTest
+          scripts/gradle-retry.sh ./gradlew :awake:core:text:desktopTest
+          scripts/gradle-retry.sh ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest --tests com.awakekt.awake.compose.testing.GradientBackgroundTest
 
       # Every compose:ui and compose:foundation test, whole: a class no step named only ever compiled,
       # so #1765's gates ran nowhere and a test #1781 made stale stayed red on main unseen (#1592).
@@ -304,14 +307,14 @@ jobs:
       # text run's settle counts frames (#1764), placement causes are named (#1512), and a
       # subcomposition reads its parent's current locals (#1774).
       - name: Compose UI and foundation suites
-        run: ./gradlew :awake:compose:ui:desktopTest :awake:compose:foundation:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:compose:ui:desktopTest :awake:compose:foundation:desktopTest
 
       # Every other module whose tests no step ran whole: 51 suites, about 2,050 tests and a minute of
       # test time, all without a GPU (engine:window draws on this job's xvfb). A test class no step
       # runs only compiles, so it stays red unseen; `verifyCiTestCoverage` gates each of these (#1592).
       - name: Remaining module suites
         run: >-
-          ./gradlew
+          scripts/gradle-retry.sh ./gradlew
           :awake:compose:ui-testing:desktopTest
           :awake:engine:window:desktopTest
           :awake:ai:desktopTest
@@ -368,7 +371,7 @@ jobs:
       # under its per-node ceiling (#1621), and unchanged parent locals copy nothing (#1774).
       - name: Nameplate, measure and locals allocation gates
         run: >-
-          ./gradlew
+          scripts/gradle-retry.sh ./gradlew
           :awake:compose:runtime:desktopTest --tests com.awakekt.awake.compose.runtime.ParentLocalsAllocationTest
           --tests com.awakekt.awake.compose.runtime.StateLabelTest
           :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
@@ -379,7 +382,7 @@ jobs:
         run: |
           python3 tools/fonts-tooling/reference_layout.py --verify-inputs
           python3 tools/fonts-tooling/reference_cjk_layout.py --verify-inputs
-          ./gradlew :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.text.TextLayoutConformanceTest --tests com.awakekt.awake.compose.foundation.text.CjkLineBreakConformanceTest
+          scripts/gradle-retry.sh ./gradlew :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.text.TextLayoutConformanceTest --tests com.awakekt.awake.compose.foundation.text.CjkLineBreakConformanceTest
 
       - name: Upload text layout deviations
         if: always()
@@ -392,23 +395,23 @@ jobs:
       # String tables and their layers, ICU-style messages, CLDR plural rules, locale fallback, input
       # labels, the locale font hook, and the Compose glue that reads them.
       - name: Localization tests
-        run: ./gradlew :awake:core:localization:desktopTest :awake:compose:localization:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:localization:desktopTest :awake:compose:localization:desktopTest
 
       # Images a Compose UI asks for by asset path: loading, the cache, a reset and a missing file.
       - name: Compose asset image tests
-        run: ./gradlew :awake:compose:assets:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:compose:assets:desktopTest
 
       # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
       # cannot catch per-frame allocations or stale wrappers after World.clear().
       - name: ECS runtime and allocation tests
-        run: ./gradlew :awake:ecs:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:ecs:desktopTest
 
       # The render contract (render scale, quality policy, uniform layout and writers), the app
       # platform (GraphicsEngine lifecycle, per-frame render quality) and the app DSL: pure JVM
       # suites with no GPU. Until this step CI compiled them but never ran them (#1324). The host's
       # frame loops and frame-pacing arithmetic run here too (#1699).
       - name: Render contract, app platform, app DSL, UI compositor and frame loop tests
-        run: ./gradlew :awake:core:host:desktopTest :awake:engine:render:contract:desktopTest :awake:engine:platform:desktopTest :awake:engine:bootstrap:desktopTest :awake:engine:compose:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:host:desktopTest :awake:engine:render:contract:desktopTest :awake:engine:platform:desktopTest :awake:engine:bootstrap:desktopTest :awake:engine:compose:desktopTest
 
       # The particle library and its scene wrapper, the scene's rendering, world text and its scene
       # wrapper, the render pass logic, and the shaders they draw with: pure JVM suites with no GPU. `ParticleExposureTest` keeps the scene
@@ -417,7 +420,7 @@ jobs:
       # the rest of #387.
       - name: Core math, particle, scene rendering, render pass and shader tests
         run: >-
-          ./gradlew
+          scripts/gradle-retry.sh ./gradlew
           :awake:core:math:desktopTest
           :awake:core:spatial:desktopTest
           :awake:core:particles:desktopTest
@@ -437,7 +440,7 @@ jobs:
       # bindings must save byte for byte.
       - name: Scene binding processor and generated binding tests
         run: >-
-          ./gradlew
+          scripts/gradle-retry.sh ./gradlew
           :awake:scene:binding:processor:test
           :awake:scene:binding:desktopTest
           :awake:scene:scene-core:desktopTest
@@ -452,13 +455,13 @@ jobs:
           :awake:project:blueprint:desktopTest
 
       - name: Every wasmJs source set compiles
-        run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
+        run: scripts/gradle-retry.sh ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
 
       # The device tests run only on a schedule, on a device, so nothing on a PR compiled their
       # source sets: two docs sample tests that read LaunchParameters failed to compile there
       # from 14 Nov while every PR stayed green. This compiles each module's Android device tests.
       - name: Every Android device-test source set compiles
-        run: ./gradlew compileAndroidDeviceTest
+        run: scripts/gradle-retry.sh ./gradlew compileAndroidDeviceTest
 
       # hello-cube (retired) had a dedicated :androidApp wrapper module producing a real
       # installable APK, uploaded below as a regression artifact. ui-showcase only has a KMP
@@ -466,7 +469,7 @@ jobs:
       # builds the Android library AAR, not an installable APK -- a real gap versus hello-cube's
       # old coverage, left open until ui-showcase gets its own :androidApp wrapper.
       - name: Build Android demo APK (Vulkan JNI regression gate)
-        run: ./gradlew :samples:engine-showcase:androidApp:assembleDebug
+        run: scripts/gradle-retry.sh ./gradlew :samples:engine-showcase:androidApp:assembleDebug
 
       # Swappy (#1699) is linked from its static library into the Vulkan JNI library built just
       # above, for both ABIs: its entry points exported, Swappy's own symbols hidden, and no C++
@@ -475,12 +478,12 @@ jobs:
         run: scripts/swappy-symbols.sh awake/backend/vulkan/bindings/android-native/build/intermediates/cxx
 
       - name: Build desktop demo
-        run: ./gradlew :samples:ui-showcase:desktopJar
+        run: scripts/gradle-retry.sh ./gradlew :samples:ui-showcase:desktopJar
 
       # engine-showcase has complete multiplatform coverage across core ECS, physics, audio,
       # particles and navigation showcases.
       - name: Engine showcase sample (tests and desktop jar)
-        run: xvfb-run -a ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
+        run: xvfb-run -a scripts/gradle-retry.sh ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
 
       - name: Upload engine showcase test reports and MSAA probes
         if: always()
@@ -492,7 +495,7 @@ jobs:
             samples/engine-showcase/build/reports/msaa/
 
       - name: Build vulkan generator
-        run: ./gradlew :awake:backend:vulkan:generator:assemble
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:generator:assemble
 
   # Naga builds with cargo, not CMake, so unlike the native libraries above it has no reason
   # to skip Windows for want of a CI job. The published shader-compiler-desktop jar carried only
@@ -537,7 +540,7 @@ jobs:
           target-path: awake/asset/shader-compiler/rust-native/target
 
       - name: Build libawake_naga for this host
-        run: ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
+        run: scripts/gradle-retry.sh ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
 
       - name: Verify the native library was packaged
         shell: bash
@@ -572,7 +575,9 @@ jobs:
       - uses: ./.github/actions/install-vulkan-sdk-windows
 
       - name: Build libawake-window and libawake-vulkan
-        run: ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative
+        # Bash, not PowerShell, so the step runs Gradle through the retry wrapper (#1592).
+        shell: bash
+        run: scripts/gradle-retry.sh ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative
 
       - name: Verify the native libraries were packaged
         shell: bash
@@ -632,29 +637,29 @@ jobs:
         uses: ./.github/actions/install-vulkan-ndk-linux
 
       - name: Build desktop native Vulkan library
-        run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
 
       # Conformance for the published vulkan-kmp bindings: their own desktop suite
       # (VulkanDesktopNativeSmokeTest and friends) ran nowhere in CI before this step --
       # the renderer's suite exercised them only indirectly.
       - name: vulkan-kmp bindings conformance (lavapipe)
-        run: ./gradlew :awake:backend:vulkan:bindings:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:bindings:desktopTest
 
       - name: Desktop Vulkan smoke test (real vkCreateInstance via lavapipe)
-        run: ./gradlew :awake:backend:vulkan:desktopTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:desktopTest
 
       # #1676: the scene pass drawn into one target from two command buffers, and a scene with an
       # offscreen View and a scaled main target, under the validation layer's synchronization
       # validation (vulkan-validationlayers, installed above). Any SYNC-HAZARD fails it.
       - name: Vulkan synchronization validation (lavapipe)
         if: ${{ !cancelled() }}
-        run: ./gradlew :awake:backend:vulkan:desktopSyncValidationTest :awake:engine:render:parity:desktopSyncValidationTest --stacktrace
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:desktopSyncValidationTest :awake:engine:render:parity:desktopSyncValidationTest --stacktrace
 
       # #1688: presents through a real GLFW window, VkSurfaceKHR and swapchain on lavapipe's X11 WSI,
       # and rebuilds the swapchain on a resize: the present path no headless test reaches.
       - name: Vulkan windowed present (lavapipe, xvfb)
         if: ${{ !cancelled() }}
-        run: xvfb-run -a ./gradlew :awake:backend:vulkan:desktopWindowedTest --stacktrace
+        run: xvfb-run -a scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:desktopWindowedTest --stacktrace
 
       # wgpu-native needs a GLFW surface to select its adapter, even when rendering offscreen.
       # Xvfb supplies the display; Mesa's lavapipe executes both backends on the hosted runner.
@@ -662,11 +667,11 @@ jobs:
       # compares its offscreen pixels with geometry alone, and checks that depth fog ran.
       - name: WebGPU production-plan and backend pixel tests (wgpu-native)
         if: ${{ !cancelled() }}
-        run: xvfb-run -a ./gradlew :awake:backend:webgpu:desktopTest --stacktrace
+        run: xvfb-run -a scripts/gradle-retry.sh ./gradlew :awake:backend:webgpu:desktopTest --stacktrace
 
       - name: Vulkan and WebGPU render parity tests
         if: ${{ !cancelled() }}
-        run: xvfb-run -a ./gradlew :awake:engine:render:parity:desktopTest --stacktrace
+        run: xvfb-run -a scripts/gradle-retry.sh ./gradlew :awake:engine:render:parity:desktopTest --stacktrace
 
       # The awake command line: its GPU-free commands, and `awake render` playing a project headless on
       # both backends. Here because its classpath carries the backends this job builds natives for.
@@ -676,7 +681,7 @@ jobs:
       - name: awake command line, and awake render on Vulkan and WebGPU
         if: ${{ !cancelled() }}
         timeout-minutes: 20
-        run: xvfb-run -a ./gradlew :awake:project:cli:test :awake:project:cli:renderTest --stacktrace
+        run: xvfb-run -a scripts/gradle-retry.sh ./gradlew :awake:project:cli:test :awake:project:cli:renderTest --stacktrace
 
       - name: Upload graphics test reports and parity images
         if: always()
@@ -781,7 +786,7 @@ jobs:
       - uses: ./.github/actions/ios-native
 
       - name: Build Naga for the iOS simulator
-        run: ./gradlew :awake:asset:shader-compiler:buildNagaIosSimulatorArm64
+        run: scripts/gradle-retry.sh ./gradlew :awake:asset:shader-compiler:buildNagaIosSimulatorArm64
 
       - name: Verify Naga native library
         shell: bash
@@ -791,7 +796,7 @@ jobs:
       # device slices the ios-native action just built, which Verify did on Intel before it moved
       # to Linux.
       - name: iOS device cinterop and compile (MoltenVK, JoltC)
-        run: ./gradlew :awake:backend:vulkan:bindings:compileKotlinIosArm64 :awake:backend:jolt:compileKotlinIosArm64
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:vulkan:bindings:compileKotlinIosArm64 :awake:backend:jolt:compileKotlinIosArm64
 
       # One Gradle call for every module's simulator tests: each separate call spent ~30s
       # configuring the build again. --continue still runs and reports every module when one
@@ -800,7 +805,7 @@ jobs:
       # and the window module.
       - name: iOS simulator tests
         run: >-
-          ./gradlew --continue
+          scripts/gradle-retry.sh ./gradlew --continue
           :awake:backend:jolt:iosSimulatorArm64Test
           :awake:scene:physics:iosSimulatorArm64Test
           :awake:ecs:iosSimulatorArm64Test
@@ -814,7 +819,7 @@ jobs:
       # and dev/** only, where a failure still names the commit that caused it.
       - name: Engine showcase iOS simulator tests
         if: github.event_name == 'push'
-        run: ./gradlew :samples:engine-showcase:iosSimulatorArm64Test
+        run: scripts/gradle-retry.sh ./gradlew :samples:engine-showcase:iosSimulatorArm64Test
 
       # After the test links, so the entry holds the library caches they built.
       - name: Save Kotlin/Native
@@ -889,26 +894,26 @@ jobs:
           cache-provider: basic
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
-        run: ./gradlew :awake:core:audio:wasmJsBrowserTest :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:audio:wasmJsBrowserTest :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
 
       - name: ECS and sprite browser tests
-        run: ./gradlew :awake:ecs:wasmJsBrowserTest :awake:asset:sprite:wasmJsBrowserTest :awake:scene:scene2d:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:ecs:wasmJsBrowserTest :awake:asset:sprite:wasmJsBrowserTest :awake:scene:scene2d:wasmJsBrowserTest
 
       # Where a replanned frame's heap goes on wasm, part by part (#1621). Filtered: scene3d's common
       # tests run on the JVM, and this step only wants the browser's own heap figure.
       - name: Scene planning heap breakdown (browser)
-        run: ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*" --tests "*PlanningLoopHeap*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:scene:scene3d:wasmJsBrowserTest --tests "*PlanningHeapBreakdown*" --tests "*PlanningLoopHeap*"
 
       # How much of a HUD a wasm frame measures, composes and draws, stage by stage, and which piece of
       # its layout allocates measuring or placing (#1621), against
       # the JVM twins' figures. Filtered: compose:game's common tests run on the JVM too.
       - name: HUD measure scope (browser)
-        run: ./gradlew :awake:compose:game:wasmJsBrowserTest --tests "*HudMeasureScope*" --tests "*LayoutHeapBreakdown*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:compose:game:wasmJsBrowserTest --tests "*HudMeasureScope*" --tests "*LayoutHeapBreakdown*"
 
       # The retained UI runtime's common tests in a browser: Kotlin/Wasm's collections are not the
       # JVM's, and a removed map entry that the JVM still reads throws there (SubcomposeForgetTest).
       - name: Compose UI runtime (browser)
-        run: ./gradlew :awake:compose:ui:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:compose:ui:wasmJsBrowserTest
 
       # The log names a failed browser test; its result file holds why, with the browser's own output.
       - name: Upload the planning heap tests' results
@@ -924,21 +929,21 @@ jobs:
       # Counting a canvas element's changes, which a host that skips unchanged frames polls, grows no
       # heap in a browser; the log keeps the figure and the poll's time for 1,000 elements (#1512).
       - name: Canvas revision heap (browser)
-        run: ./gradlew :awake:ui:canvas:wasmJsBrowserTest --tests "*CanvasRevision*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:ui:canvas:wasmJsBrowserTest --tests "*CanvasRevision*"
 
       # What the check SceneCanvas gives a skipping host costs in a browser, at 300, 1,000 and 3,000
       # elements; the log keeps the figures (#1512).
       - name: SceneCanvas skip check (browser)
-        run: ./gradlew :awake:scene:canvas:wasmJsBrowserTest --tests "*SceneCanvasPoll*" --tests "*SceneCanvasBindPoll*" --tests "*FollowerHudBrowser*" --tests "*FollowerHeapBreakdown*" --tests "*FollowerStageHeap*" :awake:compose:state:wasmJsBrowserTest --tests "*SelectedPollBrowser*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:scene:canvas:wasmJsBrowserTest --tests "*SceneCanvasPoll*" --tests "*SceneCanvasBindPoll*" --tests "*FollowerHudBrowser*" --tests "*FollowerHeapBreakdown*" --tests "*FollowerStageHeap*" :awake:compose:state:wasmJsBrowserTest --tests "*SelectedPollBrowser*"
 
       # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
       - name: Font loading browser tests
-        run: ./gradlew :awake:core:text:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:text:wasmJsBrowserTest
 
       # The browser's createBitmap against generated PNGs (same pixels as desktop, bit for bit with
       # the old decode, no canvas per texture), and the before/after timing of a 1024x1024 decode.
       - name: Image decode browser tests
-        run: ./gradlew :awake:core:image:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:image:wasmJsBrowserTest
 
       # A texture copied from a browser image on the GPU (copyExternalImageToTexture, GPU mips) against
       # the CPU decode's upload, texel by texel, under SwiftShader WebGPU, and the main-thread timing of
@@ -950,12 +955,12 @@ jobs:
       # and a re-recording bundle creating no buffer (#1621).
       # Only these classes: the backend's draw-preparation benchmark is too long for this job.
       - name: GPU texture upload and render bundle browser tests
-        run: ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*" --tests "*PlanningStageHeap*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:webgpu:wasmJsBrowserTest --tests "*ExternalImageUpload*" --tests "*ExternalImageMipSkip*" --tests "*TextureLoaders*" --tests "*GltfTextureLoad*" --tests "*ShaderEffectImage*" --tests "*RenderBundleBrowser*" --tests "*BundleArgsPoolBrowser*" --tests "*MovingCameraFrameBudget*" --tests "*MovingCameraStageHeap*" --tests "*PrepareHeapBreakdown*" --tests "*PlanningStageHeap*"
 
       # A 3,000-draw frame's compile in the browser, each step on its own, and what a call that
       # leaves parameters to their defaults allocates, by parameter shape (#1621).
       - name: Compile heap breakdown (browser)
-        run: ./gradlew :awake:engine:render:passes:wasmJsBrowserTest --tests "*CompileHeapBreakdown*" --tests "*InstancedCompileHeap*" --tests "*CompileShapeHeap*" --tests "*DefaultArgumentShape*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:engine:render:passes:wasmJsBrowserTest --tests "*CompileHeapBreakdown*" --tests "*InstancedCompileHeap*" --tests "*CompileShapeHeap*" --tests "*DefaultArgumentShape*"
 
       - name: Upload the browser render tests' results
         if: always()
@@ -968,42 +973,42 @@ jobs:
       # The vendored Basis Universal transcoder, loaded the way an app loads it, transcoding a cooked
       # KTX2 texture to RGBA8 and to every block format it offers.
       - name: KTX2 transcoder browser tests
-        run: ./gradlew :awake:asset:texture-ktx-loader:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:asset:texture-ktx-loader:wasmJsBrowserTest
 
       # Code that only runs in a browser: copying a fetched response into a ByteArray, the
       # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content
       # transport's real request. Desktop tests can't reach it.
       - name: Project loading browser tests
-        run: ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest :awake:project:transport-browser:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest :awake:project:transport-browser:wasmJsBrowserTest
 
       # Plugin signature checks through WebCrypto and archive inflation through DecompressionStream,
       # both asynchronous and both browser-only.
       - name: Plugin archive browser tests
-        run: ./gradlew :awake:plugin-archive:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:plugin-archive:wasmJsBrowserTest
 
       # The only bundle that pulls in Ktor's JS client and kotlinx-io's Node helpers. A toolchain
       # bump once left a bare `import.meta` in it that no build caught, and the page stopped loading.
       - name: Network demo browser tests
-        run: ./gradlew :samples:net-demo:wasmJsBrowserTest
+        run: scripts/gradle-retry.sh ./gradlew :samples:net-demo:wasmJsBrowserTest
 
       # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
       # binding executing the same commonTest suite as desktop, on the runner already here --
       # it caught a body filter comparing an Emscripten pointer to a body id, which passed on
       # every other target.
       - name: Physics backend verification (wasmJs)
-        run: ./gradlew :awake:backend:jolt:wasmJsTest :awake:scene:physics:wasmJsTest
+        run: scripts/gradle-retry.sh ./gradlew :awake:backend:jolt:wasmJsTest :awake:scene:physics:wasmJsTest
 
       # Scene asset prewarm (#1316) on wasmJs: the same commonTest suites as desktop, including a glTF
       # model decoded in the session's scope and adopted on the frame thread, where wasm has one
       # thread and Dispatchers.Default is the browser's event loop. Every test shares one page and so
       # one fixed-size Jolt heap: a test that leaves a physics world alive fails the ones after it.
       - name: Scene prewarm verification (wasmJs)
-        run: ./gradlew --continue :awake:scene:runtime:wasmJsTest :awake:project:runtime:wasmJsTest
+        run: scripts/gradle-retry.sh ./gradlew --continue :awake:scene:runtime:wasmJsTest :awake:project:runtime:wasmJsTest
 
       # A lazy canvas image (#1448) on wasmJs: a hidden window's image is not fetched until the
       # window shows, then read once in the browser's event loop and drawn.
       - name: Lazy canvas image verification (wasmJs)
-        run: ./gradlew :awake:compose:assets:wasmJsBrowserTest --tests "*AssetImageMap*" :awake:scene:canvas:wasmJsBrowserTest --tests "*LazyCanvasImage*"
+        run: scripts/gradle-retry.sh ./gradlew :awake:compose:assets:wasmJsBrowserTest --tests "*AssetImageMap*" :awake:scene:canvas:wasmJsBrowserTest --tests "*LazyCanvasImage*"
 
   # The WebGPU release pin is built only from a commit tagged v<release>, and on the tag run its
   # Consumer gate builds it before the release can publish. Without this job a tag would be the
@@ -1038,7 +1043,7 @@ jobs:
       - name: Tag this commit as the next release, locally
         id: release
         run: |
-          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" && v == "" { v = $2 } END { print v }')
+          version=$(scripts/gradle-retry.sh ./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" && v == "" { v = $2 } END { print v }')
           base="${version%-SNAPSHOT}"
           git tag -f "v$base"
           echo "version=$base" >> "$GITHUB_OUTPUT"
@@ -1049,7 +1054,7 @@ jobs:
       # The throwaway release is not on Central, so the wait itself cannot run; this checks that the
       # task the script calls next resolves with the pin's arguments.
       - name: Resolve the wait for Core on Central
-        run: ./gradlew waitForCoreCentral -Pawake.waitForCoreVersion="${{ steps.release.outputs.version }}" --dry-run --no-configuration-cache
+        run: scripts/gradle-retry.sh ./gradlew waitForCoreCentral -Pawake.waitForCoreVersion="${{ steps.release.outputs.version }}" --dry-run --no-configuration-cache
 
   # awake-plugins built against this change's Core, so a Core change that breaks the plugins or makes
   # them allocate more fails here, before a release. Core 0.28.0 shipped a canvas read that allocated
