@@ -16,6 +16,8 @@ import com.awakekt.awake.net.server.phase.AuthResult
 import com.awakekt.awake.net.server.phase.Authenticator
 import com.awakekt.awake.net.server.phase.PrePlayHandler
 import com.awakekt.awake.net.server.phase.PrePlayResult
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -180,14 +182,7 @@ class GameServerHostTest {
             }
 
             val iterations = 1000
-            val allocatedBefore = bean.currentThreadAllocatedBytes
-            repeat(iterations) {
-                host.step(0.033f)
-            }
-            val allocatedAfter = bean.currentThreadAllocatedBytes
-            val allocatedBytesPerTick = (allocatedAfter - allocatedBefore) / iterations
-
-            assertEquals(0L, allocatedBytesPerTick, "Steady host step ticks must allocate 0 bytes per tick in steady state, but allocated $allocatedBytesPerTick bytes/tick.")
+            assertAllocatesNothing(readAllocation(iterations) { repeat(iterations) { host.step(0.033f) } }, "a steady host step tick")
         }
 
         host.close()

@@ -8,6 +8,8 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
@@ -63,10 +65,7 @@ class NamePlateFrameCostProbeTest {
         val limits = listOf(CanvasFollowLimit(max = 60, rankBy = CanvasFollowRank.Distance))
         repeat(WARMUP_FRAMES) { tree.planFollowers(1280f, 720f, 1f, limits) }
 
-        val start = allocated()
-        repeat(MEASURED_FRAMES) { tree.planFollowers(1280f, 720f, 1f, limits) }
-
-        assertEquals(0L, (allocated() - start) / MEASURED_FRAMES, "bytes per planned frame")
+        assertAllocatesNothing(readAllocation(MEASURED_FRAMES) { repeat(MEASURED_FRAMES) { tree.planFollowers(1280f, 720f, 1f, limits) } }, "a planned frame")
     }
 
     @Test

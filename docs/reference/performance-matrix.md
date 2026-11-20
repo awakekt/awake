@@ -128,6 +128,26 @@ function object. Every other JVM allocation test in the repository still passes 
 analysis off, except `net-demo`'s snapshot decode probe, which sees one 48-byte object in a window
 of 100,000 decodes: not a per-decode cost, but not the exact zero it asserts either.
 
+### Writing a JVM allocation gate
+
+A gate reads the calling thread's allocated bytes through `readAllocation` (`test-support/allocation`,
+compiled into every module's `desktopTest` by the library plugin), never `ThreadMXBean` itself:
+
+```kotlin
+repeat(WARMUP_FRAMES) { frame() }
+assertAllocatesNothing(readAllocation(FRAMES) { repeat(FRAMES) { frame() } }, "a still frame")
+```
+
+It runs the window once to warm up, then five times, and judges the median window divided by its
+units. One window can catch an allocation of the test thread's that is not the work's, which failed
+single-window gates in CI's loaded suite step (#1592). An allocation the work makes every frame is in
+every window, so the median keeps it: an `IntArray` a frame reads 24 B per unit in all five.
+`assertAllocatesAtMost` holds a ceiling instead of zero.
+
+`verifyAllocationGates`, part of `awakeVerify`, fails a test that reads the counter itself unless
+it is one of the files recorded in `test-support/allocation/direct-readers.txt`, which read it for
+slopes, breakdowns or windows of their own. That list only shrinks.
+
 ## 3. Execution & Verification Strategy
 
 Awake uses a 3-tier strategy to maintain high performance without slowing down daily development:

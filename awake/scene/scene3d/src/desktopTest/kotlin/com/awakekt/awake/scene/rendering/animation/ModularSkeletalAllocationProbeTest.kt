@@ -18,8 +18,8 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.assertAllocatesNothing
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -40,10 +40,7 @@ class ModularSkeletalAllocationProbeTest {
         val world = crowd()
         repeat(WARMUP_FRAMES) { system.update(world, STEP) }
 
-        val start = allocated()
-        repeat(MEASURED_FRAMES) { system.update(world, STEP) }
-
-        assertEquals(0L, (allocated() - start) / MEASURED_FRAMES, "bytes per frame")
+        assertAllocatesNothing(readAllocation(MEASURED_FRAMES) { repeat(MEASURED_FRAMES) { system.update(world, STEP) } }, "a frame")
     }
 
     private fun crowd(): World {
@@ -68,9 +65,6 @@ class ModularSkeletalAllocationProbeTest {
         }
         return world
     }
-
-    private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-    private fun allocated(): Long = threadBean.currentThreadAllocatedBytes
 
     private companion object {
         const val WALK = "walk"

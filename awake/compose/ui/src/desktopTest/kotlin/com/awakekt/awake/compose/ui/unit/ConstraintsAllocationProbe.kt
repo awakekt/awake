@@ -5,8 +5,7 @@
  */
 package com.awakekt.awake.compose.ui.unit
 
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -79,11 +78,8 @@ class ConstraintsAllocationProbe {
         }
     }
 
-    private inline fun measure(block: () -> Unit): Long {
-        val before = allocatedBytes()
-        block()
-        return allocatedBytes() - before
-    }
+    /** The median of several runs of [block]: one run can catch an allocation that is not its own (#1592). */
+    private inline fun measure(block: () -> Unit): Long = readAllocation(1) { block() }.perUnit
 
     private fun Double.format(): String = ((this * 100).toInt() / 100.0).toString()
 
@@ -111,9 +107,5 @@ class ConstraintsAllocationProbe {
         const val WARM_UP_ROUNDS = 20
         const val PADDING = 16
         const val RESET_BELOW = 64
-
-        private val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
-
-        fun allocatedBytes(): Long = threads.currentThreadAllocatedBytes
     }
 }
