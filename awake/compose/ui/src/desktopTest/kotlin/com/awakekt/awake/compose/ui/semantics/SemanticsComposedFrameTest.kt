@@ -13,8 +13,7 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.unit.dp
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.test.Test
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -43,13 +42,7 @@ class SemanticsComposedFrameTest {
         val host = ComposeHost()
         fun frame() = host.frame(input) { content(tagged, merging) }
         repeat(WARMUP) { frame() }
-        val bean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-        val windows = LongArray(5) {
-            val start = bean.currentThreadAllocatedBytes
-            repeat(WINDOW) { frame() }
-            (bean.currentThreadAllocatedBytes - start) / WINDOW
-        }
-        return windows.sorted()[2]
+        return readAllocation(WINDOW) { repeat(WINDOW) { frame() } }.perUnit
     }
 
     context(_: Composer)
