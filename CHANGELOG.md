@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.61.0] - 2026-11-20
+
+### Changed
+
+- A glTF `emissiveTexture` now masks the emissive factor on skinned meshes, as it already did on static ones, so a creature with one painted emblem glows on the emblem instead of all over. With no emissive texture the factor stands alone, as glTF specifies: **a textured mesh with an emissive factor and no emissive texture now glows by the factor**, where before it didn't glow at all (skinned meshes already did). A mesh whose emissive factor is 0, the default, renders as before (#1829).
+
+### Fixed
+
+- `IndexedAssetSource` no longer fills the heap as a world loads its content bundles. Reads that each needed a different bundle used to fetch them all at once, with no limit, and a fetch held its bundle twice (an encrypted one four times). Now at most two bundles are fetched at once, by reads and `prefetch` alike (`prefetch` ran up to six), and each is held once, its members copied out as they are cached or read. 200 small bundles read at once with no cache peak at 18 MiB of retained heap, down from 139 MiB, and an 80 MiB bundle written to a cache at 83 MiB, down from 209 MiB (336 MiB sealed). `BundleMemoryLimits`, a new parameter of the constructor and of `open`, sets how many bundles are fetched at once (a host with heap to spare and a slow link can raise it; a phone can set 1) and how many bytes of members are kept without a cache (#1619).
+- `Modifier.testTag` builds its semantics configuration only when the node's tag changes, not at every composition, so a recomposed frame of tagged nodes allocates 39 B a node for their tags, down from 111 B (#1742).
+
 ## [0.60.0] - 2026-11-20
 
 ### Added
