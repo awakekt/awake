@@ -312,6 +312,7 @@ jobs:
         run: >-
           ./gradlew
           :awake:compose:runtime:desktopTest --tests com.awakekt.awake.compose.runtime.ParentLocalsAllocationTest
+          --tests com.awakekt.awake.compose.runtime.StateLabelTest
           :awake:compose:game:desktopTest --tests com.awakekt.awake.compose.game.NameplateAllocationGateTest
           --tests com.awakekt.awake.compose.game.MeasureAllocationTest
 

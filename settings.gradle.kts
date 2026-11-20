@@ -145,10 +145,13 @@ include(":samples:net-demo")
 pluginManagement {
     includeBuild("build-logic")
     repositories {
-        gradlePluginPortal()
-        // Google before any other repository: AGP's plugin markers are only there, and a repository
-        // listed before it that fails to answer (rather than answering 404) stops the search there.
+        // A repository that fails to answer, rather than answering 404, stops the search there: the
+        // Plugin Portal listed first failed builds whose plugins Maven Central or Google serve (#1592).
+        // So Google (AGP's markers are only there) and Central first, and the Portal last, for the
+        // plugins only it serves, such as foojay's.
         google()
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 plugins {

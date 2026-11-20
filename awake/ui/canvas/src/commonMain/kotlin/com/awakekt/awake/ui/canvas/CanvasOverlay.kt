@@ -480,8 +480,8 @@ internal val CanvasAnchor.alignment: Alignment
  * smaller box, or resized -- composes again at it in the same frame (`ComposeHost.placementRecompositions`).
  */
 internal class CanvasBoxSize {
-    private val widthState = mutableStateOf(UNPLACED)
-    private val heightState = mutableStateOf(UNPLACED)
+    private val widthState = mutableStateOf(UNPLACED, "CanvasBoxSize.width")
+    private val heightState = mutableStateOf(UNPLACED, "CanvasBoxSize.height")
     private var usedWidth = UNPLACED
     private var usedHeight = UNPLACED
 
