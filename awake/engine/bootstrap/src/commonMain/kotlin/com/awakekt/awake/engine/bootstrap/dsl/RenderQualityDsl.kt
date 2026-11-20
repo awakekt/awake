@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.bootstrap.dsl
 
 import com.awakekt.awake.engine.platform.quality.RenderQualityPersistence
 import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
@@ -38,6 +39,12 @@ class RenderQualityDsl internal constructor() {
      * [RenderQualitySettings.shadowDepthFormat]. Read once, when the engine starts.
      */
     var shadowDepthFormat: ShadowDepthFormat? = null
+
+    /**
+     * The scene's anti-aliasing, or `null` for the render plan's own; see
+     * [RenderQualitySettings.antiAliasing]. Multisampled modes are read once, when the engine starts.
+     */
+    var antiAliasing: AntiAliasing? = null
 }
 
 /**
@@ -56,6 +63,7 @@ fun AppSpecDsl.renderQuality(block: RenderQualityDsl.() -> Unit = {}): RenderQua
     val settings = RenderQualitySettings(config.persistence, config.budgets, config.initial)
     settings.dynamicResolution = config.dynamicResolution
     settings.shadowDepthFormat = config.shadowDepthFormat
+    settings.antiAliasing = config.antiAliasing
     service(RenderQualitySettings::class, settings)
     return settings
 }

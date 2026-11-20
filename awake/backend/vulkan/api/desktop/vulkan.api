@@ -422,6 +422,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
+	public fun getAntiAliasing ()Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public final fun getCapabilities ()Lcom/awakekt/awake/vulkan/device/DeviceCapabilities;
 	public fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
@@ -445,6 +446,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
+	public fun getSupportedAntiAliasing ()Ljava/util/Set;
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I

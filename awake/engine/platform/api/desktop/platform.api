@@ -1,5 +1,6 @@
 public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awakekt/awake/engine/platform/WindowLifecycle {
 	public fun <init> (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)V
+	protected final fun antiAliasingFor (Lcom/awakekt/awake/render/pipeline/MultisampleState;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public final fun create (Ljava/lang/Object;)V
 	protected abstract fun createBackendResources (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected abstract fun destroyBackend ()V
@@ -383,6 +384,7 @@ public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettin
 	public final fun applyTo (Lcom/awakekt/awake/render/renderer/Renderer;Z)V
 	public final fun applyTo (Lcom/awakekt/awake/render/renderer/Renderer;ZF)V
 	public static synthetic fun applyTo$default (Lcom/awakekt/awake/engine/platform/quality/RenderQualitySettings;Lcom/awakekt/awake/render/renderer/Renderer;ZILjava/lang/Object;)V
+	public final fun getAntiAliasing ()Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public final fun getBudgets ()Lcom/awakekt/awake/render/renderer/RenderQualityBudgets;
 	public final fun getDynamicResolution ()Lcom/awakekt/awake/render/renderer/DynamicResolution;
 	public final fun getDynamicResolutionStats ()Lcom/awakekt/awake/render/renderer/DynamicResolutionStats;
@@ -391,6 +393,7 @@ public final class com/awakekt/awake/engine/platform/quality/RenderQualitySettin
 	public final fun getShadowBudgetOverride ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public final fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public final fun select (Lcom/awakekt/awake/render/renderer/RenderQuality;)V
+	public final fun setAntiAliasing (Lcom/awakekt/awake/render/renderer/AntiAliasing;)V
 	public final fun setDynamicResolution (Lcom/awakekt/awake/render/renderer/DynamicResolution;)V
 	public final fun setEffectQualityOverride (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
 	public final fun setShadowBudgetOverride (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V

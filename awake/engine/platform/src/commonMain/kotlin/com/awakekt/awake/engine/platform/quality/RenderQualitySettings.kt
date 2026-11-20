@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.platform.quality
 
 import com.awakekt.awake.render.pipeline.EffectQuality
+import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.DynamicResolutionController
 import com.awakekt.awake.render.renderer.DynamicResolutionStats
@@ -85,6 +86,15 @@ class RenderQualitySettings(
      * [ShadowDepthFormat.Default], and [Renderer.shadowDepthFormat] says which it used.
      */
     var shadowDepthFormat: ShadowDepthFormat? = null
+
+    /**
+     * The scene's anti-aliasing, or `null` (the default) for the render plan's own sample count
+     * (#1791). The engine reads the multisampled modes once, as it builds its GPU resources, so a
+     * settings screen offering them says they apply on the next start. A mode the device lacks resolves
+     * to the nearest cheaper one ([AntiAliasing.resolve]); [Renderer.supportedAntiAliasing] lists what
+     * it offers and [Renderer.antiAliasing] says which mode is in effect.
+     */
+    var antiAliasing: AntiAliasing? = null
 
     /**
      * How [RenderQuality.Auto] moves the scene's resolution to hold a frame rate (#1688), or `null` for
