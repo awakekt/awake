@@ -153,8 +153,10 @@ public final class com/awakekt/awake/compose/runtime/Slot : java/lang/Enum {
 
 public final class com/awakekt/awake/compose/runtime/SnapshotMutableState : com/awakekt/awake/compose/runtime/MutableState {
 	public fun <init> (Ljava/lang/Object;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
 	public fun component1 ()Ljava/lang/Object;
 	public fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun getLabel ()Ljava/lang/String;
 	public fun getValue ()Ljava/lang/Object;
 	public fun setValue (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
@@ -167,6 +169,7 @@ public abstract interface class com/awakekt/awake/compose/runtime/State {
 public final class com/awakekt/awake/compose/runtime/StateKt {
 	public static final fun getValue (Lcom/awakekt/awake/compose/runtime/State;Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
 	public static final fun mutableStateOf (Ljava/lang/Object;)Lcom/awakekt/awake/compose/runtime/MutableState;
+	public static final fun mutableStateOf (Ljava/lang/Object;Ljava/lang/String;)Lcom/awakekt/awake/compose/runtime/MutableState;
 	public static final fun setValue (Lcom/awakekt/awake/compose/runtime/MutableState;Ljava/lang/Object;Lkotlin/reflect/KProperty;Ljava/lang/Object;)V
 }
 
