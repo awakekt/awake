@@ -9,8 +9,6 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.TextureRegion
-import kotlin.math.ceil
-import kotlin.math.min
 import kotlin.math.round
 
 /**
@@ -178,8 +176,9 @@ private fun snappedCut(line: Int, start: Float, size: Float, near: Float, far: F
 
 /**
  * Draws the source pixels [u0]..[u1], [v0]..[v1] over [x0]..[x1], [y0]..[y1]: stretched, or
- * repeated at the fill's size per source pixel along an axis that repeats. Loose floats, as `drawGlyph`
- * takes them, so a fill allocates nothing beyond the regions it draws.
+ * repeated at the fill's size per source pixel along an axis that repeats. However many times it
+ * repeats, it is one piece (#1795): the repeats are texture coordinates wrapping inside the region,
+ * not a draw each.
  */
 @Suppress("LongParameterList")
 private fun DrawScope.drawTiles(
@@ -197,38 +196,18 @@ private fun DrawScope.drawTiles(
 ) {
     val width = x1 - x0
     val height = y1 - y0
-    val srcWidth = u1 - u0
-    val srcHeight = v1 - v0
     val unit = sourcePixel(fill)
-    val tileWidth = if (repeatX) srcWidth * unit else width
-    val tileHeight = if (repeatY) srcHeight * unit else height
+    val tileWidth = if (repeatX) (u1 - u0) * unit else width
+    val tileHeight = if (repeatY) (v1 - v0) * unit else height
     if (minOf(width, height, tileWidth, tileHeight) <= 0f) return
     val imageWidth = fill.image.width.toFloat()
     val imageHeight = fill.image.height.toFloat()
-    for (row in 0 until tiles(height, tileHeight)) {
-        val top = y0 + row * tileHeight
-        val bottom = min(top + tileHeight, y1)
-        for (column in 0 until tiles(width, tileWidth)) {
-            val left = x0 + column * tileWidth
-            val right = min(left + tileWidth, x1)
-            // A tile cut short by the span's end shows only that much of its source.
-            val region = TextureRegion(
-                u0 / imageWidth,
-                v0 / imageHeight,
-                (u0 + srcWidth * (right - left) / tileWidth) / imageWidth,
-                (v0 + srcHeight * (bottom - top) / tileHeight) / imageHeight,
-            )
-            val x = round(left)
-            val y = round(top)
-            val w = round(right) - x
-            val h = round(bottom) - y
-            if (w > 0f && h > 0f) drawTexture(fill.image, x, y, w, h, region, fill.tint, fill.filterQuality)
-        }
+    val region = TextureRegion(u0 / imageWidth, v0 / imageHeight, u1 / imageWidth, v1 / imageHeight)
+    val repeatsX = width / tileWidth
+    val repeatsY = height / tileHeight
+    if (repeatsX == 1f && repeatsY == 1f) {
+        drawTexture(fill.image, x0, y0, width, height, region, fill.tint, fill.filterQuality)
+    } else {
+        drawTextureRepeated(fill.image, x0, y0, width, height, region, repeatsX, repeatsY, fill.tint, fill.filterQuality)
     }
 }
-
-/** How many tiles of [tile] cover [span], the last one cut short; rounding left over is not a tile. */
-private fun tiles(span: Float, tile: Float): Int = ceil((span - MIN_TILE) / tile).toInt()
-
-/** Less than this of a span is rounding left over from adding tiles, not a tile. */
-private const val MIN_TILE = 0.01f

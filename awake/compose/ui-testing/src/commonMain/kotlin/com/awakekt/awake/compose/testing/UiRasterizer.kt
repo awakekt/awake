@@ -186,6 +186,13 @@ private fun unrotatedSample(px: Int, py: Int, centerX: Float, centerY: Float, co
     return DrawPoint(dx * cosine - dy * sine + w / 2f, dx * sine + dy * cosine + h / 2f)
 }
 
+/** Where fraction [t] of a quad lands in a region repeated [repeat] times across it, as the UI texture shader wraps it. */
+private fun repeated(t: Float, repeat: Float): Float {
+    if (repeat == 1f) return t
+    val unwrapped = t * repeat
+    return unwrapped - floor(unwrapped)
+}
+
 /** Whether this point falls inside a rect of [w] by [h] starting at its own origin. */
 private fun DrawPoint.isWithin(w: Float, h: Float): Boolean {
     if (x < 0f || x >= w) return false
@@ -335,6 +342,8 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         tint: Color = Color.White,
         premultiplied: Boolean = false,
         blendMode: BlendMode = BlendMode.SourceOver,
+        repeatX: Float = 1f,
+        repeatY: Float = 1f,
     ) {
         if (w <= 0f || h <= 0f) return
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
@@ -344,7 +353,9 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         for (py in y0 until y1) {
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                val sampled = sampleImage(image, region, tint, alpha, (px + 0.5f - x) / w, (py + 0.5f - y) / h, premultiplied)
+                val u = repeated((px + 0.5f - x) / w, repeatX)
+                val v = repeated((py + 0.5f - y) / h, repeatY)
+                val sampled = sampleImage(image, region, tint, alpha, u, v, premultiplied)
                 blendWithMode(px, py, sampled, blendMode)
             }
         }
@@ -370,9 +381,11 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
         tint: Color = Color.White,
         premultiplied: Boolean = false,
         blendMode: BlendMode = BlendMode.SourceOver,
+        repeatX: Float = 1f,
+        repeatY: Float = 1f,
     ) {
         if (rotationDegrees == 0f) {
-            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode)
+            fillImage(x, y, w, h, image, alpha, region, tint, premultiplied, blendMode, repeatX, repeatY)
             return
         }
         if (w <= 0f || h <= 0f) return
@@ -1072,6 +1085,8 @@ private fun List<UiDrawPrimitive>.rasterizeDrawnToPixelMap(
                             primitive.tint,
                             primitive.premultiplied,
                             primitive.blendMode,
+                            primitive.repeatX,
+                            primitive.repeatY,
                         )
                         layerImage != null -> fillRotatedLayerImage(
                             x,

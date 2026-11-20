@@ -24,8 +24,8 @@ enum class DrawPipelineKind(
     /** Text glyph rasterization pipeline. */
     Glyph(VertexFormats2D.Glyph, UiPipelineVariant.Glyph),
 
-    /** Textured 2D quad pipeline. */
-    Texture(VertexFormats2D.Glyph, UiPipelineVariant.Texture),
+    /** Textured 2D quad pipeline, its region repeating inside the quad when it tiles (#1795). */
+    Texture(VertexFormats2D.Texture, UiPipelineVariant.Texture),
 
     /** Rounded rectangle pipeline with corner radius and antialiasing. */
     RoundedQuad(VertexFormats2D.RoundedQuad, UiPipelineVariant.RoundedQuad),

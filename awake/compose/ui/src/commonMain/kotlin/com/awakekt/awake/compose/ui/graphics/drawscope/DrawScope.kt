@@ -351,6 +351,28 @@ interface DrawScope {
     ) = drawTexture(material, x, y, width, height, region, tint, filterQuality, premultiplied)
 
     /**
+     * Draws [region] of [material] repeated [repeatX] times across [width] and [repeatY] times down
+     * [height], as one piece: 3.5 draws it three and a half times, the last one cut short, and 1
+     * stretches it once. However many times it repeats, it costs one quad (#1795).
+     *
+     * A [DrawScope] of its own draws the repeats one by one; the engine's draws them as one quad
+     * whose texture coordinates wrap inside [region].
+     */
+    @Suppress("LongParameterList")
+    fun drawTextureRepeated(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        repeatX: Float,
+        repeatY: Float,
+        tint: Color = Color.White,
+        filterQuality: FilterQuality = FilterQuality.Low,
+    ) = drawTextureTiles(material, x, y, width, height, region, repeatX, repeatY, tint, filterQuality)
+
+    /**
      * Draws a backdrop frosted-glass blur beneath this node's layout bounds.
      *
      * Coordinates are node-local. Applications should prefer `Modifier.backdropEffect`, whose
@@ -872,6 +894,40 @@ internal class PaintScope :
             region = region,
             tint = tint,
             filterQuality = filterQuality,
+        )
+    }
+
+    @Suppress("LongParameterList")
+    override fun drawTextureRepeated(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        repeatX: Float,
+        repeatY: Float,
+        tint: Color,
+        filterQuality: FilterQuality,
+    ) {
+        if (width <= 0f || height <= 0f || repeatX <= 0f || repeatY <= 0f) return
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        output += UiDrawPrimitive.Texture(
+            x = px,
+            y = py,
+            w = pw,
+            h = ph,
+            material = material,
+            alpha = alpha,
+            region = region,
+            tint = tint,
+            filterQuality = filterQuality,
+            repeatX = repeatX,
+            repeatY = repeatY,
         )
     }
 

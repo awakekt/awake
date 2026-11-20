@@ -67,6 +67,44 @@ fun writeGlyphVertex(
 }
 
 /**
+ * Writes a textured image vertex (16 floats): [u], [v] and the rect ([rectU], [rectV], [rectWidth], [rectHeight]) a
+ * repeating axis wraps inside, a size of 0 for an axis that does not repeat. See `VertexFormats2D.Texture`.
+ */
+@Suppress("LongParameterList")
+fun writeTextureVertex(
+    out: FloatArray,
+    offset: Int,
+    x: Float,
+    y: Float,
+    u: Float,
+    v: Float,
+    rectU: Float,
+    rectV: Float,
+    rectWidth: Float,
+    rectHeight: Float,
+    color: Color,
+    transform: UiPrimitiveTransform? = null,
+) {
+    out[offset] = x
+    out[offset + 1] = y
+    out[offset + 2] = u
+    out[offset + 3] = v
+    out[offset + 4] = rectU
+    out[offset + 5] = rectV
+    out[offset + 6] = rectWidth
+    out[offset + 7] = rectHeight
+    out[offset + 8] = color.r
+    out[offset + 9] = color.g
+    out[offset + 10] = color.b
+    out[offset + 11] = color.a
+    val t = transform ?: IDENTITY_TRANSFORM
+    out[offset + 12] = t.scaleX
+    out[offset + 13] = t.scaleY
+    out[offset + 14] = t.pivotX
+    out[offset + 15] = t.pivotY
+}
+
+/**
  * Writes a rounded-quad vertex with anti-aliased smoothing (17 floats). A [strokeWidth] above 0
  * draws only a band that wide inside the edge, an analytic border; 0 fills the shape.
  */

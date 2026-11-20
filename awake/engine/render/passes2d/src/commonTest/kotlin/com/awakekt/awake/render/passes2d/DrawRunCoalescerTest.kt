@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.ColoredVertex
 import com.awakekt.awake.core.graphics2d.DrawCommand
@@ -115,10 +116,33 @@ class DrawRunCoalescerTest {
 
         val run = DrawRunCoalescer.coalesce(listOf(texture)).filterIsInstance<StagedDrawRun.TextureRun>().single().primitives.single()
         val stride = run.vertices.size / 4
-        fun vertex(index: Int) = run.vertices.copyOfRange(index * stride, index * stride + 8).toList()
+        // Position and uv, then the colour after the repeat rect (VertexFormats2D.Texture).
+        fun vertex(index: Int) = run.vertices.copyOfRange(index * stride, index * stride + 4).toList() +
+            run.vertices.copyOfRange(index * stride + 8, index * stride + 12).toList()
 
         assertEquals(listOf(0f, 0f, 0.25f, 0f, 1f, 0.5f, 0f, 0.5f), vertex(0), "top-left: the region's top-left UV")
         assertEquals(listOf(10f, 10f, 0.5f, 0.5f, 1f, 0.5f, 0f, 0.5f), vertex(2), "bottom-right: the region's bottom-right UV")
+        assertEquals(listOf(0f, 0f), run.vertices.copyOfRange(6, 8).toList(), "a region that does not repeat has no repeat rect")
+    }
+
+    /** A repeating region is still one quad: its uv counts repeats and its rect is the region the shader wraps in (#1795). */
+    @Test
+    fun aRepeatingTextureIsOneQuadWhoseUvCountsRepeats() {
+        val texture = DrawCommand.Texture(
+            0f,
+            0f,
+            480f,
+            2f,
+            material = "sheet",
+            region = TextureRegion(0.25f, 0.5f, 0.5f, 0.75f),
+            repeatX = 240f,
+        )
+
+        val run = DrawRunCoalescer.coalesce(listOf(texture)).filterIsInstance<StagedDrawRun.TextureRun>().single().primitives.single()
+        val stride = VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
+
+        assertEquals(4 * stride, run.vertices.size, "one quad for 240 repeats")
+        assertEquals(listOf(480f, 2f, 240f, 0.75f, 0.25f, 0.5f, 0.25f, 0f), run.vertices.copyOfRange(2 * stride, 2 * stride + 8).toList())
     }
 
     /** A texture drawn as before, with neither, keeps the whole texture and a white colour. */
@@ -128,7 +152,8 @@ class DrawRunCoalescerTest {
             .filterIsInstance<StagedDrawRun.TextureRun>().single().primitives.single()
         val stride = run.vertices.size / 4
 
-        assertEquals(listOf(10f, 10f, 1f, 1f, 1f, 1f, 1f, 1f), run.vertices.copyOfRange(2 * stride, 2 * stride + 8).toList())
+        assertEquals(listOf(10f, 10f, 1f, 1f), run.vertices.copyOfRange(2 * stride, 2 * stride + 4).toList())
+        assertEquals(listOf(1f, 1f, 1f, 1f), run.vertices.copyOfRange(2 * stride + 8, 2 * stride + 12).toList())
     }
 
     @Test
