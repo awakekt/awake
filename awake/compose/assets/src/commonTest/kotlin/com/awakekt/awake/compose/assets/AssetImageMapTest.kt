@@ -46,6 +46,22 @@ class AssetImageMapTest {
     }
 
     @Test
+    fun theSizeCountsWhatHasLoadedAsTheEntriesDo() = runTest {
+        val images = cache()
+        val map = images.asMap()
+        images.reset(mapOf("seeded.png" to ImageBitmap(1, 1, ByteArray(ImageBitmap.BYTES_PER_PIXEL))))
+        assertEquals(1, map.size, "the seed")
+        map["ui/icons.png"]
+        map["missing.png"]
+        assertEquals(1, map.size, "neither has loaded yet")
+        runCurrent()
+        assertEquals(2, map.size, "the one that decoded, not the one that failed")
+        assertEquals(map.entries.size, map.size)
+        images.reset()
+        assertEquals(0, map.size, "a reset forgets them")
+    }
+
+    @Test
     fun theSeedIsThereAtOnceAndTheSameMapFollowsAReset() = runTest {
         val images = cache()
         val map = images.asMap()

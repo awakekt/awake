@@ -33,6 +33,12 @@ kotlin {
     }
 }
 
+tasks.named<Test>("desktopTest") {
+    // AssetImageMapAllocationTest counts every byte; with escape analysis on, C2 hides short-lived
+    // objects that Android's runtime still allocates, as for the compose modules (#1521).
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Compose Assets")
