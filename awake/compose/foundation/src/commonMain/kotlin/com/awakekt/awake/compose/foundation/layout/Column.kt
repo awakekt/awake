@@ -45,7 +45,7 @@ class ColumnMeasurePolicy(
 ) : MeasurePolicy by RowColumnMeasurePolicy(
     LayoutOrientation.Vertical,
     verticalArrangement.spacing,
-    CrossAxisAlign(horizontalAlignment::align),
-    MainAxisSpace(verticalArrangement::leading),
-    MainAxisSpace(verticalArrangement::between),
+    HorizontalCrossAxisAlign(horizontalAlignment),
+    VerticalMainAxisSpace(verticalArrangement, between = false),
+    VerticalMainAxisSpace(verticalArrangement, between = true),
 )

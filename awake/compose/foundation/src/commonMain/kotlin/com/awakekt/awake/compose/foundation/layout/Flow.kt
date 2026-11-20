@@ -177,7 +177,7 @@ fun FlowRow(
             verticalArrangement,
             maxItemsInEachRow,
             maxLines,
-            CrossAxisAlign(itemVerticalAlignment::align),
+            VerticalCrossAxisAlign(itemVerticalAlignment),
         ),
         content = { content(composer, RowScopeInstance) },
     )
@@ -214,7 +214,7 @@ fun FlowColumn(
             horizontalArrangement,
             maxItemsInEachColumn,
             maxLines,
-            CrossAxisAlign(itemHorizontalAlignment::align),
+            HorizontalCrossAxisAlign(itemHorizontalAlignment),
         ),
         content = { content(composer, ColumnScopeInstance) },
     )
