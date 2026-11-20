@@ -1,0 +1,64 @@
+# Lists, and on request deletes, GitHub Actions cache entries whose key contains a substring (#1592).
+# For a cache entry that fails the jobs restoring it, as the WebGPU release pin's Gradle User Home
+# entries did on 20 Nov: "Could not find <jar>" for jars Central serves, on every restore.
+# Deleting a cache entry is always safe: the next job that misses it rebuilds from the network.
+#
+# It runs no Gradle and restores no cache, so the entries it manages can't affect it. See
+# "Gradle User Home cache" in docs/release-process.md.
+name: Cache maintenance
+
+on:
+  workflow_dispatch:
+    inputs:
+      key-contains:
+        description: "Substring of the cache keys to match (at least 6 characters), e.g. c4cf91"
+        required: true
+        type: string
+      dry-run:
+        description: "List the matching entries without deleting them"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
+
+jobs:
+  caches:
+    name: Cache maintenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: List, and delete unless dry run, the entries whose key contains the substring
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SUBSTRING: ${{ inputs.key-contains }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ${#SUBSTRING} -lt 6 ]]; then
+            echo "::error::key-contains must be at least 6 characters, so one run can't match every entry."
+            exit 1
+          fi
+          gh cache list --limit 5000 --json id,key,ref,createdAt,sizeInBytes \
+            --jq "[.[] | select(.key | contains(env.SUBSTRING))]" > matches.json
+          count="$(jq length matches.json)"
+          echo "$count cache entries whose key contains '$SUBSTRING':"
+          jq -r '.[] | "\(.id)\t\(.createdAt)\t\(.sizeInBytes)\t\(.ref)\t\(.key)"' matches.json
+          {
+            echo "### Cache entries whose key contains \`$SUBSTRING\`: $count"
+            echo
+            echo "| Key | Ref | Created | Bytes |"
+            echo "|---|---|---|---|"
+            jq -r '.[] | "| `\(.key)` | \(.ref) | \(.createdAt) | \(.sizeInBytes) |"' matches.json
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "Dry run: nothing deleted."
+            exit 0
+          fi
+          jq -r '.[].id' matches.json | while read -r id; do
+            gh cache delete "$id"
+          done
+          echo "Deleted $count cache entries."

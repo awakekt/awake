@@ -499,6 +499,16 @@ three must hold:
 - a workflow can delete cache entries;
 - it has been measured on a branch first.
 
+When failures follow a cache entry, every job that restores it failing and every other job passing,
+delete it with the **Cache maintenance** workflow (`.github/workflows/cache-maintenance.yml`):
+- run it from the Actions tab with a substring of the key, of at least 6 characters (a commit or
+  content hash, or a prefix such as `gradle-home-v2`), and leave **dry-run** on to list the matching
+  entries (key, ref, created, size) in the run's summary;
+- run it again with **dry-run** off to delete them, including any entry that restores the bad one.
+
+Deleting a cache entry is always safe: the next job that misses it rebuilds from the network. The
+workflow runs no Gradle and restores no cache, so it can't be affected by what it deletes.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
