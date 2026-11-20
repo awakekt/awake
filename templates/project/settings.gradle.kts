@@ -23,6 +23,12 @@ pluginManagement {
             }
         }
         mavenCentral { content { excludePortalOnly() } }
+        // Central's mirror, right after Central: a module or plugin marker that a Central edge answers
+        // 404 for, though Central serves it, is then found here: a 404 moves on to the next repository (#1592).
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "MavenCentralMirror"
+            content { excludePortalOnly() }
+        }
         // An Awake Core release Maven Central refused under its publishing limits, served by Core at
         // Central's coordinates.
         maven("https://awakekt.github.io/awake/") { mavenContent { includeGroupAndSubgroups("com.awakekt.awake") } }
@@ -44,6 +50,7 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
         // An Awake Core release Maven Central refused under its publishing limits, served by Core at
         // Central's coordinates.
         maven("https://awakekt.github.io/awake/") { mavenContent { includeGroupAndSubgroups("com.awakekt.awake") } }

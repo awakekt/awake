@@ -259,6 +259,7 @@ class ProjectBundleTest {
                     gradlePluginPortal()
                     google()
                     mavenCentral()
+                    maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
                 }
             }
             rootProject.name = "harbor-content"

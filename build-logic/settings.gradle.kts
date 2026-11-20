@@ -31,6 +31,12 @@ pluginManagement {
             }
         }
         mavenCentral { content { excludePortalOnly() } }
+        // Central's mirror, right after Central: a module or plugin marker that a Central edge answers
+        // 404 for, though Central serves it, is then found here: a 404 moves on to the next repository (#1592).
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "MavenCentralMirror"
+            content { excludePortalOnly() }
+        }
         gradlePluginPortal()
     }
 }
@@ -46,6 +52,7 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
         gradlePluginPortal()
     }
     versionCatalogs {

@@ -23,6 +23,12 @@ pluginManagement {
             }
         }
         mavenCentral { content { excludePortalOnly() } }
+        // Central's mirror, right after Central: a module or plugin marker that a Central edge answers
+        // 404 for, though Central serves it, is then found here: a 404 moves on to the next repository (#1592).
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "MavenCentralMirror"
+            content { excludePortalOnly() }
+        }
         mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
         gradlePluginPortal()
     }
@@ -41,6 +47,7 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
         mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
         // The wgpu4k builds the WebGPU backend pins, copied byte for byte by Awake Core, for when
         // Central's 90-day snapshot cleanup removes them.

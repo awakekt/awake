@@ -1,0 +1,1 @@
+- **Projects from the game, plugin and project templates list Google's mirror of Maven Central right after Central.** A Central edge that answers 404 for a module or plugin marker Central serves no longer fails resolution: Gradle moves on to the mirror. Central stays first, and the mirror is asked only for what Central answered 404. Core's own builds list it the same way. (#1592)

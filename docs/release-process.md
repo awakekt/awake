@@ -480,6 +480,27 @@ jobs keep the job queued until it is cancelled. Delete it to return to `macos-15
 Xcode and an arm64 Mac whatever the label: it builds Naga, MoltenVK and JoltC and runs Kotlin/Native
 tests on the iOS simulator.
 
+### Maven Central's mirror
+
+Every build lists Google's mirror of Maven Central,
+`https://maven-central.storage-download.googleapis.com/maven2/`, right after `mavenCentral()`: Core's
+settings and build-logic, the three templates, the `tools/` builds, and the TestKit builds tests
+write. On 20 Nov a Central edge answered 404 for files Central serves, for 9 minutes, on every
+retry (#1592). Gradle moves on to the next repository after a module's 404, so a module or plugin
+marker that edge refuses is found in the mirror.
+
+- Central stays first. The mirror is asked only for what Central answered 404, and a repository is
+  not part of a published POM or module file, so publishing is unchanged.
+- A Central error (a 429, a 5xx, a timeout) still stops the search there, as any repository's
+  error does. Gradle's request retries (`gradle.properties`) and the step retries of #1831 cover
+  those.
+- The mirror can't cure a file that 404s behind a POM Central served: Gradle asks for a file only
+  from the repository that served its metadata. Measured with two local repositories, the first
+  serving the POM and answering 404 for the jar: the build fails, with only the first searched.
+- `CentralMirrorTest` fails when a build script, or a TestKit test that writes one, lists
+  `mavenCentral()` without the mirror right after it, and resolves a plugin from a repository that
+  answers 404 for it, followed by one that serves it.
+
 ### Gradle User Home cache
 
 CI, Font atlas and Render evidence cache the Gradle User Home with `gradle/actions/setup-gradle`'s

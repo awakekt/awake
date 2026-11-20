@@ -34,6 +34,9 @@ repositories {
     gradlePluginPortal()
     google()
     mavenCentral()
+    // Central's mirror, right after Central: a module or plugin marker that a Central edge answers
+    // 404 for, though Central serves it, is then found here: a 404 moves on to the next repository (#1592).
+    maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
 }
 
 // Embed the plugin release, independent of the consuming project's version or version catalog.
