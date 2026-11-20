@@ -28,6 +28,10 @@ import kotlin.test.assertEquals
  * nothing a frame in locomotion or animation with escape analysis off (#1555). Kotlin/Wasm has none:
  * a nullable `Entity` in the ground-contact walk boxed once per mover per frame there, 24 B each,
  * 33.6 KB a frame for 1,400 movers.
+ *
+ * Read in [ROUNDS] windows, and the median must be 0: one window once caught an allocation of the test
+ * thread's that was not the systems' (CI's loaded suite step, #1592), while an allocation per frame is
+ * in every window.
  */
 class LocomotionAllocationProbeTest {
     private val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
@@ -61,19 +65,22 @@ class LocomotionAllocationProbeTest {
         repeat(WARM_UP_FRAMES) { step() }
 
         val thread = Thread.currentThread().id
-        var bytes = 0L
-        repeat(MEASURED_FRAMES) {
-            // The walkers' own moves are the test's, not the systems'.
-            val moving = (frame / FRAMES_PER_SECOND) % 2 == 0
-            if (moving) transforms.forEach { it.worldMatrix.m03 += STRIDE }
-            frame++
-            val before = threads.getThreadAllocatedBytes(thread)
-            locomotion.update(world, 1f / FRAMES_PER_SECOND)
-            animation.update(world, 1f / FRAMES_PER_SECOND)
-            bytes += threads.getThreadAllocatedBytes(thread) - before
+        val windows = LongArray(ROUNDS) {
+            var bytes = 0L
+            repeat(MEASURED_FRAMES) {
+                // The walkers' own moves are the test's, not the systems'.
+                val moving = (frame / FRAMES_PER_SECOND) % 2 == 0
+                if (moving) transforms.forEach { it.worldMatrix.m03 += STRIDE }
+                frame++
+                val before = threads.getThreadAllocatedBytes(thread)
+                locomotion.update(world, 1f / FRAMES_PER_SECOND)
+                animation.update(world, 1f / FRAMES_PER_SECOND)
+                bytes += threads.getThreadAllocatedBytes(thread) - before
+            }
+            bytes
         }
 
-        assertEquals(0L, bytes / MEASURED_FRAMES, "bytes per frame for $MOVERS movers")
+        assertEquals(0L, windows.sorted()[ROUNDS / 2], "bytes in each window of $MEASURED_FRAMES frames for $MOVERS movers: ${windows.joinToString()}")
     }
 
     private companion object {
@@ -83,6 +90,7 @@ class LocomotionAllocationProbeTest {
         const val FRAMES_PER_SECOND = 60
         const val WARM_UP_FRAMES = 240
         const val MEASURED_FRAMES = 240
+        const val ROUNDS = 5
         const val STRIDE = 0.02f
         const val CROSS_FADE = 0.25f
         const val WALK_SECONDS = 0.8f
