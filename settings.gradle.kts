@@ -188,14 +188,10 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
+        // No Maven Local and no snapshot repository: Core's own build resolves nothing from them. Its
+        // only snapshots are io.ygdrasil's, which the mirror below serves, and every repository listed
+        // is one more that can answer a lookup wrongly (#1592).
         mavenCentral()
-        mavenLocal()
-        // io.ygdrasil stays off the snapshot repos: its pinned builds are served by the mirror below, and
-        // a cached module recorded as coming from Sonatype is searched only there (awakekt/awake#826).
-        maven("https://oss.sonatype.org/content/repositories/snapshots/") { content { excludeGroup("io.ygdrasil") } }
-        maven("https://s01.oss.sonatype.org/content/repositories/snapshots") { content { excludeGroup("io.ygdrasil") } }
-        // Current Central Portal snapshot repo, not the legacy ones above.
-        maven("https://central.sonatype.com/repository/maven-snapshots/") { content { excludeGroup("io.ygdrasil") } }
         // The wgpu4k builds pinned in build.gradle.kts, byte for byte, served by the Maven fallback
         // workflow from the mirror-io.ygdrasil-* release. See "WebGPU release pin" in
         // docs/release-process.md.

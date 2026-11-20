@@ -15,7 +15,7 @@ plugins {
 }
 
 repositories {
-    mavenLocal()
+    mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
     mavenCentral()
     google()
 }

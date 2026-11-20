@@ -5,7 +5,7 @@
  */
 pluginManagement {
     repositories {
-        mavenLocal()
+        mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
         // Google only for its own groups: a Google error can then fail nothing it doesn't serve (#1592).
         google {
             content {
@@ -20,7 +20,7 @@ pluginManagement {
 }
 dependencyResolutionManagement {
     repositories {
-        mavenLocal()
+        mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
         mavenCentral()
         // Google only for its own groups: a Google error can then fail nothing it doesn't serve (#1592).
         google {
