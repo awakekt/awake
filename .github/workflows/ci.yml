@@ -905,6 +905,11 @@ jobs:
       - name: HUD measure scope (browser)
         run: ./gradlew :awake:compose:game:wasmJsBrowserTest --tests "*HudMeasureScope*" --tests "*LayoutHeapBreakdown*"
 
+      # The retained UI runtime's common tests in a browser: Kotlin/Wasm's collections are not the
+      # JVM's, and a removed map entry that the JVM still reads throws there (SubcomposeForgetTest).
+      - name: Compose UI runtime (browser)
+        run: ./gradlew :awake:compose:ui:wasmJsBrowserTest
+
       # The log names a failed browser test; its result file holds why, with the browser's own output.
       - name: Upload the planning heap tests' results
         if: failure()
