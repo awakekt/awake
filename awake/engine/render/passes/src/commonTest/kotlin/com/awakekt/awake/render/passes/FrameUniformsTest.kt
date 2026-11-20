@@ -120,6 +120,17 @@ class FrameUniformsTest {
     }
 
     @Test
+    fun aLinearFogsRangeIsPackedLastAndExponentialFogLeavesItZero() {
+        val range = MaterialUniformLayouts.Frame.offsetOf(UniformFields.FogRange)
+        assertEquals(MaterialUniformLayouts.Frame.total - 4, range, "fogRange is the frame block's last field")
+        val block = FrameUniformBlock()
+        val linear = block.pack(VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE, fogStart = 5f, fogEnd = 80f)
+        assertContentEquals(floatArrayOf(5f, 80f, 1f, 0f), linear.copyOfRange(range, range + 4))
+        val exponential = block.pack(VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE)
+        assertContentEquals(FloatArray(4), exponential.copyOfRange(range, range + 4), "a refilled block clears the range")
+    }
+
+    @Test
     fun theFrameBlockIsRefilledInPlace() {
         val block = FrameUniformBlock()
         val first = block.pack(VIEW_PROJECTION, EYE, FORWARD, LIGHT, CASCADES, FOG, FOG_DENSITY, GpuDebugView.Off, EXPOSURE)

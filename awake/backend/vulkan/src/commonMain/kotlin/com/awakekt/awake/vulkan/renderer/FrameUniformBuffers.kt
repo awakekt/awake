@@ -74,6 +74,8 @@ internal class FrameUniformBuffers(private val graphicsDevice: GraphicsDevice) {
             fogDensity = environment.fogDensity,
             debugView = environment.debugView,
             exposure = environment.exposure,
+            fogStart = environment.fogStart,
+            fogEnd = environment.fogEnd,
         )
         writeEntry(entry(frameIndex, kind), floats)
     }

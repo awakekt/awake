@@ -696,6 +696,9 @@ Distance fog. `SceneFog`.
 | `colorR` | number | none | Legacy red channel. When `colorR`, `colorG` and `colorB` are all set, they replace `color`. |
 | `colorG` | number | none | Legacy green channel. |
 | `colorB` | number | none | Legacy blue channel. |
+| `mode` | `Exponential` or `Linear` | `Exponential` | How fog grows with distance: by `density`, or evenly from `start` to `end`. |
+| `start` | number | `0` | Where a linear fog starts, in metres from the eye. At least 0. |
+| `end` | number | `1000` | Where a linear fog reaches `color`, in metres from the eye. Beyond `start`. |
 
 ## `input_actions`
 

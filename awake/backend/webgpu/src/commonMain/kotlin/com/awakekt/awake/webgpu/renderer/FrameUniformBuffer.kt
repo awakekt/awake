@@ -68,6 +68,8 @@ internal class FrameUniformBuffer(private val device: GPUDevice) {
             fogDensity = environment.fogDensity,
             debugView = environment.debugView,
             exposure = environment.exposure,
+            fogStart = environment.fogStart,
+            fogEnd = environment.fogEnd,
         )
         return uploads.stageChanged(target.slot, floats)
     }
