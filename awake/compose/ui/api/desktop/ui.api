@@ -190,6 +190,7 @@ public final class com/awakekt/awake/compose/ui/draw/ContentDrawScope$DefaultImp
 	public static fun drawDecoratedGlyph (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILcom/awakekt/awake/core/graphics2d/GlyphDecoration;)V
 	public static fun drawRoundedRectBorder (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFLcom/awakekt/awake/core/color/Color;FF)V
 	public static fun drawTexture (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
+	public static fun drawTextureRepeated (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
 	public static fun isScaled (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
@@ -714,6 +715,8 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public fun drawTexture (Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;ILjava/lang/Object;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZILjava/lang/Object;)V
+	public fun drawTextureRepeated (Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
+	public static synthetic fun drawTextureRepeated$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)V
 	public abstract fun emit (Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;)V
 	public abstract fun getDensity ()F
 	public abstract fun getHeight ()I
@@ -743,6 +746,8 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static fun drawTexture (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZFLcom/awakekt/awake/core/graphics2d/BlendMode;ILjava/lang/Object;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZILjava/lang/Object;)V
+	public static fun drawTextureRepeated (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
+	public static synthetic fun drawTextureRepeated$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z
 	public static fun isScaled (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z

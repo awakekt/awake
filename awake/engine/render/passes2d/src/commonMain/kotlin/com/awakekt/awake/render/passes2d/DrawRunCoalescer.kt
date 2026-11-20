@@ -17,6 +17,7 @@ import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.DrawTransform
 import com.awakekt.awake.core.graphics2d.StrokeJoin
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.TexturedTriangleMesh
 import com.awakekt.awake.core.graphics2d.TexturedVertex
 import com.awakekt.awake.core.graphics2d.TranslateOffsets
@@ -33,6 +34,7 @@ import com.awakekt.awake.core.graphics2d.toPath
 import com.awakekt.awake.core.graphics2d.transform
 import com.awakekt.awake.core.graphics2d.writeGlyphVertex
 import com.awakekt.awake.core.graphics2d.writeRoundedQuadVertex
+import com.awakekt.awake.core.graphics2d.writeTextureVertex
 import com.awakekt.awake.core.graphics2d.writeVertex
 import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Rectangle
@@ -1035,6 +1037,9 @@ object DrawRunCoalescer {
                 mesh = clipped,
                 color = primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
                 transform = primitive.transform,
+                region = primitive.region,
+                repeatX = primitive.repeatX != 1f,
+                repeatY = primitive.repeatY != 1f,
             )
             val head = chunk.firstOrNull()
             val breaksBatch = head != null && (
@@ -1057,15 +1062,18 @@ object DrawRunCoalescer {
         safeInteriorRect: Rectangle?,
     ): TexturedTriangleMesh {
         val region = primitive.region
+        // A repeating axis counts repeats of the region, 0 to repeatX, and the shader wraps it into the region (#1795).
+        val repeatsX = primitive.repeatX != 1f
+        val repeatsY = primitive.repeatY != 1f
         val raw = texturedQuadMesh(
             primitive.x,
             primitive.y,
             primitive.w,
             primitive.h,
-            region.u0,
-            region.v0,
-            region.u1,
-            region.v1,
+            if (repeatsX) 0f else region.u0,
+            if (repeatsY) 0f else region.v0,
+            if (repeatsX) primitive.repeatX else region.u1,
+            if (repeatsY) primitive.repeatY else region.v1,
         ).rotatedAboutCenter(primitive.rotationDegrees)
         if (activePathClips.isEmpty() || canSkipRotatedExactClip(safeInteriorRect, primitive)) {
             return raw
@@ -1094,24 +1102,29 @@ object DrawRunCoalescer {
         val head = chunk.first()
         val totalVertices = chunk.sumOf { it.mesh.vertices.size }
         val totalIndices = chunk.sumOf { it.mesh.indices.size }
-        val vertices = FloatArray(totalVertices * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
+        val vertices = FloatArray(totalVertices * VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX)
         val indices = IntArray(totalIndices)
         var vertexCursor = 0
         var indexCursor = 0
         var vertexOffset = 0
         for (slice in chunk) {
+            val region = slice.region
             for (vertex in slice.mesh.vertices) {
-                writeGlyphVertex(
+                writeTextureVertex(
                     vertices,
                     vertexCursor,
                     vertex.position.x,
                     vertex.position.y,
                     vertex.u,
                     vertex.v,
+                    region.u0,
+                    region.v0,
+                    if (slice.repeatX) region.u1 - region.u0 else 0f,
+                    if (slice.repeatY) region.v1 - region.v0 else 0f,
                     slice.color,
                     slice.transform,
                 )
-                vertexCursor += VertexFormats2D.GLYPH_FLOATS_PER_VERTEX
+                vertexCursor += VertexFormats2D.TEXTURE_FLOATS_PER_VERTEX
             }
             for (index in slice.mesh.indices) {
                 indices[indexCursor] = vertexOffset + index
@@ -1370,6 +1383,9 @@ private class StagedTextureSlice(
     val mesh: TexturedTriangleMesh,
     val color: Color,
     val transform: DrawTransform?,
+    val region: TextureRegion,
+    val repeatX: Boolean,
+    val repeatY: Boolean,
 ) {
     fun matchesBatchState(other: StagedTextureSlice): Boolean =
         material === other.material &&

@@ -607,6 +607,7 @@ public final class com/awakekt/awake/vulkan/ui/DynamicMesh {
 	public static final field IMAGE_PASS_FLOATS_PER_VERTEX I
 	public static final field INDICES_PER_QUAD I
 	public static final field ROUNDED_QUAD_FLOATS_PER_VERTEX I
+	public static final field TEXTURE_FLOATS_PER_VERTEX I
 	public static final field VERTICES_PER_QUAD I
 	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;III)V
 	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
