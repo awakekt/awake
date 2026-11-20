@@ -144,13 +144,24 @@ include(":samples:net-demo")
 
 pluginManagement {
     includeBuild("build-logic")
+    // Modules only the Plugin Portal serves: each plugin's marker and implementation. The repositories
+    // listed before the Portal exclude them, so an error from one of those (a Central 429) can't stop
+    // the search for them before it reaches the Portal (#1592).
+    val portalOnly = listOf(
+        "org.gradle.toolchains.foojay-resolver-convention:org.gradle.toolchains.foojay-resolver-convention.gradle.plugin",
+        "org.gradle.toolchains:foojay-resolver",
+        "org.jetbrains.kotlinx.benchmark:org.jetbrains.kotlinx.benchmark.gradle.plugin",
+        "org.jetbrains.kotlinx:kotlinx-benchmark-plugin",
+    )
+    fun RepositoryContentDescriptor.excludePortalOnly() =
+        portalOnly.forEach { excludeModule(it.substringBefore(':'), it.substringAfter(':')) }
     repositories {
         // A repository that fails to answer, rather than answering 404, stops the search there: the
         // Plugin Portal listed first failed builds whose plugins Maven Central or Google serve (#1592).
         // So Google (AGP's markers are only there) and Central first, and the Portal last, for the
         // plugins only it serves, such as foojay's.
-        google()
-        mavenCentral()
+        google { content { excludePortalOnly() } }
+        mavenCentral { content { excludePortalOnly() } }
         gradlePluginPortal()
     }
 }

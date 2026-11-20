@@ -19,9 +19,11 @@ import kotlin.test.assertTrue
 /**
  * A plugin only the Plugin Portal serves, with the Portal listed last (#1592): Gradle asks the
  * repositories before it first, and one that answers an error instead of 404 (a Central `429`) stops
- * the search before the Portal, which holds the plugin. Naming the plugin in `exclusiveContent` for
- * the Portal keeps the repositories before it out of that lookup; its implementation module, which the
- * marker depends on and only the Portal serves too, has to be named with it.
+ * the search before the Portal, which holds the plugin. Excluding the plugin from the repositories
+ * before the Portal keeps them out of that lookup; its implementation module, which the marker depends
+ * on and only the Portal serves too, has to be excluded with it. An exclusion, not `exclusiveContent`:
+ * Gradle rejects exclusive content in `pluginManagement` once anything adds a buildscript repository,
+ * as an init script that adds a mirror does.
  *
  * Offline: one local server stands for Central and answers `429` to everything, another stands for the
  * Portal and serves the plugin.
@@ -39,24 +41,31 @@ class PortalOnlyPluginTest {
     }
 
     @Test
-    fun theSamePluginResolvesWhenItIsExclusiveToThePortal() {
+    fun theSamePluginResolvesWhenTheRepositoriesBeforeThePortalExcludeIt() {
         ProbePluginRepository.failing(TOO_MANY_REQUESTS).use { central ->
             ProbePluginRepository.serving().use { portal ->
-                val exclusive = """
-                    exclusiveContent {
-                        forRepository { ${portal.declaration} }
-                        filter {
-                            includeModule("$MARKER_GROUP", "$MARKER_MODULE")
-                            includeModule("com.example", "probe")
-                        }
-                    }
-                """.trimIndent()
-                val result = build(listOf(exclusive, central.declaration, portal.declaration)).build()
+                val result = build(listOf(excluding(central), portal.declaration)).build()
                 assertTrue("PROBE APPLIED" in result.output, result.output)
-                assertEquals(0, central.requests.get(), "Central was asked for a plugin exclusive to the Portal")
+                assertEquals(0, central.requests.get(), "Central was asked for a plugin it excludes")
             }
         }
     }
+
+    @Test
+    fun withBothHealthyTheExcludedPluginComesFromThePortalAlone() {
+        ProbePluginRepository.failing(NOT_FOUND).use { central ->
+            ProbePluginRepository.serving().use { portal ->
+                val result = build(listOf(excluding(central), portal.declaration)).build()
+                assertTrue("PROBE APPLIED" in result.output, result.output)
+                assertEquals(0, central.requests.get(), "Central was asked for a plugin it excludes")
+            }
+        }
+    }
+
+    /** [repository] excluding the Portal-only probe plugin, marker and implementation, as the builds exclude theirs. */
+    private fun excluding(repository: ProbePluginRepository) =
+        repository.declaration.removeSuffix(" }") +
+            "; content { excludeModule(\"$MARKER_GROUP\", \"$MARKER_MODULE\"); excludeModule(\"com.example\", \"probe\") } }"
 
     private fun build(repositories: List<String>): GradleRunner {
         val dir = createTempDirectory("portal-only-plugin").toFile()
@@ -70,5 +79,6 @@ class PortalOnlyPluginTest {
 
     private companion object {
         const val TOO_MANY_REQUESTS = 429
+        const val NOT_FOUND = 404
     }
 }

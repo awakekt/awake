@@ -1,0 +1,1 @@
+- Plugins only the Gradle Plugin Portal serves (`kotlin-dsl`, foojay's resolver, kotlinx-benchmark, and the templates' ktor and jib) are excluded from Google and Maven Central in plugin resolution, so an error from either can no longer fail them before the Portal is asked, an exposure listing the Portal last opened (#1592).

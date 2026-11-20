@@ -17,6 +17,11 @@ import kotlin.test.assertTrue
  * first failed builds whose plugins Maven Central serves: `com.vanniktech.maven.publish` 0.37.0, in
  * CI runs whose Portal returned an error. Listed last it is asked only for what no other repository
  * holds.
+ *
+ * Listed last, the Portal is asked only after every repository before it, and one of them answering an
+ * error instead of 404 (a Central `429`) stops the search there too. So each build lists the modules only
+ * the Portal serves, each plugin's marker and implementation, in `portalOnly`, and Google and Central
+ * exclude them.
  */
 class PluginPortalOrderTest {
     private val root = File("..")
@@ -30,6 +35,42 @@ class PluginPortalOrderTest {
             }
         }
         assertEquals(emptyList(), misordered, "the Plugin Portal is listed before another repository")
+    }
+
+    @Test
+    fun everyBuildKeepsGoogleAndCentralOutOfThePortalOnlyLookups() {
+        val failures = PORTAL_ONLY.flatMap { (path, modules) ->
+            val source = File(root, path).readText()
+            val declared = portalOnlyModules(source)
+            val missing = modules.filterNot { it in declared }.map { "$path: portalOnly lacks $it" }
+            val unfiltered = pluginRepositoryEntries(source)
+                .filter { (name, text) -> name in NETWORK_REPOSITORIES && "excludePortalOnly()" !in text }
+                .map { (name, _) -> "$path: $name doesn't exclude portalOnly" }
+            missing + unfiltered
+        }
+        assertEquals(emptyList(), failures, "a module only the Plugin Portal serves can be looked up before it")
+    }
+
+    @Test
+    fun theCheckReadsTheExclusionsAndEachRepositorysFilter() {
+        val source = """
+            pluginManagement {
+                val portalOnly = listOf(
+                    "a.b:a.b.gradle.plugin",
+                    "a:impl",
+                )
+                repositories {
+                    google { content { excludePortalOnly() } }
+                    mavenCentral()
+                    gradlePluginPortal()
+                }
+            }
+        """.trimIndent()
+        assertEquals(setOf("a.b:a.b.gradle.plugin", "a:impl"), portalOnlyModules(source))
+        assertEquals(
+            listOf("google" to "google { content { excludePortalOnly() } }", "mavenCentral" to "mavenCentral()", "gradlePluginPortal" to "gradlePluginPortal()"),
+            pluginRepositoryEntries(source),
+        )
     }
 
     @Test
@@ -74,6 +115,38 @@ class PluginPortalOrderTest {
         }.toList()
     }
 
+    /** The `group:module` strings of the settings' `portalOnly` list. */
+    private fun portalOnlyModules(source: String): Set<String> {
+        val list = Regex("""val portalOnly = listOf\(([^)]*)\)""").find(source)?.groupValues?.get(1).orEmpty()
+        return Regex(""""([^"]+:[^"]+)"""").findAll(list).map { it.groupValues[1] }.toSet()
+    }
+
+    /** `pluginManagement`'s `repositories` entries, each as its name and its whole text. */
+    private fun pluginRepositoryEntries(source: String): List<Pair<String, String>> {
+        val code = source.lineSequence().filterNot { it.trimStart().startsWith("//") }.joinToString("\n")
+        val management = code.substring(code.indexOf("pluginManagement"))
+        val open = Regex("""\brepositories\s*\{""").find(management) ?: return emptyList()
+        val entries = mutableListOf<Pair<String, String>>()
+        var depth = 1
+        var i = open.range.last + 1
+        var start = -1
+        while (i < management.length && depth > 0) {
+            val c = management[i]
+            if (depth == 1 && start < 0 && c.isLetter()) start = i
+            when (c) {
+                '{', '(' -> depth++
+                '}', ')' -> depth--
+                '\n' -> if (depth == 1 && start >= 0) {
+                    val text = management.substring(start, i).trim()
+                    entries += Regex("""[A-Za-z]+""").find(text)!!.value to text
+                    start = -1
+                }
+            }
+            i++
+        }
+        return entries
+    }
+
     private companion object {
         val SETTINGS = listOf(
             "settings.gradle.kts",
@@ -82,6 +155,37 @@ class PluginPortalOrderTest {
             "templates/plugin/settings.gradle.kts",
             "templates/project/settings.gradle.kts",
             "tools/scene-components-consumer/settings.gradle.kts",
+        )
+
+        private val FOOJAY = listOf(
+            "org.gradle.toolchains.foojay-resolver-convention:org.gradle.toolchains.foojay-resolver-convention.gradle.plugin",
+            "org.gradle.toolchains:foojay-resolver",
+        )
+        private val KTOR = listOf(
+            "io.ktor.plugin:io.ktor.plugin.gradle.plugin",
+            "io.ktor.plugin:plugin",
+            "com.google.cloud.tools:jib-gradle-plugin",
+        )
+
+        /** Repositories asked over the network before the Portal, which must exclude its modules. */
+        val NETWORK_REPOSITORIES = setOf("google", "mavenCentral")
+
+        /**
+         * The modules each build resolves that only the Plugin Portal serves, read from the plugins'
+         * marker POMs (20 Nov): each marker, the implementation it depends on, and ktor's jib.
+         */
+        val PORTAL_ONLY = mapOf(
+            "settings.gradle.kts" to FOOJAY + listOf(
+                "org.jetbrains.kotlinx.benchmark:org.jetbrains.kotlinx.benchmark.gradle.plugin",
+                "org.jetbrains.kotlinx:kotlinx-benchmark-plugin",
+            ),
+            "build-logic/settings.gradle.kts" to listOf(
+                "org.gradle.kotlin.kotlin-dsl:org.gradle.kotlin.kotlin-dsl.gradle.plugin",
+                "org.gradle.kotlin:gradle-kotlin-dsl-plugins",
+            ),
+            "templates/game/settings.gradle.kts" to FOOJAY + KTOR,
+            "templates/plugin/settings.gradle.kts" to FOOJAY,
+            "templates/project/settings.gradle.kts" to FOOJAY + KTOR,
         )
     }
 }
