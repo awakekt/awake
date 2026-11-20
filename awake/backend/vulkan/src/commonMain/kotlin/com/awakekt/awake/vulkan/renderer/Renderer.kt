@@ -213,6 +213,12 @@ class Renderer internal constructor(
     /** Null when the device's graphics queue cannot write timestamps. */
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice, maxFramesInFlight)
 
+    /**
+     * Whether presented frames write their GPU timestamps. Always on in use; a test turns it off to
+     * measure what the timing itself costs a frame, against the same frames untimed.
+     */
+    internal var presentedFrameTiming = true
+
     /** What the recording thread waited on this frame: the GPU's fences and the swapchain (#1709). */
     internal val frameWaits = FrameWaits()
 
