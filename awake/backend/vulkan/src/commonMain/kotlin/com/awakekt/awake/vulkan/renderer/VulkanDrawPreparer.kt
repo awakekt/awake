@@ -11,7 +11,6 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
-import com.awakekt.awake.render.command.toGpuResolvedDraw
 import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
@@ -42,6 +41,9 @@ internal class VulkanDrawPreparer(
 
     /** Each draw is prepared into this and copied out into its [GpuResolvedDraw] before the next. */
     private val scratch = PreparedDrawCall()
+
+    /** The packet each draw resolved to last, handed back while it would resolve to the same one. */
+    internal val resolvedDraws = ResolvedDrawCache()
 
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelinesByFormat
 
@@ -93,22 +95,28 @@ internal class VulkanDrawPreparer(
             into = scratch,
         ) ?: return null
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
-        if (edgePipeline != null) return prepared.toGpuResolvedDraw()
+        val frameIndex = renderer.swapchainManager.currentFrame
+        val kind = if (edgePipeline != null) ResolvedDrawCache.EDGE else ResolvedDrawCache.SINGLE
+        if (edgePipeline != null) return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared)
         val format = prepared.vertexFormat
         val depthFeature = renderer.depthPrePassFeature ?: renderer.sceneDepthPassFeature
         val depthKey = request.depthRenderKey()
         // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
         // drawing its whole card. Each return builds the draw once: building it and then copying it
         // with the depth fields set made two or three of them per draw per frame.
-        val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return prepared.toGpuResolvedDraw(depthRenderKey = depthKey)
+        val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
         val sourceMaterial = request.material as? com.awakekt.awake.vulkan.material.Material
-            ?: return prepared.toGpuResolvedDraw(depthRenderKey = depthKey)
+            ?: return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
         if (request.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked &&
             !sourceMaterial.hasTexture
         ) {
-            return prepared.toGpuResolvedDraw(depthRenderKey = depthKey)
+            return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared, depthKey)
         }
-        return prepared.toGpuResolvedDraw(
+        return resolvedDraws.resolve(
+            kind,
+            frameIndex,
+            sourceIndex,
+            prepared,
             depthRenderKey = depthKey,
             alphaCutoff = request.alphaCutoff,
             depthPipeline = depthPipeline,

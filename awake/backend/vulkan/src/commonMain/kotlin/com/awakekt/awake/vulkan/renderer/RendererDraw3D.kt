@@ -16,7 +16,6 @@ import com.awakekt.awake.render.passes.uniformFloats
 import com.awakekt.awake.render.passes.uniforms.drawBlockFloats
 import com.awakekt.awake.render.passes.uniforms.planDrawBlockFloats
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
-import com.awakekt.awake.render.pipeline.depthSortKey
 import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -158,7 +157,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             jointPaletteBuffer = palettes,
             alphaInstanceBuffer = colors,
             frameInstanceBuffer = frames,
-            depthSortKey = cmd.depthSortKey(cameraPosition),
+            depthSortKey = cmd.sortKeyFor(isTransparent, cameraPosition),
             sortOrder = cmd.sortOrder,
             sortLayer = cmd.sortLayer,
         )
@@ -184,7 +183,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         frameIndex = frameIndex,
         uniformSlotIndex = uniformSlotIndex,
         materialBinding = binding,
-        depthSortKey = cmd.depthSortKey(cameraPosition),
+        depthSortKey = cmd.sortKeyFor(isTransparent, cameraPosition),
         sortOrder = cmd.sortOrder,
         sortLayer = cmd.sortLayer,
     )
