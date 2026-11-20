@@ -282,6 +282,21 @@ public final class com/awakekt/awake/project/BundleKeyStoreKt {
 	public static final fun platformBundleKeyStore (Ljava/lang/String;)Lcom/awakekt/awake/project/BundleKeyStore;
 }
 
+public final class com/awakekt/awake/project/BundleMemoryLimits {
+	public static final field Companion Lcom/awakekt/awake/project/BundleMemoryLimits$Companion;
+	public static final field DEFAULT_CONCURRENT_BUNDLE_FETCHES I
+	public static final field DEFAULT_STAGED_MEMBER_BYTES J
+	public fun <init> ()V
+	public fun <init> (IJ)V
+	public synthetic fun <init> (IJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getConcurrentBundleFetches ()I
+	public final fun getStagedMemberBytes ()J
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/BundleMemoryLimits$Companion {
+}
+
 public final class com/awakekt/awake/project/BundleSessionKeyExchange : java/lang/AutoCloseable {
 	public static final field Companion Lcom/awakekt/awake/project/BundleSessionKeyExchange$Companion;
 	public static final field DEFAULT_MODULUS_BITS I
@@ -567,8 +582,10 @@ public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/aw
 	public static final field DEFAULT_INDEX_PATH Ljava/lang/String;
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lcom/awakekt/awake/project/BundleMemoryLimits;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lcom/awakekt/awake/project/BundleMemoryLimits;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close ()V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getCanPrefetch ()Z
@@ -580,12 +597,16 @@ public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/aw
 }
 
 public final class com/awakekt/awake/project/IndexedAssetSource$Companion {
-	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLcom/awakekt/awake/project/BundleKeyProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLcom/awakekt/awake/project/BundleKeyProvider;Lcom/awakekt/awake/project/BundleMemoryLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final synthetic fun open (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLcom/awakekt/awake/project/BundleKeyProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final synthetic fun open (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lcom/awakekt/awake/project/BundleMemoryLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final synthetic fun open (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final synthetic fun open (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLcom/awakekt/awake/project/BundleKeyProvider;Lcom/awakekt/awake/project/BundleMemoryLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLcom/awakekt/awake/project/BundleKeyProvider;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lcom/awakekt/awake/project/BundleMemoryLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lcom/awakekt/awake/project/BundleKeyProvider;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
