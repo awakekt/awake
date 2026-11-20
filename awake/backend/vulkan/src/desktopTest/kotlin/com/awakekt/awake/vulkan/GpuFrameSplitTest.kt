@@ -8,8 +8,7 @@ package com.awakekt.awake.vulkan
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.renderer.GpuFramePart
-import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
+import com.awakekt.awake.testing.allocation.readAllocation
 import kotlin.math.abs
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -26,7 +25,6 @@ import kotlin.test.assertTrue
  * `Double?` boxed seven times a frame, 51,935 B. JVM heap only: lavapipe's own memory is native.
  */
 class GpuFrameSplitTest {
-    private val threads = ManagementFactory.getThreadMXBean() as ThreadMXBean
     private val fixture = HeadlessContentAttachFixture.create(framesInFlight = FRAMES_IN_FLIGHT, presentable = true)
     private val lens = Lens(eye = Vec3f(0f, 2f, 6f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 100f)
 
@@ -37,9 +35,7 @@ class GpuFrameSplitTest {
     fun aPresentedFrameReportsEachPartAndTheWaitsAndAllocatesNoMoreForIt() {
         val renderer = fixture.renderer
         repeat(WARM_UP) { fixture.draw(lens) }
-        val before = threads.currentThreadAllocatedBytes
-        repeat(FRAMES) { fixture.draw(lens) }
-        val perFrame = (threads.currentThreadAllocatedBytes - before) / FRAMES
+        val perFrame = readAllocation(FRAMES) { repeat(FRAMES) { fixture.draw(lens) } }.perUnit
 
         val timing = renderer.frameGpuTiming
         val total = assertNotNull(renderer.frameStats?.gpuTimeMs, "lavapipe writes timestamps")
