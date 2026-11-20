@@ -14,28 +14,42 @@ trap 'rm -rf "$work"' EXIT
 failures=0
 
 # A Gradle stand-in: logs its arguments, prints "out" to stdout and "err" to stderr, and for its
-# first $FAKE_FAILS runs prints $FAKE_MESSAGE to stderr and exits 1.
+# first $FAKE_FAILS runs prints $FAKE_MESSAGE to stderr and exits 1. From run $FAKE_THEN_AT on, a
+# failing run prints $FAKE_THEN instead.
 cat > "$work/gradlew" <<'EOF'
 #!/usr/bin/env bash
 echo "$*" >> "$FAKE_CALLS"
 runs=$(wc -l < "$FAKE_CALLS")
 echo out
 echo err >&2
-if [[ $runs -le $FAKE_FAILS ]]; then echo "$FAKE_MESSAGE" >&2; exit 1; fi
+if [[ $runs -le $FAKE_FAILS ]]; then
+  if [[ $runs -ge ${FAKE_THEN_AT:-999} ]]; then echo "$FAKE_THEN" >&2; else echo "$FAKE_MESSAGE" >&2; fi
+  exit 1
+fi
 EOF
 chmod +x "$work/gradlew"
 
-check() { # name fails message expected-status expected-calls
-  local calls="$work/calls" status=0
+# A sleep stand-in on PATH, so the pauses are recorded instead of waited.
+mkdir "$work/bin"
+cat > "$work/bin/sleep" <<'EOF'
+#!/usr/bin/env bash
+echo "$1" >> "$FAKE_SLEEPS"
+EOF
+chmod +x "$work/bin/sleep"
+
+check() { # name fails message expected-status expected-calls expected-pauses
+  local calls="$work/calls" sleeps="$work/sleeps" status=0
   : > "$calls"
-  FAKE_CALLS="$calls" FAKE_FAILS="$2" FAKE_MESSAGE="$3" GRADLE_RETRY_PAUSE_SECONDS=0 \
+  : > "$sleeps"
+  PATH="$work/bin:$PATH" FAKE_CALLS="$calls" FAKE_SLEEPS="$sleeps" FAKE_FAILS="$2" FAKE_MESSAGE="$3" \
     "$script" "$work/gradlew" build > "$work/stdout" 2> "$work/stderr" || status=$?
-  local actual
+  local actual waited
   actual="$(paste -sd'|' "$calls")"
-  if [[ $status -eq $4 && "$actual" == "$5" ]]; then
+  waited="$(paste -sd' ' "$sleeps")"
+  if [[ $status -eq $4 && "$actual" == "$5" && "$waited" == "$6" ]]; then
     echo "ok   $1"
   else
-    echo "FAIL $1: expected exit $4 and calls '$5', got exit $status and calls '$actual'"
+    echo "FAIL $1: expected exit $4, calls '$5' and pauses '$6', got exit $status, calls '$actual' and pauses '$waited'"
     failures=$((failures + 1))
   fi
 }
@@ -43,13 +57,19 @@ check() { # name fails message expected-status expected-calls
 miss='> Could not find org.jetbrains.kotlin:kotlin-stdlib:2.4.20.'
 throttled="> Could not resolve org.jetbrains.kotlin:kotlin-stdlib:2.4.20. Received status code 429 from server: Too Many Requests"
 
-check "a green command runs once" 0 "" 0 "build"
-check "a miss retries with refreshed dependencies" 1 "$miss" 0 "build|build --refresh-dependencies"
-check "a plugin miss retries with refreshed dependencies" 1 "Plugin [id: 'x'] was not found in any of the following sources:" 0 "build|build --refresh-dependencies"
-check "a 429 retries without refreshing" 1 "$throttled" 0 "build|build"
-check "a 5xx retries without refreshing" 1 "Could not GET 'https://x'. Received status code 502 from server" 0 "build|build"
-check "a second failure is the result" 2 "$miss" 1 "build|build --refresh-dependencies"
-check "a test failure is not retried" 1 "> There were failing tests." 1 "build"
+refreshed="build --refresh-dependencies"
+check "a green command runs once" 0 "" 0 "build" ""
+check "a miss retries with refreshed dependencies" 1 "$miss" 0 "build|$refreshed" "60"
+check "a plugin miss retries with refreshed dependencies" 1 "Plugin [id: 'x'] was not found in any of the following sources:" 0 "build|$refreshed" "60"
+check "a 429 retries without refreshing" 1 "$throttled" 0 "build|build" "60"
+check "a 5xx retries without refreshing" 1 "Could not GET 'https://x'. Received status code 502 from server" 0 "build|build" "60"
+check "a miss refreshes once, then keeps it" 3 "$miss" 0 "build|$refreshed|$refreshed|$refreshed" "60 180 300"
+check "an outage that outlasts two retries passes on the third" 3 "$throttled" 0 "build|build|build|build" "60 180 300"
+check "a fourth failure is the result, after three retries" 4 "$throttled" 1 "build|build|build|build" "60 180 300"
+check "a test failure is not retried" 1 "> There were failing tests." 1 "build" ""
+FAKE_THEN_AT=2 FAKE_THEN="> There were failing tests." \
+  check "a test failure after a retry is the result" 3 "$throttled" 1 "build|build" "60"
+GRADLE_RETRY_PAUSES="5" check "GRADLE_RETRY_PAUSES sets the retries and their pauses" 2 "$throttled" 1 "build|build" "5"
 
 # The streams stay apart, so `$(... -q ...)` captures stdout only.
 : > "$work/calls"

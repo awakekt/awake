@@ -3,8 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Runs a Gradle command, and runs it once more after a pause when it failed resolving a dependency
-# (#1592). A green command runs exactly once and pays nothing.
+# Runs a Gradle command, and runs it again after a pause when it failed resolving a dependency, up to
+# three more times with growing pauses (#1592). A green command runs exactly once and pays nothing.
 #
 #   scripts/gradle-retry.sh ./gradlew :awake:compose:ui:desktopTest
 #   scripts/gradle-retry.sh xvfb-run -a ./gradlew :awake:backend:webgpu:desktopTest
@@ -15,15 +15,17 @@
 #   --refresh-dependencies, which drops those records. It re-checks every module's metadata.
 # - An error ("Could not resolve", "status code 429"). Gradle records no miss for it, so the retry
 #   is the same command. It does not refresh, which would send a throttling host more requests.
+# Once a miss has added --refresh-dependencies, every later run keeps it.
 #
-# Anything else fails as it did. stdout and stderr stay separate streams, so a command substitution
-# of `-q` output still captures only stdout. GRADLE_RETRY_PAUSE_SECONDS sets the pause (default 60:
-# Central has throttled these runners for longer than Gradle's own retries span).
+# Anything else fails as it did, on whichever run it happens. stdout and stderr stay separate
+# streams, so a command substitution of `-q` output still captures only stdout.
+# GRADLE_RETRY_PAUSES lists the pauses in seconds, one per retry (default "60 180 300": Central has
+# throttled these runners for longer than Gradle's own retries span, and for longer than a minute).
 set -uo pipefail
 
 [[ $# -gt 0 ]] || { echo "usage: $0 <command> [args...]" >&2; exit 64; }
 
-pause="${GRADLE_RETRY_PAUSE_SECONDS:-60}"
+read -r -a pauses <<< "${GRADLE_RETRY_PAUSES:-60 180 300}"
 log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
 
@@ -36,19 +38,25 @@ run() (
   { { "$@" 2>&1 1>&4 | tee -a "$log" >&3; exit "${PIPESTATUS[0]}"; } 4>&1 | tee -a "$log"; exit "${PIPESTATUS[0]}"; } 3>&2
 )
 
-run "$@"
-status=$?
-[[ $status -eq 0 ]] && exit 0
+refreshed=false
+attempt=0
+while true; do
+  run "$@"
+  status=$?
+  [[ $status -eq 0 ]] && exit 0
+  [[ $attempt -lt ${#pauses[@]} ]] || exit "$status"
 
-if grep -qE "$MISS" "$log"; then
-  kind="a missing dependency"
-  set -- "$@" --refresh-dependencies
-elif grep -qE "$ERROR" "$log"; then
-  kind="a repository error"
-else
-  exit "$status"
-fi
+  if grep -qE "$MISS" "$log"; then
+    kind="a missing dependency"
+    if ! $refreshed; then set -- "$@" --refresh-dependencies; refreshed=true; fi
+  elif grep -qE "$ERROR" "$log"; then
+    kind="a repository error"
+  else
+    exit "$status"
+  fi
 
-echo "::warning title=Dependency resolution retried::The command failed on $kind; running it once more in ${pause}s: $*" >&2
-sleep "$pause"
-run "$@"
+  pause="${pauses[$attempt]}"
+  attempt=$((attempt + 1))
+  echo "::warning title=Dependency resolution retried::The command failed on $kind; retry $attempt of ${#pauses[@]} in ${pause}s: $*" >&2
+  sleep "$pause"
+done
