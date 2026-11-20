@@ -502,6 +502,21 @@ again. `cache-provider: basic` is the MIT alternative, at the cost measured on #
 - no restore keys;
 - no saves from Windows.
 
+No cache key includes a settings or build file, so a cache entry outlives a change to the
+repositories it was resolved against. On 20 Nov one deduplicated entry,
+`gradle-dependencies-v2-c4cf91…`, failed every job that restored it with "Could not find <jar>" for
+jars Maven Central serves: 10 failures out of 10 restores, while every job that restored another
+entry passed (#1592). When failures follow one cache entry like that, delete it with the **Cache
+maintenance** workflow (`.github/workflows/cache-maintenance.yml`):
+- run it from the Actions tab with a substring of the key, such as `c4cf91`, of at least 6
+  characters, and leave **dry-run** on to list the matching entries (key, ref, created, size) in the
+  run's summary;
+- run it again with **dry-run** off to delete them. Delete the home entries that point at the bad
+  entry as well, by their commit substring, so no restore reaches it.
+
+Deleting a cache entry is always safe: the next job that misses it rebuilds from the network. The
+workflow runs no Gradle and restores no cache, so it can't be affected by what it deletes.
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap
