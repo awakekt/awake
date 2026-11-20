@@ -517,11 +517,13 @@ retried at all: Gradle records it as missing and trusts the record for 24 hours,
 indefinitely. So the pull request workflows run every Gradle command through
 `scripts/gradle-retry.sh`, which runs a failed command again when its output shows a resolution
 failure (#1592), up to three times, after 60, 180 and 300 s (`GRADLE_RETRY_PAUSES`). One retry
-after 60 s was not enough: on 20 Nov a Plugin Portal miss outlasted it. The retries run:
-- after a miss (`Could not find`, `was not found in any of the following sources`), with
-  `--refresh-dependencies`, which drops the missing records, kept on every later retry;
-- after an error (`Could not resolve`, a 429 or a 5xx), unchanged, so a throttling host gets no
-  extra requests.
+after 60 s was not enough: on 20 Nov a Plugin Portal miss outlasted it. A retry follows a miss
+(`Could not find`, `was not found in any of the following sources`) or an error (`Could not
+resolve`, a 429 or a 5xx), and is the same command: it never adds `--refresh-dependencies`. On
+20 Nov a Central edge answered 404 for files Central serves, a klib and then a plugin marker, for
+all of the 9 minutes the retries span. With a refresh, each retry turned modules the first run had
+resolved from the cache into fresh requests to that edge, and failed within a second on one of
+them. A retry can't cure a 404 from such an edge; a mirror listed after Central can (#1592).
 
 Every retry also runs with `--info`, so a failure that outlasts the retries leaves the host and HTTP
 status Gradle met in the log. A warm Gradle daemon keeps no answer between runs: reproduced locally,

@@ -10,14 +10,14 @@
 #   scripts/gradle-retry.sh xvfb-run -a ./gradlew :awake:backend:webgpu:desktopTest
 #
 # Two kinds of failure are retried, told apart by what Gradle printed:
-# - A miss ("Could not find", "was not found in any of the following sources"). Gradle records a 404
-#   as missing and trusts that for 24 hours, a missing module indefinitely, so the retry adds
-#   --refresh-dependencies, which drops those records. It re-checks every module's metadata.
-# - An error ("Could not resolve", "status code 429"). Gradle records no miss for it, so the retry
-#   is the same command. It does not refresh, which would send a throttling host more requests.
-# Once a miss has added --refresh-dependencies, every later run keeps it. Every retry also runs with
-# --info, so a failure that outlasts them leaves the host and HTTP status Gradle met in the log; a
-# command that passes first time is never verbose.
+# - A miss ("Could not find", "was not found in any of the following sources").
+# - An error ("Could not resolve", "status code 429", a 5xx).
+# A retry is the same command: it never adds --refresh-dependencies. A Central edge has answered 404
+# for files Central serves, for longer than every pause here; a refresh turned each module the
+# previous run had resolved from the cache into a fresh request to that edge, so every retry failed
+# sooner and on more modules (#1592). What cures such a miss is a mirror listed after Central.
+# Every retry runs with --info, so a failure that outlasts them leaves the host and HTTP status
+# Gradle met in the log; a command that passes first time is never verbose.
 #
 # Anything else fails as it did, on whichever run it happens. stdout and stderr stay separate
 # streams, so a command substitution of `-q` output still captures only stdout.
@@ -40,7 +40,6 @@ run() (
   { { "$@" 2>&1 1>&4 | tee -a "$log" >&3; exit "${PIPESTATUS[0]}"; } 4>&1 | tee -a "$log"; exit "${PIPESTATUS[0]}"; } 3>&2
 )
 
-refreshed=false
 verbose=false
 attempt=0
 while true; do
@@ -51,7 +50,6 @@ while true; do
 
   if grep -qE "$MISS" "$log"; then
     kind="a missing dependency"
-    if ! $refreshed; then set -- "$@" --refresh-dependencies; refreshed=true; fi
   elif grep -qE "$ERROR" "$log"; then
     kind="a repository error"
   else
