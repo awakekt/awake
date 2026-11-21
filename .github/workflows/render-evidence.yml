@@ -111,16 +111,16 @@ jobs:
 
       - name: Render head
         if: steps.scope.outputs.scenes == 'true'
-        run: ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
+        run: scripts/gradle-retry.sh ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
 
       - name: Capture text clipping on head
         if: steps.scope.outputs.text == 'true'
-        run: ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir="$RUNNER_TEMP/text-after"
+        run: scripts/gradle-retry.sh ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir="$RUNNER_TEMP/text-after"
 
       - name: Capture icon previews on head
         if: steps.scope.outputs.icons == 'true'
         run: |
-          ./gradlew :awake:ui:shadcn:desktopTest \
+          scripts/gradle-retry.sh ./gradlew :awake:ui:shadcn:desktopTest \
             --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' \
             --tests '*LucideShadcnSpritesheetPreviewTest*'
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/after/ui-button-icons-cpu.png"
@@ -158,7 +158,7 @@ jobs:
           # Reuse the head's naga build: cargo output is what the head just used.
           mkdir -p awake/asset/shader-compiler/rust-native
           cp -R "$GITHUB_WORKSPACE/awake/asset/shader-compiler/rust-native/target" awake/asset/shader-compiler/rust-native/ || true
-          ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/before" \
+          "$GITHUB_WORKSPACE/scripts/gradle-retry.sh" ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/before" \
             || echo "::warning::The base failed to render; showing every image as new."
 
       - name: Capture text clipping on base
@@ -173,7 +173,7 @@ jobs:
             mkdir -p awake/asset/shader-compiler/rust-native
             cp -R "$GITHUB_WORKSPACE/awake/asset/shader-compiler/rust-native/target" awake/asset/shader-compiler/rust-native/ || true
           fi
-          ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir="$RUNNER_TEMP/text-before" \
+          "$GITHUB_WORKSPACE/scripts/gradle-retry.sh" ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir="$RUNNER_TEMP/text-before" \
             || echo "::warning::The base failed to capture text clipping; showing every case as new."
 
       - name: Capture icon previews on base
@@ -183,7 +183,7 @@ jobs:
           # Run the exact same capture harness on both commits, including bases that predate it.
           cp "$GITHUB_WORKSPACE/awake/ui/shadcn/src/desktopTest/kotlin/com/awakekt/awake/ui/shadcn/LucideShadcnSpritesheetPreviewTest.kt" \
             awake/ui/shadcn/src/desktopTest/kotlin/com/awakekt/awake/ui/shadcn/
-          ./gradlew :awake:ui:shadcn:desktopTest \
+          "$GITHUB_WORKSPACE/scripts/gradle-retry.sh" ./gradlew :awake:ui:shadcn:desktopTest \
             --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' \
             --tests '*LucideShadcnSpritesheetPreviewTest*'
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/before/ui-button-icons-cpu.png"

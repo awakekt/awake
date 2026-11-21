@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "about": "Third-party algorithm and project names that a shader may carry only with provenance (#1791). awakeVerify fails a main shader source under awake/ that matches a pattern unless docs/reference/source-provenance.json has an entry for its path whose reason matches the same pattern, or a line below holds it pending a review. Pending lines only shrink.",
+  "names": [
+    { "name": "FXAA", "pattern": "FXAA" },
+    { "name": "SMAA", "pattern": "SMAA" },
+    { "name": "Kawase", "pattern": "Kawase" },
+    { "name": "dual-filter blur", "pattern": "[Dd]ual[- ]filter" },
+    { "name": "PBR Neutral", "pattern": "PBR Neutral" }
+  ],
+  "pending": [
+    {
+      "path": "awake/engine/render/effects/src/commonMain/kotlin/com/awakekt/awake/render/effects/BlurEffectShaders.kt",
+      "names": ["Kawase", "dual-filter blur"],
+      "tracker": "#1791, the line \"Provenance check for the other post-processing shaders\": Kawase's and Bjørge's are published algorithms, and no source code is known to have been adapted, so the review is of where this implementation came from."
+    }
+  ]
+}

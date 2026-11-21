@@ -67,12 +67,12 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Regenerate the atlas
-        run: ./gradlew :awake:ui:font-atlas-generator:generateFontAtlas
+        run: scripts/gradle-retry.sh ./gradlew :awake:ui:font-atlas-generator:generateFontAtlas
 
       # The generator writes KotlinPoet's two-space layout; the committed files are that output
       # after the repository's formatter, so this is part of regenerating.
       - name: Format it as it is committed
-        run: ./gradlew :awake:core:text:spotlessApply
+        run: scripts/gradle-retry.sh ./gradlew :awake:core:text:spotlessApply
 
       - name: Fail when the committed atlas is not what the generator makes
         run: |
