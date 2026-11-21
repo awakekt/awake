@@ -20,6 +20,7 @@ on:
       # The keep rules Core's modules ship to every app that shrinks its release.
       - '**/consumer-rules.pro'
       - .github/workflows/obfuscated-templates.yml
+      - scripts/runner-memory.sh
       - tools/check_obfuscated_template.sh
       - tools/check_template_consumer.sh
       - tools/PngColours.java
@@ -52,6 +53,11 @@ jobs:
       # free space otherwise.
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+
+      # Samples the runner's memory and disk every 5 s until the job ends; the last step reports the
+      # worst (#1592). Template-building steps lost their runner three times on 20–21 Nov, with no log.
+      - name: Sample the runner's memory
+        run: scripts/runner-memory.sh start "$RUNNER_TEMP/runner-memory.log"
 
       - name: Setup JDK
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
@@ -144,3 +150,7 @@ jobs:
             build/obfuscated/*.png
             build/obfuscated/*.log
           if-no-files-found: warn
+
+      - name: Report the runner's memory
+        if: always()
+        run: scripts/runner-memory.sh report "$RUNNER_TEMP/runner-memory.log"

@@ -20,6 +20,7 @@ on:
       - tools/scene-components-consumer/**
       - awake/scene/binding/**
       - .github/workflows/templates.yml
+      - scripts/runner-memory.sh
       - 'awake/**/api/**'
       - gradle/libs.versions.toml
       - build-logic/**
@@ -51,6 +52,11 @@ jobs:
       # Core's full publish and three templates' builds don't fit the runner's free space otherwise.
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+
+      # Samples the runner's memory and disk every 5 s until the job ends; the last step reports the
+      # worst (#1592). Template-building steps lost their runner three times on 20–21 Nov, with no log.
+      - name: Sample the runner's memory
+        run: scripts/runner-memory.sh start "$RUNNER_TEMP/runner-memory.log"
 
       - name: Setup JDK
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
@@ -138,6 +144,10 @@ jobs:
             echo "::error::$template: this template uses a Vulkan API newer than the latest Vulkan release $TEMPLATE_VULKAN_VERSION; it has to wait for that Vulkan release (see docs/release-process.md)"
           done
           (( ${#failed[@]} == 0 ))
+
+      - name: Report the runner's memory
+        if: always()
+        run: scripts/runner-memory.sh report "$RUNNER_TEMP/runner-memory.log"
 
   scene-components-native:
     name: Scene component consumer (native)
