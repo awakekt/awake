@@ -1164,14 +1164,14 @@ jobs:
         with:
           cache-provider: basic
 
-      # awake-plugins' own settings don't list Central's mirror; this lists it right after Central in
-      # every build this job runs (#1592). A Central edge has answered 404 for modules Central serves.
-      - name: List Central's mirror after Central in every build
+      # awake-plugins' own settings don't list Central's mirror; this lists it right before Central in
+      # every build this job runs (#1592). Central has answered these runners 429 and wrong 404s.
+      - name: List Central's mirror before Central in every build
         if: steps.reach.outputs.run == 'true'
         run: |
           init_d="${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
           mkdir -p "$init_d"
-          cp scripts/central-mirror-after.init.gradle.kts "$init_d/"
+          cp scripts/central-mirror-before.init.gradle.kts "$init_d/"
 
       # TEMPORARY (#1843, to be reverted): names every request build-logic's plugin resolution makes,
       # with its host and answer, to explain "com.vanniktech.maven.publish not found" with the mirror listed.

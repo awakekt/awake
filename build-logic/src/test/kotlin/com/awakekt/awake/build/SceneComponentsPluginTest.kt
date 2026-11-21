@@ -45,8 +45,13 @@ class SceneComponentsPluginTest {
                 }
                 version = "7.8.9-consumer"
                 repositories {
+                    maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+                        name = "MavenCentralMirror"
+                        content {
+                            excludeGroupAndSubgroups("com.awakekt")
+                        }
+                    }
                     mavenCentral()
-                    maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
                 }
                 kotlin {
                     jvm()

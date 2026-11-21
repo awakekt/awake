@@ -29,7 +29,7 @@ class CoreRepositoriesTest {
         val settings = File(root, "settings.gradle.kts").readText()
         val dependencies = repositoryEntries(settings.substring(settings.indexOf("dependencyResolutionManagement"))).first()
 
-        assertEquals(listOf("google", "mavenCentral", "maven", "maven"), dependencies.map { it.first })
+        assertEquals(listOf("google", "maven", "mavenCentral", "maven"), dependencies.map { it.first })
         assertEquals(
             """maven("https://awakekt.github.io/awake/") { content { includeGroup("io.ygdrasil") } }""",
             dependencies.last().second,

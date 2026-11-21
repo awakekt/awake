@@ -20,10 +20,16 @@ val vulkan = providers.gradleProperty("vulkan").get()
 
 repositories {
     if (providers.gradleProperty("mavenLocal").isPresent) mavenLocal { content { includeGroupAndSubgroups("com.awakekt.awake") } }
+    // Google's mirror of Maven Central first, Central after it: a 429 or 5xx ends the lookup at the
+    // repository that answers it, and Central throttles these runners; only a 404 moves on (#1592).
+    // The mirror carries no Awake release, so com.awakekt goes straight to Central.
+    maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+        name = "MavenCentralMirror"
+        content {
+            excludeGroupAndSubgroups("com.awakekt")
+        }
+    }
     mavenCentral()
-    // Central's mirror, right after Central: a module or plugin marker that a Central edge answers
-    // 404 for, though Central serves it, is then found here: a 404 moves on to the next repository (#1592).
-    maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
     google()
 }
 

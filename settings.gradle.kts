@@ -170,13 +170,17 @@ pluginManagement {
                 excludePortalOnly()
             }
         }
-        mavenCentral { content { excludePortalOnly() } }
-        // Central's mirror, right after Central: a module or plugin marker that a Central edge answers
-        // 404 for, though Central serves it, is then found here: a 404 moves on to the next repository (#1592).
+        // Google's mirror of Maven Central first, Central after it: a 429 or 5xx ends the lookup at the
+        // repository that answers it, and Central throttles these runners; only a 404 moves on (#1592).
+        // The mirror carries no Awake release, so com.awakekt goes straight to Central.
         maven("https://maven-central.storage-download.googleapis.com/maven2/") {
             name = "MavenCentralMirror"
-            content { excludePortalOnly() }
+            content {
+                excludePortalOnly()
+                excludeGroupAndSubgroups("com.awakekt")
+            }
         }
+        mavenCentral { content { excludePortalOnly() } }
         gradlePluginPortal()
     }
 }
@@ -197,8 +201,13 @@ dependencyResolutionManagement {
         // No Maven Local and no snapshot repository: Core's own build resolves nothing from them. Its
         // only snapshots are io.ygdrasil's, which awakekt.github.io below serves, and every repository listed
         // is one more that can answer a lookup wrongly (#1592).
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "MavenCentralMirror"
+            content {
+                excludeGroupAndSubgroups("com.awakekt")
+            }
+        }
         mavenCentral()
-        maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
         // The wgpu4k builds pinned in build.gradle.kts, byte for byte, served by the Maven fallback
         // workflow from the mirror-io.ygdrasil-* release. See "WebGPU release pin" in
         // docs/release-process.md.
