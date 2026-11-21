@@ -75,6 +75,7 @@ internal class SceneDrawCollector(
 
     /** Picks every [LodGroup]'s level once a frame, before any draw reads it. */
     private val lodSelection = LodSelectionPass()
+    private val detailPins = DetailPins()
 
     /** Bounds for a renderer added without them, from its mesh, so it is culled too. */
     private val boundsFallback = MeshBoundsFallback()
@@ -98,7 +99,7 @@ internal class SceneDrawCollector(
         val resolution = resolve(world)
         val lodStore = world.componentStore<LodGroup>(resolution.lodType)
         val boundsStore = world.componentStore<MeshBounds>(resolution.boundsType)
-        lodSelection.select(resolution.lodFamily, lodStore, boundsStore, culling.camera.lens)
+        lodSelection.select(resolution.lodFamily, lodStore, boundsStore, culling.camera.lens, detailPins.attach(world))
         val poseStore = world.componentStore<SkinnedPose>(resolution.poseType)
         val pbrStore = world.componentStore<PbrMaterial>(resolution.pbrType)
         val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)

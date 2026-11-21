@@ -225,6 +225,14 @@ interface Renderer : GpuDevice {
         get() = AntiAliasing.Off
 
     /**
+     * Switches [antiAliasing] to [requested] from the next frame where that needs no rebuild of the
+     * scene pass: between [AntiAliasing.Off] and [AntiAliasing.Fxaa], on a renderer built
+     * single-sampled (#1791). Any other change waits for the engine's next start. Returns whether
+     * [antiAliasing] is now [requested]; a renderer that cannot switch keeps its mode.
+     */
+    fun switchAntiAliasing(requested: AntiAliasing): Boolean = antiAliasing == requested
+
+    /**
      * Quality tier for multi-pass image effects rendered by this [Renderer].
      *
      * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at

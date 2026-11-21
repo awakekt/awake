@@ -24,6 +24,12 @@ object LodSelector {
     const val NONE: Int = -1
 
     /**
+     * The level a model pinned to full detail draws (#1805): its finest, whatever its distance,
+     * screen coverage or policy, and so does every part that follows it.
+     */
+    const val PINNED_LEVEL: Int = 0
+
+    /**
      * The level for [metric], a distance-like value that grows as the model gets farther, where level
      * `i` draws up to [maxMetric]`(i)`, ascending. [current] is the level drawn last frame, or [NONE].
      *

@@ -47,6 +47,7 @@ public final class com/awakekt/awake/core/lod/LodQuality$Companion {
 public final class com/awakekt/awake/core/lod/LodSelector {
 	public static final field INSTANCE Lcom/awakekt/awake/core/lod/LodSelector;
 	public static final field NONE I
+	public static final field PINNED_LEVEL I
 	public final fun applyPolicy (IILcom/awakekt/awake/core/lod/LodPolicy;Lcom/awakekt/awake/core/lod/LodQuality;)I
 	public static synthetic fun applyPolicy$default (Lcom/awakekt/awake/core/lod/LodSelector;IILcom/awakekt/awake/core/lod/LodPolicy;Lcom/awakekt/awake/core/lod/LodQuality;ILjava/lang/Object;)I
 	public final fun coverageLevel (F[FIF)I

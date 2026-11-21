@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.family
 import com.awakekt.awake.ecs.get
 import com.awakekt.awake.ecs.has
 import com.awakekt.awake.scene.rendering.RenderSystem3D
+import com.awakekt.awake.scene.rendering.mesh.DetailPins
 
 /**
  * Advances scene animation before rendering reads [SkinnedPose]. Register before
@@ -43,6 +44,7 @@ class AnimationSystem(
 ) : System {
     // A secondary constructor, so the released `()` and `(AnimationUpdateRate)` constructors stay as they were.
     private var hasRenderer = true
+    private val detailPins = DetailPins()
 
     /**
      * A system for a host that does or doesn't draw.
@@ -62,7 +64,8 @@ class AnimationSystem(
             updateHeadless(world, delta)
             return
         }
-        world.family(ANIMATOR, SKINNED_POSE).forEach { _, animator, skinnedPose ->
+        val pins = detailPins.attach(world)
+        world.family(ANIMATOR, SKINNED_POSE).forEach { entity, animator, skinnedPose ->
             val unseen = skinnedPose.culled && !skinnedPose.drawn
             skinnedPose.culled = false
             skinnedPose.drawn = false
@@ -75,7 +78,8 @@ class AnimationSystem(
             // This frame's delta counts toward the hold before testing it, so an interval shorter than
             // a frame poses every frame, and the overshoot carries into the next hold so the pose rate
             // averages 1 / interval instead of rounding each hold up a whole frame (#1423).
-            val interval = updateRate.intervalFor(skinnedPose.cameraDistance)
+            // A pinned model, or one attached to it, is posed every frame (#1805).
+            val interval = if (pins.isPinned(entity)) 0f else updateRate.intervalFor(skinnedPose.cameraDistance)
             skinnedPose.nextPoseIn -= delta
             if (interval > 0f && skinnedPose.nextPoseIn > 0f) {
                 animator.player.advance(delta)

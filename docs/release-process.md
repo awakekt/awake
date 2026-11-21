@@ -509,6 +509,51 @@ delete it with the **Cache maintenance** workflow (`.github/workflows/cache-main
 Deleting a cache entry is always safe: the next job that misses it rebuilds from the network. The
 workflow runs no Gradle and restores no cache, so it can't be affected by what it deletes.
 
+### Dependency resolution retries
+
+Gradle retries a request that times out or gets a 408, 429 or 5xx six times, about a minute in all
+(`gradle.properties`). Central has throttled GitHub's runners for longer than that, and a 404 is not
+retried at all: Gradle records it as missing and trusts the record for 24 hours, a missing module
+indefinitely. So the pull request workflows run every Gradle command through
+`scripts/gradle-retry.sh`, which runs a failed command again when its output shows a resolution
+failure (#1592), up to three times, after 60, 180 and 300 s (`GRADLE_RETRY_PAUSES`). One retry
+after 60 s was not enough: on 20 Nov a Plugin Portal miss outlasted it. A retry follows a miss
+(`Could not find`, `was not found in any of the following sources`) or an error (`Could not
+resolve`, a 429 or a 5xx), and is the same command, with one exception. Measured locally against a
+repository that answered 404 and then served the file:
+
+| The first run missed | Same command again | With `--refresh-dependencies` |
+|---|---|---|
+| a module or plugin (`Could not find g:x:1.0.`) | resolves | resolves |
+| a file behind metadata the repository served (`Could not find x-1.0.klib (g:x:1.0)`) | fails again: Gradle keeps the miss, and asks only that repository | resolves |
+
+So only a missing file adds `--refresh-dependencies`, kept on every later retry. A refresh
+re-requests every module the last run had cached: on 20 Nov a Central edge answered 404 for files
+Central serves, a klib and then a plugin marker, for all of the 9 minutes the retries span, and
+with a refresh after the klib each retry failed within a second on the marker it had cached before.
+
+A refresh can't help when Central serves the POM and answers 404 for the file again, because Gradle
+asks for a file only from the repository that served its POM. So the last retry also passes
+`scripts/central-mirror-first.init.gradle.kts`, which lists Google's mirror of Maven Central ahead
+of every repository the builds declare, included builds and projects with their own repositories
+too, and the POM and the file both come from the mirror. It is CI-only and that run's alone: the
+settings, the default order and published metadata are unchanged, and every earlier try asks
+Central first.
+
+Every retry also runs with `--info`, so a failure that outlasts the retries leaves the host and HTTP
+status Gradle met in the log. A warm Gradle daemon keeps no answer between runs: reproduced locally,
+a retry on the same daemon recovers as soon as the repository answers again, with or without
+`--refresh-dependencies`. A retry that fails within a second is a repository that is still refusing,
+not a stale result, so the wrapper does not stop the daemon between tries.
+
+Any other failure fails as before, on whichever run it happens, and a green command runs once. A
+step that exhausts its retries has spent 9 minutes paused on top of four runs, so a step or job
+timeout shorter than that (the 20-minute CLI and render step in `ci.yml`, Font atlas's job) can end
+it first; that costs nothing a fourth failure wouldn't. `scripts/gradle-retry.test.sh`,
+in CI, checks the wrapper and fails a pull request workflow that calls `./gradlew` without it. The
+publish workflows don't use it: a step that has reached an upload is never run again (see "Cutting
+a Core release").
+
 ---
 
 ## 3. GitHub Milestones & Subsystem Roadmap

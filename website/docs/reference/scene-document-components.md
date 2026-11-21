@@ -48,6 +48,7 @@ registers it.
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`day_cycle`](#day_cycle) | `DayCycle` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md#day-and-night) |
+| [`detail_pin`](#detail_pin) | `DetailPin` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Level of detail](../guides/level-of-detail.md#keep-an-entity-at-full-detail) |
 | [`factions`](#factions) | `Factions` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
 | [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
@@ -89,7 +90,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_particles`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `trail_renderer`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_particles`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `detail_pin`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `trail_renderer`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -659,6 +660,13 @@ first across midnight. A field no stop sets keeps its authored value.
 The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky takes `skyTint` and
 `skyExposure`, and blends between its `panoramas` by time of day. A
 rotated light node shines along its rotation and ignores the sun's direction.
+
+## `detail_pin`
+
+Keeps a node at full detail whatever its distance from the camera. `SceneDetailPin`, no fields.
+
+Its `LodGroup` draws level 0, and so does every group that follows it. `AnimationSystem` poses its
+skinned model every frame. A node socket-attached to it is pinned too.
 
 ## `factions`
 
