@@ -2347,6 +2347,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getFrameRenderPasses ()I
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getFrameUiUploads ()Lcom/awakekt/awake/render/renderer/UiUploadStats;
+	public fun getMaskTargetBytes ()J
 	public fun getMaxAnisotropy ()I
 	public fun getMaxSupportedAnisotropy ()I
 	public fun getOutputHeight ()I
@@ -2405,6 +2406,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getFrameRenderPasses (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getFrameUiUploads (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/UiUploadStats;
+	public static fun getMaskTargetBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
 	public static fun getMaxAnisotropy (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getMaxSupportedAnisotropy (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I

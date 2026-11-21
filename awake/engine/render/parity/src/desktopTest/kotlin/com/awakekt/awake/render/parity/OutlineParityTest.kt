@@ -91,6 +91,10 @@ class OutlineParityTest {
                 val exemptOnly = render(NO_MASK_LAYER, exempt = true, styled = false)
                 val exemptDraws = renderer.frameStats?.drawCalls
                 println("$backend outline: exempt only=$exemptOnly draws=$exemptDraws against unmasked draws=$unmaskedDraws")
+                // The mask follows the scene's size, not a fixed 2048 square of three D32 layers (#1709).
+                val maskBytes = renderer.maskTargetBytes
+                println("$backend outline: mask target $maskBytes bytes, against $FIXED_MASK_BYTES at the fixed 2048 square")
+                assertTrue(maskBytes in 1 until FIXED_MASK_BYTES / 64, "$backend: a $SIZE px scene's mask: $maskBytes bytes")
                 println("$backend outline: selected=$selected hovered=$hovered unmasked=$unmasked scissored=$scissored clipped=$clipped")
 
                 assertEquals(0, unmasked.red + unmasked.blue, "$backend: nothing masked draws no outline: $unmasked")
@@ -154,6 +158,9 @@ class OutlineParityTest {
         /** The cube's face on screen: [CUBE] of the frame's 2 x [HALF_HEIGHT] units. */
         const val SQUARE = (SIZE * CUBE / (2 * HALF_HEIGHT)).toInt()
         const val WIDTH = 4
+
+        /** Three D32 layers at the 2048 edge every mask target had. */
+        const val FIXED_MASK_BYTES = 2048L * 2048L * 3L * 4L
         const val RING_PIXELS = 100
         const val STRONG = 180
         const val WEAK = 90

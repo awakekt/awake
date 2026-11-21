@@ -179,6 +179,11 @@ class DepthPrePassFeature(
         }
     }
 
+    /** Clears every layer to the far plane, with an empty pass each: what a frame drawing none of them reads. */
+    fun clearLayers(encoder: GPUCommandEncoder) {
+        for (layer in 0 until depthTarget.layers) recordCascade(encoder, emptyList(), layer)
+    }
+
     private fun recordCascade(
         encoder: GPUCommandEncoder,
         draws: List<PreparedDraw>,

@@ -26,6 +26,7 @@ import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
+import com.awakekt.awake.render.passes.MASK_TARGET_MIN_SIZE
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
@@ -361,7 +362,8 @@ open class VulkanEngine(
      * fog reads the mask on every frame, not only on masked ones.
      */
     private fun createMaskTarget(): DepthTarget? = plan.maskShadersFor(RenderBackend.Vulkan)?.let {
-        DepthTarget(graphicsDevice, layers = MASK_TARGET_LAYER_COUNT, arrayed = true)
+        // The smallest edge: the first frame sizes it to the scene (#1709).
+        DepthTarget(graphicsDevice, size = MASK_TARGET_MIN_SIZE, layers = MASK_TARGET_LAYER_COUNT, arrayed = true)
             .also { target -> transferContext.runOneTimeCommands(target::clearToFar) }
     }
 
