@@ -2070,6 +2070,7 @@ public final class com/awakekt/awake/render/renderer/FrameGpuTiming {
 	public fun <init> ([FFF)V
 	public final fun getAcquireWaitMs ()F
 	public final fun getFrameResourceWaitMs ()F
+	public final fun getUpscaleAndUiMs ()Ljava/lang/Float;
 	public final fun partMs (Lcom/awakekt/awake/render/renderer/GpuFramePart;)Ljava/lang/Float;
 	public fun toString ()Ljava/lang/String;
 }
