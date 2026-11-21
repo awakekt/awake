@@ -92,6 +92,8 @@ deploy chose (#1694):
   the Vulkan release does. Not the rest of that Core release: 163 of its artifacts, 76 MB, rather than
   the whole 141 MB bundle.
 
+**A Core release leaves the site only `CORE_RELEASES` releases later:** with 4, 0.59.0 stays whole until 0.63.0 ships, so a consumer up to three releases behind still resolves from the site. That matters even though Central keeps every release. Gradle records which repository a module came from, and asks only that one for its files, so a consumer whose cache holds a module from this site fails with "Could not find" once the site drops it, without asking Central.
+
 An older release drops off the site once nothing it serves names it. GitHub Pages caps a site at 1 GB,
 which rules out keeping every release: the site is about 880 MB, and a build over `ASSEMBLE_LIMIT_MB`
 fails before deploying, printing what each release adds. **List Maven Central as well, first, never this site alone:**
