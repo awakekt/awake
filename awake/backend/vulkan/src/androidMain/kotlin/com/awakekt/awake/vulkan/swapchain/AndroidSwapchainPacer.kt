@@ -9,6 +9,7 @@ import android.view.Surface
 import com.awakekt.awake.core.host.AndroidFrameLoop
 import com.awakekt.awake.core.host.AndroidFramePacing
 import com.awakekt.awake.core.host.FrameRateMode
+import com.awakekt.awake.core.host.SteadyRate
 import com.awakekt.awake.vulkan.swappy.SwappyVk
 
 /** Swappy for a window that is an Android `Surface`, run as [AndroidFrameLoop.framePacing] says (#1699). */
@@ -42,8 +43,14 @@ private object SwappyVkCalls : SwappyCalls {
 private class AndroidSwappyHost(private val configuredMode: () -> FrameRateMode) : SwappyHost {
     override val swappySelected: Boolean get() = AndroidFrameLoop.framePacing == AndroidFramePacing.Swappy
 
-    // The loop's live override wins, as it does for the loop's own pacing.
-    override val frameRateMode: FrameRateMode get() = AndroidFrameLoop.frameRateOverride ?: configuredMode()
+    // The loop's live override wins, as it does for the loop's own pacing. With a steady rate in
+    // effect, Swappy holds the rate the loop chose (#1699).
+    override val frameRateMode: FrameRateMode
+        get() = if (AndroidFrameLoop.steadyRate == SteadyRate.Off) {
+            AndroidFrameLoop.frameRateOverride ?: configuredMode()
+        } else {
+            AndroidFrameLoop.frameRateModeInUse
+        }
 
     override val activity: Any? get() = AndroidFrameLoop.pacingActivity?.get()
 
