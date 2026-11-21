@@ -95,7 +95,9 @@ class CentralMirrorTest {
             ProbePluginRepository.serving().use { mirror ->
                 val result = probeBuild(listOf(central.declaration, mirror.declaration)) { it.buildAndFail() }
 
-                assertTrue("429" in result.output, result.output)
+                // Gradle reports a plugin lookup that ended on an error as "not found", naming no status.
+                assertTrue("was not found in any of the following sources" in result.output, result.output)
+                assertTrue(central.requests.get() > 0, "Central was asked first")
                 assertEquals(0, mirror.requests.get(), "a 429 moved on to the mirror")
             }
         }
