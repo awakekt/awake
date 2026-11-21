@@ -168,7 +168,7 @@ object ScenePassCompiler {
             if (environment.wireframe) edges = drawPreparer.prepareEdges(requests, context)
         }
         val prePasses = draws.shadowPrePasses(shadowViewProjections, drawPreparer != null, light, environment)
-        val maskPasses = draws.maskSubPasses(viewProjection)
+        val maskPasses = draws.maskSubPasses(viewProjection, clipSpace)
         drawStats?.recordPasses(prePasses, draws.opaque.size, draws.transparent.size, maskPasses, edges.size)
         return GpuPassInput(
             prePasses = prePasses,

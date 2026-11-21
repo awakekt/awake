@@ -40,6 +40,9 @@ val OutlineUniformLayout = UniformLayout(
     OutlineFields.Widths,
 )
 
+/** The narrowest outline drawn, in pixels: a width under it draws nothing, in the overlay's shader too. */
+const val OUTLINE_MIN_WIDTH_PIXELS: Float = 0.5f
+
 /**
  * How one mask layer's outline is drawn: in [color], [widthPixels] wide around the silhouette of
  * what the layer masks. A mask sub-pass carries it as its pass uniforms, [packed], and the outline
@@ -48,6 +51,13 @@ val OutlineUniformLayout = UniformLayout(
 data class OutlineStyle(val color: Color, val widthPixels: Float) {
     /** This style as a mask sub-pass's pass uniforms. */
     fun packed(): FloatArray = floatArrayOf(color.r, color.g, color.b, color.a, widthPixels)
+
+    /**
+     * Whether this style draws anything: at least [OUTLINE_MIN_WIDTH_PIXELS] wide, and not fully
+     * transparent. The outline overlay draws nothing on a frame whose mask layers have no such style
+     * (#1709).
+     */
+    val draws: Boolean get() = widthPixels >= OUTLINE_MIN_WIDTH_PIXELS && color.a > 0f
 
     /** Reading a style back from a mask sub-pass. */
     companion object {

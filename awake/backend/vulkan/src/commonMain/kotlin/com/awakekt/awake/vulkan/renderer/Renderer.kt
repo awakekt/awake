@@ -27,6 +27,7 @@ import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.mesh.GpuDynamicMeshes
+import com.awakekt.awake.render.passes.MaskTargetSizing
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.ShadowArrayResidency
@@ -161,7 +162,7 @@ class Renderer internal constructor(
     private val sceneDepthPass: DepthPrePassFeature? = null,
     /** The mask's pass, when the plan opted into one: scene depth's pipelines over the masked
      * draws, a layer per mask layer, recorded only on frames something is masked. */
-    private val maskPass: DepthPrePassFeature? = null,
+    internal val maskPass: DepthPrePassFeature? = null,
     /** The anti-aliasing mode the engine built the scene pass for, after any fallback (#1791). */
     antiAliasing: AntiAliasing = AntiAliasing.Off,
     /** The anti-aliasing modes this device offers (#1791). */
@@ -335,6 +336,8 @@ class Renderer internal constructor(
      * few bytes while no light casts, since the array is released then (#1698). */
     override val shadowMapBytes: Long get() = depthTarget?.allocatedBytes ?: 0L
 
+    override val maskTargetBytes: Long get() = maskTarget?.allocatedBytes ?: 0L
+
     /** The format the engine built the shadow depth pass for (#1698). */
     override val shadowDepthFormat: ShadowDepthFormat
         get() = depthTarget?.format ?: ShadowDepthFormat.Default
@@ -347,6 +350,9 @@ class Renderer internal constructor(
 
     /** When the shadow array is allocated and released (#1698). */
     internal val shadowResidency = ShadowArrayResidency()
+
+    /** The mask target's edge for the scene it is drawn over (#1709): see [settleMaskTarget]. */
+    internal val maskSizing = MaskTargetSizing()
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary
@@ -738,7 +744,12 @@ class Renderer internal constructor(
      */
     internal fun recordMaskPass(commandBuffer: Long, frameIndex: Int, masks: List<GpuSubPass>, environment: GpuEnvironmentState) {
         val feature = maskPass ?: return
-        if (masks.isNotEmpty()) feature.recordCommands(commandBuffer, frameIndex, masks, renderPipeline.vertexFormat, environment)
+        if (masks.isNotEmpty()) {
+            feature.recordCommands(commandBuffer, frameIndex, masks, renderPipeline.vertexFormat, environment)
+        } else {
+            // Fog reads the mask every frame: a target just resized holds UNDEFINED layers until cleared.
+            feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
+        }
     }
 
     override fun waitIdle() {

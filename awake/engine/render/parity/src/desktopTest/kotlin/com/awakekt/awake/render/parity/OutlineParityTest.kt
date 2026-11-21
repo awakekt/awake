@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.generate.generate
+import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.platform.HeadlessSurface
@@ -61,28 +62,46 @@ class OutlineParityTest {
                     projection = Lens.Projection.Orthographic
                     orthoHalfHeight = HALF_HEIGHT
                 }
-                suspend fun render(maskLayer: Int): Row {
+                suspend fun render(maskLayer: Int, exempt: Boolean = false, styled: Boolean = true, bounds: Aabb? = null): Row {
                     renderer.renderToTexture(
                         target,
                         ScenePassCompiler.compile(
                             lens = lens,
-                            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = maskLayer)),
+                            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = maskLayer, exemptFromCoverings = exempt, worldBounds = bounds)),
                             light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
                             clipSpace = renderer.clipSpace,
                             aspect = 1f,
                             drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
-                            maskLayers = listOf(SELECTED.packed(), HOVERED.packed()),
+                            maskLayers = if (styled) listOf(SELECTED.packed(), HOVERED.packed()) else emptyList(),
                         ),
                     )
                     return measure(renderer.readPixels(target).data)
                 }
                 val selected = render(0)
                 val hovered = render(1)
+                // With the cube's bounds, the overlay draws only around them (#1709): the same ring.
+                val half = CUBE / 2
+                val scissored = render(0, bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half)))
+                // Bounds a quarter of the cube's clip its ring: the backend honours the overlay's scissor.
+                val clipped = render(0, bounds = Aabb(Vec3f(-half / 4, -half / 4, -half), Vec3f(half / 4, half / 4, half)))
                 val unmasked = render(NO_MASK_LAYER)
-                println("$backend outline: selected=$selected hovered=$hovered unmasked=$unmasked")
+                val unmaskedDraws = renderer.frameStats?.drawCalls
+                // An unlit mesh joins the covering-exempt mask layer whether anything is outlined or not,
+                // as a scene's draws do while nothing is outlined: no styles. The overlay must not draw then (#1709).
+                val exemptOnly = render(NO_MASK_LAYER, exempt = true, styled = false)
+                val exemptDraws = renderer.frameStats?.drawCalls
+                println("$backend outline: exempt only=$exemptOnly draws=$exemptDraws against unmasked draws=$unmaskedDraws")
+                // The mask follows the scene's size, not a fixed 2048 square of three D32 layers (#1709).
+                val maskBytes = renderer.maskTargetBytes
+                println("$backend outline: mask target $maskBytes bytes, against $FIXED_MASK_BYTES at the fixed 2048 square")
+                assertTrue(maskBytes in 1 until FIXED_MASK_BYTES / 64, "$backend: a $SIZE px scene's mask: $maskBytes bytes")
+                println("$backend outline: selected=$selected hovered=$hovered unmasked=$unmasked scissored=$scissored clipped=$clipped")
 
                 assertEquals(0, unmasked.red + unmasked.blue, "$backend: nothing masked draws no outline: $unmasked")
+                assertEquals(0, exemptOnly.red + exemptOnly.blue, "$backend: a covering-exempt draw alone draws no outline: $exemptOnly")
                 assertTrue(selected.left in WIDTH - 1..WIDTH + 1 && selected.right in WIDTH - 1..WIDTH + 1, "$backend: a ring $WIDTH px wide: $selected")
+                assertEquals(selected, scissored, "$backend: scissored to the cube's bounds, the same outline")
+                assertTrue(clipped.red < selected.red / 2, "$backend: bounds inside the silhouette leave no ring to draw: $clipped")
                 assertEquals(0, selected.inside, "$backend: nothing inside the silhouette: $selected")
                 assertTrue(selected.red > RING_PIXELS && selected.blue == 0, "$backend: set 0 in its own colour: $selected")
                 assertTrue(hovered.blue > RING_PIXELS && hovered.red == 0, "$backend: set 1 in its own colour: $hovered")
@@ -97,7 +116,13 @@ class OutlineParityTest {
 
     private suspend fun open(backend: HeadlessUiBackend): HeadlessRenderSession {
         // The showcase's plan without its fog and sky, plus the outline: the mask pass and its overlay.
-        val plan = EngineShowcaseRenderPlan.copy(contentFeatures = listOf(outlineContentFeature()), maskShaderSet = PackShaderSets.SceneDepth)
+        // No scene-depth pass: the outline reads only the mask, which then follows the scene's size. With
+        // one, the mask keeps scene depth's size, which fog compares it with (UnlitOverFogParityTest).
+        val plan = EngineShowcaseRenderPlan.copy(
+            contentFeatures = listOf(outlineContentFeature()),
+            maskShaderSet = PackShaderSets.SceneDepth,
+            sceneDepthShaderSet = null,
+        )
         if (backend == HeadlessUiBackend.WebGpu) return webGpuHeadlessPlan(plan, surface = HeadlessSurface(SIZE, SIZE))
         val ready = CompletableDeferred<Renderer>()
         val app = AppSpecBuilder().apply { ready { ready.complete(it) } }.build().createLifecycle()
@@ -139,6 +164,9 @@ class OutlineParityTest {
         /** The cube's face on screen: [CUBE] of the frame's 2 x [HALF_HEIGHT] units. */
         const val SQUARE = (SIZE * CUBE / (2 * HALF_HEIGHT)).toInt()
         const val WIDTH = 4
+
+        /** Three D32 layers at the 2048 edge every mask target had. */
+        const val FIXED_MASK_BYTES = 2048L * 2048L * 3L * 4L
         const val RING_PIXELS = 100
         const val STRONG = 180
         const val WEAK = 90

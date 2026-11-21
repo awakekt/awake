@@ -204,6 +204,13 @@ interface Renderer : GpuDevice {
         get() = 0L
 
     /**
+     * Device memory the mask target holds, in bytes, the layers outlines and fog read; 0 on a renderer
+     * with no mask or that does not count it. It follows the scene's size (#1709).
+     */
+    val maskTargetBytes: Long
+        get() = 0L
+
+    /**
      * The depth format this renderer's shadow maps use (#1698): [ShadowDepthFormat.Default] unless
      * the engine was started with another, and on a renderer that does not choose one.
      */

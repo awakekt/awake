@@ -347,8 +347,16 @@ class Renderer internal constructor(
     /** How many shadow array layers stay resident, frame by frame: see [settleShadowArray] (#1698). */
     internal val shadowResidency = com.awakekt.awake.render.passes.ShadowArrayResidency()
 
+    /** The mask target's edge for the scene it is drawn over (#1709): see [settleMaskTarget]. */
+    internal val maskSizing = com.awakekt.awake.render.passes.MaskTargetSizing()
+
+    /** Whether every mask layer holds the far plane or a frame's draws: false for a new texture, zero-filled. */
+    internal var maskCleared = false
+
     /** The shadow depth array's bytes as allocated now; it grows with the layers a frame draws. */
     override val shadowMapBytes: Long get() = depthPrePass?.depthTarget?.allocatedBytes ?: 0L
+
+    override val maskTargetBytes: Long get() = maskPass?.depthTarget?.allocatedBytes ?: 0L
 
     /** The shadow array's own depth format, chosen when the engine started (#1709). */
     override val shadowDepthFormat: com.awakekt.awake.render.renderer.ShadowDepthFormat

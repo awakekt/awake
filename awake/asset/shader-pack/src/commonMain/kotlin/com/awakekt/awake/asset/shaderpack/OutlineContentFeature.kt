@@ -12,6 +12,7 @@ import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.command.CommandRecorder
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
@@ -60,17 +61,13 @@ class OutlineRenderFeature(
     override val pass = RenderPassSlot.Scene
 
     private val styles = arrayOfNulls<OutlineStyle>(MASK_LAYER_COUNT)
+    private val scissor = OutlineScissor()
 
     override fun recordCommands(context: RenderFrameContext) {
         val input = context.passInput ?: return
-        if (input.maskPasses.isEmpty()) return
-        styles.fill(null)
-        input.maskPasses.forEach { mask ->
-            if (mask.targetLayer in styles.indices) styles[mask.targetLayer] = OutlineStyle.unpack(mask.passUniforms)
-        }
-        // The scene's own rectangle when it draws into part of the surface, as an editor's view does.
-        val width = input.viewport?.width ?: context.surfaceWidth.toFloat()
-        val height = input.viewport?.height ?: context.surfaceHeight.toFloat()
+        if (!styledOnScreen(context, input)) return
+        val width = sceneWidth(context, input)
+        val height = sceneHeight(context, input)
         uniforms.write(context.frameIndex) {
             put(OutlineFields.Viewport, width, height, 0f, 0f)
             put(OutlineFields.Color0, styles[0]?.color ?: NO_COLOR)
@@ -84,8 +81,31 @@ class OutlineRenderFeature(
         context.engineBinding(pipeline, BindingSemantic.MaskDepth)?.let {
             recorder.bindMaterial(BindingSemantic.MaskDepth, it)
         }
+        if (scissor.narrowed) recorder.setScissor(scissor.x, scissor.y, scissor.width, scissor.height)
         recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
+        if (scissor.narrowed) recorder.setScissor(scissor.fullX, scissor.fullY, scissor.fullWidth, scissor.fullHeight)
     }
+
+    /**
+     * Reads each mask layer's style into [styles] and fits [scissor] around the styled layers' draws.
+     * False when there is nothing to draw (#1709): mask passes run for more than outlines, as a draw
+     * exempt from coverings (an unlit mesh) joins its own layer whether anything is outlined or not,
+     * and with no layer styled to draw, or none on screen, the overlay would read its mask samples to
+     * write nothing.
+     */
+    private fun styledOnScreen(context: RenderFrameContext, input: GpuPassInput): Boolean {
+        styles.fill(null)
+        input.maskPasses.forEach { mask ->
+            if (mask.targetLayer in styles.indices) styles[mask.targetLayer] = OutlineStyle.unpack(mask.passUniforms)
+        }
+        return styles.any { it?.draws == true } &&
+            scissor.fit(input.maskPasses, styles, input.viewport?.x ?: 0f, input.viewport?.y ?: 0f, sceneWidth(context, input), sceneHeight(context, input))
+    }
+
+    // The scene's own rectangle when it draws into part of the surface, as an editor's view does.
+    private fun sceneWidth(context: RenderFrameContext, input: GpuPassInput) = input.viewport?.width ?: context.surfaceWidth.toFloat()
+
+    private fun sceneHeight(context: RenderFrameContext, input: GpuPassInput) = input.viewport?.height ?: context.surfaceHeight.toFloat()
 
     /** Nothing: the registry owns the pipeline it built, and the block lives on it. */
     override fun destroy() = Unit
