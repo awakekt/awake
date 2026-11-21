@@ -188,15 +188,6 @@ jobs:
         with:
           cache-provider: basic
 
-      # TEMPORARY (#1843, to be reverted): names every request build-logic's plugin resolution makes,
-      # with its host and answer, to explain "com.vanniktech.maven.publish not found" with the mirror listed.
-      - name: "Diagnose: build-logic plugin resolution, with --info"
-        run: |
-          set -o pipefail
-          ./gradlew -p build-logic help --no-configuration-cache --info 2>&1 \
-            | grep -E "HTTP|Resource missing|Downloading|Could not|status code|vanniktech|Resolved plugin|BUILD|What went wrong|Searched in" \
-            | grep -vE "^\s+at "
-
       - uses: ./.github/actions/cache-naga
         with:
           variant: desktop
@@ -1162,16 +1153,6 @@ jobs:
           init_d="${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
           mkdir -p "$init_d"
           cp scripts/central-mirror-before.init.gradle.kts "$init_d/"
-
-      # TEMPORARY (#1843, to be reverted): names every request build-logic's plugin resolution makes,
-      # with its host and answer, to explain "com.vanniktech.maven.publish not found" with the mirror listed.
-      - name: "Diagnose: build-logic plugin resolution, with --info"
-        if: steps.reach.outputs.run == 'true'
-        run: |
-          set -o pipefail
-          ./gradlew -p build-logic help --no-configuration-cache --info 2>&1 \
-            | grep -E "HTTP|Resource missing|Downloading|Could not|status code|vanniktech|Resolved plugin|BUILD|What went wrong|Searched in" \
-            | grep -vE "^\s+at "
 
       # JVM and wasm only: the plugins' ABI dumps take the wasm klib. No natives, Android or iOS.
       - name: Publish this change's Core locally
