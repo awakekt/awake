@@ -193,7 +193,7 @@ jobs:
       - name: "Diagnose: build-logic plugin resolution, with --info"
         run: |
           set -o pipefail
-          ./gradlew -p build-logic help --no-configuration-cache --info 2>&1 \
+          GRADLE_RETRY_PAUSES=" " scripts/gradle-retry.sh ./gradlew -p build-logic help --no-configuration-cache --info 2>&1 \
             | grep -E "HTTP|Resource missing|Downloading|Could not|status code|vanniktech|Resolved plugin|BUILD|What went wrong|Searched in" \
             | grep -vE "^\s+at "
 
@@ -511,6 +511,16 @@ jobs:
   # the macOS native for every 0.6.0-0.11.1 release because nothing proved the other hosts also
   # build (#795); this is the PR-time half of that proof, on the same two hosts
   # build-and-publish.yml's naga-desktop matrix collects from for a real release.
+
+      # TEMPORARY (#1843, to be reverted): when a step above fails, asks again with every cached answer
+      # dropped, and names each request build-logic's plugin resolution makes, with its host and answer.
+      - name: "Diagnose on failure: build-logic plugin resolution, refreshed, with --info"
+        if: failure()
+        run: |
+          set -o pipefail
+          GRADLE_RETRY_PAUSES=" " scripts/gradle-retry.sh ./gradlew -p build-logic help --no-configuration-cache --refresh-dependencies --info 2>&1 \
+            | grep -E "HTTP|Resource missing|Downloading|Could not|status code|vanniktech|Resolved plugin|BUILD|What went wrong|Searched in" \
+            | grep -vE "^\s+at "
   naga-desktop:
     name: Naga desktop (${{ matrix.platform }})
     needs: platform-impact
@@ -1169,7 +1179,7 @@ jobs:
         if: steps.reach.outputs.run == 'true'
         run: |
           set -o pipefail
-          ./gradlew -p build-logic help --no-configuration-cache --info 2>&1 \
+          GRADLE_RETRY_PAUSES=" " scripts/gradle-retry.sh ./gradlew -p build-logic help --no-configuration-cache --info 2>&1 \
             | grep -E "HTTP|Resource missing|Downloading|Could not|status code|vanniktech|Resolved plugin|BUILD|What went wrong|Searched in" \
             | grep -vE "^\s+at "
 
@@ -1225,3 +1235,13 @@ jobs:
             awake-plugins/plugins/*/*/build/reports/scorecard/
           if-no-files-found: ignore
           retention-days: 14
+
+      # TEMPORARY (#1843, to be reverted): when a step above fails, asks again with every cached answer
+      # dropped, and names each request build-logic's plugin resolution makes, with its host and answer.
+      - name: "Diagnose on failure: build-logic plugin resolution, refreshed, with --info"
+        if: failure() && steps.reach.outputs.run == 'true'
+        run: |
+          set -o pipefail
+          GRADLE_RETRY_PAUSES=" " scripts/gradle-retry.sh ./gradlew -p build-logic help --no-configuration-cache --refresh-dependencies --info 2>&1 \
+            | grep -E "HTTP|Resource missing|Downloading|Could not|status code|vanniktech|Resolved plugin|BUILD|What went wrong|Searched in" \
+            | grep -vE "^\s+at "
