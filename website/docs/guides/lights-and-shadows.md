@@ -194,6 +194,12 @@ its chain, at the renderer's `effectQuality` (`Low` when that is `Off`). A camer
 is kept as it is listed. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
 resolve and post-processing.
 
+The engine builds the scene pass for the app's anti-aliasing once, at start. A settings screen that
+changes `RenderQualitySettings.antiAliasing` between `Off` and `Fxaa` takes effect from the next frame,
+when the scene pass is single-sampled. A change to or from an MSAA mode rebuilds the scene's
+attachments and pipelines, so it applies on the next start. `Renderer.antiAliasing` reports the mode
+in effect, and `Renderer.supportedAntiAliasing` the modes the device offers.
+
 With alpha to coverage enabled, built-in textured and skinned `AlphaMode.Mask` materials convert
 the filtered alpha edge around their cutoff into sample coverage. Opaque materials retain full
 coverage, and alpha-blended and additive materials retain blending. Custom content shaders keep

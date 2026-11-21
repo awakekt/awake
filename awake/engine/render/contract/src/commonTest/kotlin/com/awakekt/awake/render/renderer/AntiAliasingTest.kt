@@ -66,4 +66,20 @@ class AntiAliasingTest {
         assertEquals(AntiAliasing.Msaa8x, AntiAliasing.forSampleCount(8))
         assertFailsWith<IllegalArgumentException> { AntiAliasing.forSampleCount(3) }
     }
+
+    /** Off and FXAA switch on a single-sampled pass; anything multisampled waits for a rebuild (#1791). */
+    @Test
+    fun onlyTheSingleSampleModesSwitchWithoutARebuild() {
+        val offered = AntiAliasing.supported(setOf(1, 4))
+        fun switch(current: AntiAliasing, requested: AntiAliasing) = AntiAliasing.switchWithoutRebuild(current, requested, offered)
+        assertEquals(AntiAliasing.Fxaa, switch(AntiAliasing.Off, AntiAliasing.Fxaa))
+        assertEquals(AntiAliasing.Off, switch(AntiAliasing.Fxaa, AntiAliasing.Off))
+        assertEquals(AntiAliasing.Off, switch(AntiAliasing.Off, AntiAliasing.Msaa4x), "a multisampled request")
+        assertEquals(AntiAliasing.Msaa4x, switch(AntiAliasing.Msaa4x, AntiAliasing.Fxaa), "a multisampled pass")
+        assertEquals(
+            AntiAliasing.Off,
+            AntiAliasing.switchWithoutRebuild(AntiAliasing.Off, AntiAliasing.Fxaa, setOf(AntiAliasing.Off)),
+            "a renderer that does not offer FXAA",
+        )
+    }
 }

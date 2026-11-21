@@ -163,13 +163,22 @@ class Renderer internal constructor(
      * draws, a layer per mask layer, recorded only on frames something is masked. */
     private val maskPass: DepthPrePassFeature? = null,
     /** The anti-aliasing mode the engine built the scene pass for, after any fallback (#1791). */
-    override val antiAliasing: AntiAliasing = AntiAliasing.Off,
+    antiAliasing: AntiAliasing = AntiAliasing.Off,
     /** The anti-aliasing modes this device offers (#1791). */
     override val supportedAntiAliasing: Set<AntiAliasing> =
         setOf(AntiAliasing.Off),
 ) : RenderRenderer,
     GpuDrawPreparationSource,
     ContentFeatureHost {
+    /** The mode in effect: the one the scene pass was built for, or Off and FXAA switched since (#1791). */
+    override var antiAliasing: AntiAliasing = antiAliasing
+        private set
+
+    override fun switchAntiAliasing(requested: AntiAliasing): Boolean {
+        antiAliasing = AntiAliasing.switchWithoutRebuild(antiAliasing, requested, supportedAntiAliasing)
+        return antiAliasing == requested
+    }
+
     override val gpuDrawPreparer: GpuDrawPreparer by lazy {
         VulkanDrawPreparer(this)
     }
