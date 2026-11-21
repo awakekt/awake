@@ -35,7 +35,8 @@ import kotlin.test.assertTrue
  * them.
  *
  * Measured on lavapipe (wgpu-native over Mesa): at 0.5, 0 of the 384 stripe pixels differ from
- * scale 1, the worst scene pixel away from edges is 1/255 off, and 530 edge pixels change.
+ * scale 1, the worst scene pixel away from edges is 1/255 off, and 530 edge pixels change. On Vulkan the
+ * scaled frame takes as many render passes as the unscaled one, 2, as its upscale and UI share a pass.
  */
 class RenderScaleParityTest {
     @Test
@@ -63,7 +64,9 @@ class RenderScaleParityTest {
 
     private fun verifyHalfScale(backend: HeadlessUiBackend, frames: Frames) {
         val full = frames.frame(1f)
+        val fullPasses = frames.renderer.frameRenderPasses
         val half = frames.frame(HALF)
+        val halfPasses = frames.renderer.frameRenderPasses
         assertEquals(SIZE / 2, frames.sceneWidth, "$backend: the scene target is half the surface")
         assertEquals(SIZE, frames.outputWidth, "$backend: the surface keeps its size")
         assertEquals(SIZE * SIZE * 4, half.size, "$backend: the UI draws into, and the frame presents, the full-resolution surface")
@@ -78,6 +81,11 @@ class RenderScaleParityTest {
         println("$backend render scale 0.5: ui differing=$uiDiffering, worst away from edges=$awayWorst/255, edge pixels changed=$edgeChanged")
 
         assertEquals(0, uiDiffering, "$backend: the UI is drawn at full resolution over the upscaled scene")
+        // The upscale and the UI share one pass on the surface (#1709). Recorded apart they took three: a
+        // clear the image pass ended at once, the upscale on a reload, and the UI on another, so a
+        // scaled frame took two passes more than an unscaled one (4 against 2, measured on lavapipe).
+        // WebGPU counts no passes.
+        assertTrue(halfPasses <= fullPasses, "$backend: a scaled frame takes no more render passes than an unscaled one: $halfPasses against $fullPasses")
         assertTrue(awayWorst <= SCENE_TOLERANCE, "$backend: the scene away from edges is within $SCENE_TOLERANCE/255: $awayWorst")
         assertTrue(edgeChanged >= MIN_EDGE_CHANGED, "$backend: the scene was rendered at half resolution: $edgeChanged edge pixels changed")
     }

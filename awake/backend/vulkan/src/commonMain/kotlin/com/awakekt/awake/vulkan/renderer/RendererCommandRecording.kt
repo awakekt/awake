@@ -226,20 +226,16 @@ internal fun Renderer.recordResolvedCommandBuffer(
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.Scene)
 
     recordPostPasses(commandBuffer, postPasses)
+    // A scaled frame's upscale and UI share one pass on the swapchain image when they can (#1709).
+    var uiRecorded = false
     if (scaled != null) {
         if (scenePassInput != null) {
             recordPostPassesToTexture(commandBuffer, scaled, scenePassInput, frameIndex)
         }
         timer?.mark(commandBuffer, frameIndex, GpuFramePart.Post)
         scaled.transitionToShaderReadOnly(commandBuffer)
-        recordSwapchainPostPasses(
-            commandBuffer = commandBuffer,
-            frameIndex = frameIndex,
-            acquiredImageIndex = acquiredImageIndex,
-            chain = sceneScale.upscale(scaled, outputWidth, outputHeight),
-            clearDestination = true,
-            environment = environment,
-        )
+        val upscale = sceneScale.upscale(scaled, outputWidth, outputHeight)
+        uiRecorded = recordScaledOutput(commandBuffer, frameIndex, acquiredImageIndex, upscale, viewport, scissor, context, environment, timer)
     } else {
         // Unscaled, the frame's image passes draw on the output: they are the upscale part's.
         timer?.mark(commandBuffer, frameIndex, GpuFramePart.Post)
@@ -250,15 +246,16 @@ internal fun Renderer.recordResolvedCommandBuffer(
             chain = passInput?.postPassChain ?: ImagePassChain.Empty,
         )
     }
-    timer?.mark(commandBuffer, frameIndex, GpuFramePart.Upscale)
-
-    recordUiOrPresentTransitionPass(
-        commandBuffer = commandBuffer,
-        acquiredImageIndex = acquiredImageIndex,
-        viewport = viewport,
-        scissor = scissor,
-        context = context,
-    )
+    if (!uiRecorded) {
+        timer?.mark(commandBuffer, frameIndex, GpuFramePart.Upscale)
+        recordUiOrPresentTransitionPass(
+            commandBuffer = commandBuffer,
+            acquiredImageIndex = acquiredImageIndex,
+            viewport = viewport,
+            scissor = scissor,
+            context = context,
+        )
+    }
     timer?.end(commandBuffer, frameIndex)
     Vulkan.vkEndCommandBuffer(commandBuffer)
 }

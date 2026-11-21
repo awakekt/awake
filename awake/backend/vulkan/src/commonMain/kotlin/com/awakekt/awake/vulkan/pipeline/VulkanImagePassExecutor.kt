@@ -142,6 +142,7 @@ internal class VulkanImagePassExecutor(
     private val transientLoadRenderPasses = HashMap<VkFormat, Long>()
     private val swapchainClearRenderPasses = HashMap<VkFormat, Long>()
     private val swapchainContinueRenderPasses = HashMap<VkFormat, Long>()
+    private val swapchainPresentRenderPasses = HashMap<VkFormat, Long>()
     private val offscreenContinueRenderPasses = HashMap<VkFormat, Long>()
     private val offscreenClearRenderPasses = HashMap<VkFormat, Long>()
     private val samplers = HashMap<ImagePassSamplerSpec, Long>()
@@ -213,6 +214,72 @@ internal class VulkanImagePassExecutor(
                 srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
             )
         }
+
+    /**
+     * Render pass compatible with the 1-attachment swapchain UI pass that clears color contents
+     * (`loadOp = CLEAR`, `initialLayout = UNDEFINED`) and leaves the image ready to present
+     * (`VK_IMAGE_LAYOUT_PRESENT_SRC_KHR`). A scaled frame's upscale and UI share it, so the
+     * native-size image is written once a frame instead of cleared, loaded and loaded again (#1709).
+     */
+    fun ensureSwapchainPresentRenderPass(colorFormat: VkFormat): Long =
+        swapchainPresentRenderPasses.getOrPut(colorFormat) {
+            // The same dependency as the UI pass's own, so its framebuffers and pipelines fit.
+            createSingleColorRenderPass(
+                colorFormat = colorFormat,
+                loadOp = VkAttachmentLoadOp.CLEAR,
+                initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+                finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
+                srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
+            )
+        }
+
+    /**
+     * Whether [chain] draws only onto its active target, reading no destination snapshot and using
+     * no transient target, so [recordInOpenPass] can record it inside a render pass already open.
+     */
+    fun drawsOnlyOnActiveTarget(chain: ImagePassChain): Boolean =
+        !chain.isEmpty && chain.transientTargets.isEmpty() && chain.steps.all { step ->
+            step.destination is ImagePassDestination.ActiveTarget &&
+                step.inputs.none { it.source == ImagePassSource.DestinationSnapshot }
+        }
+
+    /**
+     * Records [chain]'s steps into [renderPass], open on [parentTarget], and leaves it open, where
+     * [executeImagePass] would end it and begin it again. Only for a chain [drawsOnlyOnActiveTarget]
+     * accepts. Leaves the viewport and scissor covering the whole target.
+     */
+    @Suppress("LongParameterList")
+    fun recordInOpenPass(
+        commandBuffer: Long,
+        frameIndex: Int,
+        parentTarget: VulkanImagePassParentTarget,
+        chain: ImagePassChain,
+        renderPass: Long,
+        stats: RenderStatsCounter,
+    ) {
+        require(drawsOnlyOnActiveTarget(chain)) { "recordInOpenPass takes a chain that draws only onto its active target." }
+        val safeFrame = frameIndex.coerceIn(0, maxFramesInFlight.coerceAtLeast(1) - 1)
+        val fullViewport = VkViewport(width = parentTarget.width.toFloat(), height = parentTarget.height.toFloat())
+        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(fullViewport))
+        for (step in chain.steps) {
+            val destination = step.destination as ImagePassDestination.ActiveTarget
+            applyScissor(commandBuffer, destination.scissorRect, parentTarget.width, parentTarget.height)
+            recordStepDraw(
+                commandBuffer = commandBuffer,
+                frameIndex = safeFrame,
+                step = step,
+                renderPass = renderPass,
+                blendEnabled = destination.blendEnabled,
+                blendMode = destination.blendMode,
+                isPremultiplied = destination.isPremultiplied,
+                parentTarget = parentTarget,
+                activeTransients = emptyMap(),
+                stats = stats,
+            )
+        }
+        Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(VkRect2D(extent = VkExtent2D(parentTarget.width, parentTarget.height))))
+    }
 
     /**
      * Single-sample colour-only pass over an offscreen resolved image. Preserves color
@@ -440,18 +507,18 @@ internal class VulkanImagePassExecutor(
         compiledShaders.clear()
         samplers.values.forEach { VulkanImages.vkDestroySampler(device, it) }
         samplers.clear()
-        transientClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        transientClearRenderPasses.clear()
-        transientLoadRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        transientLoadRenderPasses.clear()
-        swapchainClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        swapchainClearRenderPasses.clear()
-        swapchainContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        swapchainContinueRenderPasses.clear()
-        offscreenContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        offscreenContinueRenderPasses.clear()
-        offscreenClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        offscreenClearRenderPasses.clear()
+        listOf(
+            transientClearRenderPasses,
+            transientLoadRenderPasses,
+            swapchainClearRenderPasses,
+            swapchainContinueRenderPasses,
+            swapchainPresentRenderPasses,
+            offscreenContinueRenderPasses,
+            offscreenClearRenderPasses,
+        ).forEach { passes ->
+            passes.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
+            passes.clear()
+        }
     }
 
     private fun resolveParentResumeRenderPass(

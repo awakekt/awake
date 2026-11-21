@@ -28,10 +28,16 @@ enum class GpuFramePart {
     /** Image passes on the scene before it is scaled to the output. */
     Post,
 
-    /** Scaling the scene to the output, and the image passes drawn there. */
+    /**
+     * Scaling the scene to the output, and the image passes drawn there. On a scaled Vulkan frame it
+     * shares one render pass with [Ui] (#1709); read [FrameGpuTiming.upscaleAndUiMs] there.
+     */
     Upscale,
 
-    /** The UI pass over the output, and its transition to present. */
+    /**
+     * The UI pass over the output, and its transition to present. On a scaled Vulkan frame it is drawn
+     * in the same render pass as [Upscale].
+     */
     Ui,
 }
 
@@ -62,6 +68,21 @@ class FrameGpuTiming(
 
     /** Milliseconds the GPU spent on [part], or null when the device has not reported it yet. */
     fun partMs(part: GpuFramePart): Float? = partMs[part.ordinal].takeUnless { it.isNaN() }
+
+    /**
+     * [GpuFramePart.Upscale] and [GpuFramePart.Ui] together, or null when either is not reported yet.
+     *
+     * A scaled Vulkan frame draws its upscale and its UI in one render pass on the output (#1709), and
+     * the timestamp between them is written inside that pass. A tile-based GPU runs a render pass's
+     * work tile by tile, not in the order it was recorded, so there the split between the two parts
+     * says little and their sum is the reading to use.
+     */
+    val upscaleAndUiMs: Float?
+        get() {
+            val upscale = partMs(GpuFramePart.Upscale) ?: return null
+            val ui = partMs(GpuFramePart.Ui) ?: return null
+            return upscale + ui
+        }
 
     override fun toString(): String =
         "FrameGpuTiming(" + GpuFramePart.entries.joinToString { "${it.name}=${partMs(it)}" } +
