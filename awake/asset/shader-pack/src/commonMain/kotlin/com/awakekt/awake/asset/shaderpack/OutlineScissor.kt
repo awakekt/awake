@@ -43,6 +43,13 @@ internal class OutlineScissor {
     var narrowed = false
         private set
 
+    // The styled layers' union, in texture coordinates, and their widest outline: [union]'s output.
+    private var minU = 0f
+    private var minV = 0f
+    private var maxU = 0f
+    private var maxV = 0f
+    private var pad = 0f
+
     /**
      * Fits the scissor to [masks]' styled layers in the scene rectangle at [left], [top], [sceneWidth]
      * by [sceneHeight] pixels. Returns false when the outline can't reach the scene: nothing to draw.
@@ -52,38 +59,50 @@ internal class OutlineScissor {
         fullY = top.toInt()
         fullWidth = sceneWidth.toInt()
         fullHeight = sceneHeight.toInt()
-        var minU = Float.POSITIVE_INFINITY
-        var minV = Float.POSITIVE_INFINITY
-        var maxU = Float.NEGATIVE_INFINITY
-        var maxV = Float.NEGATIVE_INFINITY
-        var pad = 0f
-        var unknown = false
+        val known = union(masks, styles)
+        return if (known && minU <= maxU) clip(left, top, sceneWidth, sceneHeight) else whole()
+    }
+
+    /** Unions the styled layers' bounds and widest outline; false when one of them has no bounds. */
+    private fun union(masks: List<GpuSubPass>, styles: Array<OutlineStyle?>): Boolean {
+        minU = Float.POSITIVE_INFINITY
+        minV = Float.POSITIVE_INFINITY
+        maxU = Float.NEGATIVE_INFINITY
+        maxV = Float.NEGATIVE_INFINITY
+        pad = 0f
+        var known = true
         for (mask in masks) {
             val style = styles.getOrNull(mask.targetLayer)?.takeIf { it.draws } ?: continue
             pad = maxOf(pad, style.widthPixels)
             val bounds = mask.screenBounds
             if (bounds == null) {
-                unknown = true
+                known = false
             } else {
                 minU = minOf(minU, bounds.x)
                 minV = minOf(minV, bounds.y)
                 maxU = maxOf(maxU, bounds.right)
-                maxV = maxOf(maxV, bounds.y + bounds.height)
+                maxV = maxOf(maxV, bounds.bottom)
             }
         }
-        if (unknown || minU > maxU) return whole()
+        return known
+    }
+
+    /** The union's pixels in the scene, grown by the outline and a pixel and clamped to it; false when empty. */
+    private fun clip(left: Float, top: Float, sceneWidth: Float, sceneHeight: Float): Boolean {
         val grow = pad + 1f
         val x0 = floor(left + minU * sceneWidth - grow).coerceIn(left, left + sceneWidth)
         val y0 = floor(top + minV * sceneHeight - grow).coerceIn(top, top + sceneHeight)
         val x1 = ceil(left + maxU * sceneWidth + grow).coerceIn(left, left + sceneWidth)
         val y1 = ceil(top + maxV * sceneHeight + grow).coerceIn(top, top + sceneHeight)
-        if (x1 <= x0 || y1 <= y0) return false
-        x = x0.toInt()
-        y = y0.toInt()
-        width = (x1 - x0).toInt()
-        height = (y1 - y0).toInt()
-        narrowed = x != fullX || y != fullY || width != fullWidth || height != fullHeight
-        return true
+        val drawn = x1 > x0 && y1 > y0
+        if (drawn) {
+            x = x0.toInt()
+            y = y0.toInt()
+            width = (x1 - x0).toInt()
+            height = (y1 - y0).toInt()
+            narrowed = x != fullX || y != fullY || width != fullWidth || height != fullHeight
+        }
+        return drawn
     }
 
     private fun whole(): Boolean {
