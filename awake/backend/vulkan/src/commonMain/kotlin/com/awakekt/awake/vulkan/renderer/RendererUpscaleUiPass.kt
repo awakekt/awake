@@ -18,6 +18,37 @@ import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
 
 /**
+ * Draws a scaled frame's scene onto the swapchain image: with its UI in the same pass when
+ * [recordUpscaleAndUi] can, else alone, cleared first, for the UI pass after it. Returns whether the
+ * UI was recorded.
+ */
+@Suppress("LongParameterList")
+internal fun Renderer.recordScaledOutput(
+    commandBuffer: Long,
+    frameIndex: Int,
+    acquiredImageIndex: Int,
+    upscale: ImagePassChain,
+    viewport: VkViewport,
+    scissor: VkRect2D,
+    context: VulkanFrameContext,
+    environment: GpuEnvironmentState,
+    timer: GpuFrameTimer?,
+): Boolean {
+    val shared = recordUpscaleAndUi(commandBuffer, frameIndex, acquiredImageIndex, upscale, viewport, scissor, context, environment, timer)
+    if (!shared) {
+        recordSwapchainPostPasses(
+            commandBuffer = commandBuffer,
+            frameIndex = frameIndex,
+            acquiredImageIndex = acquiredImageIndex,
+            chain = upscale,
+            clearDestination = true,
+            environment = environment,
+        )
+    }
+    return shared
+}
+
+/**
  * A scaled frame's upscale and UI in one render pass on the swapchain image (#1709): it clears,
  * draws [upscale], then the UI, and ends ready to present. Recorded separately, they took three
  * native-size passes: a clear the image pass ended at once, the upscale on a reload, and the UI on

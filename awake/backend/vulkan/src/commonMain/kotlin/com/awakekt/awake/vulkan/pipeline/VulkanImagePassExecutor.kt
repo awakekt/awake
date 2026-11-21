@@ -507,20 +507,18 @@ internal class VulkanImagePassExecutor(
         compiledShaders.clear()
         samplers.values.forEach { VulkanImages.vkDestroySampler(device, it) }
         samplers.clear()
-        transientClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        transientClearRenderPasses.clear()
-        transientLoadRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        transientLoadRenderPasses.clear()
-        swapchainClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        swapchainClearRenderPasses.clear()
-        swapchainContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        swapchainContinueRenderPasses.clear()
-        swapchainPresentRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        swapchainPresentRenderPasses.clear()
-        offscreenContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        offscreenContinueRenderPasses.clear()
-        offscreenClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
-        offscreenClearRenderPasses.clear()
+        listOf(
+            transientClearRenderPasses,
+            transientLoadRenderPasses,
+            swapchainClearRenderPasses,
+            swapchainContinueRenderPasses,
+            swapchainPresentRenderPasses,
+            offscreenContinueRenderPasses,
+            offscreenClearRenderPasses,
+        ).forEach { passes ->
+            passes.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
+            passes.clear()
+        }
     }
 
     private fun resolveParentResumeRenderPass(
