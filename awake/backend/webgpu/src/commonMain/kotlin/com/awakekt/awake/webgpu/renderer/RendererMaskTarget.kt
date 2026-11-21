@@ -18,13 +18,13 @@ import io.ygdrasil.webgpu.GPUCommandEncoder
  */
 internal fun Renderer.settleMaskTarget() {
     val target = maskPass?.depthTarget ?: return
-    resizeMaskTarget(maskSizing.presented(target.size, surfaceWidth, surfaceHeight))
+    resizeMaskTarget(sceneDepthEdge() ?: maskSizing.presented(target.size, surfaceWidth, surfaceHeight))
 }
 
 /** Grows the mask target for an offscreen render [width] x [height] pixels, never shrinking it. */
 internal fun Renderer.ensureMaskTarget(width: Int, height: Int) {
     val target = maskPass?.depthTarget ?: return
-    resizeMaskTarget(maskSizing.offscreen(target.size, width, height))
+    resizeMaskTarget(sceneDepthEdge() ?: maskSizing.offscreen(target.size, width, height))
 }
 
 /**
@@ -43,6 +43,13 @@ internal fun Renderer.recordMaskPass(encoder: GPUCommandEncoder, input: GpuPassI
         maskCleared = true
     }
 }
+
+/**
+ * The scene depth target's edge, when the plan has one: fog compares an exempt draw's depth in the mask
+ * with scene depth at the same texture coordinate, which agrees only while both are drawn at one size.
+ * At different sizes their silhouettes rasterize apart, and fog lands on an unlit draw's edge pixels.
+ */
+private fun Renderer.sceneDepthEdge(): Int? = sceneDepthPass?.depthTarget?.size
 
 /**
  * Reallocates the mask's layers at [edge] when that differs. The old texture is closed at once, as
