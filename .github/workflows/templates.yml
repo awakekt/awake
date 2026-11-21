@@ -20,6 +20,8 @@ on:
       - tools/scene-components-consumer/**
       - awake/scene/binding/**
       - .github/workflows/templates.yml
+      - scripts/runner-memory.sh
+      - scripts/stop-build-daemons.sh
       - 'awake/**/api/**'
       - gradle/libs.versions.toml
       - build-logic/**
@@ -52,6 +54,11 @@ jobs:
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
 
+      # Samples the runner's memory and disk every 5 s until the job ends; the last step reports the
+      # worst (#1592). Template-building steps lost their runner three times on 20–21 Nov, with no log.
+      - name: Sample the runner's memory
+        run: scripts/runner-memory.sh start "$RUNNER_TEMP/runner-memory.log"
+
       - name: Setup JDK
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
@@ -74,21 +81,30 @@ jobs:
           echo "LOCAL_VERSION=${version%-SNAPSHOT}-templates" | tee -a "$GITHUB_ENV"
 
       # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
+      # About three times the slowest of the last 12 passing runs, 13 min (#1847).
       - name: Publish this pull request's Core locally
         id: publish
+        timeout-minutes: 40
         run: |
           scripts/gradle-retry.sh ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
           scripts/gradle-retry.sh ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
           scripts/gradle-retry.sh ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
 
+      # Each build's daemons outlive it, and no build here can reuse another's (each sets its own
+      # heap). Left running, the publish's and every template's daemons took a passing run down to
+      # 617 MiB available with 3 GB swapped (#1847), and runners were lost in this step. So every build
+      # starts with no daemon left over. The timeout is about three times the slowest passing run, 9 min.
       - name: Build the templates against it
+        timeout-minutes: 30
         env:
           TEMPLATE_CORE_VERSION: ${{ env.LOCAL_VERSION }}
           TEMPLATE_VULKAN_VERSION: ${{ env.LOCAL_VERSION }}
         run: |
-          tools/check_template_consumer.sh templates/game "$RUNNER_TEMP/game"
-          tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/project"
-          tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/plugin"
+          for template in game project plugin; do
+            scripts/stop-build-daemons.sh
+            tools/check_template_consumer.sh "templates/$template" "$RUNNER_TEMP/$template"
+          done
+          scripts/stop-build-daemons.sh
           tools/check_scene_components_consumer.sh "$RUNNER_TEMP/scene-components"
 
       # A Core release's Consumer job (build-and-publish.yml) builds the templates against the latest
@@ -99,6 +115,7 @@ jobs:
       # call the Vulkan backend, against that release and this pull request's Core, as that job does.
       # Only a template change can fail this: the Vulkan release on Central is fixed.
       - name: Compile the desktop apps against the latest Vulkan release
+        timeout-minutes: 20
         if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -130,6 +147,7 @@ jobs:
             work="$RUNNER_TEMP/$template-released-vulkan"
             # TEMPLATE_PREPARE_ONLY: copy the template and stamp Core and Vulkan into it, then stop.
             tools/check_template_consumer.sh "templates/$template" "$work"
+            scripts/stop-build-daemons.sh
             echo "==> templates/$template desktop app against Core $TEMPLATE_CORE_VERSION and Vulkan $TEMPLATE_VULKAN_VERSION"
             (cd "$work/awake-template" && "$GITHUB_WORKSPACE/scripts/gradle-retry.sh" ./gradlew :app:desktopApp:compileKotlin --no-configuration-cache --console=plain) \
               || failed+=("templates/$template")
@@ -138,6 +156,10 @@ jobs:
             echo "::error::$template: this template uses a Vulkan API newer than the latest Vulkan release $TEMPLATE_VULKAN_VERSION; it has to wait for that Vulkan release (see docs/release-process.md)"
           done
           (( ${#failed[@]} == 0 ))
+
+      - name: Report the runner's memory
+        if: always()
+        run: scripts/runner-memory.sh report "$RUNNER_TEMP/runner-memory.log"
 
   scene-components-native:
     name: Scene component consumer (native)

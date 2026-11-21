@@ -20,6 +20,8 @@ on:
       # The keep rules Core's modules ship to every app that shrinks its release.
       - '**/consumer-rules.pro'
       - .github/workflows/obfuscated-templates.yml
+      - scripts/runner-memory.sh
+      - scripts/stop-build-daemons.sh
       - tools/check_obfuscated_template.sh
       - tools/check_template_consumer.sh
       - tools/PngColours.java
@@ -52,6 +54,11 @@ jobs:
       # free space otherwise.
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+
+      # Samples the runner's memory and disk every 5 s until the job ends; the last step reports the
+      # worst (#1592). Template-building steps lost their runner three times on 20–21 Nov, with no log.
+      - name: Sample the runner's memory
+        run: scripts/runner-memory.sh start "$RUNNER_TEMP/runner-memory.log"
 
       - name: Setup JDK
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
@@ -87,30 +94,34 @@ jobs:
           echo "LOCAL_VERSION=${version%-SNAPSHOT}-obfuscated" | tee -a "$GITHUB_ENV"
 
       # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
+      # About three times the slowest of the last 12 passing runs, 13 min (#1847).
       - name: Publish this commit locally
+        timeout-minutes: 40
         run: |
           scripts/gradle-retry.sh ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
           scripts/gradle-retry.sh ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
           # The template applies build-logic's public plugins (basis-transcoder) at Core's version.
           scripts/gradle-retry.sh ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
 
+      # Each build's daemons outlive it, and no build here can reuse another's (each sets its own
+      # heap). Left running, they took a passing run down to 1.1 GB available with 3 GB swapped (#1847).
+      # About three times the slowest of the last 12 passing runs, 17 min.
       - name: Build and run the obfuscated releases
+        timeout-minutes: 55
         env:
           TEMPLATE_CORE_VERSION: ${{ env.LOCAL_VERSION }}
           TEMPLATE_VULKAN_VERSION: ${{ env.LOCAL_VERSION }}
         run: |
-          tools/check_obfuscated_template.sh templates/game "$RUNNER_TEMP/game" build/obfuscated
-          tools/check_obfuscated_template.sh templates/project "$RUNNER_TEMP/project" build/obfuscated
+          for template in game project; do
+            scripts/stop-build-daemons.sh
+            tools/check_obfuscated_template.sh "templates/$template" "$RUNNER_TEMP/$template" build/obfuscated
+          done
 
-      # Three builds' Gradle and Kotlin daemons, this one and both templates', still hold their memory,
-      # and with them the emulator ran the runner out mid-boot and it was shut down.
+      # The last template's Gradle and Kotlin daemons still hold their memory, and with every build's
+      # daemons left running the emulator once ran the runner out mid-boot and it was shut down.
       - name: Stop the build daemons
         run: |
-          ./gradlew --stop
-          for template in game project; do
-            (cd "$RUNNER_TEMP/$template/awake-template" && ./gradlew --stop) || true
-          done
-          pkill -f KotlinCompileDaemon || true
+          scripts/stop-build-daemons.sh
           free -h
 
       # GitHub's Linux runners expose /dev/kvm but not to the runner user; without it the emulator
@@ -144,3 +155,7 @@ jobs:
             build/obfuscated/*.png
             build/obfuscated/*.log
           if-no-files-found: warn
+
+      - name: Report the runner's memory
+        if: always()
+        run: scripts/runner-memory.sh report "$RUNNER_TEMP/runner-memory.log"
