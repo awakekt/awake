@@ -142,6 +142,17 @@ jobs:
           echo "Comparing the api dumps with $tag"
           scripts/api-binary-compat.sh "$tag" HEAD
 
+      # A released function or constructor whose last parameter takes a lambda keeps a visible form
+      # ending with it, so a call passing a trailing lambda still compiles (#1845). The tag is the one
+      # the step above fetched.
+      - name: Released trailing-lambda calls still compile
+        run: |
+          scripts/api-trailing-lambda.test.sh
+          tag="$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/||' |
+            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          echo "Comparing the api dumps with $tag"
+          scripts/api-trailing-lambda.sh "$tag" HEAD
+
       - name: Central bundle, upload and fallback repository
         run: |
           scripts/central-bundle.test.sh

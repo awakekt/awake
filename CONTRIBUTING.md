@@ -62,6 +62,7 @@ The ones you run most:
 | `./gradlew detekt` | Lint only; the pre-push hook runs it on the modules a push changes. |
 | `./gradlew desktopApiDump` | After changing public API, so the pre-push `desktopApiCheck` passes. |
 | `scripts/api-binary-compat.sh <last-release-tag>` | After changing public API: lists released JVM signatures the branch dropped. Before 1.0 each stays as a `@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)` overload; CI runs it against the last stable tag. |
+| `scripts/api-trailing-lambda.sh <last-release-tag>` | After changing public API: lists released functions and constructors that took a trailing lambda and no longer can (see "Pull requests"). CI runs it against the last stable tag. |
 | `./gradlew :awake:engine:render:parity:captureRenderEvidence` | Render screenshots for a PR that changes rendering. |
 | `./gradlew :awake:engine:render:parity:captureTextClipEvidence` | Text-clipping cases with lost-ink counts for a PR that changes text, fonts, clips or layers; `tools/fonts-tooling/text-evidence/run_local.sh <base-ref>` makes the before/after sheets. |
 | `./gradlew releaseCut -Prelease.channel=<channel>` | Cut a release; see [the release process](docs/release-process.md). |
@@ -109,7 +110,13 @@ Every pull request should:
 2. Describe the user-visible or engineering outcome and the affected modules/platforms.
 3. Include tests or explain why testing is not applicable.
 4. Include screenshots or recordings for UI and rendering changes when visual behavior changes.
-5. Update public API dumps and documentation when the public surface changes.
+5. Update public API dumps and documentation when the public surface changes. A released public
+   function or constructor whose last parameter is a function type or a `fun interface` keeps a
+   visible form that ends with it, so a call passing that last argument as a trailing lambda still
+   compiles. To add a parameter, add a new overload and leave the released one visible, with its
+   last parameter's default removed so a call without it resolves to the new one alone (#1845);
+   hiding the released one with `DeprecationLevel.HIDDEN` keeps it linking but not compiling.
+   `scripts/api-trailing-lambda.sh` fails a change that loses one.
 6. Add a clear entry under `## [Unreleased]` in `CHANGELOG.md` for user-visible behavior,
    supported-platform, build, or public API changes.
 7. Confirm that the branch contains no unrelated changes, secrets, or generated artifacts.
