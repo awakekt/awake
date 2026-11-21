@@ -48,6 +48,7 @@ while read -r floating modules; do
     done
   done
 done <<< "$families"
+checked=$((checked + 1))
 has io/ygdrasil/LICENSE-wgpu4k.txt || { echo "missing: io/ygdrasil/LICENSE-wgpu4k.txt" >&2; missing=$((missing + 1)); }
 
 [[ "$missing" -eq 0 ]] || { echo "$missing of $checked pinned io.ygdrasil files are missing from $base" >&2; exit 1; }

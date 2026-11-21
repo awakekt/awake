@@ -43,7 +43,10 @@ list_tags() {
   if [[ -n "$source_dir" ]]; then
     cat "$source_dir/tags"
   else
-    gh release list --limit 200 --json tagName,isDraft --jq '.[] | select(.isDraft | not) | .tagName'
+    # Every release, through REST and every page, newest first: a `--limit` drops the oldest once
+    # the repository has more releases, as `--limit 100` dropped the wgpu4k mirror on 21 Nov.
+    gh api "repos/${GITHUB_REPOSITORY:-awakekt/awake}/releases?per_page=100" --paginate \
+      --jq '.[] | select(.draft | not) | .tag_name'
   fi
 }
 
