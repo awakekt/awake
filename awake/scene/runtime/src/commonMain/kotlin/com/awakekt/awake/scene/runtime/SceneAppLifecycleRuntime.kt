@@ -93,6 +93,7 @@ import com.awakekt.awake.scene.worldtext.WorldTextRenderFeature
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasSlotContent
+import kotlin.concurrent.Volatile
 import kotlin.math.roundToInt
 import kotlin.reflect.KClass
 import kotlin.time.TimeSource
@@ -365,6 +366,25 @@ class SceneAppLifecycleRuntime internal constructor(
     private fun recordFrameTime(deltaSeconds: Float) {
         recentFrames.update(deltaSeconds)
         frameSpread.update(deltaSeconds)
+    }
+
+    /**
+     * Whether the platform paused the app, as Android does when its surface goes away in the
+     * background (#1709). No frames arrive while paused, so [fps] and [averageFrameTimeMs] read 0
+     * rather than the last frames' values: a report sent from another thread can't take them for live.
+     */
+    @Volatile
+    var isPaused: Boolean = false
+        private set
+
+    override fun pause() {
+        isPaused = true
+        recentFrames.reset()
+        frameSpread.reset()
+    }
+
+    override fun resume() {
+        isPaused = false
     }
 
     /**

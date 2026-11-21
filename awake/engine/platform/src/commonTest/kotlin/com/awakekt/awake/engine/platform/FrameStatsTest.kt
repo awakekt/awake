@@ -78,4 +78,20 @@ class FrameStatsTest {
         stats.update(0.010f)
         assertEquals(10f, stats.maxFrameTimeMs, 0.001f)
     }
+
+    @Test
+    fun resetForgetsEveryFrameSoNothingReadsAsLive() {
+        val stats = FrameStats(sampleWindowSeconds = 0.1f, percentileWindowSize = 8)
+        repeat(8) { stats.update(1f / 66f) }
+        assertTrue(stats.averageFrameTimeMs > 0f)
+
+        stats.reset()
+
+        assertEquals(0f, stats.fps)
+        assertEquals(0f, stats.frameTimeMs)
+        assertEquals(0f, stats.averageFrameTimeMs)
+        assertEquals(0f, stats.maxFrameTimeMs)
+        stats.update(0.05f)
+        assertEquals(50f, stats.averageFrameTimeMs)
+    }
 }
