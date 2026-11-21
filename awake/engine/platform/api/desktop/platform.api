@@ -165,6 +165,7 @@ public final class com/awakekt/awake/engine/platform/core/FrameStats {
 	public final fun getP95FrameTimeMs ()F
 	public final fun getP99FrameTimeMs ()F
 	public final fun percentileFrameTimeMs (F)F
+	public final fun reset ()V
 	public final fun update (F)Z
 }
 

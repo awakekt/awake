@@ -203,6 +203,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun initialize (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;)V
 	public final fun invalidateCanvasViews-smMvhPQ (JLcom/awakekt/awake/ecs/World;)V
 	public static synthetic fun invalidateCanvasViews-smMvhPQ$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;JLcom/awakekt/awake/ecs/World;ILjava/lang/Object;)V
+	public final fun isPaused ()Z
 	public fun pause ()V
 	public final fun phaseStats ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
 	public final fun readback (Lcom/awakekt/awake/core/math/Lens;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
