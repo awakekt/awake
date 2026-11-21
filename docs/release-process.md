@@ -480,6 +480,41 @@ jobs keep the job queued until it is cancelled. Delete it to return to `macos-15
 Xcode and an arm64 Mac whatever the label: it builds Naga, MoltenVK and JoltC and runs Kotlin/Native
 tests on the iOS simulator.
 
+### Maven Central's mirror
+
+Every build lists Google's mirror of Maven Central,
+`https://maven-central.storage-download.googleapis.com/maven2/`, right **before** `mavenCentral()`:
+Core's settings and build-logic, the three templates, the `tools/` builds, and the TestKit builds
+tests write (#1592).
+
+Why first: Gradle moves on to the next repository only after a 404. A 429, a 5xx or a timeout ends
+the lookup at the repository that answers it, and fails the build. On 20 Nov Central answered these
+runners 429 for longer than every retry, and 404 for files it serves; a nested build listing the
+mirror after Central failed on Central's 429 with the mirror never asked. Listed first, the mirror
+serves what Central would refuse. What it lacks is a clean 404 that moves on to Central.
+
+- The mirror carries Central's third-party releases, not Awake's own: on 20 Nov it answered 404 for
+  `com.awakekt.awake:ai` 0.60.0 and 0.61.0, which Central serves, while it served `kotlin-stdlib`
+  2.4.20. So every mirror entry excludes `com.awakekt`, which goes straight to Central (or the Maven
+  fallback site). A consumer asking for Core still depends on Central.
+- Something published in the last hours may not have reached the mirror yet; it is a 404 there too,
+  and comes from Central.
+- An error from the mirror now ends a lookup the same way. In #1836's 22,910-request measurement it
+  erred no more than Central did.
+- A file is asked only of the repository that served its POM. If the mirror serves a POM, its files
+  come from the mirror; if Central serves it, from Central.
+- A repository is not part of a published POM or module file, so publishing is unchanged.
+- A build whose settings don't list the mirror, such as the awake-plugins checkout the Plugins
+  consumer job builds, gets it from `scripts/central-mirror-before.init.gradle.kts`, which that job
+  copies into the Gradle User Home's `init.d`. It adds the mirror right before Central in every
+  build the job runs, unless one already lists it. It doesn't reach TestKit builds, which have a
+  Gradle User Home of their own, or a plugin in a settings script's own `plugins {}` block.
+- `CentralMirrorTest` fails when a build script, or a TestKit test that writes one, lists
+  `mavenCentral()` without the mirror, keeping `com.awakekt` off it, right before it. It also builds
+  against local repositories: a plugin the mirror lacks resolves from Central behind it; a Central
+  answering 429 behind a serving mirror is never asked; and with today's order reversed, the same
+  429 fails the build with the mirror never asked.
+
 ### Gradle User Home cache
 
 CI, Font atlas and Render evidence cache the Gradle User Home with `gradle/actions/setup-gradle`'s

@@ -44,7 +44,15 @@ class SceneComponentsPluginTest {
                     id("com.awakekt.awake.plugin.scene-components")
                 }
                 version = "7.8.9-consumer"
-                repositories { mavenCentral() }
+                repositories {
+                    maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+                        name = "MavenCentralMirror"
+                        content {
+                            excludeGroupAndSubgroups("com.awakekt")
+                        }
+                    }
+                    mavenCentral()
+                }
                 kotlin {
                     jvm()
                     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)

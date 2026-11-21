@@ -22,6 +22,16 @@ pluginManagement {
                 excludePortalOnly()
             }
         }
+        // Google's mirror of Maven Central first, Central after it: a 429 or 5xx ends the lookup at the
+        // repository that answers it, and Central throttles these runners; only a 404 moves on (#1592).
+        // The mirror carries no Awake release, so com.awakekt goes straight to Central.
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "MavenCentralMirror"
+            content {
+                excludePortalOnly()
+                excludeGroupAndSubgroups("com.awakekt")
+            }
+        }
         mavenCentral { content { excludePortalOnly() } }
         // An Awake Core release Maven Central refused under its publishing limits, served by Core at
         // Central's coordinates.
@@ -41,6 +51,12 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("androidx")
                 includeGroupAndSubgroups("com.android")
                 includeGroupAndSubgroups("com.google")
+            }
+        }
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+            name = "MavenCentralMirror"
+            content {
+                excludeGroupAndSubgroups("com.awakekt")
             }
         }
         mavenCentral()
