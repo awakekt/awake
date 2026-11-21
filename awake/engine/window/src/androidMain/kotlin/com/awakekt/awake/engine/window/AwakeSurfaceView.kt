@@ -97,6 +97,8 @@ class AwakeSurfaceView(
             lifecycle.create(holder.surface)
             engineCreated = true
         }
+        // A steady rate (#1699) is asked of the surface the frames show on.
+        AndroidFrameLoop.pacingSurface = WeakReference(holder.surface)
         running = true
         renderThread = Thread({
             while (running) {
@@ -154,6 +156,7 @@ class AwakeSurfaceView(
         running = false
         renderThread?.join()
         renderThread = null
+        AndroidFrameLoop.pacingSurface = null
         input.clearKeys()
         input.releaseGamepadButtons()
         lifecycle.releaseSurface()

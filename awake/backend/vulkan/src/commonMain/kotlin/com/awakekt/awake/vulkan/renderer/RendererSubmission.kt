@@ -5,11 +5,13 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.core.host.FrameCostReport
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkPresentInfoKHR
 import com.awakekt.awake.vulkan.models.info.VkSubmitInfo
+import kotlin.time.TimeSource
 
 /** Submits the recorded frame and presents it, including swapchain recovery. */
 internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
@@ -20,6 +22,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         uniformBuffers = graphicsDevice.uniformBuffersCreated,
     )
     statsCounter.publish(gpuFrameTimer?.lastMs)
+    reportFrameCost()
     frameWaits.publish()
     // Headless: nothing signalled an image-available semaphore, because nothing acquired an
     // image -- so waiting on one would hang here rather than fail. Submit bare and return; the
@@ -70,7 +73,7 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     // swapchain whether it changed; a resize or rotation the platform reports re-asks (#1688).
     // A change of pacer or of frame-rate mode applies here, between frames, on the thread that presents.
     graphicsDevice.swapchainPacer?.beforePresent()
-    val result = graphicsDevice.queueLock.withLock { Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo) }
+    val result = present(presentInfo)
     swapchainManager.presentResults[result.ordinal]++
     presentIntervals.recordPresent()
     when (presentAction(result, swapchainManager.suboptimalAccepted) { swapchainManager.surfaceChangedSinceBuild }) {
@@ -80,3 +83,21 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
     }
     swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
 }
+
+/**
+ * Tells the frame loop what this frame waited on and its GPU time (#1699): it counts a frame's own
+ * work, not its waits, when it picks a steady rate. Before [FrameWaits.publish] clears the sums.
+ */
+private fun Renderer.reportFrameCost() {
+    FrameCostReport.submitted(frameWaits.fenceNanos + frameWaits.acquireNanos, gpuFrameTimer?.lastMs?.let { (it * NANOS_PER_MS).toLong() })
+}
+
+/** Presents, counting the call as a wait: a pacer holds the frame here, as Swappy does (#1699). */
+private fun Renderer.present(presentInfo: VkPresentInfoKHR): VkResult {
+    val start = TimeSource.Monotonic.markNow()
+    val result = graphicsDevice.queueLock.withLock { Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo) }
+    FrameCostReport.submitted(start.elapsedNow().inWholeNanoseconds, null)
+    return result
+}
+
+private const val NANOS_PER_MS = 1_000_000f
