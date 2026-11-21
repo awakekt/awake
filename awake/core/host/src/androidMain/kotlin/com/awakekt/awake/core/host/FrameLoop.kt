@@ -6,6 +6,7 @@
 package com.awakekt.awake.core.host
 
 import android.app.Activity
+import android.view.Surface
 import java.lang.ref.WeakReference
 
 /**
@@ -43,6 +44,30 @@ object AndroidFrameLoop : FrameLoop {
     @Volatile
     var pacingActivity: WeakReference<Activity>? = null
 
+    /**
+     * Whether frames run at one steady rate the panel divides evenly, chosen from what they cost
+     * (#1699): [SteadyRate.Off] by default, which leaves every frame as it was. It applies while the
+     * frame-rate mode is [FrameRateMode.Auto], and can change while the app runs.
+     */
+    @Volatile
+    var steadyRate: SteadyRate = SteadyRate.Off
+
+    /** The steady rate held now, why it was chosen and what holds it; null while [steadyRate] is not in effect. */
+    val steadyRateStatus: SteadyRateStatus? get() = steady.status
+
+    /**
+     * The mode the last frame ran at: [frameRateOverride] or the app's mode, and the steady rate's when
+     * it is in effect. A present-time pacer reads it, so Swappy holds the same rate the loop does.
+     */
+    @Volatile
+    var frameRateModeInUse: FrameRateMode = FrameRateMode.Auto
+        private set
+
+    /** The surface the frames show on, which the steady rate is asked of; set by the view that hosts the frames. */
+    @Volatile
+    var pacingSurface: WeakReference<Surface>? = null
+
+    private val steady = AndroidSteadyRate()
     private var previousFrameTime = System.nanoTime()
 
     override fun tick(
@@ -56,7 +81,17 @@ object AndroidFrameLoop : FrameLoop {
 
         onUpdate(deltaTime)
 
-        val effectiveMode = frameRateOverride ?: mode
+        val workNanos = System.nanoTime() - currentFrameTime
+        val effectiveMode = steady.mode(
+            setting = steadyRate,
+            configured = frameRateOverride ?: mode,
+            costNanos = FrameCostReport.takeCost(workNanos),
+            nowNanos = currentFrameTime + workNanos,
+            presentPacing = presentPacing,
+            activity = pacingActivity?.get(),
+            surface = pacingSurface?.get(),
+        )
+        frameRateModeInUse = effectiveMode
         val pacer = FramePacing.pacer(effectiveMode, presentPacing)
         val sleepNanos = FramePacing.sleepNanos(effectiveMode, pacer, System.nanoTime() - currentFrameTime)
         if (sleepNanos > 0) {
