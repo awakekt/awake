@@ -61,17 +61,17 @@ class OutlineParityTest {
                     projection = Lens.Projection.Orthographic
                     orthoHalfHeight = HALF_HEIGHT
                 }
-                suspend fun render(maskLayer: Int): Row {
+                suspend fun render(maskLayer: Int, exempt: Boolean = false, styled: Boolean = true): Row {
                     renderer.renderToTexture(
                         target,
                         ScenePassCompiler.compile(
                             lens = lens,
-                            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = maskLayer)),
+                            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = maskLayer, exemptFromCoverings = exempt)),
                             light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
                             clipSpace = renderer.clipSpace,
                             aspect = 1f,
                             drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
-                            maskLayers = listOf(SELECTED.packed(), HOVERED.packed()),
+                            maskLayers = if (styled) listOf(SELECTED.packed(), HOVERED.packed()) else emptyList(),
                         ),
                     )
                     return measure(renderer.readPixels(target).data)
@@ -79,9 +79,16 @@ class OutlineParityTest {
                 val selected = render(0)
                 val hovered = render(1)
                 val unmasked = render(NO_MASK_LAYER)
+                val unmaskedDraws = renderer.frameStats?.drawCalls
+                // An unlit mesh joins the covering-exempt mask layer whether anything is outlined or not,
+                // as a scene's draws do while nothing is outlined: no styles. The overlay must not draw then (#1709).
+                val exemptOnly = render(NO_MASK_LAYER, exempt = true, styled = false)
+                val exemptDraws = renderer.frameStats?.drawCalls
+                println("$backend outline: exempt only=$exemptOnly draws=$exemptDraws against unmasked draws=$unmaskedDraws")
                 println("$backend outline: selected=$selected hovered=$hovered unmasked=$unmasked")
 
                 assertEquals(0, unmasked.red + unmasked.blue, "$backend: nothing masked draws no outline: $unmasked")
+                assertEquals(0, exemptOnly.red + exemptOnly.blue, "$backend: a covering-exempt draw alone draws no outline: $exemptOnly")
                 assertTrue(selected.left in WIDTH - 1..WIDTH + 1 && selected.right in WIDTH - 1..WIDTH + 1, "$backend: a ring $WIDTH px wide: $selected")
                 assertEquals(0, selected.inside, "$backend: nothing inside the silhouette: $selected")
                 assertTrue(selected.red > RING_PIXELS && selected.blue == 0, "$backend: set 0 in its own colour: $selected")

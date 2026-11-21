@@ -1006,6 +1006,7 @@ public final class com/awakekt/awake/render/renderer/OutlineFields {
 }
 
 public final class com/awakekt/awake/render/renderer/OutlineFieldsKt {
+	public static final field OUTLINE_MIN_WIDTH_PIXELS F
 	public static final fun getOutlineUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
@@ -1018,6 +1019,7 @@ public final class com/awakekt/awake/render/renderer/OutlineStyle {
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/OutlineStyle;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/OutlineStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getDraws ()Z
 	public final fun getWidthPixels ()F
 	public fun hashCode ()I
 	public final fun packed ()[F

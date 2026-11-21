@@ -68,6 +68,10 @@ class OutlineRenderFeature(
         input.maskPasses.forEach { mask ->
             if (mask.targetLayer in styles.indices) styles[mask.targetLayer] = OutlineStyle.unpack(mask.passUniforms)
         }
+        // Mask passes run for more than outlines: a draw exempt from coverings, an unlit mesh, joins
+        // its own layer whether anything is outlined or not. With no layer styled to draw, the
+        // full-screen overlay would read every mask sample to write nothing (#1709).
+        if (styles.none { it?.draws == true }) return
         // The scene's own rectangle when it draws into part of the surface, as an editor's view does.
         val width = input.viewport?.width ?: context.surfaceWidth.toFloat()
         val height = input.viewport?.height ?: context.surfaceHeight.toFloat()
