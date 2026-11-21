@@ -116,7 +116,13 @@ class OutlineParityTest {
 
     private suspend fun open(backend: HeadlessUiBackend): HeadlessRenderSession {
         // The showcase's plan without its fog and sky, plus the outline: the mask pass and its overlay.
-        val plan = EngineShowcaseRenderPlan.copy(contentFeatures = listOf(outlineContentFeature()), maskShaderSet = PackShaderSets.SceneDepth)
+        // No scene-depth pass: the outline reads only the mask, which then follows the scene's size. With
+        // one, the mask keeps scene depth's size, which fog compares it with (UnlitOverFogParityTest).
+        val plan = EngineShowcaseRenderPlan.copy(
+            contentFeatures = listOf(outlineContentFeature()),
+            maskShaderSet = PackShaderSets.SceneDepth,
+            sceneDepthShaderSet = null,
+        )
         if (backend == HeadlessUiBackend.WebGpu) return webGpuHeadlessPlan(plan, surface = HeadlessSurface(SIZE, SIZE))
         val ready = CompletableDeferred<Renderer>()
         val app = AppSpecBuilder().apply { ready { ready.complete(it) } }.build().createLifecycle()
