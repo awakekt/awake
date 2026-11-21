@@ -118,13 +118,17 @@ class IndexedAssetSource(
         rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
     ) : this(index, fetch, cache, rangeFetch, null)
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    /**
+     * [keys] last, so a call that passes it as a trailing lambda, as 0.60.0's did, still compiles: in
+     * the primary constructor `limits` follows it, and a trailing lambda can't be a [BundleMemoryLimits].
+     * `keys` has no default here, so a call without it resolves to the primary constructor alone.
+     */
     constructor(
         index: ProjectIndex,
         fetch: suspend (url: String) -> ByteArray,
         cache: ContentCache? = null,
         rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
-        keys: BundleKeyProvider? = null,
+        keys: BundleKeyProvider?,
     ) : this(index, fetch, cache, rangeFetch, keys, BundleMemoryLimits())
 
     init {
@@ -324,15 +328,17 @@ class IndexedAssetSource(
             )
         }
 
-        /** The [open] that predates `limits`, kept for binary compatibility. */
-        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        /**
+         * The [open] with [keys] last, so a call that passes it as a trailing lambda, as 0.60.0's
+         * did, still compiles. `keys` has no default here, so a call without it resolves to the other.
+         */
         suspend fun open(
             indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
             fetch: suspend (AssetPath) -> ByteArray,
             cache: ContentCache? = null,
             retainCachedOnly: Boolean = true,
             rangeFetch: (suspend (AssetPath, offset: Long, length: Long) -> ByteArray)? = null,
-            keys: BundleKeyProvider? = null,
+            keys: BundleKeyProvider?,
         ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeFetch, keys, BundleMemoryLimits())
 
         /** The [open] that predates `keys`, kept for binary compatibility. */
@@ -382,15 +388,17 @@ class IndexedAssetSource(
             )
         }
 
-        /** The [open] that predates `limits`, kept for binary compatibility. */
-        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        /**
+         * The [open] with [keys] last, so a call that passes it as a trailing lambda, as 0.60.0's
+         * did, still compiles. `keys` has no default here, so a call without it resolves to the other.
+         */
         suspend fun open(
             indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
             fetch: TokenAuthorizedFetch,
             cache: ContentCache? = null,
             retainCachedOnly: Boolean = true,
             rangeReads: Boolean = false,
-            keys: BundleKeyProvider? = null,
+            keys: BundleKeyProvider?,
         ): IndexedAssetSource = open(indexPath, fetch, cache, retainCachedOnly, rangeReads, keys, BundleMemoryLimits())
 
         /** The [open] that predates `keys`, kept for binary compatibility. */
