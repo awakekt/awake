@@ -47,19 +47,19 @@ jobs:
           (yes || true) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
 
       - name: Verify Awake repository gates
-        run: ./gradlew awakeVerify --no-configuration-cache
+        run: scripts/gradle-retry.sh ./gradlew awakeVerify --no-configuration-cache
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # The gates' own unit tests (layering checks, changelog fragments, release cut), so a pull request
       # that changes a gate runs them rather than waiting for the push to main.
       - name: Test build logic
-        run: ./gradlew -p build-logic test --no-configuration-cache
+        run: scripts/gradle-retry.sh ./gradlew -p build-logic test --no-configuration-cache
 
       - name: Verify API surface
-        run: ./gradlew apiCheck
+        run: scripts/gradle-retry.sh ./gradlew apiCheck
 
       # Nothing checked formatting before, so main drifted, and every spotlessApply rewrote files a
       # change never touched. An unformatted change now fails here; `./gradlew spotlessApply` fixes it.
       - name: Verify formatting
-        run: ./gradlew spotlessCheck
+        run: scripts/gradle-retry.sh ./gradlew spotlessCheck
