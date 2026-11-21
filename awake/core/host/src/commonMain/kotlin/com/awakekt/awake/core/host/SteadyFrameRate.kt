@@ -62,24 +62,33 @@ class SteadyFrameRate(
     /** Records a frame that cost [costNanos] and ended at [nowNanos]; returns the rate to hold now. */
     fun onFrame(costNanos: Long, nowNanos: Long): SteadyRateChoice? {
         if (costNanos > 0) record(costNanos, nowNanos)
-        if (count < minOf(startFrames, downFrames)) return choice
-        recentCostP90Nanos = p90OfLast(downFrames)
-        val current = choice
-        if (current == null) {
-            if (count >= startFrames) decide(fitting(p90OfLast(startFrames)), SteadyRateReason.Start, p90OfLast(startFrames), nowNanos)
-            return choice
+        if (count >= minOf(startFrames, downFrames)) {
+            recentCostP90Nanos = p90OfLast(downFrames)
+            val current = choice
+            when {
+                current == null -> startOnceMeasured(nowNanos)
+                nowNanos - changedAt >= holdNanos -> move(current.targetFps, nowNanos)
+            }
         }
-        if (nowNanos - changedAt < holdNanos) return current
-        val target = current.targetFps
+        return choice
+    }
+
+    private fun startOnceMeasured(nowNanos: Long) {
+        if (count < startFrames) return
+        val cost = p90OfLast(startFrames)
+        decide(fitting(cost), SteadyRateReason.Start, cost, nowNanos)
+    }
+
+    /** Steps down from [target] when the recent frames outgrew it, or up when the whole hold fit the next faster rate. */
+    private fun move(target: Int, nowNanos: Long) {
         if (recentCostP90Nanos > downAt * budget(target)) {
             val slower = fitting(recentCostP90Nanos)
             if (slower != target) decide(slower, SteadyRateReason.SteppedDown, recentCostP90Nanos, nowNanos)
-            return choice
+            return
         }
-        val faster = candidatesFps.lastOrNull { it > target } ?: return current
+        val faster = candidatesFps.lastOrNull { it > target } ?: return
         val held = p90Since(nowNanos - holdNanos)
         if (held < upAt * budget(faster)) decide(faster, SteadyRateReason.SteppedUp, held, nowNanos)
-        return choice
     }
 
     private fun record(costNanos: Long, nowNanos: Long) {
@@ -122,6 +131,7 @@ class SteadyFrameRate(
         return scratch[((n - 1) * P90).roundToInt()]
     }
 
+    /** The rule's defaults, and the candidate rates a display holds. */
     companion object {
         /** Frames each start and step-down decision reads. */
         const val DEFAULT_WINDOW_FRAMES = 30

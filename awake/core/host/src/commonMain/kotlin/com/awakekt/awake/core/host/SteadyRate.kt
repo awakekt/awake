@@ -44,9 +44,13 @@ enum class SteadyRateReason {
 }
 
 /**
- * The rate a host holds and why, for a frame-rate HUD: one screenshot of it says what the selector
- * saw. [costP90Nanos] is the 90th-percentile frame cost it last decided on, over the frames
- * [SteadyFrameRate] names for the [reason]; 0 for [SteadyRateReason.Fixed].
+ * The rate a host holds and why, for a frame-rate HUD: one screenshot of it says what the selector saw.
+ *
+ * @property targetFps The rate frames are held at.
+ * @property reason Why it is the target.
+ * @property costP90Nanos The 90th-percentile frame cost the decision read, over the frames
+ *   [SteadyFrameRate] names for the [reason]; 0 for [SteadyRateReason.Fixed].
+ * @property candidatesFps The rates the display holds evenly, fastest first, that the target was chosen from.
  */
 data class SteadyRateChoice(
     val targetFps: Int,
