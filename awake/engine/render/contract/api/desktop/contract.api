@@ -525,11 +525,13 @@ public final class com/awakekt/awake/render/command/GpuSubPass {
 	public final fun getDepthBiasSlope ()F
 	public final fun getPassUniforms ()[F
 	public final fun getResolvedDraws ()Ljava/util/List;
+	public final fun getScreenBounds ()Lcom/awakekt/awake/render/imagepass/ImagePassRect;
 	public final fun getTarget ()Lcom/awakekt/awake/render/texture/RenderTarget;
 	public final fun getTargetLayer ()I
 	public final fun getViewProjection ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun getViewport ()Lcom/awakekt/awake/render/renderer/RenderViewport;
 	public fun hashCode ()I
+	public final fun setScreenBounds (Lcom/awakekt/awake/render/imagepass/ImagePassRect;)V
 	public fun toString ()Ljava/lang/String;
 }
 

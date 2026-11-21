@@ -60,6 +60,7 @@ class OutlineRenderFeature(
     override val pass = RenderPassSlot.Scene
 
     private val styles = arrayOfNulls<OutlineStyle>(MASK_LAYER_COUNT)
+    private val scissor = OutlineScissor()
 
     override fun recordCommands(context: RenderFrameContext) {
         val input = context.passInput ?: return
@@ -75,6 +76,8 @@ class OutlineRenderFeature(
         // The scene's own rectangle when it draws into part of the surface, as an editor's view does.
         val width = input.viewport?.width ?: context.surfaceWidth.toFloat()
         val height = input.viewport?.height ?: context.surfaceHeight.toFloat()
+        // Only around what the styled layers mask, padded by their outline (#1709); nothing on screen, nothing drawn.
+        if (!scissor.fit(input.maskPasses, styles, input.viewport?.x ?: 0f, input.viewport?.y ?: 0f, width, height)) return
         uniforms.write(context.frameIndex) {
             put(OutlineFields.Viewport, width, height, 0f, 0f)
             put(OutlineFields.Color0, styles[0]?.color ?: NO_COLOR)
@@ -88,7 +91,9 @@ class OutlineRenderFeature(
         context.engineBinding(pipeline, BindingSemantic.MaskDepth)?.let {
             recorder.bindMaterial(BindingSemantic.MaskDepth, it)
         }
+        if (scissor.narrowed) recorder.setScissor(scissor.x, scissor.y, scissor.width, scissor.height)
         recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
+        if (scissor.narrowed) recorder.setScissor(scissor.fullX, scissor.fullY, scissor.fullWidth, scissor.fullHeight)
     }
 
     /** Nothing: the registry owns the pipeline it built, and the block lives on it. */

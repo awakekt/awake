@@ -17,6 +17,7 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
+import com.awakekt.awake.render.imagepass.ImagePassRect
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.OutlineStyle
@@ -53,18 +54,42 @@ class OutlineOverlayDrawTest {
         )
     }
 
+    @Test
+    fun theOverlayIsScissoredToTheMaskedBoundsPaddedByTheOutline() {
+        // A quarter of the 64 px scene at (16, 16), outlined 4 px wide: 4 + 1 px of padding each side.
+        val mask = layer(0, OutlineStyle(Color(1f, 0f, 0f, 1f), widthPixels = 4f)).also { it.screenBounds = ImagePassRect(0.25f, 0.25f, 0.25f, 0.25f) }
+        val recorder = record(mask)
+        assertEquals(1, recorder.draws)
+        assertEquals(listOf(listOf(11, 11, 26, 26), listOf(0, 0, SIZE, SIZE)), recorder.scissors)
+    }
+
+    @Test
+    fun anOutlineOffScreenDrawsNothingAndUnknownBoundsDrawTheWholeScene() {
+        val style = OutlineStyle(Color(1f, 0f, 0f, 1f), widthPixels = 2f)
+        assertEquals(0, draws(layer(0, style).also { it.screenBounds = ImagePassRect(2f, 2f, 0.5f, 0.5f) }))
+        val unknown = record(layer(0, style), layer(1, style).also { it.screenBounds = ImagePassRect(0.1f, 0.1f, 0.1f, 0.1f) })
+        assertEquals(1, unknown.draws)
+        assertEquals(emptyList(), unknown.scissors)
+    }
+
     private fun layer(layer: Int, style: OutlineStyle) =
         GpuSubPass(target = null, targetLayer = layer, viewProjection = Mat4(), passUniforms = style.packed())
 
-    private fun draws(vararg masks: GpuSubPass): Int {
+    private fun draws(vararg masks: GpuSubPass): Int = record(*masks).draws
+
+    private fun record(vararg masks: GpuSubPass): CountingRecorder {
         val recorder = CountingRecorder()
         val context = FrameContext(recorder, GpuPassInput(viewProjection = Mat4(), cameraEye = Vec3f.ZERO, passUniforms = FloatArray(0), maskPasses = masks.toList()))
         OutlineRenderFeature(Pipeline, Uniforms).recordCommands(context)
-        return recorder.draws
+        return recorder
     }
 
     private class CountingRecorder : CommandRecorder {
         var draws = 0
+        val scissors = mutableListOf<List<Int>>()
+        override fun setScissor(x: Int, y: Int, width: Int, height: Int) {
+            scissors += listOf(x, y, width, height)
+        }
         override fun bindPipeline(pipeline: PipelineHandle) = Unit
         override fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding) = Unit
         override fun bindVertexBuffer(binding: Int, buffer: BufferHandle) = Unit

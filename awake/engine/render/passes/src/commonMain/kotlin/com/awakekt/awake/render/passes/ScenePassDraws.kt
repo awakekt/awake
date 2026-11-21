@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.command.COVERING_EXEMPT_MASK_LAYER
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
@@ -144,7 +145,7 @@ internal class ScenePassDraws {
         return prePasses
     }
 
-    fun maskSubPasses(viewProjection: Mat4): List<GpuSubPass> = masked.subPasses(viewProjection)
+    fun maskSubPasses(viewProjection: Mat4, clipSpace: ClipSpace): List<GpuSubPass> = masked.subPasses(viewProjection, clipSpace)
 
     private fun caster(draw: GpuResolvedDraw, bounds: Aabb?, casts: Boolean): Caster {
         if (casterCount == casterPool.size) {
@@ -238,6 +239,10 @@ private class MaskedDraws {
     private val passes = ArrayList<GpuSubPass>()
     private var anyMasked = false
 
+    /** Each layer's world bounds so far, min xyz then max xyz; [bounded] false once a draw brought none. */
+    private val bounds = FloatArray(MASK_TARGET_LAYER_COUNT * BOUNDS_FLOATS)
+    private val bounded = BooleanArray(MASK_TARGET_LAYER_COUNT)
+
     fun reset(maskLayers: List<FloatArray>) {
         layers = maskLayers
         if (anyMasked) {
@@ -248,28 +253,51 @@ private class MaskedDraws {
     }
 
     fun add(request: RenderDrawCommand, draw: GpuResolvedDraw) {
-        if (request.maskLayer in layers.indices && request.maskLayer < MASK_LAYER_COUNT) add(request.maskLayer, draw)
-        if (request.exemptFromCoverings && !draw.transparent) add(COVERING_EXEMPT_MASK_LAYER, draw)
+        if (request.maskLayer in layers.indices && request.maskLayer < MASK_LAYER_COUNT) add(request.maskLayer, draw, request.worldBounds)
+        if (request.exemptFromCoverings && !draw.transparent) add(COVERING_EXEMPT_MASK_LAYER, draw, request.worldBounds)
     }
 
-    private fun add(layer: Int, draw: GpuResolvedDraw) {
+    private fun add(layer: Int, draw: GpuResolvedDraw, worldBounds: Aabb?) {
         val list = draws[layer] ?: ArrayList<GpuResolvedDraw>().also { draws[layer] = it }
+        val first = list.isEmpty()
         list += draw
         anyMasked = true
+        if (first) bounded[layer] = worldBounds != null
+        if (worldBounds == null) {
+            bounded[layer] = false
+        } else if (bounded[layer]) {
+            grow(layer, worldBounds, first)
+        }
     }
 
-    fun subPasses(viewProjection: Mat4): List<GpuSubPass> {
+    private fun grow(layer: Int, box: Aabb, first: Boolean) {
+        val at = layer * BOUNDS_FLOATS
+        growAxis(at, box.min.x, box.max.x, first)
+        growAxis(at + 1, box.min.y, box.max.y, first)
+        growAxis(at + 2, box.min.z, box.max.z, first)
+    }
+
+    private fun growAxis(at: Int, low: Float, high: Float, first: Boolean) {
+        bounds[at] = if (first) low else minOf(bounds[at], low)
+        bounds[at + AXES] = if (first) high else maxOf(bounds[at + AXES], high)
+    }
+
+    fun subPasses(viewProjection: Mat4, clipSpace: ClipSpace): List<GpuSubPass> {
         if (!anyMasked) return emptyList()
         for (layer in draws.indices) {
             val drawn = draws[layer]
             if (drawn != null && drawn.isNotEmpty()) {
                 val uniforms = layers.getOrElse(layer) { NO_LAYER_UNIFORMS }
                 passes += GpuSubPass(target = null, targetLayer = layer, viewProjection = viewProjection, resolvedDraws = drawn, passUniforms = uniforms)
+                    .also { it.screenBounds = if (bounded[layer]) screenBounds(bounds, layer * BOUNDS_FLOATS, viewProjection, clipSpace) else null }
             }
         }
         return passes
     }
 }
+
+private const val AXES = 3
+private const val BOUNDS_FLOATS = 2 * AXES
 
 /** [COVERING_EXEMPT_MASK_LAYER]'s sub-pass uniforms: nothing reads a style from it. */
 private val NO_LAYER_UNIFORMS = FloatArray(0)

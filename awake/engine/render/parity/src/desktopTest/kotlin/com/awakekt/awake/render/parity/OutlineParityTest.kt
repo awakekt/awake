@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.generate.generate
+import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.platform.HeadlessSurface
@@ -61,12 +62,12 @@ class OutlineParityTest {
                     projection = Lens.Projection.Orthographic
                     orthoHalfHeight = HALF_HEIGHT
                 }
-                suspend fun render(maskLayer: Int, exempt: Boolean = false, styled: Boolean = true): Row {
+                suspend fun render(maskLayer: Int, exempt: Boolean = false, styled: Boolean = true, bounds: Aabb? = null): Row {
                     renderer.renderToTexture(
                         target,
                         ScenePassCompiler.compile(
                             lens = lens,
-                            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = maskLayer, exemptFromCoverings = exempt)),
+                            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = maskLayer, exemptFromCoverings = exempt, worldBounds = bounds)),
                             light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
                             clipSpace = renderer.clipSpace,
                             aspect = 1f,
@@ -78,6 +79,11 @@ class OutlineParityTest {
                 }
                 val selected = render(0)
                 val hovered = render(1)
+                // With the cube's bounds, the overlay draws only around them (#1709): the same ring.
+                val half = CUBE / 2
+                val scissored = render(0, bounds = Aabb(Vec3f(-half, -half, -half), Vec3f(half, half, half)))
+                // Bounds a quarter of the cube's clip its ring: the backend honours the overlay's scissor.
+                val clipped = render(0, bounds = Aabb(Vec3f(-half / 4, -half / 4, -half), Vec3f(half / 4, half / 4, half)))
                 val unmasked = render(NO_MASK_LAYER)
                 val unmaskedDraws = renderer.frameStats?.drawCalls
                 // An unlit mesh joins the covering-exempt mask layer whether anything is outlined or not,
@@ -85,11 +91,13 @@ class OutlineParityTest {
                 val exemptOnly = render(NO_MASK_LAYER, exempt = true, styled = false)
                 val exemptDraws = renderer.frameStats?.drawCalls
                 println("$backend outline: exempt only=$exemptOnly draws=$exemptDraws against unmasked draws=$unmaskedDraws")
-                println("$backend outline: selected=$selected hovered=$hovered unmasked=$unmasked")
+                println("$backend outline: selected=$selected hovered=$hovered unmasked=$unmasked scissored=$scissored clipped=$clipped")
 
                 assertEquals(0, unmasked.red + unmasked.blue, "$backend: nothing masked draws no outline: $unmasked")
                 assertEquals(0, exemptOnly.red + exemptOnly.blue, "$backend: a covering-exempt draw alone draws no outline: $exemptOnly")
                 assertTrue(selected.left in WIDTH - 1..WIDTH + 1 && selected.right in WIDTH - 1..WIDTH + 1, "$backend: a ring $WIDTH px wide: $selected")
+                assertEquals(selected, scissored, "$backend: scissored to the cube's bounds, the same outline")
+                assertTrue(clipped.red < selected.red / 2, "$backend: bounds inside the silhouette leave no ring to draw: $clipped")
                 assertEquals(0, selected.inside, "$backend: nothing inside the silhouette: $selected")
                 assertTrue(selected.red > RING_PIXELS && selected.blue == 0, "$backend: set 0 in its own colour: $selected")
                 assertTrue(hovered.blue > RING_PIXELS && hovered.red == 0, "$backend: set 1 in its own colour: $hovered")
