@@ -48,6 +48,18 @@ that points to its entry. Its documentation names it for what it does, never as 
 of a published version. The FXAA-style stage in `PostProcessingShaders.kt` is the first such entry
 (#1791).
 
+## Third-party names in shaders
+
+`docs/reference/third-party-names.json` lists third-party algorithm and project names a shader may carry
+only with provenance (FXAA, SMAA, Kawase, the dual-filter blur, PBR Neutral), each with a pattern.
+`awakeVerify` fails any main source file under `awake/` that builds a shader (WGSL entry points or the
+ASL builders) and matches a pattern, unless one of two things holds:
+- `source-provenance.json` has an entry for its path whose `reason` matches the same pattern;
+- the names file lists it under `pending`, with the names and the tracker line that owns the review.
+
+A pending line for a file that no longer carries the name fails too, so the pending list only shrinks.
+A new algorithm with a recognisable name goes into `names` when its first shader lands (#1791).
+
 ## Audits
 
 `reuse lint` checks declared per-file copyright/license metadata. ScanCode reports detected

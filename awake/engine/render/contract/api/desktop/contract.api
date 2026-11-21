@@ -1967,6 +1967,7 @@ public final class com/awakekt/awake/render/renderer/AntiAliasing$Companion {
 	public final fun resolve (Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public static synthetic fun resolve$default (Lcom/awakekt/awake/render/renderer/AntiAliasing$Companion;Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
 	public final fun supported (Ljava/util/Set;)Ljava/util/Set;
+	public final fun switchWithoutRebuild (Lcom/awakekt/awake/render/renderer/AntiAliasing;Lcom/awakekt/awake/render/renderer/AntiAliasing;Ljava/util/Set;)Lcom/awakekt/awake/render/renderer/AntiAliasing;
 }
 
 public final class com/awakekt/awake/render/renderer/BufferCreationStats {
@@ -2374,6 +2375,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun setTextureMipSkip (I)V
 	public abstract fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public fun switchAntiAliasing (Lcom/awakekt/awake/render/renderer/AntiAliasing;)Z
 }
 
 public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
@@ -2428,6 +2430,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun setShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 	public static fun setTextureMipSkip (Lcom/awakekt/awake/render/renderer/Renderer;I)V
 	public static fun submitToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public static fun switchAntiAliasing (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/AntiAliasing;)Z
 	public static fun waitIdle (Lcom/awakekt/awake/render/renderer/Renderer;)V
 }
 

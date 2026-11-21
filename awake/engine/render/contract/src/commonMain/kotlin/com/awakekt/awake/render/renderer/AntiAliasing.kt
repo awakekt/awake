@@ -71,6 +71,16 @@ enum class AntiAliasing(val sampleCount: Int) {
             return selected
         }
 
+        /**
+         * The mode a renderer whose scene pass is built for [current] is in when asked for
+         * [requested] without rebuilding it (#1791): [requested] when both need one sample and
+         * [offered] holds it, so [Off] and [Fxaa] switch between frames, and [current] otherwise.
+         * A multisampled mode changes the scene pass's attachments and pipelines, which the engine
+         * builds once, at start.
+         */
+        fun switchWithoutRebuild(current: AntiAliasing, requested: AntiAliasing, offered: Set<AntiAliasing>): AntiAliasing =
+            if (!current.isMultisampled && !requested.isMultisampled && requested in offered) requested else current
+
         /** The multisampled mode a scene pass at [sampleCount] samples is in, or [Off] at one sample. */
         fun forSampleCount(sampleCount: Int): AntiAliasing =
             requireNotNull(entries.firstOrNull { it.sampleCount == sampleCount && it != Fxaa }) {
