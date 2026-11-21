@@ -77,9 +77,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Listed apart from the filter, so a failed listing fails the step instead of serving no mirror.
-          releases="$(gh release list --limit 100 --json tagName --jq '.[].tagName')"
+          # Every release, through REST and every page: `gh release list --limit 100` stopped finding
+          # mirror-io.ygdrasil-20260716 once it was the 101st newest (vulkan-v0.1.67's deploy, 21 Nov),
+          # and the check below then reported every pinned file missing. Listed apart from the filter,
+          # so a failed listing fails the step instead of serving no mirror.
+          releases="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate --jq '.[].tag_name')"
           tags="$(grep -E '^mirror-io\.ygdrasil-' <<< "$releases" || true)"
+          if [ -z "$tags" ]; then
+            echo "::error::No mirror-io.ygdrasil-* release among the $(wc -l <<< "$releases") releases; the site would lose the WebGPU pins."
+            exit 1
+          fi
           for tag in $tags; do
             gh release download "$tag" --pattern 'io-ygdrasil-*-maven.zip' --dir build/mirrors
             echo "Serving $tag"
