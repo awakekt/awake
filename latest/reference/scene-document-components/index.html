@@ -3038,6 +3038,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#detail_pin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        detail_pin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#factions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4259,6 +4270,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#detail_pin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        detail_pin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#factions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5036,6 +5058,13 @@ registers it.</p>
 <td><a href="../../guides/sky-and-fog/#day-and-night">Sky and fog</a></td>
 </tr>
 <tr>
+<td><a href="#detail_pin"><code>detail_pin</code></a></td>
+<td><code>DetailPin</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/level-of-detail/#keep-an-entity-at-full-detail">Level of detail</a></td>
+</tr>
+<tr>
 <td><a href="#factions"><code>factions</code></a></td>
 <td><code>Factions</code></td>
 <td><code>com.awakekt.awake.scene:ai</code></td>
@@ -5300,7 +5329,7 @@ registers it.</p>
 <tr>
 <td><code>DefaultSceneComponentResolvers.install()</code></td>
 <td><code>com.awakekt.awake.scene:runtime</code></td>
-<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_appearance</code>, <code>canvas_bar</code>, <code>canvas_bind</code>, <code>canvas_button</code>, <code>canvas_cluster</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow</code>, <code>canvas_follow_arrow</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_image</code>, <code>canvas_input</code>, <code>canvas_joystick</code>, <code>canvas_layout</code>, <code>canvas_look_area</code>, <code>canvas_particles</code>, <code>canvas_rect</code>, <code>canvas_scaler</code>, <code>canvas_stepper</code>, <code>canvas_sweep</code>, <code>canvas_text</code>, <code>canvas_text_field</code>, <code>canvas_tooltip</code>, <code>canvas_view</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>particle_emitter_2d</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>sprite</code>, <code>sprite_clips</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>texture_animation</code>, <code>texture_clips</code>, <code>tilemap</code>, <code>tone_mapping</code>, <code>trail_renderer</code>, <code>world_text</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
+<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_appearance</code>, <code>canvas_bar</code>, <code>canvas_bind</code>, <code>canvas_button</code>, <code>canvas_cluster</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow</code>, <code>canvas_follow_arrow</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_image</code>, <code>canvas_input</code>, <code>canvas_joystick</code>, <code>canvas_layout</code>, <code>canvas_look_area</code>, <code>canvas_particles</code>, <code>canvas_rect</code>, <code>canvas_scaler</code>, <code>canvas_stepper</code>, <code>canvas_sweep</code>, <code>canvas_text</code>, <code>canvas_text_field</code>, <code>canvas_tooltip</code>, <code>canvas_view</code>, <code>day_cycle</code>, <code>detail_pin</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>particle_emitter_2d</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>sprite</code>, <code>sprite_clips</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>texture_animation</code>, <code>texture_clips</code>, <code>tilemap</code>, <code>tone_mapping</code>, <code>trail_renderer</code>, <code>world_text</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
 </tr>
 <tr>
 <td><code>SceneComponentRegistry.registerControls()</code></td>
@@ -7362,6 +7391,10 @@ first across midnight. A field no stop sets keeps its authored value.</p>
 <p>The stops write the first <code>skybox</code> and <code>fog</code> in the scene. A <code>Cubemap</code> sky takes <code>skyTint</code> and
 <code>skyExposure</code>, and blends between its <code>panoramas</code> by time of day. A
 rotated light node shines along its rotation and ignores the sun's direction.</p>
+<h2 id="detail_pin"><code>detail_pin</code></h2>
+<p>Keeps a node at full detail whatever its distance from the camera. <code>SceneDetailPin</code>, no fields.</p>
+<p>Its <code>LodGroup</code> draws level 0, and so does every group that follows it. <code>AnimationSystem</code> poses its
+skinned model every frame. A node socket-attached to it is pinned too.</p>
 <h2 id="factions"><code>factions</code></h2>
 <p>Who regards whom how, for every perceiver in the scene. <code>SceneFactions</code>. A scene has at most one; with none, every faction is neutral to every other and friendly to itself.</p>
 <table>
@@ -7497,6 +7530,24 @@ rotated light node shines along its rotation and ignores the sun's direction.</p
 <td>number</td>
 <td>none</td>
 <td>Legacy blue channel.</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>Exponential</code> or <code>Linear</code></td>
+<td><code>Exponential</code></td>
+<td>How fog grows with distance: by <code>density</code>, or evenly from <code>start</code> to <code>end</code>.</td>
+</tr>
+<tr>
+<td><code>start</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Where a linear fog starts, in metres from the eye. At least 0.</td>
+</tr>
+<tr>
+<td><code>end</code></td>
+<td>number</td>
+<td><code>1000</code></td>
+<td>Where a linear fog reaches <code>color</code>, in metres from the eye. Beyond <code>start</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -9681,6 +9732,24 @@ A prefab's tags ride on its root entity; tags on the node that links the prefab 
 <td>boolean</td>
 <td><code>false</code></td>
 <td>Whether the terrain is solid ground when physics runs, as a static heightfield. Needs a square terrain of at least 4 samples a side.</td>
+</tr>
+<tr>
+<td><code>clipmapRings</code></td>
+<td>integer</td>
+<td><code>6</code></td>
+<td>Levels of the geometry clipmap that draws it, 2 to 8, each twice as coarse as the one inside.</td>
+</tr>
+<tr>
+<td><code>clipmapRingResolution</code></td>
+<td>integer</td>
+<td><code>64</code></td>
+<td>Grid cells along one side of each clipmap level: an even count from 16 to 256.</td>
+</tr>
+<tr>
+<td><code>clipmapBaseSpacing</code></td>
+<td>number</td>
+<td><code>2</code></td>
+<td>Metres between the finest clipmap level's vertices. Above 0.</td>
 </tr>
 </tbody>
 </table>

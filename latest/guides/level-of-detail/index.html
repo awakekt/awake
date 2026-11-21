@@ -1458,6 +1458,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#keep-an-entity-at-full-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep an entity at full detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#a-graphics-setting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3070,6 +3081,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#keep-an-entity-at-full-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep an entity at full detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#a-graphics-setting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3246,10 +3268,24 @@ together: each part follows the first part of the same model under the same pare
 </span></code></pre></div>
 <p><code>LodGroup.minScreenCoverage</code> switches by size on screen, as cooked models do; without it, a group
 switches by each <code>LodLevel.maxDistance</code>.</p>
+<h3 id="keep-an-entity-at-full-detail">Keep an entity at full detail</h3>
+<p>Tag an entity <code>DetailPin</code> to keep it at full detail whatever its distance, such as the player's own
+character with a zoomed-out camera, the current target or a mount:</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">player</span><span class="p">,</span><span class="w"> </span><span class="n">DetailPin</span><span class="p">)</span><span class="w">      </span><span class="c1">// full detail from the next frame</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">world</span><span class="p">.</span><span class="na">remove</span><span class="p">(</span><span class="n">player</span><span class="p">,</span><span class="w"> </span><span class="n">DetailPin</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w">  </span><span class="c1">// back to the thresholds on the next frame</span>
+</span></code></pre></div>
+<p>A scene document carries it as <code>{ "component": "detail_pin" }</code>. A pinned entity:
+- draws level 0 of its <code>LodGroup</code>, and so does every group that follows it, whatever their offsets;
+- is posed every frame by <code>AnimationSystem</code>, whatever its <code>AnimationUpdateRate</code> would hold it for;
+- passes the pin to what is attached to it: an entity whose enabled <code>SocketAttachmentComponent</code>
+  follows a pinned one, such as a weapon or a rider, is pinned too, up to four attachments deep.</p>
+<p>Unlike <code>LodPolicy(forcedLevel = 0)</code>, which pins one group's level and nothing else, the pin covers
+the followers, the attachments and the animation rate together. That lets a game tighten the bands
+for a crowd without the player's own character dropping detail with it.</p>
 <h3 id="a-graphics-setting">A graphics setting</h3>
 <p><code>SceneLod.quality</code> applies to every model:</p>
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">SceneLod</span><span class="p">.</span><span class="na">quality</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LodQuality</span><span class="p">(</span><span class="n">bias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w">            </span><span class="c1">// a lower quality setting</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">SceneLod</span><span class="p">.</span><span class="na">quality</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LodQuality</span><span class="p">(</span><span class="n">coverageScale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2f</span><span class="p">)</span><span class="w">  </span><span class="c1">// keeps each level until half the size</span>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">SceneLod</span><span class="p">.</span><span class="na">quality</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LodQuality</span><span class="p">(</span><span class="n">bias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w">            </span><span class="c1">// a lower quality setting</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">SceneLod</span><span class="p">.</span><span class="na">quality</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LodQuality</span><span class="p">(</span><span class="n">coverageScale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2f</span><span class="p">)</span><span class="w">  </span><span class="c1">// keeps each level until half the size</span>
 </span></code></pre></div>
 <h3 id="measuring-it">Measuring it</h3>
 <p><code>Renderer.frameStats.triangles</code> is what the backend drew in the last presented frame. In Awake's

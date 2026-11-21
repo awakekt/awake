@@ -1932,6 +1932,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How it works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clipmap-detail-and-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipmap detail and cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3059,6 +3076,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How it works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clipmap-detail-and-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipmap detail and cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3237,9 +3271,27 @@ terrain was authored from.</p>
 <td>none</td>
 <td>Names a surface provider and its data; see <a href="#how-it-works">How it works</a>.</td>
 </tr>
+<tr>
+<td><code>clipmapRings</code></td>
+<td>integer</td>
+<td><code>6</code></td>
+<td>Levels of the geometry clipmap, the core and its rings, 2 to 8. Each ring is twice as coarse as the one inside. See <a href="#clipmap-detail-and-cost">Clipmap detail and cost</a>.</td>
+</tr>
+<tr>
+<td><code>clipmapRingResolution</code></td>
+<td>integer</td>
+<td><code>64</code></td>
+<td>Grid cells along one side of each level, an even count from 16 to 256.</td>
+</tr>
+<tr>
+<td><code>clipmapBaseSpacing</code></td>
+<td>number</td>
+<td><code>2</code></td>
+<td>Metres between the finest level's vertices. Above 0.</td>
+</tr>
 </tbody>
 </table>
-<p><code>TerrainComponent</code> also has <code>splatMap</code> and <code>clipmapConfig</code>, which only Kotlin can set.</p>
+<p>A terrain that leaves the clipmap fields out draws exactly as it did before they existed. <code>TerrainComponent</code> also has <code>splatMap</code>, which only Kotlin can set.</p>
 <h2 id="work-with-a-heightmap">Work with a heightmap</h2>
 <p>A <code>Heightmap</code> is centred on its entity: it spans <code>-halfExtentX..halfExtentX</code> and the same on Z.</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">heightmap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Heightmap</span><span class="p">(</span>
@@ -3315,7 +3367,87 @@ texel keeps its four strongest layers, or eight where more than four meet; an ei
 about twice as much per pixel, so only terrains that need it pay for it.</p>
 <p>For large terrains, <code>TerrainClipmapSystem</code> keeps concentric rings of geometry centred on the primary
 camera, so memory stays constant however far the camera travels. <code>TerrainClipmapConfig</code> sets how many
-rings there are and how fine they start.</p>
+rings there are and how fine they start; a scene sets it with the <code>clipmap*</code> fields above.</p>
+<h3 id="clipmap-detail-and-cost">Clipmap detail and cost</h3>
+<p>Level 0 is a square of <code>clipmapRingResolution</code> cells, <code>clipmapBaseSpacing</code> metres apart, around the
+camera. Each ring around it has the same number of cells at twice the spacing, so it reaches twice as
+far. The whole clipmap is one draw, whatever the setting. Each level adds <code>(clipmapRingResolution + 1)²</code>
+vertices: 4,225 at 64 cells, 16,641 at 128 and 66,049 at 256.</p>
+<table>
+<thead>
+<tr>
+<th>Rings</th>
+<th>Cells a side</th>
+<th>Base spacing</th>
+<th style="text-align: right;">Vertices</th>
+<th style="text-align: right;">Triangles</th>
+<th style="text-align: right;">Reach from the camera</th>
+<th style="text-align: right;">Vertex spacing 1 km out</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6 (default)</td>
+<td>64 (default)</td>
+<td>2 m (default)</td>
+<td style="text-align: right;">25,350</td>
+<td style="text-align: right;">41,312</td>
+<td style="text-align: right;">2,048 m</td>
+<td style="text-align: right;">32 m</td>
+</tr>
+<tr>
+<td>8</td>
+<td>64</td>
+<td>2 m</td>
+<td style="text-align: right;">33,800</td>
+<td style="text-align: right;">54,560</td>
+<td style="text-align: right;">8,192 m</td>
+<td style="text-align: right;">32 m</td>
+</tr>
+<tr>
+<td>6</td>
+<td>128</td>
+<td>2 m</td>
+<td style="text-align: right;">99,846</td>
+<td style="text-align: right;">160,608</td>
+<td style="text-align: right;">4,096 m</td>
+<td style="text-align: right;">16 m</td>
+</tr>
+<tr>
+<td>8</td>
+<td>128</td>
+<td>2 m</td>
+<td style="text-align: right;">133,128</td>
+<td style="text-align: right;">211,744</td>
+<td style="text-align: right;">16,384 m</td>
+<td style="text-align: right;">16 m</td>
+</tr>
+<tr>
+<td>6</td>
+<td>256</td>
+<td>2 m</td>
+<td style="text-align: right;">396,294</td>
+<td style="text-align: right;">632,672</td>
+<td style="text-align: right;">8,192 m</td>
+<td style="text-align: right;">8 m</td>
+</tr>
+<tr>
+<td>8</td>
+<td>256</td>
+<td>2 m</td>
+<td style="text-align: right;">528,392</td>
+<td style="text-align: right;">833,312</td>
+<td style="text-align: right;">32,768 m</td>
+<td style="text-align: right;">8 m</td>
+</tr>
+</tbody>
+</table>
+<p>More rings reach farther without changing the detail at any distance already covered. A finer grid
+halves the spacing at every distance and roughly quadruples the vertex count. Past the outermost ring
+the terrain is not drawn. To keep the mesh as fine as the source data at a distance, take the source's
+sample spacing, double it once per ring that reaches that distance, and choose a grid that keeps up.
+The vertex shader samples the heightmap once per vertex, so the vertex count is the cost to watch on a
+phone.</p>
 <div class="admonition warning">
 <p class="admonition-title">One terrain per shader set</p>
 <p>A content host accepts one terrain per shader set. A second terrain with the same shaders is

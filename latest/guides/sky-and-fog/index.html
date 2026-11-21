@@ -3480,6 +3480,24 @@ next pair as the day moves on.</p>
 <td><code>(0.55, 0.62, 0.70)</code></td>
 <td>The colour distant surfaces fade to.</td>
 </tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>Exponential</code> or <code>Linear</code></td>
+<td><code>Exponential</code></td>
+<td>How fog grows with distance: by <code>density</code>, or evenly from <code>start</code> to <code>end</code>.</td>
+</tr>
+<tr>
+<td><code>start</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td><code>Linear</code> only. Metres from the camera where fog begins. At least 0.</td>
+</tr>
+<tr>
+<td><code>end</code></td>
+<td>number</td>
+<td><code>1000</code></td>
+<td><code>Linear</code> only. Metres from the camera where surfaces are wholly fog colour. Beyond <code>start</code>.</td>
+</tr>
 </tbody>
 </table>
 <p>A color is an object (<code>{ "r": …, "g": …, "b": … }</code>), an array, or a hex string such as <code>"#C8D2DC"</code>.
@@ -3488,9 +3506,15 @@ In the scene DSL, <code>skybox(Skybox(...))</code> and <code>fog(Fog(...))</code
 <h2 id="how-it-works">How it works</h2>
 <p>The renderer reads the first <code>Skybox</code> and the first <code>Fog</code> in the world. With no <code>Skybox</code>, no sky is
 drawn. With no <code>Fog</code>, there is no fog.</p>
-<p>Fog is exponential distance fog, computed per pixel in the lit and textured shaders: a surface
-<code>d</code> units from the camera shows <code>1 − e^(−density × d)</code> of the fog colour. Surfaces drawn by shaders
-that do not read fog, such as your own, are not fogged.</p>
+<p>Fog is distance fog, computed per pixel in the lit and textured shaders. Exponential fog, the
+default, shows <code>1 − e^(−density × d)</code> of the fog colour on a surface <code>d</code> units from the camera, so
+it thickens forever and never quite hides anything. Linear fog shows none nearer than <code>start</code>, then
+<code>(d − start) / (end − start)</code> of it, and all of it from <code>end</code> on: use it when the far edge of the
+world, or a draw distance, must vanish completely. Surfaces drawn by shaders that do not read fog,
+such as your own, are not fogged.</p>
+<p>Every <code>Fog</code> field may be changed while the scene runs; the next frame fogs with the new values, so a
+system can pull <code>end</code> in as a storm arrives. A linear range the shaders cannot ramp across, a
+negative <code>start</code> or an <code>end</code> at or before it, fails the document's validation, and <code>Fog</code> refuses it.</p>
 <p><code>SolidColor</code> uses <code>horizonColor</code> for the whole sky. The cubemap sky draws over the gradient sky when
 the plan has both.</p>
 <div class="admonition tip">

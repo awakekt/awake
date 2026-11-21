@@ -3497,6 +3497,11 @@ AntiAliasing.Fxaa }</code>: each camera whose post-processing has no FXAA stage 
 its chain, at the renderer's <code>effectQuality</code> (<code>Low</code> when that is <code>Off</code>). A camera's own <code>fxaa</code> effect
 is kept as it is listed. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
 resolve and post-processing.</p>
+<p>The engine builds the scene pass for the app's anti-aliasing once, at start. A settings screen that
+changes <code>RenderQualitySettings.antiAliasing</code> between <code>Off</code> and <code>Fxaa</code> takes effect from the next frame,
+when the scene pass is single-sampled. A change to or from an MSAA mode rebuilds the scene's
+attachments and pipelines, so it applies on the next start. <code>Renderer.antiAliasing</code> reports the mode
+in effect, and <code>Renderer.supportedAntiAliasing</code> the modes the device offers.</p>
 <p>With alpha to coverage enabled, built-in textured and skinned <code>AlphaMode.Mask</code> materials convert
 the filtered alpha edge around their cutoff into sample coverage. Opaque materials retain full
 coverage, and alpha-blended and additive materials retain blending. Custom content shaders keep
