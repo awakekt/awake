@@ -253,6 +253,29 @@ flowchart TD
 - Android Vulkan runs on its dedicated render thread, not the UI thread.
 - Coroutines may help with IO and parsing, but must not touch Vulkan handles directly.
 
+### Android Background Lifecycle
+
+An Android app stops rendering when it goes to the background, and the host activity calls
+nothing for it. `MainActivity` only sets an `AwakeSurfaceView` as its content.
+
+- When the activity stops, its window goes invisible and Android destroys the `SurfaceView`'s
+  surface. `AwakeSurfaceView.surfaceDestroyed` stops the render thread (`AwakeSurfaceView-Render`)
+  and waits for it, so no frame runs while the app is in the background.
+- The engine then waits for the GPU to finish, drops what was built on the surface, and calls
+  `AppLifecycle.pause()`. The app, its scene and the renderer stay alive.
+- When the app comes back, a new surface arrives. The engine rebuilds what needs the surface, calls
+  `AppLifecycle.resume()` and starts a new render thread. The first frame's delta is clamped.
+- A scene app's `SceneAppLifecycleRuntime.isPaused` is true from `pause()` to `resume()`. While
+  paused, its `fps` and `averageFrameTimeMs` read 0, not the last foreground frames' values (#1709).
+  A report sent from another thread, such as a telemetry heartbeat, should read `isPaused`, or the
+  pause and resume callbacks, to say whether the app is running.
+- Only the surface going away pauses the app. Losing focus while still visible (split screen, a
+  dialog, the notification shade) keeps it rendering. Whether `pause()` should also come on focus
+  loss is an open line under "Background lifecycle" on #1709.
+- The render loop only stops if the surface is destroyed. A host that keeps it alive keeps the loop
+  running: `SurfaceView.setSurfaceLifecycle(SURFACE_LIFECYCLE_FOLLOWS_ATTACHMENT)`, or the view in
+  a window that outlives the activity.
+
 ### Testing Posture
 
 - GPU resource creation is not a useful target for fake-heavy app-style test doubles.

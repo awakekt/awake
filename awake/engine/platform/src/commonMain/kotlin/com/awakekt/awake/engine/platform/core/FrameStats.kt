@@ -59,6 +59,21 @@ class FrameStats(
         return true
     }
 
+    /**
+     * Forgets every frame recorded, as when the app is paused and no frames arrive (#1709): [fps],
+     * [frameTimeMs] and every average and percentile read 0 until frames are recorded again, rather
+     * than keeping the last ones as if they were live.
+     */
+    fun reset() {
+        fps = 0f
+        frameTimeMs = 0f
+        accumulator = 0f
+        frameCount = 0
+        size = 0
+        next = 0
+        sortedIsCurrent = false
+    }
+
     /** Mean frame time over the window, or 0 before any frame. */
     val averageFrameTimeMs: Float
         get() {
