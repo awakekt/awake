@@ -123,6 +123,9 @@ data class LodGroup(
     /** The frame a selection pass last picked this group's level, so a follower can tell its leader is current. */
     internal var selectedFrame: Long = -1L
 
+    /** The frame this group was last drawn pinned, so a follower of a pinned group is pinned too. */
+    internal var pinnedFrame: Long = -1L
+
     /**
      * The level to draw at [distance], remembering it for the next call.
      *
@@ -148,6 +151,17 @@ data class LodGroup(
     internal fun selectByCoverage(coverage: Float, minCoverage: FloatArray): LodLevel {
         thresholdLevel = LodSelector.coverageLevel(coverage * SceneLod.quality.coverageScale, minCoverage, thresholdLevel, hysteresis)
         return applyPolicy(thresholdLevel)
+    }
+
+    /**
+     * Draws [LodSelector.PINNED_LEVEL] for an entity pinned to full detail (#1805), with its
+     * [policy]'s shadow offset. The thresholds start afresh once the pin is gone.
+     */
+    internal fun selectPinned(): LodLevel {
+        thresholdLevel = UNSET
+        activeLevel = LodSelector.PINNED_LEVEL
+        shadowLevel = LodSelector.shadowLevel(activeLevel, levels.size, policy)
+        return levels[activeLevel]
     }
 
     /** Draws [leaderLevel] plus [offset], within this group's [policy]. */

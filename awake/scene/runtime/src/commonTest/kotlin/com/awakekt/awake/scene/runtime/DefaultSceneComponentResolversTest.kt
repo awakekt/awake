@@ -26,6 +26,8 @@ class DefaultSceneComponentResolversTest {
         "WorldTextBinding",
         // A strip of point pairs rewritten every frame (#1465).
         "TrailBinding",
+        // Full detail whatever the distance (#1805).
+        "DetailPinBinding",
     ) + setOf(
         // One for each component a canvas element is made of (#1088).
         "CanvasRectBinding", "CanvasTextBinding", "CanvasAppearanceBinding", "CanvasLayoutBinding", "CanvasClusterBinding",

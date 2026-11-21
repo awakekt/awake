@@ -18,17 +18,26 @@ import kotlin.math.sqrt
 /**
  * Picks every [LodGroup]'s level for the frame, before any draw is collected: groups on their own
  * thresholds first, then followers, in rounds, so a follower of a follower still lands on the same
- * frame as the body at the head of the chain. Allocation-free.
+ * frame as the body at the head of the chain. A group on a [DetailPin]ned entity, or on one attached
+ * to it, draws level 0, and so does every group that follows a pinned one (#1805). Allocation-free.
  */
 internal class LodSelectionPass {
     private var frame = 0L
 
-    fun select(family: Family2<Transform, LodGroup>, groups: ComponentStore<LodGroup>?, boundsStore: ComponentStore<MeshBounds>?, lens: Lens) {
+    fun select(
+        family: Family2<Transform, LodGroup>,
+        groups: ComponentStore<LodGroup>?,
+        boundsStore: ComponentStore<MeshBounds>?,
+        lens: Lens,
+        pins: DetailPins? = null,
+    ) {
         frame++
         if (family.size == 0) return
         var pending = 0
         family.forEach { entity, transform, group ->
-            if (group.follow != null) {
+            if (pins != null && pins.isPinned(entity)) {
+                selectPinned(group)
+            } else if (group.follow != null) {
                 pending++
             } else {
                 selectOwn(group, transform, boundsStore?.get(entity), lens)
@@ -58,6 +67,7 @@ internal class LodSelectionPass {
             val leader = groups?.get(follow.leader)
             when {
                 leader == null -> selectOwn(group, transform, boundsStore?.get(entity), lens)
+                leader.pinnedFrame == frame -> selectPinned(group)
                 leader.selectedFrame == frame -> {
                     group.selectFollowing(leader.activeLevel, follow.levelOffset)
                     group.selectedFrame = frame
@@ -66,6 +76,12 @@ internal class LodSelectionPass {
             }
         }
         return pending
+    }
+
+    private fun selectPinned(group: LodGroup) {
+        group.selectPinned()
+        group.selectedFrame = frame
+        group.pinnedFrame = frame
     }
 
     /** Whether [group] was picked this frame, so draw collection reads its level rather than picking one. */

@@ -83,16 +83,16 @@ jobs:
       # does for Core before 0.3, has to see a current one.
       - name: Name the local version
         run: |
-          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
+          version=$(scripts/gradle-retry.sh ./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
           echo "LOCAL_VERSION=${version%-SNAPSHOT}-obfuscated" | tee -a "$GITHUB_ENV"
 
       # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
       - name: Publish this commit locally
         run: |
-          ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
-          ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+          scripts/gradle-retry.sh ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
+          scripts/gradle-retry.sh ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
           # The template applies build-logic's public plugins (basis-transcoder) at Core's version.
-          ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+          scripts/gradle-retry.sh ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
 
       - name: Build and run the obfuscated releases
         env:
