@@ -28,4 +28,11 @@ class ShadowFadeShaderTest {
         assertTrue(instancedLitShadowShader(ClipSpace.WebGpu).emitWgsl().contains("shadowFade"))
         assertTrue(skinnedInstancedLitShadowShader(ClipSpace.WebGpu).emitWgsl().contains("shadowFade"))
     }
+
+    @Test
+    fun cascadeSamplingEarlyOutsWhenDisabledOrPastLastCascadeReach() {
+        val wgsl = litShadowShader(ClipSpace.Vulkan).emitWgsl()
+        assertTrue("cascadeCount" in wgsl && "lastCascade" in wgsl, "reads active cascade count once")
+        assertTrue(wgsl.contains("return 1.0;"), "returns lit early when shadows are off or past reach")
+    }
 }

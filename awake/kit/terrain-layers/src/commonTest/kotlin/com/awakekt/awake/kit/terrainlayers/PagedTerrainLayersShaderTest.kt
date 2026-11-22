@@ -17,4 +17,12 @@ class PagedTerrainLayersShaderTest {
             assertTrue("pageHeightKnot" in shader && "tap3Layers" in shader)
         }
     }
+
+    @Test fun blendLayersSkipsEmptySlotsWithExplicitGradientsAndGuardsHeightBlend() {
+        val shader = terrainLayersShader(ClipSpace.Vulkan).emitWgsl()
+        assertTrue("surfaceDdx" in shader && "surfaceDdy" in shader, "computes surface derivatives once in uniform flow")
+        assertTrue("textureSampleGrad(" in shader, "samples layer albedo with explicit gradients inside share > 0")
+        assertTrue("if ((share0 > 0.0))" in shader || "if (share0 > 0.0)" in shader, "guards empty layer slots")
+        assertTrue("if ((sharpnessTotal > 0.0))" in shader || "if (sharpnessTotal > 0.0)" in shader, "skips height blend when linear")
+    }
 }

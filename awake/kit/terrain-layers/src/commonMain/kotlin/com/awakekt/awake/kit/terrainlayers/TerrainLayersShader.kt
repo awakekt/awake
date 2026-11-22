@@ -12,6 +12,8 @@ import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.dpdx
+import com.awakekt.awake.asset.shaderdsl.dpdy
 import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.gt
@@ -30,7 +32,7 @@ import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.texture2dArray
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
-import com.awakekt.awake.asset.shaderdsl.textureSampleArray
+import com.awakekt.awake.asset.shaderdsl.textureSampleArrayGrad
 import com.awakekt.awake.asset.shaderdsl.textureSampleLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
@@ -283,11 +285,23 @@ private fun AslBlockBuilder.mergeControlTaps(
                     val slot = part * CONTROL_SLOTS + channel
                     val layer = let("tap${tap}Layer$slot", floor(layerChannel * 255f.lit + 0.5f.lit))
                     val share = let("tap${tap}Share$slot", shareChannel * tapWeight)
-                    mergeIntoSlots("tap${tap}Merge$slot", layer, share, merged)
+                    mergeChannel(tap, slot, layer, share, merged)
                 }
         }
     }
     return merged
+}
+
+/** Places the first channel straight into slot 0, and merges every later channel into [slots]. */
+private fun AslBlockBuilder.mergeChannel(tap: Int, slot: Int, layer: AslExpr, share: AslExpr, slots: List<Slot>) {
+    if (tap == 0 && slot == 0) {
+        iff(share gt 0f.lit) {
+            assign(slots[0].layer, layer)
+            assign(slots[0].weight, share)
+        }
+    } else {
+        mergeIntoSlots("tap${tap}Merge$slot", layer, share, slots)
+    }
 }
 
 /** Adds [share] of [layer] to its slot, else an empty one, else replaces the weakest if stronger. */
@@ -334,7 +348,8 @@ private fun AslBlockBuilder.mergeIntoSlots(name: String, layer: AslExpr, share: 
  * Blends the merged slots. A linear blend by weight share, and a height blend where each layer
  * stands at its share plus its height and only layers within [BLEND_DEPTH] of the highest show,
  * are mixed by the slots' share-weighted sharpness: 0 is purely linear, 1 purely height-driven.
- * An empty slot has no share, so it adds nothing to either.
+ * Empty slots skip texture sampling and tiling math using explicit derivatives computed once in
+ * uniform control flow, and purely linear blends skip the height-blend pass.
  */
 private fun AslBlockBuilder.blendLayers(
     slots: List<Slot>,
@@ -345,28 +360,41 @@ private fun AslBlockBuilder.blendLayers(
 ): AslExpr {
     val tableSize = let("layerTableSize", toF32(textureDimensions(layerParams).x))
     val total = let("slotTotal", max(slots.map { it.weight }.reduce { a, b -> a + b }, EPSILON.lit))
+    val posXz = let("surfaceXz", vec2(position.x, position.z))
+    val dPosDx = let("surfaceDdx", dpdx(posXz))
+    val dPosDy = let("surfaceDdy", dpdy(posXz))
+    val byWeight = variable("byWeight", vec3(0f.lit))
+    val sharpnessTotal = variable("sharpnessTotal", 0f.lit)
     val colours = mutableListOf<AslExpr>()
-    val shares = mutableListOf<AslExpr>()
-    val sharpness = mutableListOf<AslExpr>()
     val heights = slots.mapIndexed { index, slot ->
-        val layer = let("layer$index", max(slot.layer, 0f.lit))
-        val params = let("layerParams$index", textureSampleLevel(layerParams, sampler, vec2((layer + 0.5f.lit) / tableSize, 0.5f.lit), 0f.lit))
-        // Inverse of encodeTiling: 2^(byte / 255 * 8 - 2) world units per repeat.
-        val tiling = let("tiling$index", pow(2f.lit, params.x * 8f.lit - 2f.lit))
-        val albedo = let(
-            "albedo$index",
-            textureSampleArray(albedoLayers, sampler, vec2(position.x / tiling, position.z / tiling), toU32(layer)),
-        )
-        colours += albedo.xyz
         val share = let("share$index", slot.weight / total)
-        shares += share
-        sharpness += share * params.y
-        let("height$index", select(NO_LAYER.lit, share + albedo.w, share gt 0f.lit))
+        val colour = variable("colour$index", vec3(0f.lit))
+        val height = variable("height$index", NO_LAYER.lit)
+        iff(share gt 0f.lit) {
+            val layer = let("layer$index", max(slot.layer, 0f.lit))
+            val params = let("layerParams$index", textureSampleLevel(layerParams, sampler, vec2((layer + 0.5f.lit) / tableSize, 0.5f.lit), 0f.lit))
+            // Inverse of encodeTiling: 2^(byte / 255 * 8 - 2) world units per repeat.
+            val tiling = let("tiling$index", pow(2f.lit, params.x * 8f.lit - 2f.lit))
+            val invTiling = let("invTiling$index", 1f.lit / tiling)
+            val albedo = let(
+                "albedo$index",
+                textureSampleArrayGrad(albedoLayers, sampler, posXz * invTiling, toU32(layer), dPosDx * invTiling, dPosDy * invTiling),
+            )
+            assign(colour, albedo.xyz)
+            assign(byWeight, byWeight + albedo.xyz * share)
+            assign(sharpnessTotal, sharpnessTotal + share * params.y)
+            assign(height, share + albedo.w)
+        }
+        colours += colour
+        height
     }
-    val ceiling = let("blendCeiling", heights.reduce { a, b -> max(a, b) } - BLEND_DEPTH.lit)
-    val blends = heights.mapIndexed { index, height -> let("blend$index", max(height - ceiling, 0f.lit)) }
-    val blendTotal = let("blendTotal", max(blends.reduce { a, b -> a + b }, EPSILON.lit))
-    val byHeight = let("byHeight", colours.zip(blends).map { (colour, blend) -> colour * blend }.reduce { a, b -> a + b } / blendTotal)
-    val byWeight = let("byWeight", colours.zip(shares).map { (colour, share) -> colour * share }.reduce { a, b -> a + b })
-    return let("albedo", mix(byWeight, byHeight, sharpness.reduce { a, b -> a + b }))
+    val blended = variable("albedo", byWeight)
+    iff(sharpnessTotal gt 0f.lit) {
+        val ceiling = let("blendCeiling", heights.reduce { a, b -> max(a, b) } - BLEND_DEPTH.lit)
+        val blends = heights.mapIndexed { index, height -> let("blend$index", max(height - ceiling, 0f.lit)) }
+        val blendTotal = let("blendTotal", max(blends.reduce { a, b -> a + b }, EPSILON.lit))
+        val byHeight = let("byHeight", colours.zip(blends).map { (colour, blend) -> colour * blend }.reduce { a, b -> a + b } / blendTotal)
+        assign(blended, mix(byWeight, byHeight, sharpnessTotal))
+    }
+    return blended
 }

@@ -207,18 +207,24 @@ fun AslShaderBuilder.cascadeShadowSampling(
         val normal by param(GpuDataShape.Vec3)
         val nDotL by param(F32)
 
+        val cascadeCount = let("cascadeCount", toI32(floor(inputs.cameraForward.w)))
+        iff(cascadeCount lt 1.lit) { returnValue(1f.lit) }
+        val viewDepth = cascadeViewDepth(inputs, world)
+        val lastCascade = let("lastCascade", cascadeCount - 1.lit)
+        val (_, maxReach) = cascadeBlend(inputs, lastCascade)
+        iff(viewDepth gt maxReach) { returnValue(1f.lit) }
+
         val slopeScale = let(
             "slopeScale",
             min(sqrt(max(1f.lit - nDotL * nDotL, 0f.lit)) / max(nDotL, epsilon), maxSlopeScale),
         )
         val texSize = let("texSize", vec2(textureDimensions(shadowMap)))
         val texel = let("texel", 1f.lit / texSize)
-        val viewDepth = cascadeViewDepth(inputs, world)
         val lit = variable("lit", 1f.lit)
         val resolved = variable("resolved", 0.lit)
 
         loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
-            iff(resolved gt 0.lit) { continueLoop() }
+            iff((resolved gt 0.lit) or (cascade ge cascadeCount)) { continueLoop() }
             val (blendStart, blendEnd) = cascadeBlend(inputs, cascade)
             iff(viewDepth gt blendEnd) { continueLoop() }
             val primaryShadow = let(
@@ -235,7 +241,7 @@ fun AslShaderBuilder.cascadeShadowSampling(
             assign(resolved, 1.lit)
             assign(lit, primaryShadow)
             iff(
-                (toF32(cascade) lt (floor(inputs.cameraForward.w) - 1f.lit)) and (viewDepth gt blendStart),
+                (cascade lt lastCascade) and (viewDepth gt blendStart),
             ) {
                 val nextCascade = let("nextCascade", cascade + 1.lit)
                 val nextShadow = let(
@@ -252,7 +258,7 @@ fun AslShaderBuilder.cascadeShadowSampling(
         // hard line at the shadow distance. A fade of 0 skips this and keeps that line.
         val fade = let("shadowFade", fract(inputs.cameraForward.w))
         iff(fade gt 0f.lit) {
-            val reach = let("shadowReach", inputs.depthScales[toI32(floor(inputs.cameraForward.w)) - 1.lit].z)
+            val reach = let("shadowReach", inputs.depthScales[lastCascade].z)
             assign(lit, mix(lit, 1f.lit, smoothstep(reach * (1f.lit - fade), reach, viewDepth)))
         }
         returnValue(lit)
@@ -260,8 +266,11 @@ fun AslShaderBuilder.cascadeShadowSampling(
 
     val shadowCascade = fn("shadowCascade", returns = AslType.I32) {
         val world by param(GpuDataShape.Vec3)
+        val cascadeCount = let("cascadeCount", toI32(floor(inputs.cameraForward.w)))
+        iff(cascadeCount lt 1.lit) { returnValue((-1).lit) }
         val viewDepth = cascadeViewDepth(inputs, world)
         loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
+            iff(cascade ge cascadeCount) { continueLoop() }
             val (_, blendEnd) = cascadeBlend(inputs, cascade)
             iff(viewDepth gt blendEnd) { continueLoop() }
             cascadeNdc(inputs, cascade, world, outside = (-1).lit)
