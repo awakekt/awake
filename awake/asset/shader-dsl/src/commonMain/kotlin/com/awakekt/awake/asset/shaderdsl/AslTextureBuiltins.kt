@@ -111,6 +111,44 @@ fun textureSampleArrayLevel(
 }
 
 /**
+ * WGSL `textureSampleGrad` builtin for 2D array textures: samples [layer] with caller-supplied UV
+ * derivatives. Has no uniformity requirement, so callers can guard empty layers with `iff` after
+ * computing derivatives in uniform control flow.
+ *
+ * @param texture The array texture expression.
+ * @param sampler The sampler expression.
+ * @param uv The texture coordinates.
+ * @param layer The array layer index (must be integer).
+ * @param ddx The UV derivative along screen x.
+ * @param ddy The UV derivative along screen y.
+ * @return The sampled `vec4f` value.
+ */
+@Suppress("LongParameterList") // Matches WGSL's 6-argument textureSampleGrad array overload.
+fun textureSampleArrayGrad(
+    texture: AslExpr,
+    sampler: AslExpr,
+    uv: AslExpr,
+    layer: AslExpr,
+    ddx: AslExpr,
+    ddy: AslExpr,
+): AslExpr {
+    if (texture.type != AslType.Texture2dArrayF32 || sampler.type != AslType.Sampler) {
+        throw AslDefinitionException(
+            "textureSampleArrayGrad needs (array texture, sampler), got " +
+                "${texture.type}/${sampler.type}.",
+        )
+    }
+    if (layer.type != AslType.I32 && layer.type != AslType.U32) {
+        throw AslDefinitionException("A layer index is an integer, got ${layer.type}.")
+    }
+    return AslCall(
+        "textureSampleGrad",
+        listOf(texture, sampler, uv, layer, ddx, ddy),
+        AslType.Data(GpuDataShape.Vec4),
+    )
+}
+
+/**
  * WGSL `textureSample` builtin for 2D array textures with implicit level-of-detail.
  *
  * @param texture The array texture expression.
