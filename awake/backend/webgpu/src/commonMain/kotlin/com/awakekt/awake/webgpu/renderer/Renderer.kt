@@ -133,9 +133,9 @@ class Renderer internal constructor(
         return antiAliasing == requested
     }
 
-    override val gpuDrawPreparer: GpuDrawPreparer by lazy {
-        WebGpuDrawPreparer(this)
-    }
+    private val webGpuDrawPreparerDelegate = lazy { WebGpuDrawPreparer(this) }
+
+    override val gpuDrawPreparer: GpuDrawPreparer by webGpuDrawPreparerDelegate
 
     internal val gpuPassExecutor: GpuPassExecutor by lazy { RendererGpuPassExecutor(this) }
 
@@ -532,6 +532,7 @@ class Renderer internal constructor(
         depthPrePass?.destroy()
         sceneDepthPass?.destroy()
         maskPass?.destroy()
+        if (webGpuDrawPreparerDelegate.isInitialized()) webGpuDrawPreparerDelegate.value.sharedDepth.destroy()
         depthPrePassPlaceholder?.destroy()
     }
 
