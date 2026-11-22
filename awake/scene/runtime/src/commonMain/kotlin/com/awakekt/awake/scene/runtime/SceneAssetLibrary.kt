@@ -281,12 +281,18 @@ class SceneAssetLibrary(
      * The load mesh [name] needs before it can be built, started or joined in [scope]; null when it can
      * be built now: one registered or already built, or one its resolver has loaded.
      */
-    internal fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? =
-        if (name in meshFactories || name in meshes || name in retainedMeshes) {
-            null
-        } else {
-            dynamicResolvers.firstOrNull { it.canResolveMesh(name) }?.loadMesh(name, scope)
+    internal fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? {
+        if (name !in meshFactories && !isMeshBuilt(name)) {
+            dynamicResolvers.firstOrNull { it.canResolveMesh(name) }?.loadMesh(name, scope)?.let { return it }
         }
+        return levelsOf(name)?.meshes?.firstNotNullOfOrNull { level ->
+            if (level in meshFactories || isMeshBuilt(level)) {
+                null
+            } else {
+                dynamicResolvers.firstOrNull { it.canResolveMesh(level) }?.loadMesh(level, scope)
+            }
+        }
+    }
 
     /**
      * The load material [name] needs before it can be made without blocking the frame, started in

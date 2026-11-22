@@ -68,9 +68,11 @@ internal class SpawnedModels(private val models: GltfAssetResolver) : AutoClosea
     fun mustLoad(request: SceneRenderableRequest, library: SceneAssetLibrary): Boolean {
         val mesh = request.meshRenderer.mesh
         val material = request.meshRenderer.material
+        val levelLetGo = models.meshLevels(mesh)?.meshes?.any { models.isMeshLetGo(it) && !library.isMeshBuilt(it) } == true
         return models.canResolveMesh(mesh) && (
             !models.isPreloaded(models.modelPath(mesh)) ||
                 (models.isMeshLetGo(mesh) && !library.isMeshBuilt(mesh)) ||
+                levelLetGo ||
                 (models.isMaterialLetGo(material) && !library.isMaterialBuilt(material))
             )
     }

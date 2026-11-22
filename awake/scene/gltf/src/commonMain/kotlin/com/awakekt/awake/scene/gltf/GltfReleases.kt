@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.scene.gltf
 
+import com.awakekt.awake.asset.gltf.GltfMesh
+import com.awakekt.awake.asset.gltf.LoadedSkinnedScene
+
 /**
  * Which models a [GltfAssetResolver] lets go of the CPU copies of once they are uploaded, and what it
  * has let go of. A model's geometry and images were kept for the resolver's life so that a mesh or
@@ -56,9 +59,60 @@ internal class GltfReleases {
     /** The released material keys of model [path]. */
     fun releasedMaterialsOf(path: String): List<String> = releasedMaterials.filter { belongsTo(it, path) }
 
-    private fun belongsTo(key: String, path: String): Boolean =
-        key == path || key.startsWith("$path#") || key.startsWith("$PRIMITIVE_MESH_PREFIX$path#")
+    private fun belongsTo(key: String, path: String): Boolean {
+        val base = GltfLodLevels.stripLevelPrefix(key)
+        return base == path || base.startsWith("$path#") || base.startsWith("$PRIMITIVE_MESH_PREFIX$path#")
+    }
 }
 
 /** The model a material key belongs to: the key itself, or what comes before its slot. */
 internal fun materialModelPath(key: String): String = key.substringBefore('#')
+
+internal fun GltfPart.withoutImageBytes(): GltfPart = when (this) {
+    is GltfPart.Skinned -> GltfPart.Skinned(mesh.withoutImageBytes(), textured)
+    is GltfPart.Static -> GltfPart.Static(
+        primitive.copy(
+            baseColorImageBytes = null,
+            metallicRoughnessImageBytes = null,
+            normalImageBytes = null,
+            occlusionImageBytes = null,
+            emissiveImageBytes = null,
+        ),
+    )
+}
+
+internal fun LoadedSkinnedScene.withoutImageBytes(): LoadedSkinnedScene = copy(
+    meshes = meshes.map(GltfMesh::withoutImageBytes),
+    primitives = primitives.map { it.map(GltfMesh::withoutImageBytes) },
+)
+
+internal fun LoadedSkinnedScene.withoutGeometry(): LoadedSkinnedScene = copy(
+    meshes = meshes.map(GltfMesh::withoutGeometry),
+    primitives = primitives.map { it.map(GltfMesh::withoutGeometry) },
+)
+
+private fun GltfMesh.withoutImageBytes(): GltfMesh = copy(
+    baseColorImageBytes = null,
+    metallicRoughnessImageBytes = null,
+    normalImageBytes = null,
+    occlusionImageBytes = null,
+    emissiveImageBytes = null,
+)
+
+private fun GltfMesh.withoutGeometry(): GltfMesh = copy(
+    positions = EMPTY_FLOATS,
+    normals = null,
+    colors = null,
+    uvs = null,
+    indices = EMPTY_INTS,
+    jointIndices = null,
+    jointWeights = null,
+    baseColorImageBytes = null,
+    metallicRoughnessImageBytes = null,
+    normalImageBytes = null,
+    occlusionImageBytes = null,
+    emissiveImageBytes = null,
+)
+
+private val EMPTY_FLOATS = FloatArray(0)
+private val EMPTY_INTS = IntArray(0)
