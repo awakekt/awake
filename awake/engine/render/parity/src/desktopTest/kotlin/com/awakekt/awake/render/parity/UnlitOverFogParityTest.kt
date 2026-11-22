@@ -67,9 +67,9 @@ class UnlitOverFogParityTest {
             val lit = unlitSceneCentreRgb(renderer.renderUnlitOverFogScene(DARK, skinned = false, unlit = false))
             measured += "lit static ${DARK.toList()} -> ${lit.toList()}"
             assertTrue(lit[BLUE] >= DARK[BLUE] + MIN_FOG_LIFT, "$backend: fog no longer covers a lit draw: ${measured.joinToString()}")
-            // Fog compares the mask's exempt depth with scene depth at one texture coordinate: at two
-            // sizes their silhouettes rasterize apart and fog lands on an unlit draw's edge pixels (#1709).
-            assertEquals(SCENE_DEPTH_MASK_BYTES, renderer.maskTargetBytes, "$backend: the mask is drawn at scene depth's size")
+            // Fog compares the mask's exempt depth with scene depth at one texture coordinate: both
+            // now follow MaskTargetSizing together, so silhouettes agree while shedding the fixed 2048 square (#1709).
+            assertEquals(SCENE_DEPTH_MASK_BYTES, renderer.maskTargetBytes, "$backend: the mask and scene depth size to the scene")
         }
         assertTrue(!failed, "$backend: an unlit draw left its texel by more than $TOLERANCE: ${measured.joinToString()}")
     }
@@ -77,8 +77,8 @@ class UnlitOverFogParityTest {
     private companion object {
         const val TOLERANCE = 2
 
-        /** Three D32 mask layers at the scene depth target's 2048 edge. */
-        const val SCENE_DEPTH_MASK_BYTES = 2048L * 2048L * 3L * 4L
+        /** Three D32 mask layers at the scene's [SCENE_SIZE] edge (128x128), matching the resized scene-depth target. */
+        const val SCENE_DEPTH_MASK_BYTES = SCENE_SIZE.toLong() * SCENE_SIZE.toLong() * 3L * 4L
         const val BLUE = 2
 
         /** Lit, the dark texel's blue is near 20 before fog; the haze at about 28% lifts it past 80. */

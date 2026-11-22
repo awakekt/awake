@@ -8,37 +8,40 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.render.command.MASK_TARGET_LAYER_COUNT
 
 /**
- * Sizes the mask target to the scene a presented frame draws, [Renderer.surfaceWidth] by
- * [Renderer.surfaceHeight] after the render scale, before the frame is recorded (#1709). It was a
- * fixed 2048 square, cleared and stored in full on every masked frame whatever the scene's size.
- * See [com.awakekt.awake.render.passes.MaskTargetSizing] for when it grows and shrinks.
+ * Sizes the scene-depth and mask targets to the scene a presented frame draws,
+ * [Renderer.surfaceWidth] by [Renderer.surfaceHeight] after the render scale, before the frame is
+ * recorded (#1709). Both were fixed 2048 squares (66.3 MiB combined), cleared and stored in full
+ * whatever the scene's size; sizing them in lockstep keeps fog's mask-vs-scene-depth silhouette
+ * comparison aligned at one texel grid while cutting both to the scaled scene extent.
+ * See [com.awakekt.awake.render.passes.MaskTargetSizing] for when they grow and shrink.
  */
 internal fun Renderer.settleMaskTarget() {
-    val target = maskPass?.depthTarget ?: return
-    resizeMaskTarget(sceneDepthEdge() ?: maskSizing.presented(target.size, surfaceWidth, surfaceHeight))
+    val current = currentScreenDepthEdge() ?: return
+    resizeScreenDepthTargets(maskSizing.presented(current, surfaceWidth, surfaceHeight))
 }
 
-/** Grows the mask target for an offscreen render [width] x [height] pixels, never shrinking it. */
+/** Grows the scene-depth and mask targets for an offscreen render [width] x [height] pixels, never shrinking them. */
 internal fun Renderer.ensureMaskTarget(width: Int, height: Int) {
-    val target = maskPass?.depthTarget ?: return
-    resizeMaskTarget(sceneDepthEdge() ?: maskSizing.offscreen(target.size, width, height))
+    val current = currentScreenDepthEdge() ?: return
+    resizeScreenDepthTargets(maskSizing.offscreen(current, width, height))
 }
 
-/**
- * The scene depth target's edge, when the plan has one: fog compares an exempt draw's depth in the mask
- * with scene depth at the same texture coordinate, which agrees only while both are drawn at one size.
- * At different sizes their silhouettes rasterize apart, and fog lands on an unlit draw's edge pixels.
- */
-private fun Renderer.sceneDepthEdge(): Int? = sceneDepthTarget?.size
+private fun Renderer.currentScreenDepthEdge(): Int? =
+    sceneDepthTarget?.size ?: maskPass?.depthTarget?.size
 
 /**
- * Reallocates the mask's layers at [edge] when that differs, after the device goes idle: frames in
- * flight may read the old image, and its descriptor set is rewritten in place. A one-off hitch on a
- * resize, never one per frame. The new layers are cleared before anything samples them.
+ * Reallocates the scene-depth and mask targets at [edge] when either differs, after the device
+ * goes idle: frames in flight may read the old images, and their descriptor sets are rewritten in
+ * place. A one-off hitch on a resize, never one per frame. New layers are cleared before anything
+ * samples them.
  */
-private fun Renderer.resizeMaskTarget(edge: Int) {
-    val pass = maskPass ?: return
-    if (pass.depthTarget.size == edge) return
+private fun Renderer.resizeScreenDepthTargets(edge: Int) {
+    val scenePass = sceneDepthPassFeature
+    val mask = maskPass
+    val resizeScene = scenePass != null && scenePass.depthTarget.size != edge
+    val resizeMask = mask != null && mask.depthTarget.size != edge
+    if (!resizeScene && !resizeMask) return
     waitIdle()
-    pass.resize(MASK_TARGET_LAYER_COUNT, edge)
+    if (resizeScene) scenePass.resize(1, edge)
+    if (resizeMask) mask.resize(MASK_TARGET_LAYER_COUNT, edge)
 }
