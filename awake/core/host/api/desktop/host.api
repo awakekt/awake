@@ -50,6 +50,7 @@ public final class com/awakekt/awake/core/host/FixedTimestepLoop$Companion {
 
 public final class com/awakekt/awake/core/host/FrameCostReport {
 	public static final field INSTANCE Lcom/awakekt/awake/core/host/FrameCostReport;
+	public final fun submitted (JJ)V
 	public final fun submitted (JLjava/lang/Long;)V
 	public final fun takeCost (J)J
 }

@@ -90,7 +90,11 @@ class GpuFrameSplitTest {
         const val WINDOWS = 5
         const val SUM_TOLERANCE = 1e-4f
 
-        /** 184 B measured on lavapipe, plus one 8 B allocation granule: see the class comment. */
-        const val TIMING_BUDGET = 192L
+        /**
+         * Bookkeeping in `GpuFrameTimeCounter`, `FrameCostReport`, and `GpuFrameTimer` allocates 0 B/frame
+         * (verified by `GpuFrameTimeCounterAllocationTest`); `RenderFrameStats.gpuTimeMs: Float?` boxes 16 B
+         * when published, plus two 8 B allocation granules of headroom (#1709).
+         */
+        const val TIMING_BUDGET = 32L
     }
 }

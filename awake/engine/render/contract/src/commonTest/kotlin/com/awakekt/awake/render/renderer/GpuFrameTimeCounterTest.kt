@@ -50,4 +50,20 @@ class GpuFrameTimeCounterTest {
         counter.completeSubmission(missing, null)
         assertNull(counter.latestMs)
     }
+
+    @Test
+    fun primitiveOverloadAndRepeatedFramesReuseFrameRecordsCleanly() {
+        val counter = GpuFrameTimeCounter()
+        repeat(64) { i ->
+            val ticket = counter.beginSubmission()
+            counter.publish()
+            counter.completeSubmission(ticket, i + 0.5)
+            assertEquals((i + 0.5).toFloat(), counter.latestMsOrNaN)
+        }
+        val missing = counter.beginSubmission()
+        counter.publish()
+        counter.completeSubmission(missing, Double.NaN)
+        assertEquals(true, counter.latestMsOrNaN.isNaN())
+        assertNull(counter.latestMs)
+    }
 }

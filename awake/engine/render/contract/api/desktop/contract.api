@@ -2091,8 +2091,10 @@ public final class com/awakekt/awake/render/renderer/GpuFramePart : java/lang/En
 public final class com/awakekt/awake/render/renderer/GpuFrameTimeCounter {
 	public fun <init> ()V
 	public final fun beginSubmission ()J
+	public final fun completeSubmission (JD)V
 	public final fun completeSubmission (JLjava/lang/Double;)V
 	public final fun getLatestMs ()Ljava/lang/Float;
+	public final fun getLatestMsOrNaN ()F
 	public final fun publish ()V
 }
 
