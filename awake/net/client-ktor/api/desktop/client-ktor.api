@@ -1,4 +1,5 @@
 public final class com/awakekt/awake/net/ktor/KtorWebSocketTransportKt {
+	public static final field DEFAULT_CONNECT_TIMEOUT_MILLIS J
 	public static final field DEFAULT_INBOUND_PACKETS I
 	public static final field DEFAULT_PING_INTERVAL_MILLIS J
 	public static final field OUTGOING_FRAMES I

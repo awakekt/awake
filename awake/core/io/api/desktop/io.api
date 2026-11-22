@@ -390,6 +390,10 @@ public final class com/awakekt/awake/core/io/InMemoryFileSystem : com/awakekt/aw
 	public fun write-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/core/io/IoDispatcher_desktopKt {
+	public static final fun getIoDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
 public final class com/awakekt/awake/core/io/OverlayFileSystem : com/awakekt/awake/core/io/FileSystem {
 	public fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FileSystem;)V
 	public fun createDirectories-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

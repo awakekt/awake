@@ -280,6 +280,28 @@ class DeferredSceneRouteTest {
         assertEquals(SceneRouteStatus.Loaded, router.activeRouteStatus)
     }
 
+    @Test
+    fun deferredRouteLoadsOnIoDispatcherByDefault() = runTest {
+        val captured = kotlinx.coroutines.CompletableDeferred<kotlin.coroutines.ContinuationInterceptor?>()
+        val game = app {
+            scenes {
+                route("menu") { cameraEntity("camera") }
+                deferredRoute("world", label = "World") {
+                    captured.complete(kotlin.coroutines.coroutineContext[kotlin.coroutines.ContinuationInterceptor])
+                    worldScene("harbor")
+                }
+            }
+        }
+        try {
+            game.ready(renderer)
+            game.frame()
+            game.requireService<SceneRouterRuntime>().preload("world")
+            assertEquals(com.awakekt.awake.core.io.ioDispatcher, captured.await())
+        } finally {
+            game.dispose()
+        }
+    }
+
     private suspend fun routedApp(load: suspend () -> SceneAppSpec): AwakeAppLifecycle {
         val game = app {
             scenes {

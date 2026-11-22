@@ -13,6 +13,11 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import platform.Foundation.NSData
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -42,103 +47,121 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         manager.createDirectoryAtPath(root, withIntermediateDirectories = true, attributes = null, error = null)
     }
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = runCatching {
-        val data = manager.contentsAtPath(resolve(path))
-            ?: throw FileSystemException(FileSystemError.NotFound(path))
-        IosReadSession(data.toByteArray())
-    }
-
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = runCatching {
-        val target = resolve(path)
-        if (mode == WriteMode.CreateNew && manager.fileExistsAtPath(target)) {
-            throw FileSystemException(FileSystemError.AlreadyExists(path))
-        }
-        val initial = if (mode == WriteMode.Append) {
-            manager.contentsAtPath(target)?.toByteArray()
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            val data = manager.contentsAtPath(resolve(path))
                 ?: throw FileSystemException(FileSystemError.NotFound(path))
-        } else {
-            ByteArray(0)
-        }
-        IosWriteSession(this, path, mode, initial)
-    }
-
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = runCatching {
-        val directory = resolve(path)
-        if (!manager.isDirectory(directory)) {
-            throw FileSystemException(FileSystemError.NotFound(path))
-        }
-        val names = if (recursive) {
-            manager.subpathsAtPath(directory).orEmpty()
-        } else {
-            manager.contentsOfDirectoryAtPath(directory, error = null).orEmpty()
-        }
-        names.mapNotNull { name ->
-            val relative = name.toString().removePrefix(directory.trimEnd('/') + "/")
-            val child = if (path == FilePath.Root) relative else "${path.value}/$relative"
-            val childPath = FilePath.of(child)
-            val childFile = resolve(childPath)
-            if (!manager.fileExistsAtPath(childFile)) null else entry(childPath, childFile)
-        }.sortedBy { it.path.value }
-    }
-
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = runCatching {
-        val target = resolve(path)
-        if (!manager.fileExistsAtPath(target)) null else entry(path, target)
-    }
-
-    override suspend fun createDirectories(path: FilePath): Result<Unit> = runCatching {
-        if (!manager.createDirectoryAtPath(resolve(path), withIntermediateDirectories = true, attributes = null, error = null) &&
-            !manager.isDirectory(resolve(path))
-        ) {
-            throw FileSystemException(FileSystemError.IoFailure("createDirectories", "Could not create ${path.value}."))
+            IosReadSession(data.toByteArray())
         }
     }
 
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = runCatching {
-        if (path == FilePath.Root) throw FileSystemException(FileSystemError.InvalidPath("", "The root cannot be deleted."))
-        val target = resolve(path)
-        if (!manager.fileExistsAtPath(target)) throw FileSystemException(FileSystemError.NotFound(path))
-        if (!recursive && manager.isDirectory(target) && list(path, false).getOrThrow().isNotEmpty()) {
-            throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (mode == WriteMode.CreateNew && manager.fileExistsAtPath(target)) {
+                throw FileSystemException(FileSystemError.AlreadyExists(path))
+            }
+            val initial = if (mode == WriteMode.Append) {
+                manager.contentsAtPath(target)?.toByteArray()
+                    ?: throw FileSystemException(FileSystemError.NotFound(path))
+            } else {
+                ByteArray(0)
+            }
+            IosWriteSession(this@IosFileSystem, path, mode, initial)
         }
-        if (!manager.removeItemAtPath(target, error = null)) {
-            throw FileSystemException(FileSystemError.IoFailure("delete", "Could not delete ${path.value}."))
-        }
-        notify(FileChangeBatch(listOf(FileChange.Deleted(path))))
     }
 
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = runCatching {
-        val source = resolve(from)
-        val target = resolve(to)
-        if (!manager.fileExistsAtPath(source)) throw FileSystemException(FileSystemError.NotFound(from))
-        if (manager.fileExistsAtPath(target) && !replace) throw FileSystemException(FileSystemError.AlreadyExists(to))
-        createDirectories(FilePath.of(to.value.substringBeforeLast('/', missingDelimiterValue = "."))).getOrThrow()
-        if (manager.fileExistsAtPath(target)) manager.removeItemAtPath(target, error = null)
-        if (!manager.moveItemAtPath(source, toPath = target, error = null)) {
-            throw FileSystemException(FileSystemError.IoFailure("move", "Could not move ${from.value}."))
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            val directory = resolve(path)
+            if (!manager.isDirectory(directory)) {
+                throw FileSystemException(FileSystemError.NotFound(path))
+            }
+            val names = if (recursive) {
+                manager.subpathsAtPath(directory).orEmpty()
+            } else {
+                manager.contentsOfDirectoryAtPath(directory, error = null).orEmpty()
+            }
+            names.mapNotNull { name ->
+                val relative = name.toString().removePrefix(directory.trimEnd('/') + "/")
+                val child = if (path == FilePath.Root) relative else "${path.value}/$relative"
+                val childPath = FilePath.of(child)
+                val childFile = resolve(childPath)
+                if (!manager.fileExistsAtPath(childFile)) null else entry(childPath, childFile)
+            }.sortedBy { it.path.value }
         }
-        notify(FileChangeBatch(listOf(FileChange.Moved(from, to))))
     }
 
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> {
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (!manager.fileExistsAtPath(target)) null else entry(path, target)
+        }
+    }
+
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            if (!manager.createDirectoryAtPath(resolve(path), withIntermediateDirectories = true, attributes = null, error = null) &&
+                !manager.isDirectory(resolve(path))
+            ) {
+                throw FileSystemException(FileSystemError.IoFailure("createDirectories", "Could not create ${path.value}."))
+            }
+        }
+    }
+
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            if (path == FilePath.Root) throw FileSystemException(FileSystemError.InvalidPath("", "The root cannot be deleted."))
+            val target = resolve(path)
+            if (!manager.fileExistsAtPath(target)) throw FileSystemException(FileSystemError.NotFound(path))
+            if (!recursive && manager.isDirectory(target) && list(path, false).getOrThrow().isNotEmpty()) {
+                throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
+            }
+            if (!manager.removeItemAtPath(target, error = null)) {
+                throw FileSystemException(FileSystemError.IoFailure("delete", "Could not delete ${path.value}."))
+            }
+            notify(FileChangeBatch(listOf(FileChange.Deleted(path))))
+        }
+    }
+
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            val source = resolve(from)
+            val target = resolve(to)
+            if (!manager.fileExistsAtPath(source)) throw FileSystemException(FileSystemError.NotFound(from))
+            if (manager.fileExistsAtPath(target) && !replace) throw FileSystemException(FileSystemError.AlreadyExists(to))
+            createDirectories(FilePath.of(to.value.substringBeforeLast('/', missingDelimiterValue = "."))).getOrThrow()
+            if (manager.fileExistsAtPath(target)) manager.removeItemAtPath(target, error = null)
+            if (!manager.moveItemAtPath(source, toPath = target, error = null)) {
+                throw FileSystemException(FileSystemError.IoFailure("move", "Could not move ${from.value}."))
+            }
+            notify(FileChangeBatch(listOf(FileChange.Moved(from, to))))
+        }
+    }
+
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withContext(Dispatchers.IO) {
         val beforeEntries = snapshotEntriesFromDisk()
         val before = snapshotFiles()
         val staged = InMemoryFileSystem(before)
         val result = staged.transaction(block)
-        if (result.isFailure) return result
+        if (result.isFailure) return@withContext result
         val afterEntries = captureEntries(staged)
         val after = afterEntries.filterValues { it.kind == FileKind.File }
             .mapValues { staged.read(it.key).getOrThrow() }
-        return try {
+        try {
             suppressNotifications = true
             reconcile(before, after)
             suppressNotifications = false
             val changes = diffEntries(beforeEntries, afterEntries)
             if (changes.isNotEmpty()) notify(FileChangeBatch(changes))
             result
+        } catch (cancelled: CancellationException) {
+            suppressNotifications = false
+            withContext(NonCancellable) { suspendRunCatching { reconcile(after, before) } }
+            throw cancelled
         } catch (cause: Throwable) {
             suppressNotifications = false
-            runCatching { reconcile(after, before) }
+            withContext(NonCancellable) { suspendRunCatching { reconcile(after, before) } }
             Result.failure(cause.toFileSystemException("transaction"))
         }
     }
@@ -220,10 +243,12 @@ private class IosWriteSession(
         chunks += bytes.copyOf()
     }
 
-    override suspend fun commit(): Result<Unit> = runCatching {
-        check(!closed) { "Write session is closed" }
-        owner.notify(FileChangeBatch(listOf(owner.publish(path, chunks.flattenToByteArray(), mode))))
-        closed = true
+    override suspend fun commit(): Result<Unit> = withContext(Dispatchers.IO) {
+        suspendRunCatching {
+            check(!closed) { "Write session is closed" }
+            owner.notify(FileChangeBatch(listOf(owner.publish(path, chunks.flattenToByteArray(), mode))))
+            closed = true
+        }
     }
 
     override suspend fun abort() {

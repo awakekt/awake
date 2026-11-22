@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.input.CursorImage
 import com.awakekt.awake.core.input.PointerCursor
+import com.awakekt.awake.core.io.ioDispatcher
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
@@ -17,7 +18,6 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppInstaller
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.render.renderer.Renderer
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
@@ -83,7 +83,7 @@ class LoadedSceneRoute(
  * token the player gets only by signing in. The router calls [load] the first time the route is
  * entered (or [SceneRouterRuntime.preload]ed) and shows [loading] meanwhile.
  *
- * - **Loading.** [load] runs off the frame thread, on `Dispatchers.Default` plus [loadContext]. While it
+ * - **Loading.** [load] runs off the frame thread, on [ioDispatcher] plus [loadContext]. While it
  *   runs, the route is entered: [SceneRouterRuntime.activeSceneId] names it, [loading] plays, and
  *   [SceneRouterRuntime.routeStatus] is [SceneRouteStatus.Loading]. The loaded scene takes the loading
  *   scene's place at the start of the first frame after [load] returns. A route whose [load] has already
@@ -107,7 +107,7 @@ class LoadedSceneRoute(
  * @property loading The scene shown while [load] runs and after it fails; it can read
  * [SceneRouterRuntime.routeStatus] to show progress or an error.
  * @property keepLoaded Whether what [load] returned is kept for later entries, or closed as the route is left.
- * @property loadContext Added to `Dispatchers.Default` for [load]; a test passes a dispatcher of its own.
+ * @property loadContext Added to [ioDispatcher] for [load]; a test passes a dispatcher of its own.
  * @property load Supplies the route's scene, suspending until it can, for instance until the player has
  * signed in and the content has been read.
  */
@@ -219,9 +219,9 @@ class SceneRouterRuntime internal constructor(
     private var currentRuntime: SceneAppLifecycleRuntime? = null
     private var renderer: Renderer? = null
 
-    // Deferred routes load here, off the frame thread, and hand what they loaded back through [finished]. The
-    // router outlives each scene session, so its loads are a child of the app's scope rather than a session's.
-    private val loads = services.appChildScope(Dispatchers.Default)
+    // Deferred routes load here, off the frame thread and CPU pool, and hand what they loaded back through [finished].
+    // The router outlives each scene session, so its loads are a child of the app's scope rather than a session's.
+    private val loads = services.appChildScope(ioDispatcher)
     private val finished = Channel<FinishedLoad>(Channel.UNLIMITED)
 
     // Whether the active route is a deferred one showing its loading scene.
