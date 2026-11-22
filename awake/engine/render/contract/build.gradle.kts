@@ -70,6 +70,12 @@ kotlin {
     }
 }
 
+tasks.named<Test>("desktopTest") {
+    // GpuFrameTimeCounterAllocationTest counts every byte; with escape analysis on, C2 hides
+    // short-lived allocations so what the probe sees depends on when compilation lands (#1521).
+    jvmArgs("-XX:-DoEscapeAnalysis")
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Render Contract")
