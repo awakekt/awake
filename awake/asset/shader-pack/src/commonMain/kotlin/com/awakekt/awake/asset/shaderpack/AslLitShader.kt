@@ -39,16 +39,22 @@ val LitShader: AslShaderDefinition = shader("triangle") {
     val viewProjection = frame.value("viewProjection")
     val lightDirection = frame.value("lightDirection")
     val lightColor = frame.value("lightColor")
+    val cameraPosition = frame.value("cameraPosition")
+    val fogColor = frame.value("fogColor")
+    val fogRange = frame.value("fogRange")
 
     val out = varyings("VertexOutput")
     val color by out.varying(GpuDataShape.Vec3, location = 0)
     val normal by out.varying(GpuDataShape.Vec3, location = 1)
+    val worldPos by out.varying(GpuDataShape.Vec3, location = 2)
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColor)
-        out.position set (viewProjection * (model * vec4(ins.input(VertexSemantic.Position), 1f.lit)))
+        val placed = let("placed", model * vec4(ins.input(VertexSemantic.Position), 1f.lit))
+        out.position set (viewProjection * placed)
         color set ins.input(VertexSemantic.Color)
         normal set ins.input(VertexSemantic.Normal)
+        worldPos set placed.xyz
     }
 
     val ambient = const("AMBIENT_STRENGTH", 0.08f)
@@ -60,6 +66,7 @@ val LitShader: AslShaderDefinition = shader("triangle") {
         val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
         val lit = let("lit", color * shade * lightColor.xyz)
         val mapped = let("mapped", lit / (lit + vec3(1f.lit)))
-        colorOutput(vec4(mapped, 1f.lit))
+        val fogged = applySceneFog(mapped, cameraPosition, worldPos, fogColor, fogRange)
+        colorOutput(vec4(fogged, 1f.lit))
     }
 }

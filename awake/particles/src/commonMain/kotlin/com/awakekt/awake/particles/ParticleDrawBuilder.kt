@@ -165,7 +165,7 @@ class ParticleDrawBuilder {
                 destination = uniformFloats,
                 field = ParticleExtraFields.FrameInfo,
                 x = visual.frameCount.toFloat(),
-                y = 0f,
+                y = if (visual.additive) 1f else 0f,
                 z = 0f,
                 w = 0f,
             )

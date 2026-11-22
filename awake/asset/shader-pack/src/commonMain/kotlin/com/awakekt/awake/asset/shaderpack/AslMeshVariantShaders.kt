@@ -66,6 +66,9 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val viewProjection = frame.value("viewProjection")
         val lightDirection = frame.value("lightDirection")
         val lightColor = frame.value("lightColor")
+        val cameraPosition = frame.value("cameraPosition")
+        val fogColor = frame.value("fogColor")
+        val fogRange = frame.value("fogRange")
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
         val entityModel = if (skinned && !instanced) handles.value("model") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
@@ -94,6 +97,12 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val color by out.varying(if (instanceTints != null) GpuDataShape.Vec4 else GpuDataShape.Vec3, location = 0)
         val normal by out.varying(GpuDataShape.Vec3, location = 1)
         val debugVaryings = debug?.let { SkinnedDebugVaryings(out, firstLocation = 2) }
+        val worldPos = if (debugVaryings == null) {
+            val worldPos by out.varying(GpuDataShape.Vec3, location = 2)
+            worldPos
+        } else {
+            null
+        }
 
         vertex {
             val instance = if (storagePalettes != null) instanceIndex() else null
@@ -123,11 +132,14 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
 
             if (instanced) {
                 val model = let("model", instanceModelMatrix(startLocation = if (skinned) 5 else 3))
-                out.position set (viewProjection * (model * position))
+                val placed = let("placed", model * position)
+                out.position set (viewProjection * placed)
+                worldPos?.let { it set placed.xyz }
                 normal set if (skinned) (model * outNormal).xyz else outNormal
             } else {
                 val placed = if (entityModel != null) entityModel * position else position
                 out.position set (viewProjection * placed)
+                worldPos?.let { it set placed.xyz }
                 // The palette poses the mesh in its own space; the entity's model turns its normals
                 // into the world the light is in, or the lit side would turn with the mesh.
                 normal set if (entityModel != null) (entityModel * outNormal).xyz else outNormal
@@ -146,14 +158,28 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             if (pointLights != null) addPointLights(shade, ambientShare, n, debugVaryings!!.worldPosition, pointLights)
             val rgb = if (instanceTints != null) color.xyz else color
             val lit = rgb * shade
+            val fragWorldPos = debugVaryings?.worldPosition ?: worldPos!!
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             val output = if (tint != null && glow != null) {
                 val stored = let("stored", rgb * tint.xyz)
-                val litShaded = displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x)
+                val litShaded = applySceneFog(
+                    displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x),
+                    cameraPosition,
+                    fragWorldPos,
+                    fogColor,
+                    fogRange,
+                )
                 val shaded = vec4(select(litShaded, displayTransform.unlit(stored), pbrFactors!!.w gt UNLIT_THRESHOLD.lit), tint.w)
                 skinnedDebugColor(debug!!, debugVaryings!!, n, stored, displayTransform, exposure, shaded)
             } else {
-                vec4(displayTransform.displayReferred(lit, exposure.x), if (instanceTints != null) color.w else 1f.lit)
+                val fogged = applySceneFog(
+                    displayTransform.displayReferred(lit, exposure.x),
+                    cameraPosition,
+                    fragWorldPos,
+                    fogColor,
+                    fogRange,
+                )
+                vec4(fogged, if (instanceTints != null) color.w else 1f.lit)
             }
             ditherFade(exposure.y)
             colorOutput(output)
@@ -242,8 +268,15 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val stored = let("stored", texColor.rgb * color * tint.xyz)
         val lit = stored * shade + emissiveMask * glow.xyz
         val alpha = let("alpha", texColor.a * tint.w)
+        val litShaded = applySceneFog(
+            displayTransform.displayReferred(lit, exposure.x),
+            frame.value("cameraPosition"),
+            debugVaryings.worldPosition,
+            frame.value("fogColor"),
+            frame.value("fogRange"),
+        )
         val shaded = vec4(
-            select(displayTransform.displayReferred(lit, exposure.x), displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit),
+            select(litShaded, displayTransform.unlit(stored), pbrFactors.w gt UNLIT_THRESHOLD.lit),
             alpha,
         )
         val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, stored, displayTransform, exposure, shaded))

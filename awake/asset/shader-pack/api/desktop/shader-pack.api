@@ -31,6 +31,12 @@ public final class com/awakekt/awake/asset/shaderpack/AslDepthVariantsKt {
 	public static final fun getSkinnedTexturedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslFogKt {
+	public static final fun applySceneFog (Lcom/awakekt/awake/asset/shaderdsl/AslBlockBuilder;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static synthetic fun applySceneFog$default (Lcom/awakekt/awake/asset/shaderdsl/AslBlockBuilder;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun applyTerrainFog (Lcom/awakekt/awake/asset/shaderdsl/AslBlockBuilder;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslInfiniteGridShaderKt {
 	public static final fun getInfiniteGridShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -425,6 +431,8 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
 	public final fun getCascades ()Lcom/awakekt/awake/asset/shaderpack/CascadeShadowInputs;
 	public final fun getDebugView ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getExposure ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getFogColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getFogRange ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLocalPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getPages ()Lcom/awakekt/awake/asset/shaderpack/TerrainPageSampling;
 	public final fun getSunDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

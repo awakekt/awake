@@ -166,6 +166,8 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * @property ringParams The block's [TerrainUniformLayout.RingParams].
  * @property pages Optional page-table helpers for streamed surfaces.
  * @property terrainOrigin The block's [TerrainUniformLayout.TerrainOrigin]: where this terrain lies.
+ * @param exportedFogColor The frame block's `UniformFields.FogColor`, or null in the depth form; read through [fogColor].
+ * @param exportedFogRange The frame block's `UniformFields.FogRange`, or null in the depth form; read through [fogRange].
  */
 @Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
@@ -181,6 +183,8 @@ class TerrainClipmapOutputs internal constructor(
     internal val ringParams: AslArrayHandle,
     val pages: TerrainPageSampling? = null,
     val terrainOrigin: AslExpr,
+    private val exportedFogColor: AslExpr? = null,
+    private val exportedFogRange: AslExpr? = null,
 ) {
     /** `xyz` toward the light, `w` the ambient term. */
     val sunDirection: AslExpr
@@ -204,6 +208,18 @@ class TerrainClipmapOutputs internal constructor(
     val exposure: AslExpr
         get() = exportedExposure ?: throw AslDefinitionException(
             "exposure is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.FogColor` (`rgb` colour, `a` exponential density). */
+    val fogColor: AslExpr
+        get() = exportedFogColor ?: throw AslDefinitionException(
+            "fogColor is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
+    /** The frame block's `UniformFields.FogRange` (`x` start, `y` end, `z` linear flag). */
+    val fogRange: AslExpr
+        get() = exportedFogRange ?: throw AslDefinitionException(
+            "fogRange is not exported by the cascade-depth stage, which shades nothing.",
         )
 
     /** Heightmap normal, interpolated; normalise before use. */
@@ -364,6 +380,8 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
         ringParams,
         pages,
         origin,
+        frame?.value("fogColor"),
+        frame?.value("fogRange"),
     )
 }
 
@@ -550,7 +568,8 @@ private fun terrainShader(clipSpace: ClipSpace, paged: Boolean): AslShaderDefini
             // Terrain's sun has no colour of its own: what the ambient leaves, as it lights.
             clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
         )
-        val shaded = vec4(displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x), 1f.lit)
+        val mapped = displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x)
+        val shaded = vec4(applyTerrainFog(mapped, terrain), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
 }

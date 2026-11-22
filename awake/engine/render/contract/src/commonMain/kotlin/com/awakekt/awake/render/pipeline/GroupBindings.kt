@@ -218,7 +218,7 @@ data class GroupBindings(
                 ResourceBinding(
                     binding = 0,
                     kind = ResourceKind.UniformBuffer,
-                    stages = setOf(ShaderStage.Vertex),
+                    stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
                     // `ParticleDrawLayout`, 12 floats.
                     minBindingSize = 48L,
                 ),
@@ -227,7 +227,7 @@ data class GroupBindings(
                 ResourceBinding(
                     binding = FRAME_UNIFORM_BINDING,
                     kind = ResourceKind.UniformBuffer,
-                    stages = setOf(ShaderStage.Vertex),
+                    stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
                     // `MaterialUniformLayouts.Frame`, 160 floats.
                     minBindingSize = 640L,
                 ),
