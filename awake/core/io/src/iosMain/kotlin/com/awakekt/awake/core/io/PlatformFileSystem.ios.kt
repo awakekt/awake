@@ -14,8 +14,6 @@ import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSData
@@ -47,7 +45,7 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         manager.createDirectoryAtPath(root, withIntermediateDirectories = true, attributes = null, error = null)
     }
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withContext(Dispatchers.IO) {
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withIoIfConfined {
         suspendRunCatching {
             val data = manager.contentsAtPath(resolve(path))
                 ?: throw FileSystemException(FileSystemError.NotFound(path))
@@ -55,7 +53,7 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         }
     }
 
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withContext(Dispatchers.IO) {
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (mode == WriteMode.CreateNew && manager.fileExistsAtPath(target)) {
@@ -71,7 +69,7 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         }
     }
 
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withContext(Dispatchers.IO) {
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withIoIfConfined {
         suspendRunCatching {
             val directory = resolve(path)
             if (!manager.isDirectory(directory)) {
@@ -92,14 +90,14 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         }
     }
 
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = withContext(Dispatchers.IO) {
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (!manager.fileExistsAtPath(target)) null else entry(path, target)
         }
     }
 
-    override suspend fun createDirectories(path: FilePath): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             if (!manager.createDirectoryAtPath(resolve(path), withIntermediateDirectories = true, attributes = null, error = null) &&
                 !manager.isDirectory(resolve(path))
@@ -109,7 +107,7 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         }
     }
 
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             if (path == FilePath.Root) throw FileSystemException(FileSystemError.InvalidPath("", "The root cannot be deleted."))
             val target = resolve(path)
@@ -124,7 +122,7 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         }
     }
 
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             val source = resolve(from)
             val target = resolve(to)
@@ -139,12 +137,12 @@ private class IosFileSystem(rootPath: String) : FileSystem {
         }
     }
 
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withContext(Dispatchers.IO) {
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withIoIfConfined {
         val beforeEntries = snapshotEntriesFromDisk()
         val before = snapshotFiles()
         val staged = InMemoryFileSystem(before)
         val result = staged.transaction(block)
-        if (result.isFailure) return@withContext result
+        if (result.isFailure) return@withIoIfConfined result
         val afterEntries = captureEntries(staged)
         val after = afterEntries.filterValues { it.kind == FileKind.File }
             .mapValues { staged.read(it.key).getOrThrow() }
@@ -243,7 +241,7 @@ private class IosWriteSession(
         chunks += bytes.copyOf()
     }
 
-    override suspend fun commit(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun commit(): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             check(!closed) { "Write session is closed" }
             owner.notify(FileChangeBatch(listOf(owner.publish(path, chunks.flattenToByteArray(), mode))))

@@ -7,7 +7,6 @@
 
 package com.awakekt.awake.core.io
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
@@ -38,7 +37,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         Files.createDirectories(root)
     }
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withContext(Dispatchers.IO) {
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (!Files.isRegularFile(target)) throw FileSystemException(FileSystemError.NotFound(path))
@@ -46,7 +45,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         }
     }
 
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withContext(Dispatchers.IO) {
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (mode == WriteMode.CreateNew && Files.exists(target)) {
@@ -59,7 +58,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         }
     }
 
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withContext(Dispatchers.IO) {
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withIoIfConfined {
         suspendRunCatching {
             val directory = resolve(path)
             if (!Files.isDirectory(directory)) throw FileSystemException(FileSystemError.NotFound(path))
@@ -73,21 +72,21 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         }
     }
 
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = withContext(Dispatchers.IO) {
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (Files.exists(target)) entry(target) else null
         }
     }
 
-    override suspend fun createDirectories(path: FilePath): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             Files.createDirectories(resolve(path))
             Unit
         }
     }
 
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (!Files.exists(target)) throw FileSystemException(FileSystemError.NotFound(path))
@@ -105,7 +104,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         }
     }
 
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             val source = resolve(from)
             val target = resolve(to)
@@ -120,11 +119,11 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         }
     }
 
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withContext(Dispatchers.IO) {
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withIoIfConfined {
         val before = snapshotFiles()
         val staged = InMemoryFileSystem(before)
         val result = staged.transaction(block)
-        if (result.isFailure) return@withContext result
+        if (result.isFailure) return@withIoIfConfined result
 
         val after = staged.list(FilePath.Root, recursive = true).getOrThrow()
             .filter { it.kind == FileKind.File }
@@ -269,7 +268,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
             chunks += bytes.copyOf()
         }
 
-        override suspend fun commit(): Result<Unit> = withContext(Dispatchers.IO) {
+        override suspend fun commit(): Result<Unit> = withIoIfConfined {
             suspendRunCatching {
                 check(!closed) { "Write session is closed" }
                 val destination = owner.resolve(path)

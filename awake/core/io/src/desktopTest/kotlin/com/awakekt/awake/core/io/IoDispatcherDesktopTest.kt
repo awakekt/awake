@@ -52,4 +52,26 @@ class IoDispatcherDesktopTest {
             dir.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun unconfinedCallerStaysOnItsCallingThreadWithoutBeingStrandedOnIoPool() {
+        val dir = Files.createTempDirectory("awake-io-unconfined-")
+        try {
+            val fs = createPlatformFileSystem(dir.toString())
+            val path = FilePath.of("harbor/frame.bin")
+            val callerThread = Thread.currentThread()
+            runBlocking(Dispatchers.Unconfined) {
+                assertSame(callerThread, Thread.currentThread())
+                assertTrue(fs.write(path, byteArrayOf(7, 8)).isSuccess)
+                assertContentEquals(byteArrayOf(7, 8), fs.read(path).getOrThrow())
+                assertSame(
+                    callerThread,
+                    Thread.currentThread(),
+                    "Dispatchers.Unconfined callers must stay on their calling thread after I/O",
+                )
+            }
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
 }

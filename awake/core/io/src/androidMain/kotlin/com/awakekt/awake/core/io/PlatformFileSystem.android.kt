@@ -8,7 +8,6 @@
 package com.awakekt.awake.core.io
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -31,7 +30,7 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         root.mkdirs()
     }
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withContext(Dispatchers.IO) {
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (!target.isFile) throw FileSystemException(FileSystemError.NotFound(path))
@@ -39,7 +38,7 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         }
     }
 
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withContext(Dispatchers.IO) {
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (mode == WriteMode.CreateNew && target.exists()) {
@@ -52,7 +51,7 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         }
     }
 
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withContext(Dispatchers.IO) {
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withIoIfConfined {
         suspendRunCatching {
             val directory = resolve(path)
             if (!directory.isDirectory) throw FileSystemException(FileSystemError.NotFound(path))
@@ -68,14 +67,14 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         }
     }
 
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = withContext(Dispatchers.IO) {
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = withIoIfConfined {
         suspendRunCatching {
             val target = resolve(path)
             if (!target.exists()) null else entry(path, target)
         }
     }
 
-    override suspend fun createDirectories(path: FilePath): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             val directory = resolve(path)
             if (!directory.exists() && !directory.mkdirs()) {
@@ -85,7 +84,7 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         }
     }
 
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             if (path == FilePath.Root) throw FileSystemException(FileSystemError.InvalidPath("", "The root cannot be deleted."))
             val target = resolve(path)
@@ -100,7 +99,7 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         }
     }
 
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             val source = resolve(from)
             val target = resolve(to)
@@ -117,12 +116,12 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         }
     }
 
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withContext(Dispatchers.IO) {
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withIoIfConfined {
         val beforeEntries = snapshotEntries(FilePath.Root, recursive = true)
         val before = snapshotFiles()
         val staged = InMemoryFileSystem(before)
         val result = staged.transaction(block)
-        if (result.isFailure) return@withContext result
+        if (result.isFailure) return@withIoIfConfined result
         val afterEntries = captureEntries(staged)
         val after = afterEntries.filterValues { it.kind == FileKind.File }
             .mapValues { staged.read(it.key).getOrThrow() }
@@ -278,7 +277,7 @@ private class AndroidWriteSession(
         chunks += bytes.copyOf()
     }
 
-    override suspend fun commit(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun commit(): Result<Unit> = withIoIfConfined {
         suspendRunCatching {
             check(!closed) { "Write session is closed" }
             owner.notify(FileChangeBatch(listOf(owner.publish(path, chunks.flattenToByteArray(), mode))))
