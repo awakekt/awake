@@ -38,6 +38,19 @@ data class Skybox(
     /** Whether the sun and moon are added to the sky rather than covering it. */
     var additiveBodies: Boolean = false
 
+    /** Whether an optical sun flare draws over the scene when the sun is visible above the horizon. */
+    var sunFlare: Boolean = false
+
+    /** Optional asset path of a sprite texture for sun flare elements; null draws procedural discs and halos. */
+    var sunFlareTexture: String? = null
+
+    /** Brightness multiplier applied to the sun flare. */
+    var sunFlareIntensity: Float = 1f
+
+    /** Whether the sun flare pass should be active for this skybox. */
+    val drawsSunFlare: Boolean
+        get() = enabled && sunFlare && sunFlareIntensity > 0f
+
     /**
      * Whether the sun and moon are drawn over this sky by the celestial pass rather than by a
      * procedural sky's own discs: asked for, or given a texture or a phase other than full.

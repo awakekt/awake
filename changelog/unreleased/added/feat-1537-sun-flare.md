@@ -1,0 +1,1 @@
+- Added optical sun flare (`sunFlareContentFeature`, `SunFlareLook`, `SkyboxSunFlareSystem`, `PipelineVariant.OverlayAdditive`) with 5-tap scene-depth occlusion across Vulkan and WebGPU (#1537).

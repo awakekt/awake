@@ -2166,8 +2166,10 @@ public final class com/awakekt/awake/scene/rendering/sky/SceneSkybox : com/awake
 	public fun <init> ()V
 	public synthetic fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZ)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZ)V
 	public synthetic fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZZLjava/lang/String;F)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZZLjava/lang/String;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component10 ()Ljava/lang/String;
 	public final fun component11 ()F
@@ -2178,7 +2180,10 @@ public final class com/awakekt/awake/scene/rendering/sky/SceneSkybox : com/awake
 	public final fun component16 ()F
 	public final fun component17 ()Z
 	public final fun component18 ()Z
+	public final fun component19 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component20 ()Ljava/lang/String;
+	public final fun component21 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun component4 ()Ljava/lang/Float;
 	public final fun component5 ()Ljava/lang/Float;
@@ -2187,9 +2192,11 @@ public final class com/awakekt/awake/scene/rendering/sky/SceneSkybox : com/awake
 	public final fun component8 ()Ljava/lang/Float;
 	public final fun component9 ()Ljava/lang/Float;
 	public final synthetic fun copy (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
-	public final fun copy (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZ)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
+	public final synthetic fun copy (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZ)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
+	public final fun copy (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZZLjava/lang/String;F)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;FZZZLjava/lang/String;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditiveBodies ()Z
 	public fun getAllowsMultiplePerNode ()Z
@@ -2204,6 +2211,9 @@ public final class com/awakekt/awake/scene/rendering/sky/SceneSkybox : com/awake
 	public final fun getMoonTexture ()Ljava/lang/String;
 	public final fun getPanoramas ()Ljava/util/List;
 	public final fun getSunAndMoon ()Z
+	public final fun getSunFlare ()Z
+	public final fun getSunFlareIntensity ()F
+	public final fun getSunFlareTexture ()Ljava/lang/String;
 	public final fun getSunTexture ()Ljava/lang/String;
 	public final fun getType ()Ljava/lang/String;
 	public final fun getZenithColor ()Lcom/awakekt/awake/scene/document/SceneColor;
@@ -2249,6 +2259,7 @@ public final class com/awakekt/awake/scene/rendering/sky/Skybox {
 	public final fun getAdditiveBodies ()Z
 	public final fun getCubemapPath ()Ljava/lang/String;
 	public final fun getDrawsCelestials ()Z
+	public final fun getDrawsSunFlare ()Z
 	public final fun getEnabled ()Z
 	public final fun getExposure ()F
 	public final fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
@@ -2256,6 +2267,9 @@ public final class com/awakekt/awake/scene/rendering/sky/Skybox {
 	public final fun getMoonPhase ()F
 	public final fun getMoonTexture ()Ljava/lang/String;
 	public final fun getSunAndMoon ()Z
+	public final fun getSunFlare ()Z
+	public final fun getSunFlareIntensity ()F
+	public final fun getSunFlareTexture ()Ljava/lang/String;
 	public final fun getSunTexture ()Ljava/lang/String;
 	public final fun getType ()Lcom/awakekt/awake/scene/rendering/sky/Skybox$Type;
 	public final fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
@@ -2269,6 +2283,9 @@ public final class com/awakekt/awake/scene/rendering/sky/Skybox {
 	public final fun setMoonPhase (F)V
 	public final fun setMoonTexture (Ljava/lang/String;)V
 	public final fun setSunAndMoon (Z)V
+	public final fun setSunFlare (Z)V
+	public final fun setSunFlareIntensity (F)V
+	public final fun setSunFlareTexture (Ljava/lang/String;)V
 	public final fun setSunTexture (Ljava/lang/String;)V
 	public final fun setType (Lcom/awakekt/awake/scene/rendering/sky/Skybox$Type;)V
 	public final fun setZenithColor (Lcom/awakekt/awake/core/color/Color;)V
@@ -2389,6 +2406,12 @@ public final class com/awakekt/awake/scene/rendering/sky/SkyboxCubemapSystem : c
 public final class com/awakekt/awake/scene/rendering/sky/SkyboxKt {
 	public static final fun getDefaultHorizonColor ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getDefaultZenithColor ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public final class com/awakekt/awake/scene/rendering/sky/SkyboxSunFlareSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/io/AssetSource;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/io/AssetSource;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public final class com/awakekt/awake/scene/rendering/spatial/Occluder {

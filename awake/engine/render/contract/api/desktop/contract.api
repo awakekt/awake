@@ -1711,6 +1711,20 @@ public final class com/awakekt/awake/render/pipeline/PipelineVariant$Overlay : c
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/pipeline/PipelineVariant$OverlayAdditive : com/awakekt/awake/render/pipeline/PipelineVariant {
+	public static final field INSTANCE Lcom/awakekt/awake/render/pipeline/PipelineVariant$OverlayAdditive;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAdditive ()Z
+	public fun getBlendEnabled ()Z
+	public fun getDepthTestEnabled ()Z
+	public fun getDepthWriteEnabled ()Z
+	public fun getInstanceAlpha ()Z
+	public fun getInstanceFrame ()Z
+	public fun getInstanced ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class com/awakekt/awake/render/pipeline/PreparedShaderProgram : java/lang/AutoCloseable {
 	public fun close ()V
 	public abstract fun getProgram ()Lcom/awakekt/awake/render/pipeline/ShaderProgram;

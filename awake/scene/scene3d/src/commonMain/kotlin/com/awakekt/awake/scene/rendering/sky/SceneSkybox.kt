@@ -36,6 +36,10 @@ import kotlinx.serialization.Serializable
  *   procedural sky's own discs. A texture or a phase other than full draws them too.
  * @property additiveBodies Add the sun and moon to the sky instead of covering it, as a glowing sun
  *   texture wants.
+ * @property sunFlare Draw an optical sun flare along the line from the sun through the screen centre
+ *   when the sun is above the horizon and unoccluded (#1537).
+ * @property sunFlareTexture Optional sprite texture for flare elements; null draws procedural discs and halos.
+ * @property sunFlareIntensity Brightness multiplier for the sun flare (0 to 4).
  */
 @Serializable
 @SerialName("skybox")
@@ -58,7 +62,64 @@ data class SceneSkybox(
     @PropertyRange(min = 0.0, max = 1.0) val moonPhase: Float = FULL_MOON,
     val sunAndMoon: Boolean = false,
     val additiveBodies: Boolean = false,
+    val sunFlare: Boolean = false,
+    val sunFlareTexture: String? = null,
+    @PropertyRange(min = 0.0, max = 4.0) val sunFlareIntensity: Float = 1.0f,
 ) : SceneComponent {
+    /** The constructor as released before sun flare, kept so compiled callers still link. */
+    @Deprecated("Use the constructor with sunFlare.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        enabled: Boolean = true,
+        horizonColor: SceneColor = SceneColor(0.72f, 0.80f, 0.88f, 1f),
+        zenithColor: SceneColor = SceneColor(0.20f, 0.38f, 0.68f, 1f),
+        horizonColorR: Float? = null,
+        horizonColorG: Float? = null,
+        horizonColorB: Float? = null,
+        zenithColorR: Float? = null,
+        zenithColorG: Float? = null,
+        zenithColorB: Float? = null,
+        cubemapPath: String? = null,
+        exposure: Float = 1.0f,
+        type: String = "Procedural",
+        panoramas: List<ScenePanorama> = emptyList(),
+        sunTexture: String? = null,
+        moonTexture: String? = null,
+        moonPhase: Float = FULL_MOON,
+        sunAndMoon: Boolean = false,
+        additiveBodies: Boolean = false,
+    ) : this(
+        enabled, horizonColor, zenithColor, horizonColorR, horizonColorG, horizonColorB, zenithColorR, zenithColorG,
+        zenithColorB, cubemapPath, exposure, type, panoramas, sunTexture, moonTexture, moonPhase, sunAndMoon,
+        additiveBodies, sunFlare = false,
+    )
+
+    /** [copy] as released before sun flare. */
+    @Deprecated("Use copy with sunFlare.", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        enabled: Boolean = this.enabled,
+        horizonColor: SceneColor = this.horizonColor,
+        zenithColor: SceneColor = this.zenithColor,
+        horizonColorR: Float? = this.horizonColorR,
+        horizonColorG: Float? = this.horizonColorG,
+        horizonColorB: Float? = this.horizonColorB,
+        zenithColorR: Float? = this.zenithColorR,
+        zenithColorG: Float? = this.zenithColorG,
+        zenithColorB: Float? = this.zenithColorB,
+        cubemapPath: String? = this.cubemapPath,
+        exposure: Float = this.exposure,
+        type: String = this.type,
+        panoramas: List<ScenePanorama> = this.panoramas,
+        sunTexture: String? = this.sunTexture,
+        moonTexture: String? = this.moonTexture,
+        moonPhase: Float = this.moonPhase,
+        sunAndMoon: Boolean = this.sunAndMoon,
+        additiveBodies: Boolean = this.additiveBodies,
+    ): SceneSkybox = copy(
+        enabled, horizonColor, zenithColor, horizonColorR, horizonColorG, horizonColorB, zenithColorR, zenithColorG,
+        zenithColorB, cubemapPath, exposure, type, panoramas, sunTexture, moonTexture, moonPhase, sunAndMoon,
+        additiveBodies, sunFlare, sunFlareTexture, sunFlareIntensity,
+    )
+
     /** The constructor as released before panoramas, kept so compiled callers still link. */
     @Deprecated("Use the constructor with panoramas.", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -105,6 +166,9 @@ data class SceneSkybox(
             add(SceneValidationIssue(path, "skybox.panoramas must be in time order from 0 up to 1"))
         }
         if (!(moonPhase >= 0f && moonPhase <= 1f)) add(SceneValidationIssue(path, "skybox.moonPhase must be from 0 to 1; was $moonPhase"))
+        if (!(sunFlareIntensity >= 0f && sunFlareIntensity <= 4f)) {
+            add(SceneValidationIssue(path, "skybox.sunFlareIntensity must be from 0 to 4; was $sunFlareIntensity"))
+        }
     }
 }
 

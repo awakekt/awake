@@ -97,6 +97,12 @@ object PackShaderSets {
     /** The sun and moon drawn over a sky: see [CelestialShader]. */
     val Celestial = aslShaderSet(CelestialShader)
 
+    /** Depth-occluded optical sun flare drawn after geometry: see [sunFlareShader]. */
+    val SunFlare = aslShaderSet { sunFlareShader(it, samplesDepth = true) }
+
+    /** Unoccluded optical sun flare for plans without a scene-depth pre-pass: see [sunFlareShader]. */
+    val SunFlareUnoccluded = aslShaderSet { sunFlareShader(it, samplesDepth = false) }
+
     /** Billboard textured particle shader set with particle tinting. */
     val Particle = aslShaderSet(ParticleShader)
 
