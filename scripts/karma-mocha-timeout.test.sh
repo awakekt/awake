@@ -28,20 +28,22 @@ own_logging="$(cd "$root" && git ls-files -- '*.gradle.kts' ':!build-logic' \
 if [[ -n "$own_logging" ]]; then fail "a module sets its own wasmJsBrowserTest logging:"; echo "$own_logging"
 else echo "ok   no module sets its own browser test logging"; fi
 
-conventions=(library application)
+conventions=(kmp-library application)
 for convention in "${conventions[@]}"; do
   file="$root/build-logic/src/main/kotlin/com.awakekt.awake.plugin.$convention.gradle.kts"
   grep -qF 'id("com.awakekt.awake.plugin.browser-tests")' "$file" || fail "the $convention convention does not apply browser-tests"
 done
+grep -qF 'id("com.awakekt.awake.plugin.kmp-library")' "$root/build-logic/src/main/kotlin/com.awakekt.awake.plugin.library.gradle.kts" \
+  || fail "the library convention does not apply kmp-library (and therefore browser-tests)"
 
 # Every project the Core build includes that declares a browser target gets the convention, directly
-# or through the library or application convention.
+# or through the kmp-library, library, or application convention.
 missing=0
 while IFS= read -r path; do
   build="$root/${path//://}/build.gradle.kts"
   [[ -f "$build" ]] || continue
   grep -qE 'browser *(\(|\{)' "$build" || continue
-  if ! grep -qE 'id\("com\.awakekt\.awake\.plugin\.(library|application|browser-tests)"\)' "$build"; then
+  if ! grep -qE 'id\("com\.awakekt\.awake\.plugin\.(kmp-library|library|application|browser-tests)"\)' "$build"; then
     fail "${build#"$root/"} has a browser target without the browser-tests convention"; missing=1
   fi
 done < <(sed -n 's/^include("\(:[^"]*\)").*/\1/p' "$root/settings.gradle.kts" | sed 's/^://')
