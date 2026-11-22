@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.command
 
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.imagepass.ImagePassRect
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.texture.RenderTarget
 
@@ -34,6 +35,14 @@ data class GpuSubPass(
     /** Slope-scaled depth bias added to fragments in this pass. */
     val depthBiasSlope: Float = 0f,
 ) {
+    /**
+     * Where this pass's draws fall on screen, in the scene's texture coordinates (0 to 1 from the top
+     * left), or null when that isn't known: a draw without bounds, or one crossing the camera plane.
+     * It may reach past 0 and 1. A mask pass carries it so the outline overlay shades only around what
+     * is masked (#1709). Not part of [equals]: it follows from the draws and the view.
+     */
+    var screenBounds: ImagePassRect? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is GpuSubPass) return false

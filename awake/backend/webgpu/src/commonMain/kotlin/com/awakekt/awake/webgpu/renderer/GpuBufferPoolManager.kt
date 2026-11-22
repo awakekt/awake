@@ -73,6 +73,9 @@ internal class GpuBufferPoolManager(
 
     /** The group slot each cached depth group was built at, so a reallocated target rebuilds them. */
     internal val shadowBindGroupSlots = mutableMapOf<GPURenderPipeline, Int>()
+
+    /** [shadowBindGroupSlots] for the mask's groups, which a resized mask target rebuilds (#1709). */
+    internal val maskBindGroupSlots = mutableMapOf<GPURenderPipeline, Int>()
     private val uniformSlotPools = mutableMapOf<GPURenderPipeline, MutableList<UniformSlot>>()
 
     private val skinnedInstancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
@@ -205,6 +208,7 @@ internal class GpuBufferPoolManager(
         skinnedInstancedUniformResources.remove(pipeline)?.close()
         shadowBindGroups.values.forEach { groups -> groups.remove(pipeline)?.bindGroup?.close() }
         shadowBindGroupSlots.remove(pipeline)
+        maskBindGroupSlots.remove(pipeline)
     }
 
     fun destroy() {
@@ -224,6 +228,7 @@ internal class GpuBufferPoolManager(
         shadowBindGroups.values.forEach { groups -> groups.values.forEach { it.bindGroup.close() } }
         shadowBindGroups.clear()
         shadowBindGroupSlots.clear()
+        maskBindGroupSlots.clear()
     }
 }
 
@@ -288,6 +293,7 @@ private fun GpuBufferPoolManager.depthBindingFor(
 ): MaterialBinding = shadowBindGroups.getOrPut(semantic) { mutableMapOf() }.getOrPut(pipeline.pipeline) {
     val slot = pipeline.bindingLayout.slot(semantic)
     if (semantic == BindingSemantic.ShadowDepth) shadowBindGroupSlots[pipeline.pipeline] = slot
+    if (semantic == BindingSemantic.MaskDepth) maskBindGroupSlots[pipeline.pipeline] = slot
     WebGpuBindGroupHandle(depthBindGroup(pipeline.pipeline, slot, depthTarget))
 }
 

@@ -46,6 +46,7 @@ internal class RendererGpuPassExecutor(
             val primary = PrimaryPipelineBinding(activeRenderPipeline.handle, useWireframe)
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
             settleShadowArray(input)
+            settleMaskTarget()
             val scaled = sceneScale.resolve(outputWidth, outputHeight, renderScale)
             val sceneInput = if (scaled == null) input else sceneScale.sceneInput(input, scaled, outputWidth, outputHeight)
             val sorted = input.drawsForRecording()
@@ -116,6 +117,7 @@ internal class RendererGpuPassExecutor(
         val renderer = this.renderer
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
         renderer.ensureShadowLayers(input)
+        renderer.ensureMaskTarget(target.width, target.height)
         renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, input)
         renderer.flushUniformUploads()
         renderer.imagePassExecutor.beginPass()
@@ -149,8 +151,7 @@ internal class RendererGpuPassExecutor(
                 splitDistances = floatArrayOf(Float.MAX_VALUE),
             ),
         )
-        // Nothing on a frame with nothing masked; the overlay reading it draws nothing either.
-        renderer.maskPass?.recordCommands(encoder, input.maskPasses, input.environment)
+        renderer.recordMaskPass(encoder, input)
     }
 
     /** The scene pass and its post chain into [attachment], at [attachment]'s own size. */

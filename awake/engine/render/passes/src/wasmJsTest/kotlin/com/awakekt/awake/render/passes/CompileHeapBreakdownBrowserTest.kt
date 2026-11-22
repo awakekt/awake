@@ -69,7 +69,7 @@ class CompileHeapBreakdownBrowserTest {
             },
             "prepareAndMaskPasses" to medianGrowth(DRAWS) {
                 prepare(scratch, batched, context)
-                scratch.draws.maskSubPasses(context.viewProjection)
+                scratch.draws.maskSubPasses(context.viewProjection, ClipSpace.WebGpu)
             },
             "sortTransparent" to medianGrowth(DRAWS) { sortCopy(sorter, sortable, com.awakekt.awake.render.command.TransparentOrder) },
             "sortBatchKey" to medianGrowth(DRAWS) { sortCopy(sorter, sortable, BatchKeyOrder) },

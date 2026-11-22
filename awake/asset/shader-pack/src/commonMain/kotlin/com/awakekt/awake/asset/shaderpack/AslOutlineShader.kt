@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
+import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.minus
@@ -33,13 +34,14 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.OUTLINE_MIN_WIDTH_PIXELS
 import com.awakekt.awake.render.renderer.OutlineUniformLayout
 
 /** Depth above this is the cleared mask: nothing of the layer was drawn there. */
 private const val FAR_PLANE = 0.9999f
 
-/** A width under half a pixel draws no outline. */
-private const val MIN_WIDTH = 0.5f
+/** A width under half a pixel draws no outline, as [OUTLINE_MIN_WIDTH_PIXELS] says on the CPU side. */
+private const val MIN_WIDTH = OUTLINE_MIN_WIDTH_PIXELS
 
 /** Half the circle's diagonal, for the ring's four diagonal taps. */
 private const val DIAGONAL = 0.70710677f
@@ -104,13 +106,19 @@ fun outlineShader(clipSpace: ClipSpace): AslShaderDefinition = shader("outline")
 
         val edges = colors.indices.map { layer ->
             val width = let("width$layer", if (layer == 0) widths.x else widths.y)
-            var ring: AslExpr = 0f.lit
-            RADII.forEach { radius ->
-                RING.forEach { (dx, dy) ->
-                    ring = max(ring, covered(layer, uv + vec2(dx.lit, dy.lit) * pixel * width * radius.lit))
+            val edge = variable("edge$layer", 0f.lit)
+            // A layer with no outline this frame reads none of its 17 mask samples (#1709). The branch is
+            // on a uniform, so every fragment takes the same side of it.
+            iff(width ge MIN_WIDTH.lit) {
+                var ring: AslExpr = 0f.lit
+                RADII.forEach { radius ->
+                    RING.forEach { (dx, dy) ->
+                        ring = max(ring, covered(layer, uv + vec2(dx.lit, dy.lit) * pixel * width * radius.lit))
+                    }
                 }
+                assign(edge, ring * (1f.lit - covered(layer, uv)))
             }
-            let("edge$layer", ring * (1f.lit - covered(layer, uv)) * step(MIN_WIDTH.lit, width))
+            edge
         }
         val front = let("front", edges[0] * colors[0].a)
         val back = let("back", edges[1] * colors[1].a * (1f.lit - edges[0]))
