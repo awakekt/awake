@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-11-22
+
+### Added
+
+- **Contrast-adaptive sharpening in the scaled-scene upscale pass (`SceneUpscaling`).** Adds single-pass AMD FidelityFX CAS shaders (`Sharpen` 5-tap and `UpscaleAndSharpen` 12-tap edge-thinning upscale + sharpen, MIT) to `SceneUpscale`, exposed via `Renderer.sceneUpscaling`, `RenderQualitySettings.sceneUpscaling`, and `renderQuality { sceneUpscaling = ... }` with configurable `strength` (`0f..1f`). Defaults to `SceneUpscaling.Off` so plain bilinear output is unchanged until opted into; runs after anti-aliasing and post-processing, before full-resolution UI, with zero extra render passes. (#1830)
+
+### Changed
+
+- **Rectangular (non-square) scene-depth and mask targets on Vulkan and WebGPU.** `MaskTargetSizing` now tracks width and height independently (`presentedExtent`/`offscreenExtent`) and both backends' `DepthTarget` allocate rectangular `(width, height)` textures, views, framebuffers, viewports, and scissors for `sceneDepthTarget` and `maskTarget` (shadow arrays remain square). On a 1093x480 widescreen mobile scene, both targets drop from 1152x1152 (1.33M texels) to 1152x512 (0.59M texels) -- 2.25x fewer texels and 55.6% less VRAM and clear/store bandwidth -- while keeping scene-depth and mask silhouettes aligned on the same rectangular grid; also fixes Vulkan's `VulkanFrameContext` reporting the swapchain extent instead of the active offscreen/scaled scene extent during `RenderPassSlot.Scene`. (#1709)
+- **Pure-Kotlin KMP modules no longer publish redundant `-android` AARs.** Added an internal `com.awakekt.awake.plugin.kmp-library` convention plugin and moved 89 published pure-common modules onto it; Android consumers resolve their JVM (`desktop`) variants directly via Gradle KMP variant matching, cutting 1,780 files per Maven Central release and removing redundant AGP configuration. Modules with `androidMain` sources, `consumer-rules.pro`, Android tests, or desktop-AWT helpers remain on `com.awakekt.awake.plugin.library`.
+
+### Fixed
+
+- **WebGPU release pins and availability waits support the Maven fallback repository.** `WaitForCoreCentralTask` and `WaitForVulkanCentralTask` now accept releases served from `https://awakekt.github.io/awake/` alongside Maven Central, and `webgpu-pin.yml` automatically triggers after `Maven fallback` succeeds so `<release>-SNAPSHOT` WebGPU pins publish even while Maven Central's release quota refuses uploads.
+
 ## [0.64.0] - 2026-11-22
 
 ### Changed
