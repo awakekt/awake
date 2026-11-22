@@ -8867,6 +8867,12 @@ frame sheets. See <a href="../../guides/particles/#2d-particles-scene2d">Particl
 <td><code>false</code></td>
 <td>Draws <code>baseColorFactor * texture * vertexColor</code> as stored on textured and single-draw skinned meshes, skipping lighting, tone mapping and fog while keeping alpha masking and output encoding.</td>
 </tr>
+<tr>
+<td><code>reflectance</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Analytic Fresnel sky/sun environment reflection weight on static and skinned PBR surfaces, 0 to 1.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="perceivable"><code>perceivable</code></h2>
@@ -9313,6 +9319,24 @@ document's format is in the <a href="../shader-document/">shader document refere
 <td>list of panoramas</td>
 <td><code>[]</code></td>
 <td>More cubemap strips by time of day, each <code>{ time, path }</code> in time order; a <code>day_cycle</code> blends the two around its time.</td>
+</tr>
+<tr>
+<td><code>sunFlare</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draw an optical sun flare along the line from the sun through the screen centre when the sun is above the horizon and unoccluded.</td>
+</tr>
+<tr>
+<td><code>sunFlareTexture</code></td>
+<td>string</td>
+<td>none</td>
+<td>Optional sprite texture for flare elements; none draws procedural discs and halos.</td>
+</tr>
+<tr>
+<td><code>sunFlareIntensity</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Brightness multiplier for the sun flare, 0 to 4.</td>
 </tr>
 </tbody>
 </table>
