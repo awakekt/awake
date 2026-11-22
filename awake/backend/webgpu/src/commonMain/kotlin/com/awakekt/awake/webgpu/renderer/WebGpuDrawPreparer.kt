@@ -50,8 +50,8 @@ internal class WebGpuDrawPreparer(
     /** Each slot's last packet, handed back while its draw resolves the same (#1555). */
     internal val resolvedDraws = ResolvedDrawCache()
 
-    /** Instanced casters' shared depth groups, for this batch. */
-    private val sharedDepth = SharedDepthBindings()
+    /** Instanced casters' stable shared depth groups (#1621). */
+    internal val sharedDepth = SharedDepthBindings(renderer.graphicsDevice.wgpuContext.device, renderer.uniformUploads)
 
     /** Whether this batch's wireframe-overlay edges have their frame block staged yet. */
     private var edgeFrameStaged = false
@@ -158,7 +158,7 @@ internal class WebGpuDrawPreparer(
         return if (request.alphaMode == AlphaMode.Masked) {
             depthFeature.materialBinding(depthPipeline, sourceMaterial, buffer)
         } else {
-            sharedDepth.bindingFor(request, depthKey, depthPipeline, draw.pipeline, wholeBlock) {
+            sharedDepth.bindingFor(request, depthKey, depthFeature, depthPipeline, draw.pipeline, wholeBlock) {
                 depthFeature.materialBinding(depthPipeline, buffer, wholeBlock)
             }
         }
@@ -192,7 +192,7 @@ internal class WebGpuDrawPreparer(
         instancedSlots.begin()
         edgeRuns = 0
         edgeFrameStaged = false
-        sharedDepth.clear()
+        sharedDepth.beginBatch()
         val environment = context.environment
         // Before any draw of the batch: the block its lit draws read beside their own.
         renderer.graphicsDevice.frameUniforms.stage(renderer.uniformUploads, context, context.cascades())

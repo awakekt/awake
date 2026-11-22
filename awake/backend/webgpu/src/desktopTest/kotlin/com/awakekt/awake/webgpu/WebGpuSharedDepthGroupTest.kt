@@ -15,6 +15,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
+import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
@@ -30,7 +31,11 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
+import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
 
 /**
  * Opaque instanced casters of different meshes share one depth group on WebGPU (#1555), so a depth
@@ -63,11 +68,48 @@ class WebGpuSharedDepthGroupTest {
         assertContentEquals(separate.pixels, shared.pixels, "the same shadows either way")
     }
 
+    @Test
+    fun firstCasterLeavingKeepsTheSameDepthGroupAndCreatesNone() = withScene { scene ->
+        val all = scene.frame(MESHES.map { NO_ANIMATION })
+        val firstBinding = assertNotNull(all.bindings.firstOrNull())
+        val groupsAfterAll = scene.depthGroupsCreated()
+
+        // Drop the first caster (as frustum culling does on a moving camera): remaining casters
+        // must keep the exact same group-0 reference so cascade bundles do not re-encode (#1621).
+        val withoutFirst = scene.frame(MESHES.map { NO_ANIMATION }, visibleIndices = listOf(1, 2))
+        assertEquals(2, withoutFirst.instancedCasters)
+        assertEquals(1, withoutFirst.depthGroups)
+        withoutFirst.bindings.forEach { binding ->
+            assertSame(firstBinding, binding, "remaining casters keep the stable shared depth group")
+        }
+        assertEquals(groupsAfterAll, scene.depthGroupsCreated(), "dropping the first caster creates no new depth group")
+    }
+
+    @Test
+    fun animatedCasterKeepsTheSameDepthGroupAcrossFramesAndUpdatesItsClock() = withScene { scene ->
+        val wave = Vec3f(0.4f, 1.5f, 3f)
+        val first = scene.frame(MESHES.map { wave }, timeSeconds = 0.5f)
+        val firstBinding = assertNotNull(first.bindings.firstOrNull())
+        val groupsAfterFirst = scene.depthGroupsCreated()
+
+        val second = scene.frame(MESHES.map { wave }, timeSeconds = 1.5f)
+        second.bindings.forEach { binding ->
+            assertSame(firstBinding, binding, "advancing frame time updates the shared buffer in place without changing group ref")
+        }
+        assertEquals(groupsAfterFirst, scene.depthGroupsCreated(), "advancing frame time creates no new depth group")
+        assertFalse(first.pixels.contentEquals(second.pixels), "updated animation clock moves the casters and their shadows")
+    }
+
     private fun <T> withScene(block: (Scene) -> T): T = webGpuHeadlessScene().use { session ->
         Scene(session.renderer).use(block)
     }
 
-    private class Frame(val instancedCasters: Int, val depthGroups: Int, val pixels: ByteArray)
+    private class Frame(
+        val instancedCasters: Int,
+        val depthGroups: Int,
+        val bindings: List<MaterialBinding>,
+        val pixels: ByteArray,
+    )
 
     /** The renderer's preparer, keeping each draw it resolves. */
     private class RecordingPreparer(private val delegate: GpuDrawPreparer) : GpuDrawPreparer by delegate {
@@ -90,17 +132,24 @@ class WebGpuSharedDepthGroupTest {
         private val sun = SceneLight(direction = Vec3f(0.3f, 1f, 0.2f), color = Vec3f(1f, 1f, 1f))
         private val preparer = RecordingPreparer((renderer as GpuDrawPreparationSource).gpuDrawPreparer!!)
 
-        fun frame(animations: List<Vec3f>): Frame {
+        fun depthGroupsCreated(): Long = checkNotNull((renderer as WebGpuRenderer).depthPrePass).depthGroupsCreated
+
+        fun frame(
+            animations: List<Vec3f>,
+            visibleIndices: List<Int> = props.indices.toList(),
+            timeSeconds: Float = TIME,
+        ): Frame {
             val lens = Lens(eye = Vec3f(0f, 9f, 7f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
             val light = sun.copy(cascades = shadowCascadeUniforms(sun, lens, 1f, renderer.clipSpace))
-            val draws = listOf(RenderDrawCommand(ground, lit, model = Mat4(), timeSeconds = TIME)) +
-                props.mapIndexed { index, prop ->
+            val draws = listOf(RenderDrawCommand(ground, lit, model = Mat4(), timeSeconds = timeSeconds)) +
+                visibleIndices.map { index ->
+                    val prop = props[index]
                     val x = (index - 1) * SPACING
                     RenderDrawCommand(
                         prop,
                         textured,
                         vertexAnimation = animations[index],
-                        timeSeconds = TIME,
+                        timeSeconds = timeSeconds,
                         instanceModels = listOf(translation(x, PROP_HEIGHT, -1f), translation(x, PROP_HEIGHT, 1f)),
                     )
                 }
@@ -111,8 +160,9 @@ class WebGpuSharedDepthGroupTest {
             )
             renderer.renderToTexture(target, pass)
             val casters = preparer.resolved.filter { it.depthRenderKey?.kind == DepthCasterKind.Instanced }
-            val groups = casters.mapNotNull { it.depthMaterialBinding }.distinctBy { System.identityHashCode(it) }.size
-            return Frame(casters.size, groups, runBlocking { renderer.readPixels(target) }.data)
+            val bindings = casters.mapNotNull { it.depthMaterialBinding }
+            val groups = bindings.distinctBy { System.identityHashCode(it) }.size
+            return Frame(casters.size, groups, bindings, runBlocking { renderer.readPixels(target) }.data)
         }
 
         override fun close() {
