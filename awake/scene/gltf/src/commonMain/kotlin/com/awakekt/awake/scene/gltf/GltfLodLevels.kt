@@ -99,7 +99,7 @@ internal class GltfLodLevels(private val meshes: MutableMap<String, MeshGeometry
     fun isLevelKey(name: String): Boolean = LEVEL_PREFIX.containsMatchIn(name)
 
     /** The model path a level key [name] belongs to, with its `lod<k>:` prefix removed. */
-    fun baseKey(name: String): String = name.replace(LEVEL_PREFIX, "")
+    fun baseKey(name: String): String = stripLevelPrefix(name)
 
     /** Takes [from]'s levels of model [path], whose geometry the caller copies with the rest of its keys. */
     fun adopt(path: String, from: GltfLodLevels) {
@@ -125,9 +125,12 @@ internal class GltfLodLevels(private val meshes: MutableMap<String, MeshGeometry
         }
     }
 
-    private companion object {
+    internal companion object {
         const val DEFAULT_BASE_COVERAGE = 0.25f
         val LEVEL_PREFIX = Regex("lod\\d+:")
+
+        /** Removes any `lod<k>:` prefix from [name]. */
+        fun stripLevelPrefix(name: String): String = name.replace(LEVEL_PREFIX, "")
     }
 }
 

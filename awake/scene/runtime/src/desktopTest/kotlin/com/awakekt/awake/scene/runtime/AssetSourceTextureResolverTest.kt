@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.asGpuImageSource
+import com.awakekt.awake.render.texture.needsDecode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -19,10 +20,13 @@ import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
 import javax.imageio.ImageIO
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** A texture is read from the files the first time it is asked for, once, and answers how it stands. */
 class AssetSourceTextureResolverTest {
@@ -125,6 +129,25 @@ class AssetSourceTextureResolverTest {
         assertEquals(3, assertIs<SceneTextureLoad.Loaded>(textures.texture("hero.png")).image.width, "decoded from its file")
         assertEquals(listOf("hero.png"), reads, "a cooked texture's own file isn't read")
         textures.close()
+    }
+
+    @Test
+    fun decodedTextureReleasesPixelsAfterUploadAndCloseDropsCache() = runTest {
+        val textures = resolver()
+        arrived.complete(Unit)
+
+        textures.texture("hero.png")
+        advanceUntilIdle()
+        val loaded = assertIs<SceneTextureLoad.Loaded>(textures.texture("hero.png"))
+        assertFalse(loaded.source.needsDecode, "freshly decoded pixels are ready for first upload")
+
+        val first = loaded.source.readRgba8()
+        assertTrue(loaded.source.needsDecode, "decoded RGBA8 pixels are dropped once read for upload")
+        val second = loaded.source.readRgba8()
+        assertContentEquals(first, second, "subsequent uploads re-decode identical pixels from kept file bytes")
+
+        textures.close()
+        assertSame(SceneTextureLoad.Loading, textures.texture("hero.png"), "close clears cached textures")
     }
 
     private fun TestScope.resolver() = AssetSourceTextureResolver(files, this)

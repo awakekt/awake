@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.scene.gltf
 
+import com.awakekt.awake.asset.gltf.firstSkinnedAsset
+import com.awakekt.awake.asset.meshlod.GltfLodCooker
+import com.awakekt.awake.asset.meshlod.LodCookOutcome
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
@@ -29,8 +32,12 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -114,6 +121,142 @@ class GltfReleaseAfterUploadTest {
         val geometryBytes = MODELS.toLong() * VERTICES * VertexFloats * Float.SIZE_BYTES
         println("$MODELS released models of $VERTICES vertices: ${freed / KIB} KiB freed once uploaded, of ${geometryBytes / KIB} KiB of vertices")
         assertTrue(freed >= geometryBytes / 2, "uploading released models freed $freed B of $geometryBytes B of vertices")
+    }
+
+    @Test
+    fun aReleasedLodModelDropsBaseAndLevelsAndReloadsThem() = runTest {
+        val cooked = GltfLodCooker.cook(sphereGltf().encodeToByteArray())
+        assertEquals(LodCookOutcome.Generated, cooked.outcome)
+        val path = "assets/props/rock.gltf"
+        val resolver = GltfAssetResolver().apply {
+            setAssetSource(AssetSource { Result.success(cooked.bytes) })
+            preload(path, cooked.bytes)
+            releaseAfterUpload(path)
+        }
+        val runtime = runtime(resolver)
+        val levels = assertNotNull(resolver.meshLevels(path), "cooked sphere has LOD levels")
+        val background = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+        assertNotNull(resolver.createMesh(runtime, path))
+        assertTrue(resolver.isMeshLetGo(path), "base mesh geometry drops after upload")
+        for (level in levels.meshes) {
+            assertNotNull(resolver.createMesh(runtime, level))
+            assertTrue(resolver.isMeshLetGo(level), "level $level geometry drops after upload")
+        }
+        assertFailsWith<IllegalStateException> { resolver.createMesh(runtime, levels.meshes.first()) }
+
+        // Reloading through loadMesh restores both the base mesh and every LOD level.
+        awaitLoad(assertNotNull(resolver.loadMesh(levels.meshes.first(), background)))
+        assertNull(resolver.loadMesh(path, background), "reloaded base and levels need no further load")
+        assertNotNull(resolver.createMesh(runtime, path))
+        for (level in levels.meshes) assertNotNull(resolver.createMesh(runtime, level))
+        background.cancel()
+    }
+
+    @Test
+    fun aReleasedSkinnedModelDropsGeometryAndImageBytesWhileKeepingSkeleton() = runTest {
+        val path = "assets/creatures/guardian.gltf"
+        val bytes = skinnedTexturedTriangle().encodeToByteArray()
+        val resolver = GltfAssetResolver().apply {
+            setAssetSource(AssetSource { Result.success(bytes) })
+            preload(path, bytes)
+            releaseAfterUpload(path)
+        }
+        val runtime = runtime(resolver)
+        val slot = resolver.materialSlots(path).single()
+        val background = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+        assertNotNull(resolver.createMesh(runtime, slot.mesh))
+        assertNotNull(resolver.createMaterial(renderer, slot.material))
+        assertTrue(resolver.isMeshLetGo(slot.mesh), "skinned part geometry drops after upload")
+        assertTrue(resolver.isMaterialLetGo(slot.material), "skinned part image bytes drop after upload")
+
+        // Skeleton and skins stay available for animation while vertex arrays and image bytes are cleared.
+        val scene = assertNotNull(resolver.getLoadedScene(path))
+        assertNotNull(scene.firstSkinnedAsset()?.skin)
+        assertTrue(scene.meshes.all { it.positions.isEmpty() && it.baseColorImageBytes == null })
+        assertFailsWith<IllegalStateException> { resolver.createMesh(runtime, slot.mesh) }
+
+        val materialLoad = assertNotNull(resolver.loadMaterial(slot.material, background))
+        awaitLoad(assertNotNull(resolver.loadMesh(slot.mesh, background)))
+        awaitLoad(materialLoad)
+        assertNotNull(resolver.createMesh(runtime, slot.mesh))
+        assertNotNull(resolver.createMaterial(renderer, slot.material))
+        background.cancel()
+    }
+
+    private fun sphereGltf(segments: Int = 24, rings: Int = 12): String {
+        val positions = mutableListOf(0f, 1f, 0f)
+        for (ring in 1 until rings) {
+            val theta = PI * ring / rings
+            for (segment in 0 until segments) {
+                val phi = 2 * PI * segment / segments
+                positions += listOf((sin(theta) * cos(phi)).toFloat(), cos(theta).toFloat(), (sin(theta) * sin(phi)).toFloat())
+            }
+        }
+        positions += listOf(0f, -1f, 0f)
+        val bottom = positions.size / 3 - 1
+        fun at(ring: Int, segment: Int) = 1 + (ring - 1) * segments + segment % segments
+        val indices = mutableListOf<Int>()
+        for (segment in 0 until segments) {
+            indices += listOf(0, at(1, segment + 1), at(1, segment))
+            indices += listOf(bottom, at(rings - 1, segment), at(rings - 1, segment + 1))
+            for (ring in 1 until rings - 1) {
+                indices += listOf(at(ring, segment), at(ring, segment + 1), at(ring + 1, segment))
+                indices += listOf(at(ring, segment + 1), at(ring + 1, segment + 1), at(ring + 1, segment))
+            }
+        }
+        val positionBytes = positions.flatMap { value -> (0 until 4).map { (value.toRawBits() ushr (it * 8)).toByte() } }.toByteArray()
+        val indexBytes = indices.flatMap { value -> (0 until 4).map { (value ushr (it * 8)).toByte() } }.toByteArray()
+        val buffer = positionBytes + indexBytes
+        return """
+            { "asset": {"version": "2.0"},
+              "buffers": [{"uri": "data:application/octet-stream;base64,${Base64.encode(buffer)}", "byteLength": ${buffer.size}}],
+              "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": ${positionBytes.size}},
+                              {"buffer": 0, "byteOffset": ${positionBytes.size}, "byteLength": ${indexBytes.size}}],
+              "accessors": [{"bufferView": 0, "componentType": 5126, "count": ${positions.size / 3}, "type": "VEC3", "min": [-1,-1,-1], "max": [1,1,1]},
+                            {"bufferView": 1, "componentType": 5125, "count": ${indices.size}, "type": "SCALAR"}],
+              "meshes": [{"name": "Rock", "primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
+              "nodes": [{"name": "Rock", "mesh": 0}], "scenes": [{"nodes": [0]}], "scene": 0 }
+        """.trimIndent()
+    }
+
+    private fun skinnedTexturedTriangle(): String {
+        fun floats(vararg values: Float): ByteArray = ByteBuffer.allocate(values.size * 4).order(ByteOrder.LITTLE_ENDIAN)
+            .apply { values.forEach(::putFloat) }.array()
+        val positions = floats(0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f)
+        val indices = byteArrayOf(0, 0, 1, 0, 2, 0, 0, 0)
+        val joints = ByteArray(12)
+        val weights = floats(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f)
+        val uvs = floats(0f, 0f, 1f, 0f, 0f, 1f)
+        val inverseBind = floats(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        val buffer = positions + indices + joints + weights + uvs + inverseBind
+        var offset = 0
+        val views = listOf(positions, indices, joints, weights, uvs, inverseBind).joinToString(",") { part ->
+            """{"buffer":0,"byteOffset":$offset,"byteLength":${if (part === indices) 6 else part.size}}""".also { offset += part.size }
+        }
+        return """
+            {
+              "buffers": [{"uri":"data:application/octet-stream;base64,${Base64.encode(buffer)}","byteLength":${buffer.size}}],
+              "bufferViews": [$views],
+              "accessors": [
+                {"bufferView":0,"componentType":5126,"count":3,"type":"VEC3"},
+                {"bufferView":1,"componentType":5123,"count":3,"type":"SCALAR"},
+                {"bufferView":2,"componentType":5121,"count":3,"type":"VEC4"},
+                {"bufferView":3,"componentType":5126,"count":3,"type":"VEC4"},
+                {"bufferView":4,"componentType":5126,"count":3,"type":"VEC2"},
+                {"bufferView":5,"componentType":5126,"count":1,"type":"MAT4"}
+              ],
+              "materials": [{"pbrMetallicRoughness":{"baseColorTexture":{"index":0}}}],
+              "textures": [{"source":0}],
+              "images": [{"uri":"data:image/png;base64,$PIXEL_PNG"}],
+              "meshes": [{"primitives":[{"attributes":{"POSITION":0,"JOINTS_0":2,"WEIGHTS_0":3,"TEXCOORD_0":4},"indices":1,"material":0}]}],
+              "nodes": [{"name":"Root"}, {"mesh":0,"skin":0}],
+              "skins": [{"inverseBindMatrices":5,"joints":[0]}],
+              "scenes": [{"nodes":[0,1]}],
+              "scene": 0
+            }
+        """.trimIndent()
     }
 
     private suspend fun loadedResolver(bytes: ByteArray) = GltfAssetResolver().apply {

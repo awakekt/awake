@@ -150,7 +150,8 @@ class GltfAssetResolver(
         // its `.bin` and images two or three times (#1621).
         if (isFullyLoaded(path)) return
         val externalResources = externalResourcesOf(path, bytes)
-        if (path !in loadedScenes || path !in loadedStaticMeshes) {
+        val hasGeometry = path in loadedStaticMeshes || loadedScenes[path]?.skinnedNodes?.isNotEmpty() == true
+        if (!hasGeometry) {
             preload(path, bytes, externalResources)
         }
         if (path !in loadedMaterialSlots) {
@@ -170,7 +171,7 @@ class GltfAssetResolver(
             }
         } else {
             val json = bytes.decodeToString()
-            // Keep the skeletal scene when the file contains skin data; static geometry is also
+            // Keep the skeletal scene when the file contains skin data; static geometry is only
             // retained as a fallback for a model whose first scene has no usable skin.
             if (path !in loadedScenes) {
                 runCatching { GltfParser.parseSkinned(json, externalResources) }.onSuccess { scene ->
@@ -178,7 +179,8 @@ class GltfAssetResolver(
                     scene.firstSkinnedAsset()?.mesh?.doubleSided?.toCullMode()?.let { loadedCullModes[path] = it }
                 }
             }
-            if (path !in loadedStaticMeshes) {
+            val hasSkin = loadedScenes[path]?.skinnedNodes?.isNotEmpty() == true
+            if (!hasSkin && path !in loadedStaticMeshes) {
                 loadedStaticMeshes[path] = runCatching {
                     val scene = GltfParser.parseScene(json.toEmbeddedGlb(), externalResources)
                     if (path !in loadedCullModes) scene.defaultCullMode()?.let { loadedCullModes[path] = it }
@@ -219,11 +221,12 @@ class GltfAssetResolver(
     }
 
     /**
-     * Lets go of model [path]'s CPU copies once they are on the GPU: a static mesh's geometry once its
-     * mesh is made, and a material's images once it is made. A mesh or material made again afterwards
+     * Lets go of model [path]'s CPU copies once they are on the GPU: static, LOD, and skinned mesh
+     * geometry once uploaded (keeping skeleton, skins, and animation clips for `getLoadedScene`), and
+     * material/part images once their materials are made. A mesh or material made again afterwards
      * reads the model again first, through [loadMesh] or [loadMaterial], as a scene's meshes are made;
-     * making one with no such load first fails, saying so. A model with levels of detail keeps its
-     * geometry, which its levels share. Models loaded with [loadModel] are released this way already.
+     * making one with no such load first fails, saying so. Models loaded with [loadModel] are released
+     * this way already.
      */
     fun releaseAfterUpload(path: String) = releases.release(path)
 
@@ -235,7 +238,7 @@ class GltfAssetResolver(
     fun keepAfterUpload(path: String) = releases.keep(path)
 
     /**
-     * Whether static mesh [name]'s geometry was let go of once uploaded and not read again since: making
+     * Whether mesh [name]'s geometry was let go of once uploaded and not read again since: making
      * it now fails, and [loadMesh] reads its model again first.
      */
     fun isMeshLetGo(name: String): Boolean = name in releases.droppedMeshes
@@ -249,9 +252,19 @@ class GltfAssetResolver(
 
     /** [adopt] for a model the async load path read, which is releasable, putting back what was let go of. */
     internal fun adoptLoaded(path: String, from: GltfAssetResolver) {
+        val dropped = releases.droppedMeshesOf(path)
+        val releasedMaterials = releases.releasedMaterialsOf(path)
+        if (dropped.isNotEmpty() || releasedMaterials.isNotEmpty()) {
+            from.loadedScenes[path]?.let {
+                loadedScenes[path] = it
+                loadedParts.remove(path)
+            }
+        }
         adopt(path, from)
-        for (key in releases.droppedMeshesOf(path)) if (key in loadedStaticMeshes) releases.droppedMeshes -= key
-        for (key in releases.releasedMaterialsOf(path)) {
+        for (key in dropped) {
+            if (key in loadedStaticMeshes || path in loadedScenes) releases.droppedMeshes -= key
+        }
+        for (key in releasedMaterials) {
             from.loadedMaterials[key]?.let { loadedMaterials[key] = it }
             from.skinnedPartTextures[key]?.let { skinnedPartTextures[key] = it }
             from.skinnedPartEmissive[key]?.let { skinnedPartEmissive[key] = it }
@@ -312,8 +325,12 @@ class GltfAssetResolver(
     fun loadModel(path: String, scope: CoroutineScope): SceneMeshLoad = loads.join(path, scope)
 
     /** [loadModel] for the model [name] is drawn from, when this resolves it and hasn't loaded that model. */
-    override fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? =
-        modelPath(name).takeIf { canResolveMesh(name) && (!isPreloaded(it) || name in releases.droppedMeshes) }?.let { loadModel(it, scope) }
+    override fun loadMesh(name: String, scope: CoroutineScope): SceneMeshLoad? {
+        if (!canResolveMesh(name)) return null
+        val path = modelPath(name)
+        val needsLevel = meshLevels(name)?.meshes?.any { it in releases.droppedMeshes } == true
+        return path.takeIf { !isPreloaded(it) || name in releases.droppedMeshes || needsLevel }?.let { loadModel(it, scope) }
+    }
 
     // A resolver like this one, for a load to read a model into off the frame thread.
     private fun staging(): GltfAssetResolver = GltfAssetResolver(bundledResourceReader).also { staged ->
@@ -459,7 +476,7 @@ class GltfAssetResolver(
     internal fun partGeometry(name: String): MeshGeometry? = when (val part = part(name)) {
         null -> null
         is GltfPart.Skinned -> part.mesh.let { mesh ->
-            if (mesh.isTextured) {
+            if (part.textured) {
                 MeshGeometry(mesh.toInterleavedPositionNormalColorUvSkin(), mesh.indices, format = VertexFormat.PositionNormalColorUvSkin)
             } else {
                 MeshGeometry(mesh.toInterleavedSkinned(), mesh.indices, format = VertexFormat.PositionNormalColorSkin)
@@ -502,10 +519,13 @@ class GltfAssetResolver(
      * @param meshName Name or compound identifier of the mesh.
      * @return Base model file path.
      */
-    fun modelPath(meshName: String): String = if (meshName.startsWith(PRIMITIVE_MESH_PREFIX)) {
-        meshName.removePrefix(PRIMITIVE_MESH_PREFIX).substringBeforeLast('#')
-    } else {
-        meshName
+    fun modelPath(meshName: String): String {
+        val base = lodLevels.baseKey(meshName)
+        return if (base.startsWith(PRIMITIVE_MESH_PREFIX)) {
+            base.removePrefix(PRIMITIVE_MESH_PREFIX).substringBeforeLast('#')
+        } else {
+            base
+        }
     }
 
     override fun canResolveMesh(name: String): Boolean = modelPath(name).let { path ->
@@ -513,6 +533,9 @@ class GltfAssetResolver(
     }
 
     override fun createMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh? {
+        if (name in releases.droppedMeshes) {
+            error("glTF mesh '$name' let go of its CPU copy once uploaded; load it again with loadMesh before making it.")
+        }
         val geometry = partGeometry(name) ?: loadedScenes[name]
             ?.firstSkinnedAsset()
             ?.let { skinnedAsset ->
@@ -522,11 +545,7 @@ class GltfAssetResolver(
                     format = VertexFormat.PositionNormalColorSkin,
                 )
             } ?: loadedStaticMeshes[name] ?: error(
-            if (name in releases.droppedMeshes) {
-                "glTF mesh '$name' let go of its CPU copy once uploaded; load it again with loadMesh before making it."
-            } else {
-                "glTF asset '$name' has not been preloaded. Ensure the scene or plugin preloaded it."
-            },
+            "glTF asset '$name' has not been preloaded. Ensure the scene or plugin preloaded it.",
         )
         meshBoundsRegistrar(name, geometry)
         // A level differs from its full mesh only in its triangles: it draws the full mesh's vertex buffer.
@@ -537,16 +556,38 @@ class GltfAssetResolver(
         } else {
             runtime.renderer.createMesh(geometry).also { mesh -> if (!level && meshLevels(name) != null) levelBases[name] = mesh }
         }
-        dropUploadedGeometry(name, geometry, level)
+        dropUploadedGeometry(name, geometry)
         return mesh
     }
 
-    // Only a static mesh with no levels: its levels share its vertices, and a skinned or part mesh is built per call.
-    private fun dropUploadedGeometry(name: String, geometry: MeshGeometry, level: Boolean) {
-        if (level || meshLevels(name) != null || !releases.isReleasable(modelPath(name))) return
+    // Static, LOD level, and skinned CPU geometry all drop once uploaded; loadMesh re-reads the model if needed again.
+    private fun dropUploadedGeometry(name: String, geometry: MeshGeometry) {
+        val path = modelPath(name)
+        if (!releases.isReleasable(path)) return
         if (loadedStaticMeshes[name] === geometry) {
             loadedStaticMeshes.remove(name)
             releases.droppedMeshes += name
+        } else if (path in loadedScenes) {
+            releases.droppedMeshes += name
+        }
+        val baseKey = lodLevels.baseKey(name)
+        if (allLevelsDropped(baseKey)) levelBases.remove(baseKey)
+        if (path in loadedScenes && allSkinnedMeshesDropped(path)) {
+            loadedParts.remove(path)
+            loadedScenes[path]?.let { loadedScenes[path] = it.withoutGeometry() }
+        }
+    }
+
+    private fun allLevelsDropped(baseKey: String): Boolean {
+        val levels = meshLevels(baseKey) ?: return false
+        return baseKey in releases.droppedMeshes && levels.meshes.all { it in releases.droppedMeshes }
+    }
+
+    private fun allSkinnedMeshesDropped(path: String): Boolean {
+        val slots = loadedMaterialSlots[path]
+        val baseKeys = if (slots.isNullOrEmpty()) listOf(path) else slots.map { it.mesh }
+        return baseKeys.all { key ->
+            key in releases.droppedMeshes && meshLevels(key)?.meshes?.all { it in releases.droppedMeshes } != false
         }
     }
 
@@ -599,13 +640,19 @@ class GltfAssetResolver(
     // A releasable model's images go once a material is made from them; loadMaterial reads the model again first.
     private fun releaseUploadedImages(name: String) {
         val key = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:") ?: return
-        if (!releases.isReleasable(materialModelPath(key))) return
+        val path = materialModelPath(key)
+        if (!releases.isReleasable(path)) return
         val loaded = loadedMaterials[key]
         val images = listOfNotNull(skinnedPartTextures[key], skinnedPartEmissive[key], loaded?.texture) + loaded?.pbrImages?.maps.orEmpty().filterNotNull()
         // Every image, not only the first: `any` would stop at the first one it let go of.
         var released = false
         for (image in images) released = image.releaseImageData() || released
-        if (released) releases.releasedMaterials += key
+        if (released) {
+            releases.releasedMaterials += key
+            // Drop raw image bytes still pinned on the skinned scene/parts now that every texture has been extracted.
+            loadedScenes[path]?.let { loadedScenes[path] = it.withoutImageBytes() }
+            loadedParts[path]?.let { loadedParts[path] = it.map(GltfPart::withoutImageBytes) }
+        }
     }
 
     private fun makeMaterial(renderer: Renderer, name: String): Material? = when {
@@ -795,9 +842,9 @@ private suspend fun LoadedPrimitive.toLoadedMaterial(decodeTexture: suspend (Byt
 }
 
 /** One drawable piece of a skinned model: deformed by the model's pose, or fixed in place. */
-private sealed interface GltfPart {
+internal sealed interface GltfPart {
     /** A primitive drawn with the joint palette: a skinned mesh's, or a rigid node's bound to its joint. */
-    class Skinned(val mesh: GltfMesh) : GltfPart
+    class Skinned(val mesh: GltfMesh, val textured: Boolean = mesh.isTextured) : GltfPart
 
     /** A rigid node's primitive that no joint carries, at its node's rest transform. */
     class Static(val primitive: LoadedPrimitive) : GltfPart

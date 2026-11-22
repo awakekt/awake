@@ -10,7 +10,7 @@ import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.engine.platform.error.childScope
 import com.awakekt.awake.render.texture.GpuImageSource
-import com.awakekt.awake.render.texture.asGpuImageSource
+import com.awakekt.awake.render.texture.asReleasingGpuImageSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -133,6 +133,8 @@ class AssetSourceTextureResolver(
         closed = true
         loads?.cancel()
         finished.close()
+        textures.clear()
+        loading.clear()
     }
 
     private fun receiveFinished() {
@@ -146,9 +148,13 @@ class AssetSourceTextureResolver(
 
     // TooGenericExceptionCaught: a file that fails to read or decode, for whatever reason, only fails its texture.
     @Suppress("TooGenericExceptionCaught")
-    // decodeImage: a browser keeps the decoded image for the GPU, which copies it without a readback.
+    // decodeImage: a browser keeps the decoded image for the GPU, which copies it without a readback;
+    // elsewhere asReleasingGpuImageSource drops the decoded RGBA8 pixels once uploaded.
     private suspend fun read(name: String): Result<GpuImageSource> = try {
-        Result.success(cooked?.invoke(name) ?: decodeImage(files.read(AssetPath(name)).getOrThrow()).asGpuImageSource())
+        val source = cooked?.invoke(name) ?: files.read(AssetPath(name)).getOrThrow().let { bytes ->
+            decodeImage(bytes).asReleasingGpuImageSource(bytes)
+        }
+        Result.success(source)
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (failure: Exception) {
