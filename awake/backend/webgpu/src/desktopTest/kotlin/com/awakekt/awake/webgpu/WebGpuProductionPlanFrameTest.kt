@@ -48,6 +48,12 @@ import kotlin.test.assertTrue
  * accumulates coverage source-over (`ONE`/`ONE_MINUS_SRC_ALPHA`), which keeps 1 at 1. Until #1142
  * the fog's alpha used `SRC_ALPHA`, leaving `1 - f + f²` (231 to 236) on 873 cube pixels; only
  * those alpha bytes changed when the baseline was corrected, every RGB byte is the same.
+ *
+ * Until #1709 the scene depth target stayed fixed at 2048x2048 even for this 128x128 target, so
+ * three cube silhouette edge pixels misaligned between the colour and scene-depth grids: two
+ * background pixels ((58, 49) and (71, 50)) picked up fog bleed (16, 18, 20) and one cube edge
+ * pixel ((53, 77)) missed fog. Sizing the scene depth target to 128x128 aligns both grids and
+ * removes those three edge discrepancies.
  */
 class WebGpuProductionPlanFrameTest {
 
