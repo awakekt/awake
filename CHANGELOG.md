@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-22
+
+### Changed
+
+- **Added `ShadowBudget.Minimal` (1 cascade x 512, 0.5 MiB in D16) and adaptive shadow PCF scaling by shadow map size.** `cascadeShadowSampling` now selects 1-tap hardware-filtered comparison at `<= 512` (25x fewer shadow texture fetches), 3x3 PCF (9 taps, 2.8x fewer fetches) at `<= 1024` (`ShadowBudget.Reduced`), and keeps 5x5 PCF (25 taps, unchanged) at `2048` (`ShadowBudget.Default`) across `LitShadow`, `Textured`, `SkinnedTextured`, and `Terrain` on both Vulkan and WebGPU. (#1709)
+- **Camera scene-depth and mask targets now scale to the rendered scene size together, and zero-reach shadow lights skip shadow work.** Both Vulkan and WebGPU now initialize `sceneDepthTarget` at `MASK_TARGET_MIN_SIZE` and resize `sceneDepthTarget` and `maskTarget` in lockstep via `MaskTargetSizing` instead of holding fixed 2048² D32 targets (66.3 MiB combined; at 1093x480 they drop to 1152², ~21 MiB combined) while preserving exact mask-vs-scene-depth silhouette alignment for depth fog. `SceneLightingCompiler.environmentUniforms` and `ScenePassCompiler` also treat zero-reach casting lights (`shadowDistance <= 0` or point `range <= near`) as inactive so no shadow passes or caster folds run. (#1709)
+
 ## [0.63.0] - 2026-11-22
 
 ### Added
