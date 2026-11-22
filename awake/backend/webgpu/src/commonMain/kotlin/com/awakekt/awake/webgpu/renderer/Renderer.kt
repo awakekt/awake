@@ -38,6 +38,7 @@ import com.awakekt.awake.render.renderer.RenderDrawStages
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.render.renderer.SceneUpscaling
 import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.TextureSampling
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
@@ -263,6 +264,8 @@ class Renderer internal constructor(
         set(value) {
             field = RenderScale.coerce(value)
         }
+
+    override var sceneUpscaling: SceneUpscaling = SceneUpscaling.Off
 
     /** WebGPU's own ceiling: every adapter accepts `maxAnisotropy` up to 16 and clamps it below that. */
     override val maxSupportedAnisotropy: Int get() = MAX_WEBGPU_ANISOTROPY

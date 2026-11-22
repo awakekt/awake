@@ -9,6 +9,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.SceneUpscale
 import com.awakekt.awake.render.renderer.RenderScale
+import com.awakekt.awake.render.renderer.SceneUpscaling
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 
 /**
@@ -22,6 +23,7 @@ internal class SceneScaleTarget(
     private var chain: ImagePassChain = ImagePassChain.Empty
     private var chainOutputWidth = 0
     private var chainOutputHeight = 0
+    private var chainUpscaling: SceneUpscaling = SceneUpscaling.Off
 
     /**
      * The target the scene renders into this frame over an [outputWidth] by [outputHeight] surface
@@ -53,14 +55,25 @@ internal class SceneScaleTarget(
         )
     }
 
-    /** The bilinear copy of [scene] over the output surface, kept while neither size moves. */
-    fun upscale(scene: OffscreenRenderTarget, outputWidth: Int, outputHeight: Int): ImagePassChain {
-        if (chain.isEmpty || outputWidth != chainOutputWidth || outputHeight != chainOutputHeight) {
-            chain = SceneUpscale.chain(scene, outputWidth, outputHeight)
+    /** The scale-up pass of [scene] over the output surface, kept while size and [upscaling] stay fixed. */
+    fun upscale(
+        scene: OffscreenRenderTarget,
+        outputWidth: Int,
+        outputHeight: Int,
+        upscaling: SceneUpscaling = SceneUpscaling.Off,
+    ): ImagePassChain {
+        if (!sameChain(outputWidth, outputHeight, upscaling)) {
+            chain = SceneUpscale.chain(scene, outputWidth, outputHeight, upscaling)
             chainOutputWidth = outputWidth
             chainOutputHeight = outputHeight
+            chainUpscaling = upscaling
         }
         return chain
+    }
+
+    private fun sameChain(outputWidth: Int, outputHeight: Int, upscaling: SceneUpscaling): Boolean {
+        val sameSize = outputWidth == chainOutputWidth && outputHeight == chainOutputHeight
+        return !chain.isEmpty && sameSize && upscaling == chainUpscaling
     }
 
     fun release() {

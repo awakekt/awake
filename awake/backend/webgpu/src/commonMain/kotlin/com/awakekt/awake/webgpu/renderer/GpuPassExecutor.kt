@@ -82,7 +82,7 @@ internal class RendererGpuPassExecutor(
                 )
             } else {
                 recordScene(encoder, scaled.attachment(), sceneInput, sorted, primary)
-                recordUpscale(encoder, output, sceneScale.upscale(scaled, outputWidth, outputHeight), input)
+                recordUpscale(encoder, output, sceneScale.upscale(scaled, outputWidth, outputHeight, sceneUpscaling), input)
             }
             recordPostPasses(encoder, input.postPasses)
             recordUiOverlay(

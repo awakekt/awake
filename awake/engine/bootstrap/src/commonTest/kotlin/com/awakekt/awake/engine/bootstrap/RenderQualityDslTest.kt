@@ -12,6 +12,7 @@ import com.awakekt.awake.engine.platform.quality.RenderQualityPersistence
 import com.awakekt.awake.engine.platform.quality.RenderQualitySettings
 import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
+import com.awakekt.awake.render.renderer.SceneUpscaling
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -60,5 +61,15 @@ class RenderQualityDslTest {
                 renderQuality()
             }
         }
+    }
+
+    @Test
+    fun sceneUpscalingDefaultsToOffAndForwardsFromDsl() {
+        val defaultSettings = app { renderQuality() }.service<RenderQualitySettings>()
+        assertEquals(SceneUpscaling.Off, defaultSettings?.sceneUpscaling)
+
+        val configured = SceneUpscaling.upscaleAndSharpen(0.75f)
+        val customSettings = app { renderQuality { sceneUpscaling = configured } }.service<RenderQualitySettings>()
+        assertEquals(configured, customSettings?.sceneUpscaling)
     }
 }

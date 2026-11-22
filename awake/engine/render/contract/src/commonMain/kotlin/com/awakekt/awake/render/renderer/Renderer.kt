@@ -240,6 +240,15 @@ interface Renderer : GpuDevice {
     fun switchAntiAliasing(requested: AntiAliasing): Boolean = antiAliasing == requested
 
     /**
+     * How the scale-up pass filters a scaled 3D scene (`renderScale < 1`) onto the output surface
+     * (#1830). Defaults to [SceneUpscaling.Off] (plain bilinear copy). Runs after anti-aliasing and
+     * post-processing, before UI, with zero extra render passes.
+     */
+    var sceneUpscaling: SceneUpscaling
+        get() = SceneUpscaling.Off
+        set(_) {}
+
+    /**
      * Quality tier for multi-pass image effects rendered by this [Renderer].
      *
      * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at

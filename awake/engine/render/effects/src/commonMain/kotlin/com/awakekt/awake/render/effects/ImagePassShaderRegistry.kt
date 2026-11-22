@@ -77,5 +77,7 @@ object ImagePassShaderRegistry {
         register(PostProcessingShaders.ToneMappingGradeBloomSpec)
         register(PostProcessingShaders.BloomBrightPassSpec)
         register(PostProcessingShaders.FxaaSpec)
+        register(UpscaleShaders.CasSharpenSpec)
+        register(UpscaleShaders.CasUpscaleSpec)
     }
 }

@@ -445,6 +445,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getOutputWidth ()I
 	public final fun getRedrawsStillFrames ()Z
 	public fun getRenderScale ()F
+	public fun getSceneUpscaling ()Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
@@ -467,6 +468,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun setMaxAnisotropy (I)V
 	public final fun setRedrawsStillFrames (Z)V
 	public fun setRenderScale (F)V
+	public fun setSceneUpscaling (Lcom/awakekt/awake/render/renderer/SceneUpscaling;)V
 	public fun setShadowBudget (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 	public fun setTextureMipSkip (I)V
 	public fun setWireframe (Z)V

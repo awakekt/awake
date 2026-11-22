@@ -116,7 +116,7 @@ internal fun Renderer.recordCommandBuffer(
             commandBuffer = commandBuffer,
             frameIndex = frameIndex,
             acquiredImageIndex = acquiredImageIndex,
-            chain = sceneScale.upscale(scaled, outputWidth, outputHeight),
+            chain = sceneScale.upscale(scaled, outputWidth, outputHeight, sceneUpscaling),
             clearDestination = true,
             environment = environment,
         )
@@ -234,7 +234,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         }
         timer?.mark(commandBuffer, frameIndex, GpuFramePart.Post)
         scaled.transitionToShaderReadOnly(commandBuffer)
-        val upscale = sceneScale.upscale(scaled, outputWidth, outputHeight)
+        val upscale = sceneScale.upscale(scaled, outputWidth, outputHeight, sceneUpscaling)
         uiRecorded = recordScaledOutput(commandBuffer, frameIndex, acquiredImageIndex, upscale, viewport, scissor, context, environment, timer)
     } else {
         // Unscaled, the frame's image passes draw on the output: they are the upscale part's.

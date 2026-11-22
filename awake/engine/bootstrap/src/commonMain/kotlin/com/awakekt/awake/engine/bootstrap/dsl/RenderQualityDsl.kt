@@ -11,6 +11,7 @@ import com.awakekt.awake.render.renderer.AntiAliasing
 import com.awakekt.awake.render.renderer.DynamicResolution
 import com.awakekt.awake.render.renderer.RenderQuality
 import com.awakekt.awake.render.renderer.RenderQualityBudgets
+import com.awakekt.awake.render.renderer.SceneUpscaling
 import com.awakekt.awake.render.renderer.ShadowDepthFormat
 
 /**
@@ -45,6 +46,12 @@ class RenderQualityDsl internal constructor() {
      * [RenderQualitySettings.antiAliasing]. Multisampled modes are read once, when the engine starts.
      */
     var antiAliasing: AntiAliasing? = null
+
+    /**
+     * How the scale-up pass sharpens a scaled 3D scene (`renderScale < 1`); see
+     * [RenderQualitySettings.sceneUpscaling]. Defaults to [SceneUpscaling.Off].
+     */
+    var sceneUpscaling: SceneUpscaling = SceneUpscaling.Off
 }
 
 /**
@@ -64,6 +71,7 @@ fun AppSpecDsl.renderQuality(block: RenderQualityDsl.() -> Unit = {}): RenderQua
     settings.dynamicResolution = config.dynamicResolution
     settings.shadowDepthFormat = config.shadowDepthFormat
     settings.antiAliasing = config.antiAliasing
+    settings.sceneUpscaling = config.sceneUpscaling
     service(RenderQualitySettings::class, settings)
     return settings
 }
