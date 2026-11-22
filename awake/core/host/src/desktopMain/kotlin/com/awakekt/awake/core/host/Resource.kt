@@ -14,9 +14,14 @@ import kotlinx.coroutines.Dispatchers
  * @param path The relative resource path to read.
  * @return The raw byte contents of the resource.
  */
-actual suspend fun readResourceBytes(path: String): ByteArray = withHostIoIfConfined(Dispatchers.IO) {
-    val stream = Thread.currentThread().contextClassLoader?.getResourceAsStream(path)
-        ?: object {}.javaClass.classLoader?.getResourceAsStream(path)
-        ?: error("Resource not found: $path")
-    stream.use { it.readBytes() }
+actual suspend fun readResourceBytes(path: String): ByteArray {
+    val callerLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
+    return withHostIoIfConfined(Dispatchers.IO) {
+        val stream = callerLoader.getResourceAsStream(path)
+            ?: Thread.currentThread().contextClassLoader?.getResourceAsStream(path)
+            ?: ClassLoader.getSystemClassLoader()?.getResourceAsStream(path)
+            ?: object {}.javaClass.classLoader?.getResourceAsStream(path)
+            ?: error("Resource not found: $path")
+        stream.use { it.readBytes() }
+    }
 }
