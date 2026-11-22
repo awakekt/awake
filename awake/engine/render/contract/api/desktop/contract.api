@@ -2464,6 +2464,7 @@ public final class com/awakekt/awake/render/renderer/ShadowBudget {
 
 public final class com/awakekt/awake/render/renderer/ShadowBudget$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
+	public final fun getMinimal ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public final fun getReduced ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 }
 
