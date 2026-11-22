@@ -201,6 +201,7 @@ class Material(
             uniformBuffer = BufferHandle(rawUniformBuffer),
             block = block,
             indexInBlock = indexInBlock,
+            frameIndex = frameIndex,
             uniformFloatCount = uniformFloatCount,
         ).also { it.sampler = texture?.sampler?.handle ?: samplerHandle }
     }
@@ -345,6 +346,7 @@ class Material(
         val uniformBuffer: BufferHandle,
         val block: SlotBlock,
         val indexInBlock: Int,
+        val frameIndex: Int,
         uniformFloatCount: Int,
     ) : VulkanMaterialBinding {
         val descriptorPool: DescriptorPoolHandle = DescriptorPoolHandle(block.descriptorPool)
@@ -476,9 +478,10 @@ private fun bindFrameBlock(graphicsDevice: GraphicsDevice, descriptorSet: Long, 
 internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride: Long) {
     val strideFloats: Int = (stride / Float.SIZE_BYTES).toInt()
     val stagedFloats: FloatArray = FloatArray(Material.SLOTS_PER_BLOCK * strideFloats)
-    var minDirtySlot: Int = Int.MAX_VALUE
-    var maxDirtySlot: Int = -1
-    var dirtyCount: Int = 0
+
+    // 32-bit mask covering SLOTS_PER_BLOCK = 32 slots so flush writes only contiguous dirty runs
+    // and never overwrites an interleaved clean slot owned by another in-flight frame or offscreen pass.
+    private var dirtyMask: Int = 0
     private var singleDirtySlot: Material.UniformSlot? = null
     var destroyed: Boolean = false
 
@@ -489,47 +492,53 @@ internal class SlotBlock(val memory: Long, val descriptorPool: Long, val stride:
             startIndex = 0,
             endIndex = slot.lastWrittenSize,
         )
-        if (dirtyCount == 0) {
-            minDirtySlot = slotIndexInBlock
-            maxDirtySlot = slotIndexInBlock
+        val bit = 1 shl slotIndexInBlock
+        if (dirtyMask == 0) {
             singleDirtySlot = slot
-        } else {
-            if (slotIndexInBlock < minDirtySlot) minDirtySlot = slotIndexInBlock
-            if (slotIndexInBlock > maxDirtySlot) maxDirtySlot = slotIndexInBlock
-            if (minDirtySlot != maxDirtySlot) singleDirtySlot = null
+        } else if (dirtyMask != bit) {
+            singleDirtySlot = null
         }
-        dirtyCount++
+        dirtyMask = dirtyMask or bit
     }
 
     fun flush(device: Long) {
-        if (destroyed || dirtyCount == 0 || maxDirtySlot < minDirtySlot) {
-            minDirtySlot = Int.MAX_VALUE
-            maxDirtySlot = -1
-            dirtyCount = 0
-            singleDirtySlot = null
-            return
-        }
+        val mask = dirtyMask
         val single = singleDirtySlot
-        if (minDirtySlot == maxDirtySlot && single != null && single.lastWrittenSize == single.lastWritten.size) {
-            VulkanBuffers.writeBufferMemoryFloats(device, memory, minDirtySlot * stride, single.lastWritten)
-        } else if (minDirtySlot == 0 && maxDirtySlot == Material.SLOTS_PER_BLOCK - 1) {
-            VulkanBuffers.writeBufferMemoryFloats(device, memory, 0L, stagedFloats)
-        } else {
-            // The dirty slots are written in place: copying them out first allocated their whole
-            // span, about 160 KB a frame in a populated scene.
+        dirtyMask = 0
+        singleDirtySlot = null
+        if (destroyed || mask == 0) return
+        when {
+            (mask and (mask - 1)) == 0 && single != null && single.lastWrittenSize == single.lastWritten.size -> {
+                val slotIndex = mask.countTrailingZeroBits()
+                VulkanBuffers.writeBufferMemoryFloats(device, memory, slotIndex * stride, single.lastWritten)
+            }
+            mask == -1 -> {
+                VulkanBuffers.writeBufferMemoryFloats(device, memory, 0L, stagedFloats)
+            }
+            else -> flushDirtyRuns(device, mask)
+        }
+    }
+
+    private fun flushDirtyRuns(device: Long, initialMask: Int) {
+        var remaining = initialMask
+        while (remaining != 0) {
+            val runStart = remaining.countTrailingZeroBits()
+            var runEnd = runStart
+            while (runEnd + 1 < Material.SLOTS_PER_BLOCK && (remaining and (1 shl (runEnd + 1))) != 0) {
+                runEnd++
+            }
+            val runCount = runEnd - runStart + 1
             VulkanBuffers.writeBufferMemoryFloats(
                 device,
                 memory,
-                minDirtySlot * stride,
+                runStart * stride,
                 stagedFloats,
-                dataOffset = minDirtySlot * strideFloats,
-                count = (maxDirtySlot - minDirtySlot + 1) * strideFloats,
+                dataOffset = runStart * strideFloats,
+                count = runCount * strideFloats,
             )
+            val clearBits = if (runCount == Int.SIZE_BITS) -1 else ((1 shl runCount) - 1) shl runStart
+            remaining = remaining and clearBits.inv()
         }
-        minDirtySlot = Int.MAX_VALUE
-        maxDirtySlot = -1
-        dirtyCount = 0
-        singleDirtySlot = null
     }
 }
 

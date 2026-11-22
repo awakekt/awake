@@ -33,14 +33,17 @@ internal fun Renderer.runOffscreenCommands(measureGpuTime: Boolean = true, block
  * At most one such submission is outstanding. The next one, and any synchronous offscreen work,
  * waits for it first: they share the offscreen frame's command buffer slots and cascade matrices.
  */
-internal fun Renderer.submitOffscreenCommands(block: (Long) -> Unit) {
+internal fun Renderer.submitOffscreenCommands(
+    frameSlot: Int = swapchainManager.currentFrame,
+    block: (Long) -> Unit,
+) {
     awaitSubmittedOffscreenCommands()
     if (submittedOffscreenCommandBuffer == 0L) {
         submittedOffscreenCommandBuffer = allocateOffscreenCommandBuffer()
         submittedOffscreenFence = Vulkan.vkCreateFence(device, VkFenceCreateInfo())
     }
     submittedOffscreenTiming = recordAndSubmit(submittedOffscreenCommandBuffer, submittedOffscreenFence, true, block)
-    submittedOffscreenFrame = swapchainManager.currentFrame
+    submittedOffscreenFrame = frameSlot
 }
 
 /** Waits for the outstanding [submitOffscreenCommands] work, if any. */
@@ -54,10 +57,14 @@ internal fun Renderer.awaitSubmittedOffscreenCommands() {
 
 /**
  * Waits for outstanding offscreen work that wrote [frameIndex]'s uniform and instance slots, before
- * those slots are rewritten. Work from another frame slot is left running.
+ * those slots are rewritten. Work prepared on the dedicated offscreen slot (`commandBuffers.size`)
+ * or on another frame slot is left running (#1687, #1709).
  */
 internal fun Renderer.awaitSubmittedOffscreenCommandsFor(frameIndex: Int) {
-    if (submittedOffscreenFrame == frameIndex) awaitSubmittedOffscreenCommands()
+    if (submittedOffscreenFrame == frameIndex) {
+        offscreenWaitsForFrame += 1L
+        awaitSubmittedOffscreenCommands()
+    }
 }
 
 internal const val NO_SUBMITTED_OFFSCREEN_FRAME = -1

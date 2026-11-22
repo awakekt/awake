@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.drawsForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
@@ -61,7 +62,7 @@ internal class RendererGpuPassExecutor(
     }
 
     override fun submitToTexture(target: RenderTarget, input: GpuPassInput) {
-        renderer.submitOffscreenCommands(renderer.recordToTexture(target, input))
+        renderer.submitOffscreenCommands(renderer.submittedSlotFor(input), renderer.recordToTexture(target, input))
     }
 }
 
@@ -132,4 +133,34 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
 private fun Renderer.prepareDepthDraws(input: GpuPassInput): List<PreparedDraw> {
     if (input.prePasses.isEmpty() && sceneDepthTarget == null) return emptyList()
     return input.resolvedDraws
+}
+
+/**
+ * Which frame slot [input]'s draws bind: the dedicated offscreen slot (`commandBuffers.size`) when
+ * prepared through [Renderer.offscreenDrawPreparer] (or when [input] carries no draws), or the
+ * presented frame slot a legacy caller prepared against via [Renderer.gpuDrawPreparer] (#1687, #1709).
+ */
+private fun Renderer.submittedSlotFor(input: GpuPassInput): Int {
+    val offscreenSlot = commandBuffers.size
+    return firstPresentedSlot(input.resolvedOpaqueDraws, offscreenSlot)
+        ?: firstPresentedSlot(input.resolvedTransparentDraws, offscreenSlot)
+        ?: firstPresentedSlot(input.resolvedEdgeDraws, offscreenSlot)
+        ?: firstPresentedSubPassSlot(input.prePasses, offscreenSlot)
+        ?: firstPresentedSubPassSlot(input.maskPasses, offscreenSlot)
+        ?: offscreenSlot
+}
+
+private fun firstPresentedSubPassSlot(passes: List<GpuSubPass>, offscreenSlot: Int): Int? {
+    for (i in 0 until passes.size) {
+        firstPresentedSlot(passes[i].resolvedDraws, offscreenSlot)?.let { return it }
+    }
+    return null
+}
+
+private fun firstPresentedSlot(draws: List<PreparedDraw>, offscreenSlot: Int): Int? {
+    for (i in 0 until draws.size) {
+        val slot = draws[i].materialBinding as? com.awakekt.awake.vulkan.material.Material.UniformSlot ?: continue
+        if (slot.frameIndex != offscreenSlot) return slot.frameIndex
+    }
+    return null
 }

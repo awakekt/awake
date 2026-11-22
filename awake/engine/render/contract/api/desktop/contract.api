@@ -203,6 +203,11 @@ public final class com/awakekt/awake/render/command/GpuDrawPreparationKt {
 
 public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparationSource {
 	public abstract fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
+	public fun getOffscreenDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
+}
+
+public final class com/awakekt/awake/render/command/GpuDrawPreparationSource$DefaultImpls {
+	public static fun getOffscreenDrawPreparer (Lcom/awakekt/awake/render/command/GpuDrawPreparationSource;)Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 }
 
 public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparer {

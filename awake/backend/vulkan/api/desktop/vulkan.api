@@ -441,6 +441,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getMaskTargetBytes ()J
 	public fun getMaxAnisotropy ()I
 	public fun getMaxSupportedAnisotropy ()I
+	public fun getOffscreenDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
 	public final fun getRedrawsStillFrames ()Z

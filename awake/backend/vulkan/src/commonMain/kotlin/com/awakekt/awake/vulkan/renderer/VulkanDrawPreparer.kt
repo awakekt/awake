@@ -27,6 +27,7 @@ import com.awakekt.awake.vulkan.pipeline.RenderPipeline
  */
 internal class VulkanDrawPreparer(
     private val renderer: Renderer,
+    private val offscreen: Boolean = false,
 ) : GpuDrawPreparer {
     /** Each draw's uniform slot in its material and each instanced draw's instance buffers, by what
      * the draw is: a draw culled earlier in the list leaves every later one where it was. */
@@ -71,9 +72,10 @@ internal class VulkanDrawPreparer(
         val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         if (edgePipeline != null) writeEdgeFrame(context)
         val cascades = context.cascades()
+        val frameIndex = frameIndex()
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
-            frameIndex = renderer.swapchainManager.currentFrame,
+            frameIndex = frameIndex,
             instancedIndex = if (request.instanceModels != null) instancedSlots.slotFor(request.mesh, request.material) else sourceIndex,
             isTransparent = request.transparent,
             viewProjection = context.viewProjection,
@@ -95,7 +97,6 @@ internal class VulkanDrawPreparer(
             into = scratch,
         ) ?: return null
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
-        val frameIndex = renderer.swapchainManager.currentFrame
         val kind = if (edgePipeline != null) ResolvedDrawCache.EDGE else ResolvedDrawCache.SINGLE
         if (edgePipeline != null) return resolvedDraws.resolve(kind, frameIndex, sourceIndex, prepared)
         val format = prepared.vertexFormat
@@ -127,10 +128,13 @@ internal class VulkanDrawPreparer(
         )
     }
 
+    private fun frameIndex(): Int =
+        if (offscreen) renderer.commandBuffers.size else renderer.swapchainManager.currentFrame
+
     /** The batch's edges are a pass of their own: their view-projection and debug code, written once. */
     private fun writeEdgeFrame(context: GpuDrawPreparationContext) {
         if (edgeFrameWritten) return
-        renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades(), edges = true)
+        renderer.graphicsDevice.frameUniforms.write(frameIndex(), context, context.cascades(), edges = true)
         edgeFrameWritten = true
     }
 
@@ -140,16 +144,23 @@ internal class VulkanDrawPreparer(
         instancedSlots.begin()
         sharedDepth.clear()
         edgeFrameWritten = false
-        // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
-        // phase usually waited for it already, but a frame with no UI never did, and preparing
-        // runs before acquiring the image, which is the next wait. Free when already waited.
-        renderer.waitForCurrentFrameResourceSlot()
-        // A frame handed back unprepared still reads the slot it was prepared in, which may be this one.
-        if (renderer.bufferPools.reusedFrames.preparing()) renderer.waitForAllFrameResourceSlots()
-        // Submitted offscreen work may still read the slots this batch is about to rewrite.
-        renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
-        // After both waits: the block every lit draw of this batch reads beside its own.
-        renderer.graphicsDevice.frameUniforms.write(renderer.swapchainManager.currentFrame, context, context.cascades())
+        val frameIndex = frameIndex()
+        if (offscreen) {
+            // Only wait for a previous offscreen capture sharing this slot, never blocking on or
+            // stalling the presented swapchain frames (#1687, #1709).
+            renderer.awaitSubmittedOffscreenCommands()
+        } else {
+            // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
+            // phase usually waited for it already, but a frame with no UI never did, and preparing
+            // runs before acquiring the image, which is the next wait. Free when already waited.
+            renderer.waitForCurrentFrameResourceSlot()
+            // A frame handed back unprepared still reads the slot it was prepared in, which may be this one.
+            if (renderer.bufferPools.reusedFrames.preparing()) renderer.waitForAllFrameResourceSlots()
+            // Legacy offscreen work prepared against currentFrame may still read this slot.
+            renderer.awaitSubmittedOffscreenCommandsFor(frameIndex)
+        }
+        // After waits: the block every lit draw of this batch reads beside its own.
+        renderer.graphicsDevice.frameUniforms.write(frameIndex, context, context.cascades())
     }
 
     private fun GpuDrawPreparationContext.cascades(): GpuShadowCascadeData? = shadowCascadeData ?: shadowViewProjections

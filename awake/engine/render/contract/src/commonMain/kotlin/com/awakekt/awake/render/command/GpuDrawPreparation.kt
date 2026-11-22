@@ -129,6 +129,13 @@ fun interface GpuDrawPreparer {
 interface GpuDrawPreparationSource {
     /** The backend draw preparer instance, or `null` if preparation is not supported. */
     val gpuDrawPreparer: GpuDrawPreparer?
+
+    /**
+     * Draw preparer for offscreen captures (`Renderer.submitToTexture` / `renderToTexture`),
+     * backed by a dedicated offscreen uniform slot where the backend has one so captures never
+     * stall or overwrite the presented frame's uniforms (#1687, #1709). Defaults to [gpuDrawPreparer].
+     */
+    val offscreenDrawPreparer: GpuDrawPreparer? get() = gpuDrawPreparer
 }
 
 /** Resolves a batch in source order; a null result deliberately removes that draw. */

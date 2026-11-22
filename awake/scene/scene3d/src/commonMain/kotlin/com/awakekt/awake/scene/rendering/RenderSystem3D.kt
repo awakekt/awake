@@ -66,6 +66,14 @@ class RenderSystem3D(
      */
     private val isDirtyProvider: () -> Boolean = { false },
 ) : System {
+    private val captureDrawPreparer: GpuDrawPreparer? =
+        if (drawPreparer === (renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer) {
+            (renderer as? GpuDrawPreparationSource)?.offscreenDrawPreparer ?: drawPreparer
+        } else {
+            drawPreparer
+        }
+    private val sharesCaptureSlot: Boolean = captureDrawPreparer === drawPreparer
+
     private val planner = SceneRenderPlanner3D(
         rendererClipSpace = renderer.clipSpace,
         drawPreparer = drawPreparer,
@@ -73,6 +81,7 @@ class RenderSystem3D(
         shadowBudget = { renderer.shadowBudget },
         antiAliasing = { renderer.antiAliasing },
         effectQuality = { renderer.effectQuality },
+        captureDrawPreparer = captureDrawPreparer,
     )
     private var elapsedTimeSeconds = 0f
     private var lastPlannedFrame: SceneRenderPlanner3D.PlannedFrame? = null
@@ -158,8 +167,15 @@ class RenderSystem3D(
      */
     fun planCapture(world: World, camera: Camera, aspect: Float): GpuPassInput {
         require(camera.viewport == null) { "A virtual viewport capture requires pixel width and height." }
-        return planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null, transparentSources = captureSources())
-            .passInput.also { forgetPlannedFrame() }
+        return planner.plan(
+            world,
+            camera,
+            elapsedTimeSeconds,
+            aspect,
+            viewport = null,
+            transparentSources = captureSources(),
+            forCapture = true,
+        ).passInput.also { if (sharesCaptureSlot) forgetPlannedFrame() }
     }
 
     /** Plans an offscreen view with physical-pixel dimensions, including virtual viewport scaling. */
@@ -172,7 +188,8 @@ class RenderSystem3D(
             captureViewport.aspect,
             captureViewport.viewport,
             transparentSources = captureSources(),
-        ).passInput.also { forgetPlannedFrame() }
+            forCapture = true,
+        ).passInput.also { if (sharesCaptureSlot) forgetPlannedFrame() }
     }
 
     private fun captureSources() = RenderDiagnostics.transparentSourcesForCapture(planner.featureNames)
