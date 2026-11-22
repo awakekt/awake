@@ -5,12 +5,16 @@
  */
 package com.awakekt.awake.render.renderer
 
+import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** Verifies steady-state timed frames allocate nothing in [GpuFrameTimeCounter] bookkeeping (#1709). */
 class GpuFrameTimeCounterAllocationTest {
+
+    private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
+    private fun allocated(): Long = threadBean.currentThreadAllocatedBytes
 
     @Test
     fun steadyTimedFramesAllocateZeroBytesInBookkeeping() {
@@ -30,11 +34,9 @@ class GpuFrameTimeCounterAllocationTest {
 
         repeat(WARMUP) { i -> step(1.5 + (i % 7) * 0.1) }
 
-        val threads = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
-        val id = Thread.currentThread().id
-        val before = threads.getThreadAllocatedBytes(id)
+        val before = allocated()
         repeat(FRAMES) { i -> step(2.0 + (i % 13) * 0.1) }
-        val bytesPerFrame = (threads.getThreadAllocatedBytes(id) - before) / FRAMES
+        val bytesPerFrame = (allocated() - before) / FRAMES
         assertEquals(0L, bytesPerFrame, "GpuFrameTimeCounter steady-state bookkeeping must allocate 0 B/frame")
     }
 
