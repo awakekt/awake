@@ -43,13 +43,58 @@ abstract class WaitForVulkanCentralTask : DefaultTask() {
         require(version.matches(Regex("[0-9][A-Za-z0-9.-]*")) && !version.endsWith("-SNAPSHOT")) {
             "Expected an immutable Vulkan release version, got $version"
         }
-        val repository = URI("https://repo.maven.apache.org/maven2/")
-        val modules = listOf(
+        val relativeModules = listOf(
             "com/awakekt/awake/backend/vulkan",
             "com/awakekt/awake/vulkan-kmp",
             "com/awakekt/awake/vulkan-kmp-android-native",
-        ).map { module -> repository.resolve("$module/$version/${module.substringAfterLast('/')}-$version.module") }
-        CentralAvailability(repository, modules).await("Vulkan $version", timeoutSeconds.get(), logger)
+        ).map { module -> "$module/$version/${module.substringAfterLast('/')}-$version.module" }
+        awaitAnyRepository(
+            subject = "Vulkan $version",
+            repositories = DEFAULT_RELEASE_REPOSITORIES,
+            relativeModules = relativeModules,
+            timeoutSeconds = timeoutSeconds.get(),
+            logger = logger,
+        )
+    }
+}
+
+internal val MAVEN_CENTRAL_URI: URI = URI("https://repo.maven.apache.org/maven2/")
+internal val MAVEN_FALLBACK_URI: URI = URI("https://awakekt.github.io/awake/")
+internal val DEFAULT_RELEASE_REPOSITORIES: List<URI> = listOf(MAVEN_CENTRAL_URI, MAVEN_FALLBACK_URI)
+
+/**
+ * Polls [repositories] in order until any one of them serves every declared variant file of
+ * [relativeModules], or fails once [timeoutSeconds] have passed. Lets releases served from the
+ * GitHub Pages fallback unblock downstream jobs while Maven Central refuses uploads.
+ */
+internal fun awaitAnyRepository(
+    subject: String,
+    repositories: List<URI>,
+    relativeModules: List<String>,
+    timeoutSeconds: Long,
+    logger: Logger,
+): URI {
+    require(repositories.isNotEmpty()) { "At least one release repository is required" }
+    require(timeoutSeconds > 0) { "Central availability timeout must be positive" }
+    val gates = repositories.map { repo -> repo to CentralAvailability(repo, relativeModules.map(repo::resolve)) }
+    val deadline = System.nanoTime() + Duration.ofSeconds(timeoutSeconds).toNanos()
+    while (true) {
+        var primaryMissing: List<URI> = emptyList()
+        for ((index, entry) in gates.withIndex()) {
+            val (repo, gate) = entry
+            val missing = gate.missingFiles()
+            if (missing.isEmpty()) {
+                logger.lifecycle("$subject metadata and binaries are available on $repo")
+                return repo
+            }
+            if (index == 0) primaryMissing = missing
+        }
+        val remaining = deadline - System.nanoTime()
+        if (remaining <= 0) {
+            throw GradleException("$subject is not available on any release repository: ${primaryMissing.joinToString()}")
+        }
+        logger.lifecycle("Waiting for $subject (${primaryMissing.size} missing on primary): ${primaryMissing.first()}")
+        Thread.sleep(minOf(30_000L, maxOf(1L, Duration.ofNanos(remaining).toMillis())))
     }
 }
 

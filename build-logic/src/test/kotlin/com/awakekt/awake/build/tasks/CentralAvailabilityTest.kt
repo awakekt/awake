@@ -92,6 +92,19 @@ class CentralAvailabilityTest {
         }
     }
 
+    @Test
+    fun acceptsFallbackRepositoryWhenPrimaryReturnsNotFound() = repository { primary, _ ->
+        repository { fallback, fallbackFiles ->
+            val rel = "com/awakekt/awake/core/math/1.2.3/math-1.2.3.module"
+            fallbackFiles["/$rel"] = """{"variants":[{"files":[{"url":"math-1.2.3.jar"}]}]}"""
+            fallbackFiles["/com/awakekt/awake/core/math/1.2.3/math-1.2.3.pom"] = "<project/>"
+            fallbackFiles["/com/awakekt/awake/core/math/1.2.3/math-1.2.3.jar"] = "binary"
+            val logger = org.gradle.api.logging.Logging.getLogger(CentralAvailabilityTest::class.java)
+            val resolved = awaitAnyRepository("Core 1.2.3", listOf(primary, fallback), listOf(rel), 5L, logger)
+            assertEquals(fallback, resolved)
+        }
+    }
+
     private fun repository(status: Int? = null, test: (URI, MutableMap<String, String>) -> Unit) {
         val files = ConcurrentHashMap<String, String>()
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)

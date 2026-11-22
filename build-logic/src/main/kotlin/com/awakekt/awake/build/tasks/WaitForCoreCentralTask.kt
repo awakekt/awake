@@ -44,14 +44,23 @@ abstract class WaitForCoreCentralTask : DefaultTask() {
         if (!Files.isRegularFile(pin)) {
             throw GradleException("No WebGPU release pin for Core $version in Maven Local ($pin); publish it there first")
         }
-        val repository = URI("https://repo.maven.apache.org/maven2/")
-        val modules = pinnedCoreModules(pin, version).map { centralModule(repository, it, version) }
-        CentralAvailability(repository, modules).await("Core $version", timeoutSeconds.get(), logger)
+        val relativeModules = pinnedCoreModules(pin, version).map { relativeModulePath(it, version) }
+        awaitAnyRepository(
+            subject = "Core $version",
+            repositories = DEFAULT_RELEASE_REPOSITORIES,
+            relativeModules = relativeModules,
+            timeoutSeconds = timeoutSeconds.get(),
+            logger = logger,
+        )
     }
 }
 
-/** The Gradle module file of [coordinate] (`group:name`) at [version] in the Maven [repository]. */
-internal fun centralModule(repository: URI, coordinate: String, version: String): URI {
+/** Relative path of [coordinate] (`group:name`)'s Gradle module metadata at [version]. */
+internal fun relativeModulePath(coordinate: String, version: String): String {
     val (group, name) = coordinate.split(':')
-    return repository.resolve("${group.replace('.', '/')}/$name/$version/$name-$version.module")
+    return "${group.replace('.', '/')}/$name/$version/$name-$version.module"
 }
+
+/** The Gradle module file of [coordinate] (`group:name`) at [version] in the Maven [repository]. */
+internal fun centralModule(repository: URI, coordinate: String, version: String): URI =
+    repository.resolve(relativeModulePath(coordinate, version))
