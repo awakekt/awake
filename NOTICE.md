@@ -86,3 +86,12 @@ This project includes third-party software components and compiled binaries unde
 * **License**: Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0), the repository's `LICENSE.md`. The folder's `README.md` describing the curve is under Creative Commons Attribution 4.0 (CC-BY-4.0), which this attribution satisfies.
 * **Version**: `180b1a7bddec33f73fe41712a2963cc3ad8e5547` (https://github.com/KhronosGroup/ToneMapping/tree/180b1a7bddec33f73fe41712a2963cc3ad8e5547/PBR_Neutral)
 * **Location**: the `SPDX-Snippet` blocks in `awake/engine/render/effects/.../PostProcessingShaders.kt`, `PostProcessingStack.kt` and `awake/asset/shader-pack/.../SceneDisplayTransform.kt`
+
+---
+
+### AMD FidelityFX CAS (Contrast Adaptive Sharpening)
+* **Description**: Single-pass 5-tap contrast-adaptive sharpening and 12-tap edge-thinning spatial upscale + sharpening kernels, adapted from `ffx-cas/ffx_cas.h` into Awake's shader DSL for the scaled-scene upscale pass.
+* **Copyright**: Copyright (c) 2017-2019 Advanced Micro Devices, Inc.
+* **License**: MIT License (https://opensource.org/licenses/MIT)
+* **Version**: `9fabcc9a2c45f958aff55ddfda337e74ef894b7f` (https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/9fabcc9a2c45f958aff55ddfda337e74ef894b7f/ffx-cas/ffx_cas.h)
+* **Location**: the `SPDX-Snippet` blocks in `awake/engine/render/effects/.../UpscaleShaders.kt`

@@ -54,6 +54,7 @@ import com.awakekt.awake.render.renderer.PresentIntervalTracker
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.render.renderer.SceneUpscaling
 import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import com.awakekt.awake.render.renderer.TextureSampling
@@ -272,6 +273,8 @@ class Renderer internal constructor(
         set(value) {
             field = RenderScale.coerce(value)
         }
+
+    override var sceneUpscaling: SceneUpscaling = SceneUpscaling.Off
 
     internal val sceneScale = SceneScaleTarget { width, height ->
         performCreateRenderTarget(width, height) as OffscreenRenderTarget

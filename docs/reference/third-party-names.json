@@ -6,7 +6,8 @@
     { "name": "SMAA", "pattern": "SMAA" },
     { "name": "Kawase", "pattern": "Kawase" },
     { "name": "dual-filter blur", "pattern": "[Dd]ual[- ]filter" },
-    { "name": "PBR Neutral", "pattern": "PBR Neutral" }
+    { "name": "PBR Neutral", "pattern": "PBR Neutral" },
+    { "name": "FidelityFX CAS", "pattern": "FidelityFX CAS" }
   ],
   "pending": [
     {

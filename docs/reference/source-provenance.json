@@ -72,6 +72,15 @@
       "copyright": "unrecorded",
       "license": "unrecorded",
       "reason": "FxaaShader, the post-processing stack's FXAA-style edge anti-aliasing (simplified: luma contrast test, edge orientation, subpixel blend; no end-of-edge search). Added in #970 with no recorded source, and the owner can't trace one (#1791). Its structure differs from NVIDIA's FXAA 3.11: it has no end-of-edge search and a different subpixel term. Its tuning constants (the 0.0833 minimum contrast and the 0.25, 0.166 and 0.125 relative thresholds) are the published FXAA values. It is not certified clean-room. It stays, labelled as what it is, because a second from-memory implementation would have no better provenance; it is to be replaced if a verifiably licensed FXAA or SMAA source is adopted (#1791)."
+    },
+    {
+      "path": "awake/engine/render/effects/src/commonMain/kotlin/com/awakekt/awake/render/effects/UpscaleShaders.kt",
+      "scope": "snippet",
+      "upstream": "https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/9fabcc9a2c45f958aff55ddfda337e74ef894b7f/ffx-cas/ffx_cas.h",
+      "revision": "9fabcc9a2c45f958aff55ddfda337e74ef894b7f",
+      "copyright": "Advanced Micro Devices, Inc.",
+      "license": "MIT",
+      "reason": "AMD FidelityFX CAS (Contrast Adaptive Sharpening, non-scaling 5-tap sharpen and 12-tap edge-thinning upscale+sharpen, green-channel weight mode), adapted from ffx_cas.h into Awake's shader DSL (ASL) for the single-pass scene scale-up shader (#1830). Selected over three surveyed vendor alternatives: AMD FidelityFX FSR 1.0 (GPUOpen-Effects/FidelityFX-FSR commit a21ffb8f6c13233ba336352bdff293894c706575, MIT, two full-screen passes EASU+RCAS requiring an extra full-res target), NVIDIA Image Scaling (NVIDIAGameWorks/NVIDIAImageScaling commit 35e13ba316c98eeecf16f37eae70ce88019911f6, MIT, compute-shader + LUT architecture incompatible with Awake's fragment ImagePassChain), and Snapdragon Game Super Resolution (SnapdragonGameStudios/snapdragon-gsr commit d926f074bcb9d714e179f1ce0fcb9ee2eeb5074e, BSD-3-Clause-Clear). Adapted rather than depended on because the filter runs inside Awake's own ASL fragment pass shared by Vulkan and WebGPU, and upstream ships HLSL/GLSL headers only."
     }
   ]
 }

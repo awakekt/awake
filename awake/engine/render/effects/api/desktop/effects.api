@@ -299,3 +299,21 @@ public final class com/awakekt/awake/render/effects/ToneMappingMode : java/lang/
 	public static fun values ()[Lcom/awakekt/awake/render/effects/ToneMappingMode;
 }
 
+public final class com/awakekt/awake/render/effects/UpscaleShaders {
+	public static final field CAS_SHARPEN_SHADER_ID Ljava/lang/String;
+	public static final field CAS_UPSCALE_SHADER_ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/UpscaleShaders;
+	public final fun casPeak (F)F
+	public final fun getCasFilterParamsField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getCasScaleParamsField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getCasSharpenParamsField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getCasSharpenShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getCasSharpenSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getCasSharpenUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getCasUpscaleShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getCasUpscaleSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getCasUpscaleUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun packCasSharpenUniforms (IIF)[F
+	public final fun packCasUpscaleUniforms (IIF)[F
+}
+

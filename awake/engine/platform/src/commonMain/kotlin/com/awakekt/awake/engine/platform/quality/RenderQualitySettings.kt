@@ -15,6 +15,7 @@ import com.awakekt.awake.render.renderer.RenderQualityBudgets
 import com.awakekt.awake.render.renderer.RenderQualityPolicy
 import com.awakekt.awake.render.renderer.RenderScale
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.SceneUpscaling
 import com.awakekt.awake.render.renderer.ShadowBudget
 import com.awakekt.awake.render.renderer.ShadowDepthFormat
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,6 +101,16 @@ class RenderQualitySettings(
     var antiAliasing: AntiAliasing? = null
 
     /**
+     * How the scale-up pass sharpens a scaled 3D scene (`renderScale < 1`) onto the output surface
+     * (#1830). [SceneUpscaling.Off] by default, leaving the plain bilinear stretch unchanged until
+     * opted into. Read every frame and applied to [Renderer.sceneUpscaling]; runs after
+     * anti-aliasing and post-processing, before UI. Prefer [AntiAliasing.Off] or multisampled MSAA
+     * over [AntiAliasing.Fxaa] when enabling sharpening, as sharpening an FXAA-softened image
+     * accentuates residual artifacts.
+     */
+    var sceneUpscaling: SceneUpscaling = SceneUpscaling.Off
+
+    /**
      * How [RenderQuality.Auto] moves the scene's resolution to hold a frame rate (#1688), or `null` for
      * Auto's fixed device-class budget everywhere. [DynamicResolution.Handhelds] by default: on phones
      * only, with Auto's budget as the ceiling, so Auto never draws more than that budget there and
@@ -164,6 +175,7 @@ class RenderQualitySettings(
         val shadows = shadowBudgetOverride ?: RenderQualityPolicy.shadowBudget(current, device)
         if (renderer.shadowBudget != shadows) renderer.shadowBudget = shadows
         antiAliasing?.let { if (renderer.antiAliasing != it) renderer.switchAntiAliasing(it) }
+        if (renderer.sceneUpscaling != sceneUpscaling) renderer.sceneUpscaling = sceneUpscaling
     }
 
     private fun dynamicScale(renderer: Renderer, config: DynamicResolution, frameSeconds: Float): Float {

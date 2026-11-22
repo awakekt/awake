@@ -2356,6 +2356,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun getOutputHeight ()I
 	public fun getOutputWidth ()I
 	public fun getRenderScale ()F
+	public fun getSceneUpscaling ()Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 	public fun getShadowBudget ()Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public fun getShadowDepthFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public fun getShadowMapBytes ()J
@@ -2377,6 +2378,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun setEffectQuality (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
 	public fun setMaxAnisotropy (I)V
 	public fun setRenderScale (F)V
+	public fun setSceneUpscaling (Lcom/awakekt/awake/render/renderer/SceneUpscaling;)V
 	public fun setShadowBudget (Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 	public fun setTextureMipSkip (I)V
 	public abstract fun setWireframe (Z)V
@@ -2415,6 +2417,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getOutputHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getOutputWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun getRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;)F
+	public static fun getSceneUpscaling (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 	public static fun getShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowBudget;
 	public static fun getShadowDepthFormat (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public static fun getShadowMapBytes (Lcom/awakekt/awake/render/renderer/Renderer;)J
@@ -2434,11 +2437,46 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun setEffectQuality (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
 	public static fun setMaxAnisotropy (Lcom/awakekt/awake/render/renderer/Renderer;I)V
 	public static fun setRenderScale (Lcom/awakekt/awake/render/renderer/Renderer;F)V
+	public static fun setSceneUpscaling (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/SceneUpscaling;)V
 	public static fun setShadowBudget (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/ShadowBudget;)V
 	public static fun setTextureMipSkip (Lcom/awakekt/awake/render/renderer/Renderer;I)V
 	public static fun submitToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static fun switchAntiAliasing (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/AntiAliasing;)Z
 	public static fun waitIdle (Lcom/awakekt/awake/render/renderer/Renderer;)V
+}
+
+public final class com/awakekt/awake/render/renderer/SceneUpscaleMode : java/lang/Enum {
+	public static final field Off Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+	public static final field Sharpen Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+	public static final field UpscaleAndSharpen Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+}
+
+public final class com/awakekt/awake/render/renderer/SceneUpscaling {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/SceneUpscaling$Companion;
+	public static final field DEFAULT_STRENGTH F
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+	public final fun component2 ()F
+	public final fun copy (Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;F)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/SceneUpscaling;Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMode ()Lcom/awakekt/awake/render/renderer/SceneUpscaleMode;
+	public final fun getStrength ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/SceneUpscaling$Companion {
+	public final fun getOff ()Lcom/awakekt/awake/render/renderer/SceneUpscaling;
+	public final fun sharpen (F)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
+	public static synthetic fun sharpen$default (Lcom/awakekt/awake/render/renderer/SceneUpscaling$Companion;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
+	public final fun upscaleAndSharpen (F)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
+	public static synthetic fun upscaleAndSharpen$default (Lcom/awakekt/awake/render/renderer/SceneUpscaling$Companion;FILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/SceneUpscaling;
 }
 
 public final class com/awakekt/awake/render/renderer/ShadowBudget {
