@@ -31,6 +31,7 @@ import com.awakekt.awake.asset.shaderdsl.ndcToUv
 import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.or
 import com.awakekt.awake.asset.shaderdsl.plus
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.smoothstep
 import com.awakekt.awake.asset.shaderdsl.sqrt
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
@@ -133,11 +134,15 @@ fun AslShaderBuilder.cascadeShadowSampling(
     // LOOKUP samples clear of that shared texel, and unlike more bias it does not detach the
     // shadow from the caster.
     val normalOffsetTexels = const("SHADOW_NORMAL_OFFSET_TEXELS", 1f)
-    // Five-by-five comparison PCF keeps the existing texel footprint while hiding the stair-step
-    // edges that are especially visible in the directional/cascade samples. Point shadows retain
-    // the hardware-filtered single lookup because their perspective footprint already varies per
-    // fragment and a second kernel there would multiply the cost for every point-light slot.
+    // Adaptive comparison PCF scaled by the bound shadow map's texel size (#1709):
+    // - > 1024 (Default 2048): 5x5 PCF (25 taps) keeps desktop shadows soft and byte-identical.
+    // - <= 1024 (Reduced 1024): 3x3 PCF (9 taps) cuts shadow texture fetches 2.8x on mobile GPUs.
+    // - <= 512 (Minimal 512): single hardware-filtered comparison tap (25x fewer fetches on budget phones).
+    // Point shadows retain the hardware-filtered single lookup.
     val pcfRadius = constI32("PCF_RADIUS", 2)
+    val pcfRadiusReduced = constI32("PCF_RADIUS_REDUCED", 1)
+    val pcfMinimalMaxTexels = const("SHADOW_PCF_MINIMAL_MAX_TEXELS", 512f)
+    val pcfReducedMaxTexels = const("SHADOW_PCF_REDUCED_MAX_TEXELS", 1024f)
 
     /** Samples a single cascade's PCF shadow depth; returns -1.0f if out of bounds. */
     val sampleSingleCascade = fn("sampleSingleCascade") {
@@ -171,14 +176,29 @@ fun AslShaderBuilder.cascadeShadowSampling(
         val offsetNdcXy = let("offsetNdcXy", offsetProjected.xy / offsetProjected.w)
         val sampleUv = let("sampleUv", ndcToUv(offsetNdcXy, clipSpace))
         val bias = let("bias", worldBias * inputs.depthScales[cascade].x)
-        val minUv = let("minUv", texel * toF32(pcfRadius))
+        val offsetNdc = ndc
+        iff(texSize.x le pcfMinimalMaxTexels) {
+            val singleMinUv = let("singleMinUv", texel)
+            val singleMaxUv = let("singleMaxUv", vec2(1f.lit) - singleMinUv)
+            val singleUv = let("singleUv", clamp(sampleUv, singleMinUv, singleMaxUv))
+            returnValue(
+                textureSampleCompareLevel(
+                    shadowMap,
+                    shadowMapSampler,
+                    singleUv,
+                    cascade,
+                    offsetNdc.z - bias,
+                ),
+            )
+        }
+        val radius = let("pcfRadius", select(pcfRadius, pcfRadiusReduced, texSize.x le pcfReducedMaxTexels))
+        val minUv = let("minUv", texel * toF32(radius))
         val maxUv = let("maxUv", vec2(1f.lit) - minUv)
         val clampedSampleUv = let("clampedSampleUv", clamp(sampleUv, minUv, maxUv))
-        val offsetNdc = ndc
         val shadow = variable("shadow", 0f.lit)
         val samples = variable("samples", 0f.lit)
-        loopI32("dx", -pcfRadius, pcfRadius) { dx ->
-            loopI32("dy", -pcfRadius, pcfRadius) { dy ->
+        loopI32("dx", -radius, radius) { dx ->
+            loopI32("dy", -radius, radius) { dy ->
                 val offset = let("offset", vec2(toF32(dx), toF32(dy)) * texel)
                 val tapLit = let(
                     "tapLit",

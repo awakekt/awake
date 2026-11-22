@@ -46,5 +46,8 @@ data class ShadowBudget(val cascades: Int = DEFAULT_CASCADES, val mapSize: Int =
 
         /** Two cascades of 1024 texels: a phone's, or [RenderQuality.Performance]'s. */
         val Reduced: ShadowBudget = ShadowBudget(cascades = 2, mapSize = 1024)
+
+        /** One cascade of 512 texels (0.5 MiB in D16): budget 4 GB phones that want shadows at minimal GPU cost (#1709). */
+        val Minimal: ShadowBudget = ShadowBudget(cascades = 1, mapSize = 512)
     }
 }
