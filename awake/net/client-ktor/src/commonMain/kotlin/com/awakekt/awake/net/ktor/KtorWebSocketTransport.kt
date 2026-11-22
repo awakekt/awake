@@ -10,6 +10,7 @@ import com.awakekt.awake.net.ConnectionState
 import com.awakekt.awake.net.DeliveryChannel
 import com.awakekt.awake.net.SessionId
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.DefaultWebSocketSession
@@ -36,8 +37,14 @@ const val DEFAULT_INBOUND_PACKETS: Int = 256
 /** Default WebSocket ping interval (`15_000 ms`) configured on the shared default client. */
 const val DEFAULT_PING_INTERVAL_MILLIS: Long = 15_000L
 
+/** Default TCP connect timeout (`10_000 ms`) configured on the shared default WebSocket client. */
+const val DEFAULT_CONNECT_TIMEOUT_MILLIS: Long = 10_000L
+
 private val defaultWebSocketClient: HttpClient by lazy {
     HttpClient {
+        install(HttpTimeout) {
+            connectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS
+        }
         install(WebSockets) {
             pingIntervalMillis = DEFAULT_PING_INTERVAL_MILLIS
             boundOutgoingFrames()
@@ -87,7 +94,12 @@ suspend fun connectWebSocket(
  * Opens a binary WebSocket [AbortableTransport] to [url] over a caller-supplied [client].
  *
  * Callers constructing their own [HttpClient] should install `WebSockets { boundOutgoingFrames() }`
- * so outbound sends suspend under socket backpressure rather than buffering unboundedly.
+ * so outbound sends suspend under socket backpressure rather than buffering unboundedly, and install
+ * `HttpTimeout { connectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS }` so a dropped mobile network
+ * cannot hang the handshake indefinitely. When using Ktor's Android OkHttp engine, configure
+ * `OkHttpClient.Builder.pingInterval(...)` directly on the engine (Ktor's `OkHttpWebsocketSession`
+ * ignores `WebSockets.pingIntervalMillis`) and evict idle pooled connections when resuming from
+ * background or switching networks.
  *
  * @param url Target WebSocket URL (such as `ws://127.0.0.1:8080/play`).
  * @param client Pre-configured Ktor [HttpClient] with the [WebSockets] plugin installed.

@@ -37,83 +37,99 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         Files.createDirectories(root)
     }
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = runCatching {
-        val target = resolve(path)
-        if (!Files.isRegularFile(target)) throw FileSystemException(FileSystemError.NotFound(path))
-        MemoryByteReadSession(Files.readAllBytes(target))
-    }
-
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = runCatching {
-        val target = resolve(path)
-        if (mode == WriteMode.CreateNew && Files.exists(target)) {
-            throw FileSystemException(FileSystemError.AlreadyExists(path))
-        }
-        if (mode == WriteMode.Append && !Files.isRegularFile(target)) {
-            throw FileSystemException(FileSystemError.NotFound(path))
-        }
-        NioByteWriteSession(this, path, mode, if (mode == WriteMode.Append) Files.readAllBytes(target) else ByteArray(0))
-    }
-
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = runCatching {
-        val directory = resolve(path)
-        if (!Files.isDirectory(directory)) throw FileSystemException(FileSystemError.NotFound(path))
-        val stream = if (recursive) Files.walk(directory) else Files.list(directory)
-        stream.use { paths ->
-            paths.filter { it != directory }
-                .map { entry(it) }
-                .sorted(Comparator.comparing { it.path.value })
-                .toList()
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (!Files.isRegularFile(target)) throw FileSystemException(FileSystemError.NotFound(path))
+            MemoryByteReadSession(Files.readAllBytes(target))
         }
     }
 
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = runCatching {
-        val target = resolve(path)
-        if (Files.exists(target)) entry(target) else null
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (mode == WriteMode.CreateNew && Files.exists(target)) {
+                throw FileSystemException(FileSystemError.AlreadyExists(path))
+            }
+            if (mode == WriteMode.Append && !Files.isRegularFile(target)) {
+                throw FileSystemException(FileSystemError.NotFound(path))
+            }
+            NioByteWriteSession(this@NioFileSystem, path, mode, if (mode == WriteMode.Append) Files.readAllBytes(target) else ByteArray(0))
+        }
     }
 
-    override suspend fun createDirectories(path: FilePath): Result<Unit> = runCatching {
-        Files.createDirectories(resolve(path))
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withIoIfConfined {
+        suspendRunCatching {
+            val directory = resolve(path)
+            if (!Files.isDirectory(directory)) throw FileSystemException(FileSystemError.NotFound(path))
+            val stream = if (recursive) Files.walk(directory) else Files.list(directory)
+            stream.use { paths ->
+                paths.filter { it != directory }
+                    .map { entry(it) }
+                    .sorted(Comparator.comparing { it.path.value })
+                    .toList()
+            }
+        }
     }
 
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = runCatching {
-        val target = resolve(path)
-        if (!Files.exists(target)) throw FileSystemException(FileSystemError.NotFound(path))
-        if (Files.isDirectory(target)) {
-            val children = Files.list(target).use { it.findAny().isPresent }
-            if (children && !recursive) throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
-            if (recursive) {
-                Files.walk(target).sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (Files.exists(target)) entry(target) else null
+        }
+    }
+
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            Files.createDirectories(resolve(path))
+            Unit
+        }
+    }
+
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (!Files.exists(target)) throw FileSystemException(FileSystemError.NotFound(path))
+            if (Files.isDirectory(target)) {
+                val children = Files.list(target).use { it.findAny().isPresent }
+                if (children && !recursive) throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
+                if (recursive) {
+                    Files.walk(target).sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
+                } else {
+                    Files.delete(target)
+                }
             } else {
                 Files.delete(target)
             }
-        } else {
-            Files.delete(target)
         }
     }
 
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = runCatching {
-        val source = resolve(from)
-        val target = resolve(to)
-        if (!Files.exists(source)) throw FileSystemException(FileSystemError.NotFound(from))
-        Files.createDirectories(target.parent)
-        if (replace) {
-            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-        } else {
-            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE)
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            val source = resolve(from)
+            val target = resolve(to)
+            if (!Files.exists(source)) throw FileSystemException(FileSystemError.NotFound(from))
+            Files.createDirectories(target.parent)
+            if (replace) {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+            } else {
+                Files.move(source, target, StandardCopyOption.ATOMIC_MOVE)
+            }
+            Unit
         }
     }
 
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> {
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withIoIfConfined {
         val before = snapshotFiles()
         val staged = InMemoryFileSystem(before)
         val result = staged.transaction(block)
-        if (result.isFailure) return result
+        if (result.isFailure) return@withIoIfConfined result
 
         val after = staged.list(FilePath.Root, recursive = true).getOrThrow()
             .filter { it.kind == FileKind.File }
             .associate { it.path to staged.read(it.path).getOrThrow() }
         var applied = false
-        return try {
+        try {
             reconcile(before, after)
             applied = true
             result
@@ -252,21 +268,23 @@ private class NioFileSystem(private val root: Path) : FileSystem {
             chunks += bytes.copyOf()
         }
 
-        override suspend fun commit(): Result<Unit> = runCatching {
-            check(!closed) { "Write session is closed" }
-            val destination = owner.resolve(path)
-            Files.createDirectories(destination.parent)
-            val temporary = Files.createTempFile(destination.parent, ".awake-", ".tmp")
-            try {
-                Files.write(temporary, chunks.flattenToByteArray(), StandardOpenOption.TRUNCATE_EXISTING)
-                if (mode == WriteMode.CreateNew && Files.exists(destination)) {
-                    throw FileSystemException(FileSystemError.AlreadyExists(path))
+        override suspend fun commit(): Result<Unit> = withIoIfConfined {
+            suspendRunCatching {
+                check(!closed) { "Write session is closed" }
+                val destination = owner.resolve(path)
+                Files.createDirectories(destination.parent)
+                val temporary = Files.createTempFile(destination.parent, ".awake-", ".tmp")
+                try {
+                    Files.write(temporary, chunks.flattenToByteArray(), StandardOpenOption.TRUNCATE_EXISTING)
+                    if (mode == WriteMode.CreateNew && Files.exists(destination)) {
+                        throw FileSystemException(FileSystemError.AlreadyExists(path))
+                    }
+                    Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+                } finally {
+                    Files.deleteIfExists(temporary)
                 }
-                Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-            } finally {
-                Files.deleteIfExists(temporary)
+                closed = true
             }
-            closed = true
         }
 
         override suspend fun abort() {

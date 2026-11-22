@@ -5,15 +5,23 @@
  */
 package com.awakekt.awake.core.host
 
+import kotlinx.coroutines.Dispatchers
+
 /**
- * Reads a bundled resource from JVM desktop classpath resources at [path] as raw bytes.
+ * Reads a bundled resource from JVM desktop classpath resources at [path] as raw bytes, offloading
+ * onto [Dispatchers.IO] when called from a confined dispatcher.
  *
  * @param path The relative resource path to read.
  * @return The raw byte contents of the resource.
  */
 actual suspend fun readResourceBytes(path: String): ByteArray {
-    val stream = Thread.currentThread().contextClassLoader?.getResourceAsStream(path)
-        ?: object {}.javaClass.classLoader?.getResourceAsStream(path)
-        ?: error("Resource not found: $path")
-    return stream.use { it.readBytes() }
+    val callerLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
+    return withHostIoIfConfined(Dispatchers.IO) {
+        val stream = callerLoader.getResourceAsStream(path)
+            ?: Thread.currentThread().contextClassLoader?.getResourceAsStream(path)
+            ?: ClassLoader.getSystemClassLoader()?.getResourceAsStream(path)
+            ?: object {}.javaClass.classLoader?.getResourceAsStream(path)
+            ?: error("Resource not found: $path")
+        stream.use { it.readBytes() }
+    }
 }

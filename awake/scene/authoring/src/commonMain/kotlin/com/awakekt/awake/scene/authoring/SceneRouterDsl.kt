@@ -108,7 +108,7 @@ class SceneFlowDsl internal constructor() {
      * default. It can read [SceneRouterRuntime.routeStatus] to show progress or an error.
      * @param keepLoaded Whether the scene [load] returned is kept for later entries (the default), or
      * dropped as the route is left so the next entry loads it again.
-     * @param loadContext Added to `Dispatchers.Default` for [load]; a test passes a dispatcher of its own.
+     * @param loadContext Added to `ioDispatcher` for [load]; a test passes a dispatcher of its own.
      * @param load Supplies the route's scene, suspending until it can.
      */
     fun deferredRoute(

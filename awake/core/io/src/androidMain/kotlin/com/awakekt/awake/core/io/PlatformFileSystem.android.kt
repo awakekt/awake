@@ -7,6 +7,9 @@
 
 package com.awakekt.awake.core.io
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.concurrent.thread
 
@@ -27,97 +30,115 @@ private class AndroidFileSystem(private val root: File) : FileSystem {
         root.mkdirs()
     }
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = runCatching {
-        val target = resolve(path)
-        if (!target.isFile) throw FileSystemException(FileSystemError.NotFound(path))
-        AndroidReadSession(target.readBytes())
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (!target.isFile) throw FileSystemException(FileSystemError.NotFound(path))
+            AndroidReadSession(target.readBytes())
+        }
     }
 
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = runCatching {
-        val target = resolve(path)
-        if (mode == WriteMode.CreateNew && target.exists()) {
-            throw FileSystemException(FileSystemError.AlreadyExists(path))
-        }
-        if (mode == WriteMode.Append && !target.isFile) {
-            throw FileSystemException(FileSystemError.NotFound(path))
-        }
-        AndroidWriteSession(this, path, mode, if (mode == WriteMode.Append) target.readBytes() else ByteArray(0))
-    }
-
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = runCatching {
-        val directory = resolve(path)
-        if (!directory.isDirectory) throw FileSystemException(FileSystemError.NotFound(path))
-        val entries = mutableListOf<FileEntry>()
-        fun visit(current: File) {
-            current.listFiles().orEmpty().sortedBy { it.name }.forEach { child ->
-                entries += entry(toPath(child), child)
-                if (recursive && child.isDirectory) visit(child)
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (mode == WriteMode.CreateNew && target.exists()) {
+                throw FileSystemException(FileSystemError.AlreadyExists(path))
             }
+            if (mode == WriteMode.Append && !target.isFile) {
+                throw FileSystemException(FileSystemError.NotFound(path))
+            }
+            AndroidWriteSession(this@AndroidFileSystem, path, mode, if (mode == WriteMode.Append) target.readBytes() else ByteArray(0))
         }
-        visit(directory)
-        entries.sortedBy { it.path.value }
     }
 
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = runCatching {
-        val target = resolve(path)
-        if (!target.exists()) null else entry(path, target)
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = withIoIfConfined {
+        suspendRunCatching {
+            val directory = resolve(path)
+            if (!directory.isDirectory) throw FileSystemException(FileSystemError.NotFound(path))
+            val entries = mutableListOf<FileEntry>()
+            fun visit(current: File) {
+                current.listFiles().orEmpty().sortedBy { it.name }.forEach { child ->
+                    entries += entry(toPath(child), child)
+                    if (recursive && child.isDirectory) visit(child)
+                }
+            }
+            visit(directory)
+            entries.sortedBy { it.path.value }
+        }
     }
 
-    override suspend fun createDirectories(path: FilePath): Result<Unit> = runCatching {
-        val directory = resolve(path)
-        if (!directory.exists() && !directory.mkdirs()) {
-            throw FileSystemException(FileSystemError.IoFailure("createDirectories", "Could not create ${path.value}."))
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = withIoIfConfined {
+        suspendRunCatching {
+            val target = resolve(path)
+            if (!target.exists()) null else entry(path, target)
         }
-        if (!directory.isDirectory) throw FileSystemException(FileSystemError.Conflict(path, "A file already exists at this path."))
     }
 
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = runCatching {
-        if (path == FilePath.Root) throw FileSystemException(FileSystemError.InvalidPath("", "The root cannot be deleted."))
-        val target = resolve(path)
-        if (!target.exists()) throw FileSystemException(FileSystemError.NotFound(path))
-        if (target.isDirectory && !recursive && target.listFiles().orEmpty().isNotEmpty()) {
-            throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            val directory = resolve(path)
+            if (!directory.exists() && !directory.mkdirs()) {
+                throw FileSystemException(FileSystemError.IoFailure("createDirectories", "Could not create ${path.value}."))
+            }
+            if (!directory.isDirectory) throw FileSystemException(FileSystemError.Conflict(path, "A file already exists at this path."))
         }
-        if (!target.deleteRecursively()) {
-            throw FileSystemException(FileSystemError.IoFailure("delete", "Could not delete ${path.value}."))
-        }
-        notify(FileChangeBatch(listOf(FileChange.Deleted(path))))
     }
 
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = runCatching {
-        val source = resolve(from)
-        val target = resolve(to)
-        if (!source.exists()) throw FileSystemException(FileSystemError.NotFound(from))
-        if (target.exists() && !replace) throw FileSystemException(FileSystemError.AlreadyExists(to))
-        target.parentFile?.mkdirs()
-        if (target.exists() && !target.deleteRecursively()) {
-            throw FileSystemException(FileSystemError.IoFailure("move", "Could not replace ${to.value}."))
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            if (path == FilePath.Root) throw FileSystemException(FileSystemError.InvalidPath("", "The root cannot be deleted."))
+            val target = resolve(path)
+            if (!target.exists()) throw FileSystemException(FileSystemError.NotFound(path))
+            if (target.isDirectory && !recursive && target.listFiles().orEmpty().isNotEmpty()) {
+                throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
+            }
+            if (!target.deleteRecursively()) {
+                throw FileSystemException(FileSystemError.IoFailure("delete", "Could not delete ${path.value}."))
+            }
+            notify(FileChangeBatch(listOf(FileChange.Deleted(path))))
         }
-        if (!source.renameTo(target)) {
-            throw FileSystemException(FileSystemError.IoFailure("move", "Could not move ${from.value}."))
-        }
-        notify(FileChangeBatch(listOf(FileChange.Moved(from, to))))
     }
 
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> {
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            val source = resolve(from)
+            val target = resolve(to)
+            if (!source.exists()) throw FileSystemException(FileSystemError.NotFound(from))
+            if (target.exists() && !replace) throw FileSystemException(FileSystemError.AlreadyExists(to))
+            target.parentFile?.mkdirs()
+            if (target.exists() && !target.deleteRecursively()) {
+                throw FileSystemException(FileSystemError.IoFailure("move", "Could not replace ${to.value}."))
+            }
+            if (!source.renameTo(target)) {
+                throw FileSystemException(FileSystemError.IoFailure("move", "Could not move ${from.value}."))
+            }
+            notify(FileChangeBatch(listOf(FileChange.Moved(from, to))))
+        }
+    }
+
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = withIoIfConfined {
         val beforeEntries = snapshotEntries(FilePath.Root, recursive = true)
         val before = snapshotFiles()
         val staged = InMemoryFileSystem(before)
         val result = staged.transaction(block)
-        if (result.isFailure) return result
+        if (result.isFailure) return@withIoIfConfined result
         val afterEntries = captureEntries(staged)
         val after = afterEntries.filterValues { it.kind == FileKind.File }
             .mapValues { staged.read(it.key).getOrThrow() }
-        return try {
+        try {
             suppressNotifications = true
             reconcile(before, after)
             suppressNotifications = false
             val changes = diffEntries(beforeEntries, afterEntries)
             if (changes.isNotEmpty()) notify(FileChangeBatch(changes))
             result
+        } catch (cancelled: CancellationException) {
+            suppressNotifications = false
+            withContext(NonCancellable) { suspendRunCatching { reconcile(after, before) } }
+            throw cancelled
         } catch (cause: Throwable) {
             suppressNotifications = false
-            runCatching { reconcile(after, before) }
+            withContext(NonCancellable) { suspendRunCatching { reconcile(after, before) } }
             Result.failure(cause.toFileSystemException("transaction"))
         }
     }
@@ -256,10 +277,12 @@ private class AndroidWriteSession(
         chunks += bytes.copyOf()
     }
 
-    override suspend fun commit(): Result<Unit> = runCatching {
-        check(!closed) { "Write session is closed" }
-        owner.notify(FileChangeBatch(listOf(owner.publish(path, chunks.flattenToByteArray(), mode))))
-        closed = true
+    override suspend fun commit(): Result<Unit> = withIoIfConfined {
+        suspendRunCatching {
+            check(!closed) { "Write session is closed" }
+            owner.notify(FileChangeBatch(listOf(owner.publish(path, chunks.flattenToByteArray(), mode))))
+            closed = true
+        }
     }
 
     override suspend fun abort() {

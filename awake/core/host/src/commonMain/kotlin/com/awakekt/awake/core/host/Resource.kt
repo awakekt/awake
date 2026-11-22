@@ -12,8 +12,9 @@ package com.awakekt.awake.core.host
  *
  * `suspend`, not a plain blocking call, because browser resource loading (wasmJs's actual)
  * is inherently async (`fetch()`) -- see docs/reference/decision-log.md's web-demo entry.
- * The desktop/Android/iOS actuals are synchronous I/O under the hood and need no behavior
- * change, just the `suspend` keyword.
+ * The desktop/Android/iOS actuals offload onto `Dispatchers.IO` when invoked from a confined
+ * dispatcher (such as `Main` or `Default`) and run inline under `Dispatchers.Unconfined` so
+ * frame-thread bootstrap stays on its calling thread.
  *
  * @param path The relative resource path to read.
  * @return The raw byte contents of the resource.
