@@ -125,6 +125,27 @@ class PostProcessingStackTest {
     }
 
     @Test
+    fun lowQualityBloomUsesQuarterResolutionBrightPassAndCapsBlurLevels() {
+        val effects = listOf(BloomEffect(intensity = 0.8f, radius = 48f))
+        val low = PostProcessingStack.buildChain(effects, targetContext.copy(effectQuality = EffectQuality.Low))
+        val medium = PostProcessingStack.buildChain(effects, targetContext.copy(effectQuality = EffectQuality.Medium))
+
+        val lowBright = low.transientTargets.first { it.id == PostProcessingStack.TRANSIENT_BLOOM_BRIGHT_ID }
+        val medBright = medium.transientTargets.first { it.id == PostProcessingStack.TRANSIENT_BLOOM_BRIGHT_ID }
+        assertEquals(targetContext.width / 4, lowBright.width, "Low quality extracts bloom at quarter width")
+        assertEquals(targetContext.height / 4, lowBright.height, "Low quality extracts bloom at quarter height")
+        assertEquals(targetContext.width / 2, medBright.width, "Medium quality keeps half-res bloom bright pass")
+        assertEquals(targetContext.height / 2, medBright.height, "Medium quality keeps half-res bloom bright pass")
+
+        val lowLevels = low.transientTargets.filter { it.id.startsWith("bloom_level_") }
+        assertTrue(lowLevels.size <= 2, "Low quality caps bloom blur levels at 2, was ${lowLevels.size}")
+        val lowBlurSteps = low.steps.count { it.shader.id == BlurEffectShaders.BLUR_PASS_SHADER_ID }
+        val medBlurSteps = medium.steps.count { it.shader.id == BlurEffectShaders.BLUR_PASS_SHADER_ID }
+        assertTrue(lowBlurSteps <= 2, "Low quality runs at most 2 blur passes (0 upsample passes), was $lowBlurSteps")
+        assertTrue(lowBlurSteps < medBlurSteps, "Low quality ($lowBlurSteps) runs fewer blur passes than Medium ($medBlurSteps)")
+    }
+
+    @Test
     fun buildChainBloomToneMappingAndFxaaPipelinesToLdrTarget() {
         val chain = PostProcessingStack.buildChain(
             listOf(
