@@ -89,14 +89,16 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
  * work, not its waits, when it picks a steady rate. Before [FrameWaits.publish] clears the sums.
  */
 private fun Renderer.reportFrameCost() {
-    FrameCostReport.submitted(frameWaits.fenceNanos + frameWaits.acquireNanos, gpuFrameTimer?.lastMs?.let { (it * NANOS_PER_MS).toLong() })
+    val ms = gpuFrameTimer?.lastMsOrNaN ?: Float.NaN
+    val gpuNanos = if (ms.isFinite() && ms > 0f) (ms * NANOS_PER_MS).toLong() else 0L
+    FrameCostReport.submitted(frameWaits.fenceNanos + frameWaits.acquireNanos, gpuNanos)
 }
 
 /** Presents, counting the call as a wait: a pacer holds the frame here, as Swappy does (#1699). */
 private fun Renderer.present(presentInfo: VkPresentInfoKHR): VkResult {
     val start = TimeSource.Monotonic.markNow()
     val result = graphicsDevice.queueLock.withLock { Vulkan.vkQueuePresentKHRStatus(presentQueue, presentInfo) }
-    FrameCostReport.submitted(start.elapsedNow().inWholeNanoseconds, null)
+    FrameCostReport.submitted(start.elapsedNow().inWholeNanoseconds, 0L)
     return result
 }
 

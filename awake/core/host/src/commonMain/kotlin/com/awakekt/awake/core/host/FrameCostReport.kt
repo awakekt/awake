@@ -18,10 +18,15 @@ object FrameCostReport {
     private var waitNanos = 0L
     private var gpuNanos = 0L
 
+    /** The renderer submitted a frame after waiting [waitedNanos]; its GPU took [gpuNanos], or 0 when not measured. */
+    fun submitted(waitedNanos: Long, gpuNanos: Long) {
+        waitNanos += waitedNanos.coerceAtLeast(0L)
+        if (gpuNanos > 0L) this.gpuNanos = maxOf(this.gpuNanos, gpuNanos)
+    }
+
     /** The renderer submitted a frame after waiting [waitedNanos]; its GPU took [gpuNanos], or null when not measured. */
     fun submitted(waitedNanos: Long, gpuNanos: Long?) {
-        waitNanos += waitedNanos.coerceAtLeast(0L)
-        if (gpuNanos != null && gpuNanos > 0) this.gpuNanos = maxOf(this.gpuNanos, gpuNanos)
+        submitted(waitedNanos, gpuNanos ?: 0L)
     }
 
     /**

@@ -27,8 +27,8 @@ internal class GpuFrameTimer private constructor(
     private val validBits: Int,
     private val nanosPerTick: Float,
 ) {
-    private val frameTickets = arrayOfNulls<Long>(slots)
-    private val frameOffscreenTickets = Array(slots) { emptyList<Long>() }
+    private val frameTickets = LongArray(slots) { NO_TICKET }
+    private val frameOffscreenTickets = Array(slots) { ArrayList<Long>() }
     private val counter = GpuFrameTimeCounter()
     private val offscreenPools = HashSet<Long>()
     private val freePools = ArrayDeque<Long>()
@@ -37,6 +37,9 @@ internal class GpuFrameTimer private constructor(
 
     /** The most recent GPU frame time read back, or null before the first one finished. */
     val lastMs: Float? get() = counter.latestMs
+
+    /** The most recent GPU frame time read back, or `Float.NaN` before the first one finished (zero boxing). */
+    val lastMsOrNaN: Float get() = counter.latestMsOrNaN
 
     /** The most recent frame's milliseconds by [GpuFramePart], NaN before the first one finished. */
     val lastPartMs = FloatArray(PARTS) { Float.NaN }
@@ -48,9 +51,15 @@ internal class GpuFrameTimer private constructor(
     /** Reads the slot's previous frame, then starts timing this one. Outside any render pass. */
     fun begin(commandBuffer: Long, slot: Int) {
         val first = slot * QUERIES_PER_FRAME
-        frameTickets[slot]?.let { ticket -> counter.completeSubmission(ticket, readParts(first)) }
-        frameOffscreenTickets[slot].forEach { completeOffscreen(it) }
-        frameOffscreenTickets[slot] = emptyList()
+        val previousTicket = frameTickets[slot]
+        if (previousTicket != NO_TICKET) {
+            counter.completeSubmission(previousTicket, readParts(first))
+        }
+        val slotOffscreen = frameOffscreenTickets[slot]
+        for (i in slotOffscreen.indices) {
+            completeOffscreen(slotOffscreen[i])
+        }
+        slotOffscreen.clear()
         frameTickets[slot] = counter.beginSubmission()
         VulkanQueries.vkCmdResetQueryPool(commandBuffer, pool, first, QUERIES_PER_FRAME)
         VulkanQueries.vkCmdWriteTimestamp(commandBuffer, TOP_OF_PIPE, pool, first)
@@ -71,7 +80,11 @@ internal class GpuFrameTimer private constructor(
     /** Stops timing the frame [begin] started in [commandBuffer]: the end of its [GpuFramePart.Ui]. */
     fun end(commandBuffer: Long, slot: Int) {
         mark(commandBuffer, slot, GpuFramePart.Ui)
-        frameOffscreenTickets[slot] = pendingOffscreen.toList()
+        val slotOffscreen = frameOffscreenTickets[slot]
+        slotOffscreen.clear()
+        for (i in pendingOffscreen.indices) {
+            slotOffscreen.add(pendingOffscreen[i])
+        }
         pendingOffscreen.clear()
         counter.publish()
     }
@@ -106,13 +119,13 @@ internal class GpuFrameTimer private constructor(
         return duration
     }
 
-    /** Reads the parts of the frame whose timestamps start at [first] into [lastPartMs]; their sum, or null. */
-    private fun readParts(first: Int): Double? {
+    /** Reads the parts of the frame whose timestamps start at [first] into [lastPartMs]; their sum, or `Double.NaN`. */
+    private fun readParts(first: Int): Double {
         var total = 0.0
         for (part in 0 until PARTS) {
             // As primitives: through [milliseconds]' `Double?` each part boxed, seven a frame.
             val ticks = VulkanQueries.timestampTicksBetween(device, pool, first + part, validBits)
-            if (ticks < 0) return null
+            if (ticks < 0) return Double.NaN
             val ms = ticks.toDouble() * nanosPerTick / NANOS_PER_MS
             partScratch[part] = ms.toFloat()
             total += ms
@@ -143,6 +156,7 @@ internal class GpuFrameTimer private constructor(
             )
         }
 
+        private const val NO_TICKET = -1L
         private val PARTS = GpuFramePart.entries.size
         private val QUERIES_PER_FRAME = PARTS + 1
         private const val OFFSCREEN_QUERIES = 2
