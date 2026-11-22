@@ -105,12 +105,55 @@ class OutlineParityTest {
                 assertEquals(0, selected.inside, "$backend: nothing inside the silhouette: $selected")
                 assertTrue(selected.red > RING_PIXELS && selected.blue == 0, "$backend: set 0 in its own colour: $selected")
                 assertTrue(hovered.blue > RING_PIXELS && hovered.red == 0, "$backend: set 1 in its own colour: $hovered")
+
+                verifyWideTarget(backend, renderer, mesh, material, lens)
             } finally {
                 renderer.waitIdle()
                 mesh.destroy()
                 material.destroy()
                 target.destroy()
             }
+        }
+    }
+
+    /** Rectangular (256x128) widescreen scene: mask allocates 256x128 rather than 256x256 while preserving the ring (#1709). */
+    private suspend fun verifyWideTarget(
+        backend: HeadlessUiBackend,
+        renderer: Renderer,
+        mesh: com.awakekt.awake.render.mesh.Mesh,
+        material: com.awakekt.awake.render.material.Material,
+        lens: Lens,
+    ) {
+        val wideTarget = renderer.createRenderTarget(WIDE_WIDTH, SIZE)
+        try {
+            renderer.renderToTexture(
+                wideTarget,
+                ScenePassCompiler.compile(
+                    lens = lens,
+                    drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 0)),
+                    light = SceneLight(direction = Vec3f(0f, 0f, 1f), color = Vec3f(1f, 1f, 1f)),
+                    clipSpace = renderer.clipSpace,
+                    aspect = WIDE_WIDTH.toFloat() / SIZE.toFloat(),
+                    drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                    maskLayers = listOf(SELECTED.packed(), HOVERED.packed()),
+                ),
+            )
+            val wideRow = measure(renderer.readPixels(wideTarget).data, WIDE_WIDTH, SIZE)
+            val wideBytes = renderer.maskTargetBytes
+            println("$backend outline (256x128): mask target $wideBytes bytes (square 256x256 would be $SQUARE_WIDE_BYTES), row=$wideRow")
+            assertTrue(
+                wideBytes in RECT_WIDE_BYTES until SQUARE_WIDE_BYTES,
+                "$backend: 256x128 scene must allocate a rectangular mask target ($RECT_WIDE_BYTES..<$SQUARE_WIDE_BYTES), got $wideBytes",
+            )
+            assertTrue(
+                wideRow.left in WIDTH - 1..WIDTH + 1 && wideRow.right in WIDTH - 1..WIDTH + 1,
+                "$backend: 256x128 ring must stay $WIDTH px wide: $wideRow",
+            )
+            assertEquals(0, wideRow.inside, "$backend: 256x128 nothing inside silhouette: $wideRow")
+            assertTrue(wideRow.red > RING_PIXELS && wideRow.blue == 0, "$backend: 256x128 ring in red: $wideRow")
+        } finally {
+            renderer.waitIdle()
+            wideTarget.destroy()
         }
     }
 
@@ -136,19 +179,19 @@ class OutlineParityTest {
     }
 
     /** Red and blue pixels in the frame, and red ones in the centre row: left of the square, right of it, and inside it. */
-    private fun measure(pixels: ByteArray): Row {
+    private fun measure(pixels: ByteArray, width: Int = SIZE, height: Int = SIZE): Row {
         fun red(pixel: Int) = pixels.channel(pixel, 0) > STRONG && pixels.channel(pixel, 1) < WEAK && pixels.channel(pixel, 2) < WEAK
         fun blue(pixel: Int) = pixels.channel(pixel, 2) > STRONG && pixels.channel(pixel, 0) < WEAK && pixels.channel(pixel, 1) < WEAK
-        val row = SIZE / 2
-        val squareLeft = SIZE / 2 - SQUARE / 2
-        val squareRight = SIZE / 2 + SQUARE / 2
-        val rowPixels = (0 until SIZE).map { row * SIZE + it }
+        val row = height / 2
+        val squareLeft = width / 2 - SQUARE / 2
+        val squareRight = width / 2 + SQUARE / 2
+        val rowPixels = (0 until width).map { row * width + it }
         return Row(
-            red = (0 until SIZE * SIZE).count(::red),
-            blue = (0 until SIZE * SIZE).count(::blue),
-            left = rowPixels.count { it % SIZE < squareLeft && red(it) },
-            right = rowPixels.count { it % SIZE >= squareRight && red(it) },
-            inside = rowPixels.count { it % SIZE in squareLeft + 2 until squareRight - 2 && red(it) },
+            red = (0 until width * height).count(::red),
+            blue = (0 until width * height).count(::blue),
+            left = rowPixels.count { it % width < squareLeft && red(it) },
+            right = rowPixels.count { it % width >= squareRight && red(it) },
+            inside = rowPixels.count { it % width in squareLeft + 2 until squareRight - 2 && red(it) },
         )
     }
 
@@ -158,6 +201,7 @@ class OutlineParityTest {
 
     private companion object {
         const val SIZE = 128
+        const val WIDE_WIDTH = 256
         const val CUBE = 2f
         const val HALF_HEIGHT = 2f
 
@@ -167,6 +211,10 @@ class OutlineParityTest {
 
         /** Three D32 layers at the 2048 edge every mask target had. */
         const val FIXED_MASK_BYTES = 2048L * 2048L * 3L * 4L
+
+        /** Three D32 layers at 256x128 rectangular vs 256x256 square. */
+        const val RECT_WIDE_BYTES = WIDE_WIDTH.toLong() * SIZE.toLong() * 3L * 4L
+        const val SQUARE_WIDE_BYTES = WIDE_WIDTH.toLong() * WIDE_WIDTH.toLong() * 3L * 4L
         const val RING_PIXELS = 100
         const val STRONG = 180
         const val WEAK = 90

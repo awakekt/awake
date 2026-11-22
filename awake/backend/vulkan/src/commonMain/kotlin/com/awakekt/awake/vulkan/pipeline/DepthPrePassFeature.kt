@@ -140,10 +140,11 @@ internal class DepthPrePassFeature(
      * caller has waited for the device and has not begun recording a frame that binds the target
      * (#1688, #1698).
      */
-    internal fun resize(layers: Int, size: Int): Boolean {
+    internal fun resize(layers: Int, width: Int, height: Int = width): Boolean {
         val resident = if (depthTarget.resident) depthTarget.layers else 0
-        if (layers == resident && (layers == 0 || size == depthTarget.size)) return false
-        if (layers == 0) depthTarget.release() else depthTarget.reallocate(layers, size)
+        val sameExtent = width == depthTarget.width && height == depthTarget.height
+        if (layers == resident && (layers == 0 || sameExtent)) return false
+        if (layers == 0) depthTarget.release() else depthTarget.reallocate(layers, width, height)
         initializedLayers = BooleanArray(depthTarget.layers)
         return true
     }
@@ -249,7 +250,7 @@ internal class DepthPrePassFeature(
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = depthTarget.renderPass,
             framebuffer = depthTarget.framebufferFor(cascade),
-            renderArea = VkRect2D(extent = VkExtent2D(depthTarget.size, depthTarget.size)),
+            renderArea = VkRect2D(extent = VkExtent2D(depthTarget.width, depthTarget.height)),
             pClearValues = arrayOf(Renderer.clearDepthValue),
         )
         Vulkan.vkCmdBeginRenderPass(
@@ -257,16 +258,15 @@ internal class DepthPrePassFeature(
             renderPassInfo,
             VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
         )
-        val size = depthTarget.size.toFloat()
         Vulkan.vkCmdSetViewport(
             commandBuffer,
             0,
-            arrayOf(VkViewport(width = size, height = size)),
+            arrayOf(VkViewport(width = depthTarget.width.toFloat(), height = depthTarget.height.toFloat())),
         )
         Vulkan.vkCmdSetScissor(
             commandBuffer,
             0,
-            arrayOf(VkRect2D(extent = VkExtent2D(depthTarget.size, depthTarget.size))),
+            arrayOf(VkRect2D(extent = VkExtent2D(depthTarget.width, depthTarget.height))),
         )
         var boundPipeline: DepthOnlyPipeline? = null
         var boundMaterialSet = NO_SET

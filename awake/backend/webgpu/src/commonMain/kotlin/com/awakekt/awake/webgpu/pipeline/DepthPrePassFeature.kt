@@ -208,7 +208,7 @@ class DepthPrePassFeature(
             val key: Any = if (view == null) depthTarget.viewFor(cascade) else ViewCascade(view, cascade)
             val retained = retainedBundles?.pass(key, cascadeLayout)
             val recorder = WebGpuCommandRecorder(this, stats, retained)
-            recorder.setScissor(0, 0, depthTarget.size, depthTarget.size)
+            recorder.setScissor(0, 0, depthTarget.width, depthTarget.height)
             var boundPipeline: DepthOnlyPipeline? = null
             var drawIndex = 0
             recorder.beginRetained(CASTERS)

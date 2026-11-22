@@ -105,9 +105,16 @@ class DepthTarget(
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
 
-    /** Edge length, in texels, of the square depth image; changed only by [reallocate]. */
-    var size: Int = size
+    /** Width, in texels, of the depth image; changed only by [reallocate]. */
+    var width: Int = size
         private set
+
+    /** Height, in texels, of the depth image; changed only by [reallocate]. */
+    var height: Int = size
+        private set
+
+    /** Longest edge, in texels, of the depth image (equals both [width] and [height] for square targets). */
+    val size: Int get() = maxOf(width, height)
 
     /**
      * How many layers the image holds -- one shadow cascade, or one point-light face, each; changed
@@ -195,13 +202,13 @@ class DepthTarget(
         createDescriptorSet()
     }
 
-    /** The image, its memory, its views and one framebuffer per layer, at [layers] and [size]. */
+    /** The image, its memory, its views and one framebuffer per layer, at [layers] and [width] x [height]. */
     private fun allocateImage() {
         image = VulkanImages.vkCreateImage(
             device,
             VkImageCreateInfo(
-                width = size,
-                height = size,
+                width = width,
+                height = height,
                 format = vkFormat.value,
                 arrayLayers = layers,
                 usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT or
@@ -270,8 +277,8 @@ class DepthTarget(
                 VkFramebufferCreateInfo(
                     renderPass = renderPass,
                     pAttachments = arrayOf(layerViews[layer]),
-                    width = size,
-                    height = size,
+                    width = width,
+                    height = height,
                     layers = 1,
                 ),
             )
@@ -283,19 +290,20 @@ class DepthTarget(
         private set
 
     /**
-     * Rebuilds the image at [layers] and [size], keeping the render pass, sampler and descriptor set,
-     * whose image binding is rewritten: everything that holds [binding] or [renderPass] stays valid
-     * (#1688). The new layers start `UNDEFINED`, as a new target's do.
+     * Rebuilds the image at [layers] and [width] x [height], keeping the render pass, sampler and
+     * descriptor set, whose image binding is rewritten: everything that holds [binding] or
+     * [renderPass] stays valid (#1688, #1709). The new layers start `UNDEFINED`, as a new target's do.
      *
      * The caller makes sure the GPU no longer uses the old image, and that no command buffer being
      * recorded has bound [binding] yet: the renderer waits for the device first.
      */
-    internal fun reallocate(layers: Int, size: Int) {
-        if (layers == this.layers && size == this.size) return
+    internal fun reallocate(layers: Int, width: Int, height: Int = width) {
+        if (layers == this.layers && width == this.width && height == this.height) return
         reallocations += 1
         releaseImage()
         this.layers = layers
-        this.size = size
+        this.width = width
+        this.height = height
         allocateImage()
         writeImageDescriptor()
     }
@@ -304,7 +312,7 @@ class DepthTarget(
      * Whether the image is the shadow array a light renders into rather than the 1x1 [DORMANT_SIZE]
      * stand-in `release` leaves bound (#1698).
      */
-    internal val resident: Boolean get() = size != DORMANT_SIZE
+    internal val resident: Boolean get() = width != DORMANT_SIZE || height != DORMANT_SIZE
 
     private fun releaseImage() {
         framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
@@ -434,7 +442,7 @@ class DepthTarget(
                 VkRenderPassBeginInfo(
                     renderPass = renderPass,
                     framebuffer = framebuffers[layer],
-                    renderArea = VkRect2D(extent = VkExtent2D(size, size)),
+                    renderArea = VkRect2D(extent = VkExtent2D(width, height)),
                     pClearValues = arrayOf(VkClearDepthStencilValue(depth = 1f, stencil = 0)),
                 ),
                 VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
@@ -492,4 +500,4 @@ internal fun vkDepthFormat(format: ShadowDepthFormat): VkFormat = when (format) 
  * The caller waits for the device first, as for [DepthTarget.reallocate], and clears the new layer
  * before it is sampled.
  */
-internal fun DepthTarget.release() = reallocate(layers = 1, size = DepthTarget.DORMANT_SIZE)
+internal fun DepthTarget.release() = reallocate(layers = 1, width = DepthTarget.DORMANT_SIZE)

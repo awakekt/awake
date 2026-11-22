@@ -199,12 +199,17 @@ public abstract interface class com/awakekt/awake/render/passes/LinePass {
 public final class com/awakekt/awake/render/passes/MaskTargetSizing {
 	public fun <init> ()V
 	public final fun offscreen (III)I
+	public final fun offscreenExtent (IIII)J
 	public final fun presented (III)I
+	public final fun presentedExtent (IIII)J
 }
 
 public final class com/awakekt/awake/render/passes/MaskTargetSizingKt {
 	public static final field MASK_TARGET_MAX_SIZE I
 	public static final field MASK_TARGET_MIN_SIZE I
+	public static final fun maskExtentHeight (J)I
+	public static final fun maskExtentWidth (J)I
+	public static final fun packMaskExtent (II)J
 }
 
 public final class com/awakekt/awake/render/passes/OpaqueRenderFeature : com/awakekt/awake/render/passes/RenderFeature {

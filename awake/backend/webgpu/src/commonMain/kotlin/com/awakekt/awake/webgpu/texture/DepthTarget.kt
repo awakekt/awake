@@ -23,11 +23,12 @@ import io.ygdrasil.webgpu.TextureDescriptor
 import io.ygdrasil.webgpu.TextureViewDescriptor
 
 /**
- * A square depth-only render target a feature can render into and then sample. Mirrors Vulkan's
- * `DepthTarget` (2048x2048, [ShadowDepthFormat.Depth32Float] unless built with another [format]).
+ * A depth-only render target a feature can render into and then sample. Mirrors Vulkan's
+ * `DepthTarget` (square 2048x2048 by default, or rectangular for screen-matched scene-depth and
+ * mask targets; [ShadowDepthFormat.Depth32Float] unless built with another [format]).
  *
- * Hardware only: it knows a depth format and a size, and nothing about why a caller wants depth
- * rendered offscreen. A shadow map is the one use today.
+ * Hardware only: it knows a depth format and an extent, and nothing about why a caller wants depth
+ * rendered offscreen.
  */
 class DepthTarget(
     private val graphicsDevice: GraphicsDevice,
@@ -52,23 +53,30 @@ class DepthTarget(
      * this target declare as their depth attachment. */
     val textureFormat: GPUTextureFormat = webGpuDepthFormat(format)
 
-    /** Edge length, in texels, of the square depth texture. */
-    var size: Int = size
+    /** Width, in texels, of the depth texture. */
+    var width: Int = size
         private set
+
+    /** Height, in texels, of the depth texture. */
+    var height: Int = size
+        private set
+
+    /** Longest edge, in texels, of the depth texture (equals both [width] and [height] for square targets). */
+    val size: Int get() = maxOf(width, height)
 
     /** One layer per shadow cascade -- Vulkan's `DepthTarget.layers`, same reasoning. Grows when a
      * frame draws more layers than it holds; see [reallocate]. */
     var layers: Int = layers
         private set
 
-    /** The texture's bytes: [layers] of [size] squared texels of [format]. */
-    val allocatedBytes: Long get() = format.layerBytes(size, layers)
+    /** The texture's bytes: [layers] of [width] x [height] texels of [format]. */
+    val allocatedBytes: Long get() = width.toLong() * height.toLong() * format.bytesPerTexel * layers.toLong()
 
     /**
      * Whether the texture is the shadow array a light renders into rather than the 1x1 [DORMANT_SIZE]
      * stand-in a shadow bind group points at while none casts (#1698), as on Vulkan.
      */
-    internal val resident: Boolean get() = size != DORMANT_SIZE
+    internal val resident: Boolean get() = width != DORMANT_SIZE || height != DORMANT_SIZE
 
     /**
      * The [textureFormat] texture, with [layers] array layers. It is both a render attachment and
@@ -86,24 +94,29 @@ class DepthTarget(
     private var layerViews: List<GPUTextureView> = createLayerViews()
 
     /**
-     * A new texture of [layers] layers of [size] texels, its views with it; the old ones are closed.
-     * Work already submitted against them still completes, as WebGPU defines a texture's destroy.
-     * Anything built over [depthView] -- a bind group -- is the caller's to rebuild.
+     * A new texture of [layers] layers of [width] x [height] texels, its views with it; the old
+     * ones are closed. Work already submitted against them still completes, as WebGPU defines a
+     * texture's destroy. Anything built over [depthView] -- a bind group -- is the caller's to
+     * rebuild.
      */
-    internal fun reallocate(layers: Int, size: Int = this.size) {
+    internal fun reallocate(layers: Int, width: Int, height: Int) {
         releaseTexture()
         this.layers = layers
-        this.size = size
+        this.width = width
+        this.height = height
         depthTexture = createTexture()
         depthView = createSampledView()
         layerViews = createLayerViews()
     }
 
+    /** Square overload of [reallocate] for shadow arrays. */
+    internal fun reallocate(layers: Int, size: Int = this.size) = reallocate(layers, size, size)
+
     private fun createTexture(): GPUTexture = graphicsDevice.wgpuContext.device.createTexture(
         TextureDescriptor(
             size = Extent3D(
-                width = size.toUInt(),
-                height = size.toUInt(),
+                width = width.toUInt(),
+                height = height.toUInt(),
                 depthOrArrayLayers = layers.toUInt(),
             ),
             format = textureFormat,
