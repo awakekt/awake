@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.20"
+kotlin = "2.5.0-RC"
 agp = "9.2.1"
 detekt = "2.0.0-alpha.6"
 spotless = "7.0.2"

@@ -45,9 +45,30 @@ extensions.configure<PublishingExtension>("publishing") {
 
 // Apple targets build only on macOS. Elsewhere a local publish (`-Pawake.version`) leaves their
 // publications out, for a JVM, Android or web consumer, instead of failing on klibs it can't make.
+// Under KOTLIN_ARCHIVE, KGP refuses to assemble a partial archive when any iOS target is disabled
+// (cinterop modules and modules depending on their iOS cinterops), so non-Mac local publishes fall
+// back to LEGACY_MULTIPLE_PUBLICATIONS for those modules. Real releases run on macOS and always
+// publish KOTLIN_ARCHIVE.
 if (!HostOs.isMac) {
     val applePublication = Regex("Ios(Arm64|SimulatorArm64|X64)Publication")
     tasks.matching { applePublication.containsMatchIn(it.name) }.configureEach { enabled = false }
+
+    val nonMacArchiveFallback = setOf(
+        ":awake:asset:shader-compiler",
+        ":awake:backend:jolt",
+        ":awake:backend:vulkan:bindings",
+        ":awake:backend:vulkan",
+    )
+    if (project.path in nonMacArchiveFallback) {
+        pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+            extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension>("kotlin") {
+                @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+                publishing {
+                    publicationFormat.set(org.jetbrains.kotlin.gradle.plugin.KotlinPublicationFormat.LEGACY_MULTIPLE_PUBLICATIONS)
+                }
+            }
+        }
+    }
 }
 
 tasks.matching { it.name.startsWith("generateMetadataFileFor") }.configureEach {

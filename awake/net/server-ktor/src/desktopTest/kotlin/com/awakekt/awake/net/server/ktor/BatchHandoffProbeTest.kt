@@ -121,7 +121,7 @@ class BatchHandoffProbeTest {
     }
 
     /** Thread-allocated bytes per client per tick of `produce`, after warm-up, on the calling thread. */
-    private fun allocPerClientTick(clients: Int, ticks: Int, produce: suspend (Int) -> Unit): Long {
+    private inline fun allocPerClientTick(clients: Int, ticks: Int, crossinline produce: suspend (Int) -> Unit): Long {
         val thread = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
         return runBlocking {
             val id = Thread.currentThread().id
