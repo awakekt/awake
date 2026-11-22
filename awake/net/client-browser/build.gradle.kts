@@ -10,7 +10,7 @@
 // The worker's script ships in the klib under awake-net/, and the `socket-worker` Gradle plugin puts
 // it beside a consumer's page.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -19,10 +19,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.net.browser"
-    }
-
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:net:api"))

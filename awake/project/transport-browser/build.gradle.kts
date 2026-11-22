@@ -8,7 +8,7 @@
 // wasmJs only; the request and response mapping it delegates to is common code, so desktopTest
 // checks it, and the wasm file is only the fetch() call.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -16,10 +16,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.project.transport.browser"
-    }
-
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:project"))

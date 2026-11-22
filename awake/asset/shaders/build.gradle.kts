@@ -26,7 +26,7 @@
 // that resolve them. The authored WGSL and its uniform layouts moved to awake:asset:shader-pack,
 // so a game shipping its own shaders can depend on this module without pulling that content in.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.render-extensibility")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -35,10 +35,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.asset.shaders"
-    }
-
     sourceSets {
         commonMain.dependencies {
             implementation(project(":awake:core:host"))

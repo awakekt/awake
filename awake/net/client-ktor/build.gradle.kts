@@ -8,7 +8,7 @@
 // ServiceLoader-backed client) and picks its engine per target (CIO or OkHttp on desktop/Android,
 // Darwin on iOS, Js in a browser); this module names none in main sources.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -16,10 +16,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.net.ktor"
-    }
-
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:net:api"))

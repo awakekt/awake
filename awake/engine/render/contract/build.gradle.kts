@@ -24,7 +24,7 @@
 
 
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -33,10 +33,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.render"
-    }
-
     // No platform-specific code at all in this module (see docs/mvp-plan.md's module
     // restructuring notes) -- every declaration here is a plain interface/data class,
     // implemented by each backend module (awake-vulkan today; a future awake-backend-webgpu

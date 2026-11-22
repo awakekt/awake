@@ -47,6 +47,28 @@ apiValidation {
     )
 }
 
+// Pure-KMP modules (`kmp-library`, without an Android target) have a single JVM target (`desktop`),
+// so BCV defaults their dump path to `api/<name>.api` instead of `api/desktop/<name>.api`. Keep
+// every KMP module's dump at `api/desktop/<name>.api` so `api-binary-compat.sh` and
+// `vulkan-core-api-impact.sh` compare seamlessly against earlier tags and don't see moved dumps
+// as deleted signatures.
+gradle.projectsEvaluated {
+    subprojects.filter { it.plugins.hasPlugin("com.awakekt.awake.plugin.kmp-library") }.forEach { sub ->
+        val desktopApiFile = sub.layout.projectDirectory.file("api/desktop/${sub.name}.api")
+        sub.tasks.withType<kotlinx.validation.KotlinApiCompareTask>()
+            .matching { it.name == "desktopApiCheck" }
+            .configureEach {
+                projectApiFile.set(desktopApiFile)
+            }
+        sub.tasks.matching { it.name == "desktopApiDump" }.configureEach {
+            val getToMethod = this.javaClass.methods.firstOrNull { it.name == "getTo" }
+                ?: this.javaClass.declaredMethods.firstOrNull { it.name == "getTo" }?.also { it.isAccessible = true }
+            val toProp = getToMethod?.invoke(this) as? org.gradle.api.file.RegularFileProperty
+            toProp?.set(desktopApiFile)
+        }
+    }
+}
+
 // Raised as the engine's own coverage rises; never lowered to make a red build pass.
 //
 // 98.3% line, measured 2026-08-22, up from 90.5%. Not 100, and 100 is not the target: what remains

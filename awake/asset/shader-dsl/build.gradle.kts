@@ -8,7 +8,7 @@
 // the existing naga pipeline (validateAwakeShaders/syncAwakeShaders) unchanged. Pure text
 // generation -- no render contract, no backend, no UI dependency.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -17,10 +17,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.asset.shaderdsl"
-    }
-
     sourceSets {
         commonMain.dependencies {
             // GpuDataShape -- ASL reuses the engine's one value-shape enum in its public

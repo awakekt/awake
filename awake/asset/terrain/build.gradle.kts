@@ -12,7 +12,7 @@
  */
 
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -20,10 +20,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.asset.terrain"
-    }
-
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:color"))

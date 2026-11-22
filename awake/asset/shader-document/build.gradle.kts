@@ -8,7 +8,7 @@
 // project ships and Core checks, compiles to WGSL and draws as a content feature. No scene dependency:
 // awake:scene:shader binds it into scenes.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -17,10 +17,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.asset.shaderdocument"
-    }
-
     sourceSets {
         commonMain.dependencies {
             // The document lowers to ASL and is emitted by its WGSL emitter.

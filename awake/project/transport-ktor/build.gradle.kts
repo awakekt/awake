@@ -8,7 +8,7 @@
 // none, never takes Ktor. The host builds the client and so picks its engine (OkHttp or Android on
 // Android, Darwin on iOS, CIO or Java on desktop, Js in a browser); this module names none.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     // Tests encode a project index, as a publisher would.
     alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
@@ -18,10 +18,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.project.transport.ktor"
-    }
-
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:project"))

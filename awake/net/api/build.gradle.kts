@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -13,10 +13,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.net"
-    }
-
     // No platform-specific code: every declaration is an interface or a plain buffer, so the
     // same source serves the Ktor WebSocket transport today and a UDP or WebTransport one
     // later (docs/plans/network.md, phases 3-4). Ktor must never appear as a dependency here

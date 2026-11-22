@@ -11,7 +11,7 @@
 // docs/reference/render-extensibility.md for the authored-content-vs-capability rule this
 // enforces structurally.
 plugins {
-    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.kmp-library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -19,10 +19,6 @@ plugins {
 }
 
 kotlin {
-    android {
-        namespace = "com.awakekt.awake.asset.shaderpack"
-    }
-
     sourceSets {
         commonMain.dependencies {
             // UniformField/UniformLayout/GpuDataShape -- what the layouts here are built from.
