@@ -37,6 +37,10 @@ object PostProcessingStack {
      */
     const val TRANSIENT_SCENE_COPY_ID: String = "scene_color_copy"
 
+    private const val DEFAULT_BLOOM_DIVISOR = 2
+    private const val LOW_QUALITY_BLOOM_DIVISOR = 4
+    private const val LOW_QUALITY_BLOOM_MAX_ITERATIONS = 2
+
     fun levelTargetId(level: Int): String = "bloom_level_$level"
 
     /**
@@ -84,10 +88,23 @@ object PostProcessingStack {
         // 1. Bloom downsample/upsample chain
         var finalBloomTargetId: String? = null
         if (bloom != null) {
-            val blurChain = BlurChain.forRadius(bloom.radius, targetContext.effectQuality)
+            val isLowQuality = targetContext.effectQuality == EffectQuality.Low
+            // At EffectQuality.Low, extract at quarter resolution (4x fewer RGBA16F texels than
+            // half-res) and halve the blur radius in bright-pass texels, capping at 2 downsample
+            // levels so mobile GPUs pay 2-3 tiny passes instead of a half-res 4-level chain (#1709).
+            val brightDivisor = if (isLowQuality) LOW_QUALITY_BLOOM_DIVISOR else DEFAULT_BLOOM_DIVISOR
+            val effectiveRadius = if (isLowQuality) bloom.radius * 0.5f else bloom.radius
+            val blurChain = BlurChain.forRadius(effectiveRadius, targetContext.effectQuality)?.let { chain ->
+                if (isLowQuality && chain.iterations > LOW_QUALITY_BLOOM_MAX_ITERATIONS) {
+                    val capped = LOW_QUALITY_BLOOM_MAX_ITERATIONS
+                    BlurChain(capped, BlurChain.MAX_OFFSET, min(chain.outputLevel, capped))
+                } else {
+                    chain
+                }
+            }
             if (blurChain != null) {
-                val brightWidth = (targetContext.width / 2).coerceAtLeast(1)
-                val brightHeight = (targetContext.height / 2).coerceAtLeast(1)
+                val brightWidth = (targetContext.width / brightDivisor).coerceAtLeast(1)
+                val brightHeight = (targetContext.height / brightDivisor).coerceAtLeast(1)
 
                 // Bright-pass transient target
                 targets += ImagePassTargetSpec(
