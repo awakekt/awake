@@ -1,0 +1,9 @@
+# Map/Set fields keyed by a data class with mutable (`var`) primary-constructor properties (#1709).
+#
+# `./gradlew verifyMutableMapKeys` (part of `awakeVerify`) reads this file. Each line is
+# `<repository-relative path> <count>`. The baseline only shrinks: any new site fails, and a line
+# that allows more sites than remain also fails. Never add a line; key by Entity or an immutable ID.
+#
+# Public binary-compatible field (`val trackersByTerrain: HashMap<TerrainComponent, ...>`);
+# TerrainClipmapSystem handles identity re-bucketing and pruning until the public type can change.
+awake/scene/scene3d/src/commonMain/kotlin/com/awakekt/awake/scene/rendering/terrain/TerrainClipmapSystem.kt 1

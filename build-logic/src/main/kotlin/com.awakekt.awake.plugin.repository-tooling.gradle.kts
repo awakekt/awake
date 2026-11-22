@@ -11,6 +11,7 @@ import com.awakekt.awake.build.tasks.VerifyCoroutineScopesTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
 import com.awakekt.awake.build.tasks.VerifyInlinedQueriesTask
 import com.awakekt.awake.build.tasks.VerifyKeepRulesTask
+import com.awakekt.awake.build.tasks.VerifyMutableMapKeysTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
 import com.awakekt.awake.build.tasks.WaitForCoreCentralTask
 import com.awakekt.awake.build.tasks.WaitForVulkanCentralTask
@@ -177,6 +178,19 @@ val verifyCoroutineScopes = tasks.register<VerifyCoroutineScopesTask>("verifyCor
     baseline.set(layout.projectDirectory.file("config/coroutine-scopes-baseline.txt"))
 }
 
+val verifyMutableMapKeys = tasks.register<VerifyMutableMapKeysTask>("verifyMutableMapKeys") {
+    group = "awake verification"
+    description = "Reject Map/Set keys typed as a data class with mutable (var) primary-constructor properties (#1709)."
+    rootPath.set(rootProject.projectDir.absolutePath)
+    mainSources.from(
+        layout.projectDirectory.dir("awake").asFileTree.matching {
+            include("**/src/*Main/kotlin/**/*.kt")
+            exclude("**/build/**")
+        },
+    )
+    baseline.set(layout.projectDirectory.file("config/mutable-map-keys-baseline.txt"))
+}
+
 val verifyKeepRules = tasks.register<VerifyKeepRulesTask>("verifyKeepRules") {
     group = "awake verification"
     description = "Reject a class Awake's native code finds by name that no consumer keep rule keeps."
@@ -224,7 +238,7 @@ val moduleSourceChecks = setOf(
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, ownership and source-layering gates."
-    dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes, verifyInlinedQueries)
+    dependsOn(verifyFeatureLayering, verifyHeadlessRuntime, verifyKeepRules, verifyCoroutineScopes, verifyInlinedQueries, verifyMutableMapKeys)
     dependsOn(verifyCiTestCoverage, verifyAllocationGates)
     dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
     dependsOn(rootSourceChecks)
