@@ -550,12 +550,14 @@ public final class com/awakekt/awake/vulkan/texture/DepthTarget {
 	public final fun getDescriptorSetLayout ()J
 	public final fun getFormat ()Lcom/awakekt/awake/render/renderer/ShadowDepthFormat;
 	public final fun getFramebuffer ()J
+	public final fun getHeight ()I
 	public final fun getImage ()J
 	public final fun getImageView ()J
 	public final fun getLayers ()I
 	public final fun getRenderPass ()J
 	public final fun getSampler ()J
 	public final fun getSize ()I
+	public final fun getWidth ()I
 }
 
 public final class com/awakekt/awake/vulkan/texture/DepthTarget$Companion {

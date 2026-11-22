@@ -39,12 +39,34 @@ internal class VulkanFrameContext(
     override val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     override val passInput: GpuPassInput? = null,
     private val acquiredImageIndex: Int = 0,
+    override val surfaceWidth: Int = renderer.swapchainManager.extent.width,
+    override val surfaceHeight: Int = renderer.swapchainManager.extent.height,
 ) : VulkanRenderFrameContext {
     override val lineMesh get() = renderer.lineMesh
     override val stats get() = renderer.statsCounter
     override val uiRuns get() = renderer.uiRuns
-    override val surfaceWidth get() = renderer.swapchainManager.extent.width
-    override val surfaceHeight get() = renderer.swapchainManager.extent.height
+
+    /** Copy targeting a scene pass whose extent differs from the swapchain's (scaled or offscreen). */
+    fun withSurfaceSize(width: Int, height: Int): VulkanFrameContext =
+        if (width == surfaceWidth && height == surfaceHeight) {
+            this
+        } else {
+            VulkanFrameContext(
+                renderer = renderer,
+                commandBuffer = commandBuffer,
+                frameIndex = frameIndex,
+                groupedDrawCalls = groupedDrawCalls,
+                transparentDrawCalls = transparentDrawCalls,
+                primaryPipeline = primaryPipeline,
+                viewProjection = viewProjection,
+                cameraEye = cameraEye,
+                environment = environment,
+                passInput = passInput,
+                acquiredImageIndex = acquiredImageIndex,
+                surfaceWidth = width,
+                surfaceHeight = height,
+            )
+        }
 
     /** Aimed at [commandBuffer] here, once per frame, rather than at every record site. */
     override val recorder: CommandRecorder = renderer.commandRecorder.apply {
@@ -78,8 +100,8 @@ internal class VulkanFrameContext(
             colorImage = colorImage,
             colorImageView = colorImageView,
             colorFormat = swapchain.imageFormat,
-            width = surfaceWidth,
-            height = surfaceHeight,
+            width = swapchain.extent.width,
+            height = swapchain.extent.height,
             isOffscreen = false,
             finalRenderPass = uiPipeline.renderPass,
             sampleable = swapchain.sampleable,

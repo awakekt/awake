@@ -119,6 +119,8 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
                 cameraEye = input.cameraEye,
                 environment = input.environment,
                 passInput = input,
+                surfaceWidth = offscreen.width,
+                surfaceHeight = offscreen.height,
             ),
         )
         Vulkan.vkCmdEndRenderPass(commandBuffer)

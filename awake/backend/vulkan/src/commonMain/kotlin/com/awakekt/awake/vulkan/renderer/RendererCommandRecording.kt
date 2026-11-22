@@ -108,7 +108,7 @@ internal fun Renderer.recordCommandBuffer(
     Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: sceneFullViewport))
     Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: sceneFullScissor))
     bindDepthSets(commandBuffer)
-    recordSharedPassFeatures(RenderPassSlot.Scene, context)
+    recordSharedPassFeatures(RenderPassSlot.Scene, context.withSurfaceSize(sceneExtent.width, sceneExtent.height))
     Vulkan.vkCmdEndRenderPass(commandBuffer)
     if (scaled != null) {
         scaled.transitionToShaderReadOnly(commandBuffer)
@@ -221,7 +221,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: sceneFullViewport))
     Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: sceneFullScissor))
     bindDepthSets(commandBuffer)
-    recordSharedPassFeatures(RenderPassSlot.Scene, context)
+    recordSharedPassFeatures(RenderPassSlot.Scene, context.withSurfaceSize(sceneExtent.width, sceneExtent.height))
     Vulkan.vkCmdEndRenderPass(commandBuffer)
     timer?.mark(commandBuffer, frameIndex, GpuFramePart.Scene)
 
