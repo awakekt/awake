@@ -302,15 +302,15 @@ private fun RenderDrawCommand.skinnedDrawBlockFloats(alphaCutoff: Float, fade: F
     val roughness: Float
     val unlit: Float
     if (extraUniformFloats.size == SkinnedMaterialLayout.total) {
-        val pbrOffset = SkinnedMaterialLayout.offsetOf(UniformFields.PbrFactors)
+        val factors = SkinnedMaterialLayout.readVec4(extraUniformFloats, UniformFields.PbrFactors)
         writer
             .put(extraUniformFloats, 0, SkinnedFields.JointPalette)
             .put(model.data, UniformFields.Model)
             .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
             .put(extraUniformFloats, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
-        metallic = extraUniformFloats[pbrOffset]
-        roughness = extraUniformFloats[pbrOffset + 1]
-        unlit = extraUniformFloats[pbrOffset + 3]
+        metallic = factors.x
+        roughness = factors.y
+        unlit = factors.w
     } else {
         writer
             .putPadded(SkinnedFields.JointPalette, extraUniformFloats)
